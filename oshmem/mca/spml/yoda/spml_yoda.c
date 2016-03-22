@@ -57,6 +57,7 @@ mca_spml_yoda_module_t mca_spml_yoda = {
         mca_spml_yoda_put,
         mca_spml_yoda_put_nb,
         mca_spml_yoda_get,
+        mca_spml_yoda_get_nb,
         mca_spml_yoda_recv,
         mca_spml_yoda_send,
         mca_spml_base_wait,
@@ -900,6 +901,8 @@ int mca_spml_yoda_put_nb(void* dst_addr,
 {
     UNREFERENCED_PARAMETER(handle);
 
+    /* TODO: real nonblocking operation is needed
+     */
     return mca_spml_yoda_put_internal(dst_addr, size, src_addr, dst, 1);
 }
 
@@ -971,6 +974,17 @@ int mca_spml_yoda_enable(bool enable)
 #endif
 
     return OSHMEM_SUCCESS;
+}
+
+int mca_spml_yoda_get_nb(void* src_addr,
+                          size_t size,
+                          void* dst_addr,
+                          int src,
+                          void **handle)
+{
+    /* TODO: real nonblocking operation is needed
+     */
+    return mca_spml_yoda_get(src_addr, size, dst_addr, src);
 }
 
 /**

@@ -208,16 +208,34 @@ typedef int (*mca_spml_base_module_put_nb_fn_t)(void *dst_addr,
  * Blocking data transfer from remote PE.
  * Read data from remote PE.
  *
- * @param dst_addr - The address on the local PE, to write the result of the get operation to.
- * @param size     - The number of bytes to be read.
- * @param src_addr - The address on the remote PE, to read from.
- * @param src      - The ID of the remote PE.
- * @return         - OSHMEM_SUCCESS or failure status.
+ * @param dst_addr The address on the local PE, to write the result of the get operation to.
+ * @param size     The number of bytes to be read.
+ * @param src_addr The address on the remote PE, to read from.
+ * @param src      The ID of the remote PE.
+ * @return         OSHMEM_SUCCESS or failure status.
  */
 typedef int (*mca_spml_base_module_get_fn_t)(void *dst_addr,
                                              size_t size,
                                              void *src_addr,
                                              int src);
+
+/**
+ * Non-blocking data transfer from remote PE.
+ * Read data from remote PE.
+ *
+ * @param dst_addr The address on the local PE, to write the result of the get operation to.
+ * @param size     The number of bytes to be read.
+ * @param src_addr The address on the remote PE, to read from.
+ * @param src      The ID of the remote PE.
+ * @param handle   The address of a handle to be passed to shmem_wait_nb() or
+ *                 shmem_test_nb() to wait or poll for the completion of the transfer.
+ * @return         - OSHMEM_SUCCESS or failure status.
+ */
+typedef int (*mca_spml_base_module_get_nb_fn_t)(void *dst_addr,
+                                               size_t size,
+                                               void *src_addr,
+                                               int src,
+                                               void **handle);
 
 /**
  *  Post a receive and wait for completion.
@@ -255,7 +273,7 @@ typedef int (*mca_spml_base_module_fence_fn_t)(void);
  *
  * @return         - OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_wait_nb_fn_t)(void*);
+typedef int (*mca_spml_base_module_wait_nb_fn_t)(void *);
 
 /**
  *  SPML instance.
@@ -273,6 +291,7 @@ struct mca_spml_base_module_1_0_0_t {
     mca_spml_base_module_put_fn_t spml_put;
     mca_spml_base_module_put_nb_fn_t spml_put_nb;
     mca_spml_base_module_get_fn_t spml_get;
+    mca_spml_base_module_get_nb_fn_t spml_get_nb;
 
     mca_spml_base_module_recv_fn_t spml_recv;
     mca_spml_base_module_send_fn_t spml_send;

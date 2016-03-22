@@ -70,6 +70,11 @@ extern int mca_spml_ucx_get(void* dst_addr,
                               size_t size,
                               void* src_addr,
                               int src);
+extern int mca_spml_ucx_get_nb(void* dst_addr,
+                              size_t size,
+                              void* src_addr,
+                              int src,
+                              void **handle);
 
 extern int mca_spml_ucx_put(void* dst_addr,
                               size_t size,

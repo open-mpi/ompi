@@ -53,8 +53,9 @@ mca_spml_ucx_t mca_spml_ucx = {
         mca_spml_ucx_deregister,
         mca_spml_base_oob_get_mkeys,
         mca_spml_ucx_put,
-        NULL, /* todo: mca_spml_ucx_put_nb, */
+        mca_spml_ucx_put_nb,
         mca_spml_ucx_get,
+        mca_spml_ucx_get_nb,
         mca_spml_ucx_recv,
         mca_spml_ucx_send,
         mca_spml_base_wait,
@@ -390,6 +391,19 @@ int mca_spml_ucx_get(void *src_addr, size_t size, void *dst_addr, int src)
     return ucx_status_to_oshmem(status);
 }
 
+int mca_spml_ucx_get_nb(void *src_addr, size_t size, void *dst_addr, int src, void **handle)
+{
+    void *rva;
+    ucs_status_t status;
+    spml_ucx_mkey_t *ucx_mkey;
+
+    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva);
+    status = ucp_get_nbi(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
+                     (uint64_t)rva, ucx_mkey->rkey);
+
+    return ucx_status_to_oshmem(status);
+}
+
 int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
 {
     void *rva;
@@ -398,6 +412,19 @@ int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
 
     ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva);
     status = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
+                     (uint64_t)rva, ucx_mkey->rkey);
+
+    return ucx_status_to_oshmem(status);
+}
+
+int mca_spml_ucx_put_nb(void* dst_addr, size_t size, void* src_addr, int dst, void **handle)
+{
+    void *rva;
+    ucs_status_t status;
+    spml_ucx_mkey_t *ucx_mkey;
+
+    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva);
+    status = ucp_put_nbi(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
     return ucx_status_to_oshmem(status);
