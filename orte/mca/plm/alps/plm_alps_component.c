@@ -139,8 +139,25 @@ static int orte_plm_alps_component_query(mca_base_module_t **module, int *priori
 {
 #if CRAY_WLM_DETECT
     char slurm[]="SLURM";
+    char *wlm_detected = NULL;
 
-    if(!strcmp(slurm,wlm_detect_get_active())) {
+    wlm_detected = wlm_detect_get_active();
+
+    /*
+     * The content of wlm_detected.h indicates wlm_detect_get_active
+     * may return NULL upon failure.  Resort to the suggested plan
+     * B in that event.
+     */
+
+    if (NULL == wlm_detected) {
+        wlm_detected = (char *)wlm_detect_get_default();
+        OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
+                             "%s plm:alps: wlm_detect_get_active returned NULL, using %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wlm_detected));
+
+    }
+
+    if((NULL != wlm_detected) && !strcmp(slurm, wlm_detected)) {
         mca_plm_alps_using_aprun = false;
     }
 #endif
