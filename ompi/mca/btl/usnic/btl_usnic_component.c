@@ -845,7 +845,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         }
 
         ret =
-            module->usnic_fabric_ops->getinfo(FI_EXT_USNIC_INFO_VERSION,
+            module->usnic_fabric_ops->getinfo(1,
                                             fabric,
                                             &module->usnic_info);
         if (ret != 0) {
