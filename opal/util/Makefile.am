@@ -12,6 +12,8 @@
 # Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved
+# Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -51,6 +53,7 @@ headers = \
         numtostr.h \
         opal_environ.h \
         opal_getcwd.h \
+        opal_patcher.h \
         opal_pty.h \
         os_dirpath.h \
         os_path.h \
@@ -86,6 +89,7 @@ libopalutil_la_SOURCES = \
         numtostr.c \
         opal_environ.c \
         opal_getcwd.c \
+        opal_patcher.c \
         opal_pty.c \
         os_dirpath.c \
         os_path.c \

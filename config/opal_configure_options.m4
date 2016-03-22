@@ -283,7 +283,8 @@ else
     OPAL_ENABLE_DLOPEN_SUPPORT=1
     AC_MSG_RESULT([yes])
 fi
-
+AC_DEFINE_UNQUOTED(OPAL_ENABLE_DLOPEN_SUPPORT, $OPAL_ENABLE_DLOPEN_SUPPORT,
+    [Whether we want to enable dlopen support])
 
 #
 # Heterogeneous support
