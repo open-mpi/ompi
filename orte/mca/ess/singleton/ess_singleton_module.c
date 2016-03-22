@@ -157,10 +157,8 @@ static int rte_init(void)
 
         /* for convenience, push the pubsub version of this param into the environ */
         opal_setenv (OPAL_MCA_PREFIX"pubsub_orte_server", orte_process_info.my_hnp_uri, true, &environ);
-    } else if (NULL != getenv("SINGULARITY_CONTAINER")) {
-         /* mark that we are in a container */
-        opal_setenv("OPAL_PROC_CONTAINER", "1", true, &environ);
-    } else if (mca_ess_singleton_component.isolated) {
+    } else if (NULL != getenv("SINGULARITY_CONTAINER") ||
+               mca_ess_singleton_component.isolated) {
         /* ensure we use the isolated pmix component */
         opal_setenv (OPAL_MCA_PREFIX"pmix", "isolated", true, &environ);
     } else {

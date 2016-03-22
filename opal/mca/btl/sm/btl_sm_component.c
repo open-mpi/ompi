@@ -735,11 +735,6 @@ mca_btl_sm_component_init(int *num_btls,
     int rc;
 #endif /* OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA */
 
-    /* if we are in a container, then we must disqualify ourselves */
-    if (NULL != getenv("OPAL_PROC_CONTAINER")) {
-        return NULL;
-    }
-
     *num_btls = 0;
     /* lookup/create shared memory pool only when used */
     mca_btl_sm_component.sm_mpool = NULL;

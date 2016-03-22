@@ -44,6 +44,7 @@ typedef uint8_t orte_app_context_flags_t;
 #define ORTE_APP_MANDATORY       13    // bool - flag if nodes requested in -host are "mandatory" vs "optional"
 #define ORTE_APP_MAX_PPN         14    // uint32 - maximum number of procs/node for this app
 #define ORTE_APP_PREFIX_DIR      15    // string - prefix directory for this app, if override necessary
+#define ORTE_APP_NO_CACHEDIR     16    // bool - flag that a cache dir is not to be specified for a Singularity container
 
 #define ORTE_APP_MAX_KEY        100
 
