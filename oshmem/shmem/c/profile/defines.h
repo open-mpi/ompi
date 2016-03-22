@@ -361,6 +361,14 @@
 #define shmemx_int64_prod_to_all     pshmemx_int64_prod_to_all
 
 /*
+ * Alltoall routines
+ */
+#define shmem_alltoall32             pshmem_alltoall32
+#define shmem_alltoall64             pshmem_alltoall64
+#define shmem_alltoalls32            pshmem_alltoalls32
+#define shmem_alltoalls64            pshmem_alltoalls64
+
+/*
  * Platform specific cache management routines
  */
 #define shmem_udcflush              pshmem_udcflush

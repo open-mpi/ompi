@@ -114,6 +114,7 @@ nodist_liboshmem_fortran_pshmem_la_SOURCES = \
 	pshmem_prod_to_all_f.c \
 	pshmem_collect_f.c \
 	pshmem_broadcast_f.c \
+	pshmem_alltoall_f.c \
 	pshmem_lock_f.c \
 	pshmem_cache_f.c \
 	pshmem_int4_inc_f.c \

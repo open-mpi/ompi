@@ -41,6 +41,7 @@ OSHMEM_API_SOURCES = \
 	pshmem_put.c \
 	pshmem_g.c \
 	pshmem_get.c \
+	pshmem_alltoall.c \
 	pshmem_broadcast.c \
 	pshmem_collect.c \
 	pshmem_ptr.c \

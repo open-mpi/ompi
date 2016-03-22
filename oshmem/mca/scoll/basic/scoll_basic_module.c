@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -52,9 +52,10 @@ mca_scoll_basic_query(struct oshmem_group_t *group, int *priority)
         module->super.scoll_broadcast = mca_scoll_basic_broadcast;
         module->super.scoll_collect = mca_scoll_basic_collect;
         module->super.scoll_reduce = mca_scoll_basic_reduce;
+        module->super.scoll_alltoall = mca_scoll_basic_alltoall;
         module->super.scoll_module_enable = mca_scoll_basic_enable;
         return &(module->super);
     }
 
-    return NULL ;
+    return NULL;
 }

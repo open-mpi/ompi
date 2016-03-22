@@ -31,6 +31,7 @@ OSHMEM_API_SOURCES = \
 	shmem_get.c \
 	shmem_broadcast.c \
 	shmem_collect.c \
+	shmem_alltoall.c \
 	shmem_ptr.c \
 	shmem_pe_accessible.c \
 	shmem_addr_accessible.c \

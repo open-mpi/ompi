@@ -101,6 +101,7 @@ enum shmem_wait_ops {
 #define _SHMEM_BCAST_SYNC_SIZE          (1 + _SHMEM_BARRIER_SYNC_SIZE)
 #define _SHMEM_COLLECT_SYNC_SIZE        (1 + _SHMEM_BCAST_SYNC_SIZE)
 #define _SHMEM_REDUCE_SYNC_SIZE         (1 + _SHMEM_BCAST_SYNC_SIZE)
+#define _SHMEM_ALLTOALL_SYNC_SIZE       (1)
 #define _SHMEM_REDUCE_MIN_WRKDATA_SIZE  (1)
 #define _SHMEM_SYNC_VALUE               (-1)
 
@@ -108,6 +109,7 @@ enum shmem_wait_ops {
 #define SHMEM_BCAST_SYNC_SIZE          _SHMEM_BCAST_SYNC_SIZE
 #define SHMEM_COLLECT_SYNC_SIZE        _SHMEM_COLLECT_SYNC_SIZE
 #define SHMEM_REDUCE_SYNC_SIZE         _SHMEM_REDUCE_SYNC_SIZE
+#define SHMEM_ALLTOALL_SYNC_SIZE       _SHMEM_ALLTOALL_SYNC_SIZE
 #define SHMEM_REDUCE_MIN_WRKDATA_SIZE  _SHMEM_REDUCE_MIN_WRKDATA_SIZE
 #define SHMEM_SYNC_VALUE               _SHMEM_SYNC_VALUE
 
@@ -344,6 +346,11 @@ OSHMEM_DECLSPEC void shmem_collect32(void *target, const void *source, size_t nl
 OSHMEM_DECLSPEC void shmem_collect64(void *target, const void *source, size_t nlong, int PE_start, int logPE_stride, int PE_size, long *pSync);
 OSHMEM_DECLSPEC void shmem_fcollect32(void *target, const void *source, size_t nlong, int PE_start, int logPE_stride, int PE_size, long *pSync);
 OSHMEM_DECLSPEC void shmem_fcollect64(void *target, const void *source, size_t nlong, int PE_start, int logPE_stride, int PE_size, long *pSync);
+OSHMEM_DECLSPEC void shmem_alltoall32(void *target, const void *source, size_t nelems, int PE_start, int logPE_stride, int PE_size, long *pSync);
+OSHMEM_DECLSPEC void shmem_alltoall64(void *target, const void *source, size_t nelems, int PE_start, int logPE_stride, int PE_size, long *pSync);
+OSHMEM_DECLSPEC void shmem_alltoalls32(void *target, const void *source, ptrdiff_t dst, ptrdiff_t sst, size_t nelems, int PE_start, int logPE_stride, int PE_size, long *pSync);
+OSHMEM_DECLSPEC void shmem_alltoalls64(void *target, const void *source, ptrdiff_t dst, ptrdiff_t sst, size_t nelems, int PE_start, int logPE_stride, int PE_size, long *pSync);
+
 
 /*
  * Reduction routines

@@ -86,6 +86,22 @@
 #define shmem_broadcast64_ pshmem_broadcast64_
 #define shmem_broadcast64__ pshmem_broadcast64__
 
+#define SHMEM_ALLTOALL32 PSHMEM_ALLTOALL32
+#define shmem_alltoall32_ pshmem_alltoall32_
+#define shmem_alltoall32__ pshmem_alltoall32__
+
+#define SHMEM_ALLTOALL64 PSHMEM_ALLTOALL64
+#define shmem_alltoall64_ pshmem_alltoall64_
+#define shmem_alltoall64__ pshmem_alltoall64__
+
+#define SHMEM_ALLTOALLS32 PSHMEM_ALLTOALLS32
+#define shmem_alltoalls32_ pshmem_alltoalls32_
+#define shmem_alltoalls32__ pshmem_alltoalls32__
+
+#define SHMEM_ALLTOALLS64 PSHMEM_ALLTOALLS64
+#define shmem_alltoalls64_ pshmem_alltoalls64_
+#define shmem_alltoalls64__ pshmem_alltoalls64__
+
 #define SHMEM_SET_CACHE_INV PSHMEM_SET_CACHE_INV
 #define shmem_set_cache_inv_ pshmem_set_cache_inv_
 #define shmem_set_cache_inv__ pshmem_set_cache_inv__

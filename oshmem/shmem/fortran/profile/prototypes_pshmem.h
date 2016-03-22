@@ -185,6 +185,10 @@ PN (void, pshmem_broadcast4, PSHMEM_BROADCAST4, (FORTRAN_POINTER_T target, FORTR
 PN (void, pshmem_broadcast8, PSHMEM_BROADCAST8, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_broadcast32, PSHMEM_BROADCAST32, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_broadcast64, PSHMEM_BROADCAST64, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_alltoall32, PSHMEM_ALLTOALL32, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_alltoall64, PSHMEM_ALLTOALL64, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_alltoalls32, PSHMEM_ALLTOALLS32, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *dst, MPI_Fint *sst, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_alltoalls64, PSHMEM_ALLTOALLS64, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *dst, MPI_Fint *sst, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_set_lock, PSHMEM_SET_LOCK, (FORTRAN_POINTER_T lock));
 PN (void, pshmem_clear_lock, PSHMEM_CLEAR_LOCK, (FORTRAN_POINTER_T lock));
 PN (MPI_Fint, pshmem_test_lock, PSHMEM_TEST_LOCK, (FORTRAN_POINTER_T lock));
