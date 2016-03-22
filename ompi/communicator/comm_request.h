@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
  *                         reseved.
  * $COPYRIGHT$
  *
@@ -13,7 +13,6 @@
 #define OMPI_COMM_REQ_H
 
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_free_list.h"
 #include "ompi/request/request.h"
 
 /* increase this number if more subrequests are needed */

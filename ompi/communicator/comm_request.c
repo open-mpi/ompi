@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
  *                         reseved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -13,6 +13,7 @@
 
 #include "comm_request.h"
 
+#include "opal/class/opal_free_list.h"
 #include "opal/include/opal/sys/atomic.h"
 
 static opal_free_list_t ompi_comm_requests;
