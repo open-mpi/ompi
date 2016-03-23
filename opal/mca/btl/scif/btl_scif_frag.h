@@ -60,8 +60,8 @@ static inline int mca_btl_scif_frag_alloc (mca_btl_base_endpoint_t *ep,
 static inline int mca_btl_scif_frag_return (mca_btl_scif_base_frag_t *frag)
 {
     if (frag->registration) {
-        frag->endpoint->btl->super.btl_mpool->mpool_deregister(frag->endpoint->btl->super.btl_mpool,
-                                                               &frag->registration->base);
+        frag->endpoint->btl->rcache->rcache_deregister (frag->endpoint->btl->rcache,
+                                                        &frag->registration->base);
         frag->registration = NULL;
     }
 
