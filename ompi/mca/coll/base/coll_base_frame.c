@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -113,15 +113,16 @@ ompi_request_t** coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nreqs)
 {
     if( 0 == nreqs ) return NULL;
 
-    if( data->mcct_num_reqs <= nreqs )
+    if( data->mcct_num_reqs < nreqs ) {
         data->mcct_reqs = (ompi_request_t**)realloc(data->mcct_reqs, sizeof(ompi_request_t*) * nreqs);
 
-    if( NULL != data->mcct_reqs ) {
-        for( int i = data->mcct_num_reqs; i < nreqs; i++ )
-            data->mcct_reqs[i] = MPI_REQUEST_NULL;
-        data->mcct_num_reqs = nreqs;
-    } else
-        data->mcct_num_reqs = 0;  /* nothing to return */
+        if( NULL != data->mcct_reqs ) {
+            for( int i = data->mcct_num_reqs; i < nreqs; i++ )
+                data->mcct_reqs[i] = MPI_REQUEST_NULL;
+            data->mcct_num_reqs = nreqs;
+        } else
+            data->mcct_num_reqs = 0;  /* nothing to return */
+    }
     return data->mcct_reqs;
 }
 

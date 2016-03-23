@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -80,7 +80,7 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
 
         /* Get a requests arrays of the right size */
         reqs = coll_base_comm_get_reqs(module->base_data, rsize + 1);
-        if( NULL == reqs ) { line = __LINE__; goto exit; }
+        if( NULL == reqs ) { line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto exit; }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
         err = MCA_PML_CALL(isend(sbuf, scount, sdtype, 0,
@@ -108,7 +108,7 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
 
         /* Step 2: exchange the resuts between the root processes */
         tmpbuf = (char *) malloc(scount * size * sextent);
-        if (NULL == tmpbuf) { line = __LINE__; goto exit; }
+        if (NULL == tmpbuf) { line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto exit; }
 
         err = MCA_PML_CALL(isend(rbuf, rsize * rcount, rdtype, 0,
                                  MCA_COLL_BASE_TAG_ALLGATHER,

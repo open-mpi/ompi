@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -48,9 +48,7 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
     char *tmpbuf;
     ptrdiff_t extent, lb;
     ompi_request_t *recv_reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
-#if !defined(COLL_BASE_BCAST_USE_BLOCKING)
     ompi_request_t **send_reqs = NULL;
-#endif
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -64,11 +62,10 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
     /* Set the buffer pointers */
     tmpbuf = (char *) buffer;
 
-#if !defined(COLL_BASE_BCAST_USE_BLOCKING)
     if( tree->tree_nextsize != 0 ) {
         send_reqs = coll_base_comm_get_reqs(module->base_data, tree->tree_nextsize);
+        if( NULL == send_reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto error_hndl; }
     }
-#endif
 
     /* Root code */
     if( rank == root ) {
@@ -83,27 +80,18 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
                 sendcount = original_count - segindex * count_by_segment;
             }
             for( i = 0; i < tree->tree_nextsize; i++ ) {
-#if defined(COLL_BASE_BCAST_USE_BLOCKING)
-                err = MCA_PML_CALL(send(tmpbuf, sendcount, datatype,
-                                        tree->tree_next[i],
-                                        MCA_COLL_BASE_TAG_BCAST,
-                                        MCA_PML_BASE_SEND_STANDARD, comm));
-#else
                 err = MCA_PML_CALL(isend(tmpbuf, sendcount, datatype,
                                          tree->tree_next[i],
                                          MCA_COLL_BASE_TAG_BCAST,
                                          MCA_PML_BASE_SEND_STANDARD, comm,
                                          &send_reqs[i]));
-#endif  /* COLL_BASE_BCAST_USE_BLOCKING */
                 if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             }
 
-#if !defined(COLL_BASE_BCAST_USE_BLOCKING)
             /* complete the sends before starting the next sends */
             err = ompi_request_wait_all( tree->tree_nextsize, send_reqs,
                                          MPI_STATUSES_IGNORE );
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-#endif /* not COLL_BASE_BCAST_USE_BLOCKING */
 
             /* update tmp buffer */
             tmpbuf += realsegsize;
@@ -147,27 +135,18 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
             for( i = 0; i < tree->tree_nextsize; i++ ) {
-#if defined(COLL_BASE_BCAST_USE_BLOCKING)
-                err = MCA_PML_CALL(send(tmpbuf, count_by_segment, datatype,
-                                        tree->tree_next[i],
-                                        MCA_COLL_BASE_TAG_BCAST,
-                                        MCA_PML_BASE_SEND_STANDARD, comm));
-#else
                 err = MCA_PML_CALL(isend(tmpbuf, count_by_segment, datatype,
                                          tree->tree_next[i],
                                          MCA_COLL_BASE_TAG_BCAST,
                                          MCA_PML_BASE_SEND_STANDARD, comm,
                                          &send_reqs[i]));
-#endif  /* COLL_BASE_BCAST_USE_BLOCKING */
                 if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             }
 
-#if !defined(COLL_BASE_BCAST_USE_BLOCKING)
             /* complete the sends before starting the next iteration */
             err = ompi_request_wait_all( tree->tree_nextsize, send_reqs,
                                          MPI_STATUSES_IGNORE );
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-#endif  /* COLL_BASE_BCAST_USE_BLOCKING */
 
             /* Update the receive buffer */
             tmpbuf += realsegsize;
@@ -179,26 +158,17 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         sendcount = original_count - (ptrdiff_t)(num_segments - 1) * count_by_segment;
         for( i = 0; i < tree->tree_nextsize; i++ ) {
-#if defined(COLL_BASE_BCAST_USE_BLOCKING)
-            err = MCA_PML_CALL(send(tmpbuf, sendcount, datatype,
-                                    tree->tree_next[i],
-                                    MCA_COLL_BASE_TAG_BCAST,
-                                    MCA_PML_BASE_SEND_STANDARD, comm));
-#else
             err = MCA_PML_CALL(isend(tmpbuf, sendcount, datatype,
                                      tree->tree_next[i],
                                      MCA_COLL_BASE_TAG_BCAST,
                                      MCA_PML_BASE_SEND_STANDARD, comm,
                                      &send_reqs[i]));
-#endif  /* COLL_BASE_BCAST_USE_BLOCKING */
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         }
 
-#if !defined(COLL_BASE_BCAST_USE_BLOCKING)
         err = ompi_request_wait_all( tree->tree_nextsize, send_reqs,
                                      MPI_STATUSES_IGNORE );
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-#endif  /* COLL_BASE_BCAST_USE_BLOCKING */
     }
 
     /* Leaf nodes */
@@ -240,11 +210,9 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
  error_hndl:
     OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                   __FILE__, line, err, rank) );
-    if( MPI_SUCCESS != err ) {
-        ompi_coll_base_free_reqs( recv_reqs, 2);
-        if( NULL != send_reqs ) {
-            ompi_coll_base_free_reqs( send_reqs, tree->tree_nextsize);
-        }
+    ompi_coll_base_free_reqs( recv_reqs, 2);
+    if( NULL != send_reqs ) {
+        ompi_coll_base_free_reqs(send_reqs, tree->tree_nextsize);
     }
 
     return err;
@@ -652,6 +620,8 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
 
     /* Root sends data to all others. */
     preq = reqs = coll_base_comm_get_reqs(module->base_data, size-1);
+    if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; goto err_hndl; }
+
     for (i = 0; i < size; ++i) {
         if (i == rank) {
             continue;

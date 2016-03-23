@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -49,6 +49,7 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
     ompi_datatype_get_extent(rdtype, &lb, &rdextent);
     ompi_datatype_get_extent(sdtype, &lb, &sdextent);
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims);
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* post receives first */
     for (dim = 0, nreqs = 0; dim < cart->ndims ; ++dim) {
@@ -154,6 +155,7 @@ mca_coll_basic_neighbor_alltoall_graph(const void *sbuf, int scount, struct ompi
     ompi_datatype_get_extent(rdtype, &lb, &rdextent);
     ompi_datatype_get_extent(sdtype, &lb, &sdextent);
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, 2 * degree);
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* post receives first */
     for (neighbor = 0; neighbor < degree ; ++neighbor) {
@@ -163,7 +165,7 @@ mca_coll_basic_neighbor_alltoall_graph(const void *sbuf, int scount, struct ompi
         rbuf = (char *) rbuf + rdextent * rcount;
     }
     if( MPI_SUCCESS != rc ) {
-        ompi_coll_base_free_reqs( reqs, neighbor );
+        ompi_coll_base_free_reqs( reqs, neighbor + 1 );
         return rc;
     }
 
@@ -178,7 +180,7 @@ mca_coll_basic_neighbor_alltoall_graph(const void *sbuf, int scount, struct ompi
     }
 
     if( MPI_SUCCESS != rc ) {
-        ompi_coll_base_free_reqs( reqs, degree + neighbor );
+        ompi_coll_base_free_reqs( reqs, degree + neighbor + 1 );
         return rc;
     }
 
@@ -210,6 +212,7 @@ mca_coll_basic_neighbor_alltoall_dist_graph(const void *sbuf, int scount,struct 
     ompi_datatype_get_extent(rdtype, &lb, &rdextent);
     ompi_datatype_get_extent(sdtype, &lb, &sdextent);
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, indegree + outdegree);
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* post receives first */
     for (neighbor = 0; neighbor < indegree ; ++neighbor) {
@@ -221,7 +224,7 @@ mca_coll_basic_neighbor_alltoall_dist_graph(const void *sbuf, int scount,struct 
     }
 
     if (OMPI_SUCCESS != rc) {
-        ompi_coll_base_free_reqs(reqs, neighbor);
+        ompi_coll_base_free_reqs(reqs, neighbor + 1);
         return rc;
     }
 
@@ -235,7 +238,7 @@ mca_coll_basic_neighbor_alltoall_dist_graph(const void *sbuf, int scount,struct 
     }
 
     if (OMPI_SUCCESS != rc) {
-        ompi_coll_base_free_reqs(reqs, indegree + neighbor);
+        ompi_coll_base_free_reqs(reqs, indegree + neighbor + 1);
         return rc;
     }
 

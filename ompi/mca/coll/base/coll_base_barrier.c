@@ -347,13 +347,16 @@ int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
 
     else {
         requests = coll_base_comm_get_reqs(module->base_data, size);
+        if( NULL == requests ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl; }
+
         for (i = 1; i < size; ++i) {
             err = MCA_PML_CALL(irecv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
                                      MCA_COLL_BASE_TAG_BARRIER, comm,
                                      &(requests[i])));
             if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         }
-        ompi_request_wait_all( size-1, requests+1, MPI_STATUSES_IGNORE );
+        err = ompi_request_wait_all( size-1, requests+1, MPI_STATUSES_IGNORE );
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         requests = NULL;  /* we're done the requests array is clean */
 
         for (i = 1; i < size; ++i) {
@@ -370,7 +373,7 @@ int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
     OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                   __FILE__, line, err, rank) );
     if( NULL != requests )
-        ompi_coll_base_free_reqs(requests, size-1);
+        ompi_coll_base_free_reqs(requests, size);
     return err;
 }
 /* copied function (with appropriate renaming) ends here */

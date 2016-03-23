@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -111,5 +111,3 @@ OBJ_CLASS_INSTANCE(mca_coll_basic_module_t,
                    NULL,
                    NULL);
 
-OBJ_CLASS_INSTANCE(mca_coll_basic_comm_t, mca_coll_base_comm_t,
-                   NULL, NULL);
