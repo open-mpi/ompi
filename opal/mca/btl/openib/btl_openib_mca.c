@@ -703,6 +703,11 @@ int btl_openib_register_mca_params(void)
                   0, &mca_btl_openib_component.gid_index,
                   REGINT_GE_ZERO));
 
+    CHECK(reg_bool("allow_different_subnets", NULL,
+                   "Allow connecting processes from different IB subnets."
+                   "(0 = do not allow; 1 = allow)",
+                   false, &mca_btl_openib_component.allow_different_subnets));
+
 #if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
     tmp = mca_base_var_find ("opal", "memory", "linux", "memalign");
     if (0 <= tmp) {
