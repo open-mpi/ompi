@@ -2009,7 +2009,8 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, opal_btl_
         goto out;
     }
     if (!BTL_OPENIB_QP_TYPE_PP(0)) {
-        BTL_VERBOSE(("rdmacm CPC only supported when the first QP is a PP QP; skipped"));
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "rdmacm CPC only supported when the first QP is a PP QP; skipped");
         rc = OPAL_ERR_NOT_SUPPORTED;
         goto out;
     }
