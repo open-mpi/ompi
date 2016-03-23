@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -217,7 +217,7 @@ static void process_ping(int fd, short args, void *cbdata)
     }
 
     /* if we are already connecting, there is nothing to do */
-    if (MCA_OOB_USOCK_CONNECTING == peer->state &&
+    if (MCA_OOB_USOCK_CONNECTING == peer->state ||
         MCA_OOB_USOCK_CONNECT_ACK == peer->state) {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
                             "%s:[%s:%d] already connecting to peer %s",
