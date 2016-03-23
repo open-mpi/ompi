@@ -68,7 +68,9 @@ typedef union opal_counted_pointer_t opal_counted_pointer_t;
 static inline bool opal_update_counted_pointer (volatile opal_counted_pointer_t *addr, opal_counted_pointer_t old,
                                                 opal_list_item_t *item)
 {
-    opal_counted_pointer_t new_p = {.data = {.item = item, .counter = old.data.counter + 1}};
+    opal_counted_pointer_t new_p;
+    new_p.data.item = item;
+    new_p.data.counter = old.data.counter + 1;
     return opal_atomic_cmpset_128 (&addr->value, old.value, new_p.value);
 }
 
