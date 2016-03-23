@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -50,6 +50,7 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
     ompi_datatype_get_extent(rdtype, &lb, &extent);
 
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims);
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* The ordering is defined as -1 then +1 in each dimension in
      * order of dimension. */
@@ -63,24 +64,26 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
         }
 
         if (MPI_PROC_NULL != srank) {
-            nreqs += 2;
+            nreqs++;
             rc = MCA_PML_CALL(irecv((char *) rbuf + disps[i] * extent, rcounts[i], rdtype, srank,
                                     MCA_COLL_BASE_TAG_ALLGATHER, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
             /* remove cast from const when the pml layer is updated to take
              * a const for the send buffer. */
+            nreqs++;
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, srank, MCA_COLL_BASE_TAG_ALLGATHER,
                                     MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
 
         if (MPI_PROC_NULL != drank) {
-            nreqs += 2;
+            nreqs++;
             rc = MCA_PML_CALL(irecv((char *) rbuf + disps[i+1] * extent, rcounts[i+1], rdtype, drank,
                                     MCA_COLL_BASE_TAG_ALLGATHER, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
+            nreqs++;
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, drank, MCA_COLL_BASE_TAG_ALLGATHER,
                                     MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
@@ -88,13 +91,13 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
     }
 
     if (OMPI_SUCCESS != rc) {
-        ompi_coll_base_free_reqs( reqs, nreqs );
+        ompi_coll_base_free_reqs(reqs, nreqs);
         return rc;
     }
 
     rc = ompi_request_wait_all (nreqs, reqs, MPI_STATUSES_IGNORE);
     if (OMPI_SUCCESS != rc) {
-        ompi_coll_base_free_reqs( reqs, nreqs );
+        ompi_coll_base_free_reqs(reqs, nreqs);
     }
     return rc;
 }
@@ -121,6 +124,7 @@ mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, int scount, struct om
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, 2 * degree);
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     for (neighbor = 0; neighbor < degree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv((char *) rbuf + disps[neighbor] * extent, rcounts[neighbor],
@@ -168,6 +172,7 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, indegree + outdegree);
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     for (neighbor = 0; neighbor < indegree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv((char *) rbuf + disps[neighbor] * extent, rcounts[neighbor], rdtype,
@@ -176,7 +181,7 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
     }
 
     if (OMPI_SUCCESS != rc) {
-        ompi_coll_base_free_reqs(reqs, neighbor);
+        ompi_coll_base_free_reqs(reqs, neighbor + 1);
         return rc;
     }
 
@@ -190,7 +195,7 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
     }
 
     if (OMPI_SUCCESS != rc) {
-        ompi_coll_base_free_reqs(reqs, indegree + neighbor);
+        ompi_coll_base_free_reqs(reqs, indegree + neighbor + 1);
         return rc;
     }
 
