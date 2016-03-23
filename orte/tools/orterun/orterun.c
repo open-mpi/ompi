@@ -2552,8 +2552,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
      * enter here with no procs. Avoid the "zero byte malloc"
      * message by checking here
      */
-    if (MPIR_proctable || 0 == jdata->num_procs ||
-        NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
+    if (MPIR_proctable || 0 == jdata->num_procs) {
         /* already initialized */
         opal_output_verbose(5, orte_debug_output,
                             "%s: debugger already initialized or zero procs",
@@ -2659,7 +2658,8 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
     /* if we are being launched under a debugger, then we must wait
      * for it to be ready to go and do some things to start the job
      */
-    if (MPIR_being_debugged || NULL != orte_debugger_test_daemon) {
+    if (MPIR_being_debugged || NULL != orte_debugger_test_daemon ||
+        NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
         /* if we are not launching debugger daemons, then trigger
          * the debugger - otherwise, we need to wait for the debugger
          * daemons to be started
@@ -2673,8 +2673,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
 
             /* send a message to rank=0 to release it */
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 0)) ||
-                ORTE_PROC_STATE_UNTERMINATED < proc->state ||
-                NULL == proc->rml_uri) {
+                ORTE_PROC_STATE_UNTERMINATED < proc->state) {
                 /* proc is already dead or never registered with us (so we don't have
                  * contact info for him)
                  */
