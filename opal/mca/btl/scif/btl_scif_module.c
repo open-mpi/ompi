@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -123,6 +123,11 @@ mca_btl_scif_module_finalize (struct mca_btl_base_module_t *btl)
         scif_module->endpoints = NULL;
     }
 
+    if (NULL != scif_module->rcache) {
+        mca_rcache_base_module_destroy (scif_module->rcache);
+        scif_module->rcache = NULL;
+    }
+
     /* close the listening endpoint */
     if (mca_btl_scif_module.listening && -1 != mca_btl_scif_module.scif_fd) {
         /* wake up the scif thread */
@@ -180,6 +185,7 @@ static mca_btl_base_registration_handle_t *mca_btl_scif_register_mem (struct mca
                                                                       mca_btl_base_endpoint_t *endpoint,
                                                                       void *base, size_t size, uint32_t flags)
 {
+    mca_btl_scif_module_t *scif_module = &mca_btl_scif_module;
     mca_btl_scif_reg_t *scif_reg;
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rc;
@@ -200,8 +206,8 @@ static mca_btl_base_registration_handle_t *mca_btl_scif_register_mem (struct mca
         }
     }
 
-    rc = btl->btl_mpool->mpool_register(btl->btl_mpool, base, size, 0, access_flags,
-                                        (mca_mpool_base_registration_t **) &scif_reg);
+    rc = scif_module->rcache->rcache_register (scif_module->rcache, base, size, 0, access_flags,
+                                               (mca_rcache_base_registration_t **) &scif_reg);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return NULL;
     }
@@ -210,7 +216,7 @@ static mca_btl_base_registration_handle_t *mca_btl_scif_register_mem (struct mca
     if ((off_t) -1 == scif_reg->handles[endpoint->id].btl_handle.scif_offset) {
         size_t seg_size = (size_t)((uintptr_t) scif_reg->base.bound - (uintptr_t) scif_reg->base.base) + 1;
 
-        /* NTH: until we determine a way to pass permissions to the mpool just make all segments
+        /* NTH: until we determine a way to pass permissions to the rcache just make all segments
          * read/write */
         scif_reg->handles[endpoint->id].btl_handle.scif_offset =
             scif_register (endpoint->scif_epd, scif_reg->base.base, seg_size, 0, SCIF_PROT_READ |
@@ -225,9 +231,10 @@ static mca_btl_base_registration_handle_t *mca_btl_scif_register_mem (struct mca
 static int mca_btl_scif_deregister_mem (struct mca_btl_base_module_t *btl, mca_btl_base_registration_handle_t *handle)
 {
     mca_btl_scif_registration_handle_t *scif_handle = (mca_btl_scif_registration_handle_t *) handle;
+    mca_btl_scif_module_t *scif_module = &mca_btl_scif_module;
     mca_btl_scif_reg_t *scif_reg = scif_handle->reg;
 
-    btl->btl_mpool->mpool_deregister (btl->btl_mpool, &scif_reg->base);
+    scif_module->rcache->rcache_deregister (scif_module->rcache, &scif_reg->base);
 
     return OPAL_SUCCESS;
 }
