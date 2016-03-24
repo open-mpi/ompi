@@ -55,7 +55,6 @@
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/base/base.h"
-#include "orte/mca/qos/base/base.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
@@ -338,16 +337,6 @@ static int rte_init(void)
     }
     if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
         error = "orte_rml_base_select";
-        goto error;
-    }
-
-    /* Messaging QoS Layer */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_qos_base_framework, 0))) {
-        error = "orte_qos_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_qos_base_select())) {
-        error = "orte_qos_base_select";
         goto error;
     }
 

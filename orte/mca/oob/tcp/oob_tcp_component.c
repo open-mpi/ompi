@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -704,9 +704,9 @@ static void component_shutdown(void)
 static int component_send(orte_rml_send_t *msg)
 {
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:tcp:send_nb to peer %s:%d to channel=%d seq = %d",
+                        "%s oob:tcp:send_nb to peer %s:%d seq = %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst), msg->tag,msg->dst_channel, msg->seq_num );
+                        ORTE_NAME_PRINT(&msg->dst), msg->tag, msg->seq_num );
 
     /* the module is potentially running on its own event
      * base, so all it can do is push our send request
@@ -1093,7 +1093,6 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     snd->dst = mop->snd->hdr.dst;
     snd->origin = mop->snd->hdr.origin;
     snd->tag = mop->snd->hdr.tag;
-    snd->dst_channel = mop->snd->hdr.channel;
     snd->seq_num = mop->snd->hdr.seq_num;
     snd->data = mop->snd->data;
     snd->count = mop->snd->hdr.nbytes;

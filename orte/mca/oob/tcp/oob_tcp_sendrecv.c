@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -196,12 +196,7 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                                 ORTE_NAME_PRINT(&(peer->name)));
                     opal_event_del(&peer->send_event);
                     msg->msg->status = rc;
-                    if( NULL == msg->msg->channel) {
-                        ORTE_RML_SEND_COMPLETE(msg->msg);
-                    }
-                    else {
-                        ORTE_QOS_SEND_COMPLETE(msg->msg);
-                    }
+                    ORTE_RML_SEND_COMPLETE(msg->msg);
                     OBJ_RELEASE(msg);
                     peer->send_msg = NULL;
                     goto next;
@@ -228,12 +223,7 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                                             ORTE_NAME_PRINT(&(peer->name)),
                                             (int)ntohl(msg->hdr.nbytes), peer->sd);
                         msg->msg->status = ORTE_SUCCESS;
-                        if( NULL == msg->msg->channel) {
-                            ORTE_RML_SEND_COMPLETE(msg->msg);
-                        }
-                        else {
-                            ORTE_QOS_SEND_COMPLETE(msg->msg);
-                        }
+                        ORTE_RML_SEND_COMPLETE(msg->msg);
                         OBJ_RELEASE(msg);
                         peer->send_msg = NULL;
                     } else if (NULL != msg->msg->data) {
@@ -268,12 +258,7 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                                                 ORTE_NAME_PRINT(&(peer->name)),
                                                 (int)ntohl(msg->hdr.nbytes), peer->sd);
                             msg->msg->status = ORTE_SUCCESS;
-                            if( NULL == msg->msg->channel) {
-                                ORTE_RML_SEND_COMPLETE(msg->msg);
-                            }
-                            else {
-                                ORTE_QOS_SEND_COMPLETE(msg->msg);
-                            }
+                            ORTE_RML_SEND_COMPLETE(msg->msg);
                             OBJ_RELEASE(msg);
                             peer->send_msg = NULL;
                         }
@@ -290,12 +275,7 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                                 ORTE_NAME_PRINT(&(peer->name)), peer->sd);
                     opal_event_del(&peer->send_event);
                     msg->msg->status = rc;
-                    if( NULL == msg->msg->channel) {
-                        ORTE_RML_SEND_COMPLETE(msg->msg);
-                    }
-                    else {
-                        ORTE_QOS_SEND_COMPLETE(msg->msg);
-                    }
+                    ORTE_RML_SEND_COMPLETE(msg->msg);
                     OBJ_RELEASE(msg);
                     peer->send_msg = NULL;
                     ORTE_FORCED_TERMINATE(1);
@@ -570,12 +550,13 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                     peer->recv_msg->hdr.dst.vpid == ORTE_PROC_MY_NAME->vpid) {
                     /* yes - post it to the RML for delivery */
                     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                        "%s DELIVERING TO RML tag = %d channel = %d seq_num = %d",
+                                        "%s DELIVERING TO RML tag = %d seq_num = %d",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                        peer->recv_msg->hdr.tag, peer->recv_msg->hdr.channel,
+                                        peer->recv_msg->hdr.tag,
                                         peer->recv_msg->hdr.seq_num);
-                    ORTE_RML_POST_MESSAGE(&peer->recv_msg->hdr.origin, peer->recv_msg->hdr.tag,
-                                          peer->recv_msg->hdr.channel, peer->recv_msg->hdr.seq_num,
+                    ORTE_RML_POST_MESSAGE(&peer->recv_msg->hdr.origin,
+                                          peer->recv_msg->hdr.tag,
+                                          peer->recv_msg->hdr.seq_num,
                                           peer->recv_msg->data,
                                           peer->recv_msg->hdr.nbytes);
                     OBJ_RELEASE(peer->recv_msg);
@@ -591,7 +572,6 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                     snd->origin = peer->recv_msg->hdr.origin;
                     snd->tag = peer->recv_msg->hdr.tag;
                     snd->data = peer->recv_msg->data;
-                    snd->dst_channel = peer->recv_msg->hdr.channel;
                     snd->seq_num = peer->recv_msg->hdr.seq_num;
                     snd->count = peer->recv_msg->hdr.nbytes;
                     snd->cbfunc.iov = NULL;
