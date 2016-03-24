@@ -156,7 +156,7 @@ int mca_btl_scif_del_procs (struct mca_btl_base_module_t *btl,
     return OPAL_SUCCESS;
 }
 
-static int scif_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
+static int scif_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg)
 {
     mca_btl_scif_reg_t *scif_reg = (mca_btl_scif_reg_t *)reg;
     size_t size = (size_t)((uintptr_t) reg->bound - (uintptr_t) reg->base);
