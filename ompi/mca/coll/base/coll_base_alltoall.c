@@ -45,7 +45,7 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
     int i, j, size, rank, err = MPI_SUCCESS, line;
     OPAL_PTRDIFF_TYPE ext, gap;
     ompi_request_t **preq, **reqs;
-    char *tmp_buffer;
+    char *allocated_buffer = NULL, *tmp_buffer;
     size_t max_size;
 
     /* Initialize. */
@@ -67,9 +67,9 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
     if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto error_hndl; }
 
     /* Allocate a temporary buffer */
-    tmp_buffer = calloc (max_size, 1);
-    if (NULL == tmp_buffer) { return OMPI_ERR_OUT_OF_RESOURCE; }
-    tmp_buffer -= gap;
+    allocated_buffer = calloc (max_size, 1);
+    if( NULL == allocated_buffer) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto error_hndl; }
+    tmp_buffer = allocated_buffer - gap;
     max_size = ext * rcount;
 
     /* in-place alltoall slow algorithm (but works) */
@@ -119,7 +119,8 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
 
  error_hndl:
     /* Free the temporary buffer */
-    free (tmp_buffer);
+    if( NULL != allocated_buffer )
+        free (allocated_buffer);
 
     if( MPI_SUCCESS != err ) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
