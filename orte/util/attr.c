@@ -167,6 +167,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "APP-MAX-PPN";
         case ORTE_APP_PREFIX_DIR:
             return "APP-PREFIX-DIR";
+        case ORTE_APP_NO_CACHEDIR:
+            return "ORTE_APP_NO_CACHEDIR";
 
         case ORTE_NODE_USERNAME:
             return "NODE-USERNAME";
