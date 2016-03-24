@@ -462,18 +462,35 @@ static void proc_errors(int fd, short args, void *cbdata)
                              "%s errmgr:hnp: proc %s aborted by signal",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
-        if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
-            jdata->state = ORTE_JOB_STATE_ABORTED_BY_SIG;
-            /* point to the first rank to cause the problem */
-            orte_set_attribute(&jdata->attributes, ORTE_JOB_ABORTED_PROC, ORTE_ATTR_LOCAL, pptr, OPAL_PTR);
-            /* retain the object so it doesn't get free'd */
-            OBJ_RETAIN(pptr);
-            ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
-            ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
-            /* abnormal termination - abort, but only do it once
-             * to avoid creating a lot of confusion */
-            default_hnp_abort(jdata);
-        }
+
+        ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+        /* track the number of non-zero exits */
+        i32 = 0;
+        i32ptr = &i32;
+        orte_get_attribute(&jdata->attributes, ORTE_JOB_NUM_NONZERO_EXIT, (void**)&i32ptr, OPAL_INT32);
+        ++i32;
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_NUM_NONZERO_EXIT, ORTE_ATTR_LOCAL, i32ptr, OPAL_INT32);
+        if (orte_abort_non_zero_exit) {
+
+            if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
+                jdata->state = ORTE_JOB_STATE_ABORTED_BY_SIG;
+                /* point to the first rank to cause the problem */
+                orte_set_attribute(&jdata->attributes, ORTE_JOB_ABORTED_PROC, ORTE_ATTR_LOCAL, pptr, OPAL_PTR);
+                /* retain the object so it doesn't get free'd */
+                OBJ_RETAIN(pptr);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
+                ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+                /* abnormal termination - abort, but only do it once
+                 * to avoid creating a lot of confusion */
+                default_hnp_abort(jdata);
+            }
+        } else {
+            /* user requested we consider this normal termination */
+            if (jdata->num_terminated >= jdata->num_procs) {
+                /* this job has terminated */
+                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
+            }
+        }  
         break;
 
     case ORTE_PROC_STATE_TERM_WO_SYNC:
@@ -708,8 +725,8 @@ static void default_hnp_abort(orte_job_t *jdata)
                     "-------------------------------------------------------",
                     (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "Primary" : "Child",
                     (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "" : ORTE_LOCAL_JOBID_PRINT(jdata->jobid),
-                    i32, (1 == i32) ? "process returned\na non-zero exit code." :
-                    "processes returned\nnon-zero exit codes.");
+                    i32, (1 == i32) ? "process returned\na non-zero exit code" :
+                    "processes returned\nnon-zero exit codes");
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
