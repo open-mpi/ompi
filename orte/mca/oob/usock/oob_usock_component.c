@@ -14,7 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -265,9 +265,9 @@ static int component_send(orte_rml_send_t *msg)
     orte_proc_t *proc;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:usock:send_nb to peer %s:%d to channel=%d seq_num =%d",
+                        "%s oob:usock:send_nb to peer %s:%d seq_num =%d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst), msg->tag, msg->dst_channel, msg->seq_num);
+                        ORTE_NAME_PRINT(&msg->dst), msg->tag, msg->seq_num);
 
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* daemons can only reach local procs */

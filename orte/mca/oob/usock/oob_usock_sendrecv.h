@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -123,7 +123,6 @@ OBJ_CLASS_DECLARATION(mca_oob_usock_recv_t);
         msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_USOCK_USER;                             \
         msg->hdr.tag = (m)->tag;                                        \
-        msg->hdr.channel = (m)->dst_channel;                            \
         msg->hdr.seq_num = (m)->seq_num;                                \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \
@@ -166,7 +165,6 @@ OBJ_CLASS_DECLARATION(mca_oob_usock_recv_t);
         msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_USOCK_USER;                             \
         msg->hdr.tag = (m)->tag;                                        \
-        msg->hdr.channel = (m)->dst_channel;                            \
         msg->hdr.seq_num = (m)->seq_num;                                \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \

@@ -54,7 +54,6 @@
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/qos/base/base.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -197,17 +196,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_select";
-        goto error;
-    }
-    /* Messaging QoS Layer */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_qos_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_qos_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_qos_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_qos_base_select";
         goto error;
     }
     /* setup the errmgr */
