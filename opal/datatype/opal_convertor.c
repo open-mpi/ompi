@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013      Research Organization for Information Science
+ * Copyright (c) 2013-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -595,7 +595,7 @@ int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
     OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
-        if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
+        if( CONVERTOR_SEND_CONVERSION == (convertor->flags & (CONVERTOR_SEND_CONVERSION|CONVERTOR_HOMOGENEOUS)) ) {
             convertor->fAdvance = opal_pack_general_checksum;
         } else {
             if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
@@ -609,7 +609,7 @@ int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
             }
         }
     } else {
-        if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
+        if( CONVERTOR_SEND_CONVERSION == (convertor->flags & (CONVERTOR_SEND_CONVERSION|CONVERTOR_HOMOGENEOUS)) ) {
             convertor->fAdvance = opal_pack_general;
         } else {
             if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
