@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -123,6 +124,7 @@ static int scoll_null_alltoall(struct oshmem_group_t *group,
                               const void *source,
                               ptrdiff_t dst, ptrdiff_t sst,
                               size_t nlong,
+                              size_t element_size,
                               long *pSync,
                               int alg)
 {
