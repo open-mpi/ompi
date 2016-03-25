@@ -83,6 +83,8 @@ OPAL_DECLSPEC void opal_memory_linux_malloc_init_hook(void);
 OPAL_DECLSPEC void opal_memory_linux_malloc_set_alignment(int use_memalign, size_t memalign_threshold);
 #endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
 
+extern bool opal_memory_linux_opened;
+
 END_C_DECLS
 
 #endif

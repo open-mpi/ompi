@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -60,6 +60,7 @@
 static int linux_open(void);
 static int linux_close(void);
 static int linux_register(void);
+static int linux_query(int *);
 
 #if MEMORY_LINUX_UMMUNOTIFY
 static bool ummunotify_opened = false;
@@ -69,6 +70,9 @@ static bool ptmalloc2_opened = false;
 #endif
 
 bool opal_memory_linux_disable = false;
+static int mca_memory_linux_priority;
+
+bool opal_memory_linux_opened = false;
 
 opal_memory_linux_component_t mca_memory_linux_component = {
     /* First, the opal_memory_base_component_2_0_0_t */
@@ -96,6 +100,8 @@ opal_memory_linux_component_t mca_memory_linux_component = {
         /* Memory framework functions.  These function pointer values
            are replaced by memory_linux_ummunotify.c at run time if we
            end up using ummunotify support. */
+        .memoryc_init_hook = opal_memory_linux_malloc_init_hook,
+        .memoryc_query = linux_query,
         .memoryc_register = opal_memory_base_component_register_empty,
         .memoryc_deregister = opal_memory_base_component_deregister_empty,
 #if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
@@ -243,11 +249,25 @@ static int linux_register(void)
     if (0 > ret) {
         return ret;
     }
+
+    mca_memory_linux_priority = 50;
+    ret = mca_base_component_var_register (&mca_memory_linux_component.super.memoryc_version,
+                                           "priority", "Priority of the linux memory hook component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT, &mca_memory_linux_priority);
+    if (0 > ret) {
+        return ret;
+    }
 #endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
 
     return (0 > ret) ? ret : OPAL_SUCCESS;
 }
 
+static int linux_query (int *priority)
+{
+    *priority = mca_memory_linux_priority;
+    return OPAL_SUCCESS;
+}
 
 static int linux_open(void)
 {
@@ -318,6 +338,7 @@ done:
         __malloc_hook = _opal_memory_linux_malloc_align_hook;
     }
 #endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
+    opal_memory_linux_opened = true;
 
     return OPAL_SUCCESS;
 }

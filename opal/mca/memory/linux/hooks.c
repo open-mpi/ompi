@@ -744,6 +744,10 @@ void opal_memory_linux_malloc_init_hook(void)
     check_result_t r1, lp, lpp;
     bool want_rcache = false, found_driver = false;
 
+    if (!opal_memory_linux_opened) {
+        return;
+    }
+
     /* First, check for a FAKEROOT environment.  If we're in a
        fakeroot, then access() (and likely others) have been replaced
        and are not safe to call here in this pre-main environment.  So
