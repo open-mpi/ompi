@@ -30,11 +30,18 @@
 #include "opal/mca/pmix/base/base.h"
 #include "pmix_ext.h"
 #include "pmix.h"
-#include "src/buffer_ops/buffer_ops.h"
 
 static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
 static int errhdler_ref = 0;
+
+#define PMIX_WAIT_FOR_COMPLETION(a)             \
+    do {                                        \
+        while ((a)) {                           \
+            usleep(10);                         \
+        }                                       \
+    } while (0)
+
 
 static void completion_handler (void * cbdata) {
     int * cond = (int *)cbdata;
