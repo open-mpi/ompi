@@ -53,5 +53,9 @@
  */
 int opal_patch_symbol (const char *func_symbol_name, uintptr_t func_new_addr);
 
+/**
+ * Check if symbol patching is available
+ */
+bool opal_patch_supported (void);
 
 #endif /* !defined(OPAL_PATCHER_H) */

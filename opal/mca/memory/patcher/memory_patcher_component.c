@@ -241,7 +241,11 @@ static int patcher_register (void)
 
 static int patcher_query (int *priority)
 {
-    *priority = mca_memory_patcher_priority;
+    if (opal_patch_supported ()) {
+        *priority = mca_memory_patcher_priority;
+    } else {
+        *priority = -1;
+    }
     return OPAL_SUCCESS;
 }
 
