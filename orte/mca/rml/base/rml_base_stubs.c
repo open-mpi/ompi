@@ -19,9 +19,11 @@
 
 #include <string.h>
 
+#include "opal/class/opal_list.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/mca.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 
 #include "orte/mca/rml/rml.h"
