@@ -195,6 +195,11 @@ int opal_patch_symbol (const char *func_symbol_name, uintptr_t func_new_addr)
     return OPAL_SUCCESS;
 }
 
+bool opal_patch_supported (void)
+{
+    return true;
+}
+
 /* end of #if defined(__i386__) || defined(__x86_64__) || defined(__ia64__) */
 // ------------------------------------------------- PPC equivalent:
 #elif OPAL_ENABLE_DLOPEN_SUPPORT && defined(__PPC__)
@@ -338,10 +343,20 @@ int opal_patch_symbol (const char *sys_func, uintptr_t hook_addr)
     return OPAL_SUCCESS;
 }
 
+bool opal_patch_supported (void)
+{
+    return true;
+}
 #else
 
-int opal_patch_symbol (const char *sys_func, uintptr_t hook_addr) {
+int opal_patch_symbol (const char *sys_func, uintptr_t hook_addr)
+{
     return OPAL_ERR_NOT_SUPPORTED;
+}
+
+bool opal_patch_supported (void)
+{
+    return false;
 }
 
 #endif
