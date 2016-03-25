@@ -41,13 +41,6 @@ static void completion_handler (void * cbdata) {
     *cond = 0;
 }
 
-#define PMIX_WAIT_FOR_COMPLETION(a)             \
-    do {                                        \
-        while ((a)) {                           \
-            usleep(10);                         \
-        }                                       \
-    } while (0);
-
 static void myerr(pmix_status_t status,
                   pmix_proc_t procs[], size_t nprocs,
                   pmix_info_t info[], size_t ninfo)
