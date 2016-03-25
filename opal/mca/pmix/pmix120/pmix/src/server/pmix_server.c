@@ -1279,7 +1279,7 @@ static void dereg_errhandler(int sd, short args, void *cbdata)
     if (NULL != cd->cbfunc.opcbfn) {
         cd->cbfunc.opcbfn(rc, cd->cbdata);
     }
-    OBJ_RELEASE(cd);
+    PMIX_RELEASE(cd);
 }
 
 void pmix_server_deregister_errhandler(int errhandler_ref,
