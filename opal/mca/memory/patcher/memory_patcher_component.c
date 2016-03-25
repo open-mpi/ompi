@@ -47,6 +47,9 @@
 static int patcher_open(void);
 static int patcher_close(void);
 static int patcher_register(void);
+static int patcher_query (int *);
+
+static int mca_memory_patcher_priority;
 
 opal_memory_patcher_component_t mca_memory_patcher_component = {
     .super = {
@@ -69,6 +72,7 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
         },
 
         /* Memory framework functions. */
+        .memoryc_query = patcher_query,
         .memoryc_register = opal_memory_base_component_register_empty,
         .memoryc_deregister = opal_memory_base_component_deregister_empty,
         .memoryc_set_alignment = opal_memory_base_component_set_alignment_empty,
@@ -226,6 +230,18 @@ static int intercept_brk (void *addr)
 
 static int patcher_register (void)
 {
+    mca_memory_patcher_priority = 80;
+    mca_base_component_var_register (&mca_memory_patcher_component.super.memoryc_version,
+                                     "priority", "Priority of the patcher memory hook component",
+                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                     MCA_BASE_VAR_SCOPE_CONSTANT, &mca_memory_patcher_priority);
+
+    return OPAL_SUCCESS;
+}
+
+static int patcher_query (int *priority)
+{
+    *priority = mca_memory_patcher_priority;
     return OPAL_SUCCESS;
 }
 
@@ -239,6 +255,9 @@ static int patcher_open (void)
     }
 
     was_executed_already = 1;
+
+    /* set memory hooks support level */
+    opal_mem_hooks_set_support (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
 
     rc = opal_patch_symbol ("mmap", (uintptr_t) intercept_mmap);
     if (OPAL_SUCCESS != rc) {
