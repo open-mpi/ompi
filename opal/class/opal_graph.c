@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -337,7 +338,6 @@ void opal_graph_remove_edge (opal_graph_t *graph, opal_graph_edge_t *edge)
 void opal_graph_remove_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
 {
     opal_adjacency_list_t *adj_list;
-    opal_graph_edge_t *edge;
 
     /* do not need to remove all the edges of this vertex and destruct them as
      * they will be released in the destructor for adj_list */

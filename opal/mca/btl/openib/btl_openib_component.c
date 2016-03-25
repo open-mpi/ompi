@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2015 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -2131,7 +2131,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         {
             /* we need to read this MCA param at this point in case someone
              * altered it via MPI_T */
-            int index;
             mca_base_var_source_t source;
 
             if (OPAL_SUCCESS != (ret = get_var_source ("receive_queues", &source))) {
