@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -286,7 +286,7 @@ mca_pml_ob1_component_init( int* priority,
             mca_pml_ob1.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
             break;
         }
-       
+
     }
 
     /* Set this here (vs in component_open()) because

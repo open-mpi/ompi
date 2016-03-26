@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -267,7 +268,7 @@ do {                                                            \
             opal_mutex_lock(lock);                               \
         }                                                        \
         else { OPAL_THREAD_LOCK(lock); }                         \
-    } while(0)                                                
+    } while(0)
 
 
 #define OB1_MATCHING_UNLOCK(lock)                                \
@@ -276,10 +277,10 @@ do {                                                            \
             opal_mutex_unlock(lock);                             \
         }                                                        \
         else { OPAL_THREAD_UNLOCK(lock); }                       \
-    } while(0)                                                
+    } while(0)
 
 
-                                         
+
 int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl,
         opal_ptr_t hdr_frag, uint64_t size, uint8_t order, int status);
 
