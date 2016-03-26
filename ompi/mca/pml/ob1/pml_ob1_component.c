@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -54,6 +54,7 @@ mca_pml_ob1_component_init( int* priority, bool enable_progress_threads,
 static int mca_pml_ob1_component_fini(void);
 int mca_pml_ob1_output = 0;
 static int mca_pml_ob1_verbose = 0;
+bool mca_pml_ob1_matching_protection = false;
 
 mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
     /* First, the mca_base_component_t struct containing meta
@@ -277,10 +278,15 @@ mca_pml_ob1_component_init( int* priority,
     OPAL_LIST_FOREACH(selected_btl, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
         mca_btl_base_module_t *btl = selected_btl->btl_module;
 
+        if (btl->btl_flags & MCA_BTL_FLAGS_BTL_PROGRESS_THREAD_ENABLED) {
+            mca_pml_ob1_matching_protection = true;
+        }
+
         if (btl->btl_flags & MCA_BTL_FLAGS_SINGLE_ADD_PROCS) {
             mca_pml_ob1.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
             break;
         }
+       
     }
 
     /* Set this here (vs in component_open()) because

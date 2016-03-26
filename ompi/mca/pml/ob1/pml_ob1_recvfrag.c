@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -161,7 +161,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
      * end points) from being processed, and potentially "loosing"
      * the fragment.
      */
-    OPAL_THREAD_LOCK(&comm->matching_lock);
+    OB1_MATCHING_LOCK(&comm->matching_lock);
 
      /* get sequence number of next message that can be processed */
     if(OPAL_UNLIKELY((((uint16_t) hdr->hdr_seq) != ((uint16_t) proc->expected_sequence)) ||
@@ -194,7 +194,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
 
     /* release matching lock before processing fragment */
-    OPAL_THREAD_UNLOCK(&comm->matching_lock);
+    OB1_MATCHING_UNLOCK(&comm->matching_lock);
 
     if(OPAL_LIKELY(match)) {
         bytes_received = segments->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
@@ -247,7 +247,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     return;
 
  slow_path:
-    OPAL_THREAD_UNLOCK(&comm->matching_lock);
+    OB1_MATCHING_UNLOCK(&comm->matching_lock);
     mca_pml_ob1_recv_frag_match(btl, hdr, segments,
                                 num_segments, MCA_PML_OB1_HDR_TYPE_MATCH);
 }
@@ -668,7 +668,7 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
      * end points) from being processed, and potentially "loosing"
      * the fragment.
      */
-    OPAL_THREAD_LOCK(&comm->matching_lock);
+    OB1_MATCHING_LOCK(&comm->matching_lock);
 
     /* get sequence number of next message that can be processed */
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
@@ -704,7 +704,7 @@ out_of_order_match:
                             hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
 
     /* release matching lock before processing fragment */
-    OPAL_THREAD_UNLOCK(&comm->matching_lock);
+    OB1_MATCHING_UNLOCK(&comm->matching_lock);
 
     if(OPAL_LIKELY(match)) {
         switch(type) {
@@ -729,7 +729,7 @@ out_of_order_match:
      * may now be used to form new matchs
      */
     if(OPAL_UNLIKELY(opal_list_get_size(&proc->frags_cant_match) > 0)) {
-        OPAL_THREAD_LOCK(&comm->matching_lock);
+        OB1_MATCHING_LOCK(&comm->matching_lock);
         if((frag = check_cantmatch_for_match(proc))) {
             hdr = &frag->hdr.hdr_match;
             segments = frag->segments;
@@ -738,7 +738,7 @@ out_of_order_match:
             type = hdr->hdr_common.hdr_type;
             goto out_of_order_match;
         }
-        OPAL_THREAD_UNLOCK(&comm->matching_lock);
+        OB1_MATCHING_UNLOCK(&comm->matching_lock);
     }
 
     return OMPI_SUCCESS;
@@ -749,7 +749,7 @@ wrong_seq:
      */
     append_frag_to_list(&proc->frags_cant_match, btl, hdr, segments,
                         num_segments, NULL);
-    OPAL_THREAD_UNLOCK(&comm->matching_lock);
+    OB1_MATCHING_UNLOCK(&comm->matching_lock);
     return OMPI_SUCCESS;
 }
 
