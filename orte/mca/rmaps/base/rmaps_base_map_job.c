@@ -109,7 +109,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: nprocs %s",
                             ORTE_VPID_PRINT(nprocs));
-        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) &&
+            ORTE_MAPPING_BYNODE != ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps mapping given - using default");
             map->mapping = orte_rmaps_base.mapping;
