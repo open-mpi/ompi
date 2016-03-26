@@ -24,6 +24,7 @@
 
 #include "opal/mca/base/mca_base_var_enum.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/argv.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -33,6 +34,11 @@ static void mca_base_var_enum_constructor (mca_base_var_enum_t *enumerator);
 static void mca_base_var_enum_destructor (mca_base_var_enum_t *enumerator);
 OBJ_CLASS_INSTANCE(mca_base_var_enum_t, opal_object_t, mca_base_var_enum_constructor,
                    mca_base_var_enum_destructor);
+
+static void mca_base_var_enum_flag_constructor (mca_base_var_enum_flag_t *enumerator);
+static void mca_base_var_enum_flag_destructor (mca_base_var_enum_flag_t *enumerator);
+OBJ_CLASS_INSTANCE(mca_base_var_enum_flag_t, opal_object_t, mca_base_var_enum_flag_constructor,
+                   mca_base_var_enum_flag_destructor);
 
 static int enum_dump (mca_base_var_enum_t *self, char **out);
 static int enum_get_count (mca_base_var_enum_t *self, int *count);
@@ -85,10 +91,10 @@ static int mca_base_var_enum_bool_vfs (mca_base_var_enum_t *self, const char *st
 }
 
 static int mca_base_var_enum_bool_sfv (mca_base_var_enum_t *self, const int value,
-                                       const char **string_value)
+                                       char **string_value)
 {
     if (string_value) {
-        *string_value = value ? "true" : "false";
+        *string_value = strdup (value ? "true" : "false");
     }
 
     return OPAL_SUCCESS;
@@ -155,9 +161,9 @@ static int mca_base_var_enum_verbose_vfs (mca_base_var_enum_t *self, const char 
 }
 
 static int mca_base_var_enum_verbose_sfv (mca_base_var_enum_t *self, const int value,
-                                          const char **string_value)
+                                          char **string_value)
 {
-    static char buffer[4];
+    int ret;
 
     if (value < 0 || value > 100) {
         return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
@@ -165,14 +171,16 @@ static int mca_base_var_enum_verbose_sfv (mca_base_var_enum_t *self, const int v
 
     for (int i = 0 ; verbose_values[i].string ; ++i) {
         if (verbose_values[i].value == value) {
-            *string_value = verbose_values[i].string;
+            *string_value = strdup (verbose_values[i].string);
             return OPAL_SUCCESS;
         }
     }
 
-    snprintf (buffer, 4, "%d", value);
     if (string_value) {
-        *string_value = buffer;
+        ret = asprintf (string_value, "%d", value);
+        if (0 > ret) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
     }
 
     return OPAL_SUCCESS;
@@ -251,6 +259,52 @@ int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t 
     return OPAL_SUCCESS;
 }
 
+int mca_base_var_enum_create_flag (const char *name, const mca_base_var_enum_value_flag_t *flags, mca_base_var_enum_flag_t **enumerator)
+{
+    mca_base_var_enum_flag_t *new_enum;
+    int i;
+
+    *enumerator = NULL;
+
+    new_enum = OBJ_NEW(mca_base_var_enum_flag_t);
+    if (NULL == new_enum) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    new_enum->super.enum_name = strdup (name);
+    if (NULL == new_enum->super.enum_name) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (i = 0 ; flags[i].string ; ++i);
+    new_enum->super.enum_value_count = i;
+
+    /* make a copy of the values */
+    new_enum->enum_flags = calloc (new_enum->super.enum_value_count + 1, sizeof (*new_enum->enum_flags));
+    if (NULL == new_enum->enum_flags) {
+        OBJ_RELEASE(new_enum);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    int all_flags = 0;
+    for (i = 0 ; i < new_enum->super.enum_value_count ; ++i) {
+        new_enum->enum_flags[i].flag = flags[i].flag;
+        new_enum->enum_flags[i].string = strdup (flags[i].string);
+        new_enum->enum_flags[i].conflicting_flag = flags[i].conflicting_flag;
+        /* ensure flags are only set a single bit, doesn't conflict with itself, and
+         * hasn't already been specified. */
+        assert (!(flags[i].flag & (flags[i].flag - 1)));
+        assert (!(flags[i].flag & flags[i].conflicting_flag));
+        assert (!(all_flags & flags[i].flag));
+        assert (flags[i].flag);
+        all_flags |= flags[i].flag;
+    }
+
+    *enumerator = new_enum;
+
+    return OPAL_SUCCESS;
+}
+
 static int enum_dump (mca_base_var_enum_t *self, char **out)
 {
     int i;
@@ -301,7 +355,7 @@ static int enum_get_value (mca_base_var_enum_t *self, int index, int *value, con
     }
 
     if (string_value) {
-        *string_value = self->enum_values[index].string;
+        *string_value = strdup (self->enum_values[index].string);
     }
 
     return OPAL_SUCCESS;
@@ -338,7 +392,7 @@ static int enum_value_from_string(mca_base_var_enum_t *self, const char *string_
     return OPAL_SUCCESS;
 }
 
-static int enum_string_from_value(mca_base_var_enum_t *self, const int value, const char **string_value) {
+static int enum_string_from_value(mca_base_var_enum_t *self, const int value, char **string_value) {
     int count, ret, i;
 
     ret = self->get_count(self, &count);
@@ -357,7 +411,7 @@ static int enum_string_from_value(mca_base_var_enum_t *self, const int value, co
     }
 
     if (string_value) {
-        *string_value = self->enum_values[i].string;
+        *string_value = strdup (self->enum_values[i].string);
     }
 
     return OPAL_SUCCESS;
@@ -387,5 +441,180 @@ static void mca_base_var_enum_destructor (mca_base_var_enum_t *enumerator)
             free ((void *) enumerator->enum_values[i].string);
         }
         free (enumerator->enum_values);
+    }
+}
+
+static int enum_get_value_flag (mca_base_var_enum_t *self, int index, int *value, const char **string_value)
+{
+    mca_base_var_enum_flag_t *flag_enum = (mca_base_var_enum_flag_t *) self;
+    int count, ret;
+
+    ret = self->get_count(self, &count);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    if (index >= count) {
+        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+    }
+
+    if (value) {
+        *value = flag_enum->enum_flags[index].flag;
+    }
+
+    if (string_value) {
+        *string_value = strdup (flag_enum->enum_flags[index].string);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static int enum_value_from_string_flag (mca_base_var_enum_t *self, const char *string_value, int *value_out) {
+    mca_base_var_enum_flag_t *flag_enum = (mca_base_var_enum_flag_t *) self;
+    int value, count, ret, flag;
+    char **flags;
+    bool is_int;
+    char *tmp;
+
+    ret = self->get_count(self, &count);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    flags = opal_argv_split (string_value, ',');
+    if (NULL == flags) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    flag = 0;
+
+    for (int i = 0 ; flags[i] ; ++i) {
+        value = strtol (flags[i], &tmp, 0);
+        is_int = tmp[0] == '\0';
+
+        bool found = false, conflict = false;
+        for (int j = 0 ; j < count ; ++j) {
+            if ((is_int && (value == flag_enum->enum_flags[i].flag)) ||
+                0 == strcasecmp (flags[i], flag_enum->enum_flags[i].string)) {
+                found = true;
+
+                if (flag & flag_enum->enum_flags[i].conflicting_flag) {
+                    conflict = true;
+                } else {
+                    flag |= flag_enum->enum_flags[i].flag;
+                }
+
+                break;
+            }
+        }
+
+        if (!found || conflict) {
+            opal_argv_free (flags);
+            return !found ? OPAL_ERR_VALUE_OUT_OF_BOUNDS : OPAL_ERR_BAD_PARAM;
+        }
+    }
+
+    *value_out = flag;
+
+    return OPAL_SUCCESS;
+}
+
+static int enum_string_from_value_flag (mca_base_var_enum_t *self, const int value, char **string_value) {
+    mca_base_var_enum_flag_t *flag_enum = (mca_base_var_enum_flag_t *) self;
+    int count, ret, current;
+    char *out = NULL, *tmp;
+
+    ret = self->get_count(self, &count);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    current = value;
+    for (int i = 0 ; i < count ; ++i) {
+        if (!(flag_enum->enum_flags[i].flag & current)) {
+            continue;
+        }
+
+        tmp = out;
+
+        ret = asprintf (&out, "%s%s%s", tmp ? tmp : "", tmp ? "," : "", flag_enum->enum_flags[i].string);
+        free (tmp);
+
+        if (0 > ret) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+
+        if (value & flag_enum->enum_flags[i].conflicting_flag) {
+            free (out);
+            return OPAL_ERR_BAD_PARAM;
+        }
+
+        current &= ~flag_enum->enum_flags[i].flag;
+    }
+
+    if (current) {
+        free (out);
+        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+    }
+
+    if (string_value) {
+        *string_value = out ? out : strdup ("");
+    } else {
+        free (out);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static int enum_dump_flag (mca_base_var_enum_t *self, char **out)
+{
+    mca_base_var_enum_flag_t *flag_enum = (mca_base_var_enum_flag_t *) self;
+    char *tmp;
+    int ret;
+
+    *out = NULL;
+
+    if (NULL == self) {
+        return OPAL_ERROR;
+    }
+
+    *out = strdup ("Comma-delimited list of: ");
+    if (NULL == *out) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (int i = 0; i < self->enum_value_count ; ++i) {
+        tmp = *out;
+
+        ret = asprintf (out, "%s%s0x%x:\"%s\"", tmp, i ? ", " : " ", flag_enum->enum_flags[i].flag,
+                        flag_enum->enum_flags[i].string);
+        free (tmp);
+        if (0 > ret) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static void mca_base_var_enum_flag_constructor (mca_base_var_enum_flag_t *enumerator)
+{
+    enumerator->enum_flags = NULL;
+    enumerator->super.get_value = enum_get_value_flag;
+    enumerator->super.get_count = enum_get_count;
+    enumerator->super.value_from_string = enum_value_from_string_flag;
+    enumerator->super.string_from_value = enum_string_from_value_flag;
+    enumerator->super.dump = enum_dump_flag;
+    enumerator->super.enum_is_static = false;
+}
+
+static void mca_base_var_enum_flag_destructor (mca_base_var_enum_flag_t *enumerator)
+{
+    /* release the copy of the values */
+    if (enumerator->enum_flags) {
+        for (int i = 0 ; i < enumerator->super.enum_value_count ; ++i) {
+            free ((void *) enumerator->enum_flags[i].string);
+        }
+        free (enumerator->enum_flags);
     }
 }

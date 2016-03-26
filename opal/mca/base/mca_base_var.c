@@ -1526,7 +1526,7 @@ int mca_base_var_register (const char *project_name, const char *framework_name,
                            mca_base_var_scope_t scope, void *storage)
 {
     /* Only integer variables can have enumerator */
-    assert (NULL == enumerator || MCA_BASE_VAR_TYPE_INT == type);
+    assert (NULL == enumerator || (MCA_BASE_VAR_TYPE_INT == type || MCA_BASE_VAR_TYPE_UNSIGNED_INT == type));
 
     return register_variable (project_name, framework_name, component_name,
                               variable_name, description, type, enumerator,
@@ -1927,7 +1927,6 @@ static char *source_name(mca_base_var_t *var)
 static int var_value_string (mca_base_var_t *var, char **value_string)
 {
     const mca_base_var_storage_t *value;
-    const char *tmp;
     int ret;
 
     assert (MCA_BASE_VAR_TYPE_MAX > var->mbv_type);
@@ -1974,18 +1973,13 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
     } else {
         /* we use an enumerator to handle string->bool and bool->string conversion */
         if (MCA_BASE_VAR_TYPE_BOOL == var->mbv_type) {
-            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->boolval, &tmp);
+            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->boolval, value_string);
         } else {
-            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->intval, &tmp);
+            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->intval, value_string);
         }
 
         if (OPAL_SUCCESS != ret) {
             return ret;
-        }
-
-        *value_string = strdup (tmp);
-        if (NULL == *value_string) {
-            ret = OPAL_ERR_OUT_OF_RESOURCE;
         }
     }
 
