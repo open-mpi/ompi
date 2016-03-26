@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -270,7 +270,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                 frag->iov_cnt++;
 #ifndef __sparc
 #if !MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
-                /* The following cannot be done for sparc code 
+                /* The following cannot be done for sparc code
                  * because it causes alignment errors when accessing
                  * structures later on in the btl and pml code.
                  */

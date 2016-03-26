@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,7 +55,7 @@
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/rte/rte.h"
 
-#include "btl_tcp_endpoint.h" 
+#include "btl_tcp_endpoint.h"
 #include "btl_tcp_proc.h"
 #include "btl_tcp_frag.h"
 
@@ -160,7 +160,7 @@ void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char
 #endif
 
         if((flags = fcntl(btl_endpoint->endpoint_sd, F_GETFL, 0)) < 0) {
-            BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)", 
+            BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
                        strerror(opal_socket_errno), opal_socket_errno));
         }
 
@@ -176,7 +176,7 @@ void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char
 #if defined(SO_RCVBUF)
         obtlen = sizeof(rcvbuf);
         if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, &obtlen) < 0) {
-            BTL_ERROR(("SO_RCVBUF option: %s (%d)", 
+            BTL_ERROR(("SO_RCVBUF option: %s (%d)",
                        strerror(opal_socket_errno), opal_socket_errno));
         }
 #else
@@ -185,7 +185,7 @@ void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char
 #if defined(TCP_NODELAY)
         obtlen = sizeof(nodelay);
         if(getsockopt(btl_endpoint->endpoint_sd, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay, &obtlen) < 0) {
-            BTL_ERROR(("TCP_NODELAY option: %s (%d)", 
+            BTL_ERROR(("TCP_NODELAY option: %s (%d)",
                        strerror(opal_socket_errno), opal_socket_errno));
         }
 #else
@@ -193,7 +193,7 @@ void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char
 #endif
     }
 
-    mca_btl_base_err("%s %s: endpoint %p src %s - dst %s nodelay %d sndbuf %d rcvbuf %d flags %08x\n", 
+    mca_btl_base_err("%s %s: endpoint %p src %s - dst %s nodelay %d sndbuf %d rcvbuf %d flags %08x\n",
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg, (void*)btl_endpoint, src, dst, nodelay, sndbuf, rcvbuf, flags);
 
     switch(btl_endpoint->endpoint_state) {
@@ -222,7 +222,7 @@ void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
                      (void*)btl_endpoint->endpoint_send_frag, (void*)btl_endpoint->endpoint_recv_frag );
     for(item =  opal_list_get_first(&btl_endpoint->endpoint_frags);
-        item != opal_list_get_end(&btl_endpoint->endpoint_frags); 
+        item != opal_list_get_end(&btl_endpoint->endpoint_frags);
         item = opal_list_get_next(item)) {
         mca_btl_tcp_dump_frag( (mca_btl_tcp_frag_t*)item, " | send" );
     }
@@ -239,9 +239,9 @@ static inline void mca_btl_tcp2_endpoint_event_init(mca_btl_base_endpoint_t* btl
     btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
 
-    opal_event_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_recv_event, 
-                   btl_endpoint->endpoint_sd, 
-                   OPAL_EV_READ|OPAL_EV_PERSIST, 
+    opal_event_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_recv_event,
+                   btl_endpoint->endpoint_sd,
+                   OPAL_EV_READ|OPAL_EV_PERSIST,
                    mca_btl_tcp_endpoint_recv_handler,
                    btl_endpoint );
     /**
@@ -250,9 +250,9 @@ static inline void mca_btl_tcp2_endpoint_event_init(mca_btl_base_endpoint_t* btl
      * will be fired only once, and when the endpoint is marked as
      * CONNECTED the event should be recreated with the correct flags.
      */
-    opal_event_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_send_event, 
-                   btl_endpoint->endpoint_sd, 
-                   OPAL_EV_WRITE, 
+    opal_event_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_send_event,
+                   btl_endpoint->endpoint_sd,
+                   OPAL_EV_WRITE,
                    mca_btl_tcp_endpoint_send_handler,
                    btl_endpoint);
 }
@@ -371,7 +371,7 @@ bool mca_btl_tcp2_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
     OPAL_THREAD_LOCK(&btl_endpoint->endpoint_recv_lock);
     OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
 
-    cmpval = ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
+    cmpval = ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                     &endpoint_proc->proc_ompi->proc_name,
                                     this_proc);
     if((btl_endpoint->endpoint_sd < 0) ||
@@ -443,8 +443,8 @@ static void mca_btl_tcp2_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoin
     btl_endpoint->endpoint_retries = 0;
 
     /* Create the send event in a persistent manner. */
-    opal_event_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_send_event, 
-                   btl_endpoint->endpoint_sd, 
+    opal_event_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_send_event,
+                   btl_endpoint->endpoint_sd,
                    OPAL_EV_WRITE | OPAL_EV_PERSIST,
                    mca_btl_tcp_endpoint_send_handler,
                    btl_endpoint );
@@ -719,8 +719,8 @@ static void mca_btl_tcp2_endpoint_recv_handler(int sd, short flags, void* user)
         data_still_pending_on_endpoint:
             if(NULL == frag) {
 
-                if(mca_btl_tcp_module.super.btl_max_send_size > 
-                   mca_btl_tcp_module.super.btl_eager_limit) { 
+                if(mca_btl_tcp_module.super.btl_max_send_size >
+                   mca_btl_tcp_module.super.btl_eager_limit) {
                     MCA_BTL_TCP_FRAG_ALLOC_MAX(frag);
                 } else {
                     MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag);
@@ -738,7 +738,7 @@ static void mca_btl_tcp2_endpoint_recv_handler(int sd, short flags, void* user)
                 btl_endpoint->endpoint_recv_frag = frag;
             } else {
                 btl_endpoint->endpoint_recv_frag = NULL;
-                
+
                 TODO_MCA_BTL_TCP_RECV_TRIGGER_CB(frag);
 
 #if MCA_BTL_TCP_ENDPOINT_CACHE

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
@@ -73,7 +73,7 @@
 
 #include "ompi/constants.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/mca/btl/base/base.h" 
+#include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "btl_tcp.h"
 #include "btl_tcp_addr.h"
@@ -393,7 +393,7 @@ static int mca_btl_tcp_component_close(void)
     if (NULL != mca_btl_tcp_component.tcp_btls) {
         free(mca_btl_tcp_component.tcp_btls);
     }
-  
+
     if (mca_btl_tcp_component.tcp_listen_sd >= 0) {
         opal_event_del(&mca_btl_tcp_component.tcp_recv_event);
         CLOSE_THE_SOCKET(mca_btl_tcp_component.tcp_listen_sd);
@@ -410,7 +410,7 @@ static int mca_btl_tcp_component_close(void)
     /* cleanup any pending events */
     MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_component.tcp_lock);
     for(item =  opal_list_get_first(&mca_btl_tcp_component.tcp_events);
-        item != opal_list_get_end(&mca_btl_tcp_component.tcp_events); 
+        item != opal_list_get_end(&mca_btl_tcp_component.tcp_events);
         item = next) {
         mca_btl_tcp_event_t* event = (mca_btl_tcp_event_t*)item;
         next = opal_list_get_next(item);
@@ -434,7 +434,7 @@ static int mca_btl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_eager_mutex);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max_mutex);
 
-    if( (NULL != mca_btl_tcp_event_base) && 
+    if( (NULL != mca_btl_tcp_event_base) &&
         (mca_btl_tcp_event_base != opal_sync_event_base) ) {
         /* Turn of the progress thread before moving forward */
         if( -1 != mca_btl_tcp_progress_thread_trigger ) {
@@ -977,12 +977,12 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
             }
             /* setup the receiving end of the pipe as non-blocking */
             if((flags = fcntl(mca_btl_tcp_pipe_to_progress[0], F_GETFL, 0)) < 0) {
-                BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)", 
+                BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
                            strerror(opal_socket_errno), opal_socket_errno));
             } else {
                 flags |= O_NONBLOCK;
                 if(fcntl(mca_btl_tcp_pipe_to_progress[0], F_SETFL, flags) < 0)
-                    BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)", 
+                    BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
                                strerror(opal_socket_errno), opal_socket_errno));
             }
             /* Progress thread event */

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -79,7 +79,7 @@ void mca_btl_tcp2_proc_destruct(mca_btl_tcp2_proc_t* tcp_proc)
 {
     /* remove from list of all proc instances */
     MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_component.tcp_lock);
-    opal_hash_table_remove_value_uint64(&mca_btl_tcp_component.tcp_procs, 
+    opal_hash_table_remove_value_uint64(&mca_btl_tcp_component.tcp_procs,
                                         ompi_rte_hash_name(&tcp_proc->proc_ompi->proc_name));
     MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(&mca_btl_tcp_component.tcp_lock);
 
@@ -105,7 +105,7 @@ mca_btl_tcp2_proc_t* mca_btl_tcp2_proc_create(ompi_proc_t* ompi_proc)
     mca_btl_tcp2_proc_t* btl_proc;
 
     MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_component.tcp_lock);
-    rc = opal_hash_table_get_value_uint64(&mca_btl_tcp_component.tcp_procs, 
+    rc = opal_hash_table_get_value_uint64(&mca_btl_tcp_component.tcp_procs,
                                           hash, (void**)&btl_proc);
     if(OMPI_SUCCESS == rc) {
         MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(&mca_btl_tcp_component.tcp_lock);
@@ -713,7 +713,7 @@ mca_btl_tcp2_proc_t* mca_btl_tcp2_proc_lookup(const orte_process_name_t *name)
 {
     mca_btl_tcp_proc_t* proc = NULL;
     MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_component.tcp_lock);
-    opal_hash_table_get_value_uint64(&mca_btl_tcp_component.tcp_procs, 
+    opal_hash_table_get_value_uint64(&mca_btl_tcp_component.tcp_procs,
                                      ompi_rte_hash_name(name), (void**)&proc);
     MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(&mca_btl_tcp_component.tcp_lock);
     return proc;

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -33,7 +33,7 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "btl_tcp.h"
-#include "btl_tcp_frag.h" 
+#include "btl_tcp_frag.h"
 #include "btl_tcp_proc.h"
 #include "btl_tcp_endpoint.h"
 
@@ -61,7 +61,7 @@ mca_btl_tcp2_module_t mca_btl_tcp2_module = {
         mca_btl_tcp2_send,
         NULL, /* send immediate */
         mca_btl_tcp_put,
-        NULL, /* get */ 
+        NULL, /* get */
         mca_btl_tcp_dump,
         NULL, /* mpool */
         NULL, /* register error */
@@ -190,7 +190,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_alloc(
     if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
-    
+
     frag->segments[0].seg_len = size;
     frag->segments[0].seg_addr.pval = frag+1;
 
@@ -520,7 +520,7 @@ void mca_btl_tcp_dump(struct mca_btl_base_module_t* base_btl,
         opal_list_item_t *item;
 
         for(item =  opal_list_get_first(&btl->tcp_endpoints);
-            item != opal_list_get_end(&btl->tcp_endpoints); 
+            item != opal_list_get_end(&btl->tcp_endpoints);
             item = opal_list_get_next(item)) {
             mca_btl_tcp_endpoint_dump( (mca_btl_base_endpoint_t*)item, "TCP" );
         }
