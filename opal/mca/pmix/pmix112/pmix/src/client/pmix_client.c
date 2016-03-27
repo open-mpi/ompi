@@ -248,6 +248,7 @@ int PMIx_Init(pmix_proc_t *proc)
             (void)strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
             proc->rank = pmix_globals.myid.rank;
         }
+        ++pmix_globals.init_cntr;
         return PMIX_SUCCESS;
     }
 
