@@ -139,7 +139,7 @@ static int alloc_window(struct ompi_communicator_t *comm, ompi_info_t *info, int
         return ret;
     }
 
-    win->w_acc_ops = acc_ops;
+    win->w_acc_ops = (ompi_win_accumulate_ops_t)acc_ops;
     win->w_flavor = flavor;
 
     /* setup data that is independent of osc component */
