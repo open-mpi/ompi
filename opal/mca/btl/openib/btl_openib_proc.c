@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -202,10 +202,10 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
         BTL_VERBOSE(("[%s:%d] opal_modex_recv failed for peer %s",
                    __FILE__, __LINE__,
                    OPAL_NAME_PRINT(proc->proc_name)));
-        goto err_exit;
+        goto no_err_exit;
     }
     if (0 == msg_size) {
-        goto err_exit;
+        goto no_err_exit;
     }
 
     /* Message was packed in btl_openib_component.c; the format is
@@ -328,6 +328,8 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
 err_exit:
 
     BTL_ERROR(("%d: error exit from mca_btl_openib_proc_create", OPAL_PROC_MY_NAME.vpid));
+
+no_err_exit:
 
     OBJ_RELEASE(ib_proc);
     return NULL;
