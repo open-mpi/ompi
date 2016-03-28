@@ -1,6 +1,9 @@
 # -*- text -*-
 #
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015-2016 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -55,6 +58,16 @@ most common causes when it does occur are:
   * The process ran out of file descriptors
   * The operating system ran out of file descriptors
   * The operating system ran out of memory
+
+[unsuported progress thread]
+WARNING: Support for the TCP progress thread has not been compiled in.
+Fall back to the normal progress.
+
+  Local host: %s
+  Value:      %s
+  Message:    %s
+
+#
 
 Your Open MPI job will likely hang until the failure resason is fixed
 (e.g., more file descriptors and/or memory becomes available), and may

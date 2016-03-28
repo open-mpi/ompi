@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -56,6 +56,7 @@ struct mca_btl_tcp_frag_t {
     size_t iov_cnt;
     size_t iov_idx;
     size_t size;
+    uint16_t next_step;
     int rc;
     opal_free_list_t* my_list;
     /* fake rdma completion */
@@ -126,8 +127,6 @@ do {                                                                       \
 
 bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t*, int sd);
 bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t*, int sd);
-
-size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t*, char*, char*, size_t);
-
+size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, size_t length);
 END_C_DECLS
 #endif
