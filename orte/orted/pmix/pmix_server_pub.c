@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -121,13 +121,13 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     pset = false;
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
-            range = iptr->data.integer;
+            range = (opal_pmix_data_range_t)iptr->data.integer;
             if (pset) {
                 break;
             }
             rset = true;
         } else if (0 == strcmp(iptr->key, OPAL_PMIX_PERSISTENCE)) {
-            persist = iptr->data.integer;
+            persist = (opal_pmix_persistence_t)iptr->data.integer;
             if (rset) {
                 break;
             }
@@ -214,7 +214,7 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
     /* no help for it - need to search for range */
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
-            range = iptr->data.integer;
+            range = (opal_pmix_data_range_t)iptr->data.integer;
             break;
         }
     }
@@ -304,7 +304,7 @@ int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
     /* no help for it - need to search for range */
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
-            range = iptr->data.integer;
+            range = (opal_pmix_data_range_t)iptr->data.integer;
             break;
         }
     }

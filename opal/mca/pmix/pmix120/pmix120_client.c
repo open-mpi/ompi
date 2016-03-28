@@ -95,13 +95,10 @@ int pmix120_client_finalize(void)
 
 int pmix120_initialized(void)
 {
-    pmix_status_t rc;
-
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client initialized");
 
-    rc = PMIx_Initialized();
-    return pmix120_convert_rc(rc);
+    return PMIx_Initialized();
 }
 
 int pmix120_abort(int flag, const char *msg,
@@ -333,10 +330,11 @@ int pmix120_fencenb(opal_list_t *procs, int collect_data,
 
 }
 
-int pmix120_put(opal_pmix_scope_t scope,
+int pmix120_put(opal_pmix_scope_t opal_scope,
               opal_value_t *val)
 {
     pmix_value_t kv;
+    pmix_scope_t pmix_scope = pmix120_convert_opalscope(opal_scope);
     pmix_status_t rc;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
@@ -345,7 +343,7 @@ int pmix120_put(opal_pmix_scope_t scope,
     PMIX_VALUE_CONSTRUCT(&kv);
     pmix120_value_load(&kv, val);
 
-    rc = PMIx_Put(scope, val->key, &kv);
+    rc = PMIx_Put(pmix_scope, val->key, &kv);
     PMIX_VALUE_DESTRUCT(&kv);
     return pmix120_convert_rc(rc);
 }

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -156,13 +156,10 @@ int pmix1_client_finalize(void)
 
 int pmix1_initialized(void)
 {
-    pmix_status_t rc;
-
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client initialized");
 
-    rc = PMIx_Initialized();
-    return pmix1_convert_rc(rc);
+    return PMIx_Initialized();
 }
 
 int pmix1_abort(int flag, const char *msg,
@@ -391,10 +388,11 @@ int pmix1_fencenb(opal_list_t *procs, int collect_data,
 
 }
 
-int pmix1_put(opal_pmix_scope_t scope,
+int pmix1_put(opal_pmix_scope_t opal_scope,
               opal_value_t *val)
 {
     pmix_value_t kv;
+    pmix_scope_t pmix_scope = pmix1_convert_opalscope(opal_scope);
     pmix_status_t rc;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
@@ -403,7 +401,7 @@ int pmix1_put(opal_pmix_scope_t scope,
     PMIX_VALUE_CONSTRUCT(&kv);
     pmix1_value_load(&kv, val);
 
-    rc = PMIx_Put(scope, val->key, &kv);
+    rc = PMIx_Put(pmix_scope, val->key, &kv);
     PMIX_VALUE_DESTRUCT(&kv);
     return pmix1_convert_rc(rc);
 }
