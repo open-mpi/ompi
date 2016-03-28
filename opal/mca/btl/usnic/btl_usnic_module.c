@@ -2061,6 +2061,7 @@ static int init_mpool(opal_btl_usnic_module_t *module)
     mpool_resources.register_mem = usnic_reg_mr;
     mpool_resources.deregister_mem = usnic_dereg_mr;
 #if RCACHE_VERSION == 30
+    mpool_resources.cache_name = mca_btl_usnic_component.usnic_rcache_name;
     module->rcache =
         mca_rcache_base_module_create (mca_btl_usnic_component.usnic_rcache_name,
                                        &module->super, &mpool_resources);
