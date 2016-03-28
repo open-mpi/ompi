@@ -19,14 +19,14 @@ AC_DEFUN([OMPI_SUMMARY_ADD],[
     ompi_summary_section_current=$(eval echo \$ompi_summary_values_$ompi_summary_section)
 
     if test -z "$ompi_summary_section_current" ; then
-	if test -z "$ompi_summary_sections" ; then
-	    ompi_summary_sections=$ompi_summary_section
-	else
-	    ompi_summary_sections="$ompi_summary_sections $ompi_summary_section"
-	fi
-	eval ompi_summary_values_$ompi_summary_section=\"$ompi_summary_line\"
+        if test -z "$ompi_summary_sections" ; then
+            ompi_summary_sections=$ompi_summary_section
+        else
+            ompi_summary_sections="$ompi_summary_sections $ompi_summary_section"
+        fi
+        eval ompi_summary_values_$ompi_summary_section=\"$ompi_summary_line\"
     else
-	eval ompi_summary_values_$ompi_summary_section=\"$ompi_summary_section_current,$ompi_summary_line\"
+        eval ompi_summary_values_$ompi_summary_section=\"$ompi_summary_section_current,$ompi_summary_line\"
     fi
 
     OPAL_VAR_SCOPE_POP
@@ -42,23 +42,23 @@ Version: $OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION.$OMPI_RELEASE_VERSION$OMPI_GREE
 EOF
 
     if test "$project_ompi_amc" = "true" ; then
-	echo "Build MPI C bindings: yes"
+        echo "Build MPI C bindings: yes"
     else
-	echo "Build MPI C bindings: no"
+        echo "Build MPI C bindings: no"
     fi
 
     dnl Print out the bindings if we are building OMPI
     if test "$project_ompi_amc" = "true" ; then
 	if test x$enable_mpi_cxx = xyes ; then
-	    echo "Build MPI C++ bindings (deprecated): yes"
+            echo "Build MPI C++ bindings (deprecated): yes"
 	else
-	    echo "Build MPI C++ bindings (deprecated): no"
+            echo "Build MPI C++ bindings (deprecated): no"
 	fi
 
 	if test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_MPIFH_BINDINGS ; then
-	    echo "Build MPI Fortran bindings: mpif.h"
+            echo "Build MPI Fortran bindings: mpif.h"
 	elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPI_BINDINGS ; then
-	    echo "Build MPI Fortran bindings: mpif.h, use mpi"
+            echo "Build MPI Fortran bindings: mpif.h, use mpi"
 	elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPIF08_BINDINGS ; then
 	    echo "Build MPI Fortran bindings: mpif.h, use mpi, use mpi_f08"
 	else
@@ -73,31 +73,31 @@ EOF
     fi
 
     if test "$project_oshmem_amc" = "true" ; then
-	echo "Build Open SHMEM support: yes"
+        echo "Build Open SHMEM support: yes"
     else
-	echo "Build Open SHMEM support: no"
+        echo "Build Open SHMEM support: no"
     fi
 
     if test $WANT_DEBUG = 0 ; then
-	echo "Debug build: no"
+        echo "Debug build: no"
     else
-	echo "Debug build: yes"
+        echo "Debug build: yes"
     fi
 
     if test ! -z $with_platform ; then
-	echo "Platform file: $with_platform"
+        echo "Platform file: $with_platform"
     else
-	echo "Platform file: (none)"
+        echo "Platform file: (none)"
     fi
 
     echo
 
     for ompi_summary_section in $(echo $ompi_summary_sections) ; do
-	ompi_summary_section_name=$(echo $ompi_summary_section | tr '_' ' ')
-	echo "$ompi_summary_section_name"
-	echo "-----------------------"
-	echo "$(eval echo \$ompi_summary_values_$ompi_summary_section)" | tr ',' $'\n' | sort -f
-	echo
+        ompi_summary_section_name=$(echo $ompi_summary_section | tr '_' ' ')
+        echo "$ompi_summary_section_name"
+        echo "-----------------------"
+        echo "$(eval echo \$ompi_summary_values_$ompi_summary_section)" | tr ',' $'\n' | sort -f
+        echo " "
     done
 
     if test $WANT_DEBUG = 1 ; then
@@ -105,9 +105,9 @@ EOF
 *****************************************************************************
  THIS IS A DEBUG BUILD!  DO NOT USE THIS BUILD FOR PERFORMANCE MEASUREMENTS!
 *****************************************************************************
+
 EOF
     fi
-    echo " "
 
     OPAL_VAR_SCOPE_POP
 ])
