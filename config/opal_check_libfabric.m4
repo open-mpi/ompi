@@ -88,7 +88,7 @@ AC_DEFUN([OPAL_CHECK_LIBFABRIC],[
 
     AS_IF([test $opal_check_libfabric_happy = yes],
           [$2],
-          [AS_IF([test "$opal_want_libfabric" = "yes"],
+          [AS_IF([test -n "$with_libfabric" && test "$with_libfabric" != "no"],
                  [AC_MSG_WARN([libfabric support requested (via --with-libfabric), but not found.])
                   AC_MSG_ERROR([Cannot continue.])])
            $3])
