@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,14 +9,7 @@
 
 #include "opal_config.h"
 
-/* Define this before including hwloc.h so that we also get the hwloc
-   verbs helper header file, too.  We have to do this level of
-   indirection because the hwloc subsystem is a component -- we don't
-   know its exact path.  We have to rely on the framework header files
-   to find the right hwloc verbs helper file for us. */
-#define OPAL_HWLOC_WANT_VERBS_HELPER 1
 #include "opal/mca/hwloc/hwloc.h"
-
 #include "opal/constants.h"
 
 #if BTL_IN_OPAL
