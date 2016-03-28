@@ -410,6 +410,8 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
     }
 
     if (!btl_in_use) {
+        proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
+        OBJ_RELEASE(bml_endpoint);
         /* no btl is available for this proc */
         if (mca_bml_r2.show_unreach_errors) {
             opal_show_help ("help-mca-bml-r2.txt", "unreachable proc", true,
