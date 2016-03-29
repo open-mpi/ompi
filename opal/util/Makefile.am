@@ -53,7 +53,6 @@ headers = \
         numtostr.h \
         opal_environ.h \
         opal_getcwd.h \
-        opal_patcher.h \
         opal_pty.h \
         os_dirpath.h \
         os_path.h \
@@ -89,7 +88,6 @@ libopalutil_la_SOURCES = \
         numtostr.c \
         opal_environ.c \
         opal_getcwd.c \
-        opal_patcher.c \
         opal_pty.c \
         os_dirpath.c \
         os_path.c \

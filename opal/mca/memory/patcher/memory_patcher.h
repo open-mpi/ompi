@@ -16,7 +16,7 @@
 #include "opal_config.h"
 
 #include "opal/mca/memory/memory.h"
-#include "opal/util/opal_patcher.h"
+#include "opal/mca/patcher/patcher.h"
 
 typedef struct opal_memory_patcher_component_t {
   opal_memory_base_component_2_0_0_t super;
