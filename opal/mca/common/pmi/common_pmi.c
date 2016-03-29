@@ -40,11 +40,11 @@ bool mca_common_pmi_init (void) {
     {
         int spawned, size, rank, appnum;
         int rc;
+        char buf[PMI2_MAX_VALLEN];
 
         size = -1;
         rank = -1;
         appnum = -1;
-
 
         /* if we can't startup PMI, we can't be used */
         if (PMI2_Initialized ()) {
@@ -56,11 +56,16 @@ bool mca_common_pmi_init (void) {
             mca_common_pmi_init_count--;
             return false;
         }
-        if (size < 0 || rank < 0 ) {
-            opal_show_help("help-common-pmi.txt", "pmi2-init-returned-bad-values", true);
+        /* depending on slurm versions, we may get bad rank/size or bad jobid */
+        if (size < 0 || rank < 0 || PMI2_SUCCESS != PMI2_Job_GetId(buf, PMI2_MAX_VALLEN)) {
+            /* When no srun (singloton) fail quietly */
+            if (NULL != getenv("SLURM_STEP_NUM_TASKS")) {
+                opal_show_help("help-common-pmi.txt", "pmi2-init-returned-bad-values", true);
+            }
             mca_common_pmi_init_count--;
             return false;
         }
+
         mca_common_pmi_init_size = size;
         mca_common_pmi_init_rank = rank;
         mca_common_pmi_init_count--;

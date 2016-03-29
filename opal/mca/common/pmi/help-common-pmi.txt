@@ -13,7 +13,7 @@ We cannot use PMI2 at this time, and your job will
 likely abort.
 #
 [pmi2-init-returned-bad-values]
-PMI2 initialized but returned bad values for size and rank.
+PMI2 initialized but returned bad values for size/rank/jobid.
 This is symptomatic of either a failure to use the
 "--mpi=pmi2" flag in SLURM, or a borked PMI2 installation.
 If running under SLURM, try adding "-mpi=pmi2" to your
