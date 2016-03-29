@@ -286,8 +286,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
      * So free them anyway -- even if there was an error, and return the
      * error after we free everything. */
     err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
-    if( MPI_SUCCESS == err )
-        return MPI_SUCCESS;
+
  err_hndl:
     /* Free the requests in all cases as they are persistent */
     ompi_coll_base_free_reqs(reqs, nreqs);

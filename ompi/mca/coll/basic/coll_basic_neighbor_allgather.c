@@ -219,7 +219,7 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
 
     rc = ompi_request_wait_all (indegree + outdegree, reqs, MPI_STATUSES_IGNORE);
     if (OMPI_SUCCESS != rc) {
-        ompi_coll_base_free_reqs(reqs, indegree + outdegree + 1);
+        ompi_coll_base_free_reqs(reqs, indegree + outdegree);
     }
     return rc;
 }
