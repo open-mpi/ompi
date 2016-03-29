@@ -78,7 +78,7 @@ static int orte_rml_base_register(mca_base_register_flag_t flags)
 
 static void cleanup(int sd, short args, void *cbdata)
 {
-    bool *active = (bool*)cbdata;
+    volatile bool *active = (volatile bool*)cbdata;
 
     OPAL_LIST_DESTRUCT(&orte_rml_base.posted_recvs);
     if (NULL != active) {
@@ -88,7 +88,7 @@ static void cleanup(int sd, short args, void *cbdata)
 
 static int orte_rml_base_close(void)
 {
-    bool active;
+    volatile bool active;
 
      orte_rml_base_active_t *active_module;
 
@@ -109,7 +109,7 @@ static int orte_rml_base_close(void)
         opal_event_t ev;
         active = true;
         opal_event_set(orte_event_base, &ev, -1,
-                       OPAL_EV_WRITE, cleanup, &active);
+                       OPAL_EV_WRITE, cleanup, (void*)&active);
         opal_event_set_priority(&ev, ORTE_ERROR_PRI);
         opal_event_active(&ev, OPAL_EV_WRITE, 1);
         ORTE_WAIT_FOR_COMPLETION(active);
