@@ -95,11 +95,10 @@ opal_event_base_t* mca_btl_tcp_event_base = NULL;
 #if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
 int mca_btl_tcp_progress_thread_trigger = -1;
 int mca_btl_tcp_pipe_to_progress[2] = { -1, -1 };
-static opal_thread_t mca_btl_tcp_progress_thread;
-opal_list_t mca_btl_tcp_ready_frag_pending_queue;
-opal_mutex_t mca_btl_tcp_ready_frag_mutex;
+static opal_thread_t mca_btl_tcp_progress_thread = { { 0 } };
+opal_list_t mca_btl_tcp_ready_frag_pending_queue = { { 0 } };
+opal_mutex_t mca_btl_tcp_ready_frag_mutex = OPAL_MUTEX_STATIC_INIT;
 #endif  /* MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD */
-static char *mca_btl_tcp_if_seq_string;
 
 mca_btl_tcp_component_t mca_btl_tcp_component = {
     .super = {
