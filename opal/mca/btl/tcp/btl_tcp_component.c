@@ -71,7 +71,7 @@
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/pmix/pmix.h"
 
-#include "ompi/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
@@ -291,7 +291,7 @@ static int mca_btl_tcp_component_register(void)
         opal_show_help("help-mpi-btl-tcp.txt",
                        "unsuported progress thread",
                        true, "progress thread",
-                       ompi_process_info.nodename,
+                       opal_process_info.nodename,
                        mca_btl_tcp_component.tcp_if_seq,
                        "Progress thread support compiled out");
      }
@@ -364,7 +364,7 @@ static int mca_btl_tcp_component_open(void)
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS !=
-        mca_base_var_check_exclusive("ompi",
+        mca_base_var_check_exclusive("opal",
         mca_btl_tcp_component.super.btl_version.mca_type_name,
         mca_btl_tcp_component.super.btl_version.mca_component_name,
         "if_include",
