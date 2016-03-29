@@ -46,7 +46,6 @@ END_FUNC(opal_atomic_cmpset_64)
 START_FUNC(opal_sys_timer_get_cycles)
         rdtsc
         salq    $32, %rdx
-        mov     %eax, %eax
         orq     %rdx, %rax
         ret
 END_FUNC(opal_sys_timer_get_cycles)
