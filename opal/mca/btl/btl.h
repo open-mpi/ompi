@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -240,6 +240,9 @@ typedef uint8_t mca_btl_base_tag_t;
 /** The BTL requires add_procs to be with all procs including non-local. Shared-memory
  * BTLs should not set this flag. */
 #define MCA_BTL_FLAGS_SINGLE_ADD_PROCS 0x20000
+
+/* The BTL is using progress thread and need the protection on matching */
+#define MCA_BTL_FLAGS_BTL_PROGRESS_THREAD_ENABLED 0x40000
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */

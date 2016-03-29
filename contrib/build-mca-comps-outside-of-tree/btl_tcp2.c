@@ -32,7 +32,10 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
-#include "ompi/proc/proc.h"
+#include "btl_tcp.h"
+#include "btl_tcp_frag.h"
+#include "btl_tcp_proc.h"
+#include "btl_tcp_endpoint.h"
 
 mca_btl_tcp2_module_t mca_btl_tcp2_module = {
     {
@@ -57,9 +60,9 @@ mca_btl_tcp2_module_t mca_btl_tcp2_module = {
         mca_btl_tcp2_prepare_dst,
         mca_btl_tcp2_send,
         NULL, /* send immediate */
-        mca_btl_tcp2_put,
+        mca_btl_tcp_put,
         NULL, /* get */
-        mca_btl_base_dump,
+        mca_btl_tcp_dump,
         NULL, /* mpool */
         NULL, /* register error */
         mca_btl_tcp2_ft_event
@@ -134,7 +137,9 @@ int mca_btl_tcp2_add_procs( struct mca_btl_base_module_t* btl,
         /* we increase the count of MPI users of the event library
            once per peer, so that we are used until we aren't
            connected to a peer */
+#if !MCA_BTL_TCP_USES_PROGRESS_THREAD
         opal_progress_event_users_increment();
+#endif  /* !MCA_BTL_TCP_USES_PROGRESS_THREAD */
     }
 
     return OMPI_SUCCESS;
@@ -153,7 +158,9 @@ int mca_btl_tcp2_del_procs(struct mca_btl_base_module_t* btl,
             opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t*)tcp_endpoint);
             OBJ_RELEASE(tcp_endpoint);
         }
+#if !MCA_BTL_TCP_USES_PROGRESS_THREAD
         opal_progress_event_users_decrement();
+#endif  /* !MCA_BTL_TCP_USES_PROGRESS_THREAD */
     }
     return OMPI_SUCCESS;
 }
@@ -193,7 +200,8 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_alloc(
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
-    frag->btl = (mca_btl_tcp2_module_t*)btl;
+    frag->btl = (mca_btl_tcp_module_t*)btl;
+    frag->endpoint = endpoint;
     return (mca_btl_base_descriptor_t*)frag;
 }
 
@@ -384,7 +392,7 @@ int mca_btl_tcp2_send( struct mca_btl_base_module_t* btl,
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_SEND;
     frag->hdr.count = 0;
     if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
-    return mca_btl_tcp2_endpoint_send(endpoint,frag);
+    return mca_btl_tcp_endpoint_send(endpoint,frag);
 }
 
 
@@ -425,7 +433,7 @@ int mca_btl_tcp2_put( mca_btl_base_module_t* btl,
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_PUT;
     frag->hdr.count = frag->base.des_dst_cnt;
     if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
-    return ((i = mca_btl_tcp2_endpoint_send(endpoint,frag)) >= 0 ? OMPI_SUCCESS : i);
+    return ((i = mca_btl_tcp_endpoint_send(endpoint,frag)) >= 0 ? OMPI_SUCCESS : i);
 }
 
 
@@ -462,12 +470,13 @@ int mca_btl_tcp2_get(
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_GET;
     frag->hdr.count = frag->base.des_src_cnt;
     if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
-    return ((rc = mca_btl_tcp2_endpoint_send(endpoint,frag)) >= 0 ? OMPI_SUCCESS : rc);
+    return ((rc = mca_btl_tcp_endpoint_send(endpoint,frag)) >= 0 ? OMPI_SUCCESS : rc);
 }
 
 
 /*
- * Cleanup/release module resources.
+ * Cleanup/release module resources. This function should only be called once,
+ * there is no need to protect it.
  */
 
 int mca_btl_tcp2_finalize(struct mca_btl_base_module_t* btl)
@@ -479,8 +488,42 @@ int mca_btl_tcp2_finalize(struct mca_btl_base_module_t* btl)
          item = opal_list_remove_first(&tcp_btl->tcp_endpoints)) {
         mca_btl_tcp2_endpoint_t *endpoint = (mca_btl_tcp2_endpoint_t*)item;
         OBJ_RELEASE(endpoint);
+#if !MCA_BTL_TCP_USES_PROGRESS_THREAD
         opal_progress_event_users_decrement();
+#endif  /* !MCA_BTL_TCP_USES_PROGRESS_THREAD */
     }
     free(tcp_btl);
     return OMPI_SUCCESS;
 }
+
+/**
+ *
+ */
+void mca_btl_tcp_dump(struct mca_btl_base_module_t* base_btl,
+                      struct mca_btl_base_endpoint_t* endpoint,
+                      int verbose)
+{
+    mca_btl_tcp_module_t* btl = (mca_btl_tcp_module_t*)base_btl;
+    mca_btl_base_err("%s TCP %p kernel_id %d\n"
+#if MCA_BTL_TCP_STATISTICS
+                     " |   statistics: sent %lu recv %lu\n"
+#endif  /* MCA_BTL_TCP_STATISTICS */
+                     " |   latency %u bandwidth %u\n",
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void*)btl, btl->tcp_ifkindex,
+#if MCA_BTL_TCP_STATISTICS
+                     btl->tcp_bytes_sent, btl->btl_bytes_recv,
+#endif  /* MCA_BTL_TCP_STATISTICS */
+                     btl->super.btl_latency, btl->super.btl_bandwidth);
+    if( NULL != endpoint ) {
+        mca_btl_tcp_endpoint_dump( endpoint, "TCP" );
+    } else if( verbose ) {
+        opal_list_item_t *item;
+
+        for(item =  opal_list_get_first(&btl->tcp_endpoints);
+            item != opal_list_get_end(&btl->tcp_endpoints);
+            item = opal_list_get_next(item)) {
+            mca_btl_tcp_endpoint_dump( (mca_btl_base_endpoint_t*)item, "TCP" );
+        }
+    }
+}
+

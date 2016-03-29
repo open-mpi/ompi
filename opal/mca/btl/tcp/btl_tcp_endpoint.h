@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -61,7 +61,7 @@ struct mca_btl_base_endpoint_t {
     struct mca_btl_tcp_frag_t*      endpoint_send_frag;    /**< current send frag being processed */
     struct mca_btl_tcp_frag_t*      endpoint_recv_frag;    /**< current recv frag being processed */
     mca_btl_tcp_state_t             endpoint_state;        /**< current state of the connection */
-    size_t                          endpoint_retries;      /**< number of connection retries attempted */
+    uint32_t                        endpoint_retries;      /**< number of connection retries attempted */
     opal_list_t                     endpoint_frags;        /**< list of pending frags to send */
     opal_mutex_t                    endpoint_send_lock;    /**< lock for concurrent access to endpoint state */
     opal_mutex_t                    endpoint_recv_lock;    /**< lock for concurrent access to endpoint state */
@@ -80,6 +80,7 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t*);
 int  mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t*, struct mca_btl_tcp_frag_t*);
 void mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t*, struct sockaddr*, int);
 void mca_btl_tcp_endpoint_shutdown(mca_btl_base_endpoint_t*);
+void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char* msg);
 
 END_C_DECLS
 #endif
