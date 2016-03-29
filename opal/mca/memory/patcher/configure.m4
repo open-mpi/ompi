@@ -21,7 +21,7 @@
 #
 # $HEADER$
 #
-AC_DEFUN([MCA_opal_memory_patcher_PRIORITY], [40])
+AC_DEFUN([MCA_opal_memory_patcher_PRIORITY], [41])
 
 AC_DEFUN([MCA_opal_memory_patcher_COMPILE_MODE], [
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])

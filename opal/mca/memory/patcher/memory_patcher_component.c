@@ -28,6 +28,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/memory/base/empty.h"
+#include "opal/mca/memory/base/base.h"
 #include "opal/memoryhooks/memory.h"
 
 #include <stdlib.h>
@@ -95,39 +96,51 @@ void *__mmap (void *start, size_t length, int prot, int flags, int fd, off_t off
 #define memory_patcher_syscall syscall
 #endif
 
+static void *(*original_mmap)(void *, size_t, int, int, int, off_t);
+
 static void *intercept_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
     OPAL_PATCHER_BEGIN;
     void *result = 0;
 
     if (prot == PROT_NONE) {
-        opal_mem_hooks_release_hook (start, length, 0);
+        opal_mem_hooks_release_hook (start, length, true);
     }
 
+    if (!original_mmap) {
 #if OPAL_MEMORY_PATCHER_HAVE___MMAP
-    /* the darwin syscall returns an int not a long so call the underlying __mmap function */
-    result = __mmap (start, length, prot, flags, fd, offset);
+        /* the darwin syscall returns an int not a long so call the underlying __mmap function */
+        result = __mmap (start, length, prot, flags, fd, offset);
 #else
-    result = (void*)(intptr_t) memory_patcher_syscall(SYS_mmap, start, length, prot, flags, fd, offset);
+        result = (void*)(intptr_t) memory_patcher_syscall(SYS_mmap, start, length, prot, flags, fd, offset);
 #endif
 
-// I thought we had some issue in the past with the above line for IA32,
-// like maybe syscall() wouldn't handle that many arguments. But just now
-// I used gcc -m32 and it worked on a recent system. But there's a possibility
-// that older ia32 systems may need some other code to make the above syscall.
+        // I thought we had some issue in the past with the above line for IA32,
+        // like maybe syscall() wouldn't handle that many arguments. But just now
+        // I used gcc -m32 and it worked on a recent system. But there's a possibility
+        // that older ia32 systems may need some other code to make the above syscall.
+    } else {
+        result = original_mmap (start, length, prot, flags, fd, offset);
+    }
 
     OPAL_PATCHER_END;
     return result;
 }
+
+static int (*original_munmap) (void *, size_t);
 
 static int intercept_munmap(void *start, size_t length)
 {
     OPAL_PATCHER_BEGIN;
     int result = 0;
 
-    opal_mem_hooks_release_hook (start, length, 0);
+    opal_mem_hooks_release_hook (start, length, false);
 
-    result=memory_patcher_syscall(SYS_munmap, start, length);
+    if (!original_munmap) {
+        result = memory_patcher_syscall(SYS_munmap, start, length);
+    } else {
+        result = original_munmap (start, length);
+    }
 
     OPAL_PATCHER_END;
     return result;
@@ -135,37 +148,41 @@ static int intercept_munmap(void *start, size_t length)
 
 #if defined (SYS_mremap)
 
+static void *(*original_mremap) (void *, size_t, size_t, int, ...);
+
 static void *intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, ...)
 {
     OPAL_PATCHER_BEGIN;
     void *result = 0;
 #ifdef MREMAP_FIXED
     va_list ap;
-    void *new_address;
 #endif
+    void *new_address = NULL;
 
-    opal_mem_hooks_release_hook (start, oldlen, 0);
+    opal_mem_hooks_release_hook (start, oldlen, false);
 
 #ifdef MREMAP_FIXED
     if (flags & MREMAP_FIXED) {
         va_start(ap, flags);
         new_address = va_arg(ap, void*);
-        result=(void *)(intptr_t) memory_patcher_syscall(
-            SYS_mremap, start, oldlen, newlen, flags, new_address);
+
         va_end(ap);
-    } else {
-        result=(void*)memory_patcher_syscall(
-            SYS_mremap, start, oldlen, newlen, flags);
     }
-#else
-    result=(void*)(intptr_t) memory_patcher_syscall(SYS_mremap, start, oldlen, newlen, flags);
 #endif
+
+    if (!original_mremap) {
+        result = (void *)(intptr_t) memory_patcher_syscall (SYS_mremap, start, oldlen, newlen, flags, new_address);
+    } else {
+        result = original_mremap (start, oldlen, newlen, flags, new_address);
+    }
 
     OPAL_PATCHER_END;
     return result;
 }
 
 #endif
+
+static int (*original_madvise) (void *, size_t, int);
 
 static int intercept_madvise (void *start, size_t length, int advice)
 {
@@ -178,9 +195,14 @@ static int intercept_madvise (void *start, size_t length, int advice)
 #endif
         advice == POSIX_MADV_DONTNEED)
     {
-        opal_mem_hooks_release_hook (start, length, 0);
+        opal_mem_hooks_release_hook (start, length, false);
     }
-    result = memory_patcher_syscall(SYS_madvise, start, length, advice);
+
+    if (!original_madvise) {
+        result = memory_patcher_syscall(SYS_madvise, start, length, advice);
+    } else {
+        result = original_madvise (start, length, advice);
+    }
 
     OPAL_PATCHER_END;
     return result;
@@ -191,6 +213,8 @@ static int intercept_madvise (void *start, size_t length, int advice)
 #if OPAL_MEMORY_PATCHER_HAVE___CURBRK
 void *__curbrk; /* in libc */
 #endif
+
+static int (*original_brk) (void *);
 
 static int intercept_brk (void *addr)
 {
@@ -204,23 +228,32 @@ static int intercept_brk (void *addr)
     old_addr = sbrk (0);
 #endif
 
-    /* get the current_addr */
-    new_addr = (void *) (intptr_t) memory_patcher_syscall(SYS_brk, addr);
+    if (!original_brk) {
+        /* get the current_addr */
+        new_addr = (void *) (intptr_t) memory_patcher_syscall(SYS_brk, addr);
 
 #if OPAL_MEMORY_PATCHER_HAVE___CURBRK
-    /*
-     * Note: if we were using glibc brk/sbrk, their __curbrk would get
-     * updated, but since we're going straight to the syscall, we have
-     * to update __curbrk or else glibc won't see it.
-     */
-    __curbrk = new_addr;
+        /*
+         * Note: if we were using glibc brk/sbrk, their __curbrk would get
+         * updated, but since we're going straight to the syscall, we have
+         * to update __curbrk or else glibc won't see it.
+         */
+        __curbrk = new_addr;
 #endif
+    } else {
+        result = original_brk (addr);
+#if OPAL_MEMORY_PATCHER_HAVE___CURBRK
+        new_addr = __curbrk;
+#else
+        new_addr = sbrk (0);
+#endif
+    }
 
     if (new_addr < addr) {
         errno = ENOMEM;
         result = -1;
     } else if (new_addr < old_addr) {
-        opal_mem_hooks_release_hook (new_addr, (intptr_t) old_addr - (intptr_t) new_addr, 0);
+        opal_mem_hooks_release_hook (new_addr, (intptr_t) old_addr - (intptr_t) new_addr, true);
     }
     OPAL_PATCHER_END;
     return result;
@@ -241,7 +274,7 @@ static int patcher_register (void)
 
 static int patcher_query (int *priority)
 {
-    if (opal_patch_supported ()) {
+    if (opal_patcher->patch_symbol) {
         *priority = mca_memory_patcher_priority;
     } else {
         *priority = -1;
@@ -263,30 +296,30 @@ static int patcher_open (void)
     /* set memory hooks support level */
     opal_mem_hooks_set_support (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
 
-    rc = opal_patch_symbol ("mmap", (uintptr_t) intercept_mmap);
+    rc = opal_patcher->patch_symbol ("mmap", (uintptr_t) intercept_mmap, (uintptr_t *) &original_mmap);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 
-    rc = opal_patch_symbol ("munmap", (uintptr_t)intercept_munmap);
+    rc = opal_patcher->patch_symbol ("munmap", (uintptr_t)intercept_munmap, (uintptr_t *) &original_munmap);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 
 #if defined (SYS_mremap)
-    rc = opal_patch_symbol ("mremap",(uintptr_t)intercept_mremap);
+    rc = opal_patcher->patch_symbol ("mremap",(uintptr_t)intercept_mremap, (uintptr_t *) &original_mremap);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 #endif
 
-    rc = opal_patch_symbol ("madvise", (uintptr_t)intercept_madvise);
+    rc = opal_patcher->patch_symbol ("madvise", (uintptr_t)intercept_madvise, (uintptr_t *) &original_madvise);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 
 #if defined (SYS_brk)
-    rc = opal_patch_symbol ("brk", (uintptr_t)intercept_brk);
+    rc = opal_patcher->patch_symbol ("brk", (uintptr_t)intercept_brk, (uintptr_t *) &original_brk);
 #endif
 
     return rc;
