@@ -100,7 +100,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
                                  MCA_COLL_BASE_TAG_ALLTOALL,
                                  MCA_PML_BASE_SEND_STANDARD, comm, sreq));
         if (OMPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(req, i + 1);
+            ompi_coll_base_free_reqs(req, i + size + 1);
             return err;
         }
     }
