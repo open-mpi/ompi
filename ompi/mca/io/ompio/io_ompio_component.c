@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,13 +57,13 @@ static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
 /*
 static int io_progress(void);
+*/
 
 static int register_datarep(char *,
                             MPI_Datarep_conversion_function*,
                             MPI_Datarep_conversion_function*,
                             MPI_Datarep_extent_function*,
                             void*);
-*/
 
 /*
  * Private variables
@@ -120,7 +122,7 @@ mca_io_base_component_2_0_0_t mca_io_ompio_component = {
     NULL, /* delete_unquery */
     delete_select, /* delete_select */
 
-    NULL  /* io_register_datarep */
+    register_datarep, /* register_datarep */
 };
 
 static int register_component(void)
@@ -296,3 +298,12 @@ static int io_progress (void)
     return OMPI_SUCCESS;
 }
 */
+
+static int register_datarep(char * datarep,
+                            MPI_Datarep_conversion_function* read_fn,
+                            MPI_Datarep_conversion_function* write_fn,
+                            MPI_Datarep_extent_function* extent_fn,
+                            void* state)
+{
+    return OMPI_ERROR;
+}
