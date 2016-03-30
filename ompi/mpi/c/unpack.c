@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -105,6 +105,8 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
            OMPI_SUCCESS. */
 
     }
+
+    OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
                            comm, MPI_ERR_UNKNOWN, FUNC_NAME);

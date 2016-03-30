@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -96,6 +96,8 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
     rc = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
     *position += size;
     OBJ_DESTRUCT( &local_convertor );
+
+    OPAL_CR_EXIT_LIBRARY();
 
     /* All done.  Note that the convertor returns 1 upon success, not
        OMPI_SUCCESS. */
