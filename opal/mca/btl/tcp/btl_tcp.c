@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
  *
@@ -381,6 +381,7 @@ int mca_btl_tcp_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t 
 
     frag->segments[1].seg_addr.lval = remote_address;
     frag->segments[1].seg_len = size;
+    if (endpoint->endpoint_nbo) MCA_BTL_BASE_SEGMENT_HTON(frag->segments[1]);
 
     frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
     frag->base.des_cbfunc = fake_rdma_complete;

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -291,6 +291,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                 goto repeat;
             } else if (frag->iov_idx == 2) {
                 for( i = 0; i < frag->hdr.count; i++ ) {
+                    if (btl_endpoint->endpoint_nbo) MCA_BTL_BASE_SEGMENT_NTOH(frag->segments[i]);
                     frag->iov[i+2].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
                     frag->iov[i+2].iov_len = frag->segments[i].seg_len;
                 }
