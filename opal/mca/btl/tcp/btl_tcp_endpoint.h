@@ -80,7 +80,21 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t*);
 int  mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t*, struct mca_btl_tcp_frag_t*);
 void mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t*, struct sockaddr*, int);
 void mca_btl_tcp_endpoint_shutdown(mca_btl_base_endpoint_t*);
-void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char* msg);
+
+/*
+ * Diagnostics: change this to "1" to enable the function
+ * mca_btl_tcp_endpoint_dump(), below
+ */
+#define WANT_PEER_DUMP 0
+
+#if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
+#define MCA_BTL_TCP_ENDPOINT_DUMP(LEVEL, ENDPOINT, INFO, MSG) mca_btl_tcp_endpoint_dump((LEVEL), __FILE__, __LINE__, __func__, (ENDPOINT), (INFO), (MSG))
+void mca_btl_tcp_endpoint_dump(int level, const char* fname, int lineno, const char* funcname,
+                               mca_btl_base_endpoint_t* btl_endpoint, bool full_info, const char* msg);
+#else
+#define MCA_BTL_TCP_ENDPOINT_DUMP(LEVEL, ENDPOINT, INFO, MSG)
+#endif  /* OPAL_ENABLE_DEBUG && WANT_PEER_DUMP */
 
 END_C_DECLS
+
 #endif
