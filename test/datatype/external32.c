@@ -43,110 +43,6 @@ static void dump_hex(void* what, size_t length)
     }
 }
 
-int MPI_Pack_external_size(const char datarep[], int incount,
-                           ompi_datatype_t *datatype, MPI_Aint *size)
-{
-    opal_convertor_t local_convertor;
-    size_t length;
-
-    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
-
-    /* the resulting convertor will be set to the position ZERO */
-    opal_convertor_copy_and_prepare_for_recv( ompi_mpi_external32_convertor,
-                                              &(datatype->super), incount, NULL,
-                                              CONVERTOR_SEND_CONVERSION,
-                                              &local_convertor );
-
-    opal_convertor_get_unpacked_size( &local_convertor, &length );
-    *size = (MPI_Aint)length;
-    OBJ_DESTRUCT( &local_convertor );
-
-    return OMPI_SUCCESS;
-}
-
-int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
-                      ompi_datatype_t *datatype, void *outbuf,
-                      MPI_Aint outsize, MPI_Aint *position)
-{
-    int rc = MPI_SUCCESS;
-    opal_convertor_t local_convertor;
-    struct iovec invec;
-    unsigned int iov_count;
-    size_t size;
-
-    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
-
-    /* The resulting convertor will be set to the position zero. We have to use
-     * CONVERTOR_SEND_CONVERSION in order to force the convertor to do anything
-     * more than just packing the data.
-     */
-    opal_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
-                                              &(datatype->super), incount, (void *) inbuf,
-                                              CONVERTOR_SEND_CONVERSION,
-                                              &local_convertor );
-
-    /* Check for truncation */
-    opal_convertor_get_packed_size( &local_convertor, &size );
-    if( (*position + size) > (size_t)outsize ) {  /* we can cast as we already checked for < 0 */
-        OBJ_DESTRUCT( &local_convertor );
-        return MPI_ERR_TRUNCATE;
-    }
-
-    /* Prepare the iovec with all informations */
-    invec.iov_base = (char*) outbuf + (*position);
-    invec.iov_len = size;
-
-    /* Do the actual packing */
-    iov_count = 1;
-    rc = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
-    *position += size;
-    OBJ_DESTRUCT( &local_convertor );
-
-    /* All done.  Note that the convertor returns 1 upon success, not
-       OMPI_SUCCESS. */
-    return (rc == 1) ? OMPI_SUCCESS : OMPI_ERROR;
-}
-
-int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insize,
-                         MPI_Aint *position, void *outbuf, int outcount,
-                         ompi_datatype_t *datatype)
-{
-    int rc = MPI_SUCCESS;
-    opal_convertor_t local_convertor;
-    struct iovec outvec;
-    unsigned int iov_count;
-    size_t size;
-
-    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
-
-    /* the resulting convertor will be set to the position ZERO */
-    opal_convertor_copy_and_prepare_for_recv( ompi_mpi_external32_convertor,
-                                              &(datatype->super), outcount, outbuf,
-                                              0,
-                                              &local_convertor );
-
-    /* Check for truncation */
-    opal_convertor_get_packed_size( &local_convertor, &size );
-    if( (*position + size) > (unsigned int)insize ) {
-        OBJ_DESTRUCT( &local_convertor );
-        return MPI_ERR_TRUNCATE;
-    }
-
-    /* Prepare the iovec with all informations */
-    outvec.iov_base = (char*) inbuf + (*position);
-    outvec.iov_len = size;
-
-    /* Do the actual unpacking */
-    iov_count = 1;
-    rc = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
-    *position += size;
-    OBJ_DESTRUCT( &local_convertor );
-
-    /* All done.  Note that the convertor returns 1 upon success, not
-       OMPI_SUCCESS. */
-    return (rc == 1) ? OMPI_SUCCESS : OMPI_ERROR;
-}
-
 int check_contiguous( void* send_buffer, void* packed,
                       ompi_datatype_t* datatype, int count, void* arg )
 {
@@ -220,15 +116,15 @@ static int pack_unpack_datatype( void* send_data, ompi_datatype_t *datatype, int
     void* buffer;
     int error;
 
-    error = MPI_Pack_external_size("external32",
-                                   count, datatype, &buffer_size);
+    error = ompi_datatype_pack_external_size("external32",
+                                             count, datatype, &buffer_size);
     if( MPI_SUCCESS != error ) goto return_error_code;
 
     buffer = (void*)malloc(buffer_size);
     if( NULL == buffer ) { error = MPI_ERR_UNKNOWN; goto return_error_code; }
 
-    error = MPI_Pack_external("external32", (void*)send_data, count, datatype,
-                              buffer, buffer_size, &position);
+    error = ompi_datatype_pack_external("external32", (void*)send_data, count, datatype,
+                                        buffer, buffer_size, &position);
     if( MPI_SUCCESS != error ) goto return_error_code;
     if( 0 != validator(send_data, buffer, datatype, count, validator_arg) ) {
         printf("Error during pack external. Bailing out\n");
@@ -238,8 +134,8 @@ static int pack_unpack_datatype( void* send_data, ompi_datatype_t *datatype, int
     printf("packed %ld bytes into a %ld bytes buffer ", position, buffer_size); dump_hex(buffer, position); printf("\n");
 
     position = 0;
-    error = MPI_Unpack_external("external32", buffer, buffer_size, &position,
-                                recv_data, count, datatype);
+    error = ompi_datatype_unpack_external("external32", buffer, buffer_size, &position,
+                                          recv_data, count, datatype);
     if( MPI_SUCCESS != error ) goto return_error_code;
     free(buffer);
 

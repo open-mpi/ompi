@@ -47,10 +47,6 @@ int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
                       MPI_Aint outsize, MPI_Aint *position)
 {
     int rc = MPI_SUCCESS;
-    opal_convertor_t local_convertor;
-    struct iovec invec;
-    unsigned int iov_count;
-    size_t size;
 
     MEMCHECKER(
         memchecker_datatype(datatype);
@@ -74,39 +70,12 @@ int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
-
-    /* The resulting convertor will be set to the position zero. We have to use
-     * CONVERTOR_SEND_CONVERSION in order to force the convertor to do anything
-     * more than just packing the data.
-     */
-    opal_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
-                                              &(datatype->super), incount, (void *) inbuf,
-                                              CONVERTOR_SEND_CONVERSION,
-                                              &local_convertor );
-
-    /* Check for truncation */
-    opal_convertor_get_packed_size( &local_convertor, &size );
-    if( (*position + size) > (size_t)outsize ) {  /* we can cast as we already checked for < 0 */
-        OBJ_DESTRUCT( &local_convertor );
-        OPAL_CR_EXIT_LIBRARY();
-        return OMPI_ERRHANDLER_INVOKE( MPI_COMM_WORLD, MPI_ERR_TRUNCATE, FUNC_NAME );
-    }
-
-    /* Prepare the iovec with all informations */
-    invec.iov_base = (char*) outbuf + (*position);
-    invec.iov_len = size;
-
-    /* Do the actual packing */
-    iov_count = 1;
-    rc = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
-    *position += size;
-    OBJ_DESTRUCT( &local_convertor );
+    rc = ompi_datatype_pack_external(datarep, inbuf, incount,
+                                     datatype, outbuf, 
+                                     outsize, position);
 
     OPAL_CR_EXIT_LIBRARY();
 
-    /* All done.  Note that the convertor returns 1 upon success, not
-       OMPI_SUCCESS. */
-    OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
-                           MPI_COMM_WORLD, MPI_ERR_UNKNOWN, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN((OMPI_SUCCESS == rc) ? OMPI_SUCCESS : OMPI_ERROR,
+                           MPI_COMM_WORLD, rc, FUNC_NAME);
 }
