@@ -435,6 +435,8 @@ static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
     mca_bml_base_btl_t* bml_btl;
     mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc);
 
+    assert (NULL != endpoint);
+
     for(i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
         if(mca_pml_ob1_recv_request_ack_send_btl(proc, bml_btl, hdr_src_req,

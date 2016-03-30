@@ -140,6 +140,10 @@ int mca_pml_ob1_isend(const void *buf,
     int16_t seqn;
     int rc;
 
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        return OMPI_ERR_UNREACH;
+    }
+
     seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
@@ -188,6 +192,10 @@ int mca_pml_ob1_send(const void *buf,
     mca_pml_ob1_send_request_t *sendreq = NULL;
     int16_t seqn;
     int rc;
+
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        return OMPI_ERR_UNREACH;
+    }
 
     if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_BUFFERED == sendmode)) {
         /* large buffered sends *need* a real request so use isend instead */
