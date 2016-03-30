@@ -1314,15 +1314,3 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     /* are there any existing peer instances will to accept this connection */
     (void)mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd);
 }
-
-/**
- * Debugging infrastructure, absolutely not thread safe. Call with care.
- */
-static void mca_btl_tcp_component_dump(void)
-{
-    uint32_t i;
-
-    for( i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++ ) {
-        mca_btl_tcp_dump( (mca_btl_base_module_t*)mca_btl_tcp_component.tcp_btls[i], NULL, 1 );
-    }
-}

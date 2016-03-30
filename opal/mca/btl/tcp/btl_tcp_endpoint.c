@@ -117,15 +117,10 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user);
 static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user);
 
 /*
- * Diagnostics: change this to "1" to enable the function
- * mca_btl_tcp_endpoint_dump(), below
- */
-#define WANT_PEER_DUMP 0
-/*
  * diagnostics
  */
 
-#if WANT_PEER_DUMP
+#if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
 
 #define DEBUG_LENGTH  1024
 /**
@@ -136,7 +131,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user);
  * might access freed memory. Thus, the caller should lock the endpoint prior
  * to the call.
  */
-static void
+void
 mca_btl_tcp_endpoint_dump(int level,
                           const char* fname,
                           int lineno,
@@ -289,13 +284,7 @@ out:
                         (NULL != btl_endpoint->endpoint_proc ? OPAL_NAME_PRINT(btl_endpoint->endpoint_proc->proc_opal->proc_name) : "unknown remote"),
                         outmsg);
 }
-#endif  /* WANT_PEER_DUMP */
-
-#if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
-#define MCA_BTL_TCP_ENDPOINT_DUMP(LEVEL, ENDPOINT, INFO, MSG) mca_btl_tcp_endpoint_dump((LEVEL), __FILE__, __LINE__, __func__, (ENDPOINT), (INFO), (MSG))
-#else
-#define MCA_BTL_TCP_ENDPOINT_DUMP(LEVEL, ENDPOINT, INFO, MSG)
-#endif  /* OPAL_ENABLE_DEBUG && WANT_PEER_DUMP */
+#endif /* OPAL_ENABLE_DEBUG && WANT_PEER_DUMP */
 
 /*
  * Initialize events to be used by the endpoint instance for TCP select/poll callbacks.

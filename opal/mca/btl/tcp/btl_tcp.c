@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -27,6 +29,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
+#include "opal/mca/btl/base/btl_base_error.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_frag.h"
@@ -484,4 +487,35 @@ int mca_btl_tcp_finalize(struct mca_btl_base_module_t* btl)
     }
     free(tcp_btl);
     return OPAL_SUCCESS;
+}
+
+void mca_btl_tcp_dump(struct mca_btl_base_module_t* base_btl,
+                      struct mca_btl_base_endpoint_t* endpoint,
+                      int verbose)
+{
+    mca_btl_tcp_module_t* btl = (mca_btl_tcp_module_t*)base_btl;
+    mca_btl_base_err("%s TCP %p kernel_id %d\n"
+#if MCA_BTL_TCP_STATISTICS
+                     " |   statistics: sent %lu recv %lu\n"
+#endif  /* MCA_BTL_TCP_STATISTICS */
+                     " |   latency %u bandwidth %u\n",
+                     OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), (void*)btl, btl->tcp_ifkindex,
+#if MCA_BTL_TCP_STATISTICS
+                     btl->tcp_bytes_sent, btl->btl_bytes_recv,
+#endif  /* MCA_BTL_TCP_STATISTICS */
+                     btl->super.btl_latency, btl->super.btl_bandwidth);
+#if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
+    if( NULL != endpoint ) {
+        MCA_BTL_TCP_ENDPOINT_DUMP(10, endpoint, false, "TCP");
+
+    } else if( verbose ) {
+        opal_list_item_t *item;
+
+        for(item =  opal_list_get_first(&btl->tcp_endpoints);
+            item != opal_list_get_end(&btl->tcp_endpoints); 
+            item = opal_list_get_next(item)) {
+            MCA_BTL_TCP_ENDPOINT_DUMP(10, (mca_btl_base_endpoint_t*)item, false, "TCP");
+        }
+    }
+#endif /* OPAL_ENABLE_DEBUG && WANT_PEER_DUMP */
 }
