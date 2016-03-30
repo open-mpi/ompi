@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -36,6 +36,7 @@
 
 #include "pmix_ext.h"
 #include "opal/mca/pmix/base/base.h"
+#include "opal/mca/pmix/pmix_types.h"
 
 #include "pmix_common.h"
 
@@ -266,6 +267,19 @@ int pmix1_convert_rc(pmix_status_t rc)
         return OPAL_SUCCESS;
     default:
         return OPAL_ERROR;
+    }
+}
+
+pmix_scope_t pmix1_convert_opalscope(opal_pmix_scope_t scope) {
+    switch(scope) {
+    case OPAL_PMIX_LOCAL:
+        return PMIX_LOCAL;
+    case OPAL_PMIX_REMOTE:
+        return PMIX_REMOTE;
+    case OPAL_PMIX_GLOBAL:
+        return PMIX_GLOBAL;
+    default:
+        return PMIX_SCOPE_UNDEF;
     }
 }
 

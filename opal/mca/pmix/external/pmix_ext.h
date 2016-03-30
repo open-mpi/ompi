@@ -2,6 +2,8 @@
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -163,6 +165,7 @@ OPAL_MODULE_DECLSPEC int pmix1_server_notify_error(int status,
 /****  COMPONENT UTILITY FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC pmix_status_t pmix1_convert_opalrc(int rc);
 OPAL_MODULE_DECLSPEC int pmix1_convert_rc(pmix_status_t rc);
+OPAL_MODULE_DECLSPEC pmix_scope_t pmix1_convert_opalscope(opal_pmix_scope_t scope);
 OPAL_MODULE_DECLSPEC void pmix1_value_load(pmix_value_t *v,
                                            opal_value_t *kv);
 OPAL_MODULE_DECLSPEC int pmix1_value_unload(opal_value_t *kv,
