@@ -13,6 +13,8 @@
 # Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -37,6 +39,7 @@ libdatatype_la_SOURCES = \
         ompi_datatype_create_vector.c \
         ompi_datatype_create_darray.c \
         ompi_datatype_create_subarray.c \
+        ompi_datatype_external.c \
         ompi_datatype_external32.c \
         ompi_datatype_match_size.c \
         ompi_datatype_module.c \
