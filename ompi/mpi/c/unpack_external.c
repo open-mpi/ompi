@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -45,7 +45,7 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
                          MPI_Aint *position, void *outbuf, int outcount,
                          MPI_Datatype datatype)
 {
-    int rc;
+    int rc = MPI_SUCCESS;
     opal_convertor_t local_convertor;
     struct iovec outvec;
     unsigned int iov_count;
@@ -62,9 +62,11 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         } else if (outcount < 0) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, FUNC_NAME);
-        } else if (MPI_DATATYPE_NULL == datatype || NULL == datatype) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
         }
+        OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, outcount);
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+        OMPI_CHECK_USER_BUFFER(rc, outbuf, datatype, outcount);
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
 
@@ -72,7 +74,9 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
 
     /* the resulting convertor will be set to the position ZERO */
     opal_convertor_copy_and_prepare_for_recv( ompi_mpi_external32_convertor,
-                                              &(datatype->super), outcount, outbuf, 0, &local_convertor );
+                                              &(datatype->super), outcount, outbuf,
+                                              0,
+                                              &local_convertor );
 
     /* Check for truncation */
     opal_convertor_get_packed_size( &local_convertor, &size );
