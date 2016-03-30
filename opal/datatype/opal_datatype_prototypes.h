@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -23,6 +23,14 @@ BEGIN_C_DECLS
  * First the public ones
  */
 
+OPAL_DECLSPEC int32_t
+opal_pack_general( opal_convertor_t* pConvertor,
+                   struct iovec* iov, uint32_t* out_size,
+                   size_t* max_data );
+OPAL_DECLSPEC int32_t
+opal_pack_general_checksum( opal_convertor_t* pConvertor,
+                            struct iovec* iov, uint32_t* out_size,
+                            size_t* max_data );
 OPAL_DECLSPEC int32_t
 opal_unpack_general( opal_convertor_t* pConvertor,
                      struct iovec* iov, uint32_t* out_size,
