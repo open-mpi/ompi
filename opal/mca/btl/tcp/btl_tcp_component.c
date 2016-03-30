@@ -70,6 +70,7 @@
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/threads/threads.h"
 
 #include "opal/constants.h"
 #include "opal/mca/btl/btl.h"
