@@ -514,6 +514,8 @@ static int enum_value_from_string_flag (mca_base_var_enum_t *self, const char *s
         }
     }
 
+    opal_argv_free (flags);
+
     *value_out = flag;
 
     return OPAL_SUCCESS;
