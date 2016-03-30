@@ -7,7 +7,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -362,6 +362,17 @@ OMPI_DECLSPEC int ompi_datatype_safeguard_pointer_debug_breakpoint( const void* 
                                                                     const ompi_datatype_t* pData,
                                                                     int count );
 #endif  /* OPAL_ENABLE_DEBUG */
+
+OMPI_DECLSPEC int ompi_datatype_pack_external( const char datarep[], const void *inbuf, int incount,
+                                               ompi_datatype_t *datatype, void *outbuf,
+                                               MPI_Aint outsize, MPI_Aint *position);
+
+OMPI_DECLSPEC int ompi_datatype_unpack_external( const char datarep[], const void *inbuf, MPI_Aint insize,
+                                                 MPI_Aint *position, void *outbuf, int outcount,
+                                                 ompi_datatype_t *datatype);
+
+OMPI_DECLSPEC int ompi_datatype_pack_external_size( const char datarep[], int incount,
+                                                    ompi_datatype_t *datatype, MPI_Aint *size);
 
 END_C_DECLS
 #endif  /* OMPI_DATATYPE_H_HAS_BEEN_INCLUDED */
