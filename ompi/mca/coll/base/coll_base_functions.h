@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -343,11 +343,24 @@ struct mca_coll_base_comm_t {
 typedef struct mca_coll_base_comm_t mca_coll_base_comm_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_comm_t);
 
+/**
+ * Free all requests in an array. As these requests are usually used during
+ * collective communications, and as on a succesful collective they are
+ * expected to be released during the corresponding wait, the array should
+ * generally be empty. However, this function might be used on error conditions
+ * where it will allow a correct cleanup.
+ */
 static inline void ompi_coll_base_free_reqs(ompi_request_t **reqs, int count)
 {
-    int i;
-    for (i = 0; i < count; ++i)
-        ompi_request_free(&reqs[i]);
+    if (OPAL_UNLIKELY(NULL == reqs)) {
+        return;
+    }
+
+    for (int i = 0; i < count; ++i) {
+        if( MPI_REQUEST_NULL != reqs[i] ) {
+            ompi_request_free(&reqs[i]);
+        }
+    }
 }
 
 /**

@@ -145,9 +145,6 @@ int mca_coll_self_ft_event(int state);
 
 struct mca_coll_self_module_t {
     mca_coll_base_module_t super;
-
-    ompi_request_t **mccb_reqs;
-    int mccb_num_reqs;
 };
 typedef struct mca_coll_self_module_t mca_coll_self_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_self_module_t);

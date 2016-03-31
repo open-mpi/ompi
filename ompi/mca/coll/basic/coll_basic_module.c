@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -101,9 +101,6 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
             size = dist_graph_size;
         }
     }
-    basic_module->mccb_num_reqs = size;
-    basic_module->mccb_reqs = (ompi_request_t**)
-        malloc(sizeof(ompi_request_t *) * basic_module->mccb_num_reqs);
 
     /* Choose whether to use [intra|inter], and [linear|log]-based
      * algorithms. */
@@ -184,6 +181,12 @@ int
 mca_coll_basic_module_enable(mca_coll_base_module_t *module,
                              struct ompi_communicator_t *comm)
 {
+    /* prepare the placeholder for the array of request* */
+    module->base_data = OBJ_NEW(mca_coll_base_comm_t);
+    if (NULL == module->base_data) {
+        return OMPI_ERROR;
+    }
+
     /* All done */
     return OMPI_SUCCESS;
 }

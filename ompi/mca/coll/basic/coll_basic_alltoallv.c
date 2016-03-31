@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -57,8 +57,7 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
     MPI_Aint sndextent;
     MPI_Aint rcvextent;
 
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    ompi_request_t **preq = basic_module->mccb_reqs;
+    ompi_request_t **preq;
 
     /* Initialize. */
 
@@ -69,6 +68,8 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
 
     /* Initiate all send/recv to/from others. */
     nreqs = rsize * 2;
+    preq = coll_base_comm_get_reqs(module->base_data, nreqs);
+    if( NULL == preq ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* Post all receives first  */
     /* A simple optimization: do not send and recv msgs of length zero */
@@ -79,10 +80,9 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
                                      i, MCA_COLL_BASE_TAG_ALLTOALLV, comm,
                                      &preq[i]));
             if (MPI_SUCCESS != err) {
+                ompi_coll_base_free_reqs(preq, i + 1);
                 return err;
             }
-        } else {
-            preq[i] = MPI_REQUEST_NULL;
         }
     }
 
@@ -95,14 +95,16 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
                                      MCA_PML_BASE_SEND_STANDARD, comm,
                                      &preq[rsize + i]));
             if (MPI_SUCCESS != err) {
+                ompi_coll_base_free_reqs(preq, rsize + i + 1);
                 return err;
             }
-        } else {
-            preq[rsize + i] = MPI_REQUEST_NULL;
         }
     }
 
     err = ompi_request_wait_all(nreqs, preq, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != err) {
+        ompi_coll_base_free_reqs(preq, nreqs);
+    }
 
     /* All done */
     return err;

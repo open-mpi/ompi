@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -283,25 +283,11 @@ BEGIN_C_DECLS
     int mca_coll_basic_ft_event(int status);
 
 
-/* Utility functions */
-
-    static inline void mca_coll_basic_free_reqs(ompi_request_t ** reqs,
-                                                int count)
-    {
-        int i;
-        for (i = 0; i < count; ++i)
-             ompi_request_free(&reqs[i]);
-    }
-
-
 struct mca_coll_basic_module_t {
     mca_coll_base_module_t super;
-
-    ompi_request_t **mccb_reqs;
-    int mccb_num_reqs;
 };
 typedef struct mca_coll_basic_module_t mca_coll_basic_module_t;
-OBJ_CLASS_DECLARATION(mca_coll_basic_module_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_basic_module_t);
 
 END_C_DECLS
 
