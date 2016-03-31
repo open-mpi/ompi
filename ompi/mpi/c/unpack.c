@@ -101,14 +101,12 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
         rc = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
         *position += size;
         OBJ_DESTRUCT( &local_convertor );
-
-        /* All done.  Note that the convertor returns 1 upon success, not
-           OMPI_SUCCESS. */
-        rc = (1 == rc) ? OMPI_SUCCESS : OMPI_ERROR;
     }
 
     OPAL_CR_EXIT_LIBRARY();
 
+    /* All done.  Note that the convertor returns 1 upon success, not
+       OMPI_SUCCESS. */
     OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
                            comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }
