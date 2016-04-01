@@ -211,10 +211,6 @@ int mca_pml_ob1_send(const void *buf,
         return OMPI_SUCCESS;
     }
 
-    if (OPAL_UNLIKELY(NULL == endpoint)) {
-        return OMPI_ERR_UNREACH;
-    }
-
     seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
 
     /**
