@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
         if (OMPI_ERR_BAD_PARAM == ret) {
             /* output what we got */
             opal_info_do_params(true, opal_cmd_line_is_taken(ompi_info_cmd_line, "internal"),
-                                &mca_types, NULL);
+                                &mca_types, &component_map, NULL);
         }
         exit(1);
     }
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
     if (want_all || opal_cmd_line_is_taken(ompi_info_cmd_line, "param") ||
         opal_cmd_line_is_taken(ompi_info_cmd_line, "params")) {
         opal_info_do_params(want_all, opal_cmd_line_is_taken(ompi_info_cmd_line, "internal"),
-                            &mca_types, ompi_info_cmd_line);
+                            &mca_types, &component_map, ompi_info_cmd_line);
         acted = true;
     }
     if (opal_cmd_line_is_taken(ompi_info_cmd_line, "type")) {

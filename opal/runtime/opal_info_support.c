@@ -429,6 +429,7 @@ void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
 
 void opal_info_do_params(bool want_all_in, bool want_internal,
                          opal_pointer_array_t *mca_types,
+                         opal_pointer_array_t *component_map,
                          opal_cmd_line_t *opal_info_cmd_line)
 {
     mca_base_var_info_lvl_t max_level = OPAL_INFO_LVL_1;
