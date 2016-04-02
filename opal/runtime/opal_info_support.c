@@ -639,6 +639,23 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         }
     }
 
+    /* Print the component before diving into it's paramters. This ensures that
+     * an enable component is mentioned even when it does not have any explicity
+     * parameters.
+     */
+    if (opal_info_pretty) {
+	asprintf (&message, "MCA%s %s %s", requested ? "" : " (disabled)",
+		  group->group_framework,
+		  group->group_component ? group->group_component : "");
+	opal_info_out(message, message, "---------------------------------------------------");
+	free(message);
+    } else {
+	asprintf (&message, "mca:%s:%s:disabled:%s", group->group_framework,
+		  group_component, requested ? "false" : "true");
+	opal_info_out("", "", message);
+	free (message);
+    }
+
     for (i = 0 ; i < count ; ++i) {
         ret = mca_base_var_get(variables[i], &var);
         if (OPAL_SUCCESS != ret || ((var->mbv_flags & MCA_BASE_VAR_FLAG_INTERNAL) &&
@@ -654,7 +671,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
-                asprintf (&message, "MCA%s %s", requested ? "" : " (disabled)", group->group_framework);
+		asprintf (&message, "MCA%s %s %s", requested ? "" : " (disabled)", group->group_framework, group->group_component ? group->group_component : "");
                 opal_info_out(message, message, strings[j]);
                 free(message);
             } else {
@@ -689,7 +706,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
-                asprintf (&message, "MCA%s %s", requested ? "" : " (disabled)", group->group_framework);
+		asprintf (&message, "MCA%s %s %s", requested ? "" : " (disabled)", group->group_framework, group->group_component ? group->group_component : "");
                 opal_info_out(message, message, strings[j]);
                 free(message);
             } else {
