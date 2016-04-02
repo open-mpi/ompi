@@ -483,6 +483,9 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
     /* Show the params */
 
     if (want_all) {
+        opal_info_show_component_version(mca_types, component_map, opal_info_type_all,
+                                         opal_info_component_all, opal_info_ver_full,
+                                         opal_info_ver_all);
         for (i = 0; i < mca_types->size; ++i) {
             if (NULL == (type = (char *)opal_pointer_array_get_item(mca_types, i))) {
                 continue;
@@ -511,6 +514,9 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
                 exit(1);
             }
 
+            opal_info_show_component_version(mca_types, component_map, type,
+                                             component, opal_info_ver_full,
+                                             opal_info_ver_all);
             opal_info_show_mca_params(type, component, max_level, want_internal);
         }
     }
