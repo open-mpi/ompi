@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,6 +11,7 @@
  */
 
 #include "opal_config.h"
+#include "opal/align.h"
 
 #include <stdio.h>
 #include <stdlib.h>
