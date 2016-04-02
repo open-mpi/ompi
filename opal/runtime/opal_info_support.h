@@ -68,6 +68,7 @@ OPAL_DECLSPEC void opal_info_err_params(opal_pointer_array_t *component_map);
 
 OPAL_DECLSPEC void opal_info_do_params(bool want_all_in, bool want_internal,
                                        opal_pointer_array_t *mca_type,
+                                       opal_pointer_array_t *component_map,
                                        opal_cmd_line_t *opal_info_cmd_line);
 
 OPAL_DECLSPEC void opal_info_show_path(const char *type, const char *value);
