@@ -115,6 +115,7 @@ static void mca_btl_ugni_callback_eager_get (struct mca_btl_base_module_t *btl, 
     /* fill in the response header */
     frag->hdr.rdma.ctx = frag->hdr.eager.ctx;
     frag->flags = MCA_BTL_UGNI_FRAG_RESPONSE;
+    frag->ref_cnt = 1;
 
     /* once complete use this fragment for a pending eager get if any exist */
     frag->base.des_cbfunc = mca_btl_ugni_callback_eager_get_progress_pending;
