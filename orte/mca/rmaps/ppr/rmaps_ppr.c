@@ -110,8 +110,10 @@ static int ppr_mapper(orte_job_t *jdata)
         ORTE_MAPPING_PPR != ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
         /* not for us */
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps:ppr: job %s not using ppr mapper",
-                            ORTE_JOBID_PRINT(jdata->jobid));
+                            "mca:rmaps:ppr: job %s not using ppr mapper PPR %s policy %s",
+                            ORTE_JOBID_PRINT(jdata->jobid),
+                            (NULL == jdata->map->ppr) ? "NULL" : jdata->map->ppr,
+                            (ORTE_MAPPING_PPR == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) ? "PPRSET" : "PPR NOTSET");
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 

@@ -263,7 +263,7 @@ int orte_daemon(int argc, char *argv[])
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
      */
-    mca_base_cmd_line_process_args(cmd_line, &environ, &environ);
+    mca_base_cmd_line_process_args(argv, &environ, &environ);
 
     /* Ensure that enough of OPAL is setup for us to be able to run */
     /*

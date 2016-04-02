@@ -44,32 +44,40 @@ BEGIN_C_DECLS
  * things it requires */
 typedef int (*orte_schizo_base_module_init_fn_t)(void);
 
-/* given an argv-array of personalities, parse a tool command line
+/* provide an opportunity for components to add personality and/or
+ * environment-specific command line options. The OPAL cli tools
+ * will add provided options to the CLI definition, and so the
+ * resulting CLI array will include the _union_ of options provided
+ * by the various components. Where there is overlap (i.e., an option
+ * is added that was also defined earlier in the stack), then the
+ * first definition is used. This reflects the higher priority of
+ * the original definition - note that this only impacts the help
+ * message that will be displayed */
+typedef int (*orte_schizo_base_module_define_cli_fn_t)(opal_cmd_line_t *cli);
+
+/* parse a tool command line
  * starting from the given location according to the cmd line options
  * known to this module's personality. First, of course, check that
- * this module is included in the specified array of personalities!
- * Only one command-line parser is allowed to operate - i.e., if */
-typedef int (*orte_schizo_base_module_parse_cli_fn_t)(char **personality,
-                                                      int argc, int start,
+ * this module is included in the base array of personalities, or is
+ * automatically recognizable! */
+typedef int (*orte_schizo_base_module_parse_cli_fn_t)(int argc, int start,
                                                       char **argv);
 
-/* given an argv-array of personalities, parse the environment of the
+/* parse the environment of the
  * tool to extract any personality-specific envars that need to be
  * forward to the app's environment upon execution */
-typedef int (*orte_schizo_base_module_parse_env_fn_t)(char **personality,
-                                                      char *path,
+typedef int (*orte_schizo_base_module_parse_env_fn_t)(char *path,
                                                       opal_cmd_line_t *cmd_line,
                                                       char **srcenv,
                                                       char ***dstenv);
 
-/* given an argv-array of personalities, do whatever preparation work
+/* do whatever preparation work
  * is required to setup the app for execution. This is intended to be
  * used by orterun and other launcher tools to, for example, change
  * an executable's relative-path to an absolute-path, or add a command
  * required for starting a particular kind of application (e.g., adding
  * "java" to start a Java application) */
-typedef int (*orte_schizo_base_module_setup_app_fn_t)(char **personality,
-                                                      orte_app_context_t *app);
+typedef int (*orte_schizo_base_module_setup_app_fn_t)(orte_app_context_t *app);
 
 /* add any personality-specific envars required at the job level prior
  * to beginning to execute local procs */
@@ -107,6 +115,7 @@ typedef void (*orte_schizo_base_module_finalize_fn_t)(void);
  */
 typedef struct {
     orte_schizo_base_module_init_fn_t                   init;
+    orte_schizo_base_module_define_cli_fn_t             define_cli;
     orte_schizo_base_module_parse_cli_fn_t              parse_cli;
     orte_schizo_base_module_parse_env_fn_t              parse_env;
     orte_schizo_base_module_setup_app_fn_t              setup_app;

@@ -1537,6 +1537,9 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
+    if (NULL == daemons->map) {
+        daemons->map = OBJ_NEW(orte_job_map_t);
+    }
     map = daemons->map;
 
     /* if this job is being launched against a fixed DVM, then there is
@@ -1552,8 +1555,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
      * the virtual machine unless specifically requested to do so
      */
     if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
-        OBJ_CONSTRUCT(&nodes, opal_list_t);
-        if (NULL == daemons->map) {
+        if (0 == map->num_nodes) {
             OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                  "%s plm:base:setup_vm creating map",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -1562,16 +1564,15 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
              * are obviously already here! The ess will already
              * have assigned our node to us.
              */
-            daemons->map = OBJ_NEW(orte_job_map_t);
             node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-            opal_pointer_array_add(daemons->map->nodes, (void*)node);
-            ++(daemons->map->num_nodes);
+            opal_pointer_array_add(map->nodes, (void*)node);
+            ++(map->num_nodes);
             /* maintain accounting */
             OBJ_RETAIN(node);
             /* mark that this is from a singleton */
             singleton = true;
         }
-        map = daemons->map;
+        OBJ_CONSTRUCT(&nodes, opal_list_t);
         for (i=1; i < orte_node_pool->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
@@ -1618,16 +1619,6 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
      */
     if (orte_get_attribute(&daemons->attributes, ORTE_JOB_NO_VM, NULL, OPAL_BOOL)) {
         OBJ_CONSTRUCT(&nodes, opal_list_t);
-        if (NULL == daemons->map) {
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                 "%s plm:base:setup_vm creating map",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            /* this is the first time thru, so the vm is just getting
-             * defined - create a map for it
-             */
-            daemons->map = OBJ_NEW(orte_job_map_t);
-        }
-        map = daemons->map;
         /* loop across all nodes and include those that have
          * num_procs > 0 && no daemon already on them
          */
@@ -1685,23 +1676,21 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         goto process;
     }
 
-    if (NULL == daemons->map) {
+    if (0 == map->num_nodes) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setup_vm creating map",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* this is the first time thru, so the vm is just getting
-         * defined - create a map for it and put us in as we
+         * defined - put us in as we
          * are obviously already here! The ess will already
          * have assigned our node to us.
          */
-        daemons->map = OBJ_NEW(orte_job_map_t);
         node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-        opal_pointer_array_add(daemons->map->nodes, (void*)node);
-        ++(daemons->map->num_nodes);
+        opal_pointer_array_add(map->nodes, (void*)node);
+        ++(map->num_nodes);
         /* maintain accounting */
         OBJ_RETAIN(node);
     }
-    map = daemons->map;
 
     /* zero-out the number of new daemons as we will compute this
      * each time we are called

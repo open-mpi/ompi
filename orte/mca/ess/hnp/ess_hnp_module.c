@@ -76,6 +76,7 @@
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/state.h"
 
+#include "orte/orted/orted_submit.h"
 #include "orte/orted/pmix/pmix_server.h"
 
 #include "orte/util/show_help.h"
@@ -712,6 +713,14 @@ static int rte_init(void)
         error = "orte_dfs_select";
         goto error;
     }
+
+    /* setup to support debugging */
+    orte_state.add_job_state(ORTE_JOB_STATE_READY_FOR_DEBUGGERS,
+                             orte_debugger_init_after_spawn,
+                             ORTE_SYS_PRI);
+    orte_state.add_job_state(ORTE_JOB_STATE_DEBUGGER_DETACH,
+                             orte_debugger_detached,
+                             ORTE_SYS_PRI);
 
     /* if a tool has launched us and is requesting event reports,
      * then set its contact info into the comm system

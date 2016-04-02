@@ -324,7 +324,7 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
             *dmns = NULL;
             return ORTE_ERR_NOT_FOUND;
         }
-        if (NULL == jdata->map) {
+        if (0 == jdata->map->num_nodes) {
             /* we haven't generated a job map yet - if we are the HNP,
              * then we should only involve ourselves. Otherwise, we have
              * no choice but to abort to avoid hangs */
@@ -339,12 +339,6 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
             *ndmns = 0;
             *dmns = NULL;
             return ORTE_ERR_NOT_FOUND;
-        }
-        /* get the array */
-        if (0 == jdata->map->num_nodes) {
-            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            return ORTE_ERR_SILENT;
         }
         dns = (orte_vpid_t*)malloc(jdata->map->num_nodes * sizeof(vpid));
         nds = 0;
