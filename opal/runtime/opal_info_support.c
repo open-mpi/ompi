@@ -646,12 +646,20 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         }
     }
 
+    const mca_base_var_group_t *curr_group = NULL;
+    char *component_msg = NULL;
     for (i = 0 ; i < count ; ++i) {
         ret = mca_base_var_get(variables[i], &var);
         if (OPAL_SUCCESS != ret || ((var->mbv_flags & MCA_BASE_VAR_FLAG_INTERNAL) &&
                                     !want_internal) ||
             max_level < var->mbv_info_lvl) {
             continue;
+        }
+
+        if (opal_info_pretty && curr_group != group) {
+            free(component_msg);
+            asprintf(&component_msg, " %s", group_component);
+            curr_group = group;
         }
 
         ret = mca_base_var_dump(variables[i], &strings, !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE : MCA_BASE_VAR_DUMP_READABLE);
@@ -661,7 +669,9 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
-                asprintf (&message, "MCA%s %s", requested ? "" : " (disabled)", group->group_framework);
+                asprintf (&message, "MCA%s %s%s", requested ? "" : " (disabled)",
+                          group->group_framework,
+                          component_msg ? component_msg : "");
                 opal_info_out(message, message, strings[j]);
                 free(message);
             } else {
