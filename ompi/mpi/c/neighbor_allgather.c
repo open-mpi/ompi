@@ -83,9 +83,9 @@ int MPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype send
           err = MPI_ERR_TYPE;
         } else if (recvcount < 0) {
           err = MPI_ERR_COUNT;
-        } else if (MPI_IN_PLACE == recvbuf) {
+        } else if (MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
           return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-        } else if (MPI_IN_PLACE != sendbuf) {
+        } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
@@ -94,16 +94,13 @@ int MPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype send
     /* Do we need to do anything?  Everyone had to give the same send
        signature, which means that everyone must have given a
        sendcount > 0 if there's anything to send for the intra-communicator
-       case.  If we're doing IN_PLACE, however, check recvcount,
-       not sendcount. */
+       case. */
     if ( OMPI_COMM_IS_INTRA(comm) ) {
-       if ((MPI_IN_PLACE != sendbuf && 0 == sendcount) ||
-            (0 == recvcount)) {
+       if ((0 == sendcount) || (0 == recvcount)) {
             return MPI_SUCCESS;
         }
-    }
-    else if ( OMPI_COMM_IS_INTER(comm) ){
-        /* for inter comunicators, the communication pattern
+    } else if ( OMPI_COMM_IS_INTER(comm) ){
+        /* for inter communicators, the communication pattern
            need not be symmetric. Specifically, one group is
            allows to have sendcount=0, while the other has
            a valid sendcount. Thus, the only way not to do

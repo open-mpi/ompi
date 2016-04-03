@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
+ *                         rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -51,13 +53,10 @@ int ompi_coll_libnbc_ineighbor_alltoallw(void *sbuf, int *scounts, MPI_Aint *sdi
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
 
-  char inplace;
   NBC_Schedule *schedule;
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Ineighbor_alltoallw_args *args, *found, search;
 #endif
-
-  NBC_IN_PLACE(sbuf, rbuf, inplace);
 
   handle->tmpbuf=NULL;
 
@@ -99,45 +98,20 @@ int ompi_coll_libnbc_ineighbor_alltoallw(void *sbuf, int *scounts, MPI_Aint *sdi
       res = NBC_Comm_neighbors(comm, indegree, srcs, MPI_UNWEIGHTED, outdegree, dsts, MPI_UNWEIGHTED);
       if(res != NBC_OK) return res;
 
-      if(inplace) { /* we need an extra buffer to be deadlock-free */
-        int sumrbytes=0;
-        for(i=0; i<indegree; ++i) sumrbytes += rcounts[i]*rcvexts[i];
-        handle->tmpbuf = malloc(sumrbytes);
-
-        for(i = 0; i < indegree; i++) {
-          if(srcs[i] != MPI_PROC_NULL) {
-            res = NBC_Sched_recv((char*)0+rdisps[i], true, rcounts[i], rtypes[i], srcs[i], schedule);
-            if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-          }
-        }
-        for(i = 0; i < outdegree; i++) {
-          if(dsts[i] != MPI_PROC_NULL) {
-            res = NBC_Sched_send((char*)sbuf+sdisps[i], false, scounts[i], stypes[i], dsts[i], schedule);
-            if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
-          }
-        }
-        /* unpack from buffer */
-        for(i = 0; i < indegree; i++) {
-          res = NBC_Sched_barrier(schedule);
-          if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
-          res = NBC_Sched_copy((char*)0+rdisps[i], true, rcounts[i], rtypes[i], (char*)rbuf+rdisps[i], false, rcounts[i], rtypes[i], schedule);
-          if (NBC_OK != res) { printf("Error in NBC_Sched_copy() (%i)\n", res); return res; }
-        }
-      } else { /* non INPLACE case */
-        /* simply loop over neighbors and post send/recv operations */
-        for(i = 0; i < indegree; i++) {
-          if(srcs[i] != MPI_PROC_NULL) {
-            res = NBC_Sched_recv((char*)rbuf+rdisps[i], false, rcounts[i], rtypes[i], srcs[i], schedule);
-            if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-          }
-        }
-        for(i = 0; i < outdegree; i++) {
-          if(dsts[i] != MPI_PROC_NULL) {
-            res = NBC_Sched_send((char*)sbuf+sdisps[i], false, scounts[i], stypes[i], dsts[i], schedule);
-            if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
-          }
+      /* simply loop over neighbors and post send/recv operations */
+      for(i = 0; i < indegree; i++) {
+        if(srcs[i] != MPI_PROC_NULL) {
+          res = NBC_Sched_recv((char*)rbuf+rdisps[i], false, rcounts[i], rtypes[i], srcs[i], schedule);
+          if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
         }
       }
+      for(i = 0; i < outdegree; i++) {
+        if(dsts[i] != MPI_PROC_NULL) {
+          res = NBC_Sched_send((char*)sbuf+sdisps[i], false, scounts[i], stypes[i], dsts[i], schedule);
+          if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+        }
+      }
+     
     }
 
     res = NBC_Sched_commit(schedule);

@@ -97,15 +97,9 @@ int MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const in
                                           FUNC_NAME);
         }
 
-        if (MPI_IN_PLACE == sendbuf) {
-            sendcounts = recvcounts;
-            sdispls = rdispls;
-            sendtype = recvtype;
-        }
-
         if ((NULL == sendcounts) || (NULL == sdispls) ||
             (NULL == recvcounts) || (NULL == rdispls) ||
-            MPI_IN_PLACE == recvbuf) {
+            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
