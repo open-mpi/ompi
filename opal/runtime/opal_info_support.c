@@ -659,6 +659,11 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         if (opal_info_pretty && curr_group != group) {
             free(component_msg);
             asprintf(&component_msg, " %s", group_component);
+            asprintf(&message, "MCA%s %s%s", requested ? "" : " (disabled)",
+                     group->group_framework,
+                     component_msg ? component_msg : "");
+            opal_info_out(message, message, "---------------------------------------------------");
+            free(message);
             curr_group = group;
         }
 
