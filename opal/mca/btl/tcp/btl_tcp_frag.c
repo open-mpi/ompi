@@ -164,11 +164,9 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     mca_btl_base_endpoint_t* btl_endpoint = frag->endpoint;
     int i, num_vecs, dont_copy_data = 0;
     ssize_t cnt;
-    struct iovec *iov_ptr;
 
  repeat:
     num_vecs = frag->iov_cnt;
-    iov_ptr = &frag->iov[frag->iov_idx];
 #if MCA_BTL_TCP_ENDPOINT_CACHE
     if( 0 != btl_endpoint->endpoint_cache_length ) {
         size_t length;
@@ -177,7 +175,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
          * is still some data pending.
          */
         cnt = length = btl_endpoint->endpoint_cache_length;
-        for( i = 0; i < frag->iov_cnt; i++ ) {
+        for( i = 0; i < (int)frag->iov_cnt; i++ ) {
             if( length > frag->iov_ptr[i].iov_len )
                 length = frag->iov_ptr[i].iov_len;
             if( (0 == dont_copy_data) || (length < frag->iov_ptr[i].iov_len) ) {

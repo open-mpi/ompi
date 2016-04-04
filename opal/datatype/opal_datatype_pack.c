@@ -464,9 +464,7 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
     unsigned char *conv_ptr, *iov_ptr;
     size_t iov_len_local;
     uint32_t iov_count;
-    int type, rc;
-    const opal_convertor_master_t* master = pConvertor->master;
-    ptrdiff_t advance;
+    int type;
 
     DO_DEBUG( opal_output( 0, "opal_convertor_general_pack( %p:%p, {%p, %lu}, %d )\n",
                            (void*)pConvertor, (void*)pConvertor->pBaseBuf,
