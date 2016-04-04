@@ -740,6 +740,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         }
         opal_info_show_mca_group_params(group, max_level, want_internal);
     }
+    free(component_msg);
 }
 
 void opal_info_show_mca_params(const char *type, const char *component,
