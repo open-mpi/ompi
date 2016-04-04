@@ -1794,8 +1794,8 @@ OMPI_DECLSPEC  int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *tru
                                             MPI_Aint *true_extent);
 OMPI_DECLSPEC  int MPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
                                               MPI_Count *true_extent);
-OMPI_DECLSPEC  int MPI_Type_hindexed(int count, int array_of_blocklengths[],
-                                     MPI_Aint array_of_displacements[],
+OMPI_DECLSPEC  int MPI_Type_hindexed(int count, const int array_of_blocklengths[],
+                                     const MPI_Aint array_of_displacements[],
                                      MPI_Datatype oldtype, MPI_Datatype *newtype)
                                      __mpi_interface_deprecated__("MPI_Type_hindexed is superseded by MPI_Type_create_hindexed in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Type_hvector(int count, int blocklength, MPI_Aint stride,
@@ -2495,8 +2495,8 @@ OMPI_DECLSPEC  int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *tr
                                              MPI_Aint *true_extent);
 OMPI_DECLSPEC  int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
                                                MPI_Count *true_extent);
-OMPI_DECLSPEC  int PMPI_Type_hindexed(int count, int array_of_blocklengths[],
-                                      MPI_Aint array_of_displacements[],
+OMPI_DECLSPEC  int PMPI_Type_hindexed(int count, const int array_of_blocklengths[],
+                                      const MPI_Aint array_of_displacements[],
                                       MPI_Datatype oldtype, MPI_Datatype *newtype)
                                       __mpi_interface_deprecated__("MPI_Type_hindexed is superseded by MPI_Type_create_hindexed in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Type_hvector(int count, int blocklength, MPI_Aint stride,
