@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -85,7 +85,7 @@ static int usock_peer_create_socket(mca_oob_usock_peer_t* peer)
 {
     int flags;
 
-    if (peer->sd > 0) {
+    if (peer->sd >=0) {
         return ORTE_SUCCESS;
     }
 
@@ -771,6 +771,7 @@ void mca_oob_usock_peer_close(mca_oob_usock_peer_t *peer)
 
     /* release the socket */
     close(peer->sd);
+    peer->sd = -1;
 
     /* inform the component-level that we have lost a connection so
      * it can decide what to do about it.
