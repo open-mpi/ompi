@@ -316,6 +316,10 @@ static void process_send(int fd, short args, void *cbdata)
         goto cleanup;
     }
 
+    if (MCA_OOB_USOCK_CLOSED == peer->state) {
+        /* the peer has gone, it will never come back */
+        goto cleanup;
+    }
     /* add the message to the queue for sending after the
      * connection is formed
      */
