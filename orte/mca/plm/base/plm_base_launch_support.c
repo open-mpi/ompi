@@ -79,6 +79,36 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"
 
+void orte_plm_base_set_slots(orte_node_t *node)
+{
+    if (0 == strncmp(orte_set_slots, "cores", strlen(orte_set_slots))) {
+        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                         HWLOC_OBJ_CORE, 0,
+                                                         OPAL_HWLOC_LOGICAL);
+    } else if (0 == strncmp(orte_set_slots, "sockets", strlen(orte_set_slots))) {
+        if (0 == (node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                                   HWLOC_OBJ_SOCKET, 0,
+                                                                   OPAL_HWLOC_LOGICAL))) {
+            /* some systems don't report sockets - in this case,
+             * use numanodes */
+            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                             HWLOC_OBJ_NODE, 0,
+                                                             OPAL_HWLOC_LOGICAL);
+        }
+    } else if (0 == strncmp(orte_set_slots, "numas", strlen(orte_set_slots))) {
+        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                         HWLOC_OBJ_NODE, 0,
+                                                         OPAL_HWLOC_LOGICAL);
+    } else if (0 == strncmp(orte_set_slots, "hwthreads", strlen(orte_set_slots))) {
+        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                         HWLOC_OBJ_PU, 0,
+                                                         OPAL_HWLOC_LOGICAL);
+    } else {
+        /* must be a number */
+        node->slots = strtol(orte_set_slots, NULL, 10);
+    }
+}
+
 void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -148,33 +178,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                          "%s plm:base:setting slots for node %s by %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, orte_set_slots));
-                    if (0 == strncmp(orte_set_slots, "cores", strlen(orte_set_slots))) {
-                        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                         HWLOC_OBJ_CORE, 0,
-                                                                         OPAL_HWLOC_LOGICAL);
-                    } else if (0 == strncmp(orte_set_slots, "sockets", strlen(orte_set_slots))) {
-                        if (0 == (node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                                   HWLOC_OBJ_SOCKET, 0,
-                                                                                   OPAL_HWLOC_LOGICAL))) {
-                            /* some systems don't report sockets - in this case,
-                             * use numanodes
-                             */
-                            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                             HWLOC_OBJ_NODE, 0,
-                                                                             OPAL_HWLOC_LOGICAL);
-                        }
-                    } else if (0 == strncmp(orte_set_slots, "numas", strlen(orte_set_slots))) {
-                        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                         HWLOC_OBJ_NODE, 0,
-                                                                         OPAL_HWLOC_LOGICAL);
-                    } else if (0 == strncmp(orte_set_slots, "hwthreads", strlen(orte_set_slots))) {
-                        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                         HWLOC_OBJ_PU, 0,
-                                                                         OPAL_HWLOC_LOGICAL);
-                    } else {
-                        /* must be a number */
-                        node->slots = strtol(orte_set_slots, NULL, 10);
-                    }
+                    orte_plm_base_set_slots(node);
                 }
             }
         }

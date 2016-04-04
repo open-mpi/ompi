@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,8 +77,8 @@ void orte_ras_base_display_alloc(void)
                      (NULL == alloc->name) ? "UNKNOWN" : alloc->name,
                      (int)alloc->slots, (int)alloc->slots_max, (int)alloc->slots_inuse);
         } else {
-            asprintf(&tmp2, "\t%s: slots=%d max_slots=%d slots_inuse=%d state=%s\n",
-                     (NULL == alloc->name) ? "UNKNOWN" : alloc->name,
+            asprintf(&tmp2, "\t%s: flags=0x%02x slots=%d max_slots=%d slots_inuse=%d state=%s\n",
+                     (NULL == alloc->name) ? "UNKNOWN" : alloc->name, alloc->flags,
                      (int)alloc->slots, (int)alloc->slots_max, (int)alloc->slots_inuse,
                      orte_node_state_to_str(alloc->state));
         }

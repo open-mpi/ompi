@@ -404,3 +404,9 @@ or provide more node locations in the file.
 The request to map processes by distance could not be completed
 because device to map near by was not specified. Please, use
 rmaps_dist_device mca parameter to set it.
+#
+[num-procs-not-specified]
+Either the -host or -hostfile options were given, but the number
+of processes to start was omitted. This combination is not supported.
+
+Please specify the number of processes to run and try again.
