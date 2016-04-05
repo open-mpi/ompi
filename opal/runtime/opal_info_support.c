@@ -827,7 +827,7 @@ static int centerpoint = 24;
 static int screen_width = 78;
 
 /*
- * Prints the passed integer in a pretty or parsable format.
+ * Prints the passed message in a pretty or parsable format.
  */
 void opal_info_out(const char *pretty_message, const char *plain_message, const char *value)
 {
@@ -971,6 +971,9 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
     }
 }
 
+/*
+ * Prints the passed integer in a pretty or parsable format.
+ */
 void opal_info_out_int(const char *pretty_message,
                        const char *plain_message,
                        int value)
