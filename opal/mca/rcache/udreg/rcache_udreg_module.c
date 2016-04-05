@@ -144,6 +144,7 @@ static void *mca_rcache_udreg_reg_func (void *addr, uint64_t size, void *reg_con
     udreg_reg->rcache = reg_context;
     udreg_reg->base  = OPAL_DOWN_ALIGN_PTR(addr, page_size, unsigned char *);
     udreg_reg->bound = OPAL_ALIGN_PTR((intptr_t) addr + size, page_size, unsigned char *) - 1;
+    udreg_reg->ref_count = 0;
 
     addr = (void *) udreg_reg->base;
     size = (uint64_t) (udreg_reg->bound - udreg_reg->base + 1);
@@ -161,7 +162,8 @@ static void *mca_rcache_udreg_reg_func (void *addr, uint64_t size, void *reg_con
         opal_output_verbose (MCA_BASE_VERBOSE_WARN, opal_rcache_base_framework.framework_output,
                              "rcache/udreg: could not register memory. rc: %d", rc);
         opal_free_list_return (&rcache_udreg->reg_list, item);
-        udreg_reg = NULL;
+        /* NTH: this is the only way to get UDReg_Register to recognize a failure */
+        udreg_reg = UDREG_DEVICE_REG_FAILED;
     }
 
     return udreg_reg;
@@ -173,13 +175,9 @@ static uint32_t mca_rcache_udreg_dereg_func (void *device_data, void *dreg_conte
     mca_rcache_base_registration_t *udreg_reg = (mca_rcache_base_registration_t *) device_data;
     int rc;
 
-    if (udreg_reg->ref_count) {
-        /* there are still users of this registration. leave it alone */
-        return 0;
-    }
+    assert (udreg_reg->ref_count == 0);
 
     rc = rcache_udreg->resources.base.deregister_mem (rcache_udreg->resources.base.reg_data, udreg_reg);
-
     if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
         opal_free_list_return (&rcache_udreg->reg_list,
                                (opal_free_list_item_t *) udreg_reg);
@@ -208,8 +206,9 @@ static int mca_rcache_udreg_register(mca_rcache_base_module_t *rcache, void *add
     mca_rcache_udreg_module_t *rcache_udreg = (mca_rcache_udreg_module_t *) rcache;
     mca_rcache_base_registration_t *udreg_reg, *old_reg;
     bool bypass_cache = !!(flags & MCA_RCACHE_FLAGS_CACHE_BYPASS);
-    udreg_entry_t *udreg_entry;
-    udreg_return_t urc;
+    const unsigned int page_size = opal_getpagesize ();
+    unsigned char *base, *bound;
+    udreg_entry_t *udreg_entry = NULL;
 
     *reg = NULL;
 
@@ -219,60 +218,76 @@ static int mca_rcache_udreg_register(mca_rcache_base_module_t *rcache, void *add
     rcache_udreg->requested_access_flags = access_flags;
     rcache_udreg->requested_flags = flags;
 
+    base = OPAL_DOWN_ALIGN_PTR(addr, page_size, unsigned char *);
+    bound = OPAL_ALIGN_PTR((intptr_t) addr + size, page_size, unsigned char *) - 1;
+
+    addr = base;
+    size = (size_t) (uintptr_t) (bound - base) + 1;
+
     if (false == bypass_cache) {
         /* Get a udreg entry for this region */
         do {
             opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_rcache_base_framework.framework_output,
-                                 "rcache/udreg: registering region {%p, %p} with udreg", addr, (void *)((intptr_t) addr + size));
-            while (UDREG_RC_SUCCESS !=
-                   (urc = UDREG_Register (rcache_udreg->udreg_handle, addr, size, &udreg_entry))) {
+                                 "rcache/udreg: XXX registering region {%p, %p} with udreg", addr, (void *)((intptr_t) addr + size));
+            while (UDREG_RC_SUCCESS != UDREG_Register (rcache_udreg->udreg_handle, addr, size, &udreg_entry)) {
                 /* try to remove one unused reg and retry */
+                opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_rcache_base_framework.framework_output,
+                                     "calling evict!");
                 if (!mca_rcache_udreg_evict (rcache)) {
                     opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_rcache_base_framework.framework_output,
-                                         "rcache/udreg: could not register memory with udreg. udreg rc: %d", urc);
+                                         "rcache/udreg: could not register memory with udreg");
                     OPAL_THREAD_UNLOCK(&rcache_udreg->lock);
                     return OPAL_ERR_OUT_OF_RESOURCE;
                 }
             }
 
             udreg_reg = (mca_rcache_base_registration_t *) udreg_entry->device_data;
-
-            if ((udreg_reg->access_flags & access_flags) == access_flags) {
+            if (NULL != udreg_reg && (udreg_reg->access_flags & access_flags) == access_flags) {
                 /* sufficient access */
                 break;
             }
 
             old_reg = udreg_reg;
 
-            /* to not confuse udreg make sure the new registration covers the same address
-             * range as the old one. */
-            addr = old_reg->base;
-            size = (size_t)((intptr_t) old_reg->bound - (intptr_t) old_reg->base);
+            if (old_reg) {
+                /* to not confuse udreg make sure the new registration covers the same address
+                 * range as the old one. */
+                addr = old_reg->base;
+                size = (size_t)((intptr_t) old_reg->bound - (intptr_t) old_reg->base);
 
-            /* make the new access flags more permissive */
-            rcache_udreg->requested_access_flags = access_flags | old_reg->access_flags;
+                /* make the new access flags more permissive */
+                access_flags |= old_reg->access_flags;
+
+                if (!old_reg->ref_count) {
+                    /* deregister the region before attempting to re-register */
+                    mca_rcache_udreg_dereg_func (old_reg, rcache);
+                    udreg_entry->device_data = NULL;
+                    old_reg = NULL;
+                } else {
+                    /* ensure that mca_rcache_udreg_deregister does not call into udreg since
+                     * we are forcefully evicting the registration here */
+                    old_reg->flags |= MCA_RCACHE_FLAGS_CACHE_BYPASS | MCA_RCACHE_FLAGS_INVALID;
+                }
+            }
+
+            rcache_udreg->requested_access_flags = access_flags;
 
             /* get a new registration */
-            udreg_reg = mca_rcache_udreg_reg_func (addr, size, rcache);
-            if (NULL == udreg_reg) {
-                OPAL_THREAD_UNLOCK(&rcache_udreg->lock);
-                return OPAL_ERR_OUT_OF_RESOURCE;
+            while (UDREG_DEVICE_REG_FAILED == (udreg_reg = mca_rcache_udreg_reg_func (addr, size, rcache))) {
+                if (!mca_rcache_udreg_evict (rcache)) {
+                    opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_rcache_base_framework.framework_output,
+                                         "rcache/udreg: could not register memory with udreg");
+                    OPAL_THREAD_UNLOCK(&rcache_udreg->lock);
+                    return OPAL_ERR_OUT_OF_RESOURCE;
+                }
             }
 
             /* update the device data with the new registration */
             udreg_entry->device_data = udreg_reg;
-
-            /* ensure that mca_rcache_udreg_deregister does not call into udreg since
-             * we are forcefully evicting the registration here */
-            old_reg->flags |= MCA_RCACHE_FLAGS_CACHE_BYPASS | MCA_RCACHE_FLAGS_INVALID;
-
-            mca_rcache_udreg_dereg_func (old_reg, rcache);
         } while (0);
-
-        udreg_reg->rcache_context = udreg_entry;
     } else {
         /* if cache bypass is requested don't use the udreg cache */
-        while (NULL == (udreg_reg = mca_rcache_udreg_reg_func (addr, size, rcache))) {
+        while (UDREG_DEVICE_REG_FAILED == (udreg_reg = mca_rcache_udreg_reg_func (addr, size, rcache))) {
             /* try to remove one unused reg and retry */
             if (!mca_rcache_udreg_evict (rcache)) {
                 opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_rcache_base_framework.framework_output,
@@ -281,13 +296,13 @@ static int mca_rcache_udreg_register(mca_rcache_base_module_t *rcache, void *add
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
         }
-        udreg_reg->rcache_context = NULL;
     }
 
     OPAL_THREAD_UNLOCK(&rcache_udreg->lock);
 
     *reg = udreg_reg;
     ++udreg_reg->ref_count;
+    udreg_reg->rcache_context = udreg_entry;
 
     return OPAL_SUCCESS;
 }
@@ -312,7 +327,7 @@ static int mca_rcache_udreg_deregister(mca_rcache_base_module_t *rcache,
         OPAL_THREAD_LOCK(&rcache_udreg->lock);
         UDREG_DecrRefcount (rcache_udreg->udreg_handle, reg->rcache_context);
         OPAL_THREAD_UNLOCK(&rcache_udreg->lock);
-    } else {
+    } else if (!reg->ref_count) {
         mca_rcache_udreg_dereg_func (reg, rcache);
     }
 
