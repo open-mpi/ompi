@@ -99,6 +99,8 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
         rc = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
         *position += size;
         OBJ_DESTRUCT( &local_convertor );
+    } else {
+        rc = 1;
     }
 
     /* All done.  Note that the convertor returns 1 upon success, not
