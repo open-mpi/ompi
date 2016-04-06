@@ -96,7 +96,7 @@ extern int mca_btl_tcp_progress_thread_trigger;
     do {                                                                \
         if(0 < mca_btl_tcp_progress_thread_trigger) {                   \
             opal_event_t* _event = (opal_event_t*)(event);                  \
-            opal_fd_write( mca_btl_tcp_pipe_to_progress[1], sizeof(opal_event_t*), \
+            (void) opal_fd_write( mca_btl_tcp_pipe_to_progress[1], sizeof(opal_event_t*), \
                            &_event);                                        \
         }                                                                   \
         else {                                                          \
