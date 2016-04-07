@@ -106,7 +106,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     /* The rest should be protected behind the match logic lock */
     OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
     if( true == request->req_match_received ) { /* way to late to cancel this one */
-        OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
+        OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
         assert( OMPI_ANY_TAG != ompi_request->req_status.MPI_TAG ); /* not matched isn't it */
         return OMPI_SUCCESS;
     }
