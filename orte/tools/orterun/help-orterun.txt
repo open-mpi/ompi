@@ -660,3 +660,12 @@ method and try launching your job again.
 
 Your job will now abort.
 #
+[orterun:pmix-failed]
+The call to pmix_init_server() failed. This may be due to your
+system's restriction for Unix's socket's path-length.
+
+   orte_proc_session_dir: %s
+
+Please try to set TMPDIR to something short (like /tmp) or change
+Your computer's name (see uname -n).
+#
