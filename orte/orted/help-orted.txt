@@ -43,6 +43,15 @@ a core that does not exist on this node:
 The MCA param directing this behavior is orte_daemon_cores.
 Please correct the request and try again.
 #
+[orterun:pmix-failed]
+The call to pmix_init_server() failed. This may be due to your
+system's restriction for Unix's socket's path-length.
+
+   orte_proc_session_dir: %s
+
+Please try to set TMPDIR to something short (like /tmp) or change
+Your computer's name (see uname -n).
+#
 [cwd]
 A dynamic operation (%s) was requested that requires us to obtain
 the current working directory. Unfortunately, an error was returned

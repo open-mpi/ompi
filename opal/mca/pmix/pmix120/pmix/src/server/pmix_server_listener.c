@@ -72,19 +72,20 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
 {
     int flags;
     pmix_status_t rc;
-    unsigned int addrlen;
+    socklen_t addrlen;
     char *ptr;
 
     /* create a listen socket for incoming connection attempts */
     pmix_server_globals.listen_socket = socket(PF_UNIX, SOCK_STREAM, 0);
     if (pmix_server_globals.listen_socket < 0) {
-        printf("%s:%d socket() failed", __FILE__, __LINE__);
+        printf("%s:%d socket() failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
 
     addrlen = sizeof(struct sockaddr_un);
     if (bind(pmix_server_globals.listen_socket, (struct sockaddr*)address, addrlen) < 0) {
-        printf("%s:%d bind() failed", __FILE__, __LINE__);
+        printf("%s:%d bind() failed error:%s\n", __FILE__, __LINE__,
+                strerror(errno));
         return PMIX_ERROR;
     }
     /* set the mode as required */
@@ -95,18 +96,18 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
 
     /* setup listen backlog to maximum allowed by kernel */
     if (listen(pmix_server_globals.listen_socket, SOMAXCONN) < 0) {
-        printf("%s:%d listen() failed", __FILE__, __LINE__);
+        printf("%s:%d listen() failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if ((flags = fcntl(pmix_server_globals.listen_socket, F_GETFL, 0)) < 0) {
-        printf("%s:%d fcntl(F_GETFL) failed", __FILE__, __LINE__);
+        printf("%s:%d fcntl(F_GETFL) failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
     flags |= O_NONBLOCK;
     if (fcntl(pmix_server_globals.listen_socket, F_SETFL, flags) < 0) {
-        printf("%s:%d fcntl(F_SETFL) failed", __FILE__, __LINE__);
+        printf("%s:%d fcntl(F_SETFL) failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
 

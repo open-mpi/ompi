@@ -246,6 +246,9 @@ int pmix_server_init(void)
     if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server, &info))) {
         ORTE_ERROR_LOG(rc);
         /* memory cleanup will occur when finalize is called */
+        orte_show_help("help-orterun.txt", "orterun:pmix-failed", true,
+                       orte_process_info.proc_session_dir);
+        return rc;
     }
     OPAL_LIST_DESTRUCT(&info);
 

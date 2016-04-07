@@ -143,6 +143,7 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
 {
     int debug_level;
     char *tdir, *evar;
+    char * pmix_pid;
     pid_t pid;
 
     /* initialize the output system */
@@ -219,7 +220,14 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     /* now set the address - we use the pid here to reduce collisions */
     memset(&myaddress, 0, sizeof(struct sockaddr_un));
     myaddress.sun_family = AF_UNIX;
-    snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/pmix-%d", tdir, pid);
+    asprintf(&pmix_pid, "pmix-%d", pid);
+    // If the above set temporary directory name plus the pmix-PID string
+    // plus the '/' separator are too long, just fail, so the caller
+    // may provide the user with a proper help... *Cough*, *Cough* OSX...
+    if ((strlen(tdir) + strlen(pmix_pid) + 1) > sizeof(myaddress.sun_path)-1) {
+        return PMIX_ERR_INVALID_LENGTH;
+    }
+    snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/%s", tdir, pmix_pid);
     asprintf(&myuri, "%s:%lu:%s", pmix_globals.myid.nspace, (unsigned long)pmix_globals.myid.rank, myaddress.sun_path);
 
 
