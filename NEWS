@@ -173,6 +173,55 @@ Master (not on release branches yet)
   Thanks to Alexander Pozdneev for reporting.
 
 
+1.10.3
+------
+
+- Minor manpage cleanups
+- Implement atomic support in OSHMEM/UCX
+- Fix support of MPI_COMBINER_RESIZED. Thanks to James Ramsey
+  for the report
+- Fix computation of #cpus when --use-hwthread-cpus is used
+- Add entry points for Allgatherv, iAllgatherv, Reduce, and iReduce
+  for the HCOLL library
+- Fix an HCOLL integration bug that could signal completion of request
+  while still being worked
+- Fix computation of cores when SMT is enabled. Thanks to Ben Menadue
+  for the report
+- Various USNIC fixes
+- Create a datafile in the per-proc directory in order to make it
+  unique per communicator. Thanks to Peter Wind for the report
+- Fix zero-size malloc in one-sided pt-to-pt code. Thanks to Lisandro
+  Dalcin for the report
+- Fix MPI_Get_address when passed MPI_BOTTOM to not return an error.
+  Thanks to Lisandro Dalcin for the report
+- Fix MPI_TYPE_SET_ATTR with NULL value. Thanks to Lisandro Dalcin for
+  the report
+- Fix various Fortran08 binding issues
+- Fix memchecker no-data case. Thanks to Clinton Stimpson for the report
+- Fix CUDA support under OS-X
+- Fix various OFI/MTL integration issues
+- Add MPI_T man pages
+- Fix one-sided pt-to-pt issue by preventing communication from happening
+  before a target enters a fence, even in the no-precede case
+- Fix a bug that disabled Totalview for MPMD use-case
+- Correctly support MPI_UNWEIGHTED in topo-graph-neighbors. Thanks to
+  Jun Kudo for the report
+- Fix singleton operations under SLURM when PMI2 is enabled
+- Do not use MPI_IN_PLACE in neighborhood collectives for non-blocking
+  collectives (libnbc). Thanks to Jun Kudo for the report
+- Silence autogen deprecation warnings for newer versions of Perl
+- Do not return MPI_ERR_PENDING from collectives
+- Use type int* for MPI_WIN_DISP_UNIT, MPI_WIN_CREATE_FLAVOR, and MPI_WIN_MODEL.
+  Thanks to Alastair McKinstry for the report
+- Fix register_datarep stub function in IO/OMPIO. Thanks to Eric
+  Chamberland for the report
+- Fix a bus error on MPI_WIN_[POST,START] in the shared memory one-sided component
+- Add several missing MPI_WIN_FLAVOR constants to the Fortran support
+- Enable connecting processes from different subnets using the openib BTL
+- Fix bug in basic/barrier algorithm in OSHMEM
+- Correct process binding for the --map-by node case
+
+
 1.10.2
 ------
 
