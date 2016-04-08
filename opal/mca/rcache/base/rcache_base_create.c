@@ -43,6 +43,45 @@ mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void 
     mca_base_component_list_item_t *cli;
     mca_rcache_base_selected_module_t *sm;
 
+    /* on the very first creation of a module we init the memory
+       callback */
+    if (!mca_rcache_base_used_mem_hooks) {
+        /* Use the memory hooks if leave_pinned or
+         * leave_pinned_pipeline is enabled (note that either of these
+         * leave_pinned variables may have been set by a user MCA
+         * param or elsewhere in the code base).  Yes, we could havexc
+         * coded this more succinctly, but this is more clear. Do not
+         * check memory hooks if the rcache does not provide an
+         * range invalidation function.. */
+        if (opal_leave_pinned != 0 || opal_leave_pinned_pipeline) {
+            /* open the memory manager components.  Memory hooks may be
+               triggered before this (any time after mem_free_init(),
+               actually).  This is a hook available for memory manager hooks
+               without good initialization routine support */
+            (void) mca_base_framework_open (&opal_memory_base_framework, 0);
+        }
+
+        if (opal_leave_pinned != 0 || opal_leave_pinned_pipeline) {
+            if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
+                ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
+                 opal_mem_hooks_support_level())) {
+                if (-1 == opal_leave_pinned) {
+                    opal_leave_pinned = !opal_leave_pinned_pipeline;
+                }
+                opal_mem_hooks_register_release(mca_rcache_base_mem_cb, NULL);
+            } else {
+                opal_show_help("help-rcache-base.txt", "leave pinned failed",
+                               true, name, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                               opal_proc_local_get()->proc_hostname);
+                return NULL;
+            }
+
+            /* Set this to true so that rcache_base_close knows to
+               cleanup */
+            mca_rcache_base_used_mem_hooks = 1;
+        }
+    }
+
     OPAL_LIST_FOREACH(cli, &opal_rcache_base_framework.framework_components, mca_base_component_list_item_t) {
          component = (mca_rcache_base_component_t *) cli->cli_component;
          if(0 == strcmp(component->rcache_version.mca_component_name, name)) {
@@ -60,35 +99,6 @@ mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void 
     sm->rcache_module = module;
     sm->user_data = user_data;
     opal_list_append(&mca_rcache_base_modules, (opal_list_item_t*) sm);
-
-    /* on the very first creation of a module we init the memory
-       callback */
-    if (!mca_rcache_base_used_mem_hooks) {
-        /* Use the memory hooks if leave_pinned or
-         * leave_pinned_pipeline is enabled (note that either of these
-         * leave_pinned variables may have been set by a user MCA
-         * param or elsewhere in the code base).  Yes, we could havexc
-         * coded this more succinctly, but this is more clear. Do not
-         * check memory hooks if the rcache does not provide an
-         * range invalidation function.. */
-        if ((opal_leave_pinned > 0 || opal_leave_pinned_pipeline) &&
-            module->rcache_invalidate_range) {
-            if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-                ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
-                 opal_mem_hooks_support_level())) {
-                opal_mem_hooks_register_release(mca_rcache_base_mem_cb, NULL);
-            } else {
-                opal_show_help("help-rcache-base.txt", "leave pinned failed",
-                               true, name, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                               opal_proc_local_get()->proc_hostname);
-                return NULL;
-            }
-
-            /* Set this to true so that rcache_base_close knows to
-               cleanup */
-            mca_rcache_base_used_mem_hooks = 1;
-        }
-    }
 
     return module;
 }

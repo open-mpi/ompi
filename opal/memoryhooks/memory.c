@@ -106,7 +106,7 @@ opal_mem_hooks_set_support(int support)
 void
 opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc)
 {
-    opal_list_item_t *item;
+    callback_list_item_t *cbitem, *next;
 
     if (!release_run_callbacks) return;
 
@@ -121,12 +121,7 @@ opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc)
      */
 
     opal_atomic_lock(&release_lock);
-    item = opal_list_get_first(&release_cb_list);
-    while(item != opal_list_get_end(&release_cb_list)) {
-        opal_list_item_t* next = opal_list_get_next(item);
-        callback_list_item_t *cbitem = (callback_list_item_t*) item;
-        item = next;
-
+    OPAL_LIST_FOREACH_SAFE(cbitem, next, &release_cb_list, callback_list_item_t) {
         opal_atomic_unlock(&release_lock);
         cbitem->cbfunc(buf, length, cbitem->cbdata, (bool) from_alloc);
         opal_atomic_lock(&release_lock);

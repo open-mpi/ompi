@@ -439,15 +439,6 @@ opal_init(int* pargc, char*** pargv)
     /* select a patcher module. if a patcher module can not be found it is not an error. */
     (void) opal_patcher_base_select ();
 
-    /* open the memory manager components.  Memory hooks may be
-       triggered before this (any time after mem_free_init(),
-       actually).  This is a hook available for memory manager hooks
-       without good initialization routine support */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_memory_base_framework, 0))) {
-        error = "opal_memory_base_open";
-        goto return_error;
-    }
-
     /* initialize the memory manager / tracker */
     if (OPAL_SUCCESS != (ret = opal_mem_hooks_init())) {
         error = "opal_mem_hooks_init";
