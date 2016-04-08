@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,18 +52,18 @@ mca_bml_base_inited(void)
 
 int mca_bml_base_init( bool enable_progress_threads,
                        bool enable_mpi_threads) {
-    opal_list_item_t *item = NULL;
     mca_bml_base_component_t *component = NULL, *best_component = NULL;
     mca_bml_base_module_t *module = NULL, *best_module = NULL;
     int priority = 0, best_priority = -1;
     mca_base_component_list_item_t *cli = NULL;
 
+    if (init_called) {
+        return OPAL_SUCCESS;
+    }
+
     init_called = true;
 
-    for (item = opal_list_get_first(&ompi_bml_base_framework.framework_components);
-         opal_list_get_end(&ompi_bml_base_framework.framework_components) != item;
-         item = opal_list_get_next(item)) {
-        cli = (mca_base_component_list_item_t*) item;
+    OPAL_LIST_FOREACH(cli, &ompi_bml_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (mca_bml_base_component_t*) cli->cli_component;
         if(NULL == component->bml_init) {
             opal_output_verbose( 10, ompi_bml_base_framework.framework_output,
