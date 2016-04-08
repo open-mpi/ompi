@@ -633,8 +633,9 @@ static int rte_init(void)
 
     /* setup the PMIx server */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "Try a shorter TMPDIR var. or change your computer's name (see uname -n), since pmix_server_init";
+        /* the server code already barked, so let's be quiet */
+        ret = ORTE_ERR_SILENT;
+        error = "pmix_server_init";
         goto error;
     }
 

@@ -225,9 +225,11 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     // plus the '/' separator are too long, just fail, so the caller
     // may provide the user with a proper help... *Cough*, *Cough* OSX...
     if ((strlen(tdir) + strlen(pmix_pid) + 1) > sizeof(myaddress.sun_path)-1) {
+        free(pmix_pid);
         return PMIX_ERR_INVALID_LENGTH;
     }
     snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/%s", tdir, pmix_pid);
+    free(pmix_pid);
     asprintf(&myuri, "%s:%lu:%s", pmix_globals.myid.nspace, (unsigned long)pmix_globals.myid.rank, myaddress.sun_path);
 
 
