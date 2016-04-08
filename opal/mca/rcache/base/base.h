@@ -29,6 +29,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/rcache/rcache.h"
+#include "opal/mca/memory/base/base.h"
 
 BEGIN_C_DECLS
 
