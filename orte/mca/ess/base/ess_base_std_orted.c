@@ -515,7 +515,7 @@ int orte_ess_base_orted_setup(char **hosts)
     /* setup the PMIx server */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
         ORTE_ERROR_LOG(ret);
-        error = "pmix server init";
+        error = "Try a shorter TMPDIR var. or change your computer's name (see uname -n), since pmix_server_init";
         goto error;
     }
 
