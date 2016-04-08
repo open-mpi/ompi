@@ -3,7 +3,7 @@
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -24,7 +24,7 @@ release=3
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -82,16 +82,16 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=12:2:0
+libmpi_so_version=12:3:0
 libmpi_cxx_so_version=2:3:1
-libmpi_mpifh_so_version=12:0:0
+libmpi_mpifh_so_version=12:1:0
 libmpi_usempi_tkr_so_version=6:0:1
 libmpi_usempi_ignore_tkr_so_version=7:0:1
-libmpi_usempif08_so_version=12:0:1
-libopen_rte_so_version=12:2:0
+libmpi_usempif08_so_version=12:1:1
+libopen_rte_so_version=12:3:0
 libopen_pal_so_version=13:2:0
 libmpi_java_so_version=3:0:2
-liboshmem_so_version=9:0:1
+liboshmem_so_version=9:1:1
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
@@ -99,7 +99,7 @@ liboshmem_so_version=9:0:1
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_common_cuda_so_version=1:7:0
+libmca_common_cuda_so_version=1:8:0
 libmca_common_sm_so_version=4:4:0
 libmca_common_ugni_so_version=2:1:2
 libmca_common_verbs_so_version=7:0:0
