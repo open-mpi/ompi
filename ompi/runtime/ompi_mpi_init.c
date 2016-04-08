@@ -58,6 +58,7 @@
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/btl/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/timings.h"
 
@@ -597,6 +598,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_bml_base_framework, 0))) {
         error = "mca_bml_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = mca_bml_base_init (1, ompi_mpi_thread_multiple))) {
+        error = "mca_bml_base_init() failed";
         goto error;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_pml_base_framework, 0))) {
