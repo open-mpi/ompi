@@ -83,17 +83,19 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
        it out) */
 };
 
-#if OPAL_MEMORY_PATCHER_HAVE___MMAP && !OPAL_MEMORY_PATCHER_HAVE___MMAP_PROTO
-/* prototype for Apple's internal mmap function */
-void *__mmap (void *start, size_t length, int prot, int flags, int fd, off_t offset);
-#endif
-
 #if OPAL_MEMORY_PATCHER_HAVE___SYSCALL_PROTO && OPAL_MEMORY_PATCHER_HAVE___SYSCALL
 /* calling __syscall is preferred on some systems when some arguments may be 64-bit. it also
  * has the benefit of having an off_t return type */
 #define memory_patcher_syscall __syscall
 #else
 #define memory_patcher_syscall syscall
+#endif
+
+#if 0
+
+#if OPAL_MEMORY_PATCHER_HAVE___MMAP && !OPAL_MEMORY_PATCHER_HAVE___MMAP_PROTO
+/* prototype for Apple's internal mmap function */
+void *__mmap (void *start, size_t length, int prot, int flags, int fd, off_t offset);
 #endif
 
 static void *(*original_mmap)(void *, size_t, int, int, int, off_t);
@@ -127,6 +129,8 @@ static void *intercept_mmap(void *start, size_t length, int prot, int flags, int
     return result;
 }
 
+#endif
+
 static int (*original_munmap) (void *, size_t);
 
 static int intercept_munmap(void *start, size_t length)
@@ -148,27 +152,22 @@ static int intercept_munmap(void *start, size_t length)
 
 #if defined (SYS_mremap)
 
-static void *(*original_mremap) (void *, size_t, size_t, int, ...);
+/* on linux this function has an optional extra argument but ... can not be used here because it
+ * causes issues when intercepting a 4-argument mremap call */
+static void *(*original_mremap) (void *, size_t, size_t, int, void *);
 
-static void *intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, ...)
+static void *intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, void *new_address)
 {
     OPAL_PATCHER_BEGIN;
-    void *result = 0;
-#ifdef MREMAP_FIXED
-    va_list ap;
-#endif
-    void *new_address = NULL;
+    void *result = MAP_FAILED;
 
-    opal_mem_hooks_release_hook (start, oldlen, false);
-
-#ifdef MREMAP_FIXED
-    if (flags & MREMAP_FIXED) {
-        va_start(ap, flags);
-        new_address = va_arg(ap, void*);
-
-        va_end(ap);
+    if (MAP_FAILED != start && oldlen > 0) {
+        opal_mem_hooks_release_hook (start, oldlen, true);
     }
-#endif
+
+    if (!(flags & MREMAP_FIXED)) {
+        new_address = NULL;
+    }
 
     if (!original_mremap) {
         result = (void *)(intptr_t) memory_patcher_syscall (SYS_mremap, start, oldlen, newlen, flags, new_address);
@@ -261,6 +260,87 @@ static int intercept_brk (void *addr)
 
 #endif
 
+#if defined(SYS_shmdt) && defined(__linux__)
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/shm.h>
+
+static size_t memory_patcher_get_shm_seg_size (const void *shmaddr)
+{
+    unsigned long start_addr, end_addr;
+    char *ptr, *newline;
+    char buffer[1024];
+    size_t seg_size = 0;
+    int fd;
+
+    seg_size = 0;
+
+    fd = open ("/proc/self/maps", O_RDONLY);
+    assert (fd >= 0);
+
+    for (size_t read_offset = 0 ; ; ) {
+        ssize_t nread = read(fd, buffer + read_offset, sizeof(buffer) - 1 - read_offset);
+        if (nread <= 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+
+            break;
+        } else {
+            buffer[nread + read_offset] = '\0';
+        }
+
+        ptr = buffer;
+        while ( (newline = strchr(ptr, '\n')) != NULL ) {
+            /* 00400000-0040b000 r-xp ... \n */
+            int ret = sscanf(ptr, "%lx-%lx ", &start_addr, &end_addr);
+            if (ret != 2) {
+                continue;
+            }
+
+            if (start_addr == (uintptr_t)shmaddr) {
+                seg_size = end_addr - start_addr;
+                goto out_close;
+            }
+
+            newline = strchr(ptr, '\n');
+            if (newline == NULL) {
+                break;
+            }
+
+            ptr = newline + 1;
+        }
+
+        read_offset = strlen(ptr);
+        memmove(buffer, ptr, read_offset);
+    }
+
+ out_close:
+    close(fd);
+    return seg_size;
+}
+
+static int (*original_shmdt) (const void *);
+
+static int intercept_shmdt (const void *shmaddr)
+{
+    OPAL_PATCHER_BEGIN;
+    int result;
+
+    opal_mem_hooks_release_hook (shmaddr, memory_patcher_get_shm_seg_size (shmaddr), false);
+
+    if (original_shmdt) {
+        result = original_shmdt (shmaddr);
+    } else {
+        result = memory_patcher_syscall (SYS_shmdt, shmaddr);
+    }
+
+    OPAL_PATCHER_END;
+    return result;
+}
+#endif
+
 static int patcher_register (void)
 {
     mca_memory_patcher_priority = 80;
@@ -296,10 +376,14 @@ static int patcher_open (void)
     /* set memory hooks support level */
     opal_mem_hooks_set_support (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
 
+#if 0
+    /* NTH: the only reason to hook mmap would be to detect memory protection. this does not invalidate
+     * any cache entries in the region. */
     rc = opal_patcher->patch_symbol ("mmap", (uintptr_t) intercept_mmap, (uintptr_t *) &original_mmap);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
+#endif
 
     rc = opal_patcher->patch_symbol ("munmap", (uintptr_t)intercept_munmap, (uintptr_t *) &original_munmap);
     if (OPAL_SUCCESS != rc) {
@@ -317,6 +401,13 @@ static int patcher_open (void)
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
+
+#if defined(SYS_shmdt) && defined(__linux__)
+    rc = opal_patcher->patch_symbol ("shmdt", (uintptr_t) intercept_shmdt, (uintptr_t *) &original_shmdt);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+#endif
 
 #if defined (SYS_brk)
     rc = opal_patcher->patch_symbol ("brk", (uintptr_t)intercept_brk, (uintptr_t *) &original_brk);
