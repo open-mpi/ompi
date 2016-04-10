@@ -1,0 +1,741 @@
+diff --git a/contrib/platform/intel/bend/linux b/contrib/platform/intel/bend/linux
+index 0f6927c..9ccbe34 100644
+--- a/contrib/platform/intel/bend/linux
++++ b/contrib/platform/intel/bend/linux
+@@ -18,6 +18,7 @@ enable_cxx_exceptions=no
+ enable_mpi_java=no
+ enable_io_romio=no
+ enable_contrib_no_build=libnbc
++enable_mca_no_build=btl-usnic
+ with_memory_manager=no
+ with_tm=no
+ with_devel_headers=yes
+diff --git a/opal/mca/pmix/external/pmix_ext.c b/opal/mca/pmix/external/pmix_ext.c
+index 49c466b..cebcf17 100644
+--- a/opal/mca/pmix/external/pmix_ext.c
++++ b/opal/mca/pmix/external/pmix_ext.c
+@@ -1,7 +1,7 @@
+ /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+ /*
+  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+- * Copyright (c) 2014-2015 Research Organization for Information Science
++ * Copyright (c) 2014-2016 Research Organization for Information Science
+  *                         and Technology (RIST). All rights reserved.
+  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
+  *                         All rights reserved.
+@@ -36,6 +36,7 @@
+ 
+ #include "pmix_ext.h"
+ #include "opal/mca/pmix/base/base.h"
++#include "opal/mca/pmix/pmix_types.h"
+ 
+ #include "pmix_common.h"
+ 
+@@ -269,6 +270,19 @@ int pmix1_convert_rc(pmix_status_t rc)
+     }
+ }
+ 
++pmix_scope_t pmix1_convert_opalscope(opal_pmix_scope_t scope) {
++    switch(scope) {
++    case OPAL_PMIX_LOCAL:
++        return PMIX_LOCAL;
++    case OPAL_PMIX_REMOTE:
++        return PMIX_REMOTE;
++    case OPAL_PMIX_GLOBAL:
++        return PMIX_GLOBAL;
++    default:
++        return PMIX_SCOPE_UNDEF;
++    }
++}
++
+ void pmix1_value_load(pmix_value_t *v,
+                       opal_value_t *kv)
+ {
+diff --git a/opal/mca/pmix/external/pmix_ext.h b/opal/mca/pmix/external/pmix_ext.h
+index 2d658fb..c4f9f30 100644
+--- a/opal/mca/pmix/external/pmix_ext.h
++++ b/opal/mca/pmix/external/pmix_ext.h
+@@ -2,6 +2,8 @@
+  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
+  *                         All rights reserved.
++ * Copyright (c) 2016      Research Organization for Information Science
++ *                         and Technology (RIST). All rights reserved.
+  * $COPYRIGHT$
+  *
+  * Additional copyrights may follow
+@@ -163,6 +165,7 @@ OPAL_MODULE_DECLSPEC int pmix1_server_notify_error(int status,
+ /****  COMPONENT UTILITY FUNCTIONS  ****/
+ OPAL_MODULE_DECLSPEC pmix_status_t pmix1_convert_opalrc(int rc);
+ OPAL_MODULE_DECLSPEC int pmix1_convert_rc(pmix_status_t rc);
++OPAL_MODULE_DECLSPEC pmix_scope_t pmix1_convert_opalscope(opal_pmix_scope_t scope);
+ OPAL_MODULE_DECLSPEC void pmix1_value_load(pmix_value_t *v,
+                                            opal_value_t *kv);
+ OPAL_MODULE_DECLSPEC int pmix1_value_unload(opal_value_t *kv,
+diff --git a/opal/mca/pmix/external/pmix_ext_client.c b/opal/mca/pmix/external/pmix_ext_client.c
+index 78402fc..80a5b81 100644
+--- a/opal/mca/pmix/external/pmix_ext_client.c
++++ b/opal/mca/pmix/external/pmix_ext_client.c
+@@ -1,7 +1,7 @@
+ /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+ /*
+  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+- * Copyright (c) 2014-2015 Research Organization for Information Science
++ * Copyright (c) 2014-2016 Research Organization for Information Science
+  *                         and Technology (RIST). All rights reserved.
+  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
+  *                         All rights reserved.
+@@ -30,23 +30,23 @@
+ #include "opal/mca/pmix/base/base.h"
+ #include "pmix_ext.h"
+ #include "pmix.h"
+-#include "src/buffer_ops/buffer_ops.h"
+ 
+ static pmix_proc_t my_proc;
+ static char *dbgvalue=NULL;
+ static int errhdler_ref = 0;
+ 
+-static void completion_handler (void * cbdata) {
+-    int * cond = (int *)cbdata;
+-    *cond = 0;
+-}
+-
+ #define PMIX_WAIT_FOR_COMPLETION(a)             \
+     do {                                        \
+         while ((a)) {                           \
+             usleep(10);                         \
+         }                                       \
+-    } while (0);
++    } while (0)
++
++
++static void completion_handler (void * cbdata) {
++    int * cond = (int *)cbdata;
++    *cond = 0;
++}
+ 
+ static void myerr(pmix_status_t status,
+                   pmix_proc_t procs[], size_t nprocs,
+@@ -161,13 +161,10 @@ int pmix1_client_finalize(void)
+ 
+ int pmix1_initialized(void)
+ {
+-    pmix_status_t rc;
+-
+     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+                         "PMIx_client initialized");
+ 
+-    rc = PMIx_Initialized();
+-    return pmix1_convert_rc(rc);
++    return PMIx_Initialized();
+ }
+ 
+ int pmix1_abort(int flag, const char *msg,
+@@ -396,10 +393,11 @@ int pmix1_fencenb(opal_list_t *procs, int collect_data,
+ 
+ }
+ 
+-int pmix1_put(opal_pmix_scope_t scope,
++int pmix1_put(opal_pmix_scope_t opal_scope,
+               opal_value_t *val)
+ {
+     pmix_value_t kv;
++    pmix_scope_t pmix_scope = pmix1_convert_opalscope(opal_scope);
+     pmix_status_t rc;
+ 
+     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+@@ -408,7 +406,7 @@ int pmix1_put(opal_pmix_scope_t scope,
+     PMIX_VALUE_CONSTRUCT(&kv);
+     pmix1_value_load(&kv, val);
+ 
+-    rc = PMIx_Put(scope, val->key, &kv);
++    rc = PMIx_Put(pmix_scope, val->key, &kv);
+     PMIX_VALUE_DESTRUCT(&kv);
+     return pmix1_convert_rc(rc);
+ }
+diff --git a/opal/mca/pmix/pmix112/pmix/src/client/pmix_client.c b/opal/mca/pmix/pmix112/pmix/src/client/pmix_client.c
+index b1379bb..e1171ca 100644
+--- a/opal/mca/pmix/pmix112/pmix/src/client/pmix_client.c
++++ b/opal/mca/pmix/pmix112/pmix/src/client/pmix_client.c
+@@ -248,6 +248,7 @@ int PMIx_Init(pmix_proc_t *proc)
+             (void)strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+             proc->rank = pmix_globals.myid.rank;
+         }
++        ++pmix_globals.init_cntr;
+         return PMIX_SUCCESS;
+     }
+ 
+diff --git a/opal/mca/pmix/pmix112/pmix1.h b/opal/mca/pmix/pmix112/pmix1.h
+index 60695b5..405b0b4 100644
+--- a/opal/mca/pmix/pmix112/pmix1.h
++++ b/opal/mca/pmix/pmix112/pmix1.h
+@@ -1,5 +1,7 @@
+ /*
+  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
++ * Copyright (c) 2016      Research Organization for Information Science
++ *                         and Technology (RIST). All rights reserved.
+  * $COPYRIGHT$
+  *
+  * Additional copyrights may follow
+@@ -161,6 +163,7 @@ OPAL_MODULE_DECLSPEC int pmix1_server_notify_error(int status,
+ /****  COMPONENT UTILITY FUNCTIONS  ****/
+ OPAL_MODULE_DECLSPEC pmix_status_t pmix1_convert_opalrc(int rc);
+ OPAL_MODULE_DECLSPEC int pmix1_convert_rc(pmix_status_t rc);
++OPAL_MODULE_DECLSPEC pmix_scope_t pmix1_convert_opalscope(opal_pmix_scope_t scope);
+ OPAL_MODULE_DECLSPEC void pmix1_value_load(pmix_value_t *v,
+                                            opal_value_t *kv);
+ OPAL_MODULE_DECLSPEC int pmix1_value_unload(opal_value_t *kv,
+diff --git a/opal/mca/pmix/pmix112/pmix1_client.c b/opal/mca/pmix/pmix112/pmix1_client.c
+index 97bb2c0..30af334 100644
+--- a/opal/mca/pmix/pmix112/pmix1_client.c
++++ b/opal/mca/pmix/pmix112/pmix1_client.c
+@@ -1,7 +1,7 @@
+ /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+ /*
+  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+- * Copyright (c) 2014-2015 Research Organization for Information Science
++ * Copyright (c) 2014-2016 Research Organization for Information Science
+  *                         and Technology (RIST). All rights reserved.
+  * Copyright (c) 2014      Mellanox Technologies, Inc.
+  *                         All rights reserved.
+@@ -156,13 +156,10 @@ int pmix1_client_finalize(void)
+ 
+ int pmix1_initialized(void)
+ {
+-    pmix_status_t rc;
+-
+     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+                         "PMIx_client initialized");
+ 
+-    rc = PMIx_Initialized();
+-    return pmix1_convert_rc(rc);
++    return PMIx_Initialized();
+ }
+ 
+ int pmix1_abort(int flag, const char *msg,
+@@ -391,10 +388,11 @@ int pmix1_fencenb(opal_list_t *procs, int collect_data,
+ 
+ }
+ 
+-int pmix1_put(opal_pmix_scope_t scope,
++int pmix1_put(opal_pmix_scope_t opal_scope,
+               opal_value_t *val)
+ {
+     pmix_value_t kv;
++    pmix_scope_t pmix_scope = pmix1_convert_opalscope(opal_scope);
+     pmix_status_t rc;
+ 
+     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+@@ -403,7 +401,7 @@ int pmix1_put(opal_pmix_scope_t scope,
+     PMIX_VALUE_CONSTRUCT(&kv);
+     pmix1_value_load(&kv, val);
+ 
+-    rc = PMIx_Put(scope, val->key, &kv);
++    rc = PMIx_Put(pmix_scope, val->key, &kv);
+     PMIX_VALUE_DESTRUCT(&kv);
+     return pmix1_convert_rc(rc);
+ }
+diff --git a/opal/mca/pmix/pmix112/pmix_pmix1.c b/opal/mca/pmix/pmix112/pmix_pmix1.c
+index 5c95e0f..7fb667e 100644
+--- a/opal/mca/pmix/pmix112/pmix_pmix1.c
++++ b/opal/mca/pmix/pmix112/pmix_pmix1.c
+@@ -1,7 +1,7 @@
+ /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+ /*
+  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+- * Copyright (c) 2014-2015 Research Organization for Information Science
++ * Copyright (c) 2014-2016 Research Organization for Information Science
+  *                         and Technology (RIST). All rights reserved.
+  * Copyright (c) 2014      Mellanox Technologies, Inc.
+  *                         All rights reserved.
+@@ -36,6 +36,7 @@
+ 
+ #include "pmix1.h"
+ #include "opal/mca/pmix/base/base.h"
++#include "opal/mca/pmix/pmix_types.h"
+ 
+ #include "opal/mca/pmix/pmix112/pmix/include/pmix/pmix_common.h"
+ 
+@@ -269,6 +270,19 @@ int pmix1_convert_rc(pmix_status_t rc)
+     }
+ }
+ 
++pmix_scope_t pmix1_convert_opalscope(opal_pmix_scope_t scope) {
++    switch(scope) {
++    case OPAL_PMIX_LOCAL:
++        return PMIX_LOCAL;
++    case OPAL_PMIX_REMOTE:
++        return PMIX_REMOTE;
++    case OPAL_PMIX_GLOBAL:
++        return PMIX_GLOBAL;
++    default:
++        return PMIX_SCOPE_UNDEF;
++    }
++}
++
+ void pmix1_value_load(pmix_value_t *v,
+                       opal_value_t *kv)
+ {
+diff --git a/opal/mca/pmix/pmix120/pmix/src/client/pmix_client.c b/opal/mca/pmix/pmix120/pmix/src/client/pmix_client.c
+index 22f9315..8544b79 100644
+--- a/opal/mca/pmix/pmix120/pmix/src/client/pmix_client.c
++++ b/opal/mca/pmix/pmix120/pmix/src/client/pmix_client.c
+@@ -258,6 +258,7 @@ int PMIx_Init(pmix_proc_t *proc)
+             (void)strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+             proc->rank = pmix_globals.myid.rank;
+         }
++        ++pmix_globals.init_cntr;
+         return PMIX_SUCCESS;
+     }
+     /* if we don't see the required info, then we cannot init */
+@@ -1443,7 +1444,7 @@ static void dereg_errhandler(int sd, short args, void *cbdata)
+     } else {
+         cd->cbfunc.opcbfn(PMIX_ERR_NOT_FOUND, cd->cbdata);
+     }
+-    OBJ_RELEASE(cd);
++    PMIX_RELEASE(cd);
+ }
+ 
+ void pmix_client_deregister_errhandler(int errhandler_ref,
+diff --git a/opal/mca/pmix/pmix120/pmix/src/server/pmix_server.c b/opal/mca/pmix/pmix120/pmix/src/server/pmix_server.c
+index 922ac76..e296b88 100644
+--- a/opal/mca/pmix/pmix120/pmix/src/server/pmix_server.c
++++ b/opal/mca/pmix/pmix120/pmix/src/server/pmix_server.c
+@@ -143,6 +143,7 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
+ {
+     int debug_level;
+     char *tdir, *evar;
++    char * pmix_pid;
+     pid_t pid;
+ 
+     /* initialize the output system */
+@@ -219,7 +220,16 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
+     /* now set the address - we use the pid here to reduce collisions */
+     memset(&myaddress, 0, sizeof(struct sockaddr_un));
+     myaddress.sun_family = AF_UNIX;
+-    snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/pmix-%d", tdir, pid);
++    asprintf(&pmix_pid, "pmix-%d", pid);
++    // If the above set temporary directory name plus the pmix-PID string
++    // plus the '/' separator are too long, just fail, so the caller
++    // may provide the user with a proper help... *Cough*, *Cough* OSX...
++    if ((strlen(tdir) + strlen(pmix_pid) + 1) > sizeof(myaddress.sun_path)-1) {
++        free(pmix_pid);
++        return PMIX_ERR_INVALID_LENGTH;
++    }
++    snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/%s", tdir, pmix_pid);
++    free(pmix_pid);
+     asprintf(&myuri, "%s:%lu:%s", pmix_globals.myid.nspace, (unsigned long)pmix_globals.myid.rank, myaddress.sun_path);
+ 
+ 
+@@ -578,17 +588,35 @@ pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
+ static void _deregister_nspace(int sd, short args, void *cbdata)
+ {
+     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+-    pmix_nspace_t *tmp;
++    pmix_nspace_t *nptr;
++    int i;
++    pmix_peer_t *peer;
+ 
+     pmix_output_verbose(2, pmix_globals.debug_output,
+                         "pmix:server _deregister_nspace %s",
+                         cd->proc.nspace);
+ 
+     /* see if we already have this nspace */
+-    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_nspace_t) {
+-        if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
+-            pmix_list_remove_item(&pmix_globals.nspaces, &tmp->super);
+-            PMIX_RELEASE(tmp);
++    PMIX_LIST_FOREACH(nptr, &pmix_globals.nspaces, pmix_nspace_t) {
++        if (0 == strcmp(nptr->nspace, cd->proc.nspace)) {
++            /* find and remove this client from our array of local
++             * peers - remember that it can occur multiple times
++             * if the peer called fork/exec and its children called
++             * PMIx_Init! We have to rely on none of those children
++             * living beyond our child as we otherwise cannot
++             * track them */
++            for (i=0; i < pmix_server_globals.clients.size; i++) {
++                if (NULL == (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, i))) {
++                    continue;
++                }
++                if (nptr == peer->info->nptr) {
++                    /* remove this entry */
++                    pmix_pointer_array_set_item(&pmix_server_globals.clients, i, NULL);
++                    PMIX_RELEASE(peer);
++                }
++            }
++            pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
++            PMIX_RELEASE(nptr);
+             break;
+         }
+     }
+@@ -612,7 +640,7 @@ void PMIx_server_deregister_nspace(const char nspace[])
+     PMIX_THREADSHIFT(cd, _deregister_nspace);
+ }
+ 
+-static void _execute_collective(int sd, short args, void *cbdata)
++void pmix_server_execute_collective(int sd, short args, void *cbdata)
+ {
+     pmix_trkr_caddy_t *tcd = (pmix_trkr_caddy_t*)cbdata;
+     pmix_server_trkr_t *trk = tcd->trk;
+@@ -751,7 +779,7 @@ static void _register_client(int sd, short args, void *cbdata)
+                  * we don't want to block someone
+                  * here, so kick any completed trackers into a
+                  * new event for processing */
+-                PMIX_EXECUTE_COLLECTIVE(tcd, trk, _execute_collective);
++                PMIX_EXECUTE_COLLECTIVE(tcd, trk, pmix_server_execute_collective);
+             }
+         }
+         /* also check any pending local modex requests to see if
+@@ -797,6 +825,8 @@ static void _deregister_client(int sd, short args, void *cbdata)
+     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+     pmix_rank_info_t *info;
+     pmix_nspace_t *nptr, *tmp;
++    int i;
++    pmix_peer_t *peer;
+ 
+     pmix_output_verbose(2, pmix_globals.debug_output,
+                         "pmix:server _deregister_client for nspace %s rank %d",
+@@ -814,7 +844,27 @@ static void _deregister_client(int sd, short args, void *cbdata)
+         /* nothing to do */
+         goto cleanup;
+     }
+-    /* find an remove this client */
++    /* find and remove this client from our array of local
++     * peers - remember that it can occur multiple times
++     * if the peer called fork/exec and its children called
++     * PMIx_Init! We have to rely on none of those children
++     * living beyond our child as we otherwise cannot
++     * track them */
++    for (i=0; i < pmix_server_globals.clients.size; i++) {
++        if (NULL == (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, i))) {
++            continue;
++        }
++        if (nptr != peer->info->nptr) {
++            continue;
++        }
++        if (cd->proc.rank == peer->info->rank) {
++            /* remove this entry */
++            pmix_pointer_array_set_item(&pmix_server_globals.clients, i, NULL);
++            PMIX_RELEASE(peer);
++        }
++    }
++
++    /* find and remove this client from its nspace */
+     PMIX_LIST_FOREACH(info, &nptr->server->ranks, pmix_rank_info_t) {
+         if (info->rank == cd->proc.rank) {
+             pmix_list_remove_item(&nptr->server->ranks, &info->super);
+@@ -1279,7 +1329,7 @@ static void dereg_errhandler(int sd, short args, void *cbdata)
+     if (NULL != cd->cbfunc.opcbfn) {
+         cd->cbfunc.opcbfn(rc, cd->cbdata);
+     }
+-    OBJ_RELEASE(cd);
++    PMIX_RELEASE(cd);
+ }
+ 
+ void pmix_server_deregister_errhandler(int errhandler_ref,
+diff --git a/opal/mca/pmix/pmix120/pmix/src/server/pmix_server_listener.c b/opal/mca/pmix/pmix120/pmix/src/server/pmix_server_listener.c
+index 4fe76cf..b0538fd 100644
+--- a/opal/mca/pmix/pmix120/pmix/src/server/pmix_server_listener.c
++++ b/opal/mca/pmix/pmix120/pmix/src/server/pmix_server_listener.c
+@@ -72,19 +72,20 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
+ {
+     int flags;
+     pmix_status_t rc;
+-    unsigned int addrlen;
++    socklen_t addrlen;
+     char *ptr;
+ 
+     /* create a listen socket for incoming connection attempts */
+     pmix_server_globals.listen_socket = socket(PF_UNIX, SOCK_STREAM, 0);
+     if (pmix_server_globals.listen_socket < 0) {
+-        printf("%s:%d socket() failed", __FILE__, __LINE__);
++        printf("%s:%d socket() failed\n", __FILE__, __LINE__);
+         return PMIX_ERROR;
+     }
+ 
+     addrlen = sizeof(struct sockaddr_un);
+     if (bind(pmix_server_globals.listen_socket, (struct sockaddr*)address, addrlen) < 0) {
+-        printf("%s:%d bind() failed", __FILE__, __LINE__);
++        printf("%s:%d bind() failed error:%s\n", __FILE__, __LINE__,
++                strerror(errno));
+         return PMIX_ERROR;
+     }
+     /* set the mode as required */
+@@ -95,18 +96,18 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
+ 
+     /* setup listen backlog to maximum allowed by kernel */
+     if (listen(pmix_server_globals.listen_socket, SOMAXCONN) < 0) {
+-        printf("%s:%d listen() failed", __FILE__, __LINE__);
++        printf("%s:%d listen() failed\n", __FILE__, __LINE__);
+         return PMIX_ERROR;
+     }
+ 
+     /* set socket up to be non-blocking, otherwise accept could block */
+     if ((flags = fcntl(pmix_server_globals.listen_socket, F_GETFL, 0)) < 0) {
+-        printf("%s:%d fcntl(F_GETFL) failed", __FILE__, __LINE__);
++        printf("%s:%d fcntl(F_GETFL) failed\n", __FILE__, __LINE__);
+         return PMIX_ERROR;
+     }
+     flags |= O_NONBLOCK;
+     if (fcntl(pmix_server_globals.listen_socket, F_SETFL, flags) < 0) {
+-        printf("%s:%d fcntl(F_SETFL) failed", __FILE__, __LINE__);
++        printf("%s:%d fcntl(F_SETFL) failed\n", __FILE__, __LINE__);
+         return PMIX_ERROR;
+     }
+ 
+diff --git a/opal/mca/pmix/pmix120/pmix/src/server/pmix_server_ops.h b/opal/mca/pmix/pmix120/pmix/src/server/pmix_server_ops.h
+index 99b636f..fb9b621 100644
+--- a/opal/mca/pmix/pmix120/pmix/src/server/pmix_server_ops.h
++++ b/opal/mca/pmix/pmix120/pmix/src/server/pmix_server_ops.h
+@@ -233,6 +233,8 @@ void pmix_server_check_notifications(pmix_regevents_info_t *reginfo,
+ 
+ void regevents_cbfunc (pmix_status_t status, void *cbdata);
+ 
++void pmix_server_execute_collective(int sd, short args, void *cbdata);
++
+ extern pmix_server_module_t pmix_host_server;
+ extern pmix_server_globals_t pmix_server_globals;
+ 
+diff --git a/opal/mca/pmix/pmix120/pmix/src/usock/usock_sendrecv.c b/opal/mca/pmix/pmix120/pmix/src/usock/usock_sendrecv.c
+index 0e4cd2e..f60fda0 100644
+--- a/opal/mca/pmix/pmix120/pmix/src/usock/usock_sendrecv.c
++++ b/opal/mca/pmix/pmix120/pmix/src/usock/usock_sendrecv.c
+@@ -46,6 +46,10 @@ static uint32_t current_tag = 1;  // 0 is reserved for system purposes
+ 
+ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
+ {
++    pmix_server_trkr_t *trk;
++    pmix_rank_info_t *rinfo;
++    pmix_trkr_caddy_t *tcd;
++
+     /* stop all events */
+     if (peer->recv_ev_active) {
+         event_del(&peer->recv_event);
+@@ -61,9 +65,42 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
+     }
+     CLOSE_THE_SOCKET(peer->sd);
+     if (pmix_globals.server) {
+-        /* if I am a server, then we need to
+-         * do some cleanup as the client has
+-         * left us */
++        /* if I am a server, then we need to ensure that
++         * we properly account for the loss of this client
++         * from any local collectives in which it was
++         * participating - note that the proc would not
++         * have been added to any collective tracker until
++         * after it successfully connected */
++        PMIX_LIST_FOREACH(trk, &pmix_server_globals.collectives, pmix_server_trkr_t) {
++            /* see if this proc is participating in this tracker */
++            PMIX_LIST_FOREACH(rinfo, &trk->ranks, pmix_rank_info_t) {
++                if (0 != strncmp(rinfo->nptr->nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN)) {
++                    continue;
++                }
++                if (rinfo->rank != peer->info->rank) {
++                    continue;
++                }
++                /* it is - adjust the count */
++                --trk->nlocal;
++                /* remove it from the list */
++                pmix_list_remove_item(&trk->ranks, &rinfo->super);
++                PMIX_RELEASE(rinfo);
++                /* check for completion */
++                if (pmix_list_get_size(&trk->local_cbs) == trk->nlocal) {
++                    /* complete, so now we need to process it
++                     * we don't want to block someone
++                     * here, so kick any completed trackers into a
++                     * new event for processing */
++                    PMIX_EXECUTE_COLLECTIVE(tcd, trk, pmix_server_execute_collective);
++                }
++            }
++        }
++         /* remove this proc from the list of ranks for this nspace */
++         pmix_list_remove_item(&(peer->info->nptr->server->ranks), &(peer->info->super));
++         PMIX_RELEASE(peer->info);
++         /* reduce the number of local procs */
++         --peer->info->nptr->server->nlocalprocs;
++         /* do some cleanup as the client has left us */
+          pmix_pointer_array_set_item(&pmix_server_globals.clients,
+                                      peer->index, NULL);
+          PMIX_RELEASE(peer);
+diff --git a/opal/mca/pmix/pmix120/pmix120.h b/opal/mca/pmix/pmix120/pmix120.h
+index 9569c45..4ec7d50 100644
+--- a/opal/mca/pmix/pmix120/pmix120.h
++++ b/opal/mca/pmix/pmix120/pmix120.h
+@@ -1,5 +1,7 @@
+ /*
+  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
++ * Copyright (c) 2016      Research Organization for Information Science
++ *                         and Technology (RIST). All rights reserved.
+  * $COPYRIGHT$
+  *
+  * Additional copyrights may follow
+@@ -174,6 +176,7 @@ OPAL_MODULE_DECLSPEC int pmix120_server_notify_error(int status,
+ /****  COMPONENT UTILITY FUNCTIONS  ****/
+ OPAL_MODULE_DECLSPEC pmix_status_t pmix120_convert_opalrc(int rc);
+ OPAL_MODULE_DECLSPEC int pmix120_convert_rc(pmix_status_t rc);
++OPAL_MODULE_DECLSPEC pmix_scope_t pmix120_convert_opalscope(opal_pmix_scope_t scope);
+ OPAL_MODULE_DECLSPEC void pmix120_value_load(pmix_value_t *v,
+                                            opal_value_t *kv);
+ OPAL_MODULE_DECLSPEC int pmix120_value_unload(opal_value_t *kv,
+diff --git a/opal/mca/pmix/pmix120/pmix120_client.c b/opal/mca/pmix/pmix120/pmix120_client.c
+index 8900ef2..4569f01 100644
+--- a/opal/mca/pmix/pmix120/pmix120_client.c
++++ b/opal/mca/pmix/pmix120/pmix120_client.c
+@@ -95,13 +95,10 @@ int pmix120_client_finalize(void)
+ 
+ int pmix120_initialized(void)
+ {
+-    pmix_status_t rc;
+-
+     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+                         "PMIx_client initialized");
+ 
+-    rc = PMIx_Initialized();
+-    return pmix120_convert_rc(rc);
++    return PMIx_Initialized();
+ }
+ 
+ int pmix120_abort(int flag, const char *msg,
+@@ -333,10 +330,11 @@ int pmix120_fencenb(opal_list_t *procs, int collect_data,
+ 
+ }
+ 
+-int pmix120_put(opal_pmix_scope_t scope,
++int pmix120_put(opal_pmix_scope_t opal_scope,
+               opal_value_t *val)
+ {
+     pmix_value_t kv;
++    pmix_scope_t pmix_scope = pmix120_convert_opalscope(opal_scope);
+     pmix_status_t rc;
+ 
+     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+@@ -345,7 +343,7 @@ int pmix120_put(opal_pmix_scope_t scope,
+     PMIX_VALUE_CONSTRUCT(&kv);
+     pmix120_value_load(&kv, val);
+ 
+-    rc = PMIx_Put(scope, val->key, &kv);
++    rc = PMIx_Put(pmix_scope, val->key, &kv);
+     PMIX_VALUE_DESTRUCT(&kv);
+     return pmix120_convert_rc(rc);
+ }
+diff --git a/opal/mca/pmix/pmix120/pmix_pmix120.c b/opal/mca/pmix/pmix120/pmix_pmix120.c
+index 7b37620..38176d1 100644
+--- a/opal/mca/pmix/pmix120/pmix_pmix120.c
++++ b/opal/mca/pmix/pmix120/pmix_pmix120.c
+@@ -1,7 +1,7 @@
+ /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+ /*
+  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+- * Copyright (c) 2014-2015 Research Organization for Information Science
++ * Copyright (c) 2014-2016 Research Organization for Information Science
+  *                         and Technology (RIST). All rights reserved.
+  * Copyright (c) 2014      Mellanox Technologies, Inc.
+  *                         All rights reserved.
+@@ -466,6 +466,20 @@ int pmix120_convert_rc(pmix_status_t rc)
+     }
+ }
+ 
++pmix_scope_t pmix120_convert_opalscope(opal_pmix_scope_t scope) {
++    switch(scope) {
++    case OPAL_PMIX_LOCAL:
++        return PMIX_LOCAL;
++    case OPAL_PMIX_REMOTE:
++        return PMIX_REMOTE;
++    case OPAL_PMIX_GLOBAL:
++        return PMIX_GLOBAL;
++    default:
++        return PMIX_SCOPE_UNDEF;
++    }
++}
++
++
+ void pmix120_value_load(pmix_value_t *v,
+                       opal_value_t *kv)
+ {
+diff --git a/orte/mca/state/base/state_base_fns.c b/orte/mca/state/base/state_base_fns.c
+index ee82b79..184ef56 100644
+--- a/orte/mca/state/base/state_base_fns.c
++++ b/orte/mca/state/base/state_base_fns.c
+@@ -523,6 +523,8 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
+         ORTE_FLAG_UNSET(pdata, ORTE_PROC_FLAG_ALIVE);
+         pdata->state = state;
+         if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
++            /* tell the PMIx subsystem to cleanup this client */
++            opal_pmix.server_deregister_client(proc);
+             /* Clean up the session directory as if we were the process
+              * itself.  This covers the case where the process died abnormally
+              * and didn't cleanup its own session directory.
+diff --git a/orte/orted/pmix/pmix_server.c b/orte/orted/pmix/pmix_server.c
+index ecd800d..95a0829 100644
+--- a/orte/orted/pmix/pmix_server.c
++++ b/orte/orted/pmix/pmix_server.c
+@@ -246,6 +246,9 @@ int pmix_server_init(void)
+     if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server, &info))) {
+         ORTE_ERROR_LOG(rc);
+         /* memory cleanup will occur when finalize is called */
++        orte_show_help("help-orterun.txt", "orterun:pmix-failed", true,
++                       orte_process_info.proc_session_dir);
++        return rc;
+     }
+     OPAL_LIST_DESTRUCT(&info);
+ 
+diff --git a/orte/orted/pmix/pmix_server_pub.c b/orte/orted/pmix/pmix_server_pub.c
+index 498760e..6ec4656 100644
+--- a/orte/orted/pmix/pmix_server_pub.c
++++ b/orte/orted/pmix/pmix_server_pub.c
+@@ -16,7 +16,7 @@
+  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+  * Copyright (c) 2014      Mellanox Technologies, Inc.
+  *                         All rights reserved.
+- * Copyright (c) 2014      Research Organization for Information Science
++ * Copyright (c) 2014-2016 Research Organization for Information Science
+  *                         and Technology (RIST). All rights reserved.
+  * $COPYRIGHT$
+  *
+@@ -121,13 +121,13 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
+     pset = false;
+     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
+         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
+-            range = iptr->data.integer;
++            range = (opal_pmix_data_range_t)iptr->data.integer;
+             if (pset) {
+                 break;
+             }
+             rset = true;
+         } else if (0 == strcmp(iptr->key, OPAL_PMIX_PERSISTENCE)) {
+-            persist = iptr->data.integer;
++            persist = (opal_pmix_persistence_t)iptr->data.integer;
+             if (rset) {
+                 break;
+             }
+@@ -214,7 +214,7 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
+     /* no help for it - need to search for range */
+     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
+         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
+-            range = iptr->data.integer;
++            range = (opal_pmix_data_range_t)iptr->data.integer;
+             break;
+         }
+     }
+@@ -304,7 +304,7 @@ int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
+     /* no help for it - need to search for range */
+     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
+         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
+-            range = iptr->data.integer;
++            range = (opal_pmix_data_range_t)iptr->data.integer;
+             break;
+         }
+     }
+diff --git a/orte/test/system/Makefile b/orte/test/system/Makefile
+index bc5a1a6..2d5d69e 100644
+--- a/orte/test/system/Makefile
++++ b/orte/test/system/Makefile
+@@ -1,4 +1,7 @@
+-PROGS = no_op sigusr_trap spin orte_nodename orte_spawn orte_loop_spawn orte_loop_child orte_abort get_limits orte_tool orte_no_op binom oob_stress iof_stress iof_delay radix opal_interface orte_spin segfault orte_exit test-time event-threads psm_keygen regex orte_errors evpri-test opal-evpri-test evpri-test2 mapper reducer opal_hotel orte_dfs
++PROGS = no_op sigusr_trap spin orte_nodename orte_spawn orte_loop_spawn orte_loop_child orte_abort get_limits \
++        orte_tool orte_no_op binom oob_stress iof_stress iof_delay radix opal_interface orte_spin segfault \
++        orte_exit test-time event-threads psm_keygen regex orte_errors evpri-test opal-evpri-test evpri-test2 \
++        mapper reducer opal_hotel orte_dfs ulfm
+ 
+ all: $(PROGS)
+ 
