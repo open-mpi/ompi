@@ -226,7 +226,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Datatype_getHIndexed(
     for(i = 0; i < count; i++)
         cDisps[i] = jDisps[i];
 
-    int rc = MPI_Type_hindexed(count, cBlockLengths, cDisps,
+    int rc = MPI_Type_create_hindexed(count, cBlockLengths, cDisps,
                                (MPI_Datatype)oldType, &type);
 
     ompi_java_exceptionCheck(env, rc);
