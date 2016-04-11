@@ -181,6 +181,7 @@ static int btl_openib_component_open(void)
 
     /* initialize state */
     mca_btl_openib_component.ib_num_btls = 0;
+    mca_btl_openib_component.num_default_gid_btls = 0;
     mca_btl_openib_component.openib_btls = NULL;
     OBJ_CONSTRUCT(&mca_btl_openib_component.devices, opal_pointer_array_t);
     mca_btl_openib_component.devices_count = 0;
@@ -687,11 +688,15 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
                  ibv_get_device_name(device->ib_dev), port_num, subnet_id));
 #endif
 
-    if(mca_btl_openib_component.ib_num_btls > 0 &&
+    if(mca_btl_openib_component.num_default_gid_btls > 0 &&
             IB_DEFAULT_GID_PREFIX == subnet_id &&
             mca_btl_openib_component.warn_default_gid_prefix) {
         opal_show_help("help-mpi-btl-openib.txt", "default subnet prefix",
                 true, opal_process_info.nodename);
+    }
+
+    if (IB_DEFAULT_GID_PREFIX == subnet_id) {
+        mca_btl_openib_component.num_default_gid_btls++;
     }
 
     lmc = (1 << ib_port_attr->lmc);
