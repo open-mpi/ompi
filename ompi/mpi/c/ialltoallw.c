@@ -85,6 +85,12 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
                                           FUNC_NAME);
         }
 
+        if (MPI_IN_PLACE == sendbuf) {
+            sendcounts = recvcounts;
+            sdispls    = rdispls;
+            sendtypes  = recvtypes;
+        }
+
         if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
             (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
             (MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
@@ -99,10 +105,8 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for (i = 0; i < size; ++i) {
-            if (MPI_IN_PLACE != sendbuf) {
-                OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
-                OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-            }
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
+            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
             OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtypes[i], recvcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
