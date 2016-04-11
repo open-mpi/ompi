@@ -18,7 +18,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -317,6 +317,7 @@ struct mca_btl_openib_component_t {
 #if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
     bool rroce_enable;
 #endif
+    unsigned int num_default_gid_btls; /* numbers of btl in the default subnet */
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OPAL_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
