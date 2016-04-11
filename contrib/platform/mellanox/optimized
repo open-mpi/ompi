@@ -6,6 +6,7 @@ with_devel_headers=yes
 enable_oshmem=yes
 enable_oshmem_fortran=yes
 disable_wrapper_rpath=yes
+enable_openib_rdmacm_ibaddr=yes
 
 mellanox_autodetect=${mellanox_autodetect:="no"}
 mellanox_debug=${mellanox_debug:="no"}
