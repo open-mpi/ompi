@@ -419,7 +419,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        strncpy( (PDATA)->super.name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );             \
+        strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );                   \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType, FLAGS ) \
@@ -435,7 +435,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        strncpy( (PDATA)->super.name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );           \
+        strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );                 \
     } while(0)
 
 #define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)                        \
