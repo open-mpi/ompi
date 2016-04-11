@@ -15,6 +15,8 @@
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -55,6 +57,17 @@
 #endif
 
 #include <fcntl.h>
+
+/*
+ * Note that some OS's (e.g., NetBSD and Solaris) have statfs(), but
+ * no struct statfs (!).  So check to make sure we have struct statfs
+ * before allowing the use of statfs().
+ */
+#if defined(HAVE_STATFS) && (defined(HAVE_STRUCT_STATFS_F_FSTYPENAME) || \
+                             defined(HAVE_STRUCT_STATFS_F_TYPE))
+#define USE_STATFS 1
+#endif
+
 
 /*
  * Local functions
@@ -220,12 +233,15 @@ static void mca_mpool_hugepage_find_hugepages (void) {
         } while (tok);
 
         if (!tok) {
-#if HAVE_STATFS
+#if defined(USE_STATFS)
             struct statfs info;
 
             statfs (path, &info);
-            page_size = info.f_bsize;
+#elif defined(HAVE_STATVFS)
+            struct statvfs info;
+            statvfs (path, &info);
 #endif
+            page_size = info.f_bsize;
         } else {
             (void) sscanf (tok, "pagesize=%lu", &page_size);
         }
