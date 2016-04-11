@@ -105,8 +105,8 @@ ompi_predefined_datatype_t ompi_mpi_packed =         OMPI_DATATYPE_INIT_PREDEFIN
 /*
  * C++ / C99 datatypes
  */
-ompi_predefined_datatype_t ompi_mpi_c_bool = OMPI_DATATYPE_INIT_PREDEFINED (BOOL, OMPI_DATATYPE_FLAG_DATA_C);
-ompi_predefined_datatype_t ompi_mpi_cxx_bool =       OMPI_DATATYPE_INIT_PREDEFINED (BOOL, OMPI_DATATYPE_FLAG_DATA_CPP);
+ompi_predefined_datatype_t ompi_mpi_c_bool =         OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (BOOL, C_BOOL, OMPI_DATATYPE_FLAG_DATA_C);
+ompi_predefined_datatype_t ompi_mpi_cxx_bool =       OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (BOOL, CXX_BOOL, OMPI_DATATYPE_FLAG_DATA_CPP);
 
 /*
  * Complex datatypes for C (base types), C++, and fortran
@@ -121,9 +121,9 @@ ompi_predefined_datatype_t ompi_mpi_c_long_double_complex = OMPI_DATATYPE_INIT_U
 #endif  /* HAVE_LONG_DOUBLE */
 
 /* The C++ complex datatypes are the same as the C datatypes */
-ompi_predefined_datatype_t ompi_mpi_cxx_cplex =      OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, C_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
-ompi_predefined_datatype_t ompi_mpi_cxx_dblcplex =   OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_DOUBLE_COMPLEX, C_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
-ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex =  OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_LONG_DOUBLE_COMPLEX, C_LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+ompi_predefined_datatype_t ompi_mpi_cxx_cplex =      OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, CXX_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+ompi_predefined_datatype_t ompi_mpi_cxx_dblcplex =   OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_DOUBLE_COMPLEX, CXX_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex =  OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_LONG_DOUBLE_COMPLEX, CXX_LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 
 #if OMPI_HAVE_FORTRAN_COMPLEX
 ompi_predefined_datatype_t ompi_mpi_cplex =          OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (OMPI_KIND_FORTRAN_COMPLEX, COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
