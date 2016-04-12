@@ -88,7 +88,9 @@ AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
 AC_DEFUN([OPAL_CHECK_SYNC_BUILTINS], [
   AC_MSG_CHECKING([for __sync builtin atomics])
 
-  AC_TRY_LINK([], [__sync_synchronize()],
+  AC_TRY_LINK([long tmp;], [__sync_synchronize();
+__sync_bool_compare_and_swap(&tmp, 0, 1);
+__sync_add_and_fetch(&tmp, 1);],
     [AC_MSG_RESULT([yes])
      $1],
     [AC_MSG_RESULT([no])
