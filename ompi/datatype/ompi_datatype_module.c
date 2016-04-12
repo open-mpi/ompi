@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,12 +74,12 @@ ompi_predefined_datatype_t ompi_mpi_lb =             OMPI_DATATYPE_INIT_PREDEFIN
 ompi_predefined_datatype_t ompi_mpi_ub =             OMPI_DATATYPE_INIT_PREDEFINED (UB, 0);
 ompi_predefined_datatype_t ompi_mpi_char =           OMPI_DATATYPE_INIT_PREDEFINED (CHAR, OMPI_DATATYPE_FLAG_DATA_C);
 ompi_predefined_datatype_t ompi_mpi_signed_char =    OMPI_DATATYPE_INIT_PREDEFINED (SIGNED_CHAR, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
-ompi_predefined_datatype_t ompi_mpi_unsigned_char =  OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_CHAR, OMPI_DATATYPE_FLAG_DATA_C);
+ompi_predefined_datatype_t ompi_mpi_unsigned_char =  OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_CHAR, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_byte =           OMPI_DATATYPE_INIT_PREDEFINED (BYTE, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_short =          OMPI_DATATYPE_INIT_PREDEFINED (SHORT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_unsigned_short = OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_SHORT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_int =            OMPI_DATATYPE_INIT_PREDEFINED (INT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
-ompi_predefined_datatype_t ompi_mpi_unsigned =       OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_INT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
+ompi_predefined_datatype_t ompi_mpi_unsigned =       OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_long =           OMPI_DATATYPE_INIT_PREDEFINED (LONG, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_unsigned_long =  OMPI_DATATYPE_INIT_PREDEFINED (UNSIGNED_LONG, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
 #if HAVE_LONG_LONG
@@ -105,8 +106,8 @@ ompi_predefined_datatype_t ompi_mpi_packed =         OMPI_DATATYPE_INIT_PREDEFIN
 /*
  * C++ / C99 datatypes
  */
-ompi_predefined_datatype_t ompi_mpi_c_bool = OMPI_DATATYPE_INIT_PREDEFINED (BOOL, OMPI_DATATYPE_FLAG_DATA_C);
-ompi_predefined_datatype_t ompi_mpi_cxx_bool =       OMPI_DATATYPE_INIT_PREDEFINED (BOOL, OMPI_DATATYPE_FLAG_DATA_CPP);
+ompi_predefined_datatype_t ompi_mpi_c_bool =         OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (BOOL, C_BOOL, OMPI_DATATYPE_FLAG_DATA_C);
+ompi_predefined_datatype_t ompi_mpi_cxx_bool =       OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (BOOL, CXX_BOOL, OMPI_DATATYPE_FLAG_DATA_CPP);
 
 /*
  * Complex datatypes for C (base types), C++, and fortran
@@ -121,9 +122,9 @@ ompi_predefined_datatype_t ompi_mpi_c_long_double_complex = OMPI_DATATYPE_INIT_U
 #endif  /* HAVE_LONG_DOUBLE */
 
 /* The C++ complex datatypes are the same as the C datatypes */
-ompi_predefined_datatype_t ompi_mpi_cxx_cplex =      OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, C_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
-ompi_predefined_datatype_t ompi_mpi_cxx_dblcplex =   OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_DOUBLE_COMPLEX, C_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
-ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex =  OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_LONG_DOUBLE_COMPLEX, C_LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+ompi_predefined_datatype_t ompi_mpi_cxx_cplex =      OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, CXX_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+ompi_predefined_datatype_t ompi_mpi_cxx_dblcplex =   OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_DOUBLE_COMPLEX, CXX_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex =  OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_LONG_DOUBLE_COMPLEX, CXX_LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 
 #if OMPI_HAVE_FORTRAN_COMPLEX
 ompi_predefined_datatype_t ompi_mpi_cplex =          OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (OMPI_KIND_FORTRAN_COMPLEX, COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
@@ -419,7 +420,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table;
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        strncpy( (PDATA)->super.name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );             \
+        strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );                   \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType, FLAGS ) \
@@ -435,7 +436,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table;
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        strncpy( (PDATA)->super.name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );           \
+        strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );                 \
     } while(0)
 
 #define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)                        \
