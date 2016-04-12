@@ -2482,6 +2482,31 @@ end subroutine PMPI_Get_elements
 end interface
 
 
+interface MPI_Get_elements_x
+
+subroutine MPI_Get_elements_x(status, datatype, count, ierror)
+  include 'mpif-config.h'
+  integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: count
+  integer, intent(out) :: ierror
+end subroutine MPI_Get_elements_x
+
+end interface
+
+interface PMPI_Get_elements_x
+
+subroutine PMPI_Get_elements_x(status, datatype, count, ierror)
+  include 'mpif-config.h'
+  integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: count
+  integer, intent(out) :: ierror
+end subroutine PMPI_Get_elements_x
+
+end interface
+
+
 interface MPI_Get_library_version
 
 subroutine MPI_Get_library_version(version, resultlen, ierror)
@@ -6125,6 +6150,31 @@ end subroutine PMPI_Status_set_elements
 end interface
 
 
+interface MPI_Status_set_elements_x
+
+subroutine MPI_Status_set_elements_x(status, datatype, count, ierror)
+  include 'mpif-config.h'
+  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(in) :: count
+  integer, intent(out) :: ierror
+end subroutine MPI_Status_set_elements_x
+
+end interface
+
+interface PMPI_Status_set_elements_x
+
+subroutine PMPI_Status_set_elements_x(status, datatype, count, ierror)
+  include 'mpif-config.h'
+  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(in) :: count
+  integer, intent(out) :: ierror
+end subroutine PMPI_Status_set_elements_x
+
+end interface
+
+
 interface MPI_Test
 
 subroutine MPI_Test(request, flag, status, ierror)
@@ -6888,6 +6938,31 @@ end subroutine PMPI_Type_get_extent
 end interface
 
 
+interface MPI_Type_get_extent_x
+
+subroutine MPI_Type_get_extent_x(type, lb, extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: extent
+  integer, intent(out) :: ierror
+end subroutine MPI_Type_get_extent_x
+
+end interface
+
+interface PMPI_Type_get_extent_x
+
+subroutine PMPI_Type_get_extent_x(type, lb, extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: extent
+  integer, intent(out) :: ierror
+end subroutine PMPI_Type_get_extent_x
+
+end interface
+
+
 interface MPI_Type_get_name
 
 subroutine MPI_Type_get_name(type, type_name, resultlen, ierror)
@@ -6932,6 +7007,31 @@ subroutine PMPI_Type_get_true_extent(datatype, true_lb, true_extent, ierror)
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: true_extent
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_get_true_extent
+
+end interface
+
+
+interface MPI_Type_get_true_extent_x
+
+subroutine MPI_Type_get_true_extent_x(datatype, true_lb, true_extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_extent
+  integer, intent(out) :: ierror
+end subroutine MPI_Type_get_true_extent_x
+
+end interface
+
+interface PMPI_Type_get_true_extent_x
+
+subroutine PMPI_Type_get_true_extent_x(datatype, true_lb, true_extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_extent
+  integer, intent(out) :: ierror
+end subroutine PMPI_Type_get_true_extent_x
 
 end interface
 
@@ -7130,6 +7230,29 @@ subroutine PMPI_Type_size(type, size, ierror)
   integer, intent(out) :: size
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_size
+
+end interface
+
+
+interface MPI_Type_size_x
+
+subroutine MPI_Type_size_x(type, size, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: size
+  integer, intent(out) :: ierror
+end subroutine MPI_Type_size_x
+
+end interface
+
+interface PMPI_Type_size_x
+
+subroutine PMPI_Type_size_x(type, size, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: size
+  integer, intent(out) :: ierror
+end subroutine PMPI_Type_size_x
 
 end interface
 
