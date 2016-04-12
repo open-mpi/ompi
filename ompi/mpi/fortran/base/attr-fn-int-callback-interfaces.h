@@ -49,6 +49,17 @@ interface
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+  subroutine MPI_COMM_DUP_FN(oldcomm, comm_keyval, extra_state, attribute_val_in, &
+                             attribute_val_out, flag, ierr )
+     implicit none
+     include 'mpif-config.h'
+     integer :: oldcomm
+     integer :: comm_keyval
+     integer(kind=MPI_ADDRESS_KIND) :: extra_state, attribute_val_in, attribute_val_out
+     logical :: flag
+     integer :: ierr
+  end subroutine MPI_COMM_DUP_FN
+
   subroutine MPI_COMM_NULL_COPY_FN( comm, comm_keyval, extra_state, &
                                     attribute_val_in, attribute_val_out, &
                                     flag, ierr )
@@ -71,17 +82,6 @@ interface
      integer :: ierr
   end subroutine MPI_COMM_NULL_DELETE_FN
 
-  subroutine MPI_COMM_DUP_FN(oldcomm, comm_keyval, extra_state, attribute_val_in, &
-                             attribute_val_out, flag, ierr )
-     implicit none
-     include 'mpif-config.h'
-     integer :: oldcomm
-     integer :: comm_keyval
-     integer(kind=MPI_ADDRESS_KIND) :: extra_state, attribute_val_in, attribute_val_out
-     logical :: flag
-     integer :: ierr
-  end subroutine MPI_COMM_DUP_FN
-     
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   subroutine MPI_TYPE_DUP_FN( oldtype, type_keyval, extra_state, &
