@@ -21,6 +21,15 @@ interface
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+  subroutine MPI_DUP_FN( comm, comm_keyval, extra_state, &
+                         attribute_val_in, attribute_val_out, &
+                         flag, ierr )
+     implicit none
+     integer :: comm, comm_keyval, extra_state
+     integer :: attribute_val_in, attribute_val_out, ierr
+     logical :: flag
+  end subroutine MPI_DUP_FN
+
   subroutine MPI_NULL_COPY_FN( comm, comm_keyval, extra_state, &
                                attribute_val_in, attribute_val_out, &
                                flag, ierr )
