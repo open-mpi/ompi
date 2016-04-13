@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -25,7 +25,7 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-void shmem_clear_lock(long *lock)
+void shmem_clear_lock(volatile long *lock)
 {
-    _shmem_clear_lock(lock, sizeof(long));
+    _shmem_clear_lock((void *)lock, sizeof(long));
 }

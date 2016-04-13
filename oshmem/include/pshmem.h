@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -208,9 +208,9 @@ OSHMEM_DECLSPEC void pshmem_longlong_inc(long long *target, int pe);
 /*
  * Lock functions
  */
-OSHMEM_DECLSPEC void pshmem_set_lock(long *lock);
-OSHMEM_DECLSPEC void pshmem_clear_lock(long *lock);
-OSHMEM_DECLSPEC int pshmem_test_lock(long *lock);
+OSHMEM_DECLSPEC void pshmem_set_lock(volatile long *lock);
+OSHMEM_DECLSPEC void pshmem_clear_lock(volatile long *lock);
+OSHMEM_DECLSPEC int pshmem_test_lock(volatile long *lock);
 
 /*
  * P2P sync routines
