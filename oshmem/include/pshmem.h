@@ -215,17 +215,17 @@ OSHMEM_DECLSPEC int pshmem_test_lock(long *lock);
 /*
  * P2P sync routines
  */
-OSHMEM_DECLSPEC  void pshmem_short_wait(short *addr, short value);
-OSHMEM_DECLSPEC  void pshmem_int_wait(int *addr, int value);
-OSHMEM_DECLSPEC  void pshmem_long_wait(long *addr, long value);
-OSHMEM_DECLSPEC  void pshmem_longlong_wait(long long *addr, long long value);
-OSHMEM_DECLSPEC  void pshmem_wait(long *addr, long value);
+OSHMEM_DECLSPEC  void pshmem_short_wait(volatile short *addr, short value);
+OSHMEM_DECLSPEC  void pshmem_int_wait(volatile int *addr, int value);
+OSHMEM_DECLSPEC  void pshmem_long_wait(volatile long *addr, long value);
+OSHMEM_DECLSPEC  void pshmem_longlong_wait(volatile long long *addr, long long value);
+OSHMEM_DECLSPEC  void pshmem_wait(volatile long *addr, long value);
 
-OSHMEM_DECLSPEC  void pshmem_short_wait_until(short *addr, int cmp, short value);
-OSHMEM_DECLSPEC  void pshmem_int_wait_until(int *addr, int cmp, int value);
-OSHMEM_DECLSPEC  void pshmem_long_wait_until(long *addr, int cmp, long value);
-OSHMEM_DECLSPEC  void pshmem_longlong_wait_until(long long *addr, int cmp, long long value);
-OSHMEM_DECLSPEC  void pshmem_wait_until(long *addr, int cmp, long value);
+OSHMEM_DECLSPEC  void pshmem_short_wait_until(volatile short *addr, int cmp, short value);
+OSHMEM_DECLSPEC  void pshmem_int_wait_until(volatile int *addr, int cmp, int value);
+OSHMEM_DECLSPEC  void pshmem_long_wait_until(volatile long *addr, int cmp, long value);
+OSHMEM_DECLSPEC  void pshmem_longlong_wait_until(volatile long long *addr, int cmp, long long value);
+OSHMEM_DECLSPEC  void pshmem_wait_until(volatile long *addr, int cmp, long value);
 
 /*
  * Barrier sync routines
