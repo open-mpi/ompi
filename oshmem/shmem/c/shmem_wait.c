@@ -57,11 +57,11 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_WAIT(, long, SHMEM_LONG, shmem)
-SHMEM_TYPE_WAIT(_short, short, SHMEM_SHORT, shmem)
-SHMEM_TYPE_WAIT(_int, int, SHMEM_INT, shmem)
-SHMEM_TYPE_WAIT(_long, long, SHMEM_LONG, shmem)
-SHMEM_TYPE_WAIT(_longlong, long long, SHMEM_LLONG, shmem)
+SHMEM_TYPE_WAIT(, volatile long, SHMEM_LONG, shmem)
+SHMEM_TYPE_WAIT(_short, volatile short, SHMEM_SHORT, shmem)
+SHMEM_TYPE_WAIT(_int, volatile int, SHMEM_INT, shmem)
+SHMEM_TYPE_WAIT(_long, volatile long, SHMEM_LONG, shmem)
+SHMEM_TYPE_WAIT(_longlong, volatile long long, SHMEM_LLONG, shmem)
 SHMEM_TYPE_WAIT(_int32, int32_t, SHMEM_INT32_T, shmemx)
 SHMEM_TYPE_WAIT(_int64, int64_t, SHMEM_INT64_T, shmemx)
 
@@ -82,10 +82,10 @@ SHMEM_TYPE_WAIT(_int64, int64_t, SHMEM_INT64_T, shmemx)
         return ;                                                    \
     }
 
-SHMEM_TYPE_WAIT_UNTIL(, long, SHMEM_LONG, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_short, short, SHMEM_SHORT, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_int, int, SHMEM_INT, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_long, long, SHMEM_LONG, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_longlong, long long, SHMEM_LLONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(, volatile long, SHMEM_LONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_short, volatile short, SHMEM_SHORT, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_int, volatile int, SHMEM_INT, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_long, volatile long, SHMEM_LONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_longlong, volatile long long, SHMEM_LLONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_int32, int32_t, SHMEM_INT32_T, shmemx)
 SHMEM_TYPE_WAIT_UNTIL(_int64, int64_t, SHMEM_INT64_T, shmemx)

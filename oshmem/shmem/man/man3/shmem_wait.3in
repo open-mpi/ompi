@@ -35,27 +35,27 @@ C or C++:
 .Vb
 #include <mpp/shmem.h>
 
-void shmem_int_wait(int *var, int value);
+void shmem_int_wait(volatile int *var, int value);
 
-void shmem_int_wait_until(int *var, int cond, int value);
+void shmem_int_wait_until(volatile int *var, int cond, int value);
 
-void shmem_long_wait(long *var, long value);
+void shmem_long_wait(volatile long *var, long value);
 
-void shmem_long_wait_until(long *var, int cond, long value);
+void shmem_long_wait_until(volatile long *var, int cond, long value);
 
-void shmem_longlong_wait(long long *var, long long value);
+void shmem_longlong_wait(volatile long long *var, long long value);
 
-void shmem_longlong_wait_until(long long *var, int cond,
+void shmem_longlong_wait_until(volatile long long *var, int cond,
   long long value);
 
-void shmem_short_wait(short *var, short value);
+void shmem_short_wait(volatile short *var, short value);
 
-void shmem_short_wait_until(short *var, int cond,
+void shmem_short_wait_until(volatile short *var, int cond,
   short value);
 
-void shmem_wait(long *ivar, long cmp_value);
+void shmem_wait(volatile long *ivar, long cmp_value);
 
-void shmem_wait_until(long *ivar, int cmp, long value);
+void shmem_wait_until(volatile long *ivar, int cmp, long value);
 .Ve
 Fortran:
 .Vb
