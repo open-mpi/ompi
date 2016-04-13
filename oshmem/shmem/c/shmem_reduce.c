@@ -34,6 +34,69 @@ static bool __group_cache_enabled = true;
  */
 #define SHMEM_TYPE_REDUCE_OP(name, type_name, type, prefix)    \
     void prefix##type_name##_##name##_to_all( type *target,                     \
+                                        const type *source,                                 \
+                                        int nreduce,                                        \
+                                        int PE_start,                                       \
+                                        int logPE_stride,                                   \
+                                        int PE_size,                                        \
+                                        type *pWrk,                                         \
+                                        long *pSync )                                       \
+{                                                                                           \
+    int rc = OSHMEM_SUCCESS;                                                                \
+    oshmem_group_t*  group = NULL;                                                          \
+                                                                                            \
+    RUNTIME_CHECK_INIT();                                                                   \
+    RUNTIME_CHECK_ADDR(target);                                                             \
+    RUNTIME_CHECK_ADDR(source);                                                             \
+                                                                                            \
+    {                                                                                       \
+        /* Create group basing PE_start, logPE_stride and PE_size */                        \
+        if (!__group_cache_enabled)                                                         \
+        {                                                                                   \
+            group = oshmem_proc_group_create(PE_start, (1 << logPE_stride), PE_size);       \
+            if (!group)                                                                     \
+                rc = OSHMEM_ERROR;                                                          \
+        }                                                                                   \
+        else                                                                                \
+        {                                                                                   \
+            group = find_group_in_cache(PE_start,logPE_stride,PE_size);                     \
+            if (!group)                                                                     \
+            {                                                                               \
+                group = oshmem_proc_group_create(PE_start, (1 << logPE_stride), PE_size);   \
+                if (!group)                                                                 \
+                    rc = OSHMEM_ERROR;                                                      \
+                cache_group(group,PE_start,logPE_stride,PE_size);                           \
+            }                                                                               \
+        }                                                                                   \
+                                                                                            \
+        /* Collective operation call */                                                     \
+        if ( rc == OSHMEM_SUCCESS )                                                         \
+        {                                                                                   \
+        oshmem_op_t* op = oshmem_op_##name##type_name;                                      \
+            size_t size = nreduce * op->dt_size;                                            \
+                                                                                            \
+            /* Call collective reduce operation */                                          \
+            rc = group->g_scoll.scoll_reduce(                                               \
+                                group,                                                      \
+                                op,                                                         \
+                                (void*)target,                                              \
+                                (const void*)source,                                        \
+                                size,                                                       \
+                                pSync,                                                      \
+                                (void*)pWrk,                                                \
+                                SCOLL_DEFAULT_ALG );                                        \
+        }                                                                                   \
+                                                                                            \
+        if ( !__group_cache_enabled && (rc == OSHMEM_SUCCESS ) )                            \
+        {                                                                                   \
+            oshmem_proc_group_destroy(group);                                               \
+        }                                                                                   \
+    }                                                                                       \
+    RUNTIME_CHECK_RC(rc);                                                                   \
+}
+
+#define SHMEM_TYPE_REDUCE_OPX(name, type_name, type, prefix)    \
+    void prefix##type_name##_##name##_to_all( type *target,                     \
                                         type *source,                                       \
                                         int nreduce,                                        \
                                         int PE_start,                                       \
@@ -175,25 +238,25 @@ SHMEM_TYPE_REDUCE_OP(and, _short, short, shmem)
 SHMEM_TYPE_REDUCE_OP(and, _int, int, shmem)
 SHMEM_TYPE_REDUCE_OP(and, _long, long, shmem)
 SHMEM_TYPE_REDUCE_OP(and, _longlong, long long, shmem)
-SHMEM_TYPE_REDUCE_OP(and, _int16, int16_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(and, _int32, int32_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(and, _int64, int64_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(and, _int16, int16_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(and, _int32, int32_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(and, _int64, int64_t, shmemx)
 
 SHMEM_TYPE_REDUCE_OP(or, _short, short, shmem)
 SHMEM_TYPE_REDUCE_OP(or, _int, int, shmem)
 SHMEM_TYPE_REDUCE_OP(or, _long, long, shmem)
 SHMEM_TYPE_REDUCE_OP(or, _longlong, long long, shmem)
-SHMEM_TYPE_REDUCE_OP(or, _int16, int16_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(or, _int32, int32_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(or, _int64, int64_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(or, _int16, int16_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(or, _int32, int32_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(or, _int64, int64_t, shmemx)
 
 SHMEM_TYPE_REDUCE_OP(xor, _short, short, shmem)
 SHMEM_TYPE_REDUCE_OP(xor, _int, int, shmem)
 SHMEM_TYPE_REDUCE_OP(xor, _long, long, shmem)
 SHMEM_TYPE_REDUCE_OP(xor, _longlong, long long, shmem)
-SHMEM_TYPE_REDUCE_OP(xor, _int16, int16_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(xor, _int32, int32_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(xor, _int64, int64_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(xor, _int16, int16_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(xor, _int32, int32_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(xor, _int64, int64_t, shmemx)
 
 SHMEM_TYPE_REDUCE_OP(max, _short, short, shmem)
 SHMEM_TYPE_REDUCE_OP(max, _int, int, shmem)
@@ -202,9 +265,9 @@ SHMEM_TYPE_REDUCE_OP(max, _longlong, long long, shmem)
 SHMEM_TYPE_REDUCE_OP(max, _float, float, shmem)
 SHMEM_TYPE_REDUCE_OP(max, _double, double, shmem)
 SHMEM_TYPE_REDUCE_OP(max, _longdouble, long double, shmem)
-SHMEM_TYPE_REDUCE_OP(max, _int16, int16_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(max, _int32, int32_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(max, _int64, int64_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(max, _int16, int16_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(max, _int32, int32_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(max, _int64, int64_t, shmemx)
 
 SHMEM_TYPE_REDUCE_OP(min, _short, short, shmem)
 SHMEM_TYPE_REDUCE_OP(min, _int, int, shmem)
@@ -213,9 +276,9 @@ SHMEM_TYPE_REDUCE_OP(min, _longlong, long long, shmem)
 SHMEM_TYPE_REDUCE_OP(min, _float, float, shmem)
 SHMEM_TYPE_REDUCE_OP(min, _double, double, shmem)
 SHMEM_TYPE_REDUCE_OP(min, _longdouble, long double, shmem)
-SHMEM_TYPE_REDUCE_OP(min, _int16, int16_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(min, _int32, int32_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(min, _int64, int64_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(min, _int16, int16_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(min, _int32, int32_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(min, _int64, int64_t, shmemx)
 
 SHMEM_TYPE_REDUCE_OP(sum, _short, short, shmem)
 SHMEM_TYPE_REDUCE_OP(sum, _int, int, shmem)
@@ -226,9 +289,9 @@ SHMEM_TYPE_REDUCE_OP(sum, _double, double, shmem)
 SHMEM_TYPE_REDUCE_OP(sum, _longdouble, long double, shmem)
 SHMEM_TYPE_REDUCE_OP(sum, _complexf, float complex, shmem)
 SHMEM_TYPE_REDUCE_OP(sum, _complexd, double complex, shmem)
-SHMEM_TYPE_REDUCE_OP(sum, _int16, int16_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(sum, _int32, int32_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(sum, _int64, int64_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(sum, _int16, int16_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(sum, _int32, int32_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(sum, _int64, int64_t, shmemx)
 
 SHMEM_TYPE_REDUCE_OP(prod, _short, short, shmem)
 SHMEM_TYPE_REDUCE_OP(prod, _int, int, shmem)
@@ -239,6 +302,6 @@ SHMEM_TYPE_REDUCE_OP(prod, _double, double, shmem)
 SHMEM_TYPE_REDUCE_OP(prod, _longdouble, long double, shmem)
 SHMEM_TYPE_REDUCE_OP(prod, _complexf, float complex, shmem)
 SHMEM_TYPE_REDUCE_OP(prod, _complexd, double complex, shmem)
-SHMEM_TYPE_REDUCE_OP(prod, _int16, int16_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(prod, _int32, int32_t, shmemx)
-SHMEM_TYPE_REDUCE_OP(prod, _int64, int64_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(prod, _int16, int16_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(prod, _int32, int32_t, shmemx)
+SHMEM_TYPE_REDUCE_OPX(prod, _int64, int64_t, shmemx)

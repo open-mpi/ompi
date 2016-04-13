@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -22,6 +22,28 @@
  * Retrieves the value at the symmetric address addr of the remote PE pe.
  */
 #define SHMEM_TYPE_G(type_name, type, prefix)    \
+    type prefix##type_name##_g(const type *addr, int pe) \
+    {                                                               \
+        int rc = OSHMEM_SUCCESS;                                    \
+        size_t size = 0;                                            \
+        type out_value;                                             \
+                                                                    \
+        RUNTIME_CHECK_INIT();                                       \
+        RUNTIME_CHECK_PE(pe);                                       \
+        RUNTIME_CHECK_ADDR(addr);                                   \
+                                                                    \
+        size = sizeof(out_value);                                   \
+        rc = MCA_SPML_CALL(get(                                     \
+            (void*)addr,                                            \
+            size,                                                   \
+            (void*)&out_value,                                      \
+            pe));                                                   \
+        RUNTIME_CHECK_RC(rc);                                       \
+                                                                    \
+        return out_value;                                           \
+    }
+
+#define SHMEM_TYPE_GX(type_name, type, prefix)    \
     type prefix##type_name##_g(type *addr, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
@@ -67,6 +89,6 @@ SHMEM_TYPE_G(_longlong, long long, shmem)
 SHMEM_TYPE_G(_float, float, shmem)
 SHMEM_TYPE_G(_double, double, shmem)
 SHMEM_TYPE_G(_longdouble, long double, shmem)
-SHMEM_TYPE_G(_int16, int16_t, shmemx)
-SHMEM_TYPE_G(_int32, int32_t, shmemx)
-SHMEM_TYPE_G(_int64, int64_t, shmemx)
+SHMEM_TYPE_GX(_int16, int16_t, shmemx)
+SHMEM_TYPE_GX(_int32, int32_t, shmemx)
+SHMEM_TYPE_GX(_int64, int64_t, shmemx)
