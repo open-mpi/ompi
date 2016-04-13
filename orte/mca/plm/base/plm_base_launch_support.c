@@ -118,10 +118,24 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     orte_proc_t *dmn1;
     int i;
 
-    /* if we got back topology info from the first node, then we use
-     * it as the "standard" for all other nodes unless they sent
-     * back their own topology */
-    if (1 < orte_process_info.num_procs) {
+    /* if we are not launching, then we just assume that all
+     * daemons share our topology */
+    if (orte_do_not_launch) {
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        t = node->topology;
+        for (i=1; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            if (NULL == node->topology) {
+                node->topology = t;
+            }
+        }
+    } else if (1 < orte_process_info.num_procs) {
+        /* if we got back topology info from the first node, then we use
+         * it as the "standard" for all other nodes unless they sent
+         * back their own topology */
+
         /* find daemon.vpid = 1 */
         jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
         if (NULL == (dmn1 = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 1))) {
@@ -143,17 +157,6 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setting topo to that from node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
-        for (i=1; i < orte_node_pool->size; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                continue;
-            }
-            if (NULL == node->topology) {
-                node->topology = t;
-            }
-        }
-    } else if (orte_do_not_launch) {
-        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-        t = node->topology;
         for (i=1; i < orte_node_pool->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
