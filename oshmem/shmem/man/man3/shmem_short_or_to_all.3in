@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" Copyright (c) 2015      University of Houston.  All rights reserved.
-.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" Copyright (c) 2014-2016 Mellanox Technologies, Inc.
 .\" $COPYRIGHT$
 .de Vb
 .ft CW
@@ -27,19 +27,19 @@ C or C++:
 .Vb
 #include <mpp/shmem.h>
 
-void shmem_int_or_to_all(int *target, int *source,
+void shmem_int_or_to_all(int *target, const int *source,
   int nreduce, int PE_start, int logPE_stride, int PE_size,
   int *pWrk, long *pSync);
 
-void shmem_long_or_to_all(long *target, long *source,
+void shmem_long_or_to_all(long *target, const long *source,
   int nreduce, int PE_start, int logPE_stride, int PE_size,
   long *pWrk, long *pSync);
 
 void shmem_longlong_or_to_all(long long *target,
-  long long *source, int nreduce, int PE_start, int logPE_stride,
+  const long long *source, int nreduce, int PE_start, int logPE_stride,
   int PE_size, long long *pWrk, long *pSync);
 
-void shmem_short_or_to_all(short *target, short *source,
+void shmem_short_or_to_all(short *target, const short *source,
   int nreduce, int PE_start, int logPE_stride, int PE_size,
   short *pWrk, long *pSync);
 .Ve
