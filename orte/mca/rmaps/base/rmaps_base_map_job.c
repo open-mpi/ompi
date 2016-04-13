@@ -136,8 +136,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: nprocs %s",
                             ORTE_VPID_PRINT(nprocs));
-        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) &&
-            ORTE_MAPPING_BYNODE != ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps mapping given - using default");
             map->mapping = orte_rmaps_base.mapping;
@@ -292,8 +291,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                                         "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 }
-            } else if (ORTE_MAPPING_BYNODE == mpol || ORTE_MAPPING_BYBOARD == mpol) {
-                jdata->map->binding = OPAL_BIND_TO_NONE;
             } else if (nprocs <= 2) {
                 /* if nothing was specified, then we default to a policy
                  * based on number of procs and cpus_per_rank */
