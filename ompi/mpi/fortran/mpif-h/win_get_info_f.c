@@ -19,8 +19,8 @@
 #pragma weak pmpi_win_get_info_ = ompi_win_get_info_f
 #pragma weak pmpi_win_get_info__ = ompi_win_get_info_f
 
-#pragma weak PMPI_Win_create_f = ompi_win_get_info_f
-#pragma weak PMPI_Win_create_f08 = ompi_win_get_info_f
+#pragma weak PMPI_Win_get_info_f = ompi_win_get_info_f
+#pragma weak PMPI_Win_get_info_f08 = ompi_win_get_info_f
 #else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_GET_INFO,
                            pmpi_win_get_info,
@@ -38,8 +38,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_GET_INFO,
 #pragma weak mpi_win_get_info_ = ompi_win_get_info_f
 #pragma weak mpi_win_get_info__ = ompi_win_get_info_f
 
-#pragma weak MPI_Win_create_f = ompi_win_get_info_f
-#pragma weak MPI_Win_create_f08 = ompi_win_get_info_f
+#pragma weak MPI_Win_get_info_f = ompi_win_get_info_f
+#pragma weak MPI_Win_get_info_f08 = ompi_win_get_info_f
 #else
 #if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_INFO,
