@@ -2562,39 +2562,6 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    /* If we are using ptmalloc2 and there are no posix threads
-       available, this will cause memory corruption.  Refuse to run.
-       Right now, ptmalloc2 is the only memory manager that we have on
-       OS's that support OpenFabrics that provide both FREE and MUNMAP
-       support, so the following test is [currently] good enough... */
-    value = opal_mem_hooks_support_level();
-
-    /* If we have a memory manager available, and
-       opal_leave_pinned==-1, then unless the user explicitly set
-       opal_leave_pinned_pipeline==0, then set opal_leave_pinned to 1.
-
-       We have a memory manager if we have both FREE and MUNMAP
-       support */
-    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
-        if (0 == opal_leave_pinned_pipeline &&
-            -1 == opal_leave_pinned) {
-            opal_leave_pinned = 1;
-        }
-    } else {
-        opal_leave_pinned = 0;
-        opal_leave_pinned_pipeline = 0;
-    }
-
-#if OPAL_CUDA_SUPPORT
-    if (mca_btl_openib_component.cuda_want_gdr && (0 == opal_leave_pinned)) {
-        opal_show_help("help-mpi-btl-openib.txt",
-                       "CUDA_gdr_and_nopinned", true,
-                       opal_process_info.nodename);
-        goto no_btls;
-    }
-#endif /* OPAL_CUDA_SUPPORT */
-
     index = mca_base_var_find("ompi", "btl", "openib", "max_inline_data");
     if (index >= 0) {
         if (OPAL_SUCCESS == mca_base_var_get_value(index, NULL, &source, NULL)) {
@@ -2930,6 +2897,22 @@ btl_openib_component_init(int *num_btl_modules,
         opal_argv_free(mca_btl_openib_component.if_exclude_list);
         mca_btl_openib_component.if_exclude_list = NULL;
     }
+
+    /* If we are using ptmalloc2 and there are no posix threads
+       available, this will cause memory corruption.  Refuse to run.
+       Right now, ptmalloc2 is the only memory manager that we have on
+       OS's that support OpenFabrics that provide both FREE and MUNMAP
+       support, so the following test is [currently] good enough... */
+    value = opal_mem_hooks_support_level();
+
+#if OPAL_CUDA_SUPPORT
+   if (mca_btl_openib_component.cuda_want_gdr && (0 == opal_leave_pinned)) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "CUDA_gdr_and_nopinned", true,
+                       opal_process_info.nodename);
+        goto no_btls;
+    }
+#endif /* OPAL_CUDA_SUPPORT */
 
     mca_btl_openib_component.memory_registration_verbose = opal_output_open(NULL);
     opal_output_set_verbosity (mca_btl_openib_component.memory_registration_verbose,

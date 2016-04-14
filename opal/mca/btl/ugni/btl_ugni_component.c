@@ -331,26 +331,6 @@ btl_ugni_component_close(void)
     return OPAL_SUCCESS;
 }
 
-static void mca_btl_ugni_autoset_leave_pinned (void) {
-    if (MCA_BTL_UGNI_RCACHE_UDREG != mca_btl_ugni_component.rcache_type) {
-        int value = opal_mem_hooks_support_level();
-        if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-            ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
-            /* Set leave pinned to 1 if leave pinned pipeline is not set */
-            if (-1 == opal_leave_pinned) {
-                opal_leave_pinned = !opal_leave_pinned_pipeline;
-            }
-        } else {
-            opal_leave_pinned = 0;
-            opal_leave_pinned_pipeline = 0;
-        }
-    } else if (-1 == opal_leave_pinned) {
-        /* if udreg is in use we can set leave pinned without checking for the
-         * memory hooks. */
-        opal_leave_pinned = !opal_leave_pinned_pipeline;
-    }
-}
-
 static mca_btl_base_module_t **
 mca_btl_ugni_component_init (int *num_btl_modules,
                              bool enable_progress_threads,
@@ -408,8 +388,6 @@ mca_btl_ugni_component_init (int *num_btl_modules,
             mca_btl_ugni_component.smsg_page_size = mca_btl_ugni_ugni_page_size;
         }
     }
-
-    mca_btl_ugni_autoset_leave_pinned ();
 
     mca_btl_ugni_module.super.btl_rdma_pipeline_send_length = mca_btl_ugni_module.super.btl_eager_limit;
 

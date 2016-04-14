@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -79,6 +79,12 @@ BEGIN_C_DECLS
 typedef int (*opal_memory_base_component_process_fn_t)(void);
 
 /**
+ * Prototype for a function that is invoked when the memory base is
+ * trying to select a component. This funtionality is required.
+ */
+typedef int (*opal_memory_base_component_query_fn_t)(int *priority);
+
+/**
  * Prototype for a function that is invoked when Open MPI starts to
  * "care" about a specific memory region.  That is, Open MPI declares
  * that it wants to be notified if the memory mapping for this region
@@ -120,6 +126,11 @@ typedef void (*opal_memory_base_component_set_alignment_fn_t)(int use_memalign,
                                                               size_t memalign_threshold);
 
 /**
+ * Function to be called when initializing malloc hooks
+ */
+typedef void (*opal_memory_base_component_init_hook_fn_t)(void);
+
+/**
  * Structure for memory components.
  */
 typedef struct opal_memory_base_component_2_0_0_t {
@@ -127,6 +138,12 @@ typedef struct opal_memory_base_component_2_0_0_t {
     mca_base_component_t memoryc_version;
     /** MCA base data */
     mca_base_component_data_t memoryc_data;
+
+    opal_memory_base_component_query_fn_t memoryc_query;
+
+    /** This function will be called when the malloc hooks are
+     * initialized. It may be NULL if no hooks are needed. */
+    opal_memory_base_component_init_hook_fn_t memoryc_init_hook;
 
     /** Function to call when something has changed, as indicated by
         opal_memory_changed().  Will be ignored if the component does

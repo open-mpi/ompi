@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,20 +45,22 @@ static int empty_process(void)
     return OPAL_SUCCESS;
 }
 
+static int empty_query (int *priority)
+{
+    *priority = 0;
+    return OPAL_SUCCESS;
+}
 
 /*
  * Local variables
  */
 static opal_memory_base_component_2_0_0_t empty_component = {
-    /* Don't care about the version info */
-    { 0, },
-    /* Don't care about the data */
-    { 0, },
     /* Empty / safe functions to call if no memory componet is selected */
-    empty_process,
-    opal_memory_base_component_register_empty,
-    opal_memory_base_component_deregister_empty,
-    opal_memory_base_component_set_alignment_empty,
+    .memoryc_query = empty_query,
+    .memoryc_process = empty_process,
+    .memoryc_register = opal_memory_base_component_register_empty,
+    .memoryc_deregister = opal_memory_base_component_deregister_empty,
+    .memoryc_set_alignment = opal_memory_base_component_set_alignment_empty,
 };
 
 
@@ -66,6 +70,12 @@ static opal_memory_base_component_2_0_0_t empty_component = {
 opal_memory_base_component_2_0_0_t *opal_memory = &empty_component;
 
 
+void opal_memory_base_malloc_init_hook (void)
+{
+    if (opal_memory->memoryc_init_hook) {
+        opal_memory->memoryc_init_hook ();
+    }
+}
 
 /*
  * Function for finding and opening either all MCA components, or the one
@@ -73,21 +83,34 @@ opal_memory_base_component_2_0_0_t *opal_memory = &empty_component;
  */
 static int opal_memory_base_open(mca_base_open_flag_t flags)
 {
+    mca_base_component_list_item_t *item, *next;
+    opal_memory_base_component_2_0_0_t *tmp;
+    int priority, highest_priority = 0;
     int ret;
 
-    /* Open up all available components */
+    /* can only be zero or one */
+    OPAL_LIST_FOREACH(item, &opal_memory_base_framework.framework_components, mca_base_component_list_item_t) {
+        tmp = (opal_memory_base_component_2_0_0_t *) item->cli_component;
+        ret = tmp->memoryc_query (&priority);
+        if (OPAL_SUCCESS != ret || priority < highest_priority) {
+            continue;
+        }
+
+        highest_priority = priority;
+        opal_memory = tmp;
+    }
+
+    OPAL_LIST_FOREACH_SAFE(item, next, &opal_memory_base_framework.framework_components, mca_base_component_list_item_t) {
+        if ((void *) opal_memory != (void *) item->cli_component) {
+            mca_base_component_unload (item->cli_component, opal_memory_base_framework.framework_output);
+            opal_list_remove_item (&opal_memory_base_framework.framework_components, &item->super);
+        }
+    }
+
+    /* open remaining component */
     ret = mca_base_framework_components_open (&opal_memory_base_framework, flags);
     if (ret != OPAL_SUCCESS) {
         return ret;
-    }
-
-    /* can only be zero or one */
-    if (opal_list_get_size(&opal_memory_base_framework.framework_components) == 1) {
-        mca_base_component_list_item_t *item;
-        item = (mca_base_component_list_item_t*)
-            opal_list_get_first(&opal_memory_base_framework.framework_components);
-        opal_memory = (opal_memory_base_component_2_0_0_t*)
-            item->cli_component;
     }
 
     /* All done */

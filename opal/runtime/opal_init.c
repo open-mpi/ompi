@@ -45,6 +45,7 @@
 #include "opal/datatype/opal_datatype.h"
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/patcher/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/sec/base/base.h"
@@ -430,14 +431,13 @@ opal_init(int* pargc, char*** pargv)
         goto return_error;
     }
 
-    /* open the memory manager components.  Memory hooks may be
-       triggered before this (any time after mem_free_init(),
-       actually).  This is a hook available for memory manager hooks
-       without good initialization routine support */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_memory_base_framework, 0))) {
-        error = "opal_memory_base_open";
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_patcher_base_framework, 0))) {
+        error = "opal_patcher_base_open";
         goto return_error;
     }
+
+    /* select a patcher module. if a patcher module can not be found it is not an error. */
+    (void) opal_patcher_base_select ();
 
     /* initialize the memory manager / tracker */
     if (OPAL_SUCCESS != (ret = opal_mem_hooks_init())) {

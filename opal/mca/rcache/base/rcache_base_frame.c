@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -92,6 +92,13 @@ static int mca_rcache_base_close(void)
     /* deregister memory free callback */
     if (mca_rcache_base_used_mem_hooks) {
         opal_mem_hooks_unregister_release(mca_rcache_base_mem_cb);
+
+        /* close the memory manager components.  Registered hooks can
+           still be fired any time between now and the call to
+           opal_mem_free_finalize(), and callbacks from the memory manager
+           hooks to the bowels of the mem_free code can still occur any
+           time between now and end of application (even post main()!) */
+        (void) mca_base_framework_close (&opal_memory_base_framework);
     }
     /* All done */
 

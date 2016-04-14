@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -46,6 +46,7 @@ int  __munmap(caddr_t addr, size_t len);
 #endif
 
 static int opal_memory_malloc_open(void);
+static int opal_memory_malloc_query(int *);
 
 const opal_memory_base_component_2_0_0_t mca_memory_malloc_solaris_component = {
     /* First, the mca_component_t struct containing meta information
@@ -68,6 +69,7 @@ const opal_memory_base_component_2_0_0_t mca_memory_malloc_solaris_component = {
 
     /* This component doesn't need these functions, but need to
        provide safe/empty register/deregister functions to call */
+    .memoryc_query = opal_memory_malloc_query,
     .memoryc_register = opal_memory_base_component_register_empty,
     .memoryc_deregister = opal_memory_base_component_deregister_empty,
     .memoryc_set_alignment = opal_memory_base_component_set_alignment_empty,
@@ -93,6 +95,11 @@ opal_memory_malloc_open(void)
     return OPAL_SUCCESS;
 }
 
+static int opal_memory_malloc_query (int *priority)
+{
+    *priority = 79;
+    return OPAL_SUCCESS;
+}
 
 /*
  * Three ways to call munmap.  Prefered is to call __munmap, which

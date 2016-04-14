@@ -4,3 +4,4 @@ opal_show_help_yyleng
 opal_show_help_yytext
 opal_util_keyval_yyleng
 opal_util_keyval_yytext
+__curbrk
