@@ -251,7 +251,7 @@ mca_patcher_linux_modify_got (ElfW(Addr) base, const ElfW(Phdr) *phdr, const cha
             }
 
             opal_output_verbose (MCA_BASE_VERBOSE_TRACE, opal_patcher_base_framework.framework_output,
-                                 "patch %p (%s): modifying got entry %p. original value %p. new value %p\n", ctx->patch,
+                                 "patch %p (%s): modifying got entry %p. original value %p. new value %p\n", (void *)ctx->patch,
                                  ctx->patch->super.patch_symbol, (void *) entry, *entry, (void *) ctx->patch->super.patch_value);
 
             patch_got->got_entry = entry;
