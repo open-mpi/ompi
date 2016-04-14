@@ -2,7 +2,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -341,6 +341,7 @@ static int ppr_mapper(orte_job_t *jdata)
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                     orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                    true, node->num_procs, app->app);
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     rc = ORTE_ERR_SILENT;
                     goto error;
                 }
@@ -356,11 +357,13 @@ static int ppr_mapper(orte_job_t *jdata)
                     if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                         return ORTE_ERR_SILENT;
                     } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                         /* if we were explicitly told not to oversubscribe, then don't */
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                         return ORTE_ERR_SILENT;
                     }
                 }
