@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -60,6 +60,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return ORTE_ERR_SILENT;
         }
     }
@@ -194,11 +195,13 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
                     orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                    true, app->num_procs, app->app);
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     return ORTE_ERR_SILENT;
                 } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                     /* if we were explicitly told not to oversubscribe, then don't */
                     orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                    true, app->num_procs, app->app);
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     return ORTE_ERR_SILENT;
                 }
             }
@@ -237,6 +240,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return ORTE_ERR_SILENT;
         }
         oversubscribed = true;
@@ -375,11 +379,13 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                     if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                         return ORTE_ERR_SILENT;
                     } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                         /* if we were explicitly told not to oversubscribe, then don't */
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                         return ORTE_ERR_SILENT;
                     }
                 }
@@ -486,6 +492,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return ORTE_ERR_SILENT;
         }
     }
@@ -592,11 +599,13 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                     if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                         return ORTE_ERR_SILENT;
                     } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                         /* if we were explicitly told not to oversubscribe, then don't */
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                         return ORTE_ERR_SILENT;
                     }
                 }
@@ -643,6 +652,7 @@ static int byobj_span(orte_job_t *jdata,
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return ORTE_ERR_SILENT;
         }
     }

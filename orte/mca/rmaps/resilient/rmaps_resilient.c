@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -833,6 +833,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                     orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                    true, nd->num_procs, app->app);
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     return ORTE_ERR_SILENT;
                 }
                 /* flag the node as oversubscribed so that sched-yield gets
