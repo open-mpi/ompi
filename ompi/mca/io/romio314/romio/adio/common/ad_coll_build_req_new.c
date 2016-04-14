@@ -844,7 +844,7 @@ int ADIOI_Build_agg_reqs(ADIO_File fd, int rw_type, int nprocs,
     {
 	if (client_comm_sz_arr[i] > 0)
 	{
-	    MPI_Type_hindexed(client_ol_ct_arr[i], client_blk_arr[i],
+	    MPI_Type_create_hindexed(client_ol_ct_arr[i], client_blk_arr[i],
 			      client_disp_arr[i], MPI_BYTE,
 			      &(client_comm_dtype_arr[i]));
 	    MPI_Type_commit(&(client_comm_dtype_arr[i]));
@@ -863,7 +863,7 @@ int ADIOI_Build_agg_reqs(ADIO_File fd, int rw_type, int nprocs,
 	if (agg_ol_ct == 1)
 	    MPI_Type_contiguous (agg_blk_arr[0], MPI_BYTE, agg_dtype_p);
 	else if (agg_ol_ct > 1)
-	    MPI_Type_hindexed(agg_ol_ct, agg_blk_arr, agg_disp_arr, MPI_BYTE,
+	    MPI_Type_create_hindexed(agg_ol_ct, agg_blk_arr, agg_disp_arr, MPI_BYTE,
 			      agg_dtype_p);
 
 	MPI_Type_commit(agg_dtype_p);
@@ -1203,7 +1203,7 @@ int ADIOI_Build_client_reqs(ADIO_File fd,
     {
 	if (agg_comm_sz_arr[i] > 0)
 	{
-	    MPI_Type_hindexed(agg_ol_ct_arr[i], agg_blk_arr[i],
+	    MPI_Type_create_hindexed(agg_ol_ct_arr[i], agg_blk_arr[i],
                               agg_disp_arr[i], MPI_BYTE,
                               &(agg_comm_dtype_arr[i]));
             MPI_Type_commit(&(agg_comm_dtype_arr[i]));
@@ -2063,7 +2063,7 @@ int ADIOI_Build_client_req(ADIO_File fd,
     /* Create the aggregator MPI_Datatype */
     if (agg_comm_sz > 0)
     {
-	MPI_Type_hindexed(agg_ol_ct, agg_blk_arr, agg_disp_arr, MPI_BYTE,
+	MPI_Type_create_hindexed(agg_ol_ct, agg_blk_arr, agg_disp_arr, MPI_BYTE,
 			  agg_comm_dtype_p);
 	MPI_Type_commit(agg_comm_dtype_p);
     }
