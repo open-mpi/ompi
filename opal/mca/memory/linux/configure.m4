@@ -52,17 +52,14 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
         ;;
     esac
 
+    # Must specifically request this component
     AS_IF([test "$with_memory_manager" = "linux"],
           [memory_linux_ptmalloc2_happy=yes
            memory_linux_ummu_happy=yes
            memory_linux_requested=1],
           [memory_linux_requested=0
-           AS_IF([test -z "$with_memory_manager" || test "$with_memory_manager" = "yes"],
-                 [memory_linux_ptmalloc2_happy=yes
-                  memory_linux_ummu_happy=yes],
-                 [memory_linux_ptmalloc2_happy=no
-                  memory_linux_ummu_happy=no])])
-
+           memory_linux_ptmalloc2_happy=no
+          memory_linux_ummu_happy=no])
 
     ######################################################################
     # if memory hook available

@@ -69,9 +69,16 @@ static opal_memory_base_component_2_0_0_t empty_component = {
  */
 opal_memory_base_component_2_0_0_t *opal_memory = &empty_component;
 
+#if MEMORY_LINUX_PTMALLOC2
+#include "opal/mca/memory/linux/memory_linux.h"
+#endif
 
 void opal_memory_base_malloc_init_hook (void)
 {
+#if MEMORY_LINUX_PTMALLOC2
+    opal_memory->memoryc_init_hook = opal_memory_linux_malloc_init_hook;
+#endif
+
     if (opal_memory->memoryc_init_hook) {
         opal_memory->memoryc_init_hook ();
     }
@@ -91,7 +98,14 @@ static int opal_memory_base_open(mca_base_open_flag_t flags)
     /* can only be zero or one */
     OPAL_LIST_FOREACH(item, &opal_memory_base_framework.framework_components, mca_base_component_list_item_t) {
         tmp = (opal_memory_base_component_2_0_0_t *) item->cli_component;
+
         ret = tmp->memoryc_query (&priority);
+#if MEMORY_LINUX_PTMALLOC2
+        if (0 == strcmp (tmp->mca_component_name, "linux")) {
+            /* if ptmalloc is enabled always use it */
+            priority = 1000000;
+        }
+#endif
         if (OPAL_SUCCESS != ret || priority < highest_priority) {
             continue;
         }
