@@ -5413,7 +5413,7 @@ end subroutine PMPI_Request_get_status
 end interface
 
 
-interface MPI_Get
+interface MPI_Rget
 
 subroutine MPI_Rget(origin_addr, origin_count, origin_datatype, &
                     target_rank, target_disp, target_count, &
@@ -5434,7 +5434,7 @@ end subroutine MPI_Rget
 
 end interface
 
-interface PMPI_Get
+interface PMPI_Rget
 
 subroutine PMPI_Rget(origin_addr, origin_count, origin_datatype, &
                     target_rank, target_disp, target_count, &
