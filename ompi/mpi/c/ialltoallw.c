@@ -71,7 +71,7 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
             memchecker_datatype(recvtypes[i]);
             ompi_datatype_type_extent(recvtypes[i], &recv_ext);
             memchecker_call(&opal_memchecker_base_isaddressable,
-                            (char *)(recvbuf)+sdispls[i]*recv_ext,
+                            (char *)(recvbuf)+rdispls[i]*recv_ext,
                             recvcounts[i], recvtypes[i]);
         }
     );
