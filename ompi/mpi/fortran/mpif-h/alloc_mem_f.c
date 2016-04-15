@@ -65,13 +65,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM_CPTR,
 #pragma weak mpi_alloc_mem_ = ompi_alloc_mem_f
 #pragma weak mpi_alloc_mem__ = ompi_alloc_mem_f
 
+#pragma weak MPI_Alloc_mem_f = ompi_alloc_mem_f
+#pragma weak MPI_Alloc_mem_f08 = ompi_alloc_mem_f
+
 #pragma weak MPI_ALLOC_MEM_CPTR = ompi_alloc_mem_f
 #pragma weak mpi_alloc_mem_cptr = ompi_alloc_mem_f
 #pragma weak mpi_alloc_mem_cptr_ = ompi_alloc_mem_f
 #pragma weak mpi_alloc_mem_cptr__ = ompi_alloc_mem_f
-
-#pragma weak MPI_Alloc_mem_f = ompi_alloc_mem_f
-#pragma weak MPI_Alloc_mem_f08 = ompi_alloc_mem_f
 
 #pragma weak MPI_Alloc_mem_cptr_f = ompi_alloc_mem_f
 #pragma weak MPI_Alloc_mem_cptr_f08 = ompi_alloc_mem_f
