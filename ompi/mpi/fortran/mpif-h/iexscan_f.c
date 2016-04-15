@@ -79,7 +79,7 @@ void ompi_iexscan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     c_type = MPI_Type_f2c(*datatype);
     c_op = MPI_Op_f2c(*op);
 
-    /* MPI_IN_PLACE is not supported */
+    sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM (sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM (recvbuf);
 
