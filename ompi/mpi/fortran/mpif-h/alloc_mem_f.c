@@ -29,14 +29,16 @@
 #pragma weak pmpi_alloc_mem_ = ompi_alloc_mem_f
 #pragma weak pmpi_alloc_mem__ = ompi_alloc_mem_f
 
-/* Extra pragmas for the _cptr variant from MPI-3.1 */
+#pragma weak PMPI_Alloc_mem_f = ompi_alloc_mem_f
+#pragma weak PMPI_Alloc_mem_f08 = ompi_alloc_mem_f
+
 #pragma weak PMPI_ALLOC_MEM_CPTR = ompi_alloc_mem_f
 #pragma weak pmpi_alloc_mem_cptr = ompi_alloc_mem_f
 #pragma weak pmpi_alloc_mem_cptr_ = ompi_alloc_mem_f
 #pragma weak pmpi_alloc_mem_cptr__ = ompi_alloc_mem_f
 
-#pragma weak PMPI_Alloc_mem_f = ompi_alloc_mem_f
-#pragma weak PMPI_Alloc_mem_f08 = ompi_alloc_mem_f
+#pragma weak PMPI_Alloc_mem_cptr_f = ompi_alloc_mem_f
+#pragma weak PMPI_Alloc_mem_cptr_f08 = ompi_alloc_mem_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM,
                            pmpi_alloc_mem,
@@ -50,7 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM_CPTR,
                            pmpi_alloc_mem_cptr,
                            pmpi_alloc_mem_cptr_,
                            pmpi_alloc_mem_cptr__,
-                           pompi_alloc_mem_f,
+                           pompi_alloc_mem_cptr_f,
                            (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr),
                            (size, info, baseptr, ierr) )
 #endif
@@ -61,14 +63,16 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM_CPTR,
 #pragma weak mpi_alloc_mem_ = ompi_alloc_mem_f
 #pragma weak mpi_alloc_mem__ = ompi_alloc_mem_f
 
-/* Extra pragmas for the _cptr variant from MPI-3.1 */
+#pragma weak MPI_Alloc_mem_f = ompi_alloc_mem_f
+#pragma weak MPI_Alloc_mem_f08 = ompi_alloc_mem_f
+
 #pragma weak MPI_ALLOC_MEM_CPTR = ompi_alloc_mem_f
 #pragma weak mpi_alloc_mem_cptr = ompi_alloc_mem_f
 #pragma weak mpi_alloc_mem_cptr_ = ompi_alloc_mem_f
 #pragma weak mpi_alloc_mem_cptr__ = ompi_alloc_mem_f
 
-#pragma weak MPI_Alloc_mem_f = ompi_alloc_mem_f
-#pragma weak MPI_Alloc_mem_f08 = ompi_alloc_mem_f
+#pragma weak MPI_Alloc_mem_cptr_f = ompi_alloc_mem_f
+#pragma weak MPI_Alloc_mem_cptr_f08 = ompi_alloc_mem_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
@@ -84,7 +88,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLOC_MEM_CPTR,
                            mpi_alloc_mem_cptr,
                            mpi_alloc_mem_cptr_,
                            mpi_alloc_mem_cptr__,
-                           ompi_alloc_mem_f,
+                           ompi_alloc_mem_cptr_f,
                            (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr),
                            (size, info, baseptr, ierr) )
 #endif
@@ -101,4 +105,13 @@ void ompi_alloc_mem_f(MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *i
 
     ierr_c = MPI_Alloc_mem(*size, c_info, baseptr);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
+}
+
+/*
+ * Note that MPI-3 mandates a second form of the
+ * MPI_Alloc_mem interface -- one that has a "_cptr" suffix.
+ */
+void ompi_alloc_mem_cptr_f(MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr)
+{
+    ompi_alloc_mem_f(size, info, baseptr, ierr);
 }
