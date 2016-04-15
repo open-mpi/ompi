@@ -80,7 +80,7 @@ void ompi_exscan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     c_type = PMPI_Type_f2c(*datatype);
     c_op = PMPI_Op_f2c(*op);
 
-    /* MPI_IN_PLACE is not supported */
+    sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM (sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM (recvbuf);
 

@@ -98,7 +98,7 @@ void ompi_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
         --size;
     }
 
-    /* Alltoallw does not support MPI_IN_PLACE */
+    sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
