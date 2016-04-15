@@ -12,17 +12,23 @@
 
 int main(int argc, char **argv)
 {
-    int iter, err, rank, size;
+    int iter, itermax, err, rank, size;
     MPI_Comm comm, merged;
 
-    /* MPI environnement */
+    /* MPI environment */
+
+    if (2 == argc) {
+        itermax = atoi(argv[1]);
+    } else {
+        itermax = 100;
+    }
 
     printf("parent*******************************\n");
     printf("parent: Launching MPI*\n");
 
     MPI_Init( &argc, &argv);
 
-    for (iter = 0; iter < 100; ++iter) {
+    for (iter = 0; iter < itermax; ++iter) {
         MPI_Comm_spawn(EXE_TEST, NULL, 1, MPI_INFO_NULL,
                        0, MPI_COMM_WORLD, &comm, &err);
         printf("parent: MPI_Comm_spawn #%d return : %d\n", iter, err);

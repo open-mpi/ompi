@@ -588,17 +588,35 @@ pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
 static void _deregister_nspace(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
-    pmix_nspace_t *tmp;
+    pmix_nspace_t *nptr;
+    int i;
+    pmix_peer_t *peer;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _deregister_nspace %s",
                         cd->proc.nspace);
 
     /* see if we already have this nspace */
-    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_nspace_t) {
-        if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
-            pmix_list_remove_item(&pmix_globals.nspaces, &tmp->super);
-            PMIX_RELEASE(tmp);
+    PMIX_LIST_FOREACH(nptr, &pmix_globals.nspaces, pmix_nspace_t) {
+        if (0 == strcmp(nptr->nspace, cd->proc.nspace)) {
+            /* find and remove this client from our array of local
+             * peers - remember that it can occur multiple times
+             * if the peer called fork/exec and its children called
+             * PMIx_Init! We have to rely on none of those children
+             * living beyond our child as we otherwise cannot
+             * track them */
+            for (i=0; i < pmix_server_globals.clients.size; i++) {
+                if (NULL == (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, i))) {
+                    continue;
+                }
+                if (nptr == peer->info->nptr) {
+                    /* remove this entry */
+                    pmix_pointer_array_set_item(&pmix_server_globals.clients, i, NULL);
+                    PMIX_RELEASE(peer);
+                }
+            }
+            pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
+            PMIX_RELEASE(nptr);
             break;
         }
     }
@@ -807,6 +825,8 @@ static void _deregister_client(int sd, short args, void *cbdata)
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_rank_info_t *info;
     pmix_nspace_t *nptr, *tmp;
+    int i;
+    pmix_peer_t *peer;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _deregister_client for nspace %s rank %d",
@@ -824,7 +844,27 @@ static void _deregister_client(int sd, short args, void *cbdata)
         /* nothing to do */
         goto cleanup;
     }
-    /* find an remove this client */
+    /* find and remove this client from our array of local
+     * peers - remember that it can occur multiple times
+     * if the peer called fork/exec and its children called
+     * PMIx_Init! We have to rely on none of those children
+     * living beyond our child as we otherwise cannot
+     * track them */
+    for (i=0; i < pmix_server_globals.clients.size; i++) {
+        if (NULL == (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, i))) {
+            continue;
+        }
+        if (nptr != peer->info->nptr) {
+            continue;
+        }
+        if (cd->proc.rank == peer->info->rank) {
+            /* remove this entry */
+            pmix_pointer_array_set_item(&pmix_server_globals.clients, i, NULL);
+            PMIX_RELEASE(peer);
+        }
+    }
+
+    /* find and remove this client from its nspace */
     PMIX_LIST_FOREACH(info, &nptr->server->ranks, pmix_rank_info_t) {
         if (info->rank == cd->proc.rank) {
             pmix_list_remove_item(&nptr->server->ranks, &info->super);
