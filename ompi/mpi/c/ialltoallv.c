@@ -90,6 +90,12 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
                                           FUNC_NAME);
         }
 
+        if (MPI_IN_PLACE == sendbuf) {
+            sendcounts = recvcounts;
+            sdispls = rdispls;
+            sendtype = recvtype;
+        }
+
         if ((NULL == sendcounts) || (NULL == sdispls) ||
             (NULL == recvcounts) || (NULL == rdispls) ||
             MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
