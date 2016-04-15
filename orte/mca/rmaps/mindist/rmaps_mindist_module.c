@@ -12,6 +12,9 @@
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -272,6 +275,7 @@ static int mindist_map(orte_job_t *jdata)
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                 true, app->num_procs, app->app);
                         rc = ORTE_ERR_SILENT;
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                         goto error;
                     } else {
                         node->oversubscribed = true;
@@ -385,6 +389,7 @@ static int mindist_map(orte_job_t *jdata)
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                         true, app->num_procs, app->app);
                 rc = ORTE_ERR_SILENT;
+                ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 goto error;
             }
             opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
