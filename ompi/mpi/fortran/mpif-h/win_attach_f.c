@@ -18,8 +18,8 @@
 #pragma weak pmpi_win_attach_ = ompi_win_attach_f
 #pragma weak pmpi_win_attach__ = ompi_win_attach_f
 
-#pragma weak PMPI_Win_create_f = ompi_win_attach_f
-#pragma weak PMPI_Win_create_f08 = ompi_win_attach_f
+#pragma weak PMPI_Win_attach_f = ompi_win_attach_f
+#pragma weak PMPI_Win_attach_f08 = ompi_win_attach_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ATTACH,
                            pmpi_win_attach,
@@ -36,8 +36,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ATTACH,
 #pragma weak mpi_win_attach_ = ompi_win_attach_f
 #pragma weak mpi_win_attach__ = ompi_win_attach_f
 
-#pragma weak MPI_Win_create_f = ompi_win_attach_f
-#pragma weak MPI_Win_create_f08 = ompi_win_attach_f
+#pragma weak MPI_Win_attach_f = ompi_win_attach_f
+#pragma weak MPI_Win_attach_f08 = ompi_win_attach_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
