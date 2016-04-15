@@ -1332,6 +1332,27 @@ end subroutine PMPI_Comm_get_errhandler
 end interface
 
 
+interface MPI_Comm_get_info
+
+subroutine MPI_Comm_get_info(comm, info_used, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: info_used
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_get_info
+
+end interface
+
+interface PMPI_Comm_get_info
+
+subroutine PMPI_Comm_get_info(comm, info_used, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: info_used
+  integer, intent(out) :: ierror
+end subroutine PMPI_Comm_get_info
+
+end interface
+
+
 interface MPI_Comm_get_name
 
 subroutine MPI_Comm_get_name(comm, comm_name, resultlen, ierror)
@@ -2072,6 +2093,25 @@ subroutine PMPI_Exscan(sendbuf, recvbuf, count, datatype, op, &
   integer, intent(in) :: comm
   integer, intent(out) :: ierror
 end subroutine PMPI_Exscan
+
+end interface
+
+
+interface MPI_F_sync_reg
+
+subroutine MPI_F_sync_reg(buf)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: buf
+end subroutine MPI_F_sync_reg
+
+end interface
+
+interface PMPI_F_sync_reg
+
+subroutine PMPI_F_sync_reg(buf)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: buf
+end subroutine PMPI_F_sync_reg
 
 end interface
 
@@ -7936,6 +7976,27 @@ end subroutine PMPI_Win_lock
 end interface
 
 
+interface MPI_Win_lock_all
+
+subroutine MPI_Win_lock_all(assert, win, ierror)
+  integer, intent(in) :: assert
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_lock_all
+
+end interface
+
+interface PMPI_Win_lock_all
+
+subroutine PMPI_Win_lock_all(assert, win, ierror)
+  integer, intent(in) :: assert
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_lock_all
+
+end interface
+
+
 interface MPI_Win_post
 
 subroutine MPI_Win_post(group, assert, win, ierror)
@@ -8104,6 +8165,25 @@ end subroutine PMPI_Win_start
 end interface
 
 
+interface MPI_Win_sync
+
+subroutine MPI_Win_sync(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_sync
+
+end interface
+
+interface PMPI_Win_sync
+
+subroutine PMPI_Win_sync(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_sync
+
+end interface
+
+
 interface MPI_Win_test
 
 subroutine MPI_Win_test(win, flag, ierror)
@@ -8142,6 +8222,25 @@ subroutine PMPI_Win_unlock(rank, win, ierror)
   integer, intent(in) :: win
   integer, intent(out) :: ierror
 end subroutine PMPI_Win_unlock
+
+end interface
+
+
+interface MPI_Win_unlock_all
+
+subroutine MPI_Win_unlock_all(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_unlock_all
+
+end interface
+
+interface PMPI_Win_unlock_all
+
+subroutine PMPI_Win_unlock_all(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_unlock_all
 
 end interface
 
