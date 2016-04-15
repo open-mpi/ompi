@@ -301,12 +301,8 @@ opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h
 
 opal/mca/installdirs/config/install_dirs.h
 
-opal/mca/pmix/pmix112/pmix/include/pmix/autogen/config.h
-opal/mca/pmix/pmix112/pmix/include/private/autogen/config.h
-opal/mca/pmix/pmix112/pmix/include/private/autogen/config.h.in
-opal/mca/pmix/pmix120/pmix/include/pmix/autogen/config.h
-opal/mca/pmix/pmix120/pmix/include/private/autogen/config.h
-opal/mca/pmix/pmix120/pmix/include/private/autogen/config.h.in
+opal/mca/pmix/pmix114/pmix/include/pmix/autogen/config.h
+opal/mca/pmix/pmix114/pmix/src/include/private/autogen/config.h
 
 
 opal/tools/opal-checkpoint/opal-checkpoint
@@ -452,6 +448,7 @@ orte/test/system/getenv_pmi
 orte/test/system/pmi_abort
 orte/test/system/opal_hwloc
 orte/test/system/opal_db
+orte/test/system/ulfm
 
 orte/tools/orte-checkpoint/orte-checkpoint
 orte/tools/orte-checkpoint/orte-checkpoint.1
