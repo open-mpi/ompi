@@ -491,7 +491,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
          }
 
         is_long_msg = true;
-        tag = get_rtag (module);
+        tag = get_tag (module);
     }
 
     if (is_long_msg) {
