@@ -163,6 +163,7 @@ end subroutine PMPI_Address
 
 end interface
 
+
 interface MPI_Aint_add
 
 function MPI_Aint_add(base, diff)
@@ -185,6 +186,7 @@ end function PMPI_Aint_add
 
 end interface
 
+
 interface MPI_Aint_diff
 
 function MPI_Aint_diff(addr1, addr2)
@@ -206,6 +208,7 @@ function PMPI_Aint_diff(addr1, addr2)
 end function PMPI_Aint_diff
 
 end interface
+
 
 interface MPI_Allgather
 
@@ -1074,18 +1077,6 @@ end subroutine MPI_Comm_create
 
 end interface
 
-interface MPI_Comm_create_group
-
-subroutine MPI_Comm_create_group(comm, group, tag, newcomm, ierror)
-  integer, intent(in) :: comm
-  integer, intent(in) :: group
-  integer, intent(in) :: tag
-  integer, intent(out) :: newcomm
-  integer, intent(out) :: ierror
-end subroutine MPI_Comm_create_group
-
-end interface
-
 interface PMPI_Comm_create
 
 subroutine PMPI_Comm_create(comm, group, newcomm, ierror)
@@ -1115,6 +1106,31 @@ subroutine PMPI_Comm_create_errhandler(function, errhandler, ierror)
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierror
 end subroutine PMPI_Comm_create_errhandler
+
+end interface
+
+
+interface MPI_Comm_create_group
+
+subroutine MPI_Comm_create_group(comm, group, tag, newcomm, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: group
+  integer, intent(in) :: tag
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_create_group
+
+end interface
+
+interface PMPI_Comm_create_group
+
+subroutine PMPI_Comm_create_group(comm, group, tag, newcomm, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: group
+  integer, intent(in) :: tag
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine PMPI_Comm_create_group
 
 end interface
 
@@ -1196,6 +1212,17 @@ end subroutine MPI_Comm_dup
 
 end interface
 
+interface PMPI_Comm_dup
+
+subroutine PMPI_Comm_dup(comm, newcomm, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine PMPI_Comm_dup
+
+end interface
+
+
 interface MPI_Comm_dup_with_info
 
 subroutine MPI_Comm_dup_with_info(comm, info, newcomm, ierror)
@@ -1207,24 +1234,14 @@ end subroutine MPI_Comm_dup_with_info
 
 end interface
 
-interface MPI_Comm_idup
+interface PMPI_Comm_dup_with_info
 
-subroutine MPI_Comm_idup(comm, newcomm, request, ierror)
+subroutine PMPI_Comm_dup_with_info(comm, info, newcomm, ierror)
   integer, intent(in) :: comm
-  integer, intent(out) :: newcomm
-  integer, intent(out) :: request
-  integer, intent(out) :: ierror
-end subroutine MPI_Comm_idup
-
-end interface
-
-interface PMPI_Comm_dup
-
-subroutine PMPI_Comm_dup(comm, newcomm, ierror)
-  integer, intent(in) :: comm
+  integer, intent(in) :: info
   integer, intent(out) :: newcomm
   integer, intent(out) :: ierror
-end subroutine PMPI_Comm_dup
+end subroutine PMPI_Comm_dup_with_info
 
 end interface
 
@@ -1315,6 +1332,27 @@ end subroutine PMPI_Comm_get_errhandler
 end interface
 
 
+interface MPI_Comm_get_info
+
+subroutine MPI_Comm_get_info(comm, info_used, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: info_used
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_get_info
+
+end interface
+
+interface PMPI_Comm_get_info
+
+subroutine PMPI_Comm_get_info(comm, info_used, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: info_used
+  integer, intent(out) :: ierror
+end subroutine PMPI_Comm_get_info
+
+end interface
+
+
 interface MPI_Comm_get_name
 
 subroutine MPI_Comm_get_name(comm, comm_name, resultlen, ierror)
@@ -1374,6 +1412,29 @@ subroutine PMPI_Comm_group(comm, group, ierror)
   integer, intent(out) :: group
   integer, intent(out) :: ierror
 end subroutine PMPI_Comm_group
+
+end interface
+
+
+interface MPI_Comm_idup
+
+subroutine MPI_Comm_idup(comm, newcomm, request, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_idup
+
+end interface
+
+interface PMPI_Comm_idup
+
+subroutine PMPI_Comm_idup(comm, newcomm, request, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Comm_idup
 
 end interface
 
@@ -1754,6 +1815,7 @@ end subroutine PMPI_Compare_and_swap
 
 end interface
 
+
 interface MPI_Dims_create
 
 subroutine MPI_Dims_create(nnodes, ndims, dims, ierror)
@@ -2057,6 +2119,26 @@ end subroutine PMPI_Exscan
 
 end interface
 
+
+interface MPI_F_sync_reg
+
+subroutine MPI_F_sync_reg(buf)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: buf
+end subroutine MPI_F_sync_reg
+
+end interface
+
+interface PMPI_F_sync_reg
+
+subroutine PMPI_F_sync_reg(buf)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: buf
+end subroutine PMPI_F_sync_reg
+
+end interface
+
+
 interface MPI_Fetch_and_op
 
 subroutine MPI_Fetch_and_op(origin_addr, result_addr, datatype, target_rank,&
@@ -2094,6 +2176,7 @@ subroutine PMPI_Fetch_and_op(origin_addr, result_addr, datatype, target_rank,&
 end subroutine PMPI_Fetch_and_op
 
 end interface
+
 
 interface MPI_Finalize
 
@@ -2270,6 +2353,7 @@ end subroutine PMPI_Get
 
 end interface
 
+
 interface MPI_Get_accumulate
 
 subroutine MPI_Get_accumulate(origin_addr, origin_count, origin_datatype,&
@@ -2321,6 +2405,7 @@ subroutine PMPI_Get_accumulate(origin_addr, origin_count, origin_datatype,&
 end subroutine PMPI_Get_accumulate
 
 end interface
+
 
 interface MPI_Get_address
 
@@ -2397,6 +2482,29 @@ end subroutine PMPI_Get_elements
 end interface
 
 
+interface MPI_Get_elements_x
+
+subroutine MPI_Get_elements_x(status, datatype, count, ierror)
+  include 'mpif-config.h'
+  integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: count
+  integer, intent(out) :: ierror
+end subroutine MPI_Get_elements_x
+
+end interface
+
+interface PMPI_Get_elements_x
+
+subroutine PMPI_Get_elements_x(status, datatype, count, ierror)
+  include 'mpif-config.h'
+  integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: count
+  integer, intent(out) :: ierror
+end subroutine PMPI_Get_elements_x
+
+end interface
 
 
 interface MPI_Get_library_version
@@ -3250,6 +3358,41 @@ end subroutine PMPI_Ibcast
 end interface
 
 
+interface MPI_Ibsend
+
+subroutine MPI_Ibsend(buf, count, datatype, dest, tag, &
+        comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: dest
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Ibsend
+
+end interface
+
+interface PMPI_Ibsend
+
+subroutine PMPI_Ibsend(buf, count, datatype, dest, tag, &
+        comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: dest
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Ibsend
+
+end interface
+
+
 interface MPI_Iexscan
 
 subroutine MPI_Iexscan(sendbuf, recvbuf, count, datatype, op, &
@@ -3283,41 +3426,6 @@ subroutine PMPI_Iexscan(sendbuf, recvbuf, count, datatype, op, &
   integer, intent(out) :: request
   integer, intent(out) :: ierror
 end subroutine PMPI_Iexscan
-
-end interface
-
-
-interface MPI_Ibsend
-
-subroutine MPI_Ibsend(buf, count, datatype, dest, tag, &
-        comm, request, ierror)
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
-  integer, intent(in) :: count
-  integer, intent(in) :: datatype
-  integer, intent(in) :: dest
-  integer, intent(in) :: tag
-  integer, intent(in) :: comm
-  integer, intent(out) :: request
-  integer, intent(out) :: ierror
-end subroutine MPI_Ibsend
-
-end interface
-
-interface PMPI_Ibsend
-
-subroutine PMPI_Ibsend(buf, count, datatype, dest, tag, &
-        comm, request, ierror)
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
-  integer, intent(in) :: count
-  integer, intent(in) :: datatype
-  integer, intent(in) :: dest
-  integer, intent(in) :: tag
-  integer, intent(in) :: comm
-  integer, intent(out) :: request
-  integer, intent(out) :: ierror
-end subroutine PMPI_Ibsend
 
 end interface
 
@@ -4732,6 +4840,7 @@ end subroutine PMPI_Neighbor_alltoallw
 
 end interface
 
+
 interface MPI_Op_commutative
 
 subroutine MPI_Op_commutative(op, commute, ierror)
@@ -5070,6 +5179,7 @@ end subroutine PMPI_Query_thread
 
 end interface
 
+
 interface MPI_Raccumulate
 
 subroutine MPI_Raccumulate(origin_addr, origin_count, origin_datatype,&
@@ -5114,143 +5224,6 @@ end subroutine PMPI_Raccumulate
 
 end interface
 
-interface MPI_Get
-
-subroutine MPI_Rget(origin_addr, origin_count, origin_datatype, &
-                    target_rank, target_disp, target_count, &
-                    target_datatype, win, request, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
-  integer, intent(in) :: origin_count
-  integer, intent(in) :: origin_datatype
-  integer, intent(in) :: target_rank
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
-  integer, intent(in) :: target_count
-  integer, intent(in) :: target_datatype
-  integer, intent(in) :: win
-  integer, intent(out) :: request
-  integer, intent(out) :: ierror
-end subroutine MPI_Rget
-
-end interface
-
-interface PMPI_Get
-
-subroutine PMPI_Rget(origin_addr, origin_count, origin_datatype, &
-                    target_rank, target_disp, target_count, &
-                    target_datatype, win, request, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
-  integer, intent(in) :: origin_count
-  integer, intent(in) :: origin_datatype
-  integer, intent(in) :: target_rank
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
-  integer, intent(in) :: target_count
-  integer, intent(in) :: target_datatype
-  integer, intent(in) :: win
-  integer, intent(out) :: request
-  integer, intent(out) :: ierror
-end subroutine PMPI_Rget
-
-end interface
-
-interface MPI_Rget_accumulate
-
-subroutine MPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,&
-                               result_addr, result_count, result_datatype,&
-                               target_rank, target_disp, target_count, &
-                               target_datatype, op, win, request, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
-  integer, intent(in) :: origin_count
-  integer, intent(in) :: origin_datatype
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
-  integer, intent(in) :: result_count
-  integer, intent(in) :: result_datatype
-  integer, intent(in) :: target_rank
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
-  integer, intent(in) :: target_count
-  integer, intent(in) :: target_datatype
-  integer, intent(in) :: op
-  integer, intent(in) :: win
-  integer, intent(out) :: request
-  integer, intent(out) :: ierror
-end subroutine MPI_Rget_accumulate
-
-end interface
-
-interface PMPI_Rget_accumulate
-
-subroutine PMPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,&
-                                result_addr, result_count, result_datatype,&
-                                target_rank, target_disp, target_count, &
-                                target_datatype, op, win, request, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
-  integer, intent(in) :: origin_count
-  integer, intent(in) :: origin_datatype
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
-  integer, intent(in) :: result_count
-  integer, intent(in) :: result_datatype
-  integer, intent(in) :: target_rank
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
-  integer, intent(in) :: target_count
-  integer, intent(in) :: target_datatype
-  integer, intent(in) :: op
-  integer, intent(in) :: win
-  integer, intent(out) :: request
-  integer, intent(out) :: ierror
-end subroutine PMPI_Rget_accumulate
-
-end interface
-
-interface MPI_Rput
-
-subroutine MPI_Rput(origin_addr, origin_count, origin_datatype, &
-                    target_rank, target_disp, target_count, &
-                    target_datatype, win, request, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
-  integer, intent(in) :: origin_count
-  integer, intent(in) :: origin_datatype
-  integer, intent(in) :: target_rank
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
-  integer, intent(in) :: target_count
-  integer, intent(in) :: target_datatype
-  integer, intent(in) :: win
-  integer, intent(out) :: request
-  integer, intent(out) :: ierror
-end subroutine MPI_Rput
-
-end interface
-
-interface PMPI_Rput
-
-subroutine PMPI_Rput(origin_addr, origin_count, origin_datatype, &
-                    target_rank, target_disp, target_count, &
-                    target_datatype, win, request, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
-  integer, intent(in) :: origin_count
-  integer, intent(in) :: origin_datatype
-  integer, intent(in) :: target_rank
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
-  integer, intent(in) :: target_count
-  integer, intent(in) :: target_datatype
-  integer, intent(in) :: win
-  integer, intent(out) :: request
-  integer, intent(out) :: ierror
-end subroutine PMPI_Rput
-
-end interface
 
 interface MPI_Recv
 
@@ -5535,6 +5508,147 @@ subroutine PMPI_Request_get_status(request, flag, status, ierror)
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierror
 end subroutine PMPI_Request_get_status
+
+end interface
+
+
+interface MPI_Rget
+
+subroutine MPI_Rget(origin_addr, origin_count, origin_datatype, &
+                    target_rank, target_disp, target_count, &
+                    target_datatype, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Rget
+
+end interface
+
+interface PMPI_Rget
+
+subroutine PMPI_Rget(origin_addr, origin_count, origin_datatype, &
+                    target_rank, target_disp, target_count, &
+                    target_datatype, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Rget
+
+end interface
+
+
+interface MPI_Rget_accumulate
+
+subroutine MPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,&
+                               result_addr, result_count, result_datatype,&
+                               target_rank, target_disp, target_count, &
+                               target_datatype, op, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: result_count
+  integer, intent(in) :: result_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Rget_accumulate
+
+end interface
+
+interface PMPI_Rget_accumulate
+
+subroutine PMPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,&
+                                result_addr, result_count, result_datatype,&
+                                target_rank, target_disp, target_count, &
+                                target_datatype, op, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: result_count
+  integer, intent(in) :: result_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Rget_accumulate
+
+end interface
+
+
+interface MPI_Rput
+
+subroutine MPI_Rput(origin_addr, origin_count, origin_datatype, &
+                    target_rank, target_disp, target_count, &
+                    target_datatype, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Rput
+
+end interface
+
+interface PMPI_Rput
+
+subroutine PMPI_Rput(origin_addr, origin_count, origin_datatype, &
+                    target_rank, target_disp, target_count, &
+                    target_datatype, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Rput
 
 end interface
 
@@ -6036,6 +6150,31 @@ end subroutine PMPI_Status_set_elements
 end interface
 
 
+interface MPI_Status_set_elements_x
+
+subroutine MPI_Status_set_elements_x(status, datatype, count, ierror)
+  include 'mpif-config.h'
+  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(in) :: count
+  integer, intent(out) :: ierror
+end subroutine MPI_Status_set_elements_x
+
+end interface
+
+interface PMPI_Status_set_elements_x
+
+subroutine PMPI_Status_set_elements_x(status, datatype, count, ierror)
+  include 'mpif-config.h'
+  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(in) :: count
+  integer, intent(out) :: ierror
+end subroutine PMPI_Status_set_elements_x
+
+end interface
+
+
 interface MPI_Test
 
 subroutine MPI_Test(request, flag, status, ierror)
@@ -6373,6 +6512,37 @@ end subroutine PMPI_Type_create_hindexed
 end interface
 
 
+interface MPI_Type_create_hindexed_block
+
+subroutine MPI_Type_create_hindexed_block(count, blocklength, array_of_displacements, oldtype, newtype&
+        , ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: count
+  integer, intent(in) :: blocklength
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
+  integer, intent(in) :: oldtype
+  integer, intent(out) :: newtype
+  integer, intent(out) :: ierror
+end subroutine MPI_Type_create_hindexed_block
+
+end interface
+
+interface PMPI_Type_create_hindexed_block
+
+subroutine PMPI_Type_create_hindexed_block(count, blocklength, array_of_displacements, oldtype, newtype&
+        , ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: count
+  integer, intent(in) :: blocklength
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
+  integer, intent(in) :: oldtype
+  integer, intent(out) :: newtype
+  integer, intent(out) :: ierror
+end subroutine PMPI_Type_create_hindexed_block
+
+end interface
+
+
 interface MPI_Type_create_hvector
 
 subroutine MPI_Type_create_hvector(count, blocklength, stride, oldtype, newtype&
@@ -6429,37 +6599,6 @@ subroutine PMPI_Type_create_indexed_block(count, blocklength, array_of_displacem
   integer, intent(out) :: newtype
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_create_indexed_block
-
-end interface
-
-
-interface MPI_Type_create_hindexed_block
-
-subroutine MPI_Type_create_hindexed_block(count, blocklength, array_of_displacements, oldtype, newtype&
-        , ierror)
-  include 'mpif-config.h'
-  integer, intent(in) :: count
-  integer, intent(in) :: blocklength
-  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
-  integer, intent(in) :: oldtype
-  integer, intent(out) :: newtype
-  integer, intent(out) :: ierror
-end subroutine MPI_Type_create_hindexed_block
-
-end interface
-
-interface PMPI_Type_create_hindexed_block
-
-subroutine PMPI_Type_create_hindexed_block(count, blocklength, array_of_displacements, oldtype, newtype&
-        , ierror)
-  include 'mpif-config.h'
-  integer, intent(in) :: count
-  integer, intent(in) :: blocklength
-  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
-  integer, intent(in) :: oldtype
-  integer, intent(out) :: newtype
-  integer, intent(out) :: ierror
-end subroutine PMPI_Type_create_hindexed_block
 
 end interface
 
@@ -6799,6 +6938,31 @@ end subroutine PMPI_Type_get_extent
 end interface
 
 
+interface MPI_Type_get_extent_x
+
+subroutine MPI_Type_get_extent_x(type, lb, extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: extent
+  integer, intent(out) :: ierror
+end subroutine MPI_Type_get_extent_x
+
+end interface
+
+interface PMPI_Type_get_extent_x
+
+subroutine PMPI_Type_get_extent_x(type, lb, extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: extent
+  integer, intent(out) :: ierror
+end subroutine PMPI_Type_get_extent_x
+
+end interface
+
+
 interface MPI_Type_get_name
 
 subroutine MPI_Type_get_name(type, type_name, resultlen, ierror)
@@ -6843,6 +7007,31 @@ subroutine PMPI_Type_get_true_extent(datatype, true_lb, true_extent, ierror)
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: true_extent
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_get_true_extent
+
+end interface
+
+
+interface MPI_Type_get_true_extent_x
+
+subroutine MPI_Type_get_true_extent_x(datatype, true_lb, true_extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_extent
+  integer, intent(out) :: ierror
+end subroutine MPI_Type_get_true_extent_x
+
+end interface
+
+interface PMPI_Type_get_true_extent_x
+
+subroutine PMPI_Type_get_true_extent_x(datatype, true_lb, true_extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_extent
+  integer, intent(out) :: ierror
+end subroutine PMPI_Type_get_true_extent_x
 
 end interface
 
@@ -7041,6 +7230,29 @@ subroutine PMPI_Type_size(type, size, ierror)
   integer, intent(out) :: size
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_size
+
+end interface
+
+
+interface MPI_Type_size_x
+
+subroutine MPI_Type_size_x(type, size, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: size
+  integer, intent(out) :: ierror
+end subroutine MPI_Type_size_x
+
+end interface
+
+interface PMPI_Type_size_x
+
+subroutine PMPI_Type_size_x(type, size, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: size
+  integer, intent(out) :: ierror
+end subroutine PMPI_Type_size_x
 
 end interface
 
@@ -7329,17 +7541,6 @@ end subroutine PMPI_Waitsome
 end interface
 
 
-interface MPI_Win_call_errhandler
-
-subroutine MPI_Win_call_errhandler(win, errorcode, ierror)
-  integer, intent(in) :: win
-  integer, intent(in) :: errorcode
-  integer, intent(out) :: ierror
-end subroutine MPI_Win_call_errhandler
-
-end interface
-
-
 interface MPI_Win_allocate
 
 subroutine MPI_Win_allocate(size, disp_unit, info, comm, &
@@ -7362,6 +7563,31 @@ subroutine MPI_Win_allocate_cptr(size, disp_unit, info, comm, &
   integer(KIND=MPI_ADDRESS_KIND) :: size
   type(C_PTR) :: baseptr
 end subroutine MPI_Win_allocate_cptr
+
+end interface
+
+interface PMPI_Win_allocate
+
+subroutine PMPI_Win_allocate(size, disp_unit, info, comm, &
+      baseptr, win, ierror)
+  include 'mpif-config.h'
+  integer(KIND=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(in) :: disp_unit
+  integer, intent(in) :: info
+  integer, intent(in) :: comm
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: baseptr
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_allocate
+
+subroutine PMPI_Win_allocate_cptr(size, disp_unit, info, comm, &
+     baseptr, win, ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer :: disp_unit, info, comm, win, ierror
+  integer(KIND=MPI_ADDRESS_KIND) :: size
+  type(C_PTR) :: baseptr
+end subroutine PMPI_Win_allocate_cptr
 
 end interface
 
@@ -7391,6 +7617,68 @@ end subroutine MPI_Win_allocate_shared_cptr
 
 end interface
 
+interface PMPI_Win_allocate_shared
+
+subroutine PMPI_Win_allocate_shared(size, disp_unit, info, comm, &
+      baseptr, win, ierror)
+  include 'mpif-config.h'
+  integer(KIND=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(in) :: disp_unit
+  integer, intent(in) :: info
+  integer, intent(in) :: comm
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: baseptr
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_allocate_shared
+
+subroutine PMPI_Win_allocate_shared_cptr(size, disp_unit, info, comm, &
+     baseptr, win, ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer :: disp_unit, info, comm, win, ierror
+  integer(KIND=MPI_ADDRESS_KIND) :: size
+  type(C_PTR) :: baseptr
+end subroutine PMPI_Win_allocate_shared_cptr
+
+end interface
+
+
+interface MPI_Win_attach
+
+subroutine MPI_Win_attach(win, base, size, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_attach
+
+end interface
+
+interface PMPI_Win_attach
+
+subroutine PMPI_Win_attach(win, base, size, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_attach
+
+end interface
+
+
+interface MPI_Win_call_errhandler
+
+subroutine MPI_Win_call_errhandler(win, errorcode, ierror)
+  integer, intent(in) :: win
+  integer, intent(in) :: errorcode
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_call_errhandler
+
+end interface
 
 interface PMPI_Win_call_errhandler
 
@@ -7484,58 +7772,6 @@ end subroutine PMPI_Win_create_dynamic
 end interface
 
 
-interface MPI_Win_attach
-
-subroutine MPI_Win_attach(win, base, size, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
-  integer, intent(in) :: win
-  integer, intent(out) :: ierror
-end subroutine MPI_Win_attach
-
-end interface
-
-interface PMPI_Win_attach
-
-subroutine PMPI_Win_attach(win, base, size, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
-  integer, intent(in) :: win
-  integer, intent(out) :: ierror
-end subroutine PMPI_Win_attach
-
-end interface
-
-
-interface MPI_Win_detach
-
-subroutine MPI_Win_detach(win, base, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
-  integer, intent(in) :: win
-  integer, intent(out) :: ierror
-end subroutine MPI_Win_detach
-
-end interface
-
-interface PMPI_Win_detach
-
-subroutine PMPI_Win_detach(win, base, ierror)
-  include 'mpif-config.h'
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
-  integer, intent(in) :: win
-  integer, intent(out) :: ierror
-end subroutine PMPI_Win_detach
-
-end interface
-
-
 interface MPI_Win_create_errhandler
 
 subroutine MPI_Win_create_errhandler(function, errhandler, ierror)
@@ -7605,6 +7841,31 @@ end subroutine PMPI_Win_delete_attr
 end interface
 
 
+interface MPI_Win_detach
+
+subroutine MPI_Win_detach(win, base, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_detach
+
+end interface
+
+interface PMPI_Win_detach
+
+subroutine PMPI_Win_detach(win, base, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_detach
+
+end interface
+
+
 interface MPI_Win_fence
 
 subroutine MPI_Win_fence(assert, win, ierror)
@@ -7624,6 +7885,7 @@ subroutine PMPI_Win_fence(assert, win, ierror)
 end subroutine PMPI_Win_fence
 
 end interface
+
 
 interface MPI_Win_flush
 
@@ -7645,6 +7907,7 @@ end subroutine PMPI_Win_flush
 
 end interface
 
+
 interface MPI_Win_flush_all
 
 subroutine MPI_Win_flush_all(win, ierror)
@@ -7662,6 +7925,7 @@ subroutine PMPI_Win_flush_all(win, ierror)
 end subroutine PMPI_Win_flush_all
 
 end interface
+
 
 interface MPI_Win_flush_local
 
@@ -7683,6 +7947,7 @@ end subroutine PMPI_Win_flush_local
 
 end interface
 
+
 interface MPI_Win_flush_local_all
 
 subroutine MPI_Win_flush_local_all(win, ierror)
@@ -7700,6 +7965,7 @@ subroutine PMPI_Win_flush_local_all(win, ierror)
 end subroutine PMPI_Win_flush_local_all
 
 end interface
+
 
 interface MPI_Win_free
 
@@ -7879,6 +8145,27 @@ end subroutine PMPI_Win_lock
 end interface
 
 
+interface MPI_Win_lock_all
+
+subroutine MPI_Win_lock_all(assert, win, ierror)
+  integer, intent(in) :: assert
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_lock_all
+
+end interface
+
+interface PMPI_Win_lock_all
+
+subroutine PMPI_Win_lock_all(assert, win, ierror)
+  integer, intent(in) :: assert
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_lock_all
+
+end interface
+
+
 interface MPI_Win_post
 
 subroutine MPI_Win_post(group, assert, win, ierror)
@@ -8019,6 +8306,33 @@ end subroutine MPI_Win_shared_query_cptr
 
 end interface
 
+interface PMPI_Win_shared_query
+
+subroutine PMPI_Win_shared_query(win, rank, size, disp_unit, baseptr,&
+      ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: win
+  integer, intent(in) :: rank
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: size
+  integer, intent(out) :: disp_unit
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: baseptr
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_shared_query
+
+subroutine PMPI_Win_shared_query_cptr(win, rank, size, disp_unit, baseptr,&
+      ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer, intent(in) :: win
+  integer, intent(in) :: rank
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: size
+  integer, intent(out) :: disp_unit
+  type(C_PTR), intent(out) :: baseptr
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_shared_query_cptr
+
+end interface
+
 
 interface MPI_Win_start
 
@@ -8039,6 +8353,25 @@ subroutine PMPI_Win_start(group, assert, win, ierror)
   integer, intent(in) :: win
   integer, intent(out) :: ierror
 end subroutine PMPI_Win_start
+
+end interface
+
+
+interface MPI_Win_sync
+
+subroutine MPI_Win_sync(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_sync
+
+end interface
+
+interface PMPI_Win_sync
+
+subroutine PMPI_Win_sync(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_sync
 
 end interface
 
@@ -8081,6 +8414,25 @@ subroutine PMPI_Win_unlock(rank, win, ierror)
   integer, intent(in) :: win
   integer, intent(out) :: ierror
 end subroutine PMPI_Win_unlock
+
+end interface
+
+
+interface MPI_Win_unlock_all
+
+subroutine MPI_Win_unlock_all(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_unlock_all
+
+end interface
+
+interface PMPI_Win_unlock_all
+
+subroutine PMPI_Win_unlock_all(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_unlock_all
 
 end interface
 
