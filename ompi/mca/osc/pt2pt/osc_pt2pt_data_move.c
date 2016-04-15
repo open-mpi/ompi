@@ -398,7 +398,7 @@ static inline int process_put_long(ompi_osc_pt2pt_module_t* module, int source,
     ret = ompi_osc_pt2pt_component_irecv (module, target,
                                          put_header->count,
                                          datatype, source,
-                                         put_header->tag,
+                                         tag_to_target(put_header->tag),
                                          module->comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
@@ -534,7 +534,7 @@ static inline int process_get (ompi_osc_pt2pt_module_t* module, int target,
     }
 
     /* send get data */
-    ret = osc_pt2pt_get_post_send (module, source, get_header->count, datatype, target, get_header->tag);
+    ret = osc_pt2pt_get_post_send (module, source, get_header->count, datatype, target, tag_to_origin(get_header->tag));
 
     OBJ_RELEASE(datatype);
 
@@ -848,7 +848,7 @@ static int ompi_osc_pt2pt_acc_long_start (ompi_osc_pt2pt_module_t *module, int s
     do {
         if (op == &ompi_mpi_op_replace.op) {
             ret = ompi_osc_pt2pt_irecv_w_cb (target, acc_header->count, datatype, source,
-                                            acc_header->tag, module->comm, NULL,
+                                            tag_to_target(acc_header->tag), module->comm, NULL,
                                             replace_cb, module);
             break;
         }
@@ -877,7 +877,7 @@ static int ompi_osc_pt2pt_acc_long_start (ompi_osc_pt2pt_module_t *module, int s
         }
 
         ret = ompi_osc_pt2pt_irecv_w_cb (buffer, primitive_count, primitive_datatype, source,
-                                         acc_header->tag, module->comm, NULL, accumulate_cb, acc_data);
+                                         tag_to_target(acc_header->tag), module->comm, NULL, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
         }
@@ -925,7 +925,7 @@ static int ompi_osc_pt2pt_gacc_start (ompi_osc_pt2pt_module_t *module, int sourc
             break;
         }
 
-        ret = ompi_osc_pt2pt_isend_w_cb (target, acc_header->count, datatype, source, acc_header->tag,
+        ret = ompi_osc_pt2pt_isend_w_cb (target, acc_header->count, datatype, source, tag_to_origin(acc_header->tag),
                                         module->comm, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
@@ -994,14 +994,14 @@ static int ompi_osc_gacc_long_start (ompi_osc_pt2pt_module_t *module, int source
             break;
         }
 
-        ret = ompi_osc_pt2pt_irecv_w_cb (buffer, acc_header->count, datatype, source, acc_header->tag,
+        ret = ompi_osc_pt2pt_irecv_w_cb (buffer, acc_header->count, datatype, source, tag_to_target(acc_header->tag),
                                         module->comm, &recv_request, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
             break;
         }
 
-        ret = ompi_osc_pt2pt_isend_w_cb (target, primitive_count, primitive_datatype, source, acc_header->tag,
+        ret = ompi_osc_pt2pt_isend_w_cb (target, primitive_count, primitive_datatype, source, tag_to_origin(acc_header->tag),
                                         module->comm, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             /* cancel the receive and free the accumulate data */
@@ -1054,7 +1054,7 @@ static int ompi_osc_pt2pt_cswap_start (ompi_osc_pt2pt_module_t *module, int sour
 
     do {
         /* no reason to do a non-blocking send here */
-        ret = MCA_PML_CALL(send(target, 1, datatype, source, cswap_header->tag, MCA_PML_BASE_SEND_STANDARD,
+        ret = MCA_PML_CALL(send(target, 1, datatype, source, tag_to_origin(cswap_header->tag), MCA_PML_BASE_SEND_STANDARD,
                                 module->comm));
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             break;
@@ -1503,7 +1503,7 @@ static int process_large_datatype_request (ompi_osc_pt2pt_module_t *module, int 
     memcpy (ddt_buffer->header, header, header_len);
 
     ret = ompi_osc_pt2pt_irecv_w_cb ((void *)((uintptr_t) ddt_buffer->header + header_len),
-                                    ddt_len, MPI_BYTE, source, tag, module->comm, NULL,
+                                    ddt_len, MPI_BYTE, source, tag_to_target(tag), module->comm, NULL,
                                     process_large_datatype_request_cb, ddt_buffer);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         OBJ_RELEASE(ddt_buffer);
