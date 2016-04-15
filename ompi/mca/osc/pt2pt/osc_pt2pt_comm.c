@@ -788,7 +788,7 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
     ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, false, release_req);
     if (OMPI_SUCCESS != ret) {
         /* allocate space for the header plus space to store ddt_len */
-        frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + 8;
+        frag_len = sizeof(ompi_osc_pt2pt_header_get_t) + 8;
         ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, false, release_req);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
