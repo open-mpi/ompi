@@ -74,7 +74,7 @@ const Datatype DOUBLE_INT(MPI_DOUBLE_INT);
 const Datatype LONG_INT(MPI_LONG_INT);
 const Datatype TWOINT(MPI_2INT);
 const Datatype SHORT_INT(MPI_SHORT_INT);
-const Datatype LONG_DOUBLE_INT(MPI_LONG_DOUBLE);
+const Datatype LONG_DOUBLE_INT(MPI_LONG_DOUBLE_INT);
 
 #if OMPI_BUILD_FORTRAN_BINDINGS
 // elementary datatype (Fortran)
