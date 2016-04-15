@@ -523,6 +523,8 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         ORTE_FLAG_UNSET(pdata, ORTE_PROC_FLAG_ALIVE);
         pdata->state = state;
         if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
+            /* tell the PMIx subsystem to cleanup this client */
+            opal_pmix.server_deregister_client(proc);
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.
