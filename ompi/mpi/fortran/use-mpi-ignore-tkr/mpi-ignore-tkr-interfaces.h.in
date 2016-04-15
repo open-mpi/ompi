@@ -1122,6 +1122,18 @@ end subroutine MPI_Comm_create_group
 
 end interface
 
+interface PMPI_Comm_create_group
+
+subroutine PMPI_Comm_create_group(comm, group, tag, newcomm, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: group
+  integer, intent(in) :: tag
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine PMPI_Comm_create_group
+
+end interface
+
 
 interface MPI_Comm_create_keyval
 
@@ -1219,6 +1231,17 @@ subroutine MPI_Comm_dup_with_info(comm, info, newcomm, ierror)
   integer, intent(out) :: newcomm
   integer, intent(out) :: ierror
 end subroutine MPI_Comm_dup_with_info
+
+end interface
+
+interface PMPI_Comm_dup_with_info
+
+subroutine PMPI_Comm_dup_with_info(comm, info, newcomm, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine PMPI_Comm_dup_with_info
 
 end interface
 
@@ -1380,6 +1403,17 @@ subroutine MPI_Comm_idup(comm, newcomm, request, ierror)
   integer, intent(out) :: request
   integer, intent(out) :: ierror
 end subroutine MPI_Comm_idup
+
+end interface
+
+interface PMPI_Comm_idup
+
+subroutine PMPI_Comm_idup(comm, newcomm, request, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Comm_idup
 
 end interface
 
@@ -7346,6 +7380,31 @@ end subroutine MPI_Win_allocate_cptr
 
 end interface
 
+interface PMPI_Win_allocate
+
+subroutine PMPI_Win_allocate(size, disp_unit, info, comm, &
+      baseptr, win, ierror)
+  include 'mpif-config.h'
+  integer(KIND=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(in) :: disp_unit
+  integer, intent(in) :: info
+  integer, intent(in) :: comm
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: baseptr
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_allocate
+
+subroutine PMPI_Win_allocate_cptr(size, disp_unit, info, comm, &
+     baseptr, win, ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer :: disp_unit, info, comm, win, ierror
+  integer(KIND=MPI_ADDRESS_KIND) :: size
+  type(C_PTR) :: baseptr
+end subroutine PMPI_Win_allocate_cptr
+
+end interface
+
 
 interface MPI_Win_allocate_shared
 
@@ -7369,6 +7428,31 @@ subroutine MPI_Win_allocate_shared_cptr(size, disp_unit, info, comm, &
   integer(KIND=MPI_ADDRESS_KIND) :: size
   type(C_PTR) :: baseptr
 end subroutine MPI_Win_allocate_shared_cptr
+
+end interface
+
+interface PMPI_Win_allocate_shared
+
+subroutine PMPI_Win_allocate_shared(size, disp_unit, info, comm, &
+      baseptr, win, ierror)
+  include 'mpif-config.h'
+  integer(KIND=MPI_ADDRESS_KIND), intent(in) :: size
+  integer, intent(in) :: disp_unit
+  integer, intent(in) :: info
+  integer, intent(in) :: comm
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: baseptr
+  integer, intent(out) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_allocate_shared
+
+subroutine PMPI_Win_allocate_shared_cptr(size, disp_unit, info, comm, &
+     baseptr, win, ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer :: disp_unit, info, comm, win, ierror
+  integer(KIND=MPI_ADDRESS_KIND) :: size
+  type(C_PTR) :: baseptr
+end subroutine PMPI_Win_allocate_shared_cptr
 
 end interface
 
@@ -7966,6 +8050,33 @@ subroutine MPI_Win_shared_query_cptr(win, rank, size, disp_unit, baseptr,&
   type(C_PTR), intent(out) :: baseptr
   integer, intent(out) :: ierror
 end subroutine MPI_Win_shared_query_cptr
+
+end interface
+
+interface PMPI_Win_shared_query
+
+subroutine PMPI_Win_shared_query(win, rank, size, disp_unit, baseptr,&
+      ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: win
+  integer, intent(in) :: rank
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: size
+  integer, intent(out) :: disp_unit
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: baseptr
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_shared_query
+
+subroutine PMPI_Win_shared_query_cptr(win, rank, size, disp_unit, baseptr,&
+      ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer, intent(in) :: win
+  integer, intent(in) :: rank
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: size
+  integer, intent(out) :: disp_unit
+  type(C_PTR), intent(out) :: baseptr
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_shared_query_cptr
 
 end interface
 
