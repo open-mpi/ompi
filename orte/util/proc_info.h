@@ -45,8 +45,6 @@
 
 BEGIN_C_DECLS
 
-#define ORTE_MAX_HOSTNAME_SIZE  512
-
 typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_TYPE_NONE     0x0000
 #define ORTE_PROC_SINGLETON     0x0001

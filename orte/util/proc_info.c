@@ -99,7 +99,7 @@ int orte_proc_info(void)
 
     int idx, i;
     char *ptr;
-    char hostname[ORTE_MAX_HOSTNAME_SIZE];
+    char hostname[OPAL_MAXHOSTNAMELEN];
     char **prefixes;
     bool match;
     struct in_addr buf;
@@ -168,7 +168,7 @@ int orte_proc_info(void)
     orte_process_info.pid = getpid();
 
     /* get the nodename */
-    gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+    gethostname(hostname, sizeof(hostname));
     /* add this to our list of aliases */
     opal_argv_append_nosize(&orte_process_info.aliases, hostname);
 
