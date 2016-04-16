@@ -88,9 +88,8 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
              * of here. we can't be selected :-(.
              */
             else {
-                char hn[MAXHOSTNAMELEN];
-                gethostname(hn, MAXHOSTNAMELEN - 1);
-                hn[MAXHOSTNAMELEN - 1] = '\0';
+                char hn[OPAL_MAXHOSTNAMELEN];
+                gethostname(hn, sizeof(hn));
                 opal_output_verbose(10, opal_shmem_base_framework.framework_output,
                      "shmem_posix_shm_open: disqualifying posix because "
                      "shm_open(2) failed with error: %s (errno %d)\n",

@@ -399,7 +399,7 @@ int opal_hwloc_base_report_bind_failure(const char *file,
 
     if (!already_reported &&
         OPAL_HWLOC_BASE_MBFA_SILENT != opal_hwloc_base_mbfa) {
-        char hostname[64];
+        char hostname[OPAL_MAXHOSTNAMELEN];
         gethostname(hostname, sizeof(hostname));
 
         opal_show_help("help-opal-hwloc-base.txt", "mbind failure", true,

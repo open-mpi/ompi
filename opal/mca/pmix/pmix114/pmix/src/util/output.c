@@ -125,7 +125,7 @@ PMIX_CLASS_INSTANCE(pmix_output_stream_t, pmix_object_t, construct, NULL);
 bool pmix_output_init(void)
 {
     int i;
-    char hostname[32];
+    char hostname[PMIX_MAXHOSTNAMELEN];
     char *str;
 
     if (initialized) {
@@ -250,7 +250,7 @@ bool pmix_output_switch(int output_id, bool enable)
 void pmix_output_reopen_all(void)
 {
     char *str;
-    char hostname[32];
+    char hostname[PMIX_MAXHOSTNAMELEN];
 
     str = getenv("PMIX_OUTPUT_STDERR_FD");
     if (NULL != str) {

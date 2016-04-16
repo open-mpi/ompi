@@ -258,6 +258,15 @@ typedef PMIX_PTRDIFF_TYPE ptrdiff_t;
 #define PMIX_PATH_MAX	256
 #endif
 
+#if defined(MAXHOSTNAMELEN)
+#define PMIX_MAXHOSTNAMELEN (MAXHOSTNAMELEN + 1)
+#elif defined(HOST_NAME_MAX)
+#define PMIX_MAXHOSTNAMELEN (HOST_NAME_MAX + 1)
+#else
+/* SUSv2 guarantees that "Host names are limited to 255 bytes". */
+#define PMIX_MAXHOSTNAMELEN (255 + 1)
+#endif
+
 /*
  * Set the compile-time path-separator on this system and variable separator
  */
@@ -387,12 +396,7 @@ typedef PMIX_PTRDIFF_TYPE ptrdiff_t;
 #ifdef HAVE_HOSTLIB_H
 /* gethostname() */
 #include <hostLib.h>
-
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN 64
 #endif
-#endif
-
 #endif
 
 /* If we're in C++, then just undefine restrict and then define it to
