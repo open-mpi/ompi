@@ -15,7 +15,7 @@
 
 major=1
 minor=1
-release=3
+release=4
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
 # it will be appended to the version number.  It does not have to be
@@ -30,7 +30,7 @@ greek=rc1
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=git17fb9c5
+repo_rev=gitb363c5d
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -44,7 +44,7 @@ tarball_version=
 
 # The date when this release was created
 
-date="Apr 14, 2016"
+date="Apr 15, 2016"
 
 # The shared library version of each of PMIx's public libraries.
 # These versions are maintained in accordance with the "Library
@@ -75,4 +75,4 @@ date="Apr 14, 2016"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libpmix_so_version=2:2:0
+libpmix_so_version=2:3:0

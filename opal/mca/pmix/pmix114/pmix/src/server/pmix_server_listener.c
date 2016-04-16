@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -75,41 +75,41 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
 {
     int flags;
     pmix_status_t rc;
-    unsigned int addrlen;
+    socklen_t addrlen;
     char *ptr;
 
     /* create a listen socket for incoming connection attempts */
     pmix_server_globals.listen_socket = socket(PF_UNIX, SOCK_STREAM, 0);
     if (pmix_server_globals.listen_socket < 0) {
-        printf("%s:%d socket() failed", __FILE__, __LINE__);
+        printf("%s:%d socket() failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
 
     addrlen = sizeof(struct sockaddr_un);
     if (bind(pmix_server_globals.listen_socket, (struct sockaddr*)address, addrlen) < 0) {
-        printf("%s:%d bind() failed", __FILE__, __LINE__);
+        printf("%s:%d bind() failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
     /* set the mode as required */
     if (0 != chmod(address->sun_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)) {
-        pmix_output(0, "CANNOT CHMOD %s", address->sun_path);
+        pmix_output(0, "CANNOT CHMOD %s\n", address->sun_path);
         return PMIX_ERROR;
     }
 
     /* setup listen backlog to maximum allowed by kernel */
     if (listen(pmix_server_globals.listen_socket, SOMAXCONN) < 0) {
-        printf("%s:%d listen() failed", __FILE__, __LINE__);
+        printf("%s:%d listen() failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if ((flags = fcntl(pmix_server_globals.listen_socket, F_GETFL, 0)) < 0) {
-        printf("%s:%d fcntl(F_GETFL) failed", __FILE__, __LINE__);
+        printf("%s:%d fcntl(F_GETFL) failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
     flags |= O_NONBLOCK;
     if (fcntl(pmix_server_globals.listen_socket, F_SETFL, flags) < 0) {
-        printf("%s:%d fcntl(F_SETFL) failed", __FILE__, __LINE__);
+        printf("%s:%d fcntl(F_SETFL) failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
 
