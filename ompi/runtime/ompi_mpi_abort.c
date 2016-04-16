@@ -119,7 +119,7 @@ int
 ompi_mpi_abort(struct ompi_communicator_t* comm,
                int errcode)
 {
-    char *msg, *host, hostname[MAXHOSTNAMELEN];
+    char *msg, *host, hostname[OPAL_MAXHOSTNAMELEN];
     pid_t pid = 0;
 
     /* Protection for recursive invocation */
