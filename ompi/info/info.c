@@ -95,7 +95,7 @@ opal_pointer_array_t ompi_info_f_to_c_table = {{0}};
  */
 int ompi_info_init(void)
 {
-    char val[MPI_MAX_INFO_VAL];
+    char val[OPAL_MAXHOSTNAMELEN];
     char *cptr;
 
     /* initialize table */
@@ -134,7 +134,7 @@ int ompi_info_init(void)
     }
 
     /* local host name */
-    gethostname(val, MPI_MAX_INFO_VAL);
+    gethostname(val, sizeof(val));
     ompi_info_set(&ompi_mpi_info_env.info, "host", val);
 
     /* architecture name */
