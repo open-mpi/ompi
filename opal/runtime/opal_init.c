@@ -257,7 +257,7 @@ opal_init_util(int* pargc, char*** pargv)
 {
     int ret;
     char *error = NULL;
-    char hostname[512];
+    char hostname[OPAL_MAXHOSTNAMELEN];
 
     if( ++opal_util_initialized != 1 ) {
         if( opal_util_initialized < 1 ) {
@@ -282,7 +282,7 @@ opal_init_util(int* pargc, char*** pargv)
      * that we don't bother with fqdn and prefix issues here - we let
      * the RTE later replace this with a modified name if the user
      * requests it */
-    gethostname(hostname, 512);
+    gethostname(hostname, sizeof(hostname));
     opal_process_info.nodename = strdup(hostname);
 
     /* initialize the memory allocator */

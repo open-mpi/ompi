@@ -45,12 +45,12 @@ int main(int argc, char **argv)
     uint32_t nprocs;
     char nsp2[PMIX_MAX_NSLEN+1];
     pmix_app_t *app;
-    char hostname[1024];
+    char hostname[PMIX_MAXHOSTNAMELEN];
     pmix_proc_t *peers;
     size_t npeers, ntmp=0;
     char *nodelist;
 
-    gethostname(hostname, 1024);
+    gethostname(hostname, sizeof(hostname));
 
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc))) {

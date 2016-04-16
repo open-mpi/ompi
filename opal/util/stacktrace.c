@@ -42,7 +42,7 @@
 
 #define HOSTFORMAT "[%s:%05d] "
 
-static char stacktrace_hostname[64];
+static char stacktrace_hostname[OPAL_MAXHOSTNAMELEN];
 static char *unable_to_print_msg = "Unable to print stack trace!\n";
 
 /**
@@ -427,7 +427,6 @@ int opal_util_register_stackhandlers (void)
     bool complain, showed_help = false;
 
     gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
-    stacktrace_hostname[sizeof(stacktrace_hostname) - 1] = '\0';
     /* to keep these somewhat readable, only print the machine name */
     for (i = 0 ; i < (int)strlen(stacktrace_hostname) ; ++i) {
         if (stacktrace_hostname[i] == '.') {

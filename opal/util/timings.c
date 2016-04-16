@@ -75,8 +75,8 @@ int opal_timing_clocksync_read(char *fname)
     bool found = false;
     char *ptr = NULL;
 
-    char hname[1024] = "NA";
-    if( gethostname(hname, 1024) ){
+    char hname[OPAL_MAXHOSTNAMELEN] = "NA";
+    if( gethostname(hname, sizeof(hname)) ){
         opal_output(0, "opal_timing_clocksync_read(%s): Cannot gethostname",
                     fname);
     }

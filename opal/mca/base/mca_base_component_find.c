@@ -330,7 +330,7 @@ static int component_find_check (mca_base_framework_t *framework, char **request
         }
 
         if (!found) {
-            char h[MAXHOSTNAMELEN];
+            char h[OPAL_MAXHOSTNAMELEN];
             gethostname(h, sizeof(h));
             opal_show_help("help-mca-base.txt",
                            "find-available:not-valid", true,
