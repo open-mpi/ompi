@@ -1,3 +1,5 @@
+#include "orte_config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +11,7 @@ int main(int argc, char ** argv){
 
     int i;
     int rank, size, child_rank;
-    char nomehost[20];
+    char nomehost[OPAL_MAXHOSTNAMELEN];
     MPI_Comm parent, intercomm1, intercomm2;
     int erro;
     int level, curr_level;
@@ -60,7 +62,7 @@ int main(int argc, char ** argv){
 
     }
 
-    gethostname(nomehost, 20);
+    gethostname(nomehost, sizeof(nomehost));
     printf("(%d) in %s\n", rank, nomehost);
 
     MPI_Finalize();

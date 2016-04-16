@@ -6,6 +6,9 @@
  */
 
 #define _GNU_SOURCE
+
+#include "orte_config.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -15,7 +18,7 @@
 int main(int argc, char* argv[])
 {
     int rank, size;
-    char hostname[512];
+    char hostname[OPAL_MAXHOSTNAMELEN];
     void *appnum;
     void *univ_size;
     char *appstr, *unistr;
@@ -40,7 +43,7 @@ int main(int argc, char* argv[])
         asprintf(&unistr, "%d", *(int*)univ_size);
     }
 
-    gethostname(hostname, 512);
+    gethostname(hostname, sizeof(hostname));
     printf("Hello, World, I am %d of %d on host %s from app number %s universe size %s universe envar %s\n",
            rank, size, hostname, appstr, unistr, (NULL == envar) ? "NULL" : envar);
 
