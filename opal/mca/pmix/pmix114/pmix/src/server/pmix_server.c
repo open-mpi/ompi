@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -144,6 +144,7 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     int debug_level;
     char *tdir, *evar;
     pid_t pid;
+    char * pmix_pid;
 
     /* initialize the output system */
     if (!pmix_output_init()) {
@@ -217,7 +218,16 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     /* now set the address - we use the pid here to reduce collisions */
     memset(&myaddress, 0, sizeof(struct sockaddr_un));
     myaddress.sun_family = AF_UNIX;
-    snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/pmix-%d", tdir, pid);
+    asprintf(&pmix_pid, "pmix-%d", pid);
+    // If the above set temporary directory name plus the pmix-PID string
+    // plus the '/' separator are too long, just fail, so the caller
+    // may provide the user with a proper help... *Cough*, *Cough* OSX...
+    if ((strlen(tdir) + strlen(pmix_pid) + 1) > sizeof(myaddress.sun_path)-1) {
+        free(pmix_pid);
+        return PMIX_ERR_INVALID_LENGTH;
+    }
+    snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/%s", tdir, pmix_pid);
+    free(pmix_pid);
     asprintf(&myuri, "%s:%lu:%s", pmix_globals.myid.nspace, (unsigned long)pmix_globals.myid.rank, myaddress.sun_path);
 
 
@@ -576,35 +586,17 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const char nspace[], int n
 static void _deregister_nspace(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
-    pmix_nspace_t *nptr;
-    int i;
-    pmix_peer_t *peer;
+    pmix_nspace_t *tmp;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _deregister_nspace %s",
                         cd->proc.nspace);
 
     /* see if we already have this nspace */
-    PMIX_LIST_FOREACH(nptr, &pmix_globals.nspaces, pmix_nspace_t) {
-        if (0 == strcmp(nptr->nspace, cd->proc.nspace)) {
-            /* find and remove this client from our array of local
-             * peers - remember that it can occur multiple times
-             * if the peer called fork/exec and its children called
-             * PMIx_Init! We have to rely on none of those children
-             * living beyond our child as we otherwise cannot
-             * track them */
-            for (i=0; i < pmix_server_globals.clients.size; i++) {
-                if (NULL == (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, i))) {
-                    continue;
-                }
-                if (nptr == peer->info->nptr) {
-                    /* remove this entry */
-                    pmix_pointer_array_set_item(&pmix_server_globals.clients, i, NULL);
-                    PMIX_RELEASE(peer);
-                }
-            }
-            pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
-            PMIX_RELEASE(nptr);
+    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_nspace_t) {
+        if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
+            pmix_list_remove_item(&pmix_globals.nspaces, &tmp->super);
+            PMIX_RELEASE(tmp);
             break;
         }
     }
@@ -628,7 +620,7 @@ PMIX_EXPORT void PMIx_server_deregister_nspace(const char nspace[])
     PMIX_THREADSHIFT(cd, _deregister_nspace);
 }
 
-void pmix_server_execute_collective(int sd, short args, void *cbdata)
+static void _execute_collective(int sd, short args, void *cbdata)
 {
     pmix_trkr_caddy_t *tcd = (pmix_trkr_caddy_t*)cbdata;
     pmix_server_trkr_t *trk = tcd->trk;
@@ -767,7 +759,7 @@ static void _register_client(int sd, short args, void *cbdata)
                  * we don't want to block someone
                  * here, so kick any completed trackers into a
                  * new event for processing */
-                PMIX_EXECUTE_COLLECTIVE(tcd, trk, pmix_server_execute_collective);
+                PMIX_EXECUTE_COLLECTIVE(tcd, trk, _execute_collective);
             }
         }
         /* also check any pending local modex requests to see if
@@ -813,8 +805,6 @@ static void _deregister_client(int sd, short args, void *cbdata)
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_rank_info_t *info;
     pmix_nspace_t *nptr, *tmp;
-    int i;
-    pmix_peer_t *peer;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _deregister_client for nspace %s rank %d",
@@ -832,27 +822,7 @@ static void _deregister_client(int sd, short args, void *cbdata)
         /* nothing to do */
         goto cleanup;
     }
-    /* find and remove this client from our array of local
-     * peers - remember that it can occur multiple times
-     * if the peer called fork/exec and its children called
-     * PMIx_Init! We have to rely on none of those children
-     * living beyond our child as we otherwise cannot
-     * track them */
-    for (i=0; i < pmix_server_globals.clients.size; i++) {
-        if (NULL == (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, i))) {
-            continue;
-        }
-        if (nptr != peer->info->nptr) {
-            continue;
-        }
-        if (cd->proc.rank == peer->info->rank) {
-            /* remove this entry */
-            pmix_pointer_array_set_item(&pmix_server_globals.clients, i, NULL);
-            PMIX_RELEASE(peer);
-        }
-    }
-
-    /* find and remove this client from its nspace */
+    /* find an remove this client */
     PMIX_LIST_FOREACH(info, &nptr->server->ranks, pmix_rank_info_t) {
         if (info->rank == cd->proc.rank) {
             pmix_list_remove_item(&nptr->server->ranks, &info->super);
@@ -2183,9 +2153,8 @@ static void deregevents_cbfunc (pmix_status_t status, void *cbdata)
     pmix_buffer_t *reply = PMIX_NEW(pmix_buffer_t);
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "server:deregevents_cbfunc called status = %d", status);
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, &status, 1, PMIX_INT))) {
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, &status, 1, PMIX_INT)))
         PMIX_ERROR_LOG(rc);
-    }
     // send reply
     PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
     PMIX_RELEASE(cd);
@@ -2289,7 +2258,6 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
             proc.rank = peer->info->rank;
             if (PMIX_SUCCESS != (rc = pmix_host_server.client_finalized(&proc, peer->info->server_object,
                                                                         op_cbfunc, cd))) {
-                PMIX_ERROR_LOG(rc);
                 PMIX_RELEASE(cd);
             }
         }

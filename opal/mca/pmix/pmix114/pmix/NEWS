@@ -23,6 +23,27 @@ current release as well as the "stable" bug fix release branch.
 Master (not on release branches yet)
 ------------------------------------
 
+1.1.4
+-----
+- Properly increment the reference count for PMIx_Init
+- Fix examples so all run properly
+- Fix/complete PMI2 backward compatibility support to handle
+  keys that are not associated with a specific rank
+- Do a better job of hiding non-API symbols
+- Correct handling of semi-colon terminations on macros.
+  Thanks to Ashley Pittman for the patch
+- Add more man pages
+- Improve error checking and messages for connection
+  attempts from client to server
+- If the tmpdir name is too long, provide an appropriate
+  help message to the user (particularly relevant on
+  Mac OSX). Thanks to Rainer Keller for the patch.
+- Fix some C++ compatibility issues
+- Fix/complete PMI-1 backward compatibility support
+- Do not install internal headers unless specifically
+  requested to do so
+- Add support for multiple calls to Put/Commit
+
 
 1.1.3
 -----

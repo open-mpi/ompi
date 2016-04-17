@@ -702,10 +702,6 @@ PMIX_EXPORT pmix_status_t PMIx_Commit(void)
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    if (pmix_globals.init_cntr <= 0) {
-        return PMIX_ERR_INIT;
-    }
-
     /* if we are a server, or we aren't connected, don't attempt to send */
     if (pmix_globals.server) {
         return PMIX_SUCCESS;  // not an error
@@ -788,10 +784,6 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    if (pmix_globals.init_cntr <= 0) {
-        return PMIX_ERR_INIT;
-    }
-
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
     cb->active = true;
@@ -850,10 +842,6 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist
 {
     pmix_cb_t *cb;
     pmix_status_t rc;
-
-    if (pmix_globals.init_cntr <= 0) {
-        return PMIX_ERR_INIT;
-    }
 
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
@@ -1213,10 +1201,17 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
                                     "connection to server aborted by OS - retrying");
                 CLOSE_THE_SOCKET(sd);
                 continue;
+            } else {
+                pmix_output_verbose(2, pmix_globals.debug_output,
+                                    "Connect failed: %s (%d)", strerror(pmix_socket_errno),
+                                    pmix_socket_errno);
+                CLOSE_THE_SOCKET(sd);
+                continue;
             }
+        } else {
+            /* otherwise, the connect succeeded - so break out of the loop */
+            break;
         }
-        /* otherwise, the connect succeeded - so break out of the loop */
-        break;
     }
 
     if (retries == PMIX_MAX_RETRIES || sd < 0){
@@ -1410,7 +1405,8 @@ void pmix_client_deregister_errhandler(int errhandler_ref,
             PMIX_RELEASE(msg);
             pmix_remove_errhandler(errhandler_ref);
             cbfunc(PMIX_ERR_PACK_FAILURE, cbdata);
-        } else {
+        }
+        else {
             /* create a callback object as we need to pass it to the
              * recv routine so we know which callback to use when
              * the server acks/nacks the register events request*/
@@ -1421,9 +1417,9 @@ void pmix_client_deregister_errhandler(int errhandler_ref,
             /* push the message into our event base to send to the server */
             PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, deregevents_cbfunc, cb);
         }
-    } else {
-        cbfunc(PMIX_ERR_NOT_FOUND, cbdata);
     }
+    else
+        cbfunc(PMIX_ERR_NOT_FOUND, cbdata);
 }
 
 static void notifyerror_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,

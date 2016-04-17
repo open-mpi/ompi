@@ -195,18 +195,6 @@ void pmix_errhandler_invoke(pmix_status_t status,
                     break;
             }
         }
-        if (!exact_match) {
-            /* if no exact match was found, then we will fire the errhandler
-             * for any matching info key. This may be too lax and need to be adjusted
-             * later */
-            for (k = 0; k < errreg->ninfo; k++) {
-                if ((0 == strcmp(errreg->info[j].key, info[k].key)) &&
-                    (pmix_value_cmp(&errreg->info[j].value, &info[k].value))) {
-                    errreg->errhandler(status, procs, nprocs, iptr, ninfo+1);
-                    fired = true;
-                }
-            }
-        }
     }
 
     /* if nothing fired and we found a general err handler, then fire it */
