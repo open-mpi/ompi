@@ -91,7 +91,7 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
         return PMIX_ERROR;
     }
     /* set the mode as required */
-    if (0 != chmod(address->sun_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)) {
+    if (0 != chmod(address->sun_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH)) {
         pmix_output(0, "CANNOT CHMOD %s\n", address->sun_path);
         return PMIX_ERROR;
     }

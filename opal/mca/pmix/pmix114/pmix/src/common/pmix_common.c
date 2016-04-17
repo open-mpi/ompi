@@ -31,6 +31,10 @@ PMIX_EXPORT void PMIx_Register_errhandler(pmix_info_t info[], size_t ninfo,
                               pmix_errhandler_reg_cbfunc_t cbfunc,
                               void *cbdata)
 {
+    if (pmix_globals.init_cntr <= 0) {
+        return;
+    }
+
     /* common err handler registration */
     if (pmix_globals.server) {
         /* PMIX server: store the error handler, process info keys and call
@@ -57,6 +61,10 @@ PMIX_EXPORT void PMIx_Deregister_errhandler(int errhandler_ref,
                                 pmix_op_cbfunc_t cbfunc,
                                 void *cbdata)
 {
+    if (pmix_globals.init_cntr <= 0) {
+        return;
+    }
+
     /* common err handler registration */
     if (pmix_globals.server) {
         /* PMIX server: store the error handler, process info keys and call
@@ -81,6 +89,10 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_error(pmix_status_t status,
                                 pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
+
+    if (pmix_globals.init_cntr <= 0) {
+        return PMIX_ERR_INIT;
+    }
 
     if (pmix_globals.server) {
         rc = pmix_server_notify_error(status, procs, nprocs, error_procs,

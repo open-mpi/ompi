@@ -234,6 +234,8 @@ void pmix_server_check_notifications(pmix_regevents_info_t *reginfo,
 
 void regevents_cbfunc (pmix_status_t status, void *cbdata);
 
+void pmix_server_execute_collective(int sd, short args, void *cbdata);
+
 extern pmix_server_module_t pmix_host_server;
 extern pmix_server_globals_t pmix_server_globals;
 

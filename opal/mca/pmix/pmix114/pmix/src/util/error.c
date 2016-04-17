@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -157,9 +157,8 @@ void pmix_errhandler_invoke(pmix_status_t status,
     /* We need to parse thru each registered handler and determine
      * which one to call for the specific error */
     int i, idflt;
-    size_t j, k;
+    size_t j;
     bool fired = false;
-    bool exact_match;
     pmix_error_reg_info_t *errreg, *errdflt=NULL;
     pmix_info_t *iptr;
 
@@ -184,14 +183,12 @@ void pmix_errhandler_invoke(pmix_status_t status,
         }
         iptr[0].value.data.integer = i;
         /* match error name key first */
-        exact_match = false;
         for (j = 0; j < errreg->ninfo; j++) {
             if ((0 == strcmp(errreg->info[j].key, PMIX_ERROR_NAME)) &&
                 (status == errreg->info[j].value.data.int32)) {
                     iptr[0].value.data.integer = i;
                     errreg->errhandler(status, procs, nprocs, iptr, ninfo+1);
                     fired = true;
-                    exact_match = true;
                     break;
             }
         }
