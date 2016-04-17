@@ -702,6 +702,10 @@ PMIX_EXPORT pmix_status_t PMIx_Commit(void)
     pmix_cb_t *cb;
     pmix_status_t rc;
 
+    if (pmix_globals.init_cntr <= 0) {
+        return PMIX_ERR_INIT;
+    }
+
     /* if we are a server, or we aren't connected, don't attempt to send */
     if (pmix_globals.server) {
         return PMIX_SUCCESS;  // not an error
@@ -784,6 +788,10 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     pmix_cb_t *cb;
     pmix_status_t rc;
 
+    if (pmix_globals.init_cntr <= 0) {
+        return PMIX_ERR_INIT;
+    }
+
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
     cb->active = true;
@@ -842,6 +850,10 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist
 {
     pmix_cb_t *cb;
     pmix_status_t rc;
+
+    if (pmix_globals.init_cntr <= 0) {
+        return PMIX_ERR_INIT;
+    }
 
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
