@@ -277,7 +277,9 @@ static size_t memory_patcher_get_shm_seg_size (const void *shmaddr)
     seg_size = 0;
 
     fd = open ("/proc/self/maps", O_RDONLY);
-    assert (fd >= 0);
+    if (fd < 0) {
+        return 0;
+    }
 
     for (size_t read_offset = 0 ; ; ) {
         ssize_t nread = read(fd, buffer + read_offset, sizeof(buffer) - 1 - read_offset);
