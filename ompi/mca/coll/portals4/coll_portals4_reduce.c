@@ -367,6 +367,7 @@ ompi_coll_portals4_reduce_intra(const void *sendbuf, void *recvbuf, int count,
         struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module)
 {
+    int ret;
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;
     ompi_coll_portals4_request_t *request;
 
@@ -381,9 +382,13 @@ ompi_coll_portals4_reduce_intra(const void *sendbuf, void *recvbuf, int count,
     request->is_sync = true;
     request->fallback_request = NULL;
 
-    reduce_kary_tree_top(sendbuf, recvbuf, count,
+    ret = reduce_kary_tree_top(sendbuf, recvbuf, count,
             dtype, op, root, comm,  request,  portals4_module);
-    reduce_kary_tree_bottom(request);
+    if (OMPI_SUCCESS != ret)
+	return ret;
+    ret = reduce_kary_tree_bottom(request);
+    if (OMPI_SUCCESS != ret)
+	return ret;
 
     OMPI_COLL_PORTALS4_REQUEST_RETURN(request);
     return (OMPI_SUCCESS);
@@ -398,6 +403,7 @@ ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
         ompi_request_t ** ompi_request,
         struct mca_coll_base_module_2_1_0_t *module)
 {
+    int ret;
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;
     ompi_coll_portals4_request_t *request;
 
@@ -413,9 +419,10 @@ ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
     request->fallback_request = ompi_request;
     request->is_sync = false;
 
-
-    reduce_kary_tree_top(sendbuf, recvbuf, count,
+    ret = reduce_kary_tree_top(sendbuf, recvbuf, count,
             dtype, op, root, comm,  request,  portals4_module);
+    if (OMPI_SUCCESS != ret)
+	return ret;
 
     if (!request->u.reduce.is_optim) {
         OMPI_COLL_PORTALS4_REQUEST_RETURN(request);
@@ -428,7 +435,11 @@ ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
 int
 ompi_coll_portals4_ireduce_intra_fini(ompi_coll_portals4_request_t *request)
 {
-    reduce_kary_tree_bottom(request);
+    int ret;
+
+    ret = reduce_kary_tree_bottom(request);
+    if (OMPI_SUCCESS != ret)
+	return ret;
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_complete(&request->super, true);
