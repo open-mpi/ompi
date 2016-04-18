@@ -24,11 +24,11 @@ C or C++:
 .Vb
 #include <mpp/shmem.h>
 
-void shmem_clear_lock(long *lock);
+void shmem_clear_lock(volatile long *lock);
 
-void shmem_set_lock(long *lock);
+void shmem_set_lock(volatile long *lock);
 
-int shmem_test_lock(long *lock);
+int shmem_test_lock(volatile long *lock);
 .Ve
 Fortran:
 .Vb

@@ -34,7 +34,7 @@ static bool __group_cache_enabled = true;
  */
 #define SHMEM_TYPE_REDUCE_OP(name, type_name, type, prefix)    \
     void prefix##type_name##_##name##_to_all( type *target,                     \
-                                        type *source,                                       \
+                                        const type *source,                                 \
                                         int nreduce,                                        \
                                         int PE_start,                                       \
                                         int logPE_stride,                                   \

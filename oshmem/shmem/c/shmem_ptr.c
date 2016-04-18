@@ -26,7 +26,7 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-void *shmem_ptr(void *ptr, int pe)
+void *shmem_ptr(const void *ptr, int pe)
 {
     SHMEM_API_VERBOSE(10,
                       "*************** WARNING!!! NOT SUPPORTED FUNCTION **********************\n"
