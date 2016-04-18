@@ -1768,8 +1768,8 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         theirproc = ompi_group_peer_lookup(intercomm->c_remote_group,0);
 
         mask = OMPI_RTE_CMP_JOBID | OMPI_RTE_CMP_VPID;
-        rc = ompi_rte_compare_name_fields(mask, (const orte_process_name_t*)&(ourproc->super.proc_name),
-                                                (const orte_process_name_t*)&(theirproc->super.proc_name));
+        rc = ompi_rte_compare_name_fields(mask, (const ompi_process_name_t*)&(ourproc->super.proc_name),
+                                                (const ompi_process_name_t*)&(theirproc->super.proc_name));
         if ( 0 > rc ) {
             flag = true;
         }
