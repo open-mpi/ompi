@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2016      Research Organization for Information Science
@@ -74,7 +74,7 @@ OSHMEM_DECLSPEC  int pshmem_my_pe(void);
  * Accessability routines
  */
 OSHMEM_DECLSPEC int pshmem_pe_accessible(int pe);
-OSHMEM_DECLSPEC int pshmem_addr_accessible(void *addr, int pe);
+OSHMEM_DECLSPEC int pshmem_addr_accessible(const void *addr, int pe);
 
 /*
  * Symmetric heap routines
@@ -87,7 +87,7 @@ OSHMEM_DECLSPEC  void pshmem_free(void* ptr);
 /*
  * Remote pointer operations
  */
-OSHMEM_DECLSPEC  void *pshmem_ptr(void *ptr, int pe);
+OSHMEM_DECLSPEC  void *pshmem_ptr(const void *ptr, int pe);
 
 /*
  * Elemental put routines
@@ -151,14 +151,14 @@ OSHMEM_DECLSPEC  void pshmem_put128_nbi(void *target, const void *source, size_t
 /*
  * Elemental get routines
  */
-OSHMEM_DECLSPEC  char pshmem_char_g(char* addr, int pe);
-OSHMEM_DECLSPEC  short pshmem_short_g(short* addr, int pe);
-OSHMEM_DECLSPEC  int pshmem_int_g(int* addr, int pe);
-OSHMEM_DECLSPEC  long pshmem_long_g(long* addr, int pe);
-OSHMEM_DECLSPEC  float pshmem_float_g(float* addr, int pe);
-OSHMEM_DECLSPEC  double pshmem_double_g(double* addr, int pe);
-OSHMEM_DECLSPEC  long long pshmem_longlong_g(long long* addr, int pe);
-OSHMEM_DECLSPEC  long double pshmem_longdouble_g(long double* addr, int pe);
+OSHMEM_DECLSPEC  char pshmem_char_g(const char* addr, int pe);
+OSHMEM_DECLSPEC  short pshmem_short_g(const short* addr, int pe);
+OSHMEM_DECLSPEC  int pshmem_int_g(const int* addr, int pe);
+OSHMEM_DECLSPEC  long pshmem_long_g(const long* addr, int pe);
+OSHMEM_DECLSPEC  float pshmem_float_g(const float* addr, int pe);
+OSHMEM_DECLSPEC  double pshmem_double_g(const double* addr, int pe);
+OSHMEM_DECLSPEC  long long pshmem_longlong_g(const long long* addr, int pe);
+OSHMEM_DECLSPEC  long double pshmem_longdouble_g(const long double* addr, int pe);
 
 /*
  * Block data get routines
@@ -246,24 +246,24 @@ OSHMEM_DECLSPEC void pshmem_longlong_inc(long long *target, int pe);
 /*
  * Lock functions
  */
-OSHMEM_DECLSPEC void pshmem_set_lock(long *lock);
-OSHMEM_DECLSPEC void pshmem_clear_lock(long *lock);
-OSHMEM_DECLSPEC int pshmem_test_lock(long *lock);
+OSHMEM_DECLSPEC void pshmem_set_lock(volatile long *lock);
+OSHMEM_DECLSPEC void pshmem_clear_lock(volatile long *lock);
+OSHMEM_DECLSPEC int pshmem_test_lock(volatile long *lock);
 
 /*
  * P2P sync routines
  */
-OSHMEM_DECLSPEC  void pshmem_short_wait(short *addr, short value);
-OSHMEM_DECLSPEC  void pshmem_int_wait(int *addr, int value);
-OSHMEM_DECLSPEC  void pshmem_long_wait(long *addr, long value);
-OSHMEM_DECLSPEC  void pshmem_longlong_wait(long long *addr, long long value);
-OSHMEM_DECLSPEC  void pshmem_wait(long *addr, long value);
+OSHMEM_DECLSPEC  void pshmem_short_wait(volatile short *addr, short value);
+OSHMEM_DECLSPEC  void pshmem_int_wait(volatile int *addr, int value);
+OSHMEM_DECLSPEC  void pshmem_long_wait(volatile long *addr, long value);
+OSHMEM_DECLSPEC  void pshmem_longlong_wait(volatile long long *addr, long long value);
+OSHMEM_DECLSPEC  void pshmem_wait(volatile long *addr, long value);
 
-OSHMEM_DECLSPEC  void pshmem_short_wait_until(short *addr, int cmp, short value);
-OSHMEM_DECLSPEC  void pshmem_int_wait_until(int *addr, int cmp, int value);
-OSHMEM_DECLSPEC  void pshmem_long_wait_until(long *addr, int cmp, long value);
-OSHMEM_DECLSPEC  void pshmem_longlong_wait_until(long long *addr, int cmp, long long value);
-OSHMEM_DECLSPEC  void pshmem_wait_until(long *addr, int cmp, long value);
+OSHMEM_DECLSPEC  void pshmem_short_wait_until(volatile short *addr, int cmp, short value);
+OSHMEM_DECLSPEC  void pshmem_int_wait_until(volatile int *addr, int cmp, int value);
+OSHMEM_DECLSPEC  void pshmem_long_wait_until(volatile long *addr, int cmp, long value);
+OSHMEM_DECLSPEC  void pshmem_longlong_wait_until(volatile long long *addr, int cmp, long long value);
+OSHMEM_DECLSPEC  void pshmem_wait_until(volatile long *addr, int cmp, long value);
 
 /*
  * Barrier sync routines
@@ -291,56 +291,56 @@ OSHMEM_DECLSPEC void pshmem_alltoalls64(void *target, const void *source, ptrdif
 /*
  * Reduction routines
  */
-OSHMEM_DECLSPEC void pshmem_short_and_to_all(short *target, short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_int_and_to_all(int *target, int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_long_and_to_all(long *target, long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longlong_and_to_all(long long *target, long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_short_and_to_all(short *target, const short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_int_and_to_all(int *target, const int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_long_and_to_all(long *target, const long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longlong_and_to_all(long long *target, const long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmem_short_or_to_all(short *target, short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_int_or_to_all(int *target, int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_long_or_to_all(long *target, long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longlong_or_to_all(long long *target, long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_short_or_to_all(short *target, const short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_int_or_to_all(int *target, const int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_long_or_to_all(long *target, const long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longlong_or_to_all(long long *target, const long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmem_short_xor_to_all(short *target, short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_int_xor_to_all(int *target, int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_long_xor_to_all(long *target, long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longlong_xor_to_all(long long *target, long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_short_xor_to_all(short *target, const short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_int_xor_to_all(int *target, const int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_long_xor_to_all(long *target, const long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longlong_xor_to_all(long long *target, const long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmem_short_max_to_all(short *target, short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_int_max_to_all(int *target, int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_long_max_to_all(long *target, long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longlong_max_to_all(long long *target, long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_float_max_to_all(float *target, float *source, int nreduce, int PE_start, int logPE_stride, int PE_size, float *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_double_max_to_all(double *target, double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, double *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longdouble_max_to_all(long double *target, long double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long double *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_short_max_to_all(short *target, const short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_int_max_to_all(int *target, const int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_long_max_to_all(long *target, const long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longlong_max_to_all(long long *target, const long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_float_max_to_all(float *target, const float *source, int nreduce, int PE_start, int logPE_stride, int PE_size, float *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_double_max_to_all(double *target, const double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, double *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longdouble_max_to_all(long double *target, const long double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long double *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmem_short_min_to_all(short *target, short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_int_min_to_all(int *target, int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_long_min_to_all(long *target, long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longlong_min_to_all(long long *target, long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_float_min_to_all(float *target, float *source, int nreduce, int PE_start, int logPE_stride, int PE_size, float *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_double_min_to_all(double *target, double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, double *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longdouble_min_to_all(long double *target, long double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long double *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_short_min_to_all(short *target, const short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_int_min_to_all(int *target, const int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_long_min_to_all(long *target, const long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longlong_min_to_all(long long *target, const long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_float_min_to_all(float *target, const float *source, int nreduce, int PE_start, int logPE_stride, int PE_size, float *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_double_min_to_all(double *target, const double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, double *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longdouble_min_to_all(long double *target, const long double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long double *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmem_short_sum_to_all(short *target, short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_int_sum_to_all(int *target, int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_long_sum_to_all(long *target, long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longlong_sum_to_all(long long *target, long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_float_sum_to_all(float *target, float *source, int nreduce, int PE_start, int logPE_stride, int PE_size, float *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_double_sum_to_all(double *target, double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, double *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longdouble_sum_to_all(long double *target, long double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long double *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_complexf_sum_to_all(OSHMEM_COMPLEX_TYPE(float) *target, OSHMEM_COMPLEX_TYPE(float) *source, int nreduce, int PE_start, int logPE_stride, int PE_size, OSHMEM_COMPLEX_TYPE(float) *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_complexd_sum_to_all(OSHMEM_COMPLEX_TYPE(double) *target, OSHMEM_COMPLEX_TYPE(double) *source, int nreduce, int PE_start, int logPE_stride, int PE_size, OSHMEM_COMPLEX_TYPE(double) *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_short_sum_to_all(short *target, const short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_int_sum_to_all(int *target, const int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_long_sum_to_all(long *target, const long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longlong_sum_to_all(long long *target, const long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_float_sum_to_all(float *target, const float *source, int nreduce, int PE_start, int logPE_stride, int PE_size, float *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_double_sum_to_all(double *target, const double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, double *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longdouble_sum_to_all(long double *target, const long double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long double *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_complexf_sum_to_all(OSHMEM_COMPLEX_TYPE(float) *target, const OSHMEM_COMPLEX_TYPE(float) *source, int nreduce, int PE_start, int logPE_stride, int PE_size, OSHMEM_COMPLEX_TYPE(float) *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_complexd_sum_to_all(OSHMEM_COMPLEX_TYPE(double) *target, const OSHMEM_COMPLEX_TYPE(double) *source, int nreduce, int PE_start, int logPE_stride, int PE_size, OSHMEM_COMPLEX_TYPE(double) *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmem_short_prod_to_all(short *target, short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_int_prod_to_all(int *target, int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_long_prod_to_all(long *target, long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longlong_prod_to_all(long long *target, long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_float_prod_to_all(float *target, float *source, int nreduce, int PE_start, int logPE_stride, int PE_size, float *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_double_prod_to_all(double *target, double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, double *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_longdouble_prod_to_all(long double *target, long double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long double *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_complexf_prod_to_all(OSHMEM_COMPLEX_TYPE(float) *target, OSHMEM_COMPLEX_TYPE(float) *source, int nreduce, int PE_start, int logPE_stride, int PE_size, OSHMEM_COMPLEX_TYPE(float) *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmem_complexd_prod_to_all(OSHMEM_COMPLEX_TYPE(double) *target, OSHMEM_COMPLEX_TYPE(double) *source, int nreduce, int PE_start, int logPE_stride, int PE_size, OSHMEM_COMPLEX_TYPE(double) *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_short_prod_to_all(short *target, const short *source, int nreduce, int PE_start, int logPE_stride, int PE_size, short *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_int_prod_to_all(int *target, const int *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_long_prod_to_all(long *target, const long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longlong_prod_to_all(long long *target, const long long *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long long *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_float_prod_to_all(float *target, const float *source, int nreduce, int PE_start, int logPE_stride, int PE_size, float *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_double_prod_to_all(double *target, const double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, double *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_longdouble_prod_to_all(long double *target, const long double *source, int nreduce, int PE_start, int logPE_stride, int PE_size, long double *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_complexf_prod_to_all(OSHMEM_COMPLEX_TYPE(float) *target, const OSHMEM_COMPLEX_TYPE(float) *source, int nreduce, int PE_start, int logPE_stride, int PE_size, OSHMEM_COMPLEX_TYPE(float) *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmem_complexd_prod_to_all(OSHMEM_COMPLEX_TYPE(double) *target, const OSHMEM_COMPLEX_TYPE(double) *source, int nreduce, int PE_start, int logPE_stride, int PE_size, OSHMEM_COMPLEX_TYPE(double) *pWrk, long *pSync);
 
 /*
  * Platform specific cache management routines

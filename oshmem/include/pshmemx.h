@@ -60,9 +60,9 @@ OSHMEM_DECLSPEC void pshmemx_iput16(void* target, const void* source, ptrdiff_t 
 /*
  * Elemental get routines
  */
-OSHMEM_DECLSPEC  int16_t pshmemx_int16_g(int16_t* addr, int pe);
-OSHMEM_DECLSPEC  int32_t pshmemx_int32_g(int32_t* addr, int pe);
-OSHMEM_DECLSPEC  int64_t pshmemx_int64_g(int64_t* addr, int pe);
+OSHMEM_DECLSPEC  int16_t pshmemx_int16_g(const int16_t* addr, int pe);
+OSHMEM_DECLSPEC  int32_t pshmemx_int32_g(const int32_t* addr, int pe);
+OSHMEM_DECLSPEC  int64_t pshmemx_int64_g(const int64_t* addr, int pe);
 
 /*
  * Block data get routines
@@ -113,33 +113,33 @@ OSHMEM_DECLSPEC  void pshmemx_int64_wait_until(int64_t *addr, int cmp, int64_t v
 /*
  * Reduction routines
  */
-OSHMEM_DECLSPEC void pshmemx_int16_and_to_all(int16_t *target, int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int32_and_to_all(int32_t *target, int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int64_and_to_all(int64_t *target, int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int16_and_to_all(int16_t *target, const int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int32_and_to_all(int32_t *target, const int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int64_and_to_all(int64_t *target, const int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmemx_int16_or_to_all(int16_t *target, int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int32_or_to_all(int32_t *target, int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int64_or_to_all(int64_t *target, int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int16_or_to_all(int16_t *target, const int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int32_or_to_all(int32_t *target, const int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int64_or_to_all(int64_t *target, const int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmemx_int16_xor_to_all(int16_t *target, int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int32_xor_to_all(int32_t *target, int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int64_xor_to_all(int64_t *target, int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int16_xor_to_all(int16_t *target, const int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int32_xor_to_all(int32_t *target, const int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int64_xor_to_all(int64_t *target, const int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmemx_int16_max_to_all(int16_t *target, int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int32_max_to_all(int32_t *target, int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int64_max_to_all(int64_t *target, int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int16_max_to_all(int16_t *target, const int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int32_max_to_all(int32_t *target, const int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int64_max_to_all(int64_t *target, const int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmemx_int16_min_to_all(int16_t *target, int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int32_min_to_all(int32_t *target, int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int64_min_to_all(int64_t *target, int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int16_min_to_all(int16_t *target, const int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int32_min_to_all(int32_t *target, const int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int64_min_to_all(int64_t *target, const int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmemx_int16_sum_to_all(int16_t *target, int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int32_sum_to_all(int32_t *target, int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int64_sum_to_all(int64_t *target, int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int16_sum_to_all(int16_t *target, const int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int32_sum_to_all(int32_t *target, const int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int64_sum_to_all(int64_t *target, const int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
-OSHMEM_DECLSPEC void pshmemx_int16_prod_to_all(int16_t *target, int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int32_prod_to_all(int32_t *target, int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
-OSHMEM_DECLSPEC void pshmemx_int64_prod_to_all(int64_t *target, int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int16_prod_to_all(int16_t *target, const int16_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int16_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int32_prod_to_all(int32_t *target, const int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
+OSHMEM_DECLSPEC void pshmemx_int64_prod_to_all(int64_t *target, const int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
 /*
  * Backward compatibility section

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -22,7 +22,7 @@
  * Retrieves the value at the symmetric address addr of the remote PE pe.
  */
 #define SHMEM_TYPE_G(type_name, type, prefix)    \
-    type prefix##type_name##_g(type *addr, int pe) \
+    type prefix##type_name##_g(const type *addr, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
