@@ -14,6 +14,7 @@
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -363,9 +364,9 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
 
             OBJ_RETAIN(target_dt);
 
-            ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE, target,
-                                            tag, module->comm, ompi_osc_pt2pt_dt_send_complete,
-                                            target_dt);
+            ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE,
+                                            target, tag_to_target(tag), module->comm,
+                                            ompi_osc_pt2pt_dt_send_complete, target_dt);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 break;
             }
@@ -394,8 +395,8 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
             header->tag = tag;
             osc_pt2pt_hton(header, proc);
 
-            ret = ompi_osc_pt2pt_data_isend (module,origin_addr, origin_count, origin_dt, target, tag,
-                                             request);
+            ret = ompi_osc_pt2pt_data_isend (module,origin_addr, origin_count, origin_dt,
+                                            target, tag_to_target(tag), request);
         }
     } while (0);
 
@@ -491,7 +492,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
          }
 
         is_long_msg = true;
-        tag = get_rtag (module);
+        tag = get_tag (module);
     }
 
     if (is_long_msg) {
@@ -519,9 +520,9 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
 
             OBJ_RETAIN(target_dt);
 
-            ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE, target,
-                                            tag, module->comm, ompi_osc_pt2pt_dt_send_complete,
-                                            target_dt);
+            ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE,
+                                            target, tag_to_target(tag), module->comm,
+                                            ompi_osc_pt2pt_dt_send_complete, target_dt);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 break;
             }
@@ -553,8 +554,8 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
             OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                                  "acc: starting long accumulate with tag %d", tag));
 
-            ret = ompi_osc_pt2pt_data_isend (module, origin_addr, origin_count, origin_dt, target, tag,
-                                             request);
+            ret = ompi_osc_pt2pt_data_isend (module, origin_addr, origin_count, origin_dt,
+                                            target, tag_to_target(tag), request);
         }
     } while (0);
 
@@ -663,7 +664,8 @@ int ompi_osc_pt2pt_compare_and_swap (const void *origin_addr, const void *compar
     osc_pt2pt_copy_for_send (ptr, dt->super.size, compare_addr, proc, 1, dt);
 
     request->outstanding_requests = 1;
-    ret = ompi_osc_pt2pt_irecv_w_cb (result_addr, 1, dt, target, tag, module->comm,
+    ret = ompi_osc_pt2pt_irecv_w_cb (result_addr, 1, dt,
+                                    target, tag_to_origin(tag), module->comm,
                                     NULL, ompi_osc_pt2pt_req_comm_complete, request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
@@ -786,7 +788,7 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
     ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, false, release_req);
     if (OMPI_SUCCESS != ret) {
         /* allocate space for the header plus space to store ddt_len */
-        frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + 8;
+        frag_len = sizeof(ompi_osc_pt2pt_header_get_t) + 8;
         ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, false, release_req);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -827,9 +829,9 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
 
             OBJ_RETAIN(target_dt);
 
-            ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE, target,
-                                            tag, module->comm, ompi_osc_pt2pt_dt_send_complete,
-                                            target_dt);
+            ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE,
+                                            target, tag_to_target(tag), module->comm,
+                                            ompi_osc_pt2pt_dt_send_complete, target_dt);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 break;
             }
@@ -843,8 +845,9 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
 
         /* TODO -- store the request somewhere so we can cancel it on error */
         pt2pt_request->outstanding_requests = 1;
-        ret = ompi_osc_pt2pt_irecv_w_cb (origin_addr, origin_count, origin_dt, target, tag,
-                                        module->comm, NULL, ompi_osc_pt2pt_req_comm_complete, pt2pt_request);
+        ret = ompi_osc_pt2pt_irecv_w_cb (origin_addr, origin_count, origin_dt,
+                                        target, tag_to_origin(tag), module->comm,
+                                        NULL, ompi_osc_pt2pt_req_comm_complete, pt2pt_request);
     } while (0);
 
     if (OMPI_SUCCESS == ret) {
@@ -1045,9 +1048,9 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
 
             OBJ_RETAIN(target_datatype);
 
-            ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE, target_rank,
-                                            tag, module->comm, ompi_osc_pt2pt_dt_send_complete,
-                                            target_datatype);
+            ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE,
+                                            target_rank, tag_to_target(tag), module->comm,
+                                            ompi_osc_pt2pt_dt_send_complete, target_datatype);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 break;
             }
@@ -1059,8 +1062,9 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
             ptr += ddt_len;
         }
 
-        ret = ompi_osc_pt2pt_irecv_w_cb (result_addr, result_count, result_datatype, target_rank, tag,
-                                        module->comm, NULL, ompi_osc_pt2pt_req_comm_complete, pt2pt_request);
+        ret = ompi_osc_pt2pt_irecv_w_cb (result_addr, result_count, result_datatype,
+                                        target_rank, tag_to_origin(tag), module->comm,
+                                        NULL, ompi_osc_pt2pt_req_comm_complete, pt2pt_request);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             break;
         }
@@ -1077,8 +1081,9 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
             header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC_LONG;
             osc_pt2pt_hton(header, proc);
 
-            ret = ompi_osc_pt2pt_isend_w_cb (origin_addr, origin_count, origin_datatype, target_rank,
-                                            tag, module->comm, ompi_osc_pt2pt_req_comm_complete, pt2pt_request);
+            ret = ompi_osc_pt2pt_isend_w_cb (origin_addr, origin_count, origin_datatype,
+                                            target_rank, tag_to_target(tag), module->comm,
+                                            ompi_osc_pt2pt_req_comm_complete, pt2pt_request);
         }
     } while (0);
 

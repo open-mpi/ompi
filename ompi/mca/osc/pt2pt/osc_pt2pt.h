@@ -14,6 +14,7 @@
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -150,7 +151,6 @@ struct ompi_osc_pt2pt_module_t {
 
     /** cyclic counter for a unique tage for long messages. */
     uint32_t tag_counter;
-    uint32_t rtag_counter;
 
     /* Number of outgoing fragments that have completed since the
        begining of time */
@@ -637,13 +637,15 @@ static inline void osc_pt2pt_add_pending (ompi_osc_pt2pt_pending_t *pending)
 /**
  * get_tag:
  *
- * @short Get a send/recv tag for large memory operations.
+ * @short Get a send/recv base tag for large memory operations.
  *
  * @param[in] module - OSC PT2PT module
  *
- * @long This function aquires a 16-bit tag for use with large memory operations. The
+ * @long This function acquires a 16-bit tag for use with large memory operations. The
  *       tag will be odd or even depending on if this is in a passive target access
- *       or not.
+ *       or not. An actual tag that will be passed to PML send/recv function is given
+ *       by tag_to_target or tag_to_origin function depending on the communication
+ *       direction.
  */
 static inline int get_tag(ompi_osc_pt2pt_module_t *module)
 {
@@ -654,14 +656,32 @@ static inline int get_tag(ompi_osc_pt2pt_module_t *module)
     return (tmp & OSC_PT2PT_FRAG_MASK) | !!(module->passive_target_access_epoch);
 }
 
-static inline int get_rtag(ompi_osc_pt2pt_module_t *module)
+/**
+ * tag_to_target:
+ *
+ * @short Get a tag used for PML send/recv communication from an origin to a target.
+ *
+ * @param[in] tag - base tag given by get_tag function.
+ */
+static inline int tag_to_target(int tag)
 {
-    /* the LSB of the tag is used be the receiver to determine if the
-       message is a passive or active target (ie, where to mark
-       completion). */
-    int32_t tmp = OPAL_THREAD_ADD32((volatile int32_t *) &module->rtag_counter, 4);
-    return (tmp & OSC_PT2PT_FRAG_MASK) | !!(module->passive_target_access_epoch);
+    /* (returned_tag >> 1) & 0x1 == 0 */
+    return tag + 0;
 }
+
+/**
+ * tag_to_origin:
+ *
+ * @short Get a tag used for PML send/recv communication from a target to an origin.
+ *
+ * @param[in] tag - base tag given by get_tag function.
+ */
+static inline int tag_to_origin(int tag)
+{
+    /* (returned_tag >> 1) & 0x1 == 1 */
+    return tag + 2;
+}
+
 /**
  * ompi_osc_pt2pt_accumulate_lock:
  *
