@@ -138,7 +138,8 @@ static int intercept_munmap(void *start, size_t length)
     OPAL_PATCHER_BEGIN;
     int result = 0;
 
-    opal_mem_hooks_release_hook (start, length, false);
+    /* could be in a malloc implementation */
+    opal_mem_hooks_release_hook (start, length, true);
 
     if (!original_munmap) {
         result = memory_patcher_syscall(SYS_munmap, start, length);
