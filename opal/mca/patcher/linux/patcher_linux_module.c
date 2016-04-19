@@ -90,8 +90,13 @@ mca_patcher_linux_get_phdr_dynamic(const ElfW(Phdr) *phdr, uint16_t phnum, int p
     return NULL;
 }
 
+#if SIZEOF_VOID_P == 8
 static const ElfW(Dyn)*
-mca_patcher_linux_get_dynentry(ElfW(Addr) base, const ElfW(Phdr) *pdyn, uint32_t type)
+mca_patcher_linux_get_dynentry(ElfW(Addr) base, const ElfW(Phdr) *pdyn, int64_t type)
+#else
+static const ElfW(Dyn)*
+mca_patcher_linux_get_dynentry(ElfW(Addr) base, const ElfW(Phdr) *pdyn, int32_t type)
+#endif
 {
     for (ElfW(Dyn) *dyn = (ElfW(Dyn)*)(base + pdyn->p_vaddr); dyn->d_tag; ++dyn) {
         if (dyn->d_tag == type) {
@@ -196,7 +201,7 @@ static int mca_patcher_linux_get_aux_phent (void)
             nread = read(fd, buffer, sizeof(buffer));
             if (nread < 0) {
                 opal_output_verbose (MCA_BASE_VERBOSE_ERROR, opal_patcher_base_framework.framework_output,
-                                     "failed to read %lu bytes from %s (ret=%ld): %s", sizeof (buffer),
+                                     "failed to read %" PRIsize_t " bytes from %s (ret=%ld): %s", sizeof (buffer),
                                       proc_auxv_filename, nread, strerror (errno));
                 break;
             }
@@ -319,7 +324,8 @@ static int mca_patcher_linux_apply_patch (mca_patcher_linux_patch_t *patch)
     (void)dl_iterate_phdr(mca_patcher_linux_phdr_iterator, &ctx);
     if (ctx.status == OPAL_SUCCESS) {
         opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_patcher_base_framework.framework_output,
-                             "modified '%s' to 0x%lx", ctx.patch->super.patch_symbol, ctx.patch->super.patch_value);
+                             "modified '%s' to %" PRIxPTR , ctx.patch->super.patch_symbol,
+                             ctx.patch->super.patch_value);
     }
 
     return ctx.status;
