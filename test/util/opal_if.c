@@ -59,7 +59,7 @@ test_ifaddrtoname(char *addr)
 int
 main(int argc, char *argv[])
 {
-    char hostname[MAXHOSTNAMELEN];
+    char hostname[OPAL_MAXHOSTNAMELEN];
 
     opal_init(&argc, &argv);
     test_init("opal_if");
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
     }
 
     /* local host name */
-    gethostname(hostname, MAXHOSTNAMELEN);
+    gethostname(hostname, sizeof(hostname));
     if (test_ifaddrtoname(hostname)) {
         test_success();
     } else {
