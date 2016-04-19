@@ -90,7 +90,7 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
 #if defined(__i386__)
         patch->patch_data_size = 5;
         *(unsigned char *)(patch->patch_data+0) = 0xe9;
-        *(unsigned int *) (patch->patch_data+1) = (unsigned int)(func_new_addr - func_old_addr - 5);
+        *(unsigned int *) (patch->patch_data+1) = (unsigned int)(func_new_addr - patch->patch_orig - 5);
 #elif defined(__x86_64__)
         patch->patch_data_size = 13;
         *(unsigned short*)(patch->patch_data + 0) = 0xbb49;
@@ -237,7 +237,7 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
 
 #endif
 
-static int mca_patcher_overwrite_patch_address (uintptr_t sys_addr, unsigned long hook_addr)
+static int mca_patcher_overwrite_patch_address (uintptr_t sys_addr, uintptr_t hook_addr)
 {
     mca_patcher_base_patch_t *patch;
     int rc;
