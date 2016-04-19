@@ -31,11 +31,21 @@ AC_DEFUN([MCA_opal_patcher_linux_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([opal_patcher_linux_CPPFLAGS_save])
 
     opal_patcher_linux_happy=no
-    if test $OPAL_ENABLE_DLOPEN_SUPPORT = 1; then
-        OPAL_CHECK_PACKAGE([patcher_linux], [dlfcn.h], [dl], [dl_iterate_phdr], [], [], [],
-                           [opal_patcher_linux_happy=yes],[])
-        AC_CHECK_HEADERS([elf.h],[],[opal_patcher_linux_happy=no])
-	AC_CHECK_HEADERS([sys/auxv.h])
+    if test $OPAL_ENABLE_DLOPEN_SUPPORT = 1 ; then
+        # Only enable on Linux for now. In the future this component might
+        # be modified to work on FreeBSD.
+        case $host in
+            *-linux*)
+                opal_patcher_linux_happy=yes;
+                ;;
+        esac
+
+        if test $opal_patcher_linux_happy = yes ; then
+            OPAL_CHECK_PACKAGE([patcher_linux], [dlfcn.h], [dl], [dl_iterate_phdr], [], [], [],
+                               [],[opal_patcher_linux_happy=no])
+            AC_CHECK_HEADERS([elf.h],[],[opal_patcher_linux_happy=no])
+	    AC_CHECK_HEADERS([sys/auxv.h])
+        fi
     fi
 
     AS_IF([test $opal_patcher_linux_happy = yes], [$1], [$2])
