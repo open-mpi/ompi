@@ -182,6 +182,8 @@ static void *intercept_mremap (void *start, size_t oldlen, size_t newlen, int fl
 
 #endif
 
+#if defined (SYS_madvise)
+
 static int (*original_madvise) (void *, size_t, int);
 
 static int intercept_madvise (void *start, size_t length, int advice)
@@ -207,6 +209,8 @@ static int intercept_madvise (void *start, size_t length, int advice)
     OPAL_PATCHER_END;
     return result;
 }
+
+#endif
 
 #if defined SYS_brk
 
@@ -400,10 +404,12 @@ static int patcher_open (void)
     }
 #endif
 
+#if defined (SYS_madvise)
     rc = opal_patcher->patch_symbol ("madvise", (uintptr_t)intercept_madvise, (uintptr_t *) &original_madvise);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
+#endif
 
 #if defined(SYS_shmdt) && defined(__linux__)
     rc = opal_patcher->patch_symbol ("shmdt", (uintptr_t) intercept_shmdt, (uintptr_t *) &original_shmdt);
