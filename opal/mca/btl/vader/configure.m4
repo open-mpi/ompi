@@ -43,7 +43,7 @@ AC_DEFUN([MCA_opal_btl_vader_CONFIG],[
     # always happy
     [$1]
 
-    OMPI_SUMMARY_ADD([[Transports]],[[Shared memory/copy in+copy out]],[$1],[yes])
+    OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/copy in+copy out]],[$1],[yes])
 
 # substitute in the things needed to build with XPMEM support
     AC_SUBST([btl_vader_CFLAGS])

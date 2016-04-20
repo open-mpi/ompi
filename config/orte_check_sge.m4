@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -50,7 +50,7 @@ AC_DEFUN([ORTE_CHECK_GRIDENGINE],[
                                     orte_gridengine_build=yes],
 				   [AC_MSG_RESULT([not found])])])])])
 
-	OMPI_SUMMARY_ADD([[Resource Managers]],[[Grid Engine]],[$1],[$orte_gridengine_build])
+	OPAL_SUMMARY_ADD([[Resource Managers]],[[Grid Engine]],[$1],[$orte_gridengine_build])
     fi
 
     AS_IF([test "$orte_gridengine_build" = "yes"],

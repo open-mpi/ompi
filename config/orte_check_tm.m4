@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -145,7 +145,7 @@ AC_DEFUN([ORTE_CHECK_TM],[
 	    orte_check_tm_happy=no
 	fi
 
-	OMPI_SUMMARY_ADD([[Resource Managers]],[[Torque]],[$1],[$orte_check_tm_happy])
+	OPAL_SUMMARY_ADD([[Resource Managers]],[[Torque]],[$1],[$orte_check_tm_happy])
 
 	OPAL_VAR_SCOPE_POP
     fi

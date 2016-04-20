@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
@@ -277,7 +277,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
 	LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
 	LIBS="$ompi_check_openib_$1_save_LIBS"
 
-	OMPI_SUMMARY_ADD([[Transports]],[[OpenFabrics Verbs]],[$1],[$opal_check_openib_happy])
+	OPAL_SUMMARY_ADD([[Transports]],[[OpenFabrics Verbs]],[$1],[$opal_check_openib_happy])
 
         OPAL_VAR_SCOPE_POP
     fi

@@ -61,7 +61,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
 
 	CPPFLAGS="$opal_check_knem_$1_save_CPPFLAGS"
 
-        OMPI_SUMMARY_ADD([[Transports]],[[Shared memory/Linux KNEM]],[$1],[$opal_check_knem_happy])
+        OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/Linux KNEM]],[$1],[$opal_check_knem_happy])
 	OPAL_VAR_SCOPE_POP
     fi
 

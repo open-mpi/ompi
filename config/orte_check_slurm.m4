@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -68,7 +68,7 @@ AC_DEFUN([ORTE_CHECK_SLURM],[
                              [orte_check_slurm_happy="yes"],
                              [orte_check_slurm_happy="no"])])
 
-        OMPI_SUMMARY_ADD([[Resource Managers]],[[Slurm]],[$1],[$orte_check_slurm_happy])
+        OPAL_SUMMARY_ADD([[Resource Managers]],[[Slurm]],[$1],[$orte_check_slurm_happy])
     fi
 
     AS_IF([test "$orte_check_slurm_happy" = "yes"],

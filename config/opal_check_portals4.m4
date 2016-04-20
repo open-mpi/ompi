@@ -94,7 +94,7 @@ AC_DEFUN([OPAL_CHECK_PORTALS4],[
 	AS_IF([test $max_md_size -ne 0 && test $max_va_size -ne 0],
               [AC_MSG_NOTICE([Portals 4 address space size: $max_md_size, $max_va_size])])
 
-	OMPI_SUMMARY_ADD([[Transports]],[[Portals4]],[$1],[$ompi_check_portals4_happy])
+	OPAL_SUMMARY_ADD([[Transports]],[[Portals4]],[$1],[$ompi_check_portals4_happy])
     fi
 
     AS_IF([test "$ompi_check_portals4_happy" = "yes"],
