@@ -37,7 +37,7 @@ AC_DEFUN([MCA_opal_btl_scif_CONFIG],[
 
     AS_IF([test "$opal_btl_scif_happy" = "yes"], [$1], [$2])
 
-    OMPI_SUMMARY_ADD([[Transports]],[[Intel SCIF]],[[btl_scif]],[$opal_btl_scif_happy])
+    OPAL_SUMMARY_ADD([[Transports]],[[Intel SCIF]],[[btl_scif]],[$opal_btl_scif_happy])
 
     # substitute in the things needed to build scif
     AC_SUBST([btl_scif_CPPFLAGS])

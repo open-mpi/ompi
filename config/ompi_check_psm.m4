@@ -77,7 +77,7 @@ AC_DEFUN([OMPI_CHECK_PSM],[
                     [AC_MSG_WARN([glob.h not found.  Can not build component.])
                     ompi_check_psm_happy="no"])])
 
-	OMPI_SUMMARY_ADD([[Transports]],[[Intel TrueScale (PSM)]],[$1],[$ompi_check_psm_happy])
+	OPAL_SUMMARY_ADD([[Transports]],[[Intel TrueScale (PSM)]],[$1],[$ompi_check_psm_happy])
     fi
 
     AS_IF([test "$ompi_check_psm_happy" = "yes"],

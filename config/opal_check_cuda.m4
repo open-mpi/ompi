@@ -124,7 +124,7 @@ else
     CUDA_SUPPORT=0
 fi
 
-OMPI_SUMMARY_ADD([[Miscellaneous]],[[CUDA support]],[opal_cuda], [$opal_check_cuda_happy])
+OPAL_SUMMARY_ADD([[Miscellaneous]],[[CUDA support]],[opal_cuda], [$opal_check_cuda_happy])
 
 AM_CONDITIONAL([OPAL_cuda_support], [test "x$CUDA_SUPPORT" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT],$CUDA_SUPPORT,

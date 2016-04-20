@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006      QLogic Corp. All rights reserved.
-dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved
@@ -68,7 +68,7 @@ AC_DEFUN([OPAL_CHECK_UGNI], [
               [AC_MSG_WARN([GNI driver does not currently support progress threads.  Disabling.])
                opal_check_ugni_happy="no"])
 
-	OMPI_SUMMARY_ADD([[Transports]],[[Cray uGNI (Gemini/Aries)]],[$1],[$opal_check_ugni_happy])
+	OPAL_SUMMARY_ADD([[Transports]],[[Cray uGNI (Gemini/Aries)]],[$1],[$opal_check_ugni_happy])
     fi
 
     AS_IF([test "$opal_check_ugni_happy" = "yes"],

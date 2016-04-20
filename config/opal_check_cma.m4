@@ -41,7 +41,7 @@ AC_DEFUN([OPAL_CHECK_CMA],[
 
 	OPAL_VAR_SCOPE_POP
 
-	OMPI_SUMMARY_ADD([[Transports]],[[Shared memory/Linux CMA]],[$1],[$ompi_check_cma_happy])
+	OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/Linux CMA]],[$1],[$ompi_check_cma_happy])
     fi
 
     AS_IF([test "$ompi_check_cma_happy" = "yes"], [$2], [$3])
