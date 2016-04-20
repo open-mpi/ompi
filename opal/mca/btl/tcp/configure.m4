@@ -36,5 +36,5 @@ AC_DEFUN([MCA_opal_btl_tcp_CONFIG],[
 #include <netinet/in.h>
 #endif
 		   ])
-    OMPI_SUMMARY_ADD([[Transports]],[[TCP]],[[btl_tcp]],[$opal_btl_tcp_happy])
+    OPAL_SUMMARY_ADD([[Transports]],[[TCP]],[[btl_tcp]],[$opal_btl_tcp_happy])
 ])dnl

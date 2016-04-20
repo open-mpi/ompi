@@ -5,6 +5,7 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -76,7 +77,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
 
 	AS_IF([test "$ompi_ucx_version_ok" = "no"], [ompi_check_ucx_happy="no"])
 
-	OMPI_SUMMARY_ADD([[Transports]],[[Open UCX]],[$1],[$ompi_check_ucx_happy])
+	OPAL_SUMMARY_ADD([[Transports]],[[Open UCX]],[$1],[$ompi_check_ucx_happy])
     fi
 
 

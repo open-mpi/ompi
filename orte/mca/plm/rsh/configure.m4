@@ -27,6 +27,6 @@ AC_DEFUN([MCA_orte_plm_rsh_CONFIG],[
 
     AC_CHECK_FUNC([fork], [plm_rsh_happy="yes"], [plm_rsh_happy="no"])
 
-    OMPI_SUMMARY_ADD([[Resource Managers]],[[ssh/rsh]],[$1],[$plm_rsh_happy])
+    OPAL_SUMMARY_ADD([[Resource Managers]],[[ssh/rsh]],[$1],[$plm_rsh_happy])
     AS_IF([test "$plm_rsh_happy" = "yes"], [$1], [$2])
 ])dnl

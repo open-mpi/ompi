@@ -9,7 +9,7 @@ dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
 dnl
-AC_DEFUN([OMPI_SUMMARY_ADD],[
+AC_DEFUN([OPAL_SUMMARY_ADD],[
     OPAL_VAR_SCOPE_PUSH([ompi_summary_section ompi_summary_line ompi_summary_section_current])
 
     dnl need to replace spaces in the section name with somethis else. _ seems like a reasonable
@@ -32,7 +32,7 @@ AC_DEFUN([OMPI_SUMMARY_ADD],[
     OPAL_VAR_SCOPE_POP
 ])
 
-AC_DEFUN([OMPI_SUMMARY_PRINT],[
+AC_DEFUN([OPAL_SUMMARY_PRINT],[
     OPAL_VAR_SCOPE_PUSH([ompi_summary_section ompi_summary_section_name])
     cat <<EOF
 

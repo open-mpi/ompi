@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -122,7 +122,7 @@ AC_DEFUN([ORTE_CHECK_LSF],[
 	LDFLAGS="$orte_check_lsf_$1_save_LDFLAGS"
 	LIBS="$orte_check_lsf_$1_save_LIBS"
 
-	OMPI_SUMMARY_ADD([[Resource Managers]],[[LSF]],[$1],[$orte_check_lsf_happy])
+	OPAL_SUMMARY_ADD([[Resource Managers]],[[LSF]],[$1],[$orte_check_lsf_happy])
     fi
 
     AS_IF([test "$orte_check_lsf_happy" = "yes"],
