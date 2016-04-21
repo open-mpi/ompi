@@ -564,7 +564,9 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                             pStack->disp + local_disp);
                 pos_desc++;
+#if 0
             update_loop_description:  /* update the current state */
+#endif  /* in a heterogeneous environment we can't handle the contiguous loops */
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
