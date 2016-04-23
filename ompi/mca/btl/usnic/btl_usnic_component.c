@@ -337,11 +337,11 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
        1. num_vfs (i.e., "usNICs") >= num_local_procs (to ensure that
           each MPI process will be able to have its own protection
           domain), and
-       2. num_vfs * num_qps_per_vf >= num_local_procs * NUM_CHANNELS
+       2. num_qps_per_vf >= NUM_CHANNELS
           (to ensure that each MPI process will be able to get the
           number of QPs it needs -- we know that every VF will have
           the same number of QPs), and
-       3. num_vfs * num_cqs_per_vf >= num_local_procs * NUM_CHANNELS
+       3. num_cqs_per_vf >= NUM_CHANNELS
           (to ensure that each MPI process will be able to get the
           number of CQs that it needs) */
     if (uip->ui.v1.ui_num_vf < unlp) {
@@ -350,19 +350,17 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
         goto error;
     }
 
-    if (uip->ui.v1.ui_num_vf * uip->ui.v1.ui_qp_per_vf <
-        unlp * USNIC_NUM_CHANNELS) {
-        snprintf(str, sizeof(str), "Not enough WQ/RQ (found %d, need %d)",
-                 uip->ui.v1.ui_num_vf * uip->ui.v1.ui_qp_per_vf,
-                 unlp * USNIC_NUM_CHANNELS);
+    if (uip->ui.v1.ui_qp_per_vf < USNIC_NUM_CHANNELS) {
+        snprintf(str, sizeof(str), "Not enough transmit/receive queues per usNIC (found %d, need %d)",
+                 uip->ui.v1.ui_qp_per_vf,
+                 USNIC_NUM_CHANNELS);
         goto error;
     }
-    if (uip->ui.v1.ui_num_vf * uip->ui.v1.ui_cq_per_vf <
-        unlp * USNIC_NUM_CHANNELS) {
+    if (uip->ui.v1.ui_cq_per_vf < USNIC_NUM_CHANNELS) {
         snprintf(str, sizeof(str),
-                 "Not enough CQ per usNIC (found %d, need %d)",
-                 uip->ui.v1.ui_num_vf * uip->ui.v1.ui_cq_per_vf,
-                 unlp * USNIC_NUM_CHANNELS);
+                 "Not enough completion queues per usNIC (found %d, need %d)",
+                 uip->ui.v1.ui_cq_per_vf,
+                 USNIC_NUM_CHANNELS);
         goto error;
     }
 

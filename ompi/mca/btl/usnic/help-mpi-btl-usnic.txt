@@ -18,7 +18,7 @@ This means that you have either not provisioned enough usNICs on this
 VIC, or there are not enough total receive, transmit, or completion
 queues on the provisioned usNICs.  On each VIC in a given server, you
 need to provision at least as many usNICs as MPI processes on that
-server.  In each usNIC, you need to provision at least two each of the
+server.  In each usNIC, you need to provision enough of each of the
 following: send queues, receive queues, and completion queues.
 
 Open MPI will skip this usNIC interface in the usnic BTL, which may
