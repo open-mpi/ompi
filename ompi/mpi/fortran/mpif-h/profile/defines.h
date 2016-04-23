@@ -34,6 +34,7 @@
 #define ompi_allgather_f pompi_allgather_f
 #define ompi_allgatherv_f pompi_allgatherv_f
 #define ompi_alloc_mem_f pompi_alloc_mem_f
+#define ompi_alloc_mem_cptr_f pompi_alloc_mem_cptr_f
 #define ompi_allreduce_f pompi_allreduce_f
 #define ompi_alltoall_f pompi_alltoall_f
 #define ompi_alltoallv_f pompi_alltoallv_f
