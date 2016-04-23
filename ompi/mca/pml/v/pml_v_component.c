@@ -56,7 +56,7 @@ mca_pml_base_component_2_0_0_t mca_pml_v_component =
 };
 
 static bool pml_v_enable_progress_treads = OPAL_ENABLE_PROGRESS_THREADS;
-static bool pml_v_enable_mpi_thread_multiple = OMPI_ENABLE_THREAD_MULTIPLE;
+static bool pml_v_enable_mpi_thread_multiple = 1;
 
 static char *ompi_pml_vprotocol_include_list;
 static char *ompi_pml_v_output;

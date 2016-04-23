@@ -38,7 +38,7 @@ static int mca_io_base_open(mca_base_open_flag_t flags)
         return ret;
     }
 
-    return mca_io_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, OMPI_ENABLE_THREAD_MULTIPLE);
+    return mca_io_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1);
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, io, "I/O", NULL, mca_io_base_open, NULL,

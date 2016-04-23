@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -230,16 +230,17 @@ int mca_pml_ob1_send(const void *buf,
         }
     }
 
-#if !OMPI_ENABLE_THREAD_MULTIPLE
-    sendreq = mca_pml_ob1_sendreq;
-    mca_pml_ob1_sendreq = NULL;
-    if( OPAL_UNLIKELY(NULL == sendreq) )
-#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
-        {
-            MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
-            if (NULL == sendreq)
-                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        }
+    if (OPAL_LIKELY(!ompi_mpi_thread_multiple)) {
+        sendreq = mca_pml_ob1_sendreq;
+        mca_pml_ob1_sendreq = NULL;
+    }
+
+    if( OPAL_UNLIKELY(NULL == sendreq) ) {
+        MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+        if (NULL == sendreq)
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
     sendreq->req_send.req_base.req_proc = dst_proc;
     sendreq->rdma_frag = NULL;
 
@@ -261,16 +262,12 @@ int mca_pml_ob1_send(const void *buf,
         rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
     }
 
-#if OMPI_ENABLE_THREAD_MULTIPLE
-    MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
-#else
-    if( NULL != mca_pml_ob1_sendreq ) {
+    if (OPAL_UNLIKELY(ompi_mpi_thread_multiple || NULL != mca_pml_ob1_sendreq)) {
         MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
     } else {
         mca_pml_ob1_send_request_fini (sendreq);
         mca_pml_ob1_sendreq = sendreq;
     }
-#endif
 
     return rc;
 }

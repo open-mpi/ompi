@@ -43,7 +43,6 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
 
     switch (ev->type) {
         case PTL_EVENT_AUTO_FREE:
-#if OMPI_ENABLE_THREAD_MULTIPLE
             OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
             switch (block->status) {
                 case BLOCK_STATUS_ACTIVATED: /* May be encountered with multi threading */
@@ -73,19 +72,10 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
                                         __FILE__, __LINE__, block->status);
                     break;
             }
-#else
-            if (OPAL_UNLIKELY(block->release_on_free)) {
-                opal_list_remove_item(&ompi_mtl_portals4.recv_short_blocks,
-                                      &block->base);
-                ompi_mtl_portals4_recv_short_block_free(block);
-            } else {
-                ompi_mtl_portals4_activate_block(block);
-            }
-#endif
+
             break;
 
         case PTL_EVENT_AUTO_UNLINK:
-#if OMPI_ENABLE_THREAD_MULTIPLE
             OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
             switch (block->status) {
                 case BLOCK_STATUS_ACTIVATED: /* Normal case */
@@ -115,14 +105,10 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
                                         __FILE__, __LINE__, block->status);
                     break;
             }
-#else
-            block->status = BLOCK_STATUS_WAITING_FREE;
-            ompi_mtl_portals4.active_recv_short_blocks--;
-#endif
+
             break;
 
         case PTL_EVENT_LINK:
-#if OMPI_ENABLE_THREAD_MULTIPLE
             OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
             switch (block->status) {
                 case BLOCK_STATUS_WAITING_LINK:
@@ -138,10 +124,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
                                         __FILE__, __LINE__, block->status);
                     break;
             }
-#else
-            block->status = BLOCK_STATUS_ACTIVATED;
-            ompi_mtl_portals4.active_recv_short_blocks++;
-#endif
+
             break;
 
         default:

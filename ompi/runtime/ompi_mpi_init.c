@@ -324,15 +324,7 @@ void ompi_mpi_thread_level(int requested, int *provided)
      */
     ompi_mpi_thread_requested = requested;
 
-    if (OMPI_ENABLE_THREAD_MULTIPLE == 1) {
-        ompi_mpi_thread_provided = *provided = requested;
-    } else {
-        if (MPI_THREAD_MULTIPLE == requested) {
-            ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
-        } else {
-            ompi_mpi_thread_provided = *provided = requested;
-        }
-    }
+    ompi_mpi_thread_provided = *provided = requested;
 
     if (!ompi_mpi_main_thread) {
         ompi_mpi_main_thread = opal_thread_get_self();
@@ -529,7 +521,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     memset ( &threadlevel_bf, 0, sizeof(uint8_t));
     OMPI_THREADLEVEL_SET_BITFLAG ( ompi_mpi_thread_provided, threadlevel_bf );
 
-#if OMPI_ENABLE_THREAD_MULTIPLE
     /* add this bitflag to the modex */
     OPAL_MODEX_SEND_STRING(ret, OPAL_PMIX_GLOBAL,
                            "MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t));
@@ -537,7 +528,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_init: modex send thread level";
         goto error;
     }
-#endif
 
     /* If thread support was enabled, then setup OPAL to allow for
        them. */

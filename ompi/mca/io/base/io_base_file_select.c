@@ -215,23 +215,19 @@ int mca_io_base_file_select(ompi_file_t *file,
         }
 
         if (OMPI_SUCCESS !=
-            (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
-                                              OMPI_ENABLE_THREAD_MULTIPLE))) {
+            (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
         if (OMPI_SUCCESS !=
-            (ret = mca_fcoll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
-                                                 OMPI_ENABLE_THREAD_MULTIPLE))) {
+            (ret = mca_fcoll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
         if (OMPI_SUCCESS !=
-            (ret = mca_fbtl_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
-                                                OMPI_ENABLE_THREAD_MULTIPLE))) {
+            (ret = mca_fbtl_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
         if (OMPI_SUCCESS !=
-            (ret = mca_sharedfp_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
-                                                    OMPI_ENABLE_THREAD_MULTIPLE))) {
+            (ret = mca_sharedfp_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
     }
