@@ -19,7 +19,7 @@ Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -220,6 +220,13 @@ Master (not on release branches yet)
 - Enable connecting processes from different subnets using the openib BTL
 - Fix bug in basic/barrier algorithm in OSHMEM
 - Correct process binding for the --map-by node case
+- Include support for subnet-to-subnet routing over InfiniBand networks
+- Fix ompi_alloc_mem_cptr_f linkage error
+- Fix usnic resource check
+- AUTHORS: Fix an errant reference to Subversion IDs
+- Fix affinity for MPMD jobs running under LSF
+- Fix many Fortran binding bugs
+- Fix `MPI_IN_PLACE`-related bugs
 
 
 1.10.2
@@ -247,7 +254,7 @@ Master (not on release branches yet)
 - Add support for OSHMEM v1.2 APIs
 - Improve efficiency of oshmem_preconnect_all algorithm
 - Fix bug in buffered sends support
-- Fix double free in edge case of mpirun. Thanks to @jsharpe for 
+- Fix double free in edge case of mpirun. Thanks to @jsharpe for
   the patch
 - Multiple one-sided support fixes
 - Fix integer overflow in the tuned "reduce" collective when
