@@ -90,12 +90,19 @@
 extern bool ompi_enable_timing;
 extern bool ompi_enable_timing_ext;
 
+static void fence_cbfunc(int status, void *cbdata)
+{
+  volatile bool *active = (volatile bool*)cbdata;
+  *active = false;
+}
+
 int ompi_mpi_finalize(void)
 {
     int ret = MPI_SUCCESS;
     opal_list_item_t *item;
     ompi_proc_t** procs;
     size_t nprocs;
+    volatile bool active;
     OPAL_TIMING_DECLARE(tm);
     OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
@@ -239,7 +246,14 @@ int ompi_mpi_finalize(void)
        del_procs behavior around May of 2014 (see
        https://svn.open-mpi.org/trac/ompi/ticket/4669#comment:4 for
        more details). */
-    opal_pmix.fence(NULL, 0);
+    if (NULL != opal_pmix.fence_nb) {
+      active = true;
+      opal_pmix.fence_nb(NULL, 0, fence_cbfunc, (void*)&active);
+      OMPI_WAIT_FOR_COMPLETION(active);
+    } else {
+      MPI_Barrier(MPI_COMM_WORLD);
+      opal_pmix.fence(NULL, 0);
+    }
 
     /* check for timing request - get stop time and report elapsed
      time if so */
