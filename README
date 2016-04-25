@@ -1849,27 +1849,20 @@ component frameworks in Open MPI:
 MPI component frameworks:
 -------------------------
 
-allocator - Memory allocator
 bcol      - Base collective operations
 bml       - BTL management layer
-btl       - MPI point-to-point Byte Transfer Layer, used for MPI
-            point-to-point messages on some types of networks
 coll      - MPI collective algorithms
 crcp      - Checkpoint/restart coordination protocol
-dpm       - MPI dynamic process management
 fbtl      - file byte transfer layer: abstraction for individual
             read/write operations for OMPIO
 fcoll     - collective read and write operations for MPI I/O
 fs        - file system functions for MPI I/O
 io        - MPI I/O
-mpool     - Memory pooling
 mtl       - Matching transport layer, used for MPI point-to-point
             messages on some types of networks
 op        - Back end computations for intrinsic MPI_Op operators
 osc       - MPI one-sided communications
 pml       - MPI point-to-point management layer
-pubsub    - MPI publish/subscribe management
-rcache    - Memory registration cache
 rte       - Run-time environment operations
 sbgp      - Collective operation sub-group
 sharedfp  - shared file pointer operations for MPI I/O
@@ -1897,6 +1890,7 @@ ess       - RTE environment-specfic services
 filem     - Remote file management
 grpcomm   - RTE group communications
 iof       - I/O forwarding
+notifier  - System-level notification support
 odls      - OpenRTE daemon local launch subsystem
 oob       - Out of band messaging
 plm       - Process lifecycle management
@@ -1904,7 +1898,8 @@ ras       - Resource allocation system
 rmaps     - Resource mapping system
 rml       - RTE message layer
 routed    - Routing table for the RML
-sensor    - Software and hardware health monitoring
+rtc       - Run-time control framework
+schitzo   - OpenRTE personality framework
 snapc     - Snapshot coordination
 sstore    - Distributed scalable storage
 state     - RTE state machine
@@ -1912,10 +1907,11 @@ state     - RTE state machine
 Miscellaneous frameworks:
 -------------------------
 
+allocator   - Memory allocator
 backtrace   - Debugging call stack backtrace support
+btl         - point-to-point Byte Transfer Layer
 compress    - Compression algorithms
 crs         - Checkpoint and restart service
-db          - Internal database support
 dl          - Dynamic loading library interface
 event       - Event library (libevent) versioning support
 hwloc       - Hardware locality (hwloc) versioning support
@@ -1924,7 +1920,12 @@ installdirs - Installation directory relocation services
 memchecker  - Run-time memory checking
 memcpy      - Memopy copy support
 memory      - Memory management hooks
+mpool       - Memory pooling
+patcher     - Symbol patcher hooks
 pstat       - Process status
+rcache      - Memory registration cache
+reachable   - Network reachability computations
+sec         - Security framework
 shmem       - Shared memory support (NOT related to OSHMEM)
 timer       - High-resolution timers
 
