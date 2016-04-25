@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * ******** ADD IBM COPYRIGHT HERE ******
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
