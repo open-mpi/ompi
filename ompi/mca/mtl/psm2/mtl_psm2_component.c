@@ -198,10 +198,6 @@ ompi_mtl_psm2_component_init(bool enable_progress_threads,
 	return NULL;
     }
 
-    if (num_local_procs == num_total_procs) {
-      setenv("PSM2_DEVICES", "self,shm", 0);
-    }
-
     err = psm2_init(&verno_major, &verno_minor);
     if (err) {
       opal_show_help("help-mtl-psm2.txt",
