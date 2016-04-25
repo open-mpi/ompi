@@ -1899,7 +1899,7 @@ rmaps     - Resource mapping system
 rml       - RTE message layer
 routed    - Routing table for the RML
 rtc       - Run-time control framework
-schitzo   - OpenRTE personality framework
+schizo    - OpenRTE personality framework
 snapc     - Snapshot coordination
 sstore    - Distributed scalable storage
 state     - RTE state machine
