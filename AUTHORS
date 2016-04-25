@@ -1,157 +1,338 @@
 Open MPI Authors
 ================
 
-The following cumulative list contains the names and email addresses of
-all individuals who have committed code to the Open MPI repository.
+The following cumulative list contains the names and email addresses
+of all individuals who have committed code to the Open MPI repository
+(either directly or through a third party, such as through a
+Github.com pull request).  Note that these email addresses are not
+guaranteed to be current; they are simply a unique indicator of the
+individual who committed them.
 
-Email                           Name                        Affiliation(s)
-------------------------------- --------------------------- -------------------
-Nadia.Derbey@bull.net           Nadia Derby                 Bull
-adi@minet.uni-jena.de           Adrian Knoth                UJ
-adkulkar@cs.indiana.edu         Abhishek Kulkarni           IU
-adrian@lisas.de                 Adrian Reber                HE
-afriedle@osl.iu.edu             Andrew Friedley             IU, SNL
-alekseys@mellanox.com           Aleksey Senin               Mellanox
-alex.margolin@mail.huji.ac.il   Alex Margolin               Mellanox
-alexm@mellanox.com              Alex Mikheev                Mellanox
-alinas@mellanox.com             Alina Sklarevich            Mellanox
-andreas.knuepfer@tu-dresden.de  Andreas Knuepfer            ZIH
-angskun@cs.utk.edu              Thara Angskun               UTK
-anya.tatashina@sun.com          Anya Tatashina              Sun
-artpol84@gmail.com              Artem Polyakov              Individual
-avneesh.pant@qlogic.com         Avneesh Pant                QLogic
-bdamico@cisco.com               Bill D'Amico                Cisco
-bert.wesarg@tu-dresden.de       Bert Wesarg                 ZIH
-bosilca@icl.utk.edu             George Bosilca              UTK
-bouteill@icl.utk.edu            Aurelien Bouteiller         UTK
-brad.benton@us.ibm.com          Brad Benton                 IBM, AMD
-brbarret@open-mpi.org           Brian Barrett               IU, LANL, SNL
-ccoti@icl.utk.edu               Camille Coti                UTK, INRIA
-christian.bell@qlogic.com       Christian Bell              QLogic
-cyeoh@au1.ibm.com               Chris Yeoh                  IBM
-dan.lacher@sun.com              Dan Lacher                  Sun
-ddd@lanl.gov                    David Daniel                LANL
-devendar@mellanox.com           Devendar Bureddy            Mellanox
-dgdimick@lnal.gov               Denis Dimick                LANL
-dgoodell@cisco.com              Dave Goodell                Cisco
-donald.kerr@oracle.com          Donald Kerr                 Sun, Oracle
-dorons@mellanox.com             Doron Shoham                Mellanox
-ethan.mallove@oracle.com        Ethan Mallove               Sun, Oracle
-eugene.loh@oracle.com           Eugene Loh                  Sun, Oracle
-gabriel@cs.uh.edu               Edgar Gabriel               HLRS, UH, UTK
-gef@icl.utk.edu                 Graham Fagg                 UTK
-gilles@rist.or.jp               Gilles Gouaillardet         RIST
-gingery@lanl.gov                Ginger Young                LANL
-gleb@voltaire.com               Gleb Natapov                Voltaire
-gpaulsen@us.ibm.com             Geoffrey Paulsen            IBM
-gshipman@lanl.gov               Galen Shipman               LANL
-gwatson@lanl.gov                Greg Watson                 LANL
-herault@icl.utk.edu             Thomas Herault              INRIA
-hjelmn@lanl.gov                 Nathan Hjelm                LANL
-hmontakhabi@uh.edu              Hadi Montakhabi             UH
-howardp@lanl.gov                Howard Pritchard            LANL
-hppritcha@gmail.com             Howard Pritchard            LANL
-htor@osl.iu.edu                 Torsten Hoefler             IU, TUC
-iain.bason@oracle.com           Iain Bason                  Sun, Oracle
-igoru@mellanox.com              Igor Usarov                 Mellanox
-jdmason@opengridcomputing.com   Jon Mason                   Chelsio
-jjhursey@open-mpi.org           Josh Hursey                 IU, ORNL, LANL, LBNL, UWL
-jnysal@in.ibm.com               Nysal Jan                   IBM
-joshual@mellanox.com            Joshua Ladd                 Mellanox
-jroman@dsic.upv.es              Jose E. Roman               UPV
-jsquyres@cisco.com              Jeff Squyres                Cisco, IU
-karen.norteman@sun.com          Karen Norteman              Sun
-kliteyn@mellanox.co.il          Yevgeny Kliteynik           Mellanox
-koenig@acm.org                  Greg Koenig                 ORNL
-lcasswell@lanl.gov              Laura Casswell              LANL
-lemarini@icl.utk.edu            Pierre Lemarinier           UTK
-lennyb@voltaire.com             Lenny Verkhovsky            Mellanox
-lums@cs.indiana.edu             Andrew Lumsdaine            IU
-manjugv@ornl.gov                Manjunath Gorentla Venkata  ORNL
-mark.santcroos@rutgers.edu      Mark Santcroos              Rutgers Univ.
-matneykdsr@ornl.gov             Ken Matney                  ORNL
-matthias.jurenz@tu-dresden.de   Matthias Jurenz             ZIH
-miked@mellanox.com              Mike Dubman                 Mellanox
-mjbhaskar@uh.edu                Mangala Jyothi Bhaskar      UH
-mroz.karol@gmail.com            Karol Mroz                  UBC
-mschaara@cs.uh.edu              Mohamad Chaarawi            UH
-mt@lanl.gov                     Mark Taylor                 LANL
-mwsukal@ca.sandia.gov           Mitch Sukalski              SNL
-naughtont@ornl.gov              Tom Naughton                ORNL
-niethammer@hlrs.de              Christoph Niethammer        HLRS
-ollie@lanl.gov                  Li-Ta Lo                    LANL
-ovega@dsic.upv.es               Oscar Vega-Gisbert          UPV
-pak.lui@sun.com                 Pak Lui                     Sun
-patrick@myri.com                Patrick Geoffray            Myricom
-penoff@cs.ubc.ca                Brad Penoff                 UBC
-pjesa@icl.iu.edu                Jelena Pjesivac-Grbovic     UTK
-pkambadu@osl.iu.edu             Prabhanjan Kambadur         IU
-rainer.keller@hlrs.de           Rainer Keller               HLRS, ORNL
-rasmus@cas.uoregon.edu          Craig Rasmussen             LANL, UO
-rbbrigh@sandia.gov              Ron Brightwell              SNL
-regrant@sandia.gov              Ryan Grant                  SNL
-rfaucett@cisco.com              Reese Faucette              Cisco
-rhc@open-mpi.org                Ralph Castain               LANL, Cisco, Intel
-richardg@mellanox.com           Rich Graham                 ORNL, LANL, Mellanox
-rta@lanl.gov                    Rob Awles                   LANL
-rvandevaart@nvidia.com          Rolf Vandevaart             Sun, Oracle, NVIDIA
-sami@lanl.gov                   Sami Ayyorgun               LANL
-samuel@lanl.gov                 Samuel K. Gutierrez         LANL
-santhana@osu.edu                Gopal Santhanaraman         OSU
-sboehm@ornl.gov                 Swen Boehm                  ORNL
-shamisp@ornl.gov                Pavel Shamis                Mellanox, ORNL
-sharonm@voltaire.com            Sharon Melamed              Voltaire
-shiqing@hlrs.de                 Shiqing Fan                 HLRS
-stork@hlrs.de                   Sven Stork                  HLRS
-surs@osu.edu                    Sayantan Sur                OSU
-sushant@lanl.gov                Sushant Sharma              LANL
-swise@opengridcomputing.com     Steve Wise                  Chelsio
-sylvain.jeaugey@bull.net        Sylvain Jeaugey             Bull
-terry.dontje@oracle.com         Terry Dontje                Sun, Oracle
-thkorde@sandia.gov              Todd Kordenbrock            SNL
-tmattox@gmail.com               Tim Mattox                  IU, Cisco
-tpatinya@vols.utk.edu           Thananon Patinyasakdikul    UTK
-tprins@lanl.gov                 Tim Prins                   IU, LANL
-twoodall@lanl.gov               Tim Woodall                 LANL
-vasily@mellanox.com             Vasily Filipov              Mellanox
-vsahay@osl.iu.edu               Vishal Sahay                IU
-vvenkates@gmail.com             Vishwanath Venkatesan       UH, Intel
-wbland@icl.utk.edu              Wesley Bland                UTK
-yaeld@mellanox.com              Yael Dalen                  Mellanox
-yohann.burette@intel.com        Yohann Burette              Intel
-yosefe@mellanox.com             Yossi Etigin                Mellanox
-yuw@lanl.gov                    Weikuan Yu                  LANL, OSU
-wangzm@cn.ibm.com               Zhiming Wang                IBM
-------------------------------- --------------------------- -------------------
-
-Affiliation abbreviations:
---------------------------
-
-AMD = Advanced Micro Devices, Inc.
-Chelsio = Chelsio Communications, Inc.
-Cisco = Cisco Systems, Inc.
-HE = Hochschule Esslingen
-HLRS = High Performance Computing Center, Stuttgart
-IU = Indiana University
-LANL = Los Alamos National Laboratory
-LBNL = Lawrence Berkeley National Laboratory
-Voltaire = Voltaire
-Myricom = Myricom, Inc.
-NU = Northeastern University
-Oracle = Oracle
-ORNL = Oak Ridge National Laboratory
-OSU = The Ohio State University
-QLogic = QLogic
-RIST = Research Organization for Information Science and Technology
-SNL = Sandia National Laboratories
-Sun = Sun Microsystems, Inc.
-TUC = Technische Universtaet Chemnitz
-UBC = University of British Columbia
-UJ = Friedrich-Schiller-Universitat Jena
-UH = University of Houston
-OU = University of Oregon
-UPV = Universitat Politecnica de Valencia
-UTK = University of Tennessee, Knoxville
-UWL = University of Wisconsin-La Crosse
-Mellanox = Mellanox
-ZIH = Technische Universitaet Dresden
+Abhishek Kulkarni, Indiana University
+  adkulkar@cs.indiana.edu
+Adrian Knoth, Friedrich-Schiller-Universitat Jena
+  adi@minet.uni-jena.de
+Adrian Reber, Hochschule Esslingen
+  adrian@lisas.de
+Alejandro Vilches, Intel
+  alejandro.vilches@intel.com
+Aleksey Senin, Mellanox
+  alekseys@mellanox.com
+Alex Margolin, Mellanox
+  alex.margolin@mail.huji.ac.il
+Alex Mikheev, Mellanox
+  alexm@mellanox.com
+Alina Sklarevich, Mellanox
+  alinas@mellanox.com
+Anandhi S Jayakumar, Intel
+  anandhi.s.jayakumar@intel.com
+Andreas Knüpfer, Technische Universitaet Dresden
+  andreas.knuepfer@tu-dresden.de
+Andrew Friedley, Indiana University, Sandia National Laboratory, Intel
+  afriedle-intel@users.noreply.github.com
+  afriedle@osl.iu.edu
+  andrew.friedley@intel.com
+Andrew Lumsdaine, Indiana University
+  lums@cs.indiana.edu
+Annapurna Dasari, Intel
+  annapurna.dasari@intel.com
+Anya Tatashina, Sun
+  anya.tatashina@sun.com
+Artem Polyakov, Individual, Mellanox
+  artpol84@gmail.com
+Aurélien Bouteiller, University of Tennessee-Knoxville
+  bouteill@icl.utk.edu
+  darter4.nics.utk.edu
+Avneesh Pant, QLogic
+  avneesh.pant@qlogic.com
+Bert Wesarg, Technische Universitaet Dresden
+  bert.wesarg@tu-dresden.de
+Bill D'Amico, Cisco
+  bdamico@cisco.com
+Brad Benton, IBM, AMD
+  brad.benton@us.ibm.com
+Brad Penoff, University of British Columbia
+  penoff@cs.ubc.ca
+Brian Barrett, Indiana University, Los Alamos National Laboratory, Sandia National Laboratory
+  brbarret@open-mpi.org
+Brice Goglin, INRIA
+  Brice.Goglin@inria.fr
+Camille Coti, University of Tennessee-Knoxville, INRIA
+  ccoti@icl.utk.edu
+Christian Bell, QLogic
+  christian.bell@qlogic.com
+Christoph Niethammer, High Performance Computing Center, Stuttgart
+  niethammer@hlrs.de
+Christopher Yeoh, IBM
+  cyeoh@au1.ibm.com
+Craig E Rasmussen, Los Alamos National Laboratory, University of Oregon
+  rasmus@cas.uoregon.edu
+Dan Lacher, Sun
+  dan.lacher@sun.com
+Dave Goodell, Cisco
+  davidjgoodell@gmail.com
+  dgoodell@cisco.com
+David Daniel, Los Alamos National Laboratory
+  ddd@lanl.gov
+Denis Dimick, Los Alamos National Laboratory
+  dgdimick@lnal.gov
+Devendar Bureddy, Mellanox
+  bureddy@users.noreply.github.com
+  devendar@mellanox.com
+Dimitar Pashov, Individual
+  d.pashov@gmail.com
+Donald Kerr, Sun, Oracle
+  donald.kerr@oracle.com
+Doron Shoham, Mellanox
+  dorons@mellanox.com
+Edagr Gabriel, High Performance Computing Center, Stuttgart, University of Tennessee-Knoxville, University of Houston
+  gabriel@Peggys-MacBook-Air.local
+  edgargabriel@users.noreply.github.com
+  gabriel@cs.uh.edu
+Elena Elkina, Mellanox
+  elena.elkina@itseez.com
+  elena.elkina89@gmail.com
+Ethan Mallove, Sun, Oracle
+  ethan.mallove@oracle.com
+Eugene Loh, Sun, Oracle
+  eugene.loh@oracle.com
+Federico Reghenzani, Individual
+  federico1.reghenzani@mail.polimi.it
+Francois WELLENREITER, Individual
+  francois.wellenreiter@atos.net
+  wellen@free.fr
+Gabriel Pichot, Individual
+  gabriel.pichot@gmail.com
+Galen Shipman, Los Alamos National Laboratory
+  gshipman@lanl.gov
+Geoffrey Paulsen, IBM
+  gpaulsen@us.ibm.com
+George Bosilca, University of Tennessee-Knoxville
+  bosilca@eecs.utk.edu
+  bosilca@icl.utk.edu
+  bosilca@users.noreply.github.com
+Gilles Gouaillardet, Research Organization for Information Science and Technology
+  ggouaillardet@users.noreply.github.com
+  gilles.gouaillardet@iferc.org
+  gilles@rist.or.jp
+Ginger Young, Los Alamos National Laboratory
+  gingery@lanl.gov
+Gleb Natapov, Voltaire
+  gleb@voltaire.com
+Gopal Santhanaraman, The Ohio State University
+  santhana@osu.edu
+Graham Fagg, University of Tennessee-Knoxville
+  gef@icl.utk.edu
+Greg Koenig, Oak Ridge National Laboratory
+  koenig@acm.org
+Greg Watson, Los Alamos National Laboratory
+  gwatson@lanl.gov
+Guillaume Papauré, Bull
+  guillaume.papaure@bull.net
+Hadi Montakhabi, University of Houston
+  hmontakhabi@uh.edu
+Howard Pritchard, Los Alamos National Laboratory
+  howardp@lanl.gov
+  hppritcha@gmail.com
+  hppritcha@users.noreply.github.com
+Iain Bason, Sun, Oracle
+  iain.bason@oracle.com
+Igor Ivanov, Mellanox
+  igor.ivanov.va@gmail.com
+  igor.ivanov@itseez.com
+Igor Usarov, Mellanox
+  igoru@mellanox.com
+Jeff Squyres, University of Indiana, Cisco
+  jeff@squyres.com
+  jsquyres@cisco.com
+  jsquyres@users.noreply.github.com
+Jelena Pjesivac-Grbovic, University of Tennessee-Knoxville
+  pjesa@icl.iu.edu
+Jithin Jose, Intel
+  jithin.jose@intel.com
+John Westlund, Intel
+  john.a.westlund@intel.com
+Jon Mason, OpenGrid Computing
+  jdmason@opengridcomputing.com
+Jose Roman, Universitat Politecnica de Valencia
+  jroman@dsic.upv.es
+Josh Hursey, Indiana University, Oak Ridge National Laboratory, Los Alamos National Laboratory, Lawrence Berkeley National Laboratory, University of Wisconsin-La Crosse, IBM
+  jhursey@us.ibm.com
+  jjhursey@open-mpi.org
+Joshua Ladd, Mellanox
+  jladd.mlnx@gmail.com
+  joshual@mellanox.com
+KAWASHIMA Takahiro, Fujistu
+  t-kawashima@jp.fujitsu.com
+Karen Norteman, Sun
+  karen.norteman@sun.com
+Karol Mroz, University of British Columbia
+  mroz.karol@gmail.com
+Kenneth Matney, Oak Ridge National Laboratory
+  matneykdsr@ornl.gov
+L. R. Rajeshnarayanan, Intel
+  l.r.rajeshnarayanan@intel.com
+Laura Casswell, Los Alamos National Laboratory
+  lcasswell@lanl.gov
+Lenny Verkhovsky, Volataine
+  lennyb@voltaire.com
+Leobardo Ruiz Rountree, Individual
+  lruizrountree@gmail.com
+Li-Ta Lo, Los Alamos National Laboratory
+  ollie@lanl.gov
+MPI Team (bot), self
+  mpiteam@open-mpi.org
+Mangala Jyothi Bhaskar, University of Houston
+  mjbhaskar@crill.cs.uh.edu
+  mjbhaskar@salmon.cs.uh.edu
+  mjbhaskar@uh.edu
+Manjunath Gorentla Venkata, Oak Ridge National Laboratory
+  manjugv@ornl.gov
+Mark Santcroos, Rutgers University
+  m.a.santcroos@amc.uva.nl
+  mas781@scarletmail.rutgers.edu
+Mark Taylor, Los Alamos National Laboratory
+  mt@lanl.gov
+Matias A Cabral, Intel
+  matias.a.cabral@intel.com
+  matcabral@users.noreply.github.com
+Matthias Jurenz, Technische Universitaet Dresden
+  matthias.jurenz@tu-dresden.de
+Maximilien Levesque, Individual
+  maximilien.levesque@gmail.com
+Mike Dubman, Mellanox
+  miked@mellanox.com
+Mitch Sukalski, Sandia National Laboratory
+  mwsukal@ca.sandia.gov
+Mohamad Chaarawi, University of Houston
+  mschaara@cs.uh.edu
+Nadezhda Kogteva, Mellanox
+  nadezhda@mngx-orion-01.dmz.e2e.mlnx
+  nadezhda.kogteva@itseez.com
+Nadia Derbey, Bull
+  Nadia.Derbey@bull.net
+Nathan Hjelm, Los Alamos National Laboratory
+  hjelmn@cs.unm.edu
+  hjelmn@lanl.gov
+  hjelmn@me.com
+Nathaniel Graham, Los Alamos National Laboratory
+  ngraham@lanl.gov
+  nrgraham23@gmail.com
+Nick Papior Andersen, Individual
+  nickpapior@gmail.com
+Nysal Jan K A, IBM
+  jnysal@gmail.com
+  jnysal@in.ibm.com
+Orion Poplawski, Individual
+  orion@cora.nwra.com
+Oscar Vega-Gisbert, Universitat Politecnica de Valencia
+  ovega@dsic.upv.es
+Pak Lui, Sun
+  pak.lui@sun.com
+Patrick Geoffray, Myricom
+  patrick@myri.com
+Pavel Shamis, Mellanox, Oak Ridge National Laboratory
+  shamisp@ornl.gov
+  shamisp@users.noreply.github.com
+Pierre Lemarinier, University of Tennessee-Knoxville
+  lemarini@icl.utk.edu
+Piotr Lesnicki, Bull
+  piotr.lesnicki@ext.bull.net
+Prabhanjan Kambadur, Indiana University
+  pkambadu@osl.iu.edu
+Raghavendra Pendyala, Intel
+  raghavendra.p.pendyala@intel.com
+Rainer Keller, High Performance Computing Center, Stuttgart, Oak Ridge National Laboratory, Hochschule fuer Technik Stuttgart
+  rainer.keller@hft-stuttgart.de
+  rainer.keller@hlrs.de
+Ralph Castain, Los Alamos National Laboratory, Cisco, Greenplum, Intel
+  rhc@odin.cs.indiana.edu
+  rhc@open-mpi.org
+Reese Faucette, Cisco
+  rfaucett@cisco.com
+Rich Graham, Los Alamos National Laboratory, Oak Ridge National Laboratory, Mellanox
+  richardg@mellanox.com
+Rob Awles, Los Alamos National Laboratory
+  rta@lanl.gov
+Rob Latham, Argonne National Laboratory
+  robl@mcs.anl.gov
+Rolf vandeVaart, NVIDIA
+  rvandevaart@nvidia.com
+Ron Brightwell, Sandia National Laboratory
+  rbbrigh@sandia.gov
+Ryan Grant, Sandia National Laboratory
+  regrant233@gmail.com
+  regrant@sandia.gov
+Sami Ayyorgun, Los Alamos National Laboratory
+  sami@lanl.gov
+Samuel Gutierrez, Los Alamos National Laboratory
+  samuel@lanl.gov
+Sayantan Sur, The Ohio State University
+  surs@osu.edu
+Sharon Melamed, Volataire
+  sharonm@voltaire.com
+Shiqing Fan, High Performance Computing Center, Stuttgart
+  shiqing@hlrs.de
+Steve Wise, OpenGrid Computing
+  swise@opengridcomputing.com
+Sushant Sharma, Los Alamos National Laboratory
+  sushant@lanl.gov
+Sven Stork, High Performance Computing Center, Stuttgart
+  stork@hlrs.de
+Swen Boehm, Oak Ridge National Laboratory
+  sboehm@ornl.gov
+Sylvain Jeaugey, Bull, NVIDIA
+  sjeaugey@nvidia.com
+  sylvain.jeaugey@bull.net
+Teng Lin, Individual
+  teng.lin@gmail.com
+Terry Dontje, Sun, Oracle
+  terry.dontje@oracle.com
+Thananon Patinyasakdikul, University of Tennessee-Knoxville
+  tpatinya@utk.edu
+Thara Angskun, University of Tennessee-Knoxville
+  angskun@cs.utk.edu
+Thomas Herault, University of Tennessee-Knoxville
+  herault@icl.utk.edu
+Tim Mattox, Indiana University, Cisco, Individual
+  timothy.mattox@engilitycorp.com
+  tmattox@gmail.com
+Tim Prins, Indiana University, Los Alamos National Laboratory
+  tprins@lanl.gov
+Tim Woodall, Los Alamos National Laboratory
+  twoodall@lanl.gov
+Todd Kordenbrock, Sandia National Laboratory
+  thkgcode@gmail.com
+  thkorde@sandia.gov
+  tkordenbrock@users.noreply.github.com
+Tom Naughton, Oak Ridge National Laboratory
+  naughtont@ornl.gov
+Tomislav Janjusic, Mellanox
+  tomislavj@mngx-apl-01.mtl.labs.mlnx
+Torsten Hoefler, Indiana University, Technische Universtaet Chemnitz
+  htor@osl.iu.edu
+Valentin Petrov, Mellanox
+  valentinp@mellanox.com
+Vasily Filipov, Mellanox
+  vasily@mellanox.com
+Vishal Sahay, Indiana University
+  vsahay@osl.iu.edu
+Vishwanath Venkatesan, University of Houston, Intel
+  vvenkates@gmail.com
+Weikuan Yu, Los Alamos National Laboratory
+  yuw@lanl.gov
+Wesley Bland, University of Tennessee-Knoxville
+  wbland@icl.utk.edu
+William Throwe, Individual
+  wtt6@cornell.edu
+Yael Dayan, Mellanox
+  yaeld@mellanox.com
+Yevgeny Kliteynik, Mellanox
+  kliteyn@mellanox.co.il
+Yohann Burette, Intel
+  yburette@users.noreply.github.com
+  yohann.burette@intel.com
+Yossi Itigin, Mellanox
+  yosefe@mellanox.com
+Zhi Ming Wang, IBM
+  wangzm@cn.ibm.com
