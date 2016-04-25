@@ -344,7 +344,9 @@ static int intercept_shmdt (const void *shmaddr)
     OPAL_PATCHER_BEGIN;
     int result;
 
-    opal_mem_hooks_release_hook (shmaddr, memory_patcher_get_shm_seg_size (shmaddr), false);
+    /* opal_mem_hooks_release_hook should probably be updated to take a const void *.
+     * for now just cast away the const */
+    opal_mem_hooks_release_hook ((void *) shmaddr, memory_patcher_get_shm_seg_size (shmaddr), false);
 
     if (original_shmdt) {
         result = original_shmdt (shmaddr);
