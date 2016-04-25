@@ -221,7 +221,6 @@ Master (not on release branches yet)
 - Fix bug in basic/barrier algorithm in OSHMEM
 - Correct process binding for the --map-by node case
 - Include support for subnet-to-subnet routing over InfiniBand networks
-- Fix ompi_alloc_mem_cptr_f linkage error
 - Fix usnic resource check
 - AUTHORS: Fix an errant reference to Subversion IDs
 - Fix affinity for MPMD jobs running under LSF
