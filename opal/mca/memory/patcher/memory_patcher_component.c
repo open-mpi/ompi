@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -91,6 +91,14 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
 #define memory_patcher_syscall syscall
 #endif
 
+/*
+ * The following block of code is #if 0'ed out because we do not need
+ * to intercept mmap() any more (mmap() only deals with memory
+ * protection; it does not invalidate any rcache entries for a given
+ * region).  But if we do someday, this is the code that we'll need.
+ * It's a little non-trivial, so we might as well keep it (and #if 0
+ * it out).
+ */
 #if 0
 
 #if OPAL_MEMORY_PATCHER_HAVE___MMAP && !OPAL_MEMORY_PATCHER_HAVE___MMAP_PROTO
@@ -384,8 +392,8 @@ static int patcher_open (void)
     opal_mem_hooks_set_support (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
 
 #if 0
-    /* NTH: the only reason to hook mmap would be to detect memory protection. this does not invalidate
-     * any cache entries in the region. */
+    /* See above block to see why mmap() functionality is #if 0'ed
+       out */
     rc = opal_patcher->patch_symbol ("mmap", (uintptr_t) intercept_mmap, (uintptr_t *) &original_mmap);
     if (OPAL_SUCCESS != rc) {
         return rc;
@@ -427,6 +435,7 @@ static int patcher_open (void)
 
 static int patcher_close(void)
 {
-    /* NTH: is it possible to unpatch the symbols? */
+    /* Note that we don't need to unpatch any symbols here; the
+       patcher framework will take care of all of that for us. */
     return OPAL_SUCCESS;
 }
