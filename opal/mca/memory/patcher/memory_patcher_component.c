@@ -15,7 +15,8 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * ******** Add IBM COPYRIGHT HERE ***********
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
