@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -226,7 +226,7 @@ int ompi_mpi_finalize(void)
       have many other, much higher priority issues to handle that deal
       with non-erroneous cases. */
 
-    /* Wait for everyone to reach this point.  This is a grpcomm
+    /* Wait for everyone to reach this point.  This is a PMIx
        barrier instead of an MPI barrier for (at least) two reasons:
 
        1. An MPI barrier doesn't ensure that all messages have been
@@ -247,12 +247,24 @@ int ompi_mpi_finalize(void)
        https://svn.open-mpi.org/trac/ompi/ticket/4669#comment:4 for
        more details). */
     if (NULL != opal_pmix.fence_nb) {
-      active = true;
-      opal_pmix.fence_nb(NULL, 0, fence_cbfunc, (void*)&active);
-      OMPI_WAIT_FOR_COMPLETION(active);
+        active = true;
+        /* Note that the non-blocking PMIx fence will cycle calling
+           opal_progress(), which will allow any other pending
+           communications/actions to complete.  See
+           https://github.com/open-mpi/ompi/issues/1576 for the
+           original bug report. */
+        opal_pmix.fence_nb(NULL, 0, fence_cbfunc, (void*)&active);
+        OMPI_WAIT_FOR_COMPLETION(active);
     } else {
-      MPI_Barrier(MPI_COMM_WORLD);
-      opal_pmix.fence(NULL, 0);
+        /* However, we cannot guarantee that the provided PMIx has
+           fence_nb.  If it doesn't, then do the best we can: an MPI
+           barrier on COMM_WORLD (which isn't the best because of the
+           reasons cited above), followed by a blocking PMIx fence
+           (which may not necessarily call opal_progress()). */
+        ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
+        comm->c_coll.coll_barrier(comm, comm->c_coll.coll_barrier_module);
+
+        opal_pmix.fence(NULL, 0);
     }
 
     /* check for timing request - get stop time and report elapsed
