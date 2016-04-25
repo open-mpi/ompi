@@ -1922,6 +1922,7 @@ memcpy      - Memopy copy support
 memory      - Memory management hooks
 mpool       - Memory pooling
 patcher     - Symbol patcher hooks
+pmix        - Process management interface (exascale)
 pstat       - Process status
 rcache      - Memory registration cache
 reachable   - Network reachability computations
