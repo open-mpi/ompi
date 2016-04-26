@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -59,9 +59,7 @@ mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void 
                actually).  This is a hook available for memory manager hooks
                without good initialization routine support */
             (void) mca_base_framework_open (&opal_memory_base_framework, 0);
-        }
 
-        if (opal_leave_pinned != 0 || opal_leave_pinned_pipeline) {
             if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
                 ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
                  opal_mem_hooks_support_level())) {
@@ -69,7 +67,7 @@ mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void 
                     opal_leave_pinned = !opal_leave_pinned_pipeline;
                 }
                 opal_mem_hooks_register_release(mca_rcache_base_mem_cb, NULL);
-            } else {
+            } else if (1 == opal_leave_pinned || opal_leave_pinned_pipeline) {
                 opal_show_help("help-rcache-base.txt", "leave pinned failed",
                                true, name, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                opal_proc_local_get()->proc_hostname);
