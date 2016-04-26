@@ -13,6 +13,8 @@
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -249,7 +251,7 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
                             (m)->iov, (m)->count,                       \
                             (m)->tag, (m)->cbdata);                     \
             }                                                           \
-         } else {                                                       \
+         } else if (NULL != (m)->cbfunc.buffer) {                       \
             /* non-blocking buffer send */                              \
             (m)->cbfunc.buffer((m)->status, &((m)->origin),             \
                            (m)->buffer,                                 \
