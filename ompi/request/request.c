@@ -36,7 +36,7 @@ opal_pointer_array_t             ompi_request_f_to_c_table = {{0}};
 size_t                           ompi_request_waiting = 0;
 size_t                           ompi_request_completed = 0;
 size_t                           ompi_request_failed = 0;
-opal_mutex_t                     ompi_request_lock = {{0}};
+opal_recursive_mutex_t           ompi_request_lock = {{0}};
 opal_condition_t                 ompi_request_cond = {{0}};
 ompi_predefined_request_t        ompi_request_null = {{{{{0}}}}};
 ompi_predefined_request_t        *ompi_request_null_addr = &ompi_request_null;
@@ -109,7 +109,7 @@ OBJ_CLASS_INSTANCE(
 
 int ompi_request_init(void)
 {
-    OBJ_CONSTRUCT(&ompi_request_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ompi_request_lock, opal_recursive_mutex_t);
     OBJ_CONSTRUCT(&ompi_request_cond, opal_condition_t);
 
     OBJ_CONSTRUCT(&ompi_request_null, ompi_request_t);

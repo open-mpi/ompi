@@ -209,10 +209,10 @@ do {                                                                            
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;        \
    (sendreq)->req_send.req_base.req_ompi.req_status._ucount =                        \
         (sendreq)->req_send.req_bytes_packed;                                        \
-   ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), (with_signal) ); \
-                                                                                     \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                                \
                             &(sendreq->req_send.req_base), PERUSE_SEND);             \
+                                                                                     \
+   ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), (with_signal) ); \
 } while(0)
 
 static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *sendreq)
