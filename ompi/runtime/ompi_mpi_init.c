@@ -399,11 +399,24 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Indicate that we have *started* MPI_INIT* */
     ompi_mpi_init_started = true;
 
-    /* Setup enough to check get/set MCA params */
+    /* Figure out the final MPI thread levels.  If we were not
+       compiled for support for MPI threads, then don't allow
+       MPI_THREAD_MULTIPLE.  Set this stuff up here early in the
+       process so that other components can make decisions based on
+       this value. */
 
+    ompi_mpi_thread_level(requested, provided);
+
+    /* Setup enough to check get/set MCA params */
     if (OPAL_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
         error = "ompi_mpi_init: opal_init_util failed";
         goto error;
+    }
+
+    /* If thread support was enabled, then setup OPAL to allow for them. This must be done
+     * early to prevent a race condition that can occur with orte_init(). */
+    if (*provided != MPI_THREAD_SINGLE) {
+        opal_set_using_threads(true);
     }
 
     /* Convince OPAL to use our naming scheme */
@@ -509,13 +522,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Figure out the final MPI thread levels.  If we were not
-       compiled for support for MPI threads, then don't allow
-       MPI_THREAD_MULTIPLE.  Set this stuff up here early in the
-       process so that other components can make decisions based on
-       this value. */
-
-    ompi_mpi_thread_level(requested, provided);
 
     /* determine the bitflag belonging to the threadlevel_support provided */
     memset ( &threadlevel_bf, 0, sizeof(uint8_t));
@@ -527,13 +533,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OPAL_SUCCESS != ret) {
         error = "ompi_mpi_init: modex send thread level";
         goto error;
-    }
-
-    /* If thread support was enabled, then setup OPAL to allow for
-       them. */
-    if ((OPAL_ENABLE_PROGRESS_THREADS == 1) ||
-        (*provided != MPI_THREAD_SINGLE)) {
-        opal_set_using_threads(true);
     }
 
     /* initialize datatypes. This step should be done early as it will
