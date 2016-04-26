@@ -1011,11 +1011,13 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
     /* store the event registration info so we can call the registered
        client when the server notifies the event */
     reginfo = PMIX_NEW(pmix_regevents_info_t);
-    PMIX_INFO_CREATE (reginfo->info, ninfo);
-    reginfo->ninfo = ninfo;
-    for (n=0; n < ninfo; n++) {
-        memcpy(reginfo->info[n].key, info[n].key, PMIX_MAX_KEYLEN);
-        pmix_value_xfer(&reginfo->info[n].value, &info[n].value);
+    if (0 < ninfo) {
+        PMIX_INFO_CREATE (reginfo->info, ninfo);
+        reginfo->ninfo = ninfo;
+        for (n=0; n < ninfo; n++) {
+            memcpy(reginfo->info[n].key, info[n].key, PMIX_MAX_KEYLEN);
+            pmix_value_xfer(&reginfo->info[n].value, &info[n].value);
+        }
     }
     PMIX_RETAIN(peer);
     reginfo->peer = peer;
