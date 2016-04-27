@@ -40,8 +40,5 @@ enable_mca_direct=pml-ob1
 # enable development headers
 with_devel_headers=yes
 
-# enable ptmalloc (enables lazy deregistration)
-with_memory_manager=linux
-
 # disable valgrind
 with_valgrind=no

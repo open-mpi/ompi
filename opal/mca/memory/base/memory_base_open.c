@@ -113,7 +113,7 @@ static int opal_memory_base_open(mca_base_open_flag_t flags)
 #if MEMORY_LINUX_PTMALLOC2
         /* See above comment about linux/ptmalloc2 about why this
            abstraction violation is here. */
-        if (0 == strcmp (tmp->mca_component_name, "linux")) {
+        if (0 == strcmp (tmp->memoryc_version.mca_component_name, "linux")) {
             /* if ptmalloc is enabled always use it */
             priority = 1000000;
         }
