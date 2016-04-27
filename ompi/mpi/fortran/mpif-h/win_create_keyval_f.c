@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -73,6 +73,7 @@ void ompi_win_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* win_copy_att
                              MPI_Fint *win_keyval, MPI_Aint *extra_state, MPI_Fint *ierr)
 {
     int ret, c_ierr;
+    OMPI_SINGLE_NAME_DECL(win_keyval);
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
@@ -85,7 +86,7 @@ void ompi_win_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* win_copy_att
        to the old MPI-1 INTEGER-parameter functions). */
 
     ret = ompi_attr_create_keyval_aint(WIN_ATTR, copy_fn, del_fn,
-                                       win_keyval, *extra_state, OMPI_KEYVAL_F77,
+                                       OMPI_SINGLE_NAME_CONVERT(win_keyval), *extra_state, OMPI_KEYVAL_F77,
                                        NULL);
 
     if (MPI_SUCCESS != ret) {
@@ -94,5 +95,6 @@ void ompi_win_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* win_copy_att
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     } else {
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+        OMPI_SINGLE_INT_2_FINT(win_keyval);
     }
 }
