@@ -14,7 +14,7 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -122,52 +122,53 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
         return btl_proc;
     }
 
-    btl_proc = OBJ_NEW(mca_btl_tcp_proc_t);
-    if(NULL == btl_proc)
-        return NULL;
-    btl_proc->proc_opal = proc;
-    OBJ_RETAIN(btl_proc->proc_opal);
+    do {
+        btl_proc = OBJ_NEW(mca_btl_tcp_proc_t);
+        if(NULL == btl_proc) {
+            rc = OPAL_ERR_OUT_OF_RESOURCE;
+            break;
+        }
 
-    /* add to hash table of all proc instance */
-    opal_proc_table_set_value(&mca_btl_tcp_component.tcp_procs,
-                              proc->proc_name, btl_proc);
-    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+        btl_proc->proc_opal = proc;
 
-    /* lookup tcp parameters exported by this proc */
-    OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version,
-                    &proc->proc_name, (uint8_t**)&btl_proc->proc_addrs, &size);
-    if(rc != OPAL_SUCCESS) {
-        if(OPAL_ERR_NOT_FOUND != rc)
-            BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
-        OBJ_RELEASE(btl_proc);
-        return NULL;
-    }
-    if(0 != (size % sizeof(mca_btl_tcp_addr_t))) {
-        BTL_ERROR(("opal_modex_recv: invalid size %lu: btl-size: %lu\n",
-          (unsigned long) size, (unsigned long)sizeof(mca_btl_tcp_addr_t)));
-        return NULL;
-    }
-    btl_proc->proc_addr_count = size / sizeof(mca_btl_tcp_addr_t);
+        OBJ_RETAIN(btl_proc->proc_opal);
 
-    /* allocate space for endpoint array - one for each exported address */
-    btl_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc((1 + btl_proc->proc_addr_count) *
-                sizeof(mca_btl_base_endpoint_t*));
-    if(NULL == btl_proc->proc_endpoints) {
-        OBJ_RELEASE(btl_proc);
-        return NULL;
-    }
+        /* lookup tcp parameters exported by this proc */
+        OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version,
+                        &proc->proc_name, (uint8_t**)&btl_proc->proc_addrs, &size);
+        if(rc != OPAL_SUCCESS) {
+            if(OPAL_ERR_NOT_FOUND != rc)
+                BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
+            break;
+        }
 
-    if(NULL == mca_btl_tcp_component.tcp_local && (proc == opal_proc_local_get())) {
-        mca_btl_tcp_component.tcp_local = btl_proc;
-    }
-    {
+        if(0 != (size % sizeof(mca_btl_tcp_addr_t))) {
+            BTL_ERROR(("opal_modex_recv: invalid size %lu: btl-size: %lu\n",
+                       (unsigned long) size, (unsigned long)sizeof(mca_btl_tcp_addr_t)));
+            rc = OPAL_ERROR;
+            break;
+        }
+
+        btl_proc->proc_addr_count = size / sizeof(mca_btl_tcp_addr_t);
+
+        /* allocate space for endpoint array - one for each exported address */
+        btl_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
+            malloc((1 + btl_proc->proc_addr_count) *
+                   sizeof(mca_btl_base_endpoint_t*));
+        if(NULL == btl_proc->proc_endpoints) {
+            rc = OPAL_ERR_OUT_OF_RESOURCE;
+            break;
+        }
+
+        if(NULL == mca_btl_tcp_component.tcp_local && (proc == opal_proc_local_get())) {
+            mca_btl_tcp_component.tcp_local = btl_proc;
+        }
+
         /* convert the OPAL addr_family field to OS constants,
          * so we can check for AF_INET (or AF_INET6) and don't have
          * to deal with byte ordering anymore.
          */
-        unsigned int i;
-        for (i = 0; i < btl_proc->proc_addr_count; i++) {
+        for (unsigned int i = 0; i < btl_proc->proc_addr_count; i++) {
             if (MCA_BTL_TCP_AF_INET == btl_proc->proc_addrs[i].addr_family) {
                 btl_proc->proc_addrs[i].addr_family = AF_INET;
             }
@@ -177,7 +178,21 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
             }
 #endif
         }
+    } while (0);
+
+    if (OPAL_SUCCESS == rc) {
+        /* add to hash table of all proc instance. */
+        opal_proc_table_set_value(&mca_btl_tcp_component.tcp_procs,
+                                  proc->proc_name, btl_proc);
+    } else {
+        if (btl_proc) {
+            OBJ_RELEASE(btl_proc);
+            btl_proc = NULL;
+        }
     }
+
+    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+
     return btl_proc;
 }
 
