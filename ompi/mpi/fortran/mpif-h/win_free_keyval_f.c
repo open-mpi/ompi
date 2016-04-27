@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -70,6 +70,8 @@ void ompi_win_free_keyval_f(MPI_Fint *win_keyval, MPI_Fint *ierr)
 {
     int c_ierr;
     OMPI_SINGLE_NAME_DECL(win_keyval);
+
+    OMPI_SINGLE_FINT_2_INT(win_keyval);
 
     c_ierr = PMPI_Win_free_keyval(OMPI_SINGLE_NAME_CONVERT(win_keyval));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
