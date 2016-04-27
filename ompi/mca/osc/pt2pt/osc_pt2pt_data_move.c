@@ -1622,8 +1622,6 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
     size_t incoming_length = request->req_status._ucount;
     int source = request->req_status.MPI_SOURCE;
 
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-
     assert(incoming_length >= sizeof(ompi_osc_pt2pt_header_base_t));
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -1665,8 +1663,6 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
     /* put this request on the garbage colletion list */
     osc_pt2pt_gc_add_request (module, request);
     ompi_osc_pt2pt_frag_start_receive (module);
-
-    OPAL_THREAD_LOCK(&ompi_request_lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "finished posting receive request"));

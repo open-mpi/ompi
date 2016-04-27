@@ -306,18 +306,18 @@ typedef struct ompi_request_fns_t {
 /**
  * Globals used for tracking requests and request completion.
  */
-OMPI_DECLSPEC extern opal_pointer_array_t  ompi_request_f_to_c_table;
-OMPI_DECLSPEC extern size_t                ompi_request_waiting;
-OMPI_DECLSPEC extern size_t                ompi_request_completed;
-OMPI_DECLSPEC extern size_t                ompi_request_failed;
-OMPI_DECLSPEC extern int32_t               ompi_request_poll;
-OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
-OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
+OMPI_DECLSPEC extern opal_pointer_array_t   ompi_request_f_to_c_table;
+OMPI_DECLSPEC extern size_t                 ompi_request_waiting;
+OMPI_DECLSPEC extern size_t                 ompi_request_completed;
+OMPI_DECLSPEC extern size_t                 ompi_request_failed;
+OMPI_DECLSPEC extern int32_t                ompi_request_poll;
+OMPI_DECLSPEC extern opal_recursive_mutex_t ompi_request_lock;
+OMPI_DECLSPEC extern opal_condition_t       ompi_request_cond;
 OMPI_DECLSPEC extern ompi_predefined_request_t        ompi_request_null;
 OMPI_DECLSPEC extern ompi_predefined_request_t        *ompi_request_null_addr;
-OMPI_DECLSPEC extern ompi_request_t        ompi_request_empty;
-OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
-OMPI_DECLSPEC extern ompi_request_fns_t    ompi_request_functions;
+OMPI_DECLSPEC extern ompi_request_t         ompi_request_empty;
+OMPI_DECLSPEC extern ompi_status_public_t   ompi_status_empty;
+OMPI_DECLSPEC extern ompi_request_fns_t     ompi_request_functions;
 
 /**
  * Initialize the MPI_Request subsystem; invoked during MPI_INIT.
