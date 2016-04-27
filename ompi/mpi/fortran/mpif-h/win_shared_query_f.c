@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -113,12 +113,17 @@ void ompi_win_shared_query_f(MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size,
 {
     int c_ierr;
     MPI_Win c_win;
+    OMPI_SINGLE_NAME_DECL(disp_unit);
 
     c_win = PMPI_Win_f2c(*win);
 
     c_ierr = PMPI_Win_shared_query(c_win, OMPI_FINT_2_INT(*rank), size,
-                                  OMPI_FINT_2_INT(disp_unit), baseptr);
+                                  OMPI_SINGLE_NAME_CONVERT(disp_unit), baseptr);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    if (MPI_SUCCESS == c_ierr) {
+        OMPI_SINGLE_INT_2_FINT(disp_unit);
+    }
 }
 
 /*
