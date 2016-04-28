@@ -118,7 +118,7 @@ void ompi_win_shared_query_f(MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size,
     c_win = PMPI_Win_f2c(*win);
 
     c_ierr = PMPI_Win_shared_query(c_win, OMPI_FINT_2_INT(*rank), size,
-                                  OMPI_SINGLE_NAME_CONVERT(disp_unit), baseptr);
+                                   OMPI_SINGLE_NAME_CONVERT(disp_unit), baseptr);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
