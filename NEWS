@@ -12,7 +12,7 @@ Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
-Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
                         reserved.
 Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
@@ -73,7 +73,6 @@ Master (not on release branches yet)
  **********************************************************************
  *  Open MPI is now fully MPI-3.1 compliant
  **********************************************************************
-
 
 - Enhancements to reduce the memory footprint for jobs at scale.
   A new MCA parameter - mpi_add_procs_cutoff is available to set
@@ -716,6 +715,7 @@ Master (not on release branches yet)
  **********************************************************************
  *  Open MPI is now fully MPI-3.0 compliant
  **********************************************************************
+
 - Add Linux OpenSHMEM support built on top of Open MPI's MPI
   layer. Thanks to Mellanox for contributing this new feature.
 - Allow restricting ORTE daemons to specific cores using the
@@ -795,6 +795,7 @@ Master (not on release branches yet)
  * in particular may want to override at least the binding default
  * to allow threads to use multiple cores.
  **********************************************************************
+
 - Restore version number output in "ompi_info --all".
 - Various bug fixes for the mpi_f08 Fortran bindings.
 - Fix ROMIO compile error with Lustre 2.4.  Thanks to Adam Moody for
