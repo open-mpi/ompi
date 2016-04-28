@@ -2438,6 +2438,8 @@ static void setup_debugger_job(void)
      * to avoid confusing the rest of the system's bookkeeping
      */
     orte_plm_base_create_jobid(debugger);
+    /* set the personality to ORTE */
+    opal_argv_append_nosize(&debugger->personality, "orte");
     /* flag the job as being debugger daemons */
     ORTE_FLAG_SET(debugger, ORTE_JOB_FLAG_DEBUGGER_DAEMON);
     /* unless directed, we do not forward output */
