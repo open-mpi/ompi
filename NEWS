@@ -151,14 +151,14 @@ included in the vX.Y.Z section and be denoted as:
   suggesting a fix.
 - Fix an issue with parsing mpirun command line options which contain
   colons.  Thanks to Lev Given for reporting.
-- Fix a problem with Open MPI's package config files.  Thanks to
+- Fix a problem with Open MPI's package configury files.  Thanks to
   Christoph Junghans for reporting.
 - Fix a typo in the MPI_Intercomm_merge man page.  Thanks To Harald
   Servat for reporting and correcting.
 - Update man pages for non-blocking sends per MPI 3.1 standard.
   Thanks to Alexander Pozdneev for reporting.
 - Fix problems when building with plfs file system software present.
-- Fix problem when compiling againsts pvfs2.  Thanks to Dave Love for
+- Fix problem when compiling against pvfs2.  Thanks to Dave Love for
   reporting.
 - Fix problems with MPI_Neighbor_alltoall{v,w}.  Thanks to Willem
   Vermin for reporting this issue.
@@ -166,6 +166,22 @@ included in the vX.Y.Z section and be denoted as:
   Daryin for reporting this issue.
 - Fix various a compilation problems on Cygwin.  Thanks to Marco Atzeri
   for supplying these fixes.
+- Fix problem with resizing of subarray and darray data types.  Thanks
+  to Keith Bennett and Dan Garmann for reporting.
+- Fix a pmix configury issue.  Thanks to Paul Hargrove for reporting.
+- Fix a problem with MPI_COMBINER_RESIZED.  Thanks to James Ramsey for the report.
+- Fix an hwloc binding issue.  Thanks to Ben Menadue for reporting.
+- Fix a problem with the shared memory(sm) BTL.  Thanks to Peter Wind for the report.
+- Fixes for heterogeneous support. Thanks to Siegmar Gross for reporting.
+- Fix a problem with memchecker.  Thanks to Clinton Simpson for reporting.
+- Fix problem with using BIND(C) for Fortran bindings with logical parameters.
+  Thanks to Paul Romano for reporting.
+- Fix a problem with MPI_UNWEIGHTED in topology functions.  Thanks to Jun Kudo for
+  reporting.
+- Fix problem with a MCA parameter base filesystem types.  Thanks to
+  Siegmar Gross for reporting.
+- Fix a problem with some windows info argument types.  Thanks to Alastair McKinstry
+  for reporting
 
 
 1.10.3 - DATE
