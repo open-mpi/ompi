@@ -1010,14 +1010,6 @@ int orte_submit_job(char *argv[], int *index,
             free(param);
         }
 
-        /* pre-condition any network transports that require it */
-        if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(jdata))) {
-            ORTE_ERROR_LOG(rc);
-            orte_show_help("help-orterun.txt", "orterun:precondition", false,
-                           orte_basename, NULL, NULL, rc);
-            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            return rc;
-        }
         /* setup for debugging */
         orte_debugger_init_before_spawn(jdata);
 

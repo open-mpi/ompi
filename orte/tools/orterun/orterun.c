@@ -187,21 +187,21 @@ int orterun(int argc, char *argv[])
         }
     }
 
-      // wait for response and unpack the status, jobid
-      while (orte_event_base_active && launchst.active) {
-          opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
-      }
-      if (orte_debug_flag) {
-          opal_output(0, "Job %s has launched",
-                      (NULL == launchst.jdata) ? "UNKNOWN" : ORTE_JOBID_PRINT(launchst.jdata->jobid));
-      }
-      if (!orte_event_base_active || ORTE_SUCCESS != launchst.status) {
-          goto DONE;
-      }
+    // wait for response and unpack the status, jobid
+    while (orte_event_base_active && launchst.active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
+    if (orte_debug_flag) {
+        opal_output(0, "Job %s has launched",
+                   (NULL == launchst.jdata) ? "UNKNOWN" : ORTE_JOBID_PRINT(launchst.jdata->jobid));
+    }
+    if (!orte_event_base_active || ORTE_SUCCESS != launchst.status) {
+        goto DONE;
+    }
 
-      while (orte_event_base_active && completest.active) {
-          opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
-      }
+    while (orte_event_base_active && completest.active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
 
     if (ORTE_PROC_IS_HNP) {
         /* ensure all local procs are dead */

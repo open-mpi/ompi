@@ -14,6 +14,7 @@
 #include "orte/constants.h"
 
 #include "opal/dss/dss.h"
+#include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -279,6 +280,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "ORTE_JOB_MULTI_DAEMON_SIM";
         case ORTE_JOB_NOTIFY_COMPLETION:
             return "ORTE_JOB_NOTIFY_COMPLETION";
+        case ORTE_JOB_TRANSPORT_KEY:
+            return "ORTE_JOB_TRANSPORT_KEY";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";
