@@ -57,7 +57,7 @@ void my_mem_check(void){
     for(s=size_hash; s != NULL; s=s->hh.next) {
       if(get_verbose_level()>=ERROR)
         printf("pointer %p of size %ld has not been freed!\n", s->key, s->size);
-	nb_errors ++;
+      nb_errors ++;
     }
 
     if(get_verbose_level() >= INFO)

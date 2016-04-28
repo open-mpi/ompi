@@ -1164,17 +1164,18 @@ void group_nodes(affinity_mat_t *aff_mat,tree_t *tab_node, tree_t *new_tab_node,
       else if(last_best>best_val)
 	printf("Cost most last impoved solution\n");
     }
-      if( n < 10000 ){
+
+    if( n < 10000 ){
       /* perform a mapping in the weighted degree order */
 
 
-    if(verbose_level>=INFO)
-      printf("----WG----\n");
+      if(verbose_level>=INFO)
+        printf("----WG----\n");
 
       compute_weighted_degree(tab_group,n,arity);
 
       if(verbose_level>=INFO)
-	printf("Weigted degree computed\n");
+        printf("Weigted degree computed\n");
 
       qsort(tab_group,n,sizeof(group_list_t*),weighted_degree_dsc);
       /* display_tab_group(tab_group,n,arity);*/
@@ -1183,10 +1184,10 @@ void group_nodes(affinity_mat_t *aff_mat,tree_t *tab_node, tree_t *new_tab_node,
       /* timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,n,0); */
 
       if(verbose_level>=DEBUG){
-	if(timeout)
-	  printf("WG timeout!\n");
-	else if(last_best>best_val)
-	  printf("WG impoved solution\n");
+        if(timeout)
+          printf("WG timeout!\n");
+        else if(last_best>best_val)
+          printf("WG impoved solution\n");
       }
     }
 
