@@ -78,7 +78,6 @@ I	3	2	860 bytes	24 msgs sent
 
 static MPI_T_pvar_handle flush_handle;
 static const char flush_pvar_name[] = "pml_monitoring_flush";
-static const char flush_cvar_name[] = "pml_monitoring_enable";
 static int flush_pvar_idx;
 
 int main(int argc, char* argv[])
