@@ -58,8 +58,6 @@ static int cray_resolve_peers(const char *nodename,
 static int cray_resolve_nodes(opal_jobid_t jobid, char **nodelist);
 static int cray_put(opal_pmix_scope_t scope, opal_value_t *kv);
 static int cray_fence(opal_list_t *procs, int collect_data);
-static int cray_fence_nb(opal_list_t *procs, int collect_data,
-                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 static int cray_commit(void);
 static int cray_get(const opal_process_name_t *id,
                     const char *key, opal_list_t *info,
@@ -93,7 +91,7 @@ const opal_pmix_base_module_t opal_pmix_cray_module = {
     .abort = cray_abort,
     .commit = cray_commit,
     .fence = cray_fence,
-    .fence_nb = cray_fence_nb,
+    .fence_nb = NULL,
     .put = cray_put,
     .get = cray_get,
     .get_nb = cray_get_nb,
@@ -735,12 +733,6 @@ fn_exit:
         free(r_bytes_and_ranks);
     }
     return rc;
-}
-
-static int cray_fence_nb(opal_list_t *procs, int collect_data,
-                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
-{
-    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int cray_get(const opal_process_name_t *id, const char *key, opal_list_t *info, opal_value_t **kv)
