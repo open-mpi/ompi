@@ -288,6 +288,10 @@ Master (not on release branches yet)
 1.10.1: 4 Nov 2015
 ------------------
 
+- Workaround an optimization problem with gcc compilers >= 4.9.2 that
+  causes problems with memory registration, and forced
+  mpi_leave_pinned to default to 0 (i.e., off).  Thanks to @oere for
+  the fix.
 - Fix use of MPI_LB and MPI_UB in subarray and darray datatypes.
   Thanks to Gus Correa and Dimitar Pashov for pointing out the issue.
 - Minor updates to mpi_show_mpi_alloc_mem_leaks and
@@ -362,6 +366,7 @@ Master (not on release branches yet)
   - Added OFI MTL (usable with PSM in libfabric v1.1.0).
 - Added Intel Omni-Path support via new PSM2 MTL.
 - Added "yalla" PML for faster MXM support.
+- Removed support for MX
 - Added persistent distributed virtual machine (pDVM) support for fast
   workflow executions.
 - Fixed typo in GCC inline assembly introduced in Open MPI v1.8.8.
@@ -597,6 +602,7 @@ Master (not on release branches yet)
   output extra bytes if the system was very heavily loaded
 - Fix a bug where specifying mca_component_show_load_errors=0 could
   cause ompi_info to segfault
+- Updated valgrind suppression file
 
 
 1.8.3: 26 Sep 2014
@@ -625,6 +631,10 @@ Master (not on release branches yet)
 1.8.2: 25 Aug 2014
 ------------------
 
+- Fix auto-wireup of OOB, allowing ORTE to automatically
+  test all available NICs
+- "Un-deprecate" pernode, npernode, and npersocket options
+  by popular demand
 - Add missing Fortran bindings for MPI_WIN_LOCK_ALL,
   MPI_WIN_UNLOCK_ALL, and MPI_WIN_SYNC.
 - Fix cascading/over-quoting in some cases with the rsh/ssh-based
@@ -1040,6 +1050,8 @@ Master (not on release branches yet)
   formats.
 - Added Location Aware Mapping Algorithm (LAMA) mapping component.
 - Fixes for MPI_STATUS handling in corner cases.
+- Add a distance-based mapping component to find the socket "closest"
+  to the PCI bus.
 
 
 1.7.1: 16 Apr 2013
@@ -1069,6 +1081,7 @@ Master (not on release branches yet)
   - Added better "use mpi" support (for compilers that support it)
   - Removed incorrect MPI_SCATTERV interface from "mpi" module that
     was added in the 1.5.x series for ABI reasons.
+- Lots of VampirTrace upgrades and fixes; upgrade to v5.14.3.
 - Modified process affinity system to provide warning when bindings
   result in being "bound to all", which is equivalent to not being
   bound.
