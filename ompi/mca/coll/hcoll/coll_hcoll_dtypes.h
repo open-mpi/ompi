@@ -25,6 +25,8 @@
 #define OPAL_DATATYPE_FLOAT8         16
 #define OPAL_DATATYPE_FLOAT12        17
 #define OPAL_DATATYPE_FLOAT16        18
+#define OPAL_DATATYPE_FLOAT_COMPLEX  19
+#define OPAL_DATATYPE_DOUBLE_COMPLEX 20
 
 total 15 types
 */
@@ -51,8 +53,13 @@ static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OPAL_DATATYPE_MAX
     &DTE_FLOAT64,               /*OPAL_DATATYPE_FLOAT8         16 */
     &DTE_FLOAT96,               /*OPAL_DATATYPE_FLOAT12        17 */
     &DTE_FLOAT128,              /*OPAL_DATATYPE_FLOAT16        18 */
+#if defined(DTE_FLOAT32_COMPLEX) && defined(DTE_FLOAT64_COMPLEX)
+    &DTE_FLOAT32_COMPLEX,       /*OPAL_DATATYPE_COMPLEX8       19 */
+    &DTE_FLOAT64_COMPLEX,       /*OPAL_DATATYPE_COMPLEX16      20 */
+#else
     &DTE_ZERO,                  /*OPAL_DATATYPE_COMPLEX8       19 */
     &DTE_ZERO,                  /*OPAL_DATATYPE_COMPLEX16      20 */
+#endif
     &DTE_ZERO,                  /*OPAL_DATATYPE_COMPLEX32      21 */
     &DTE_ZERO,                  /*OPAL_DATATYPE_BOOL           22 */
     &DTE_ZERO,                  /*OPAL_DATATYPE_WCHAR          23 */
