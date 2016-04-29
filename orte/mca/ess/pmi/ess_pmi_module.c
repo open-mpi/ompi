@@ -217,6 +217,9 @@ static int rte_init(void)
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+        opal_output_verbose(2, orte_ess_base_framework.framework_output,
+                            "%s transport key %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), string_key);
         asprintf(&envar, OPAL_MCA_PREFIX"orte_precondition_transports=%s", string_key);
         putenv(envar);
         added_transport_keys = true;
