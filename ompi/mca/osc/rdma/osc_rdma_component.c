@@ -845,6 +845,8 @@ static int ompi_osc_rdma_share_data (ompi_osc_rdma_module_t *module)
                                                   module->region_size);
 
             my_data->base = (uint64_t) (intptr_t) module->rank_array;
+            /* store my rank in the length field */
+            my_data->len = (osc_rdma_size_t) my_rank;
 
             if (module->selected_btl->btl_register_mem) {
                 memcpy (my_data->btl_handle_data, module->state_handle, module->selected_btl->btl_registration_handle_size);
@@ -861,9 +863,11 @@ static int ompi_osc_rdma_share_data (ompi_osc_rdma_module_t *module)
                 }
             }
 
+            int base_rank = ompi_comm_rank (module->local_leaders) * ((comm_size + module->node_count - 1) / module->node_count);
+
             /* fill in the local part of the rank -> node map */
             for (int i = 0 ; i < RANK_ARRAY_COUNT(module) ; ++i) {
-                int save_rank = my_rank + i;
+                int save_rank = base_rank + i;
                 if (save_rank >= comm_size) {
                     break;
                 }
