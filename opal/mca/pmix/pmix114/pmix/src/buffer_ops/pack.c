@@ -669,7 +669,7 @@ int pmix_bfrop_pack_app(pmix_buffer_t *buffer, const void *src,
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_int(buffer, &app[i].argc, 1, PMIX_INT))) {
             return ret;
         }
-        for (j=0; j < app->argc; j++) {
+        for (j=0; j < app[i].argc; j++) {
             if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &app[i].argv[j], 1, PMIX_STRING))) {
                 return ret;
             }
