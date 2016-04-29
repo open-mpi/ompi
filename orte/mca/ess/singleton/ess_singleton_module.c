@@ -217,14 +217,17 @@ static int rte_init(void)
     }
     orte_process_info.my_node_rank = u16;
 
-    /* get universe size */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_UNIV_SIZE,
+    /* get max procs */
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_MAX_PROCS,
                           ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
-        error = "getting univ size";
+        error = "getting max procs";
         goto error;
     }
-    orte_process_info.num_procs = u32;
+    orte_process_info.max_procs = u32;
+
+    /* we are a singleton, so there is only one proc in the job */
+    orte_process_info.num_procs = 1;
     /* push into the environ for pickup in MPI layer for
      * MPI-3 required info key
      */

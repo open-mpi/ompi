@@ -296,7 +296,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_UNIV_SIZE);
     kv->type = OPAL_UINT32;
-    kv->data.uint32 = jdata->num_procs;
+    kv->data.uint32 = jdata->total_slots_alloc;
     opal_list_append(info, &kv->super);
 
     /* job size */
