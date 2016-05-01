@@ -94,7 +94,7 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
 
         OPAL_THREAD_LOCK(&tcp_proc->proc_lock);
 
-        for (int j = 0 ; j < (int)tcp_proc->proc_endpoint_count ; ++j) {
+        for (uint32_t j = 0 ; j < (int)tcp_proc->proc_endpoint_count ; ++j) {
             tcp_endpoint = tcp_proc->proc_endpoints[j];
             if (tcp_endpoint->endpoint_btl == tcp_btl) {
                 existing_found = true;

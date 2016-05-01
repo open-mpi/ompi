@@ -768,7 +768,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
         }
 
         /* try adding this proc to each btl until */
-        for (int i = 0 ; i < (int)mca_btl_tcp_component.tcp_num_btls ; ++i) {
+        for( uint32_t i = 0; i < mca_btl_tcp_component.tcp_num_btls; ++i ) {
             endpoint = NULL;
             (void) mca_btl_tcp_add_procs (&mca_btl_tcp_component.tcp_btls[i]->super, 1, &opal_proc,
                                           &endpoint, NULL);
