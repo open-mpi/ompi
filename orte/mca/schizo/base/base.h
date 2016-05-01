@@ -41,6 +41,7 @@ ORTE_DECLSPEC    int orte_schizo_base_select(void);
 typedef struct {
     /* list of active modules */
     opal_list_t active_modules;
+    char **personalities;
 } orte_schizo_base_t;
 
 /**
@@ -61,15 +62,13 @@ OBJ_CLASS_DECLARATION(orte_schizo_base_active_module_t);
 
 /* the base stub functions */
 ORTE_DECLSPEC const char* orte_schizo_base_print_env(orte_schizo_launch_environ_t env);
-ORTE_DECLSPEC int orte_schizo_base_parse_cli(char **personality,
-                                             int argc, int start, char **argv);
-ORTE_DECLSPEC int orte_schizo_base_parse_env(char **personality,
-                                             char *path,
+ORTE_DECLSPEC int orte_schizo_base_define_cli(opal_cmd_line_t *cli);
+ORTE_DECLSPEC int orte_schizo_base_parse_cli(int argc, int start, char **argv);
+ORTE_DECLSPEC int orte_schizo_base_parse_env(char *path,
                                              opal_cmd_line_t *cmd_line,
                                              char **srcenv,
                                              char ***dstenv);
-ORTE_DECLSPEC int orte_schizo_base_setup_app(char **personality,
-                                             orte_app_context_t *app);
+ORTE_DECLSPEC int orte_schizo_base_setup_app(orte_app_context_t *app);
 ORTE_DECLSPEC int orte_schizo_base_setup_fork(orte_job_t *jdata,
                                               orte_app_context_t *context);
 ORTE_DECLSPEC int orte_schizo_base_setup_child(orte_job_t *jobdat,

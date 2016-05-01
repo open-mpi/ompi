@@ -169,25 +169,17 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
 
     /* create the job object */
     jdata = OBJ_NEW(orte_job_t);
+    jdata->map = OBJ_NEW(orte_job_map_t);
 
     /* transfer the job info across */
     OPAL_LIST_FOREACH(info, job_info, opal_value_t) {
         if (0 == strcmp(info->key, OPAL_PMIX_PERSONALITY)) {
             jdata->personality = opal_argv_split(info->data.string, ',');
         } else if (0 == strcmp(info->key, OPAL_PMIX_MAPPER)) {
-            if (NULL == jdata->map) {
-                jdata->map = OBJ_NEW(orte_job_map_t);
-            }
             jdata->map->req_mapper = strdup(info->data.string);
         } else if (0 == strcmp(info->key, OPAL_PMIX_DISPLAY_MAP)) {
-            if (NULL == jdata->map) {
-                jdata->map = OBJ_NEW(orte_job_map_t);
-            }
             jdata->map->display_map = true;
         } else if (0 == strcmp(info->key, OPAL_PMIX_PPR)) {
-            if (NULL == jdata->map) {
-                jdata->map = OBJ_NEW(orte_job_map_t);
-            }
             if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
                 /* not allowed to provide multiple mapping policies */
                 orte_show_help("help-orte-rmaps-base.txt", "redefining-policy",
@@ -198,9 +190,6 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
             ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_PPR);
             jdata->map->ppr = strdup(info->data.string);
         } else if (0 == strcmp(info->key, OPAL_PMIX_MAPBY)) {
-            if (NULL == jdata->map) {
-                jdata->map = OBJ_NEW(orte_job_map_t);
-            }
             if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
                 /* not allowed to provide multiple mapping policies */
                 orte_show_help("help-orte-rmaps-base.txt", "redefining-policy",
@@ -214,9 +203,6 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
                 return rc;
             }
         } else if (0 == strcmp(info->key, OPAL_PMIX_RANKBY)) {
-            if (NULL == jdata->map) {
-                jdata->map = OBJ_NEW(orte_job_map_t);
-            }
             if (ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
                 /* not allowed to provide multiple ranking policies */
                 orte_show_help("help-orte-rmaps-base.txt", "redefining-policy",
@@ -231,9 +217,6 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
                 return rc;
             }
         } else if (0 == strcmp(info->key, OPAL_PMIX_BINDTO)) {
-            if (NULL == jdata->map) {
-                jdata->map = OBJ_NEW(orte_job_map_t);
-            }
             if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
                 /* not allowed to provide multiple mapping policies */
                 orte_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,

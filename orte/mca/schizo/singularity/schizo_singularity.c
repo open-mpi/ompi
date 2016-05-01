@@ -29,8 +29,7 @@
 
 #include "schizo_singularity.h"
 
-static int setup_app(char **personality,
-                     orte_app_context_t *context);
+static int setup_app(orte_app_context_t *context);
 static int setup_fork(orte_job_t *jdata,
                       orte_app_context_t *context);
 
@@ -39,18 +38,19 @@ orte_schizo_base_module_t orte_schizo_singularity_module = {
     .setup_fork = setup_fork
 };
 
-static int setup_app(char **personality,
-                     orte_app_context_t *app)
+static int setup_app(orte_app_context_t *app)
 {
     int i;
     char *newenv, *pth, *t2;
     bool takeus = false;
 
-    /* see if we are included */
-    for (i=0; NULL != personality[i]; i++) {
-        if (0 == strcmp(personality[i], "singularity")) {
-            takeus = true;
-            break;
+    if (NULL != orte_schizo_base.personalities) {
+        /* see if we are included */
+        for (i=0; NULL != orte_schizo_base.personalities[i]; i++) {
+            if (0 == strcmp(orte_schizo_base.personalities[i], "singularity")) {
+                takeus = true;
+                break;
+            }
         }
     }
     if (!takeus) {
@@ -113,11 +113,13 @@ static int setup_fork(orte_job_t *jdata,
     char *p, *t2;
     char dir[MAXPATHLEN];
 
-    /* see if we are included */
-    for (i=0; NULL != jdata->personality[i]; i++) {
-        if (0 == strcmp(jdata->personality[i], "singularity")) {
-            takeus = true;
-            break;
+    if (NULL != orte_schizo_base.personalities) {
+        /* see if we are included */
+        for (i=0; NULL != jdata->personality[i]; i++) {
+            if (0 == strcmp(jdata->personality[i], "singularity")) {
+                takeus = true;
+                break;
+            }
         }
     }
     if (!takeus) {
