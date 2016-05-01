@@ -300,18 +300,17 @@ static inline void mca_btl_tcp_endpoint_event_init(mca_btl_base_endpoint_t* btl_
 
     opal_event_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_recv_event,
                     btl_endpoint->endpoint_sd,
-                    OPAL_EV_READ|OPAL_EV_PERSIST,
+                    OPAL_EV_READ | OPAL_EV_PERSIST,
                     mca_btl_tcp_endpoint_recv_handler,
                     btl_endpoint );
     /**
-     * The send event should be non persistent until the endpoint is
-     * completely connected. This means, when the event is created it
-     * will be fired only once, and when the endpoint is marked as
-     * CONNECTED the event should be recreated with the correct flags.
+     * In the multi-threaded case, the send event must be persistent in order
+     * to avoid missing the connection notification in send_handler due to
+     * a local handling of the peer process (which holds the lock).
      */
     opal_event_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_send_event,
                     btl_endpoint->endpoint_sd,
-                    OPAL_EV_WRITE,
+                    OPAL_EV_WRITE | OPAL_EV_PERSIST,
                     mca_btl_tcp_endpoint_send_handler,
                     btl_endpoint);
 }
@@ -558,13 +557,6 @@ static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoint
     btl_endpoint->endpoint_retries = 0;
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, true, "READY [endpoint_connected]");
 
-    /* Create the send event in a persistent manner. */
-    opal_event_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_send_event,
-                    btl_endpoint->endpoint_sd,
-                    OPAL_EV_WRITE | OPAL_EV_PERSIST,
-                    mca_btl_tcp_endpoint_send_handler,
-                    btl_endpoint );
-
     if(opal_list_get_size(&btl_endpoint->endpoint_frags) > 0) {
         if(NULL == btl_endpoint->endpoint_send_frag)
             btl_endpoint->endpoint_send_frag = (mca_btl_tcp_frag_t*)
@@ -779,6 +771,10 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
     opal_socklen_t so_length = sizeof(so_error);
     struct sockaddr_storage endpoint_addr;
 
+    /* Delete the send event notification, as the next step is waiting for the ack
+     * from the peer. Once this ack is received we will deal with the send notification
+     * accordingly.
+     */
     opal_event_del(&btl_endpoint->endpoint_send_event);
 
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
@@ -802,12 +798,7 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
         return;
     }
 
-    /* Do not unregister from receiving send event notifications, instead
-     * leave the event to trigger once more, and then it will get automatically
-     * deleted as no send fragments are available.
-     */
-
-     if(mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint) == OPAL_SUCCESS) {
+    if(mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint) == OPAL_SUCCESS) {
         btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECT_ACK;
         opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
         MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, false, "event_add(recv) [complete_connect]");
