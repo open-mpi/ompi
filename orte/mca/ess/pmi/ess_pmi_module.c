@@ -154,11 +154,11 @@ static int rte_init(void)
     }
     orte_process_info.my_node_rank = u16;
 
-    /* get universe size */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_UNIV_SIZE,
+    /* get max procs */
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_MAX_PROCS,
                           ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
-        error = "getting univ size";
+        error = "getting max procs";
         goto error;
     }
     orte_process_info.max_procs = u32;
