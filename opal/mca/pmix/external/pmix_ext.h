@@ -47,8 +47,8 @@ typedef struct {
     opal_list_item_t super;
     opal_jobid_t jobid;
     char nspace[PMIX_MAX_NSLEN + 1];
-} opal_pmix1_jobid_trkr_t;
-OBJ_CLASS_DECLARATION(opal_pmix1_jobid_trkr_t);
+} opal_pmix_ext_jobid_trkr_t;
+OBJ_CLASS_DECLARATION(opal_pmix_ext_jobid_trkr_t);
 
 typedef struct {
     opal_object_t super;
@@ -67,8 +67,8 @@ typedef struct {
     opal_pmix_lookup_cbfunc_t lkcbfunc;
     opal_pmix_spawn_cbfunc_t spcbfunc;
     void *cbdata;
-} pmix1_opcaddy_t;
-OBJ_CLASS_DECLARATION(pmix1_opcaddy_t);
+} pmix_ext_opcaddy_t;
+OBJ_CLASS_DECLARATION(pmix_ext_opcaddy_t);
 
 typedef struct {
     opal_object_t super;
@@ -83,77 +83,77 @@ typedef struct {
     void *cbdata;
     opal_pmix_release_cbfunc_t odmdxfunc;
     void *ocbdata;
-} pmix1_opalcaddy_t;
-OBJ_CLASS_DECLARATION(pmix1_opalcaddy_t);
+} pmix_ext_opalcaddy_t;
+OBJ_CLASS_DECLARATION(pmix_ext_opalcaddy_t);
 
 
 /****  CLIENT FUNCTIONS  ****/
-OPAL_MODULE_DECLSPEC int pmix1_client_init(void);
-OPAL_MODULE_DECLSPEC int pmix1_client_finalize(void);
-OPAL_MODULE_DECLSPEC int pmix1_initialized(void);
-OPAL_MODULE_DECLSPEC int pmix1_abort(int flag, const char *msg,
+OPAL_MODULE_DECLSPEC int pmix_ext_client_init(void);
+OPAL_MODULE_DECLSPEC int pmix_ext_client_finalize(void);
+OPAL_MODULE_DECLSPEC int pmix_ext_initialized(void);
+OPAL_MODULE_DECLSPEC int pmix_ext_abort(int flag, const char *msg,
                                      opal_list_t *procs);
-OPAL_MODULE_DECLSPEC int pmix1_commit(void);
-OPAL_MODULE_DECLSPEC int pmix1_fence(opal_list_t *procs, int collect_data);
-OPAL_MODULE_DECLSPEC int pmix1_fencenb(opal_list_t *procs, int collect_data,
+OPAL_MODULE_DECLSPEC int pmix_ext_commit(void);
+OPAL_MODULE_DECLSPEC int pmix_ext_fence(opal_list_t *procs, int collect_data);
+OPAL_MODULE_DECLSPEC int pmix_ext_fencenb(opal_list_t *procs, int collect_data,
                                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_put(opal_pmix_scope_t scope,
+OPAL_MODULE_DECLSPEC int pmix_ext_put(opal_pmix_scope_t scope,
                                      opal_value_t *val);
-OPAL_MODULE_DECLSPEC int pmix1_get(const opal_process_name_t *proc, const char *key,
+OPAL_MODULE_DECLSPEC int pmix_ext_get(const opal_process_name_t *proc, const char *key,
                                    opal_list_t *info, opal_value_t **val);
-OPAL_MODULE_DECLSPEC int pmix1_getnb(const opal_process_name_t *proc, const char *key,
+OPAL_MODULE_DECLSPEC int pmix_ext_getnb(const opal_process_name_t *proc, const char *key,
                                      opal_list_t *info,
                                      opal_pmix_value_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_publish(opal_list_t *info);
-OPAL_MODULE_DECLSPEC int pmix1_publishnb(opal_list_t *info,
+OPAL_MODULE_DECLSPEC int pmix_ext_publish(opal_list_t *info);
+OPAL_MODULE_DECLSPEC int pmix_ext_publishnb(opal_list_t *info,
                                          opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_lookup(opal_list_t *data, opal_list_t *info);
-OPAL_MODULE_DECLSPEC int pmix1_lookupnb(char **keys, opal_list_t *info,
+OPAL_MODULE_DECLSPEC int pmix_ext_lookup(opal_list_t *data, opal_list_t *info);
+OPAL_MODULE_DECLSPEC int pmix_ext_lookupnb(char **keys, opal_list_t *info,
                                         opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_unpublish(char **keys, opal_list_t *info);
-OPAL_MODULE_DECLSPEC int pmix1_unpublishnb(char **keys, opal_list_t *info,
+OPAL_MODULE_DECLSPEC int pmix_ext_unpublish(char **keys, opal_list_t *info);
+OPAL_MODULE_DECLSPEC int pmix_ext_unpublishnb(char **keys, opal_list_t *info,
                                            opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid);
-OPAL_MODULE_DECLSPEC int pmix1_spawnnb(opal_list_t *job_info, opal_list_t *apps,
+OPAL_MODULE_DECLSPEC int pmix_ext_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid);
+OPAL_MODULE_DECLSPEC int pmix_ext_spawnnb(opal_list_t *job_info, opal_list_t *apps,
                                        opal_pmix_spawn_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_connect(opal_list_t *procs);
-OPAL_MODULE_DECLSPEC int pmix1_connectnb(opal_list_t *procs,
+OPAL_MODULE_DECLSPEC int pmix_ext_connect(opal_list_t *procs);
+OPAL_MODULE_DECLSPEC int pmix_ext_connectnb(opal_list_t *procs,
                                          opal_pmix_op_cbfunc_t cbfunc,
                                          void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_disconnect(opal_list_t *procs);
-OPAL_MODULE_DECLSPEC int pmix1_disconnectnb(opal_list_t *procs,
+OPAL_MODULE_DECLSPEC int pmix_ext_disconnect(opal_list_t *procs);
+OPAL_MODULE_DECLSPEC int pmix_ext_disconnectnb(opal_list_t *procs,
                                             opal_pmix_op_cbfunc_t cbfunc,
                                             void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_resolve_peers(const char *nodename, opal_jobid_t jobid,
+OPAL_MODULE_DECLSPEC int pmix_ext_resolve_peers(const char *nodename, opal_jobid_t jobid,
                                              opal_list_t *procs);
-OPAL_MODULE_DECLSPEC int pmix1_resolve_nodes(opal_jobid_t jobid, char **nodelist);
+OPAL_MODULE_DECLSPEC int pmix_ext_resolve_nodes(opal_jobid_t jobid, char **nodelist);
 
 /****  COMMON FUNCTIONS  ****/
-OPAL_MODULE_DECLSPEC int pmix1_store_local(const opal_process_name_t *proc,
+OPAL_MODULE_DECLSPEC int pmix_ext_store_local(const opal_process_name_t *proc,
                                              opal_value_t *val);
 
 /****  SERVER SOUTHBOUND FUNCTIONS  ****/
-OPAL_MODULE_DECLSPEC int pmix1_server_init(opal_pmix_server_module_t *module,
+OPAL_MODULE_DECLSPEC int pmix_ext_server_init(opal_pmix_server_module_t *module,
                                            opal_list_t *info);
-OPAL_MODULE_DECLSPEC int pmix1_server_finalize(void);
-OPAL_MODULE_DECLSPEC int pmix1_server_gen_regex(const char *input, char **regex);
-OPAL_MODULE_DECLSPEC int pmix1_server_gen_ppn(const char *input, char **ppn);
-OPAL_MODULE_DECLSPEC int pmix1_server_register_nspace(opal_jobid_t jobid,
+OPAL_MODULE_DECLSPEC int pmix_ext_server_finalize(void);
+OPAL_MODULE_DECLSPEC int pmix_ext_server_gen_regex(const char *input, char **regex);
+OPAL_MODULE_DECLSPEC int pmix_ext_server_gen_ppn(const char *input, char **ppn);
+OPAL_MODULE_DECLSPEC int pmix_ext_server_register_nspace(opal_jobid_t jobid,
                                                       int nlocalprocs,
                                                       opal_list_t *info,
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
-OPAL_MODULE_DECLSPEC void pmix1_server_deregister_nspace(opal_jobid_t jobid);
-OPAL_MODULE_DECLSPEC int pmix1_server_register_client(const opal_process_name_t *proc,
+OPAL_MODULE_DECLSPEC void pmix_ext_server_deregister_nspace(opal_jobid_t jobid);
+OPAL_MODULE_DECLSPEC int pmix_ext_server_register_client(const opal_process_name_t *proc,
                                                       uid_t uid, gid_t gid,
                                                       void *server_object,
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
-OPAL_MODULE_DECLSPEC void pmix1_server_deregister_client(const opal_process_name_t *proc);
-OPAL_MODULE_DECLSPEC int pmix1_server_setup_fork(const opal_process_name_t *proc, char ***env);
-OPAL_MODULE_DECLSPEC int pmix1_server_dmodex(const opal_process_name_t *proc,
+OPAL_MODULE_DECLSPEC void pmix_ext_server_deregister_client(const opal_process_name_t *proc);
+OPAL_MODULE_DECLSPEC int pmix_ext_server_setup_fork(const opal_process_name_t *proc, char ***env);
+OPAL_MODULE_DECLSPEC int pmix_ext_server_dmodex(const opal_process_name_t *proc,
                                              opal_pmix_modex_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_server_notify_error(int status,
+OPAL_MODULE_DECLSPEC int pmix_ext_server_notify_error(int status,
                                                    opal_list_t *procs,
                                                    opal_list_t *error_procs,
                                                    opal_list_t *info,
@@ -161,11 +161,11 @@ OPAL_MODULE_DECLSPEC int pmix1_server_notify_error(int status,
 
 
 /****  COMPONENT UTILITY FUNCTIONS  ****/
-OPAL_MODULE_DECLSPEC pmix_status_t pmix1_convert_opalrc(int rc);
-OPAL_MODULE_DECLSPEC int pmix1_convert_rc(pmix_status_t rc);
-OPAL_MODULE_DECLSPEC void pmix1_value_load(pmix_value_t *v,
+OPAL_MODULE_DECLSPEC pmix_status_t pmix_ext_convert_opalrc(int rc);
+OPAL_MODULE_DECLSPEC int pmix_ext_convert_rc(pmix_status_t rc);
+OPAL_MODULE_DECLSPEC void pmix_ext_value_load(pmix_value_t *v,
                                            opal_value_t *kv);
-OPAL_MODULE_DECLSPEC int pmix1_value_unload(opal_value_t *kv,
+OPAL_MODULE_DECLSPEC int pmix_ext_value_unload(opal_value_t *kv,
                                             const pmix_value_t *v);
 
 END_C_DECLS
