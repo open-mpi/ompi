@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -52,7 +52,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
     /* If the ndims is zero then return the NULL datatype */
     if( ndims < 2 ) {
         if( 0 == ndims ) {
-            *newtype = &ompi_mpi_datatype_null.dt;
+            ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newtype);
             return MPI_SUCCESS;
         }
         ompi_datatype_create_contiguous( subsize_array[0], oldtype, &last_type );
