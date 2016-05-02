@@ -175,9 +175,11 @@ static void *intercept_mremap (void *start, size_t oldlen, size_t newlen, int fl
         opal_mem_hooks_release_hook (start, oldlen, true);
     }
 
+#if defined(MREMAP_FIXED)
     if (!(flags & MREMAP_FIXED)) {
         new_address = NULL;
     }
+#endif
 
     if (!original_mremap) {
         result = (void *)(intptr_t) memory_patcher_syscall (SYS_mremap, start, oldlen, newlen, flags, new_address);
