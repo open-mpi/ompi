@@ -127,7 +127,7 @@ OBJ_CLASS_INSTANCE(opal_output_stream_t, opal_object_t, construct, NULL);
 bool opal_output_init(void)
 {
     int i;
-    char hostname[32];
+    char hostname[OPAL_MAXHOSTNAMELEN];
     char *str;
 
     if (initialized) {
@@ -177,7 +177,6 @@ bool opal_output_init(void)
         verbose.lds_want_stderr = true;
     }
     gethostname(hostname, sizeof(hostname));
-    hostname[sizeof(hostname)-1] = '\0';
     asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
@@ -254,7 +253,7 @@ bool opal_output_switch(int output_id, bool enable)
 void opal_output_reopen_all(void)
 {
     char *str;
-    char hostname[32];
+    char hostname[OPAL_MAXHOSTNAMELEN];
 
     str = getenv("OPAL_OUTPUT_STDERR_FD");
     if (NULL != str) {

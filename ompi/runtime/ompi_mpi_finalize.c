@@ -120,7 +120,7 @@ int ompi_mpi_finalize(void)
         /* Note that if we're not initialized or already finalized, we
            cannot raise an MPI exception.  The best that we can do is
            write something to stderr. */
-        char hostname[MAXHOSTNAMELEN];
+        char hostname[OPAL_MAXHOSTNAMELEN];
         pid_t pid = getpid();
         gethostname(hostname, sizeof(hostname));
 

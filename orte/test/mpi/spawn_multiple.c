@@ -1,3 +1,5 @@
+#include "orte_config.h"
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -9,7 +11,7 @@ int main(int argc, char* argv[])
     int msg;
     MPI_Comm parent, child;
     int rank, size;
-    char hostname[512];
+    char hostname[OPAL_MAXHOSTNAMELEN];
     pid_t pid;
     int i;
     char *cmds[2];
@@ -48,7 +50,7 @@ int main(int argc, char* argv[])
     else {
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
-        gethostname(hostname, 512);
+        gethostname(hostname, sizeof(hostname));
         pid = getpid();
         printf("Hello from the child %d of %d on host %s pid %ld: argv[1] = %s\n", rank, size, hostname, (long)pid, argv[1]);
         MPI_Recv(&msg, 1, MPI_INT, 0, 1, parent, MPI_STATUS_IGNORE);

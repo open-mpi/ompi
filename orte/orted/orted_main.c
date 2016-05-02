@@ -230,7 +230,7 @@ int orte_daemon(int argc, char *argv[])
     char *rml_uri;
     int i;
     opal_buffer_t *buffer;
-    char hostname[100];
+    char hostname[OPAL_MAXHOSTNAMELEN];
 #if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var = NULL;
 #endif
@@ -297,7 +297,7 @@ int orte_daemon(int argc, char *argv[])
      * away just in case we have a problem along the way
      */
     if (orted_globals.debug) {
-        gethostname(hostname, 100);
+        gethostname(hostname, sizeof(hostname));
         fprintf(stderr, "Daemon was launched on %s - beginning to initialize\n", hostname);
     }
 
@@ -725,12 +725,12 @@ int orte_daemon(int argc, char *argv[])
         if (orte_retain_aliases) {
             char **aliases=NULL;
             uint8_t naliases, ni;
-            char hostname[ORTE_MAX_HOSTNAME_SIZE];
+            char hostname[OPAL_MAXHOSTNAMELEN];
 
             /* if we stripped the prefix or removed the fqdn,
              * include full hostname as an alias
              */
-            gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+            gethostname(hostname, sizeof(hostname));
             if (strlen(orte_process_info.nodename) < strlen(hostname)) {
                 opal_argv_append_nosize(&aliases, hostname);
             }

@@ -316,9 +316,9 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
                           pmix_op_cbfunc_t cbfunc, myxfer_t *x)
 {
     char *regex, *ppn;
-    char hostname[1024];
+    char hostname[PMIX_MAXHOSTNAMELEN];
 
-    gethostname(hostname, 1024);
+    gethostname(hostname, sizeof(hostname));
     x->ninfo = 6;
 
     PMIX_INFO_CREATE(x->info, x->ninfo);

@@ -42,7 +42,7 @@ static bool have_been_invoked = false;
 
 int oshmem_shmem_abort(int errcode)
 {
-    char *host, hostname[MAXHOSTNAMELEN];
+    char *host, hostname[OPAL_MAXHOSTNAMELEN];
     pid_t pid = 0;
 
     /* Protection for recursive invocation */

@@ -194,15 +194,14 @@ static int component_send(orte_rml_send_t *msg)
 static char* component_get_addr(void)
 {
     int len;
-    char hn[MAXHOSTNAMELEN], *cptr;
+    char hn[OPAL_MAXHOSTNAMELEN], *cptr;
 
     /*
      * TODO: for aries want to plug in GNI addr here instead to
      * eventually be able to support connect/accept using aprun.
      */
 
-    len = gethostname(hn, MAXHOSTNAMELEN - 1);
-    hn[len]='\0';
+    len = gethostname(hn, sizeof(hn));
 
     asprintf(&cptr, "gni://%s:%d", hn, getpid());
 
