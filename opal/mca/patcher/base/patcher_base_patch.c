@@ -157,8 +157,6 @@ int mca_patcher_base_patch_hook (mca_patcher_base_module_t *module, uintptr_t ho
     const unsigned int nop = 0x60000000;
     unsigned int *nop_addr;
 
-    fprintf (stderr, "Patching hook @ 0x%lx\n", hook_addr);
-
     hook_patch = OBJ_NEW(mca_patcher_base_patch_t);
     if (OPAL_UNLIKELY(NULL == hook_patch)) {
         return OPAL_ERR_OUT_OF_RESOURCE;
