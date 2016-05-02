@@ -450,22 +450,21 @@ MPI Functionality and Features
   deprecated_example.c:4: warning: 'MPI_Type_struct' is deprecated (declared at /opt/openmpi/include/mpi.h:1522)
   shell$
 
-- MPI_THREAD_MULTIPLE support is included, but is only lightly tested.
-  It likely does not work for thread-intensive applications.  Note
-  that *only* the MPI point-to-point communication functions for the
-  BTL's listed here are considered thread safe.  Other support
-  functions (e.g., MPI attributes) have not been certified as safe
-  when simultaneously used by multiple threads.
+- MPI_THREAD_MULTIPLE is supported.  Note that Open MPI must be
+  configured  with --enable-mpi-thread-multiple to get this
+  level of thread safety support.
+
+  The following BTLs support MPI_THREAD_MULTIPLE:
   - tcp
-  - sm
+  - openib
+  - vader (shared memory)
+  - ugni
   - self
 
-  Note that Open MPI's thread support is in a fairly early stage; the
-  above devices may *work*, but the latency is likely to be fairly
-  high.  Specifically, efforts so far have concentrated on
-  *correctness*, not *performance* (yet).
-
-  YMMV.
+  The following MTLs and PMLs support MPI_THREAD_MULTIPLE:
+  - MXM
+  - PSM/PSM2
+  - portals4
 
 - MPI_REAL16 and MPI_COMPLEX32 are only supported on platforms where a
   portable C datatype can be found that matches the Fortran type
