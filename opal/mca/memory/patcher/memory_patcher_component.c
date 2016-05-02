@@ -43,6 +43,10 @@
 #include <sys/time.h>
 #include <sys/syscall.h>
 
+#if defined(HAVE_LINUX_MMAN_H)
+#include <linux/mman.h>
+#endif
+
 #include "memory_patcher.h"
 #undef opal_memory_changed
 

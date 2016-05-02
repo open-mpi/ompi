@@ -84,6 +84,8 @@ AC_DEFUN([MCA_opal_memory_patcher_CONFIG],[
     AC_DEFINE_UNQUOTED([OPAL_MEMORY_PATCHER_HAVE___SYSCALL], [$memory_patcher_have___syscall],
                        [Whether the internal __syscall call exists])
 
+    AC_CHECK_HEADERS([linux/mman.h])
+
     [$1]
 
     OPAL_VAR_SCOPE_POP
