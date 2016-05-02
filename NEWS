@@ -214,6 +214,8 @@ Master (not on release branches yet)
 1.10.3 - DATE
 ------
 
+- Fix zero-length datatypes.  Thanks to Wei-keng Liao for reporting
+  the issue.
 - Minor manpage cleanups
 - Implement atomic support in OSHMEM/UCX
 - Fix support of MPI_COMBINER_RESIZED. Thanks to James Ramsey
