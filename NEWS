@@ -57,6 +57,8 @@ included in the vX.Y.Z section and be denoted as:
 1.10.3 - DATE
 ------
 
+- Fix zero-length datatypes.  Thanks to Wei-keng Liao for reporting
+  the issue.
 - Minor manpage cleanups
 - Implement atomic support in OSHMEM/UCX
 - Fix support of MPI_COMBINER_RESIZED. Thanks to James Ramsey
