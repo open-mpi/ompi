@@ -3,6 +3,8 @@ dnl
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2016      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -65,7 +67,7 @@ EOF
 	    echo "Build MPI Fortran bindings: no"
 	fi
 
-        if test x$opal_java_happy = xyes ; then
+        if test x$WANT_MPI_JAVA_SUPPORT = x1 ; then
             echo "Build MPI Java bindings (experimental): yes"
         else
             echo "MPI Build Java bindings (experimental): no"
