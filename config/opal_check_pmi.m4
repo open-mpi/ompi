@@ -14,7 +14,7 @@
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -259,13 +259,14 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            # out if the files aren't found, which is okay
            # as we are only executing here if the user
            # specified external pmix
-           OPAL_CHECK_WITHDIR([external-pmix], [$pmix_ext_install_dir/include], [pmix.h])
-           OPAL_CHECK_WITHDIR([external-libpmix], [$pmix_ext_install_dir/lib], [libpmix.*])
+           #OPAL_CHECK_WITHDIR([external-pmix], [$pmix_ext_install_dir/include], [pmix.h])
+           #OPAL_CHECK_WITHDIR([external-libpmix], [$pmix_ext_install_dir/lib], [libpmix.*])
+           OPAL_CHECK_PACKAGE([opal_pmix_ext], [pmix.h], [pmix], [PMIx_Init], [], [$pmix_ext_install_dir], [], [opal_external_pmix_happy=yes], [])
 
-           opal_pmix_ext_CPPFLAGS="-I$pmix_ext_install_dir -I$pmix_ext_install_dir/include -I$pmix_ext_install_dir/include/pmix -I$pmix_ext_install_dir/include/pmix/include"
-           opal_pmix_ext_LDFLAGS="-L$pmix_ext_install_dir/lib"
-           opal_pmix_ext_LIBS="-lpmix"
-           opal_external_pmix_happy="yes"
+           #opal_pmix_ext_CPPFLAGS="-I$pmix_ext_install_dir -I$pmix_ext_install_dir/include -I$pmix_ext_install_dir/include/pmix -I$pmix_ext_install_dir/include/pmix/include"
+           #opal_pmix_ext_LDFLAGS="-L$pmix_ext_install_dir/lib"
+           #opal_pmix_ext_LIBS="-lpmix"
+           #opal_external_pmix_happy="yes"
           ])
     AC_SUBST(opal_pmix_ext_CPPFLAGS)
     AC_SUBST(opal_pmix_ext_LDFLAGS)
