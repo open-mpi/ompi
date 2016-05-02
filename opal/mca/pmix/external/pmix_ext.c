@@ -38,7 +38,7 @@
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/pmix_types.h"
 
-#include "pmix_common.h"
+#include <pmix/pmix_common.h>
 
 /****    C.O.M.M.O.N   I.N.T.E.R.F.A.C.E.S     ****/
 
