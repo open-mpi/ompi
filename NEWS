@@ -91,7 +91,8 @@ Master (not on release branches yet)
   Version 1.1.2 of PMIx is included internally in this release.
 - Add support for PLFS file systems in Open MPI I/O.
 - Add support for UCX transport.
-- Improved support for MPI_THREAD_MULTIPLE.
+- Improved support for MPI_THREAD_MULTIPLE (when configured with
+  --enable-mpi-thread-multiple).
 - Simplify build process for Cray XC systems.  Add support for
   using native SLURM.
 - Updated internal/embedded copies of third-part software:
