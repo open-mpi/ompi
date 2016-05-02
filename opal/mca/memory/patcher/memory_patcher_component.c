@@ -43,6 +43,10 @@
 #include <sys/time.h>
 #include <sys/syscall.h>
 
+#if defined(HAVE_LINUX_MMAN_H)
+#include <linux/mman.h>
+#endif
+
 #include "memory_patcher.h"
 #undef opal_memory_changed
 
@@ -162,11 +166,20 @@ static int intercept_munmap(void *start, size_t length)
 
 #if defined (SYS_mremap)
 
+#if defined(__linux__)
 /* on linux this function has an optional extra argument but ... can not be used here because it
  * causes issues when intercepting a 4-argument mremap call */
 static void *(*original_mremap) (void *, size_t, size_t, int, void *);
+#else
+/* mremap has a different signature on BSD systems */
+static void *(*original_mremap) (void *, size_t, void *, size_t, int);
+#endif
 
+#if defined(__linux__)
 static void *intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, void *new_address)
+#else
+static void *intercept_mremap (void *start, size_t oldlen, void *new_address, size_t newlen, int flags)
+#endif
 {
     OPAL_PATCHER_BEGIN;
     void *result = MAP_FAILED;
@@ -175,15 +188,25 @@ static void *intercept_mremap (void *start, size_t oldlen, size_t newlen, int fl
         opal_mem_hooks_release_hook (start, oldlen, true);
     }
 
+#if defined(MREMAP_FIXED)
     if (!(flags & MREMAP_FIXED)) {
         new_address = NULL;
     }
+#endif
 
+#if defined(__linux__)
     if (!original_mremap) {
         result = (void *)(intptr_t) memory_patcher_syscall (SYS_mremap, start, oldlen, newlen, flags, new_address);
     } else {
         result = original_mremap (start, oldlen, newlen, flags, new_address);
     }
+#else
+    if (!original_mremap) {
+        result = (void *)(intptr_t) memory_patcher_syscall (SYS_mremap, start, oldlen, new_address, newlen, flags);
+    } else {
+        result = original_mremap (start, oldlen, new_address, newlen, flags);
+    }
+#endif
 
     OPAL_PATCHER_END;
     return result;
