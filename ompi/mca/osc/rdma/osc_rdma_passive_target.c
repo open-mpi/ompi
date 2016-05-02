@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -197,6 +197,8 @@ int ompi_osc_rdma_lock_atomic (int lock_type, int target, int assert, ompi_win_t
         return OMPI_ERR_RMA_SYNC;
     }
 
+    /* clear the global sync object (in case MPI_Win_fence was called) */
+    module->all_sync.type = OMPI_OSC_RDMA_SYNC_TYPE_NONE;
 
     /* create lock item */
     lock = ompi_osc_rdma_sync_allocate (module);
