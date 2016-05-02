@@ -75,20 +75,33 @@ static int PatchLoadImm (uintptr_t addr, unsigned int reg, size_t value)
 
 #endif
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
-
-static void flush_and_invalidate_cache (unsigned long  a)
+static void flush_and_invalidate_cache (unsigned long a)
 {
-#if defined(__i386__)
-    /* does not work with AMD processors */
+#if OPAL_ASSEMBLY_ARCH == OPAL_IA32
+    static int have_clflush = -1;
+
+    if (OPAL_UNLIKELY(-1 == have_clflush)) {
+        int32_t cpuid1, cpuid2;
+        const int32_t level = 1;
+
+        __asm__ volatile ("cpuid" :
+                          "=a" (cpuid1), "=d" (cpuid2) :
+                          "a" (level) :
+                          "ecx", "ebx");
+        /* clflush is in edx bit 19 */
+        have_clflush = !!(cpuid2 & (1 << 19));
+    }
+
+    if (have_clflush) {
+        /* does not work with AMD processors */
+        __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
+    }
+#elif OPAL_ASSEMBLY_ARCH == OPAL_AMD64
     __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
-#elif defined(__x86_64__)
-    __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
-#elif defined(__ia64__)
+#elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
     __asm__ volatile ("fc %0;; sync.i;; srlz.i;;" : : "r"(a) : "memory");
 #endif
 }
-#endif
 
 // modify protection of memory range
 static void ModifyMemoryProtection (uintptr_t addr, size_t length, int prot)
@@ -117,11 +130,9 @@ static inline void apply_patch (unsigned char *patch_data, uintptr_t address, si
 {
     ModifyMemoryProtection (address, data_size, PROT_EXEC|PROT_READ|PROT_WRITE);
     memcpy ((void *) address, patch_data, data_size);
-#if defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
     for (size_t i = 0 ; i < data_size ; i += 16) {
         flush_and_invalidate_cache (address + i);
     }
-#endif
 
     ModifyMemoryProtection (address, data_size, PROT_EXEC|PROT_READ);
 }
