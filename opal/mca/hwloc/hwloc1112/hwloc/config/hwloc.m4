@@ -714,7 +714,10 @@ EOF])
     # Linux libudev support
     if test "x$enable_libudev" != xno; then
       AC_CHECK_HEADERS([libudev.h], [
-	AC_CHECK_LIB([udev], [udev_device_new_from_subsystem_sysname], [HWLOC_LIBS="$HWLOC_LIBS -ludev"])
+	AC_CHECK_LIB([udev], [udev_device_new_from_subsystem_sysname], [
+	  HWLOC_LIBS="$HWLOC_LIBS -ludev"
+	  AC_DEFINE([HWLOC_HAVE_LIBUDEV], [1], [Define to 1 if you have libudev.])
+	])
       ])
     fi
 

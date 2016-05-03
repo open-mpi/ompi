@@ -27,7 +27,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_LIBUDEV_H
+#ifdef HWLOC_HAVE_LIBUDEV
 #include <libudev.h>
 #endif
 #include <sys/types.h>
@@ -46,7 +46,7 @@ struct hwloc_linux_backend_data_s {
   char *root_path; /* NULL if unused */
   int root_fd; /* The file descriptor for the file system root, used when browsing, e.g., Linux' sysfs and procfs. */
   int is_real_fsroot; /* Boolean saying whether root_fd points to the real filesystem root of the system */
-#ifdef HAVE_LIBUDEV_H
+#ifdef HWLOC_HAVE_LIBUDEV
   struct udev *udev; /* Global udev context */
 #endif
   char *dumped_hwdata_dirname;
@@ -4596,7 +4596,7 @@ hwloc_linux_block_class_fillinfos(struct hwloc_backend *backend,
     *tmp = '\0';
   hwloc_obj_add_info(obj, "LinuxDeviceID", line);
 
-#ifdef HAVE_LIBUDEV_H
+#ifdef HWLOC_HAVE_LIBUDEV
   if (data->udev) {
     struct udev_device *dev;
     const char *prop;
@@ -5106,7 +5106,7 @@ hwloc_linux_backend_disable(struct hwloc_backend *backend)
     free(data->root_path);
   close(data->root_fd);
 #endif
-#ifdef HAVE_LIBUDEV_H
+#ifdef HWLOC_HAVE_LIBUDEV
   if (data->udev)
     udev_unref(data->udev);
 #endif
@@ -5177,7 +5177,7 @@ hwloc_linux_component_instantiate(struct hwloc_disc_component *component,
 #endif
   data->root_fd = root;
 
-#ifdef HAVE_LIBUDEV_H
+#ifdef HWLOC_HAVE_LIBUDEV
   data->udev = NULL;
   if (data->is_real_fsroot) {
     data->udev = udev_new();
