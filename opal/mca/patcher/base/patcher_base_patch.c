@@ -81,13 +81,17 @@ static void flush_and_invalidate_cache (unsigned long a)
     static int have_clflush = -1;
 
     if (OPAL_UNLIKELY(-1 == have_clflush)) {
-        int32_t cpuid1, cpuid2;
+        int32_t cpuid1, cpuid2, tmp;
         const int32_t level = 1;
 
-        __asm__ volatile ("cpuid" :
-                          "=a" (cpuid1), "=d" (cpuid2) :
+        /* cpuid clobbers ebx but it must be restored for -fPIC so save
+         * then restore ebx */
+        __asm__ volatile ("xchgl %%ebx, %2\n"
+                          "cpuid\n"
+                          "xchgl %%ebx, %2\n":
+                          "=a" (cpuid1), "=d" (cpuid2), "=r" (tmp) :
                           "a" (level) :
-                          "ecx", "ebx");
+                          "ecx");
         /* clflush is in edx bit 19 */
         have_clflush = !!(cpuid2 & (1 << 19));
     }
