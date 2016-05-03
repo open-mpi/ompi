@@ -17,6 +17,12 @@ bug fixes (and other actions) for each version of hwloc since version
 in v0.9.1).
 
 
+Version 1.11.4
+--------------
+* Fix Linux build with -m32 with respect to libudev.
+  Thanks to Paul Hargrove for reporting the issue.
+
+
 Version 1.11.3
 --------------
 * Fix /proc/mounts parsing on Linux by using mntent.h.
