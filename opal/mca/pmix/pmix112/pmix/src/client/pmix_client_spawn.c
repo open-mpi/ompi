@@ -5,6 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,13 +56,13 @@
 
 static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata);
-static void spawn_cbfunc(int status, char nspace[], void *cbdata);
+static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata);
 
-int PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
+pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
                const pmix_app_t apps[], size_t napps,
                char nspace[])
 {
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,

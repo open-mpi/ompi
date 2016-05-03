@@ -7,6 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1590,7 +1591,7 @@ pmix_status_t PMIx_generate_ppn(const char *input, char **regexp)
  ****    IMMEDIATELY. THUS ANYTHING THAT ACCESSES A GLOBAL ENTITY        ****
  ****    MUST BE PUSHED INTO AN EVENT FOR PROTECTION                     ****/
 
-static void op_cbfunc(int status, void *cbdata)
+static void op_cbfunc(pmix_status_t status, void *cbdata)
 {
     pmix_server_caddy_t *cd = (pmix_server_caddy_t*)cbdata;
     pmix_buffer_t *reply;

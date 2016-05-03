@@ -62,7 +62,7 @@ static pmix_kval_t* lookup_keyval(pmix_list_t *data,
 static pmix_proc_data_t* lookup_proc(pmix_hash_table_t *jtable,
                                      uint64_t id, bool create);
 
-int pmix_hash_store(pmix_hash_table_t *table,
+pmix_status_t pmix_hash_store(pmix_hash_table_t *table,
                     int rank, pmix_kval_t *kin)
 {
     pmix_proc_data_t *proc_data;
@@ -147,7 +147,7 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, int rank,
     return PMIX_SUCCESS;
 }
 
-int pmix_hash_remove_data(pmix_hash_table_t *table,
+pmix_status_t pmix_hash_remove_data(pmix_hash_table_t *table,
                           int rank, const char *key)
 {
     pmix_proc_data_t *proc_data;
