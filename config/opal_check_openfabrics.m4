@@ -412,6 +412,8 @@ AC_DEFUN([OPAL_CHECK_EXP_VERBS],[
     AC_DEFINE_UNQUOTED([HAVE_EXP_VERBS], [$have_struct_ibv_exp_send_wr], [Experimental verbs])
     AC_CHECK_DECLS([IBV_EXP_ATOMIC_HCA_REPLY_BE, IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY, ibv_exp_create_qp, ibv_exp_query_device, IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG],
                    [], [], [#include <infiniband/verbs_exp.h>])
+    AC_CHECK_MEMBERS([struct ibv_exp_device_attr.ext_atom, struct ibv_exp_device_attr.ext_atomic_cap], [], [],
+                     [[#include <infiniband/verbs_exp.h>]])
     AS_IF([test '$have_struct_ibv_exp_send_wr' = 1], [$1], [$2])
     OPAL_VAR_SCOPE_POP
 ])dnl
