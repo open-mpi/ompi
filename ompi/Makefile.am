@@ -87,6 +87,7 @@ SUBDIRS = \
         mpi/cxx \
         $(OMPI_MPIEXT_MPIFH_DIRS) \
         mpi/fortran/mpif-h \
+        $(OMPI_MPIEXT_USEMPI_DIR) \
         $(OMPI_FORTRAN_USEMPI_DIR) \
         $(OMPI_MPIEXT_USEMPIF08_DIRS) \
         $(OMPI_FORTRAN_USEMPIF08_DIR) \

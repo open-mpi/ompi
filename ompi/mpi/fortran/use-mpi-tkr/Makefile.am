@@ -92,7 +92,6 @@ endif
 # platforms).
 libmpi_usempi_la_LIBADD = \
         $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
-        $(OMPI_MPIEXT_USEMPI_LIBS) \
         $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 # Set the library version
 libmpi_usempi_la_LDFLAGS = \
