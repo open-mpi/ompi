@@ -1350,7 +1350,7 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
     init_attr.comp_mask = IBV_EXP_QP_INIT_ATTR_PD;
     init_attr.pd = m->btl->device->ib_pd;
 
-#if HAVE_DECL_IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG
+#if defined(HAVE_DECL_IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG) && HAVE_DECL_IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG
     init_attr.comp_mask |= IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG;
     init_attr.max_atomic_arg = sizeof (int64_t);
 #endif
