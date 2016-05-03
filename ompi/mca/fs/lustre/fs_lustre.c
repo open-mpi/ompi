@@ -78,9 +78,6 @@ int mca_fs_lustre_component_init_query(bool enable_progress_threads,
 struct mca_fs_base_module_1_0_0_t *
 mca_fs_lustre_component_file_query (mca_io_ompio_file_t *fh, int *priority)
 {
-    int err;
-    char *dir;
-    struct statfs fsbuf;
     char *tmp;
 
     /* The code in this function is based on the ADIO FS selection in ROMIO
