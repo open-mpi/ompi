@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -86,7 +86,7 @@ AC_DEFUN([OPAL_MCA],[
     if test "$enable_mca_no_build" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-mca-no-build flag requires an explicit list
-*** of type-component pairs.  For example, --enable-mca-direct=pml-ob1])
+*** of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
     else
         ifs_save="$IFS"
         IFS="${IFS}$PATH_SEPARATOR,"
