@@ -463,7 +463,6 @@ MPI Functionality and Features
 
   The following MTLs and PMLs support MPI_THREAD_MULTIPLE:
   - MXM
-  - PSM/PSM2
   - portals4
 
 - MPI_REAL16 and MPI_COMPLEX32 are only supported on platforms where a
