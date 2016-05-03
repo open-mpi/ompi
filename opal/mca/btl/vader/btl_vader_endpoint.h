@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -63,7 +63,7 @@ typedef struct mca_btl_base_endpoint_t {
 
     int32_t peer_smp_rank;  /**< my peer's SMP process rank.  Used for accessing
                              *   SMP specfic data structures. */
-    volatile uint64_t send_count;    /**< number of fragments sent to this peer */
+    volatile size_t send_count;    /**< number of fragments sent to this peer */
     char *segment_base;     /**< start of the peer's segment (in the address space
                              *   of this process) */
 
