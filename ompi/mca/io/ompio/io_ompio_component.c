@@ -270,9 +270,6 @@ file_query(struct ompi_file_t *file,
            int *priority)
 {
     mca_io_ompio_data_t *data;
-    int err;
-    char *dir;
-    struct statfs fsbuf;
     char *tmp;
     int rank;
     int is_lustre=0; //false
