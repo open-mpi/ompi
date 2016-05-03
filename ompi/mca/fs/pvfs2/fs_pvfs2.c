@@ -81,9 +81,6 @@ mca_fs_pvfs2_component_file_query (mca_io_ompio_file_t *fh, int *priority)
      *   See COPYRIGHT notice in top-level directory.
      */
 
-    int err;
-    char *dir;
-    struct statfs fsbuf;
     char *tmp;
 
     /* The code in this function is based on the ADIO FS selection in ROMIO
