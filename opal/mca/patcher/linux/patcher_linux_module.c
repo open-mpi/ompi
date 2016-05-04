@@ -39,21 +39,6 @@
 
 static void *mca_patcher_linux_dlopen(const char *filename, int flag);
 
-typedef struct mca_patcher_linux_elf_strtab {
-    char               *tab;
-    ElfW(Xword)        size;
-} mca_patcher_linux_elf_strtab_t;
-
-typedef struct mca_patcher_linux_elf_jmpreltab {
-    ElfW(Rela)         *tab;
-    ElfW(Xword)        size;
-} mca_patcher_linux_elf_jmprel_t;
-
-typedef struct mca_patcher_linux_elf_symtab {
-    ElfW(Sym)          *tab;
-    ElfW(Xword)        entsz;
-} mca_patcher_linux_elf_symtab_t;
-
 typedef struct mca_patcher_linux_dl_iter_context {
     mca_patcher_linux_patch_t *patch;
     bool remove;
@@ -81,93 +66,54 @@ static void *(*orig_dlopen) (const char *, int);
 static const ElfW(Phdr) *
 mca_patcher_linux_get_phdr_dynamic(const ElfW(Phdr) *phdr, uint16_t phnum, int phent)
 {
-    for (uint16_t i = 0; i < phnum; ++i) {
+    for (uint16_t i = 0 ; i < phnum ; ++i, phdr = (ElfW(Phdr)*)((intptr_t) phdr + phent)) {
         if (phdr->p_type == PT_DYNAMIC) {
             return phdr;
         }
-        phdr = (ElfW(Phdr)*)((char*)phdr + phent);
     }
+
     return NULL;
 }
 
-#if SIZEOF_VOID_P == 8
-static const ElfW(Dyn)*
-mca_patcher_linux_get_dynentry(ElfW(Addr) base, const ElfW(Phdr) *pdyn, int64_t type)
-#else
-static const ElfW(Dyn)*
-mca_patcher_linux_get_dynentry(ElfW(Addr) base, const ElfW(Phdr) *pdyn, int32_t type)
-#endif
+static void *mca_patcher_linux_get_dynentry(ElfW(Addr) base, const ElfW(Phdr) *pdyn, ElfW(Sxword) type)
 {
     for (ElfW(Dyn) *dyn = (ElfW(Dyn)*)(base + pdyn->p_vaddr); dyn->d_tag; ++dyn) {
         if (dyn->d_tag == type) {
-            return dyn;
+            return (void *) (uintptr_t) dyn->d_un.d_val;
         }
     }
+
     return NULL;
-}
-
-static void mca_patcher_linux_get_jmprel(ElfW(Addr) base, const ElfW(Phdr) *pdyn,
-                                  mca_patcher_linux_elf_jmprel_t *table)
-{
-    const ElfW(Dyn) *dyn;
-
-    dyn = mca_patcher_linux_get_dynentry(base, pdyn, DT_JMPREL);
-    table->tab = (dyn == NULL) ? NULL : (ElfW(Rela)*)dyn->d_un.d_ptr;
-    dyn = mca_patcher_linux_get_dynentry(base, pdyn, DT_PLTRELSZ);
-    table->size = (dyn == NULL) ? 0 : dyn->d_un.d_val;
-}
-
-static void mca_patcher_linux_get_symtab(ElfW(Addr) base, const ElfW(Phdr) *pdyn,
-                                  mca_patcher_linux_elf_symtab_t *table)
-{
-    const ElfW(Dyn) *dyn;
-
-    dyn = mca_patcher_linux_get_dynentry(base, pdyn, DT_SYMTAB);
-    table->tab = (dyn == NULL) ? NULL : (ElfW(Sym)*)dyn->d_un.d_ptr;
-    dyn = mca_patcher_linux_get_dynentry(base, pdyn, DT_SYMENT);
-    table->entsz = (dyn == NULL) ? 0 : dyn->d_un.d_val;
-}
-
-static void mca_patcher_linux_get_strtab(ElfW(Addr) base, const ElfW(Phdr) *pdyn,
-                                  mca_patcher_linux_elf_strtab_t *table)
-{
-    const ElfW(Dyn) *dyn;
-
-    dyn = mca_patcher_linux_get_dynentry(base, pdyn, DT_STRTAB);
-    table->tab = (dyn == NULL) ? NULL : (char *)dyn->d_un.d_ptr;
-    dyn = mca_patcher_linux_get_dynentry(base, pdyn, DT_STRSZ);
-    table->size = (dyn == NULL) ? 0 : dyn->d_un.d_val;
 }
 
 static void * mca_patcher_linux_get_got_entry (ElfW(Addr) base, const ElfW(Phdr) *phdr, int16_t phnum,
                                                int phent, const char *symbol)
 {
-    mca_patcher_linux_elf_jmprel_t jmprel;
-    mca_patcher_linux_elf_symtab_t symtab;
-    mca_patcher_linux_elf_strtab_t strtab;
-    ElfW(Rela) *rela, *relaend;
     const ElfW(Phdr) *dphdr;
-    const char *relsymname;
-    uint32_t relsymidx;
+    void *jmprel, *strtab;
+    ElfW(Sym)  *symtab;
+    size_t pltrelsz;
 
     dphdr = mca_patcher_linux_get_phdr_dynamic (phdr, phnum, phent);
 
-    mca_patcher_linux_get_jmprel (base, dphdr, &jmprel);
-    mca_patcher_linux_get_symtab (base, dphdr, &symtab);
-    mca_patcher_linux_get_strtab (base, dphdr, &strtab);
+    jmprel = mca_patcher_linux_get_dynentry (base, dphdr, DT_JMPREL);
+    symtab = (ElfW(Sym) *) mca_patcher_linux_get_dynentry (base, dphdr, DT_SYMTAB);
+    strtab = mca_patcher_linux_get_dynentry (base, dphdr, DT_STRTAB);
+    pltrelsz = (size_t) (uintptr_t) mca_patcher_linux_get_dynentry (base, dphdr, DT_PLTRELSZ);
 
-    relaend = (ElfW(Rela) *)((char *)jmprel.tab + jmprel.size);
-    for (rela = jmprel.tab; rela < relaend; ++rela) {
+    for (ElfW(Rela) *reloc = jmprel; (intptr_t) reloc < (intptr_t) jmprel + pltrelsz; ++reloc) {
 #if SIZEOF_VOID_P == 8
-        relsymidx  = ELF64_R_SYM(rela->r_info);
+        uint32_t relsymidx = ELF64_R_SYM(reloc->r_info);
 #else
-        relsymidx  = ELF32_R_SYM(rela->r_info);
+        uint32_t relsymidx = ELF32_R_SYM(reloc->r_info);
 #endif
-        relsymname = strtab.tab + symtab.tab[relsymidx].st_name;
-        if (!strcmp(symbol, relsymname)) {
-            return (void *)(base + rela->r_offset);
+        char *elf_sym = (char *) strtab + symtab[relsymidx].st_name;
+
+        if (0 == strcmp (symbol, elf_sym)) {
+            return (void *)(base + reloc->r_offset);
         }
     }
+
     return NULL;
 }
 
@@ -177,11 +123,7 @@ static int mca_patcher_linux_get_aux_phent (void)
 #define MCA_PATCHER_LINUX_AUXV_BUF_LEN 16
     static const char *proc_auxv_filename = "/proc/self/auxv";
     static int phent = 0;
-#if SIZEOF_VOID_P == 8
-    Elf64_auxv_t buffer[MCA_PATCHER_LINUX_AUXV_BUF_LEN];
-#else
-    Elf32_auxv_t buffer[MCA_PATCHER_LINUX_AUXV_BUF_LEN];
-#endif
+    ElfW(auxv_t) buffer[MCA_PATCHER_LINUX_AUXV_BUF_LEN];
     unsigned count;
     ssize_t nread;
     int fd;
@@ -231,8 +173,7 @@ mca_patcher_linux_modify_got (ElfW(Addr) base, const ElfW(Phdr) *phdr, const cha
                               int16_t phnum, int phent, mca_patcher_linux_dl_iter_context_t *ctx)
 {
     long page_size = opal_getpagesize ();
-    void **entry;
-    void *page;
+    void **entry, *page;
     int ret;
 
     entry = mca_patcher_linux_get_got_entry (base, phdr, phnum, phent, ctx->patch->super.patch_symbol);
@@ -267,18 +208,18 @@ mca_patcher_linux_modify_got (ElfW(Addr) base, const ElfW(Phdr) *phdr, const cha
             *entry = (void *) ctx->patch->super.patch_value;
         }
     } else {
-        if (*entry == (void *) ctx->patch->super.patch_value) {
-            /* find the appropriate entry and restore the original value */
-            mca_patcher_linux_patch_got_t *patch_got;
-            OPAL_LIST_FOREACH_REV(patch_got, &ctx->patch->patch_got_list, mca_patcher_linux_patch_got_t) {
-                if (patch_got->got_entry == entry) {
-                    opal_output_verbose (MCA_BASE_VERBOSE_TRACE, opal_patcher_base_framework.framework_output,
-                                         "restoring got entry %p with original value %p\n", (void *) entry, patch_got->got_orig);
+        /* find the appropriate entry and restore the original value */
+        mca_patcher_linux_patch_got_t *patch_got;
+        OPAL_LIST_FOREACH_REV(patch_got, &ctx->patch->patch_got_list, mca_patcher_linux_patch_got_t) {
+            if (patch_got->got_entry == entry) {
+                opal_output_verbose (MCA_BASE_VERBOSE_TRACE, opal_patcher_base_framework.framework_output,
+                                     "restoring got entry %p with original value %p\n", (void *) entry, patch_got->got_orig);
+                if (*entry == (void *) ctx->patch->super.patch_value) {
                     *entry = patch_got->got_orig;
-                    opal_list_remove_item (&ctx->patch->patch_got_list, &patch_got->super);
-                    OBJ_RELEASE(patch_got);
-                    break;
                 }
+                opal_list_remove_item (&ctx->patch->patch_got_list, &patch_got->super);
+                OBJ_RELEASE(patch_got);
+                break;
             }
         }
     }
@@ -321,12 +262,7 @@ static int mca_patcher_linux_apply_patch (mca_patcher_linux_patch_t *patch)
     /* Avoid locks here because we don't modify ELF data structures.
      * Worst case the same symbol will be written more than once.
      */
-    (void)dl_iterate_phdr(mca_patcher_linux_phdr_iterator, &ctx);
-    if (ctx.status == OPAL_SUCCESS) {
-        opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_patcher_base_framework.framework_output,
-                             "modified '%s' to %" PRIxPTR , ctx.patch->super.patch_symbol,
-                             ctx.patch->super.patch_value);
-    }
+    (void) dl_iterate_phdr(mca_patcher_linux_phdr_iterator, &ctx);
 
     return ctx.status;
 }
@@ -342,11 +278,7 @@ static int mca_patcher_linux_remove_patch (mca_patcher_linux_patch_t *patch)
     /* Avoid locks here because we don't modify ELF data structures.
      * Worst case the same symbol will be written more than once.
      */
-    (void)dl_iterate_phdr(mca_patcher_linux_phdr_iterator, &ctx);
-    if (ctx.status == OPAL_SUCCESS) {
-        opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_patcher_base_framework.framework_output,
-            "modified '%s' to 0x%lx", ctx.patch->super.patch_symbol, ctx.patch->super.patch_value);
-    }
+    (void) dl_iterate_phdr(mca_patcher_linux_phdr_iterator, &ctx);
 
     return ctx.status;
 }
@@ -357,7 +289,6 @@ static void *mca_patcher_linux_dlopen(const char *filename, int flag)
     mca_patcher_linux_patch_t *patch;
     void *handle;
 
-    assert (orig_dlopen);
     handle = orig_dlopen (filename, flag);
     if (handle != NULL) {
         /*
@@ -368,10 +299,10 @@ static void *mca_patcher_linux_dlopen(const char *filename, int flag)
          */
         opal_mutex_lock (&mca_patcher_linux_module.patch_list_mutex);
         OPAL_LIST_FOREACH(patch, &mca_patcher_linux_module.patch_list, mca_patcher_linux_patch_t) {
-            opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_patcher_base_framework.framework_output,
-                                 "in dlopen(), re-applying '%s' to %p", patch->super.patch_symbol, (void *) patch->super.patch_value);
-            /* ignore hook binary patches */
             if (!patch->super.patch_data_size) {
+                opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_patcher_base_framework.framework_output,
+                                     "in dlopen(), re-applying '%s' to %p", patch->super.patch_symbol, (void *) patch->super.patch_value);
+                /* ignore hook binary patches */
                 mca_patcher_linux_apply_patch (patch);
             }
         }
