@@ -154,7 +154,7 @@ static inline int32_t opal_atomic_ll_32 (volatile int32_t *addr)
    __asm__ __volatile__ ("lwarx   %0, 0, %1  \n\t"
                          : "=&r" (ret)
                          : "r" (addr)
-                         :);
+                         );
    return ret;
 }
 
