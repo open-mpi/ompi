@@ -68,7 +68,7 @@ OPAL_DECLSPEC int mca_patcher_base_patch_hook (mca_patcher_base_module_t *module
 OPAL_DECLSPEC void mca_base_patcher_patch_apply_binary (mca_patcher_base_patch_t *patch);
 
 static inline uintptr_t mca_patcher_base_addr_text (uintptr_t addr) {
-#if (defined(__PPC64__) || defined(__powerpc64__) || defined(__PPC__)) && _CALL_ELF != 2
+#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64) && (!defined (_CALL_ELF) || (_CALL_ELF != 2))
     struct odp_t {
         uintptr_t text;
         uintptr_t toc;

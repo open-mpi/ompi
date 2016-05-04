@@ -214,7 +214,7 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
         return rc;
     }
 
-#if _CALL_ELF == 2
+#if defined(_CALL_ELF) && (_CALL_ELF == 2)
     sys_addr += 8;
     hook_addr += 8;
 #endif /* _CALL_ELF == 2*/
