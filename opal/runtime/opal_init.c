@@ -431,14 +431,6 @@ opal_init(int* pargc, char*** pargv)
         goto return_error;
     }
 
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_patcher_base_framework, 0))) {
-        error = "opal_patcher_base_open";
-        goto return_error;
-    }
-
-    /* select a patcher module. if a patcher module can not be found it is not an error. */
-    (void) opal_patcher_base_select ();
-
     /* initialize the memory manager / tracker */
     if (OPAL_SUCCESS != (ret = opal_mem_hooks_init())) {
         error = "opal_mem_hooks_init";
