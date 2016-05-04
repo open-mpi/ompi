@@ -122,7 +122,7 @@ static void ModifyMemoryProtection (uintptr_t addr, size_t length, int prot)
         if (mprotect((void *)base, page_size, prot))
             perror("MemHook: mprotect failed");
         base += page_size;
-    } while (base < addr + length);
+    } while (base < bound);
 #else
     if (mprotect((void *) base, length, prot)) {
             perror("MemHook: mprotect failed");
@@ -156,10 +156,9 @@ void mca_base_patcher_patch_apply_binary (mca_patcher_base_patch_t *patch)
 
 int mca_patcher_base_patch_hook (mca_patcher_base_module_t *module, uintptr_t hook_addr)
 {
-#if defined(__PPC64__) || defined(__powerpc64__) || defined(__PPC__)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
     mca_patcher_base_patch_t *hook_patch;
     const unsigned int nop = 0x60000000;
-    unsigned int *nop_addr;
 
     hook_patch = OBJ_NEW(mca_patcher_base_patch_t);
     if (OPAL_UNLIKELY(NULL == hook_patch)) {
@@ -167,15 +166,16 @@ int mca_patcher_base_patch_hook (mca_patcher_base_module_t *module, uintptr_t ho
     }
 
     // locate reserved code space in hook function
-    for (nop_addr = (unsigned int *)hook_addr ; ; nop_addr++) {
+    for (unsigned int *nop_addr = (unsigned int *)hook_addr ; ; nop_addr++) {
         if (nop_addr[0] == nop && nop_addr[1] == nop && nop_addr[2] == nop
                 && nop_addr[3] == nop && nop_addr[4] == nop) {
+            hook_patch->patch_orig = (uintptr_t) nop_addr;
             break;
         }
     }
+
     // generate code to restore TOC
     register unsigned long toc asm("r2");
-    hook_patch->patch_orig = (uintptr_t) nop_addr;
     hook_patch->patch_data_size = PatchLoadImm((uintptr_t)hook_patch->patch_data, 2, toc);
 
     /* put the hook patch on the patch list so it will be undone on finalize */

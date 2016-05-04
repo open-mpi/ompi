@@ -21,7 +21,7 @@
 /* Any function being patched in as a hook must use SYMBOLPATCH_BEGIN at the top,
  * and SYMBOLPATCH_END before it returns (this is just for PPC). */
 
-#if (defined(__PPC64__) || defined(__powerpc64__) || defined(__PPC__)) && defined(OPAL_GCC_INLINE_ASSEMBLY)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
 
 /* special processing for ppc64 to save and restore TOC (r2)
  * Reference: "64-bit PowerPC ELF Application Binary Interface Supplement 1.9" */
