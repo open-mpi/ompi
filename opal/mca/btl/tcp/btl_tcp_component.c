@@ -85,6 +85,9 @@
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
+#define MCA_BTL_TCP_BTL_BANDWIDTH 100
+#define MCA_BTL_TCP_BTL_LATENCY 100
+
 /*
  * Local functions
  */
@@ -320,8 +323,8 @@ static int mca_btl_tcp_component_register(void)
                                        MCA_BTL_FLAGS_HETEROGENEOUS_RDMA |
                                        MCA_BTL_FLAGS_SEND;
 
-    mca_btl_tcp_module.super.btl_bandwidth = 100;
-    mca_btl_tcp_module.super.btl_latency = 100;
+    mca_btl_tcp_module.super.btl_bandwidth = MCA_BTL_TCP_BTL_BANDWIDTH;
+    mca_btl_tcp_module.super.btl_latency = MCA_BTL_TCP_BTL_LATENCY;
 
     mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,
                                 &mca_btl_tcp_module.super);
