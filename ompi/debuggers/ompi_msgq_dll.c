@@ -7,6 +7,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -441,42 +442,43 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
         {
             mqs_taddr_t typedefs_sizeof;
 
-            if(mqs_find_symbol (image, "MPIR_debug_typedefs_sizeof", &typedefs_sizeof) != mqs_ok)
-               return err_no_store;
-               p_info->sizes.short_size = ompi_fetch_int( process, /* sizeof (short) */
-                                                          typedefs_sizeof,
-                                                          p_info );
-               typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.int_size = ompi_fetch_int( process, /* sizeof (int) */
-                                                        typedefs_sizeof,
-                                                        p_info );
-               typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.long_size = ompi_fetch_int( process, /* sizeof (long) */
-                                                         typedefs_sizeof,
-                                                         p_info );
-               typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.long_long_size = ompi_fetch_int( process, /* sizeof (long long) */
-                                                              typedefs_sizeof,
-                                                              p_info );
-               typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.pointer_size = ompi_fetch_int( process, /* sizeof (void *) */
-                                                            typedefs_sizeof,
-                                                            p_info );
-               typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.bool_size = ompi_fetch_int( process, /* sizeof (bool) */
-                                                         typedefs_sizeof,
-                                                         p_info );
-               typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.size_t_size = ompi_fetch_int( process, /* sizeof (size_t) */
+            if (mqs_find_symbol (image, "MPIR_debug_typedefs_sizeof", &typedefs_sizeof) != mqs_ok) {
+                return err_no_store;
+            }
+            p_info->sizes.short_size = ompi_fetch_int( process, /* sizeof (short) */
+                                                       typedefs_sizeof,
+                                                       p_info );
+            typedefs_sizeof += p_info->sizes.int_size;
+            p_info->sizes.int_size = ompi_fetch_int( process, /* sizeof (int) */
+                                                     typedefs_sizeof,
+                                                     p_info );
+            typedefs_sizeof += p_info->sizes.int_size;
+             p_info->sizes.long_size = ompi_fetch_int( process, /* sizeof (long) */
+                                                       typedefs_sizeof,
+                                                       p_info );
+            typedefs_sizeof += p_info->sizes.int_size;
+            p_info->sizes.long_long_size = ompi_fetch_int( process, /* sizeof (long long) */
                                                            typedefs_sizeof,
                                                            p_info );
-               DEBUG( VERBOSE_GENERAL,
-                      ("sizes short = %d int = %d long = %d long long = %d "
-                       "void* = %d bool = %d size_t = %d\n",
-                       p_info->sizes.short_size, p_info->sizes.int_size,
-                       p_info->sizes.long_size, p_info->sizes.long_long_size,
-                       p_info->sizes.pointer_size, p_info->sizes.bool_size,
-                       p_info->sizes.size_t_size) );
+            typedefs_sizeof += p_info->sizes.int_size;
+            p_info->sizes.pointer_size = ompi_fetch_int( process, /* sizeof (void *) */
+                                                         typedefs_sizeof,
+                                                         p_info );
+            typedefs_sizeof += p_info->sizes.int_size;
+            p_info->sizes.bool_size = ompi_fetch_int( process, /* sizeof (bool) */
+                                                      typedefs_sizeof,
+                                                      p_info );
+            typedefs_sizeof += p_info->sizes.int_size;
+            p_info->sizes.size_t_size = ompi_fetch_int( process, /* sizeof (size_t) */
+                                                        typedefs_sizeof,
+                                                        p_info );
+            DEBUG( VERBOSE_GENERAL,
+                   ("sizes short = %d int = %d long = %d long long = %d "
+                    "void* = %d bool = %d size_t = %d\n",
+                    p_info->sizes.short_size, p_info->sizes.int_size,
+                    p_info->sizes.long_size, p_info->sizes.long_long_size,
+                    p_info->sizes.pointer_size, p_info->sizes.bool_size,
+                    p_info->sizes.size_t_size) );
         }
 
         mqs_put_process_info (process, (mqs_process_info *)p_info);
