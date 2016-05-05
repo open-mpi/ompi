@@ -105,7 +105,7 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
  * imm64 = i << 63 | imm41 << 22 | ic << 21 | imm5c << 16 | imm9d << 7 | imm7b
  */
          unsigned char buf[16];
-         unsigned long long imm64 =  func_new_addr - func_old_addr - 16;
+         unsigned long long imm64 =  func_new_addr - patch->patch_orig - 16;
          register unsigned long long glb_ptr  __asm__("r1");
          unsigned long long nop =
             (0x0ULL<<37) | /* O     */
@@ -133,7 +133,7 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
             (1ULL                      <<  6) |
             (0x0ULL                    <<  0);
 
-         patch->data_size = 32;
+         patch->patch_data_size = 32;
 
          make_ia64_bundle(buf, movl, (glb_ptr>>22)&0x1FFFFFFFFFFULL, nop, 5);
          for (int i = 0 ; i < 16 ; ++i) {
@@ -214,7 +214,7 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
         return rc;
     }
 
-#if _CALL_ELF == 2
+#if defined(_CALL_ELF) && (_CALL_ELF == 2)
     sys_addr += 8;
     hook_addr += 8;
 #endif /* _CALL_ELF == 2*/

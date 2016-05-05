@@ -75,20 +75,37 @@ static int PatchLoadImm (uintptr_t addr, unsigned int reg, size_t value)
 
 #endif
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
-
-static void flush_and_invalidate_cache (unsigned long  a)
+static void flush_and_invalidate_cache (unsigned long a)
 {
-#if defined(__i386__)
-    /* does not work with AMD processors */
+#if OPAL_ASSEMBLY_ARCH == OPAL_IA32
+    static int have_clflush = -1;
+
+    if (OPAL_UNLIKELY(-1 == have_clflush)) {
+        int32_t cpuid1, cpuid2, tmp;
+        const int32_t level = 1;
+
+        /* cpuid clobbers ebx but it must be restored for -fPIC so save
+         * then restore ebx */
+        __asm__ volatile ("xchgl %%ebx, %2\n"
+                          "cpuid\n"
+                          "xchgl %%ebx, %2\n":
+                          "=a" (cpuid1), "=d" (cpuid2), "=r" (tmp) :
+                          "a" (level) :
+                          "ecx");
+        /* clflush is in edx bit 19 */
+        have_clflush = !!(cpuid2 & (1 << 19));
+    }
+
+    if (have_clflush) {
+        /* does not work with AMD processors */
+        __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
+    }
+#elif OPAL_ASSEMBLY_ARCH == OPAL_AMD64
     __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
-#elif defined(__x86_64__)
-    __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
-#elif defined(__ia64__)
+#elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
     __asm__ volatile ("fc %0;; sync.i;; srlz.i;;" : : "r"(a) : "memory");
 #endif
 }
-#endif
 
 // modify protection of memory range
 static void ModifyMemoryProtection (uintptr_t addr, size_t length, int prot)
@@ -105,7 +122,7 @@ static void ModifyMemoryProtection (uintptr_t addr, size_t length, int prot)
         if (mprotect((void *)base, page_size, prot))
             perror("MemHook: mprotect failed");
         base += page_size;
-    } while (base < addr + length);
+    } while (base < bound);
 #else
     if (mprotect((void *) base, length, prot)) {
             perror("MemHook: mprotect failed");
@@ -117,11 +134,9 @@ static inline void apply_patch (unsigned char *patch_data, uintptr_t address, si
 {
     ModifyMemoryProtection (address, data_size, PROT_EXEC|PROT_READ|PROT_WRITE);
     memcpy ((void *) address, patch_data, data_size);
-#if defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
     for (size_t i = 0 ; i < data_size ; i += 16) {
         flush_and_invalidate_cache (address + i);
     }
-#endif
 
     ModifyMemoryProtection (address, data_size, PROT_EXEC|PROT_READ);
 }
@@ -141,10 +156,9 @@ void mca_base_patcher_patch_apply_binary (mca_patcher_base_patch_t *patch)
 
 int mca_patcher_base_patch_hook (mca_patcher_base_module_t *module, uintptr_t hook_addr)
 {
-#if defined(__PPC64__) || defined(__powerpc64__) || defined(__PPC__)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
     mca_patcher_base_patch_t *hook_patch;
     const unsigned int nop = 0x60000000;
-    unsigned int *nop_addr;
 
     hook_patch = OBJ_NEW(mca_patcher_base_patch_t);
     if (OPAL_UNLIKELY(NULL == hook_patch)) {
@@ -152,15 +166,16 @@ int mca_patcher_base_patch_hook (mca_patcher_base_module_t *module, uintptr_t ho
     }
 
     // locate reserved code space in hook function
-    for (nop_addr = (unsigned int *)hook_addr ; ; nop_addr++) {
+    for (unsigned int *nop_addr = (unsigned int *)hook_addr ; ; nop_addr++) {
         if (nop_addr[0] == nop && nop_addr[1] == nop && nop_addr[2] == nop
                 && nop_addr[3] == nop && nop_addr[4] == nop) {
+            hook_patch->patch_orig = (uintptr_t) nop_addr;
             break;
         }
     }
+
     // generate code to restore TOC
     register unsigned long toc asm("r2");
-    hook_patch->patch_orig = (uintptr_t) nop_addr;
     hook_patch->patch_data_size = PatchLoadImm((uintptr_t)hook_patch->patch_data, 2, toc);
 
     /* put the hook patch on the patch list so it will be undone on finalize */
