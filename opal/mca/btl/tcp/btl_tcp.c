@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -94,7 +95,7 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
 
         OPAL_THREAD_LOCK(&tcp_proc->proc_lock);
 
-        for (uint32_t j = 0 ; j < (int)tcp_proc->proc_endpoint_count ; ++j) {
+        for (uint32_t j = 0 ; j < (uint32_t)tcp_proc->proc_endpoint_count ; ++j) {
             tcp_endpoint = tcp_proc->proc_endpoints[j];
             if (tcp_endpoint->endpoint_btl == tcp_btl) {
                 existing_found = true;
@@ -512,7 +513,7 @@ void mca_btl_tcp_dump(struct mca_btl_base_module_t* base_btl,
         opal_list_item_t *item;
 
         for(item =  opal_list_get_first(&btl->tcp_endpoints);
-            item != opal_list_get_end(&btl->tcp_endpoints); 
+            item != opal_list_get_end(&btl->tcp_endpoints);
             item = opal_list_get_next(item)) {
             MCA_BTL_TCP_ENDPOINT_DUMP(10, (mca_btl_base_endpoint_t*)item, false, "TCP");
         }
