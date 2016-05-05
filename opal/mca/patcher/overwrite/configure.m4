@@ -30,8 +30,9 @@ AC_DEFUN([MCA_opal_patcher_overwrite_CONFIG],[
 
     opal_patcher_overwrite_happy=no
     if test $OPAL_ENABLE_DLOPEN_SUPPORT = 1; then
+# Disable ia64 for now. We can revive it later if anyone cares
         AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#if !defined(__i386__) && !defined(__x86_64__) && !defined(__ia64__) && !defined(__PPC__)
+#if !defined(__i386__) && !defined(__x86_64__) && !defined(__PPC__)
 #error "platform not supported"
 #endif
 ]],[])],[opal_patcher_overwrite_happy=yes],[])

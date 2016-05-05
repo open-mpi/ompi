@@ -31,6 +31,7 @@
 #include "opal/mca/memory/base/empty.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/mca/patcher/base/base.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -395,11 +396,16 @@ static int patcher_register (void)
 
 static int patcher_query (int *priority)
 {
-    if (opal_patcher->patch_symbol) {
-        *priority = mca_memory_patcher_priority;
-    } else {
+    int rc;
+
+    rc = mca_base_framework_open (&opal_patcher_base_framework, 0);
+    if (OPAL_SUCCESS != rc) {
         *priority = -1;
+        return OPAL_SUCCESS;
     }
+
+    *priority = mca_memory_patcher_priority;
+
     return OPAL_SUCCESS;
 }
 
@@ -413,6 +419,12 @@ static int patcher_open (void)
     }
 
     was_executed_already = 1;
+
+    rc = opal_patcher_base_select ();
+    if (OPAL_SUCCESS != rc) {
+        mca_base_framework_close (&opal_patcher_base_framework);
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
 
     /* set memory hooks support level */
     opal_mem_hooks_set_support (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
@@ -461,6 +473,8 @@ static int patcher_open (void)
 
 static int patcher_close(void)
 {
+    mca_base_framework_close (&opal_patcher_base_framework);
+
     /* Note that we don't need to unpatch any symbols here; the
        patcher framework will take care of all of that for us. */
     return OPAL_SUCCESS;

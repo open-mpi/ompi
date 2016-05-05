@@ -48,6 +48,10 @@ AC_DEFUN([MCA_opal_patcher_linux_CONFIG],[
         fi
     fi
 
+    # this component can not be used until we can determine a way to hook munmap, etc inside
+    # glibc. this is needed to catch munmap called by free
+    opal_patcher_linux_happy=no
+
     AS_IF([test $opal_patcher_linux_happy = yes], [$1], [$2])
     OPAL_VAR_SCOPE_POP
 ])

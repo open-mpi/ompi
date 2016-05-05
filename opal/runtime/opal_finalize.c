@@ -40,7 +40,6 @@
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
-#include "opal/mca/patcher/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/sec/base/base.h"
 #include "opal/mca/timer/base/base.h"
@@ -153,7 +152,6 @@ opal_finalize(void)
 
     (void) mca_base_framework_close(&opal_backtrace_base_framework);
     (void) mca_base_framework_close(&opal_memchecker_base_framework);
-    (void) mca_base_framework_close(&opal_patcher_base_framework);
 
     /* close the memcpy framework */
     (void) mca_base_framework_close(&opal_memcpy_base_framework);
