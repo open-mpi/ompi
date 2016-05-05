@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -160,7 +160,6 @@ static mca_bml_base_endpoint_t *mca_bml_r2_allocate_endpoint (ompi_proc_t *proc)
     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
     bml_endpoint->btl_max_send_size = -1;
     bml_endpoint->btl_proc = proc;
-    proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint;
 
     bml_endpoint->btl_flags_or = 0;
     return bml_endpoint;
@@ -428,6 +427,12 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
     /* compute metrics for registered btls */
     mca_bml_r2_compute_endpoint_metrics (bml_endpoint);
 
+    /* do it last, for the lazy initialization check in bml_base_get* */
+#if OPAL_ENABLE_THREAD_MULTI
+    opal_atomic_wmb();
+#endif /* OPAL_ENABLE_THREAD_MULTI */
+    proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint;
+
     return OMPI_SUCCESS;
 }
 
@@ -521,6 +526,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
 
             if (NULL == bml_endpoint) {
                 bml_endpoint = mca_bml_r2_allocate_endpoint (proc);
+                proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint;
                 if (NULL == bml_endpoint) {
                     free(btl_endpoints);
                     free(new_procs);
