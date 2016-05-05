@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -119,7 +119,7 @@ int
 ompi_mpi_abort(struct ompi_communicator_t* comm,
                int errcode)
 {
-    char *msg, *host, hostname[OPAL_MAXHOSTNAMELEN];
+    char *host, hostname[OPAL_MAXHOSTNAMELEN];
     pid_t pid = 0;
 
     /* Protection for recursive invocation */
@@ -157,20 +157,6 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                if opal_backtrace_print() is not supported. */
             opal_backtrace_print(stderr, NULL, 1);
         }
-    }
-
-    /* Notify the debugger that we're about to abort */
-
-    if (errcode < 0 ||
-        asprintf(&msg, "[%s:%d] aborting with MPI error %s%s",
-                 host, (int) pid, ompi_mpi_errnum_get_string(errcode),
-                 opal_abort_print_stack ?
-                 " (stack trace available on stderr)" : "") < 0) {
-        msg = NULL;
-    }
-    ompi_debugger_notify_abort(msg);
-    if (NULL != msg) {
-        free(msg);
     }
 
     /* Should we wait for a while before aborting? */

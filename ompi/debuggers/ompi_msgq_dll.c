@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -380,7 +380,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
      * that types have been read from there before we try to look them
      * up.
      */
-    mqs_find_function (image, "MPIR_Breakpoint", mqs_lang_c, NULL);
+    mqs_find_function (image, "ompi_debugger_setup_dlls", mqs_lang_c, NULL);
 
     /* Are we supposed to ignore this ? (e.g. it's really an HPF
      * runtime using the Open MPI process acquisition, but not wanting
