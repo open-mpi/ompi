@@ -67,7 +67,7 @@ static const char pmix_version_string[] = PMIX_VERSION;
 
 #define PMIX_MAX_RETRIES 10
 
-static int usock_connect(struct sockaddr *address);
+static pmix_status_t usock_connect(struct sockaddr *address);
 
 static void pmix_client_notify_recv(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
                                     pmix_buffer_t *buf, void *cbdata)
@@ -221,10 +221,11 @@ const char* PMIx_Get_version(void)
     return pmix_version_string;
 }
 
-int PMIx_Init(pmix_proc_t *proc)
+pmix_status_t PMIx_Init(pmix_proc_t *proc)
 {
     char **uri, *evar;
-    int rc, debug_level;
+    pmix_status_t rc;
+    int debug_level;
     struct sockaddr_un address;
     pmix_nspace_t *nsptr;
     pmix_cb_t cb;
@@ -464,7 +465,7 @@ pmix_status_t PMIx_Finalize(void)
     return PMIX_SUCCESS;
 }
 
-int PMIx_Abort(int flag, const char msg[],
+pmix_status_t PMIx_Abort(int flag, const char msg[],
                pmix_proc_t procs[], size_t nprocs)
 {
     pmix_buffer_t *bfr;
@@ -1142,7 +1143,7 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
     PMIX_RELEASE(kptr);
 }
 
-static int usock_connect(struct sockaddr *addr)
+static pmix_status_t usock_connect(struct sockaddr *addr)
 {
     int sd=-1;
     pmix_status_t rc;

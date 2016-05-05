@@ -296,7 +296,7 @@ pmix_status_t pmix_hash_table_set_value_uint64(pmix_hash_table_t* ht,
 }
 
 
-int pmix_hash_table_remove_value_uint64(pmix_hash_table_t* ht, uint64_t key)
+pmix_status_t pmix_hash_table_remove_value_uint64(pmix_hash_table_t* ht, uint64_t key)
 {
     pmix_list_t* list = ht->ht_table + (key & ht->ht_mask);
     pmix_uint64_hash_node_t *node;
@@ -362,7 +362,7 @@ static inline uint32_t pmix_hash_value(size_t mask, const void *key,
     return (uint32_t) (crc & mask);
 }
 
-int pmix_hash_table_get_value_ptr(pmix_hash_table_t* ht, const void* key,
+pmix_status_t pmix_hash_table_get_value_ptr(pmix_hash_table_t* ht, const void* key,
 				  size_t key_size, void **ptr)
 {
     pmix_list_t* list = ht->ht_table + pmix_hash_value(ht->ht_mask, key,
@@ -389,7 +389,7 @@ int pmix_hash_table_get_value_ptr(pmix_hash_table_t* ht, const void* key,
 }
 
 
-int pmix_hash_table_set_value_ptr(pmix_hash_table_t* ht, const void* key,
+pmix_status_t pmix_hash_table_set_value_ptr(pmix_hash_table_t* ht, const void* key,
                                   size_t key_size, void* value)
 {
     pmix_list_t* list = ht->ht_table + pmix_hash_value(ht->ht_mask, key,
@@ -430,7 +430,7 @@ int pmix_hash_table_set_value_ptr(pmix_hash_table_t* ht, const void* key,
 }
 
 
-int pmix_hash_table_remove_value_ptr(pmix_hash_table_t* ht,
+pmix_status_t pmix_hash_table_remove_value_ptr(pmix_hash_table_t* ht,
                                      const void* key, size_t key_size)
 {
     pmix_list_t* list = ht->ht_table + pmix_hash_value(ht->ht_mask,
@@ -462,7 +462,7 @@ int pmix_hash_table_remove_value_ptr(pmix_hash_table_t* ht,
 }
 
 
-int
+pmix_status_t
 pmix_hash_table_get_first_key_uint32(pmix_hash_table_t *ht, uint32_t *key,
                                      void **value, void **node)
 {
@@ -489,7 +489,7 @@ pmix_hash_table_get_first_key_uint32(pmix_hash_table_t *ht, uint32_t *key,
 }
 
 
-int
+pmix_status_t
 pmix_hash_table_get_next_key_uint32(pmix_hash_table_t *ht, uint32_t *key,
                                     void **value, void *in_node,
                                     void **out_node)
@@ -534,7 +534,7 @@ pmix_hash_table_get_next_key_uint32(pmix_hash_table_t *ht, uint32_t *key,
 }
 
 
-int
+pmix_status_t
 pmix_hash_table_get_first_key_uint64(pmix_hash_table_t *ht, uint64_t *key,
                                      void **value, void **node)
 {
@@ -561,7 +561,7 @@ pmix_hash_table_get_first_key_uint64(pmix_hash_table_t *ht, uint64_t *key,
 }
 
 
-int
+pmix_status_t
 pmix_hash_table_get_next_key_uint64(pmix_hash_table_t *ht, uint64_t *key,
                                     void **value, void *in_node,
                                     void **out_node)

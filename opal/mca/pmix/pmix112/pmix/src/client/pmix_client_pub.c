@@ -5,6 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,10 +56,10 @@
 
 static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata);
-static void op_cbfunc(int status, void *cbdata);
+static void op_cbfunc(pmix_status_t status, void *cbdata);
 static void wait_lookup_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                                pmix_buffer_t *buf, void *cbdata);
-static void lookup_cbfunc(int status, pmix_pdata_t pdata[], size_t ndata,
+static void lookup_cbfunc(pmix_status_t status, pmix_pdata_t pdata[], size_t ndata,
                           void *cbdata);
 
 pmix_status_t PMIx_Publish(const pmix_info_t info[],
@@ -166,10 +167,10 @@ pmix_status_t PMIx_Publish_nb(const pmix_info_t info[], size_t ninfo,
     return PMIX_SUCCESS;
 }
 
-int PMIx_Lookup(pmix_pdata_t pdata[], size_t ndata,
+pmix_status_t PMIx_Lookup(pmix_pdata_t pdata[], size_t ndata,
                 const pmix_info_t info[], size_t ninfo)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
     char **keys = NULL;
     size_t i;
@@ -292,9 +293,9 @@ pmix_status_t PMIx_Lookup_nb(char **keys, const pmix_info_t info[], size_t ninfo
     return PMIX_SUCCESS;
 }
 
-int PMIx_Unpublish(char **keys, const pmix_info_t info[], size_t ninfo)
+pmix_status_t PMIx_Unpublish(char **keys, const pmix_info_t info[], size_t ninfo)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -415,7 +416,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     PMIX_RELEASE(cb);
 }
 
-static void op_cbfunc(int status, void *cbdata)
+static void op_cbfunc(pmix_status_t status, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 
@@ -489,7 +490,7 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     PMIX_RELEASE(cb);
 }
 
-static void lookup_cbfunc(int status, pmix_pdata_t pdata[], size_t ndata,
+static void lookup_cbfunc(pmix_status_t status, pmix_pdata_t pdata[], size_t ndata,
                           void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;

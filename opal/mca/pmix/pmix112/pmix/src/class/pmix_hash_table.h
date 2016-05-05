@@ -70,12 +70,12 @@ typedef struct pmix_hash_table_t pmix_hash_table_t;
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_init(pmix_hash_table_t* ht, size_t table_size);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_init(pmix_hash_table_t* ht, size_t table_size);
 
 /**
  * Alternative form
  */
-PMIX_DECLSPEC int pmix_hash_table_init2(pmix_hash_table_t* ht, size_t estimated_max_size,
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_init2(pmix_hash_table_t* ht, size_t estimated_max_size,
                                         int density_numer, int density_denom,
                                         int growth_numer, int growth_denom);
 

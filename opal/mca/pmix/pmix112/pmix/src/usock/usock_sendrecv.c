@@ -85,9 +85,10 @@ exit:
     return ret;
 }
 
-static int read_bytes(int sd, char **buf, size_t *remain)
+static pmix_status_t read_bytes(int sd, char **buf, size_t *remain)
 {
-    int ret = PMIX_SUCCESS, rc;
+    pmix_status_t ret = PMIX_SUCCESS;
+    int rc;
     char *ptr = *buf;
 
     /* read until all bytes recvd or error */
