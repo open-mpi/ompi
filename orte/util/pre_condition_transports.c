@@ -64,7 +64,7 @@ static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) 
 char* orte_pre_condition_transports_print(uint64_t *unique_key)
 {
     unsigned int *int_ptr;
-    size_t i, string_key_len, written_len;
+    size_t i, j, string_key_len, written_len;
     char *string_key = NULL, *format = NULL;
 
     /* string is two 64 bit numbers printed in hex with a dash between
@@ -92,6 +92,12 @@ char* orte_pre_condition_transports_print(uint64_t *unique_key)
     /* print the first number */
     int_ptr = (unsigned int*) &unique_key[0];
     for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
+        if (0 == int_ptr[i]) {
+            /* inject some energy */
+            for (j=0; j < sizeof(unsigned int); j++) {
+                int_ptr[i] |= j << j;
+            }
+        }
         snprintf(string_key + written_len,
                  string_key_len - written_len,
                  format, int_ptr[i]);
@@ -105,6 +111,12 @@ char* orte_pre_condition_transports_print(uint64_t *unique_key)
     /* print the second number */
     int_ptr = (unsigned int*) &unique_key[1];
     for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
+        if (0 == int_ptr[i]) {
+            /* inject some energy */
+            for (j=0; j < sizeof(unsigned int); j++) {
+                int_ptr[i] |= j << j;
+            }
+        }
         snprintf(string_key + written_len,
                  string_key_len - written_len,
                  format, int_ptr[i]);
