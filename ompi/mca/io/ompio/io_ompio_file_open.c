@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -599,14 +600,14 @@ int mca_io_ompio_file_get_info (ompi_file_t *fh,
     int ret = OMPI_SUCCESS;
     ompi_info_t *info=NULL;
 
-    if ( MPI_INFO_NULL == fh->f_info  ) {
-	*info_used = MPI_INFO_NULL;
+    info = OBJ_NEW(ompi_info_t);
+    if (NULL == info) {
+        return MPI_ERR_INFO;
     }
-    else {
-	info = OBJ_NEW(ompi_info_t);
+    if (MPI_INFO_NULL != fh->f_info) {
 	ret = ompi_info_dup (fh->f_info, &info);
-	*info_used = info;
     }
+    *info_used = info;
 
     return ret;
 }
