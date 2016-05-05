@@ -19,6 +19,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -430,9 +431,7 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
     mca_bml_r2_compute_endpoint_metrics (bml_endpoint);
 
     /* do it last, for the lazy initialization check in bml_base_get* */
-#if OPAL_ENABLE_THREAD_MULTI
     opal_atomic_wmb();
-#endif /* OPAL_ENABLE_THREAD_MULTI */
     proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint;
 
     return OMPI_SUCCESS;
