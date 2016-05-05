@@ -87,8 +87,8 @@ BEGIN_C_DECLS
 #endif
 
 /*
- * Internal type corresponding to pmix_status_t and unsigned int.  Do not use
- * this in interface calls - use PMIX_pmix_status_t / PMIX_Upmix_status_t instead.
+ * Internal type corresponding to int and unsigned int.  Do not use
+ * this in interface calls - use PMIX_INT / PMIX_UINT instead.
  */
 #if SIZEOF_INT == 1
 #define BFROP_TYPE_INT PMIX_INT8
@@ -185,7 +185,7 @@ typedef struct {
     pmix_bfrop_unpack_fn_t odti_unpack_fn;
     /** copy function */
     pmix_bfrop_copy_fn_t odti_copy_fn;
-    /** prpmix_status_t function */
+    /** print function */
     pmix_bfrop_print_fn_t odti_print_fn;
 } pmix_bfrop_type_info_t;
 PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_bfrop_type_info_t);
@@ -402,7 +402,7 @@ pmix_status_t pmix_bfrop_copy_pdata(pmix_pdata_t **dest, pmix_pdata_t *src,
                           pmix_data_type_t type);
 
 /*
- * Internal prpmix_status_t functions
+ * Internal print functions
  */
 pmix_status_t pmix_bfrop_print_bool(char **output, char *prefix, bool *src, pmix_data_type_t type);
 pmix_status_t pmix_bfrop_print_byte(char **output, char *prefix, uint8_t *src, pmix_data_type_t type);
