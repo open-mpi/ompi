@@ -37,31 +37,19 @@
     }
 }
 
-int orte_schizo_base_define_cli(opal_cmd_line_t *cli)
+int orte_schizo_base_parse_cli(char **personality,
+                               int argc, int start, char **argv)
 {
     int rc;
     orte_schizo_base_active_module_t *mod;
 
-    OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
-        if (NULL != mod->module->define_cli) {
-            rc = mod->module->define_cli(cli);
-            if (ORTE_SUCCESS != rc && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
+    if (NULL == personality) {
+        return ORTE_ERR_NOT_SUPPORTED;
     }
-    return ORTE_SUCCESS;
-}
-
-int orte_schizo_base_parse_cli(int argc, int start, char **argv)
-{
-    int rc;
-    orte_schizo_base_active_module_t *mod;
 
     OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
         if (NULL != mod->module->parse_cli) {
-            rc = mod->module->parse_cli(argc, start, argv);
+            rc = mod->module->parse_cli(personality, argc, start, argv);
             if (ORTE_SUCCESS != rc && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -71,7 +59,8 @@ int orte_schizo_base_parse_cli(int argc, int start, char **argv)
     return ORTE_SUCCESS;
 }
 
-int orte_schizo_base_parse_env(char *path,
+int orte_schizo_base_parse_env(char **personality,
+                               char *path,
                                opal_cmd_line_t *cmd_line,
                                char **srcenv,
                                char ***dstenv)
@@ -81,7 +70,7 @@ int orte_schizo_base_parse_env(char *path,
 
     OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
         if (NULL != mod->module->parse_env) {
-            rc = mod->module->parse_env(path, cmd_line, srcenv, dstenv);
+            rc = mod->module->parse_env(personality, path, cmd_line, srcenv, dstenv);
             if (ORTE_SUCCESS != rc && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -91,14 +80,15 @@ int orte_schizo_base_parse_env(char *path,
     return ORTE_SUCCESS;
 }
 
-int orte_schizo_base_setup_app(orte_app_context_t *app)
+int orte_schizo_base_setup_app(char **personality,
+                               orte_app_context_t *app)
 {
     int rc;
     orte_schizo_base_active_module_t *mod;
 
     OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
         if (NULL != mod->module->setup_app) {
-            rc = mod->module->setup_app(app);
+            rc = mod->module->setup_app(personality, app);
             if (ORTE_SUCCESS != rc && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;

@@ -28,6 +28,8 @@
  * available.
  */
 
+static bool selected = false;
+
 int orte_schizo_base_select(void)
 {
     mca_base_component_list_item_t *cli = NULL;
@@ -38,10 +40,11 @@ int orte_schizo_base_select(void)
     int rc, priority;
     bool inserted;
 
-    if (0 < opal_list_get_size(&orte_schizo_base.active_modules)) {
+    if (selected) {
         /* ensure we don't do this twice */
         return ORTE_SUCCESS;
     }
+    selected = true;
 
     /* Query all available components and ask if they have a module */
     OPAL_LIST_FOREACH(cli, &orte_schizo_base_framework.framework_components, mca_base_component_list_item_t) {

@@ -28,13 +28,6 @@ ORTE_DECLSPEC int orte_submit_job(char *cmd[], int *index,
                                   orte_submit_cbfunc_t launch_cb, void *launch_cbdata,
                                   orte_submit_cbfunc_t complete_cb, void *complete_cbdata);
 ORTE_DECLSPEC int orte_submit_halt(void);
-ORTE_DECLSPEC void orte_debugger_init_after_spawn(int fd, short event, void *arg);
-ORTE_DECLSPEC void orte_debugger_detached(int fd, short event, void *arg);
-
-extern int orte_debugger_attach_fd;
-extern bool orte_debugger_fifo_active;
-extern opal_event_t *orte_debugger_attach;
-extern char MPIR_attach_fifo[];
 
 /**
  * Global struct for catching orte command line options.
@@ -89,7 +82,6 @@ struct orte_cmd_line_t {
     bool merge;
     bool enable_recovery;
     char *hnp;
-    bool staged_exec;
 };
 typedef struct orte_cmd_line_t orte_cmd_line_t;
 ORTE_DECLSPEC extern orte_cmd_line_t orte_cmd_line;

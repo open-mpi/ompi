@@ -417,7 +417,7 @@ static int parse_args(int argc, char *argv[]) {
     /**
      * Put all of the MCA arguments in the environment
      */
-    mca_base_cmd_line_process_args(argc, &app_env, &global_env);
+    mca_base_cmd_line_process_args(&cmd_line, &app_env, &global_env);
 
     len = opal_argv_count(app_env);
     for(i = 0; i < len; ++i) {
