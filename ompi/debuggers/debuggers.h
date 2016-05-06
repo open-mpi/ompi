@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,18 +35,6 @@ BEGIN_C_DECLS
  * necessary for understanding the queues and other structures.
  */
 extern void ompi_debugger_setup_dlls(void);
-
-/**
- * Notify a debugger that we're about to abort
- */
-extern void ompi_debugger_notify_abort(char *string);
-
-/**
- * Breakpoint function for parallel debuggers.
- * This function is also defined in orterun for the starter.
- * It should never conflict with this one
- */
-OMPI_DECLSPEC void* MPIR_Breakpoint(void);
 
 /**
  * Flag debugger will set when an application may proceed past
