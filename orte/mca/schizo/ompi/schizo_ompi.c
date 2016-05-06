@@ -688,7 +688,7 @@ static int parse_env(char *path,
         if (!set_from_file) {
             /* set necessary env variables for external usage */
             vars = NULL;
-            if (OPAL_SUCCESS == mca_base_var_process_env_list(&vars) &&
+            if (OPAL_SUCCESS == mca_base_var_process_env_list(env_set_flag, &vars) &&
                     NULL != vars) {
                 for (i=0; NULL != vars[i]; i++) {
                     value = strchr(vars[i], '=');

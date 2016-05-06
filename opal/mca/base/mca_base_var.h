@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -729,7 +730,7 @@ OPAL_DECLSPEC int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_typ
  * Parse a provided list of envars and add their local value, or
  * their assigned value, to the provided argv
  */
-OPAL_DECLSPEC int mca_base_var_process_env_list(char ***argv);
+OPAL_DECLSPEC int mca_base_var_process_env_list(char *list, char ***argv);
 OPAL_DECLSPEC int mca_base_var_process_env_list_from_file(char ***argv);
 
 END_C_DECLS
