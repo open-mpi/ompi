@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
         exit(cmd_error ? 1 : 0);
     }
 
-    mca_base_cmd_line_process_args(argv, &app_env, &global_env);
+    mca_base_cmd_line_process_args(orte_info_cmd_line, &app_env, &global_env);
 
     /* putenv() all the stuff that we got back from env (in case the
      * user specified some --mca params on the command line).  This

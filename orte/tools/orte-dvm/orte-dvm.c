@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
      *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
      *  depend upon opal_init_util() functionality.
      */
-    if (OPAL_SUCCESS != mca_base_cmd_line_process_args(argv, &environ, &environ)) {
+    if (OPAL_SUCCESS != mca_base_cmd_line_process_args(&cmd_line, &environ, &environ)) {
         exit(1);
     }
 

@@ -156,7 +156,7 @@ OPAL_DECLSPEC int mca_base_is_component_required(opal_list_t *components_availab
 /* mca_base_cmd_line.c */
 
 OPAL_DECLSPEC int mca_base_cmd_line_setup(opal_cmd_line_t *cmd);
-OPAL_DECLSPEC int mca_base_cmd_line_process_args(char **argv,
+OPAL_DECLSPEC int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
                                                  char ***app_env,
                                                  char ***global_env);
 OPAL_DECLSPEC void mca_base_cmd_line_wrap_args(char **args);

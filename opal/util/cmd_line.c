@@ -156,9 +156,7 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
     }
     OBJ_CONSTRUCT(cmd, opal_cmd_line_t);
 
-    if (NULL != table) {
-        ret = opal_cmd_line_add(cmd, table);
-    }
+    ret = opal_cmd_line_add(cmd, table);
     return ret;
 }
 
