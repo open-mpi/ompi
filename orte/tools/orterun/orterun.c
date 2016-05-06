@@ -85,7 +85,6 @@
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/state/state.h"
-#include "orte/util/cmd_line.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 
@@ -99,6 +98,14 @@
 #include "orte/orted/orted.h"
 #include "orte/orted/orted_submit.h"
 #include "orterun.h"
+
+/* local type */
+ typedef struct {
+     int status;
+     volatile bool active;
+     orte_job_t *jdata;
+ } orte_submit_status_t;
+
 
 /* local data */
 static opal_list_t job_stack;
@@ -144,8 +151,28 @@ static void run_next_job(int fd, short args, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
+static void launched(int index, orte_job_t *jdata, int ret, void *cbdata)
+{
+    orte_submit_status_t *launchst = (orte_submit_status_t*)cbdata;
+    launchst->status = ret;
+    ORTE_UPDATE_EXIT_STATUS(ret);
+    OBJ_RETAIN(jdata);
+    launchst->jdata = jdata;
+    launchst->active = false;
+}
+static void completed(int index, orte_job_t *jdata, int ret, void *cbdata)
+{
+    orte_submit_status_t *completest = (orte_submit_status_t*)cbdata;
+    completest->status = ret;
+    ORTE_UPDATE_EXIT_STATUS(ret);
+    OBJ_RETAIN(jdata);
+    completest->jdata = jdata;
+    completest->active = false;
+}
+
 int orterun(int argc, char *argv[])
 {
+    orte_submit_status_t launchst, completest;
 
     if (ORTE_SUCCESS != orte_submit_init(argc, argv, NULL)) {
         exit(1);
@@ -155,9 +182,9 @@ int orterun(int argc, char *argv[])
      * us to proceed if the allow-run-as-root flag was given. Otherwise,
      * exit with a giant warning flag
      */
-    if (0 == geteuid() && !orte_cmd_line.run_as_root) {
+    if (0 == geteuid() && !orte_cmd_options.run_as_root) {
         fprintf(stderr, "--------------------------------------------------------------------------\n");
-        if (orte_cmd_line.help) {
+        if (orte_cmd_options.help) {
             fprintf(stderr, "%s cannot provide the help message when run as root.\n", orte_basename);
         } else {
             /* show_help is not yet available, so print an error manually */
@@ -181,14 +208,43 @@ int orterun(int argc, char *argv[])
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
                             ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
 
-    /* spawn the job and its daemons */
-    if (ORTE_SUCCESS != orte_submit_job(argv, NULL,
-                                        NULL, NULL,
-                                        NULL, NULL)) {
-        ORTE_UPDATE_EXIT_STATUS(1);
-        goto DONE;
+    /* if the user just wants us to terminate a DVM, then do so */
+    if (orte_cmd_options.terminate_dvm) {
+        if (ORTE_ERR_OP_IN_PROGRESS != orte_submit_halt()) {
+            ORTE_UPDATE_EXIT_STATUS(1);
+            goto DONE;
+        }
+        while (1) {
+           opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+        }
+    } else {
+        /* spawn the job and its daemons */
+        memset(&launchst, 0, sizeof(launchst));
+        memset(&completest, 0, sizeof(completest));
+        launchst.active = true;
+        completest.active = true;
+        if (ORTE_SUCCESS != orte_submit_job(argv, NULL,
+                                            launched, &launchst,
+                                            completed, &completest)) {
+            ORTE_UPDATE_EXIT_STATUS(1);
+            goto DONE;
+        }
     }
 
+      // wait for response and unpack the status, jobid
+      while (orte_event_base_active && launchst.active) {
+          opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+      }
+      if (orte_debug_flag) {
+          opal_output(0, "Job %s has launched", ORTE_JOBID_PRINT(launchst.jdata->jobid));
+      }
+      if (!orte_event_base_active || ORTE_SUCCESS != launchst.status) {
+          goto DONE;
+      }
+
+      while (orte_event_base_active && completest.active) {
+          opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+      }
 
 #if 0
     if (orte_staged_execution) {
@@ -225,31 +281,15 @@ int orterun(int argc, char *argv[])
     }
 #endif
 
-    /* loop the event lib until an exit event is detected */
-    while (orte_event_base_active) {
-        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    if (ORTE_PROC_IS_HNP) {
+        /* ensure all local procs are dead */
+        orte_odls.kill_local_procs(NULL);
     }
-
-    /* ensure all local procs are dead */
-    orte_odls.kill_local_procs(NULL);
 
  DONE:
-    /* if it was created, remove the debugger attach fifo */
-    if (0 <= orte_debugger_attach_fd) {
-        if (orte_debugger_fifo_active) {
-            opal_event_del(orte_debugger_attach);
-            free(orte_debugger_attach);
-        }
-        close(orte_debugger_attach_fd);
-        unlink(MPIR_attach_fifo);
-    }
-
     /* cleanup and leave */
-    orte_finalize();
+    orte_submit_finalize();
 
-    if (NULL != orte_launch_environ) {
-        opal_argv_free(orte_launch_environ);
-    }
     if (orte_debug_flag) {
         fprintf(stderr, "exiting with status %d\n", orte_exit_status);
     }

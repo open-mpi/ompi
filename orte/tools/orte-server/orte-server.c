@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
      */
-    mca_base_cmd_line_process_args(argv, &environ, &environ);
+    mca_base_cmd_line_process_args(cmd_line, &environ, &environ);
 
     /* if debug is set, then set orte_debug_flag so that the data server
      * code will output

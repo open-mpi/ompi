@@ -207,7 +207,7 @@ int opal_info_init(int argc, char **argv,
         exit(cmd_error ? 1 : 0);
     }
 
-    mca_base_cmd_line_process_args(argv, &app_env, &global_env);
+    mca_base_cmd_line_process_args(opal_info_cmd_line, &app_env, &global_env);
 
 
     /* set the flags */

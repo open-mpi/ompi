@@ -12,6 +12,8 @@
 
 #include "orte_config.h"
 
+#include "opal/util/cmd_line.h"
+
 #include "orte/mca/plm/plm.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -37,9 +39,9 @@ extern opal_event_t *orte_debugger_attach;
 extern char MPIR_attach_fifo[];
 
 /**
- * Global struct for catching orte command line options.
+ * Global struct for caching orte command line options.
  */
-struct orte_cmd_line_t {
+struct orte_cmd_options_t {
     bool help;
     bool version;
     bool verbose;
@@ -91,8 +93,9 @@ struct orte_cmd_line_t {
     char *hnp;
     bool staged_exec;
 };
-typedef struct orte_cmd_line_t orte_cmd_line_t;
-ORTE_DECLSPEC extern orte_cmd_line_t orte_cmd_line;
+typedef struct orte_cmd_options_t orte_cmd_options_t;
+ORTE_DECLSPEC extern orte_cmd_options_t orte_cmd_options;
+ORTE_DECLSPEC extern opal_cmd_line_t *orte_cmd_line;
 
 
 END_C_DECLS

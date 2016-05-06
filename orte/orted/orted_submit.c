@@ -92,14 +92,13 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/mca/schizo/schizo.h"
+#include "orte/mca/schizo/base/base.h"
 #include "orte/mca/state/state.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_quit.h"
-#include "orte/util/cmd_line.h"
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/show_help.h"
 
@@ -108,13 +107,13 @@
 /**
  * Global struct for catching orte command line options.
  */
-orte_cmd_line_t orte_cmd_line = {0};
+orte_cmd_options_t orte_cmd_options = {0};
+opal_cmd_line_t *orte_cmd_line = NULL;
 
 static char **global_mca_env = NULL;
 static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static opal_pointer_array_t tool_jobs;
-static opal_cmd_line_t *cmd_line=NULL;
 static bool mycmdline = false;
 int orte_debugger_attach_fd = -1;
 bool orte_debugger_fifo_active=false;
@@ -203,38 +202,22 @@ static OBJ_CLASS_INSTANCE(trackr_t,
 int orte_submit_init(int argc, char *argv[],
                      opal_cmd_line_t *opts)
 {
-    int rc;
-    bool version, help;
+    int rc, i;
     char *param;
 
-    OBJ_CONSTRUCT(&tool_jobs, opal_pointer_array_t);
-    opal_pointer_array_init(&tool_jobs, 256, INT_MAX, 128);
+    /* init the globals */
+    memset(&orte_cmd_options, 0, sizeof(orte_cmd_options));
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
     orte_basename = opal_basename(argv[0]);
 
-    /* setup the cmd line only once */
-    if (NULL != opts) {
-        /* just add the component-defined ones to the end */
-        if (OPAL_SUCCESS != (rc = orte_schizo.define_cli(opts))) {
-            return rc;
-        }
-        cmd_line = opts;
-        mycmdline = false;
-    } else {
-        /* create our own */
-        cmd_line = OBJ_NEW(opal_cmd_line_t);
-        rc = orte_cmd_line_create(cmd_line, argc, argv,
-                                  &environ, &environ,
-                                  &version, &help);
-        if (ORTE_SUCCESS != rc) {
-            OBJ_RELEASE(cmd_line);
-            return rc;
-        }
-        /* print version if requested.  Do this before check for help so
-           that --version --help works as one might expect. */
-        if (version) {
+    /* see if print version is requested. Do this before
+     * check for help so that --version --help works as
+     * one might expect. */
+     for (i=0; NULL != argv[i]; i++) {
+         if (0 == strcmp(argv[i], "--version") ||
+             0 == strcmp(argv[i], "-V")) {
             char *str, *project_name = NULL;
             if (0 == strcmp(orte_basename, "mpirun")) {
                 project_name = "Open MPI";
@@ -253,7 +236,84 @@ int orte_submit_init(int argc, char *argv[],
             }
             exit(0);
         }
+    }
+
+    /* init only the util portion of OPAL */
+    if (OPAL_SUCCESS != (rc = opal_init_util(&argc, &argv))) {
+        return rc;
+    }
+    /* open the SCHIZO framework so we can setup the command line */
+    if (ORTE_SUCCESS != (rc = mca_base_framework_open(&orte_schizo_base_framework, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_schizo_base_select())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    OBJ_CONSTRUCT(&tool_jobs, opal_pointer_array_t);
+    opal_pointer_array_init(&tool_jobs, 256, INT_MAX, 128);
+
+    /* setup the cmd line only once */
+    if (NULL != opts) {
+        /* just add the component-defined ones to the end */
+        if (OPAL_SUCCESS != (rc = orte_schizo.define_cli(opts))) {
+            return rc;
+        }
+        orte_cmd_line = opts;
+        mycmdline = false;
+    } else {
+
+        /* have to create the cmd line next as even --help
+         * will need it */
+        orte_cmd_line = OBJ_NEW(opal_cmd_line_t);
+        if (OPAL_SUCCESS != (rc = orte_schizo.define_cli(orte_cmd_line))) {
+            OBJ_RELEASE(orte_cmd_line);
+            return rc;
+        }
         mycmdline = true;
+    }
+
+    /* now that options have been defined, finish setup */
+    mca_base_cmd_line_setup(orte_cmd_line);
+
+    /* parse the result to get values */
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line,
+                                                  true, argc, argv)) ) {
+        if (OPAL_ERR_SILENT != rc) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(rc));
+        }
+        return rc;
+    }
+
+    /* check if we are running as root - if we are, then only allow
+     * us to proceed if the allow-run-as-root flag was given. Otherwise,
+     * exit with a giant warning flag
+     */
+    if (0 == geteuid() && !orte_cmd_options.run_as_root) {
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
+        if (orte_cmd_options.help) {
+            fprintf(stderr, "%s cannot provide the help message when run as root.\n", orte_basename);
+        } else {
+            /* show_help is not yet available, so print an error manually */
+            fprintf(stderr, "%s has detected an attempt to run as root.\n", orte_basename);
+        }
+        fprintf(stderr, "Running at root is *strongly* discouraged as any mistake (e.g., in\n");
+        fprintf(stderr, "defining TMPDIR) or bug can result in catastrophic damage to the OS\n");
+        fprintf(stderr, "file system, leaving your system in an unusable state.\n\n");
+        fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
+        fprintf(stderr, "option to your cmd line. However, we reiterate our strong advice\n");
+        fprintf(stderr, "against doing so - please do so at your own risk.\n");
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
+        exit(1);
+    }
+
+    /* process any mca params */
+    rc = mca_base_cmd_line_process_args(orte_cmd_line, &environ, &environ);
+    if (ORTE_SUCCESS != rc) {
+        return rc;
     }
 
     /* Need to initialize OPAL so that install_dirs are filled in */
@@ -262,60 +322,63 @@ int orte_submit_init(int argc, char *argv[],
     }
 
     /* Check for help request */
-    if (help) {
-        char *str, *args = NULL;
-        char *project_name = NULL;
-        if (0 == strcmp(orte_basename, "mpirun")) {
-            project_name = "Open MPI";
-        } else {
-            project_name = "OpenRTE";
+   for (i=0; NULL != argv[i]; i++) {
+       if (0 == strcmp(argv[i], "--help") ||
+           0 == strcmp(argv[i], "-h")) {
+            char *str, *args = NULL;
+            char *project_name = NULL;
+            if (0 == strcmp(orte_basename, "mpirun")) {
+                project_name = "Open MPI";
+            } else {
+                project_name = "OpenRTE";
+            }
+            args = opal_cmd_line_get_usage_msg(orte_cmd_line);
+            str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
+                                        orte_basename, project_name, OPAL_VERSION,
+                                        orte_basename, args,
+                                        PACKAGE_BUGREPORT);
+            if (NULL != str) {
+                printf("%s", str);
+                free(str);
+            }
+            free(args);
+            /* If someone asks for help, that should be all we do */
+            exit(0);
         }
-        args = opal_cmd_line_get_usage_msg(cmd_line);
-        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
-                                    orte_basename, project_name, OPAL_VERSION,
-                                    orte_basename, args,
-                                    PACKAGE_BUGREPORT);
-        if (NULL != str) {
-            printf("%s", str);
-            free(str);
-        }
-        free(args);
-        /* If someone asks for help, that should be all we do */
-        exit(0);
     }
 
-    /* set the flags - if they gave us a -hnp option, then
+   /* set the flags - if they gave us a -hnp option, then
      * we are a tool. If not, then we are an HNP */
-    if (NULL == orte_cmd_line.hnp) {
+    if (NULL == orte_cmd_options.hnp) {
         orte_process_info.proc_type = ORTE_PROC_HNP;
     } else {
         orte_process_info.proc_type = ORTE_PROC_TOOL;
     }
 
     if (ORTE_PROC_IS_TOOL) {
-        if (0 == strncasecmp(orte_cmd_line.hnp, "file", strlen("file"))) {
+        if (0 == strncasecmp(orte_cmd_options.hnp, "file", strlen("file"))) {
             char input[1024], *filename;
             FILE *fp;
 
             /* it is a file - get the filename */
-            filename = strchr(orte_cmd_line.hnp, ':');
+            filename = strchr(orte_cmd_options.hnp, ':');
             if (NULL == filename) {
                 /* filename is not correctly formatted */
-                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "uri", orte_cmd_line.hnp);
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "uri", orte_cmd_options.hnp);
                 exit(1);
             }
             ++filename; /* space past the : */
 
             if (0 >= strlen(filename)) {
                 /* they forgot to give us the name! */
-                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "uri", orte_cmd_line.hnp);
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "uri", orte_cmd_options.hnp);
                 exit(1);
             }
 
             /* open the file and extract the uri */
             fp = fopen(filename, "r");
             if (NULL == fp) { /* can't find or read file! */
-                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, orte_cmd_line.hnp);
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, orte_cmd_options.hnp);
                 exit(1);
             }
             /* initialize the input to NULLs to ensure any input
@@ -324,7 +387,7 @@ int orte_submit_init(int argc, char *argv[],
             if (NULL == fgets(input, 1024, fp)) {
                 /* something malformed about file */
                 fclose(fp);
-                orte_show_help("help-orte-top.txt", "orte-top:hnp-file-bad", true, orte_cmd_line.hnp);
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-file-bad", true, orte_cmd_options.hnp);
                 exit(1);
             }
             fclose(fp);
@@ -333,7 +396,7 @@ int orte_submit_init(int argc, char *argv[],
             opal_setenv(OPAL_MCA_PREFIX"orte_hnp_uri", input, true, &environ);
         } else {
             /* should just be the uri itself - construct the target hnp info */
-            opal_setenv(OPAL_MCA_PREFIX"orte_hnp_uri", orte_cmd_line.hnp, true, &environ);
+            opal_setenv(OPAL_MCA_PREFIX"orte_hnp_uri", orte_cmd_options.hnp, true, &environ);
         }
         /* we are never allowed to operate as a distributed tool,
          * so insist on the ess/tool component */
@@ -349,41 +412,42 @@ int orte_submit_init(int argc, char *argv[],
          * in the global struct as the app_file parser would replace it.
          * So handle this specific cmd line option manually.
          */
-        orte_cmd_line.prefix = NULL;
-        orte_cmd_line.path_to_mpirun = NULL;
-        if (opal_cmd_line_is_taken(cmd_line, "prefix") ||
+        orte_cmd_options.prefix = NULL;
+        orte_cmd_options.path_to_mpirun = NULL;
+        if (opal_cmd_line_is_taken(orte_cmd_line, "prefix") ||
             '/' == argv[0][0] || want_prefix_by_default) {
             size_t param_len;
             if ('/' == argv[0][0]) {
                 char* tmp_basename = NULL;
                 /* If they specified an absolute path, strip off the
                    /bin/<exec_name>" and leave just the prefix */
-                orte_cmd_line.path_to_mpirun = opal_dirname(argv[0]);
+                orte_cmd_options.path_to_mpirun = opal_dirname(argv[0]);
                 /* Quick sanity check to ensure we got
                    something/bin/<exec_name> and that the installation
                    tree is at least more or less what we expect it to
                    be */
-                tmp_basename = opal_basename(orte_cmd_line.path_to_mpirun);
+                tmp_basename = opal_basename(orte_cmd_options.path_to_mpirun);
                 if (0 == strcmp("bin", tmp_basename)) {
-                    char* tmp = orte_cmd_line.path_to_mpirun;
-                    orte_cmd_line.path_to_mpirun = opal_dirname(tmp);
+                    char* tmp = orte_cmd_options.path_to_mpirun;
+                    orte_cmd_options.path_to_mpirun = opal_dirname(tmp);
                     free(tmp);
                 } else {
-                    free(orte_cmd_line.path_to_mpirun);
-                    orte_cmd_line.path_to_mpirun = NULL;
+                    free(orte_cmd_options.path_to_mpirun);
+                    orte_cmd_options.path_to_mpirun = NULL;
                 }
                 free(tmp_basename);
             }
             /* if both are given, check to see if they match */
-            if (opal_cmd_line_is_taken(cmd_line, "prefix") && NULL != orte_cmd_line.path_to_mpirun) {
+            if (opal_cmd_line_is_taken(orte_cmd_line, "prefix") &&
+                NULL != orte_cmd_options.path_to_mpirun) {
                 char *tmp_basename;
                 /* if they don't match, then that merits a warning */
-                param = strdup(opal_cmd_line_get_param(cmd_line, "prefix", 0, 0));
+                param = strdup(opal_cmd_line_get_param(orte_cmd_line, "prefix", 0, 0));
                 /* ensure we strip any trailing '/' */
                 if (0 == strcmp(OPAL_PATH_SEP, &(param[strlen(param)-1]))) {
                     param[strlen(param)-1] = '\0';
                 }
-                tmp_basename = strdup(orte_cmd_line.path_to_mpirun);
+                tmp_basename = strdup(orte_cmd_options.path_to_mpirun);
                 if (0 == strcmp(OPAL_PATH_SEP, &(tmp_basename[strlen(tmp_basename)-1]))) {
                     tmp_basename[strlen(tmp_basename)-1] = '\0';
                 }
@@ -395,15 +459,15 @@ int orte_submit_init(int argc, char *argv[],
                      * people can specify the backend prefix as different
                      * from the local one
                      */
-                    free(orte_cmd_line.path_to_mpirun);
-                    orte_cmd_line.path_to_mpirun = NULL;
+                    free(orte_cmd_options.path_to_mpirun);
+                    orte_cmd_options.path_to_mpirun = NULL;
                 }
                 free(tmp_basename);
-            } else if (NULL != orte_cmd_line.path_to_mpirun) {
-                param = strdup(orte_cmd_line.path_to_mpirun);
-            } else if (opal_cmd_line_is_taken(cmd_line, "prefix")){
+            } else if (NULL != orte_cmd_options.path_to_mpirun) {
+                param = strdup(orte_cmd_options.path_to_mpirun);
+            } else if (opal_cmd_line_is_taken(orte_cmd_line, "prefix")){
                 /* must be --prefix alone */
-                param = strdup(opal_cmd_line_get_param(cmd_line, "prefix", 0, 0));
+                param = strdup(opal_cmd_line_get_param(orte_cmd_line, "prefix", 0, 0));
             } else {
                 /* --enable-orterun-prefix-default was given to orterun */
                 param = strdup(opal_install_dirs.prefix);
@@ -423,7 +487,7 @@ int orte_submit_init(int argc, char *argv[],
                     }
                 }
 
-                orte_cmd_line.prefix = param;
+                orte_cmd_options.prefix = param;
             }
             want_prefix_by_default = true;
         }
@@ -432,7 +496,7 @@ int orte_submit_init(int argc, char *argv[],
     /* Setup MCA params */
     orte_register_params();
 
-    if (orte_cmd_line.debug) {
+    if (orte_cmd_options.debug) {
         orte_devel_level_output = true;
     }
 
@@ -512,7 +576,17 @@ void orte_submit_finalize(void)
 
     /* destruct the cmd line object */
     if (mycmdline) {
-        OBJ_RELEASE(cmd_line);
+        OBJ_RELEASE(orte_cmd_line);
+    }
+
+    /* if it was created, remove the debugger attach fifo */
+    if (0 <= orte_debugger_attach_fd) {
+        if (orte_debugger_fifo_active) {
+            opal_event_del(orte_debugger_attach);
+            free(orte_debugger_attach);
+        }
+        close(orte_debugger_attach_fd);
+        unlink(MPIR_attach_fifo);
     }
 }
 
@@ -602,12 +676,12 @@ int orte_submit_job(char *argv[], int *index,
 
     /* reset the globals every time thru as the argv
      * will modify them */
-    memset(&orte_cmd_line, 0, sizeof(orte_cmd_line));
+    memset(&orte_cmd_options, 0, sizeof(orte_cmd_options));
     argc = opal_argv_count(argv);
 
     /* parse the cmd line - do this every time thru so we can
      * repopulate the globals */
-    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(cmd_line, true,
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true,
                                                   argc, argv)) ) {
         if (OPAL_ERR_SILENT != rc) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],
@@ -617,7 +691,7 @@ int orte_submit_job(char *argv[], int *index,
     }
 
     /* Check for some "global" command line params */
-    parse_globals(argc, argv, cmd_line);
+    parse_globals(argc, argv, orte_cmd_line);
 
     /* create a new job object to hold the info for this one - the
      * jobid field will be filled in by the PLM when the job is
@@ -644,36 +718,36 @@ int orte_submit_job(char *argv[], int *index,
 
     /* check for stdout/err directives */
     /* if we were asked to tag output, mark it so */
-    if (orte_cmd_line.tag_output) {
+    if (orte_cmd_options.tag_output) {
         orte_set_attribute(&jdata->attributes, ORTE_JOB_TAG_OUTPUT, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
     /* if we were asked to timestamp output, mark it so */
-    if (orte_cmd_line.timestamp_output) {
+    if (orte_cmd_options.timestamp_output) {
         orte_set_attribute(&jdata->attributes, ORTE_JOB_TIMESTAMP_OUTPUT, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
     /* if we were asked to output to files, pass it along */
-    if (NULL != orte_cmd_line.output_filename) {
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_FILE, ORTE_ATTR_GLOBAL, orte_cmd_line.output_filename, OPAL_STRING);
+    if (NULL != orte_cmd_options.output_filename) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_FILE, ORTE_ATTR_GLOBAL, orte_cmd_options.output_filename, OPAL_STRING);
     }
     /* if we were asked to merge stderr to stdout, mark it so */
-    if (orte_cmd_line.merge) {
+    if (orte_cmd_options.merge) {
         orte_set_attribute(&jdata->attributes, ORTE_JOB_MERGE_STDERR_STDOUT, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
 
 
     /* check what user wants us to do with stdin */
-    if (NULL != orte_cmd_line.stdin_target) {
-        if (0 == strcmp(orte_cmd_line.stdin_target, "all")) {
+    if (NULL != orte_cmd_options.stdin_target) {
+        if (0 == strcmp(orte_cmd_options.stdin_target, "all")) {
             jdata->stdin_target = ORTE_VPID_WILDCARD;
-        } else if (0 == strcmp(orte_cmd_line.stdin_target, "none")) {
+        } else if (0 == strcmp(orte_cmd_options.stdin_target, "none")) {
             jdata->stdin_target = ORTE_VPID_INVALID;
         } else {
-            jdata->stdin_target = strtoul(orte_cmd_line.stdin_target, NULL, 10);
+            jdata->stdin_target = strtoul(orte_cmd_options.stdin_target, NULL, 10);
         }
     }
 
     /* if we want the argv's indexed, indicate that */
-    if (orte_cmd_line.index_argv) {
+    if (orte_cmd_options.index_argv) {
         orte_set_attribute(&jdata->attributes, ORTE_JOB_INDEX_ARGV, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
 
@@ -692,57 +766,64 @@ int orte_submit_job(char *argv[], int *index,
     /* create the map object to communicate policies */
     jdata->map = OBJ_NEW(orte_job_map_t);
 
-    if (NULL != orte_cmd_line.mapping_policy) {
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&jdata->map->mapping, NULL, orte_cmd_line.mapping_policy))) {
+    if (NULL != orte_cmd_options.mapping_policy) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&jdata->map->mapping, NULL, orte_cmd_options.mapping_policy))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-    } else if (orte_cmd_line.pernode) {
+    } else if (orte_cmd_options.pernode) {
         ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_PPR);
         ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
         /* define the ppr */
         jdata->map->ppr = strdup("1:node");
-    } else if (0 < orte_cmd_line.npernode) {
+    } else if (0 < orte_cmd_options.npernode) {
         ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_PPR);
         ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
         /* define the ppr */
-        (void)asprintf(&jdata->map->ppr, "%d:node", orte_cmd_line.npernode);
+        (void)asprintf(&jdata->map->ppr, "%d:node", orte_cmd_options.npernode);
     }
-    if (NULL != orte_cmd_line.ranking_policy) {
+
+    /* if the user specified cpus/rank, set it */
+    if (0 < orte_cmd_options.cpus_per_proc) {
+        jdata->map->cpus_per_rank = orte_cmd_options.cpus_per_proc;
+    }
+    /* if the user specified a ranking policy, then set it */
+    if (NULL != orte_cmd_options.ranking_policy) {
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_ranking_policy(&jdata->map->ranking,
                                                                      jdata->map->mapping,
-                                                                     orte_cmd_line.ranking_policy))) {
+                                                                     orte_cmd_options.ranking_policy))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     }
-    if (NULL != orte_cmd_line.binding_policy) {
+    /* if the user specified a binding policy, then set it */
+    if (NULL != orte_cmd_options.binding_policy) {
         if (ORTE_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&jdata->map->binding,
-                                                                     orte_cmd_line.binding_policy))) {
+                                                                     orte_cmd_options.binding_policy))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     }
 
     /* if they asked for nolocal, mark it so */
-    if (orte_cmd_line.nolocal) {
+    if (orte_cmd_options.nolocal) {
         ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
     }
-    if (orte_cmd_line.no_oversubscribe) {
+    if (orte_cmd_options.no_oversubscribe) {
         ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
     }
-    if (orte_cmd_line.oversubscribe) {
+    if (orte_cmd_options.oversubscribe) {
         ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
     }
-    if (orte_cmd_line.report_bindings) {
+    if (orte_cmd_options.report_bindings) {
         orte_set_attribute(&jdata->attributes, ORTE_JOB_REPORT_BINDINGS, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
-    if (orte_cmd_line.slot_list) {
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_SLOT_LIST, ORTE_ATTR_GLOBAL, orte_cmd_line.slot_list, OPAL_STRING);
+    if (orte_cmd_options.slot_list) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_SLOT_LIST, ORTE_ATTR_GLOBAL, orte_cmd_options.slot_list, OPAL_STRING);
     }
 
     /* if recovery was disabled on the cmd line, do so */
-    if (orte_cmd_line.enable_recovery) {
+    if (orte_cmd_options.enable_recovery) {
         ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_RECOVERABLE);
     }
 
@@ -776,21 +857,21 @@ int orte_submit_job(char *argv[], int *index,
         daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
 
         /* check for request to report uri */
-        if (NULL != orte_cmd_line.report_uri) {
+        if (NULL != orte_cmd_options.report_uri) {
             FILE *fp;
             char *rml_uri;
             rml_uri = orte_rml.get_contact_info();
-            if (0 == strcmp(orte_cmd_line.report_uri, "-")) {
+            if (0 == strcmp(orte_cmd_options.report_uri, "-")) {
                 /* if '-', then output to stdout */
                 printf("%s\n",  (NULL == rml_uri) ? "NULL" : rml_uri);
-            } else if (0 == strcmp(orte_cmd_line.report_uri, "+")) {
+            } else if (0 == strcmp(orte_cmd_options.report_uri, "+")) {
                 /* if '+', output to stderr */
                 fprintf(stderr, "%s\n",  (NULL == rml_uri) ? "NULL" : rml_uri);
             } else {
-                fp = fopen(orte_cmd_line.report_uri, "w");
+                fp = fopen(orte_cmd_options.report_uri, "w");
                 if (NULL == fp) {
                     orte_show_help("help-orterun.txt", "orterun:write_file", false,
-                                   orte_basename, "uri", orte_cmd_line.report_uri);
+                                   orte_basename, "uri", orte_cmd_options.report_uri);
                     exit(0);
                 }
                 fprintf(fp, "%s\n", (NULL == rml_uri) ? "NULL" : rml_uri);
@@ -911,25 +992,25 @@ int orte_submit_job(char *argv[], int *index,
 static int init_globals(void)
 {
     /* Reset the other fields every time */
-    orte_cmd_line.help = false;
-    orte_cmd_line.version = false;
-    orte_cmd_line.num_procs =  0;
-    if (NULL != orte_cmd_line.appfile) {
-        free(orte_cmd_line.appfile);
+    orte_cmd_options.help = false;
+    orte_cmd_options.version = false;
+    orte_cmd_options.num_procs =  0;
+    if (NULL != orte_cmd_options.appfile) {
+        free(orte_cmd_options.appfile);
     }
-    orte_cmd_line.appfile = NULL;
-    if (NULL != orte_cmd_line.wdir) {
-        free(orte_cmd_line.wdir);
+    orte_cmd_options.appfile = NULL;
+    if (NULL != orte_cmd_options.wdir) {
+        free(orte_cmd_options.wdir);
     }
-    orte_cmd_line.set_cwd_to_session_dir = false;
-    orte_cmd_line.wdir = NULL;
-    if (NULL != orte_cmd_line.path) {
-        free(orte_cmd_line.path);
+    orte_cmd_options.set_cwd_to_session_dir = false;
+    orte_cmd_options.wdir = NULL;
+    if (NULL != orte_cmd_options.path) {
+        free(orte_cmd_options.path);
     }
-    orte_cmd_line.path = NULL;
+    orte_cmd_options.path = NULL;
 
-    orte_cmd_line.preload_binaries = false;
-    orte_cmd_line.preload_files  = NULL;
+    orte_cmd_options.preload_binaries = false;
+    orte_cmd_options.preload_files  = NULL;
 
     /* All done */
     return ORTE_SUCCESS;
@@ -939,19 +1020,19 @@ static int init_globals(void)
 static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
 {
     /* check for request to report pid */
-    if (NULL != orte_cmd_line.report_pid) {
+    if (NULL != orte_cmd_options.report_pid) {
         FILE *fp;
-        if (0 == strcmp(orte_cmd_line.report_pid, "-")) {
+        if (0 == strcmp(orte_cmd_options.report_pid, "-")) {
             /* if '-', then output to stdout */
             printf("%d\n", (int)getpid());
-        } else if (0 == strcmp(orte_cmd_line.report_pid, "+")) {
+        } else if (0 == strcmp(orte_cmd_options.report_pid, "+")) {
             /* if '+', output to stderr */
             fprintf(stderr, "%d\n", (int)getpid());
         } else {
-            fp = fopen(orte_cmd_line.report_pid, "w");
+            fp = fopen(orte_cmd_options.report_pid, "w");
             if (NULL == fp) {
                 orte_show_help("help-orterun.txt", "orterun:write_file", false,
-                               orte_basename, "pid", orte_cmd_line.report_pid);
+                               orte_basename, "pid", orte_cmd_options.report_pid);
                 exit(0);
             }
             fprintf(fp, "%d\n", (int)getpid());
@@ -961,8 +1042,8 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
 
     /* Do we want a user-level debugger? */
 
-    if (orte_cmd_line.debugger) {
-        run_debugger(orte_basename, cmd_line, argc, argv, orte_cmd_line.num_procs);
+    if (orte_cmd_options.debugger) {
+        run_debugger(orte_basename, cmd_line, argc, argv, orte_cmd_options.num_procs);
     }
 
     return ORTE_SUCCESS;
@@ -1146,12 +1227,10 @@ static int create_app(int argc, char* argv[],
                       orte_app_context_t **app_ptr,
                       bool *made_app, char ***app_env)
 {
-    opal_cmd_line_t app_cmd_line;
     char cwd[OPAL_PATH_MAX];
     int i, j, count, rc;
     char *param, *value;
     orte_app_context_t *app = NULL;
-    bool cmd_line_made = false;
     bool found = false;
     char *appname;
 
@@ -1167,7 +1246,7 @@ static int create_app(int argc, char* argv[],
      *  $ mpirun -np 2 -mca foo bar --app launch.appfile
      * Only pick up '-mca foo bar' on this pass.
      */
-    if (NULL != orte_cmd_line.appfile) {
+    if (NULL != orte_cmd_options.appfile) {
         if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(argc, 0, argv))) {
             goto cleanup;
         }
@@ -1175,21 +1254,25 @@ static int create_app(int argc, char* argv[],
 
     /* Parse application command line options. */
     init_globals();
-    OBJ_CONSTRUCT(&app_cmd_line, opal_cmd_line_t);
-    rc = orte_cmd_line_create(&app_cmd_line, argc, argv,
-                              app_env, &global_mca_env,
-                              NULL, NULL);
-    cmd_line_made = true;
+    /* parse the cmd line - do this every time thru so we can
+     * repopulate the globals */
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true,
+                                                  argc, argv)) ) {
+        if (OPAL_ERR_SILENT != rc) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(rc));
+        }
+        return rc;
+    }
 
     /* Is there an appfile in here? */
-    if (NULL != orte_cmd_line.appfile) {
-        OBJ_DESTRUCT(&app_cmd_line);
-        return parse_appfile(jdata, strdup(orte_cmd_line.appfile), app_env);
+    if (NULL != orte_cmd_options.appfile) {
+        return parse_appfile(jdata, strdup(orte_cmd_options.appfile), app_env);
     }
 
     /* Setup application context */
     app = OBJ_NEW(orte_app_context_t);
-    opal_cmd_line_get_tail(&app_cmd_line, &count, &app->argv);
+    opal_cmd_line_get_tail(orte_cmd_line, &count, &app->argv);
 
     /* See if we have anything left */
     if (0 == count) {
@@ -1213,8 +1296,8 @@ static int create_app(int argc, char* argv[],
     /* Grab all MCA environment variables */
 
     app->env = opal_argv_copy(*app_env);
-    if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(orte_cmd_line.path,
-                                                    &app_cmd_line,
+    if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(orte_cmd_options.path,
+                                                    orte_cmd_line,
                                                     environ, &app->env))) {
         goto cleanup;
     }
@@ -1222,10 +1305,10 @@ static int create_app(int argc, char* argv[],
 
     /* Did the user request a specific wdir? */
 
-    if (NULL != orte_cmd_line.wdir) {
+    if (NULL != orte_cmd_options.wdir) {
         /* if this is a relative path, convert it to an absolute path */
-        if (opal_path_is_absolute(orte_cmd_line.wdir)) {
-            app->cwd = strdup(orte_cmd_line.wdir);
+        if (opal_path_is_absolute(orte_cmd_options.wdir)) {
+            app->cwd = strdup(orte_cmd_options.wdir);
         } else {
             /* get the cwd */
             if (OPAL_SUCCESS != (rc = opal_getcwd(cwd, sizeof(cwd)))) {
@@ -1234,10 +1317,10 @@ static int create_app(int argc, char* argv[],
                 goto cleanup;
             }
             /* construct the absolute path */
-            app->cwd = opal_os_path(false, cwd, orte_cmd_line.wdir, NULL);
+            app->cwd = opal_os_path(false, cwd, orte_cmd_options.wdir, NULL);
         }
         orte_set_attribute(&app->attributes, ORTE_APP_USER_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
-    } else if (orte_cmd_line.set_cwd_to_session_dir) {
+    } else if (orte_cmd_options.set_cwd_to_session_dir) {
         orte_set_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
         orte_set_attribute(&app->attributes, ORTE_APP_USER_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     } else {
@@ -1258,25 +1341,25 @@ static int create_app(int argc, char* argv[],
         /* Check to see if the user explicitly wanted to disable automatic
            --prefix behavior */
 
-        if (opal_cmd_line_is_taken(&app_cmd_line, "noprefix")) {
+        if (opal_cmd_line_is_taken(orte_cmd_line, "noprefix")) {
             want_prefix_by_default = false;
         }
 
         /* Did the user specify a prefix, or want prefix by default? */
-        if (opal_cmd_line_is_taken(&app_cmd_line, "prefix") || want_prefix_by_default) {
+        if (opal_cmd_line_is_taken(orte_cmd_line, "prefix") || want_prefix_by_default) {
             size_t param_len;
             /* if both the prefix was given and we have a prefix
              * given above, check to see if they match
              */
-            if (opal_cmd_line_is_taken(&app_cmd_line, "prefix") &&
-                NULL != orte_cmd_line.prefix) {
+            if (opal_cmd_line_is_taken(orte_cmd_line, "prefix") &&
+                NULL != orte_cmd_options.prefix) {
                 /* if they don't match, then that merits a warning */
-                param = strdup(opal_cmd_line_get_param(&app_cmd_line, "prefix", 0, 0));
+                param = strdup(opal_cmd_line_get_param(orte_cmd_line, "prefix", 0, 0));
                 /* ensure we strip any trailing '/' */
                 if (0 == strcmp(OPAL_PATH_SEP, &(param[strlen(param)-1]))) {
                     param[strlen(param)-1] = '\0';
                 }
-                value = strdup(orte_cmd_line.prefix);
+                value = strdup(orte_cmd_options.prefix);
                 if (0 == strcmp(OPAL_PATH_SEP, &(value[strlen(value)-1]))) {
                     value[strlen(value)-1] = '\0';
                 }
@@ -1287,14 +1370,14 @@ static int create_app(int argc, char* argv[],
                      * know that one is being used
                      */
                     free(param);
-                    param = strdup(orte_cmd_line.prefix);
+                    param = strdup(orte_cmd_options.prefix);
                 }
                 free(value);
-            } else if (NULL != orte_cmd_line.prefix) {
-                param = strdup(orte_cmd_line.prefix);
-            } else if (opal_cmd_line_is_taken(&app_cmd_line, "prefix")){
+            } else if (NULL != orte_cmd_options.prefix) {
+                param = strdup(orte_cmd_options.prefix);
+            } else if (opal_cmd_line_is_taken(orte_cmd_line, "prefix")){
                 /* must be --prefix alone */
-                param = strdup(opal_cmd_line_get_param(&app_cmd_line, "prefix", 0, 0));
+                param = strdup(opal_cmd_line_get_param(orte_cmd_line, "prefix", 0, 0));
             } else {
                 /* --enable-orterun-prefix-default was given to orterun */
                 param = strdup(opal_install_dirs.prefix);
@@ -1323,32 +1406,32 @@ static int create_app(int argc, char* argv[],
      * hostfile and machine file.
      * We can only deal with one hostfile per app context, otherwise give an error.
      */
-    if (0 < (j = opal_cmd_line_get_ninsts(&app_cmd_line, "hostfile"))) {
+    if (0 < (j = opal_cmd_line_get_ninsts(orte_cmd_line, "hostfile"))) {
         if(1 < j) {
             orte_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
                            true, orte_basename, NULL);
             return ORTE_ERR_FATAL;
         } else {
-            value = opal_cmd_line_get_param(&app_cmd_line, "hostfile", 0, 0);
+            value = opal_cmd_line_get_param(orte_cmd_line, "hostfile", 0, 0);
             orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_GLOBAL, value, OPAL_STRING);
         }
     }
-    if (0 < (j = opal_cmd_line_get_ninsts(&app_cmd_line, "machinefile"))) {
+    if (0 < (j = opal_cmd_line_get_ninsts(orte_cmd_line, "machinefile"))) {
         if(1 < j || orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING)) {
             orte_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
                            true, orte_basename, NULL);
             return ORTE_ERR_FATAL;
         } else {
-            value = opal_cmd_line_get_param(&app_cmd_line, "machinefile", 0, 0);
+            value = opal_cmd_line_get_param(orte_cmd_line, "machinefile", 0, 0);
             orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_GLOBAL, value, OPAL_STRING);
         }
     }
 
     /* Did the user specify any hosts? */
-    if (0 < (j = opal_cmd_line_get_ninsts(&app_cmd_line, "host"))) {
+    if (0 < (j = opal_cmd_line_get_ninsts(orte_cmd_line, "host"))) {
         char **targ=NULL, *tval;
         for (i = 0; i < j; ++i) {
-            value = opal_cmd_line_get_param(&app_cmd_line, "host", i, 0);
+            value = opal_cmd_line_get_param(orte_cmd_line, "host", i, 0);
             opal_argv_append_nosize(&targ, value);
         }
         tval = opal_argv_join(targ, ',');
@@ -1361,18 +1444,18 @@ static int create_app(int argc, char* argv[],
     }
 
     /* check for bozo error */
-    if (0 > orte_cmd_line.num_procs) {
+    if (0 > orte_cmd_options.num_procs) {
         orte_show_help("help-orterun.txt", "orterun:negative-nprocs",
                        true, orte_basename, app->argv[0],
-                       orte_cmd_line.num_procs, NULL);
+                       orte_cmd_options.num_procs, NULL);
         return ORTE_ERR_FATAL;
     }
 
-    app->num_procs = (orte_std_cntr_t)orte_cmd_line.num_procs;
+    app->num_procs = (orte_std_cntr_t)orte_cmd_options.num_procs;
     total_num_apps++;
 
     /* Capture any preload flags */
-    if (orte_cmd_line.preload_binaries) {
+    if (orte_cmd_options.preload_binaries) {
         orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
     /* if we were told to cwd to the session dir and the app was given in
@@ -1383,15 +1466,15 @@ static int create_app(int argc, char* argv[],
      */
     if (!opal_path_is_absolute(app->argv[0]) &&
         NULL == strstr(app->argv[0], "java")) {
-        if (orte_cmd_line.preload_binaries) {
+        if (orte_cmd_options.preload_binaries) {
             orte_set_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
         } else if (orte_get_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, NULL, OPAL_BOOL)) {
             orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
         }
     }
-    if (NULL != orte_cmd_line.preload_files) {
+    if (NULL != orte_cmd_options.preload_files) {
         orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, ORTE_ATTR_GLOBAL,
-                           orte_cmd_line.preload_files, OPAL_STRING);
+                           orte_cmd_options.preload_files, OPAL_STRING);
     }
 
     /* Do not try to find argv[0] here -- the starter is responsible
@@ -1565,9 +1648,6 @@ static int create_app(int argc, char* argv[],
     if (NULL != app) {
         OBJ_RELEASE(app);
     }
-    if (cmd_line_made) {
-        OBJ_DESTRUCT(&app_cmd_line);
-    }
     return rc;
 }
 
@@ -1600,9 +1680,9 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
      * Make sure to clear out this variable so we don't do anything odd in
      * app_create()
      */
-    if (NULL != orte_cmd_line.appfile) {
-        free(orte_cmd_line.appfile);
-        orte_cmd_line.appfile = NULL;
+    if (NULL != orte_cmd_options.appfile) {
+        free(orte_cmd_options.appfile);
+        orte_cmd_options.appfile = NULL;
     }
 
     /* Try to open the file */

@@ -49,7 +49,6 @@
 void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 {
     orte_job_t *jdata;
-    orte_job_map_t *map;
     orte_node_t *node;
     int rc, i;
     bool did_map, given;
@@ -113,94 +112,21 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
     }
 
-    /* NOTE: CHECK FOR JDATA->MAP == NULL. IF IT IS, THEN USE
-     * THE VALUES THAT WERE READ BY THE LOCAL MCA PARAMS. THE
-     * PLM PROXY WILL SEND A JOB-OBJECT THAT WILL INCLUDE ANY
-     * MAPPING DIRECTIVES - OTHERWISE, THAT OBJECT WILL HAVE A
-     * NULL MAP FIELD
-     * LONE EXCEPTION - WE COPY DISPLAY MAP ACROSS IF THEY
-     * DIDN'T SET IT
-     */
-    if (NULL == jdata->map) {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: creating new map for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        /* create a map object where we will store the results */
-        map = OBJ_NEW(orte_job_map_t);
-        if (NULL == map) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            OBJ_RELEASE(caddy);
-            return;
-        }
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: nprocs %s",
-                            ORTE_VPID_PRINT(nprocs));
+
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                        "mca:rmaps: setting mapping policies for job %s",
+                        ORTE_JOBID_PRINT(jdata->jobid));
+
+    if (!jdata->map->display_map) {
+        jdata->map->display_map = orte_rmaps_base.display_map;
+    }
+    /* set the default mapping policy IFF it wasn't provided */
+    if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
         if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                "mca:rmaps mapping given - using default");
-            map->mapping = orte_rmaps_base.mapping;
+                                "mca:rmaps mapping given by MCA param");
+            jdata->map->mapping = orte_rmaps_base.mapping;
         } else {
-            /* default based on number of procs */
-            if (nprocs <= 2) {
-                if (1 < orte_rmaps_base.cpus_per_rank) {
-                    /* assigning multiple cpus to a rank requires that we map to
-                     * objects that have multiple cpus in them, so default
-                     * to byslot if nothing else was specified by the user.
-                     */
-                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps[%d] mapping not given - using byslot", __LINE__);
-                    ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
-                } else if (opal_hwloc_use_hwthreads_as_cpus) {
-                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps[%d] mapping not given - using byhwthread", __LINE__);
-                    ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYHWTHREAD);
-                } else {
-                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps[%d] mapping not given - using bycore", __LINE__);
-                    ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYCORE);
-                }
-            } else {
-                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                    "mca:rmaps[%d] mapping not given - using bysocket", __LINE__);
-                ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSOCKET);
-            }
-            /* check for oversubscribe directives */
-            if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
-                ORTE_SET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-            } else {
-                /* pass along the directive */
-                if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-                    ORTE_SET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-                } else {
-                    ORTE_UNSET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-                }
-            }
-            /* check for no-use-local directive */
-            if (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-                ORTE_SET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
-            }
-        }
-        /* ranking was already handled, so just use it here */
-        map->ranking = orte_rmaps_base.ranking;
-
-        if (NULL != orte_rmaps_base.ppr) {
-            map->ppr = strdup(orte_rmaps_base.ppr);
-        }
-        map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
-        map->display_map = orte_rmaps_base.display_map;
-        /* assign the map object to this job */
-        jdata->map = map;
-    } else {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: setting mapping policies for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-
-        if (!jdata->map->display_map) {
-            jdata->map->display_map = orte_rmaps_base.display_map;
-        }
-        /* set the default mapping policy IFF it wasn't provided */
-        if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
             /* default based on number of procs */
             if (nprocs <= 2) {
                 if (1 < orte_rmaps_base.cpus_per_rank) {
@@ -226,25 +152,32 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
             }
         }
-        /* check for oversubscribe directives */
-        if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+    }
+    /* check for oversubscribe directives */
+    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+    } else {
+        /* pass along the directive */
+        if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
             ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
         } else {
-            /* pass along the directive */
-            if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-                ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-            } else {
-                ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-            }
+            ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
         }
-        /* check for no-use-local directive */
-        if (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-            ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
-        }
-        /* ditto for rank and bind policies */
-        if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
-            jdata->map->ranking = orte_rmaps_base.ranking;
-        }
+    }
+    /* check for no-use-local directive */
+    if (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
+    }
+    /* ditto for rank policy */
+    if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
+        jdata->map->ranking = orte_rmaps_base.ranking;
+    }
+
+    if (NULL == jdata->map->ppr && NULL != orte_rmaps_base.ppr) {
+        jdata->map->ppr = strdup(orte_rmaps_base.ppr);
+    }
+    if (0 == jdata->map->cpus_per_rank) {
+        jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
     }
 
     /* define the binding policy for this job - if the user specified one
