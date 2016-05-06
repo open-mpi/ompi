@@ -94,25 +94,29 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
 /*
  * Look for and handle any -mca options on the command line
  */
-int mca_base_cmd_line_process_args(char **argv,
+int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
                                    char ***context_env, char ***global_env)
 {
-    int i, rc;
+    int i, num_insts, rc;
     char **params;
     char **values;
 
+    /* If no relevant parameters were given, just return */
+
+    if (!opal_cmd_line_is_taken(cmd, OPAL_MCA_CMD_LINE_ID) &&
+        !opal_cmd_line_is_taken(cmd, "g"OPAL_MCA_CMD_LINE_ID)) {
+        return OPAL_SUCCESS;
+    }
+
+    /* Handle app context-specific parameters */
+
+    num_insts = opal_cmd_line_get_ninsts(cmd, OPAL_MCA_CMD_LINE_ID);
     params = values = NULL;
-    for (i = 0; NULL != argv[i]; ++i) {
-        if (0 == strcmp("-"OPAL_MCA_CMD_LINE_ID,  argv[i]) ||
-            0 == strcmp("--"OPAL_MCA_CMD_LINE_ID, argv[i])) {
-            if (NULL == argv[i+1] || NULL == argv[i+2]) {
-                return OPAL_ERR_BAD_PARAM;
-            }
-            if (OPAL_SUCCESS != (rc = process_arg(argv[i+1], argv[i+2],
-                                                  &params, &values))) {
-                return rc;
-            }
-            i += 2;
+    for (i = 0; i < num_insts; ++i) {
+        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 0),
+                                              opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 1),
+                                              &params, &values))) {
+            return rc;
         }
     }
     if (NULL != params) {
@@ -121,19 +125,15 @@ int mca_base_cmd_line_process_args(char **argv,
         opal_argv_free(values);
     }
 
+    /* Handle global parameters */
 
+    num_insts = opal_cmd_line_get_ninsts(cmd, "g"OPAL_MCA_CMD_LINE_ID);
     params = values = NULL;
-    for (i = 0; NULL != argv[i]; ++i) {
-        if (0 == strcmp("-g"OPAL_MCA_CMD_LINE_ID,  argv[i]) ||
-            0 == strcmp("--g"OPAL_MCA_CMD_LINE_ID, argv[i])) {
-            if (NULL == argv[i+1] || NULL == argv[i+2]) {
-                return OPAL_ERR_BAD_PARAM;
-            }
-            if (OPAL_SUCCESS != (rc = process_arg(argv[i+1], argv[i+2],
-                                                  &params, &values))) {
-                return rc;
-            }
-            i += 2;
+    for (i = 0; i < num_insts; ++i) {
+        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, "g"OPAL_MCA_CMD_LINE_ID, i, 0),
+                                              opal_cmd_line_get_param(cmd, "g"OPAL_MCA_CMD_LINE_ID, i, 1),
+                                              &params, &values))) {
+            return rc;
         }
     }
     if (NULL != params) {
@@ -146,6 +146,7 @@ int mca_base_cmd_line_process_args(char **argv,
 
     return OPAL_SUCCESS;
 }
+
 
 
 /*

@@ -57,8 +57,7 @@ headers += \
         util/nidmap.h \
         util/regex.h \
         util/attr.h \
-        util/listener.h \
-        util/cmd_line.h
+        util/listener.h
 
 lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
         util/error_strings.c \
@@ -77,8 +76,7 @@ lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
         util/nidmap.c \
         util/regex.c \
         util/attr.c \
-        util/listener.c \
-        util/cmd_line.c
+        util/listener.c
 
 # Remove the generated man pages
 distclean-local:

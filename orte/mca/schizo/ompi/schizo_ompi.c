@@ -74,22 +74,22 @@ orte_schizo_base_module_t orte_schizo_ompi_module = {
 static opal_cmd_line_init_t cmd_line_init[] = {
     /* Various "obvious" options */
     { NULL, 'h', NULL, "help", 0,
-      &orte_cmd_line.help, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
     { NULL, 'V', NULL, "version", 0,
-      &orte_cmd_line.version, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.version, OPAL_CMD_LINE_TYPE_BOOL,
       "Print version and exit" },
     { NULL, 'v', NULL, "verbose", 0,
-      &orte_cmd_line.verbose, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
     { "orte_execute_quiet", 'q', NULL, "quiet", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
     { NULL, '\0', "report-pid", "report-pid", 1,
-      &orte_cmd_line.report_pid, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.report_pid, OPAL_CMD_LINE_TYPE_STRING,
       "Printout pid on stdout [-], stderr [+], or a file [anything else]" },
     { NULL, '\0', "report-uri", "report-uri", 1,
-      &orte_cmd_line.report_uri, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.report_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Printout URI on stdout [-], stderr [+], or a file [anything else]" },
 
     /* exit status reporting */
@@ -99,7 +99,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     /* uri of the dvm, or at least where to get it */
     { NULL, '\0', "hnp", "hnp", 1,
-      &orte_cmd_line.hnp, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.hnp, OPAL_CMD_LINE_TYPE_STRING,
       "Specify the URI of the HNP, or the name of the file (specified as file:filename) that contains that info" },
 
     /* hetero apps */
@@ -117,16 +117,16 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     /* tag output */
     { "orte_tag_output", '\0', "tag-output", "tag-output", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.tag_output, OPAL_CMD_LINE_TYPE_BOOL,
       "Tag all output with [job,rank]" },
     { "orte_timestamp_output", '\0', "timestamp-output", "timestamp-output", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.timestamp_output, OPAL_CMD_LINE_TYPE_BOOL,
       "Timestamp all application process output" },
     { "orte_output_filename", '\0', "output-filename", "output-filename", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.output_filename, OPAL_CMD_LINE_TYPE_STRING,
       "Redirect output from application processes into filename/job/rank/std[out,err,diag]" },
     { NULL, '\0', "merge-stderr-to-stdout", "merge-stderr-to-stdout", 0,
-      &orte_cmd_line.merge, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.merge, OPAL_CMD_LINE_TYPE_BOOL,
       "Merge stderr to stdout for each process"},
     { "orte_xterm", '\0', "xterm", "xterm", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
@@ -134,12 +134,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     /* select stdin option */
     { NULL, '\0', "stdin", "stdin", 1,
-      &orte_cmd_line.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
       "Specify procs to receive stdin [rank, all, none] (default: 0, indicating rank 0)" },
 
     /* request that argv[0] be indexed */
     { NULL, '\0', "index-argv-by-rank", "index-argv-by-rank", 0,
-      &orte_cmd_line.index_argv, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.index_argv, OPAL_CMD_LINE_TYPE_BOOL,
       "Uniquely index argv[0] for each process using its rank" },
 
     /* Specify the launch agent to be used */
@@ -149,33 +149,33 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     /* Preload the binary on the remote machine */
     { NULL, 's', NULL, "preload-binary", 0,
-      &orte_cmd_line.preload_binaries, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.preload_binaries, OPAL_CMD_LINE_TYPE_BOOL,
       "Preload the binary on the remote machine before starting the remote process." },
 
     /* Preload files on the remote machine */
     { NULL, '\0', NULL, "preload-files", 1,
-      &orte_cmd_line.preload_files, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.preload_files, OPAL_CMD_LINE_TYPE_STRING,
       "Preload the comma separated list of files to the remote machines current working directory before starting the remote process." },
 
 #if OPAL_ENABLE_FT_CR == 1
     /* Tell SStore to preload a snapshot before launch */
     { NULL, '\0', NULL, "sstore-load", 1,
-      &orte_cmd_line.sstore_load, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.sstore_load, OPAL_CMD_LINE_TYPE_STRING,
       "Internal Use Only! Tell SStore to preload a snapshot before launch." },
 #endif
 
     /* Use an appfile */
     { NULL, '\0', NULL, "app", 1,
-      &orte_cmd_line.appfile, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.appfile, OPAL_CMD_LINE_TYPE_STRING,
       "Provide an appfile; ignore all other command line options" },
 
     /* Number of processes; -c, -n, --n, -np, and --np are all
        synonyms */
     { NULL, 'c', "np", "np", 1,
-      &orte_cmd_line.num_procs, OPAL_CMD_LINE_TYPE_INT,
+      &orte_cmd_options.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
     { NULL, '\0', "n", "n", 1,
-      &orte_cmd_line.num_procs, OPAL_CMD_LINE_TYPE_INT,
+      &orte_cmd_options.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
 
     /* maximum size of VM - typically used to subdivide an allocation */
@@ -233,19 +233,19 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
     { "rmaps_base_no_schedule_local", '\0', "nolocal", "nolocal", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.nolocal, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not run any MPI applications on the local node" },
     { "rmaps_base_no_oversubscribe", '\0', "nooversubscribe", "nooversubscribe", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
     { "rmaps_base_oversubscribe", '\0', "oversubscribe", "oversubscribe", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are allowed to be oversubscribed, even on a managed system, and overloading of processing elements"},
     { "rmaps_base_cpus_per_rank", '\0', "cpus-per-proc", "cpus-per-proc", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
+      &orte_cmd_options.cpus_per_proc, OPAL_CMD_LINE_TYPE_INT,
       "Number of cpus to use for each process [default=1]" },
     { "rmaps_base_cpus_per_rank", '\0', "cpus-per-rank", "cpus-per-rank", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
+      &orte_cmd_options.cpus_per_proc, OPAL_CMD_LINE_TYPE_INT,
       "Synonym for cpus-per-proc" },
 
     /* backward compatiblity */
@@ -284,17 +284,17 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     /* Mapping options */
     { "rmaps_base_mapping_policy", '\0', NULL, "map-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.mapping_policy, OPAL_CMD_LINE_TYPE_STRING,
       "Mapping Policy [slot | hwthread | core | socket (default) | numa | board | node]" },
 
       /* Ranking options */
     { "rmaps_base_ranking_policy", '\0', NULL, "rank-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.ranking_policy, OPAL_CMD_LINE_TYPE_STRING,
       "Ranking Policy [slot (default) | hwthread | core | socket | numa | board | node]" },
 
       /* Binding options */
     { "hwloc_base_binding_policy", '\0', NULL, "bind-to", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.binding_policy, OPAL_CMD_LINE_TYPE_STRING,
       "Policy for binding processes. Allowed values: none, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board (\"none\" is the default when oversubscribed, \"core\" is the default when np<=2, and \"socket\" is the default when np>2). Allowed qualifiers: overload-allowed, if-supported" },
 
     /* backward compatiblity */
@@ -306,12 +306,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Bind processes to sockets" },
 
     { "hwloc_base_report_bindings", '\0', "report-bindings", "report-bindings", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.report_bindings, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to report process bindings to stderr" },
 
     /* slot list option */
     { "hwloc_base_slot_list", '\0', "slot-list", "slot-list", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.slot_list, OPAL_CMD_LINE_TYPE_STRING,
       "List of processor IDs to bind processes to [default=NULL]"},
 
     /* generalized pattern mapping option */
@@ -332,24 +332,24 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     /* mpiexec-like arguments */
     { NULL, '\0', "wdir", "wdir", 1,
-      &orte_cmd_line.wdir, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.wdir, OPAL_CMD_LINE_TYPE_STRING,
       "Set the working directory of the started processes" },
     { NULL, '\0', "wd", "wd", 1,
-      &orte_cmd_line.wdir, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.wdir, OPAL_CMD_LINE_TYPE_STRING,
       "Synonym for --wdir" },
     { NULL, '\0', "set-cwd-to-session-dir", "set-cwd-to-session-dir", 0,
-      &orte_cmd_line.set_cwd_to_session_dir, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.set_cwd_to_session_dir, OPAL_CMD_LINE_TYPE_BOOL,
       "Set the working directory of the started processes to their session directory" },
     { NULL, '\0', "path", "path", 1,
-      &orte_cmd_line.path, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.path, OPAL_CMD_LINE_TYPE_STRING,
       "PATH to be used to look for executables to start processes" },
 
     /* User-level debugger arguments */
     { NULL, '\0', "tv", "tv", 0,
-      &orte_cmd_line.debugger, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.debugger, OPAL_CMD_LINE_TYPE_BOOL,
       "Deprecated backwards compatibility flag; synonym for \"--debug\"" },
     { NULL, '\0', "debug", "debug", 0,
-      &orte_cmd_line.debugger, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.debugger, OPAL_CMD_LINE_TYPE_BOOL,
       "Invoke the user-level debugger indicated by the orte_base_user_debugger MCA parameter" },
     { "orte_base_user_debugger", '\0', "debugger", "debugger", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
@@ -399,7 +399,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Report events to a tool listening at the specified URI" },
 
     { "orte_enable_recovery", '\0', "enable-recovery", "enable-recovery", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.enable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable recovery from process failure [Default = disabled]" },
 
     { "orte_max_restarts", '\0', "max-restarts", "max-restarts", 1,
@@ -417,7 +417,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 #endif
 
     { NULL, '\0', "disable-recovery", "disable-recovery", 0,
-      &orte_cmd_line.disable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.disable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
       "Disable recovery (resets all recovery options to off)" },
 
     { "state_novm_select", '\0', "novm", "novm", 0,
@@ -425,24 +425,24 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)" },
 
     { NULL, '\0', "staged", "staged", 0,
-      &orte_cmd_line.staged_exec, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.staged_exec, OPAL_CMD_LINE_TYPE_BOOL,
       "Used staged execution if inadequate resources are present (cannot support MPI jobs)" },
 
     { NULL, '\0', "allow-run-as-root", "allow-run-as-root", 0,
-      &orte_cmd_line.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
       "Allow execution as root (STRONGLY DISCOURAGED)" },
 
     { NULL, '\0', "personality", "personality", 1,
-      &orte_cmd_line.personality, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_cmd_options.personality, OPAL_CMD_LINE_TYPE_STRING,
       "Comma-separated list of programming model, languages, and containers being used (default=\"ompi\")" },
 
     { NULL, '\0', "dvm", "dvm", 0,
-      &orte_cmd_line.create_dvm, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.create_dvm, OPAL_CMD_LINE_TYPE_BOOL,
       "Create a persistent distributed virtual machine (DVM)" },
 
     /* tell the dvm to terminate */
     { NULL, '\0', "terminate", "terminate", 0,
-      &orte_cmd_line.terminate_dvm, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.terminate_dvm, OPAL_CMD_LINE_TYPE_BOOL,
       "Terminate the DVM" },
 
     /* End of list */
