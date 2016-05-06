@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -505,6 +505,8 @@ mca_io_ompio_file_preallocate (ompi_file_t *fh,
             buf = NULL;
         }
     }
+    ret = data->ompio_fh.f_fs->fs_file_set_size (&data->ompio_fh, diskspace);
+
     fh->f_comm->c_coll.coll_barrier (fh->f_comm,
                                      fh->f_comm->c_coll.coll_barrier_module);
     return ret;

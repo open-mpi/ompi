@@ -54,7 +54,6 @@ static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newt
     }
     
     ompi_datatype_set_args( type, 0, NULL, 0, NULL, 1, &oldtype, MPI_COMBINER_DUP );
-
     *newtype = type;
     return OMPI_SUCCESS;
 }
