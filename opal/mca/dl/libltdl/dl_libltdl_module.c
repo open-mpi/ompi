@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +19,6 @@
 static int libltdl_open(const char *fname, bool use_ext, bool private_namespace,
                        opal_dl_handle_t **handle, char **err_msg)
 {
-    assert(fname);
     assert(handle);
 
     *handle = NULL;
@@ -53,7 +53,12 @@ static int libltdl_open(const char *fname, bool use_ext, bool private_namespace,
         (*handle)->ltdl_handle = local_handle;
 
 #if OPAL_ENABLE_DEBUG
-        (*handle)->filename = strdup(fname);
+        if( NULL != fname ) {
+            (*handle)->filename = strdup(fname);
+        }
+        else {
+            (*handle)->filename = strdup("(null)");
+        }
 #endif
 
         return OPAL_SUCCESS;
