@@ -8,7 +8,7 @@
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -90,9 +90,6 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
         OBJ_RELEASE(schedule);
         return res;
       }
-
-      *request = &ompi_request_empty;
-      return OMPI_SUCCESS;
     }
 
     for (int r = 1, firstred = 1 ; r <= maxr; ++r) {
