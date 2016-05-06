@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -366,7 +366,7 @@ static void process_env_list(char *env_list, char ***argv, char sep)
     opal_argv_free(tokens);
 }
 
-int mca_base_var_process_env_list(char ***argv)
+int mca_base_var_process_env_list(char *list, char ***argv)
 {
     char sep;
     sep = ';';
@@ -379,7 +379,9 @@ int mca_base_var_process_env_list(char ***argv)
             return OPAL_SUCCESS;
         }
     }
-    if (NULL != mca_base_env_list) {
+    if (NULL != list) {
+        process_env_list(list, argv, sep);
+    } else if (NULL != mca_base_env_list) {
         process_env_list(mca_base_env_list, argv, sep);
     }
 
