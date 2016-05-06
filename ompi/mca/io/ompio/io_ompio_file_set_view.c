@@ -2,14 +2,14 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *  $COPYRIGHT$
@@ -39,6 +39,25 @@
 #include "io_ompio.h"
 
 static OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *);
+static int datatype_duplicate (ompi_datatype_t *oldtype, ompi_datatype_t **newtype );
+static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newtype )
+{
+    ompi_datatype_t *type;
+    if( ompi_datatype_is_predefined(oldtype) ) {
+        *newtype = oldtype;
+        return OMPI_SUCCESS;
+    }
+
+    if ( OMPI_SUCCESS != ompi_datatype_duplicate (oldtype, &type)){
+        ompi_datatype_destroy (&type);
+        return MPI_ERR_INTERN;
+    }
+    
+    ompi_datatype_set_args( type, 0, NULL, 0, NULL, 1, &oldtype, MPI_COMBINER_DUP );
+
+    *newtype = type;
+    return OMPI_SUCCESS;
+}
 
 
 int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
@@ -82,7 +101,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
 
     fh->f_flags |= OMPIO_FILE_VIEW_IS_SET;
     fh->f_datarep = strdup (datarep);
-    ompi_datatype_duplicate (filetype, &fh->f_orig_filetype );
+    datatype_duplicate (filetype, &fh->f_orig_filetype );
 
     opal_datatype_get_extent(&filetype->super, &lb, &ftype_extent);
     opal_datatype_type_size (&filetype->super, &ftype_size);
@@ -120,7 +139,9 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     opal_datatype_type_ub   (&newfiletype->super, &ub);
     opal_datatype_type_size (&etype->super, &fh->f_etype_size);
     opal_datatype_type_size (&newfiletype->super, &fh->f_view_size);
-    ompi_datatype_duplicate (etype, &fh->f_etype);
+    datatype_duplicate (etype, &fh->f_etype);
+    // This file type is our own representation. The original is stored
+    // in orig_file type, No need to set args on this one.
     ompi_datatype_duplicate (newfiletype, &fh->f_filetype);
 
     fh->f_cc_size = get_contiguous_chunk_size (fh);
@@ -234,8 +255,8 @@ int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
     fh = &data->ompio_fh;
 
     *disp = fh->f_disp;
-    ompi_datatype_duplicate (fh->f_etype, etype);
-    ompi_datatype_duplicate (fh->f_orig_filetype, filetype);
+    datatype_duplicate (fh->f_etype, etype);
+    datatype_duplicate (fh->f_orig_filetype, filetype);
     strcpy (datarep, fh->f_datarep);
 
     return OMPI_SUCCESS;
