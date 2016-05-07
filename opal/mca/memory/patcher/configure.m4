@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -84,7 +84,7 @@ AC_DEFUN([MCA_opal_memory_patcher_CONFIG],[
     AC_DEFINE_UNQUOTED([OPAL_MEMORY_PATCHER_HAVE___SYSCALL], [$memory_patcher_have___syscall],
                        [Whether the internal __syscall call exists])
 
-    AC_CHECK_HEADERS([linux/mman.h])
+    AC_CHECK_HEADERS([linux/mman.h sys/syscall.h])
 
     [$1]
 
