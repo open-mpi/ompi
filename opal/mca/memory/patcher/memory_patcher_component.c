@@ -42,8 +42,9 @@
 #include <dlfcn.h>
 #include <assert.h>
 #include <sys/time.h>
+#if defined(HAVE_SYS_SYSCALL_H)
 #include <sys/syscall.h>
-
+#endif
 #if defined(HAVE_LINUX_MMAN_H)
 #include <linux/mman.h>
 #endif
