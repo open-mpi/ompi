@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -332,6 +335,8 @@ BEGIN_C_DECLS
      * @param cmd OPAL command line handle.
      * @param ignore_unknown Whether to print an error message upon
      * finding an unknown token or not
+     * @param ignore_unknown_option Whether to print an error message upon
+     * finding an unknown option or not
      * @param argc Length of the argv array.
      * @param argv Array of strings from the command line.
      *
@@ -414,6 +419,7 @@ BEGIN_C_DECLS
      */
     OPAL_DECLSPEC int opal_cmd_line_parse(opal_cmd_line_t *cmd,
                                           bool ignore_unknown,
+                                          bool ignore_unknown_option,
                                           int argc, char **argv);
 
     /**

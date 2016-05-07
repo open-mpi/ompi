@@ -29,7 +29,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_vari.h"
 #include "opal/util/keyval_parse.h"
-
+#include "opal/util/output.h"
 static void save_value(const char *name, const char *value);
 
 static char * file_being_read;

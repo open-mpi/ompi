@@ -66,10 +66,9 @@ static char *mca_base_var_override_file = NULL;
 static char *mca_base_var_file_prefix = NULL;
 static char *mca_base_envar_file_prefix = NULL;
 static char *mca_base_param_file_path = NULL;
-static char *mca_base_env_list = NULL;
-#define MCA_BASE_ENV_LIST_SEP_DEFAULT ";"
-static char *mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
-static char *mca_base_env_list_internal = NULL;
+char *mca_base_env_list = NULL;
+char *mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
+char *mca_base_env_list_internal = NULL;
 static bool mca_base_var_suppress_override_warning = false;
 static opal_list_t mca_base_var_file_values;
 static opal_list_t mca_base_envar_file_values;
@@ -130,7 +129,6 @@ static const char *info_lvl_strings[] = {
  */
 static int fixup_files(char **file_list, char * path, bool rel_path_search, char sep);
 static int read_files (char *file_list, opal_list_t *file_values, char sep);
-static int mca_base_var_cache_files (bool rel_path_search);
 static int var_set_initial (mca_base_var_t *var, mca_base_var_t *original);
 static int var_get (int vari, mca_base_var_t **var_out, bool original);
 static int var_value_string (mca_base_var_t *var, char **value_string);
@@ -242,7 +240,6 @@ static char *append_filename_to_list(const char *filename)
 int mca_base_var_init(void)
 {
     int ret;
-    char *name = NULL;
 
     if (!mca_base_var_initialized) {
         /* Init the value array for the param storage */
@@ -282,41 +279,6 @@ int mca_base_var_init(void)
 
         mca_base_var_initialized = true;
 
-        mca_base_var_cache_files(false);
-
-        /* register the envar-forwarding params */
-        (void)mca_base_var_register ("opal", "mca", "base", "env_list",
-                                     "Set SHELL env variables",
-                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                     MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
-
-        mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
-        (void)mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
-                                     "Set SHELL env variables delimiter. Default: semicolon ';'",
-                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                     MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
-
-        /* Set OMPI_MCA_mca_base_env_list variable, it might not be set before
-         * if mca variable was taken from amca conf file. Need to set it
-         * here because mca_base_var_process_env_list is called from schizo_ompi.c
-         * only when this env variable was set.
-         */
-        if (NULL != mca_base_env_list) {
-            (void) mca_base_var_env_name ("mca_base_env_list", &name);
-            if (NULL != name) {
-                opal_setenv(name, mca_base_env_list, false, &environ);
-                free(name);
-            }
-        }
-
-        /* Register internal MCA variable mca_base_env_list_internal. It can be set only during
-         * parsing of amca conf file and contains SHELL env variables specified via -x there.
-         * Its format is the same as for mca_base_env_list.
-         */
-        (void)mca_base_var_register ("opal", "mca", "base", "env_list_internal",
-                "Store SHELL env variables from amca conf file",
-                MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_3,
-                MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_internal);
     }
 
     return OPAL_SUCCESS;
@@ -419,7 +381,7 @@ static void resolve_relative_paths(char **file_prefix, char *file_path, bool rel
     }
 }
 
-static int mca_base_var_cache_files(bool rel_path_search)
+int mca_base_var_cache_files(bool rel_path_search)
 {
     char *tmp;
     int ret;
@@ -427,7 +389,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
     /* We may need this later */
     home = (char*)opal_home_directory();
 
-    if(NULL == cwd) {
+    if (NULL == cwd) {
         cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
         if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
             opal_output(0, "Error: Unable to get the current working directory\n");
@@ -452,7 +414,8 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_2,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_var_files);
     free (tmp);
-    if (OPAL_SUCCESS != ret) {
+    if (0 > ret) {
+        opal_output(0, "FAILED PARAM FILES: %d", ret);
         return ret;
     }
 
@@ -464,6 +427,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
     ret = asprintf(&mca_base_var_override_file, "%s" OPAL_PATH_SEP "openmpi-mca-params-override.conf",
                    opal_install_dirs.sysconfdir);
     if (0 > ret) {
+        opal_output(0, "FAILED OVERRIDE");
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -476,6 +440,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  &mca_base_var_override_file);
     free (tmp);
     if (0 > ret) {
+        opal_output(0, "FAILED OVERRIDE PARAM FILES");
         return ret;
     }
 
@@ -490,6 +455,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_2,
                                  MCA_BASE_VAR_SCOPE_LOCAL, &mca_base_var_suppress_override_warning);
     if (0 > ret) {
+        opal_output(0, "FAILED OVERRIDE WARNING");
         return ret;
     }
 
@@ -503,6 +469,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_var_file_prefix);
     if (0 > ret) {
+        opal_output(0, "FAILED PARAM PREFIX");
         return ret;
     }
 
@@ -512,12 +479,14 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_envar_file_prefix);
     if (0 > ret) {
+        opal_output(0, "FAILED ENV PREFIX");
         return ret;
     }
 
     ret = asprintf(&mca_base_param_file_path, "%s" OPAL_PATH_SEP "amca-param-sets%c%s",
                    opal_install_dirs.opaldatadir, OPAL_ENV_SEP, cwd);
     if (0 > ret) {
+        opal_output(0, "FAILED PARAM FILE PATH");
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -528,6 +497,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_param_file_path);
     free (tmp);
     if (0 > ret) {
+        opal_output(0, "FAILED PARAM FILE PATH2");
         return ret;
     }
 
@@ -537,6 +507,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &force_agg_path);
     if (0 > ret) {
+        opal_output(0, "FAILED PARAM FILE FORCE");
         return ret;
     }
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -120,7 +121,7 @@ int main(int argc, char *argv[])
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_server_cmd_line_opts);
     mca_base_cmd_line_setup(cmd_line);
-    if (OPAL_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
+    if (OPAL_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false, false,
                                                    argc, argv))) {
         if (OPAL_ERR_SILENT != ret) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],

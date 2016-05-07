@@ -40,6 +40,7 @@
 #include "opal/util/proc.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/net.h"
 #include "opal/datatype/opal_datatype.h"
@@ -413,6 +414,13 @@ opal_init(int* pargc, char*** pargv)
     if (OPAL_SUCCESS != (ret = opal_init_util(pargc, pargv))) {
         return ret;
     }
+
+    /* read any param files that were provided */
+    if (OPAL_SUCCESS != (ret = mca_base_var_cache_files(false))) {
+        error = "failed to cache files";
+        goto return_error;
+    }
+
 
     /* open hwloc - since this is a static framework, no
      * select is required

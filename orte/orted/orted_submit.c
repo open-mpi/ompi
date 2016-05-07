@@ -1,5 +1,5 @@
-/* -*- C -*-
- *
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -114,7 +114,6 @@ static char **global_mca_env = NULL;
 static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static opal_pointer_array_t tool_jobs;
-static bool mycmdline = false;
 int orte_debugger_attach_fd = -1;
 bool orte_debugger_fifo_active=false;
 opal_event_t *orte_debugger_attach=NULL;
@@ -238,6 +237,25 @@ int orte_submit_init(int argc, char *argv[],
         }
     }
 
+    /* need to parse mca options *before* opal_init_util() */
+    orte_cmd_line = OBJ_NEW(opal_cmd_line_t);
+    mca_base_cmd_line_setup (orte_cmd_line);
+
+    /* parse the result to get values */
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line,
+                                                  true, true, argc, argv)) ) {
+        if (OPAL_ERR_SILENT != rc) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(rc));
+        }
+        return rc;
+    }
+
+    if (OPAL_SUCCESS != (rc = mca_base_cmd_line_process_args(orte_cmd_line, &environ, &environ))) {
+        return rc;
+    }
+
+
     /* init only the util portion of OPAL */
     if (OPAL_SUCCESS != (rc = opal_init_util(&argc, &argv))) {
         return rc;
@@ -255,24 +273,16 @@ int orte_submit_init(int argc, char *argv[],
     OBJ_CONSTRUCT(&tool_jobs, opal_pointer_array_t);
     opal_pointer_array_init(&tool_jobs, 256, INT_MAX, 128);
 
-    /* setup the cmd line only once */
+    /* if they were provided, add the opts */
     if (NULL != opts) {
-        /* just add the component-defined ones to the end */
-        if (OPAL_SUCCESS != (rc = orte_schizo.define_cli(opts))) {
+        if (OPAL_SUCCESS != (rc = opal_cmd_line_add(orte_cmd_line, opts))) {
             return rc;
         }
-        orte_cmd_line = opts;
-        mycmdline = false;
-    } else {
+    }
 
-        /* have to create the cmd line next as even --help
-         * will need it */
-        orte_cmd_line = OBJ_NEW(opal_cmd_line_t);
-        if (OPAL_SUCCESS != (rc = orte_schizo.define_cli(orte_cmd_line))) {
-            OBJ_RELEASE(orte_cmd_line);
-            return rc;
-        }
-        mycmdline = true;
+    /* setup the rest of the cmd line only once */
+    if (OPAL_SUCCESS != (rc = orte_schizo.define_cli(orte_cmd_line))) {
+        return rc;
     }
 
     /* now that options have been defined, finish setup */
@@ -280,7 +290,7 @@ int orte_submit_init(int argc, char *argv[],
 
     /* parse the result to get values */
     if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line,
-                                                  true, argc, argv)) ) {
+                                                  true, false, argc, argv)) ) {
         if (OPAL_ERR_SILENT != rc) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],
                     opal_strerror(rc));
@@ -300,7 +310,7 @@ int orte_submit_init(int argc, char *argv[],
             /* show_help is not yet available, so print an error manually */
             fprintf(stderr, "%s has detected an attempt to run as root.\n", orte_basename);
         }
-        fprintf(stderr, "Running at root is *strongly* discouraged as any mistake (e.g., in\n");
+        fprintf(stderr, "Running as root is *strongly* discouraged as any mistake (e.g., in\n");
         fprintf(stderr, "defining TMPDIR) or bug can result in catastrophic damage to the OS\n");
         fprintf(stderr, "file system, leaving your system in an unusable state.\n\n");
         fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
@@ -575,7 +585,7 @@ void orte_submit_finalize(void)
     OBJ_DESTRUCT(&tool_jobs);
 
     /* destruct the cmd line object */
-    if (mycmdline) {
+    if (NULL != orte_cmd_line) {
         OBJ_RELEASE(orte_cmd_line);
     }
 
@@ -681,7 +691,7 @@ int orte_submit_job(char *argv[], int *index,
 
     /* parse the cmd line - do this every time thru so we can
      * repopulate the globals */
-    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true,
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true, false,
                                                   argc, argv)) ) {
         if (OPAL_ERR_SILENT != rc) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],
@@ -1256,7 +1266,7 @@ static int create_app(int argc, char* argv[],
     init_globals();
     /* parse the cmd line - do this every time thru so we can
      * repopulate the globals */
-    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true,
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true, false,
                                                   argc, argv)) ) {
         if (OPAL_ERR_SILENT != rc) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],
