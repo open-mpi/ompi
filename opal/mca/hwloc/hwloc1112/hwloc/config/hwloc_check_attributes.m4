@@ -322,9 +322,10 @@ AC_DEFUN([_HWLOC_CHECK_ATTRIBUTES], [
     # Attribute may_alias: No suitable cross-check available, that works for non-supporting compilers
     # Ignored by intel-9.1.045 -- turn off with -wd1292
     # Ignored by PGI-6.2.5; ignore not detected due to missing cross-check
+    # The test case is chosen to match our only use in topology-xml-*.c, and reproduces an xlc-13.1.0 bug.
     #
     _HWLOC_CHECK_SPECIFIC_ATTRIBUTE([may_alias],
-        [int * p_value __attribute__ ((__may_alias__));],
+        [struct { int i; } __attribute__ ((__may_alias__)) * p_value;],
         [],
         [])
 
