@@ -236,7 +236,8 @@ int orterun(int argc, char *argv[])
           opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
       }
       if (orte_debug_flag) {
-          opal_output(0, "Job %s has launched", ORTE_JOBID_PRINT(launchst.jdata->jobid));
+          opal_output(0, "Job %s has launched",
+                      (NULL == launchst.jdata) ? "UNKNOWN" : ORTE_JOBID_PRINT(launchst.jdata->jobid));
       }
       if (!orte_event_base_active || ORTE_SUCCESS != launchst.status) {
           goto DONE;
