@@ -21,7 +21,7 @@ endif
 
 .1in.1:
 	@ echo "  BUILDING $@"
-	@ $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
+	$(AM_V_CC) $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
 	  --package-name='@PACKAGE_NAME@' \
 	  --package-version='@PACKAGE_VERSION@' \
 	  --ompi-date='@OMPI_RELEASE_DATE@' \
@@ -32,7 +32,7 @@ endif
 
 .3in.3:
 	@ echo "  BUILDING $@"
-	@ $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
+	$(AM_V_CC) $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
 	  --package-name='@PACKAGE_NAME@' \
 	  --package-version='@PACKAGE_VERSION@' \
 	  --ompi-date='@OMPI_RELEASE_DATE@' \
@@ -44,7 +44,7 @@ endif
 
 .7in.7:
 	@ echo "  BUILDING $@"
-	@ $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
+	$(AM_V_CC) $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
 	  --package-name='@PACKAGE_NAME@' \
 	  --package-version='@PACKAGE_VERSION@' \
 	  --ompi-date='@OMPI_RELEASE_DATE@' \
