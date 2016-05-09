@@ -87,14 +87,16 @@ static int xcast(orte_jobid_t job,
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
-static int pmi_barrier(orte_grpcomm_collective_t *coll)
+static void process_barrier(int fd, short args, void *cbdata)
 {
     int rc;
-    
+    orte_grpcomm_caddy_t *caddy = (orte_grpcomm_caddy_t*)cbdata;
+    orte_grpcomm_collective_t *coll = caddy->op;
+
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     /* if I am alone, just execute the callback */
     if (1 == orte_process_info.num_procs) {
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
@@ -104,20 +106,20 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
         if (NULL != coll->cbfunc) {
             coll->cbfunc(NULL, coll->cbdata);
         }
-        return ORTE_SUCCESS;
+        return;
     }
-    
+
 #if WANT_PMI2_SUPPORT
     /* PMI2 doesn't provide a barrier, so use the Fence function here */
     if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
         OPAL_PMI_ERROR(rc, "PMI2_KVS_Fence");
-        return ORTE_ERROR;
+        return;
     }
 #else
     /* use the PMI barrier function */
     if (PMI_SUCCESS != (rc = PMI_Barrier())) {
         OPAL_PMI_ERROR(rc, "PMI_Barrier");
-        return ORTE_ERROR;
+        return;
     }
 #endif
 
@@ -130,6 +132,15 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
         coll->cbfunc(NULL, coll->cbdata);
     }
 
+    return;
+}
+
+static int pmi_barrier(orte_grpcomm_collective_t *coll)
+{
+    /* push it into the event library to avoid blocking
+     * opal progress
+     */
+    ORTE_GRPCOMM_ACTIVATE(coll, process_barrier);
     return ORTE_SUCCESS;
 }
 
@@ -141,8 +152,10 @@ static int pmi_allgather(orte_grpcomm_collective_t *coll)
 
 
 /***   MODEX SECTION ***/
-static int modex(orte_grpcomm_collective_t *coll)
+static void process_modex(int fd, short args, void *cbdata)
 {
+    orte_grpcomm_caddy_t *caddy = (orte_grpcomm_caddy_t*)cbdata;
+    orte_grpcomm_collective_t *coll = caddy->op;
     int *local_ranks, local_rank_count;
     opal_hwloc_locality_t locality;
     const char *cpuset;
@@ -160,7 +173,7 @@ static int modex(orte_grpcomm_collective_t *coll)
                                                           &local_rank_count))) {
         opal_output(0, "%s could not get local ranks",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        return ORTE_ERROR;
+        return;
     }
 
 
@@ -177,39 +190,39 @@ static int modex(orte_grpcomm_collective_t *coll)
         }
         name.vpid = v;
 
-	/* check if this is a local process */
-	for (i = 0, local = false ; i < local_rank_count ; ++i) {
-	    if ((orte_vpid_t) local_ranks[i] == v) {
-		local = true;
-		break;
-	    }
-	}
+        /* check if this is a local process */
+        for (i = 0, local = false ; i < local_rank_count ; ++i) {
+            if ((orte_vpid_t) local_ranks[i] == v) {
+                local = true;
+                break;
+            }
+        }
 
-	/* compute and store the locality as it isn't something that gets pushed to PMI  - doing
+        /* compute and store the locality as it isn't something that gets pushed to PMI  - doing
          * this here will prevent the MPI layer from fetching data for all ranks
          */
         if (local) {
-	    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&name, OPAL_DB_CPUSET,
-                                                            (void **)&cpuset, OPAL_STRING))) {
-		ORTE_ERROR_LOG(rc);
-		return rc;
-	    }
+            if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&name, OPAL_DB_CPUSET,
+                                                                (void **)&cpuset, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return;
+            }
 
-	    if (NULL == cpuset) {
-		/* if we share a node, but we don't know anything more, then
-		 * mark us as on the node as this is all we know
-		 */
-                locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-	    } else {
-		/* determine relative location on our node */
-		locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-								 orte_process_info.cpuset,
-								 (char *) cpuset);
-	    }
-	} else {
-            /* this is on a different node, then mark as non-local */
-            locality = OPAL_PROC_NON_LOCAL;
-	}
+            if (NULL == cpuset) {
+                /* if we share a node, but we don't know anything more, then
+                 * mark us as on the node as this is all we know
+                 */
+                     locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+            } else {
+                /* determine relative location on our node */
+                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                             orte_process_info.cpuset,
+                                                             (char *) cpuset);
+            }
+        } else {
+                /* this is on a different node, then mark as non-local */
+                locality = OPAL_PROC_NON_LOCAL;
+        }
 
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                             "%s grpcomm:pmi proc %s locality %s",
@@ -219,7 +232,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_SCOPE_INTERNAL,
                                                 OPAL_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            return;
         }
     }
 
@@ -228,5 +241,14 @@ static int modex(orte_grpcomm_collective_t *coll)
     if (NULL != coll->cbfunc) {
         coll->cbfunc(NULL, coll->cbdata);
     }
-    return rc;
+    return;
+}
+
+static int modex(orte_grpcomm_collective_t *coll)
+{
+    /* we need to get this into the event library
+     * to avoid blocking opal_pr
+     */
+    ORTE_GRPCOMM_ACTIVATE(coll, process_modex);
+    return ORTE_SUCCESS;
 }

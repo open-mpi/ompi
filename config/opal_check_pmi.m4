@@ -53,6 +53,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     opal_check_pmi_$1_LDFLAGS=
     opal_check_pmi_$1_CPPFLAGS=
     opal_check_pmi_$1_LIBS=
+    opal_check_pmi_have_hdr=no
 
     AC_MSG_CHECKING([if user requested PMI support])
     AS_IF([test "$with_pmi" = "no"],
@@ -69,11 +70,11 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                   opal_default_loc="yes"])
            AS_IF([test ! -z "$with_pmi_libdir"],
                  [opal_check_pmi_lib_dir=$with_pmi_libdir
-		  opal_default_libloc=no],
+                  opal_default_libloc=no],
                  [opal_check_pmi_lib_dir=$opal_check_pmi_install_dir
-		  AS_IF([test "$opal_default_loc" = "no"],
-		        [opal_default_libloc=no],
-			[opal_default_libloc=yes])])
+                  AS_IF([test "$opal_default_loc" = "no"],
+                        [opal_default_libloc=no],
+                        [opal_default_libloc=yes])])
            # check for pmi-1 lib */
            files=`ls -U $opal_check_pmi_lib_dir/libpmi.* 2> /dev/null | wc -l`
            AS_IF([test "$files" -gt "0"],
@@ -83,7 +84,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                          opal_pmi_rpath="$opal_check_pmi_lib_dir"
                          opal_pmi_added_ldflag=yes])
                   opal_check_pmi_$1_LIBS="-lpmi"],
-		 [files=`ls -U $opal_check_pmi_lib_dir/lib64/libpmi.* 2> /dev/null | wc -l`
+                 [files=`ls -U $opal_check_pmi_lib_dir/lib64/libpmi.* 2> /dev/null | wc -l`
                   AS_IF([test "$files" -gt "0"],
                         [opal_have_pmi1=1
                          AS_IF([test "$opal_default_libloc" = "no"],
@@ -100,16 +101,22 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                                        opal_pmi_added_ldflag=yes])
                                 opal_check_pmi_$1_LIBS="-lpmi"])])])
            # check for pmi.h
-           AS_IF([test -f "$opal_check_pmi_install_dir/include/pmi.h"],
-               [AS_IF([test "$opal_default_loc" = "no"],
-                      [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include"
-                       opal_pmi_added_cppflag=yes])],
-               # this could be SLURM, which puts things in a different location
-               [AS_IF([test -f "$opal_check_pmi_install_dir/include/slurm/pmi.h"],
-                       # even if this was the default loc, we still need to add it in
-                       # because of the slurm path addition
-                      [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include/slurm"
-                       opal_pmi_added_cppflag=yes])])
+           AS_IF([test -f "$opal_check_pmi_install_dir/pmi.h"],
+                 [opal_check_pmi_have_hdr=yes
+                  opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir"
+                  opal_pmi_added_cppflag=yes],
+                 [AS_IF([test -f "$opal_check_pmi_install_dir/include/pmi.h"],
+                        [opal_check_pmi_have_hdr=yes
+                         AS_IF([test "$opal_default_loc" = "no"],
+                               [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include"
+                                opal_pmi_added_cppflag=yes])],
+                        # this could be SLURM, which puts things in a different location
+                        [AS_IF([test -f "$opal_check_pmi_install_dir/include/slurm/pmi.h"],
+                                # even if this was the default loc, we still need to add it in
+                                # because of the slurm path addition
+                               [opal_check_pmi_have_hdr=yes
+                                opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include/slurm"
+                                opal_pmi_added_cppflag=yes])])])
 
            # check for pmi2 lib */
            files=`ls -U $opal_check_pmi_lib_dir/libpmi2.* 2> /dev/null | wc -l`
@@ -120,7 +127,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                          opal_pmi_rpath="$opal_check_pmi_lib_dir"
                          opal_pmi_added_ldflag=yes])
                   opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi2"],
-		 [files=`ls -U $opal_check_pmi_lib_dir/lib64/libpmi2.* 2> /dev/null | wc -l`
+                 [files=`ls -U $opal_check_pmi_lib_dir/lib64/libpmi2.* 2> /dev/null | wc -l`
                   AS_IF([test "$files" -gt "0"],
                         [opal_have_pmi2=1
                          AS_IF([test "$opal_default_libloc" = "no"],
@@ -138,26 +145,37 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                                 opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi2"])])])
            # check for pmi2.h
            AS_IF([test "$opal_pmi_added_cppflag" = "no"],
-                 [AS_IF([test -f "$opal_check_pmi_install_dir/include/pmi2.h"],
-                        [AS_IF([test "$opal_default_loc" = "no"],
-                               [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include"])],
-                        # this could be SLURM, which puts things in a different location
-                        [AS_IF([test -f "$opal_check_pmi_install_dir/include/slurm/pmi2.h"],
-                               # even if this was the default loc, we still need to add it in
-                               # because of the slurm path addition
-                               [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include/slurm"])])])
+                 [AS_IF([test -f "$opal_check_pmi_install_dir/pmi2.h"],
+                        [opal_check_pmi_have_hdr=yes
+                         opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir"],
+                        [AS_IF([test -f "$opal_check_pmi_install_dir/include/pmi2.h"],
+                               [opal_check_pmi_have_hdr=yes
+                                AS_IF([test "$opal_default_loc" = "no"],
+                                      [opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include"])],
+                               # this could be SLURM, which puts things in a different location
+                               [AS_IF([test -f "$opal_check_pmi_install_dir/include/slurm/pmi2.h"],
+                                       # even if this was the default loc, we still need to add it in
+                                       # because of the slurm path addition
+                                       [opal_check_pmi_have_hdr=yes
+                                        opal_check_pmi_$1_CPPFLAGS="-I$opal_check_pmi_install_dir/include/slurm"])])])])
 
            # since support was explicitly requested, then we should error out
            # if we didn't find the required support
            AC_MSG_CHECKING([if PMI support can be built])
-           AS_IF([test "$opal_have_pmi1" != "1" && test "$opal_have_pmi2" != "1"],
+           AS_IF([test "$opal_check_pmi_have_hdr" != "yes"],
                  [AC_MSG_RESULT([no])
                   AC_MSG_WARN([PMI support requested (via --with-pmi) but neither pmi.h])
-		  AC_MSG_WARN([nor pmi2.h were found under locations:])
+                  AC_MSG_WARN([nor pmi2.h were found under locations:])
                   AC_MSG_WARN([    $opal_check_pmi_install_dir])
-                  AC_MSG_WARN([    $opal_check_pmi_install_dir/slurm])
+                  AC_MSG_WARN([    $opal_check_pmi_install_dir/include])
+                  AC_MSG_WARN([    $opal_check_pmi_install_dir/include/slurm])
                   AC_MSG_WARN([Specified path: $with_pmi])
-		  AC_MSG_WARN([OR neither libpmi nor libpmi2 were found under:])
+                  AC_MSG_ERROR([Aborting])
+                  $3])
+
+           AS_IF([test "$opal_have_pmi1" != "1" && test "$opal_have_pmi2" != "1"],
+                 [AC_MSG_RESULT([no])
+                  AC_MSG_WARN([PMI support requested but neither libpmi nor libpmi2 were found under:])
                   AC_MSG_WARN([    $opal_check_pmi_lib_dir/lib])
                   AC_MSG_WARN([    $opal_check_pmi_lib_dir/lib64])
                   AC_MSG_WARN([Specified path: $with_pmi_libdir])
