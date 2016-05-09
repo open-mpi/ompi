@@ -38,7 +38,7 @@ pmix_status_t pmix_bfrop_print(char **output, char *prefix, void *src, pmix_data
         return PMIX_ERR_BAD_PARAM;
     }
 
-    /* Lookup the prpmix_status_t function for this type and call it */
+    /* Lookup the print function for this type and call it */
 
     if(NULL == (info = (pmix_bfrop_type_info_t*)pmix_pointer_array_get_item(&pmix_bfrop_types, type))) {
         return PMIX_ERR_UNKNOWN_DATA_TYPE;
@@ -48,7 +48,7 @@ pmix_status_t pmix_bfrop_print(char **output, char *prefix, void *src, pmix_data
 }
 
 /*
- * STANDARD PRpmix_status_t FUNCTIONS FOR SYSTEM TYPES
+ * STANDARD print FUNCTIONS FOR SYSTEM TYPES
  */
 pmix_status_t pmix_bfrop_print_bool(char **output, char *prefix, bool *src, pmix_data_type_t type)
 {
@@ -58,7 +58,7 @@ pmix_status_t pmix_bfrop_print_bool(char **output, char *prefix, bool *src, pmix
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_BOOL\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -84,7 +84,7 @@ pmix_status_t pmix_bfrop_print_byte(char **output, char *prefix, uint8_t *src, p
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_BYTE\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -109,7 +109,7 @@ pmix_status_t pmix_bfrop_print_string(char **output, char *prefix, char *src, pm
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_STRING\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -134,7 +134,7 @@ pmix_status_t pmix_bfrop_print_size(char **output, char *prefix, size_t *src, pm
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_SIZE\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -159,7 +159,7 @@ pmix_status_t pmix_bfrop_print_pid(char **output, char *prefix, pid_t *src, pmix
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_PID\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -183,7 +183,7 @@ pmix_status_t pmix_bfrop_print_int(char **output, char *prefix, int *src, pmix_d
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_INT\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -208,7 +208,7 @@ pmix_status_t pmix_bfrop_print_uint(char **output, char *prefix, uint *src, pmix
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_UINT\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -233,7 +233,7 @@ pmix_status_t pmix_bfrop_print_uint8(char **output, char *prefix, uint8_t *src, 
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_UINT8\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -258,7 +258,7 @@ pmix_status_t pmix_bfrop_print_uint16(char **output, char *prefix, uint16_t *src
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_UINT16\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -284,7 +284,7 @@ pmix_status_t pmix_bfrop_print_uint32(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_UINT32\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -310,7 +310,7 @@ pmix_status_t pmix_bfrop_print_int8(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_INT8\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -336,7 +336,7 @@ pmix_status_t pmix_bfrop_print_int16(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_INT16\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -361,7 +361,7 @@ pmix_status_t pmix_bfrop_print_int32(char **output, char *prefix, int32_t *src, 
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_INT32\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -387,7 +387,7 @@ pmix_status_t pmix_bfrop_print_uint64(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_UINT64\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -414,7 +414,7 @@ pmix_status_t pmix_bfrop_print_int64(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_INT64\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -440,7 +440,7 @@ pmix_status_t pmix_bfrop_print_float(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_FLOAT\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -466,7 +466,7 @@ pmix_status_t pmix_bfrop_print_double(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_DOUBLE\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -493,7 +493,7 @@ pmix_status_t pmix_bfrop_print_time(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_TIME\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -522,7 +522,7 @@ pmix_status_t pmix_bfrop_print_timeval(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_TIMEVAL\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -540,7 +540,7 @@ pmix_status_t pmix_bfrop_print_timeval(char **output, char *prefix,
     return PMIX_SUCCESS;
 }
 
-/* PRpmix_status_t FUNCTIONS FOR GENERIC PMIX TYPES */
+/* PRINT FUNCTIONS FOR GENERIC PMIX TYPES */
 
 /*
  * PMIX_VALUE
@@ -554,7 +554,7 @@ pmix_status_t pmix_bfrop_print_value(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_VALUE\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -738,19 +738,19 @@ static void print_hwloc_obj(char **output, char *prefix,
     unsigned i;
     struct hwloc_topology_support *support;
 
-    /* prpmix_status_t the object type */
+    /* print the object type */
     hwloc_obj_type_snprintf(string, 1024, obj, 1);
     asprintf(&pfx, "\n%s\t", (NULL == prefix) ? "" : prefix);
     asprintf(&tmp, "%sType: %s Number of child objects: %u%sName=%s",
              (NULL == prefix) ? "" : prefix, string, obj->arity,
              pfx, (NULL == obj->name) ? "NULL" : obj->name);
     if (0 < hwloc_obj_attr_snprintf(string, 1024, obj, pfx, 1)) {
-        /* prpmix_status_t the attributes */
+        /* print the attributes */
         asprintf(&tmp2, "%s%s%s", tmp, pfx, string);
         free(tmp);
         tmp = tmp2;
     }
-    /* prpmix_status_t the cpusets - apparently, some new HWLOC types don't
+    /* print the cpusets - apparently, some new HWLOC types don't
      * have cpusets, so protect ourselves here
      */
     if (NULL != obj->cpuset) {
@@ -791,7 +791,7 @@ static void print_hwloc_obj(char **output, char *prefix,
     asprintf(&pfx, "%s\t", (NULL == prefix) ? "" : prefix);
     for (i=0; i < obj->arity; i++) {
         obj2 = obj->children[i];
-        /* prpmix_status_t the object */
+        /* print the object */
         print_hwloc_obj(&tmp2, pfx, topo, obj2);
     }
     free(pfx);
@@ -809,7 +809,7 @@ pmix_status_t pmix_bfrop_print_topo(char **output, char *prefix,
 
     /* get root object */
     obj = hwloc_get_root_obj(src);
-    /* prpmix_status_t it */
+    /* print it */
     print_hwloc_obj(&tmp, prefix, src, obj);
     *output = tmp;
     return PMIX_SUCCESS;
@@ -831,7 +831,7 @@ pmix_status_t pmix_bfrop_print_persist(char **output, char *prefix, pmix_persist
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_PERSIST\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
@@ -857,7 +857,7 @@ pmix_status_t pmix_bfrop_print_bo(char **output, char *prefix,
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
 
-    /* if src is NULL, just prpmix_status_t data type and return */
+    /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: PMIX_BYTE_OBJECT\tValue: NULL pointer", prefx);
         if (prefx != prefix) {
