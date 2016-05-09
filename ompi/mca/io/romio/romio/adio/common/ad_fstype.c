@@ -356,6 +356,8 @@ static void ADIO_FileSysType_fncall(const char *filename, int *fstype, int *erro
     }
 # endif
 
+# ifdef ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE
+
 #  ifdef ROMIO_BGL 
     /* BlueGene is a special case: all file systems are AD_BGL, except for
      * certain exceptions */
@@ -428,6 +430,8 @@ static void ADIO_FileSysType_fncall(const char *filename, int *fstype, int *erro
 	    return;
     }
 # endif
+
+# endif /*ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE */
 
 # ifdef ROMIO_UFS
     /* if UFS support is enabled, default to that */
