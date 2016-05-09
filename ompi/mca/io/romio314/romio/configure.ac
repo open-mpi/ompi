@@ -1360,11 +1360,53 @@ if test "$pac_cv_have_statfs" = yes ; then
     AC_DEFINE(HAVE_STRUCT_STATFS,1,[Define if struct statfs can be compiled])
 fi
 
+AC_MSG_CHECKING([for f_type member of statfs structure])
+AC_TRY_COMPILE([
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+    ],[
+    struct statfs f;
+    memset(&f, 0, sizeof(f));
+    f.f_type = 0;
+    ],
+    pac_cv_have_statfs_f_type=yes,
+    pac_cv_have_statfs_f_type=no
+)
+AC_MSG_RESULT($pac_cv_have_statfs_f_type)
+if test $pac_cv_have_statfs_f_type = yes ; then
+    AC_DEFINE(ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE, 1,[Define if statfs has f_type])
+fi
+
 AC_MSG_CHECKING([for f_fstypename member of statfs structure])
 AC_TRY_COMPILE([
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
     ],[
     struct statfs f;
     memset(&f, 0, sizeof(f));
