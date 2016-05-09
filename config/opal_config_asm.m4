@@ -91,6 +91,21 @@ AC_DEFUN([OPAL_CHECK_SYNC_BUILTINS], [
      $1],
     [AC_MSG_RESULT([no])
      $2])
+
+  AC_MSG_CHECKING([for 64-bit __sync builtin atomics])
+
+  AC_TRY_LINK([
+#include <stdint.h>
+uint64_t tmp;], [
+__sync_bool_compare_and_swap(&tmp, 0, 1);
+__sync_add_and_fetch(&tmp, 1);],
+    [AC_MSG_RESULT([yes])
+     opal_asm_sync_have_64bit=1],
+    [AC_MSG_RESULT([no])
+     opal_asm_sync_have_64bit=0])
+
+  AC_DEFINE_UNQUOTED([OPAL_ASM_SYNC_HAVE_64BIT],[$opal_asm_sync_have_64bit],
+		     [Whether 64-bit is supported by the __sync builtin atomics])
 ])
 
 
