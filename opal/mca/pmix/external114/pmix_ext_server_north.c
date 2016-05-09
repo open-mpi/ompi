@@ -37,8 +37,6 @@
 #include "opal/mca/pmix/base/base.h"
 #include "pmix_ext.h"
 
-#include <pmix.h>
-#include <pmix_server.h>
 
 /****    N.O.R.T.H.B.O.U.N.D   I.N.T.E.R.F.A.C.E.S     ****/
 
@@ -85,7 +83,7 @@ static pmix_status_t server_deregister_events(const pmix_info_t info[], size_t n
 static pmix_status_t server_listener_fn(int listening_sd,
                                         pmix_connection_cbfunc_t cbfunc);
 
-pmix_server_module_t external_module = {
+pmix_server_module_t external114_module = {
     server_client_connected_fn,
     server_client_finalized_fn,
     server_abort_fn,
@@ -102,15 +100,15 @@ pmix_server_module_t external_module = {
     server_listener_fn
 };
 
-opal_pmix_server_module_t *external_host_module = NULL;
+opal_pmix_server_module_t *external114_host_module = NULL;
 
 
 static void opal_opcbfunc(int status, void *cbdata)
 {
-    pmix1_opalcaddy_t *opalcaddy = (pmix1_opalcaddy_t*)cbdata;
+    pmix_ext114_opalcaddy_t *opalcaddy = (pmix_ext114_opalcaddy_t*)cbdata;
 
     if (NULL != opalcaddy->opcbfunc) {
-        opalcaddy->opcbfunc(pmix1_convert_opalrc(status), opalcaddy->cbdata);
+        opalcaddy->opcbfunc(pmix_ext114_convert_opalrc(status), opalcaddy->cbdata);
     }
     OBJ_RELEASE(opalcaddy);
 }
@@ -120,49 +118,49 @@ static pmix_status_t server_client_connected_fn(const pmix_proc_t *p, void *serv
     int rc;
     opal_process_name_t proc;
 
-    if (NULL == external_host_module || NULL == external_host_module->client_connected) {
+    if (NULL == external114_host_module || NULL == external114_host_module->client_connected) {
         return PMIX_SUCCESS;
     }
 
     /* convert the nspace/rank to an opal_process_name_t */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
-        return pmix1_convert_opalrc(rc);
+        return pmix_ext114_convert_opalrc(rc);
     }
     proc.vpid = p->rank;
 
     /* pass it up */
-    rc = external_host_module->client_connected(&proc, server_object);
-    return pmix1_convert_opalrc(rc);
+    rc = external114_host_module->client_connected(&proc, server_object);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 static pmix_status_t server_client_finalized_fn(const pmix_proc_t *p, void* server_object,
                                                 pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     opal_process_name_t proc;
 
-    if (NULL == external_host_module || NULL == external_host_module->client_finalized) {
+    if (NULL == external114_host_module || NULL == external114_host_module->client_finalized) {
         return PMIX_SUCCESS;
     }
 
     /* convert the nspace/rank to an opal_process_name_t */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
-        return pmix1_convert_opalrc(rc);
+        return pmix_ext114_convert_opalrc(rc);
     }
     proc.vpid = p->rank;
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->opcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
     /* pass it up */
-    rc = external_host_module->client_finalized(&proc, server_object, opal_opcbfunc, opalcaddy);
+    rc = external114_host_module->client_finalized(&proc, server_object, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 static pmix_status_t server_abort_fn(const pmix_proc_t *p, void *server_object,
@@ -174,20 +172,20 @@ static pmix_status_t server_abort_fn(const pmix_proc_t *p, void *server_object,
     opal_namelist_t *nm;
     opal_process_name_t proc;
     int rc;
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
 
-    if (NULL == external_host_module || NULL == external_host_module->abort) {
+    if (NULL == external114_host_module || NULL == external114_host_module->abort) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
     /* convert the nspace/rank to an opal_process_name_t */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
-        return pmix1_convert_opalrc(rc);
+        return pmix_ext114_convert_opalrc(rc);
     }
     proc.vpid = p->rank;
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->opcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -197,7 +195,7 @@ static pmix_status_t server_abort_fn(const pmix_proc_t *p, void *server_object,
         opal_list_append(&opalcaddy->procs, &nm->super);
         if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&nm->name.jobid, procs[n].nspace))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
         if (PMIX_RANK_WILDCARD == procs[n].rank) {
             nm->name.vpid = OPAL_VPID_WILDCARD;
@@ -207,17 +205,17 @@ static pmix_status_t server_abort_fn(const pmix_proc_t *p, void *server_object,
     }
 
     /* pass it up */
-    rc = external_host_module->abort(&proc, server_object, status, msg,
+    rc = external114_host_module->abort(&proc, server_object, status, msg,
                             &opalcaddy->procs, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 static void _data_release(void *cbdata)
 {
-    pmix1_opalcaddy_t *opalcaddy = (pmix1_opalcaddy_t*)cbdata;
+    pmix_ext114_opalcaddy_t *opalcaddy = (pmix_ext114_opalcaddy_t*)cbdata;
 
     if (NULL != opalcaddy->odmdxfunc) {
         opalcaddy->odmdxfunc(opalcaddy->ocbdata);
@@ -229,9 +227,9 @@ static void opmdx_response(int status, const char *data, size_t sz, void *cbdata
                            opal_pmix_release_cbfunc_t relcbfunc, void *relcbdata)
 {
     pmix_status_t rc;
-    pmix1_opalcaddy_t *opalcaddy = (pmix1_opalcaddy_t*)cbdata;
+    pmix_ext114_opalcaddy_t *opalcaddy = (pmix_ext114_opalcaddy_t*)cbdata;
 
-    rc = pmix1_convert_rc(status);
+    rc = pmix_ext114_convert_rc(status);
     if (NULL != opalcaddy->mdxcbfunc) {
         opalcaddy->odmdxfunc = relcbfunc;
         opalcaddy->ocbdata = relcbdata;
@@ -247,18 +245,18 @@ static pmix_status_t server_fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
                                        char *data, size_t ndata,
                                        pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     size_t n;
     opal_namelist_t *nm;
     opal_value_t *iptr;
     int rc;
 
-    if (NULL == external_host_module || NULL == external_host_module->fence_nb) {
+    if (NULL == external114_host_module || NULL == external114_host_module->fence_nb) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->mdxcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -268,7 +266,7 @@ static pmix_status_t server_fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
         opal_list_append(&opalcaddy->procs, &nm->super);
         if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&nm->name.jobid, procs[n].nspace))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
         if (PMIX_RANK_WILDCARD == procs[n].rank) {
             nm->name.vpid = OPAL_VPID_WILDCARD;
@@ -282,19 +280,19 @@ static pmix_status_t server_fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
         iptr = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &iptr->super);
         iptr->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(iptr, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
     }
 
     /* pass it up */
-    rc = external_host_module->fence_nb(&opalcaddy->procs, &opalcaddy->info,
+    rc = external114_host_module->fence_nb(&opalcaddy->procs, &opalcaddy->info,
                                data, ndata, opmdx_response, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
@@ -302,18 +300,18 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
                                           pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     opal_process_name_t proc;
     opal_value_t *iptr;
     size_t n;
 
-    if (NULL == external_host_module || NULL == external_host_module->direct_modex) {
+    if (NULL == external114_host_module || NULL == external114_host_module->direct_modex) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
     /* convert the nspace/rank to an opal_process_name_t */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
-        return pmix1_convert_opalrc(rc);
+        return pmix_ext114_convert_opalrc(rc);
     }
     if (PMIX_RANK_WILDCARD == p->rank) {
         proc.vpid = OPAL_VPID_WILDCARD;
@@ -322,7 +320,7 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
     }
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->mdxcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -331,21 +329,21 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
         iptr = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &iptr->super);
         iptr->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(iptr, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
     }
 
     /* pass it up */
-    rc = external_host_module->direct_modex(&proc, &opalcaddy->info, opmdx_response, opalcaddy);
+    rc = external114_host_module->direct_modex(&proc, &opalcaddy->info, opmdx_response, opalcaddy);
     if (OPAL_SUCCESS != rc && OPAL_ERR_IN_PROCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
     if (OPAL_ERR_IN_PROCESS == rc) {
         rc = OPAL_SUCCESS;
     }
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 static pmix_status_t server_publish_fn(const pmix_proc_t *p,
@@ -354,17 +352,17 @@ static pmix_status_t server_publish_fn(const pmix_proc_t *p,
 {
     int rc;
     size_t n;
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     opal_process_name_t proc;
     opal_value_t *oinfo;
 
-    if (NULL == external_host_module || NULL == external_host_module->publish) {
+    if (NULL == external114_host_module || NULL == external114_host_module->publish) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
    /* convert the nspace/rank to an opal_process_name_t */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
-        return pmix1_convert_opalrc(rc);
+        return pmix_ext114_convert_opalrc(rc);
     }
     if (PMIX_RANK_WILDCARD == p->rank) {
         proc.vpid = OPAL_VPID_WILDCARD;
@@ -373,7 +371,7 @@ static pmix_status_t server_publish_fn(const pmix_proc_t *p,
     }
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->opcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -382,33 +380,33 @@ static pmix_status_t server_publish_fn(const pmix_proc_t *p,
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(oinfo, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
     }
 
     /* pass it up */
-    rc = external_host_module->publish(&proc, &opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = external114_host_module->publish(&proc, &opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
 
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 static void opal_lkupcbfunc(int status,
                             opal_list_t *data,
                             void *cbdata)
 {
-    pmix1_opalcaddy_t *opalcaddy = (pmix1_opalcaddy_t*)cbdata;
+    pmix_ext114_opalcaddy_t *opalcaddy = (pmix_ext114_opalcaddy_t*)cbdata;
     pmix_status_t rc;
     pmix_pdata_t *d=NULL;
     size_t nd=0, n;
     opal_pmix_pdata_t *p;
 
     if (NULL != opalcaddy->lkupcbfunc) {
-        rc = pmix1_convert_opalrc(status);
+        rc = pmix_ext114_convert_opalrc(status);
         /* convert any returned data */
         if (NULL != data) {
             nd = opal_list_get_size(data);
@@ -419,7 +417,7 @@ static void opal_lkupcbfunc(int status,
                 (void)opal_snprintf_jobid(d[n].proc.nspace, PMIX_MAX_NSLEN, p->proc.jobid);
                 d[n].proc.rank = p->proc.vpid;
                 (void)strncpy(d[n].key, p->value.key, PMIX_MAX_KEYLEN);
-                pmix1_value_load(&d[n].value, &p->value);
+                pmix_ext114_value_load(&d[n].value, &p->value);
             }
         }
         opalcaddy->lkupcbfunc(rc, d, nd, opalcaddy->cbdata);
@@ -432,18 +430,18 @@ static pmix_status_t server_lookup_fn(const pmix_proc_t *p, char **keys,
                                       pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     opal_process_name_t proc;
     opal_value_t *iptr;
     size_t n;
 
-    if (NULL == external_host_module || NULL == external_host_module->lookup) {
+    if (NULL == external114_host_module || NULL == external114_host_module->lookup) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
     /* convert the nspace/rank to an opal_process_name_t */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
-        return pmix1_convert_opalrc(rc);
+        return pmix_ext114_convert_opalrc(rc);
     }
     if (PMIX_RANK_WILDCARD == p->rank) {
         proc.vpid = OPAL_VPID_WILDCARD;
@@ -452,7 +450,7 @@ static pmix_status_t server_lookup_fn(const pmix_proc_t *p, char **keys,
     }
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->lkupcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -461,19 +459,19 @@ static pmix_status_t server_lookup_fn(const pmix_proc_t *p, char **keys,
         iptr = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &iptr->super);
         iptr->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(iptr, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
     }
 
     /* pass it up */
-    rc = external_host_module->lookup(&proc, keys, &opalcaddy->info, opal_lkupcbfunc, opalcaddy);
+    rc = external114_host_module->lookup(&proc, keys, &opalcaddy->info, opal_lkupcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
 
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 
@@ -482,18 +480,18 @@ static pmix_status_t server_unpublish_fn(const pmix_proc_t *p, char **keys,
                                          pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     opal_process_name_t proc;
     opal_value_t *iptr;
     size_t n;
 
-    if (NULL == external_host_module || NULL == external_host_module->unpublish) {
+    if (NULL == external114_host_module || NULL == external114_host_module->unpublish) {
         return PMIX_SUCCESS;
     }
 
     /* convert the nspace/rank to an opal_process_name_t */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
-        return pmix1_convert_opalrc(rc);
+        return pmix_ext114_convert_opalrc(rc);
     }
     if (PMIX_RANK_WILDCARD == p->rank) {
         proc.vpid = OPAL_VPID_WILDCARD;
@@ -502,7 +500,7 @@ static pmix_status_t server_unpublish_fn(const pmix_proc_t *p, char **keys,
     }
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->opcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -511,29 +509,29 @@ static pmix_status_t server_unpublish_fn(const pmix_proc_t *p, char **keys,
         iptr = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &iptr->super);
         iptr->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(iptr, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
     }
 
     /* pass it up */
-    rc = external_host_module->unpublish(&proc, keys, &opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = external114_host_module->unpublish(&proc, keys, &opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
 
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 static void opal_spncbfunc(int status, opal_jobid_t jobid, void *cbdata)
 {
-    pmix1_opalcaddy_t *opalcaddy = (pmix1_opalcaddy_t*)cbdata;
+    pmix_ext114_opalcaddy_t *opalcaddy = (pmix_ext114_opalcaddy_t*)cbdata;
     pmix_status_t rc;
     char nspace[PMIX_MAX_NSLEN];
 
     if (NULL != opalcaddy->spwncbfunc) {
-        rc = pmix1_convert_opalrc(status);
+        rc = pmix_ext114_convert_opalrc(status);
         /* convert the jobid */
         (void)opal_snprintf_jobid(nspace, PMIX_MAX_NSLEN, jobid);
         opalcaddy->spwncbfunc(rc, nspace, opalcaddy->cbdata);
@@ -546,20 +544,20 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
                                      const pmix_app_t apps[], size_t napps,
                                      pmix_spawn_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     opal_process_name_t proc;
     opal_pmix_app_t *app;
     opal_value_t *oinfo;
     size_t k, n;
     int rc;
 
-    if (NULL == external_host_module || NULL == external_host_module->spawn) {
+    if (NULL == external114_host_module || NULL == external114_host_module->spawn) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
     /* convert the nspace/rank to an opal_process_name_t */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
-        return pmix1_convert_opalrc(rc);
+        return pmix_ext114_convert_opalrc(rc);
     }
     if (PMIX_RANK_WILDCARD == p->rank) {
         proc.vpid = OPAL_VPID_WILDCARD;
@@ -568,7 +566,7 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
     }
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->spwncbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -577,9 +575,9 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(job_info[k].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &job_info[k].value))) {
+        if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(oinfo, &job_info[k].value))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
     }
 
@@ -602,21 +600,21 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
             oinfo = OBJ_NEW(opal_value_t);
             opal_list_append(&app->info, &oinfo->super);
             oinfo->key = strdup(apps[n].info[k].key);
-            if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &apps[n].info[k].value))) {
+            if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(oinfo, &apps[n].info[k].value))) {
                 OBJ_RELEASE(opalcaddy);
-                return pmix1_convert_opalrc(rc);
+                return pmix_ext114_convert_opalrc(rc);
             }
         }
     }
 
     /* pass it up */
-    rc = external_host_module->spawn(&proc, &opalcaddy->info, &opalcaddy->apps, opal_spncbfunc, opalcaddy);
+    rc = external114_host_module->spawn(&proc, &opalcaddy->info, &opalcaddy->apps, opal_spncbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(opalcaddy);
     }
 
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 
@@ -625,17 +623,17 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
                                        pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     opal_namelist_t *nm;
     size_t n;
     opal_value_t *oinfo;
 
-    if (NULL == external_host_module || NULL == external_host_module->connect) {
+    if (NULL == external114_host_module || NULL == external114_host_module->connect) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->opcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -645,7 +643,7 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
         opal_list_append(&opalcaddy->procs, &nm->super);
         if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&nm->name.jobid, procs[n].nspace))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
         if (PMIX_RANK_WILDCARD == procs[n].rank) {
             nm->name.vpid = OPAL_VPID_WILDCARD;
@@ -659,19 +657,19 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(oinfo, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
     }
 
     /* pass it up */
-    rc = external_host_module->connect(&opalcaddy->procs, &opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = external114_host_module->connect(&opalcaddy->procs, &opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
 
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 
@@ -680,17 +678,17 @@ static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t npro
                                           pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     opal_namelist_t *nm;
     size_t n;
     opal_value_t *oinfo;
 
-    if (NULL == external_host_module || NULL == external_host_module->disconnect) {
+    if (NULL == external114_host_module || NULL == external114_host_module->disconnect) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->opcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -700,7 +698,7 @@ static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t npro
         opal_list_append(&opalcaddy->procs, &nm->super);
         if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&nm->name.jobid, procs[n].nspace))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
         if (PMIX_RANK_WILDCARD == procs[n].rank) {
             nm->name.vpid = OPAL_VPID_WILDCARD;
@@ -714,31 +712,31 @@ static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t npro
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(oinfo, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
     }
 
     /* pass it up */
-    rc = external_host_module->disconnect(&opalcaddy->procs, &opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = external114_host_module->disconnect(&opalcaddy->procs, &opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
 
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 static pmix_status_t server_register_events(const pmix_info_t info[], size_t ninfo,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix1_opalcaddy_t *opalcaddy;
+    pmix_ext114_opalcaddy_t *opalcaddy;
     size_t n;
     opal_value_t *oinfo;
     int rc;
 
     /* setup the caddy */
-    opalcaddy = OBJ_NEW(pmix1_opalcaddy_t);
+    opalcaddy = OBJ_NEW(pmix_ext114_opalcaddy_t);
     opalcaddy->opcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
@@ -747,19 +745,19 @@ static pmix_status_t server_register_events(const pmix_info_t info[], size_t nin
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix_ext114_value_unload(oinfo, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
-            return pmix1_convert_opalrc(rc);
+            return pmix_ext114_convert_opalrc(rc);
         }
     }
 
     /* pass it up */
-    rc = external_host_module->register_events(&opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = external114_host_module->register_events(&opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
 
-    return pmix1_convert_opalrc(rc);
+    return pmix_ext114_convert_opalrc(rc);
 }
 
 static pmix_status_t server_deregister_events(const pmix_info_t info[], size_t ninfo,
@@ -772,10 +770,10 @@ static pmix_status_t server_listener_fn(int listening_sd,
 {
     int rc;
 
-    if (NULL == external_host_module || NULL == external_host_module->listener) {
+    if (NULL == external114_host_module || NULL == external114_host_module->listener) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
-    rc = external_host_module->listener(listening_sd, cbfunc);
-    return pmix1_convert_opalrc(rc);
+    rc = external114_host_module->listener(listening_sd, cbfunc);
+    return pmix_ext114_convert_opalrc(rc);
 }

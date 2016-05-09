@@ -46,61 +46,61 @@
 /* These are functions used by both client and server to
  * access common functions in the embedded PMIx library */
 
-static const char *pmix1_get_nspace(opal_jobid_t jobid);
-static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace);
+static const char *pmix_ext114_get_nspace(opal_jobid_t jobid);
+static void pmix_ext114_register_jobid(opal_jobid_t jobid, const char *nspace);
 
-const opal_pmix_base_module_t opal_pmix_external_module = {
+const opal_pmix_base_module_t opal_pmix_external114_module = {
     /* client APIs */
-    .init = pmix1_client_init,
-    .finalize = pmix1_client_finalize,
-    .initialized = pmix1_initialized,
-    .abort = pmix1_abort,
-    .commit = pmix1_commit,
-    .fence = pmix1_fence,
-    .fence_nb = pmix1_fencenb,
-    .put = pmix1_put,
-    .get = pmix1_get,
-    .get_nb = pmix1_getnb,
-    .publish = pmix1_publish,
-    .publish_nb = pmix1_publishnb,
-    .lookup = pmix1_lookup,
-    .lookup_nb = pmix1_lookupnb,
-    .unpublish = pmix1_unpublish,
-    .unpublish_nb = pmix1_unpublishnb,
-    .spawn = pmix1_spawn,
-    .spawn_nb = pmix1_spawnnb,
-    .connect = pmix1_connect,
-    .connect_nb = pmix1_connectnb,
-    .disconnect = pmix1_disconnect,
-    .disconnect_nb = pmix1_disconnectnb,
-    .resolve_peers = pmix1_resolve_peers,
-    .resolve_nodes = pmix1_resolve_nodes,
+    .init = pmix_ext114_client_init,
+    .finalize = pmix_ext114_client_finalize,
+    .initialized = pmix_ext114_initialized,
+    .abort = pmix_ext114_abort,
+    .commit = pmix_ext114_commit,
+    .fence = pmix_ext114_fence,
+    .fence_nb = pmix_ext114_fencenb,
+    .put = pmix_ext114_put,
+    .get = pmix_ext114_get,
+    .get_nb = pmix_ext114_getnb,
+    .publish = pmix_ext114_publish,
+    .publish_nb = pmix_ext114_publishnb,
+    .lookup = pmix_ext114_lookup,
+    .lookup_nb = pmix_ext114_lookupnb,
+    .unpublish = pmix_ext114_unpublish,
+    .unpublish_nb = pmix_ext114_unpublishnb,
+    .spawn = pmix_ext114_spawn,
+    .spawn_nb = pmix_ext114_spawnnb,
+    .connect = pmix_ext114_connect,
+    .connect_nb = pmix_ext114_connectnb,
+    .disconnect = pmix_ext114_disconnect,
+    .disconnect_nb = pmix_ext114_disconnectnb,
+    .resolve_peers = pmix_ext114_resolve_peers,
+    .resolve_nodes = pmix_ext114_resolve_nodes,
     /* server APIs */
-    .server_init = pmix1_server_init,
-    .server_finalize = pmix1_server_finalize,
-    .generate_regex = pmix1_server_gen_regex,
-    .generate_ppn = pmix1_server_gen_ppn,
-    .server_register_nspace = pmix1_server_register_nspace,
-    .server_deregister_nspace = pmix1_server_deregister_nspace,
-    .server_register_client = pmix1_server_register_client,
-    .server_deregister_client = pmix1_server_deregister_client,
-    .server_setup_fork = pmix1_server_setup_fork,
-    .server_dmodex_request = pmix1_server_dmodex,
-    .server_notify_error = pmix1_server_notify_error,
+    .server_init = pmix_ext114_server_init,
+    .server_finalize = pmix_ext114_server_finalize,
+    .generate_regex = pmix_ext114_server_gen_regex,
+    .generate_ppn = pmix_ext114_server_gen_ppn,
+    .server_register_nspace = pmix_ext114_server_register_nspace,
+    .server_deregister_nspace = pmix_ext114_server_deregister_nspace,
+    .server_register_client = pmix_ext114_server_register_client,
+    .server_deregister_client = pmix_ext114_server_deregister_client,
+    .server_setup_fork = pmix_ext114_server_setup_fork,
+    .server_dmodex_request = pmix_ext114_server_dmodex,
+    .server_notify_error = pmix_ext114_server_notify_error,
     /* utility APIs */
     .get_version = PMIx_Get_version,
     .register_errhandler = opal_pmix_base_register_handler,
     .deregister_errhandler = opal_pmix_base_deregister_handler,
-    .store_local = pmix1_store_local,
-    .get_nspace = pmix1_get_nspace,
-    .register_jobid = pmix1_register_jobid
+    .store_local = pmix_ext114_store_local,
+    .get_nspace = pmix_ext114_get_nspace,
+    .register_jobid = pmix_ext114_register_jobid
 };
 
-static const char *pmix1_get_nspace(opal_jobid_t jobid)
+static const char *pmix_ext114_get_nspace(opal_jobid_t jobid)
 {
-    opal_pmix1_jobid_trkr_t *jptr;
+    opal_pmix_ext114_jobid_trkr_t *jptr;
 
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_external114_component.jobids, opal_pmix1_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_external114_component.jobids, opal_pmix_ext114_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             return jptr->nspace;
         }
@@ -108,23 +108,23 @@ static const char *pmix1_get_nspace(opal_jobid_t jobid)
     return NULL;
 }
 
-static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace)
+static void pmix_ext114_register_jobid(opal_jobid_t jobid, const char *nspace)
 {
-    opal_pmix1_jobid_trkr_t *jptr;
+    opal_pmix_ext114_jobid_trkr_t *jptr;
 
     /* if we don't already have it, add this to our jobid tracker */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_external114_component.jobids, opal_pmix1_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_external114_component.jobids, opal_pmix_ext114_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             return;
         }
     }
-    jptr = OBJ_NEW(opal_pmix1_jobid_trkr_t);
+    jptr = OBJ_NEW(opal_pmix_ext114_jobid_trkr_t);
     (void)strncpy(jptr->nspace, nspace, PMIX_MAX_NSLEN);
     jptr->jobid = jobid;
     opal_list_append(&mca_pmix_external114_component.jobids, &jptr->super);
 }
 
-pmix_status_t pmix1_convert_opalrc(int rc)
+pmix_status_t pmix_ext114_convert_opalrc(int rc)
 {
     switch (rc) {
     case OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER:
@@ -186,7 +186,7 @@ pmix_status_t pmix1_convert_opalrc(int rc)
     }
 }
 
-int pmix1_convert_rc(pmix_status_t rc)
+int pmix_ext114_convert_rc(pmix_status_t rc)
 {
     switch (rc) {
     case PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER:
@@ -271,7 +271,7 @@ int pmix1_convert_rc(pmix_status_t rc)
     }
 }
 
-pmix_scope_t pmix1_convert_opalscope(opal_pmix_scope_t scope) {
+pmix_scope_t pmix_ext114_convert_opalscope(opal_pmix_scope_t scope) {
     switch(scope) {
     case OPAL_PMIX_LOCAL:
         return PMIX_LOCAL;
@@ -284,7 +284,7 @@ pmix_scope_t pmix1_convert_opalscope(opal_pmix_scope_t scope) {
     }
 }
 
-void pmix1_value_load(pmix_value_t *v,
+void pmix_ext114_value_load(pmix_value_t *v,
                       opal_value_t *kv)
 {
     switch(kv->type) {
@@ -385,7 +385,7 @@ void pmix1_value_load(pmix_value_t *v,
     }
 }
 
-int pmix1_value_unload(opal_value_t *kv,
+int pmix_ext114_value_unload(opal_value_t *kv,
                        const pmix_value_t *v)
 {
     int rc=OPAL_SUCCESS;
@@ -490,11 +490,11 @@ int pmix1_value_unload(opal_value_t *kv,
 
 
 /****  INSTANTIATE INTERNAL CLASSES  ****/
-OBJ_CLASS_INSTANCE(opal_pmix1_jobid_trkr_t,
+OBJ_CLASS_INSTANCE(opal_pmix_ext114_jobid_trkr_t,
                    opal_list_item_t,
                    NULL, NULL);
 
-static void opcon(pmix1_opcaddy_t *p)
+static void opcon(pmix_ext114_opcaddy_t *p)
 {
     memset(&p->p, 0, sizeof(pmix_proc_t));
     p->procs = NULL;
@@ -512,7 +512,7 @@ static void opcon(pmix1_opcaddy_t *p)
     p->spcbfunc = NULL;
     p->cbdata = NULL;
 }
-static void opdes(pmix1_opcaddy_t *p)
+static void opdes(pmix_ext114_opcaddy_t *p)
 {
     if (NULL != p->procs) {
         PMIX_PROC_FREE(p->procs, p->nprocs);
@@ -527,11 +527,11 @@ static void opdes(pmix1_opcaddy_t *p)
         PMIX_APP_FREE(p->apps, p->sz);
     }
 }
-OBJ_CLASS_INSTANCE(pmix1_opcaddy_t,
+OBJ_CLASS_INSTANCE(pmix_ext114_opcaddy_t,
                    opal_object_t,
                    opcon, opdes);
 
-static void ocadcon(pmix1_opalcaddy_t *p)
+static void ocadcon(pmix_ext114_opalcaddy_t *p)
 {
     OBJ_CONSTRUCT(&p->procs, opal_list_t);
     OBJ_CONSTRUCT(&p->info, opal_list_t);
@@ -545,12 +545,12 @@ static void ocadcon(pmix1_opalcaddy_t *p)
     p->odmdxfunc = NULL;
     p->ocbdata = NULL;
 }
-static void ocaddes(pmix1_opalcaddy_t *p)
+static void ocaddes(pmix_ext114_opalcaddy_t *p)
 {
     OPAL_LIST_DESTRUCT(&p->procs);
     OPAL_LIST_DESTRUCT(&p->info);
     OPAL_LIST_DESTRUCT(&p->apps);
 }
-OBJ_CLASS_INSTANCE(pmix1_opalcaddy_t,
+OBJ_CLASS_INSTANCE(pmix_ext114_opalcaddy_t,
                    opal_object_t,
                    ocadcon, ocaddes);

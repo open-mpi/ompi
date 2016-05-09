@@ -27,15 +27,15 @@
 /*
  * Public string showing the pmix external component version number
  */
-const char *opal_pmix_external_component_version_string =
-    "OPAL external pmix MCA component version " OPAL_VERSION;
+const char *opal_pmix_external114_component_version_string =
+    "OPAL external pmix 1.1.4 MCA component version " OPAL_VERSION;
 
 /*
  * Local function
  */
-static int external_open(void);
-static int external_close(void);
-static int external_component_query(mca_base_module_t **module, int *priority);
+static int pmix_ext114_open(void);
+static int pmix_ext114_close(void);
+static int pmix_ext114_component_query(mca_base_module_t **module, int *priority);
 
 
 /*
@@ -62,9 +62,9 @@ mca_pmix_pmix1_component_t mca_pmix_external114_component = {
 
         /* Component open and close functions */
 
-            .mca_open_component = external_open,
-            .mca_close_component = external_close,
-            .mca_query_component = external_component_query,
+            .mca_open_component = pmix_ext114_open,
+            .mca_close_component = pmix_ext114_close,
+            .mca_query_component = pmix_ext114_component_query,
         },
         /* Next the MCA v1.0.0 component meta data */
         .base_data = {
@@ -75,20 +75,20 @@ mca_pmix_pmix1_component_t mca_pmix_external114_component = {
     .native_launch = false
 };
 
-static int external_open(void)
+static int pmix_ext114_open(void)
 {
     OBJ_CONSTRUCT(&mca_pmix_external114_component.jobids, opal_list_t);
     return OPAL_SUCCESS;
 }
 
-static int external_close(void)
+static int pmix_ext114_close(void)
 {
     OPAL_LIST_DESTRUCT(&mca_pmix_external114_component.jobids);
     return OPAL_SUCCESS;
 }
 
 
-static int external_component_query(mca_base_module_t **module, int *priority)
+static int pmix_ext114_component_query(mca_base_module_t **module, int *priority)
 {
     char *t, *id;
 
@@ -101,6 +101,6 @@ static int external_component_query(mca_base_module_t **module, int *priority)
         /* we could be a server, so we still need to be considered */
         *priority = 5;
     }
-    *module = (mca_base_module_t *)&opal_pmix_external_module;
+    *module = (mca_base_module_t *)&opal_pmix_external114_module;
     return OPAL_SUCCESS;
 }
