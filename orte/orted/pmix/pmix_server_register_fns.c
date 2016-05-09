@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -359,7 +359,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         kv->data.uint32 = app->first_rank;
         opal_list_append(pmap, &kv->super);
 
-        /* global rank */
+        /* global/univ rank */
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_GLOBAL_RANK);
         kv->type = OPAL_UINT32;
@@ -372,6 +372,13 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         kv->type = OPAL_UINT32;
         kv->data.uint32 = pptr->app_rank;
         opal_list_append(pmap, &kv->super);
+
+        /* app size */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_APP_SIZE);
+        kv->type = OPAL_UINT32;
+        kv->data.uint32 = app->num_procs;
+        opal_list_append(info, &kv->super);
 
         /* local rank */
         kv = OBJ_NEW(opal_value_t);

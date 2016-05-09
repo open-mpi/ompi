@@ -48,6 +48,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_APPNUM                "pmix.appnum"       // (uint32_t) app number within the job
 #define OPAL_PMIX_RANK                  "pmix.rank"         // (uint32_t) process rank within the job
 #define OPAL_PMIX_GLOBAL_RANK           "pmix.grank"        // (uint32_t) rank spanning across all jobs in this session
+#define OPAL_PMIX_UNIV_RANK             "pmix.grank"        // (uint32_t) synonym for global_rank
 #define OPAL_PMIX_APP_RANK              "pmix.apprank"      // (uint32_t) rank within this app
 #define OPAL_PMIX_NPROC_OFFSET          "pmix.offset"       // (uint32_t) starting global rank of this job
 #define OPAL_PMIX_LOCAL_RANK            "pmix.lrank"        // (uint16_t) rank on this node within this job
@@ -78,6 +79,7 @@ BEGIN_C_DECLS
 /* size info */
 #define OPAL_PMIX_UNIV_SIZE             "pmix.univ.size"    // (uint32_t) #procs in this nspace
 #define OPAL_PMIX_JOB_SIZE              "pmix.job.size"     // (uint32_t) #procs in this job
+#define OPAL_PMIX_APP_SIZE              "pmix.app.size"     // (uint32_t) #procs in this app
 #define OPAL_PMIX_LOCAL_SIZE            "pmix.local.size"   // (uint32_t) #procs in this job on this node
 #define OPAL_PMIX_NODE_SIZE             "pmix.node.size"    // (uint32_t) #procs across all jobs on this node
 #define OPAL_PMIX_MAX_PROCS             "pmix.max.size"     // (uint32_t) max #procs for this job
