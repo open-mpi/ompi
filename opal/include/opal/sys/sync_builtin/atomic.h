@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -86,6 +86,8 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t *addr, int32_t delta)
     return __sync_sub_and_fetch(addr, delta);
 }
 
+#if OPAL_ASM_SYNC_HAVE_64BIT
+
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
 static inline int opal_atomic_cmpset_acq_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
@@ -105,17 +107,6 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
     return __sync_bool_compare_and_swap(addr, oldval, newval);
 }
 
-#if OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128
-static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr,
-                                          opal_int128_t oldval, opal_int128_t newval)
-{
-    return __sync_bool_compare_and_swap(addr, oldval, newval);
-}
-
-#define OPAL_HAVE_ATOMIC_CMPSET_128 1
-
-#endif
-
 #define OPAL_HAVE_ATOMIC_MATH_64 1
 #define OPAL_HAVE_ATOMIC_ADD_64 1
 static inline int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
@@ -128,5 +119,18 @@ static inline int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 {
     return __sync_sub_and_fetch(addr, delta);
 }
+
+#endif
+
+#if OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128
+static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr,
+                                          opal_int128_t oldval, opal_int128_t newval)
+{
+    return __sync_bool_compare_and_swap(addr, oldval, newval);
+}
+
+#define OPAL_HAVE_ATOMIC_CMPSET_128 1
+
+#endif
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */
