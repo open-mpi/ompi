@@ -12,7 +12,7 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -622,6 +622,10 @@ int ompi_coll_base_allgather_intra_two_procs(const void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_allgather_intra_two_procs rank %d", rank));
+
+    if (2 != ompi_comm_size(comm)) {
+        return MPI_ERR_UNSUPPORTED_OPERATION;
+    }
 
     err = ompi_datatype_get_extent (sdtype, &lb, &sext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
