@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      QLogic Corp. All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014      Intel Corporation. All rights reserved.
+# Copyright (c) 2016      Intel Corporation. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -64,6 +64,14 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
           [AC_MSG_WARN([PSM2 driver does not currently support progress threads.  Disabling MTL.])
            ompi_check_psm2_happy="no"])
 
+    AS_IF([test "$ompi_check_psm2_happy" = "yes"],
+          [AC_CHECK_HEADERS(
+                glob.h,
+                    [],
+                    [AC_MSG_WARN([glob.h not found.  Can not build component.])
+                    ompi_check_psm2_happy="no"])])
+	
+	
     AS_IF([test "$ompi_check_psm2_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_psm2" -a "$with_psm2" != "no"],
