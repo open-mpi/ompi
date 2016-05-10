@@ -13,7 +13,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -303,6 +303,11 @@ int ompi_coll_base_barrier_intra_two_procs(struct ompi_communicator_t *comm,
     remote = ompi_comm_rank(comm);
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_barrier_intra_two_procs rank %d", remote));
+
+    if (2 != ompi_comm_size(comm)) {
+        return MPI_ERR_UNSUPPORTED_OPERATION;
+    }
+
     remote = (remote + 1) & 0x1;
 
     err = ompi_coll_base_sendrecv_zero(remote, MCA_COLL_BASE_TAG_BARRIER,
