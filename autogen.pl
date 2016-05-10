@@ -5,6 +5,8 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -966,6 +968,12 @@ sub patch_autotools_output {
         verbose "$indent_str"."Patching configure for Sun Studio Fortran version strings ($tag)\n";
         $c =~ s/$search_string/$replace_string/;
     }
+
+    # Oracle has apparently begun (as of 12.5-beta) removing the "Sun" branding.
+    # So this patch (cumulative over the previous one) is required.
+    verbose "$indent_str"."Patching configure for Oracle Studio Fortran version strings\n";
+    $c =~ s/\*Sun\*Fortran\*\)/*Sun*Fortran* | *Studio*Fortran*)/g;
+    $c =~ s/\*Sun\\ F\*\)(.*\n\s+tmp_sharedflag=)/*Sun\\ F* | *Studio*Fortran*)$1/g;
 
     # See http://git.savannah.gnu.org/cgit/libtool.git/commit/?id=v2.2.6-201-g519bf91 for details
     # Note that this issue was fixed in LT 2.2.8, however most distros are still using 2.2.6b
