@@ -242,7 +242,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AC_MSG_WARN([an external copy that you supply.])
            AC_MSG_ERROR([Cannot continue])])
 
-    AC_MSG_CHECKING([if user requested PMIx support($with_pmix)])
+    AC_MSG_CHECKING([if user requested external PMIx support($with_pmix)])
     AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_pmix" = "internal"],
           [AC_MSG_RESULT([no])
            opal_external_pmix_happy="no"],
@@ -251,7 +251,20 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AS_IF([test "$with_pmix" = "external"],
                  [pmix_ext_install_dir=/usr],
                  [pmix_ext_install_dir=$with_pmix])
-           OPAL_CHECK_PACKAGE([opal_pmix_ext], [pmix.h], [pmix], [PMIx_Init], [], [$pmix_ext_install_dir], [], [opal_external_pmix_happy=yes], [])
+           AC_MSG_CHECKING([if external component can be used])
+           OPAL_CHECK_PACKAGE([opal_pmix_ext],
+                              [pmix.h],
+                              [pmix],
+                              [PMIx_Init],
+                              [],
+                              [$pmix_ext_install_dir],
+                              [],
+                              [AC_MSG_RESULT([PMIx external support will be built])
+                               opal_external_pmix_happy=yes],
+                              [AC_MSG_RESULT([no])
+                               AC_MSG_WARN([External PMIx support was requested but failed])
+                               AC_MSG_WARN([as explained above.])
+                               AC_MSG_ERROR([Cannot continue])])
           ])
     AC_SUBST(opal_pmix_ext_CPPFLAGS)
     AC_SUBST(opal_pmix_ext_LDFLAGS)
