@@ -373,12 +373,14 @@ int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_data,
 {
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)source_data->args;
 
-    /* If required then increase the reference count of the arguments. This avoid us
-     * to make one more copy for a read only piece of memory.
+    /* Increase the reference count of the datatype enveloppe. This
+     * prevent us from making extra copies for the enveloppe (which is mostly
+     * a read only memory).
      */
-    assert( NULL != source_data->args );
-    pArgs->ref_count++;
-    dest_data->args = pArgs;
+    if( NULL != pArgs ) {
+        OPAL_THREAD_ADD32(&pArgs->ref_count, 1);
+        dest_data->args = pArgs;
+    }
     return OMPI_SUCCESS;
 }
 
@@ -394,7 +396,7 @@ int32_t ompi_datatype_release_args( ompi_datatype_t* pData )
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)pData->args;
 
     assert( 0 < pArgs->ref_count );
-    pArgs->ref_count--;
+    OPAL_THREAD_ADD32(&pArgs->ref_count, -1);
     if( 0 == pArgs->ref_count ) {
         /* There are some duplicated datatypes around that have a pointer to this
          * args. We will release them only when the last datatype will dissapear.
