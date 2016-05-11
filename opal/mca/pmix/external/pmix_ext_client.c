@@ -5,6 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +31,6 @@
 #include "opal/mca/pmix/base/base.h"
 #include "pmix_ext.h"
 #include "pmix.h"
-#include "pmix/src/buffer_ops/buffer_ops.h"
 
 static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
