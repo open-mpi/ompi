@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <glob.h>
 
 static int param_priority;
 
@@ -185,12 +186,41 @@ ompi_mtl_psm_component_open(void)
     }
 
   /* Component available only if Truescale hardware is present */
-  if (0 == stat("/dev/ipath", &st)) {
-    return OMPI_SUCCESS;
-  }
-  else {
+  if (0 != stat("/dev/ipath", &st)) {
     return OPAL_ERR_NOT_AVAILABLE;
   }
+
+  /* Component available only if at least one qib port is ACTIVE */
+  bool foundOnlineQibPort = false;
+  size_t i;
+  char portState[128];
+  FILE *devFile;
+  glob_t globbuf;
+  globbuf.gl_offs = 0;
+  if (glob("/sys/class/infiniband/qib*/ports/*/state",
+        GLOB_DOOFFS, NULL, &globbuf) != 0) {
+    return OPAL_ERR_NOT_AVAILABLE;
+  }
+
+  for (i=0;i < globbuf.gl_pathc; i++) {
+    devFile = fopen(globbuf.gl_pathv[i], "r");
+    fgets(portState, sizeof(portState), devFile);
+    fclose(devFile);
+
+    if (strstr(portState, "ACTIVE") != NULL) {
+      /* Found at least one ACTIVE port */
+      foundOnlineQibPort = true;
+      break;
+    }
+  }
+
+  globfree(&globbuf);
+
+  if (!foundOnlineQibPort) {
+    return OPAL_ERR_NOT_AVAILABLE;
+  }
+
+  return OMPI_SUCCESS;
 }
 
 static int

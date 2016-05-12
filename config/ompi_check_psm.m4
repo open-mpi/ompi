@@ -16,6 +16,8 @@ dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2016      Intel Corporation. All rights reserved.
+dnl 
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -67,6 +69,13 @@ AC_DEFUN([OMPI_CHECK_PSM],[
 	AS_IF([test "$ompi_check_psm_happy" = "yes" && test "$enable_progress_threads" = "yes"],
               [AC_MSG_WARN([PSM driver does not currently support progress threads.  Disabling BTL.])
                ompi_check_psm_happy="no"])
+
+    	AS_IF([test "$ompi_check_psm_happy" = "yes"],
+              [AC_CHECK_HEADERS(
+               glob.h,
+               [],
+               [AC_MSG_WARN([glob.h not found.  Can not build component.])
+               ompi_check_psm_happy="no"])])
 
 	OPAL_SUMMARY_ADD([[Transports]],[[Intel TrueScale (PSM)]],[$1],[$ompi_check_psm_happy])
     fi
