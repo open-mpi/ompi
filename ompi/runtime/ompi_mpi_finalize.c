@@ -16,7 +16,7 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -242,19 +242,20 @@ int ompi_mpi_finalize(void)
        more details). */
     if (NULL != opal_pmix.fence_nb) {
         active = true;
-        /* Note that the non-blocking PMIx fence will cycle calling
-           opal_progress(), which will allow any other pending
-           communications/actions to complete.  See
-           https://github.com/open-mpi/ompi/issues/1576 for the
-           original bug report. */
+        /* Note that use of the non-blocking PMIx fence will
+         * allow us to lazily cycle calling
+         * opal_progress(), which will allow any other pending
+         * communications/actions to complete.  See
+         * https://github.com/open-mpi/ompi/issues/1576 for the
+         * original bug report. */
         opal_pmix.fence_nb(NULL, 0, fence_cbfunc, (void*)&active);
-        OMPI_WAIT_FOR_COMPLETION(active);
+        OMPI_LAZY_WAIT_FOR_COMPLETION(active);
     } else {
         /* However, we cannot guarantee that the provided PMIx has
-           fence_nb.  If it doesn't, then do the best we can: an MPI
-           barrier on COMM_WORLD (which isn't the best because of the
-           reasons cited above), followed by a blocking PMIx fence
-           (which may not necessarily call opal_progress()). */
+         * fence_nb.  If it doesn't, then do the best we can: an MPI
+         * barrier on COMM_WORLD (which isn't the best because of the
+         * reasons cited above), followed by a blocking PMIx fence
+         * (which does not call opal_progress()). */
         ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
         comm->c_coll.coll_barrier(comm, comm->c_coll.coll_barrier_module);
 

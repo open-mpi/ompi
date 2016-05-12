@@ -36,7 +36,8 @@ static int s1_initialized(void);
 static int s1_abort(int flag, const char msg[],
                     opal_list_t *procs);
 static int s1_commit(void);
-static int s1_fence(opal_list_t *procs, int collect_data);
+static int s1_fencenb(opal_list_t *procs, int collect_data,
+                      opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s1_get(const opal_process_name_t *id,
@@ -59,7 +60,7 @@ const opal_pmix_base_module_t opal_pmix_s1_module = {
     .initialized = s1_initialized,
     .abort = s1_abort,
     .commit = s1_commit,
-    .fence = s1_fence,
+    .fence_nb = s1_fencenb,
     .put = s1_put,
     .get = s1_get,
     .publish = s1_publish,
@@ -77,6 +78,17 @@ const opal_pmix_base_module_t opal_pmix_s1_module = {
 
 // usage accounting
 static int pmix_init_count = 0;
+
+// local object
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    opal_pmix_op_cbfunc_t opcbfunc;
+    void *cbdata;
+} pmi_opcaddy_t;
+OBJ_CLASS_INSTANCE(pmi_opcaddy_t,
+                   opal_object_t,
+                   NULL, NULL);
 
 // PMI constant values:
 static int pmix_kvslen_max = 0;
@@ -500,8 +512,9 @@ static int s1_commit(void)
     return OPAL_SUCCESS;
 }
 
-static int s1_fence(opal_list_t *procs, int collect_data)
+static void fencenb(int sd, short args, void *cbdata)
 {
+    pmi_opcaddy_t *op = (pmi_opcaddy_t*)cbdata;
     int rc;
     int32_t i;
     opal_value_t *kp, kvn;
@@ -515,7 +528,8 @@ static int s1_fence(opal_list_t *procs, int collect_data)
     /* use the PMI barrier function */
     if (PMI_SUCCESS != (rc = PMI_Barrier())) {
         OPAL_PMI_ERROR(rc, "PMI_Barrier");
-        return OPAL_ERROR;
+        rc = OPAL_ERROR;
+        goto cleanup;
     }
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
@@ -536,7 +550,7 @@ static int s1_fence(opal_list_t *procs, int collect_data)
                                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
-                return rc;
+                goto cleanup;
             }
             if (NULL == kp || NULL == kp->data.string) {
                 /* if we share a node, but we don't know anything more, then
@@ -566,6 +580,27 @@ static int s1_fence(opal_list_t *procs, int collect_data)
             OBJ_DESTRUCT(&kvn);
         }
     }
+
+  cleanup:
+    if (NULL != op->opcbfunc) {
+        op->opcbfunc(rc, op->cbdata);
+    }
+    OBJ_RELEASE(op);
+    return;
+}
+
+static int s1_fencenb(opal_list_t *procs, int collect_data,
+                      opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    pmi_opcaddy_t *op;
+
+    /* thread-shift this so we don't block in SLURM's barrier */
+    op = OBJ_NEW(pmi_opcaddy_t);
+    op->opcbfunc = cbfunc;
+    op->cbdata = cbdata;
+    event_assign(&op->ev, opal_pmix_base.evbase, -1,
+                 EV_WRITE, fencenb, op);
+    event_active(&op->ev, EV_WRITE, 1);
 
     return OPAL_SUCCESS;
 }

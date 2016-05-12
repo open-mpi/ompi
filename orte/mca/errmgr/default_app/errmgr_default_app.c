@@ -28,6 +28,7 @@
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
 #include "opal/errhandler/opal_errhandler.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
@@ -71,6 +72,33 @@
 static void proc_errors(int fd, short args, void *cbdata);
 static void pmix_error(int error, opal_proc_t *proc, void *cbdata)
 {
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
+                        "%s errmgr:default_app: errhandler called",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* push it into our event base */
+    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_COMM_FAILED);
+}
+
+static int myerrhandle = -1;
+
+static void register_cbfunc(int status, int errhndler, void *cbdata)
+{
+    myerrhandle = errhndler;
+}
+
+static void notify_cbfunc(int status,
+                          opal_list_t *procs,
+                          opal_list_t *info,
+                          opal_pmix_release_cbfunc_t cbfunc,
+                          void *cbdata)
+{
+    if (NULL != cbfunc) {
+        cbfunc(cbdata);
+    }
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
+                        "%s errmgr:default_app: pmix errhandler called",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     /* push it into our event base */
     ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_COMM_FAILED);
 }
@@ -86,13 +114,16 @@ static void pmix_error(int error, opal_proc_t *proc, void *cbdata)
     /* register an errhandler */
     opal_register_errhandler(pmix_error, NULL);
 
+    /* tie the default PMIx errhandler back to us */
+    opal_pmix.register_errhandler(NULL, notify_cbfunc, register_cbfunc, NULL);
+
     return ORTE_SUCCESS;
 }
 
 static int finalize(void)
 {
     opal_deregister_errhandler();
-
+    opal_pmix.deregister_errhandler(myerrhandle, NULL, NULL);
     return ORTE_SUCCESS;
 }
 
