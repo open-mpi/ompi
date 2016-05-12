@@ -369,6 +369,8 @@ int pmix1_fencenb(opal_list_t *procs, int collect_data,
     if (collect_data) {
         PMIX_INFO_CONSTRUCT(&info);
         (void)strncpy(info.key, PMIX_COLLECT_DATA, PMIX_MAX_KEYLEN);
+        info.value.type = PMIX_BOOL;
+        info.value.data.flag = true;
         iptr = &info;
         n = 1;
     } else {
