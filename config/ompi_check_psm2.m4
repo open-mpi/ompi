@@ -67,6 +67,14 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
            ompi_check_psm2_happy="no"])
 
     AS_IF([test "$ompi_check_psm2_happy" = "yes"],
+          [AC_CHECK_HEADERS(
+                glob.h,
+                    [],
+                    [AC_MSG_WARN([glob.h not found.  Can not build component.])
+                    ompi_check_psm2_happy="no"])])
+	
+	
+    AS_IF([test "$ompi_check_psm2_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_psm2" && test "$with_psm2" != "no"],
                  [AC_MSG_ERROR([PSM2 support requested but not found.  Aborting])])
