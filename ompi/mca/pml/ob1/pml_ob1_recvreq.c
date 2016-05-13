@@ -818,8 +818,8 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
                                    recvreq->req_recv.req_base.req_count,
                                    recvreq->req_recv.req_base.req_datatype);
                    );
+        OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     }
-    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
        recvreq->req_rdma_offset < recvreq->req_send_offset) {
