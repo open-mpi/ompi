@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
@@ -65,7 +65,13 @@ char *ompi_mpi_show_mca_params_string = NULL;
 bool ompi_mpi_have_sparse_group_storage = !!(OMPI_GROUP_SPARSE);
 bool ompi_mpi_preconnect_mpi = false;
 
+/* NTH: temporarily disable add_procs on big-endian and 32-bit systems
+ * until we have a better solution for handling proc sentinels. */
+#if SIZEOF_VOID_P == 4 || BYTE_ORDER == BIG_ENDIAN
+#define OMPI_ADD_PROCS_CUTOFF_DEFAULT UINT_MAX
+#else
 #define OMPI_ADD_PROCS_CUTOFF_DEFAULT 0
+#endif
 uint32_t ompi_add_procs_cutoff = OMPI_ADD_PROCS_CUTOFF_DEFAULT;
 bool ompi_mpi_dynamics_enabled = true;
 
@@ -270,8 +276,14 @@ int ompi_mpi_register_params(void)
                                   "Maximum world size for pre-allocating resources for all "
                                   "remote processes. Increasing this limit may improve "
                                   "communication performance at the cost of memory usage",
-                                  MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL,
-                                  0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
+                                  MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+/* NTH: temporarily disable add_procs on big-endian and 32-bit systems
+ * until we have a better solution for handling proc sentinels. */
+#if SIZEOF_VOID_P == 4 || BYTE_ORDER == BIG_ENDIAN
+                                  MCA_BASE_VAR_SCOPE_CONSTANT,
+#else
+                                  MCA_BASE_VAR_SCOPE_LOCAL,
+#endif
                                   &ompi_add_procs_cutoff);
 
     ompi_mpi_dynamics_enabled = true;
