@@ -249,7 +249,7 @@ static int intercept_madvise (void *start, size_t length, int advice)
 #if defined SYS_brk
 
 #if OPAL_MEMORY_PATCHER_HAVE___CURBRK
-void *__curbrk; /* in libc */
+extern void *__curbrk; /* in libc */
 #endif
 
 static int (*original_brk) (void *);
