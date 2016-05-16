@@ -539,6 +539,17 @@ static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
     ep->fifo = NULL;
 }
 
+#if OPAL_BTL_VADER_HAVE_XPMEM
+static int mca_btl_vader_endpoint_rcache_cleanup (mca_rcache_base_registration_t *reg, void *ctx)
+{
+    mca_rcache_base_vma_module_t *vma_module = (mca_rcache_base_vma_module_t *) ctx;
+    /* otherwise dereg will fail on assert */
+    reg->ref_count = 0;
+    (void) mca_rcache_base_vma_delete (vma_module, reg);
+    return OPAL_SUCCESS;
+}
+#endif
+
 static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
 {
     OBJ_DESTRUCT(&ep->pending_frags);
@@ -548,21 +559,11 @@ static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
         if (ep->segment_data.xpmem.vma_module) {
             /* clean out the registration cache */
-            const int nregs = 100;
-            mca_rcache_base_registration_t *regs[nregs];
-            int reg_cnt;
-
-            do {
-                reg_cnt = mca_rcache_base_vma_find_all (ep->segment_data.xpmem.vma_module,
-                                                        0, (size_t) -1, regs, nregs);
-                for (int i = 0 ; i < reg_cnt ; ++i) {
-                    /* otherwise dereg will fail on assert */
-                    regs[i]->ref_count = 0;
-                    OBJ_RELEASE(regs[i]);
-                }
-            } while (reg_cnt == nregs);
-
-            ep->segment_data.xpmem.vma_module = NULL;
+            (void) mca_rcache_base_vma_iterate (ep->segment_data.xpmem.vma_module,
+                                                NULL, (size_t) -1,
+                                                mca_btl_vader_endpoint_rcache_cleanup,
+                                                (void *) ep->segment_data.xpmem.vma_module);
+            OBJ_RELEASE(ep->segment_data.xpmem.vma_module);
         }
 
         if (ep->segment_base) {

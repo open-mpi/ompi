@@ -40,7 +40,7 @@ struct mca_rcache_grdma_cache_t {
     opal_list_item_t super;
     char *cache_name;
     opal_list_t lru_list;
-    opal_list_t gc_list;
+    opal_lifo_t gc_lifo;
     mca_rcache_base_vma_module_t *vma_module;
 };
 typedef struct mca_rcache_grdma_cache_t mca_rcache_grdma_cache_t;
