@@ -362,6 +362,12 @@ static int ompi_register_mca_variables(void)
     return OMPI_SUCCESS;
 }
 
+static void fence_release(int status, void *cbdata)
+{
+    volatile bool *active = (volatile bool*)cbdata;
+    *active = false;
+}
+
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
     int ret;
@@ -370,6 +376,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     char *error = NULL;
     char *cmd=NULL, *av=NULL;
     ompi_errhandler_errtrk_t errtrk;
+    volatile bool active;
     OPAL_TIMING_DECLARE(tm);
     OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
@@ -634,13 +641,23 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * if data exchange is required. The modex occurs solely across procs
      * in our job. If a barrier is required, the "modex" function will
      * perform it internally */
-    OPAL_MODEX();
+    active = true;
+    opal_pmix.commit();
+    if (!opal_pmix_base_async_modex) {
+        if (NULL != opal_pmix.fence_nb) {
+            opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
+                               fence_release, (void*)&active);
+            OMPI_WAIT_FOR_COMPLETION(active);
+        } else {
+            opal_pmix.fence(NULL, opal_pmix_collect_all_data);
+        }
+    }
 
     OPAL_TIMING_MNEXT((&tm,"time from modex to first barrier"));
 
     /* select buffered send allocator component to be used */
     if( OMPI_SUCCESS !=
-	(ret = mca_pml_base_bsend_init(ompi_mpi_thread_multiple))) {
+        (ret = mca_pml_base_bsend_init(ompi_mpi_thread_multiple))) {
         error = "mca_pml_base_bsend_init() failed";
         goto error;
     }
@@ -802,7 +819,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* wait for everyone to reach this point - this is a hard
      * barrier requirement at this time, though we hope to relax
      * it at a later point */
-    opal_pmix.fence(NULL, 0);
+    active = true;
+    opal_pmix.commit();
+    if (NULL != opal_pmix.fence_nb) {
+        opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
+                           fence_release, (void*)&active);
+        OMPI_WAIT_FOR_COMPLETION(active);
+    } else {
+        opal_pmix.fence(NULL, opal_pmix_collect_all_data);
+    }
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
@@ -839,10 +864,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        e.g. hierarch, might create subcommunicators. The threadlevel
        requested by all processes is required in order to know
        which cid allocation algorithm can be used. */
-    if ( OMPI_SUCCESS !=
-	 ( ret = ompi_comm_cid_init ())) {
-	error = "ompi_mpi_init: ompi_comm_cid_init failed";
-	goto error;
+    if (OMPI_SUCCESS != ( ret = ompi_comm_cid_init ())) {
+        error = "ompi_mpi_init: ompi_comm_cid_init failed";
+        goto error;
     }
 
     /* Init coll for the comms. This has to be after dpm_base_select,

@@ -205,27 +205,27 @@ OMPI_DECLSPEC extern mca_base_framework_t ompi_rte_base_framework;
  * progress while waiting, so we loop over opal_progress, letting
  * the RTE progress thread move the RTE along
  */
-#define OMPI_WAIT_FOR_COMPLETION(flg)                                   \
-    do {                                                                \
-        opal_output_verbose(1, ompi_rte_base_framework.framework_output, \
-                            "%s waiting on RTE event at %s:%d",         \
-                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
-                            __FILE__, __LINE__);                        \
-        while ((flg)) {                                                \
-            opal_progress();                                            \
-        }                                                               \
+#define OMPI_WAIT_FOR_COMPLETION(flg)                                       \
+    do {                                                                    \
+        opal_output_verbose(1, ompi_rte_base_framework.framework_output,    \
+                            "%s waiting on RTE event at %s:%d",             \
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),             \
+                            __FILE__, __LINE__);                            \
+        while ((flg)) {                                                     \
+            opal_progress();                                                \
+        }                                                                   \
     }while(0);
 
-#define OMPI_LAZY_WAIT_FOR_COMPLETION(flg)                              \
-    do {                                                                \
-        opal_output_verbose(1, ompi_rte_base_framework.framework_output, \
-                            "%s lazy waiting on RTE event at %s:%d",    \
-                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
-                            __FILE__, __LINE__);                        \
-        while ((flg)) {                                                 \
-            opal_progress();                                            \
-            usleep(100);                                                \
-        }                                                               \
+#define OMPI_LAZY_WAIT_FOR_COMPLETION(flg)                                  \
+    do {                                                                    \
+        opal_output_verbose(1, ompi_rte_base_framework.framework_output,    \
+                            "%s lazy waiting on RTE event at %s:%d",        \
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),             \
+                            __FILE__, __LINE__);                            \
+        while ((flg)) {                                                     \
+            opal_progress();                                                \
+            usleep(100);                                                    \
+        }                                                                   \
     }while(0);
 
 typedef struct {
