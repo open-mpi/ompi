@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -150,7 +150,7 @@ static mca_bml_base_endpoint_t *mca_bml_r2_allocate_endpoint (ompi_proc_t *proc)
     /* allocate bml specific proc data */
     bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
     if (NULL == bml_endpoint) {
-        opal_output(0, "mca_bml_r2_add_procs: unable to allocate resources");
+        opal_output(0, "%s: unable to allocate resources", __func__);
         return NULL;
     }
 
@@ -197,15 +197,16 @@ static int mca_bml_r2_endpoint_add_btl (struct ompi_proc_t *proc, mca_bml_base_e
     /* NTH: these flags should have been sanitized by the btl. Once that is verified these
      * checks can be safely removed. */
     if ((btl_flags & MCA_BTL_FLAGS_PUT) && (NULL == btl->btl_put)) {
-        opal_output(0, "mca_bml_r2_add_procs: The PUT flag is specified for"
+        opal_output(0, "%s: The PUT flag is specified for"
                     " the %s BTL without any PUT function attached. Discard the flag !",
+                    __func__,
                     btl->btl_component->btl_version.mca_component_name);
         btl_flags ^= MCA_BTL_FLAGS_PUT;
     }
     if ((btl_flags & MCA_BTL_FLAGS_GET) && (NULL == btl->btl_get)) {
-        opal_output(0, "mca_bml_r2_add_procs: The GET flag is specified for"
+        opal_output(0, "%s: The GET flag is specified for"
                     " the %s BTL without any GET function attached. Discard the flag !",
-                    btl->btl_component->btl_version.mca_component_name);
+                    __func__, btl->btl_component->btl_version.mca_component_name);
         btl_flags ^= MCA_BTL_FLAGS_GET;
     }
 
