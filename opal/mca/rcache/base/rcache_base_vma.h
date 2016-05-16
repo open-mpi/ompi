@@ -13,7 +13,7 @@
  *
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -34,6 +34,7 @@
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_rb_tree.h"
+#include "opal/class/opal_lifo.h"
 
 BEGIN_C_DECLS
 
@@ -68,6 +69,26 @@ int mca_rcache_base_vma_delete (mca_rcache_base_vma_module_t *vma_module,
 
 void mca_rcache_base_vma_dump_range (mca_rcache_base_vma_module_t *vma_module,
                                      unsigned char *base, size_t size, char *msg);
+
+/**
+ * Iterate over registrations in the specified range.
+ *
+ * @param[in] vma_module  vma tree
+ * @param[in] base        base address of region
+ * @param[in] size        size of region
+ * @param[in] callback_fn function to call for each matching registration handle
+ * @param[in] ctx         callback context
+ *
+ * The callback will be made with the vma lock held. This is a recursive lock so
+ * it is still safe to call any vma functions on this vma_module. Keep in mind it
+ * is only safe to call mca_rcache_base_vma_delete() on the supplied registration
+ * from the callback. The iteration will terminate if the callback returns anything
+ * other than OPAL_SUCCESS.
+ */
+int mca_rcache_base_vma_iterate (mca_rcache_base_vma_module_t *vma_module,
+                                 unsigned char *base, size_t size,
+                                 int (*callback_fn) (struct mca_rcache_base_registration_t *, void *),
+                                 void *ctx);
 
 END_C_DECLS
 
