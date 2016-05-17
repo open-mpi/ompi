@@ -95,6 +95,24 @@ __sync_add_and_fetch(&tmp, 1);],
      $1],
     [AC_MSG_RESULT([no])
      $2])
+
+  AC_MSG_CHECKING([for 64-bit __sync builtin atomics])
+
+  AC_TRY_LINK([
+#include <stdint.h>
+uint64_t tmp;], [
+__sync_bool_compare_and_swap(&tmp, 0, 1);
+__sync_add_and_fetch(&tmp, 1);],
+    [AC_MSG_RESULT([yes])
+     opal_asm_sync_have_64bit=1],
+    [AC_MSG_RESULT([no])
+     opal_asm_sync_have_64bit=0])
+
+  AC_DEFINE_UNQUOTED([OPAL_ASM_SYNC_HAVE_64BIT],[$opal_asm_sync_have_64bit],
+		     [Whether 64-bit is supported by the __sync builtin atomics])
+
+  # Check for 128-bit support
+  OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
 ])
 
 
@@ -878,7 +896,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     opal_cv_asm_builtin="BUILTIN_NO"
     if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
        OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])
-       OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
     fi
     if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_osx_builtin_atomics" = "yes" ; then
        AC_CHECK_HEADER([libkern/OSAtomic.h],
@@ -1008,6 +1025,12 @@ AC_MSG_ERROR([Can not continue.])
               [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
         esac
+
+	if test "x$OPAL_ASM_SUPPORT_64BIT" = "x1" && test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" &&
+		test "$opal_asm_sync_have_64bit" = "0" ; then
+	    # __sync builtins exist but do not implement 64-bit support. Fall back on inline asm.
+	    opal_cv_asm_builtin="BUILTIN_NO"
+	fi
 
       if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" ; then
         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
