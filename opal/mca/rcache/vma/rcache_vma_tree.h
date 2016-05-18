@@ -1,26 +1,28 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
-/**
-  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-  *                         University Research and Technology
-  *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2007 The University of Tennessee and The University
-  *                         of Tennessee Research Foundation.  All rights
-  *                         reserved.
-  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
-  *                         University of Stuttgart.  All rights reserved.
-  * Copyright (c) 2004-2005 The Regents of the University of California.
-  *                         All rights reserved.
-  *
-  * Copyright (c) 2006      Voltaire. All rights reserved.
-  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
-  *
-  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
-  * $COPYRIGHT$
-  *
-  * Additional copyrights may follow
-  *
-  * $HEADER$
-  */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ *
+ * Copyright (c) 2006      Voltaire. All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ *
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 /**
   * @file
   * Description of the Registration Cache framework
@@ -110,6 +112,15 @@ void mca_rcache_vma_destroy(mca_rcache_vma_t *vma);
  */
 void mca_rcache_vma_tree_dump_range(mca_rcache_vma_module_t *vma_rcache,
                                     unsigned char *base, size_t size, char *msg);
+
+
+/*
+ * Iterate over matching registration handles in the tree.
+ */
+int mca_rcache_vma_tree_iterate (mca_rcache_vma_module_t *vma_module,
+                                 unsigned char *base, size_t size,
+                                 int (*callback_fn) (mca_mpool_base_registration_t *, void *),
+                                 void *ctx);
 
 
 #endif /* MCA_RCACHE_VMA_TREE_H */

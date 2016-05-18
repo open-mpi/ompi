@@ -1,25 +1,27 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
-/**
-  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
-  *                         University Research and Technology
-  *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2007 The University of Tennessee and The University
-  *                         of Tennessee Research Foundation.  All rights
-  *                         reserved.
-  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
-  *                         University of Stuttgart.  All rights reserved.
-  * Copyright (c) 2004-2005 The Regents of the University of California.
-  *                         All rights reserved.
-  *
-  * Copyright (c) 2006      Voltaire. All rights reserved.
-  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
-  *
-  * $COPYRIGHT$
-  *
-  * Additional copyrights may follow
-  *
-  * $HEADER$
-  */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ *
+ * Copyright (c) 2006      Voltaire. All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ *
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 /**
   * @file
   * Description of the Registration Cache framework
@@ -38,7 +40,6 @@ struct mca_rcache_vma_module_t {
     mca_rcache_base_module_t base;
     opal_rb_tree_t rb_tree;
     opal_list_t vma_list;
-    opal_list_t vma_delete_list;
     size_t reg_cur_cache_size;
 };
 typedef struct mca_rcache_vma_module_t mca_rcache_vma_module_t;
@@ -67,13 +68,6 @@ int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,
 int mca_rcache_vma_delete(struct mca_rcache_base_module_t* rcache,
         mca_mpool_base_registration_t* registration);
 
-/* It is not safe to call mca_rcache_vma_clean with the rcache lock held */
-int mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache);
-/* Destroy vma objects which are on the deferred delete list. These were placed
-   on the list earlier when the rcache lock was held and it was not safe to
-   destory them. They should not be linked into any other structure anymore except
-   the vma_list_delete list */
-
 /**
   * init/finalize
   */
@@ -85,6 +79,25 @@ void mca_rcache_vma_finalize(struct mca_rcache_base_module_t*);
 void mca_rcache_vma_dump_range(struct mca_rcache_base_module_t *rcache,
                                unsigned char* addr, size_t size, char *msg);
 
+
+/**
+ * Iterate over registrations in the specified range.
+ *
+ * @param[in] vma_module  vma tree
+ * @param[in] base        base address of region
+ * @param[in] size        size of region
+ * @param[in] callback_fn function to call for each matching registration handle
+ * @param[in] ctx         callback context
+ *
+ * The callback will be made with the vma lock held. This is a recursive lock so
+ * it is still safe to call any vma functions on this vma_module. Keep in mind it
+ * is only safe to call mca_rcache_base_vma_delete() on the supplied registration
+ * from the callback. The iteration will terminate if the callback returns anything
+ * other than OPAL_SUCCESS.
+ */
+int mca_rcache_vma_iterate (mca_rcache_base_module_t *rcache, unsigned char *base, size_t size,
+                            int (*callback_fn) (mca_mpool_base_registration_t *, void *),
+                            void *ctx);
 
 END_C_DECLS
 
