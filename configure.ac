@@ -577,7 +577,8 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     dlfcn.h execinfo.h err.h fcntl.h grp.h libgen.h \
     libutil.h memory.h netdb.h netinet/in.h netinet/tcp.h \
     poll.h pthread.h pty.h pwd.h sched.h \
-    strings.h stropts.h sys/fcntl.h sys/ipc.h sys/shm.h \
+    strings.h stropts.h linux/ethtool.h linux/sockios.h \
+    net/if.h sys/fcntl.h sys/ipc.h sys/shm.h \
     sys/ioctl.h sys/mman.h sys/param.h sys/queue.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
     sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/tree.h \
@@ -628,13 +629,28 @@ AC_CACHE_SAVE
 opal_show_title "Type tests"
 
 AC_CHECK_TYPES([socklen_t, struct sockaddr_in, struct sockaddr_in6,
-                struct sockaddr_storage],
+                struct sockaddr_storage, struct ifreq, struct ethtool_cmd],
                [], [], [AC_INCLUDES_DEFAULT
 #if HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_NET_IF_H
+#include <net/if.h>
+#endif])
+
+AC_CHECK_DECLS([ethtool_cmd_speed, SIOCETHTOOL],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
 #endif])
 
 AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC, AF_INET6, PF_INET6],

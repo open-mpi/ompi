@@ -56,6 +56,7 @@
 #include <limits.h>
 
 #include "opal/mca/event/event.h"
+#include "opal/util/ethtool.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
@@ -84,6 +85,9 @@
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
+
+#define MCA_BTL_TCP_BTL_BANDWIDTH 100
+#define MCA_BTL_TCP_BTL_LATENCY 100
 
 /*
  * Local functions
@@ -320,8 +324,11 @@ static int mca_btl_tcp_component_register(void)
                                        MCA_BTL_FLAGS_HETEROGENEOUS_RDMA |
                                        MCA_BTL_FLAGS_SEND;
 
-    mca_btl_tcp_module.super.btl_bandwidth = 100;
-    mca_btl_tcp_module.super.btl_latency = 100;
+    /* Bandwidth and latency initially set to 0. May be overridden during
+     * mca_btl_tcp_create().
+     */
+    mca_btl_tcp_module.super.btl_bandwidth = 0;
+    mca_btl_tcp_module.super.btl_latency = 0;
 
     mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,
                                 &mca_btl_tcp_module.super);
@@ -513,6 +520,27 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s:%d", if_name, i);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_latency, OPAL_INFO_LVL_5, &btl->super.btl_latency);
+
+        /* Only attempt to auto-detect bandwidth and/or latency if it is 0.
+         *
+         * If detection fails to return anything other than 0, set a default
+         * bandwidth and latency.
+         */
+        if (0 == btl->super.btl_bandwidth) {
+            unsigned int speed = opal_ethtool_get_speed(if_name);
+            btl->super.btl_bandwidth = (speed == 0) ? MCA_BTL_TCP_BTL_BANDWIDTH : speed;
+            if (i > 0) {
+                btl->super.btl_bandwidth >>= 1;
+            }
+        }
+        /* We have no runtime btl latency detection mechanism. Just set a default. */
+        if (0 == btl->super.btl_latency) {
+            btl->super.btl_latency = MCA_BTL_TCP_BTL_LATENCY;
+            if (i > 0) {
+                btl->super.btl_latency <<= 1;
+            }
+        }
+
 #if 0 && OPAL_ENABLE_DEBUG
         BTL_OUTPUT(("interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
                     btl->super.btl_bandwidth, btl->super.btl_latency));

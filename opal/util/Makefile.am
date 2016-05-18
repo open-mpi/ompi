@@ -43,6 +43,7 @@ headers = \
         cmd_line.h \
         crc.h \
         daemon_init.h \
+	ethtool.h \
         error.h \
         fd.h \
         few.h \
@@ -78,6 +79,7 @@ libopalutil_la_SOURCES = \
         cmd_line.c \
         crc.c \
         daemon_init.c \
+	ethtool.c \
         error.c \
         fd.c \
         few.c \
