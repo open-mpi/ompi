@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -58,6 +58,10 @@ static opal_atomic_lock_t progress_lock;
 static opal_progress_callback_t *callbacks = NULL;
 static size_t callbacks_len = 0;
 static size_t callbacks_size = 0;
+
+static opal_progress_callback_t *callbacks_lp = NULL;
+static size_t callbacks_lp_len = 0;
+static size_t callbacks_lp_size = 0;
 
 /* do we want to call sched_yield() if nothing happened */
 bool opal_progress_yield_when_idle = false;
@@ -151,6 +155,7 @@ opal_progress_finalize(void)
 void
 opal_progress(void)
 {
+    static volatile uint64_t num_calls = 0;
     size_t i;
     int events = 0;
 
@@ -187,6 +192,13 @@ opal_progress(void)
     /* progress all registered callbacks */
     for (i = 0 ; i < callbacks_len ; ++i) {
         events += (callbacks[i])();
+    }
+
+    if ((OPAL_THREAD_ADD64((volatile int64_t *) &num_calls, 1) & 0x7) == 0) {
+        /* run low priority callbacks once every 8 calls to opal_progress() */
+        for (i = 0 ; i < callbacks_lp_len ; ++i) {
+            events += (callbacks_lp[i])();
+        }
     }
 
 #if OPAL_HAVE_SCHED_YIELD
@@ -317,6 +329,9 @@ opal_progress_register(opal_progress_callback_t cb)
     int ret = OPAL_SUCCESS;
     size_t index;
 
+    /* just in case there is a low-priority callback remove it */
+    (void) opal_progress_unregister (cb);
+
     opal_atomic_lock(&progress_lock);
 
     /* see if we need to allocate more space */
@@ -345,17 +360,53 @@ opal_progress_register(opal_progress_callback_t cb)
     return ret;
 }
 
-int
-opal_progress_unregister(opal_progress_callback_t cb)
+int opal_progress_register_lp (opal_progress_callback_t cb)
+{
+    int ret = OPAL_SUCCESS;
+    size_t index;
+
+    /* just in case there is a high-priority callback remove it */
+    (void) opal_progress_unregister (cb);
+
+    opal_atomic_lock(&progress_lock);
+
+    /* see if we need to allocate more space */
+    if (callbacks_lp_len + 1 > callbacks_lp_size) {
+        opal_progress_callback_t *tmp;
+        tmp = (opal_progress_callback_t*)realloc(callbacks_lp, sizeof(opal_progress_callback_t) * (callbacks_lp_size + 4));
+        if (tmp == NULL) {
+            ret = OPAL_ERR_TEMP_OUT_OF_RESOURCE;
+            goto cleanup;
+        }
+        /* registering fake callbacks_lp to fill callbacks_lp[] */
+        for( index = callbacks_lp_len + 1 ;  index < callbacks_lp_size + 4 ; index++) {
+            tmp[index] = &fake_cb;
+        }
+
+        callbacks_lp = tmp;
+        callbacks_lp_size += 4;
+    }
+
+    callbacks_lp[callbacks_lp_len++] = cb;
+
+ cleanup:
+
+    opal_atomic_unlock(&progress_lock);
+
+    return ret;
+}
+
+static int _opal_progress_unregister (opal_progress_callback_t cb, opal_progress_callback_t *callback_array,
+                                      size_t callback_array_len)
 {
     size_t i;
     int ret = OPAL_ERR_NOT_FOUND;
 
     opal_atomic_lock(&progress_lock);
 
-    for (i = 0 ; i < callbacks_len ; ++i) {
-        if (cb == callbacks[i]) {
-            callbacks[i] = &fake_cb;
+    for (i = 0 ; i < callback_array_len ; ++i) {
+        if (cb == callback_array[i]) {
+            callback_array[i] = &fake_cb;
             ret = OPAL_SUCCESS;
             break;
         }
@@ -367,17 +418,28 @@ opal_progress_unregister(opal_progress_callback_t cb)
        do any repacking.  size_t can be unsigned, so 0 - 1 is bad for
        a loop condition :). */
     if (OPAL_SUCCESS == ret) {
-        if (callbacks_len > 1 ) {
-            /* now tightly pack the array */
-            for ( ; i < callbacks_len - 1 ; ++i) {
-                callbacks[i] = callbacks[i + 1];
-            }
+        if (i < callback_array_len - 1) {
+            memmove (callback_array + i, callback_array + i + 1,
+                     (callback_array_len - i - 1) * sizeof (callback_array[0]));
         }
-        callbacks[callbacks_len - 1] = &fake_cb;
-        callbacks_len--;
+
+        callback_array[callback_array_len - 1] = &fake_cb;
+        callback_array_len--;
     }
 
     opal_atomic_unlock(&progress_lock);
+
+    return ret;
+}
+
+int opal_progress_unregister (opal_progress_callback_t cb)
+{
+    int ret = _opal_progress_unregister (cb, callbacks, callbacks_len);
+    if (OPAL_SUCCESS != ret) {
+        /* if not in the high-priority array try to remove from the lp array.
+         * a callback will never be in both. */
+        return _opal_progress_unregister (cb, callbacks_lp, callbacks_lp_len);
+    }
 
     return ret;
 }

@@ -166,22 +166,30 @@ static mca_bml_base_endpoint_t *mca_bml_r2_allocate_endpoint (ompi_proc_t *proc)
     return bml_endpoint;
 }
 
-static void mca_bml_r2_register_progress (mca_btl_base_module_t *btl)
+static void mca_bml_r2_register_progress (mca_btl_base_module_t *btl, bool hp)
 {
     if (NULL != btl->btl_component->btl_progress) {
         bool found = false;
+        size_t p;
 
-        for (size_t p = 0 ; p < mca_bml_r2.num_btl_progress ; ++p) {
+        for (p = 0 ; p < mca_bml_r2.num_btl_progress ; ++p) {
             if(mca_bml_r2.btl_progress[p] == btl->btl_component->btl_progress) {
                 found = true;
                 break;
             }
         }
 
-        if (found == false) {
-            mca_bml_r2.btl_progress[mca_bml_r2.num_btl_progress++] =
-                btl->btl_component->btl_progress;
-            opal_progress_register (btl->btl_component->btl_progress);
+        if (found == false || hp) {
+            if (found == false) {
+                mca_bml_r2.btl_progress[mca_bml_r2.num_btl_progress++] =
+                    btl->btl_component->btl_progress;
+            }
+
+            if (hp) {
+                opal_progress_register (btl->btl_component->btl_progress);
+            } else {
+                opal_progress_register_lp (btl->btl_component->btl_progress);
+            }
         }
     }
 }
@@ -405,7 +413,7 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
         if (OMPI_SUCCESS != rc) {
             btl->btl_del_procs (btl, 1, (opal_proc_t **) &proc, &btl_endpoint);
         } else {
-            mca_bml_r2_register_progress (btl);
+            mca_bml_r2_register_progress (btl, true);
             btl_in_use = true;
         }
     }
@@ -546,9 +554,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
             btl_inuse++;
         }
 
-        if (btl_inuse) {
-            mca_bml_r2_register_progress (btl);
-        }
+        mca_bml_r2_register_progress (btl, !!(btl_inuse));
     }
 
     free(btl_endpoints);
