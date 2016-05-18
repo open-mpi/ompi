@@ -1,5 +1,5 @@
-/* -*- C -*-
- *
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -238,6 +238,26 @@ int orte_submit_init(int argc, char *argv[],
         }
     }
 
+    /* need to parse mca options *before* opal_init_util() */
+    orte_cmd_line = OBJ_NEW(opal_cmd_line_t);
+    mca_base_cmd_line_setup (orte_cmd_line);
+
+    /* parse the result to get values */
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line,
+                                                  true, true, argc, argv)) ) {
+        if (OPAL_ERR_SILENT != rc) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(rc));
+        }
+        return rc;
+    }
+
+    if (OPAL_SUCCESS != (rc = mca_base_cmd_line_process_args(orte_cmd_line, &environ, &environ))) {
+	return rc;
+    }
+
+    OBJ_RELEASE(orte_cmd_line);
+
     /* init only the util portion of OPAL */
     if (OPAL_SUCCESS != (rc = opal_init_util(&argc, &argv))) {
         return rc;
@@ -280,7 +300,7 @@ int orte_submit_init(int argc, char *argv[],
 
     /* parse the result to get values */
     if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line,
-                                                  true, argc, argv)) ) {
+                                                  true, false, argc, argv)) ) {
         if (OPAL_ERR_SILENT != rc) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],
                     opal_strerror(rc));
@@ -681,7 +701,7 @@ int orte_submit_job(char *argv[], int *index,
 
     /* parse the cmd line - do this every time thru so we can
      * repopulate the globals */
-    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true,
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true, false,
                                                   argc, argv)) ) {
         if (OPAL_ERR_SILENT != rc) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],
@@ -1256,7 +1276,7 @@ static int create_app(int argc, char* argv[],
     init_globals();
     /* parse the cmd line - do this every time thru so we can
      * repopulate the globals */
-    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true,
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line, true, false,
                                                   argc, argv)) ) {
         if (OPAL_ERR_SILENT != rc) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],

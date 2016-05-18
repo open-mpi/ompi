@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -239,7 +240,7 @@ int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, char short_name,
  * Parse a command line according to a pre-built OPAL command line
  * handle.
  */
-int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
+int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_unknown_option,
                         int argc, char **argv)
 {
     int i, j, orig, ret;
@@ -476,7 +477,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
            into the tail.  If we're not ignoring unknowns, then print
            an error and return. */
         if (is_unknown_option || is_unknown_token) {
-            if (!ignore_unknown || is_unknown_option) {
+            if (!ignore_unknown || (is_unknown_option && !ignore_unknown_option)) {
                 fprintf(stderr, "%s: Error: unknown option \"%s\"\n",
                         cmd->lcl_argv[0], cmd->lcl_argv[i]);
                 printed_error = true;

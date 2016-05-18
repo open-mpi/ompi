@@ -11,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
@@ -174,7 +174,7 @@ int opal_info_init(int argc, char **argv,
     }
 
     /* Do the parsing */
-    ret = opal_cmd_line_parse(opal_info_cmd_line, false, argc, argv);
+    ret = opal_cmd_line_parse(opal_info_cmd_line, false, false, argc, argv);
     if (OPAL_SUCCESS != ret) {
         cmd_error = true;
         if (OPAL_ERR_SILENT != ret) {
