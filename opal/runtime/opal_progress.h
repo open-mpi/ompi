@@ -163,6 +163,8 @@ typedef int (*opal_progress_callback_t)(void);
  */
 OPAL_DECLSPEC int opal_progress_register(opal_progress_callback_t cb);
 
+OPAL_DECLSPEC int opal_progress_register_lp (opal_progress_callback_t cb);
+
 
 /**
  * Deregister previously registered event
