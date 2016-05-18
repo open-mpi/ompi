@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -73,10 +73,11 @@ static inline mca_pml_ob1_comm_proc_t *mca_pml_ob1_peer_lookup (struct ompi_comm
     if (OPAL_UNLIKELY(NULL == pml_comm->procs[rank])) {
         OPAL_THREAD_LOCK(&pml_comm->proc_lock);
         if (NULL == pml_comm->procs[rank]) {
-            pml_comm->procs[rank] = OBJ_NEW(mca_pml_ob1_comm_proc_t);
-            pml_comm->procs[rank]->ompi_proc = ompi_comm_peer_lookup (comm, rank);
-            OBJ_RETAIN(pml_comm->procs[rank]->ompi_proc);
+            mca_pml_ob1_comm_proc_t* proc = OBJ_NEW(mca_pml_ob1_comm_proc_t);
+            proc->ompi_proc = ompi_comm_peer_lookup (comm, rank);
+            OBJ_RETAIN(proc->ompi_proc);
             opal_atomic_wmb ();
+            pml_comm->procs[rank] = proc;
         }
         OPAL_THREAD_UNLOCK(&pml_comm->proc_lock);
     }
