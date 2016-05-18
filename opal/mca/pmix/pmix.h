@@ -250,21 +250,6 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
         }                                                               \
     } while(0);
 
-
-/**
- * Provide a simplified macro for calling the fence function
- * that takes into account directives and availability of
- * non-blocking operations
- */
-#define OPAL_MODEX()                                    \
-    do {                                                \
-        opal_pmix.commit();                             \
-        if (!opal_pmix_base_async_modex) {              \
-            opal_pmix.fence(NULL,                       \
-                opal_pmix_collect_all_data);            \
-        }                                               \
-    } while(0);
-
 /**
  * Provide a macro for accessing a base function that exchanges
  * data values between two procs using the PMIx Publish/Lookup

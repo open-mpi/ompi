@@ -57,7 +57,8 @@ static int cray_resolve_peers(const char *nodename,
                               opal_list_t *procs);
 static int cray_resolve_nodes(opal_jobid_t jobid, char **nodelist);
 static int cray_put(opal_pmix_scope_t scope, opal_value_t *kv);
-static int cray_fence(opal_list_t *procs, int collect_data);
+static int cray_fencenb(opal_list_t *procs, int collect_data,
+                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 static int cray_commit(void);
 static int cray_get(const opal_process_name_t *id,
                     const char *key, opal_list_t *info,
@@ -90,8 +91,8 @@ const opal_pmix_base_module_t opal_pmix_cray_module = {
     .initialized = cray_initialized,
     .abort = cray_abort,
     .commit = cray_commit,
-    .fence = cray_fence,
-    .fence_nb = NULL,
+    .fence = NULL,
+    .fence_nb = cray_fencenb,
     .put = cray_put,
     .get = cray_get,
     .get_nb = cray_get_nb,
@@ -118,6 +119,17 @@ const opal_pmix_base_module_t opal_pmix_cray_module = {
 
 // usage accounting
 static int pmix_init_count = 0;
+
+// local object
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    opal_pmix_op_cbfunc_t opcbfunc;
+    void *cbdata;
+} pmi_opcaddy_t;
+OBJ_CLASS_INSTANCE(pmi_opcaddy_t,
+                   opal_object_t,
+                   NULL, NULL);
 
 // PMI constant values:
 static int pmix_kvslen_max = 0;
@@ -512,8 +524,9 @@ static int cray_commit(void)
     return OPAL_SUCCESS;
 }
 
-static int cray_fence(opal_list_t *procs, int collect_data)
+static void fencenb(int sd, short args, void *cbdata)
 {
+    pmi_opcaddy_t *op = (pmi_opcaddy_t*)cbdata;
     int rc, cnt;
     int32_t i;
     int *all_lens = NULL;
@@ -550,7 +563,8 @@ static int cray_fence(opal_list_t *procs, int collect_data)
 
     send_buffer = OBJ_NEW(opal_buffer_t);
     if (NULL == send_buffer) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
     }
 
     opal_dss.copy_payload(send_buffer, mca_pmix_cray_component.cache_global);
@@ -668,7 +682,7 @@ static int cray_fence(opal_list_t *procs, int collect_data)
      * for every process in the job.
      *
      *  we only need to set locality for each local rank as "not found"
-     * equates to "non-local" 
+     * equates to "non-local"
      */
 
     for (i=0; i < pmix_nlranks; i++) {
@@ -732,7 +746,27 @@ fn_exit:
     if (r_bytes_and_ranks != NULL) {
         free(r_bytes_and_ranks);
     }
-    return rc;
+    if (NULL != op->opcbfunc) {
+        op->opcbfunc(rc, op->cbdata);
+    }
+    OBJ_RELEASE(op);
+    return;
+}
+
+static int cray_fencenb(opal_list_t *procs, int collect_data,
+                      opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    pmi_opcaddy_t *op;
+
+    /* thread-shift this so we don't block in Cray's barrier */
+    op = OBJ_NEW(pmi_opcaddy_t);
+    op->opcbfunc = cbfunc;
+    op->cbdata = cbdata;
+    event_assign(&op->ev, opal_pmix_base.evbase, -1,
+                 EV_WRITE, fencenb, op);
+    event_active(&op->ev, EV_WRITE, 1);
+
+    return OPAL_SUCCESS;
 }
 
 static int cray_get(const opal_process_name_t *id, const char *key, opal_list_t *info, opal_value_t **kv)

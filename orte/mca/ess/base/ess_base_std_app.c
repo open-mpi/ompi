@@ -12,10 +12,10 @@
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,8 +68,6 @@
 
 #include "orte/mca/ess/base/base.h"
 
-static bool progress_thread_running = false;
-
 int orte_ess_base_app_setup(bool db_restrict_local)
 {
     int ret;
@@ -106,11 +104,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         orte_process_info.super.proc_arch = opal_local_arch;
         opal_proc_local_set(&orte_process_info.super);
     }
-
-    /* get an async event base - we use the opal_async one so
-     * we don't startup extra threads if not needed */
-    orte_event_base = opal_progress_thread_init(NULL);
-    progress_thread_running = true;
 
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
@@ -259,12 +252,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     return ORTE_SUCCESS;
 
  error:
-    if (!progress_thread_running) {
-        /* can't send the help message, so ensure it
-         * comes out locally
-         */
-        orte_show_help_finalize();
-    }
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
@@ -289,12 +276,6 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&orte_state_base_framework);
 
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
-
-    /* release the event base */
-    if (progress_thread_running) {
-        opal_progress_thread_finalize(NULL);
-        progress_thread_running = false;
-    }
 
     return ORTE_SUCCESS;
 }

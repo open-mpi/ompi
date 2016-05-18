@@ -528,7 +528,8 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "opal_pmix_base_select";
         goto error;
     }
-
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
     /* setup the PMIx server */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
         ORTE_ERROR_LOG(ret);
