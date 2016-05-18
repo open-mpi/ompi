@@ -258,9 +258,12 @@ mca_rcache_base_registration_t *mca_rcache_base_vma_tree_find (mca_rcache_base_v
     mca_rcache_base_vma_item_t *vma;
     mca_rcache_base_vma_reg_list_item_t *item;
 
+    opal_mutex_lock (&vma_module->vma_lock);
+
     vma = (mca_rcache_base_vma_item_t *) opal_rb_tree_find_with (&vma_module->rb_tree, base,
                                                                  mca_rcache_base_vma_tree_node_compare_search);
     if (!vma) {
+        opal_mutex_unlock (&vma_module->vma_lock);
         return NULL;
     }
 
@@ -269,11 +272,17 @@ mca_rcache_base_registration_t *mca_rcache_base_vma_tree_find (mca_rcache_base_v
             continue;
         }
 
-        if(item->reg->bound >= bound)
+        if(item->reg->bound >= bound) {
+            opal_mutex_unlock (&vma_module->vma_lock);
             return item->reg;
-        if(!(item->reg->flags & MCA_RCACHE_FLAGS_PERSIST))
+        }
+
+        if(!(item->reg->flags & MCA_RCACHE_FLAGS_PERSIST)) {
             break;
+        }
     }
+
+    opal_mutex_unlock (&vma_module->vma_lock);
 
     return NULL;
 }
@@ -299,6 +308,8 @@ int mca_rcache_base_vma_tree_find_all (mca_rcache_base_vma_module_t *vma_module,
     if(opal_list_get_size(&vma_module->vma_list) == 0)
         return cnt;
 
+    opal_mutex_lock (&vma_module->vma_lock);
+
     do {
         mca_rcache_base_vma_item_t *vma;
         mca_rcache_base_vma_reg_list_item_t *vma_item;
@@ -316,25 +327,23 @@ int mca_rcache_base_vma_tree_find_all (mca_rcache_base_vma_module_t *vma_module,
         }
 
         OPAL_LIST_FOREACH(vma_item, &vma->reg_list, mca_rcache_base_vma_reg_list_item_t) {
-            if ((vma_item->reg->flags & MCA_RCACHE_FLAGS_INVALID) ||
+            if (vma_item->reg->flags & MCA_RCACHE_FLAGS_INVALID ||
                 is_reg_in_array (regs, cnt, vma_item->reg)) {
                 continue;
             }
             regs[cnt++] = vma_item->reg;
             if (cnt == reg_cnt) {
+                opal_mutex_unlock (&vma_module->vma_lock);
                 return cnt; /* no space left in the provided array */
             }
         }
 
         base = (unsigned char *)vma->end + 1;
-    } while(bound >= base);
+    } while (bound >= base);
+
+    opal_mutex_unlock (&vma_module->vma_lock);
 
     return cnt;
-}
-
-static inline int mca_rcache_base_vma_can_insert (mca_rcache_base_vma_module_t *vma_module, size_t nbytes, size_t limit)
-{
-    return (0 == limit || vma_module->reg_cur_cache_size + nbytes <= limit);
 }
 
 static inline void mca_rcache_base_vma_update_byte_count (mca_rcache_base_vma_module_t *vma_module,
@@ -343,11 +352,73 @@ static inline void mca_rcache_base_vma_update_byte_count (mca_rcache_base_vma_mo
     vma_module->reg_cur_cache_size += nbytes;
 }
 
+int mca_rcache_base_vma_tree_iterate (mca_rcache_base_vma_module_t *vma_module, unsigned char *base,
+                                      size_t size, int (*callback_fn) (struct mca_rcache_base_registration_t *, void *),
+                                      void *ctx)
+{
+    unsigned char *bound = base + size - 1;
+    mca_rcache_base_vma_item_t *vma;
+    int rc = OPAL_SUCCESS;
+
+    if (opal_list_get_size(&vma_module->vma_list) == 0) {
+        /* nothin to do */
+        return OPAL_SUCCESS;
+    }
+
+    opal_mutex_lock (&vma_module->vma_lock);
+
+    do {
+        mca_rcache_base_vma_reg_list_item_t *vma_item, *next;
+        vma = (mca_rcache_base_vma_item_t *) opal_rb_tree_find_with (&vma_module->rb_tree, base,
+                                                                     mca_rcache_base_vma_tree_node_compare_closest);
+
+        if (NULL == vma) {
+            /* base is bigger than any registered memory */
+            break;
+        }
+
+        if (base < (unsigned char *) vma->start) {
+            base = (unsigned char *) vma->start;
+            continue;
+        }
+
+        base = (unsigned char *)vma->end + 1;
+
+        /* all the registrations in the vma may be deleted by the callback so keep a
+         * reference until we are done with it. */
+        OBJ_RETAIN(vma);
+
+        OPAL_LIST_FOREACH_SAFE(vma_item, next, &vma->reg_list, mca_rcache_base_vma_reg_list_item_t) {
+            rc = callback_fn (vma_item->reg, ctx);
+            if (OPAL_SUCCESS != rc) {
+                break;
+            }
+        }
+
+        OBJ_RELEASE(vma);
+
+        if (OPAL_SUCCESS != rc) {
+            break;
+        }
+    } while (bound >= base);
+
+    opal_mutex_unlock (&vma_module->vma_lock);
+
+    return rc;
+}
+
+static inline int mca_rcache_base_vma_can_insert (mca_rcache_base_vma_module_t *vma_module, size_t nbytes, size_t limit)
+{
+    return (0 == limit || vma_module->reg_cur_cache_size + nbytes <= limit);
+}
+
 int mca_rcache_base_vma_tree_insert (mca_rcache_base_vma_module_t *vma_module,
                                      mca_rcache_base_registration_t *reg, size_t limit)
 {
     mca_rcache_base_vma_item_t *i;
     uintptr_t begin = (uintptr_t)reg->base, end = (uintptr_t)reg->bound;
+
+    opal_mutex_lock (&vma_module->vma_lock);
 
     i = (mca_rcache_base_vma_item_t *) opal_rb_tree_find_with (&vma_module->rb_tree,
             (void *) begin, mca_rcache_base_vma_tree_node_compare_closest);
@@ -373,6 +444,7 @@ int mca_rcache_base_vma_tree_insert (mca_rcache_base_vma_module_t *vma_module,
             opal_list_append(&vma_module->vma_list, &vma->super);
             begin = vma->end + 1;
             mca_rcache_base_vma_add_reg (vma, reg);
+            opal_mutex_unlock (&vma_module->vma_lock);
             return OPAL_SUCCESS;
         }
 
@@ -434,10 +506,14 @@ int mca_rcache_base_vma_tree_insert (mca_rcache_base_vma_module_t *vma_module,
         i = (mca_rcache_base_vma_item_t *) opal_list_get_next (&i->super);
     }
 
+    opal_mutex_unlock (&vma_module->vma_lock);
+
     return OPAL_SUCCESS;
 
 remove:
     mca_rcache_base_vma_tree_delete (vma_module, reg);
+    opal_mutex_unlock (&vma_module->vma_lock);
+
     return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 }
 
@@ -453,17 +529,23 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
                                      mca_rcache_base_registration_t *reg)
 {
     mca_rcache_base_vma_item_t *vma;
+    opal_list_t deleted_vmas;
+
+    opal_mutex_lock (&vma_module->vma_lock);
 
     vma = (mca_rcache_base_vma_item_t *)
         opal_rb_tree_find_with (&vma_module->rb_tree, reg->base,
                                 mca_rcache_base_vma_tree_node_compare_search);
 
     if (!vma) {
+        opal_mutex_unlock (&vma_module->vma_lock);
         return OPAL_ERROR;
     }
 
+    OBJ_CONSTRUCT(&deleted_vmas, opal_list_t);
+
     while (vma != (mca_rcache_base_vma_item_t *) opal_list_get_end (&vma_module->vma_list)
-            && vma->start <= (uintptr_t) reg->bound) {
+           && vma->start <= (uintptr_t) reg->bound) {
         mca_rcache_base_vma_remove_reg(vma, reg);
 
         if(opal_list_is_empty(&vma->reg_list)) {
@@ -473,7 +555,7 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
             mca_rcache_base_vma_update_byte_count (vma_module,
                                                    vma->start - vma->end - 1);
             opal_list_remove_item (&vma_module->vma_list, &vma->super);
-            OBJ_RELEASE(vma);
+            opal_list_append (&deleted_vmas, &vma->super);
             vma = next;
         } else {
             int merged;
@@ -491,7 +573,7 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
                     prev->end = vma->end;
                     opal_list_remove_item(&vma_module->vma_list, &vma->super);
                     opal_rb_tree_delete(&vma_module->rb_tree, vma);
-                    OBJ_RELEASE(vma);
+                    opal_list_append (&deleted_vmas, &vma->super);
                     vma = prev;
                     merged = 1;
                 }
@@ -505,7 +587,7 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
                     vma->end = next->end;
                     opal_list_remove_item(&vma_module->vma_list, &next->super);
                     opal_rb_tree_delete(&vma_module->rb_tree, next);
-                    OBJ_RELEASE(next);
+                    opal_list_append (&deleted_vmas, &next->super);
                     merged = 1;
                 }
             } while (merged);
@@ -513,6 +595,11 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
             vma = (mca_rcache_base_vma_item_t *) opal_list_get_next (vma);
         }
     }
+
+    opal_mutex_unlock (&vma_module->vma_lock);
+
+    /* actually free vmas now that the lock has been dropped */
+    OPAL_LIST_DESTRUCT(&deleted_vmas);
 
     return 0;
 }
@@ -558,7 +645,7 @@ void mca_rcache_base_vma_tree_dump_range (mca_rcache_base_vma_module_t *vma_modu
         OPAL_LIST_FOREACH(vma_item, &vma->reg_list, mca_rcache_base_vma_reg_list_item_t) {
             reg = vma_item->reg;
             opal_output(0, "    reg: base=%p, bound=%p, ref_count=%d, flags=0x%x",
-                        reg->base, reg->bound, reg->ref_count, reg->flags);
+                        (void *) reg->base, (void *) reg->bound, reg->ref_count, reg->flags);
         }
         base = (unsigned char *)vma->end + 1;
     } while (bound >= base);

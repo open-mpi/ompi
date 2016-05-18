@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -142,6 +142,14 @@ int mca_rcache_base_vma_delete (mca_rcache_base_vma_module_t *vma_module,
                                      (uint64_t) (reg->bound - reg->base),
                                      (uint64_t) (uintptr_t) reg);
     return mca_rcache_base_vma_tree_delete (vma_module, reg);
+}
+
+int mca_rcache_base_vma_iterate (mca_rcache_base_vma_module_t *vma_module,
+                                 unsigned char *base, size_t size,
+                                 int (*callback_fn) (struct mca_rcache_base_registration_t *, void *),
+                                 void *ctx)
+{
+    return mca_rcache_base_vma_tree_iterate (vma_module, base, size, callback_fn, ctx);
 }
 
 void mca_rcache_base_vma_dump_range (mca_rcache_base_vma_module_t *vma_module,

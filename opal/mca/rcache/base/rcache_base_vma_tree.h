@@ -15,7 +15,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  *
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -105,5 +105,13 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
 void mca_rcache_base_vma_tree_dump_range (mca_rcache_base_vma_module_t *vma_module,
                                           unsigned char *base, size_t size, char *msg);
 
+
+/*
+ * Iterate over matching registration handles in the tree.
+ */
+int mca_rcache_base_vma_tree_iterate (mca_rcache_base_vma_module_t *vma_module,
+                                      unsigned char *base, size_t size,
+                                      int (*callback_fn) (struct mca_rcache_base_registration_t *, void *),
+                                      void *ctx);
 
 #endif /* MCA_RCACHE_BASE_VMA_TREE_H */
