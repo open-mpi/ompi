@@ -166,8 +166,9 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             if (0 == strcmp(nd->name, node->name)) {
                 found = true;
                 OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
-                                     "%s dashhost: found existing node %s on input list - ignoring",
+                                     "%s dashhost: found existing node %s on input list - adding slots",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
+                node->slots += nd->slots;
                 break;
             }
         }
