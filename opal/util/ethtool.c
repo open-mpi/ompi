@@ -2,6 +2,7 @@
  * Copyright (c) 2016 Karol Mroz.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,18 +34,6 @@
 #include "opal/util/ethtool.h"
 #include "opal/util/if.h"
 
-#if ! HAVE_DECL_ETHTOOL_CMD_SPEED
-static inline unsigned int
-ethtool_cmd_speed(const struct ethtool_cmd *ep)
-{
-#ifdef HAVE_STRUCT_ETHTOOL_CMD_SPEED_HI
-    return (ep->speed_hi << 16) | ep->speed;
-#else
-    return ep->speed;
-#endif
-}
-#endif
-
 /*
  * Obtain an appropriate bandwidth for the interface if_name. On Linux, we
  * get this via an ioctl(). Elsewhere or in the error case, we return the
@@ -75,15 +64,18 @@ opal_ethtool_get_speed (const char *if_name)
         goto out;
     }
 
-    speed = ethtool_cmd_speed(&edata);
+#ifdef HAVE_STRUCT_ETHTOOL_CMD_SPEED_HI
+    speed = (edata.speed_hi << 16) | edata.speed;
+#else
+    speed = edata.speed;
+#endif
     if (UINT_MAX == speed) {
         speed = 0;
     }
 
 out:
     close(sockfd);
-    return speed;
-#else
-    return speed;
 #endif
+
+    return speed;
 }
