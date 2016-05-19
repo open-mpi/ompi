@@ -653,6 +653,42 @@ AC_CHECK_DECLS([ethtool_cmd_speed, SIOCETHTOOL],
 #include <linux/sockios.h>
 #endif])
 
+AC_CHECK_MEMBERS([struct ethtool_cmd.speed_hi],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
+#endif])
+
+AC_CHECK_MEMBERS([struct ethtool_cmd.speed_hi],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
+#endif])
+
+AC_CHECK_MEMBERS([struct ethtool_cmd.speed_hi],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
+#endif])
+
+AC_CHECK_MEMBERS([struct ethtool_cmd.speed_hi],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
+#endif])
+
 AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC, AF_INET6, PF_INET6],
                [], [], [AC_INCLUDES_DEFAULT
 #if HAVE_SYS_SOCKET_H

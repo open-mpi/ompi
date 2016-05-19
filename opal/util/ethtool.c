@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016 Karol Mroz.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,11 +33,15 @@
 #include "opal/util/ethtool.h"
 #include "opal/util/if.h"
 
-#if !defined(HAVE_DECL_ETHTOOL_CMD_SPEED)
+#if ! HAVE_DECL_ETHTOOL_CMD_SPEED
 static inline unsigned int
 ethtool_cmd_speed(const struct ethtool_cmd *ep)
 {
+#ifdef HAVE_STRUCT_ETHTOOL_CMD_SPEED_HI
     return (ep->speed_hi << 16) | ep->speed;
+#else
+    return ep->speed;
+#endif
 }
 #endif
 
