@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved. 
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -86,6 +88,7 @@ static int rte_orte_close(void)
 {
     opal_mutex_lock(&mca_rte_orte_component.lock);
     OPAL_LIST_DESTRUCT(&mca_rte_orte_component.modx_reqs);
+    opal_mutex_unlock(&mca_rte_orte_component.lock);
     OBJ_DESTRUCT(&mca_rte_orte_component.lock);
 
     return OMPI_SUCCESS;
