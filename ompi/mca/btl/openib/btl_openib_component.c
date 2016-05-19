@@ -1580,7 +1580,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
     port_cnt = get_port_list(device, allowed_ports);
     if (0 == port_cnt) {
-        free(allowed_ports);
         ret = OMPI_SUCCESS;
         ++num_devices_intentionally_ignored;
         goto error;
@@ -1801,6 +1800,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         }
     }
     free(allowed_ports);
+    allowed_ports = NULL;
 
     /* If we made a BTL, check APM status and return.  Otherwise, fall
        through and destroy everything */
@@ -2115,19 +2115,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
 error:
-#if OMPI_ENABLE_PROGRESS_THREADS
-    if (device->ib_channel) {
-        ibv_destroy_comp_channel(device->ib_channel);
-    }
-#endif
-    if (device->mpool) {
-        mca_mpool_base_module_destroy(device->mpool);
-    }
-
-    if (device->ib_pd) {
-        ibv_dealloc_pd(device->ib_pd);
-    }
-
     if (OMPI_SUCCESS != ret) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "error in device init", true,
@@ -2135,8 +2122,8 @@ error:
                        ibv_get_device_name(device->ib_dev));
     }
 
-    if (device->ib_dev_context) {
-        ibv_close_device(device->ib_dev_context);
+    if (NULL != allowed_ports) {
+        free(allowed_ports);
     }
     OBJ_RELEASE(device);
     return ret;
@@ -2398,7 +2385,7 @@ btl_openib_component_init(int *num_btl_modules,
                           bool enable_mpi_threads)
 {
     struct ibv_device **ib_devs;
-    mca_btl_base_module_t** btls;
+    mca_btl_base_module_t** btls = NULL;
     int i, ret, num_devs, length;
     opal_list_t btl_list;
     mca_btl_openib_module_t * openib_btl;
