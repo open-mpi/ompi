@@ -20,7 +20,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -185,8 +185,8 @@ extern pmix_usock_globals_t pmix_usock_globals;
 /* usock common functions */
 void pmix_usock_init(pmix_usock_cbfunc_t cbfunc);
 void pmix_usock_finalize(void);
-int pmix_usock_set_nonblocking(int sd);
-int pmix_usock_set_blocking(int sd);
+pmix_status_t pmix_usock_set_nonblocking(int sd);
+pmix_status_t  pmix_usock_set_blocking(int sd);
 pmix_status_t pmix_usock_send_blocking(int sd, char *ptr, size_t size);
 pmix_status_t pmix_usock_recv_blocking(int sd, char *data, size_t size);
 void pmix_usock_send_recv(int sd, short args, void *cbdata);

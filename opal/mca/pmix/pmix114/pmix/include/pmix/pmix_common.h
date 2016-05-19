@@ -391,11 +391,11 @@ typedef struct pmix_proc {
 
 
 /****    PMIX VALUE STRUCT    ****/
-struct pmix_info;
+typedef struct pmix_info_t pmix_info_t;
 
 typedef struct pmix_info_array {
     size_t size;
-    struct pmix_info *array;
+    pmix_info_t *array;
 } pmix_info_array_t;
 /* NOTE: operations can supply a collection of values under
  * a single key by passing a pmix_value_t containing an
@@ -503,10 +503,10 @@ void pmix_value_load(pmix_value_t *v, void *data, pmix_data_type_t type);
 
 
 /****    PMIX INFO STRUCT    ****/
-typedef struct pmix_info {
+struct pmix_info_t {
     char key[PMIX_MAX_KEYLEN+1];  // ensure room for the NULL terminator
     pmix_value_t value;
-} pmix_info_t;
+};
 
 /* utility macros for working with pmix_info_t structs */
 #define PMIX_INFO_CREATE(m, n)                                  \

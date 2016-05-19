@@ -9,9 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +28,7 @@
 #include "src/util/output.h"
 #include "src/buffer_ops/internal.h"
 
-int pmix_bfrop_copy(void **dest, void *src, pmix_data_type_t type)
+ pmix_status_t pmix_bfrop_copy(void **dest, void *src, pmix_data_type_t type)
 {
     pmix_bfrop_type_info_t *info;
 
@@ -51,7 +52,7 @@ int pmix_bfrop_copy(void **dest, void *src, pmix_data_type_t type)
     return info->odti_copy_fn(dest, src, type);
 }
 
-int pmix_bfrop_copy_payload(pmix_buffer_t *dest, pmix_buffer_t *src)
+pmix_status_t pmix_bfrop_copy_payload(pmix_buffer_t *dest, pmix_buffer_t *src)
 {
     size_t to_copy = 0;
     char *ptr;
@@ -80,7 +81,7 @@ int pmix_bfrop_copy_payload(pmix_buffer_t *dest, pmix_buffer_t *src)
 /*
  * STANDARD COPY FUNCTION - WORKS FOR EVERYTHING NON-STRUCTURED
  */
-int pmix_bfrop_std_copy(void **dest, void *src, pmix_data_type_t type)
+ pmix_status_t pmix_bfrop_std_copy(void **dest, void *src, pmix_data_type_t type)
 {
     size_t datasize;
     uint8_t *val = NULL;
@@ -156,7 +157,7 @@ int pmix_bfrop_std_copy(void **dest, void *src, pmix_data_type_t type)
 /*
  * STRING
  */
-int pmix_bfrop_copy_string(char **dest, char *src, pmix_data_type_t type)
+ pmix_status_t pmix_bfrop_copy_string(char **dest, char *src, pmix_data_type_t type)
 {
     if (NULL == src) {  /* got zero-length string/NULL pointer - store NULL */
         *dest = NULL;
@@ -296,7 +297,7 @@ pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
     case PMIX_INFO_ARRAY:
         p->data.array.size = src->data.array.size;
         if (0 < src->data.array.size) {
-            p->data.array.array = (struct pmix_info *)malloc(src->data.array.size * sizeof(pmix_info_t));
+            p->data.array.array = (pmix_info_t*)malloc(src->data.array.size * sizeof(pmix_info_t));
             p1 = (pmix_info_t*)p->data.array.array;
             s1 = (pmix_info_t*)src->data.array.array;
             memcpy(p1, s1, src->data.array.size * sizeof(pmix_info_t));
@@ -320,7 +321,7 @@ pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
 }
 
 /* PMIX_VALUE */
-int pmix_bfrop_copy_value(pmix_value_t **dest, pmix_value_t *src,
+pmix_status_t pmix_bfrop_copy_value(pmix_value_t **dest, pmix_value_t *src,
                           pmix_data_type_t type)
 {
     pmix_value_t *p;
@@ -338,7 +339,7 @@ int pmix_bfrop_copy_value(pmix_value_t **dest, pmix_value_t *src,
     return pmix_value_xfer(p, src);
 }
 
-int pmix_bfrop_copy_info(pmix_info_t **dest, pmix_info_t *src,
+pmix_status_t pmix_bfrop_copy_info(pmix_info_t **dest, pmix_info_t *src,
                          pmix_data_type_t type)
 {
     *dest = (pmix_info_t*)malloc(sizeof(pmix_info_t));
@@ -346,7 +347,7 @@ int pmix_bfrop_copy_info(pmix_info_t **dest, pmix_info_t *src,
     return pmix_value_xfer(&(*dest)->value, &src->value);
 }
 
-int pmix_bfrop_copy_buf(pmix_buffer_t **dest, pmix_buffer_t *src,
+pmix_status_t pmix_bfrop_copy_buf(pmix_buffer_t **dest, pmix_buffer_t *src,
                         pmix_data_type_t type)
 {
     *dest = PMIX_NEW(pmix_buffer_t);
@@ -354,7 +355,7 @@ int pmix_bfrop_copy_buf(pmix_buffer_t **dest, pmix_buffer_t *src,
     return PMIX_SUCCESS;
 }
 
-int pmix_bfrop_copy_app(pmix_app_t **dest, pmix_app_t *src,
+pmix_status_t pmix_bfrop_copy_app(pmix_app_t **dest, pmix_app_t *src,
                         pmix_data_type_t type)
 {
     size_t j;
@@ -374,7 +375,7 @@ int pmix_bfrop_copy_app(pmix_app_t **dest, pmix_app_t *src,
     return PMIX_SUCCESS;
 }
 
-int pmix_bfrop_copy_kval(pmix_kval_t **dest, pmix_kval_t *src,
+pmix_status_t pmix_bfrop_copy_kval(pmix_kval_t **dest, pmix_kval_t *src,
                          pmix_data_type_t type)
 {
     pmix_kval_t *p;
@@ -392,7 +393,7 @@ int pmix_bfrop_copy_kval(pmix_kval_t **dest, pmix_kval_t *src,
     return pmix_value_xfer(p->value, src->value);
 }
 
-int pmix_bfrop_copy_array(pmix_info_array_t **dest,
+pmix_status_t pmix_bfrop_copy_array(pmix_info_array_t **dest,
                           pmix_info_array_t *src,
                           pmix_data_type_t type)
 {
@@ -400,14 +401,14 @@ int pmix_bfrop_copy_array(pmix_info_array_t **dest,
 
     *dest = (pmix_info_array_t*)malloc(sizeof(pmix_info_array_t));
     (*dest)->size = src->size;
-    (*dest)->array = (struct pmix_info *)malloc(src->size * sizeof(pmix_info_t));
+    (*dest)->array = (pmix_info_t*)malloc(src->size * sizeof(pmix_info_t));
     d1 = (pmix_info_t*)(*dest)->array;
     s1 = (pmix_info_t*)src->array;
     memcpy(d1, s1, src->size * sizeof(pmix_info_t));
     return PMIX_SUCCESS;
 }
 
-int pmix_bfrop_copy_proc(pmix_proc_t **dest, pmix_proc_t *src,
+pmix_status_t pmix_bfrop_copy_proc(pmix_proc_t **dest, pmix_proc_t *src,
                          pmix_data_type_t type)
 {
     *dest = (pmix_proc_t*)malloc(sizeof(pmix_proc_t));
@@ -420,7 +421,7 @@ int pmix_bfrop_copy_proc(pmix_proc_t **dest, pmix_proc_t *src,
 }
 
 #if PMIX_HAVE_HWLOC
-int pmix_bfrop_copy_topo(hwloc_topology_t *dest,
+pmix_status_t pmix_bfrop_copy_topo(hwloc_topology_t *dest,
                          hwloc_topology_t src,
                          pmix_data_type_t type)
 {
@@ -429,7 +430,7 @@ int pmix_bfrop_copy_topo(hwloc_topology_t *dest,
 }
 #endif
 
-int pmix_bfrop_copy_modex(pmix_modex_data_t **dest, pmix_modex_data_t *src,
+pmix_status_t pmix_bfrop_copy_modex(pmix_modex_data_t **dest, pmix_modex_data_t *src,
                           pmix_data_type_t type)
 {
     *dest = (pmix_modex_data_t*)malloc(sizeof(pmix_modex_data_t));
@@ -449,7 +450,7 @@ int pmix_bfrop_copy_modex(pmix_modex_data_t **dest, pmix_modex_data_t *src,
     return PMIX_SUCCESS;
 }
 
-int pmix_bfrop_copy_persist(pmix_persistence_t **dest, pmix_persistence_t *src,
+pmix_status_t pmix_bfrop_copy_persist(pmix_persistence_t **dest, pmix_persistence_t *src,
                             pmix_data_type_t type)
 {
     *dest = (pmix_persistence_t*)malloc(sizeof(pmix_persistence_t));
@@ -460,7 +461,7 @@ int pmix_bfrop_copy_persist(pmix_persistence_t **dest, pmix_persistence_t *src,
     return PMIX_SUCCESS;
 }
 
-int pmix_bfrop_copy_bo(pmix_byte_object_t **dest, pmix_byte_object_t *src,
+pmix_status_t pmix_bfrop_copy_bo(pmix_byte_object_t **dest, pmix_byte_object_t *src,
                        pmix_data_type_t type)
 {
     *dest = (pmix_byte_object_t*)malloc(sizeof(pmix_byte_object_t));
@@ -473,7 +474,7 @@ int pmix_bfrop_copy_bo(pmix_byte_object_t **dest, pmix_byte_object_t *src,
     return PMIX_SUCCESS;
 }
 
-int pmix_bfrop_copy_pdata(pmix_pdata_t **dest, pmix_pdata_t *src,
+pmix_status_t pmix_bfrop_copy_pdata(pmix_pdata_t **dest, pmix_pdata_t *src,
                           pmix_data_type_t type)
 {
     *dest = (pmix_pdata_t*)malloc(sizeof(pmix_pdata_t));

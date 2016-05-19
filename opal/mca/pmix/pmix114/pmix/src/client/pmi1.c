@@ -266,7 +266,8 @@ PMIX_EXPORT int PMI_Get_size(int *size)
     PMIX_INFO_CONSTRUCT(&info[0]);
     PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
 
-    if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_JOB_SIZE, info, 1, &val)) {
+    rc = PMIx_Get(&proc, PMIX_JOB_SIZE, info, 1, &val);
+    if (PMIX_SUCCESS == rc) {
         rc = convert_int(size, val);
         PMIX_VALUE_RELEASE(val);
     }
@@ -311,7 +312,8 @@ PMIX_EXPORT int PMI_Get_universe_size(int *size)
     PMIX_INFO_CONSTRUCT(&info[0]);
     PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
 
-    if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_UNIV_SIZE, info, 1, &val)) {
+    rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, info, 1, &val);
+    if (PMIX_SUCCESS == rc) {
         rc = convert_int(size, val);
         PMIX_VALUE_RELEASE(val);
     }
@@ -344,7 +346,8 @@ PMIX_EXPORT int PMI_Get_appnum(int *appnum)
     PMIX_INFO_CONSTRUCT(&info[0]);
     PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
 
-    if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_APPNUM, info, 1, &val)) {
+    rc = PMIx_Get(&proc, PMIX_APPNUM, info, 1, &val);
+    if (PMIX_SUCCESS == rc) {
         rc = convert_int(appnum, val);
         PMIX_VALUE_RELEASE(val);
     }
@@ -491,7 +494,8 @@ PMIX_EXPORT int PMI_Get_clique_size(int *size)
     PMIX_INFO_CONSTRUCT(&info[0]);
     PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
 
-    if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_LOCAL_SIZE, info, 1, &val)) {
+    rc = PMIx_Get(&myproc, PMIX_LOCAL_SIZE, info, 1, &val);
+    if (PMIX_SUCCESS == rc) {
         rc = convert_int(size, val);
         PMIX_VALUE_RELEASE(val);
     }
@@ -514,7 +518,8 @@ PMIX_EXPORT int PMI_Get_clique_ranks(int ranks[], int length)
         return PMI_ERR_INVALID_ARGS;
     }
 
-    if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_LOCAL_PEERS, NULL, 0, &val)) {
+    rc = PMIx_Get(&myproc, PMIX_LOCAL_PEERS, NULL, 0, &val);
+    if (PMIX_SUCCESS == rc) {
         /* kv will contain a string of comma-separated
          * ranks on my node */
         rks = pmix_argv_split(val->data.string, ',');

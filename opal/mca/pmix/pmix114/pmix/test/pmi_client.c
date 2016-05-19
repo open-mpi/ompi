@@ -271,12 +271,12 @@ static int test_item4(void)
     log_info("PMI_Get_clique_size=%d\n", val);
     log_assert((0 < val) && (val <= size), "");
 
-    ranks = alloca(val);
+    ranks = alloca(val*sizeof(int));
     if (!ranks) {
         return PMI_FAIL;
     }
 
-    memset(ranks, (-1), val);
+    memset(ranks, (-1), val*sizeof(int));
     if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(ranks, val))) {
         log_fatal("PMI_Get_clique_ranks failed: %d\n", rc);
         return rc;

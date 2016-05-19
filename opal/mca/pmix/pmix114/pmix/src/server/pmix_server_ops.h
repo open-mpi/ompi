@@ -5,7 +5,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  */
 
@@ -147,7 +147,7 @@ typedef struct {
     } while (0)
 
 
-int pmix_start_listening(struct sockaddr_un *address);
+pmix_status_t pmix_start_listening(struct sockaddr_un *address);
 void pmix_stop_listening(void);
 
 bool pmix_server_trk_update(pmix_server_trkr_t *trk);

@@ -47,7 +47,7 @@ static void set_namespace(int nprocs, char *ranks, char *name)
 {
     size_t ninfo;
     pmix_info_t *info;
-    ninfo = 6;
+    ninfo = 8;
     char *regex, *ppn;
 
     PMIX_INFO_CREATE(info, ninfo);
@@ -76,6 +76,14 @@ static void set_namespace(int nprocs, char *ranks, char *name)
     (void)strncpy(info[5].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
     info[5].value.type = PMIX_STRING;
     info[5].value.data.string = ppn;
+
+    (void)strncpy(info[6].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
+    info[6].value.type = PMIX_UINT32;
+    info[6].value.data.uint32 = nprocs;
+
+    (void)strncpy(info[7].key, PMIX_APPNUM, PMIX_MAX_KEYLEN);
+    info[7].value.type = PMIX_UINT32;
+    info[7].value.data.uint32 = getpid ();
 
     int in_progress = 1, rc;
     if (PMIX_SUCCESS == (rc = PMIx_server_register_nspace(name, nprocs, info, ninfo, release_cb, &in_progress))) {

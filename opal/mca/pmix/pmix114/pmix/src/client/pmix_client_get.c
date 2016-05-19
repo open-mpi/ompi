@@ -7,6 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +18,7 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
+#include <pmix/autogen/pmix_stdint.h>
 
 #include <pmix.h>
 
@@ -65,14 +66,14 @@ static void _getnbfn(int sd, short args, void *cbdata);
 static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                          pmix_buffer_t *buf, void *cbdata);
 
-static void _value_cbfunc(int status, pmix_value_t *kv, void *cbdata);
+static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata);
 
-PMIX_EXPORT int PMIx_Get(const pmix_proc_t *proc, const char key[],
+PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
                          const pmix_info_t info[], size_t ninfo,
                          pmix_value_t **val)
 {
     pmix_cb_t *cb;
-    int rc;
+    pmix_status_t rc;
 
     if (pmix_globals.init_cntr <= 0) {
         return PMIX_ERR_INIT;
@@ -169,7 +170,7 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
     return PMIX_SUCCESS;
 }
 
-static void _value_cbfunc(int status, pmix_value_t *kv, void *cbdata)
+static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_status_t rc;
@@ -472,7 +473,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         val->type = PMIX_INFO_ARRAY;
         val->data.array.size = nvals;
         PMIX_INFO_CREATE(iptr, nvals);
-        val->data.array.array = (struct pmix_info *)iptr;
+        val->data.array.array = (pmix_info_t*)iptr;
         for (n=0; n < (size_t)results.size && n < nvals; n++) {
             if (NULL != (info = (pmix_info_t*)pmix_pointer_array_get_item(&results, n))) {
                 (void)strncpy(iptr[n].key, info->key, PMIX_MAX_KEYLEN);

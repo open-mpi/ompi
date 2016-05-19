@@ -7,6 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +18,7 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
+#include <pmix/autogen/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
 #include <pmix.h>
@@ -235,10 +236,11 @@ PMIX_EXPORT const char* PMIx_Get_version(void)
     return pmix_version_string;
 }
 
-PMIX_EXPORT int PMIx_Init(pmix_proc_t *proc)
+PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc)
 {
     char **uri, *evar;
-    int rc, debug_level;
+    pmix_status_t rc;
+    int debug_level;
     struct sockaddr_un address;
     pmix_nspace_t *nsptr;
     pmix_cb_t cb;
@@ -481,7 +483,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(void)
     return PMIX_SUCCESS;
 }
 
-PMIX_EXPORT int PMIx_Abort(int flag, const char msg[],
+PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
                pmix_proc_t procs[], size_t nprocs)
 {
     pmix_buffer_t *bfr;
@@ -1301,8 +1303,8 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
     /* unpack the status code */
     cnt = 1;
     if ((PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ret, &cnt, PMIX_INT))) ||
-                         (PMIX_SUCCESS != ret)) {
-        PMIX_ERROR_LOG(rc);
+                         (PMIX_SUCCESS != ret)) {   
+        /* This is not an actual error since the server may not support registration events */ 
         /* remove the err handler and call the error handler reg completion callback fn.*/
         rc = pmix_remove_errhandler(cb->errhandler_ref);
         /* call the callback with error */

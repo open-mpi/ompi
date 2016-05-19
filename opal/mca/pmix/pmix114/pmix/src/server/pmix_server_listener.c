@@ -7,7 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +18,7 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
+#include <pmix/autogen/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
 #include <pmix_server.h>
@@ -92,7 +92,7 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
     }
     /* set the mode as required */
     if (0 != chmod(address->sun_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH)) {
-        pmix_output(0, "CANNOT CHMOD %s\n", address->sun_path);
+        pmix_output(0, "CANNOT CHMOD %s", address->sun_path);
         return PMIX_ERROR;
     }
 

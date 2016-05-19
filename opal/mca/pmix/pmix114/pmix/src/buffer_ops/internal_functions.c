@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +46,7 @@ char* pmix_bfrop_buffer_extend(pmix_buffer_t *buffer, size_t bytes_to_add)
     }
 
     required = buffer->bytes_used + bytes_to_add;
-    if(required >= (size_t)pmix_bfrop_threshold_size) {
+    if (required >= pmix_bfrop_threshold_size) {
         to_alloc = ((required + pmix_bfrop_threshold_size - 1)
                     / pmix_bfrop_threshold_size) * pmix_bfrop_threshold_size;
     } else {
@@ -108,13 +109,13 @@ bool pmix_bfrop_too_small(pmix_buffer_t *buffer, size_t bytes_reqd)
     return false;
 }
 
-int pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t type)
+pmix_status_t pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t type)
 {
     /* Lookup the pack function for the actual pmix_data_type type and call it */
     return pmix_bfrop_pack_datatype(buffer, &type, 1, PMIX_INT);
 }
 
-int pmix_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type)
+pmix_status_t pmix_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type)
 {
     int32_t n=1;
     return pmix_bfrop_unpack_datatype(buffer, type, &n, PMIX_INT);

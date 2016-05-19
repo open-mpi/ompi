@@ -7,6 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +18,7 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
+#include <pmix/autogen/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
 #include <pmix_server.h>
@@ -638,7 +639,8 @@ PMIX_EXPORT void PMIx_server_deregister_nspace(const char nspace[])
     PMIX_THREADSHIFT(cd, _deregister_nspace);
 }
 
- void pmix_server_execute_collective(int sd, short args, void *cbdata) {
+void pmix_server_execute_collective(int sd, short args, void *cbdata)
+{
     pmix_trkr_caddy_t *tcd = (pmix_trkr_caddy_t*)cbdata;
     pmix_server_trkr_t *trk = tcd->trk;
     char *data = NULL;
@@ -1697,7 +1699,7 @@ PMIX_EXPORT pmix_status_t PMIx_generate_ppn(const char *input, char **regexp)
  ****    IMMEDIATELY. THUS ANYTHING THAT ACCESSES A GLOBAL ENTITY        ****
  ****    MUST BE PUSHED INTO AN EVENT FOR PROTECTION                     ****/
 
-static void op_cbfunc(int status, void *cbdata)
+static void op_cbfunc(pmix_status_t status, void *cbdata)
 {
     pmix_server_caddy_t *cd = (pmix_server_caddy_t*)cbdata;
     pmix_buffer_t *reply;

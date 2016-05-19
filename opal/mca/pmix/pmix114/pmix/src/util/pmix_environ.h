@@ -14,6 +14,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -112,7 +113,7 @@ PMIX_DECLSPEC char **pmix_environ_merge(char **minor, char **major) __pmix_attri
  *   pmix_setenv("foo", "bar", true, &my_env);
  * \endcode
  */
-PMIX_DECLSPEC int pmix_setenv(const char *name, const char *value,
+PMIX_DECLSPEC pmix_status_t pmix_setenv(const char *name, const char *value,
                               bool overwrite, char ***env) __pmix_attribute_nonnull__(1);
 
 /**
