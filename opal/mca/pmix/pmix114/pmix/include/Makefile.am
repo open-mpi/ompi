@@ -1,5 +1,6 @@
 #
 # Copyright 2015-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -26,7 +27,8 @@ include_pmix_HEADERS = \
 include_pmix_autogendir = $(includedir)/pmix/autogen
 include_pmix_autogen_HEADERS = \
         include/pmix/autogen/pmix_config_top.h \
-        include/pmix/autogen/pmix_config_bottom.h
+        include/pmix/autogen/pmix_config_bottom.h \
+        include/pmix/autogen/pmix_stdint.h
 nodist_include_pmix_autogen_HEADERS = \
         include/pmix/autogen/config.h
 

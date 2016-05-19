@@ -16,6 +16,7 @@
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -377,7 +378,7 @@ static pmix_status_t connected(const pmix_proc_t *proc, void *server_object)
 {
     return PMIX_SUCCESS;
 }
-static int finalized(const pmix_proc_t *proc, void *server_object,
+static pmix_status_t finalized(const pmix_proc_t *proc, void *server_object,
                      pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_output(0, "SERVER: FINALIZED %s:%d",
@@ -401,9 +402,9 @@ static void abcbfunc(pmix_status_t status, void *cbdata)
     PMIX_RELEASE(x);
 }
 
-static int abort_fn(const pmix_proc_t *proc,
+static pmix_status_t abort_fn(const pmix_proc_t *proc,
                     void *server_object,
-                    pmix_status_t status, const char msg[],
+                    int status, const char msg[],
                     pmix_proc_t procs[], size_t nprocs,
                     pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
@@ -441,7 +442,7 @@ static int abort_fn(const pmix_proc_t *proc,
 }
 
 
-static int fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
+static pmix_status_t fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
                       const pmix_info_t info[], size_t ninfo,
                       char *data, size_t ndata,
                       pmix_modex_cbfunc_t cbfunc, void *cbdata)
@@ -455,7 +456,7 @@ static int fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
 }
 
 
-static int dmodex_fn(const pmix_proc_t *proc,
+static pmix_status_t dmodex_fn(const pmix_proc_t *proc,
                      const pmix_info_t info[], size_t ninfo,
                      pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
@@ -470,7 +471,7 @@ static int dmodex_fn(const pmix_proc_t *proc,
 }
 
 
-static int publish_fn(const pmix_proc_t *proc,
+static pmix_status_t publish_fn(const pmix_proc_t *proc,
                       const pmix_info_t info[], size_t ninfo,
                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
@@ -494,7 +495,7 @@ static int publish_fn(const pmix_proc_t *proc,
 }
 
 
-static int lookup_fn(const pmix_proc_t *proc, char **keys,
+static pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
                      const pmix_info_t info[], size_t ninfo,
                      pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
@@ -543,7 +544,7 @@ static int lookup_fn(const pmix_proc_t *proc, char **keys,
 }
 
 
-static int unpublish_fn(const pmix_proc_t *proc, char **keys,
+static pmix_status_t unpublish_fn(const pmix_proc_t *proc, char **keys,
                         const pmix_info_t info[], size_t ninfo,
                         pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
@@ -576,7 +577,7 @@ static void spcbfunc(pmix_status_t status, void *cbdata)
     }
 }
 
-static int spawn_fn(const pmix_proc_t *proc,
+static pmix_status_t spawn_fn(const pmix_proc_t *proc,
                     const pmix_info_t job_info[], size_t ninfo,
                     const pmix_app_t apps[], size_t napps,
                     pmix_spawn_cbfunc_t cbfunc, void *cbdata)
@@ -602,7 +603,7 @@ static int spawn_fn(const pmix_proc_t *proc,
 }
 
 
-static int connect_fn(const pmix_proc_t procs[], size_t nprocs,
+static pmix_status_t connect_fn(const pmix_proc_t procs[], size_t nprocs,
                       const pmix_info_t info[], size_t ninfo,
                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
@@ -619,7 +620,7 @@ static int connect_fn(const pmix_proc_t procs[], size_t nprocs,
 }
 
 
-static int disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
+static pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                          const pmix_info_t info[], size_t ninfo,
                          pmix_op_cbfunc_t cbfunc, void *cbdata)
 {

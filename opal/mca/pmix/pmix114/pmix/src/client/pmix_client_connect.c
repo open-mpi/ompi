@@ -7,7 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +18,7 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
+#include <pmix/autogen/pmix_stdint.h>
 
 #include <pmix.h>
 
@@ -59,12 +59,12 @@
 /* callback for wait completion */
 static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata);
-static void op_cbfunc(int status, void *cbdata);
+static void op_cbfunc(pmix_status_t status, void *cbdata);
 
-PMIX_EXPORT int PMIx_Connect(const pmix_proc_t procs[], size_t nprocs,
+PMIX_EXPORT pmix_status_t PMIx_Connect(const pmix_proc_t procs[], size_t nprocs,
                              const pmix_info_t info[], size_t ninfo)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -172,10 +172,10 @@ PMIX_EXPORT pmix_status_t PMIx_Connect_nb(const pmix_proc_t procs[], size_t npro
     return PMIX_SUCCESS;
 }
 
-PMIX_EXPORT int PMIx_Disconnect(const pmix_proc_t procs[], size_t nprocs,
+PMIX_EXPORT pmix_status_t PMIx_Disconnect(const pmix_proc_t procs[], size_t nprocs,
                                 const pmix_info_t info[], size_t ninfo)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     if (pmix_globals.init_cntr <= 0) {
@@ -327,7 +327,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     }
 }
 
-static void op_cbfunc(int status, void *cbdata)
+static void op_cbfunc(pmix_status_t status, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 

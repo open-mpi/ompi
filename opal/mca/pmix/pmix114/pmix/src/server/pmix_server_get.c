@@ -7,6 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +18,7 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <src/include/pmix_stdint.h>
+#include <pmix/autogen/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
 #include <pmix_server.h>

@@ -14,7 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,12 +73,12 @@ typedef struct pmix_hash_table_t pmix_hash_table_t;
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_init(pmix_hash_table_t* ht, size_t table_size);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_init(pmix_hash_table_t* ht, size_t table_size);
 
 /**
  * Alternative form
  */
-PMIX_DECLSPEC int pmix_hash_table_init2(pmix_hash_table_t* ht, size_t estimated_max_size,
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_init2(pmix_hash_table_t* ht, size_t estimated_max_size,
                                         int density_numer, int density_denom,
                                         int growth_numer, int growth_denom);
 

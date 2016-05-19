@@ -22,6 +22,7 @@ dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
+dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -84,6 +85,34 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(PMIX_RELEASE_DATE)
     AC_MSG_RESULT([$PMIX_VERSION])
 
+    # Save the breakdown the version information
+    AC_MSG_CHECKING([for pmix major version])
+    PMIX_MAJOR_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --major`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_MAJOR_VERSION)
+    AC_DEFINE_UNQUOTED([PMIX_MAJOR_VERSION], ["$PMIX_MAJOR_VERSION"],
+                       [The library major version is always available, contrary to VERSION])
+
+    AC_MSG_CHECKING([for pmix minor version])
+    PMIX_MINOR_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --minor`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_MINOR_VERSION)
+    AC_DEFINE_UNQUOTED([PMIX_MINOR_VERSION], ["$PMIX_MINOR_VERSION"],
+                       [The library minor version is always available, contrary to VERSION])
+
+    AC_MSG_CHECKING([for pmix release version])
+    PMIX_RELEASE_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --release`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_RELEASE_VERSION)
+    AC_DEFINE_UNQUOTED([PMIX_RELEASE_VERSION], ["$PMIX_RELEASE_VERSION"],
+                       [The library release version is always available, contrary to VERSION])
+
     # Debug mode?
     AC_MSG_CHECKING([if want pmix maintainer support])
     pmix_debug=
@@ -101,11 +130,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_MSG_CHECKING([for pmix directory prefix])
     AC_MSG_RESULT(m4_ifval([$1], pmix_config_prefix, [(none)]))
 
-    # Note that private/config.h *MUST* be listed first so that it
-    # becomes the "main" config header file.  Any AC-CONFIG-HEADERS
-    # after that (pmix/config.h) will only have selective #defines
-    # replaced, not the entire file.
-    AC_CONFIG_HEADERS(pmix_config_prefix[src/include/private/autogen/config.h])
     AC_CONFIG_HEADERS(pmix_config_prefix[include/pmix/autogen/config.h])
 
     # What prefix are we using?

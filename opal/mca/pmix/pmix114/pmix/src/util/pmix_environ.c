@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,7 +93,7 @@ char **pmix_environ_merge(char **minor, char **major)
  * Portable version of setenv(), allowing editing of any environ-like
  * array
  */
-int pmix_setenv(const char *name, const char *value, bool overwrite,
+ pmix_status_t pmix_setenv(const char *name, const char *value, bool overwrite,
                 char ***env)
 {
     int i;
@@ -175,7 +176,7 @@ int pmix_setenv(const char *name, const char *value, bool overwrite,
  * Portable version of unsetenv(), allowing editing of any
  * environ-like array
  */
-int pmix_unsetenv(const char *name, char ***env)
+ pmix_status_t pmix_unsetenv(const char *name, char ***env)
 {
     int i;
     char *compare;

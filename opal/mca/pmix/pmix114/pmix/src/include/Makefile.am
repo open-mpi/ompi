@@ -11,14 +11,13 @@
 #                         All rights reserved.
 # Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
-
-EXTRA_DIST += src/include/private/autogen/README.txt
 
 # This makefile.am does not stand on its own - it is included from
 # src/Makefile.am
@@ -35,13 +34,7 @@ headers += \
         src/include/align.h \
         src/include/hash_string.h \
         src/include/pmix_socket_errno.h \
-        src/include/pmix_stdint.h \
         src/include/prefetch.h \
         src/include/types.h
 
 endif ! PMIX_EMBEDDED_MODE
-
-if WANT_INSTALL_HEADERS
-headers += \
-    src/include/private/autogen/config.h
-endif

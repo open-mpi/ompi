@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
- *
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +28,7 @@
 static int native_init(void);
 static void native_finalize(void);
 static char* create_cred(void);
-static int validate_cred(pmix_peer_t *peer, char *cred);
+static pmix_status_t validate_cred(pmix_peer_t *peer, char *cred);
 
 pmix_sec_base_module_t pmix_native_module = {
     "native",
@@ -70,7 +70,7 @@ static char* create_cred(void)
     return cred;
 }
 
-static int validate_cred(pmix_peer_t *peer, char *cred)
+static pmix_status_t validate_cred(pmix_peer_t *peer, char *cred)
 {
     uid_t uid;
     gid_t gid;

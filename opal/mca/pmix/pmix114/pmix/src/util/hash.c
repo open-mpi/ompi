@@ -11,7 +11,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +22,7 @@
 
 #include <src/include/pmix_config.h>
 
-#include <src/include/pmix_stdint.h>
+#include <pmix/autogen/pmix_stdint.h>
 #include <src/include/hash_string.h>
 
 #include <string.h>
@@ -65,7 +65,7 @@ static pmix_kval_t* lookup_keyval(pmix_list_t *data,
 static pmix_proc_data_t* lookup_proc(pmix_hash_table_t *jtable,
                                      uint64_t id, bool create);
 
-int pmix_hash_store(pmix_hash_table_t *table,
+pmix_status_t pmix_hash_store(pmix_hash_table_t *table,
                     int rank, pmix_kval_t *kin)
 {
     pmix_proc_data_t *proc_data;
@@ -229,7 +229,7 @@ pmix_status_t pmix_hash_fetch_by_key(pmix_hash_table_t *table, const char *key,
     return PMIX_SUCCESS;
 }
 
-int pmix_hash_remove_data(pmix_hash_table_t *table,
+pmix_status_t pmix_hash_remove_data(pmix_hash_table_t *table,
                           int rank, const char *key)
 {
     pmix_status_t rc = PMIX_SUCCESS;
