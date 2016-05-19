@@ -1213,6 +1213,10 @@ size_t fwrite( const void *buf, size_t size, size_t nmemb, FILE *stream)
 }
 
 
+/* fgetc may be defined as a macro, so we must disable it */
+#if defined(fgetc)
+# undef fgetc
+#endif
 int fgetc(FILE *stream)
 {
 #define VT_IOWRAP_THISFUNCNAME fgetc
@@ -1326,6 +1330,10 @@ char *gets(char *s)
 }
 
 
+/* fputc may be defined as a macro, so we must disable it */
+#if defined(fputc)
+# undef fputc
+#endif
 int fputc(int c, FILE *stream)
 {
 #define VT_IOWRAP_THISFUNCNAME fputc
