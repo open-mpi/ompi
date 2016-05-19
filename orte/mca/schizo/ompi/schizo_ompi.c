@@ -281,6 +281,7 @@ static int setup_fork(orte_job_t *jdata,
     char **envcpy, **nps, **firstranks;
     char *npstring, *firstrankstring;
     char *num_app_ctx;
+    orte_app_context_t* tmp_app;
 
     /* see if the mapper thinks we are oversubscribed */
     oversubscribed = false;
@@ -471,11 +472,11 @@ static int setup_fork(orte_job_t *jdata,
     nps = NULL;
     firstranks = NULL;
     for (i=0; i < jdata->apps->size; i++) {
-        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+        if (NULL == (tmp_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        opal_argv_append_nosize(&nps, ORTE_VPID_PRINT(app->num_procs));
-        opal_argv_append_nosize(&firstranks, ORTE_VPID_PRINT(app->first_rank));
+        opal_argv_append_nosize(&nps, ORTE_VPID_PRINT(tmp_app->num_procs));
+        opal_argv_append_nosize(&firstranks, ORTE_VPID_PRINT(tmp_app->first_rank));
     }
     npstring = opal_argv_join(nps, ' ');
     firstrankstring = opal_argv_join(firstranks, ' ');
