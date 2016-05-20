@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -522,7 +522,7 @@ static int parse_args(int argc, char *argv[])
 
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
-    ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
+    ret = opal_cmd_line_parse(&cmd_line, false, false, argc, argv);
     if (OPAL_SUCCESS != ret) {
         if (OPAL_ERR_SILENT != ret) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],

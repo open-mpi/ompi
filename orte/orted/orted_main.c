@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
@@ -249,7 +250,7 @@ int orte_daemon(int argc, char *argv[])
         exit(1);
     }
     mca_base_cmd_line_setup(cmd_line);
-    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
+    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false, false,
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);

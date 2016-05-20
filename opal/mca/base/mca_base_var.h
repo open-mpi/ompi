@@ -733,6 +733,17 @@ OPAL_DECLSPEC int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_typ
 OPAL_DECLSPEC int mca_base_var_process_env_list(char *list, char ***argv);
 OPAL_DECLSPEC int mca_base_var_process_env_list_from_file(char ***argv);
 
+/*
+ * Initialize any file-based params
+ */
+OPAL_DECLSPEC int mca_base_var_cache_files(bool rel_path_search);
+
+
+extern char *mca_base_env_list;
+#define MCA_BASE_ENV_LIST_SEP_DEFAULT ";"
+extern char *mca_base_env_list_sep;
+extern char *mca_base_env_list_internal;
+
 END_C_DECLS
 
 #endif /* OPAL_MCA_BASE_VAR_H */
