@@ -415,7 +415,6 @@ int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_var_files);
     free (tmp);
     if (0 > ret) {
-        opal_output(0, "FAILED PARAM FILES: %d", ret);
         return ret;
     }
 
@@ -427,7 +426,6 @@ int mca_base_var_cache_files(bool rel_path_search)
     ret = asprintf(&mca_base_var_override_file, "%s" OPAL_PATH_SEP "openmpi-mca-params-override.conf",
                    opal_install_dirs.sysconfdir);
     if (0 > ret) {
-        opal_output(0, "FAILED OVERRIDE");
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -440,7 +438,6 @@ int mca_base_var_cache_files(bool rel_path_search)
                                  &mca_base_var_override_file);
     free (tmp);
     if (0 > ret) {
-        opal_output(0, "FAILED OVERRIDE PARAM FILES");
         return ret;
     }
 
@@ -455,7 +452,6 @@ int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_2,
                                  MCA_BASE_VAR_SCOPE_LOCAL, &mca_base_var_suppress_override_warning);
     if (0 > ret) {
-        opal_output(0, "FAILED OVERRIDE WARNING");
         return ret;
     }
 
@@ -469,7 +465,6 @@ int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_var_file_prefix);
     if (0 > ret) {
-        opal_output(0, "FAILED PARAM PREFIX");
         return ret;
     }
 
@@ -479,14 +474,12 @@ int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_envar_file_prefix);
     if (0 > ret) {
-        opal_output(0, "FAILED ENV PREFIX");
         return ret;
     }
 
     ret = asprintf(&mca_base_param_file_path, "%s" OPAL_PATH_SEP "amca-param-sets%c%s",
                    opal_install_dirs.opaldatadir, OPAL_ENV_SEP, cwd);
     if (0 > ret) {
-        opal_output(0, "FAILED PARAM FILE PATH");
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -497,7 +490,6 @@ int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_param_file_path);
     free (tmp);
     if (0 > ret) {
-        opal_output(0, "FAILED PARAM FILE PATH2");
         return ret;
     }
 
@@ -507,7 +499,6 @@ int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &force_agg_path);
     if (0 > ret) {
-        opal_output(0, "FAILED PARAM FILE FORCE");
         return ret;
     }
 
