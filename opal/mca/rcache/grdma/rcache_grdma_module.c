@@ -17,6 +17,8 @@
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -518,7 +520,7 @@ static void mca_rcache_grdma_finalize (mca_rcache_base_module_t *rcache)
                 rcache_grdma->stat_evicted);
     }
 
-    do_unregistration_gc (rcache_grdma);
+    do_unregistration_gc (&rcache_grdma->super);
 
     (void) mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, NULL, (size_t) -1,
                                         iterate_dereg_finalize, (void *) rcache);
