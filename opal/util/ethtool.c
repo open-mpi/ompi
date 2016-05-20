@@ -64,7 +64,9 @@ opal_ethtool_get_speed (const char *if_name)
         goto out;
     }
 
-#ifdef HAVE_STRUCT_ETHTOOL_CMD_SPEED_HI
+#if HAVE_DECL_ETHTOOL_CMD_SPEED
+    speed = ethtool_cmd_speed(&edata);
+#elif defined(HAVE_STRUCT_ETHTOOL_CMD_SPEED_HI)
     speed = (edata.speed_hi << 16) | edata.speed;
 #else
     speed = edata.speed;
