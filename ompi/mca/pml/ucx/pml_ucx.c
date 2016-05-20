@@ -405,7 +405,7 @@ mca_pml_ucx_blocking_recv_completion(void *request, ucs_status_t status,
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     mca_pml_ucx_set_recv_status(&req->req_status, status, info);
-    PML_UCX_ASSERT( !(REQUEST_COMPLETE(req) );
+    PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
     req->req_complete = REQUEST_COMPLETED;
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }

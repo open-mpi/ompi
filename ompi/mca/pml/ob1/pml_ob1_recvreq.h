@@ -159,7 +159,6 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
     size_t i;
 
     if(false == recvreq->req_recv.req_base.req_pml_complete){
-        OPAL_THREAD_LOCK(&ompi_request_lock);
 
         if(recvreq->req_recv.req_bytes_packed > 0) {
             PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
@@ -200,7 +199,6 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
             MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(recvreq);
         }
 
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
 }
 

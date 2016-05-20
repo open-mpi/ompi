@@ -71,7 +71,6 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
 {
     mca_pml_ob1_recv_request_t* recvreq = *(mca_pml_ob1_recv_request_t**)request;
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     if(false == recvreq->req_recv.req_base.req_free_called){
 
         recvreq->req_recv.req_base.req_free_called = true;
@@ -92,7 +91,6 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
         }
 
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }

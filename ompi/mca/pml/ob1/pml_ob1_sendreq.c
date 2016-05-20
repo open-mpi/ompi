@@ -98,7 +98,6 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
 static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
 {
     mca_pml_ob1_send_request_t* sendreq = *(mca_pml_ob1_send_request_t**)request;
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     if(false == sendreq->req_send.req_base.req_free_called) {
 
         sendreq->req_send.req_base.req_free_called = true;
@@ -119,7 +118,6 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
         }
         *request = MPI_REQUEST_NULL;
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     return OMPI_SUCCESS;
 }
 
@@ -444,9 +442,7 @@ int mca_pml_ob1_send_request_start_buffered(
     sendreq->req_state = 2;
 
     /* request is complete at mpi level */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* send */
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_RNDV);

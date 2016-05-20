@@ -43,7 +43,7 @@ void mca_pml_ucx_send_completion(void *request, ucs_status_t status)
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     mca_pml_ucx_set_send_status(&req->req_status, status);
-    PML_UCX_ASSERT( !(REQUEST_COMPLETE(req));
+    PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
     ompi_request_complete(req, true);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
@@ -59,7 +59,7 @@ void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     mca_pml_ucx_set_recv_status(&req->req_status, status, info);
-    PML_UCX_ASSERT( !(REQUEST_COMPLETE(req) );
+    PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
     ompi_request_complete(req, true);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }

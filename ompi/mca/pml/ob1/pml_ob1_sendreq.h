@@ -262,7 +262,6 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
             mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
         }
 
-        OPAL_THREAD_LOCK(&ompi_request_lock);
         sendreq->req_send.req_base.req_pml_complete = true;
 
         if( !REQUEST_COMPLETE( &((sendreq->req_send).req_base.req_ompi)) ) {
@@ -276,7 +275,6 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
         if(true == sendreq->req_send.req_base.req_free_called) {
             MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
         }
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
 }
 
