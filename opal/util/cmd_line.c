@@ -977,12 +977,10 @@ static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
     /* see if the option already exists */
     if (NULL != e->ocl_cmd_single_dash_name &&
         NULL != find_option(cmd, e->ocl_cmd_single_dash_name)) {
-        opal_output(0, "Duplicate cmd line entry %s", e->ocl_cmd_single_dash_name);
         return OPAL_ERR_BAD_PARAM;
     }
     if (NULL != e->ocl_cmd_long_name &&
         NULL != find_option(cmd, e->ocl_cmd_long_name)) {
-        opal_output(0, "Duplicate cmd line entry %s", e->ocl_cmd_long_name);
         return OPAL_ERR_BAD_PARAM;
     }
 

@@ -199,7 +199,7 @@ static OBJ_CLASS_INSTANCE(trackr_t,
                           tcon, tdes);
 
 int orte_submit_init(int argc, char *argv[],
-                     opal_cmd_line_t *opts)
+                     opal_cmd_line_init_t *opts)
 {
     int rc, i;
     char *param;
@@ -284,9 +284,6 @@ int orte_submit_init(int argc, char *argv[],
     if (OPAL_SUCCESS != (rc = orte_schizo.define_cli(orte_cmd_line))) {
         return rc;
     }
-
-    /* now that options have been defined, finish setup */
-    mca_base_cmd_line_setup(orte_cmd_line);
 
     /* parse the result to get values */
     if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line,

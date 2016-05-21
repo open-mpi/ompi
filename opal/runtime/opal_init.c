@@ -334,6 +334,12 @@ opal_init_util(int* pargc, char*** pargv)
         goto return_error;
     }
 
+    /* read any param files that were provided */
+    if (OPAL_SUCCESS != (ret = mca_base_var_cache_files(false))) {
+        error = "failed to cache files";
+        goto return_error;
+    }
+
     /* register params for opal */
     if (OPAL_SUCCESS != (ret = opal_register_params())) {
         error = "opal_register_params";
@@ -414,13 +420,6 @@ opal_init(int* pargc, char*** pargv)
     if (OPAL_SUCCESS != (ret = opal_init_util(pargc, pargv))) {
         return ret;
     }
-
-    /* read any param files that were provided */
-    if (OPAL_SUCCESS != (ret = mca_base_var_cache_files(false))) {
-        error = "failed to cache files";
-        goto return_error;
-    }
-
 
     /* open hwloc - since this is a static framework, no
      * select is required
