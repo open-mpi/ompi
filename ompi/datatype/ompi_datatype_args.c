@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -44,12 +44,12 @@ __ompi_datatype_create_from_args( int32_t* i, OPAL_PTRDIFF_TYPE * a,
                                   ompi_datatype_t** d, int32_t type );
 
 typedef struct __dt_args {
-    int                ref_count;
-    int                create_type;
+    int32_t            ref_count;
+    int32_t            create_type;
     size_t             total_pack_size;
-    int                ci;
-    int                ca;
-    int                cd;
+    int32_t            ci;
+    int32_t            ca;
+    int32_t            cd;
     int*               i;
     OPAL_PTRDIFF_TYPE* a;
     ompi_datatype_t**  d;
@@ -71,11 +71,11 @@ typedef struct __dt_args {
 #endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
 
 /**
- * Some architecture require that 64 bits pointers (to pointers) has to
- * be 64 bits aligned. As in the ompi_datatype_args_t structure we have 2 such
- * pointers and one to an array of ints, if we start by setting the 64
- * bits aligned one we will not have any trouble. Problem arise on
- * SPARC 64.
+ * Some architectures require 64 bits pointers (to pointers) to
+ * be 64 bits aligned. As in the ompi_datatype_args_t structure we have
+ * 2 such array of pointers and one to an array of ints, if we start by
+ * setting the 64 bits aligned one we will not have any trouble. Problem
+ * originally reported on SPARC 64.
  */
 #define ALLOC_ARGS(PDATA, IC, AC, DC)                                   \
     do {                                                                \
@@ -236,9 +236,8 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
              */
             OBJ_RETAIN( d[pos] );
             pArgs->total_pack_size += ((ompi_datatype_args_t*)d[pos]->args)->total_pack_size;
-        } else {
-            pArgs->total_pack_size += 2 * sizeof(int);  /* _NAMED + predefined id */
         }
+        pArgs->total_pack_size += sizeof(int);  /* each data has an ID */
     }
 
     return OMPI_SUCCESS;
@@ -499,6 +498,12 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
             __ompi_datatype_pack_description( datatype, &recursive_buffer, &next_index );
 
             if (!ompi_datatype_is_predefined(datatype)) {
+                /* If the precomputed size is not large enough we're already in troubles, we
+                 * have overwritten outside of the allocated buffer. Raise the alarm !
+                 * If not reassess the size of the packed buffer necessary for holding the
+                 * datatype description.
+                 */
+                assert(args->total_pack_size >= (uintptr_t)((char*)recursive_buffer - (char *) packed_description));
                 args->total_pack_size = (uintptr_t)((char*)recursive_buffer - (char *) packed_description);
             }
 
