@@ -75,24 +75,26 @@ int MPI_Type_create_darray(int size,
         } else if( (MPI_ORDER_C != order) && (MPI_ORDER_FORTRAN != order) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         }
-        for( i = 0; i < ndims; i++ ) {
-            if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) &&
-                (MPI_DISTRIBUTE_CYCLIC != distrib_array[i]) &&
-                (MPI_DISTRIBUTE_NONE != distrib_array[i]) ) {
+        if( ndims > 0 ) {
+            for( i = 0; i < ndims; i++ ) {
+                if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) &&
+                    (MPI_DISTRIBUTE_CYCLIC != distrib_array[i]) &&
+                    (MPI_DISTRIBUTE_NONE != distrib_array[i]) ) {
+                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+                } else if( (gsize_array[i] < 1) || (psize_array[i] < 0) ||
+                           ((darg_array[i] < 0) && (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) ) ) {
+                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+                } else if( (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) &&
+                           (MPI_DISTRIBUTE_BLOCK == distrib_array[i]) &&
+                           ((darg_array[i] * psize_array[i]) < gsize_array[i]) ) {
+                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+                } else if( 1 > psize_array[i] )
+                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+                prod_psize *= psize_array[i];
+            }
+            if( prod_psize != size )
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-            } else if( (gsize_array[i] < 1) || (psize_array[i] < 0) ||
-                       ((darg_array[i] < 0) && (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) ) ) {
-                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-            } else if( (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) &&
-                       (MPI_DISTRIBUTE_BLOCK == distrib_array[i]) &&
-                       ((darg_array[i] * psize_array[i]) < gsize_array[i]) ) {
-                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-            } else if( 1 > psize_array[i] )
-                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-            prod_psize *= psize_array[i];
         }
-        if( prod_psize != size )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
