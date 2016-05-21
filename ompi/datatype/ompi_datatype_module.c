@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -37,9 +37,6 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 
 #include "mpi.h"
-
-/* by default the debuging is turned off */
-int ompi_datatype_dfd = -1;
 
 /**
  * This is the number of predefined datatypes. It is different than the MAX_PREDEFINED
@@ -658,12 +655,6 @@ int32_t ompi_datatype_finalize( void )
 
     /* Get rid of the Fortran2C translation table */
     OBJ_DESTRUCT(&ompi_datatype_f_to_c_table);
-
-#if defined(VERBOSE)
-    if( ompi_datatype_dfd != -1 )
-        opal_output_close( ompi_datatype_dfd );
-    ompi_datatype_dfd = -1;
-#endif  /* VERBOSE */
 
     /* release the local convertors (external32 and local) */
     ompi_datatype_default_convertors_fini();
