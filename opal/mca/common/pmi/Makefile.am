@@ -3,11 +3,11 @@
 # Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
 #                         reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved
+# Copyright (c) 2014-2016 Intel, Inc. All rights reserved
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -43,5 +43,6 @@ libmca_common_pmi_la_SOURCES = common_pmi.h common_pmi.c
 if WANT_PMI2_SUPPORT
 libmca_common_pmi_la_SOURCES += pmi2_pmap_parser.c
 endif
+libmca_common_pmi_la_CPPFLAGS = $(common_pmi_CPPFLAGS)
 libmca_common_pmi_la_LDFLAGS = $(common_pmi_LDFLAGS) -version-info $(libmca_opal_common_pmi_so_version)
 libmca_common_pmi_la_LIBADD = $(common_pmi_LIBS)
