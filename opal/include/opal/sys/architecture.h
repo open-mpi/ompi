@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +39,7 @@
 #define OPAL_SPARCV9_64     0062
 #define OPAL_MIPS           0070
 #define OPAL_ARM            0100
+#define OPAL_ARM64          0101
 #define OPAL_BUILTIN_SYNC   0200
 #define OPAL_BUILTIN_OSX    0201
 #define OPAL_BUILTIN_NO     0202

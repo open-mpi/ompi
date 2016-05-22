@@ -934,6 +934,14 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
             ;;
+	aarch64*)
+            opal_cv_asm_arch="ARM64"
+            OPAL_ASM_SUPPORT_64BIT=1
+            OPAL_ASM_ARM_VERSION=8
+            AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
+                               [What ARM assembly version to use])
+            OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
+            ;;
 
         armv7*)
             opal_cv_asm_arch="ARM"
