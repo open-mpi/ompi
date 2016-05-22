@@ -52,6 +52,13 @@
 #define __NR_process_vm_readv 376
 #define __NR_process_vm_writev 377
 
+#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+
+/* ARM64 uses the asm-generic syscall numbers */
+
+#define __NR_process_vm_readv 270
+#define __NR_process_vm_writev 271
+
 #elif OPAL_ASSEMBLY_ARCH == OPAL_MIPS
 
 #if _MIPS_SIM == _MIPS_SIM_ABI32
