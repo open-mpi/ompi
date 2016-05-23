@@ -513,17 +513,6 @@ int mca_base_var_cache_files(bool rel_path_search)
         }
     }
 
-    /***  TEMPORARY SETTING - AMCA PARAM FILES ARE CURRENTLY NOT OPERATIONAL
-     *    PENDING IDENTIFICATION OF A MAINTAINER
-     ***/
-    if (NULL != mca_base_var_file_prefix ||
-        NULL != mca_base_envar_file_prefix ||
-        NULL != mca_base_param_file_path) {
-        opal_output(0, "The AMCA parameter file options are not operational at this time");
-        opal_output(0, "pending identification of a maintainer. Please list your options");
-        opal_output(0, "manually on the command line or in your environment");
-        return OPAL_ERR_SILENT;
-    }
     if (NULL != mca_base_var_file_prefix) {
        resolve_relative_paths(&mca_base_var_file_prefix, mca_base_param_file_path, rel_path_search, &mca_base_var_files, OPAL_ENV_SEP);
     }
