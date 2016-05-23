@@ -1511,14 +1511,23 @@ static int create_app(int argc, char* argv[],
         found = false;
         for (i=1; NULL != app->argv[i]; i++) {
             if (NULL != strstr(app->argv[i], "java.library.path")) {
+                char *dptr;
+                /* find the '=' that delineates the option from the path */
+                if (NULL == (dptr = strchr(app->argv[i], '='))) {
+                    /* that's just wrong */
+                    rc = ORTE_ERR_BAD_PARAM;
+                    goto cleanup;
+                }
+                /* step over the '=' */
+                ++dptr;
                 /* yep - but does it include the path to the mpi libs? */
                 found = true;
                 if (NULL == strstr(app->argv[i], opal_install_dirs.libdir)) {
                     /* doesn't appear to - add it to be safe */
                     if (':' == app->argv[i][strlen(app->argv[i]-1)]) {
-                        asprintf(&value, "-Djava.library.path=%s%s", app->argv[i], opal_install_dirs.libdir);
+                        asprintf(&value, "-Djava.library.path=%s%s", dptr, opal_install_dirs.libdir);
                     } else {
-                        asprintf(&value, "-Djava.library.path=%s:%s", app->argv[i], opal_install_dirs.libdir);
+                        asprintf(&value, "-Djava.library.path=%s:%s", dptr, opal_install_dirs.libdir);
                     }
                     free(app->argv[i]);
                     app->argv[i] = value;
