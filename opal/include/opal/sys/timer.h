@@ -70,6 +70,9 @@
  *
  *********************************************************************/
 
+/* By default we suppose all timers are monotonic per node. */
+#define OPAL_TIMER_MONOTONIC 1
+
 BEGIN_C_DECLS
 
 /* If you update this list, you probably also want to update
