@@ -494,21 +494,28 @@ static int enum_value_from_string_flag (mca_base_var_enum_t *self, const char *s
 
         bool found = false, conflict = false;
         for (int j = 0 ; j < count ; ++j) {
-            if ((is_int && (value == flag_enum->enum_flags[i].flag)) ||
-                0 == strcasecmp (flags[i], flag_enum->enum_flags[i].string)) {
+            if ((is_int && (value & flag_enum->enum_flags[j].flag)) ||
+                0 == strcasecmp (flags[i], flag_enum->enum_flags[j].string)) {
                 found = true;
 
-                if (flag & flag_enum->enum_flags[i].conflicting_flag) {
+                if (flag & flag_enum->enum_flags[j].conflicting_flag) {
                     conflict = true;
                 } else {
-                    flag |= flag_enum->enum_flags[i].flag;
+                    flag |= flag_enum->enum_flags[j].flag;
                 }
 
-                break;
+                if (is_int) {
+                    value &= ~flag_enum->enum_flags[j].flag;
+                    if (0 == value) {
+                        break;
+                    }
+                } else {
+                    break;
+                }
             }
         }
 
-        if (!found || conflict) {
+        if (!found || conflict || (is_int && value)) {
             opal_argv_free (flags);
             return !found ? OPAL_ERR_VALUE_OUT_OF_BOUNDS : OPAL_ERR_BAD_PARAM;
         }
