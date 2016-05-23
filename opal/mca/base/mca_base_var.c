@@ -724,7 +724,7 @@ static int var_set_from_string (mca_base_var_t *var, char *src)
     case MCA_BASE_VAR_TYPE_BOOL:
     case MCA_BASE_VAR_TYPE_SIZE_T:
         ret = int_from_string(src, var->mbv_enumerator, &int_value);
-        if (OPAL_ERR_VALUE_OUT_OF_BOUNDS == ret ||
+        if (OPAL_SUCCESS != ret ||
             (MCA_BASE_VAR_TYPE_INT == var->mbv_type && ((int) int_value != (int64_t) int_value)) ||
             (MCA_BASE_VAR_TYPE_UNSIGNED_INT == var->mbv_type && ((unsigned int) int_value != int_value))) {
             if (var->mbv_enumerator) {
