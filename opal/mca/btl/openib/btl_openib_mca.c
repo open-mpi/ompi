@@ -17,7 +17,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -710,20 +710,6 @@ int btl_openib_register_mca_params(void)
                    "Allow connecting processes from different IB subnets."
                    "(0 = do not allow; 1 = allow)",
                    false, &mca_btl_openib_component.allow_different_subnets));
-
-#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
-    tmp = mca_base_var_find ("opal", "memory", "linux", "memalign");
-    if (0 <= tmp) {
-        (void) mca_base_var_register_synonym(tmp, "opal", "btl", "openib", "memalign",
-                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
-    }
-
-    tmp = mca_base_var_find ("opal", "memory", "linux", "memalign_threshold");
-    if (0 <= tmp) {
-        (void) mca_base_var_register_synonym(tmp, "opal", "btl", "openib", "memalign_threshold",
-                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
-    }
-#endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
 
     /* Register any MCA params for the connect pseudo-components */
     if (OPAL_SUCCESS == ret) {
