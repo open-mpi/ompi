@@ -301,9 +301,10 @@ opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h
 
 opal/mca/installdirs/config/install_dirs.h
 
-opal/mca/pmix/pmix114/pmix/include/pmix/autogen/config.h
-opal/mca/pmix/pmix114/pmix/src/include/private/autogen/config.h.in
-opal/mca/pmix/pmix114/pmix/src/include/private/autogen/config.h
+opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h
+opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h.in
+opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h.in
+opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h
 
 opal/tools/opal-checkpoint/opal-checkpoint
 opal/tools/opal-checkpoint/opal-checkpoint.1
