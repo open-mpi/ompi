@@ -732,7 +732,6 @@ hwloc_look_solaris(struct hwloc_backend *backend)
   hwloc_look_lgrp(topology);
 #endif /* HAVE_LIBLGRP */
 #ifdef HAVE_LIBKSTAT
-  nbprocs = 0;
   if (hwloc_look_kstat(topology) > 0)
     alreadypus = 1;
 #endif /* HAVE_LIBKSTAT */

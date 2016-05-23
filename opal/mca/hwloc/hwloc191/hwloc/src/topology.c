@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2014 Inria.  All rights reserved.
+ * Copyright © 2009-2015 Inria.  All rights reserved.
  * Copyright © 2009-2012 Université Bordeaux 1
  * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
@@ -159,7 +159,7 @@ hwloc_fallback_nbprocessors(struct hwloc_topology *topology) {
     n = -1;
 #elif defined(HWLOC_WIN_SYS)
   SYSTEM_INFO sysinfo;
-  GetSystemInfo(&sysinfo);
+  GetSystemInfo(&sysinfo); /* only in the current group, should only be used in 32bits mode (without multiple groups) */
   n = sysinfo.dwNumberOfProcessors;
 #else
 #ifdef __GNUC__
@@ -1580,32 +1580,7 @@ propagate_nodesets(hwloc_obj_t obj)
 }
 
 static void
-apply_nodeset(hwloc_obj_t obj, hwloc_obj_t sys)
-{
-  unsigned i;
-  hwloc_obj_t child, *temp;
-
-  if (sys) {
-    if (obj->type == HWLOC_OBJ_NODE && obj->os_index != (unsigned) -1 &&
-        !hwloc_bitmap_isset(sys->allowed_nodeset, obj->os_index)) {
-      hwloc_debug("Dropping memory from disallowed node %u\n", obj->os_index);
-      obj->memory.local_memory = 0;
-      obj->memory.total_memory = 0;
-      for(i=0; i<obj->memory.page_types_len; i++)
-	obj->memory.page_types[i].count = 0;
-    }
-  } else {
-    if (obj->allowed_nodeset) {
-      sys = obj;
-    }
-  }
-
-  for_each_child_safe(child, obj, temp)
-    apply_nodeset(child, sys);
-}
-
-static void
-remove_unused_cpusets(hwloc_obj_t obj)
+remove_unused_sets(hwloc_obj_t obj)
 {
   hwloc_obj_t child, *temp;
 
@@ -1613,9 +1588,21 @@ remove_unused_cpusets(hwloc_obj_t obj)
     hwloc_bitmap_and(obj->cpuset, obj->cpuset, obj->online_cpuset);
     hwloc_bitmap_and(obj->cpuset, obj->cpuset, obj->allowed_cpuset);
   }
+  if (obj->nodeset) {
+    hwloc_bitmap_and(obj->nodeset, obj->nodeset, obj->allowed_nodeset);
+  }
+  if (obj->type == HWLOC_OBJ_NODE && obj->os_index != (unsigned) -1 &&
+      !hwloc_bitmap_isset(obj->allowed_nodeset, obj->os_index)) {
+    unsigned i;
+    hwloc_debug("Dropping memory from disallowed node %u\n", obj->os_index);
+    obj->memory.local_memory = 0;
+    obj->memory.total_memory = 0;
+    for(i=0; i<obj->memory.page_types_len; i++)
+      obj->memory.page_types[i].count = 0;
+  }
 
   for_each_child_safe(child, obj, temp)
-    remove_unused_cpusets(child);
+    remove_unused_sets(child);
 }
 
 /* Remove an object from its parent and free it.
@@ -2181,6 +2168,12 @@ hwloc_level_filter_objects(hwloc_topology_t topology,
   /* count interesting objects and allocate the new array */
   for(i=0, nnew=0; i<nold; i++)
     nnew += hwloc_level_filter_object(topology, NULL, old[i]);
+  if (!nnew) {
+    *objs = NULL;
+    *n_objs = 0;
+    free(old);
+    return 0;
+  }
   new = malloc(nnew * sizeof(hwloc_obj_t));
   if (!new) {
     free(old);
@@ -2522,12 +2515,8 @@ next_cpubackend:
   print_objects(topology, 0, topology->levels[0][0]);
 
   if (!(topology->flags & HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM)) {
-    hwloc_debug("%s", "\nRemoving unauthorized and offline cpusets from all cpusets\n");
-    remove_unused_cpusets(topology->levels[0][0]);
-
-    hwloc_debug("%s", "\nRemoving disallowed memory according to nodesets\n");
-    apply_nodeset(topology->levels[0][0], NULL);
-
+    hwloc_debug("%s", "\nRemoving unauthorized and offline sets from all sets\n");
+    remove_unused_sets(topology->levels[0][0]);
     print_objects(topology, 0, topology->levels[0][0]);
   }
 
@@ -3075,7 +3064,6 @@ hwloc__check_children(struct hwloc_obj *parent)
   /* check that children complete_cpuset are properly ordered, empty ones may be anywhere
    * (can be wrong for main cpuset since removed PUs can break the ordering).
    */
-#ifdef HWLOC_DEBUG
   if (parent->complete_cpuset) {
     int firstchild;
     int prev_firstchild = -1; /* -1 works fine with first comparisons below */
@@ -3089,7 +3077,6 @@ hwloc__check_children(struct hwloc_obj *parent)
       prev_firstchild = firstchild;
     }
   }
-#endif
 
   /* checks for all children */
   for(j=1; j<parent->arity; j++) {

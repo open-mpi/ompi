@@ -468,11 +468,11 @@ hwloc_disc_components_enable_others(struct hwloc_topology *topology)
 	char c;
 
 	/* replace libpci with pci for backward compatibility with v1.6 */
-	if (!strncmp(curenv, "libpci", s)) {
+	if (!strncmp(curenv, "libpci", 6) && s == 6) {
 	  curenv[0] = curenv[1] = curenv[2] = *HWLOC_COMPONENT_SEPS;
 	  curenv += 3;
 	  s -= 3;
-	} else if (curenv[0] == HWLOC_COMPONENT_EXCLUDE_CHAR && !strncmp(curenv+1, "libpci", s-1)) {
+	} else if (curenv[0] == HWLOC_COMPONENT_EXCLUDE_CHAR && !strncmp(curenv+1, "libpci", 6) && s == 7 ) {
 	  curenv[3] = curenv[0];
 	  curenv[0] = curenv[1] = curenv[2] = *HWLOC_COMPONENT_SEPS;
 	  curenv += 3;
@@ -529,7 +529,7 @@ nextname:
 	char *curenv = env;
 	while (*curenv) {
 	  size_t s = strcspn(curenv, HWLOC_COMPONENT_SEPS);
-	  if (curenv[0] == HWLOC_COMPONENT_EXCLUDE_CHAR && !strncmp(curenv+1, comp->name, s-1)) {
+	  if (curenv[0] == HWLOC_COMPONENT_EXCLUDE_CHAR && !strncmp(curenv+1, comp->name, s-1) && strlen(comp->name) == s-1) {
 	    if (hwloc_components_verbose)
 	      fprintf(stderr, "Excluding %s discovery component `%s' because of HWLOC_COMPONENTS environment variable\n",
 	    hwloc_disc_component_type_string(comp->type), comp->name);

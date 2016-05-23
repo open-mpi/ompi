@@ -39,6 +39,9 @@
 /* Define to 1 if you have the `cpuset_setid' function. */
 #undef HAVE_CPUSET_SETID
 
+/* Define to 1 if you have the <ctype.h> header file. */
+#undef HAVE_CTYPE_H
+
 /* Define to 1 if we have -lcuda */
 #undef HAVE_CUDA
 
@@ -528,6 +531,9 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HWLOC_HAVE_STDINT_H
 
+/* Define to 1 if function `syscall' is available */
+#undef HWLOC_HAVE_SYSCALL
+
 /* Define to 1 if you have the `windows.h' header. */
 #undef HWLOC_HAVE_WINDOWS_H
 
@@ -536,9 +542,6 @@
 
 /* Define to 1 if you have x86 cpuid */
 #undef HWLOC_HAVE_X86_CPUID
-
-/* Define to 1 if the _syscall3 macro works */
-#undef HWLOC_HAVE__SYSCALL3
 
 /* Define to 1 on HP-UX */
 #undef HWLOC_HPUX_SYS

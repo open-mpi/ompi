@@ -207,7 +207,7 @@ hwloc_obj_type_of_string (const char * string)
   if (!strcasecmp(string, "Cache")) return HWLOC_OBJ_CACHE;
   if (!strcasecmp(string, "Core")) return HWLOC_OBJ_CORE;
   if (!strcasecmp(string, "PU")) return HWLOC_OBJ_PU;
-  if (!strcasecmp(string, "Bridge")) return HWLOC_OBJ_BRIDGE;
+  if (!strcasecmp(string, "Bridge") || !strcasecmp(string, "HostBridge") || !strcasecmp(string, "PCIBridge")) return HWLOC_OBJ_BRIDGE;
   if (!strcasecmp(string, "PCIDev")) return HWLOC_OBJ_PCI_DEVICE;
   if (!strcasecmp(string, "OSDev")) return HWLOC_OBJ_OS_DEVICE;
   return (hwloc_obj_type_t) -1;
@@ -237,7 +237,9 @@ hwloc_obj_type_sscanf(const char *string, hwloc_obj_type_t *typep, int *depthatt
     type = HWLOC_OBJ_PU;
   } else if (!hwloc_strncasecmp(string, "misc", 2)) {
     type = HWLOC_OBJ_MISC;
-  } else if (!hwloc_strncasecmp(string, "bridge", 2)) {
+  } else if (!hwloc_strncasecmp(string, "bridge", 2)
+	     || !hwloc_strncasecmp(string, "hostbridge", 6)
+	     || !hwloc_strncasecmp(string, "pcibridge", 5)) {
     type = HWLOC_OBJ_BRIDGE;
   } else if (!hwloc_strncasecmp(string, "pci", 2)) {
     type = HWLOC_OBJ_PCI_DEVICE;
@@ -496,7 +498,8 @@ hwloc_obj_type_snprintf(char * __hwloc_restrict string, size_t size, hwloc_obj_t
     case HWLOC_OBJ_OSDEV_GPU: return hwloc_snprintf(string, size, "GPU");
     case HWLOC_OBJ_OSDEV_COPROC: return hwloc_snprintf(string, size, verbose ? "Co-Processor" : "CoProc");
     default:
-      *string = '\0';
+      if (size > 0)
+	*string = '\0';
       return 0;
     }
     break;

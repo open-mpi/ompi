@@ -676,9 +676,8 @@ HWLOC_DECLSPEC int hwloc_topology_ignore_type_keep_structure(hwloc_topology_t to
 /** \brief Ignore all objects that do not bring any structure.
  *
  * Ignore all objects that do not bring any structure:
- * Each ignored object should have a single children or be the only child of its parent.
- * I/O objects may not be ignored, topology flags should be used to configure
- * their discovery instead.
+ * This is equivalent to calling hwloc_topology_ignore_type_keep_structure()
+ * for all object types.
  */
 HWLOC_DECLSPEC int hwloc_topology_ignore_all_keep_structure(hwloc_topology_t topology);
 
@@ -693,6 +692,10 @@ enum hwloc_topology_flags_e {
    * Gather all resources, even if some were disabled by the administrator.
    * For instance, ignore Linux Cpusets and gather all processors and memory nodes,
    * and ignore the fact that some resources may be offline.
+   *
+   * When this flag is not set, PUs that are disallowed are not added to the topology.
+   * Parent objects (package, core, cache, etc.) are added only if some of their children are allowed.
+   * NUMA nodes are always added but their available memory is set to 0 when disallowed.
    * \hideinitializer
    */
   HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM = (1UL<<0),
@@ -1196,7 +1199,7 @@ HWLOC_DECLSPEC const char * hwloc_obj_type_string (hwloc_obj_type_t type) __hwlo
  * Attributes that are not specified in the string (for instance "Group"
  * without a depth, or "L2Cache" without a cache type) are set to -1.
  *
- * \p typeattrd is only filled if the size specified in \p typeattrsize
+ * \p typeattrp is only filled if the size specified in \p typeattrsize
  * is large enough. It is currently only used for caches, and the required
  * size is at least the size of hwloc_obj_cache_type_t.
  *

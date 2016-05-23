@@ -172,15 +172,40 @@ typedef struct _PSAPI_WORKING_SET_EX_INFORMATION {
 } PSAPI_WORKING_SET_EX_INFORMATION;
 #endif
 
+/*
+ * ULONG_PTR and DWORD_PTR are 64/32bits depending on the arch
+ * while bitmaps use unsigned long (always 32bits)
+ */
+
+static void hwloc_bitmap_from_ULONG_PTR(hwloc_bitmap_t set, ULONG_PTR mask)
+{
+#if SIZEOF_VOID_P == 8
+  hwloc_bitmap_from_ulong(set, mask & 0xffffffff);
+  hwloc_bitmap_set_ith_ulong(set, 1, mask >> 32);
+#else
+  hwloc_bitmap_from_ulong(set, mask);
+#endif
+}
+
 static void hwloc_bitmap_set_ith_ULONG_PTR(hwloc_bitmap_t set, unsigned i, ULONG_PTR mask)
 {
-	/* ULONG_PTR is 64/32bits depending on the arch
-	 * while unsigned long is always 32bits */
 #if SIZEOF_VOID_P == 8
-	hwloc_bitmap_set_ith_ulong(set, 2*i, mask & 0xffffffff);
-	hwloc_bitmap_set_ith_ulong(set, 2*i+1, mask >> 32);
+  hwloc_bitmap_set_ith_ulong(set, 2*i, mask & 0xffffffff);
+  hwloc_bitmap_set_ith_ulong(set, 2*i+1, mask >> 32);
 #else
-	hwloc_bitmap_set_ith_ulong(set, i, mask);
+  hwloc_bitmap_set_ith_ulong(set, i, mask);
+#endif
+}
+
+static ULONG_PTR hwloc_bitmap_to_ULONG_PTR(hwloc_const_bitmap_t set)
+{
+#if SIZEOF_VOID_P == 8
+  ULONG_PTR up = hwloc_bitmap_to_ith_ulong(set, 1);
+  up <<= 32;
+  up |= hwloc_bitmap_to_ulong(set);
+  return up;
+#else
+  return hwloc_bitmap_to_ulong(set);
 #endif
 }
 
@@ -189,7 +214,7 @@ static void hwloc_bitmap_set_ith_ULONG_PTR(hwloc_bitmap_t set, unsigned i, ULONG
 static int
 hwloc_win_set_thread_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_thread_t thread, hwloc_const_bitmap_t hwloc_set, int flags)
 {
-  DWORD mask;
+  DWORD_PTR mask;
 
   if (flags & HWLOC_CPUBIND_NOMEMBIND) {
     errno = ENOSYS;
@@ -197,7 +222,7 @@ hwloc_win_set_thread_cpubind(hwloc_topology_t topology __hwloc_attribute_unused,
   }
   /* TODO: groups SetThreadGroupAffinity */
   /* The resulting binding is always strict */
-  mask = hwloc_bitmap_to_ulong(hwloc_set);
+  mask = hwloc_bitmap_to_ULONG_PTR(hwloc_set);
   if (!SetThreadAffinityMask(thread, mask))
     return -1;
   return 0;
@@ -233,7 +258,7 @@ hwloc_win_set_thisthread_membind(hwloc_topology_t topology, hwloc_const_nodeset_
 static int
 hwloc_win_set_proc_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_pid_t proc, hwloc_const_bitmap_t hwloc_set, int flags)
 {
-  DWORD mask;
+  DWORD_PTR mask;
   if (flags & HWLOC_CPUBIND_NOMEMBIND) {
     errno = ENOSYS;
     return -1;
@@ -241,7 +266,7 @@ hwloc_win_set_proc_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, h
   /* TODO: groups, hard: has to manually bind all threads into the other group,
    * and the bind the process inside the group */
   /* The resulting binding is always strict */
-  mask = hwloc_bitmap_to_ulong(hwloc_set);
+  mask = hwloc_bitmap_to_ULONG_PTR(hwloc_set);
   if (!SetProcessAffinityMask(proc, mask))
     return -1;
   return 0;
@@ -277,7 +302,7 @@ hwloc_win_get_proc_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, h
   /* TODO: groups, GetProcessGroupAffinity, or merge SetThreadGroupAffinity for all threads */
   if (!GetProcessAffinityMask(proc, &proc_mask, &sys_mask))
     return -1;
-  hwloc_bitmap_from_ulong(hwloc_set, proc_mask);
+  hwloc_bitmap_from_ULONG_PTR(hwloc_set, proc_mask);
   return 0;
 }
 
@@ -480,10 +505,9 @@ hwloc_look_windows(struct hwloc_backend *backend)
   BOOL (WINAPI *GetLogicalProcessorInformationExProc)(LOGICAL_PROCESSOR_RELATIONSHIP relationship, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer, PDWORD ReturnLength);
   BOOL (WINAPI *GetNumaAvailableMemoryNodeProc)(UCHAR Node, PULONGLONG AvailableBytes);
   BOOL (WINAPI *GetNumaAvailableMemoryNodeExProc)(USHORT Node, PULONGLONG AvailableBytes);
+  hwloc_bitmap_t groups_pu_set = NULL;
   SYSTEM_INFO SystemInfo;
-
   DWORD length;
-
   HMODULE kernel32;
 
   if (topology->levels[0][0]->cpuset)
@@ -676,6 +700,12 @@ hwloc_look_windows(struct hwloc_backend *backend)
 	      /* KAFFINITY is ULONG_PTR */
 	      hwloc_bitmap_set_ith_ULONG_PTR(obj->cpuset, id, mask);
 	      hwloc_debug_2args_bitmap("group %u %d bitmap %s\n", id, procInfo->Group.GroupInfo[id].ActiveProcessorCount, obj->cpuset);
+
+	      /* save the set of PUs so that we can create them at the end */
+	      if (!groups_pu_set)
+		groups_pu_set = hwloc_bitmap_alloc();
+	      hwloc_bitmap_or(groups_pu_set, groups_pu_set, obj->cpuset);
+
 	      hwloc_insert_object_by_cpuset(topology, obj);
 	    }
 	    continue;
@@ -692,7 +722,7 @@ hwloc_look_windows(struct hwloc_backend *backend)
 	  /* GROUP_AFFINITY.Mask is KAFFINITY, which is ULONG_PTR */
 	  hwloc_bitmap_set_ith_ULONG_PTR(obj->cpuset, GroupMask[i].Group, GroupMask[i].Mask);
         }
-	hwloc_debug("%s#%u bitmap %s\n", hwloc_obj_type_string(type), id, obj->cpuset);
+	hwloc_debug_2args_bitmap("%s#%u bitmap %s\n", hwloc_obj_type_string(type), id, obj->cpuset);
 
 	switch (type) {
 	  case HWLOC_OBJ_NODE:
@@ -741,10 +771,28 @@ hwloc_look_windows(struct hwloc_backend *backend)
       }
       free(procInfoTotal);
     }
+
   }
 
-  /* add PU objects */
-  hwloc_setup_pu_level(topology, hwloc_fallback_nbprocessors(topology));
+  if (groups_pu_set) {
+    /* the system supports multiple Groups.
+     * PU indexes may be discontiguous, especially if Groups contain less than 64 procs.
+     */
+    hwloc_obj_t obj;
+    unsigned idx;
+    hwloc_bitmap_foreach_begin(idx, groups_pu_set) {
+      obj = hwloc_alloc_setup_object(HWLOC_OBJ_PU, idx);
+      obj->cpuset = hwloc_bitmap_alloc();
+      hwloc_bitmap_only(obj->cpuset, idx);
+      hwloc_debug_1arg_bitmap("cpu %u has cpuset %s\n",
+			      idx, obj->cpuset);
+      hwloc_insert_object_by_cpuset(topology, obj);
+    } hwloc_bitmap_foreach_end();
+    hwloc_bitmap_free(groups_pu_set);
+  } else {
+    /* add PU objects, assuming they are contiguous */
+    hwloc_setup_pu_level(topology, hwloc_fallback_nbprocessors(topology));
+  }
 
   hwloc_obj_add_info(topology->levels[0][0], "Backend", "Windows");
   if (topology->is_thissystem)
