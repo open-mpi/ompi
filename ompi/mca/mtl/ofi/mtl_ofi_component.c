@@ -64,16 +64,16 @@ ompi_mtl_ofi_component_register(void)
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &param_priority);
 
-    prov_include = NULL;
+    prov_include = "psm,psm2,gni";
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "provider_include",
-                                    "Comma-delimited list of OFI providers that are considered for use (e.g., \"psm,sockets\"; an empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_exclude.",
+                                    "Comma-delimited list of OFI providers that are considered for use (e.g., \"psm,psm2\"; an empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_exclude.",
                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                     OPAL_INFO_LVL_1,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &prov_include);
 
-    prov_exclude = "sockets,mxm";
+    prov_exclude = NULL;
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "provider_exclude",
                                     "Comma-delimited list of OFI providers that are not considered for use (default: \"sockets,mxm\"; empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_include.",
