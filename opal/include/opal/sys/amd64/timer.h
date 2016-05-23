@@ -22,6 +22,9 @@
 
 typedef uint64_t opal_timer_t;
 
+/* Using RDTSC(P) results in non-monotonic timers across cores */
+#undef OPAL_TIMER_MONOTONIC
+#define OPAL_TIMER_MONOTONIC 0
 
 #if OMPI_GCC_INLINE_ASSEMBLY
 

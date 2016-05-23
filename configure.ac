@@ -841,7 +841,10 @@ OPAL_SEARCH_LIBS_CORE([dirname], [gen])
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OPAL_SEARCH_LIBS_CORE([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid  setenv])
+# -lrt might be needed for clock_gettime
+OPAL_SEARCH_LIBS_CORE([clock_gettime], [rt])
+
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv])
 
 # Sanity check: ensure that we got at least one of statfs or statvfs.
 if test $ac_cv_func_statfs = no -a $ac_cv_func_statvfs = no; then
