@@ -178,7 +178,6 @@ portals4_init_interface(void)
     me.ignore_bits = MTL_PORTALS4_CONTEXT_MASK |
         MTL_PORTALS4_SOURCE_MASK |
         MTL_PORTALS4_TAG_MASK;
-
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
                       ompi_mtl_portals4.recv_idx,
                       &me,
