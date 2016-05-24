@@ -483,7 +483,7 @@ static int check_for_cuda_freed_memory (mca_rcache_base_module_t *rcache, void *
     /* This memory has been freed.  Find all registrations and delete. Ensure they are deregistered
      * now by passing dereg_mem as the delete function. This is safe because the vma lock is
      * recursive and this is only called from register. */
-    return mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, base, size, gc_add, NULL);
+    return mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, addr, size, gc_add, NULL);
 }
 #endif /* OPAL_CUDA_GDR_SUPPORT */
 
