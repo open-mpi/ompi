@@ -5,6 +5,7 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +22,7 @@
 
 int mca_btl_vader_xpmem_init (void)
 {
-    mca_btl_vader_component.my_seg_id = xpmem_make (0, VADER_MAX_ADDRESS, XPMEM_PERMIT_MODE, (void *)0666);
+    mca_btl_vader_component.my_seg_id = xpmem_make (0, XPMEM_MAXADDR_SIZE, XPMEM_PERMIT_MODE, (void *)0666);
     if (-1 == mca_btl_vader_component.my_seg_id) {
         return OPAL_ERR_NOT_AVAILABLE;
     }
@@ -52,8 +53,8 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
 
     base = OPAL_DOWN_ALIGN((uintptr_t) rem_ptr, attach_align, uintptr_t);
     bound = OPAL_ALIGN((uintptr_t) rem_ptr + size - 1, attach_align, uintptr_t) + 1;
-    if (OPAL_UNLIKELY(bound > VADER_MAX_ADDRESS)) {
-        bound = VADER_MAX_ADDRESS;
+    if (OPAL_UNLIKELY(bound > XPMEM_MAXADDR_SIZE)) {
+        bound = XPMEM_MAXADDR_SIZE;
     }
 
     /* several segments may match the base pointer */
