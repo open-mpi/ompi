@@ -62,6 +62,7 @@ static size_t callbacks_size = 0;
 static opal_progress_callback_t *callbacks_lp = NULL;
 static size_t callbacks_lp_len = 0;
 static size_t callbacks_lp_size = 0;
+static uint64_t callbacks_lp_mask = 0x7;
 
 /* do we want to call sched_yield() if nothing happened */
 bool opal_progress_yield_when_idle = false;
@@ -108,6 +109,8 @@ opal_progress_init(void)
        debug_output = opal_output_open(NULL);
     }
 #endif
+
+    callbacks_lp_mask = opal_progress_lp_call_ratio - 1;
 
     OPAL_OUTPUT((debug_output, "progress: initialized event flag to: %x",
                  opal_progress_event_flag));
@@ -194,7 +197,7 @@ opal_progress(void)
         events += (callbacks[i])();
     }
 
-    if ((OPAL_THREAD_ADD64((volatile int64_t *) &num_calls, 1) & 0x7) == 0) {
+    if ((OPAL_THREAD_ADD64((volatile int64_t *) &num_calls, 1) & callbacks_lp_mask) == 0) {
         /* run low priority callbacks once every 8 calls to opal_progress() */
         for (i = 0 ; i < callbacks_lp_len ; ++i) {
             events += (callbacks_lp[i])();

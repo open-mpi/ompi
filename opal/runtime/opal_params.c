@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2016 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -45,6 +45,7 @@
 #include "opal/dss/dss.h"
 #include "opal/util/show_help.h"
 #include "opal/util/timings.h"
+#include "opal/util/bit_ops.h"
 
 char *opal_signal_string = NULL;
 char *opal_net_private_ipv4 = NULL;
@@ -66,6 +67,7 @@ int opal_leave_pinned = -1;
 bool opal_leave_pinned_pipeline = false;
 bool opal_abort_print_stack = false;
 int opal_abort_delay = 0;
+unsigned int opal_progress_lp_call_ratio = 8;
 
 static bool opal_register_done = false;
 
@@ -277,6 +279,25 @@ int opal_register_params(void)
                                  &opal_abort_delay);
     if (0 > ret) {
 	return ret;
+    }
+
+    opal_progress_lp_call_ratio = 8;
+    ret = mca_base_var_register("opal", "opal", NULL, "progress_lp_call_ratio",
+                                "Ratio of calls to high-priority to low-priority progress "
+                                "functions. Higher numbers decrease the frequency of the callback "
+                                "rate. Must be a power of two (default: 8)",
+                                MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                OPAL_INFO_LVL_5,
+                                MCA_BASE_VAR_SCOPE_READONLY,
+                                &opal_progress_lp_call_ratio);
+    if (0 > ret) {
+	return ret;
+    }
+
+    if (opal_progress_lp_call_ratio & (opal_progress_lp_call_ratio - 1)) {
+        opal_output(0, "MCA variable progress_lp_call_ratio must be a power of two. value = %u",
+                    opal_progress_lp_call_ratio);
+        return OPAL_ERR_BAD_PARAM;
     }
 
     opal_abort_print_stack = false;
