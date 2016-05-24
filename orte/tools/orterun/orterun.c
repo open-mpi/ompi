@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -186,17 +186,17 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "report-uri", "report-uri", 1,
       &orterun_globals.report_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Printout URI on stdout [-], stderr [+], or a file [anything else]" },
-    
+
     /* exit status reporting */
     { "orte_report_child_jobs_separately", '\0', "report-child-jobs-separately", "report-child-jobs-separately", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Return the exit status of the primary job only" },
-    
+
     /* hetero apps */
     { "orte_hetero_apps", '\0', NULL, "hetero-apps", 0,
         NULL, OPAL_CMD_LINE_TYPE_BOOL,
     "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries" },
-    
+
     /* select XML output */
     { "orte_xml_output", '\0', "xml", "xml", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -223,7 +223,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "stdin", "stdin", 1,
       &orterun_globals.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
       "Specify procs to receive stdin [rank, all, none] (default: 0, indicating rank 0)" },
-    
+
     /* request that argv[0] be indexed */
     { NULL, '\0', "index-argv-by-rank", "index-argv-by-rank", 0,
       &orterun_globals.index_argv, OPAL_CMD_LINE_TYPE_BOOL,
@@ -233,7 +233,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte_launch_agent", '\0', "launch-agent", "launch-agent", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Command used to start processes on remote nodes (default: orted)" },
-    
+
     /* Preload the binary on the remote machine */
     { NULL, 's', NULL, "preload-binary", 0,
       &orterun_globals.preload_binaries, OPAL_CMD_LINE_TYPE_BOOL,
@@ -264,7 +264,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "n", "n", 1,
       &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
-    
+
     /* maximum size of VM - typically used to subdivide an allocation */
     { "orte_max_vm_size", '\0', "max-vm-size", "max-vm-size", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
@@ -283,7 +283,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "opal_if_do_not_resolve", '\0', "do-not-resolve", "do-not-resolve", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not attempt to resolve interfaces" },
-    
+
     /* uri of Open MPI server, or at least where to get it */
     { NULL, '\0', "ompi-server", "ompi-server", 1,
       &orterun_globals.ompi_server, OPAL_CMD_LINE_TYPE_STRING,
@@ -294,7 +294,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "server-wait-time", "server-wait-time", 1,
       &orterun_globals.server_wait_timeout, OPAL_CMD_LINE_TYPE_INT,
       "Time in seconds to wait for ompi-server (default: 10 sec)" },
-    
+
     { "carto_file_path", '\0', "cf", "cartofile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a cartography file" },
@@ -467,20 +467,20 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte_output_debugger_proctable", '\0', "output-proctable", "output-proctable", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Output the debugger proctable after launch" },
-    
+
     /* OpenRTE arguments */
     { "orte_debug", 'd', "debug-devel", "debug-devel", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
-    
+
     { "orte_debug_daemons", '\0', "debug-daemons", "debug-daemons", 0,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Enable debugging of any OpenRTE daemons used by this application" },
-    
+
     { "orte_debug_daemons_file", '\0', "debug-daemons-file", "debug-daemons-file", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of any OpenRTE daemons used by this application, storing output in files" },
-    
+
     { "orte_leave_session_attached", '\0', "leave-session-attached", "leave-session-attached", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
@@ -488,7 +488,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte_do_not_launch", '\0', "do-not-launch", "do-not-launch", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Perform all necessary operations to prepare to launch the application, but do not actually launch it" },
-    
+
     { NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Prefix where Open MPI is installed on remote nodes" },
@@ -599,7 +599,7 @@ static void run_next_job(int fd, short args, void *cbdata)
         /* collect any file maps and spawn the next job */
         name.jobid = caddy->jdata->jobid;
         name.vpid = ORTE_VPID_WILDCARD;
-        
+
         orte_dfs.get_file_map(&name, spawn_next_job, jdata);
     } else {
         /* just spawn the job */
@@ -655,9 +655,9 @@ int orterun(int argc, char *argv[])
         } else {
             project_name = "OpenRTE";
         }
-        str = opal_info_make_version_str("all", 
-                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
-                                         OPAL_RELEASE_VERSION, 
+        str = opal_info_make_version_str("all",
+                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                         OPAL_RELEASE_VERSION,
                                          OPAL_GREEK_VERSION,
                                          OPAL_REPO_REV);
         if (NULL != str) {
@@ -697,7 +697,7 @@ int orterun(int argc, char *argv[])
     if (OPAL_SUCCESS != mca_base_cmd_line_process_args(&cmd_line, &environ, &environ)) {
         exit(1);
     }
-    
+
     /* Ensure that enough of OPAL is setup for us to be able to run */
     /*
      * NOTE: (JJH)
@@ -706,7 +706,7 @@ int orterun(int argc, char *argv[])
      *  line could contain MCA parameters that affect the way opal_init_util()
      *  functions. AMCA parameters are one such option normally received on the
      *  command line that affect the way opal_init_util() behaves.
-     *  It is "safe" to call mca_base_cmd_line_process_args() before 
+     *  It is "safe" to call mca_base_cmd_line_process_args() before
      *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
      *  depend upon opal_init_util() functionality.
      */
@@ -714,7 +714,7 @@ int orterun(int argc, char *argv[])
     if (OPAL_SUCCESS != opal_init(&argc, &argv)) {
         exit(1);
     }
-    
+
     /* Check for help request */
     if (orterun_globals.help) {
         char *str, *args = NULL;
@@ -739,7 +739,7 @@ int orterun(int argc, char *argv[])
         opal_finalize();
         exit(0);
     }
-    
+
     /* may look strange, but the way we handle prefix is a little weird
      * and probably needs to be addressed more fully at some future point.
      * For now, we have a conflict between app_files and cmd line usage.
@@ -852,7 +852,7 @@ int orterun(int argc, char *argv[])
          */
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     /* check what user wants us to do with stdin */
     if (0 == strcmp(orterun_globals.stdin_target, "all")) {
         jdata->stdin_target = ORTE_VPID_WILDCARD;
@@ -861,7 +861,7 @@ int orterun(int argc, char *argv[])
     } else {
         jdata->stdin_target = strtoul(orterun_globals.stdin_target, NULL, 10);
     }
-    
+
     /* if we want the argv's indexed, indicate that */
     if (orterun_globals.index_argv) {
         jdata->controls |= ORTE_JOB_CONTROL_INDEX_ARGV;
@@ -869,7 +869,7 @@ int orterun(int argc, char *argv[])
 
     /* Parse each app, adding it to the job object */
     parse_locals(jdata, argc, argv);
-    
+
     if (0 == jdata->num_apps) {
         /* This should never happen -- this case should be caught in
            create_app(), but let's just double check... */
@@ -885,10 +885,10 @@ int orterun(int argc, char *argv[])
      * orterun
      */
     orte_launch_environ = opal_argv_copy(environ);
-    
+
     /* purge an ess flag set externally */
     opal_unsetenv("OMPI_MCA_ess", &orte_launch_environ);
-    
+
 #if OPAL_ENABLE_FT_CR == 1
     /* Disable OPAL CR notifications for this tool */
     opal_cr_set_enabled(false);
@@ -943,9 +943,9 @@ int orterun(int argc, char *argv[])
         }
         if (NULL != rml_uri) {
             free(rml_uri);
-        }        
+        }
     }
-    
+
     /* If we have a prefix, then modify the PATH and
        LD_LIBRARY_PATH environment variables in our copy. This
        will ensure that any locally-spawned children will
@@ -958,7 +958,7 @@ int orterun(int argc, char *argv[])
     if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0)) &&
         NULL != app->prefix_dir) {
         char *oldenv, *newenv, *lib_base, *bin_base;
-        
+
         /* copy the prefix into the daemon job so that any launcher
          * can find the orteds when we launch the virtual machine
          */
@@ -987,7 +987,7 @@ int orterun(int argc, char *argv[])
         }
         free(newenv);
         free(bin_base);
-        
+
         /* Reset LD_LIBRARY_PATH */
         newenv = opal_os_path( false, app->prefix_dir, lib_base, NULL );
         oldenv = getenv("LD_LIBRARY_PATH");
@@ -1005,7 +1005,7 @@ int orterun(int argc, char *argv[])
         free(newenv);
         free(lib_base);
     }
-    
+
     /* pre-condition any network transports that require it */
     if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(jdata))) {
         ORTE_ERROR_LOG(rc);
@@ -1022,14 +1022,14 @@ int orterun(int argc, char *argv[])
      */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
                             ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
-    
+
     /* setup the data server */
     if (ORTE_SUCCESS != (rc = orte_data_server_init())) {
         ORTE_ERROR_LOG(rc);
         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
         goto DONE;
     }
-    
+
     /* if an uri for the ompi-server was provided, set the route */
     if (NULL != ompi_server) {
         opal_buffer_t buf;
@@ -1041,7 +1041,7 @@ int orterun(int argc, char *argv[])
             ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             goto DONE;
         }
-        OBJ_DESTRUCT(&buf);        
+        OBJ_DESTRUCT(&buf);
         /* check if we are to wait for the server to start - resolves
          * a race condition that can occur when the server is run
          * as a background job - e.g., in scripts
@@ -1065,7 +1065,7 @@ int orterun(int argc, char *argv[])
             }
         }
     }
-    
+
     /* setup for debugging */
     orte_debugger_init_before_spawn(jdata);
     orte_state.add_job_state(ORTE_JOB_STATE_READY_FOR_DEBUGGERS,
@@ -1231,7 +1231,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
             fclose(fp);
         }
     }
-    
+
     /* Do we want a user-level debugger? */
 
     if (orterun_globals.debugger) {
@@ -1270,7 +1270,7 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
             0 == strncmp(orterun_globals.ompi_server, "FILE", strlen("FILE"))) {
             char input[1024], *filename;
             FILE *fp;
-            
+
             /* it is a file - get the filename */
             filename = strchr(orterun_globals.ompi_server, ':');
             if (NULL == filename) {
@@ -1280,14 +1280,14 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
                 exit(1);
             }
             ++filename; /* space past the : */
-            
+
             if (0 >= strlen(filename)) {
                 /* they forgot to give us the name! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
                                orte_basename, orterun_globals.ompi_server);
                 exit(1);
             }
-            
+
             /* open the file and extract the uri */
             fp = fopen(filename, "r");
             if (NULL == fp) { /* can't find or read file! */
@@ -1313,7 +1313,7 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
             orte_hnp_contact_t *hnp;
             char *ptr;
             pid_t pid;
-            
+
             ptr = strchr(orterun_globals.ompi_server, ':');
             if (NULL == ptr) {
                 /* pid is not correctly formatted */
@@ -1323,7 +1323,7 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
                 exit(1);
             }
             ++ptr; /* space past the : */
-            
+
             if (0 >= strlen(ptr)) {
                 /* they forgot to give us the pid! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-bad", true,
@@ -1331,9 +1331,9 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
                                orterun_globals.ompi_server, orte_basename);
                 exit(1);
             }
-            
+
             pid = strtoul(ptr, NULL, 10);
-            
+
             /* to search the local mpirun's, we have to partially initialize the
              * orte_process_info structure. This won't fully be setup until orte_init,
              * but we finagle a little bit of it here
@@ -1345,16 +1345,16 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
                                orte_basename, orte_basename);
                 exit(1);
             }
-            
+
             OBJ_CONSTRUCT(&hnp_list, opal_list_t);
-            
+
             /* get the list of HNPs, but do -not- setup contact info to them in the RML */
             if (ORTE_SUCCESS != (rc = orte_list_local_hnps(&hnp_list, false))) {
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-could-not-get-hnp-list", true,
                                orte_basename, orte_basename);
                 exit(1);
             }
-            
+
             /* search the list for the desired pid */
             while (NULL != (item = opal_list_remove_first(&hnp_list))) {
                 hnp = (orte_hnp_contact_t*)item;
@@ -1510,7 +1510,7 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
              * So we make a copy of the variable.
              */
             char *s = strdup(env[j]);
-            
+
             if (NULL == s) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
@@ -1535,7 +1535,7 @@ static int capture_cmd_line_params(int argc, int start, char **argv)
         "routed",
         NULL
     };
-    
+
     for (i = 0; i < (argc-start); ++i) {
         if (0 == strcmp("-mca",  argv[i]) ||
             0 == strcmp("--mca", argv[i]) ) {
@@ -1596,7 +1596,7 @@ static int capture_cmd_line_params(int argc, int start, char **argv)
             i += 2;
         }
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -1653,7 +1653,7 @@ static int create_app(int argc, char* argv[],
             goto cleanup;
         }
     }
-    
+
     /* Parse application command line options. */
 
     init_globals();
@@ -1697,7 +1697,7 @@ static int create_app(int argc, char* argv[],
     if (ORTE_SUCCESS != (rc = capture_cmd_line_params(argc, count, argv))) {
         goto cleanup;
     }
-    
+
     /* Grab all OMPI_* environment variables */
 
     app->env = opal_argv_copy(*app_env);
@@ -1717,7 +1717,7 @@ static int create_app(int argc, char* argv[],
             free(param);
         }
     }
-    
+
     /* add the ompi-server, if provided */
     if (NULL != ompi_server) {
         opal_setenv("OMPI_MCA_pubsub_orte_server", ompi_server, true, &app->env);
@@ -1829,7 +1829,7 @@ static int create_app(int argc, char* argv[],
     if (0 == total_num_apps) {
         /* Check to see if the user explicitly wanted to disable automatic
            --prefix behavior */
-        
+
         if (opal_cmd_line_is_taken(&cmd_line, "noprefix")) {
             want_prefix_by_default = false;
         }
@@ -1891,8 +1891,8 @@ static int create_app(int argc, char* argv[],
         }
     }
 
-    /* Did the user specify a hostfile. Need to check for both 
-     * hostfile and machine file. 
+    /* Did the user specify a hostfile. Need to check for both
+     * hostfile and machine file.
      * We can only deal with one hostfile per app context, otherwise give an error.
      */
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "hostfile"))) {
@@ -1915,7 +1915,7 @@ static int create_app(int argc, char* argv[],
             app->hostfile = strdup(value);
         }
     }
- 
+
     /* Did the user specify any hosts? */
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "host"))) {
         for (i = 0; i < j; ++i) {
@@ -1989,14 +1989,23 @@ static int create_app(int argc, char* argv[],
         found = false;
         for (i=1; NULL != app->argv[i]; i++) {
             if (NULL != strstr(app->argv[i], "java.library.path")) {
+                char *dptr;
+                /* find the '=' that delineates the option from the path */
+                if (NULL == (dptr = strchr(app->argv[i], '='))) {
+                    /* that's just wrong */
+                    rc = ORTE_ERR_BAD_PARAM;
+                    goto cleanup;
+                }
+                /* step over the '=' */
+                ++dptr;
                 /* yep - but does it include the path to the mpi libs? */
                 found = true;
                 if (NULL == strstr(app->argv[i], opal_install_dirs.libdir)) {
                     /* doesn't appear to - add it to be safe */
                     if (':' == app->argv[i][strlen(app->argv[i]-1)]) {
-                        asprintf(&value, "-Djava.library.path=%s%s", app->argv[i], opal_install_dirs.libdir);
+                        asprintf(&value, "-Djava.library.path=%s%s", dptr, opal_install_dirs.libdir);
                     } else {
-                        asprintf(&value, "-Djava.library.path=%s:%s", app->argv[i], opal_install_dirs.libdir);
+                        asprintf(&value, "-Djava.library.path=%s:%s", dptr, opal_install_dirs.libdir);
                     }
                     free(app->argv[i]);
                     app->argv[i] = value;
@@ -2010,7 +2019,7 @@ static int create_app(int argc, char* argv[],
             opal_argv_insert_element(&app->argv, 1, value);
             free(value);
         }
-        
+
         /* see if we were given a class path */
         found = false;
         for (i=1; NULL != app->argv[i]; i++) {
@@ -2125,7 +2134,7 @@ static int create_app(int argc, char* argv[],
         }
     }
     free(appname);
-    
+
     *app_ptr = app;
     app = NULL;
     *made_app = true;
@@ -2297,7 +2306,7 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
  * new_argv.
  */
 static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
-                   int argc, char **argv, char ***new_argv, int num_procs) 
+                   int argc, char **argv, char ***new_argv, int num_procs)
 {
     int ret = ORTE_SUCCESS;
     int i, j, count;
@@ -2424,7 +2433,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
                            true, (*new_argv)[0], argv[0], tmp,
                            (*new_argv)[0]);
             /* Fall through to free / fail, below */
-        } 
+        }
 
         /* Some debuggers do not support launching MPMD */
         else if (single_app && NULL != strstr(tmp, " : ")) {
@@ -2438,7 +2447,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
            must have an executable to run (e.g., cannot use mpirun's
            app context file feature). */
         else if (fail_needed_executable) {
-            orte_show_help("help-orterun.txt", 
+            orte_show_help("help-orterun.txt",
                            "debugger requires executable", true,
                            (*new_argv)[0], argv[0], (*new_argv)[0], argv[0],
                            (*new_argv)[0]);
@@ -2489,10 +2498,10 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
 
     /* Get the orte_base_debug MCA parameter and search for a debugger
        that can run */
-    
+
     id = mca_base_var_find("orte", "orte", NULL, "base_user_debugger");
     if (id < 0) {
-        orte_show_help("help-orterun.txt", "debugger-mca-param-not-found", 
+        orte_show_help("help-orterun.txt", "debugger-mca-param-not-found",
                        true);
         exit(1);
     }
@@ -2508,7 +2517,7 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
 
     lines = opal_argv_split(tmp[0], ':');
     for (i = 0; NULL != lines[i]; ++i) {
-        if (ORTE_SUCCESS == process(lines[i], basename, cmd_line, argc, argv, 
+        if (ORTE_SUCCESS == process(lines[i], basename, cmd_line, argc, argv,
                                     &new_argv, num_procs)) {
             break;
         }
@@ -2523,11 +2532,11 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
     opal_argv_free(lines);
 
     /* We found one */
-    
+
     /* cleanup the MPIR arrays in case the debugger doesn't set them */
     memset((char*)MPIR_executable_path, 0, MPIR_MAX_PATH_LENGTH);
     memset((char*)MPIR_server_arguments, 0, MPIR_MAX_ARG_LENGTH);
-    
+
     /* Set an MCA param so that everyone knows that they are being
        launched under a debugger; not all debuggers are consistent
        about setting MPIR_being_debugged in both the launcher and the
@@ -2616,7 +2625,7 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
  * MPIR_debug_gate.  These environment variable names must be
  * hard-coded in the OMPI layer (see ompi/debuggers/ompi_debuggers.c).
  */
- 
+
 /* local globals and functions */
 #define DUMP_INT(X) fprintf(stderr, "  %s = %d\n", # X, X);
 #define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
@@ -2703,13 +2712,13 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
         }
         return;
     }
-    
+
  launchit:
     opal_output_verbose(1, orte_debug_output, "Info: Spawned by a debugger");
 
     /* tell the procs they are being debugged */
     (void) mca_base_var_env_name ("orte_in_parallel_debugger", &env_name);
-    
+
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
@@ -2809,7 +2818,7 @@ static void setup_debugger_job(void)
         proc->state = ORTE_PROC_STATE_INIT;
         proc->app_idx = 0;
 
-        OBJ_RETAIN(node);  /* maintain accounting on object */    
+        OBJ_RETAIN(node);  /* maintain accounting on object */
         proc->node = node;
         proc->nodename = node->name;
         /* add the proc to the job */
@@ -2832,7 +2841,7 @@ static bool mpir_breakpoint_fired = false;
  * Initialization of data structures for running under a debugger
  * using the MPICH/TotalView parallel debugger interface. This stage
  * of initialization must occur after spawn
- * 
+ *
  * NOTE: We -always- perform this step to ensure that any debugger
  * that attaches to us post-launch of the application can get a
  * completed proctable
@@ -2863,7 +2872,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
 
             /* trigger the debugger */
             MPIR_Breakpoint();
-        
+
             /* send a message to rank=0 of any app jobs to release it */
             for (k=1; k < orte_job_data->size; k++) {
                 if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, k))) {
@@ -2894,16 +2903,16 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
     }
 
     /* fill in the proc table for the application processes */
-    
+
     opal_output_verbose(5, orte_debug_output,
                         "%s: Setting up debugger process table for applications",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    
+
     MPIR_debug_state = 1;
-    
+
     /* set the total number of processes in the job */
     MPIR_proctable_size = jdata->num_procs;
-    
+
     /* allocate MPIR_proctable */
     MPIR_proctable = (struct MPIR_PROCDESC *)malloc(sizeof(struct MPIR_PROCDESC) *
                                                     MPIR_proctable_size);
@@ -2912,7 +2921,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    
+
     if (orte_debugger_dump_proctable) {
         opal_output(orte_clean_output, "MPIR Proctable for job %s", ORTE_JOBID_PRINT(jdata->jobid));
     }
@@ -2929,7 +2938,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
         if (NULL == (appctx = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx))) {
             continue;
         }
-        
+
         /* take the indicated alias as the hostname, if aliases exist */
         if (orte_retain_aliases &&
             orte_use_hostname_alias <= opal_argv_count(proc->node->alias)) {
@@ -2939,13 +2948,13 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
             MPIR_proctable[i].host_name = strdup(proc->node->name);
         }
 
-        if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
-            MPIR_proctable[i].executable_name = 
-                opal_os_path( false, appctx->app, NULL ); 
+        if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) {
+            MPIR_proctable[i].executable_name =
+                opal_os_path( false, appctx->app, NULL );
         } else {
             MPIR_proctable[i].executable_name =
-                opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
-        } 
+                opal_os_path( false, appctx->cwd, appctx->app, NULL );
+        }
         MPIR_proctable[i].pid = proc->pid;
         if (orte_debugger_dump_proctable) {
             opal_output(orte_clean_output, "%s: Host %s Exe %s Pid %d",
@@ -2972,7 +2981,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
 
             /* trigger the debugger */
             MPIR_Breakpoint();
-        
+
             /* send a message to rank=0 of any app jobs to release it */
             for (k=1; k < orte_job_data->size; k++) {
                 if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, k))) {
@@ -3121,7 +3130,7 @@ static void attach_debugger(int fd, short event, void *arg)
                             MPIR_executable_path : orte_debugger_test_daemon);
         setup_debugger_job();
     }
-        
+
     /* reset the read or timer event */
     if (0 == orte_debugger_check_rate) {
         fifo_active = true;
