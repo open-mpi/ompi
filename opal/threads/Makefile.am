@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2016 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -28,9 +28,11 @@ headers += \
         threads/mutex.h \
         threads/mutex_unix.h \
         threads/threads.h \
-	threads/tsd.h
+        threads/tsd.h \
+        threads/wait_sync.h
 
 lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
         threads/condition.c \
         threads/mutex.c \
-        threads/thread.c
+        threads/thread.c \
+        threads/wait_sync.c

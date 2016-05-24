@@ -1,5 +1,8 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2015.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2016      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -137,7 +140,7 @@ static inline ucp_ep_h mca_pml_ucx_get_ep(ompi_communicator_t *comm, int dst)
 
 static inline void mca_pml_ucx_request_reset(ompi_request_t *req)
 {
-    req->req_complete          = false;
+    req->req_complete          = REQUEST_PENDING;
     req->req_status._cancelled = false;
 }
 
