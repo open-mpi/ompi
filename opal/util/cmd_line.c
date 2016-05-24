@@ -35,10 +35,10 @@
 #include "opal/util/argv.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_environ.h"
 
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/constants.h"
-
 
 /*
  * Some usage message constants
@@ -440,7 +440,6 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
 
                             /* If it's the first, save it in the
                                variable dest and/or MCA parameter */
-
                             if (0 == j &&
                                 (NULL != option->clo_mca_param_env_var ||
                                  NULL != option->clo_variable_dest)) {
@@ -485,15 +484,29 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
                     fprintf(stderr, "Type '%s --help' for usage.\n",
                             cmd->lcl_argv[0]);
                 }
-            }
         error:
-            while (i < cmd->lcl_argc) {
-                opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv,
-                                 cmd->lcl_argv[i]);
-                ++i;
-            }
+                while (i < cmd->lcl_argc) {
+                    opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv,
+                                     cmd->lcl_argv[i]);
+                    ++i;
+                }
 
-            /* Because i has advanced, we'll fall out of the loop */
+                /* Because i has advanced, we'll fall out of the loop */
+            } else {
+                while (i < cmd->lcl_argc) {
+                    opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv,
+                                     cmd->lcl_argv[i]);
+                    ++i;
+                    if (i == cmd->lcl_argc) {
+                        break;
+                    }
+                    if (cmd->lcl_argv[i][0] == '-') {
+                        /* found next option */
+                        break;
+                    }
+                }
+                is_unknown_option = is_unknown_token = false;
+            }
         }
     }
 
@@ -977,12 +990,10 @@ static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
     /* see if the option already exists */
     if (NULL != e->ocl_cmd_single_dash_name &&
         NULL != find_option(cmd, e->ocl_cmd_single_dash_name)) {
-        opal_output(0, "Duplicate cmd line entry %s", e->ocl_cmd_single_dash_name);
         return OPAL_ERR_BAD_PARAM;
     }
     if (NULL != e->ocl_cmd_long_name &&
         NULL != find_option(cmd, e->ocl_cmd_long_name)) {
-        opal_output(0, "Duplicate cmd line entry %s", e->ocl_cmd_long_name);
         return OPAL_ERR_BAD_PARAM;
     }
 
@@ -1158,7 +1169,6 @@ static int set_dest(cmd_line_option_t *option, char *sval)
 {
     int ival = atol(sval);
     long lval = strtoul(sval, NULL, 10);
-    char *str = NULL;
     size_t i;
 
     /* Set MCA param.  We do this in the environment because the MCA
@@ -1176,16 +1186,13 @@ static int set_dest(cmd_line_option_t *option, char *sval)
         case OPAL_CMD_LINE_TYPE_STRING:
         case OPAL_CMD_LINE_TYPE_INT:
         case OPAL_CMD_LINE_TYPE_SIZE_T:
-            asprintf(&str, "%s=%s", option->clo_mca_param_env_var, sval);
+            opal_setenv (option->clo_mca_param_env_var, sval, true, &environ);
             break;
         case OPAL_CMD_LINE_TYPE_BOOL:
-            asprintf(&str, "%s=1", option->clo_mca_param_env_var);
+            opal_setenv (option->clo_mca_param_env_var, "1", true, &environ);
             break;
         default:
             break;
-        }
-        if (NULL != str) {
-            putenv(str);
         }
     }
 

@@ -118,11 +118,11 @@ ffi.set_source("orte_cffi", """
 ffi.cdef("""
 /* Types */
 typedef ... orte_job_t;
-typedef ... opal_cmd_line_t;
+typedef ... opal_cmd_line_init_t;
 typedef void (*orte_submit_cbfunc_t)(int index, orte_job_t *jdata, int ret, void *cbdata);
 
 /* Functions */
-int orte_submit_init(int argc, char *argv[], opal_cmd_line_t *opts);
+int orte_submit_init(int argc, char *argv[], opal_cmd_line_init_t *opts);
 int orte_submit_job(char *cmd[], int *index,
                     orte_submit_cbfunc_t launch_cb, void *launch_cbdata,
                     orte_submit_cbfunc_t complete_cb, void *complete_cbdata);
