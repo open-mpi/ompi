@@ -59,6 +59,10 @@ typedef int (*mca_rcache_base_module_clean_fn_t)(
 typedef void (*mca_rcache_base_module_dump_range_fn_t)(
         struct mca_rcache_base_module_t* rcache, unsigned char* addr, size_t size, char *msg);
 
+typedef int (*mca_rcache_base_module_iterate_fn_t)(
+        struct mca_rcache_base_module_t* rcache, unsigned char *base, size_t size,
+        int (*callback_fn) (mca_mpool_base_registration_t *, void *), void *ctx);
+
 /**
   * finalize
   */
@@ -93,6 +97,7 @@ struct mca_rcache_base_module_t {
     mca_rcache_base_module_clean_fn_t rcache_clean;
     mca_rcache_base_module_finalize_fn_t rcache_finalize;
     mca_rcache_base_module_dump_range_fn_t rcache_dump_range;
+    mca_rcache_base_module_iterate_fn_t rcache_iterate;
     opal_mutex_t lock;
 };
 typedef struct mca_rcache_base_module_t mca_rcache_base_module_t;
