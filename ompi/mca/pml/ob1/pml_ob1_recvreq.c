@@ -71,28 +71,26 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
 {
     mca_pml_ob1_recv_request_t* recvreq = *(mca_pml_ob1_recv_request_t**)request;
 
-    assert( false == recvreq->req_recv.req_base.req_free_called );
+    if(false == recvreq->req_recv.req_base.req_free_called){
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    recvreq->req_recv.req_base.req_free_called = true;
+        recvreq->req_recv.req_base.req_free_called = true;
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
+                                 &(recvreq->req_recv.req_base), PERUSE_RECV );
 
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
-                             &(recvreq->req_recv.req_base), PERUSE_RECV );
+        if( true == recvreq->req_recv.req_base.req_pml_complete ) {
+            /* make buffer defined when the request is compeleted,
+               and before releasing the objects. */
+            MEMCHECKER(
+                memchecker_call(&opal_memchecker_base_mem_defined,
+                                recvreq->req_recv.req_base.req_addr,
+                                recvreq->req_recv.req_base.req_count,
+                                recvreq->req_recv.req_base.req_datatype);
+            );
 
-    if( true == recvreq->req_recv.req_base.req_pml_complete ) {
-        /* make buffer defined when the request is compeleted,
-           and before releasing the objects. */
-        MEMCHECKER(
-            memchecker_call(&opal_memchecker_base_mem_defined,
-                            recvreq->req_recv.req_base.req_addr,
-                            recvreq->req_recv.req_base.req_count,
-                            recvreq->req_recv.req_base.req_datatype);
-        );
+            MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
+        }
 
-        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
     }
-
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
@@ -126,14 +124,12 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     request->req_recv.req_base.req_pml_complete = true;
     OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request->req_status._cancelled = true;
     /* This macro will set the req_complete to true so the MPI Test/Wait* functions
      * on this request will be able to complete. As the status is marked as
      * cancelled the cancel state will be detected.
      */
     MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(request);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     /*
      * Receive request cancelled, make user buffer accessible.
      */
