@@ -199,7 +199,7 @@ static OBJ_CLASS_INSTANCE(trackr_t,
                           tcon, tdes);
 
 int orte_submit_init(int argc, char *argv[],
-                     opal_cmd_line_t *opts)
+                     opal_cmd_line_init_t *opts)
 {
     int rc, i;
     char *param;
@@ -211,50 +211,31 @@ int orte_submit_init(int argc, char *argv[],
        use it in pretty-print error messages */
     orte_basename = opal_basename(argv[0]);
 
-    /* see if print version is requested. Do this before
-     * check for help so that --version --help works as
-     * one might expect. */
-     for (i=0; NULL != argv[i]; i++) {
-         if (0 == strcmp(argv[i], "--version") ||
-             0 == strcmp(argv[i], "-V")) {
-            char *str, *project_name = NULL;
-            if (0 == strcmp(orte_basename, "mpirun")) {
-                project_name = "Open MPI";
-            } else {
-                project_name = "OpenRTE";
-            }
-            str = opal_info_make_version_str("all",
-                                             OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-                                             OPAL_RELEASE_VERSION,
-                                             OPAL_GREEK_VERSION,
-                                             OPAL_REPO_REV);
-            if (NULL != str) {
-                fprintf(stdout, "%s (%s) %s\n\nReport bugs to %s\n",
-                        orte_basename, project_name, str, PACKAGE_BUGREPORT);
-                free(str);
-            }
-            exit(0);
+    /* search the argv for MCA params */
+    for (i=0; NULL != argv[i]; i++) {
+        if (':' == argv[i][0] ||
+            NULL == argv[i+1] || NULL == argv[i+2]) {
+            break;
+        }
+        if (0 == strncmp(argv[i], "-"OPAL_MCA_CMD_LINE_ID, strlen("-"OPAL_MCA_CMD_LINE_ID)) ||
+            0 == strncmp(argv[i], "--"OPAL_MCA_CMD_LINE_ID, strlen("--"OPAL_MCA_CMD_LINE_ID)) ||
+            0 == strncmp(argv[i], "-g"OPAL_MCA_CMD_LINE_ID, strlen("-g"OPAL_MCA_CMD_LINE_ID)) ||
+            0 == strncmp(argv[i], "--g"OPAL_MCA_CMD_LINE_ID, strlen("--g"OPAL_MCA_CMD_LINE_ID))) {
+            (void) mca_base_var_env_name (argv[i+1], &param);
+            opal_setenv(param, argv[i+2], true, &environ);
+            free(param);
+        } else if (0 == strcmp(argv[i], "-am") ||
+                   0 == strcmp(argv[i], "--am")) {
+            (void)mca_base_var_env_name("mca_base_param_file_prefix", &param);
+            opal_setenv(param, argv[i+1], true, &environ);
+            free(param);
+        } else if (0 == strcmp(argv[i], "-tune") ||
+                   0 == strcmp(argv[i], "--tune")) {
+            (void)mca_base_var_env_name("mca_base_envar_file_prefix", &param);
+            opal_setenv(param, argv[i+1], true, &environ);
+            free(param);
         }
     }
-
-    /* need to parse mca options *before* opal_init_util() */
-    orte_cmd_line = OBJ_NEW(opal_cmd_line_t);
-    mca_base_cmd_line_setup (orte_cmd_line);
-
-    /* parse the result to get values */
-    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line,
-                                                  true, true, argc, argv)) ) {
-        if (OPAL_ERR_SILENT != rc) {
-            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
-                    opal_strerror(rc));
-        }
-        return rc;
-    }
-
-    if (OPAL_SUCCESS != (rc = mca_base_cmd_line_process_args(orte_cmd_line, &environ, &environ))) {
-        return rc;
-    }
-
 
     /* init only the util portion of OPAL */
     if (OPAL_SUCCESS != (rc = opal_init_util(&argc, &argv))) {
@@ -272,6 +253,10 @@ int orte_submit_init(int argc, char *argv[],
 
     OBJ_CONSTRUCT(&tool_jobs, opal_pointer_array_t);
     opal_pointer_array_init(&tool_jobs, 256, INT_MAX, 128);
+
+
+    /* setup the cmd line */
+    orte_cmd_line = OBJ_NEW(opal_cmd_line_t);
 
     /* if they were provided, add the opts */
     if (NULL != opts) {
@@ -296,6 +281,29 @@ int orte_submit_init(int argc, char *argv[],
                     opal_strerror(rc));
         }
         return rc;
+    }
+
+    /* see if print version is requested. Do this before
+     * check for help so that --version --help works as
+     * one might expect. */
+     if (orte_cmd_options.version) {
+        char *str, *project_name = NULL;
+        if (0 == strcmp(orte_basename, "mpirun")) {
+            project_name = "Open MPI";
+        } else {
+            project_name = "OpenRTE";
+        }
+        str = opal_info_make_version_str("all",
+                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                         OPAL_RELEASE_VERSION,
+                                         OPAL_GREEK_VERSION,
+                                         OPAL_REPO_REV);
+        if (NULL != str) {
+            fprintf(stdout, "%s (%s) %s\n\nReport bugs to %s\n",
+                    orte_basename, project_name, str, PACKAGE_BUGREPORT);
+            free(str);
+        }
+        exit(0);
     }
 
     /* check if we are running as root - if we are, then only allow
@@ -332,29 +340,26 @@ int orte_submit_init(int argc, char *argv[],
     }
 
     /* Check for help request */
-   for (i=0; NULL != argv[i]; i++) {
-       if (0 == strcmp(argv[i], "--help") ||
-           0 == strcmp(argv[i], "-h")) {
-            char *str, *args = NULL;
-            char *project_name = NULL;
-            if (0 == strcmp(orte_basename, "mpirun")) {
-                project_name = "Open MPI";
-            } else {
-                project_name = "OpenRTE";
-            }
-            args = opal_cmd_line_get_usage_msg(orte_cmd_line);
-            str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
-                                        orte_basename, project_name, OPAL_VERSION,
-                                        orte_basename, args,
-                                        PACKAGE_BUGREPORT);
-            if (NULL != str) {
-                printf("%s", str);
-                free(str);
-            }
-            free(args);
-            /* If someone asks for help, that should be all we do */
-            exit(0);
+   if (orte_cmd_options.help) {
+        char *str, *args = NULL;
+        char *project_name = NULL;
+        if (0 == strcmp(orte_basename, "mpirun")) {
+            project_name = "Open MPI";
+        } else {
+            project_name = "OpenRTE";
         }
+        args = opal_cmd_line_get_usage_msg(orte_cmd_line);
+        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
+                                    orte_basename, project_name, OPAL_VERSION,
+                                    orte_basename, args,
+                                    PACKAGE_BUGREPORT);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+        /* If someone asks for help, that should be all we do */
+        exit(0);
     }
 
    /* set the flags - if they gave us a -hnp option, then
