@@ -74,8 +74,8 @@ int mca_atomic_mxm_cswap(void *target,
 
     /* mxm request init */
     sreq.base.state = MXM_REQ_NEW;
-    sreq.base.mq = mca_spml_self->mxm_mq;
-    sreq.base.conn = mca_spml_self->mxm_peers[pe]->mxm_hw_rdma_conn;
+    sreq.base.mq = mca_atomic_mxm_spml_self->mxm_mq;
+    sreq.base.conn = mca_atomic_mxm_spml_self->mxm_peers[pe]->mxm_hw_rdma_conn;
     sreq.base.completed_cb = NULL;
     sreq.base.data_type = MXM_REQ_DATA_BUFFER;
 
