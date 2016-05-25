@@ -1,6 +1,6 @@
 /*
- * Copyright © 2010-2014 Inria.  All rights reserved.
- * Copyright © 2010-2013 Université Bordeaux 1
+ * Copyright © 2010-2015 Inria.  All rights reserved.
+ * Copyright © 2010-2013 Université Bordeaux
  * Copyright © 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  *
@@ -54,6 +54,7 @@ struct procinfo {
   struct cacheinfo *cache;
   char cpuvendor[13];
   char cpumodel[3*4*4+1];
+  unsigned cpustepping;
   unsigned cpumodelnumber;
   unsigned cpufamilynumber;
 };
@@ -152,6 +153,7 @@ static void look_proc(struct procinfo *infos, unsigned highest_cpuid, unsigned h
     infos->cpufamilynumber = _family;
     infos->cpumodelnumber = _model;
   }
+  infos->cpustepping = regs[0] & 0xf;
 
   if (highest_ext_cpuid >= 0x80000004) {
     memset(regs, 0, sizeof(regs));
@@ -391,6 +393,8 @@ hwloc_x86_add_cpuinfos(hwloc_obj_t obj, struct procinfo *info, int nodup)
   hwloc_obj_add_info_nodup(obj, "CPUModelNumber", number, nodup);
   snprintf(number, sizeof(number), "%u", info->cpufamilynumber);
   hwloc_obj_add_info_nodup(obj, "CPUFamilyNumber", number, nodup);
+  snprintf(number, sizeof(number), "%u", info->cpustepping);
+  hwloc_obj_add_info_nodup(obj, "CPUStepping", number, nodup);
 }
 
 /* Analyse information stored in infos, and build/annotate topology levels accordingly */

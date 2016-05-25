@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2014 Inria.  All rights reserved.
+ * Copyright © 2013-2015 Inria.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -336,7 +336,7 @@ hwloc_plugin_check_namespace(const char *pluginname __hwloc_attribute_unused, co
     static int verboseenv_value = 0;
     if (!verboseenv_checked) {
       char *verboseenv = getenv("HWLOC_PLUGINS_VERBOSE");
-      verboseenv_value = atoi(verboseenv);
+      verboseenv_value = verboseenv ? atoi(verboseenv) : 0;
       verboseenv_checked = 1;
     }
     if (verboseenv_value)
@@ -383,6 +383,8 @@ HWLOC_DECLSPEC int hwloc_pci_find_linkspeed(const unsigned char *config, unsigne
 /** \brief Modify the PCI device object into a bridge and fill its attribute if a bridge is found in the PCI config space.
  *
  * This function requires 64 bytes of common configuration header at the beginning of config.
+ *
+ * Returns -1 and destroys /p obj if bridge fields are invalid.
  */
 HWLOC_DECLSPEC int hwloc_pci_prepare_bridge(hwloc_obj_t obj, const unsigned char *config);
 

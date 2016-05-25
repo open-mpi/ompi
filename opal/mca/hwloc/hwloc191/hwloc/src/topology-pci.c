@@ -281,7 +281,8 @@ hwloc_look_pci(struct hwloc_backend *backend)
     if (offset > 0 && offset + 20 /* size of PCI express block up to link status */ <= CONFIG_SPACE_CACHESIZE)
       hwloc_pci_find_linkspeed(config_space_cache, offset, &obj->attr->pcidev.linkspeed);
 
-    hwloc_pci_prepare_bridge(obj, config_space_cache);
+    if (hwloc_pci_prepare_bridge(obj, config_space_cache) < 0)
+      continue;
 
     if (obj->type == HWLOC_OBJ_PCI_DEVICE) {
       memcpy(&tmp16, &config_space_cache[PCI_SUBSYSTEM_VENDOR_ID], sizeof(tmp16));

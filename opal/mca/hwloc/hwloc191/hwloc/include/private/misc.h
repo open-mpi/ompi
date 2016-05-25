@@ -13,7 +13,6 @@
 
 #include <hwloc/autogen/config.h>
 #include <private/autogen/config.h>
-#include <ctype.h>
 
 #ifdef HWLOC_HAVE_DECL_STRNCASECMP
 #ifdef HAVE_STRINGS_H

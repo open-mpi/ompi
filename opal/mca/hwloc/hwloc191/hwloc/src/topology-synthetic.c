@@ -1,7 +1,7 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2014 Inria.  All rights reserved.
- * Copyright © 2009-2010 Université Bordeaux 1
+ * Copyright © 2009-2015 Inria.  All rights reserved.
+ * Copyright © 2009-2010 Université Bordeaux
  * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
@@ -73,9 +73,9 @@ hwloc_backend_synthetic_init(struct hwloc_synthetic_backend_data_s *data,
 	errno = EINVAL;
 	return -1;
       }
-      if (type == HWLOC_OBJ_MISC) {
+      if (type == HWLOC_OBJ_SYSTEM || type == HWLOC_OBJ_MISC || type == HWLOC_OBJ_BRIDGE || type == HWLOC_OBJ_PCI_DEVICE || type == HWLOC_OBJ_OS_DEVICE) {
 	if (verbose)
-	  fprintf(stderr, "Synthetic string with disallow object type at '%s'\n", pos);
+	  fprintf(stderr, "Synthetic string with disallowed object type at '%s'\n", pos);
 	errno = EINVAL;
 	return -1;
       }
@@ -93,6 +93,12 @@ hwloc_backend_synthetic_init(struct hwloc_synthetic_backend_data_s *data,
     if (next_pos == pos) {
       if (verbose)
 	fprintf(stderr,"Synthetic string doesn't have a number of objects at '%s'\n", pos);
+      errno = EINVAL;
+      return -1;
+    }
+    if (!item) {
+      if (verbose)
+	fprintf(stderr,"Synthetic string with disallow 0 number of objects at '%s'\n", pos);
       errno = EINVAL;
       return -1;
     }
@@ -129,6 +135,19 @@ hwloc_backend_synthetic_init(struct hwloc_synthetic_backend_data_s *data,
     hwloc_obj_type_t type;
 
     type = curlevel->type;
+
+    if (i == count-1 && type != HWLOC_OBJ_TYPE_UNKNOWN && type != HWLOC_OBJ_PU) {
+      if (verbose)
+	fprintf(stderr, "Synthetic string cannot use non-PU type for last level\n");
+      errno = EINVAL;
+      return -1;
+    }
+    if (i != count-1 && type == HWLOC_OBJ_PU) {
+      if (verbose)
+	fprintf(stderr, "Synthetic string cannot use PU type for non-last level\n");
+      errno = EINVAL;
+      return -1;
+    }
 
     if (type == HWLOC_OBJ_TYPE_UNKNOWN) {
       if (i == count-1)
@@ -249,13 +268,6 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
   switch (type) {
     case HWLOC_OBJ_GROUP:
       break;
-    case HWLOC_OBJ_SYSTEM:
-    case HWLOC_OBJ_BRIDGE:
-    case HWLOC_OBJ_PCI_DEVICE:
-    case HWLOC_OBJ_OS_DEVICE:
-      /* Shouldn't happen.  */
-      abort();
-      break;
     case HWLOC_OBJ_MACHINE:
       break;
     case HWLOC_OBJ_NODE:
@@ -268,6 +280,10 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
       break;
     case HWLOC_OBJ_PU:
       break;
+    case HWLOC_OBJ_SYSTEM:
+    case HWLOC_OBJ_BRIDGE:
+    case HWLOC_OBJ_PCI_DEVICE:
+    case HWLOC_OBJ_OS_DEVICE:
     case HWLOC_OBJ_MISC:
     case HWLOC_OBJ_TYPE_MAX:
       /* Should never happen */
@@ -296,12 +312,6 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
   switch (type) {
     case HWLOC_OBJ_GROUP:
       obj->attr->group.depth = curlevel->depth;
-      break;
-    case HWLOC_OBJ_SYSTEM:
-    case HWLOC_OBJ_BRIDGE:
-    case HWLOC_OBJ_PCI_DEVICE:
-    case HWLOC_OBJ_OS_DEVICE:
-      abort();
       break;
     case HWLOC_OBJ_MACHINE:
       break;
@@ -332,6 +342,10 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
       break;
     case HWLOC_OBJ_PU:
       break;
+    case HWLOC_OBJ_SYSTEM:
+    case HWLOC_OBJ_BRIDGE:
+    case HWLOC_OBJ_PCI_DEVICE:
+    case HWLOC_OBJ_OS_DEVICE:
     case HWLOC_OBJ_MISC:
     case HWLOC_OBJ_TYPE_MAX:
       /* Should never happen */

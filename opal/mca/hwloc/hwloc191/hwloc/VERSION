@@ -5,8 +5,8 @@
 # If snapshot=1, then use the value from snapshot_version as the
 # entire hwloc version (i.e., ignore major, minor, release, and
 # greek).  This is only set to 1 when making snapshot tarballs.
-snapshot=0
-snapshot_version=gitclone
+snapshot=1
+snapshot_version=1.9.1-76-g8725d82
 
 # major, minor, and release are generally combined in the form
 # <major>.<minor>.<release>.  If release is zero, then it is omitted.
@@ -22,11 +22,11 @@ release=2
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=
+greek=rc1
 
 # The date when this release was created
 
-date="Aug 25, 2014"
+date="Unreleased developer copy"
 
 # The shared library version of hwloc's public library.  This version
 # is maintained in accordance with the "Library Interface Versions"

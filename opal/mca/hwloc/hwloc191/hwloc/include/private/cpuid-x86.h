@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2012, 2014 Université Bordeaux
+ * Copyright © 2010-2012, 2014 Université Bordeaux 1
  * Copyright © 2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright © 2014 Inria.  All rights reserved.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2014 Inria.  All rights reserved.
- * Copyright © 2009-2013 Université Bordeaux 1
+ * Copyright © 2009-2015 Inria.  All rights reserved.
+ * Copyright © 2009-2013, 2015 Université Bordeaux 1
  * Copyright © 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright © 2010 IBM
  * See COPYING in top-level directory.
@@ -54,8 +54,8 @@ struct hwloc_linux_backend_data_s {
  * Misc Abstraction layers *
  ***************************/
 
-#if !(defined HWLOC_HAVE_SCHED_SETAFFINITY) && (defined HWLOC_HAVE__SYSCALL3)
-/* libc doesn't have support for sched_setaffinity, build system call
+#if !(defined HWLOC_HAVE_SCHED_SETAFFINITY) && (defined HWLOC_HAVE_SYSCALL)
+/* libc doesn't have support for sched_setaffinity, make system call
  * ourselves: */
 #    include <linux/unistd.h>
 #    ifndef __NR_sched_setaffinity
@@ -89,7 +89,7 @@ struct hwloc_linux_backend_data_s {
 #       endif
 #    endif
 #    ifndef sched_setaffinity
-       _syscall3(int, sched_setaffinity, pid_t, pid, unsigned int, lg, const void *, mask)
+#      define sched_setaffinity(pid, lg, mask) syscall(__NR_sched_setaffinity, pid, lg, mask)
 #    endif
 #    ifndef __NR_sched_getaffinity
 #       ifdef __i386__
@@ -122,7 +122,7 @@ struct hwloc_linux_backend_data_s {
 #       endif
 #    endif
 #    ifndef sched_getaffinity
-       _syscall3(int, sched_getaffinity, pid_t, pid, unsigned int, lg, void *, mask)
+#      define sched_getaffinity(pid, lg, mask) (syscall(__NR_sched_getaffinity, pid, lg, mask) < 0 ? -1 : 0)
 #    endif
 #endif
 
@@ -340,7 +340,7 @@ hwloc_linux_set_tid_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, 
 #else /* HWLOC_HAVE_OLD_SCHED_SETAFFINITY */
   return sched_setaffinity(tid, sizeof(linux_set), &linux_set);
 #endif /* HWLOC_HAVE_OLD_SCHED_SETAFFINITY */
-#elif defined(HWLOC_HAVE__SYSCALL3)
+#elif defined(HWLOC_HAVE_SYSCALL)
   unsigned long mask = hwloc_bitmap_to_ulong(hwloc_set);
 
 #ifdef HWLOC_HAVE_OLD_SCHED_SETAFFINITY
@@ -348,10 +348,10 @@ hwloc_linux_set_tid_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, 
 #else /* HWLOC_HAVE_OLD_SCHED_SETAFFINITY */
   return sched_setaffinity(tid, sizeof(mask), (void*) &mask);
 #endif /* HWLOC_HAVE_OLD_SCHED_SETAFFINITY */
-#else /* !_SYSCALL3 */
+#else /* !SYSCALL */
   errno = ENOSYS;
   return -1;
-#endif /* !_SYSCALL3 */
+#endif /* !SYSCALL */
 }
 
 #if defined(HWLOC_HAVE_CPU_SET_S) && !defined(HWLOC_HAVE_OLD_SCHED_SETAFFINITY)
@@ -503,7 +503,7 @@ hwloc_linux_get_tid_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, 
   for(cpu=0; cpu<CPU_SETSIZE; cpu++)
     if (CPU_ISSET(cpu, &linux_set))
       hwloc_bitmap_set(hwloc_set, cpu);
-#elif defined(HWLOC_HAVE__SYSCALL3)
+#elif defined(HWLOC_HAVE_SYSCALL)
   unsigned long mask;
 
 #ifdef HWLOC_HAVE_OLD_SCHED_SETAFFINITY
@@ -515,10 +515,10 @@ hwloc_linux_get_tid_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, 
     return -1;
 
   hwloc_bitmap_from_ulong(hwloc_set, mask);
-#else /* !_SYSCALL3 */
+#else /* !SYSCALL */
   errno = ENOSYS;
   return -1;
-#endif /* !_SYSCALL3 */
+#endif /* !SYSCALL */
 
   return 0;
 }
@@ -2507,7 +2507,7 @@ look_powerpc_device_tree(struct hwloc_topology *topology,
 
   /* only works for Power so far, and not useful on ARM */
   if (strncmp(data->utsname.machine, "ppc", 3))
-      return;
+    return;
 
   ofroot = "/sys/firmware/devicetree/base/cpus";
   ofrootlen = 34;
@@ -2575,10 +2575,10 @@ look_powerpc_device_tree(struct hwloc_topology *topology,
         }
         free(threads);
       } else if ((unsigned int)-1 != reg) {
-       /* Doesn't work on ARM because cpu "reg" do not start at 0.
-	* We know the first cpu "reg" is the lowest. The others are likely
-	* in order assuming the device-tree shows objects in order.
-	*/
+        /* Doesn't work on ARM because cpu "reg" do not start at 0.
+	 * We know the first cpu "reg" is the lowest. The others are likely
+	 * in order assuming the device-tree shows objects in order.
+	 */
         cpuset = hwloc_bitmap_alloc();
         hwloc_bitmap_set(cpuset, reg);
       }
@@ -2944,11 +2944,11 @@ look_sysfscpu(struct hwloc_topology *topology,
 	  hwloc_bitmap_set(core->cpuset, i);
 	} else {
 	  core->cpuset = coreset;
+	  coreset = NULL; /* don't free it */
 	}
         hwloc_debug_1arg_bitmap("os core %u has cpuset %s\n",
-                     mycoreid, coreset);
+                     mycoreid, core->cpuset);
         hwloc_insert_object_by_cpuset(topology, core);
-        coreset = NULL; /* don't free it */
       }
 
       /* look at the books */
@@ -3129,6 +3129,8 @@ hwloc_linux_parse_cpuinfo_x86(const char *prefix, const char *value,
     hwloc__add_info(infos, infos_count, "CPUModelNumber", value);
   } else if (!strcmp("cpu family", prefix)) {
     hwloc__add_info(infos, infos_count, "CPUFamilyNumber", value);
+  } else if (!strcmp("stepping", prefix)) {
+    hwloc__add_info(infos, infos_count, "CPUStepping", value);
   }
   return 0;
 }
@@ -3512,7 +3514,7 @@ look_cpuinfo(struct hwloc_topology *topology,
    * provide bogus information. We should rather drop it. */
   missingsocket=0;
   for(j=0; j<numprocs; j++)
-    if (Lprocs[i].Psock == -1) {
+    if (Lprocs[j].Psock == -1) {
       missingsocket=1;
       break;
     }
@@ -3556,7 +3558,7 @@ look_cpuinfo(struct hwloc_topology *topology,
    * provide bogus information. We should rather drop it. */
   missingcore=0;
   for(j=0; j<numprocs; j++)
-    if (Lprocs[i].Pcore == -1) {
+    if (Lprocs[j].Pcore == -1) {
       missingcore=1;
       break;
     }
@@ -4796,7 +4798,8 @@ hwloc_look_linuxfs_pci(struct hwloc_backend *backend)
       fclose(file);
 
       /* is this a bridge? */
-      hwloc_pci_prepare_bridge(obj, config_space_cache);
+      if (hwloc_pci_prepare_bridge(obj, config_space_cache) < 0)
+	continue;
 
       /* get the revision */
       attr->revision = config_space_cache[HWLOC_PCI_REVISION_ID];
