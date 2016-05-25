@@ -408,6 +408,7 @@ static void* get_coll_handle(void)
     ompi_req->req_status.MPI_ERROR = MPI_SUCCESS;
     ompi_req->req_state = OMPI_REQUEST_ACTIVE;
     ompi_req->req_free = request_free;
+    ompi_req->req_type = OMPI_REQUEST_COLL;
     return (void *)ompi_req;
 }
 
