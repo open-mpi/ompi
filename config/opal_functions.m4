@@ -391,9 +391,13 @@ AC_DEFUN([OPAL_FLAGS_UNIQ],[
                 opal_found=0
                 opal_i=`expr $opal_count + 1`
                 ;;
+        -framework)
+                opal_found=0
+                opal_i=`expr $opal_count + 1`
+                ;;
         --param)
-                ompi_found=0
-                ompi_i=`expr $ompi_count + 1`
+                opal_found=0
+                opal_i=`expr $opal_count + 1`
                 ;;
         esac
 
