@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -413,8 +413,8 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
     }
 
     if(!OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, REQUEST_COMPLETED)) {
-        ompi_wait_sync_t *tmp_sync = OPAL_ATOMIC_SWP_PTR(&request->req_complete,
-                                                         REQUEST_COMPLETED);
+        ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWP_PTR(&request->req_complete,
+                                                                              REQUEST_COMPLETED);
         /* In the case where another thread concurrently changed the request to REQUEST_PENDING */
         if( REQUEST_PENDING != tmp_sync )
             wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
