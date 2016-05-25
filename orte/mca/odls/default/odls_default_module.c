@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -478,17 +478,6 @@ static int do_child(orte_app_context_t* context,
     sigprocmask(SIG_UNBLOCK, &sigs, 0);
 
     /* Exec the new executable */
-
-    if (10 < opal_output_get_verbosity(orte_odls_base_framework.framework_output)) {
-        int jout;
-        opal_output(0, "%s STARTING %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), context->app);
-        for (jout=0; NULL != context->argv[jout]; jout++) {
-            opal_output(0, "%s\tARGV[%d]: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jout, context->argv[jout]);
-        }
-        for (jout=0; NULL != environ_copy[jout]; jout++) {
-            opal_output(0, "%s\tENVIRON[%d]: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jout, environ_copy[jout]);
-        }
-    }
 
     execve(context->app, context->argv, environ_copy);
     send_error_show_help(write_fd, 1,
