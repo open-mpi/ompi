@@ -129,6 +129,8 @@ typedef struct mca_btl_ugni_module_t {
     int nlocal_procs;
 
     volatile int active_send_count;
+    volatile int64_t connected_peer_count;
+    volatile int64_t active_rdma_count;
 
     mca_rcache_base_module_t *rcache;
 } mca_btl_ugni_module_t;

@@ -76,6 +76,8 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     ugni_module->initialized = false;
     ugni_module->nlocal_procs = 0;
     ugni_module->active_send_count = 0;
+    ugni_module->connected_peer_count = 0;
+    ugni_module->active_rdma_count = 0;
 
     OBJ_CONSTRUCT(&ugni_module->failed_frags, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->failed_frags_lock, opal_mutex_t);
