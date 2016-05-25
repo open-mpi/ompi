@@ -109,6 +109,16 @@ included in the vX.Y.Z section and be denoted as:
 - Fix affinity for MPMD jobs running under LSF
 - Fix many Fortran binding bugs
 - Fix `MPI_IN_PLACE`-related bugs
+- Fix PSM/PSM2 support for singleton operations
+- Ensure MPI transports continue to progress during RTE barriers
+- Update HWLOC to 1.9.1 end-of-series
+- Fix a bug in the Java command line parser when the
+  -Djava.library.path options was given by the user
+- Update the MTL/OFI provider selection behavior
+- Add support for clock_gettime on Linux.
+- Correctly detect and configure for Solaris Studio 12.5
+  beta compilers
+- Correctly compute #slots when -host is used for MPMD case
 
 
 1.10.2: 26 Jan 2016
