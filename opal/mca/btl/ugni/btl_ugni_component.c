@@ -234,11 +234,8 @@ btl_ugni_component_register(void)
     /*
      * see def. of ALIGNMENT_MASK to figure this one out
      */
-    if (GNI_DEVICE_GEMINI == device_type) {
-        mca_btl_ugni_module.super.btl_get_alignment = 4;
-    } else {
-        mca_btl_ugni_module.super.btl_get_alignment = 0;
-    }
+    /* both gemini and aries have a 4-byte alignment requirement on remote addresses */
+    mca_btl_ugni_module.super.btl_get_alignment = 4;
 
     /* threshold for put */
     mca_btl_ugni_module.super.btl_min_rdma_pipeline_size    = 8 * 1024;
