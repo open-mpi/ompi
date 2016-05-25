@@ -100,7 +100,7 @@ typedef struct __dt_args {
         if( pArgs->ci == 0 ) pArgs->i = NULL;                           \
         else pArgs->i = (int*)buf;                                      \
         pArgs->ref_count = 1;                                           \
-        pArgs->total_pack_size = (4 + (IC)) * sizeof(int) +             \
+        pArgs->total_pack_size = (4 + (IC) + (DC)) * sizeof(int) +      \
             (AC) * sizeof(OPAL_PTRDIFF_TYPE);                           \
         (PDATA)->args = (void*)pArgs;                                   \
         (PDATA)->packed_description = NULL;                             \
