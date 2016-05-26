@@ -83,7 +83,7 @@ AC_DEFUN([OMPI_CHECK_MXM],[
     fi
 
     AS_IF([test "$ompi_check_mxm_happy" = "yes"],
-          [$1_LDFLAGS="[$]$_LDFLAGS $ompi_check_mxm_LDFLAGS"
+          [$1_LDFLAGS="[$]$1_LDFLAGS $ompi_check_mxm_LDFLAGS"
 	   $1_LIBS="[$]$1_LIBS $ompi_check_mxm_LIBS"
 	   $1_CPPFLAGS="[$]$1_CPPFLAGS $ompi_check_mxm_CPPFLAGS"
 	   $2],
