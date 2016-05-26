@@ -15,6 +15,8 @@
 # Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
 # Copyright (c) 2013      Intel, Inc. All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -129,3 +131,6 @@ noinst_LTLIBRARIES = $(lib)
 libmca_btl_openib_la_SOURCES = $(lib_sources)
 libmca_btl_openib_la_LDFLAGS= -module -avoid-version $(btl_openib_LDFLAGS)
 libmca_btl_openib_la_LIBADD = $(btl_openib_LIBS)
+
+maintainer-clean-local:
+	rm -f btl_openib_lex.c

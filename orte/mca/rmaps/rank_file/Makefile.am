@@ -12,6 +12,8 @@
 # Copyright (c) 2008      Voltaire. All rights reserved
 #
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -51,3 +53,5 @@ noinst_LTLIBRARIES = $(component_noinst)
 libmca_rmaps_rank_file_la_SOURCES =$(sources)
 libmca_rmaps_rank_file_la_LDFLAGS = -module -avoid-version
 
+maintainer-clean-local:
+	rm -f rmaps_rank_file_lex.c
