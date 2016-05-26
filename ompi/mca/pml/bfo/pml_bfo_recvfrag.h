@@ -36,7 +36,7 @@ typedef struct mca_pml_bfo_buffer_t mca_pml_bfo_buffer_t;
 
 
 struct mca_pml_bfo_recv_frag_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
     mca_pml_bfo_hdr_t hdr;
     size_t num_segments;
     mca_btl_base_module_t* btl;
@@ -51,8 +51,8 @@ OBJ_CLASS_DECLARATION(mca_pml_bfo_recv_frag_t);
 
 #define MCA_PML_BFO_RECV_FRAG_ALLOC(frag)                       \
 do {                                                            \
-    ompi_free_list_item_t* item;                                \
-    OMPI_FREE_LIST_WAIT_MT(&mca_pml_bfo.recv_frags, item);         \
+    opal_free_list_item_t* item;                                \
+    OPAL_FREE_LIST_WAIT_MT(&mca_pml_bfo.recv_frags, item);      \
     frag = (mca_pml_bfo_recv_frag_t*)item;                      \
 } while(0)
 
@@ -101,8 +101,8 @@ do {                                                                    \
     frag->num_segments = 0;                                             \
                                                                         \
     /* return recv_frag */                                              \
-    OMPI_FREE_LIST_RETURN_MT(&mca_pml_bfo.recv_frags,                      \
-                          (ompi_free_list_item_t*)frag);                \
+    OPAL_FREE_LIST_RETURN(&mca_pml_bfo.recv_frags,                      \
+                          (opal_free_list_item_t*)frag);                \
  } while(0)
 
 

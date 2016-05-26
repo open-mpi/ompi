@@ -25,7 +25,7 @@
 #define MCA_PML_BFO_H
 
 #include "ompi_config.h"
-#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -62,11 +62,11 @@ struct mca_pml_bfo_t {
     opal_mutex_t lock;
 
     /* free lists */
-    ompi_free_list_t rdma_frags;
-    ompi_free_list_t recv_frags;
-    ompi_free_list_t pending_pckts;
-    ompi_free_list_t buffers;
-    ompi_free_list_t send_ranges;
+    opal_free_list_t rdma_frags;
+    opal_free_list_t recv_frags;
+    opal_free_list_t pending_pckts;
+    opal_free_list_t buffers;
+    opal_free_list_t send_ranges;
 
     /* list of pending operations */
     opal_list_t pckt_pending;
@@ -208,7 +208,7 @@ extern int mca_pml_bfo_ft_event( int state );
 END_C_DECLS
 
 struct mca_pml_bfo_pckt_pending_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
     ompi_proc_t* proc;
     mca_pml_bfo_hdr_t hdr;
     struct mca_bml_base_btl_t *bml_btl;
@@ -219,16 +219,16 @@ OBJ_CLASS_DECLARATION(mca_pml_bfo_pckt_pending_t);
 
 #define MCA_PML_BFO_PCKT_PENDING_ALLOC(pckt)                    \
 do {                                                            \
-    ompi_free_list_item_t* item;                                \
-    OMPI_FREE_LIST_WAIT_MT(&mca_pml_bfo.pending_pckts, item);      \
+    opal_free_list_item_t* item;                                \
+    OPAL_FREE_LIST_WAIT(&mca_pml_bfo.pending_pckts, item);      \
     pckt = (mca_pml_bfo_pckt_pending_t*)item;                   \
 } while (0)
 
 #define MCA_PML_BFO_PCKT_PENDING_RETURN(pckt)                   \
 do {                                                            \
     /* return packet */                                         \
-    OMPI_FREE_LIST_RETURN_MT(&mca_pml_bfo.pending_pckts,           \
-        (ompi_free_list_item_t*)pckt);                          \
+    OPAL_FREE_LIST_RETURN(&mca_pml_bfo.pending_pckts,           \
+        (opal_free_list_item_t*)pckt);                          \
 } while(0)
 
 #define MCA_PML_BFO_ADD_FIN_TO_PENDING(P, D, B, O, S)               \

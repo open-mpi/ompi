@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -20,13 +20,13 @@
 
 #include "ompi_config.h"
 
-#include "pml_bfo.h"
-#include "pml_bfo_recvreq.h"
-#include "pml_bfo_sendreq.h"
+#include "pml_ob1.h"
+#include "pml_ob1_recvreq.h"
+#include "pml_ob1_sendreq.h"
 #include "ompi/memchecker.h"
 
 
-int mca_pml_bfo_start(size_t count, ompi_request_t** requests)
+int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
 {
     int rc;
     size_t i;
@@ -48,6 +48,9 @@ int mca_pml_bfo_start(size_t count, ompi_request_t** requests)
          * completes - and create a new request.
          */
 
+#if OPAL_ENABLE_MULTI_THREADS
+        opal_atomic_rmb();
+#endif
         reuse_old_request = true;
         switch(pml_request->req_ompi.req_state) {
             case OMPI_REQUEST_INACTIVE:
@@ -57,13 +60,11 @@ int mca_pml_bfo_start(size_t count, ompi_request_t** requests)
             case OMPI_REQUEST_ACTIVE: {
 
                 ompi_request_t *request;
-                OPAL_THREAD_LOCK(&ompi_request_lock);
                 if (pml_request->req_pml_complete == false) {
                     /* free request after it completes */
                     pml_request->req_free_called = true;
                 } else {
                     /* can reuse the existing request */
-                    OPAL_THREAD_UNLOCK(&ompi_request_lock);
                     break;
                 }
 
@@ -98,7 +99,6 @@ int mca_pml_bfo_start(size_t count, ompi_request_t** requests)
                          rc = OMPI_ERR_REQUEST;
                          break;
                 }
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 if(OMPI_SUCCESS != rc)
                     return rc;
                 pml_request = (mca_pml_base_request_t*)request;

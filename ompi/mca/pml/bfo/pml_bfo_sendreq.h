@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -24,7 +25,6 @@
 
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
-#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "pml_bfo_comm.h"
 #include "pml_bfo_hdr.h"
@@ -66,7 +66,7 @@ typedef struct mca_pml_bfo_send_request_t mca_pml_bfo_send_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_bfo_send_request_t);
 
 struct mca_pml_bfo_send_range_t {
-    ompi_free_list_item_t base;
+    opal_free_list_item_t base;
     uint64_t range_send_offset;
     uint64_t range_send_length;
     int range_btl_idx;
@@ -125,11 +125,11 @@ get_request_from_send_pending(mca_pml_bfo_send_pending_t *type)
                                         sendreq)                        \
     {                                                                   \
         ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );         \
-        ompi_free_list_item_t* item;                                    \
+        opal_free_list_item_t* item;                                    \
                                                                         \
         sendreq = NULL;                                                 \
         if( OPAL_LIKELY(NULL != proc) ) {                               \
-            OMPI_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);     \
+            OPAL_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);  \
             sendreq = (mca_pml_bfo_send_request_t*)item;                \
             sendreq->req_send.req_base.req_proc = proc;                 \
         }                                                               \
@@ -166,9 +166,12 @@ static inline void mca_pml_bfo_free_rdma_resources(mca_pml_bfo_send_request_t* s
 
     /* return mpool resources */
     for(r = 0; r < sendreq->req_rdma_cnt; r++) {
-        mca_mpool_base_registration_t* reg = sendreq->req_rdma[r].btl_reg;
-        if( NULL != reg && reg->mpool != NULL ) {
-            reg->mpool->mpool_deregister(reg->mpool, reg);
+        struct mca_btl_base_registration_handle_t* handle = sendreq->req_rdma[r].btl_reg;
+        mca_bml_base_btl_t *bml_btl = sendreq->req_rdma[r].bml_btl;
+
+        if( NULL != handle ) {
+            mca_bml_base_deregister_mem (bml_btl, handle);
+            sendreq->req_rdma[r].btl_reg = NULL;
         }
     }
     sendreq->req_rdma_cnt = 0;
@@ -198,10 +201,10 @@ do {                                                                            
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;        \
    (sendreq)->req_send.req_base.req_ompi.req_status._ucount =                        \
         (sendreq)->req_send.req_bytes_packed;                                        \
-   ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), (with_signal) ); \
-                                                                                     \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                                \
                             &(sendreq->req_send.req_base), PERUSE_SEND);             \
+                                                                                     \
+   ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), (with_signal) ); \
 } while(0)
 
 /*
@@ -210,10 +213,9 @@ do {                                                                            
 
 #define MCA_PML_BFO_SEND_REQUEST_RETURN(sendreq)                        \
     do {                                                                \
-    /*  Let the base handle the reference counts */                     \
-    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));             \
-    OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_send_requests,                 \
-                           (ompi_free_list_item_t*)sendreq);            \
+        MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));         \
+        OPAL_FREE_LIST_RETURN( &mca_pml_base_send_requests,             \
+                               (opal_free_list_item_t*)sendreq);        \
     } while(0)
 
 
@@ -228,39 +230,38 @@ do {                                                                            
 static inline void
 send_request_pml_complete(mca_pml_bfo_send_request_t *sendreq)
 {
-    assert(false == sendreq->req_send.req_base.req_pml_complete);
-
-    if(sendreq->req_send.req_bytes_packed > 0) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND);
-    }
-
-    /* return mpool resources */
-    mca_pml_bfo_free_rdma_resources(sendreq);
-
-    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
-        sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
-        mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
-    }
-
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    if(false == sendreq->req_send.req_base.req_ompi.req_complete) {
-        /* Should only be called for long messages (maybe synchronous) */
-        MCA_PML_BFO_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
-    } else {
-        if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
-            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+    if(false == sendreq->req_send.req_base.req_pml_complete) {
+        if(sendreq->req_send.req_bytes_packed > 0) {
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
+                                     &(sendreq->req_send.req_base), PERUSE_SEND);
         }
-    }
-    sendreq->req_send.req_base.req_pml_complete = true;
+
+        /* return mpool resources */
+        mca_pml_bfo_free_rdma_resources(sendreq);
+
+        if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
+            sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
+            mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
+        }
+
+        sendreq->req_send.req_base.req_pml_complete = true;
+
+        if( !REQUEST_COMPLETE( &((sendreq->req_send).req_base.req_ompi)) ) {
+            /* Should only be called for long messages (maybe synchronous) */
+            MCA_PML_BFO_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+        } else {
+            if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
+                ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+            }
+        }
 #if PML_BFO
-    sendreq->req_send.req_base.req_sequence -= 100;
+        sendreq->req_send.req_base.req_sequence -= 100;
 #endif /* PML_BFO */
 
-    if(sendreq->req_send.req_base.req_free_called) {
-        MCA_PML_BFO_SEND_REQUEST_RETURN(sendreq);
+        if(true == sendreq->req_send.req_base.req_free_called) {
+            MCA_PML_BFO_SEND_REQUEST_RETURN(sendreq);
+        }
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 /* returns true if request was completed on PML level */

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -24,7 +24,6 @@
 
 #include "ompi_config.h"
 #include "opal/prefetch.h"
-#include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/mpool.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -98,31 +97,26 @@ void mca_pml_bfo_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
 static int mca_pml_bfo_send_request_free(struct ompi_request_t** request)
 {
     mca_pml_bfo_send_request_t* sendreq = *(mca_pml_bfo_send_request_t**)request;
+    if( false == sendreq->req_send.req_base.req_free_called ) {
 
-    assert( false == sendreq->req_send.req_base.req_free_called );
+        sendreq->req_send.req_base.req_free_called = true;
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
+                                 &(sendreq->req_send.req_base), PERUSE_SEND );
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    sendreq->req_send.req_base.req_free_called = true;
+        if( true == sendreq->req_send.req_base.req_pml_complete ) {
+            /* make buffer defined when the request is compeleted,
+               and before releasing the objects. */
+            MEMCHECKER(
+                memchecker_call(&opal_memchecker_base_mem_defined,
+                                sendreq->req_send.req_base.req_addr,
+                                sendreq->req_send.req_base.req_count,
+                                sendreq->req_send.req_base.req_datatype);
+            );
 
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
-                             &(sendreq->req_send.req_base), PERUSE_SEND );
-
-    if( true == sendreq->req_send.req_base.req_pml_complete ) {
-        /* make buffer defined when the request is compeleted,
-           and before releasing the objects. */
-        MEMCHECKER(
-            memchecker_call(&opal_memchecker_base_mem_defined,
-                            sendreq->req_send.req_base.req_addr,
-                            sendreq->req_send.req_base.req_count,
-                            sendreq->req_send.req_base.req_datatype);
-        );
-
-        MCA_PML_BFO_SEND_REQUEST_RETURN( sendreq );
+            MCA_PML_BFO_SEND_REQUEST_RETURN( sendreq );
+        }
+        *request = MPI_REQUEST_NULL;
     }
-
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-
-    *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
 
@@ -289,7 +283,9 @@ mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
     req_bytes_delivered = mca_pml_bfo_compute_segment_length (btl->btl_seg_size,
                                                               (void *) des->des_local,
                                                               des->des_local_count, 0);
-    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
+    if (OPAL_LIKELY(0 < req_bytes_delivered)) {
+        OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
+    }
 
     send_request_pml_complete_check(sendreq);
     /* free the descriptor */
@@ -477,9 +473,7 @@ int mca_pml_bfo_send_request_start_buffered(
     sendreq->req_state = 2;
 
     /* request is complete at mpi level */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     MCA_PML_BFO_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* send */
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_BFO_HDR_TYPE_RNDV);
