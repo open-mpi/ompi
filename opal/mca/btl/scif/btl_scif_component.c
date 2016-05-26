@@ -158,7 +158,7 @@ static int btl_scif_component_register(void)
                                             NULL, NULL, NULL, &mca_btl_scif_component.put_count);
 #endif
 
-    mca_btl_scif_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
+    mca_btl_scif_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 1;
     mca_btl_scif_module.super.btl_eager_limit               = 1 * 1024;
     mca_btl_scif_module.super.btl_rndv_eager_limit          = 1 * 1024;
     mca_btl_scif_module.super.btl_rdma_pipeline_frag_size   = 4 * 1024 * 1024;
