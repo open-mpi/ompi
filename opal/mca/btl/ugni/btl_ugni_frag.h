@@ -112,12 +112,14 @@ static inline void mca_btl_ugni_alloc_post_descriptor (mca_btl_base_endpoint_t *
         (*desc)->cbdata        = cbdata;
         (*desc)->local_handle  = local_handle;
         (*desc)->endpoint      = endpoint;
+        (void) OPAL_THREAD_ADD64(&endpoint->btl->active_rdma_count, 1);
     }
 }
 
 static inline void mca_btl_ugni_return_post_descriptor (mca_btl_ugni_module_t *module,
                                                         mca_btl_ugni_post_descriptor_t *desc)
 {
+    (void) OPAL_THREAD_ADD64(&module->active_rdma_count, -1);
     opal_free_list_return (&module->post_descriptors, &desc->super);
 }
 

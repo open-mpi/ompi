@@ -613,6 +613,10 @@ mca_btl_ugni_progress_wait_list (mca_btl_ugni_module_t *ugni_module)
     mca_btl_base_endpoint_t *endpoint = NULL;
     int count;
 
+    if (0 == opal_list_get_size(&ugni_module->ep_wait_list)) {
+        return 0;
+    }
+
     OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
     count = opal_list_get_size(&ugni_module->ep_wait_list);
 
@@ -636,18 +640,28 @@ mca_btl_ugni_progress_wait_list (mca_btl_ugni_module_t *ugni_module)
 static int mca_btl_ugni_component_progress (void)
 {
     mca_btl_ugni_module_t *ugni_module;
+    static int64_t call_count = 0;
+    int64_t cur_call_count = OPAL_THREAD_ADD64(&call_count, 1);
     unsigned int i;
     int count = 0;
 
     for (i = 0 ; i < mca_btl_ugni_component.ugni_num_btls ; ++i) {
         ugni_module = mca_btl_ugni_component.modules + i;
 
-        mca_btl_ugni_progress_wait_list (ugni_module);
+        if ((cur_call_count & 0x7) == 0) {
+            count += mca_btl_ugni_progress_datagram (ugni_module);
+        }
 
-        count += mca_btl_ugni_progress_datagram (ugni_module);
-        count += mca_btl_ugni_progress_local_smsg (ugni_module);
-        count += mca_btl_ugni_progress_remote_smsg (ugni_module);
-        count += mca_btl_ugni_progress_rdma (ugni_module, 0);
+        if (ugni_module->connected_peer_count) {
+            mca_btl_ugni_progress_wait_list (ugni_module);
+            count += mca_btl_ugni_progress_local_smsg (ugni_module);
+            count += mca_btl_ugni_progress_remote_smsg (ugni_module);
+        }
+
+        if (ugni_module->active_rdma_count) {
+            count += mca_btl_ugni_progress_rdma (ugni_module, 0);
+        }
+
         if (mca_btl_ugni_component.progress_thread_enabled) {
             count += mca_btl_ugni_progress_rdma (ugni_module, 1);
         }

@@ -81,6 +81,7 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
     }
 
     ep->state = MCA_BTL_UGNI_EP_STATE_INIT;
+    (void) opal_atomic_add_64 (&ep->btl->connected_peer_count, -11);
 
     return OPAL_SUCCESS;
 }
@@ -152,6 +153,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 
     ep->rmt_irq_mem_hndl = ep->remote_attr.rmt_irq_mem_hndl;
     ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTED;
+    (void) opal_atomic_add_64 (&ep->btl->connected_peer_count, 1);
 
     /* send all pending messages */
     BTL_VERBOSE(("endpoint connected. posting %u sends", (unsigned int) opal_list_get_size (&ep->frag_wait_list)));
