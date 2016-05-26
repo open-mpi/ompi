@@ -41,11 +41,9 @@ void mca_pml_ucx_send_completion(void *request, ucs_status_t status)
     PML_UCX_VERBOSE(8, "send request %p completed with status %s", (void*)req,
                     ucs_status_string(status));
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     mca_pml_ucx_set_send_status(&req->req_status, status);
     PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
     ompi_request_complete(req, true);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
@@ -57,11 +55,9 @@ void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
                     (void*)req, ucs_status_string(status), info->sender_tag,
                     info->length);
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     mca_pml_ucx_set_recv_status(&req->req_status, status, info);
     PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
     ompi_request_complete(req, true);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 static void mca_pml_ucx_persistent_request_detach(mca_pml_ucx_persistent_request_t *preq,
@@ -86,14 +82,12 @@ static inline void mca_pml_ucx_preq_completion(ompi_request_t *tmp_req)
 {
     mca_pml_ucx_persistent_request_t *preq;
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_complete(tmp_req, false);
     preq = (mca_pml_ucx_persistent_request_t*)tmp_req->req_complete_cb_data;
     if (preq != NULL) {
         PML_UCX_ASSERT(preq->tmp_req != NULL);
         mca_pml_ucx_persistent_request_complete(preq, tmp_req);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 void mca_pml_ucx_psend_completion(void *request, ucs_status_t status)
