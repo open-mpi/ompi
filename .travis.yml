@@ -40,7 +40,7 @@ env:
     global:
         - AM_MAKEFLAGS="-j4"
         - CPPFLAGS="-I$HOME/bogus/include"
-        - LDFLAGS="-I$HOME/bogus/lib"
+        - LDFLAGS="-L$HOME/bogus/lib"
         - LD_LIBRARY_PATH="$HOME/bogus/lib"
     matrix:
         - GCC_VERSION=default
@@ -57,6 +57,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "5" ]] ; then sudo apt-get --assume-yes install gcc-5 g++-5 gfortran-5; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "5" ]] ; then brew update; brew unlink gcc ; brew install gcc; fi
+    - mkdir -p $HOME/bogus/include $HOME/bogus/lib
 
 # Note that we use "make -k" to do the entire build, even if there was a
 # build error in there somewhere.  This prevents us from needing to submit
