@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,12 @@
  * necessary */
 
 /* largest address we can attach to using xpmem */
+#if defined(__x86_64__)
 #define VADER_MAX_ADDRESS ((uintptr_t)0x7ffffffff000ul)
+#else
+#define VADER_MAX_ADDRESS XPMEM_MAXADDR_SIZE
+#endif
+
 
 int mca_btl_vader_xpmem_init (void);
 
