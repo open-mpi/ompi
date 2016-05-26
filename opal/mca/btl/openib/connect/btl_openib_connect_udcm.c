@@ -2542,7 +2542,7 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep)
     psn = &lcl_ep->qps[0].qp->lcl_psn;
 
     /* reserve additional wr for eager rdma credit management */
-    send_wr = lcl_ep->ib_addr->qp->sd_wqe +
+    send_wr = lcl_ep->ib_addr->max_wqe +
         (mca_btl_openib_component.use_eager_rdma ?
          mca_btl_openib_component.max_eager_rdma : 0);
 #if OPAL_HAVE_CONNECTX_XRC_DOMAINS
@@ -2554,6 +2554,8 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep)
 
     qp_init_attr.send_cq = qp_init_attr.recv_cq = openib_btl->device->ib_cq[prio];
 
+    /* if this code is update the code in endpoint_init_qp_xrc may need to
+     * be updated as well */
     /* no need recv queue; receives are posted to srq */
     qp_init_attr.cap.max_recv_wr = 0;
     qp_init_attr.cap.max_send_wr = send_wr;

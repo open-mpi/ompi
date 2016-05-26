@@ -125,6 +125,7 @@ static void ib_address_constructor(ib_address_t *ib_addr)
     ib_addr->lid = 0;
     ib_addr->status = MCA_BTL_IB_ADDR_CLOSED;
     ib_addr->qp = NULL;
+    ib_addr->max_wqe = 0;
     /* NTH: make the addr_lock recursive because mca_btl_openib_endpoint_connected can call
      * into the CPC with the lock held. The alternative would be to drop the lock but the
      * lock is never obtained in a critical path. */
