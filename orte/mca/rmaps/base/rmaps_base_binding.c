@@ -119,7 +119,7 @@ static void unbind_procs(orte_job_t *jdata)
         }
     }
 }
-         
+
 static int bind_upwards(orte_job_t *jdata,
                         orte_node_t *node,
                         hwloc_obj_type_t target,
@@ -335,7 +335,6 @@ static int bind_downwards(orte_job_t *jdata,
                     return ORTE_ERR_SILENT;
                 } else {
                     /* if we have the default binding policy, then just don't bind */
-                    OPAL_SET_BINDING_POLICY(map->binding, OPAL_BIND_TO_NONE);
                     unbind_procs(jdata);
                     hwloc_bitmap_zero(totalcpuset);
                     return ORTE_SUCCESS;
@@ -373,7 +372,7 @@ static int bind_downwards(orte_job_t *jdata,
         }
     }
     hwloc_bitmap_free(totalcpuset);
-    
+
     return ORTE_SUCCESS;
 }
 
