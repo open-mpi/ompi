@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
@@ -231,7 +231,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
                 pmapinfo = (opal_list_t*)kv->data.ptr;
                 szmap = opal_list_get_size(pmapinfo);
                 PMIX_INFO_CREATE(pmap, szmap);
-                pinfo[n].value.data.array.array = (struct pmix_info*)pmap;
+                pinfo[n].value.data.array.array = (struct pmix_info_t*)pmap;
                 pinfo[n].value.data.array.size = szmap;
                 m = 0;
                 OPAL_LIST_FOREACH(k2, pmapinfo, opal_value_t) {

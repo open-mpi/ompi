@@ -13,9 +13,10 @@
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
 # Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -155,16 +156,16 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                   default_pmi_loc=yes])
            AS_IF([test ! -z "$with_pmi_libdir"],
                  [check_pmi_lib_dir=$with_pmi_libdir
-		  default_pmi_libloc=no],
+                  default_pmi_libloc=no],
                  [check_pmi_lib_dir=$check_pmi_install_dir
-		  AS_IF([test "$default_pmi_loc" = "no"],
-		        [default_pmi_libloc=no],
-			[default_pmi_libloc=yes])])
+          AS_IF([test "$default_pmi_loc" = "no"],
+                [default_pmi_libloc=no],
+                [default_pmi_libloc=yes])])
 
            # check for pmi-1 lib */
            slurm_pmi_found=no
            OPAL_CHECK_PMI_LIB([$check_pmi_install_dir],
-	                      [$check_pmi_lib_dir],
+                              [$check_pmi_lib_dir],
                               [pmi], [PMI_Init],
                               [slurm_pmi_found=yes],
                               [opal_enable_pmi1=yes
@@ -174,10 +175,10 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 
            AS_IF([test "$opal_enable_pmi1" = "yes"],
                  [AS_IF([test "$default_pmi_loc" = "no" || test "$slurm_pmi_found" = "yes"],
-		        [opal_pmi1_CPPFLAGS="$pmi_CPPFLAGS"
+                        [opal_pmi1_CPPFLAGS="$pmi_CPPFLAGS"
                          AC_SUBST(opal_pmi1_CPPFLAGS)])
                   AS_IF([test "$default_pmi_libloc" = "no" || test "$slurm_pmi_found" = "yes"],
-		        [opal_pmi1_LDFLAGS="$pmi_LDFLAGS"
+                        [opal_pmi1_LDFLAGS="$pmi_LDFLAGS"
                          AC_SUBST(opal_pmi1_LDFLAGS)
                          opal_pmi1_rpath="$pmi_rpath"
                          AC_SUBST(opal_pmi1_rpath)])])
@@ -195,25 +196,25 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 
            AS_IF([test "$opal_enable_pmi2" = "yes"],
                  [AS_IF([test "$default_pmi_loc" = "no" || test "$slurm_pmi_found" = "yes"],
-		        [opal_pmi2_CPPFLAGS="$pmi2_CPPFLAGS"
+                        [opal_pmi2_CPPFLAGS="$pmi2_CPPFLAGS"
                          AC_SUBST(opal_pmi2_CPPFLAGS)])
                   AS_IF([test "$default_pmi_libloc" = "no" || test "$slurm_pmi_found" = "yes"],
-		        [opal_pmi2_LDFLAGS="$pmi2_LDFLAGS"
+                        [opal_pmi2_LDFLAGS="$pmi2_LDFLAGS"
                          AC_SUBST(opal_pmi2_LDFLAGS)
                          opal_pmi2_rpath="$pmi2_rpath"
                          AC_SUBST(opal_pmi2_rpath)])])
 
            # since support was explicitly requested, then we should error out
            # if we didn't find the required support
-	   AC_MSG_CHECKING([can PMI support be built])
+           AC_MSG_CHECKING([can PMI support be built])
            AS_IF([test "$opal_enable_pmi1" != "yes" && test "$opal_enable_pmi2" != "yes"],
                  [AC_MSG_RESULT([no])
                   AC_MSG_WARN([PMI support requested (via --with-pmi) but neither pmi.h])
-		  AC_MSG_WARN([nor pmi2.h were found under locations:])
+                  AC_MSG_WARN([nor pmi2.h were found under locations:])
                   AC_MSG_WARN([    $check_pmi_install_dir])
                   AC_MSG_WARN([    $check_pmi_install_dir/slurm])
                   AC_MSG_WARN([Specified path: $with_pmi])
-		  AC_MSG_WARN([OR neither libpmi nor libpmi2 were found under:])
+                  AC_MSG_WARN([OR neither libpmi nor libpmi2 were found under:])
                   AC_MSG_WARN([    $check_pmi_lib_dir/lib])
                   AC_MSG_WARN([    $check_pmi_lib_dir/lib64])
                   AC_MSG_WARN([Specified path: $with_pmi_libdir])
@@ -230,7 +231,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
     opal_pmix_ext_LDFLAGS=
     opal_pmix_ext_LIBS=
 
-    OPAL_VAR_SCOPE_PUSH([pmix_ext_install_dir])
+    OPAL_VAR_SCOPE_PUSH([pmix_ext_install_dir opal_pmix_CPPFLAGS_save opal_pmix_LDFLAGS_save opal_pmix_LIBS_save opal_pmix_LD_LIBRARY_PATH_save])
 
     AC_ARG_WITH([pmix],
                 [AC_HELP_STRING([--with-pmix(=DIR)],
@@ -251,6 +252,9 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AS_IF([test "$with_pmix" = "external"],
                  [pmix_ext_install_dir=/usr],
                  [pmix_ext_install_dir=$with_pmix])
+           # Make sure we have the headers and libs in the correct location
+           OPAL_CHECK_WITHDIR([external-pmix], [$pmix_ext_install_dir/include], [pmix.h])
+           OPAL_CHECK_WITHDIR([external-libpmix], [$pmix_ext_install_dir/lib], [libpmix.*])
            AC_MSG_CHECKING([if external component can be used])
            OPAL_CHECK_PACKAGE([opal_pmix_ext],
                               [pmix.h],
@@ -258,14 +262,66 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                               [PMIx_Init],
                               [],
                               [$pmix_ext_install_dir],
-                              [],
+                              [$pmix_ext_install_dir/lib],
                               [AC_MSG_RESULT([PMIx external support will be built])
                                opal_external_pmix_happy=yes],
-                              [AC_MSG_RESULT([no])
+                              [opal_external_pmix_happy="no"
+                               AC_MSG_RESULT([no])
                                AC_MSG_WARN([External PMIx support was requested but failed])
                                AC_MSG_WARN([as explained above.])
                                AC_MSG_ERROR([Cannot continue])])
-          ])
+           # Check the version
+           opal_external_pmix_version="unknown"
+           opal_pmix_CPPFLAGS_save=$CPPFLAGS
+           opal_pmix_LDFLAGS_save=$LDFLAGS
+           opal_pmix_LIBS_save=$LIBS
+           LD_LIBRARY_PATH_orig=$opal_pmix_LD_LIBRARY_PATH_save
+
+           CPPFLAGS=$opal_pmix_ext_CPPFLAGS
+           LDFLAGS=$opal_pmix_ext_LDFLAGS
+           LIBS=$opal_pmix_ext_LIBS
+           LD_LIBRARY_PATH=$pmix_ext_install_dir/lib
+
+          AC_MSG_CHECKING([PMIx library version])
+          AC_TRY_RUN([
+#include <stdio.h>
+#include <stdlib.h>
+#include <pmix.h>
+#include <pmix/pmix_common.h>
+
+int main(int argc, char **argv)
+{
+    const char * version = NULL;
+    FILE *f = NULL;
+
+    f = fopen("conftestval", "w");
+    if( !f ) exit(1);
+    version = PMIx_Get_version();
+    fprintf(f, "%s", version);
+    fclose(f);
+
+    return 0;
+}
+             ], [
+                 eval opal_external_pmix_version=`cat conftestval`
+                 AC_MSG_RESULT([$opal_external_pmix_version])
+             ], [
+                 LD_LIBRARY_PATH=$opal_pmix_LD_LIBRARY_PATH_save
+                 opal_external_pmix_happy="no"
+                 AC_MSG_ERROR([External PMIx support requested but could not build/run a test program. Aborting])
+             ], [
+                 LD_LIBRARY_PATH=$opal_pmix_LD_LIBRARY_PATH_save
+                 opal_external_pmix_happy="no"
+                 AC_MSG_ERROR([External PMIx disabled for cross compile. Aborting])
+         ])
+         CPPFLAGS=$opal_pmix_CPPFLAGS_save
+         LDFLAGS=$opal_pmix_LDFLAGS_save
+         LIBS=$opal_pmix_LIBS_save
+         LD_LIBRARY_PATH=$opal_pmix_LD_LIBRARY_PATH_save
+
+         opal_external_pmix_happy="yes"
+    ])
+
     AC_SUBST(opal_pmix_ext_CPPFLAGS)
     AC_SUBST(opal_pmix_ext_LDFLAGS)
     AC_SUBST(opal_pmix_ext_LIBS)
