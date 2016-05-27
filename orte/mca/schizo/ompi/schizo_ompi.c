@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -91,6 +91,18 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "report-uri", "report-uri", 1,
       &orte_cmd_options.report_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Printout URI on stdout [-], stderr [+], or a file [anything else]" },
+
+    /* testing options */
+    { NULL, '\0', "timeout", "timeout", 1,
+      &orte_cmd_options.timeout, OPAL_CMD_LINE_TYPE_INT,
+      "Timeout the job after the specified number of seconds" },
+    { NULL, '\0', "report-state-on-timeout", "report-state-on-timeout", 0,
+      &orte_cmd_options.report_state_on_timeout, OPAL_CMD_LINE_TYPE_BOOL,
+      "Report all job and process states upon timeout" },
+    { NULL, '\0', "get-stack-traces", "get-stack-traces", 0,
+      &orte_cmd_options.get_stack_traces, OPAL_CMD_LINE_TYPE_BOOL,
+      "Get stack traces of all application procs on timeout" },
+
 
     /* exit status reporting */
     { "orte_report_child_jobs_separately", '\0', "report-child-jobs-separately", "report-child-jobs-separately", 0,
