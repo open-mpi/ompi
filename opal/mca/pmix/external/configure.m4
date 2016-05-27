@@ -18,6 +18,7 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2014-2015 Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,7 +33,21 @@ AC_DEFUN([MCA_opal_pmix_external_CONFIG],[
 
     AC_REQUIRE([OPAL_CHECK_PMIX])
 
-    AS_IF([test "$opal_external_pmix_happy" = "yes"],
+    # We have a different external comment for the 1.1.4 series, so check that
+    AS_IF([test "$opal_external_pmix_happy" = "yes" ],
+          [
+           OPAL_CHECK_VERSION([opal_pmix_external],
+                              [$opal_external_pmix_version],
+                              ["1.1.4"],
+                              [opal_external_pmix_version_happy="yes"],
+                              [AC_MSG_WARN([Defer to the 1.1.4 external component])
+                               opal_external_pmix_version_happy="no"],
+                              [AC_MSG_WARN([Defer to the 1.1.4 external component])
+                               opal_external_pmix_version_happy="no"],
+                              [opal_external_pmix_version_happy="yes"])
+           ])
+
+    AS_IF([test "$opal_external_pmix_happy" = "yes" && test "$opal_external_pmix_version_happy" = "yes" ],
           [AS_IF([test "$opal_event_external_support" != "yes"],
                  [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL LIBEVENT])
                   AC_MSG_WARN([LIBRARY. THIS LIBRARY MUST POINT TO THE SAME ONE USED])
