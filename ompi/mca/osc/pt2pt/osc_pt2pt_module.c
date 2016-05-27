@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -95,11 +95,12 @@ int ompi_osc_pt2pt_free(ompi_win_t *win)
 
     if (NULL != module->epoch_outgoing_frag_count) free(module->epoch_outgoing_frag_count);
 
-    if (NULL != module->frag_request) {
+    if (NULL != module->frag_request && MPI_REQUEST_NULL != module->frag_request) {
         module->frag_request->req_complete_cb = NULL;
         ompi_request_cancel (module->frag_request);
         ompi_request_free (&module->frag_request);
     }
+
     if (NULL != module->comm) {
         ompi_comm_free(&module->comm);
     }
