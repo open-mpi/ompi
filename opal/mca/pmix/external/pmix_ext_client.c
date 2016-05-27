@@ -112,7 +112,12 @@ int pmix1_client_init(void)
         asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
         putenv(dbgvalue);
     }
+
+#ifdef OPAL_PMIX_VERSION_11
+    rc = PMIx_Init(&my_proc);
+#else
     rc = PMIx_Init(&my_proc, NULL, 0);
+#endif
     if (PMIX_SUCCESS != rc) {
         return pmix1_convert_rc(rc);
     }
@@ -154,7 +159,11 @@ int pmix1_client_finalize(void)
     /* deregister the errhandler */
     PMIx_Deregister_errhandler(errhdler_ref, NULL, NULL);
 
+#ifdef OPAL_PMIX_VERSION_11
+    rc = PMIx_Finalize();
+#else
     rc = PMIx_Finalize(NULL, 0);
+#endif
 
     return pmix1_convert_rc(rc);
 }
