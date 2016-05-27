@@ -46,7 +46,7 @@ opal_pointer_array_t ompi_mpi_windows = {{0}};
 ompi_predefined_win_t ompi_mpi_win_null = {{{0}}};
 ompi_predefined_win_t *ompi_mpi_win_null_addr = &ompi_mpi_win_null;
 mca_base_var_enum_t *ompi_win_accumulate_ops = NULL;
-mca_base_var_enum_t *ompi_win_accumulate_order = NULL;
+mca_base_var_enum_flag_t *ompi_win_accumulate_order = NULL;
 
 static mca_base_var_enum_value_t accumulate_ops_values[] = {
     {.value = OMPI_WIN_ACCUMULATE_OPS_SAME_OP_NO_OP, .string = "same_op_no_op",},
