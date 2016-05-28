@@ -1661,9 +1661,10 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
 
     osc_pt2pt_gc_clean (module);
 
+    ompi_osc_pt2pt_frag_start_receive (module);
+
     /* put this request on the garbage colletion list */
     osc_pt2pt_gc_add_request (module, request);
-    ompi_osc_pt2pt_frag_start_receive (module);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "finished posting receive request"));
