@@ -62,15 +62,15 @@ $file =~ s/#OPAL_DATE#/$opal_date/g;
 $file =~ s/#ORTE_DATE#/$orte_date/g;
 
 if ($cxx == 0) {
-    $file =~ s/\n\.SH C\+\+ Syntax.+?fi\n/\n/s;
+    $file =~ s/\n\.SH C\+\+ Syntax.+?\n\.SH/\n\.SH/s;
 }
 
 if ($fortran == 0) {
-    $file =~ s/\n\.SH Fortran Syntax.+?fi\n/\n/s;
+    $file =~ s/\n\.SH Fortran Syntax.+?\n\.SH/\n\.SH/s;
 }
 
 if ($f08 == 0) {
-    $file =~ s/\n\.SH Fortran 2008 Syntax.+?fi\n/\n/s;
+    $file =~ s/\n\.SH Fortran 2008 Syntax.+?\n\.SH/\n\.SH/s;
 }
 
 open(FILE, ">$output") ||
