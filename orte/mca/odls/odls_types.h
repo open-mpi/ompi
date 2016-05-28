@@ -9,7 +9,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
@@ -79,6 +79,9 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_DVM_NIDMAP_CMD          (orte_daemon_cmd_flag_t) 29
 /* add procs for the DVM */
 #define ORTE_DAEMON_DVM_ADD_PROCS           (orte_daemon_cmd_flag_t) 30
+
+/* for debug purposes, get stack traces from all application procs */
+#define ORTE_DAEMON_GET_STACK_TRACES        (orte_daemon_cmd_flag_t) 31
 
 /*
  * Struct written up the pipe from the child to the parent.

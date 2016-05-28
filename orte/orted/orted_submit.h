@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,6 +93,9 @@ struct orte_cmd_options_t {
     bool enable_recovery;
     char *hnp;
     bool staged_exec;
+    int timeout;
+    bool report_state_on_timeout;
+    bool get_stack_traces;
 };
 typedef struct orte_cmd_options_t orte_cmd_options_t;
 ORTE_DECLSPEC extern orte_cmd_options_t orte_cmd_options;
