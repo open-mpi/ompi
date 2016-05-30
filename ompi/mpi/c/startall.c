@@ -88,6 +88,7 @@ int MPI_Startall(int count, MPI_Request requests[])
             }
         }
     }
+
     ret = MCA_PML_CALL(start(count, requests));
 
     OPAL_CR_EXIT_LIBRARY();
