@@ -1528,6 +1528,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     bool default_hostfile_used;
     char *hosts;
     bool singleton=false;
+    bool multi_sim = false;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:setup_vm",
@@ -1617,7 +1618,8 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
      * look across all jobs and ensure that the "VM" contains
      * all nodes with application procs on them
      */
-    if (orte_get_attribute(&daemons->attributes, ORTE_JOB_NO_VM, NULL, OPAL_BOOL)) {
+    multi_sim = orte_get_attribute(&jdata->attributes, ORTE_JOB_MULTI_DAEMON_SIM, NULL, OPAL_BOOL);
+    if (orte_get_attribute(&daemons->attributes, ORTE_JOB_NO_VM, NULL, OPAL_BOOL) || multi_sim) {
         OBJ_CONSTRUCT(&nodes, opal_list_t);
         /* loop across all nodes and include those that have
          * num_procs > 0 && no daemon already on them
@@ -1645,13 +1647,16 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                 /* not to be used */
                 continue;
             }
-            if (0 < node->num_procs) {
+            if (0 < node->num_procs || multi_sim) {
                 /* retain a copy for our use in case the item gets
                  * destructed along the way
                  */
                 OBJ_RETAIN(node);
                 opal_list_append(&nodes, &node->super);
             }
+        }
+        if (multi_sim) {
+            goto process;
         }
         /* see if anybody had procs */
         if (0 == opal_list_get_size(&nodes)) {

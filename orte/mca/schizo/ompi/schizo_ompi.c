@@ -941,8 +941,9 @@ static int setup_fork(orte_job_t *jdata,
     opal_setenv("OMPI_COMM_WORLD_LOCAL_SIZE", param, true, &app->env);
     free(param);
 
-    /* forcibly set the local tmpdir base to match ours */
+    /* forcibly set the local tmpdir base and top session dir to match ours */
     opal_setenv("OMPI_MCA_orte_tmpdir_base", orte_process_info.tmpdir_base, true, &app->env);
+    opal_setenv("OMPI_MCA_orte_top_session_dir", orte_process_info.top_session_dir, true, &app->env);
 
     /* MPI-3 requires we provide some further info to the procs,
      * so we pass them as envars to avoid introducing further
