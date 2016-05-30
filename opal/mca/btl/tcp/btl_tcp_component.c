@@ -407,8 +407,8 @@ static int mca_btl_tcp_component_close(void)
     }
 #endif
 
-    /* cleanup any pending events */
-    MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_component.tcp_lock);
+    /* remove all pending events. Do not lock the tcp_events list as
+       the event themselves will unregister during the destructor. */
     for(item =  opal_list_get_first(&mca_btl_tcp_component.tcp_events);
         item != opal_list_get_end(&mca_btl_tcp_component.tcp_events);
         item = next) {
@@ -417,7 +417,6 @@ static int mca_btl_tcp_component_close(void)
         opal_event_del(&event->event);
         OBJ_RELEASE(event);
     }
-    MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(&mca_btl_tcp_component.tcp_lock);
 
     /* release resources */
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_procs);
