@@ -245,6 +245,17 @@ int orte_ess_base_orted_setup(char **hosts)
             error = "orte_session_dir define";
             goto error;
         }
+        /* if we have multiple daemons/node, then add our pid to the name */
+        if (NULL != (param = getenv("OMPI_MCA_ras_base_multiplier")) &&
+            1 < strtol(param, NULL, 10)) {
+            if (0 > asprintf(&param, "%s.%lu", orte_process_info.top_session_dir, (unsigned long)orte_process_info.pid)) {
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                error = "create top session dir";
+                goto error;
+            }
+            free(orte_process_info.top_session_dir);
+            orte_process_info.top_session_dir = param;
+        }
         /* clear the session directory just in case there are
          * stale directories laying around
          */

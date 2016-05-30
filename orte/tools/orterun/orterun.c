@@ -290,6 +290,7 @@ int orterun(int argc, char *argv[])
  DONE:
     /* cleanup and leave */
     orte_submit_finalize();
+    orte_finalize();
 
     if (orte_debug_flag) {
         fprintf(stderr, "exiting with status %d\n", orte_exit_status);

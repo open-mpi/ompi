@@ -138,6 +138,7 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_MERGE_STDERR_STDOUT    (ORTE_JOB_START_KEY + 46)    // bool - merge stderr into stdout stream
 #define ORTE_JOB_TAG_OUTPUT             (ORTE_JOB_START_KEY + 47)    // bool - tag stdout/stderr
 #define ORTE_JOB_TIMESTAMP_OUTPUT       (ORTE_JOB_START_KEY + 48)    // bool - timestamp stdout/stderr
+#define ORTE_JOB_MULTI_DAEMON_SIM       (ORTE_JOB_START_KEY + 49)    // bool - multiple daemons/node to simulate large cluster
 
 #define ORTE_JOB_MAX_KEY   300
 
