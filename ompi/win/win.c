@@ -61,7 +61,7 @@ static mca_base_var_enum_value_flag_t accumulate_order_flags[] = {
     {.flag = OMPI_WIN_ACC_ORDER_WAR, .string = "war", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
     {.flag = OMPI_WIN_ACC_ORDER_RAW, .string = "raw", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
     {.flag = OMPI_WIN_ACC_ORDER_WAW, .string = "waw", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
-    {},
+    {0},
 };
 
 static void ompi_win_construct(ompi_win_t *win);
