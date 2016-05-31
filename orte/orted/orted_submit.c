@@ -2911,7 +2911,7 @@ void orte_timeout_wakeup(int sd, short args, void *cbdata)
      */
     orte_show_help("help-orterun.txt", "orterun:timeout",
                    true, timeout_seconds);
-    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    ORTE_UPDATE_EXIT_STATUS(ETIMEDOUT);
     /* if we are testing HNP suicide, then just exit */
     if (ORTE_PROC_IS_HNP &&
         NULL != getenv("ORTE_TEST_HNP_SUICIDE")) {
