@@ -161,7 +161,7 @@ static int alloc_window(struct ompi_communicator_t *comm, ompi_info_t *info, int
     ret = ompi_info_get_value_enum (info, "accumulate_order", &acc_order,
                                     OMPI_WIN_ACC_ORDER_RAR | OMPI_WIN_ACC_ORDER_WAR |
                                     OMPI_WIN_ACC_ORDER_RAW | OMPI_WIN_ACC_ORDER_WAW,
-                                    ompi_win_accumulate_order, &flag);
+                                    &(ompi_win_accumulate_order->super), &flag);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(win);
         return ret;
