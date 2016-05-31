@@ -39,7 +39,8 @@
 #define OPAL_ARM            0100
 #define OPAL_BUILTIN_SYNC   0200
 #define OPAL_BUILTIN_OSX    0201
-#define OPAL_BUILTIN_NO     0202
+#define OPAL_BUILTIN_GCC    0202
+#define OPAL_BUILTIN_NO     0203
 
 /* Formats */
 #define OPAL_DEFAULT        1000  /* standard for given architecture */

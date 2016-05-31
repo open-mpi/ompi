@@ -116,6 +116,84 @@ __sync_add_and_fetch(&tmp, 1);],
 ])
 
 
+AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
+
+  OPAL_VAR_SCOPE_PUSH([atomic_compare_exchange_n_128_result CFLAGS_save])
+
+  AC_ARG_ENABLE([cross-cmpset128],[AC_HELP_STRING([--enable-cross-cmpset128],
+                [enable the use of the __sync builtin atomic compare-and-swap 128 when cross compiling])])
+
+  atomic_compare_exchange_n_128_result=0
+
+  if test ! "$enable_cross_cmpset128" = "yes" ; then
+      AC_MSG_CHECKING([for processor support of __atomic builtin atomic compare-and-swap on 128-bit values])
+
+      AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);])],
+	  [AC_MSG_RESULT([yes])
+	      atomic_compare_exchange_n_128_result=1],
+	  [AC_MSG_RESULT([no])],
+	  [AC_MSG_RESULT([no (cross compiling)])])
+
+      if test $atomic_compare_exchange_n_128_result = 0 ; then
+	  CFLAGS_save=$CFLAGS
+	  CFLAGS="$CFLAGS -mcx16"
+
+	  AC_MSG_CHECKING([for __atomic builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+          AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);])],
+              [AC_MSG_RESULT([yes])
+		  atomic_compare_exchange_n_128_result=1
+		  CFLAGS_save="$CFLAGS"],
+              [AC_MSG_RESULT([no])],
+	      [AC_MSG_RESULT([no (cross compiling)])])
+
+	  CFLAGS=$CFLAGS_save
+      fi
+  else
+      AC_MSG_CHECKING([for compiler support of __atomic builtin atomic compare-and-swap on 128-bit values])
+
+      # Check if the compiler supports the __atomic builtin
+      AC_TRY_LINK([], [__int128 x = 0; __atomic_bool_compare_and_swap (&x, 0, 1);],
+	  [AC_MSG_RESULT([yes])
+	      atomic_compare_exchange_n_128_result=1],
+	  [AC_MSG_RESULT([no])])
+
+      if test $atomic_compare_exchange_n_128_result = 0 ; then
+	  CFLAGS_save=$CFLAGS
+	  CFLAGS="$CFLAGS -mcx16"
+
+	  AC_MSG_CHECKING([for __atomic builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+	  AC_TRY_LINK([], [__int128 x = 0; __atomic_bool_compare_and_swap (&x, 0, 1);],
+              [AC_MSG_RESULT([yes])
+		  atomic_compare_exchange_n_128_result=1
+		  CFLAGS_save="$CFLAGS"],
+              [AC_MSG_RESULT([no])])
+
+	  CFLAGS=$CFLAGS_save
+      fi
+  fi
+
+  AC_DEFINE_UNQUOTED([OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128], [$atomic_compare_exchange_n_128_result],
+	[Whether the __atomic builtin atomic compare and swap supports 128-bit values])
+
+  OPAL_VAR_SCOPE_POP
+])
+
+AC_DEFUN([OPAL_CHECK_GCC_ATOMIC_BUILTINS], [
+  AC_MSG_CHECKING([for __atomic builtin atomics])
+
+  AC_TRY_LINK([long tmp, old = 0;], [__atomic_thread_fence(__ATOMIC_SEQ_CST);
+__atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+__atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);],
+    [AC_MSG_RESULT([yes])
+     $1],
+    [AC_MSG_RESULT([no])
+     $2])
+
+  # Check for 128-bit support
+  OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
+])
+
+
 dnl #################################################################
 dnl
 dnl OPAL_CHECK_ASM_TEXT
@@ -895,6 +973,9 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
     opal_cv_asm_builtin="BUILTIN_NO"
     if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
+       OPAL_CHECK_GCC_ATOMIC_BUILTINS([opal_cv_asm_builtin="BUILTIN_GCC"], [])
+    fi
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
        OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])
     fi
     if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_osx_builtin_atomics" = "yes" ; then
@@ -1032,7 +1113,7 @@ AC_MSG_ERROR([Can not continue.])
 	    opal_cv_asm_builtin="BUILTIN_NO"
 	fi
 
-      if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" ; then
+      if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" || test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
           [Whether C compiler supports GCC style inline assembly])
       else
