@@ -280,10 +280,12 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            CPPFLAGS=$opal_pmix_ext_CPPFLAGS
            LDFLAGS=$opal_pmix_ext_LDFLAGS
            LIBS=$opal_pmix_ext_LIBS
-           LD_LIBRARY_PATH=$pmix_ext_install_dir/lib
+           LD_LIBRARY_PATH=$pmix_ext_install_dir/lib:$LD_LIBRARY_PATH
+           export LD_LIBRARY_PATH
 
           AC_MSG_CHECKING([PMIx library version])
-          AC_TRY_RUN([
+          AC_RUN_IFELSE([
+              AC_LANG_SOURCE([
 #include <stdio.h>
 #include <stdlib.h>
 #include <pmix.h>
@@ -302,15 +304,17 @@ int main(int argc, char **argv)
 
     return 0;
 }
-             ], [
+             ])], [
                  eval opal_external_pmix_version=`cat conftestval`
                  AC_MSG_RESULT([$opal_external_pmix_version])
              ], [
                  LD_LIBRARY_PATH=$opal_pmix_LD_LIBRARY_PATH_save
+                 export LD_LIBRARY_PATH
                  opal_external_pmix_happy="no"
                  AC_MSG_ERROR([External PMIx support requested but could not build/run a test program. Aborting])
              ], [
                  LD_LIBRARY_PATH=$opal_pmix_LD_LIBRARY_PATH_save
+                 export LD_LIBRARY_PATH
                  opal_external_pmix_happy="no"
                  AC_MSG_ERROR([External PMIx disabled for cross compile. Aborting])
          ])
