@@ -86,7 +86,7 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
                                          int32_t oldval, int32_t newval)
 {
     return __atomic_compare_exchange_n (addr, &oldval, newval, false,
-                                        __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+                                        __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
 static inline int32_t opal_atomic_swap_32 (volatile int32_t *addr, int32_t newval)
@@ -125,7 +125,7 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
     return __atomic_compare_exchange_n (addr, &oldval, newval, false,
-                                        __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+                                        __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
 static inline int64_t opal_atomic_swap_64 (volatile int64_t *addr, int64_t newval)
@@ -153,7 +153,48 @@ static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr,
                                           opal_int128_t oldval, opal_int128_t newval)
 {
     return __atomic_compare_exchange_n (addr, &oldval, newval, false,
-                                        __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+                                        __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
+}
+
+#endif
+
+#if defined(__HLE__)
+
+#include <immintrin.h>
+
+#define OPAL_HAVE_ATOMIC_SPINLOCKS 1
+
+static inline void opal_atomic_init (opal_atomic_lock_t* lock, int32_t value)
+{
+   lock->u.lock = value;
+}
+
+static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
+{
+    int ret = __atomic_exchange_n (&lock->u.lock, OPAL_ATOMIC_LOCKED,
+                                   __ATOMIC_ACQUIRE | __ATOMIC_HLE_ACQUIRE);
+    if (OPAL_ATOMIC_LOCKED == ret) {
+        /* abort the transaction */
+        _mm_pause ();
+        return 1;
+    }
+
+    return 0;
+}
+
+static inline void opal_atomic_lock (opal_atomic_lock_t *lock)
+{
+    while (OPAL_ATOMIC_LOCKED == __atomic_exchange_n (&lock->u.lock, OPAL_ATOMIC_LOCKED,
+                                                      __ATOMIC_ACQUIRE | __ATOMIC_HLE_ACQUIRE)) {
+        /* abort the transaction */
+        _mm_pause ();
+    }
+}
+
+static inline void opal_atomic_unlock (opal_atomic_lock_t *lock)
+{
+    __atomic_store_n (&lock->u.lock, OPAL_ATOMIC_UNLOCKED,
+                       __ATOMIC_RELEASE | __ATOMIC_HLE_RELEASE);
 }
 
 #endif
