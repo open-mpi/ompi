@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014-2015 Intel, Inc. All right reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
@@ -21,6 +21,7 @@ DISTCLEANFILES = \
 # the tarball (in case someone invokes autogen.sh on a dist tarball).
 EXTRA_DIST = \
         hwloc/doc/README.txt \
+        hwloc/contrib/systemd/README.txt \
         hwloc/tests/README.txt \
         hwloc/utils/README.txt
 
