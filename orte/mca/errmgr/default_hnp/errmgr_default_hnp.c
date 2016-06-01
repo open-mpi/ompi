@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011      Oracle and/or all its affiliates.  All rights reserved. 
+ * Copyright (c) 2011      Oracle and/or all its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -161,18 +161,26 @@ static void job_errors(int fd, short args, void *cbdata)
                          orte_job_state_to_str(jobstate)));
 
     if (ORTE_JOB_STATE_NEVER_LAUNCHED == jobstate ||
-        ORTE_JOB_STATE_ALLOC_FAILED == jobstate || 
-        ORTE_JOB_STATE_MAP_FAILED == jobstate || 
+        ORTE_JOB_STATE_ALLOC_FAILED == jobstate ||
+        ORTE_JOB_STATE_MAP_FAILED == jobstate ||
         ORTE_JOB_STATE_CANNOT_LAUNCH == jobstate) {
-        orte_never_launched = true;
-        /* disable routing as we may not have performed the daemon 
-         * wireup - e.g., in a managed environment, all the daemons 
-         * "phone home", but don't actually wireup into the routed 
-         * network until they receive the launch message 
-         */ 
-        orte_routing_is_enabled = false; 
+        /* mark this job as terminated */
         jdata->num_terminated = jdata->num_procs;
-        ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_TERMINATED);
+        /* if this is a dynamic spawn, then abort the primary job */
+        if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
+            ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_FORCED_EXIT);
+            /* set the global abnormal exit flag  */
+            orte_abnormal_term_ordered = true;
+        } else {
+            orte_never_launched = true;
+            /* disable routing as we may not have performed the daemon
+             * wireup - e.g., in a managed environment, all the daemons
+             * "phone home", but don't actually wireup into the routed
+             * network until they receive the launch message
+             */
+            orte_routing_is_enabled = false;
+            ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_TERMINATED);
+        }
         OBJ_RELEASE(caddy);
         return;
     }
@@ -227,7 +235,7 @@ static void job_errors(int fd, short args, void *cbdata)
         jdata->num_procs != jdata->num_reported) {
         orte_show_help("help-errmgr-base.txt", "failed-daemon", true);
     }
-        
+
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_FORCED_EXIT);
     /* set the global abnormal exit flag  */
@@ -269,7 +277,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          orte_proc_state_to_str(state)));
-    
+
     /*
      * if orte is trying to shutdown, just let it
      */
@@ -642,10 +650,10 @@ static void default_hnp_abort(orte_job_t *jdata)
                          "%s errmgr:default_hnp: abort called on job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
-    
+
     /* the job aborted - turn off any sensors on this job */
     orte_sensor.stop(jdata->jobid);
-    
+
     /* set control params to indicate we are terminating */
     orte_job_term_ordered = true;
     orte_enable_recovery = false;
@@ -674,7 +682,7 @@ static void default_hnp_abort(orte_job_t *jdata)
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_hnp: ordering orted termination",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     /* tell the plm to terminate the orteds - they will automatically
      * kill their local procs
      */
