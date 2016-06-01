@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,6 +64,7 @@ enum {
 
     OMPI_ERR_BUFFER                 = OPAL_ERR_BUFFER,
     OMPI_ERR_SILENT                 = OPAL_ERR_SILENT,
+    OMPI_ERR_HANDLERS_COMPLETE      = OPAL_ERR_HANDLERS_COMPLETE,
 
     OMPI_ERR_REQUEST                = OMPI_ERR_BASE - 1,
     OMPI_ERR_RMA_SYNC               = OMPI_ERR_BASE - 2,

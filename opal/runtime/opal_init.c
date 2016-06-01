@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -255,6 +255,9 @@ opal_err2str(int errnum, const char **errmsg)
         break;
     case OPAL_ERR_DEBUGGER_RELEASE:
         retval = "Release debugger";
+        break;
+    case OPAL_ERR_HANDLERS_COMPLETE:
+        retval = "Event handler processing complete";
         break;
     default:
         retval = "UNRECOGNIZED";

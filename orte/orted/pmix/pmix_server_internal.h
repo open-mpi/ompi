@@ -152,7 +152,8 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
     } while(0);
 
 /* define the server module functions */
-extern int pmix_server_client_connected_fn(opal_process_name_t *proc, void* server_object);
+extern int pmix_server_client_connected_fn(opal_process_name_t *proc, void* server_object,
+                                           opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 extern int pmix_server_client_finalized_fn(opal_process_name_t *proc, void* server_object,
                                            opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 extern int pmix_server_abort_fn(opal_process_name_t *proc, void *server_object,

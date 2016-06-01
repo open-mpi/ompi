@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +42,7 @@ opal_pointer_array_t ompi_errhandler_f_to_c_table = {{0}};
 /*
  * default errhandler id
  */
-static int default_errhandler_id = -1;
+static size_t default_errhandler_id = SIZE_MAX;
 
 /*
  * Class information
@@ -163,7 +163,7 @@ int ompi_errhandler_finalize(void)
 
     /* JMS Add stuff here checking for unreleased errorhandlers,
        similar to communicators, info handles, etc. */
-    opal_pmix.deregister_errhandler(default_errhandler_id, NULL, NULL);
+    opal_pmix.deregister_evhandler(default_errhandler_id, NULL, NULL);
 
     /* Remove errhandler F2C table */
 
@@ -222,7 +222,7 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
 
 /* registration callback */
 void ompi_errhandler_registration_callback(int status,
-                                           int errhandler_ref,
+                                           size_t errhandler_ref,
                                            void *cbdata)
 {
     ompi_errhandler_errtrk_t *errtrk = (ompi_errhandler_errtrk_t*)cbdata;
@@ -236,14 +236,15 @@ void ompi_errhandler_registration_callback(int status,
  * Default errhandler callback
  */
 void ompi_errhandler_callback(int status,
-                              opal_list_t *procs,
-                              opal_list_t *info,
-                              opal_pmix_release_cbfunc_t cbfunc,
+                              const opal_process_name_t *source,
+                              opal_list_t *info, opal_list_t *results,
+                              opal_pmix_notification_complete_fn_t cbfunc,
                               void *cbdata)
 {
-    /* allow the caller to release its data */
+    /* tell the event chain engine to go no further - we
+     * will handle this */
     if (NULL != cbfunc) {
-        cbfunc(cbdata);
+        cbfunc(OMPI_ERR_HANDLERS_COMPLETE, NULL, NULL, NULL, cbdata);
     }
     /* our default action is to abort */
     ompi_mpi_abort(MPI_COMM_WORLD, status);

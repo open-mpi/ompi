@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -35,6 +35,7 @@ const char *opal_pmix_ext20_component_version_string =
 static int external_open(void);
 static int external_close(void);
 static int external_component_query(mca_base_module_t **module, int *priority);
+static int external_register(void);
 
 
 /*
@@ -64,6 +65,7 @@ mca_pmix_ext20_component_t mca_pmix_ext20_component = {
             .mca_open_component = external_open,
             .mca_close_component = external_close,
             .mca_query_component = external_component_query,
+            .mca_register_component_params = external_register,
         },
         /* Next the MCA v1.0.0 component meta data */
         .base_data = {
@@ -74,15 +76,38 @@ mca_pmix_ext20_component_t mca_pmix_ext20_component = {
     .native_launch = false
 };
 
+static int external_register(void)
+{
+    mca_pmix_ext20_component.cache_size = 256;
+    mca_base_component_var_register(&mca_pmix_ext20_component.super.base_version,
+                                    "cache_size", "Size of the ring buffer cache for events",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                    MCA_BASE_VAR_SCOPE_CONSTANT,
+                                    &mca_pmix_ext20_component.cache_size);
+
+    return OPAL_SUCCESS;
+}
+
+
 static int external_open(void)
 {
+    mca_pmix_ext20_component.evindex = 0;
     OBJ_CONSTRUCT(&mca_pmix_ext20_component.jobids, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext20_component.single_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext20_component.multi_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext20_component.default_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext20_component.cache, opal_list_t);
+
     return OPAL_SUCCESS;
 }
 
 static int external_close(void)
 {
     OPAL_LIST_DESTRUCT(&mca_pmix_ext20_component.jobids);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext20_component.single_events);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext20_component.multi_events);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext20_component.default_events);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext20_component.cache);
     return OPAL_SUCCESS;
 }
 

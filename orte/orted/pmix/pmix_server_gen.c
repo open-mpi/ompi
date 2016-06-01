@@ -76,15 +76,19 @@ static void _client_conn(int sd, short args, void *cbdata)
         ORTE_FLAG_SET(p, ORTE_PROC_FLAG_REG);
         ORTE_ACTIVATE_PROC_STATE(&p->name, ORTE_PROC_STATE_REGISTERED);
     }
+    if (NULL != cd->cbfunc) {
+        cd->cbfunc(OPAL_SUCCESS, cd->cbdata);
+    }
     OBJ_RELEASE(cd);
 }
 
-int pmix_server_client_connected_fn(opal_process_name_t *proc, void *server_object)
+int pmix_server_client_connected_fn(opal_process_name_t *proc, void *server_object,
+                                    opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     /* need to thread-shift this request as we are going
      * to access our global list of registered events */
     ORTE_PMIX_THREADSHIFT(proc, server_object, OPAL_SUCCESS, NULL,
-                          NULL, _client_conn, NULL, NULL);
+                          NULL, _client_conn, cbfunc, cbdata);
     return ORTE_SUCCESS;
 }
 
@@ -264,26 +268,22 @@ static void _notify_release(int status, void *cbdata)
 {
     orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
 
-    if (NULL != cd->procs) {
-        OPAL_LIST_RELEASE(cd->procs);
-    }
-    if (NULL != cd->eprocs) {
-        OPAL_LIST_RELEASE(cd->eprocs);
-    }
     if (NULL != cd->info) {
         OPAL_LIST_RELEASE(cd->info);
     }
     OBJ_RELEASE(cd);
 }
+
+/* someone has sent us an event that we need to distribute
+ * to our local clients */
 void pmix_server_notify(int status, orte_process_name_t* sender,
                         opal_buffer_t *buffer,
                         orte_rml_tag_t tg, void *cbdata)
 {
-    opal_list_t *procs = NULL, *eprocs = NULL, *info = NULL;
-    int cnt, rc, ret, nprocs, n;
-    opal_namelist_t *nm;
+    int cnt, rc, ret, ninfo, n;
     opal_value_t *val;
     orte_pmix_server_op_caddy_t *cd;
+    orte_process_name_t source;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s Notification received",
@@ -296,99 +296,45 @@ void pmix_server_notify(int status, orte_process_name_t* sender,
         return;
     }
 
-    /* unpack the target procs that are to be notified */
+    /* unpack the source */
     cnt = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nprocs, &cnt, OPAL_INT))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &source, &cnt, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         return;
-    }
-
-    /* if any were provided, add them to the list */
-    if (0 < nprocs) {
-        procs = OBJ_NEW(opal_list_t);
-        for (n=0; n < nprocs; n++) {
-            nm = OBJ_NEW(opal_namelist_t);
-            opal_list_append(procs, &nm->super);
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nm->name, &cnt, OPAL_NAME))) {
-                ORTE_ERROR_LOG(rc);
-                OPAL_LIST_RELEASE(procs);
-                return;
-            }
-        }
-    }
-
-    /* unpack the procs that were impacted by the error */
-    cnt = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nprocs, &cnt, OPAL_INT))) {
-        ORTE_ERROR_LOG(rc);
-        if (NULL != procs) {
-            OPAL_LIST_RELEASE(procs);
-        }
-        return;
-    }
-
-    /* if any were provided, add them to the list */
-    if (0 < nprocs) {
-        eprocs = OBJ_NEW(opal_list_t);
-        for (n=0; n < nprocs; n++) {
-            nm = OBJ_NEW(opal_namelist_t);
-            opal_list_append(eprocs, &nm->super);
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nm->name, &cnt, OPAL_NAME))) {
-                ORTE_ERROR_LOG(rc);
-                if (NULL != procs) {
-                    OPAL_LIST_RELEASE(procs);
-                }
-                OPAL_LIST_RELEASE(eprocs);
-                return;
-            }
-        }
     }
 
     /* unpack the infos that were provided */
     cnt = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nprocs, &cnt, OPAL_INT))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ninfo, &cnt, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
-        if (NULL != procs) {
-            OPAL_LIST_RELEASE(procs);
-        }
         return;
     }
 
     /* if any were provided, add them to the list */
-    if (0 < nprocs) {
-        info = OBJ_NEW(opal_list_t);
-        for (n=0; n < nprocs; n++) {
+    cd = OBJ_NEW(orte_pmix_server_op_caddy_t);
+
+    if (0 < ninfo) {
+        cd->info = OBJ_NEW(opal_list_t);
+        for (n=0; n < ninfo; n++) {
             val = OBJ_NEW(opal_value_t);
-            opal_list_append(info, &val->super);
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &val, &cnt, OPAL_VALUE))) {
                 ORTE_ERROR_LOG(rc);
-                if (NULL != procs) {
-                    OPAL_LIST_RELEASE(procs);
-                }
-                if (NULL != eprocs) {
-                    OPAL_LIST_RELEASE(eprocs);
-                }
-                OPAL_LIST_RELEASE(info);
+                OBJ_RELEASE(val);
+                OPAL_LIST_RELEASE(cd->info);
+                OBJ_RELEASE(cd);
                 return;
             }
+            opal_list_append(cd->info, &val->super);
         }
     }
 
-    cd = OBJ_NEW(orte_pmix_server_op_caddy_t);
-    cd->procs = procs;
-    cd->eprocs = eprocs;
-    cd->info = info;
-
-    if (OPAL_SUCCESS != (rc = opal_pmix.server_notify_error(ret, procs, eprocs, info, _notify_release, cd))) {
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s NOTIFYING PMIX SERVER OF STATUS %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ret);
+    if (OPAL_SUCCESS != (rc = opal_pmix.server_notify_event(ret, &source, cd->info, _notify_release, cd))) {
         ORTE_ERROR_LOG(rc);
-        if (NULL != procs) {
-            OPAL_LIST_RELEASE(procs);
-        }
-        if (NULL != eprocs) {
-            OPAL_LIST_RELEASE(eprocs);
-        }
-        if (NULL != info) {
-            OPAL_LIST_RELEASE(info);
+        if (NULL != cd->info) {
+            OPAL_LIST_RELEASE(cd->info);
         }
         OBJ_RELEASE(cd);
     }

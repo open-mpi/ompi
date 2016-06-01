@@ -85,11 +85,11 @@ const opal_pmix_base_module_t opal_pmix_ext114_module = {
     .server_deregister_client = pmix1_server_deregister_client,
     .server_setup_fork = pmix1_server_setup_fork,
     .server_dmodex_request = pmix1_server_dmodex,
-    .server_notify_error = pmix1_server_notify_error,
+    .server_notify_event = pmix1_server_notify_error,
     /* utility APIs */
     .get_version = PMIx_Get_version,
-    .register_errhandler = opal_pmix_base_register_handler,
-    .deregister_errhandler = opal_pmix_base_deregister_handler,
+    .register_evhandler = opal_pmix_base_register_handler,
+    .deregister_evhandler = opal_pmix_base_deregister_handler,
     .store_local = pmix1_store_local,
     .get_nspace = pmix1_get_nspace,
     .register_jobid = pmix1_register_jobid

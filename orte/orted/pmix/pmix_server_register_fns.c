@@ -49,32 +49,6 @@
 #include "pmix_server_internal.h"
 #include "pmix_server.h"
 
-typedef struct {
-    volatile bool active;
-    opal_list_t *info;
-} myxfer_t;
-
-static void opcbfunc(int status, void *cbdata)
-{
-    myxfer_t *p = (myxfer_t*)cbdata;
-    opal_list_t *lt = p->info;
-    opal_value_t *k1, *k2;
-    opal_list_t *pmap;
-
-    if (NULL != lt) {
-        OPAL_LIST_FOREACH_SAFE(k1, k2, lt, opal_value_t) {
-            if (OPAL_PTR == k1->type) {
-                pmap = (opal_list_t*)k1->data.ptr;
-                OPAL_LIST_RELEASE(pmap);
-            }
-            opal_list_remove_item(lt, &k1->super);
-            OBJ_RELEASE(k1);
-        }
-        OBJ_RELEASE(lt);
-    }
-    p->active = false;
-}
-
 /* stuff proc attributes for sending back to a proc */
 int orte_pmix_server_register_nspace(orte_job_t *jdata)
 {
@@ -91,7 +65,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     orte_app_context_t *app;
     uid_t uid;
     gid_t gid;
-    myxfer_t *p;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s register nspace for %s",
@@ -406,17 +379,11 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     orte_set_attribute(&jdata->attributes, ORTE_JOB_NSPACE_REGISTERED, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
 
     /* pass it down */
-    p = (myxfer_t*)malloc(sizeof(myxfer_t));
-    p->active = true;
-    p->info = info;
-    if (OPAL_SUCCESS != opal_pmix.server_register_nspace(jdata->jobid,
-                                                         jdata->num_local_procs,
-                                                         info, opcbfunc, (void*)p)) {
-        OPAL_LIST_RELEASE(info);
-        return ORTE_ERROR;
-    }
-    ORTE_WAIT_FOR_COMPLETION(p->active);
-    free(p);
+    /* we are in an event, so no need to callback */
+    rc = opal_pmix.server_register_nspace(jdata->jobid,
+                                          jdata->num_local_procs,
+                                          info, NULL, NULL);
+    OPAL_LIST_RELEASE(info);
 
-    return ORTE_SUCCESS;
+    return rc;
 }

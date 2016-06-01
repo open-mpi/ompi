@@ -61,6 +61,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
@@ -2133,6 +2134,64 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
 
 static bool mpir_breakpoint_fired = false;
 
+static void _send_notification(void)
+{
+    opal_buffer_t buf;
+    int status = OPAL_ERR_DEBUGGER_RELEASE;
+    orte_grpcomm_signature_t sig;
+    int rc;
+    opal_value_t kv, *kvptr;
+
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+
+    /* pack the debugger_attached status */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &status, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+
+    /* the source is me */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+
+    /* instruct that it is to go only to non-default evhandlers */
+    status = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &status, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_PMIX_EVENT_NON_DEFAULT);
+    kv.type = OPAL_BOOL;
+    kv.data.flag = true;
+    kvptr = &kv;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &kvptr, 1, OPAL_VALUE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kv);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+    OBJ_DESTRUCT(&kv);
+
+    /* xcast it to everyone */
+    OBJ_CONSTRUCT(&sig, orte_grpcomm_signature_t);
+    sig.signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig.signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig.signature[0].vpid = ORTE_VPID_WILDCARD;
+    sig.sz = 1;
+
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(&sig, ORTE_RML_TAG_NOTIFICATION, &buf))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_DESTRUCT(&sig);
+    OBJ_DESTRUCT(&buf);
+}
+
 static void orte_debugger_dump(void)
 {
     int i;
@@ -2282,8 +2341,6 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
     orte_proc_t *proc;
     orte_app_context_t *appctx;
     orte_vpid_t i, j;
-    opal_buffer_t *buf;
-    int rc;
     char **aliases, *aptr;
 
     /* if we couldn't get thru the mapper stage, we might
@@ -2303,19 +2360,11 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
             /* trigger the debugger */
             MPIR_Breakpoint();
 
-            /* send a message to rank=0 to release it */
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 0)) ||
-                ORTE_PROC_STATE_UNTERMINATED < proc->state ) {
-                /* proc is already dead */
-                return;
-            }
-            buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
-            if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
-                                                  ORTE_RML_TAG_DEBUGGER_RELEASE,
-                                                  orte_rml_send_callback, NULL))) {
-                opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
-                OBJ_RELEASE(buf);
-            }
+            opal_output_verbose(5, orte_debug_output,
+                                "%s NOTIFYING DEBUGGER RELEASE",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            /* notify all procs that the debugger is ready */
+            _send_notification();
         }
         return;
     }
@@ -2409,25 +2458,11 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
             /* trigger the debugger */
             MPIR_Breakpoint();
 
-            /* send a message to rank=0 to release it */
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 0)) ||
-                ORTE_PROC_STATE_UNTERMINATED < proc->state) {
-                /* proc is already dead or never registered with us (so we don't have
-                 * contact info for him)
-                 */
-                return;
-            }
             opal_output_verbose(2, orte_debug_output,
-                                "%s sending debugger release to %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&proc->name));
-            buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
-            if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
-                                                  ORTE_RML_TAG_DEBUGGER_RELEASE,
-                                                  orte_rml_send_callback, NULL))) {
-                opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
-                OBJ_RELEASE(buf);
-            }
+                                "%s NOTIFYING DEBUGGER RELEASE",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            /* notify all procs that the debugger is ready */
+            _send_notification();
         } else {
             /* if I am launching debugger daemons, then I need to do so now
              * that the job has been started and I know which nodes have
@@ -2635,7 +2670,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
     return ret;
 }
 
-static void open_fifo (void)
+static void open_fifo(void)
 {
     if (orte_debugger_attach_fd > 0) {
     close(orte_debugger_attach_fd);

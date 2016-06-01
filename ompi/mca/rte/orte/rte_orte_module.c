@@ -95,6 +95,34 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
     exit(-1);
 }
 
+static size_t handler = SIZE_MAX;
+static bool debugger_register_active = true;
+static bool debugger_event_active = true;
+
+static void _release_fn(int status,
+                        const opal_process_name_t *source,
+                        opal_list_t *info, opal_list_t *results,
+                        opal_pmix_notification_complete_fn_t cbfunc,
+                        void *cbdata)
+{
+    /* must let the notifier know we are done */
+    if (NULL != cbfunc) {
+        cbfunc(ORTE_SUCCESS, NULL, NULL, NULL, cbdata);
+    }
+    debugger_event_active = false;
+}
+
+static void _register_fn(int status,
+                         size_t evhandler_ref,
+                         void *cbdata)
+{
+    opal_list_t *codes = (opal_list_t*)cbdata;
+
+    handler = evhandler_ref;
+    OPAL_LIST_RELEASE(codes);
+    debugger_register_active = false;
+}
+
 /*
  * Wait for a debugger if asked.  We support two ways of waiting for
  * attaching debuggers -- see big comment in
@@ -103,7 +131,8 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
 void ompi_rte_wait_for_debugger(void)
 {
     int debugger;
-    orte_rml_recv_cb_t xfer;
+    opal_list_t *codes;
+    opal_value_t *kv;
 
     /* See lengthy comment in orte/tools/orterun/debuggers.c about
        orte_in_parallel_debugger */
@@ -133,23 +162,23 @@ void ompi_rte_wait_for_debugger(void)
 #endif
         }
     } else {
-        /* only the rank=0 proc waits for either a message from the
-         * HNP or for the debugger to attach - everyone else will just
-         * spin in * the grpcomm barrier in ompi_mpi_init until rank=0
-         * joins them.
-         */
-        if (0 != ORTE_PROC_MY_NAME->vpid) {
-            return;
-        }
 
-        /* VPID 0 waits for a message from the HNP */
-        OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
-        xfer.active = true;
-        orte_rml.recv_buffer_nb(OMPI_NAME_WILDCARD,
-                                ORTE_RML_TAG_DEBUGGER_RELEASE,
-                                ORTE_RML_NON_PERSISTENT,
-                                orte_rml_recv_callback, &xfer);
-        /* let the MPI progress engine run while we wait */
-        OMPI_WAIT_FOR_COMPLETION(xfer.active);
+        /* register an event handler for the ORTE_ERR_DEBUGGER_RELEASE event */
+        codes = OBJ_NEW(opal_list_t);
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup("errorcode");
+        kv->type = OPAL_INT;
+        kv->data.integer = ORTE_ERR_DEBUGGER_RELEASE;
+        opal_list_append(codes, &kv->super);
+
+        opal_pmix.register_evhandler(codes, NULL, _release_fn, _register_fn, codes);
+        /* let the MPI progress engine run while we wait for registration to complete */
+        OMPI_WAIT_FOR_COMPLETION(debugger_register_active);
+
+        /* let the MPI progress engine run while we wait for debugger release */
+        OMPI_WAIT_FOR_COMPLETION(debugger_event_active);
+
+        /* deregister the event handler */
+        opal_pmix.deregister_evhandler(handler, NULL, NULL);
     }
 }

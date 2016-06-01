@@ -145,19 +145,22 @@ OPAL_MODULE_DECLSPEC int pmix1_server_register_nspace(opal_jobid_t jobid,
                                                       opal_list_t *info,
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
-OPAL_MODULE_DECLSPEC void pmix1_server_deregister_nspace(opal_jobid_t jobid);
+OPAL_MODULE_DECLSPEC void pmix1_server_deregister_nspace(opal_jobid_t jobid,
+                                                         opal_pmix_op_cbfunc_t cbfunc,
+                                                         void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix1_server_register_client(const opal_process_name_t *proc,
                                                       uid_t uid, gid_t gid,
                                                       void *server_object,
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
-OPAL_MODULE_DECLSPEC void pmix1_server_deregister_client(const opal_process_name_t *proc);
+OPAL_MODULE_DECLSPEC void pmix1_server_deregister_client(const opal_process_name_t *proc,
+                                                         opal_pmix_op_cbfunc_t cbfunc,
+                                                         void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix1_server_setup_fork(const opal_process_name_t *proc, char ***env);
 OPAL_MODULE_DECLSPEC int pmix1_server_dmodex(const opal_process_name_t *proc,
                                              opal_pmix_modex_cbfunc_t cbfunc, void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix1_server_notify_error(int status,
-                                                   opal_list_t *procs,
-                                                   opal_list_t *error_procs,
+                                                   const opal_process_name_t *source,
                                                    opal_list_t *info,
                                                    opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 

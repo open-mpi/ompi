@@ -50,8 +50,10 @@ extern opal_pmix_server_module_t *host_module;
 static char *dbgvalue=NULL;
 static int errhdler_ref = 0;
 
-static void completion_handler (void * cbdata) {
-    int * cond = (int *)cbdata;
+static void completion_handler(int status, opal_list_t *results,
+                               opal_pmix_op_cbfunc_t cbfunc, void *thiscbdata,
+                               void *notification_cbdata) {
+    int * cond = (int *)notification_cbdata;
     *cond = 0;
 }
 
@@ -95,7 +97,7 @@ static void myerr(pmix_status_t status,
     }
 
     /* call the base errhandler */
-    opal_pmix_base_errhandler(rc, &plist, &ilist, completion_handler, (void *)&cond);
+    opal_pmix_base_evhandler(rc, &OPAL_PROC_MY_NAME, &plist, &ilist, completion_handler, (void *)&cond);
     PMIX_WAIT_FOR_COMPLETION(cond);
 
     OPAL_LIST_DESTRUCT(&plist);
@@ -263,7 +265,9 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     return pmix1_convert_rc(rc);
 }
 
-void pmix1_server_deregister_nspace(opal_jobid_t jobid)
+void pmix1_server_deregister_nspace(opal_jobid_t jobid,
+                                    opal_pmix_op_cbfunc_t cbfunc,
+                                    void *cbdata)
 {
     opal_pmix1_jobid_trkr_t *jptr;
 
@@ -306,7 +310,9 @@ int pmix1_server_register_client(const opal_process_name_t *proc,
     return pmix1_convert_rc(rc);
 }
 
-void pmix1_server_deregister_client(const opal_process_name_t *proc)
+void pmix1_server_deregister_client(const opal_process_name_t *proc,
+                                    opal_pmix_op_cbfunc_t cbfunc,
+                                    void *cbdata)
 {
     opal_pmix1_jobid_trkr_t *jptr;
     pmix_proc_t p;
@@ -376,46 +382,20 @@ int pmix1_server_dmodex(const opal_process_name_t *proc,
 }
 
 int pmix1_server_notify_error(int status,
-                                opal_list_t *procs,
-                                opal_list_t *error_procs,
-                                opal_list_t *info,
-                                opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+                              const opal_process_name_t *source,
+                              opal_list_t *info,
+                              opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     opal_value_t *kv;
     pmix_info_t *pinfo;
-    size_t sz, psz, esz, n;
-    pmix_proc_t *ps, *eps;
+    size_t sz, n;
     pmix_status_t rc;
     pmix1_opcaddy_t *op;
-    opal_namelist_t *nm;
 
-    /* convert the list of procs */
-    if (NULL != procs) {
-        psz = opal_list_get_size(procs);
-        PMIX_PROC_CREATE(ps, psz);
-        n = 0;
-        OPAL_LIST_FOREACH(nm, procs, opal_namelist_t) {
-            (void)opal_snprintf_jobid(ps[n].nspace, PMIX_MAX_NSLEN, nm->name.jobid);
-            ps[n].rank = (int)nm->name.vpid;
-            ++n;
-        }
-    } else {
-        psz = 0;
-        ps = NULL;
-    }
-    if (NULL != error_procs) {
-        esz = opal_list_get_size(error_procs);
-        PMIX_PROC_CREATE(eps, esz);
-        n = 0;
-        OPAL_LIST_FOREACH(nm, error_procs, opal_namelist_t) {
-            (void)opal_snprintf_jobid(eps[n].nspace, PMIX_MAX_NSLEN, nm->name.jobid);
-            eps[n].rank = (int)nm->name.vpid;
-            ++n;
-        }
-    } else {
-        esz = 0;
-        eps = NULL;
-    }
+    /* setup the caddy */
+    op = OBJ_NEW(pmix1_opcaddy_t);
+    op->opcbfunc = cbfunc;
+    op->cbdata = cbdata;
 
     /* convert the list to an array of pmix_info_t */
     if (NULL != info) {
@@ -430,21 +410,12 @@ int pmix1_server_notify_error(int status,
         sz = 0;
         pinfo = NULL;
     }
-
-    /* setup the caddy */
-    op = OBJ_NEW(pmix1_opcaddy_t);
-    op->procs = ps;
-    op->nprocs = psz;
-    op->error_procs = eps;
-    op->nerror_procs = esz;
     op->info = pinfo;
     op->sz = sz;
-    op->opcbfunc = cbfunc;
-    op->cbdata = cbdata;
 
     rc = pmix1_convert_opalrc(status);
-    rc = PMIx_Notify_error(rc, ps, psz, eps, esz,
-                                  pinfo, sz, opcbfunc, op);
+    rc = PMIx_Notify_error(rc, NULL, 0, NULL, 0,
+                           pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);
     }
