@@ -162,16 +162,24 @@ typedef int (*opal_pmix_server_disconnect_fn_t)(opal_list_t *procs, opal_list_t 
  * manager may have access to events beyond process failure. In cases where
  * the client application requests to be notified of such events, the request
  * will be passed to the PMIx server, which in turn shall pass the request to
- * the resource manager. The list of opal_value_t will describe the
- * desired events */
+ * the resource manager. The list of opal_value_t will provide the OPAL
+ * error codes corresponding to the desired events */
  typedef int (*opal_pmix_server_register_events_fn_t)(opal_list_t *info,
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
 
-/* Deregister from the specified events. */
+/* Deregister from the specified events. The list of opal_value_t will provide the OPAL
+ * error codes corresponding to the desired events */
  typedef int (*opal_pmix_server_deregister_events_fn_t)(opal_list_t *info,
                                                         opal_pmix_op_cbfunc_t cbfunc,
                                                         void *cbdata);
+
+/* Notify  the specified processes of an event generated either by
+  * the PMIx server itself, or by one of its local clients. The RTE
+  * is requested to pass the notification to each PMIx server that
+  * hosts one or more of the specified processes */
+typedef int (*opal_pmix_server_notify_fn_t)(int code, opal_list_t *procs, opal_list_t *info,
+                                            opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Callback function for incoming connection requests from
  * local clients */
@@ -204,6 +212,7 @@ typedef struct opal_pmix_server_module_1_0_0_t {
     opal_pmix_server_disconnect_fn_t            disconnect;
     opal_pmix_server_register_events_fn_t       register_events;
     opal_pmix_server_deregister_events_fn_t     deregister_events;
+    opal_pmix_server_notify_fn_t                notify_event;
     opal_pmix_server_listener_fn_t              listener;
 } opal_pmix_server_module_t;
 

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014-2015 Mellanox Technologies, Inc.
 #                         All rights reserved.
@@ -22,25 +22,25 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_opal_pmix_external_DSO
+if MCA_BUILD_opal_pmix_ext114_DSO
 component_noinst =
-component_install = mca_pmix_external.la
+component_install = mca_pmix_ext114.la
 else
-component_noinst = libmca_pmix_external.la
+component_noinst = libmca_pmix_ext114.la
 component_install =
 endif
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_pmix_external_la_SOURCES = $(sources)
-mca_pmix_external_la_CFLAGS =
-mca_pmix_external_la_CPPFLAGS = $(opal_pmix_ext_CPPFLAGS)
-mca_pmix_external_la_LDFLAGS = -module -avoid-version $(opal_pmix_ext_LDFLAGS)
-mca_pmix_external_la_LIBADD = $(opal_pmix_ext_LIBS)
+mca_pmix_ext114_la_SOURCES = $(sources)
+mca_pmix_ext114_la_CFLAGS =
+mca_pmix_ext114_la_CPPFLAGS = $(opal_pmix_ext114_CPPFLAGS)
+mca_pmix_ext114_la_LDFLAGS = -module -avoid-version $(opal_pmix_ext114_LDFLAGS)
+mca_pmix_ext114_la_LIBADD = $(opal_pmix_ext114_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_pmix_external_la_SOURCES =$(sources)
-libmca_pmix_external_la_CFLAGS =
-libmca_pmix_external_la_CPPFLAGS = $(opal_pmix_ext_CPPFLAGS)
-libmca_pmix_external_la_LDFLAGS = -module -avoid-version $(opal_pmix_ext_LDFLAGS)
-libmca_pmix_external_la_LIBADD = $(opal_pmix_ext_LIBS)
+libmca_pmix_ext114_la_SOURCES =$(sources)
+libmca_pmix_ext114_la_CFLAGS =
+libmca_pmix_ext114_la_CPPFLAGS = $(opal_pmix_ext114_CPPFLAGS)
+libmca_pmix_ext114_la_LDFLAGS = -module -avoid-version $(opal_pmix_ext114_LDFLAGS)
+libmca_pmix_ext114_la_LIBADD = $(opal_pmix_ext114_LIBS)

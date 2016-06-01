@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -11,8 +11,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_PMIX_EXTERNAL_H
-#define MCA_PMIX_EXTERNAL_H
+#ifndef MCA_PMIX_EXT114_H
+#define MCA_PMIX_EXT114_H
 
 #include "opal_config.h"
 
@@ -38,11 +38,11 @@ typedef struct {
   opal_pmix_base_component_t super;
   opal_list_t jobids;
   bool native_launch;
-} mca_pmix_external_component_t;
+} mca_pmix_ext114_component_t;
 
-OPAL_DECLSPEC extern mca_pmix_external_component_t mca_pmix_external_component;
+OPAL_DECLSPEC extern mca_pmix_ext114_component_t mca_pmix_ext114_component;
 
-OPAL_DECLSPEC extern const opal_pmix_base_module_t opal_pmix_external_module;
+OPAL_DECLSPEC extern const opal_pmix_base_module_t opal_pmix_ext114_module;
 
 /****  INTERNAL OBJECTS  ****/
 typedef struct {

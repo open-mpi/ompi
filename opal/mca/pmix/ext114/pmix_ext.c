@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -48,7 +48,7 @@
 static const char *pmix1_get_nspace(opal_jobid_t jobid);
 static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace);
 
-const opal_pmix_base_module_t opal_pmix_external_module = {
+const opal_pmix_base_module_t opal_pmix_ext114_module = {
     /* client APIs */
     .init = pmix1_client_init,
     .finalize = pmix1_client_finalize,
@@ -99,7 +99,7 @@ static const char *pmix1_get_nspace(opal_jobid_t jobid)
 {
     opal_pmix1_jobid_trkr_t *jptr;
 
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext114_component.jobids, opal_pmix1_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             return jptr->nspace;
         }
@@ -112,7 +112,7 @@ static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace)
     opal_pmix1_jobid_trkr_t *jptr;
 
     /* if we don't already have it, add this to our jobid tracker */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext114_component.jobids, opal_pmix1_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             return;
         }
@@ -120,7 +120,7 @@ static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace)
     jptr = OBJ_NEW(opal_pmix1_jobid_trkr_t);
     (void)strncpy(jptr->nspace, nspace, PMIX_MAX_NSLEN);
     jptr->jobid = jobid;
-    opal_list_append(&mca_pmix_external_component.jobids, &jptr->super);
+    opal_list_append(&mca_pmix_ext114_component.jobids, &jptr->super);
 }
 
 pmix_status_t pmix1_convert_opalrc(int rc)

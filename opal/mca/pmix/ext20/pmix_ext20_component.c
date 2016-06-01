@@ -21,13 +21,13 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
 #include "opal/mca/pmix/pmix.h"
-#include "pmix_ext.h"
+#include "pmix_ext20.h"
 
 /*
  * Public string showing the pmix external component version number
  */
-const char *opal_pmix_external_component_version_string =
-    "OPAL external pmix MCA component version " OPAL_VERSION;
+const char *opal_pmix_ext20_component_version_string =
+    "OPAL external pmix2.0 MCA component version " OPAL_VERSION;
 
 /*
  * Local function
@@ -42,7 +42,7 @@ static int external_component_query(mca_base_module_t **module, int *priority);
  * and pointers to our public functions in it
  */
 
-mca_pmix_external_component_t mca_pmix_external_component = {
+mca_pmix_ext20_component_t mca_pmix_ext20_component = {
     {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -55,7 +55,7 @@ mca_pmix_external_component_t mca_pmix_external_component = {
 
         /* Component name and version */
 
-            .mca_component_name = "external",
+            .mca_component_name = "ext20",
             MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                                   OPAL_RELEASE_VERSION),
 
@@ -76,13 +76,13 @@ mca_pmix_external_component_t mca_pmix_external_component = {
 
 static int external_open(void)
 {
-    OBJ_CONSTRUCT(&mca_pmix_external_component.jobids, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext20_component.jobids, opal_list_t);
     return OPAL_SUCCESS;
 }
 
 static int external_close(void)
 {
-    OPAL_LIST_DESTRUCT(&mca_pmix_external_component.jobids);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext20_component.jobids);
     return OPAL_SUCCESS;
 }
 
@@ -100,6 +100,6 @@ static int external_component_query(mca_base_module_t **module, int *priority)
         /* we could be a server, so we still need to be considered */
         *priority = 5;
     }
-    *module = (mca_base_module_t *)&opal_pmix_external_module;
+    *module = (mca_base_module_t *)&opal_pmix_ext20_module;
     return OPAL_SUCCESS;
 }
