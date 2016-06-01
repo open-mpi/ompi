@@ -9,6 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,3 +29,6 @@ noinst_LTLIBRARIES = libopalutilkeyval.la
 libopalutilkeyval_la_SOURCES = \
 	keyval_lex.h \
         keyval_lex.l
+
+maintainer-clean-local:
+	rm -f keyval_lex.c
