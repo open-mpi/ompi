@@ -244,7 +244,6 @@ struct mca_btl_base_endpoint_t *mca_btl_ugni_get_ep (struct mca_btl_base_module_
     do {
         rc = opal_hash_table_get_value_uint64 (&ugni_module->id_to_endpoint, proc_id, (void **) &ep);
         if (OPAL_SUCCESS == rc) {
-            OPAL_THREAD_UNLOCK(&ugni_module->endpoint_lock);
             break;
         }
 
