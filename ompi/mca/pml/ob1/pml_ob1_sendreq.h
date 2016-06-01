@@ -262,17 +262,18 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
             mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
         }
 
-        sendreq->req_send.req_base.req_pml_complete = true;
+        if (!sendreq->req_send.req_base.req_free_called) {
+            sendreq->req_send.req_base.req_pml_complete = true;
 
-        if( !REQUEST_COMPLETE( &((sendreq->req_send).req_base.req_ompi)) ) {
-            /* Should only be called for long messages (maybe synchronous) */
-            MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
-        } else {
-            if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
-                ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+            if( !REQUEST_COMPLETE( &((sendreq->req_send).req_base.req_ompi)) ) {
+                /* Should only be called for long messages (maybe synchronous) */
+                MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+            } else {
+                if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
+                    ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+                }
             }
-        }
-        if(true == sendreq->req_send.req_base.req_free_called) {
+        } else {
             MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
         }
     }
