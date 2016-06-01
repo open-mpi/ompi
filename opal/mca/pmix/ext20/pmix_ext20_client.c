@@ -28,12 +28,12 @@
 #include "opal/util/proc.h"
 
 #include "opal/mca/pmix/base/base.h"
-#include "pmix_ext.h"
+#include "pmix_ext20.h"
 #include "pmix.h"
 
 static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
-static int errhdler_ref = 0;
+static size_t errhdler_ref = 0;
 
 #define PMIX_WAIT_FOR_COMPLETION(a)             \
     do {                                        \
@@ -43,21 +43,24 @@ static int errhdler_ref = 0;
     } while (0)
 
 
-static void completion_handler (void * cbdata) {
-    int * cond = (int *)cbdata;
-    *cond = 0;
+static void completion_handler (void *cbdata) {
+    bool *active = (bool *)cbdata;
+    *active = false;
 }
 
-static void myerr(pmix_status_t status,
+static void myerr(size_t evhdlr_registration_id,
+                  pmix_status_t status,
                   pmix_proc_t procs[], size_t nprocs,
-                  pmix_info_t info[], size_t ninfo)
+                  pmix_info_t info[], size_t ninfo,
+                  pmix_event_notification_cbfunc_fn_t cbfunc,
+                  void *cbdata)
 {
     int rc;
     opal_list_t plist, ilist;
     opal_namelist_t *nm;
     opal_value_t *iptr;
     size_t n;
-    volatile int cond = 1;
+    volatile bool active;
 
     /* convert the incoming status */
     rc = pmix1_convert_rc(status);
@@ -81,21 +84,22 @@ static void myerr(pmix_status_t status,
     }
 
     /* call the base errhandler */
-    opal_pmix_base_errhandler(rc, &plist, &ilist, completion_handler, (void *)&cond);
-    PMIX_WAIT_FOR_COMPLETION(cond);
+    active = true;
+    opal_pmix_base_errhandler(rc, &plist, &ilist, completion_handler, (void *)&active);
+    PMIX_WAIT_FOR_COMPLETION(active);
 
     OPAL_LIST_DESTRUCT(&plist);
     OPAL_LIST_DESTRUCT(&ilist);
 }
 
 static void errreg_cbfunc (pmix_status_t status,
-                          int errhandler_ref,
+                          size_t errhandler_ref,
                           void *cbdata)
 {
     errhdler_ref = errhandler_ref;
     opal_output_verbose(5, opal_pmix_base_framework.framework_output,
-                        "PMIX client errreg_cbfunc - error handler registered status=%d, reference=%d",
-                         status, errhandler_ref);
+                        "PMIX client errreg_cbfunc - error handler registered status=%d, reference=%lu",
+                         status, (unsigned long)errhandler_ref);
 }
 
 int pmix1_client_init(void)
@@ -113,11 +117,7 @@ int pmix1_client_init(void)
         putenv(dbgvalue);
     }
 
-#ifdef OPAL_PMIX_VERSION_11
-    rc = PMIx_Init(&my_proc);
-#else
     rc = PMIx_Init(&my_proc, NULL, 0);
-#endif
     if (PMIX_SUCCESS != rc) {
         return pmix1_convert_rc(rc);
     }
@@ -126,7 +126,7 @@ int pmix1_client_init(void)
    if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
         /* if we were launched by the OMPI RTE, then
          * the jobid is in a special format - so get it */
-        mca_pmix_external_component.native_launch = true;
+        mca_pmix_ext20_component.native_launch = true;
         opal_convert_string_to_jobid(&pname.jobid, my_proc.nspace);
     } else {
         /* we were launched by someone else, so make the
@@ -138,13 +138,13 @@ int pmix1_client_init(void)
     job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
     (void)strncpy(job->nspace, my_proc.nspace, PMIX_MAX_NSLEN);
     job->jobid = pname.jobid;
-    opal_list_append(&mca_pmix_external_component.jobids, &job->super);
+    opal_list_append(&mca_pmix_ext20_component.jobids, &job->super);
 
     pname.vpid = my_proc.rank;
     opal_proc_set_name(&pname);
 
-    /* register the errhandler */
-    PMIx_Register_errhandler(NULL, 0, myerr, errreg_cbfunc, NULL );
+    /* register the default event handler */
+    PMIx_Register_event_handler(NULL, 0, NULL, 0, myerr, errreg_cbfunc, NULL);
     return OPAL_SUCCESS;
 
 }
@@ -156,15 +156,10 @@ int pmix1_client_finalize(void)
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client finalize");
 
-    /* deregister the errhandler */
-    PMIx_Deregister_errhandler(errhdler_ref, NULL, NULL);
+    /* deregister the default event handler */
+    PMIx_Deregister_event_handler(errhdler_ref, NULL, NULL);
 
-#ifdef OPAL_PMIX_VERSION_11
-    rc = PMIx_Finalize();
-#else
     rc = PMIx_Finalize(NULL, 0);
-#endif
-
     return pmix1_convert_rc(rc);
 }
 
@@ -197,7 +192,7 @@ int pmix1_abort(int flag, const char *msg,
             /* look thru our list of jobids and find the
              * corresponding nspace */
             job = NULL;
-            OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+            OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
                 if (jptr->jobid == ptr->name.jobid) {
                     job = jptr;
                     break;
@@ -232,7 +227,7 @@ int pmix1_store_local(const opal_process_name_t *proc, opal_value_t *val)
         /* look thru our list of jobids and find the
          * corresponding nspace */
         job = NULL;
-        OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
             if (jptr->jobid == proc->jobid) {
                 job = jptr;
                 break;
@@ -298,7 +293,7 @@ int pmix1_fence(opal_list_t *procs, int collect_data)
             /* look thru our list of jobids and find the
              * corresponding nspace */
             job = NULL;
-            OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+            OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
                 if (jptr->jobid == ptr->name.jobid) {
                     job = jptr;
                     break;
@@ -360,7 +355,7 @@ int pmix1_fencenb(opal_list_t *procs, int collect_data,
             /* look thru our list of jobids and find the
              * corresponding nspace */
             job = NULL;
-            OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+            OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
                 if (jptr->jobid == ptr->name.jobid) {
                     job = jptr;
                     break;
@@ -445,7 +440,7 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
         /* look thru our list of jobids and find the
          * corresponding nspace */
         job = NULL;
-        OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
             if (jptr->jobid == proc->jobid) {
                 job = jptr;
                 break;
@@ -550,7 +545,7 @@ int pmix1_getnb(const opal_process_name_t *proc, const char *key,
         /* look thru our list of jobids and find the
          * corresponding nspace */
         job = NULL;
-        OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
             if (jptr->jobid == proc->jobid) {
                 job = jptr;
                 break;
@@ -701,7 +696,7 @@ int pmix1_lookup(opal_list_t *data, opal_list_t *info)
         /* transfer the data back */
         n=0;
         OPAL_LIST_FOREACH(d, data, opal_pmix_pdata_t) {
-            if (mca_pmix_external_component.native_launch) {
+            if (mca_pmix_ext20_component.native_launch) {
                 /* if we were launched by the OMPI RTE, then
                  * the jobid is in a special format - so get it */
                 opal_convert_string_to_jobid(&d->proc.jobid, pdata[n].proc.nspace);
@@ -712,7 +707,7 @@ int pmix1_lookup(opal_list_t *data, opal_list_t *info)
             }
             /* if we don't already have it, add this to our jobid tracker */
             job = NULL;
-            OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+            OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
                 if (jptr->jobid == d->proc.jobid) {
                     job = jptr;
                     break;
@@ -722,7 +717,7 @@ int pmix1_lookup(opal_list_t *data, opal_list_t *info)
                job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
                 (void)strncpy(job->nspace, pdata[n].proc.nspace, PMIX_MAX_NSLEN);
                 job->jobid = d->proc.jobid;
-                opal_list_append(&mca_pmix_external_component.jobids, &job->super);
+                opal_list_append(&mca_pmix_ext20_component.jobids, &job->super);
             }
             if (PMIX_RANK_WILDCARD == pdata[n].proc.rank) {
                 d->proc.vpid = OPAL_VPID_WILDCARD;
@@ -764,7 +759,7 @@ static void lk_cbfunc(pmix_status_t status,
         for (n=0; n < ndata; n++) {
             d = OBJ_NEW(opal_pmix_pdata_t);
             opal_list_append(&results, &d->super);
-            if (mca_pmix_external_component.native_launch) {
+            if (mca_pmix_ext20_component.native_launch) {
                 /* if we were launched by the OMPI RTE, then
                  * the jobid is in a special format - so get it */
                 opal_convert_string_to_jobid(&d->proc.jobid, data[n].proc.nspace);
@@ -775,7 +770,7 @@ static void lk_cbfunc(pmix_status_t status,
             }
             /* if we don't already have it, add this to our jobid tracker */
             job = NULL;
-            OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+            OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
                 if (jptr->jobid == d->proc.jobid) {
                     job = jptr;
                     break;
@@ -785,7 +780,7 @@ static void lk_cbfunc(pmix_status_t status,
                 job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
                 (void)strncpy(job->nspace, data[n].proc.nspace, PMIX_MAX_NSLEN);
                 job->jobid = d->proc.jobid;
-                opal_list_append(&mca_pmix_external_component.jobids, &job->super);
+                opal_list_append(&mca_pmix_ext20_component.jobids, &job->super);
             }
             if (PMIX_RANK_WILDCARD == data[n].proc.rank) {
                 d->proc.vpid = OPAL_VPID_WILDCARD;
@@ -949,7 +944,7 @@ int pmix1_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
 
     ret = PMIx_Spawn(pinfo, ninfo, papps, napps, nspace);
     if (PMIX_SUCCESS == ret) {
-        if (mca_pmix_external_component.native_launch) {
+        if (mca_pmix_ext20_component.native_launch) {
             /* if we were launched by the OMPI RTE, then
              * the jobid is in a special format - so get it */
             opal_convert_string_to_jobid(jobid, nspace);
@@ -962,7 +957,7 @@ int pmix1_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
         job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
         (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
         job->jobid = *jobid;
-        opal_list_append(&mca_pmix_external_component.jobids, &job->super);
+        opal_list_append(&mca_pmix_ext20_component.jobids, &job->super);
     }
     PMIX_APP_FREE(papps, napps);
 
@@ -979,7 +974,7 @@ static void spcbfunc(pmix_status_t status,
 
     rc = pmix1_convert_rc(status);
     if (PMIX_SUCCESS == status) {
-        if (mca_pmix_external_component.native_launch) {
+        if (mca_pmix_ext20_component.native_launch) {
             /* if we were launched by the OMPI RTE, then
              * the jobid is in a special format - so get it */
             opal_convert_string_to_jobid(&jobid, nspace);
@@ -992,7 +987,7 @@ static void spcbfunc(pmix_status_t status,
         job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
         (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
         job->jobid = jobid;
-        opal_list_append(&mca_pmix_external_component.jobids, &job->super);
+        opal_list_append(&mca_pmix_ext20_component.jobids, &job->super);
     }
 
     op->spcbfunc(rc, jobid, op->cbdata);
@@ -1070,7 +1065,7 @@ int pmix1_connect(opal_list_t *procs)
         /* look thru our list of jobids and find the
          * corresponding nspace */
         job = NULL;
-        OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
             if (jptr->jobid == ptr->name.jobid) {
                 job = jptr;
                 break;
@@ -1123,7 +1118,7 @@ int pmix1_connectnb(opal_list_t *procs,
     OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
         /* look thru our list of jobids and find the
          * corresponding nspace */
-        OPAL_LIST_FOREACH(job, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(job, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
             if (job->jobid == ptr->name.jobid) {
                 (void)strncpy(op->procs[n].nspace, job->nspace, PMIX_MAX_NSLEN);
                 break;
@@ -1162,7 +1157,7 @@ int pmix1_disconnect(opal_list_t *procs)
     OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
         /* look thru our list of jobids and find the
          * corresponding nspace */
-        OPAL_LIST_FOREACH(job, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(job, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
             if (job->jobid == ptr->name.jobid) {
                 (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
                 break;
@@ -1210,7 +1205,7 @@ int pmix1_disconnectnb(opal_list_t *procs,
     OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
         /* look thru our list of jobids and find the
          * corresponding nspace */
-        OPAL_LIST_FOREACH(job, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(job, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
             if (job->jobid == ptr->name.jobid) {
                 (void)strncpy(op->procs[n].nspace, job->nspace, PMIX_MAX_NSLEN);
                 break;
@@ -1245,7 +1240,7 @@ int pmix1_resolve_peers(const char *nodename, opal_jobid_t jobid,
         nspace = NULL;
     } else {
         job = NULL;
-        OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
             if (jptr->jobid == jobid) {
                 job = jptr;
                 break;
@@ -1264,7 +1259,7 @@ int pmix1_resolve_peers(const char *nodename, opal_jobid_t jobid,
         for (n=0; n < nprocs; n++) {
             nm = OBJ_NEW(opal_namelist_t);
             opal_list_append(procs, &nm->super);
-            if (mca_pmix_external_component.native_launch) {
+            if (mca_pmix_ext20_component.native_launch) {
                 /* if we were launched by the OMPI RTE, then
                  * the jobid is in a special format - so get it */
                 opal_convert_string_to_jobid(&nm->name.jobid, array[n].nspace);
@@ -1275,7 +1270,7 @@ int pmix1_resolve_peers(const char *nodename, opal_jobid_t jobid,
             }
             /* if we don't already have it, add this to our jobid tracker */
             job = NULL;
-            OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+            OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
                 if (jptr->jobid == nm->name.jobid) {
                     job = jptr;
                     break;
@@ -1285,7 +1280,7 @@ int pmix1_resolve_peers(const char *nodename, opal_jobid_t jobid,
                 job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
                 (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
                 job->jobid = jobid;
-                opal_list_append(&mca_pmix_external_component.jobids, &job->super);
+                opal_list_append(&mca_pmix_ext20_component.jobids, &job->super);
             }
             nm->name.vpid = array[n].rank;
         }
@@ -1305,7 +1300,7 @@ int pmix1_resolve_nodes(opal_jobid_t jobid, char **nodelist)
         /* look thru our list of jobids and find the
          * corresponding nspace */
         job = NULL;
-        OPAL_LIST_FOREACH(jptr, &mca_pmix_external_component.jobids, opal_pmix1_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
             if (jptr->jobid == jobid) {
                 job = jptr;
                 break;

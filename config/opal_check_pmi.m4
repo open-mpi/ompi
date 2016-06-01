@@ -227,12 +227,6 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 
 AC_DEFUN([OPAL_CHECK_PMIX],[
 
-    opal_pmix_ext_CPPFLAGS=
-    opal_pmix_ext_LDFLAGS=
-    opal_pmix_ext_LIBS=
-
-    OPAL_VAR_SCOPE_PUSH([pmix_ext_install_dir opal_pmix_CPPFLAGS_save opal_pmix_LDFLAGS_save opal_pmix_LIBS_save opal_pmix_LD_LIBRARY_PATH_save])
-
     AC_ARG_WITH([pmix],
                 [AC_HELP_STRING([--with-pmix(=DIR)],
                                 [Build PMIx support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of PMIx.  "external" forces Open MPI to use an external installation of PMIx.  Supplying a valid directory name also forces Open MPI to use an external installation of PMIx, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI does not support --without-pmix.])])
@@ -246,7 +240,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
     AC_MSG_CHECKING([if user requested external PMIx support($with_pmix)])
     AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_pmix" = "internal"],
           [AC_MSG_RESULT([no])
-           opal_external_pmix_happy="no"],
+           opal_external_pmix_happy=no],
           [AC_MSG_RESULT([yes])
            # check for external pmix lib */
            AS_IF([test "$with_pmix" = "external"],
@@ -255,80 +249,6 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            # Make sure we have the headers and libs in the correct location
            OPAL_CHECK_WITHDIR([external-pmix], [$pmix_ext_install_dir/include], [pmix.h])
            OPAL_CHECK_WITHDIR([external-libpmix], [$pmix_ext_install_dir/lib], [libpmix.*])
-           AC_MSG_CHECKING([if external component can be used])
-           OPAL_CHECK_PACKAGE([opal_pmix_ext],
-                              [pmix.h],
-                              [pmix],
-                              [PMIx_Init],
-                              [],
-                              [$pmix_ext_install_dir],
-                              [$pmix_ext_install_dir/lib],
-                              [AC_MSG_RESULT([PMIx external support will be built])
-                               opal_external_pmix_happy=yes],
-                              [opal_external_pmix_happy="no"
-                               AC_MSG_RESULT([no])
-                               AC_MSG_WARN([External PMIx support was requested but failed])
-                               AC_MSG_WARN([as explained above.])
-                               AC_MSG_ERROR([Cannot continue])])
-           # Check the version
-           opal_external_pmix_version="unknown"
-           opal_pmix_CPPFLAGS_save=$CPPFLAGS
-           opal_pmix_LDFLAGS_save=$LDFLAGS
-           opal_pmix_LIBS_save=$LIBS
-           LD_LIBRARY_PATH_orig=$opal_pmix_LD_LIBRARY_PATH_save
+           opal_external_pmix_happy=yes])
 
-           CPPFLAGS=$opal_pmix_ext_CPPFLAGS
-           LDFLAGS=$opal_pmix_ext_LDFLAGS
-           LIBS=$opal_pmix_ext_LIBS
-           LD_LIBRARY_PATH=$pmix_ext_install_dir/lib:$LD_LIBRARY_PATH
-           export LD_LIBRARY_PATH
-
-          AC_MSG_CHECKING([PMIx library version])
-          AC_RUN_IFELSE([
-              AC_LANG_SOURCE([
-#include <stdio.h>
-#include <stdlib.h>
-#include <pmix.h>
-#include <pmix/pmix_common.h>
-
-int main(int argc, char **argv)
-{
-    const char * version = NULL;
-    FILE *f = NULL;
-
-    f = fopen("conftestval", "w");
-    if( !f ) exit(1);
-    version = PMIx_Get_version();
-    fprintf(f, "%s", version);
-    fclose(f);
-
-    return 0;
-}
-             ])], [
-                 eval opal_external_pmix_version=`cat conftestval`
-                 AC_MSG_RESULT([$opal_external_pmix_version])
-             ], [
-                 LD_LIBRARY_PATH=$opal_pmix_LD_LIBRARY_PATH_save
-                 export LD_LIBRARY_PATH
-                 opal_external_pmix_happy="no"
-                 AC_MSG_ERROR([External PMIx support requested but could not build/run a test program. Aborting])
-             ], [
-                 LD_LIBRARY_PATH=$opal_pmix_LD_LIBRARY_PATH_save
-                 export LD_LIBRARY_PATH
-                 opal_external_pmix_happy="no"
-                 AC_MSG_ERROR([External PMIx disabled for cross compile. Aborting])
-         ])
-         CPPFLAGS=$opal_pmix_CPPFLAGS_save
-         LDFLAGS=$opal_pmix_LDFLAGS_save
-         LIBS=$opal_pmix_LIBS_save
-         LD_LIBRARY_PATH=$opal_pmix_LD_LIBRARY_PATH_save
-
-         opal_external_pmix_happy="yes"
-    ])
-
-    AC_SUBST(opal_pmix_ext_CPPFLAGS)
-    AC_SUBST(opal_pmix_ext_LDFLAGS)
-    AC_SUBST(opal_pmix_ext_LIBS)
-
-    OPAL_VAR_SCOPE_POP
 ])
