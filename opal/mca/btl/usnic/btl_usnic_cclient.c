@@ -228,7 +228,8 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
                                      uint32_t dest_netmask, int dest_port,
                                      char *dest_nodename,
                                      size_t max_msg_size)
-{
+{  
+    OPAL_THREAD_LOCK(&btl_usnic_lock);
     /* If connectivity checking is not enabled, do nothing */
     if (!mca_btl_usnic_component.connectivity_enabled) {
         return OPAL_SUCCESS;
@@ -259,6 +260,7 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
         ABORT("usnic connectivity client IPC write failed");
         /* Will not return */
     }
+    OPAL_THREAD_UNLOCK(&btl_usnic_lock);
 
     return OPAL_SUCCESS;
 }

@@ -51,6 +51,12 @@
 BEGIN_C_DECLS
 
 /*
+ * MPI_THREAD_MULTIPLE support
+ */
+extern opal_recursive_mutex_t btl_usnic_lock;
+
+
+/*
  * Forward declarations to avoid include loops
  */
 struct opal_btl_usnic_send_segment_t;

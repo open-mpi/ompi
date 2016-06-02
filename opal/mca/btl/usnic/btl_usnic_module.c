@@ -1080,6 +1080,7 @@ opal_btl_usnic_module_progress_sends(
     /*
      * Handle all the retransmits we can
      */
+    OPAL_THREAD_LOCK(&btl_usnic_lock);
     if (OPAL_UNLIKELY(!opal_list_is_empty(&module->pending_resend_segs))) {
         usnic_do_resends(module);
     }
@@ -1189,6 +1190,7 @@ opal_btl_usnic_module_progress_sends(
 
         endpoint = next_endpoint;
     }
+    OPAL_THREAD_UNLOCK(&btl_usnic_lock);
 }
 
 /*
@@ -1223,6 +1225,7 @@ usnic_send(
     opal_btl_usnic_module_t *module;
     opal_btl_usnic_send_segment_t *sseg;
 
+    OPAL_THREAD_LOCK(&btl_usnic_lock);
     endpoint = (opal_btl_usnic_endpoint_t *)base_endpoint;
     module = (opal_btl_usnic_module_t *)base_module;
     frag = (opal_btl_usnic_send_frag_t*) descriptor;
@@ -1331,6 +1334,7 @@ usnic_send(
 
     ++module->stats.pml_module_sends;
 
+    OPAL_THREAD_UNLOCK(&btl_usnic_lock);
     return rc;
 }
 

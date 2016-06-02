@@ -340,8 +340,9 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
         opal_output(0, "    Received ACK for sequence number %" UDSEQ " from %s to %s\n",
                     bseg->us_btl_header->ack_seq, remote_ip, local_ip);
 #endif
+        OPAL_THREAD_LOCK(&btl_usnic_lock);
         opal_btl_usnic_handle_ack(endpoint, ack_seq);
-
+        OPAL_THREAD_UNLOCK(&btl_usnic_lock);
         goto repost;
     }
 
