@@ -143,6 +143,11 @@ int ompi_request_default_wait_any(size_t count,
 
     request = requests[*index];
     assert( REQUEST_COMPLETE(request) );
+#if OPAL_ENABLE_FT_CR == 1
+    if( opal_cr_is_enabled ) {
+        OMPI_CRCP_REQUEST_COMPLETE(request);
+    }
+#endif
     /* Per note above, we have to call gen request query_fn even
        if STATUS_IGNORE was provided */
     if (OMPI_REQUEST_GEN == request->req_type) {
@@ -166,17 +171,6 @@ int ompi_request_default_wait_any(size_t count,
         rc = ompi_request_free(&requests[*index]);
     }
 
-#if OPAL_ENABLE_FT_CR == 1
-    if( opal_cr_is_enabled) {
-        ompi_request_t **rptr = requests;
-        for (i = 0; i < count; i++, rptr++) {
-            request = *rptr;
-            if( REQUEST_COMPLETE(request) ) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-        }
-    }
-#endif
     WAIT_SYNC_RELEASE(&sync);
     return rc;
 }
