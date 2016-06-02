@@ -2,7 +2,7 @@
  *  Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                          University Research and Technology
  *                          Corporation.  All rights reserved.
- *  Copyright (c) 2004-2005 The University of Tennessee and The University
+ *  Copyright (c) 2004-2016 The University of Tennessee and The University
  *                          of Tennessee Research Foundation.  All rights
  *                          reserved.
  *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -233,9 +233,9 @@ int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
     ompio_req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;
 
     if ( 0 == count ) {
-	ompi_request_complete (&ompio_req->req_ompi, 0);
 	ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
 	ompio_req->req_ompi.req_status._ucount = 0;
+	ompi_request_complete (&ompio_req->req_ompi, false);
 	return OMPI_SUCCESS;
     }
 
@@ -299,9 +299,9 @@ int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
 	ompi_status_public_t status;
 	ret = ompio_io_ompio_file_read (fh, buf, count, datatype, &status);
 
-	ompi_request_complete (&ompio_req->req_ompi, 0);
 	ompio_req->req_ompi.req_status.MPI_ERROR = ret;
 	ompio_req->req_ompi.req_status._ucount = status._ucount;
+	ompi_request_complete (&ompio_req->req_ompi, false);
     }
 
     *request = (ompi_request_t *) ompio_req;
