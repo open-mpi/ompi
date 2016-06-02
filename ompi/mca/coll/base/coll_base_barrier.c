@@ -41,26 +41,26 @@
  * signal a two peer synchronization.
  */
 static inline int
-ompi_coll_base_sendrecv_zero(int dest, int stag,
+ompi_coll_base_sendrecv_zero( int dest, int stag,
                               int source, int rtag,
-                              MPI_Comm comm)
+                              MPI_Comm comm )
 
 {
-    int err, line = 0;
-    ompi_request_t* reqs[2];
-    ompi_status_public_t statuses[2];
+    int err, rc, line = 0;
+    ompi_request_t* reqs[1];
+    ompi_status_public_t statuses[1];
 
     /* post new irecv */
     err = MCA_PML_CALL(irecv( NULL, 0, MPI_BYTE, source, rtag,
-                              comm, &reqs[0]));
+                              comm, &reqs[0] ));
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
     /* send data to children */
-    err = MCA_PML_CALL(isend( NULL, 0, MPI_BYTE, dest, stag,
-                              MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
-    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+    rc = MCA_PML_CALL(send( NULL, 0, MPI_BYTE, dest, stag,
+                            MCA_PML_BASE_SEND_STANDARD, comm ));
+    if (rc != MPI_SUCCESS) { line = __LINE__; err = rc; goto error_handler; }
 
-    err = ompi_request_wait_all( 2, reqs, statuses );
+    err = ompi_request_wait( &reqs[0], &statuses[0] );
     if( MPI_ERR_IN_STATUS == err ) { line = __LINE__;
         /* As we use wait_all we will get MPI_ERR_IN_STATUS which is not an error
          * code that we can propagate up the stack. Instead, look for the real
@@ -199,8 +199,8 @@ int ompi_coll_base_barrier_intra_recursivedoubling(struct ompi_communicator_t *c
             /* send message to lower ranked node */
             remote = rank - adjsize;
             err = ompi_coll_base_sendrecv_zero(remote, MCA_COLL_BASE_TAG_BARRIER,
-                                                remote, MCA_COLL_BASE_TAG_BARRIER,
-                                                comm);
+                                               remote, MCA_COLL_BASE_TAG_BARRIER,
+                                               comm);
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
 
         } else if (rank < (size - adjsize)) {
@@ -224,8 +224,8 @@ int ompi_coll_base_barrier_intra_recursivedoubling(struct ompi_communicator_t *c
 
             /* post receive from the remote node */
             err = ompi_coll_base_sendrecv_zero(remote, MCA_COLL_BASE_TAG_BARRIER,
-                                                remote, MCA_COLL_BASE_TAG_BARRIER,
-                                                comm);
+                                               remote, MCA_COLL_BASE_TAG_BARRIER,
+                                               comm);
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
         }
     }
@@ -273,8 +273,8 @@ int ompi_coll_base_barrier_intra_bruck(struct ompi_communicator_t *comm,
 
         /* send message to lower ranked node */
         err = ompi_coll_base_sendrecv_zero(to, MCA_COLL_BASE_TAG_BARRIER,
-                                            from, MCA_COLL_BASE_TAG_BARRIER,
-                                            comm);
+                                           from, MCA_COLL_BASE_TAG_BARRIER,
+                                           comm);
         if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
     }
 
@@ -307,8 +307,8 @@ int ompi_coll_base_barrier_intra_two_procs(struct ompi_communicator_t *comm,
     remote = (remote + 1) & 0x1;
 
     err = ompi_coll_base_sendrecv_zero(remote, MCA_COLL_BASE_TAG_BARRIER,
-                                        remote, MCA_COLL_BASE_TAG_BARRIER,
-                                        comm);
+                                       remote, MCA_COLL_BASE_TAG_BARRIER,
+                                       comm);
     return (err);
 }
 
