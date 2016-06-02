@@ -83,15 +83,13 @@ int ompi_request_default_wait_any(size_t count,
                                   int *index,
                                   ompi_status_public_t * status)
 {
-    size_t completed = count, num_requests_null_inactive = 0;
-    int i, rc = OMPI_SUCCESS;
-    ompi_request_t **rptr=NULL;
+    size_t i, completed = count, num_requests_null_inactive = 0;
+    int rc = OMPI_SUCCESS;
     ompi_request_t *request=NULL;
     ompi_wait_sync_t sync;
 
     WAIT_SYNC_INIT(&sync, 1);
     
-    rptr = requests;
     num_requests_null_inactive = 0;
     for (i = 0; i < count; i++) {
         request = requests[i];
@@ -177,10 +175,10 @@ int ompi_request_default_wait_all( size_t count,
                                    ompi_request_t ** requests,
                                    ompi_status_public_t * statuses )
 {
-    size_t completed = 0, failed = 0;
+    size_t i, completed = 0, failed = 0;
     ompi_request_t **rptr;
     ompi_request_t *request;
-    int i, mpi_error = OMPI_SUCCESS;
+    int mpi_error = OMPI_SUCCESS;
     ompi_wait_sync_t sync;
 
     WAIT_SYNC_INIT(&sync, count);
