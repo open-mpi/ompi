@@ -27,18 +27,18 @@ int sync_wait_st(ompi_wait_sync_t *sync)
     while(sync->count > 0) {
         opal_progress();
     }
-    return OPAL_SUCCESS;
+    return (0 == sync->status) ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
 int sync_wait_mt(ompi_wait_sync_t *sync)
 {
     if(sync->count <= 0)
-        return OPAL_SUCCESS;
+        return (0 == sync->status) ? OPAL_SUCCESS : OPAL_ERROR;
 
     /* lock so nobody can signal us during the list updating */
     pthread_mutex_lock(&sync->lock);
 
-    /* Insert sync to the list */
+    /* Insert sync on the list of pending synchronization constructs */
     OPAL_THREAD_LOCK(&wait_sync_lock);
     if( NULL == wait_sync_list ) {
         sync->next = sync->prev = sync;
@@ -52,32 +52,34 @@ int sync_wait_mt(ompi_wait_sync_t *sync)
     OPAL_THREAD_UNLOCK(&wait_sync_lock);
 
     /**
-     * If we are not responsible for progresing, let's go silent until something worth noticing happen:
+     * If we are not responsible for progresing, go silent until something worth noticing happen:
      *  - this thread has been promoted to take care of the progress
      *  - our sync has been triggered.
      */
+ check_status:
     if( sync != wait_sync_list ) {
         pthread_cond_wait(&sync->condition, &sync->lock);
 
         /**
-         * At this point either the sync was completed in which case we should remove it from the wait
-         * list, or/and I was promoted as the progress manager.
+         * At this point either the sync was completed in which case
+         * we should remove it from the wait list, or/and I was
+         * promoted as the progress manager.
          */
 
         if( sync->count <= 0 ) {  /* Completed? */
             pthread_mutex_unlock(&sync->lock);
             goto i_am_done;
         }
-        /* promoted ! */
-        assert(sync == wait_sync_list);
+        /* either promoted, or spurious wakeup ! */
+        goto check_status;
     }
 
     pthread_mutex_unlock(&sync->lock);
     while(sync->count > 0) {  /* progress till completion */
         opal_progress();  /* don't progress with the sync lock locked or you'll deadlock */
     }
-
     assert(sync == wait_sync_list);
+
  i_am_done:
     /* My sync is now complete. Trim the list: remove self, wake next */
     OPAL_THREAD_LOCK(&wait_sync_lock);
@@ -91,5 +93,5 @@ int sync_wait_mt(ompi_wait_sync_t *sync)
     }
     OPAL_THREAD_UNLOCK(&wait_sync_lock);
 
-    return OPAL_SUCCESS;
+    return (0 == sync->status) ? OPAL_SUCCESS : OPAL_ERROR;
 }

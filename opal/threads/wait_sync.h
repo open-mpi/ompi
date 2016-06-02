@@ -73,17 +73,23 @@ OPAL_DECLSPEC int sync_wait_st(ompi_wait_sync_t *sync);
        PTHREAD_MUTEX_INIT(&(sync)->lock, NULL);       \
     } while(0)
 
-static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates, int req_status)
+/**
+ * Update the status of the synchronization primitive. If an error is
+ * reported the synchronization is completed and the signal
+ * triggered. The status of the synchronization will be reported to
+ * the waiting threads.
+ */
+static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates, int status)
 {
-    if( OPAL_LIKELY(OPAL_SUCCESS == req_status) ) {
-        if( 0 == (OPAL_ATOMIC_ADD_32(&sync->count, -updates)) ) {
-            WAIT_SYNC_SIGNAL(sync);
+    if( OPAL_LIKELY(OPAL_SUCCESS == status) ) {
+        if( 0 != (OPAL_ATOMIC_ADD_32(&sync->count, -updates)) ) {
+            return;
         }
     } else {
         OPAL_ATOMIC_CMPSET_32(&(sync->count), 0, 0);
         sync->status = -1;
-        WAIT_SYNC_SIGNAL(sync);
     }
+    WAIT_SYNC_SIGNAL(sync);
 }
 
 END_C_DECLS
