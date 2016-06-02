@@ -889,17 +889,16 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
       [AC_HELP_STRING([--enable-osx-builtin-atomics],
          [Enable use of OSX builtin atomics (default: disabled)])])
 
-    if test "$enable_builtin_atomics" = "yes" ; then
-       OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-         [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
-       AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
-         [Whether C compiler supports GCC style inline assembly])
-       OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
-    elif test "$enable_osx_builtin_atomics" = "yes" ; then
-	   AC_CHECK_HEADER([libkern/OSAtomic.h],[opal_cv_asm_builtin="BUILTIN_OSX"],
-	    [AC_MSG_ERROR([OSX builtin atomics requested but not found.])])
-    else
-       opal_cv_asm_builtin="BUILTIN_NO"
+    opal_cv_asm_builtin="BUILTIN_NO"
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
+       OPAL_CHECK_GCC_ATOMIC_BUILTINS([opal_cv_asm_builtin="BUILTIN_GCC"], [])
+    fi
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
+       OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])
+    fi
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_osx_builtin_atomics" = "yes" ; then
+       AC_CHECK_HEADER([libkern/OSAtomic.h],
+                       [opal_cv_asm_builtin="BUILTIN_OSX"])
     fi
 
         OPAL_CHECK_ASM_PROC
@@ -1026,7 +1025,13 @@ AC_MSG_ERROR([Can not continue.])
             ;;
         esac
 
-      if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" ; then
+	if test "x$OPAL_ASM_SUPPORT_64BIT" = "x1" && test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" &&
+		test "$opal_asm_sync_have_64bit" = "0" ; then
+	    # __sync builtins exist but do not implement 64-bit support. Fall back on inline asm.
+	    opal_cv_asm_builtin="BUILTIN_NO"
+	fi
+
+      if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" || test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
           [Whether C compiler supports GCC style inline assembly])
       else
