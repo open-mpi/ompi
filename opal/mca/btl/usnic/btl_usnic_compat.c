@@ -509,6 +509,7 @@ opal_btl_usnic_prepare_src(
     size_t* size,
     uint32_t flags)
 {
+    OPAL_THREAD_LOCK(&btl_usnic_lock);
     opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t*) base_module;
     opal_btl_usnic_send_frag_t *frag;
     uint32_t payload_len;
@@ -552,6 +553,7 @@ opal_btl_usnic_prepare_src(
 #endif
 #endif
 
+    OPAL_THREAD_UNLOCK(&btl_usnic_lock);
     return &frag->sf_base.uf_base;
 }
 

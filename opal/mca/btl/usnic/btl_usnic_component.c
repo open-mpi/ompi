@@ -86,6 +86,9 @@
 
 #define OPAL_BTL_USNIC_NUM_COMPLETIONS 500
 
+/* MPI_THREAD_MULTIPLE_SUPPORT */
+opal_recursive_mutex_t btl_usnic_lock;
+
 /* RNG buffer definition */
 opal_rng_buff_t opal_btl_usnic_rand_buff = {0};
 
@@ -221,6 +224,8 @@ static int usnic_component_close(void)
     /* clean up the unit test infrastructure */
     opal_btl_usnic_cleanup_tests();
 #endif
+
+    OBJ_DESTRUCT(&btl_usnic_lock);
 
     return OPAL_SUCCESS;
 }
@@ -615,12 +620,21 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     *num_btl_modules = 0;
 
-    /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
+    /* MPI_THREAD_MULTIPLE is only supported in 2.0+ */
     if (want_mpi_threads && !mca_btl_base_thread_multiple_override) {
-        opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: MPI_THREAD_MULTIPLE not supported; skipping this component");
-        return NULL;
+
+	if (OMPI_MAJOR_VERSION >= 2) {
+            opal_output_verbose(5, USNIC_OUT,
+                                "btl:usnic: MPI_THREAD_MULTIPLE support is in testing phase.");
+	}
+	else {
+            opal_output_verbose(5, USNIC_OUT,
+                                "btl:usnic: MPI_THREAD_MULTIPLE is not supported in version < 2.");
+	    return NULL;
+	}
     }
+
+    OBJ_CONSTRUCT(&btl_usnic_lock, opal_recursive_mutex_t);
 
     /* We only want providers named "usnic that are of type EP_DGRAM */
     fabric_attr.prov_name = "usnic";
@@ -1151,6 +1165,8 @@ static int usnic_handle_completion(
     /* Make the completion be Valgrind-defined */
     opal_memchecker_base_mem_defined(seg, sizeof(*seg));
 
+    OPAL_THREAD_LOCK(&btl_usnic_lock);
+
     /* Handle work completions */
     switch(seg->us_type) {
 
@@ -1181,6 +1197,8 @@ static int usnic_handle_completion(
         BTL_ERROR(("Unhandled completion segment type %d", seg->us_type));
         break;
     }
+
+    OPAL_THREAD_UNLOCK(&btl_usnic_lock);
     return 1;
 }
 
