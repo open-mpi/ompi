@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2015      Intel, Inc. All rights reserved
+# Copyright (c) 2015-2016 Intel, Inc. All rights reserved
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -24,9 +24,9 @@ AC_DEFUN([PMIX_MUNGE_CONFIG],[
                                 [Search for munge libraries in DIR ])])
 
     pmix_munge_support=0
-    if test "$with_munge" != "no"; then
+    if test ! -z "$with_munge" && test "$with_munge" != "no"; then
         AC_MSG_CHECKING([for munge in])
-        if test ! -z "$with_munge" && test "$with_munge" != "yes"; then
+        if test "$with_munge" != "yes"; then
             if test -d $with_munge/include/munge; then
                 pmix_munge_dir=$with_munge/include/munge
             else
@@ -76,8 +76,8 @@ AC_DEFUN([PMIX_MUNGE_CONFIG],[
         AC_MSG_RESULT([yes])
     fi
 
-    AC_DEFINE_UNQUOTED([PMIX_HAVE_MUNGE], [$pmix_munge_support],
-                       [Whether we have munge support or not])
+    AC_DEFINE_UNQUOTED([PMIX_WANT_MUNGE], [$pmix_munge_support],
+                       [Whether we want munge support or not])
 
     PMIX_VAR_SCOPE_POP
 ])dnl

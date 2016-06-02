@@ -332,7 +332,9 @@ pmix_status_t pmix_bfrop_pack_float(pmix_buffer_t *buffer, const void *src,
     char *convert;
 
     for (i = 0; i < num_vals; ++i) {
-        asprintf(&convert, "%f", ssrc[i]);
+        if (0 > asprintf(&convert, "%f", ssrc[i])) {
+            return PMIX_ERR_NOMEM;
+        }
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &convert, 1, PMIX_STRING))) {
             free(convert);
             return ret;
@@ -353,7 +355,9 @@ pmix_status_t pmix_bfrop_pack_double(pmix_buffer_t *buffer, const void *src,
     char *convert;
 
     for (i = 0; i < num_vals; ++i) {
-        asprintf(&convert, "%f", ssrc[i]);
+        if (0 > asprintf(&convert, "%f", ssrc[i])) {
+            return PMIX_ERR_NOMEM;
+        }
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &convert, 1, PMIX_STRING))) {
             free(convert);
             return ret;

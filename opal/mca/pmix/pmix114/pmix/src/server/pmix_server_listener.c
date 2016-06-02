@@ -71,7 +71,8 @@ static pthread_t engine;
 /*
  * start listening on our rendezvous file
  */
-pmix_status_t pmix_start_listening(struct sockaddr_un *address)
+pmix_status_t pmix_start_listening(struct sockaddr_un *address,
+                                   mode_t mode, uid_t sockuid, gid_t sockgid)
 {
     int flags;
     pmix_status_t rc;
@@ -90,27 +91,32 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
         printf("%s:%d bind() failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
+    /* chown as required */
+    if (0 != chown(address->sun_path, sockuid, sockgid)) {
+        pmix_output(0, "CANNOT CHOWN socket %s: %s", address->sun_path, strerror (errno));
+        goto sockerror;
+    }
     /* set the mode as required */
-    if (0 != chmod(address->sun_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH)) {
-        pmix_output(0, "CANNOT CHMOD %s", address->sun_path);
-        return PMIX_ERROR;
+    if (0 != chmod(address->sun_path, mode)) {
+        pmix_output(0, "CANNOT CHMOD socket %s: %s", address->sun_path, strerror (errno));
+        goto sockerror;
     }
 
     /* setup listen backlog to maximum allowed by kernel */
     if (listen(pmix_server_globals.listen_socket, SOMAXCONN) < 0) {
         printf("%s:%d listen() failed\n", __FILE__, __LINE__);
-        return PMIX_ERROR;
+        goto sockerror;
     }
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if ((flags = fcntl(pmix_server_globals.listen_socket, F_GETFL, 0)) < 0) {
         printf("%s:%d fcntl(F_GETFL) failed\n", __FILE__, __LINE__);
-        return PMIX_ERROR;
+        goto sockerror;
     }
     flags |= O_NONBLOCK;
     if (fcntl(pmix_server_globals.listen_socket, F_SETFL, flags) < 0) {
         printf("%s:%d fcntl(F_SETFL) failed\n", __FILE__, __LINE__);
-        return PMIX_ERROR;
+        goto sockerror;
     }
 
     /* setup my version for validating connections - we
@@ -156,6 +162,11 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
     }
 
     return PMIX_SUCCESS;
+
+sockerror:
+    (void)close(pmix_server_globals.listen_socket);
+    pmix_server_globals.listen_socket = -1;
+    return PMIX_ERROR;
 }
 
 void pmix_stop_listening(void)
@@ -176,7 +187,9 @@ void pmix_stop_listening(void)
      * case the thread is blocked in a call to select for
      * a long time */
     i=1;
-    write(pmix_server_globals.stop_thread[1], &i, sizeof(int));
+    if (0 > write(pmix_server_globals.stop_thread[1], &i, sizeof(int))) {
+        return;
+    }
     /* wait for thread to exit */
     pthread_join(engine, NULL);
     /* close the socket to remove the connection point */
@@ -295,6 +308,42 @@ static void listener_cb(int incoming_sd)
     event_active(&pending_connection->ev, EV_WRITE, 1);
 }
 
+/* Parse init-ack message:
+ *    NSPACE<0><rank>VERSION<0>[CRED<0>]
+ */
+static pmix_status_t parse_connect_ack (char *msg, int len,
+                                        char **nspace, int *rank,
+                                        char **version, char **cred)
+{
+    if ((int)strnlen (msg, len) < len) {
+        *nspace = msg;
+        msg += strlen(*nspace) + 1;
+        len -= strlen(*nspace) + 1;
+    } else
+        return PMIX_ERR_BAD_PARAM;
+
+    if ((int)sizeof(int) <= len) {
+        *rank = *(int *)msg;
+        msg += sizeof(int);
+        len -= sizeof(int);
+    } else
+        return PMIX_ERR_BAD_PARAM;
+
+    if ((int)strnlen (msg, len) < len) {
+        *version = msg;
+        msg += strlen(*version) + 1;
+        len -= strlen(*version) + 1;
+    } else
+        return PMIX_ERR_BAD_PARAM;
+
+    if ((int)strnlen (msg, len) < len)
+        *cred = msg;
+    else
+        *cred = NULL;
+
+    return PMIX_SUCCESS;
+}
+
 /*  Receive the peer's identification info from a newly
  *  connected socket and verify the expected response.
  */
@@ -308,7 +357,6 @@ static pmix_status_t pmix_server_authenticate(int sd, int *out_rank,
     pmix_nspace_t *nptr, *tmp;
     pmix_rank_info_t *info;
     pmix_peer_t *psave = NULL;
-    size_t csize;
     bool found;
     pmix_proc_t proc;
 
@@ -341,44 +389,22 @@ static pmix_status_t pmix_server_authenticate(int sd, int *out_rank,
         return PMIX_ERR_UNREACH;
     }
 
-    /* get the nspace */
-    nspace = msg;  // a NULL terminator is in the data
-
-    /* get the rank */
-    memcpy(&rank, msg+strlen(nspace)+1, sizeof(int));
+    if (PMIX_SUCCESS != (rc = parse_connect_ack (msg, hdr.nbytes, &nspace,
+                                                 &rank, &version, &cred))) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "error parsing connect-ack from client ON SOCKET %d", sd);
+        free(msg);
+        return rc;
+    }
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "connect-ack recvd from peer %s:%d",
-                        nspace, rank);
+                        "connect-ack recvd from peer %s:%d:%s",
+                        nspace, rank, version);
 
     /* do not check the version - we only retain it at this
      * time in case we need to check it at some future date.
      * For now, our intent is to retain backward compatibility
      * and so we will assume that all versions are compatible. */
-    csize = strlen(nspace)+1+sizeof(int);
-    version = (char*)(msg+csize);
-    csize += strlen(version) + 1;  // position ourselves before modifiying version
-#if 0
-    /* find the first '.' */
-    ptr = strchr(version, '.');
-    if (NULL != ptr) {
-        ++ptr;
-        /* stop it at the second '.', if present */
-        if (NULL != (ptr = strchr(ptr, '.'))) {
-            *ptr = '\0';
-        }
-    }
-    if (0 != strcmp(version, myversion)) {
-        pmix_output_verbose(2, pmix_globals.debug_output,
-                            "pmix:server client/server PMIx versions mismatch - server %s client %s",
-                            myversion, version);
-        free(msg);
-        return PMIX_ERR_NOT_SUPPORTED;
-    }
-
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "connect-ack version from client matches ours");
-#endif
 
     /* see if we know this nspace */
     nptr = NULL;
@@ -429,21 +455,18 @@ static pmix_status_t pmix_server_authenticate(int sd, int *out_rank,
     }
 
     /* see if there is a credential */
-    if (csize < hdr.nbytes) {
-        cred = (char*)(msg + csize);
-        if (NULL != cred && NULL != pmix_sec.validate_cred) {
-            if (PMIX_SUCCESS != (rc = pmix_sec.validate_cred(psave, cred))) {
-                pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "validation of client credential failed");
-                free(msg);
-                pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
-                PMIX_RELEASE(psave);
-                /* send an error reply to the client */
-                goto error;
-            }
+    if (NULL != pmix_sec.validate_cred) {
+        if (PMIX_SUCCESS != (rc = pmix_sec.validate_cred(psave, cred))) {
             pmix_output_verbose(2, pmix_globals.debug_output,
-                                "client credential validated");
+                                "validation of client credential failed");
+            free(msg);
+            pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
+            PMIX_RELEASE(psave);
+            /* send an error reply to the client */
+            goto error;
         }
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "client credential validated");
     }
     free(msg);
 

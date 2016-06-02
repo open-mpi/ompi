@@ -207,8 +207,8 @@ pmix_status_t pmix_lookup_errhandler(pmix_notification_fn_t err,
                                      int *index)
 {
     int i;
+    pmix_error_reg_info_t *errreg;
     pmix_status_t rc = PMIX_ERR_NOT_FOUND;
-    pmix_error_reg_info_t *errreg = NULL;
 
     for (i = 0; i < pmix_pointer_array_get_size(&pmix_globals.errregs) ; i++) {
         errreg = (pmix_error_reg_info_t*)pmix_pointer_array_get_item(&pmix_globals.errregs, i);
