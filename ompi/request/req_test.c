@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -27,11 +28,12 @@
 
 #include "ompi/mca/crcp/crcp.h"
 
-int ompi_request_default_test( ompi_request_t ** rptr,
-                       int *completed,
-                       ompi_status_public_t * status )
+int ompi_request_default_test(ompi_request_t ** rptr,
+                              int *completed,
+                              ompi_status_public_t * status )
 {
     ompi_request_t *request = *rptr;
+
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
 
@@ -46,7 +48,7 @@ int ompi_request_default_test( ompi_request_t ** rptr,
         return OMPI_SUCCESS;
     }
 
-    if (request->req_complete) {
+    if( REQUEST_COMPLETE(request) ) {
         OMPI_CRCP_REQUEST_COMPLETE(request);
 
         *completed = true;
@@ -117,7 +119,7 @@ int ompi_request_default_test_any(
             continue;
         }
 
-        if( request->req_complete ) {
+        if( REQUEST_COMPLETE(request) ) {
             OMPI_CRCP_REQUEST_COMPLETE(request);
 
             *index = i;
@@ -193,8 +195,7 @@ int ompi_request_default_test_all(
         request = *rptr;
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ||
-            request->req_complete) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
+            REQUEST_COMPLETE(request) ) {
             num_completed++;
         }
     }
@@ -225,6 +226,7 @@ int ompi_request_default_test_all(
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
+            OMPI_CRCP_REQUEST_COMPLETE(request);
             statuses[i] = request->req_status;
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
@@ -255,6 +257,7 @@ int ompi_request_default_test_all(
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
+            OMPI_CRCP_REQUEST_COMPLETE(request);
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
                 continue;
