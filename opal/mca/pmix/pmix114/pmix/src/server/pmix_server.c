@@ -219,7 +219,9 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     /* now set the address - we use the pid here to reduce collisions */
     memset(&myaddress, 0, sizeof(struct sockaddr_un));
     myaddress.sun_family = AF_UNIX;
-    asprintf(&pmix_pid, "pmix-%d", pid);
+    if (0 > asprintf(&pmix_pid, "pmix-%d", pid)) {
+        return PMIX_ERR_NOMEM;
+    }
     // If the above set temporary directory name plus the pmix-PID string
     // plus the '/' separator are too long, just fail, so the caller
     // may provide the user with a proper help... *Cough*, *Cough* OSX...
@@ -229,7 +231,10 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     }
     snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/%s", tdir, pmix_pid);
     free(pmix_pid);
-    asprintf(&myuri, "%s:%lu:%s", pmix_globals.myid.nspace, (unsigned long)pmix_globals.myid.rank, myaddress.sun_path);
+    if (0 > asprintf(&myuri, "%s:%lu:%s", pmix_globals.myid.nspace,
+                     (unsigned long)pmix_globals.myid.rank, myaddress.sun_path)) {
+        return PMIX_ERR_NOMEM;
+    }
 
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -245,6 +250,9 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     pmix_status_t rc;
     size_t n;
     pmix_kval_t kv;
+    uid_t sockuid = -1;
+    gid_t sockgid = -1;
+    mode_t sockmode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
 
     ++pmix_globals.init_cntr;
     if (1 < pmix_globals.init_cntr) {
@@ -272,10 +280,12 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         for (n=0; n < ninfo; n++) {
             if (0 == strcmp(info[n].key, PMIX_USERID)) {
                 /* the userid is in the uint32_t storage */
-                chown(myaddress.sun_path, info[n].value.data.uint32, -1);
+                sockuid = info[n].value.data.uint32;
             } else if (0 == strcmp(info[n].key, PMIX_GRPID)) {
                /* the grpid is in the uint32_t storage */
-                chown(myaddress.sun_path, -1, info[n].value.data.uint32);
+                sockgid = info[n].value.data.uint32;
+            } else if (0 == strcmp(info[n].key, PMIX_SOCKET_MODE)) {
+                sockmode = info[n].value.data.uint32 & 0777;
             }
         }
     }
@@ -288,32 +298,29 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     pmix_list_append(&pmix_usock_globals.posted_recvs, &req->super);
 
     /* start listening */
-    if (PMIX_SUCCESS != pmix_start_listening(&myaddress)) {
+    if (PMIX_SUCCESS != pmix_start_listening(&myaddress, sockmode, sockuid, sockgid)) {
         PMIx_server_finalize();
         return PMIX_ERR_INIT;
     }
 
-    /* check the info keys for a directive about the uid/gid
-     * to be set for the rendezvous file, and any info we
+    /* check the info keys for info we
      * need to provide to every client */
     if (NULL != info) {
         PMIX_CONSTRUCT(&kv, pmix_kval_t);
         for (n=0; n < ninfo; n++) {
-            if (0 == strcmp(info[n].key, PMIX_USERID)) {
-                /* the userid is in the uint32_t storage */
-                chown(myaddress.sun_path, info[n].value.data.uint32, -1);
-            } else if (0 == strcmp(info[n].key, PMIX_GRPID)) {
-                /* the grpid is in the uint32_t storage */
-                chown(myaddress.sun_path, -1, info[n].value.data.uint32);
-            } else {
-                /* store and pass along to every client */
-                kv.key = info[n].key;
-                kv.value = &info[n].value;
-                if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(&pmix_server_globals.gdata, &kv, 1, PMIX_KVAL))) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_DESTRUCT(&kv);
-                    return rc;
-                }
+            if (0 == strcmp(info[n].key, PMIX_USERID))
+                continue;
+            if (0 == strcmp(info[n].key, PMIX_GRPID))
+                continue;
+            if (0 == strcmp(info[n].key, PMIX_SOCKET_MODE))
+                continue;
+            /* store and pass along to every client */
+            kv.key = info[n].key;
+            kv.value = &info[n].value;
+            if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(&pmix_server_globals.gdata, &kv, 1, PMIX_KVAL))) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_DESTRUCT(&kv);
+                return rc;
             }
         }
         /* protect the incoming data */
@@ -723,10 +730,12 @@ void pmix_server_execute_collective(int sd, short args, void *cbdata)
 static void _register_client(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
-    pmix_rank_info_t *info;
+    pmix_rank_info_t *info, *iptr, *iptr2;
     pmix_nspace_t *nptr, *tmp;
     pmix_server_trkr_t *trk;
     pmix_trkr_caddy_t *tcd;
+    bool all_def;
+    size_t i;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _register_client for nspace %s rank %d",
@@ -772,8 +781,49 @@ static void _register_client(int sd, short args, void *cbdata)
             if (trk->def_complete) {
                 continue;
             }
+            /* see if any of our procs are involved - the tracker will
+             * have been created because a callback was received, but
+             * no rank info will have been entered since the clients
+             * had not yet been registered. Thus, we couldn't enter rank
+             * objects into the tracker as we didn't know which
+             * of the ranks were local */
+            for (i=0; i < trk->npcs; i++) {
+                if (0 != strncmp(cd->proc.nspace, trk->pcs[i].nspace, PMIX_MAX_NSLEN)) {
+                    continue;
+                }
+                /* need to check if this rank is one of mine */
+                PMIX_LIST_FOREACH(iptr, &nptr->server->ranks, pmix_rank_info_t) {
+                    if (PMIX_RANK_WILDCARD == trk->pcs[i].rank ||
+                        iptr->rank == trk->pcs[i].rank) {
+                        /* add a tracker for this proc - don't need more than
+                         * the nspace pointer and rank */
+                        iptr2 = PMIX_NEW(pmix_rank_info_t);
+                        PMIX_RETAIN(info->nptr);
+                        iptr2->nptr = info->nptr;
+                        iptr2->rank = info->rank;
+                        pmix_list_append(&trk->ranks, &iptr2->super);
+                        /* track the count */
+                        ++trk->nlocal;
+                    }
+                }
+            }
+            /* we need to know if this tracker is now complete - the only
+             * way to do this is to check if all participating
+             * nspaces are fully registered */
+            all_def = true;
+            /* search all the involved procs - fortunately, this
+             * list is usually very small */
+            PMIX_LIST_FOREACH(iptr, &trk->ranks, pmix_rank_info_t) {
+                if (!iptr->nptr->server->all_registered) {
+                    /* nope */
+                    all_def = false;
+                    break;
+                }
+            }
+            /* update this tracker's status */
+            trk->def_complete = all_def;
             /* is this now completed? */
-            if (pmix_list_get_size(&trk->local_cbs) == trk->nlocal) {
+            if (trk->def_complete && pmix_list_get_size(&trk->local_cbs) == trk->nlocal) {
                 /* it did, so now we need to process it
                  * we don't want to block someone
                  * here, so kick any completed trackers into a
@@ -1531,7 +1581,9 @@ PMIX_EXPORT pmix_status_t PMIx_generate_regex(const char *input, char **regexp)
         if (0 == pmix_list_get_size(&vreg->ranges)) {
             if (NULL != vreg->prefix) {
                 /* solitary value */
-                asprintf(&tmp, "%s", vreg->prefix);
+                if (0 > asprintf(&tmp, "%s", vreg->prefix)) {
+                    return PMIX_ERR_NOMEM;
+                }
                 pmix_argv_append_nosize(&regexargs, tmp);
                 free(tmp);
             }
@@ -1540,16 +1592,24 @@ PMIX_EXPORT pmix_status_t PMIx_generate_regex(const char *input, char **regexp)
         }
         /* start the regex for this value with the prefix */
         if (NULL != vreg->prefix) {
-            asprintf(&tmp, "%s[%d:", vreg->prefix, vreg->num_digits);
+            if (0 > asprintf(&tmp, "%s[%d:", vreg->prefix, vreg->num_digits)) {
+                return PMIX_ERR_NOMEM;
+            }
         } else {
-            asprintf(&tmp, "[%d:", vreg->num_digits);
+            if (0 > asprintf(&tmp, "[%d:", vreg->num_digits)) {
+                return PMIX_ERR_NOMEM;
+            }
         }
         /* add the ranges */
         while (NULL != (range = (pmix_regex_range_t*)pmix_list_remove_first(&vreg->ranges))) {
             if (1 == range->cnt) {
-                asprintf(&tmp2, "%s%d,", tmp, range->start);
+                if (0 > asprintf(&tmp2, "%s%d,", tmp, range->start)) {
+                    return PMIX_ERR_NOMEM;
+                }
             } else {
-                asprintf(&tmp2, "%s%d-%d,", tmp, range->start, range->start + range->cnt - 1);
+                if (0 > asprintf(&tmp2, "%s%d-%d,", tmp, range->start, range->start + range->cnt - 1)) {
+                    return PMIX_ERR_NOMEM;
+                }
             }
             free(tmp);
             tmp = tmp2;
@@ -1559,7 +1619,9 @@ PMIX_EXPORT pmix_status_t PMIx_generate_regex(const char *input, char **regexp)
         tmp[strlen(tmp)-1] = ']';
         if (NULL != vreg->suffix) {
             /* add in the suffix, if provided */
-            asprintf(&tmp2, "%s%s", tmp, vreg->suffix);
+            if (0 > asprintf(&tmp2, "%s%s", tmp, vreg->suffix)) {
+                return PMIX_ERR_NOMEM;
+            }
             free(tmp);
             tmp = tmp2;
         }
@@ -1570,7 +1632,9 @@ PMIX_EXPORT pmix_status_t PMIx_generate_regex(const char *input, char **regexp)
 
     /* assemble final result */
     tmp = pmix_argv_join(regexargs, ',');
-    asprintf(regexp, "pmix[%s]", tmp);
+    if (0 > asprintf(regexp, "pmix[%s]", tmp)) {
+        return PMIX_ERR_NOMEM;
+    }
     free(tmp);
 
     /* cleanup */
@@ -1671,9 +1735,13 @@ PMIX_EXPORT pmix_status_t PMIx_generate_ppn(const char *input, char **regexp)
     PMIX_LIST_FOREACH(vreg, &nodes, pmix_regex_value_t) {
         while (NULL != (rng = (pmix_regex_range_t*)pmix_list_remove_first(&vreg->ranges))) {
             if (1 == rng->cnt) {
-                asprintf(&tmp2, "%s%d,", tmp, rng->start);
+                if (0 > asprintf(&tmp2, "%s%d,", tmp, rng->start)) {
+                    return PMIX_ERR_NOMEM;
+                }
             } else {
-                asprintf(&tmp2, "%s%d-%d,", tmp, rng->start, rng->start + rng->cnt - 1);
+                if (0 > asprintf(&tmp2, "%s%d-%d,", tmp, rng->start, rng->start + rng->cnt - 1)) {
+                    return PMIX_ERR_NOMEM;
+                }
             }
             free(tmp);
             tmp = tmp2;

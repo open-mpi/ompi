@@ -43,6 +43,9 @@ Master (not on release branches yet)
 - Do not install internal headers unless specifically
   requested to do so
 - Add support for multiple calls to Put/Commit
+- Silence some "return code unchecked" warnings. Thanks
+  to Jim Garlick for pointing them out
+- Resolve a race condition during register_clients
 
 
 1.1.3

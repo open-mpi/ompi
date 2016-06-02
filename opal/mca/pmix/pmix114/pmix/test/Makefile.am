@@ -29,6 +29,7 @@ headers = test_common.h cli_stages.h server_callbacks.h utils.h test_fence.h tes
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/src/api
 
+noinst_SCRIPTS = pmix_client_otheruser.sh
 noinst_PROGRAMS = pmi_client pmi2_client
 if !WANT_HIDDEN
 noinst_PROGRAMS += pmix_test pmix_client pmix_regex
@@ -64,3 +65,4 @@ pmix_regex_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmix_regex_LDADD = \
 	$(top_builddir)/libpmix.la
 
+EXTRA_DIST = $(noinst_SCRIPTS)

@@ -81,7 +81,12 @@ int main(int argc, char **argv)
     }
 
     /* setup the server library */
-    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, NULL, 0))) {
+    pmix_info_t info[1];
+    (void)strncpy(info[0].key, PMIX_SOCKET_MODE, PMIX_MAX_KEYLEN);
+    info[0].value.type = PMIX_UINT32;
+    info[0].value.data.uint32 = 0666;
+
+    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, info, 1))) {
         TEST_ERROR(("Init failed with error %d", rc));
         FREE_TEST_PARAMS(params);
         return rc;

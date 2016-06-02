@@ -50,8 +50,12 @@ int main(int argc, char **argv)
     size_t npeers, ntmp=0;
     char *nodelist;
 
-    gethostname(hostname, sizeof(hostname));
-    getcwd(dir, 1024);
+    if (0 > gethostname(hostname, sizeof(hostname))) {
+        exit(1);
+    }
+    if (NULL == getcwd(dir, 1024)) {
+        exit(1);
+    }
 
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc))) {
@@ -81,11 +85,15 @@ int main(int argc, char **argv)
     /* rank=0 calls spawn */
     if (0 == myproc.rank) {
         PMIX_APP_CREATE(app, 1);
-        (void)asprintf(&app->cmd, "%s/client", dir);
+        if (0 > asprintf(&app->cmd, "%s/client", dir)) {
+            exit(1);
+        }
         app->maxprocs = 2;
         app->argc = 1;
         app->argv = (char**)malloc(2 * sizeof(char*));
-        (void)asprintf(&app->argv[0], "%s/client", dir);
+        if (0 > asprintf(&app->argv[0], "%s/client", dir)) {
+            exit(1);
+        }
         app->argv[1] = NULL;
         app->env = (char**)malloc(2 * sizeof(char*));
         app->env[0] = strdup("PMIX_ENV_VALUE=3");

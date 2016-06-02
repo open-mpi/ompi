@@ -456,7 +456,11 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                          #endif
                      ])
 
-    #
+    AC_CHECK_MEMBERS([struct ucred.uid, struct ucred.cr_uid, struct sockpeercred.uid],
+                     [], [],
+                     [#include <sys/types.h>
+                      #include <sys/socket.h> ])
+
     # Check for ptrdiff type.  Yes, there are platforms where
     # sizeof(void*) != sizeof(long) (64 bit Windows, apparently).
     #
@@ -491,7 +495,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
     PMIX_SEARCH_LIBS_CORE([ceil], [m])
 
-    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep])
+    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep getpeereid])
 
     # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
     # confused.  On others, it's in the standard library, but stubbed with

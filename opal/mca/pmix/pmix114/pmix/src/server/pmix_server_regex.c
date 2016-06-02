@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -528,7 +528,9 @@ static pmix_status_t pmix_regex_extract_ppn(char *regexp, char ***procs)
                 ++t;
                 end = strtol(t, NULL, 10);
                 for (k=start; k <= end; k++) {
-                    asprintf(&t, "%d", k);
+                    if (0 > asprintf(&t, "%d", k)) {
+                        return PMIX_ERR_NOMEM;
+                    }
                     pmix_argv_append_nosize(&ps, t);
                     free(t);
                 }

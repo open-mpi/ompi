@@ -93,6 +93,9 @@ BEGIN_C_DECLS
 #define PMIX_USERID                "pmix.euid"              // (uint32_t) effective user id
 #define PMIX_GRPID                 "pmix.egid"              // (uint32_t) effective group id
 
+/* attributes for the rendezvous socket  */
+#define PMIX_SOCKET_MODE           "pmix.sockmode"          // (uint32_t) POSIX mode_t (9 bits valid)
+
 /* general proc-level attributes */
 #define PMIX_CPUSET                "pmix.cpuset"            // (char*) hwloc bitmap applied to proc upon launch
 #define PMIX_CREDENTIAL            "pmix.cred"              // (char*) security credential assigned to proc
