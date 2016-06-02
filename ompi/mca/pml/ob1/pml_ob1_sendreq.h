@@ -226,7 +226,7 @@ static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *se
 }
 
 /*
- * Release resources associated with a request
+ * Release resources associated with a request and return the request.
  */
 
 #define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                        \
@@ -234,6 +234,7 @@ static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *se
         mca_pml_ob1_send_request_fini (sendreq);                        \
         opal_free_list_return ( &mca_pml_base_send_requests,            \
                                 (opal_free_list_item_t*)sendreq);       \
+        sendreq = NULL;  /* for safety */                               \
     } while(0)
 
 
