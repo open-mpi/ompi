@@ -148,11 +148,21 @@ AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
 
 	  CFLAGS=$CFLAGS_save
       fi
+
+      if test $atomic_compare_exchange_n_128_result = 1 ; then
+         AC_MSG_CHECKING([if __int128 atomic compare-and-swap is always lock-free])
+          AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_always_lock_free(16, 0)) { return 1; }])],
+              [AC_MSG_RESULT([yes])],
+              [AC_MSG_RESULT([no])
+                 OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
+                 atomic_compare_exchange_n_128_result=0],
+             [AC_MSG_RESULT([no (cross compiling)])])
+      fi
   else
       AC_MSG_CHECKING([for compiler support of __atomic builtin atomic compare-and-swap on 128-bit values])
 
       # Check if the compiler supports the __atomic builtin
-      AC_TRY_LINK([], [__int128 x = 0; __atomic_bool_compare_and_swap (&x, 0, 1);],
+      AC_TRY_LINK([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);],
 	  [AC_MSG_RESULT([yes])
 	      atomic_compare_exchange_n_128_result=1],
 	  [AC_MSG_RESULT([no])])
@@ -162,7 +172,7 @@ AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
 	  CFLAGS="$CFLAGS -mcx16"
 
 	  AC_MSG_CHECKING([for __atomic builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
-	  AC_TRY_LINK([], [__int128 x = 0; __atomic_bool_compare_and_swap (&x, 0, 1);],
+          AC_TRY_LINK([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);],
               [AC_MSG_RESULT([yes])
 		  atomic_compare_exchange_n_128_result=1
 		  CFLAGS_save="$CFLAGS"],
@@ -173,7 +183,7 @@ AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
   fi
 
   AC_DEFINE_UNQUOTED([OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128], [$atomic_compare_exchange_n_128_result],
-	[Whether the __atomic builtin atomic compare and swap supports 128-bit values])
+	[Whether the __atomic builtin atomic compare and swap is lock-free on 128-bit values])
 
   OPAL_VAR_SCOPE_POP
 ])
