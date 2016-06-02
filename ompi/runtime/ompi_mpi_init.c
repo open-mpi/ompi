@@ -819,14 +819,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* wait for everyone to reach this point - this is a hard
      * barrier requirement at this time, though we hope to relax
      * it at a later point */
-    active = true;
-    opal_pmix.commit();
-    if (NULL != opal_pmix.fence_nb) {
-        opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
-                           fence_release, (void*)&active);
-        OMPI_WAIT_FOR_COMPLETION(active);
-    } else {
-        opal_pmix.fence(NULL, opal_pmix_collect_all_data);
+    if (!ompi_async_mpi_init) {
+        active = true;
+        if (NULL != opal_pmix.fence_nb) {
+            opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
+                               fence_release, (void*)&active);
+            OMPI_WAIT_FOR_COMPLETION(active);
+        } else {
+            opal_pmix.fence(NULL, opal_pmix_collect_all_data);
+        }
     }
 
     /* check for timing request - get stop time and report elapsed

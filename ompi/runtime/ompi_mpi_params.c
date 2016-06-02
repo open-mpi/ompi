@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -64,6 +64,9 @@ int ompi_mpi_event_tick_rate = -1;
 char *ompi_mpi_show_mca_params_string = NULL;
 bool ompi_mpi_have_sparse_group_storage = !!(OMPI_GROUP_SPARSE);
 bool ompi_mpi_preconnect_mpi = false;
+
+bool ompi_async_mpi_init = false;
+bool ompi_async_mpi_finalize = false;
 
 #define OMPI_ADD_PROCS_CUTOFF_DEFAULT 0
 uint32_t ompi_add_procs_cutoff = OMPI_ADD_PROCS_CUTOFF_DEFAULT;
@@ -281,6 +284,22 @@ int ompi_mpi_register_params(void)
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_dynamics_enabled);
+
+    ompi_async_mpi_init = false;
+    (void) mca_base_var_register("ompi", "async", "mpi", "init",
+                                 "Do not perform a barrier at the end of MPI_Init",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_async_mpi_init);
+
+    ompi_async_mpi_finalize = false;
+    (void) mca_base_var_register("ompi", "async", "mpi", "finalize",
+                                 "Do not perform a barrier at the beginning of MPI_Finalize",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_async_mpi_finalize);
 
     value = mca_base_var_find ("opal", "opal", NULL, "abort_delay");
     if (0 <= value) {

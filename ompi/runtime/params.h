@@ -135,6 +135,13 @@ OMPI_DECLSPEC extern uint32_t ompi_add_procs_cutoff;
  */
 OMPI_DECLSPEC extern bool ompi_mpi_dynamics_enabled;
 
+/* EXPERIMENTAL: do not perform an RTE barrier at the end of MPI_Init */
+OMPI_DECLSPEC extern bool ompi_async_mpi_init;
+
+/* EXPERIMENTAL: do not perform an RTE barrier at the beginning of MPI_Finalize */
+OMPI_DECLSPEC extern bool ompi_async_mpi_finalize;
+
+
 /**
  * Register MCA parameters used by the MPI layer.
  *
