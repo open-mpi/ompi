@@ -398,12 +398,16 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
 #endif
 /**
  *  Signal or mark a request as complete. If with_signal is true this will
- *  wake any thread pending on the request and ompi_request_lock should be
- *  held while calling this function. If with_signal is false, there will
- *  signal generated, and no lock required. This is a special case when
- *  the function is called from the critical path for small messages, where
- *  we know the current execution flow created the request, and is still
- *  in the _START macro.
+ *  wake any thread pending on the request. If with_signal is false, the
+ *  opposite will be true, the request will simply be marked as completed
+ *  and no effort will be made to correctly (atomically) handle the associated
+ *  synchronization primitive. This is a special case when the function
+ *  is called from the critical path for small messages, where we know
+ *  the current execution flow created the request, and no synchronized wait
+ *  has been set.
+ *  BEWARE: The error code should be set on the request prior to calling
+ *  this function, or the synchronization primitive might not be correctly
+ *  triggered.
  */
 static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
@@ -412,13 +416,16 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
         request->req_complete_cb = NULL;
     }
 
-    if(!OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, REQUEST_COMPLETED)) {
-        ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWP_PTR(&request->req_complete,
-                                                                              REQUEST_COMPLETED);
-        /* In the case where another thread concurrently changed the request to REQUEST_PENDING */
-        if( REQUEST_PENDING != tmp_sync )
-            wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
-    }
+    if( OPAL_LIKELY(with_signal) ) {
+        if(!OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, REQUEST_COMPLETED)) {
+            ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWP_PTR(&request->req_complete,
+                                                                                  REQUEST_COMPLETED);
+            /* In the case where another thread concurrently changed the request to REQUEST_PENDING */
+            if( REQUEST_PENDING != tmp_sync )
+                wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
+        }
+    } else
+        request->req_complete = REQUEST_COMPLETED;
 
     if( OPAL_UNLIKELY(MPI_SUCCESS != request->req_status.MPI_ERROR) ) {
         ompi_request_failed++;

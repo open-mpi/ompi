@@ -85,7 +85,7 @@ int mca_io_ompio_component_progress ( void )
         if ( NULL != req->req_progress_fn ) {
             if ( req->req_progress_fn(req) ) {
                 completed++;
-                ompi_request_complete (&req->req_ompi, 1);
+                ompi_request_complete (&req->req_ompi, true);
                 /* The fbtl progress function is expected to set the
                  * status elements
                  */
