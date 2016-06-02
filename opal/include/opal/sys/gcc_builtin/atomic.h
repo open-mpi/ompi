@@ -156,6 +156,18 @@ static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr,
                                         __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
+#elif defined(OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128) && OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128
+
+#define OPAL_HAVE_ATOMIC_CMPSET_128 1
+
+/* __atomic version is not lock-free so use legacy __sync version */
+
+static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr,
+                                          opal_int128_t oldval, opal_int128_t newval)
+{
+    return __sync_bool_compare_and_swap (addr, oldval, newval);
+}
+
 #endif
 
 #if defined(__HLE__)
