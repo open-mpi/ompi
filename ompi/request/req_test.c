@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -27,11 +28,12 @@
 #include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
-int ompi_request_default_test( ompi_request_t ** rptr,
-                       int *completed,
-                       ompi_status_public_t * status )
+int ompi_request_default_test(ompi_request_t ** rptr,
+                              int *completed,
+                              ompi_status_public_t * status )
 {
     ompi_request_t *request = *rptr;
+
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
 
@@ -46,7 +48,7 @@ int ompi_request_default_test( ompi_request_t ** rptr,
         return OMPI_SUCCESS;
     }
 
-    if (request->req_complete) {
+    if( REQUEST_COMPLETE(request) ) {
 
         *completed = true;
         /* For a generalized request, we *have* to call the query_fn
@@ -116,7 +118,7 @@ int ompi_request_default_test_any(
             continue;
         }
 
-        if( request->req_complete ) {
+        if( REQUEST_COMPLETE(request) ) {
 
             *index = i;
             *completed = true;
@@ -191,7 +193,7 @@ int ompi_request_default_test_all(
         request = *rptr;
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ||
-            request->req_complete) {
+            REQUEST_COMPLETE(request) ) {
             num_completed++;
         }
     }
