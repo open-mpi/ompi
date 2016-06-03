@@ -121,8 +121,7 @@ typedef bool (*orte_odls_base_child_died_fn_t)(orte_proc_t *child);
 
 ORTE_DECLSPEC int
 orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
-                                        orte_odls_base_kill_local_fn_t kill_local,
-                                        orte_odls_base_child_died_fn_t child_died);
+                                        orte_odls_base_kill_local_fn_t kill_local);
 
 ORTE_DECLSPEC int orte_odls_base_default_restart_proc(orte_proc_t *child,
                                                       orte_odls_base_fork_local_proc_fn_t fork_local);
