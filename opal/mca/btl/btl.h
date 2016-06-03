@@ -309,21 +309,20 @@ enum {
     /** The btl supports atomic min */
     MCA_BTL_ATOMIC_SUPPORTS_MAX    = 0x00200000,
 
+    /** The btl supports 32-bit integer operations. Keep in mind the btl may
+     * support only a subset of the available atomics. */
+    MCA_BTL_ATOMIC_SUPPORTS_32BIT  = 0x01000000,
+
+    /** The btl supports floating-point operations. Keep in mind the btl may
+     * support only a subset of the available atomics and may not support
+     * both 64 or 32-bit floating point. */
+    MCA_BTL_ATOMIC_SUPPORTS_FLOAT  = 0x02000000,
+
     /** The btl supports atomic compare-and-swap */
     MCA_BTL_ATOMIC_SUPPORTS_CSWAP  = 0x10000000,
 
     /** The btl guarantees global atomicity (can mix btl atomics with cpu atomics) */
     MCA_BTL_ATOMIC_SUPPORTS_GLOB   = 0x20000000,
-
-
-    /** The btl supports 32-bit integer operations. Keep in mind the btl may
-     * support only a subset of the available atomics. */
-    MCA_BTL_ATOMIC_SUPPORTS_32BIT  = 0x40000000,
-
-    /** The btl supports floating-point operations. Keep in mind the btl may
-     * support only a subset of the available atomics and may not support
-     * both 64 or 32-bit floating point. */
-    MCA_BTL_ATOMIC_SUPPORTS_FLOAT  = 0x80000000,
 };
 
 enum {
