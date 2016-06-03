@@ -119,6 +119,11 @@ included in the vX.Y.Z section and be denoted as:
 - Correctly detect and configure for Solaris Studio 12.5
   beta compilers
 - Correctly compute #slots when -host is used for MPMD case
+- Fix a bug in the hcoll collectives due to an uninitialized field
+- Do not set a binding policy when oversubscribing a node
+- Fix hang in intercommunicator operations when oversubscribed
+- Speed up process termination during MPI_Abort
+
 
 
 1.10.2: 26 Jan 2016
