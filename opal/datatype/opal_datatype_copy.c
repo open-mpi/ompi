@@ -107,7 +107,7 @@ int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, in
 #endif
 
     DO_DEBUG( opal_output( 0, "opal_datatype_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
-                           (void*)datatype, count, destination_base, source_base ); );
+                           (void*)datatype, count, (void*)destination_base, (void*)source_base ); );
 
     /* empty data ? then do nothing. This should normally be trapped
      * at a higher level.

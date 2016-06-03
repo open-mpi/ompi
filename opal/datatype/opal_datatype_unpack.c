@@ -75,7 +75,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
     OPAL_PTRDIFF_TYPE initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
     DO_DEBUG( opal_output( 0, "unpack_homogeneous_contig( pBaseBuf %p, iov_count %d )\n",
-                           pConv->pBaseBuf, *out_size ); );
+                           (void*)pConv->pBaseBuf, *out_size ); );
     if( stack[1].type != opal_datatype_uint1.id ) {
         stack[1].count *= opal_datatype_basicDatatypes[stack[1].type]->size;
         stack[1].type = opal_datatype_uint1.id;
@@ -92,19 +92,19 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
         if( (OPAL_PTRDIFF_TYPE)pData->size == extent ) {
             user_memory += pConv->bConverted;
             DO_DEBUG( opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %lu\n",
-                                   user_memory, packed_buffer, (unsigned long)remaining ); );
+                                   (void*)user_memory, (void*)packed_buffer, (unsigned long)remaining ); );
 
             /* contiguous data or basic datatype with count */
             OPAL_DATATYPE_SAFEGUARD_POINTER( user_memory, remaining,
                                              pConv->pBaseBuf, pData, pConv->count );
             DO_DEBUG( opal_output( 0, "1. unpack contig dest %p src %p length %lu\n",
-                                   user_memory, packed_buffer, (unsigned long)remaining ); );
+                                   (void*)user_memory, (void*)packed_buffer, (unsigned long)remaining ); );
             MEMCPY_CSUM( user_memory, packed_buffer, remaining, pConv );
         } else {
             user_memory += stack[0].disp + stack[1].disp;
 
             DO_DEBUG( opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %lu\n",
-                                   user_memory, packed_buffer, (unsigned long)remaining ); );
+                                   (void*)user_memory, (void*)packed_buffer, (unsigned long)remaining ); );
 
             length = (0 == pConv->stack_pos ? 0 : stack[1].count);  /* left over from the last unpack */
             /* complete the last copy */
@@ -112,7 +112,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
                 OPAL_DATATYPE_SAFEGUARD_POINTER( user_memory, length, pConv->pBaseBuf,
                                                  pData, pConv->count );
                 DO_DEBUG( opal_output( 0, "2. unpack dest %p src %p length %lu\n",
-                                       user_memory, packed_buffer, (unsigned long)length ); );
+                                       (void*)user_memory, (void*)packed_buffer, (unsigned long)length ); );
                 MEMCPY_CSUM( user_memory, packed_buffer, length, pConv );
                 packed_buffer  += length;
                 user_memory    += (extent - (pData->size - length));
@@ -131,7 +131,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
                 OPAL_DATATYPE_SAFEGUARD_POINTER( user_memory, pData->size, pConv->pBaseBuf,
                                                  pData, pConv->count );
                 DO_DEBUG( opal_output( 0, "3. unpack dest %p src %p length %lu\n",
-                                       user_memory, packed_buffer, (unsigned long)pData->size ); );
+                                       (void*)user_memory, (void*)packed_buffer, (unsigned long)pData->size ); );
                 MEMCPY_CSUM( user_memory, packed_buffer, pData->size, pConv );
                 packed_buffer += pData->size;
                 user_memory   += extent;
@@ -145,7 +145,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
                 OPAL_DATATYPE_SAFEGUARD_POINTER( user_memory, remaining, pConv->pBaseBuf,
                                                  pData, pConv->count );
                 DO_DEBUG( opal_output( 0, "4. unpack dest %p src %p length %lu\n",
-                                       user_memory, packed_buffer, (unsigned long)remaining ); );
+                                       (void*)user_memory, (void*)packed_buffer, (unsigned long)remaining ); );
                 MEMCPY_CSUM( user_memory, packed_buffer, remaining, pConv );
                 user_memory += remaining;
                 stack[1].count -= remaining;
@@ -188,7 +188,7 @@ opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pEle
 
     DO_DEBUG( opal_output( 0, "unpack partial data start %lu end %lu data_length %lu user %p\n"
                            "\tbConverted %lu total_length %lu count %d\n",
-                           (unsigned long)start_position, (unsigned long)start_position + length, (unsigned long)data_length, *user_buffer,
+                           (unsigned long)start_position, (unsigned long)start_position + length, (unsigned long)data_length, (void*)*user_buffer,
                            (unsigned long)pConvertor->bConverted, (unsigned long)pConvertor->local_size, pConvertor->count ); );
 
     /* Find a byte that is not used in the partial buffer */
@@ -273,7 +273,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
     uint32_t iov_count;
 
     DO_DEBUG( opal_output( 0, "opal_convertor_generic_simple_unpack( %p, {%p, %lu}, %u )\n",
-                           (void*)pConvertor, iov[0].iov_base, (unsigned long)iov[0].iov_len, *out_size ); );
+                           (void*)pConvertor, (void*)iov[0].iov_base, (unsigned long)iov[0].iov_len, *out_size ); );
 
     description = pConvertor->use_desc->desc;
 
@@ -452,7 +452,7 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
     int32_t rc;
 
     DO_DEBUG( opal_output( 0, "opal_convertor_general_unpack( %p, {%p, %lu}, %u )\n",
-                           (void*)pConvertor, iov[0].iov_base, (unsigned long)iov[0].iov_len, *out_size ); );
+                           (void*)pConvertor, (void*)iov[0].iov_base, (unsigned long)iov[0].iov_len, *out_size ); );
 
     description = pConvertor->use_desc->desc;
 
@@ -484,8 +484,8 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                 OPAL_DATATYPE_SAFEGUARD_POINTER( conv_ptr + pElem->elem.disp, pData->size, pConvertor->pBaseBuf,
                                                  pData, pConvertor->count );
                 DO_DEBUG( opal_output( 0, "unpack (%p, %ld) -> (%p:%ld, %d, %ld) type %s\n",
-                                       iov_ptr, iov_len_local,
-                                       pConvertor->pBaseBuf, conv_ptr + pElem->elem.disp - pConvertor->pBaseBuf,
+                                       (void*)iov_ptr, iov_len_local,
+                                       (void*)pConvertor->pBaseBuf, conv_ptr + pElem->elem.disp - pConvertor->pBaseBuf,
                                        count_desc, description[pos_desc].elem.extent,
                                        opal_datatype_basicDatatypes[type]->name ); );
                 rc = master->pFunctions[type]( pConvertor, count_desc,

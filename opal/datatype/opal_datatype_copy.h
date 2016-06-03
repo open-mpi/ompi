@@ -62,7 +62,7 @@ static inline void _predefined_data( const dt_elem_desc_t* ELEM,
                                     (DATATYPE), (TOTAL_COUNT) );
         /* the extent and the size of the basic datatype are equals */
         DO_DEBUG( opal_output( 0, "copy 1. %s( %p, %p, %lu ) => space %lu\n",
-                               STRINGIFY(MEM_OP_NAME), _destination, _source, (unsigned long)_copy_blength, (unsigned long)(*(SPACE)) ); );
+                               STRINGIFY(MEM_OP_NAME), (void*)_destination, (void*)_source, (unsigned long)_copy_blength, (unsigned long)(*(SPACE)) ); );
         MEM_OP( _destination, _source, _copy_blength );
         _source      += _copy_blength;
         _destination += _copy_blength;
@@ -72,7 +72,7 @@ static inline void _predefined_data( const dt_elem_desc_t* ELEM,
             OPAL_DATATYPE_SAFEGUARD_POINTER( _source, _copy_blength, (SOURCE_BASE),
                                         (DATATYPE), (TOTAL_COUNT) );
             DO_DEBUG( opal_output( 0, "copy 2. %s( %p, %p, %lu ) => space %lu\n",
-                                   STRINGIFY(MEM_OP_NAME), _destination, _source, (unsigned long)_copy_blength, (unsigned long)(*(SPACE) - (_i * _copy_blength)) ); );
+                                   STRINGIFY(MEM_OP_NAME), (void*)_destination, (void*)_source, (unsigned long)_copy_blength, (unsigned long)(*(SPACE) - (_i * _copy_blength)) ); );
             MEM_OP( _destination, _source, _copy_blength );
             _source      += _elem->extent;
             _destination += _elem->extent;
@@ -108,7 +108,7 @@ static inline void _contiguous_loop( const dt_elem_desc_t* ELEM,
             OPAL_DATATYPE_SAFEGUARD_POINTER( _source, _end_loop->size, (SOURCE_BASE),
                                         (DATATYPE), (TOTAL_COUNT) );
             DO_DEBUG( opal_output( 0, "copy 3. %s( %p, %p, %lu ) => space %lu\n",
-                                   STRINGIFY(MEM_OP_NAME), _destination, _source, (unsigned long)_end_loop->size, (unsigned long)(*(SPACE) - _i * _end_loop->size) ); );
+                                   STRINGIFY(MEM_OP_NAME), (void*)_destination, (void*)_source, (unsigned long)_end_loop->size, (unsigned long)(*(SPACE) - _i * _end_loop->size) ); );
             MEM_OP( _destination, _source, _end_loop->size );
             _source      += _loop->extent;
             _destination += _loop->extent;
@@ -132,7 +132,7 @@ static inline int32_t _copy_content_same_ddt( const opal_datatype_t* datatype, i
                   *destination = (unsigned char*)destination_base;
 
     DO_DEBUG( opal_output( 0, "_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
-                           (void*)datatype, count, destination_base, source_base ); );
+                           (void*)datatype, count, (void*)destination_base, (void*)source_base ); );
 
     iov_len_local = count * datatype->size;
 
@@ -156,7 +156,7 @@ static inline int32_t _copy_content_same_ddt( const opal_datatype_t* datatype, i
                 OPAL_DATATYPE_SAFEGUARD_POINTER( source, memop_chunk,
                                             (unsigned char*)source_base, datatype, count );
                 DO_DEBUG( opal_output( 0, "copy c1. %s( %p, %p, %lu ) => space %lu\n",
-                                       STRINGIFY(MEM_OP_NAME), destination, source, (unsigned long)memop_chunk, (unsigned long)total_length ); );
+                                       STRINGIFY(MEM_OP_NAME), (void*)destination, (void*)source, (unsigned long)memop_chunk, (unsigned long)total_length ); );
                 MEM_OP( destination, source, memop_chunk );
                 destination   += memop_chunk;
                 source        += memop_chunk;
@@ -170,7 +170,7 @@ static inline int32_t _copy_content_same_ddt( const opal_datatype_t* datatype, i
             OPAL_DATATYPE_SAFEGUARD_POINTER( source, datatype->size,
                                         (unsigned char*)source_base, datatype, count );
             DO_DEBUG( opal_output( 0, "copy c2. %s( %p, %p, %lu ) => space %lu\n",
-                                   STRINGIFY(MEM_OP_NAME), destination, source, (unsigned long)datatype->size,
+                                   STRINGIFY(MEM_OP_NAME), (void*)destination, (void*)source, (unsigned long)datatype->size,
                                    (unsigned long)(iov_len_local - (pos_desc * datatype->size)) ); );
             MEM_OP( destination, source, datatype->size );
             destination += extent;
