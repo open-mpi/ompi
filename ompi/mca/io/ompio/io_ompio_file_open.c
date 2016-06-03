@@ -769,35 +769,36 @@ mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
 {
     mca_io_ompio_data_t *data;
     int i, k, index;
-    size_t position;
-    size_t total_bytes;
     size_t temp_offset;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
     temp_offset = data->ompio_fh.f_view_extent *
         (offset*data->ompio_fh.f_etype_size / data->ompio_fh.f_view_size);
+    
 
-    position = 0;
-    total_bytes = (offset*data->ompio_fh.f_etype_size) % data->ompio_fh.f_view_size;
+    i = (offset*data->ompio_fh.f_etype_size) % data->ompio_fh.f_view_size;
     index = 0;
-    i = total_bytes;
     k = 0;
 
     while (1) {
-        k += data->ompio_fh.f_decoded_iov[index].iov_len;
+        k = data->ompio_fh.f_decoded_iov[index].iov_len;
         if (i >= k) {
-            i = i - data->ompio_fh.f_decoded_iov[index].iov_len;
-            position += data->ompio_fh.f_decoded_iov[index].iov_len;
-            index = index+1;
+            i -= k;
+            index++;
+            if ( 0 == i ) {
+                k=0;
+                break;
+            }
         }
         else {
+            k=i;
             break;
         }
     }
 
     *disp = data->ompio_fh.f_disp + temp_offset +
-        (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_decoded_iov[index].iov_base;
+        (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_decoded_iov[index].iov_base + k;
 
     return OMPI_SUCCESS;
 }
