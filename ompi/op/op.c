@@ -443,6 +443,10 @@ static void ompi_op_construct(ompi_op_t *new_op)
 {
     int i;
 
+    /* Provide a default of a high value. Useful for non-predefined ops. */
+    new_op->op_type = OMPI_OP_NUM_OF_TYPES;
+    new_op->o_flags = 0;
+
     /* assign entry in fortran <-> c translation array */
 
     new_op->o_f_to_c_index =
