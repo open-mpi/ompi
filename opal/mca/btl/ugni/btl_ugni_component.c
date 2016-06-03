@@ -288,6 +288,13 @@ btl_ugni_component_register(void)
         MCA_BTL_ATOMIC_SUPPORTS_AND | MCA_BTL_ATOMIC_SUPPORTS_OR | MCA_BTL_ATOMIC_SUPPORTS_XOR |
         MCA_BTL_ATOMIC_SUPPORTS_CSWAP;
 
+    if (GNI_DEVICE_ARIES == device_type) {
+        /* aries supports additional atomic operations */
+        mca_btl_ugni_module.super.btl_atomic_flags |= MCA_BTL_ATOMIC_SUPPORTS_MIN | MCA_BTL_ATOMIC_SUPPORTS_MAX |
+            MCA_BTL_ATOMIC_SUPPORTS_LAND | MCA_BTL_ATOMIC_SUPPORTS_LOR | MCA_BTL_ATOMIC_SUPPORTS_LXOR |
+            MCA_BTL_ATOMIC_SUPPORTS_32BIT | MCA_BTL_ATOMIC_SUPPORTS_FLOAT;
+    }
+
     mca_btl_ugni_module.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
 
     mca_btl_ugni_module.super.btl_bandwidth = 40000; /* Mbs */
