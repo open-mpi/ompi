@@ -55,9 +55,6 @@ mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
 
     dim = comm->c_cube_dim;
     hibit = opal_hibit(rank, dim);
-    if (hibit < 0) {
-        return MPI_ERR_OTHER;
-    }
     --dim;
 
     /* Receive from children. */
