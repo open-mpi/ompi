@@ -901,9 +901,14 @@ sub patch_autotools_output {
     # enough Libtool that dosn't need this patch.  But don't alarm the
     # user and make them think that autogen failed if this patch fails --
     # make the errors be silent.
+    # Also patch ltmain.sh for NAG compiler
     if (-f "config/ltmain.sh") {
         verbose "$indent_str"."Patching PGI compiler version numbers in ltmain.sh\n";
         system("$patch_prog -N -p0 < $topdir/config/ltmain_pgi_tp.diff >/dev/null 2>&1");
+        unlink("config/ltmain.sh.rej");
+
+        verbose "$indent_str"."Patching \"-pthread\" option for NAG compiler in ltmain.sh\n";
+        system("$patch_prog -N -p0 < $topdir/config/ltmain_nag_pthread.diff >/dev/null 2>&1");
         unlink("config/ltmain.sh.rej");
     }
 
@@ -974,6 +979,25 @@ sub patch_autotools_output {
 ";
 
         push(@verbose_out, $indent_str . "Patching configure for Sun Studio Fortran version strings ($tag)\n");
+        $c =~ s/$search_string/$replace_string/;
+    }
+
+    foreach my $tag (("", "_FC")) {
+
+        # We have to change the search pattern and substitution on each
+        # iteration to take into account the tag changing
+        my $search_string = 'lf95\052.*# Lahey Fortran 8.1\n\s+' .
+            "whole_archive_flag_spec${tag}=" . '\n\s+' .
+            "tmp_sharedflag='--shared' ;;" . '\n\s+' .
+            'xl';
+        my $replace_string = "lf95*)				# Lahey Fortran 8.1
+	  whole_archive_flag_spec${tag}=
+	  tmp_sharedflag='--shared' ;;
+	nagfor*)			# NAGFOR 5.3
+	  tmp_sharedflag='-Wl,-shared';;
+	xl";
+
+        push(@verbose_out, $indent_str . "Patching configure for NAG compiler ($tag)\n");
         $c =~ s/$search_string/$replace_string/;
     }
 
