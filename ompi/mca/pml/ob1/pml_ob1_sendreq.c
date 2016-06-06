@@ -13,7 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -495,9 +495,6 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         if( OPAL_LIKELY(OMPI_SUCCESS == rc) ) {
             /* signal request completion */
             send_request_pml_complete(sendreq);
-
-            /* check for pending requests */
-            MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
             return OMPI_SUCCESS;
         }
 
@@ -688,9 +685,6 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     frag->cbfunc = mca_pml_ob1_rget_completion;
     /* do not store the local handle in the fragment. it will be released by mca_pml_ob1_free_rdma_resources */
 
-    /* save the fragment for get->put fallback */
-    sendreq->rdma_frag = frag;
-
     reg_size = bml_btl->btl->btl_registration_handle_size;
 
     /* allocate space for get hdr + segment list */
@@ -699,8 +693,12 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
                        MCA_BTL_DES_FLAGS_SIGNAL);
     if( OPAL_UNLIKELY(NULL == des) ) {
         /* NTH: no need to reset the converter here. it will be reset before it is retried */
+        MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    /* save the fragment for get->put fallback */
+    sendreq->rdma_frag = frag;
 
     /* build match header */
     hdr = (mca_pml_ob1_rget_hdr_t *) des->des_segments->seg_addr.pval;
