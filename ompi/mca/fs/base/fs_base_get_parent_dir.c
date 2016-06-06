@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -106,6 +106,7 @@ int  mca_fs_base_get_fstype(char *fname )
         char *dir;
         mca_fs_base_get_parent_dir (fname, &dir );
         ret = opal_path_nfs (dir, &fstype);
+        free(dir);
         if ( false == ret ) {
             return ompio_type;
         }
