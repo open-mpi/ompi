@@ -74,6 +74,10 @@ OBJ_CLASS_DECLARATION(pmix_server_req_t);
 typedef struct {
     opal_object_t super;
     opal_event_t ev;
+    int status;
+    opal_process_name_t *proc;
+    const char *msg;
+    void *server_object;
     opal_list_t *procs;
     opal_list_t *eprocs;
     opal_list_t *info;
@@ -90,46 +94,62 @@ typedef struct {
 } orte_pmix_mdx_caddy_t;
 OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
 
-#define ORTE_DMX_REQ(p, cf, ocf, ocd)                    \
-do {                                                     \
-    pmix_server_req_t *_req;                             \
-    _req = OBJ_NEW(pmix_server_req_t);                   \
-    _req->target = (p);                                  \
-    _req->mdxcbfunc = (ocf);                             \
-    _req->cbdata = (ocd);                                \
-    opal_event_set(orte_event_base, &(_req->ev),         \
-                   -1, OPAL_EV_WRITE, (cf), _req);       \
-    opal_event_set_priority(&(_req->ev), ORTE_MSG_PRI);  \
-    opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
-} while(0);
+#define ORTE_DMX_REQ(p, cf, ocf, ocd)                       \
+    do {                                                     \
+        pmix_server_req_t *_req;                             \
+        _req = OBJ_NEW(pmix_server_req_t);                   \
+        _req->target = (p);                                  \
+        _req->mdxcbfunc = (ocf);                             \
+        _req->cbdata = (ocd);                                \
+        opal_event_set(orte_event_base, &(_req->ev),         \
+                       -1, OPAL_EV_WRITE, (cf), _req);       \
+        opal_event_set_priority(&(_req->ev), ORTE_MSG_PRI);  \
+        opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
+    } while(0);
 
-#define ORTE_SPN_REQ(j, cf, ocf, ocd)                    \
-do {                                                     \
-    pmix_server_req_t *_req;                             \
-    _req = OBJ_NEW(pmix_server_req_t);                   \
-    _req->jdata = (j);                                   \
-    _req->spcbfunc = (ocf);                              \
-    _req->cbdata = (ocd);                                \
-    opal_event_set(orte_event_base, &(_req->ev),         \
-                   -1, OPAL_EV_WRITE, (cf), _req);       \
-    opal_event_set_priority(&(_req->ev), ORTE_MSG_PRI);  \
-    opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
-} while(0);
+#define ORTE_SPN_REQ(j, cf, ocf, ocd)                       \
+    do {                                                     \
+        pmix_server_req_t *_req;                             \
+        _req = OBJ_NEW(pmix_server_req_t);                   \
+        _req->jdata = (j);                                   \
+        _req->spcbfunc = (ocf);                              \
+        _req->cbdata = (ocd);                                \
+        opal_event_set(orte_event_base, &(_req->ev),         \
+                       -1, OPAL_EV_WRITE, (cf), _req);       \
+        opal_event_set_priority(&(_req->ev), ORTE_MSG_PRI);  \
+        opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
+    } while(0);
 
-#define ORTE_PMIX_OPERATION(p, i, fn, cf, cb)               \
-do {                                                        \
-    orte_pmix_server_op_caddy_t *_cd;                       \
-    _cd = OBJ_NEW(orte_pmix_server_op_caddy_t);             \
-    _cd->procs = (p);                                       \
-    _cd->info = (i);                                        \
-    _cd->cbfunc = (cf);                                     \
-    _cd->cbdata = (cb);                                     \
-    opal_event_set(orte_event_base, &(_cd->ev), -1,         \
-                   OPAL_EV_WRITE, (fn), _cd);               \
-    opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);      \
-    opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);        \
-} while(0);
+#define ORTE_PMIX_OPERATION(p, i, fn, cf, cb)                   \
+    do {                                                        \
+        orte_pmix_server_op_caddy_t *_cd;                       \
+        _cd = OBJ_NEW(orte_pmix_server_op_caddy_t);             \
+        _cd->procs = (p);                                       \
+        _cd->info = (i);                                        \
+        _cd->cbfunc = (cf);                                     \
+        _cd->cbdata = (cb);                                     \
+        opal_event_set(orte_event_base, &(_cd->ev), -1,         \
+                       OPAL_EV_WRITE, (fn), _cd);               \
+        opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);      \
+        opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);        \
+    } while(0);
 
+#define ORTE_PMIX_THREADSHIFT(p, s, st, m, pl, fn, cf, cb)      \
+    do {                                                        \
+        orte_pmix_server_op_caddy_t *_cd;                       \
+        _cd = OBJ_NEW(orte_pmix_server_op_caddy_t);             \
+        _cd->proc = (p);                                        \
+        _cd->server_object = (s);                               \
+        _cd->status = (st);                                     \
+        _cd->msg = (m);                                         \
+        _cd->procs = (pl);                                      \
+        _cd->cbfunc = (cf);                                     \
+        _cd->cbdata = (cb);                                     \
+        opal_event_set(orte_event_base, &(_cd->ev), -1,         \
+                       OPAL_EV_WRITE, (fn), _cd);               \
+        opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);      \
+        opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);        \
+    } while(0);
 
 /* define the server module functions */
 extern int pmix_server_client_connected_fn(opal_process_name_t *proc, void* server_object);

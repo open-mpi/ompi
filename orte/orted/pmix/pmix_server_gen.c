@@ -43,50 +43,141 @@
 
 #include "pmix_server_internal.h"
 
-int pmix_server_client_connected_fn(opal_process_name_t *proc, void *server_object)
+static void _client_conn(int sd, short args, void *cbdata)
 {
-    ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_REGISTERED);
-    return ORTE_SUCCESS;
-}
-
-int pmix_server_client_finalized_fn(opal_process_name_t *proc, void *server_object,
-                                    opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
-{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
     orte_job_t *jdata;
     orte_proc_t *p, *ptr;
     int i;
 
-    if (NULL != cbdata) {
+    if (NULL != cd->server_object) {
         /* we were passed back the orte_proc_t */
-        p = (orte_proc_t*)cbdata;
+        p = (orte_proc_t*)cd->server_object;
     } else {
         /* find the named process */
         p = NULL;
-        if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
-            return ORTE_ERR_NOT_FOUND;
+        if (NULL == (jdata = orte_get_job_data_object(cd->proc->jobid))) {
+            return;
         }
         for (i=0; i < jdata->procs->size; i++) {
             if (NULL == (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
                 continue;
             }
-            if (proc->jobid != ptr->name.jobid) {
+            if (cd->proc->jobid != ptr->name.jobid) {
                 continue;
             }
-            if (proc->vpid == ptr->name.vpid) {
+            if (cd->proc->vpid == ptr->name.vpid) {
                 p = ptr;
                 break;
             }
         }
     }
     if (NULL != p) {
-        p->state = ORTE_PROC_STATE_TERMINATED;
-            /* release the caller */
-        if (NULL != cbfunc) {
-            cbfunc(ORTE_SUCCESS, cbdata);
-        }
-        return ORTE_SUCCESS;
+        ORTE_FLAG_SET(p, ORTE_PROC_FLAG_REG);
+        ORTE_ACTIVATE_PROC_STATE(&p->name, ORTE_PROC_STATE_REGISTERED);
     }
-    return ORTE_ERR_NOT_FOUND;
+    OBJ_RELEASE(cd);
+}
+
+int pmix_server_client_connected_fn(opal_process_name_t *proc, void *server_object)
+{
+    /* need to thread-shift this request as we are going
+     * to access our global list of registered events */
+    ORTE_PMIX_THREADSHIFT(proc, server_object, OPAL_SUCCESS, NULL,
+                          NULL, _client_conn, NULL, NULL);
+    return ORTE_SUCCESS;
+}
+
+static void _client_finalized(int sd, short args, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+    orte_job_t *jdata;
+    orte_proc_t *p, *ptr;
+    int i;
+
+    if (NULL != cd->server_object) {
+        /* we were passed back the orte_proc_t */
+        p = (orte_proc_t*)cd->server_object;
+    } else {
+        /* find the named process */
+        p = NULL;
+        if (NULL == (jdata = orte_get_job_data_object(cd->proc->jobid))) {
+            return;
+        }
+        for (i=0; i < jdata->procs->size; i++) {
+            if (NULL == (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                continue;
+            }
+            if (cd->proc->jobid != ptr->name.jobid) {
+                continue;
+            }
+            if (cd->proc->vpid == ptr->name.vpid) {
+                p = ptr;
+                break;
+            }
+        }
+    }
+    if (NULL != p) {
+        ORTE_FLAG_SET(p, ORTE_PROC_FLAG_HAS_DEREG);
+        /* release the caller */
+        if (NULL != cd->cbfunc) {
+            cd->cbfunc(ORTE_SUCCESS, cd->cbdata);
+        }
+    }
+    OBJ_RELEASE(cd);
+}
+
+int pmix_server_client_finalized_fn(opal_process_name_t *proc, void *server_object,
+                                    opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    /* need to thread-shift this request as we are going
+     * to access our global list of registered events */
+    ORTE_PMIX_THREADSHIFT(proc, server_object, OPAL_SUCCESS, NULL,
+                          NULL, _client_finalized, cbfunc, cbdata);
+    return ORTE_SUCCESS;
+
+}
+
+static void _client_abort(int sd, short args, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+    orte_job_t *jdata;
+    orte_proc_t *p, *ptr;
+    int i;
+
+    if (NULL != cd->server_object) {
+        p = (orte_proc_t*)cd->server_object;
+    } else {
+        /* find the named process */
+        p = NULL;
+        if (NULL == (jdata = orte_get_job_data_object(cd->proc->jobid))) {
+            return;
+        }
+        for (i=0; i < jdata->procs->size; i++) {
+            if (NULL == (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                continue;
+            }
+            if (cd->proc->jobid != ptr->name.jobid) {
+                continue;
+            }
+            if (cd->proc->vpid == ptr->name.vpid) {
+                p = ptr;
+                break;
+            }
+        }
+    }
+    if (NULL != p) {
+        p->exit_code = cd->status;
+        ORTE_ACTIVATE_PROC_STATE(&p->name, ORTE_PROC_STATE_CALLED_ABORT);
+    }
+
+    ORTE_UPDATE_EXIT_STATUS(cd->status);
+
+    /* release the caller */
+    if (NULL != cd->cbfunc) {
+        cd->cbfunc(OPAL_SUCCESS, cd->cbdata);
+    }
+    OBJ_RELEASE(cd);
 }
 
 int pmix_server_abort_fn(opal_process_name_t *proc, void *server_object,
@@ -94,21 +185,11 @@ int pmix_server_abort_fn(opal_process_name_t *proc, void *server_object,
                          opal_list_t *procs_to_abort,
                          opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    orte_proc_t *p;
-
-    if (NULL != server_object) {
-        p = (orte_proc_t*)server_object;
-        p->exit_code = status;
-    }
-
-    ORTE_UPDATE_EXIT_STATUS(status);
-    ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_CALLED_ABORT);
-
-    /* release the caller */
-    if (NULL != cbfunc) {
-        cbfunc(OPAL_SUCCESS, cbdata);
-    }
-    return OPAL_SUCCESS;
+    /* need to thread-shift this request as we are going
+     * to access our global list of registered events */
+    ORTE_PMIX_THREADSHIFT(proc, server_object, status, msg,
+                          procs_to_abort, _client_abort, cbfunc, cbdata);
+    return ORTE_SUCCESS;
 }
 
 static void _register_events(int sd, short args, void *cbdata)

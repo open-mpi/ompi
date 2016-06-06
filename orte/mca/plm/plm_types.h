@@ -53,7 +53,6 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_IOF_COMPLETE             6  /* io forwarding pipes have closed */
 #define ORTE_PROC_STATE_WAITPID_FIRED            7  /* waitpid fired on process */
 #define ORTE_PROC_STATE_MODEX_READY              8  /* all modex info has been stored */
-
 /*
  * Define a "boundary" so we can easily and quickly determine
  * if a proc is still running or not - any value less than
