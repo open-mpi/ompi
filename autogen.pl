@@ -969,6 +969,25 @@ sub patch_autotools_output {
         $c =~ s/$search_string/$replace_string/;
     }
 
+    foreach my $tag (("", "_FC")) {
+
+        # We have to change the search pattern and substitution on each
+        # iteration to take into account the tag changing
+        my $search_string = 'lf95\052.*# Lahey Fortran 8.1\n\s+' .
+            "whole_archive_flag_spec${tag}=" . '\n\s+' .
+            "tmp_sharedflag='--shared' ;;" . '\n\s+' .
+            'xl';
+        my $replace_string = "lf95*)				# Lahey Fortran 8.1
+	  whole_archive_flag_spec${tag}=
+	  tmp_sharedflag='--shared' ;;
+	nagfor*)			# NAGFOR 5.3
+	  tmp_sharedflag='-Wl,-shared';;
+	xl";
+
+        verbose "$indent_str"."Patching configure for NAG compiler ($tag)\n";
+        $c =~ s/$search_string/$replace_string/;
+    }
+
     # Oracle has apparently begun (as of 12.5-beta) removing the "Sun" branding.
     # So this patch (cumulative over the previous one) is required.
     verbose "$indent_str"."Patching configure for Oracle Studio Fortran version strings\n";

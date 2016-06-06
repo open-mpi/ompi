@@ -172,7 +172,33 @@ EOF
 
     AS_IF([test -n "$rpath_args"],
           [WRAPPER_RPATH_SUPPORT=rpath
-           AC_MSG_RESULT([yes ($rpath_args)])],
+           cat > $rpath_script <<EOF
+#!/bin/sh
+
+# Slurp in the libtool config into my environment
+
+# Apparently, "libtoool --config" calls "exit", so we can't source it
+# (because if script A sources script B, and B calls "exit", then both
+# B and A will exit).  Instead, we have to send the output to a file
+# and then source that.
+$OPAL_TOP_BUILDDIR/libtool --tag=FC --config > $rpath_outfile
+
+chmod +x $rpath_outfile
+. ./$rpath_outfile
+rm -f $rpath_outfile
+
+# Evaluate \$hardcode_libdir_flag_spec, and substitute in LIBDIR for \$libdir
+libdir=LIBDIR
+flags="\`eval echo \$hardcode_libdir_flag_spec\`"
+echo \$flags
+
+# Done
+exit 0
+EOF
+           chmod +x $rpath_script
+           rpath_fc_args=`./$rpath_script`
+           rm -f $rpath_script
+           AC_MSG_RESULT([yes ($rpath_args + $rpath_fc_args)])],
           [WRAPPER_RPATH_SUPPORT=unnecessary
            AC_MSG_RESULT([yes (no extra flags needed)])])
 
@@ -214,7 +240,7 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
 # for each of them.  Then also add in an RPATH for @{libdir} (which
 # will be replaced by the wrapper compile to the installdir libdir at
 # runtime), and the RUNPATH args, if we have them.
-AC_DEFUN([RPATHIFY_LDFLAGS],[
+AC_DEFUN([RPATHIFY_LDFLAGS_INTERNAL],[
     OPAL_VAR_SCOPE_PUSH([rpath_out rpath_dir rpath_tmp])
     AS_IF([test "$enable_wrapper_rpath" = "yes" && test "$WRAPPER_RPATH_SUPPORT" != "disabled" && test "$WRAPPER_RPATH_SUPPORT" != "unnecessary"], [
            rpath_out=""
@@ -222,18 +248,22 @@ AC_DEFUN([RPATHIFY_LDFLAGS],[
                case $val in
                -L*)
                    rpath_dir=`echo $val | cut -c3-`
-                   rpath_tmp=`echo $rpath_args | sed -e s@LIBDIR@$rpath_dir@`
+                   rpath_tmp=`echo ${$2} | sed -e s@LIBDIR@$rpath_dir@`
                    rpath_out="$rpath_out $rpath_tmp"
                    ;;
                esac
            done
 
            # Now add in the RPATH args for @{libdir}, and the RUNPATH args
-           rpath_tmp=`echo $rpath_args | sed -e s/LIBDIR/@{libdir}/`
+           rpath_tmp=`echo ${$2} | sed -e s/LIBDIR/@{libdir}/`
            $1="${$1} $rpath_out $rpath_tmp $runpath_args"
           ])
     OPAL_VAR_SCOPE_POP
 ])
+
+AC_DEFUN([RPATHIFY_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_args])])
+
+AC_DEFUN([RPATHIFY_FC_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_fc_args])])
 
 
 dnl
@@ -430,9 +460,12 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
 
        AC_MSG_CHECKING([for OMPI LDFLAGS])
        OMPI_WRAPPER_EXTRA_LDFLAGS="$ompi_mca_wrapper_extra_ldflags $wrapper_extra_ldflags $with_wrapper_ldflags"
+       OMPI_WRAPPER_EXTRA_FC_LDFLAGS=$OMPI_WRAPPER_EXTRA_LDFLAGS
        RPATHIFY_LDFLAGS([OMPI_WRAPPER_EXTRA_LDFLAGS])
        AC_SUBST([OMPI_WRAPPER_EXTRA_LDFLAGS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LDFLAGS])
+       RPATHIFY_FC_LDFLAGS([OMPI_WRAPPER_EXTRA_FC_LDFLAGS])
+       AC_SUBST([OMPI_WRAPPER_EXTRA_FC_LDFLAGS])
 
        # Convert @{libdir} to ${libdir} for pkg-config
        _OPAL_SETUP_WRAPPER_FINAL_PKGCONFIG([OMPI])
