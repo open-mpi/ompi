@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2011-2012      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016           Los Alamos National Security, LLC. All rights
+ *                              reserved.
  *
  */
 
@@ -14,7 +16,10 @@
 #ifndef OPAL_SYS_CMA_H
 #define OPAL_SYS_CMA_H 1
 
+#if !defined(OPAL_ASSEMBLY_ARCH)
+/* need opal_config.h for the assembly architecture */
 #include "opal_config.h"
+#endif
 
 #include "opal/sys/architecture.h"
 
