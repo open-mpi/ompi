@@ -16,6 +16,7 @@
 #include "nbc_internal.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/op/op.h"
 
 #include <assert.h>
 
@@ -101,7 +102,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
   }
 
   /* algorithm selection */
-  if(p < 4 || size*count < 65536 || inplace) {
+  if(p < 4 || size*count < 65536 || !ompi_op_is_commute(op) || inplace) {
     alg = NBC_ARED_BINOMIAL;
   } else {
     alg = NBC_ARED_RING;
