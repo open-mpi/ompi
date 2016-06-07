@@ -425,13 +425,20 @@ static int openib_btl_prepare(struct mca_btl_openib_module_t* openib_btl)
 static int openib_btl_size_queues(struct mca_btl_openib_module_t* openib_btl)
 {
     uint32_t send_cqes, recv_cqes;
-    int rc = OPAL_SUCCESS, qp;
+    int rc = OPAL_SUCCESS;
     mca_btl_openib_device_t *device = openib_btl->device;
+    uint32_t requested[BTL_OPENIB_MAX_CQ];
+    bool need_resize = false;
 
     opal_mutex_lock(&openib_btl->ib_lock);
+
+    for (int cq = 0 ; cq < BTL_OPENIB_MAX_CQ ; ++cq) {
+        requested[cq] = 0;
+    }
+
     /* figure out reasonable sizes for completion queues */
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
+    for (int qp = 0 ; qp < mca_btl_openib_component.num_qps ; qp++) {
+        if (BTL_OPENIB_QP_TYPE_SRQ(qp)) {
             send_cqes = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
             recv_cqes = mca_btl_openib_component.qp_infos[qp].rd_num;
         } else {
@@ -440,24 +447,30 @@ static int openib_btl_size_queues(struct mca_btl_openib_module_t* openib_btl)
             recv_cqes = send_cqes;
         }
 
-        opal_mutex_lock(&openib_btl->device->device_lock);
-        openib_btl->device->cq_size[qp_cq_prio(qp)] += recv_cqes;
-        openib_btl->device->cq_size[BTL_OPENIB_LP_CQ] += send_cqes;
-        opal_mutex_unlock(&openib_btl->device->device_lock);
+        requested[qp_cq_prio(qp)] += recv_cqes;
+        requested[BTL_OPENIB_LP_CQ] += send_cqes;
     }
 
-    rc = adjust_cq(device, BTL_OPENIB_HP_CQ);
-    if (OPAL_SUCCESS != rc) {
-        goto out;
-    }
+    opal_mutex_lock (&openib_btl->device->device_lock);
+    for (int cq = 0 ; cq < BTL_OPENIB_MAX_CQ ; ++cq) {
+        if (requested[cq] < mca_btl_openib_component.ib_cq_size[cq]) {
+            requested[cq] = mca_btl_openib_component.ib_cq_size[cq];
+        } else if (requested[cq] > openib_btl->device->ib_dev_attr.max_cqe) {
+            requested[cq] = openib_btl->device->ib_dev_attr.max_cqe;
+        }
 
-    rc = adjust_cq(device, BTL_OPENIB_LP_CQ);
-    if (OPAL_SUCCESS != rc) {
-        goto out;
-    }
+        if (openib_btl->device->cq_size[cq] < requested[cq]) {
+            openib_btl->device->cq_size[cq] = requested[cq];
 
-out:
+            rc = adjust_cq (device, cq);
+            if (OPAL_SUCCESS != rc) {
+                break;
+            }
+        }
+    }
+    opal_mutex_unlock (&openib_btl->device->device_lock);
     opal_mutex_unlock(&openib_btl->ib_lock);
+
     return rc;
 }
 
@@ -1107,7 +1120,7 @@ int mca_btl_openib_add_procs(
     }
 
     if (nprocs_new) {
-        OPAL_THREAD_ADD32(&openib_btl->num_peers, nprocs_new);
+        opal_atomic_add_32 (&openib_btl->num_peers, nprocs_new);
 
         /* adjust cq sizes given the new procs */
         rc = openib_btl_size_queues (openib_btl);
@@ -1217,7 +1230,7 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
 
         /* this is a new process to this openib btl
          * account this procs if need */
-        OPAL_THREAD_ADD32(&openib_btl->num_peers, 1);
+        opal_atomic_add_32 (&openib_btl->num_peers, 1);
         rc = openib_btl_size_queues(openib_btl);
         if (OPAL_SUCCESS != rc) {
             BTL_ERROR(("error creating cqs"));

@@ -82,6 +82,12 @@ BEGIN_C_DECLS
  * Infiniband (IB) BTL component.
  */
 
+enum {
+    BTL_OPENIB_HP_CQ,
+    BTL_OPENIB_LP_CQ,
+    BTL_OPENIB_MAX_CQ,
+};
+
 typedef enum {
     MCA_BTL_OPENIB_TRANSPORT_IB,
     MCA_BTL_OPENIB_TRANSPORT_IWARP,
@@ -206,7 +212,7 @@ struct mca_btl_openib_component_t {
     uint32_t reg_mru_len;    /**< Length of the registration cache most recently used list */
     uint32_t use_srq;        /**< Use the Shared Receive Queue (SRQ mode) */
 
-    uint32_t ib_cq_size[2];  /**< Max outstanding CQE on the CQ */
+    uint32_t ib_cq_size[BTL_OPENIB_MAX_CQ];  /**< Max outstanding CQE on the CQ */
 
     int      ib_max_inline_data; /**< Max size of inline data */
     unsigned int ib_pkey_val;
@@ -379,8 +385,8 @@ typedef struct mca_btl_openib_device_t {
 #endif
     struct ibv_device_attr ib_dev_attr;
     struct ibv_pd *ib_pd;
-    struct ibv_cq *ib_cq[2];
-    uint32_t cq_size[2];
+    struct ibv_cq *ib_cq[BTL_OPENIB_MAX_CQ];
+    uint32_t cq_size[BTL_OPENIB_MAX_CQ];
     mca_mpool_base_module_t *mpool;
     mca_rcache_base_module_t *rcache;
     /* MTU for this device */
@@ -863,11 +869,6 @@ extern int mca_btl_openib_ft_event(int state);
  */
 void mca_btl_openib_show_init_error(const char *file, int line,
                                     const char *func, const char *dev);
-
-#define BTL_OPENIB_HP_CQ 0
-#define BTL_OPENIB_LP_CQ 1
-
-
 /**
  * Post to Shared Receive Queue with certain priority
  *
