@@ -7,7 +7,7 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -299,10 +299,24 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
 static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf, void *recvbuf,
                                     MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle) {
   int root, vrank, maxr, vpeer, peer, res;
+  char *rbuf, *lbuf, *buf;
+  int tmprbuf, tmplbuf;
 
   root = 0; /* this makes the code for ireduce and iallreduce nearly identical - could be changed to improve performance */
   RANK2VRANK(rank, vrank, root);
   maxr = (int)ceil((log((double)p)/LOG2));
+  /* ensure the result ends up in recvbuf on vrank 0 */
+  if (0 == (maxr%2)) {
+    rbuf = 0;
+    tmprbuf = true;
+    lbuf = recvbuf;
+    tmplbuf = false;
+  } else {
+    lbuf = 0;
+    tmplbuf = true;
+    rbuf = recvbuf;
+    tmprbuf = false;
+  }
 
   for (int r = 1, firstred = 1 ; r <= maxr ; ++r) {
     if ((vrank % (1 << r)) == 0) {
@@ -311,7 +325,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
       VRANK2RANK(peer, vpeer, root)
       if (peer < p) {
         /* we have to wait until we have the data */
-        res = NBC_Sched_recv (0, true, count, datatype, peer, schedule, true);
+        res = NBC_Sched_recv (rbuf, tmprbuf, count, datatype, peer, schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }
@@ -319,16 +333,18 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
         /* this cannot be done until handle->tmpbuf is unused :-( so barrier after the op */
         if (firstred && MPI_IN_PLACE != sendbuf) {
           /* perform the reduce with the senbuf */
-          res = NBC_Sched_op (recvbuf, false, sendbuf, false, 0, true, count, datatype, op, schedule, true);
+          res = NBC_Sched_op2 (sendbuf, false, rbuf, tmprbuf, count, datatype, op, schedule, true);
           firstred = 0;
         } else {
           /* perform the reduce in my local buffer */
-          res = NBC_Sched_op (recvbuf, false, recvbuf, false, 0, true, count, datatype, op, schedule, true);
+          res = NBC_Sched_op2 (lbuf, tmplbuf, rbuf, tmprbuf, count, datatype, op, schedule, true);
         }
-
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }
+        /* swap left and right buffers */
+        buf = rbuf; rbuf = lbuf ; lbuf = buf;
+        tmprbuf ^= 1; tmplbuf ^= 1;
       }
     } else {
       /* we have to send this round */
@@ -338,8 +354,8 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
         /* we have to use the sendbuf in the first round .. */
         res = NBC_Sched_send (sendbuf, false, count, datatype, peer, schedule, false);
       } else {
-        /* and the recvbuf in all remeining rounds */
-        res = NBC_Sched_send (recvbuf, false, count, datatype, peer, schedule, false);
+        /* and the recvbuf in all remaining rounds */
+        res = NBC_Sched_send (lbuf, tmplbuf, count, datatype, peer, schedule, false);
       }
 
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -373,6 +389,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
     }
   }
 
+  if (0 == vrank) assert(lbuf == recvbuf);
   /* now send to the right hosts */
   for (int r = 0; r < maxr; ++r) {
     if (((vrank + (1 << r) < p) && (vrank < (1 << r))) || (vrank == 0)) {
