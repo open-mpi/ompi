@@ -125,7 +125,7 @@ int ompi_request_default_wait_any(size_t count,
   after_sync_wait:
     /* recheck the complete status and clean up the sync primitives. Do it backward to
      * return the earliest complete request to the user. */
-    for(i = completed-1; i >= 0; i--) {
+    for(i = completed-1; (i+1) > 0; i--) {
         request = requests[i];
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
