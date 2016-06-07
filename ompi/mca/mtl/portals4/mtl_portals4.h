@@ -158,8 +158,7 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 /* send posting */
 #define MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, source, tag, type) \
     {                                                                   \
-        match_bits = 0;                                                 \
-        match_bits |= contextid;                                        \
+        match_bits = contextid;                                         \
         match_bits = (match_bits << 24);                                \
         match_bits |= source;                                           \
         match_bits = (match_bits << 24);                                \
@@ -172,7 +171,7 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
         match_bits = 0;                                                 \
         ignore_bits = MTL_PORTALS4_PROTOCOL_IGNR;                       \
                                                                         \
-        match_bits |= contextid;                                        \
+        match_bits = contextid;                                         \
         match_bits = (match_bits << 24);                                \
                                                                         \
         if (MPI_ANY_SOURCE == source) {                                 \
@@ -194,37 +193,29 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
     (0 != (MTL_PORTALS4_SHORT_MSG & match_bits))
 #define MTL_PORTALS4_IS_LONG_MSG(match_bits)            \
     (0 != (MTL_PORTALS4_LONG_MSG & match_bits))
+#define MTL_PORTALS4_IS_READY_MSG(match_bits)           \
+    (0 != (MTL_PORTALS4_READY_MSG & match_bits))
 
 #define MTL_PORTALS4_GET_TAG(match_bits)                \
     ((int)(match_bits & MTL_PORTALS4_TAG_MASK))
 #define MTL_PORTALS4_GET_SOURCE(match_bits)             \
     ((int)((match_bits & MTL_PORTALS4_SOURCE_MASK) >> 24))
-#define MTL_PORTALS4_GET_CONTEXT(match_bits)            \
-    ((int)((match_bits & MTL_PORTALS4_CONTEXT_MASK) >> 48))
 
 
 #define MTL_PORTALS4_SYNC_MSG       0x8000000000000000ULL
 
 #define MTL_PORTALS4_SET_HDR_DATA(hdr_data, opcount, length, sync)   \
     {                                                                \
-        hdr_data = 0;                                                \
+        hdr_data = (sync) ? 1 : 0;                                   \
+        hdr_data = (hdr_data << 15);                                 \
         hdr_data |= opcount & 0x7FFFULL;                             \
         hdr_data = (hdr_data << 48);                                 \
         hdr_data |= (length & 0xFFFFFFFFFFFFULL);                    \
-        hdr_data |= (sync ? MTL_PORTALS4_SYNC_MSG : 0);              \
     }
 
 #define MTL_PORTALS4_GET_LENGTH(hdr_data) ((size_t)(hdr_data & 0xFFFFFFFFFFFFULL))
 #define MTL_PORTALS4_IS_SYNC_MSG(hdr_data)            \
     (0 != (MTL_PORTALS4_SYNC_MSG & hdr_data))
-
-#define MTL_PORTALS4_SET_READ_BITS(match_bits, contextid, tag) \
-    {                                                                   \
-        match_bits = 0;                                                 \
-        match_bits |= (contextid & 0x0000000000FFFFFFULL);              \
-        match_bits = (match_bits << 24);                                \
-        match_bits |= (tag & 0x0000000000FFFFFFULL);                    \
-    }
 
 /* mtl-portals4 helpers */
 OMPI_DECLSPEC ompi_proc_t *

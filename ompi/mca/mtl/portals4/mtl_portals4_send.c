@@ -182,7 +182,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                               ompi_mtl_portals4_isend_request_t *ptl_request)
 {
     int ret;
-    ptl_match_bits_t read_match_bits, match_bits;
+    ptl_match_bits_t match_bits;
     ptl_me_t me;
     ptl_hdr_data_t hdr_data;
 
@@ -190,12 +190,9 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                                MTL_PORTALS4_SHORT_MSG);
 
     MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length,
-                              MCA_PML_BASE_SEND_SYNCHRONOUS == mode);
+                              (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) ? 1 : 0);
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) {
-
-        MTL_PORTALS4_SET_READ_BITS(read_match_bits, contextid, tag);
-
         me.start = NULL;
         me.length = 0;
         me.ct_handle = PTL_CT_NONE;
@@ -207,7 +204,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
             PTL_ME_EVENT_LINK_DISABLE |
             PTL_ME_EVENT_UNLINK_DISABLE;
         me.match_id = ptl_proc;
-        me.match_bits = read_match_bits;
+        me.match_bits = hdr_data;
         me.ignore_bits = 0;
 
         ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
@@ -269,15 +266,13 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
                              ompi_mtl_portals4_isend_request_t *ptl_request)
 {
     int ret;
-    ptl_match_bits_t read_match_bits, match_bits;
+    ptl_match_bits_t match_bits;
     ptl_me_t me;
     ptl_hdr_data_t hdr_data;
     ptl_size_t put_length;
 
     MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag,
                                MTL_PORTALS4_LONG_MSG);
-
-    MTL_PORTALS4_SET_READ_BITS(read_match_bits, contextid, tag);
 
     MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length, 0);
 
@@ -292,7 +287,7 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id = ptl_proc;
-    me.match_bits = read_match_bits;
+    me.match_bits = hdr_data;
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
