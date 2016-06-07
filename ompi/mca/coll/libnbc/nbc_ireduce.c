@@ -7,16 +7,19 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  */
+
+#include "ompi/op/op.h"
+
 #include "nbc_internal.h"
 
-static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-                                      MPI_Op op, void *redbuf, NBC_Schedule *schedule, NBC_Handle *handle);
+static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *redbuf, int count, MPI_Datatype datatype,
+                                      MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                    MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
 
@@ -95,6 +98,7 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
     if(rank == root) {
       /* root reduces in receivebuffer */
       handle->tmpbuf = malloc (ext * count);
+      redbuf = recvbuf;
     } else {
       /* recvbuf may not be valid on non-root nodes */
       handle->tmpbuf = malloc (ext * count * 2);
@@ -135,7 +139,7 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
 
     switch(alg) {
       case NBC_RED_BINOMIAL:
-        res = red_sched_binomial(rank, p, root, sendbuf, recvbuf, count, datatype, op, redbuf, schedule, handle);
+        res = red_sched_binomial(rank, p, root, sendbuf, redbuf, count, datatype, op, schedule, handle);
         break;
       case NBC_RED_CHAIN:
         res = red_sched_chain(rank, p, root, sendbuf, recvbuf, count, datatype, op, ext, size, schedule, handle, segsize);
@@ -257,6 +261,8 @@ int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count
 
 
 /* binomial reduce
+ * if op is not commutative, reduce on rank 0, and then send the result to root rank
+ *
  * working principle:
  * - each node gets a virtual rank vrank
  * - the 'root' node get vrank 0
@@ -285,65 +291,73 @@ int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count
   if (vrank == 0) rank = root; \
   if (vrank == root) rank = 0; \
 }
-static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-                                      MPI_Op op, void *redbuf, NBC_Schedule *schedule, NBC_Handle *handle) {
-  int vrank, vpeer, peer, res, maxr;
+static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *redbuf, int count, MPI_Datatype datatype,
+                                      MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle) {
+  int vroot, vrank, vpeer, peer, res, maxr;
+  char *rbuf, *lbuf, *buf;
+  int tmprbuf, tmplbuf;
 
-  RANK2VRANK(rank, vrank, root);
+  if (ompi_op_is_commute(op)) {
+    vroot = root;
+  } else {
+    vroot = 0;
+  }
+  RANK2VRANK(rank, vrank, vroot);
   maxr = (int)ceil((log((double)p)/LOG2));
+
+  /* ensure the result ends up in redbuf on vrank 0 */
+  if (0 == (maxr%2)) {
+    rbuf = 0;
+    tmprbuf = true;
+    lbuf = redbuf;
+    tmplbuf = false;
+  } else {
+    lbuf = 0;
+    tmplbuf = true;
+    rbuf = redbuf;
+    tmprbuf = false;
+  }
 
   for (int r = 1, firstred = 1 ; r <= maxr ; ++r) {
     if ((vrank % (1 << r)) == 0) {
       /* we have to receive this round */
       vpeer = vrank + (1 << (r - 1));
-      VRANK2RANK(peer, vpeer, root)
+      VRANK2RANK(peer, vpeer, vroot)
       if (peer < p) {
         /* we have to wait until we have the data */
-        res = NBC_Sched_recv (0, true, count, datatype, peer, schedule, true);
+        res = NBC_Sched_recv (rbuf, tmprbuf, count, datatype, peer, schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }
 
         /* perform the reduce in my local buffer */
         /* this cannot be done until handle->tmpbuf is unused :-( so barrier after the op */
-        if (firstred) {
-          if (rank == root) {
-            /* root is the only one who reduces in the receivebuffer
-             * take data from sendbuf in first round - save copy */
-            res = NBC_Sched_op (recvbuf, false, sendbuf, false, 0, true, count, datatype, op, schedule, true);
-          } else {
-            /* all others may not have a receive buffer
-             * take data from sendbuf in first round - save copy */
-            res = NBC_Sched_op ((char *) redbuf - (intptr_t) handle->tmpbuf, true, sendbuf, false, 0, true, count,
-                                datatype, op, schedule, true);
-          }
+        if (firstred && MPI_IN_PLACE != sendbuf) {
+          /* perform the reduce with the senbuf */
+          res = NBC_Sched_op2 (sendbuf, false, rbuf, tmprbuf, count, datatype, op, schedule, true);
           firstred = 0;
         } else {
-          if(rank == root) {
-            /* root is the only one who reduces in the receivebuffer */
-            res = NBC_Sched_op (recvbuf, false, recvbuf, false, 0, true, count, datatype, op, schedule, true);
-          } else {
-            /* all others may not have a receive buffer */
-            res = NBC_Sched_op ((char *) redbuf - (intptr_t) handle->tmpbuf, true, (char *) redbuf - (intptr_t) handle->tmpbuf,
-                                true, 0, true, count, datatype, op, schedule, true);
-          }
+          /* perform the reduce in my local buffer */
+          res = NBC_Sched_op2 (lbuf, tmplbuf, rbuf, tmprbuf, count, datatype, op, schedule, true);
         }
 
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }
+        /* swap left and right buffers */
+        buf = rbuf; rbuf = lbuf ; lbuf = buf;
+        tmprbuf ^= 1; tmplbuf ^= 1;
       }
     } else {
       /* we have to send this round */
       vpeer = vrank - (1 << (r - 1));
-      VRANK2RANK(peer, vpeer, root)
-      if (firstred) {
-        /* we did not reduce anything */
+      VRANK2RANK(peer, vpeer, vroot)
+      if (firstred && MPI_IN_PLACE != sendbuf) {
+        /* we have to use the sendbuf in the first round .. */
         res = NBC_Sched_send (sendbuf, false, count, datatype, peer, schedule, false);
       } else {
-        /* we have to use the redbuf the root (which works in receivebuf) is never sending .. */
-        res = NBC_Sched_send ((char *) redbuf - (intptr_t) handle->tmpbuf, true, count, datatype, peer, schedule,
-                              false);
+        /* and the redbuf in all remaining rounds */
+        res = NBC_Sched_send (lbuf, tmplbuf, count, datatype, peer, schedule, false);
       }
 
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -352,6 +366,14 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
 
       /* leave the game */
       break;
+    }
+  }
+  /* send to root if vroot ! root */
+  if (vroot != root) {
+    if (0 == rank) {
+      res = NBC_Sched_send (redbuf, false, count, datatype, root, schedule, false);
+    } else if (root == rank) {
+      res = NBC_Sched_recv (redbuf, false, count, datatype, vroot, schedule, false);
     }
   }
 
