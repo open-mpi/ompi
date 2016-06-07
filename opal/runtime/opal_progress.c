@@ -93,7 +93,7 @@ static int debug_output = -1;
  */
 static int fake_cb(void) { return 0; }
 
-static int _opal_progress_unregister (opal_progress_callback_t cb, opal_progress_callback_t *callback_array,
+static int _opal_progress_unregister (opal_progress_callback_t cb, volatile opal_progress_callback_t *callback_array,
                                       size_t *callback_array_len);
 
 /* init the progress engine - called from orte_init */
@@ -118,8 +118,8 @@ opal_progress_init(void)
     callbacks_lp = malloc (callbacks_lp_size * sizeof (callbacks_lp[0]));
 
     if (NULL == callbacks || NULL == callbacks_lp) {
-        free (callbacks);
-        free (callbacks_lp);
+        free ((void *) callbacks);
+        free ((void *) callbacks_lp);
         callbacks_size = callbacks_lp_size = 0;
         callbacks = callbacks_lp = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -154,12 +154,12 @@ opal_progress_finalize(void)
 
     callbacks_len = 0;
     callbacks_size = 0;
-    free(callbacks);
+    free ((void *) callbacks);
     callbacks = NULL;
 
     callbacks_lp_len = 0;
     callbacks_lp_size = 0;
-    free(callbacks_lp);
+    free ((void *) callbacks_lp);
     callbacks_lp = NULL;
 
     opal_atomic_unlock(&progress_lock);
@@ -349,7 +349,7 @@ opal_progress_set_event_poll_rate(int polltime)
 #endif
 }
 
-static int opal_progress_find_cb (opal_progress_callback_t cb, opal_progress_callback_t *cbs,
+static int opal_progress_find_cb (opal_progress_callback_t cb, volatile opal_progress_callback_t *cbs,
                                      size_t cbs_len)
 {
     for (size_t i = 0 ; i < cbs_len ; ++i) {
@@ -361,7 +361,7 @@ static int opal_progress_find_cb (opal_progress_callback_t cb, opal_progress_cal
     return OPAL_ERR_NOT_FOUND;
 }
 
-static int _opal_progress_register (opal_progress_callback_t cb, opal_progress_callback_t **cbs,
+static int _opal_progress_register (opal_progress_callback_t cb, volatile opal_progress_callback_t **cbs,
                                     size_t *cbs_size, size_t *cbs_len)
 {
     int ret = OPAL_SUCCESS;
@@ -381,7 +381,7 @@ static int _opal_progress_register (opal_progress_callback_t cb, opal_progress_c
 
         if (*cbs) {
             /* copy old callbacks */
-            memcpy (tmp, *cbs, sizeof(tmp[0]) * *cbs_size);
+            memcpy (tmp, (void *) *cbs, sizeof(tmp[0]) * *cbs_size);
         }
 
         for (size_t i = *cbs_len ; i < 2 * *cbs_size ; ++i) {
@@ -437,7 +437,7 @@ int opal_progress_register_lp (opal_progress_callback_t cb)
     return ret;
 }
 
-static int _opal_progress_unregister (opal_progress_callback_t cb, opal_progress_callback_t *callback_array,
+static int _opal_progress_unregister (opal_progress_callback_t cb, volatile opal_progress_callback_t *callback_array,
                                       size_t *callback_array_len)
 {
     int ret = opal_progress_find_cb (cb, callback_array, *callback_array_len);
