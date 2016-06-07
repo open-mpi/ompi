@@ -886,13 +886,11 @@ static int rdmacm_module_start_connect(opal_btl_openib_connect_base_module_t *cp
     return OPAL_SUCCESS;
 
 out:
-    for (item = opal_list_remove_first(&(contents->ids));
-         NULL != item;
-         item = opal_list_remove_first(&(contents->ids))) {
+    while (NULL != (item = opal_list_remove_first (&contents->ids))) {
         OBJ_RELEASE(item);
-   }
+    }
 
-   return rc;
+    return rc;
 }
 
 #if !BTL_OPENIB_RDMACM_IB_ADDR
@@ -1136,7 +1134,7 @@ static void *call_disconnect_callback(int fd, int flags, void *v)
 {
     rdmacm_contents_t *contents = (rdmacm_contents_t *) v;
     void *tmp = NULL;
-    id_context_t *context = (id_context_t*) v;
+    id_context_t *context;
     opal_list_item_t *item;
 
     pthread_mutex_lock (&rdmacm_disconnect_lock);
@@ -1325,12 +1323,10 @@ static int rdmacm_disconnected(id_context_t *context)
     /* If this was a client thread, then it *may* still be listed in a
        contents->ids list. */
 
-    context->already_disconnected = true;
-    if (NULL != context) {
-        OPAL_OUTPUT((-1, "SERVICE Releasing context because of DISCONNECT: context %p, id %p",
-                     (void*) context, (void*) context->id));
-        OBJ_RELEASE(context);
-    }
+    OPAL_OUTPUT((-1, "SERVICE Releasing context because of DISCONNECT: context %p, id %p",
+                 (void*) context, (void*) context->id));
+    OBJ_RELEASE(context);
+
     return OPAL_SUCCESS;
 }
 
