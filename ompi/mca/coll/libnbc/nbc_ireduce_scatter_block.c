@@ -73,6 +73,8 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
   count = p * recvcount;
 
   if (0 < count) {
+    char *rbuf, *lbuf, *buf;
+
     handle->tmpbuf = malloc (ext*count*2);
     if (NULL == handle->tmpbuf) {
       OMPI_COLL_LIBNBC_REQUEST_RETURN(handle);
@@ -80,6 +82,8 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    rbuf = 0;
+    lbuf = (char *)(ext*count);
     redbuf = (char *) handle->tmpbuf + ext * count;
 
     /* copy data to redbuf if we only have a single node */
@@ -98,7 +102,7 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
         peer = rank + (1 << (r - 1));
         if (peer < p) {
           /* we have to wait until we have the data */
-          res = NBC_Sched_recv (0, true, count, datatype, peer, schedule, true);
+          res = NBC_Sched_recv (rbuf, true, count, datatype, peer, schedule, true);
           if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
             NBC_Return_handle (handle);
             return res;
@@ -106,29 +110,29 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
 
           if (firstred) {
             /* take reduce data from the sendbuf in the first round -> save copy */
-            res = NBC_Sched_op (redbuf-(unsigned long)handle->tmpbuf, true, sendbuf, false, 0, true, count,
-                                datatype, op, schedule, true);
+            res = NBC_Sched_op2 (sendbuf, false, rbuf, true, count, datatype, op, schedule, true);
             firstred = 0;
           } else {
           /* perform the reduce in my local buffer */
-            res = NBC_Sched_op (redbuf-(unsigned long)handle->tmpbuf, true, redbuf-(unsigned long)handle->tmpbuf,
-                                true, 0, true, count, datatype, op, schedule, true);
+            res = NBC_Sched_op2 (lbuf, true, rbuf, true, count, datatype, op, schedule, true);
           }
 
           if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
             NBC_Return_handle (handle);
             return res;
           }
+          /* swap left and right buffers */
+          buf = rbuf; rbuf = lbuf ; lbuf = buf;
         }
       } else {
         /* we have to send this round */
         peer = rank - (1 << (r - 1));
         if(firstred) {
           /* we have to send the senbuf */
-          res = NBC_Sched_send (sendbuf, false, count, datatype, peer, schedule, true);
+          res = NBC_Sched_send (sendbuf, false, count, datatype, peer, schedule, false);
         } else {
           /* we send an already reduced value from redbuf */
-          res = NBC_Sched_send (redbuf-(unsigned long)handle->tmpbuf, true, count, datatype, peer, schedule, true);
+          res = NBC_Sched_send (lbuf, true, count, datatype, peer, schedule, false);
         }
 
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -157,16 +161,16 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
     } else {
       for (int r = 1, offset = 0 ; r < p ; ++r) {
         offset += recvcount;
-        sbuf = ((char *)redbuf) + (offset*ext);
+        sbuf = lbuf + (offset*ext);
         /* root sends the right buffer to the right receiver */
-        res = NBC_Sched_send (sbuf-(unsigned long)handle->tmpbuf, true, recvcount, datatype, r, schedule, false);
+        res = NBC_Sched_send (sbuf, true, recvcount, datatype, r, schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           NBC_Return_handle (handle);
           return res;
         }
       }
 
-      res = NBC_Sched_copy (redbuf-(unsigned long)handle->tmpbuf, true, recvcount, datatype, recvbuf, false, recvcount,
+      res = NBC_Sched_copy (lbuf, true, recvcount, datatype, recvbuf, false, recvcount,
                             datatype, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (handle);
