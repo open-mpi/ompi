@@ -93,7 +93,7 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
   }
 
   /* algorithm selection */
-  if (p > 4 || size * count < 65536) {
+  if (p > 4 || size * count < 65536 || !ompi_op_is_commute(op)) {
     alg = NBC_RED_BINOMIAL;
     if(rank == root) {
       /* root reduces in receivebuffer */
