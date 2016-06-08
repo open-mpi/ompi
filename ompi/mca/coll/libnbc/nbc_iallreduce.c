@@ -21,7 +21,7 @@
 #include <assert.h>
 
 static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf,
-                                    void *recvbuf, MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
+                                    void *recvbuf, MPI_Op op, char inplace, NBC_Schedule *schedule, NBC_Handle *handle);
 static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule,
                                     NBC_Handle *handle);
@@ -63,6 +63,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
   char inplace;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+  ptrdiff_t span, gap;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
@@ -86,7 +87,8 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
     return res;
   }
 
-  handle->tmpbuf = malloc (ext * count);
+  span = opal_datatype_span(&datatype->super, count, &gap);
+  handle->tmpbuf = malloc (span);
   if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
     NBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;
@@ -129,7 +131,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
 
     switch(alg) {
       case NBC_ARED_BINOMIAL:
-        res = allred_sched_diss(rank, p, count, datatype, sendbuf, recvbuf, op, schedule, handle);
+        res = allred_sched_diss(rank, p, count, datatype, sendbuf, recvbuf, op, inplace, schedule, handle);
         break;
       case NBC_ARED_RING:
         res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, handle);
@@ -298,25 +300,33 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
   if (vrank == root) rank = 0; \
 }
 static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf, void *recvbuf,
-                                    MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle) {
+                                    MPI_Op op, char inplace, NBC_Schedule *schedule, NBC_Handle *handle) {
   int root, vrank, maxr, vpeer, peer, res;
   char *rbuf, *lbuf, *buf;
   int tmprbuf, tmplbuf;
+  ptrdiff_t gap;
+  (void)opal_datatype_span(&datatype->super, count, &gap);
 
   root = 0; /* this makes the code for ireduce and iallreduce nearly identical - could be changed to improve performance */
   RANK2VRANK(rank, vrank, root);
   maxr = (int)ceil((log((double)p)/LOG2));
   /* ensure the result ends up in recvbuf on vrank 0 */
   if (0 == (maxr%2)) {
-    rbuf = 0;
+    rbuf = (void *)(-gap);
     tmprbuf = true;
     lbuf = recvbuf;
     tmplbuf = false;
   } else {
-    lbuf = 0;
+    lbuf = (void *)(-gap);
     tmplbuf = true;
     rbuf = recvbuf;
     tmprbuf = false;
+    if (inplace) {
+        res = NBC_Copy(rbuf, count, datatype, ((char *)handle->tmpbuf) - gap, count, datatype, MPI_COMM_SELF);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+          return res;
+        }
+    }
   }
 
   for (int r = 1, firstred = 1 ; r <= maxr ; ++r) {
@@ -332,7 +342,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
         }
 
         /* this cannot be done until handle->tmpbuf is unused :-( so barrier after the op */
-        if (firstred && MPI_IN_PLACE != sendbuf) {
+        if (firstred && !inplace) {
           /* perform the reduce with the senbuf */
           res = NBC_Sched_op2 (sendbuf, false, rbuf, tmprbuf, count, datatype, op, schedule, true);
           firstred = 0;
@@ -351,7 +361,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
       /* we have to send this round */
       vpeer = vrank - (1 << (r - 1));
       VRANK2RANK(peer, vpeer, root)
-      if (firstred && MPI_IN_PLACE != sendbuf) {
+      if (firstred && !inplace) {
         /* we have to use the sendbuf in the first round .. */
         res = NBC_Sched_send (sendbuf, false, count, datatype, peer, schedule, false);
       } else {
