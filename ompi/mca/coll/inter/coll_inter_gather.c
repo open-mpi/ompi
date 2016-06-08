@@ -61,11 +61,11 @@ mca_coll_inter_gather_inter(const void *sbuf, int scount,
         int size_local;
         ptrdiff_t gap, span;
 
-	size_local = ompi_comm_size(comm->c_local_comm);
-        span = opal_datatype_span(&sdtype->super, scount*size_local, &gap);
+        size_local = ompi_comm_size(comm->c_local_comm);
+        span = opal_datatype_span(&sdtype->super, (int64_t)scount*(int64_t)size_local, &gap);
 
-	ptmp_free = (char*)malloc(span);
-	if (NULL == ptmp_free) {
+        ptmp_free = (char*)malloc(span);
+        if (NULL == ptmp_free) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         ptmp = ptmp_free - gap;

@@ -47,7 +47,7 @@ mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
 {
     int i, rank, size, err, total=0, size_local;
     int *counts=NULL,*displace=NULL;
-    char *ptmp_free=NULL, *ptmp;
+    char *ptmp_free=NULL, *ptmp=NULL;
     ompi_datatype_t *ndtype;
 
     /* Initialize */
