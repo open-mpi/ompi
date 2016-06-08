@@ -12,7 +12,7 @@
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved
-# Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -34,7 +34,8 @@ headers += \
         src/util/timings.h \
         src/util/os_path.h \
         src/util/basename.h \
-        src/util/hash.h
+        src/util/hash.h \
+        src/util/strnlen.h
 
 sources += \
         src/util/argv.c \

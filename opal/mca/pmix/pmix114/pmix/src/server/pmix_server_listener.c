@@ -56,6 +56,7 @@
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
 #include "src/util/progress_threads.h"
+#include "src/util/strnlen.h"
 #include "src/usock/usock.h"
 #include "src/sec/pmix_sec.h"
 
@@ -315,31 +316,41 @@ static pmix_status_t parse_connect_ack (char *msg, int len,
                                         char **nspace, int *rank,
                                         char **version, char **cred)
 {
-    if ((int)strnlen (msg, len) < len) {
+    int msglen;
+
+    PMIX_STRNLEN(msglen, msg, len);
+    if (msglen < len) {
         *nspace = msg;
         msg += strlen(*nspace) + 1;
         len -= strlen(*nspace) + 1;
-    } else
+    } else {
         return PMIX_ERR_BAD_PARAM;
+    }
 
-    if ((int)sizeof(int) <= len) {
+    PMIX_STRNLEN(msglen, msg, len);
+    if (msglen <= len) {
         *rank = *(int *)msg;
         msg += sizeof(int);
         len -= sizeof(int);
-    } else
+    } else {
         return PMIX_ERR_BAD_PARAM;
+    }
 
-    if ((int)strnlen (msg, len) < len) {
+    PMIX_STRNLEN(msglen, msg, len);
+    if (msglen < len) {
         *version = msg;
         msg += strlen(*version) + 1;
         len -= strlen(*version) + 1;
-    } else
+    } else {
         return PMIX_ERR_BAD_PARAM;
+    }
 
-    if ((int)strnlen (msg, len) < len)
+    PMIX_STRNLEN(msglen, msg, len);
+    if (msglen < len)
         *cred = msg;
-    else
+    else {
         *cred = NULL;
+    }
 
     return PMIX_SUCCESS;
 }
