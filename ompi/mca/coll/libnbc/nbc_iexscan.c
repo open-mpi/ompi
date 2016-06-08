@@ -72,9 +72,9 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         if (inplace) {
-            NBC_Copy(recvbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
+            res = NBC_Copy(recvbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
         } else {
-            NBC_Copy(sendbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
+            res = NBC_Copy(sendbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
         }
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
             NBC_Return_handle (handle);

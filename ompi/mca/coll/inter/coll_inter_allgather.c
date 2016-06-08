@@ -48,8 +48,8 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
-    int rank, root = 0, size, rsize, err;
-    char *ptmp_free = NULL, *ptmp;
+    int rank, root = 0, size, rsize, err = OMPI_SUCCESS;
+    char *ptmp_free = NULL, *ptmp = NULL;
     ptrdiff_t gap, span;
     ompi_request_t *req[2];
 
@@ -59,7 +59,7 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
 
     /* Perform the gather locally at the root */
     if ( scount > 0 ) {
-        span = opal_datatype_span(&sdtype->super, scount*size, &gap);
+        span = opal_datatype_span(&sdtype->super, (int64_t)scount*(int64_t)size, &gap);
 	ptmp_free = (char*)malloc(span);
 	if (NULL == ptmp_free) {
 	    return OMPI_ERR_OUT_OF_RESOURCE;

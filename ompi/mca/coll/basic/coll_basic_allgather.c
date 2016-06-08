@@ -106,7 +106,7 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
         if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         /* Step 2: exchange the resuts between the root processes */
-        span = opal_datatype_span(&sdtype->super, scount * size, &gap);
+        span = opal_datatype_span(&sdtype->super, (int64_t)scount * (int64_t)size, &gap);
         tmpbuf_free = (char *) malloc(span);
         if (NULL == tmpbuf_free) { line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto exit; }
         tmpbuf = tmpbuf_free - gap;
