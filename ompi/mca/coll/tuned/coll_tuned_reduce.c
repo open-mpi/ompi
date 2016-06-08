@@ -77,7 +77,6 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
     char *accumbuf = NULL, *accumbuf_free = NULL;
     char *local_op_buffer = NULL, *sendtmpbuf = NULL;
     ptrdiff_t extent, size, gap, segment_increment;
-    size_t typelng;
     ompi_request_t* reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
     int num_segments, line, ret, segindex, i, rank;
     int recvcount, prevcount, inbi;
@@ -508,6 +507,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
 {
     int ret, rank, size, io_root, segcount = count;
     void *use_this_sendbuf = NULL, *use_this_recvbuf = NULL;
+    char *tmpbuf_free = NULL;
     size_t typelng;
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -538,24 +538,26 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
     use_this_recvbuf = recvbuf;
     if (io_root != root) {
         ptrdiff_t dsize, gap;
-        char *tmpbuf = NULL;
+        char *tmpbuf;
     
         dsize = opal_datatype_span(&datatype->super, count, &gap);
 
         if ((root == rank) && (MPI_IN_PLACE == sendbuf)) {
-            tmpbuf = (char *) malloc(dsize);
-            if (NULL == tmpbuf) {
+            tmpbuf_free = (char *) malloc(dsize);
+            if (NULL == tmpbuf_free) {
                 return MPI_ERR_INTERN;
             }
+            tmpbuf = tmpbuf_free - gap;
             ompi_datatype_copy_content_same_ddt(datatype, count, 
                                                 (char*)tmpbuf,
                                                 (char*)recvbuf);
             use_this_sendbuf = tmpbuf;
         } else if (io_root == rank) {
-            tmpbuf = (char *) malloc(dsize);
-            if (NULL == tmpbuf) {
+            tmpbuf_free = (char *) malloc(dsize);
+            if (NULL == tmpbuf_free) {
                 return MPI_ERR_INTERN;
             }
+            tmpbuf = tmpbuf_free - gap;
             use_this_recvbuf = tmpbuf;
         }
     }
@@ -575,9 +577,6 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
                                     MCA_COLL_BASE_TAG_REDUCE, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != ret) { return ret; }
-            if (MPI_IN_PLACE == sendbuf) {
-                free(use_this_sendbuf);
-            }
           
         } else if (io_root == rank) {
             /* Send result from use_this_recvbuf to root */
@@ -585,8 +584,10 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
                                     MCA_COLL_BASE_TAG_REDUCE, 
                                     MCA_PML_BASE_SEND_STANDARD, comm));
             if (MPI_SUCCESS != ret) { return ret; }
-            free(use_this_recvbuf);
         }
+    }
+    if (NULL != tmpbuf_free) {
+        free(tmpbuf_free);
     }
 
     return MPI_SUCCESS;
