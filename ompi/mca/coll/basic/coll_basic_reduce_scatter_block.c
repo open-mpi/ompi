@@ -127,7 +127,7 @@ mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
     int totalcounts;
     ptrdiff_t gap, span;
     char *tmpbuf = NULL, *tmpbuf2 = NULL;
-    char *lbuf, *buf;
+    char *lbuf = NULL, *buf;
     ompi_request_t *req;
 
     rank = ompi_comm_rank(comm);

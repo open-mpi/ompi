@@ -56,13 +56,13 @@ mca_coll_inter_scatter_inter(void *sbuf, int scount,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
         /* First process receives the data from root */
-        char *ptmp_free = NULL, *ptmp;
+        char *ptmp_free = NULL, *ptmp = NULL;
 	if(0 == rank) {
             int size_local;
             ptrdiff_t gap, span;
 
 	    size_local = ompi_comm_size(comm->c_local_comm);
-            span = opal_datatype_span(&rdtype->super, rcount*size_local, &gap);
+            span = opal_datatype_span(&rdtype->super, (int64_t)rcount*(int64_t)size_local, &gap);
             ptmp_free = malloc(span);
 	    if (NULL == ptmp_free) {
 		return OMPI_ERR_OUT_OF_RESOURCE;

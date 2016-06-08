@@ -67,9 +67,9 @@ int ompi_coll_libnbc_iexscan(void* sendbuf, void* recvbuf, int count, MPI_Dataty
         handle->tmpbuf = malloc(span);
         if (handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
         if (inplace) {
-            NBC_Copy(recvbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
+            res = NBC_Copy(recvbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
         } else {
-            NBC_Copy(sendbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
+            res = NBC_Copy(sendbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
         }
     }
 

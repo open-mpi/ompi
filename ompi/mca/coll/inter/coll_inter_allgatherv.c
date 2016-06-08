@@ -49,7 +49,7 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
 {
     int i, rank, size, size_local, total=0, err;
     int *count=NULL,*displace=NULL;
-    char *ptmp_free=NULL, *ptmp;
+    char *ptmp_free=NULL, *ptmp=NULL;
     ompi_datatype_t *ndtype = NULL;
     ompi_request_t *req[2];
 

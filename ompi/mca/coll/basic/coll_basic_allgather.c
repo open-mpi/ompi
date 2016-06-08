@@ -158,12 +158,11 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
             goto exit;
         }
 
-        span = opal_datatype_span(&sdtype->super, scount * size, &gap);
+        /* Step 2: exchange the resuts between the root processes */
+        span = opal_datatype_span(&sdtype->super, (int64_t)scount * (int64_t)size, &gap);
         tmpbuf_free = (char *) malloc(span);
-        if (NULL == tmpbuf_free) {
-            err = OMPI_ERR_OUT_OF_RESOURCE;
-            goto exit;
-        }
+        if (NULL == tmpbuf_free) { err = OMPI_ERR_OUT_OF_RESOURCE; goto exit; }
+
         tmpbuf = tmpbuf_free - gap;
 
         err = MCA_PML_CALL(isend(rbuf, rsize * rcount, rdtype, 0,
