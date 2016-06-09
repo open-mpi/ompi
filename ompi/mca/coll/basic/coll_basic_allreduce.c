@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -189,6 +189,7 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
         err = MCA_PML_CALL(recv(rbuf, count, dtype, root,
                                 MCA_COLL_BASE_TAG_ALLREDUCE,
                                 comm, MPI_STATUS_IGNORE));
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
     }
 
   exit:
