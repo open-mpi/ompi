@@ -659,6 +659,7 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
      * the error after we free everything. */
 
     err = ompi_request_wait_all(nreqs, req, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
  err_hndl:
     if( MPI_SUCCESS != err ) {
