@@ -329,7 +329,7 @@ static pmix_status_t parse_connect_ack (char *msg, int len,
 
     PMIX_STRNLEN(msglen, msg, len);
     if (msglen <= len) {
-        *rank = *(int *)msg;
+        memcpy(rank, msg, sizeof(int));
         msg += sizeof(int);
         len -= sizeof(int);
     } else {
