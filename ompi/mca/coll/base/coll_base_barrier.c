@@ -47,12 +47,12 @@ ompi_coll_base_sendrecv_zero( int dest, int stag,
 
 {
     int err, rc, line = 0;
-    ompi_request_t* reqs[1];
-    ompi_status_public_t statuses[1];
+    ompi_request_t *req;
+    ompi_status_public_t status;
 
     /* post new irecv */
     err = MCA_PML_CALL(irecv( NULL, 0, MPI_BYTE, source, rtag,
-                              comm, &reqs[0] ));
+                              comm, &req ));
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
     /* send data to children */
@@ -60,21 +60,16 @@ ompi_coll_base_sendrecv_zero( int dest, int stag,
                             MCA_PML_BASE_SEND_STANDARD, comm ));
     if (rc != MPI_SUCCESS) { line = __LINE__; err = rc; goto error_handler; }
 
-    err = ompi_request_wait( &reqs[0], &statuses[0] );
+    err = ompi_request_wait( &req, &status );
     if( MPI_ERR_IN_STATUS == err ) { line = __LINE__;
         /* As we use wait_all we will get MPI_ERR_IN_STATUS which is not an error
          * code that we can propagate up the stack. Instead, look for the real
          * error code from the MPI_ERROR in the status.
          */
-        int err_index = 0;
-        if( MPI_SUCCESS == statuses[0].MPI_ERROR
-         || MPI_ERR_PENDING == statuses[0].MPI_ERROR ) {
-            err_index = 1;
-        }
-        err = statuses[err_index].MPI_ERROR;
-        OPAL_OUTPUT ((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred in the %s"
+        err = status.MPI_ERROR;
+        OPAL_OUTPUT ((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred in the receive"
                                               " stage of ompi_coll_base_sendrecv_zero\n",
-                      __FILE__, line, err, (0 == err_index ? "receive" : "send")));
+                      __FILE__, line, err));
         return err;
     }
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
