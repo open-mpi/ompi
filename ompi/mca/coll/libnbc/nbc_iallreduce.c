@@ -202,6 +202,7 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
   NBC_Schedule *schedule;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+  ptrdiff_t span, gap;
 
   rank = ompi_comm_rank (comm);
   rsize = ompi_comm_remote_size (comm);
@@ -223,7 +224,8 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
     return res;
   }
 
-  handle->tmpbuf = malloc (ext * count);
+  span = opal_datatype_span(&datatype->super, count, &gap);
+  handle->tmpbuf = malloc (span);
   if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
     NBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;
@@ -620,10 +622,13 @@ static inline int allred_sched_ring (int r, int p, int count, MPI_Datatype datat
 static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 				      MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle) {
   int res;
+  ptrdiff_t span, gap;
 
   if (0 == count) {
     return OMPI_SUCCESS;
   }
+
+  span = opal_datatype_span(&datatype->super, count, &gap);
 
   /* send my data to the remote root */
   res = NBC_Sched_send (sendbuf, false, count, datatype, 0, schedule, false);
@@ -631,34 +636,56 @@ static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, 
     return res;
   }
 
-  res = NBC_Sched_recv (recvbuf, false, count, datatype, 0, schedule, false);
+  /* recv my data to the remote root */
+  if (0 != rank || 1 ==(rsize%2)) {
+    res = NBC_Sched_recv (recvbuf, false, count, datatype, 0, schedule, false);
+  } else {
+    res = NBC_Sched_recv ((void *)(-gap), true, count, datatype, 0, schedule, false);
+  }
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
   }
 
   if (0 == rank) {
-    /* wait for data from the remote root */
+    char *rbuf, *lbuf, *buf;
+    int tmprbuf, tmplbuf;
+
     res = NBC_Sched_barrier (schedule);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
 
+    /* ensure the result ends up in recvbuf */
+    if (0 == (rsize%2)) {
+      lbuf = (void *)(-gap);
+      tmplbuf = true;
+      rbuf = recvbuf;
+      tmprbuf = false;
+    } else {
+      rbuf = (void *)(-gap);
+      tmprbuf = true;
+      lbuf = recvbuf;
+      tmplbuf = false;
+    }
+
     /* get data from remote peers and reduce */
     for (int rpeer = 1 ; rpeer < rsize ; ++rpeer) {
-      res = NBC_Sched_recv (0, true, count, datatype, rpeer, schedule, true);
+      res = NBC_Sched_recv (rbuf, tmprbuf, count, datatype, rpeer, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
 
-      res = NBC_Sched_op (recvbuf, false, 0, true, recvbuf, false, count, datatype, op,
-                          schedule, true);
+      res = NBC_Sched_op2 (lbuf, tmplbuf, rbuf, tmprbuf, count, datatype, op, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
+      /* swap left and right buffers */
+      buf = rbuf; rbuf = lbuf ; lbuf = buf;
+      tmprbuf ^= 1; tmplbuf ^= 1;
     }
 
     /* exchange our result with the remote root (each root will broadcast to the other's peers) */
-    res = NBC_Sched_recv (0, true, count, datatype, 0, schedule, false);
+    res = NBC_Sched_recv ((void *)(-gap), true, count, datatype, 0, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
@@ -671,7 +698,7 @@ static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, 
 
     /* broadcast the result to all remote peers */
     for (int rpeer = 1 ; rpeer < rsize ; ++rpeer) {
-      res = NBC_Sched_send (0, true, count, datatype, rpeer, schedule, false);
+      res = NBC_Sched_send ((void *)(-gap), true, count, datatype, rpeer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
