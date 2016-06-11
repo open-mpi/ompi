@@ -503,7 +503,6 @@ static int memheap_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
         return OSHMEM_ERROR;
     }
 
-    OPAL_THREAD_LOCK(&memheap_oob.lck);
     cmd = MEMHEAP_RKEY_REQ;
     opal_dss.pack(msg, &cmd, 1, OPAL_UINT8);
     opal_dss.pack(msg, &seg, 1, OPAL_UINT32);
