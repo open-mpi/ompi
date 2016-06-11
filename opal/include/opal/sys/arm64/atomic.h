@@ -30,8 +30,10 @@
 #define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 #define OPAL_HAVE_ATOMIC_LLSC_32 1
 #define OPAL_HAVE_ATOMIC_CMPSET_32 1
+#define OPAL_HAVE_ATOMIC_SWAP_32 1
 #define OPAL_HAVE_ATOMIC_MATH_32 1
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
+#define OPAL_HAVE_ATOMIC_SWAP_64 1
 #define OPAL_HAVE_ATOMIC_LLSC_64 1
 #define OPAL_HAVE_ATOMIC_ADD_32 1
 #define OPAL_HAVE_ATOMIC_SUB_32 1
@@ -90,6 +92,20 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
                           : "cc", "memory");
 
     return (ret == oldval);
+}
+
+static inline int32_t opal_atomic_swap_32(volatile int32_t *addr, int32_t newval)
+{
+    int32_t ret, tmp;
+
+    __asm__ __volatile__ ("1:  ldaxr   %w0, [%2]       \n"
+                          "    stlxr   %w1, %w3, [%2]  \n"
+                          "    cbnz    %w1, 1b         \n"
+                          : "=&r" (ret), "=&r" (tmp)
+                          : "r" (addr), "r" (newval)
+                          : "cc", "memory");
+
+    return ret;
 }
 
 /* these two functions aren't inlined in the non-gcc case because then
@@ -174,6 +190,21 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                           : "cc", "memory");
 
     return (ret == oldval);
+}
+
+static inline int64_t opal_atomic_swap_64 (volatile int64_t *addr, int64_t newval)
+{
+    int64_t ret;
+    int tmp;
+
+    __asm__ __volatile__ ("1:  ldaxr   %0, [%2]        \n"
+                          "    stlxr   %w1, %3, [%2]   \n"
+                          "    cbnz    %w1, 1b         \n"
+                          : "=&r" (ret), "=&r" (tmp)
+                          : "r" (addr), "r" (newval)
+                          : "cc", "memory");
+
+    return ret;
 }
 
 /* these two functions aren't inlined in the non-gcc case because then
