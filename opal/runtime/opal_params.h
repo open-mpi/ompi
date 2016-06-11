@@ -73,6 +73,12 @@ OPAL_DECLSPEC extern bool opal_abort_print_stack;
  */
 OPAL_DECLSPEC extern int opal_abort_delay;
 
+/**
+ * Ratio of calls to high-priority to low-priority progress functions.
+ * Must be a power of two.
+ */
+OPAL_DECLSPEC extern unsigned int opal_progress_lp_call_ratio;
+
 #if OPAL_ENABLE_DEBUG
 extern bool opal_progress_debug;
 #endif
