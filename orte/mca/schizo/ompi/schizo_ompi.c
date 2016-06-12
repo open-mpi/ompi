@@ -436,10 +436,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)" },
 
-    { NULL, '\0', "staged", "staged", 0,
-      &orte_cmd_options.staged_exec, OPAL_CMD_LINE_TYPE_BOOL,
-      "Used staged execution if inadequate resources are present (cannot support MPI jobs)" },
-
     { NULL, '\0', "allow-run-as-root", "allow-run-as-root", 0,
       &orte_cmd_options.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
       "Allow execution as root (STRONGLY DISCOURAGED)" },

@@ -107,50 +107,6 @@
  } orte_submit_status_t;
 
 
-/* local data */
-static opal_list_t job_stack;
-
-static void spawn_next_job(opal_buffer_t *bptr, void *cbdata)
-{
-    orte_job_t *jdata = (orte_job_t*)cbdata;
-
-    /* add the data to the job's file map */
-    orte_set_attribute(&jdata->attributes, ORTE_JOB_FILE_MAPS, ORTE_ATTR_GLOBAL, &bptr, OPAL_BUFFER);
-
-    /* spawn the next job */
-    orte_plm.spawn(jdata);
-}
-static void run_next_job(int fd, short args, void *cbdata)
-{
-    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata;
-    orte_process_name_t name;
-
-    /* get next job on stack */
-    jdata = (orte_job_t*)opal_list_remove_first(&job_stack);
-
-    if (NULL == jdata) {
-        /* all done - trip the termination sequence */
-        orte_event_base_active = false;
-        OBJ_DESTRUCT(&job_stack);
-        OBJ_RELEASE(caddy);
-        return;
-    }
-
-    if (NULL != orte_dfs.get_file_map) {
-        /* collect any file maps and spawn the next job */
-        name.jobid = caddy->jdata->jobid;
-        name.vpid = ORTE_VPID_WILDCARD;
-
-        orte_dfs.get_file_map(&name, spawn_next_job, jdata);
-    } else {
-        /* just spawn the job */
-        orte_plm.spawn(jdata);
-    }
-
-    OBJ_RELEASE(caddy);
-}
-
 static void launched(int index, orte_job_t *jdata, int ret, void *cbdata)
 {
     orte_submit_status_t *launchst = (orte_submit_status_t*)cbdata;
@@ -246,41 +202,6 @@ int orterun(int argc, char *argv[])
       while (orte_event_base_active && completest.active) {
           opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
       }
-
-#if 0
-    if (orte_staged_execution) {
-        /* staged execution is requested - each app_context
-         * is treated as a separate job and executed in
-         * sequence
-         */
-        int i;
-        jdata->num_procs = 0;
-        OBJ_CONSTRUCT(&job_stack, opal_list_t);
-        for (i=1; i < jdata->apps->size; i++) {
-            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-                continue;
-            }
-            jptr = OBJ_NEW(orte_job_t);
-            opal_list_append(&job_stack, &jptr->super);
-            /* transfer the app */
-            opal_pointer_array_set_item(jdata->apps, i, NULL);
-            --jdata->num_apps;
-            /* reset the app_idx */
-            app->idx = 0;
-            opal_pointer_array_set_item(jptr->apps, 0, app);
-            ++jptr->num_apps;
-        }
-        /* define a state machine position
-         * that is fired when each job completes so we can then start
-         * the next job in our stack
-         */
-        if (ORTE_SUCCESS != (rc = orte_state.set_job_state_callback(ORTE_JOB_STATE_NOTIFY_COMPLETED, run_next_job))) {
-            ORTE_ERROR_LOG(rc);
-            ORTE_UPDATE_EXIT_STATUS(rc);
-            goto DONE;
-        }
-    }
-#endif
 
     if (ORTE_PROC_IS_HNP) {
         /* ensure all local procs are dead */
