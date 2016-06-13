@@ -23,7 +23,7 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                    MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
 
-static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, void *tmpbuf, int count, MPI_Datatype datatype,
                                     MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -208,25 +208,20 @@ int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count
 				   struct mca_coll_base_module_2_1_0_t *module) {
   int rank, res, rsize;
   NBC_Schedule *schedule;
-  MPI_Aint ext;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+  ptrdiff_t span, gap;
 
   rank = ompi_comm_rank (comm);
   rsize = ompi_comm_remote_size (comm);
-
-  res = ompi_datatype_type_extent (datatype, &ext);
-  if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
-    return res;
-  }
 
   res = NBC_Init_handle(comm, &handle, libnbc_module);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
   }
 
-  handle->tmpbuf = malloc (ext * count);
+  span = opal_datatype_span(&datatype->super, count, &gap);
+  handle->tmpbuf = malloc (span);
   if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
     NBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;
@@ -238,7 +233,7 @@ int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  res = red_sched_linear (rank, rsize, root, sendbuf, recvbuf, count, datatype, op, schedule, handle);
+  res = red_sched_linear (rank, rsize, root, sendbuf, recvbuf, (void *)(-gap), count, datatype, op, schedule, handle);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     NBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;
@@ -461,33 +456,51 @@ static inline int red_sched_chain (int rank, int p, int root, const void *sendbu
 }
 
 /* simple linear algorithm for intercommunicators */
-static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, void *tmpbuf, int count, MPI_Datatype datatype,
                                     MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle) {
   int res;
+  char *rbuf, *lbuf, *buf;
+  int tmprbuf, tmplbuf;
 
   if (0 == count) {
     return OMPI_SUCCESS;
   }
 
   if (MPI_ROOT == root) {
-    res = NBC_Sched_recv (recvbuf, false, count, datatype, 0, schedule, true);
+    /* ensure the result ends up in recvbuf */
+    if (0 == (rsize%2)) {
+      lbuf = tmpbuf;
+      tmplbuf = true;
+      rbuf = recvbuf;
+      tmprbuf = false;
+    } else {
+      rbuf = tmpbuf;
+      tmprbuf = true;
+      lbuf = recvbuf;
+      tmplbuf = false;
+    }
+
+    res = NBC_Sched_recv (lbuf, tmplbuf, count, datatype, 0, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
 
     for (int peer = 1 ; peer < rsize ; ++peer) {
-      res = NBC_Sched_recv (0, true, count, datatype, peer, schedule, true);
+      res = NBC_Sched_recv (rbuf, tmprbuf, count, datatype, peer, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
 
-      res = NBC_Sched_op (recvbuf, false, 0, true, recvbuf, false, count, datatype, op, schedule, true);
+      res = NBC_Sched_op2 (lbuf, tmplbuf, rbuf, tmprbuf, count, datatype, op, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
+      /* swap left and right buffers */
+      buf = rbuf; rbuf = lbuf ; lbuf = buf;
+      tmprbuf ^= 1; tmplbuf ^= 1;
     }
   } else if (MPI_PROC_NULL != root) {
-    res = NBC_Sched_send (sendbuf, false, count, datatype, root, schedule, false);
+    res = NBC_Sched_send (sendbuf, false, count, datatype, root, schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }

@@ -40,6 +40,7 @@ int ompi_coll_libnbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const i
                                      struct mca_coll_base_module_2_1_0_t *module) {
   int peer, rank, maxr, p, res, count;
   MPI_Aint ext;
+  ptrdiff_t gap, span;
   char *sbuf, inplace;
   NBC_Schedule *schedule;
   NBC_Handle *handle;
@@ -82,14 +83,15 @@ int ompi_coll_libnbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const i
 
   maxr = (int) ceil ((log((double) p) / LOG2));
 
-  handle->tmpbuf = malloc (ext * count * 2);
+  span = opal_datatype_span(&datatype->super, count, &gap);
+  handle->tmpbuf = malloc (span * 2);
   if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
     NBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  rbuf = 0;
-  lbuf = (char *)(ext*count);
+  rbuf = (char *)(-gap);
+  lbuf = (char *)(span - gap);
 
   schedule = OBJ_NEW(NBC_Schedule);
   if (OPAL_UNLIKELY(NULL == schedule)) {

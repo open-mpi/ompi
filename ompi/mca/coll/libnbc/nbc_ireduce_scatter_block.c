@@ -38,6 +38,7 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
                                            struct mca_coll_base_module_2_1_0_t *module) {
   int peer, rank, maxr, p, res, count;
   MPI_Aint ext;
+  ptrdiff_t gap, span;
   char *redbuf, *sbuf, inplace;
   NBC_Schedule *schedule;
   NBC_Handle *handle;
@@ -75,16 +76,17 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
   if (0 < count) {
     char *rbuf, *lbuf, *buf;
 
-    handle->tmpbuf = malloc (ext*count*2);
+    span = opal_datatype_span(&datatype->super, count, &gap);
+    handle->tmpbuf = malloc (2*span);
     if (NULL == handle->tmpbuf) {
       OMPI_COLL_LIBNBC_REQUEST_RETURN(handle);
       OBJ_RELEASE(schedule);
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    rbuf = 0;
-    lbuf = (char *)(ext*count);
-    redbuf = (char *) handle->tmpbuf + ext * count;
+    rbuf = (void *)(-gap);
+    lbuf = (char *)(span - gap);
+    redbuf = (char *) handle->tmpbuf + span - gap;
 
     /* copy data to redbuf if we only have a single node */
     if ((p == 1) && !inplace) {
@@ -170,8 +172,10 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
         }
       }
 
-      res = NBC_Sched_copy (lbuf, true, recvcount, datatype, recvbuf, false, recvcount,
-                            datatype, schedule, false);
+      if ((p != 1) || !inplace) {
+        res = NBC_Sched_copy (lbuf, true, recvcount, datatype, recvbuf, false, recvcount,
+                              datatype, schedule, false);
+      }
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (handle);
         return res;
