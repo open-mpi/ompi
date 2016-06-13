@@ -7,6 +7,8 @@
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2016      HfT Stuttgart, University of Applied Science.
+ *                         All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -32,15 +34,12 @@ static inline opal_timer_t
 opal_sys_timer_get_cycles(void)
 {
     opal_timer_t ret;
-    int tmp;
-
     __asm__ __volatile__(
-                         "xchg{l} {%%}ebx, %1\n"
-                         "cpuid\n"
-                         "xchg{l} {%%}ebx, %1\n"
-                         "rdtsc\n"
-                         : "=A"(ret), "=r"(tmp)
-                         :: "ecx");
+                         "cpuid\n\t"
+                         "rdtsc\n\t"
+                         : "=A" (ret)       // Output
+                         : "a" (0)          // Input
+                         : "ecx");          // Clobber
 
     return ret;
 }

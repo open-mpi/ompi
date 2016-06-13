@@ -499,7 +499,7 @@ foo$opal_cv_asm_label_suffix
     # test for both 16 and 10 (decimal and hex notations)
     echo "configure: .align test address offset is $opal_asm_addr" >&AC_FD_CC
     if test "$opal_asm_addr" = "16" || test "$opal_asm_addr" = "10" ; then
-       opal_cv_asm_align_log="yes"
+        opal_cv_asm_align_log="yes"
     else
         opal_cv_asm_align_log="no"
     fi])
@@ -511,7 +511,7 @@ foo$opal_cv_asm_label_suffix
     fi
 
     AC_DEFINE_UNQUOTED([OPAL_ASM_ALIGN_LOG],
-                       [$asm_align_log_result],
+                       [$opal_asm_align_log_result],
                        [Assembly align directive expects logarithmic value])
 
     unset omp_asm_addr asm_result
@@ -1194,17 +1194,18 @@ AC_MSG_ERROR([Can not continue.])
 
     # Check for RDTSCP support
     result=0
-    AS_IF([test "$opal_cv_asm_arch" = "OPAL_AMD64" || test "$opal_cv_asm_arch" = "OPAL_IA32"],
+    AS_IF([test "$opal_cv_asm_arch" = "AMD64" || test "$opal_cv_asm_arch" = "IA32"],
           [AC_MSG_CHECKING([for RDTSCP assembly support])
            AC_LANG_PUSH([C])
-           AC_TRY_RUN([[
+           AC_TRY_RUN([
+#include <stdint.h>
 int main(int argc, char* argv[])
 {
-  unsigned int rax, rdx;
-  __asm__ __volatile__ ("rdtscp\n": "=a" (rax), "=d" (rdx):: "%rax", "%rdx");
+  uint32_t eax, edx;
+  __asm__ __volatile__ ("rdtscp\n": "=a" (eax), "=d" (edx):: "ecx");
   return 0;
 }
-           ]],
+           ],
            [result=1
             AC_MSG_RESULT([yes])],
            [AC_MSG_RESULT([no])],

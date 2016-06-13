@@ -2,6 +2,8 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2016      HfT Stuttgart, University of Applied Science.
+ *                         All rights reserved.
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -30,6 +32,13 @@ typedef uint64_t opal_timer_t;
 
 /**
  * http://www.intel.com/content/www/us/en/intelligent-systems/embedded-systems-training/ia-32-ia-64-benchmark-code-execution-paper.html
+ * The above document has two mistakes:
+ * - Above author claims cpuid uses varying number of cycles -- sure the input
+ *   is not fixed (eax from rdtsc); author recommends calling rdtsc 3 times...
+ *   Fix by calling with leaf eax=0.
+ * - multi-line asm doesn't work with gcc's (good) work of register-scheduling,
+ *   leaving instructions like "mov %eax, %eax" in the stream...
+ *   GAS does not eliminate.
  */
 static inline opal_timer_t
 opal_sys_timer_get_cycles(void)
@@ -38,8 +47,9 @@ opal_sys_timer_get_cycles(void)
 #if !OPAL_ASSEMBLY_SUPPORTS_RDTSCP
      __asm__ __volatile__ ("cpuid\n\t"
                            "rdtsc\n\t"
-                           : "=a" (l), "=d" (h)
-                           :: "rbx", "rcx");
+                           : "=a" (l), "=d" (h) // Output
+                           : "a" (0)            // Input
+                           : "rbx", "rcx");     // Clobber
 #else
      /* If we need higher accuracy we should implement the algorithm proposed
       * on the Intel document referenced above. However, in the context of MPI
@@ -47,11 +57,14 @@ opal_sys_timer_get_cycles(void)
       * can afford a small inaccuracy.
       */
      __asm__ __volatile__ ("rdtscp\n\t"
-                           "mov %%edx, %0\n\t"
-                           "mov %%eax, %1\n\t"
-                           "cpuid\n\t"
-                           : "=r" (h), "=r" (l)
-                           :: "rax", "rbx", "rcx", "rdx");
+                           : "=a" (l), "=d" (h) // Output
+                           :                    // Input
+                           : "rcx");            // Clobber
+     __asm__ __volatile__ ("cpuid\n\t"
+                           :                    // Output
+                           : "a" (0)            // Input
+                           : "rbx", "rcx", "rdx");
+
 #endif
      return ((opal_timer_t)l) | (((opal_timer_t)h) << 32);
 }

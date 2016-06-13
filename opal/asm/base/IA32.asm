@@ -102,9 +102,6 @@ END_FUNC(opal_atomic_sub_32)
 
 
 START_FUNC(opal_sys_timer_get_cycles)
-        pushl   %ebp
-        movl    %esp, %ebp
         rdtsc
-        popl    %ebp
         ret
 END_FUNC(opal_sys_timer_get_cycles)
