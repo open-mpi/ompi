@@ -61,12 +61,39 @@ included in the vX.Y.Z section and be denoted as:
  *  Open MPI is now fully MPI-3.1 compliant
  **********************************************************************
 
-- Enhancements to reduce the memory footprint for jobs at scale.  A
-  new MCA parameter, "mpi_add_procs_cutoff", is available to set the
-  threshold for using this feature.
+Major new features:
+
 - Many enhancements to MPI RMA.  Open MPI now maps MPI RMA operations
   on to native RMA operations for those networks which support this
   capability.
+- Greatly improved support for MPI_THREAD_MULTIPLE (when configured
+  with --enable-mpi-thread-multiple).
+- Enhancements to reduce the memory footprint for jobs at scale.  A
+  new MCA parameter, "mpi_add_procs_cutoff", is available to set the
+  threshold for using this feature.
+- Completely revamped support for memory registration hooks when using
+  OS-bypass network transports.
+- Significant OMPIO performance improvements and many bug fixes.
+- Add support for PMIx - Process Management Interface for Exascale.
+  Version 1.1.2 of PMIx is included internally in this release.
+- Add support for PLFS file systems in Open MPI I/O.
+- Add support for UCX transport.
+- Simplify build process for Cray XC systems.  Add support for
+  using native SLURM.
+- Add a --tune mpirun command line option to simplify setting many
+  environment variables and MCA parameters.
+- Add a new MCA parameter "orte_default_dash_host" to offer an analogue
+  to the existing "orte_default_hostfile" MCA parameter.
+- Add the ability to specify the number of desired slots in the mpirun
+  --host option.
+
+Changes in behavior compared to prior versions:
+
+- In environments where mpirun cannot automatically determine the
+  number of slots available (e.g., when using a hostfile that does not
+  specify "slots", or when using --host without specifying a ":N"
+  suffix to hostnames), mpirun now requires the use of "-np N" to
+  specify how many MPI processes to launch.
 - The MPI C++ bindings -- which were removed from the MPI standard in
   v3.0 -- are no longer built by default and will be removed in some
   future version of Open MPI.  Use the --enable-mpi-cxx-bindings
@@ -74,49 +101,54 @@ included in the vX.Y.Z section and be denoted as:
 - ompi_info now shows all components, even if they do not have MCA
   parameters.  The prettyprint output now separates groups with a
   dashed line.
-- Add support for PMIx - Process Management Interface for Exascale.
-  Version 1.1.2 of PMIx is included internally in this release.
-- Add support for PLFS file systems in Open MPI I/O.
-- Add support for UCX transport.
-- Improved support for MPI_THREAD_MULTIPLE (when configured with
-  --enable-mpi-thread-multiple).
-- Simplify build process for Cray XC systems.  Add support for
-  using native SLURM.
-- Updated internal/embedded copies of third-part software:
+- OMPIO is now the default implementation of parallel I/O, with the
+  exception for Lustre parallel filesystems (where ROMIO is still the
+  default).  The default selection of OMPI vs. ROMIO can be controlled
+  via the "--mca io ompi|romio" command line switch to mpirun.
+- Per Open MPI's versioning scheme (see the README), increasing the
+  major version number to 2 indicates that this version is not
+  ABI-compatible with prior versions of Open MPI.  You will need to
+  recompile MPI and OpenSHMEM applications to work with this version
+  of Open MPI.
+- Removed checkpoint/restart code due to loss of maintainer. :-(
+
+Removed legacy support:
+
+- Removed support for OS X Leopard.
+- Removed support for Cray XT systems.
+- Removed VampirTrace.
+- Removed support for Myrinet/MX.
+- Removed legacy collective module:ML.
+- Removed support for Alpha processors.
+- Removed --enable-mpi-profiling configure option.
+
+Bug fixes / minor enhancements:
+
+- Updated internal/embedded copies of third-party software:
   - Update the internal copy of ROMIO to that which shipped in MPICH
     3.1.4.
   - Update internal copy of libevent to v2.0.22.
   - Update internal copy of hwloc to v1.11.2.
-- Add a --tune mpirun command line option to simplify setting many
-  environment variables and MCA parameters.
-- Add a new MCA parameter -
-  "opal_common_verbs_want_fork_support". This replaces the
-  "btl_openib_want_fork_support" parameter.
-- Add a new MCA parameter "orte_default_dash_host" to offer an analogue
-  to the existing "orte_default_hostfile" MCA parameter.
+- Notable new MCA parameters:
+  - opal_progress_lp_call_ration: Control how often low-priority
+    callbacks are made during Open MPI's main progress loop.
+  - opal_common_verbs_want_fork_support: This replaces the
+    btl_openib_want_fork_support parameter.
 - Add --with-platform-patches-dir configure option.
 - Add --with-pmi-libdir configure option for environments that install
   PMI libs in a non-default location.
-- Add the ability to specify the number of desired slots in the mpirun
-  --host option.
-- In environments where mpirun cannot automatically determine the
-  number of slots available (e.g., when using a hostfile that does not
-  specify "slots", or when using --host without specifying a ":N"
-  suffix to hostnames), mpirun now requires the use of "-np N" to
-  specify how many MPI processes to launch.
-- Removed some legacy support:
-  - Removed support for OS X Leopard.
-  - Removed support for Cray XT systems.
-  - Removed VampirTrace.
-  - Removed support for Myrinet/MX.
-  - Removed legacy collective module:ML.
-  - Removed support for Alpha processors.
-  - Removed --enable-mpi-profiling configure option.
-- Removed checkpoint/restart code due to loss of maintainer. :-(
+- Various configure-related compatibility updates for newer versions
+  of libibverbs and OFED.
 - Numerous fixes/improvements to orte-dvm.  Special thanks to Mark
   Santcroos for his help.
 - Silence a compiler warning in PSM MTL.  Thanks to Adrian Reber for
   reporting this.
+- Properly detect Intel TrueScale and OmniPath devices in the ACTIVE
+  state.  Thanks to Durga Choudhury for reporting the issue.
+- Fix detection and use of Solaris Studio 12.5 (beta) compilers.
+  Thanks to Paul Hargrove for reporting and debugging.
+- Fix various small memory leaks.
+- Allow NULL arrays when creating empty MPI datatypes.
 - Replace use of alloca with malloc for certain datatype creation
   functions.  Thanks to Bogdan Sataric for reporting this.
 - Fix use of MPI_LB and MPI_UB in creation of of certain MPI datatypes.
@@ -125,6 +157,8 @@ included in the vX.Y.Z section and be denoted as:
   Schnetter for reporting and fixing.
 - Improve hcoll library detection in configure.  Thanks to David
   Shrader and Ake Sandgren for reporting this.
+- Miscellaneous minor bug fixes in the hcoll component.
+- Miscellaneous minor bug fixes in the ugni component.
 - Fix problems with XRC detection in OFED 3.12 and older releases.
   Thanks to Paul Hargrove for his analysis of this problem.
 - Update (non-standard/experimental) Java MPI interfaces to support
@@ -152,6 +186,8 @@ included in the vX.Y.Z section and be denoted as:
   reporting this.
 - Fix a problem in neighborhood collectives.  Thanks to Lisandro
   Dalcin for reporting.
+- Fix MPI_IREDUCE_SCATTER_BLOCK for a one-process communicator. Thanks
+  to Lisandro Dalcin for reporting.
 - Add (Open MPI-specific) additional flavors to MPI_COMM_SPLIT_TYPE.
   See MPI_Comm_split_type(3) for details.  Thanks to Nick Andersen for
   supplying this enhancement.
