@@ -157,8 +157,10 @@ opal_btl_usnic_check_rx_seq(
 #if MSGDEBUG1
         opal_output(0, "Handle piggy-packed ACK seq %"UDSEQ"\n", seg->rs_base.us_btl_header->ack_seq);
 #endif
+        OPAL_THREAD_LOCK(&btl_usnic_lock);
         opal_btl_usnic_handle_ack(endpoint,
                 seg->rs_base.us_btl_header->ack_seq);
+        OPAL_THREAD_UNLOCK(&btl_usnic_lock);
     }
 
     /* Do we have room in the endpoint's receiver window?
