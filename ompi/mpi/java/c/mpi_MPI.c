@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -131,6 +131,10 @@ OBJ_CLASS_INSTANCE(ompi_java_buffer_t,
  */
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
+    // Ensure that PSM signal hijacking is disabled *before* loading
+    // the library (see comment in the function for more detail).
+    opal_init_psm();
+
     libmpi = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
 
 #if defined(HAVE_DL_INFO) && defined(HAVE_LIBGEN_H)
