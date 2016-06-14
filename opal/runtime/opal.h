@@ -6,18 +6,19 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008	   Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -53,7 +54,7 @@ OPAL_DECLSPEC extern int opal_cache_line_size;
 OPAL_DECLSPEC int opal_init(int* pargc, char*** pargv);
 
 /**
- * Finalize the OPAL layer, including the MCA system. 
+ * Finalize the OPAL layer, including the MCA system.
  *
  * @retval OPAL_SUCCESS Upon success.
  * @retval OPAL_ERROR Upon failure.
@@ -75,7 +76,14 @@ OPAL_DECLSPEC int opal_finalize(void);
 OPAL_DECLSPEC int opal_init_util(int* pargc, char*** pargv);
 
 /**
- * Finalize the OPAL layer, excluding the MCA system. 
+ * Disable PSM/PSM2 signal hijacking.
+ *
+ * See comment in the function for more detail.
+ */
+OPAL_DECLSPEC int opal_init_psm(void);
+
+/**
+ * Finalize the OPAL layer, excluding the MCA system.
  *
  * @retval OPAL_SUCCESS Upon success.
  * @retval OPAL_ERROR Upon failure.
