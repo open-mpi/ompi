@@ -87,6 +87,7 @@ int MPI_Startall(int count, MPI_Request requests[])
             }
         }
     }
+
     ret = MCA_PML_CALL(start(count, requests));
 
     return ret;

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -42,11 +42,11 @@ struct mca_pml_cm_request_t {
 
 /* START: These fields have to match the definition of the mca_pml_base_request_t */
     ompi_request_t req_ompi;              /**< base request */
-    volatile bool req_pml_complete;       /**< flag indicating if the pt-2-pt layer is done with this request */
+    volatile int32_t req_pml_complete;    /**< flag indicating if the pt-2-pt layer is done with this request */
+    volatile int32_t req_free_called;     /**< flag indicating if the user has freed this request */
     mca_pml_cm_request_type_t req_pml_type;
     struct ompi_communicator_t *req_comm; /**< communicator pointer */
     struct ompi_datatype_t *req_datatype; /**< pointer to data type */
-    volatile bool req_free_called;        /**< flag indicating if the user has freed this request */
     opal_convertor_t req_convertor;       /**< convertor that describes the memory layout */
 /* END: These fields have to match the definition of the mca_pml_base_request_t */
 };

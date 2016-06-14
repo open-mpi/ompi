@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -248,36 +248,35 @@ static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *se
 static inline void
 send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 {
-    assert(false == sendreq->req_send.req_base.req_pml_complete);
+    if(false == sendreq->req_send.req_base.req_pml_complete) {
+        if(sendreq->req_send.req_bytes_packed > 0) {
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
+                                     &(sendreq->req_send.req_base), PERUSE_SEND);
+        }
 
-    if(sendreq->req_send.req_bytes_packed > 0) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND);
-    }
+        /* return mpool resources */
+        mca_pml_ob1_free_rdma_resources(sendreq);
 
-    /* return mpool resources */
-    mca_pml_ob1_free_rdma_resources(sendreq);
+        if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
+            sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
+            mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
+        }
 
-    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
-        sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
-        mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
-    }
+        if (!sendreq->req_send.req_base.req_free_called) {
+            sendreq->req_send.req_base.req_pml_complete = true;
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    if(false == sendreq->req_send.req_base.req_ompi.req_complete) {
-        /* Should only be called for long messages (maybe synchronous) */
-        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
-    } else {
-        if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
-            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+            if( !REQUEST_COMPLETE( &((sendreq->req_send).req_base.req_ompi)) ) {
+                /* Should only be called for long messages (maybe synchronous) */
+                MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+            } else {
+                if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
+                    ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+                }
+            }
+        } else {
+            MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
         }
     }
-    sendreq->req_send.req_base.req_pml_complete = true;
-
-    if(sendreq->req_send.req_base.req_free_called) {
-        MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
-    }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 /* returns true if request was completed on PML level */

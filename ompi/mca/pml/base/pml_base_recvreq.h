@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -78,7 +78,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
     (request)->req_base.req_sequence = 0;                                \
     (request)->req_base.req_datatype = datatype;                         \
     /* What about req_type ? */                                          \
-    (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
+    (request)->req_base.req_pml_complete = false;                        \
     (request)->req_base.req_free_called = false;                         \
 }
 /**
@@ -99,7 +99,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
         (request)->req_ompi.req_status._ucount = 0;                             \
         (request)->req_ompi.req_status._cancelled = 0;                          \
                                                                                 \
-        (request)->req_ompi.req_complete = false;                               \
+        (request)->req_ompi.req_complete = REQUEST_PENDING;                     \
         (request)->req_ompi.req_state = OMPI_REQUEST_ACTIVE;                    \
     } while (0)
 
