@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
@@ -246,6 +246,34 @@ opal_err2str(int errnum, const char **errmsg)
 }
 
 
+int opal_init_psm(void)
+{
+    /* Very early in the init sequence -- before *ANY* MCA components
+       are opened -- we need to disable some behavior from the PSM and
+       PSM2 libraries (by default): at least some old versions of
+       these libraries hijack signal handlers during their library
+       constructors and then do not un-hijack them when the libraries
+       are unloaded.
+
+       It is a bit of an abstraction break that we have to put
+       vendor/transport-specific code in the OPAL core, but we're
+       out of options, unfortunately.
+
+       NOTE: We only disable this behavior if the corresponding
+       environment variables are not already set (i.e., if the
+       user/environment has indicated a preference for this behavior,
+       we won't override it). */
+    if (NULL == getenv("IPATH_NO_BACKTRACE")) {
+        opal_setenv("IPATH_NO_BACKTRACE", "1", true, &environ);
+    }
+    if (NULL == getenv("HFI_NO_BACKTRACE")) {
+        opal_setenv("HFI_NO_BACKTRACE", "1", true, &environ);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+
 int
 opal_init_util(int* pargc, char*** pargv)
 {
@@ -300,6 +328,10 @@ opal_init_util(int* pargc, char*** pargv)
         error = "opal_util_keyval_parse_init";
         goto return_error;
     }
+
+    // Disable PSM signal hijacking (see comment in function for more
+    // details)
+    opal_init_psm();
 
     /* Setup the parameter system */
     if (OPAL_SUCCESS != (ret = mca_base_param_init())) {
