@@ -123,6 +123,8 @@ included in the vX.Y.Z section and be denoted as:
 - Do not set a binding policy when oversubscribing a node
 - Fix hang in intercommunicator operations when oversubscribed
 - Speed up process termination during MPI_Abort
+- Disable backtrace support by default in the PSM/PSM2 libraries to
+  prevent unintentional conflicting behavior.
 
 
 
