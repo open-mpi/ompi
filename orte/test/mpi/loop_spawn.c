@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include "mpi.h"
 #include <pthread.h>
-#include <signal.h> 
+#include <signal.h>
 #include <sys/time.h>
 #include <errno.h>
 #define     EXE_TEST             "./loop_child"
@@ -15,10 +15,10 @@ int main(int argc, char **argv)
     int iter, err, rank, size;
     MPI_Comm comm, merged;
 
-    /* MPI environnement */    
+    /* MPI environnement */
 
     printf("parent*******************************\n");
-    printf("parent: Launching MPI*\n");
+    printf("parent %d: Launching MPI*\n", getpid());
 
     MPI_Init( &argc, &argv);
 
@@ -30,8 +30,9 @@ int main(int argc, char **argv)
         MPI_Intercomm_merge(comm, 0, &merged);
         MPI_Comm_rank(merged, &rank);
         MPI_Comm_size(merged, &size);
-        printf("parent: MPI_Comm_spawn #%d rank %d, size %d\n", 
-               iter, rank, size);
+        printf("parent %d: MPI_Comm_spawn #%d rank %d, size %d\n",
+               getpid(), iter, rank, size);
+        MPI_Comm_disconnect(&comm);
         MPI_Comm_free(&merged);
     }
 
