@@ -54,7 +54,7 @@ included in the vX.Y.Z section and be denoted as:
                                  included in release version vA.B.C.
 
 
-1.10.3 - DATE
+1.10.3 - 15 June 2016
 ------
 
 - Fix zero-length datatypes.  Thanks to Wei-keng Liao for reporting
