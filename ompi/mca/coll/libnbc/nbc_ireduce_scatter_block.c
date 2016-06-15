@@ -201,11 +201,12 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
+int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sendbuf, void *recvbuf, int rcount, struct ompi_datatype_t *dtype,
 						 struct ompi_op_t *op, struct ompi_communicator_t *comm,
 						 ompi_request_t **request, struct mca_coll_base_module_2_1_0_t *module) {
   int rank, res, count, rsize;
   MPI_Aint ext;
+  ptrdiff_t gap, span;
   NBC_Schedule *schedule;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -226,8 +227,10 @@ int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sbuf, void *rbuf, i
 
   count = rcount * rsize;
 
+  span = opal_datatype_span(&dtype->super, count, &gap);
+
   if (count > 0) {
-    handle->tmpbuf = malloc (2 * ext * count);
+    handle->tmpbuf = malloc (2 * span);
     if (NULL == handle->tmpbuf) {
       NBC_Return_handle (handle);
       return OMPI_ERR_OUT_OF_RESOURCE;
@@ -244,42 +247,47 @@ int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sbuf, void *rbuf, i
   handle->schedule = schedule;
 
   /* send my data to the remote root */
-  res = NBC_Sched_send (sbuf, false, count, dtype, 0, schedule, false);
+  res = NBC_Sched_send (sendbuf, false, count, dtype, 0, schedule, false);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     NBC_Return_handle (handle);
     return res;
   }
 
   if (0 == rank) {
-    res = NBC_Sched_recv ((void *) 0, true, count, dtype, 0, schedule, true);
+    char *lbuf, *rbuf;
+    lbuf = (char *)(-gap);
+    rbuf = (char *)(span-gap);
+    res = NBC_Sched_recv (lbuf, true, count, dtype, 0, schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       NBC_Return_handle (handle);
       return res;
     }
 
     for (int peer = 1 ; peer < rsize ; ++peer) {
-      res = NBC_Sched_recv ((void *)(ext * count), true, count, dtype, peer, schedule, true);
+      char *tbuf;
+      res = NBC_Sched_recv (rbuf, true, count, dtype, peer, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (handle);
         return res;
       }
 
-      res = NBC_Sched_op ((void *) 0, true, (void *)(ext * count), true, (void *) 0, true, count, dtype, op,
-                          schedule, true);
+      res = NBC_Sched_op2 (lbuf, true, rbuf, true, count, dtype,
+                          op, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (handle);
         return res;
       }
+      tbuf = lbuf; lbuf = rbuf; rbuf = tbuf;
     }
 
     /* exchange data with remote root for scatter phase (we *could* use the local communicator to do the scatter) */
-    res = NBC_Sched_recv ((void *)(ext * count), true, count, dtype, 0, schedule, false);
+    res = NBC_Sched_recv (rbuf, true, count, dtype, 0, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       NBC_Return_handle (handle);
       return res;
     }
 
-    res = NBC_Sched_send ((void *) 0, true, count, dtype, 0, schedule, true);
+    res = NBC_Sched_send (lbuf, true, count, dtype, 0, schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       NBC_Return_handle (handle);
       return res;
@@ -287,7 +295,7 @@ int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sbuf, void *rbuf, i
 
     /* scatter */
     for (int peer = 0 ; peer < rsize ; ++peer) {
-      res = NBC_Sched_send ((void *)(ext * (count + peer * rcount)), true, rcount, dtype, peer, schedule, false);
+      res = NBC_Sched_send (rbuf + ext * rcount * peer, true, rcount, dtype, peer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (handle);
         return res;
@@ -296,7 +304,7 @@ int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sbuf, void *rbuf, i
   }
 
   /* receive my block */
-  res = NBC_Sched_recv(rbuf, true, rcount, dtype, 0, schedule, false);
+  res = NBC_Sched_recv(recvbuf, false, rcount, dtype, 0, schedule, false);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     NBC_Return_handle (handle);
     return res;
