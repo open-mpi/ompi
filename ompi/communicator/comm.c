@@ -853,7 +853,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
 
     /* check that all processors have been called with the same value */
     for (int i = 0 ; i < size ; ++i) {
-        if ( results[2*i] != split_type ) {
+        if ( results[2*i] != split_type && MPI_UNDEFINED != results[2*i] && MPI_UNDEFINED != split_type) {
             rc = OMPI_ERR_BAD_PARAM;
             goto exit;
         }
@@ -861,7 +861,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
 
     /* how many are participating and on my node? */
     rc = ompi_comm_split_type_get_part (comm->c_local_group, results, &lranks, &my_size);
-    if (0 == my_size) {
+    if (0 == my_size && MPI_UNDEFINED != split_type) {
         /* should never happen */
         rc = OMPI_ERR_BAD_PARAM;
     }
