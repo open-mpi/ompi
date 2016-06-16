@@ -182,7 +182,7 @@ opal_progress_finalize(void)
 void
 opal_progress(void)
 {
-    static volatile uint64_t num_calls = 0;
+    static volatile uint32_t num_calls = 0;
     size_t i;
     int events = 0;
 
@@ -221,7 +221,7 @@ opal_progress(void)
         events += (callbacks[i])();
     }
 
-    if ((OPAL_THREAD_ADD64((volatile int64_t *) &num_calls, 1) & 0x7) == 0) {
+    if ((OPAL_THREAD_ADD32((volatile int32_t *) &num_calls, 1) & 0x7) == 0) {
         /* run low priority callbacks once every 8 calls to opal_progress() */
         for (i = 0 ; i < callbacks_lp_len ; ++i) {
             events += (callbacks_lp[i])();
