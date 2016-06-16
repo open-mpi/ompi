@@ -46,37 +46,47 @@ void opal_pmix_base_set_evbase(opal_event_base_t *evbase)
 /********     ERRHANDLER SUPPORT FOR COMPONENTS THAT
  ********     DO NOT NATIVELY SUPPORT IT
  ********/
-static opal_pmix_notification_fn_t errhandler = NULL;
+static opal_pmix_notification_fn_t evhandler = NULL;
 
-void opal_pmix_base_register_handler(opal_list_t *info,
+void opal_pmix_base_register_handler(opal_list_t *event_codes,
+                                     opal_list_t *info,
                                      opal_pmix_notification_fn_t err,
-                                     opal_pmix_errhandler_reg_cbfunc_t cbfunc,
+                                     opal_pmix_evhandler_reg_cbfunc_t cbfunc,
                                      void *cbdata)
 {
-    errhandler = err;
+    evhandler = err;
     if (NULL != cbfunc) {
         cbfunc(OPAL_SUCCESS, 0, cbdata);
     }
 }
 
-void opal_pmix_base_errhandler(int status,
-                               opal_list_t *procs,
-                               opal_list_t *info,
-                               opal_pmix_release_cbfunc_t cbfunc, void *cbdata)
+void opal_pmix_base_evhandler(int status,
+                              const opal_process_name_t *source,
+                              opal_list_t *info, opal_list_t *results,
+                              opal_pmix_notification_complete_fn_t cbfunc, void *cbdata)
 {
-    if (NULL != errhandler) {
-        errhandler(status, procs, info, cbfunc, cbdata);
+    if (NULL != evhandler) {
+        evhandler(status, source, info, results, cbfunc, cbdata);
     }
 }
 
-void opal_pmix_base_deregister_handler(int errid,
+void opal_pmix_base_deregister_handler(size_t errid,
                                        opal_pmix_op_cbfunc_t cbfunc,
                                        void *cbdata)
 {
-    errhandler = NULL;
+    evhandler = NULL;
     if (NULL != cbfunc) {
         cbfunc(OPAL_SUCCESS, cbdata);
     }
+}
+
+int opal_pmix_base_notify_event(int status,
+                                const opal_process_name_t *source,
+                                opal_pmix_data_range_t range,
+                                opal_list_t *info,
+                                opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    return OPAL_SUCCESS;
 }
 
 struct lookup_caddy_t {

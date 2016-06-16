@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -44,7 +44,7 @@
 /* These are the interfaces used by the embedded PMIx server
  * to call up into ORTE for service requests */
 
-static pmix_status_t server_client_connected_fn(const pmix_proc_t *proc, void* server_object);
+ static pmix_status_t server_client_connected_fn(const pmix_proc_t *proc, void* server_object);
 static pmix_status_t server_client_finalized_fn(const pmix_proc_t *proc, void* server_object,
                                                 pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t server_abort_fn(const pmix_proc_t *proc, void *server_object,
@@ -85,20 +85,20 @@ static pmix_status_t server_listener_fn(int listening_sd,
                                         pmix_connection_cbfunc_t cbfunc);
 
 pmix_server_module_t mymodule = {
-    server_client_connected_fn,
-    server_client_finalized_fn,
-    server_abort_fn,
-    server_fencenb_fn,
-    server_dmodex_req_fn,
-    server_publish_fn,
-    server_lookup_fn,
-    server_unpublish_fn,
-    server_spawn_fn,
-    server_connect_fn,
-    server_disconnect_fn,
-    server_register_events,
-    server_deregister_events,
-    server_listener_fn
+    .client_connected = server_client_connected_fn,
+    .client_finalized = server_client_finalized_fn,
+    .abort = server_abort_fn,
+    .fence_nb = server_fencenb_fn,
+    .direct_modex = server_dmodex_req_fn,
+    .publish = server_publish_fn,
+    .lookup = server_lookup_fn,
+    .unpublish = server_unpublish_fn,
+    .spawn = server_spawn_fn,
+    .connect = server_connect_fn,
+    .disconnect = server_disconnect_fn,
+    .register_events = server_register_events,
+    .deregister_events = server_deregister_events,
+    .listener = server_listener_fn
 };
 
 opal_pmix_server_module_t *host_module = NULL;
@@ -130,7 +130,8 @@ static pmix_status_t server_client_connected_fn(const pmix_proc_t *p, void *serv
     proc.vpid = p->rank;
 
     /* pass it up */
-    rc = host_module->client_connected(&proc, server_object);
+    rc = host_module->client_connected(&proc, server_object,
+                                       NULL, NULL);
     return pmix1_convert_opalrc(rc);
 }
 

@@ -1,0 +1,30 @@
+PMIx Authors
+================
+
+The following cumulative list contains the names and GitHub IDs of
+all individuals who have committed code to the PMIx repository.
+
+Email                           Name                        Affiliation(s)
+------------------------------- --------------------------- -------------------
+alinask                         Elena Shipunova             Mellanox
+annu13                          Annapurna Dasari            Intel
+artpol84                        Artem Polyakov              Mellanox
+dsolt                           Dave Solt                   IBM
+ggouaillardet                   Gilles Gouaillardet         RIST
+hjelmn                          Nathan Hjelm                LANL
+igor-ivanov                     Igor Ivanov                 Mellanox
+jladd-mlnx                      Joshua Ladd                 Mellanox
+jsquyres                        Jeff Squyres                Cisco, IU
+nkogteva                        Nadezhda Kogteva            Mellanox
+rhc54                           Ralph Castain               LANL, Cisco, Intel
+------------------------------- --------------------------- -------------------
+
+Affiliation abbreviations:
+--------------------------
+Cisco = Cisco Systems, Inc.
+IBM = International Business Machines, Inc.
+Intel = Intel, Inc.
+IU = Indiana University
+LANL = Los Alamos National Laboratory
+Mellanox = Mellanox
+RIST = Research Organization for Information Science and Technology

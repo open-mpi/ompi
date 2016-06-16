@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +27,6 @@
 
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
-#include "opal/errhandler/opal_errhandler.h"
 #include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/error_strings.h"
@@ -70,37 +69,32 @@
 };
 
 static void proc_errors(int fd, short args, void *cbdata);
-static void pmix_error(int error, opal_proc_t *proc, void *cbdata)
-{
-    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
-                        "%s errmgr:default_app: errhandler called",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    /* push it into our event base */
-    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_COMM_FAILED);
-}
+static size_t myerrhandle = SIZE_MAX;
 
-static int myerrhandle = -1;
-
-static void register_cbfunc(int status, int errhndler, void *cbdata)
+static void register_cbfunc(int status, size_t errhndler, void *cbdata)
 {
     myerrhandle = errhndler;
 }
 
 static void notify_cbfunc(int status,
-                          opal_list_t *procs,
-                          opal_list_t *info,
-                          opal_pmix_release_cbfunc_t cbfunc,
-                          void *cbdata)
+                          const opal_process_name_t *source,
+                          opal_list_t *info, opal_list_t *results,
+                          opal_pmix_notification_complete_fn_t cbfunc, void *cbdata)
 {
-    if (NULL != cbfunc) {
-        cbfunc(cbdata);
-    }
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
-                        "%s errmgr:default_app: pmix errhandler called",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                        "%s errmgr:default_app: pmix event handler called with status %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_ERROR_NAME(status)));
+
+    /* let the caller know we processed this, but allow the
+     * chain to continue */
+    if (NULL != cbfunc) {
+        cbfunc(ORTE_SUCCESS, NULL, NULL, NULL, cbdata);
+    }
+
     /* push it into our event base */
-    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_COMM_FAILED);
+    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, status);
 }
 
 /************************
@@ -111,19 +105,17 @@ static void notify_cbfunc(int status,
     /* setup state machine to trap proc errors */
     orte_state.add_proc_state(ORTE_PROC_STATE_ERROR, proc_errors, ORTE_ERROR_PRI);
 
-    /* register an errhandler */
-    opal_register_errhandler(pmix_error, NULL);
-
-    /* tie the default PMIx errhandler back to us */
-    opal_pmix.register_errhandler(NULL, notify_cbfunc, register_cbfunc, NULL);
+    /* tie the default PMIx event handler back to us */
+    opal_pmix.register_evhandler(NULL, NULL, notify_cbfunc, register_cbfunc, NULL);
 
     return ORTE_SUCCESS;
 }
 
 static int finalize(void)
 {
-    opal_deregister_errhandler();
-    opal_pmix.deregister_errhandler(myerrhandle, NULL, NULL);
+    if (SIZE_MAX != myerrhandle) {
+        opal_pmix.deregister_evhandler(myerrhandle, NULL, NULL);
+    }
     return ORTE_SUCCESS;
 }
 

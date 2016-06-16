@@ -30,6 +30,7 @@
 #include "orte/util/nidmap.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_quit.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/state/state.h"
 #include "orte/mca/state/base/base.h"
@@ -383,7 +384,7 @@ static void check_complete(int fd, short args, void *cbdata)
 
     /* tell the PMIx subsystem the job is complete */
     if (NULL != opal_pmix.server_deregister_nspace) {
-        opal_pmix.server_deregister_nspace(jdata->jobid);
+        opal_pmix.server_deregister_nspace(jdata->jobid, NULL, NULL);
     }
 
     /* Release the resources used by this job. Since some errmgrs may want

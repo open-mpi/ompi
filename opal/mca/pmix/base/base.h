@@ -32,17 +32,23 @@ OPAL_DECLSPEC int opal_pmix_base_select(void);
 
 OPAL_DECLSPEC extern bool opal_pmix_base_allow_delayed_server;
 
-OPAL_DECLSPEC void opal_pmix_base_register_handler(opal_list_t *info,
-                                                   opal_pmix_notification_fn_t errhandler,
-                                                   opal_pmix_errhandler_reg_cbfunc_t cbfunc,
+OPAL_DECLSPEC void opal_pmix_base_register_handler(opal_list_t *event_codes,
+                                                   opal_list_t *info,
+                                                   opal_pmix_notification_fn_t evhandler,
+                                                   opal_pmix_evhandler_reg_cbfunc_t cbfunc,
                                                    void *cbdata);
-OPAL_DECLSPEC void opal_pmix_base_deregister_handler(int errhandler,
+OPAL_DECLSPEC void opal_pmix_base_deregister_handler(size_t errhandler,
                                                      opal_pmix_op_cbfunc_t cbfunc,
                                                      void *cbdata);
-OPAL_DECLSPEC void opal_pmix_base_errhandler(int status,
-                                             opal_list_t *procs,
-                                             opal_list_t *info,
-                                             opal_pmix_release_cbfunc_t cbfunc, void *cbdata);
+OPAL_DECLSPEC int opal_pmix_base_notify_event(int status,
+                                              const opal_process_name_t *source,
+                                              opal_pmix_data_range_t range,
+                                              opal_list_t *info,
+                                              opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+OPAL_DECLSPEC void opal_pmix_base_evhandler(int status,
+                                            const opal_process_name_t *source,
+                                            opal_list_t *info, opal_list_t *results,
+                                            opal_pmix_notification_complete_fn_t cbfunc, void *cbdata);
 OPAL_DECLSPEC int opal_pmix_base_exchange(opal_value_t *info,
                                           opal_pmix_pdata_t *pdat,
                                           int timeout);

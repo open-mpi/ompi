@@ -3,7 +3,7 @@
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -57,66 +57,20 @@ static size_t errhdler_ref = 0;
         }                                       \
     } while (0)
 
-static void completion_handler (void *cbdata) {
-    bool *active = (bool *)cbdata;
-    *active = false;
-}
-
-static void myerr(size_t evhdlr_registration_id,
-                  pmix_status_t status,
-                  pmix_proc_t procs[], size_t nprocs,
-                  pmix_info_t info[], size_t ninfo,
-                  pmix_event_notification_cbfunc_fn_t cbfunc,
-                  void *cbdata)
-{
-    int rc;
-    opal_list_t plist, ilist;
-    opal_namelist_t *nm;
-    opal_value_t *iptr;
-    size_t n;
-    volatile bool active;
-
-    /* convert the incoming status */
-    rc = pmix1_convert_rc(status);
-
-    /* convert the array of procs */
-    OBJ_CONSTRUCT(&plist, opal_list_t);
-    for (n=0; n < nprocs; n++) {
-        nm = OBJ_NEW(opal_namelist_t);
-        nm->name.jobid = strtoul(procs[n].nspace, NULL, 10);
-        nm->name.vpid = procs[n].rank;
-        opal_list_append(&plist, &nm->super);
-    }
-
-    /* convert the array of info */
-    OBJ_CONSTRUCT(&ilist, opal_list_t);
-    for (n=0; n < ninfo; n++) {
-        iptr = OBJ_NEW(opal_value_t);
-        iptr->key = strdup(info[n].key);
-        pmix1_value_unload(iptr, &info[n].value);
-        opal_list_append(&plist, &iptr->super);
-    }
-
-    /* call the base errhandler */
-    active = true;
-    opal_pmix_base_errhandler(rc, &plist, &ilist, completion_handler, (void *)&active);
-    PMIX_WAIT_FOR_COMPLETION(active);
-
-    OPAL_LIST_DESTRUCT(&plist);
-    OPAL_LIST_DESTRUCT(&ilist);
-}
-
 static void errreg_cbfunc (pmix_status_t status,
                           size_t errhandler_ref,
                           void *cbdata)
 {
+    volatile bool *active = (volatile bool*)cbdata;
+
     errhdler_ref = errhandler_ref;
     opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                         "PMIX server errreg_cbfunc - error handler registered status=%d, reference=%lu",
                          status, (unsigned long)errhandler_ref);
+    *active = false;
 }
 
-int pmix1_server_init(opal_pmix_server_module_t *module,
+int pmix20_server_init(opal_pmix_server_module_t *module,
                       opal_list_t *info)
 {
     pmix_status_t rc;
@@ -124,6 +78,7 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
     opal_value_t *kv;
     pmix_info_t *pinfo;
     size_t sz, n;
+    volatile bool active;
 
     if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
         asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
@@ -137,7 +92,7 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
             (void)strncpy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
-            pmix1_value_load(&pinfo[n].value, kv);
+            pmix20_value_load(&pinfo[n].value, kv);
             ++n;
         }
     } else {
@@ -147,7 +102,7 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
 
     if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, pinfo, sz))) {
         PMIX_INFO_FREE(pinfo, sz);
-        return pmix1_convert_rc(rc);
+        return pmix20_convert_rc(rc);
     }
     PMIX_INFO_FREE(pinfo, sz);
 
@@ -155,79 +110,95 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
     host_module = module;
 
     /* register the default event handler */
-    PMIx_Register_event_handler(NULL, 0, NULL, 0, myerr, errreg_cbfunc, NULL);
+    active = true;
+    PMIx_Register_event_handler(NULL, 0, NULL, 0, pmix20_event_hdlr, errreg_cbfunc, (void*)&active);
+    PMIX_WAIT_FOR_COMPLETION(active);
 
     return OPAL_SUCCESS;
 }
 
-int pmix1_server_finalize(void)
+static void fincb(pmix_status_t status, void *cbdata)
 {
-    pmix_status_t rc;
-
-    /* deregister the default event handler */
-    PMIx_Deregister_event_handler(errhdler_ref, NULL, NULL);
-
-    rc = PMIx_server_finalize();
-    return pmix1_convert_rc(rc);
+    volatile bool *active = (volatile bool*)cbdata;
+    *active = false;
 }
 
-int pmix1_server_gen_regex(const char *input, char **regex)
+int pmix20_server_finalize(void)
+{
+    pmix_status_t rc;
+    volatile bool active;
+
+    /* deregister the default event handler */
+    active = true;
+    PMIx_Deregister_event_handler(errhdler_ref, fincb, (void*)&active);
+    PMIX_WAIT_FOR_COMPLETION(active);
+
+    rc = PMIx_server_finalize();
+    return pmix20_convert_rc(rc);
+}
+
+int pmix20_server_gen_regex(const char *input, char **regex)
 {
     pmix_status_t rc;
 
     rc = PMIx_generate_regex(input, regex);
-    return pmix1_convert_rc(rc);
+    return pmix20_convert_rc(rc);
 }
 
 
-int pmix1_server_gen_ppn(const char *input, char **ppn)
+int pmix20_server_gen_ppn(const char *input, char **ppn)
 {
     pmix_status_t rc;
 
     rc = PMIx_generate_ppn(input, ppn);
-    return pmix1_convert_rc(rc);
+    return pmix20_convert_rc(rc);
 }
 
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {
-    pmix1_opcaddy_t *op = (pmix1_opcaddy_t*)cbdata;
+    pmix20_opcaddy_t *op = (pmix20_opcaddy_t*)cbdata;
 
     if (NULL != op->opcbfunc) {
-        op->opcbfunc(pmix1_convert_rc(status), op->cbdata);
+        op->opcbfunc(pmix20_convert_rc(status), op->cbdata);
     }
-    OBJ_RELEASE(op);
+    if (op->active) {
+        op->status = status;
+        op->active = false;
+    } else {
+        OBJ_RELEASE(op);
+    }
 }
 
-int pmix1_server_register_nspace(opal_jobid_t jobid,
-                                 int nlocalprocs,
-                                 opal_list_t *info,
-                                 opal_pmix_op_cbfunc_t cbfunc,
-                                 void *cbdata)
+static void _reg_nspace(int sd, short args, void *cbdata)
 {
+    pmix20_threadshift_t *cd = (pmix20_threadshift_t*)cbdata;
     opal_value_t *kv, *k2;
-    pmix_info_t *pinfo, *pmap;
+    pmix_info_t *pinfo = NULL, *pmap;
     size_t sz, szmap, m, n;
     char nspace[PMIX_MAX_NSLEN];
     pmix_status_t rc;
-    pmix1_opcaddy_t *op;
     opal_list_t *pmapinfo;
-    opal_pmix1_jobid_trkr_t *job;
+    opal_pmix20_jobid_trkr_t *job;
+    pmix20_opcaddy_t op;
+
+    /* we must threadshift this request as we might not be in an event
+     * and we are going to access framework-global lists/objects */
 
     /* convert the jobid */
-    (void)opal_snprintf_jobid(nspace, PMIX_MAX_NSLEN, jobid);
+    (void)opal_snprintf_jobid(nspace, PMIX_MAX_NSLEN, cd->jobid);
 
     /* store this job in our list of known nspaces */
-    job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
+    job = OBJ_NEW(opal_pmix20_jobid_trkr_t);
     (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
-    job->jobid = jobid;
+    job->jobid = cd->jobid;
     opal_list_append(&mca_pmix_ext20_component.jobids, &job->super);
 
     /* convert the list to an array of pmix_info_t */
-    if (NULL != info) {
-        sz = opal_list_get_size(info);
+    if (NULL != cd->info) {
+        sz = opal_list_get_size(cd->info);
         PMIX_INFO_CREATE(pinfo, sz);
         n = 0;
-        OPAL_LIST_FOREACH(kv, info, opal_value_t) {
+        OPAL_LIST_FOREACH(kv, cd->info, opal_value_t) {
             (void)strncpy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
             if (0 == strcmp(kv->key, OPAL_PMIX_PROC_DATA)) {
                 pinfo[n].value.type = PMIX_INFO_ARRAY;
@@ -241,11 +212,11 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
                 m = 0;
                 OPAL_LIST_FOREACH(k2, pmapinfo, opal_value_t) {
                     (void)strncpy(pmap[m].key, k2->key, PMIX_MAX_KEYLEN);
-                    pmix1_value_load(&pmap[m].value, k2);
+                    pmix20_value_load(&pmap[m].value, k2);
                     ++m;
                 }
             } else {
-                pmix1_value_load(&pinfo[n].value, kv);
+                pmix20_value_load(&pinfo[n].value, kv);
             }
             ++n;
         }
@@ -254,82 +225,185 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
         pinfo = NULL;
     }
 
-    /* setup the caddy */
-    op = OBJ_NEW(pmix1_opcaddy_t);
-    op->info = pinfo;
-    op->sz = sz;
-    op->opcbfunc = cbfunc;
-    op->cbdata = cbdata;
-    rc = PMIx_server_register_nspace(nspace, nlocalprocs, pinfo, sz,
-                                     opcbfunc, op);
-    if (PMIX_SUCCESS != rc) {
-        OBJ_RELEASE(op);
+    OBJ_CONSTRUCT(&op, pmix20_opcaddy_t);
+    op.active = true;
+    rc = PMIx_server_register_nspace(nspace, cd->status, pinfo, sz,
+                                     opcbfunc, (void*)&op);
+    if (PMIX_SUCCESS == rc) {
+        PMIX_WAIT_FOR_COMPLETION(op.active);
+    } else {
+        op.status = rc;
     }
-    return pmix1_convert_rc(rc);
+    /* ensure we execute the cbfunc so the caller doesn't hang */
+    if (NULL != cd->opcbfunc) {
+        cd->opcbfunc(pmix20_convert_rc(op.status), cd->cbdata);
+    }
+    if (NULL != pinfo) {
+        PMIX_INFO_FREE(pinfo, sz);
+    }
+    OBJ_DESTRUCT(&op);
+    OBJ_RELEASE(cd);
 }
 
-void pmix1_server_deregister_nspace(opal_jobid_t jobid)
+int pmix20_server_register_nspace(opal_jobid_t jobid,
+                                 int nlocalprocs,
+                                 opal_list_t *info,
+                                 opal_pmix_op_cbfunc_t cbfunc,
+                                 void *cbdata)
 {
-    opal_pmix1_jobid_trkr_t *jptr;
+    pmix20_threadshift_t *cd;
+
+    /* we must threadshift this request as it touches
+     * shared lists of objects */
+    cd = OBJ_NEW(pmix20_threadshift_t);
+    cd->jobid = jobid;
+    cd->status = nlocalprocs;
+    cd->info = info;
+    cd->opcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    /* if the cbfunc is NULL, then the caller is in an event
+     * and we can directly call the processing function */
+    if (NULL == cbfunc) {
+        _reg_nspace(0, 0, cd);
+    } else {
+        event_assign(&cd->ev, opal_pmix_base.evbase,
+                     -1, EV_WRITE, _reg_nspace, cd);
+        event_active(&cd->ev, EV_WRITE, 1);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static void tdcbfunc(pmix_status_t status, void *cbdata)
+{
+    pmix20_threadshift_t *cd = (pmix20_threadshift_t*)cbdata;
+
+    if (NULL != cd->opcbfunc) {
+        cd->opcbfunc(pmix20_convert_rc(status), cd->cbdata);
+    }
+    if (cd->active) {
+        cd->active = false;
+    } else {
+        OBJ_RELEASE(cd);
+    }
+}
+
+static void _dereg_nspace(int sd, short args, void *cbdata)
+{
+    pmix20_threadshift_t *cd = (pmix20_threadshift_t*)cbdata;
+    opal_pmix20_jobid_trkr_t *jptr;
 
     /* if we don't already have it, we can ignore this */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
-        if (jptr->jobid == jobid) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix20_jobid_trkr_t) {
+        if (jptr->jobid == cd->jobid) {
             /* found it - tell the server to deregister */
-            PMIx_server_deregister_nspace(jptr->nspace);
+            cd->active = true;
+            PMIx_server_deregister_nspace(jptr->nspace, tdcbfunc, cd);
+            PMIX_WAIT_FOR_COMPLETION(cd->active);
+            OBJ_RELEASE(cd);
             /* now get rid of it from our list */
             opal_list_remove_item(&mca_pmix_ext20_component.jobids, &jptr->super);
             OBJ_RELEASE(jptr);
             return;
         }
     }
+    /* must release the caller */
+    tdcbfunc(PMIX_ERR_NOT_FOUND, cd);
 }
 
-int pmix1_server_register_client(const opal_process_name_t *proc,
+void pmix20_server_deregister_nspace(opal_jobid_t jobid,
+                                     opal_pmix_op_cbfunc_t cbfunc,
+                                     void *cbdata)
+{
+    pmix20_threadshift_t *cd;
+
+    /* we must threadshift this request as it touches
+     * shared lists of objects */
+    cd = OBJ_NEW(pmix20_threadshift_t);
+    cd->jobid = jobid;
+    cd->opcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    if (NULL == cbfunc) {
+        _dereg_nspace(0, 0, cd);
+    } else {
+        event_assign(&cd->ev, opal_pmix_base.evbase,
+                     -1, EV_WRITE, _dereg_nspace, cd);
+        event_active(&cd->ev, EV_WRITE, 1);
+    }
+}
+
+int pmix20_server_register_client(const opal_process_name_t *proc,
                                  uid_t uid, gid_t gid,
                                  void *server_object,
                                  opal_pmix_op_cbfunc_t cbfunc,
                                  void *cbdata)
 {
     pmix_status_t rc;
-    pmix1_opcaddy_t *op;
-
-    /* setup the caddy */
-    op = OBJ_NEW(pmix1_opcaddy_t);
-    op->opcbfunc = cbfunc;
-    op->cbdata = cbdata;
+    pmix_proc_t p;
+    pmix20_opcaddy_t op;
 
     /* convert the jobid */
-    (void)opal_snprintf_jobid(op->p.nspace, PMIX_MAX_NSLEN, proc->jobid);
-    op->p.rank = proc->vpid;
+    (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc->jobid);
+    p.rank = proc->vpid;
 
-    rc = PMIx_server_register_client(&op->p, uid, gid, server_object,
-                                     opcbfunc, op);
-    if (PMIX_SUCCESS != rc) {
-        OBJ_RELEASE(op);
+    OBJ_CONSTRUCT(&op, pmix20_opcaddy_t);
+    op.active = true;
+    rc = PMIx_server_register_client(&p, uid, gid, server_object,
+                                     opcbfunc, (void*)&op);
+    if (PMIX_SUCCESS == rc) {
+        PMIX_WAIT_FOR_COMPLETION(op.active);
+        rc = op.status;
     }
-    return pmix1_convert_rc(rc);
+    OBJ_DESTRUCT(&op);
+    return pmix20_convert_rc(rc);
 }
 
-void pmix1_server_deregister_client(const opal_process_name_t *proc)
+static void _dereg_client(int sd, short args, void *cbdata)
 {
-    opal_pmix1_jobid_trkr_t *jptr;
+    pmix20_threadshift_t *cd = (pmix20_threadshift_t*)cbdata;
+    opal_pmix20_jobid_trkr_t *jptr;
     pmix_proc_t p;
 
     /* if we don't already have it, we can ignore this */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix1_jobid_trkr_t) {
-        if (jptr->jobid == proc->jobid) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext20_component.jobids, opal_pmix20_jobid_trkr_t) {
+        if (jptr->jobid == cd->source->jobid) {
             /* found it - tell the server to deregister */
             (void)strncpy(p.nspace, jptr->nspace, PMIX_MAX_NSLEN);
-            p.rank = proc->vpid;
-            PMIx_server_deregister_client(&p);
-            return;
+            p.rank = cd->source->vpid;
+            cd->active = true;
+            PMIx_server_deregister_client(&p, tdcbfunc, (void*)cd);
+            PMIX_WAIT_FOR_COMPLETION(cd->active);
+            break;
         }
+    }
+    OBJ_RELEASE(cd);
+}
+
+/* tell the local PMIx server to cleanup this client as it is
+ * done executing */
+void pmix20_server_deregister_client(const opal_process_name_t *proc,
+                                     opal_pmix_op_cbfunc_t cbfunc,
+                                     void *cbdata)
+{
+    pmix20_threadshift_t *cd;
+
+    /* we must threadshift this request as we might not be in an event
+     * and we are going to access framework-global lists/objects */
+    cd = OBJ_NEW(pmix20_threadshift_t);
+    cd->source = proc;
+    cd->opcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    if (NULL == cbfunc) {
+        _dereg_client(0, 0, cd);
+    } else {
+        event_assign(&cd->ev, opal_pmix_base.evbase,
+                     -1, EV_WRITE, _dereg_client, cd);
+        event_active(&cd->ev, EV_WRITE, 1);
     }
 }
 
-
-int pmix1_server_setup_fork(const opal_process_name_t *proc, char ***env)
+/* have the local PMIx server setup the environment for this client */
+int pmix20_server_setup_fork(const opal_process_name_t *proc, char ***env)
 {
     pmix_status_t rc;
     pmix_proc_t p;
@@ -339,7 +413,7 @@ int pmix1_server_setup_fork(const opal_process_name_t *proc, char ***env)
     p.rank = proc->vpid;
 
     rc = PMIx_server_setup_fork(&p, env);
-    return pmix1_convert_rc(rc);
+    return pmix20_convert_rc(rc);
 }
 
 /* this is the call back up from the embedded PMIx server that
@@ -348,23 +422,24 @@ int pmix1_server_setup_fork(const opal_process_name_t *proc, char ***env)
 static void dmdx_response(pmix_status_t status, char *data, size_t sz, void *cbdata)
 {
     int rc;
-    pmix1_opcaddy_t *op = (pmix1_opcaddy_t*)cbdata;
+    pmix20_opcaddy_t *op = (pmix20_opcaddy_t*)cbdata;
 
-    rc = pmix1_convert_rc(status);
+    rc = pmix20_convert_rc(status);
     if (NULL != op->mdxcbfunc) {
         op->mdxcbfunc(rc, data, sz, op->cbdata, NULL, NULL);
     }
     OBJ_RELEASE(op);
 }
 
-int pmix1_server_dmodex(const opal_process_name_t *proc,
+/* request modex data for a local proc from the PMIx server */
+int pmix20_server_dmodex(const opal_process_name_t *proc,
                         opal_pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix1_opcaddy_t *op;
+    pmix20_opcaddy_t *op;
     pmix_status_t rc;
 
     /* setup the caddy */
-    op = OBJ_NEW(pmix1_opcaddy_t);
+    op = OBJ_NEW(pmix20_opcaddy_t);
     op->mdxcbfunc = cbfunc;
     op->cbdata = cbdata;
 
@@ -377,50 +452,20 @@ int pmix1_server_dmodex(const opal_process_name_t *proc,
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);
     }
-    return pmix1_convert_rc(rc);
+    return pmix20_convert_rc(rc);
 }
 
-int pmix1_server_notify_error(int status,
-                                opal_list_t *procs,
-                                opal_list_t *error_procs,
-                                opal_list_t *info,
-                                opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+/* tell the PMIx server to notify its local clients of an event */
+int pmix20_server_notify_event(int status,
+                               const opal_process_name_t *source,
+                               opal_list_t *info,
+                               opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     opal_value_t *kv;
     pmix_info_t *pinfo;
-    size_t sz, psz, esz, n;
-    pmix_proc_t *ps, *eps;
+    size_t sz, n;
     pmix_status_t rc;
-    pmix1_opcaddy_t *op;
-    opal_namelist_t *nm;
-
-    /* convert the list of procs */
-    if (NULL != procs) {
-        psz = opal_list_get_size(procs);
-        PMIX_PROC_CREATE(ps, psz);
-        n = 0;
-        OPAL_LIST_FOREACH(nm, procs, opal_namelist_t) {
-            (void)opal_snprintf_jobid(ps[n].nspace, PMIX_MAX_NSLEN, nm->name.jobid);
-            ps[n].rank = (int)nm->name.vpid;
-            ++n;
-        }
-    } else {
-        psz = 0;
-        ps = NULL;
-    }
-    if (NULL != error_procs) {
-        esz = opal_list_get_size(error_procs);
-        PMIX_PROC_CREATE(eps, esz);
-        n = 0;
-        OPAL_LIST_FOREACH(nm, error_procs, opal_namelist_t) {
-            (void)opal_snprintf_jobid(eps[n].nspace, PMIX_MAX_NSLEN, nm->name.jobid);
-            eps[n].rank = (int)nm->name.vpid;
-            ++n;
-        }
-    } else {
-        esz = 0;
-        eps = NULL;
-    }
+    pmix20_opcaddy_t *op;
 
     /* convert the list to an array of pmix_info_t */
     if (NULL != info) {
@@ -429,29 +474,35 @@ int pmix1_server_notify_error(int status,
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
             (void)strncpy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
-            pmix1_value_load(&pinfo[n].value, kv);
+            pmix20_value_load(&pinfo[n].value, kv);
         }
     } else {
         sz = 0;
         pinfo = NULL;
     }
-
     /* setup the caddy */
-    op = OBJ_NEW(pmix1_opcaddy_t);
-    op->procs = ps;
-    op->nprocs = psz;
-    op->error_procs = eps;
-    op->nerror_procs = esz;
+    op = OBJ_NEW(pmix20_opcaddy_t);
     op->info = pinfo;
     op->sz = sz;
     op->opcbfunc = cbfunc;
     op->cbdata = cbdata;
+    /* convert the jobid */
+    if (NULL == source) {
+        (void)opal_snprintf_jobid(op->p.nspace, PMIX_MAX_NSLEN, OPAL_JOBID_INVALID);
+        op->p.rank = OPAL_VPID_INVALID;
+    } else {
+        (void)opal_snprintf_jobid(op->p.nspace, PMIX_MAX_NSLEN, source->jobid);
+        op->p.rank = source->vpid;
+    }
 
-    rc = pmix1_convert_opalrc(status);
-    rc = PMIx_Notify_event(rc, ps, psz, eps, esz,
+
+    rc = pmix20_convert_opalrc(status);
+    /* the range is irrelevant here as the server is passing
+     * the event down to its local clients */
+    rc = PMIx_Notify_event(rc, &op->p, PMIX_RANGE_LOCAL,
                            pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);
     }
-    return pmix1_convert_rc(rc);
+    return pmix20_convert_rc(rc);
 }

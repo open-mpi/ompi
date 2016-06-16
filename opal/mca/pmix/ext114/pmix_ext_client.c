@@ -43,8 +43,10 @@ static int errhdler_ref = 0;
     } while (0)
 
 
-static void completion_handler (void * cbdata) {
-    int * cond = (int *)cbdata;
+static void completion_handler(int status, opal_list_t *results,
+                               opal_pmix_op_cbfunc_t cbfunc, void *thiscbdata,
+                               void *notification_cbdata) {
+    int * cond = (int *)notification_cbdata;
     *cond = 0;
 }
 
@@ -81,7 +83,7 @@ static void myerr(pmix_status_t status,
     }
 
     /* call the base errhandler */
-    opal_pmix_base_errhandler(rc, &plist, &ilist, completion_handler, (void *)&cond);
+    opal_pmix_base_evhandler(rc, &OPAL_PROC_MY_NAME, &plist, &ilist, completion_handler, (void *)&cond);
     PMIX_WAIT_FOR_COMPLETION(cond);
 
     OPAL_LIST_DESTRUCT(&plist);

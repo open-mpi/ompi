@@ -93,7 +93,7 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     int rc;
     uint8_t cmd = ORTE_PMIX_PUBLISH_CMD;
     opal_value_t *iptr;
-    opal_pmix_data_range_t range = OPAL_PMIX_SESSION;
+    opal_pmix_data_range_t range = OPAL_PMIX_RANGE_SESSION;
     opal_pmix_persistence_t persist = OPAL_PMIX_PERSIST_APP;
     bool rset, pset;
 
@@ -143,7 +143,7 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     }
 
     /* if the range is SESSION, then set the target to the global server */
-    if (OPAL_PMIX_SESSION == range) {
+    if (OPAL_PMIX_RANGE_SESSION == range) {
         req->target = orte_pmix_server_globals.server;
     } else {
         req->target = *ORTE_PROC_MY_HNP;
@@ -193,7 +193,7 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
     uint8_t cmd = ORTE_PMIX_LOOKUP_CMD;
     int32_t nkeys, i;
     opal_value_t *iptr;
-    opal_pmix_data_range_t range = OPAL_PMIX_SESSION;
+    opal_pmix_data_range_t range = OPAL_PMIX_RANGE_SESSION;
 
     /* the list of info objects are directives for us - they include
      * things like timeout constraints, so there is no reason to
@@ -227,7 +227,7 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
     }
 
     /* if the range is SESSION, then set the target to the global server */
-    if (OPAL_PMIX_SESSION == range) {
+    if (OPAL_PMIX_RANGE_SESSION == range) {
         req->target = orte_pmix_server_globals.server;
     } else {
         req->target = *ORTE_PROC_MY_HNP;
@@ -280,7 +280,7 @@ int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
     uint8_t cmd = ORTE_PMIX_UNPUBLISH_CMD;
     uint32_t nkeys, n;
     opal_value_t *iptr;
-    opal_pmix_data_range_t range = OPAL_PMIX_SESSION;
+    opal_pmix_data_range_t range = OPAL_PMIX_RANGE_SESSION;
 
     /* create the caddy */
     req = OBJ_NEW(pmix_server_req_t);
@@ -317,7 +317,7 @@ int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
     }
 
     /* if the range is SESSION, then set the target to the global server */
-    if (OPAL_PMIX_SESSION == range) {
+    if (OPAL_PMIX_RANGE_SESSION == range) {
         req->target = orte_pmix_server_globals.server;
     } else {
         req->target = *ORTE_PROC_MY_HNP;

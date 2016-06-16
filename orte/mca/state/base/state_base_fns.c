@@ -18,6 +18,7 @@
 #include "opal/mca/pmix/pmix.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -524,7 +525,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         pdata->state = state;
         if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
             /* tell the PMIx subsystem to cleanup this client */
-            opal_pmix.server_deregister_client(proc);
+            opal_pmix.server_deregister_client(proc, NULL, NULL);
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.
@@ -609,7 +610,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
 
     /* tell the PMIx server to release its data */
     if (NULL != opal_pmix.server_deregister_nspace) {
-        opal_pmix.server_deregister_nspace(jdata->jobid);
+        opal_pmix.server_deregister_nspace(jdata->jobid, NULL, NULL);
     }
 
     i32ptr = &i32;

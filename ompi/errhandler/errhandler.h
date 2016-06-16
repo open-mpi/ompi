@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -380,13 +380,13 @@ typedef struct {
 } ompi_errhandler_errtrk_t;
 
 OMPI_DECLSPEC void ompi_errhandler_callback(int status,
-                                            opal_list_t *procs,
-                                            opal_list_t *info,
-                                            opal_pmix_release_cbfunc_t cbfunc,
+                                            const opal_process_name_t *source,
+                                            opal_list_t *info, opal_list_t *results,
+                                            opal_pmix_notification_complete_fn_t cbfunc,
                                             void *cbdata);
 
 OMPI_DECLSPEC void ompi_errhandler_registration_callback(int status,
-                                                         int errhandler_ref,
+                                                         size_t errhandler_ref,
                                                          void *cbdata);
 /**
  * Check to see if an errhandler is intrinsic.

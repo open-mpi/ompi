@@ -32,7 +32,9 @@ BEGIN_C_DECLS
 
 /* Notify the host server that a client connected to us */
 typedef int (*opal_pmix_server_client_connected_fn_t)(opal_process_name_t *proc,
-                                                      void* server_object);
+                                                      void* server_object,
+                                                      opal_pmix_op_cbfunc_t cbfunc,
+                                                      void *cbdata);
 
 /* Notify the host server that a client called pmix.finalize - note
  * that the client will be in a blocked state until the host server
@@ -192,7 +194,7 @@ typedef void (*opal_pmix_connection_cbfunc_t)(int incoming_sd);
  * numbers of local clients such as occur when running on large
  * SMPs. The host server listener is required to call accept
  * on the incoming connection request, and then passing the
- * resulting soct to the provided cbfunc. A NULL for this function
+ * resulting socket to the provided cbfunc. A NULL for this function
  * will cause the internal PMIx server to spawn its own listener
  * thread */
 typedef int (*opal_pmix_server_listener_fn_t)(int listening_sd,

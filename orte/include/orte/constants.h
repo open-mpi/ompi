@@ -86,6 +86,7 @@ enum {
     ORTE_ERR_CONNECTION_FAILED              = OPAL_ERR_CONNECTION_FAILED,
     ORTE_ERR_AUTHENTICATION_FAILED          = OPAL_ERR_AUTHENTICATION_FAILED,
     ORTE_ERR_COMM_FAILURE                   = OPAL_ERR_COMM_FAILURE,
+    ORTE_ERR_DEBUGGER_RELEASE               = OPAL_ERR_DEBUGGER_RELEASE,
 
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!
