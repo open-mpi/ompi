@@ -242,15 +242,19 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * already (e.g., during the call to comm_spawn), then we don't
      * override it */
     if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-        /* if the user specified a default binding policy via
-         * MCA param, then we use it */
-        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+        /* if the user specified that we allow oversubscription, then do not bind.
+         * otherwise, if the user explicitly mapped-by some object, then we default
+         * to binding to that object */
+        if ((ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
+            !(ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        } else if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+            /* if the user specified a default binding policy via
+             * MCA param, then we use it */
             jdata->map->binding = opal_hwloc_binding_policy;
         } else {
             orte_mapping_policy_t mpol;
             mpol = ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping);
-            /* if the user explicitly mapped-by some object, then we default
-             * to binding to that object */
             if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping) &&
                 ORTE_MAPPING_BYBOARD < mpol && mpol < ORTE_MAPPING_BYSLOT) {
                 if (ORTE_MAPPING_BYHWTHREAD == mpol) {
