@@ -45,6 +45,7 @@ static void errhandler(size_t evhdlr_registration_id,
                        pmix_status_t status,
                        const pmix_proc_t *source,
                        pmix_info_t info[], size_t ninfo,
+                       pmix_info_t results[], size_t nresults,
                        pmix_event_notification_cbfunc_fn_t cbfunc,
                        void *cbdata)
 {

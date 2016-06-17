@@ -1516,6 +1516,10 @@ static void ldes(pmix_listener_t *p)
     if (0 <= p->socket) {
         CLOSE_THE_SOCKET(p->socket);
     }
+    /* cleanup the rendezvous file */
+    if (0 == access(p->address.sun_path, F_OK)) {
+        unlink(p->address.sun_path);
+    }
     if (NULL != p->varname) {
         free(p->varname);
     }
