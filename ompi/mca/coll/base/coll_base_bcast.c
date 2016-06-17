@@ -235,18 +235,16 @@ ompi_coll_base_bcast_intra_generic2( void* buffer,
                                      size_t segment_size,
                                      ompi_coll_tree_t* tree )
 {
-    int err = 0, line, i, rank, segindex, req_index;
+    int err = 0, line, i = 0, rank, req_index;
     opal_convertor_t send_convertors[2], recv_convertors[2];
-    char *tmpbuf;
     size_t offset = 0;
     size_t next_offset;
     size_t size;
     size_t remaining;
-    size_t total_size;
-    int scindex = 0;
+    int sc_index = 0, rc_index = 0;
     ompi_request_t *recv_reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
     ompi_request_t **send_reqs = NULL;
-    ompi_datatype_size(datatype, &remaining);
+    ompi_datatype_type_size(datatype, &remaining);
     remaining *= count;
 
 #if OPAL_ENABLE_DEBUG
@@ -276,19 +274,19 @@ ompi_coll_base_bcast_intra_generic2( void* buffer,
         /* remote architecture and prepared with the type.       */
         opal_convertor_copy_and_prepare_for_send(
                            proc->super.proc_convertor,
-                           &(type->super),
+                           &(datatype->super),
                            count,
-                           buf,
+                           buffer,
                            0,
                            &send_convertors[0] );
         opal_convertor_copy_and_prepare_for_send(
                            proc->super.proc_convertor,
-                           &(type->super),
+                           &(datatype->super),
                            count,
-                           buf,
+                           buffer,
                            0,
                            &send_convertors[1] );
-        opal_convertor_set_position(&convertor, &offset);
+        opal_convertor_set_position(&send_convertors[0], &offset);
         while (remaining) {
             next_offset = offset + (segment_size<remaining?segment_size:remaining);
             opal_convertor_set_position(&send_convertors[sc_index ^ 1], &next_offset);
@@ -300,48 +298,30 @@ ompi_coll_base_bcast_intra_generic2( void* buffer,
                 next_offset = offset + remaining;
             }
             size = next_offset - offset;
-            err = MCA_PML_CALL(icsend(&send_convertors[sc_index],
-                                     tree->tree_next[i],
-                                     MCA_COLL_BASE_TAG_BCAST,
-                                     MCA_PML_BASE_SEND_STANDARD, comm,
-                                      &send_reqs[i]));
-            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-            offset = next_offset;
-            remaining -= size;
-            i++; sc_index ^= 1;
-        }
-        /*
-           For each segment:
-           - send segment to all children.
-           The last segment may have less elements than other segments.
-        */
-        sendcount = count_by_segment;
-        for( segindex = 0; segindex < num_segments; segindex++ ) {
-            if( segindex == (num_segments - 1) ) {
-                sendcount = original_count - segindex * count_by_segment;
-            }
+
             for( i = 0; i < tree->tree_nextsize; i++ ) {
-                err = MCA_PML_CALL(isend(tmpbuf, sendcount, datatype,
-                                         tree->tree_next[i],
-                                         MCA_COLL_BASE_TAG_BCAST,
-                                         MCA_PML_BASE_SEND_STANDARD, comm,
-                                         &send_reqs[i]));
+                err = MCA_PML_CALL(icsend(&send_convertors[sc_index],
+                                          &size,
+                                          tree->tree_next[i],
+                                          MCA_COLL_BASE_TAG_BCAST,
+                                          MCA_PML_BASE_SEND_STANDARD, comm,
+                                          &send_reqs[i]));
                 if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             }
-
             /* complete the sends before starting the next sends */
             err = ompi_request_wait_all( tree->tree_nextsize, send_reqs,
                                          MPI_STATUSES_IGNORE );
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
-            /* update tmp buffer */
-            tmpbuf += realsegsize;
-
+            offset = next_offset;
+            remaining -= size;
+            sc_index ^= 1;
         }
     }
 
     /* Intermediate nodes code */
     else if( tree->tree_nextsize > 0 ) {
+#if 0
         /*
            Create the pipeline.
            1) Post the first receive
@@ -410,10 +390,61 @@ ompi_coll_base_bcast_intra_generic2( void* buffer,
         err = ompi_request_wait_all( tree->tree_nextsize, send_reqs,
                                      MPI_STATUSES_IGNORE );
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+#else
+        assert(0);
+#endif
     }
 
     /* Leaf nodes */
     else {
+#if 1
+        ompi_proc_t* proc = ompi_comm_peer_lookup(comm,tree->tree_prev);
+        /* We will create a convertor specialized for the        */
+        /* remote architecture and prepared with the type.       */
+        opal_convertor_copy_and_prepare_for_recv(
+                           proc->super.proc_convertor,
+                           &(datatype->super),
+                           count,
+                           buffer,
+                           0,
+                           &recv_convertors[0] );
+        opal_convertor_copy_and_prepare_for_recv(
+                           proc->super.proc_convertor,
+                           &(datatype->super),
+                           count,
+                           buffer,
+                           0,
+                           &recv_convertors[1] );
+        opal_convertor_set_position(&recv_convertors[0], &offset);
+        while (remaining) {
+            next_offset = offset + (segment_size<remaining?segment_size:remaining);
+            opal_convertor_set_position(&recv_convertors[rc_index ^ 1], &next_offset);
+            if (offset == next_offset) {
+                /*
+                 * that can only happen if the segment is too small and would be truncated to zero
+                 * in this case, send everything
+                 */
+                next_offset = offset + remaining;
+            }
+            size = next_offset - offset;
+
+            err = MCA_PML_CALL(icrecv(&recv_convertors[rc_index],
+                                      &size,
+                                      tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
+                                      comm, &recv_reqs[rc_index]));
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+            offset = next_offset;
+            remaining -= size;
+            rc_index ^= 1;
+            /* wait on the previous segment */
+            err = ompi_request_wait( &recv_reqs[rc_index],
+                                     MPI_STATUS_IGNORE );
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+        }
+
+        err = ompi_request_wait( &recv_reqs[rc_index^1], MPI_STATUS_IGNORE );
+        if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+#else
         /*
            Receive all segments from parent in a loop:
            1) post irecv for the first segment
@@ -444,6 +475,7 @@ ompi_coll_base_bcast_intra_generic2( void* buffer,
 
         err = ompi_request_wait( &recv_reqs[req_index], MPI_STATUS_IGNORE );
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+#endif
     }
 
     return (MPI_SUCCESS);

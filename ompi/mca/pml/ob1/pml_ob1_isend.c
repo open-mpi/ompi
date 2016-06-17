@@ -317,6 +317,7 @@ int mca_pml_ob1_icsend(opal_convertor_t* convertor,
     if (NULL == sendreq)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
+    OBJ_RETAIN(convertor->pDesc);
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
                                   convertor->pBaseBuf,
                                   0,
@@ -380,6 +381,7 @@ int mca_pml_ob1_csend(struct opal_convertor_t* convertor,
     sendreq->req_send.req_base.req_proc = dst_proc;
     sendreq->rdma_frag = NULL;
 
+    OBJ_RETAIN(convertor->pDesc);
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
                                   convertor->pBaseBuf,
                                   0,

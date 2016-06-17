@@ -71,8 +71,6 @@ int OMPI_Isplit_send(const void *buf, int count, MPI_Datatype type, int dest,
     assert(count > 0);
     if (count > 0) {
         ompi_proc_t* proc = ompi_comm_peer_lookup(comm,dest);
-        OBJ_RETAIN(type);
-        OBJ_RETAIN(type);
         OBJ_CONSTRUCT(&convertor, opal_convertor_t);
         convertor.stack_pos = -1;
         /* We will create a convertor specialized for the        */

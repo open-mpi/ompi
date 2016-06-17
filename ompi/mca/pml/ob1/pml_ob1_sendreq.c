@@ -1235,7 +1235,8 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
     /* Get the address of the current offset. Note: at this time ob1 CAN NOT handle
      * non-contiguous RDMA. If that changes this code will be wrong. */
     opal_convertor_get_offset_pointer (&sendreq->req_send.req_base.req_convertor,
-                                       hdr->hdr_rdma_offset, &frag->local_address);
+                                       hdr->hdr_rdma_offset+sendreq->req_send.req_base.req_offset,
+                                       &frag->local_address);
 
     mca_pml_ob1_send_request_put_frag(frag);
 }

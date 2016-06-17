@@ -735,8 +735,10 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
 
         /* updating the write location */
         OPAL_THREAD_LOCK(&recvreq->lock);
+        offset += recvreq->req_recv.req_base.req_offset;
         opal_convertor_set_position( &recvreq->req_recv.req_base.req_convertor, &offset);
         opal_convertor_get_current_pointer (&recvreq->req_recv.req_base.req_convertor, &frag->local_address);
+        offset -= recvreq->req_recv.req_base.req_offset;
         OPAL_THREAD_UNLOCK(&recvreq->lock);
 
         frag->rdma_bml = rdma_bml;
@@ -779,7 +781,7 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
 {
     size_t bytes_received = 0;
     size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_OB1_RECV_REQUEST_UNPACK */
-    size_t data_offset = 0;
+    size_t data_offset = recvreq->req_recv.req_base.req_offset;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
     bytes_received = mca_pml_ob1_compute_segment_length_base (segments, num_segments,
@@ -998,9 +1000,11 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
         /* take lock to protect convertor against concurrent access
          * from unpack */
         OPAL_THREAD_LOCK(&recvreq->lock);
+        recvreq->req_rdma_offset += recvreq->req_recv.req_base.req_offset;
         opal_convertor_set_position (&recvreq->req_recv.req_base.req_convertor,
                                      &recvreq->req_rdma_offset);
         opal_convertor_get_current_pointer (&recvreq->req_recv.req_base.req_convertor, &data_ptr);
+        recvreq->req_rdma_offset -= recvreq->req_recv.req_base.req_offset;
         OPAL_THREAD_UNLOCK(&recvreq->lock);
 
         if (btl->btl_register_mem) {
