@@ -179,7 +179,15 @@ pmix_status_t pmix_bfrop_copy_payload(pmix_buffer_t *dest, pmix_buffer_t *src)
 bool pmix_value_cmp(pmix_value_t *p, pmix_value_t *p1)
 {
     bool rc = false;
+
+    if (p->type != p1->type) {
+        return rc;
+    }
+
     switch (p->type) {
+        case PMIX_UNDEF:
+            rc = true;
+            break;
         case PMIX_BOOL:
             rc = (p->data.flag == p1->data.flag);
             break;
@@ -238,6 +246,8 @@ pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
     /* copy the right field */
     p->type = src->type;
     switch (src->type) {
+    case PMIX_UNDEF:
+    break;
     case PMIX_BOOL:
         p->data.flag = src->data.flag;
         break;

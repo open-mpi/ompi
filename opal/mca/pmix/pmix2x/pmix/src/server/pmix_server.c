@@ -66,6 +66,7 @@ pmix_server_globals_t pmix_server_globals = {{{0}}};
 
 // local variables
 static char *security_mode = NULL;
+static pid_t mypid;
 
 // local functions for connection support
 static void server_message_handler(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
@@ -116,7 +117,6 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
 {
     int debug_level;
     char *tdir, *evar;
-    pid_t pid;
     char * pmix_pid;
     pmix_listener_t *listener;
 
@@ -139,10 +139,10 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
         (void)strncpy(pmix_globals.myid.nspace, evar, PMIX_MAX_NSLEN);
     }
     /* look for our rank, if one was given */
-    pid = getpid();
+    mypid = getpid();
     if (NULL == (evar = getenv("PMIX_SERVER_RANK"))) {
         /* use our pid */
-        pmix_globals.myid.rank = pid;
+        pmix_globals.myid.rank = mypid;
     } else {
         pmix_globals.myid.rank = strtol(evar, NULL, 10);
     }
@@ -193,7 +193,7 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
 
     /* for now, just setup the v1.1 series rendezvous point
      * we use the pid to reduce collisions */
-    if (0 > asprintf(&pmix_pid, "%s/pmix-%d", tdir, pid)) {
+    if (0 > asprintf(&pmix_pid, "%s/pmix-%d", tdir, mypid)) {
         return PMIX_ERR_NOMEM;
     }
     if ((strlen(pmix_pid) + 1) > sizeof(listener->address.sun_path)-1) {
@@ -209,7 +209,7 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
         return PMIX_ERR_NOMEM;
     }
     listener->varname = strdup("PMIX_SERVER_URI");
-    listener->protocol_type = 1;
+    listener->protocol = PMIX_PROTOCOL_V1;
     pmix_list_append(&pmix_server_globals.listeners, &listener->super);
     free(pmix_pid);
 
@@ -224,9 +224,14 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
 {
     pmix_usock_posted_recv_t *req;
     pmix_status_t rc;
-    size_t n;
+    size_t n, m;
     pmix_kval_t kv;
     pmix_listener_t *lt;
+    int myhostnamelen = 10;
+    char myhostname[myhostnamelen];
+    char *pmix_pid, *tdir;
+    char **protected = NULL;
+    bool protect;
 
     ++pmix_globals.init_cntr;
     if (1 < pmix_globals.init_cntr) {
@@ -255,7 +260,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     }
 
     /* check the info keys for a directive about the uid/gid
-     * to be set for the rendezvous file */
+     * to be set for the rendezvous file, and for indication
+     * of willingness to support tool connections */
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strcmp(info[n].key, PMIX_USERID)) {
@@ -264,17 +270,52 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                     lt->owner = info[n].value.data.uint32;
                     lt->owner_given = true;
                 }
+                /* push this onto our protected list of keys not
+                 * to be passed to the clients */
+                pmix_argv_append_nosize(&protected, PMIX_USERID);
             } else if (0 == strcmp(info[n].key, PMIX_GRPID)) {
                /* the grpid is in the uint32_t storage */
                 PMIX_LIST_FOREACH(lt, &pmix_server_globals.listeners, pmix_listener_t) {
                     lt->group = info[n].value.data.uint32;
                     lt->group_given = true;
                 }
+                /* push this onto our protected list of keys not
+                 * to be passed to the clients */
+                pmix_argv_append_nosize(&protected, PMIX_GRPID);
             } else if (0 == strcmp(info[n].key, PMIX_SOCKET_MODE)) {
                 /* socket mode is in the uint32_t storage */
                 PMIX_LIST_FOREACH(lt, &pmix_server_globals.listeners, pmix_listener_t) {
                     lt->mode = info[n].value.data.uint32;
                 }
+            } else if (0 == strcmp(info[n].key, PMIX_SERVER_TOOL_SUPPORT)) {
+                pmix_listener_t *tl = PMIX_NEW(pmix_listener_t);
+                tl -> address.sun_family = AF_UNIX;
+                tl->protocol = PMIX_PROTOCOL_TOOL;
+                /* Get up to 10 chars of hostname.*/
+                gethostname(myhostname, myhostnamelen);
+                /* need to put this in the global tmpdir as opposed to
+                 * where the server tmpdir might be */
+                if (NULL == (tdir = getenv("TMPDIR"))) {
+                    if (NULL == (tdir = getenv("TEMP"))) {
+                        if (NULL == (tdir = getenv("TMP"))) {
+                            tdir = "/tmp";
+                        }
+                    }
+                }
+                if (0 > asprintf(&pmix_pid, "%s/pmix.%s.tool.%d", tdir, myhostname, mypid)) {
+                    return PMIX_ERR_NOMEM;
+                }
+                if ((strlen(pmix_pid) + 1) > sizeof(tl->address.sun_path)-1) {
+                    free(pmix_pid);
+                    return PMIX_ERR_INVALID_LENGTH;
+                }
+                snprintf(tl->address.sun_path, sizeof(tl->address.sun_path) - 1, "%s", pmix_pid);
+                free(pmix_pid);
+                pmix_server_globals.tool_connections_allowed = true;
+                pmix_list_append(&pmix_server_globals.listeners, &tl->super);
+                /* push this onto our protected list of keys not
+                 * to be passed to the clients */
+                pmix_argv_append_nosize(&protected, PMIX_SERVER_TOOL_SUPPORT);
             }
         }
     }
@@ -299,18 +340,29 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     if (NULL != info) {
         PMIX_CONSTRUCT(&kv, pmix_kval_t);
         for (n=0; n < ninfo; n++) {
-            if (0 == strcmp(info[n].key, PMIX_USERID))
+            /* check the list of protected keys */
+            protect = false;
+            if (NULL != protected) {
+                for (m=0; NULL != protected[m]; m++) {
+                    if (0 == strcmp(info[n].key, protected[m])) {
+                        protect = true;
+                        break;
+                    }
+                }
+            }
+            if (protect) {
                 continue;
-            if (0 == strcmp(info[n].key, PMIX_GRPID))
-                continue;
-            if (0 == strcmp(info[n].key, PMIX_SOCKET_MODE))
-                continue;
+            }
             /* store and pass along to every client */
             kv.key = info[n].key;
             kv.value = &info[n].value;
             if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(&pmix_server_globals.gdata, &kv, 1, PMIX_KVAL))) {
                 PMIX_ERROR_LOG(rc);
+                /* protect the incoming data */
+                kv.key = NULL;
+                kv.value = NULL;
                 PMIX_DESTRUCT(&kv);
+                PMIx_server_finalize();
                 return rc;
             }
         }
@@ -357,6 +409,7 @@ static void cleanup_server_state(void)
 
 PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
 {
+
     if (1 != pmix_globals.init_cntr) {
         --pmix_globals.init_cntr;
         return PMIX_SUCCESS;
@@ -1954,6 +2007,44 @@ static void notifyerror_cbfunc (pmix_status_t status, void *cbdata)
     PMIX_RELEASE(cd);
 }
 
+static void query_cbfunc(pmix_status_t status,
+                         pmix_info_t *info, size_t ninfo,
+                         void *cbdata,
+                         pmix_release_cbfunc_t release_fn,
+                         void *release_cbdata)
+{
+    pmix_query_caddy_t *qcd = (pmix_query_caddy_t*)cbdata;
+    pmix_server_caddy_t *cd = (pmix_server_caddy_t*)qcd->cbdata;
+    pmix_buffer_t *reply = PMIX_NEW(pmix_buffer_t);
+    pmix_status_t rc;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:query callback with status %d", status);
+
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, &status, 1, PMIX_STATUS))) {
+        PMIX_ERROR_LOG(rc);
+        goto complete;
+    }
+    /* pack the returned data */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, &ninfo, 1, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        goto complete;
+    }
+    if (0 < ninfo) {
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, info, ninfo, PMIX_INFO))) {
+            PMIX_ERROR_LOG(rc);
+        }
+    }
+
+  complete:
+    // send reply
+    PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+    // cleanup
+    PMIX_INFO_FREE(qcd->info, qcd->ninfo);
+    PMIX_RELEASE(qcd);
+    PMIX_RELEASE(cd);
+}
+
 /* the switchyard is the primary message handling function. It's purpose
  * is to take incoming commands (packed into a buffer), unpack them,
  * and then call the corresponding host server's function to execute
@@ -2124,6 +2215,7 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
         }
         return rc;
     }
+
     if (PMIX_DEREGEVENTS_CMD == cmd) {
         pmix_server_deregister_events(peer, buf);
         return PMIX_SUCCESS;
@@ -2134,6 +2226,13 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
         rc = pmix_server_event_recvd_from_client(peer, buf, notifyerror_cbfunc, cd);
         return rc;
     }
+
+    if (PMIX_QUERY_CMD == cmd) {
+        PMIX_PEER_CADDY(cd, peer, tag);
+        rc = pmix_server_query(peer, buf, query_cbfunc, cd);
+        return rc;
+    }
+
     return PMIX_ERR_NOT_SUPPORTED;
 }
 
@@ -2142,7 +2241,7 @@ static void server_message_handler(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr
 {
     pmix_peer_t *peer = (pmix_peer_t*)pr;
     pmix_buffer_t *reply;
-    int rc;
+    pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "SWITCHYARD for %s:%d:%d",
@@ -2153,7 +2252,7 @@ static void server_message_handler(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr
     /* send the return, if there was an error returned */
     if (PMIX_SUCCESS != rc) {
         reply = PMIX_NEW(pmix_buffer_t);
-        pmix_bfrop.pack(reply, &rc, 1, PMIX_INT);
+        pmix_bfrop.pack(reply, &rc, 1, PMIX_STATUS);
         PMIX_SERVER_QUEUE_REPLY(peer, hdr->tag, reply);
     }
 }

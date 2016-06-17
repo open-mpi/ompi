@@ -437,6 +437,8 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
     pmix_status_t ret;
 
     switch (p->type) {
+        case PMIX_UNDEF:
+        break;
         case PMIX_BOOL:
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.flag, 1, PMIX_BOOL))) {
             return ret;

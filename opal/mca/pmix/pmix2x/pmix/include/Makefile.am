@@ -17,7 +17,8 @@ include_HEADERS = \
         include/pmix.h \
         include/pmix_server.h \
         include/pmi.h \
-        include/pmi2.h
+        include/pmi2.h \
+        include/pmix_tool.h
 
 include_pmixdir = $(includedir)/pmix
 include_pmix_HEADERS = \

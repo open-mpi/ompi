@@ -66,6 +66,7 @@ typedef enum {
     PMIX_NOTIFY_CMD,
     PMIX_REGEVENTS_CMD,
     PMIX_DEREGEVENTS_CMD,
+    PMIX_QUERY_CMD
 } pmix_cmd_t;
 
 /* define a set of flags to direct collection
@@ -213,6 +214,22 @@ typedef struct {
     pmix_snd_caddy_t snd;
 } pmix_server_caddy_t;
 PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
+
+/* caddy for query requests */
+typedef struct {
+    pmix_object_t super;
+    pmix_event_t ev;
+    volatile bool active;
+    pmix_status_t status;
+    pmix_info_t *info;
+    size_t ninfo;
+    pmix_info_t *directives;
+    size_t ndirs;
+    pmix_info_cbfunc_t cbfunc;
+    pmix_release_cbfunc_t relcbfunc;
+    void *cbdata;
+} pmix_query_caddy_t;
+PMIX_CLASS_DECLARATION(pmix_query_caddy_t);
 
 /* define a tracker for collective operations */
 typedef struct {

@@ -130,6 +130,10 @@ typedef struct {
     pmix_modex_cbfunc_t mdxcbfunc;
     pmix_lookup_cbfunc_t lkupcbfunc;
     pmix_spawn_cbfunc_t spwncbfunc;
+#if HAVE_PMIX_QUERY_FUNCTION
+    pmix_info_cbfunc_t infocbfunc;
+    pmix_tool_connection_cbfunc_t toolcbfunc;
+#endif
     void *cbdata;
     opal_pmix_release_cbfunc_t odmdxfunc;
     void *ocbdata;
@@ -293,6 +297,7 @@ OPAL_MODULE_DECLSPEC int pmix20_server_notify_event(int status,
 OPAL_MODULE_DECLSPEC void pmix20_event_hdlr(size_t evhdlr_registration_id,
                                             pmix_status_t status, const pmix_proc_t *source,
                                             pmix_info_t info[], size_t ninfo,
+                                            pmix_info_t results[], size_t nresults,
                                             pmix_event_notification_cbfunc_fn_t cbfunc,
                                             void *cbdata);
 OPAL_MODULE_DECLSPEC pmix_status_t pmix20_convert_opalrc(int rc);

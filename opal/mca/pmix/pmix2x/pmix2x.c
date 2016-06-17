@@ -564,6 +564,9 @@ opal_pmix_data_range_t pmix2x_convert_range(pmix_data_range_t range) {
 void pmix2x_value_load(pmix_value_t *v,
                        opal_value_t *kv)
 {
+    char nspace[PMIX_MAX_NSLEN + 1];
+    size_t n;
+
     switch(kv->type) {
         case OPAL_UNDEF:
             v->type = PMIX_UNDEF;
@@ -655,6 +658,19 @@ void pmix2x_value_load(pmix_value_t *v,
                 v->data.bo.size = 0;
             }
             break;
+        case OPAL_UINT32_ARRAY:
+            /* an array of 32-bit jobids */
+            v->type = PMIX_INFO_ARRAY;
+            v->data.array.size = kv->data.uint32_array.size;
+            if (0 < v->data.array.size) {
+                PMIX_INFO_CREATE(v->data.array.array, v->data.array.size);
+                for (n=0; n < v->data.array.size; n++) {
+                    v->data.array.array[n].value.type = PMIX_STRING;
+                    (void)opal_snprintf_jobid(nspace, PMIX_MAX_NSLEN, kv->data.uint32_array.data[n]);
+                    v->data.array.array[n].value.data.string = strdup(nspace);
+                }
+            }
+            break;
         default:
             /* silence warnings */
             break;
@@ -669,7 +685,7 @@ int pmix2x_value_unload(opal_value_t *kv,
 
     switch(v->type) {
     case PMIX_UNDEF:
-        rc = OPAL_ERR_UNKNOWN_DATA_TYPE;
+        kv->type = OPAL_UNDEF;
         break;
     case PMIX_BOOL:
         kv->type = OPAL_BOOL;
@@ -1148,6 +1164,8 @@ static void ocadcon(pmix2x_opalcaddy_t *p)
     p->spwncbfunc = NULL;
     p->cbdata = NULL;
     p->odmdxfunc = NULL;
+    p->infocbfunc = NULL;
+    p->toolcbfunc = NULL;
     p->ocbdata = NULL;
 }
 static void ocaddes(pmix2x_opalcaddy_t *p)

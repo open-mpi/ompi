@@ -269,7 +269,6 @@ typedef pmix_status_t (*pmix_server_notify_event_fn_t)(pmix_status_t code,
                                                        pmix_info_t info[], size_t ninfo,
                                                        pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-
 /* Callback function for incoming connection requests from
  * local clients */
 typedef void (*pmix_connection_cbfunc_t)(int incoming_sd, void *cbdata);
@@ -288,6 +287,40 @@ typedef pmix_status_t (*pmix_server_listener_fn_t)(int listening_sd,
                                                    pmix_connection_cbfunc_t cbfunc,
                                                    void *cbdata);
 
+/* Query information from the resource manager. The query will include
+ * the nspace/rank of the proc that is requesting the info, an
+ * array of pmix_info_t describing the request, an optional array
+ * of pmix_info_t directives, and a callback function/data for the return. */
+typedef pmix_status_t (*pmix_server_query_fn_t)(pmix_proc_t *proct,
+                                                pmix_info_t *info, size_t ninfo,
+                                                pmix_info_t *directives, size_t ndirs,
+                                                pmix_info_cbfunc_t cbfunc,
+                                                void *cbdata);
+
+/* Callback function for incoming tool connections - the host
+ * RM shall provide an nspace/rank for the connecting tool. We
+ * assume that a rank=0 will be the normal assignment, but allow
+ * for the future possibility of a parallel set of tools
+ * connecting, and thus each proc requiring a rank*/
+typedef void (*pmix_tool_connection_cbfunc_t)(pmix_status_t status,
+                                              pmix_proc_t *proc, void *cbdata);
+
+/* Register that a tool has connected to the server, and request
+ * that the tool be assigned an nspace/rank for further interactions.
+ * The optional pmix_info_t array can be used to pass qualifiers for
+ * the connection request:
+ *
+ * (a) PMIX_USERID - effective userid of the tool
+ * (b) PMIX_GRPID - effective groupid of the tool
+ * (c) PMIX_FWD_STDOUT - forward any stdout to this tool
+ * (d) PMIX_FWD_STDERR - forward any stderr to this tool
+ * (e) PMIX_FWD_STDIN - forward stdin from this tool to any
+ *     processes spawned on its behalf
+ */
+typedef void (*pmix_server_tool_connection_fn_t)(pmix_info_t *info, size_t ninfo,
+                                                 pmix_tool_connection_cbfunc_t cbfunc,
+                                                 void *cbdata);
+
 typedef struct pmix_server_module_2_0_0_t {
     pmix_server_client_connected_fn_t   client_connected;
     pmix_server_client_finalized_fn_t   client_finalized;
@@ -304,6 +337,8 @@ typedef struct pmix_server_module_2_0_0_t {
     pmix_server_deregister_events_fn_t  deregister_events;
     pmix_server_notify_event_fn_t       notify_event;
     pmix_server_listener_fn_t           listener;
+    pmix_server_query_fn_t              query;
+    pmix_server_tool_connection_fn_t    tool_connected;
 } pmix_server_module_t;
 
 /****    SERVER SUPPORT INIT/FINALIZE FUNCTIONS    ****/
@@ -314,7 +349,10 @@ typedef struct pmix_server_module_2_0_0_t {
  * array of pmix_info_t structs is used to pass
  * additional info that may be required by the server
  * when initializing - e.g., a user/group ID to set
- * on the rendezvous file for the Unix Domain Socket */
+ * on the rendezvous file for the Unix Domain Socket. It
+ * also may include the PMIX_SERVER_TOOL_SUPPORT key, thereby
+ * indicating that the daemon is willing to accept connection
+ * requests from tools */
 pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                                pmix_info_t info[], size_t ninfo);
 

@@ -350,6 +350,7 @@ static void _event_hdlr(int sd, short args, void *cbdata)
 void pmix20_event_hdlr(size_t evhdlr_registration_id,
                        pmix_status_t status, const pmix_proc_t *source,
                        pmix_info_t info[], size_t ninfo,
+                       pmix_info_t results[], size_t nresults,
                        pmix_event_notification_cbfunc_fn_t cbfunc,
                        void *cbdata)
 {
@@ -559,6 +560,9 @@ opal_pmix_data_range_t pmix20_convert_range(pmix_data_range_t range) {
 void pmix20_value_load(pmix_value_t *v,
                        opal_value_t *kv)
 {
+    size_t n;
+    char nspace[PMIX_MAX_NSLEN + 1];
+
     switch(kv->type) {
         case OPAL_UNDEF:
             v->type = PMIX_UNDEF;
@@ -650,6 +654,19 @@ void pmix20_value_load(pmix_value_t *v,
                 v->data.bo.size = 0;
             }
             break;
+        case OPAL_UINT32_ARRAY:
+            /* an array of 32-bit jobids */
+            v->type = PMIX_INFO_ARRAY;
+            v->data.array.size = kv->data.uint32_array.size;
+            if (0 < v->data.array.size) {
+                PMIX_INFO_CREATE(v->data.array.array, v->data.array.size);
+                for (n=0; n < v->data.array.size; n++) {
+                    v->data.array.array[n].value.type = PMIX_STRING;
+                    (void)opal_snprintf_jobid(nspace, PMIX_MAX_NSLEN, kv->data.uint32_array.data[n]);
+                    v->data.array.array[n].value.data.string = strdup(nspace);
+                }
+            }
+            break;
         default:
             /* silence warnings */
             break;
@@ -664,7 +681,7 @@ int pmix20_value_unload(opal_value_t *kv,
 
     switch(v->type) {
     case PMIX_UNDEF:
-        rc = OPAL_ERR_UNKNOWN_DATA_TYPE;
+        kv->type = OPAL_UNDEF;
         break;
     case PMIX_BOOL:
         kv->type = OPAL_BOOL;
@@ -1143,6 +1160,10 @@ static void ocadcon(pmix20_opalcaddy_t *p)
     p->spwncbfunc = NULL;
     p->cbdata = NULL;
     p->odmdxfunc = NULL;
+#if HAVE_PMIX_QUERY_FUNCTION
+    p->infocbfunc = NULL;
+    p->toolcbfunc = NULL;
+#endif
     p->ocbdata = NULL;
 }
 static void ocaddes(pmix20_opalcaddy_t *p)

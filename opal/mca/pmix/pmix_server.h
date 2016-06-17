@@ -183,6 +183,27 @@ typedef int (*opal_pmix_server_disconnect_fn_t)(opal_list_t *procs, opal_list_t 
 typedef int (*opal_pmix_server_notify_fn_t)(int code, opal_list_t *procs, opal_list_t *info,
                                             opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
+/* Query the RTE for information */
+typedef int (*opal_pmix_server_query_fn_t)(opal_process_name_t *requestor,
+                                           opal_list_t *info, opal_list_t *directives,
+                                           opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* Register that a tool has connected to the server, and request
+ * that the tool be assigned a jobid for further interactions.
+ * The optional opal_value_t list can be used to pass qualifiers for
+ * the connection request:
+ *
+ * (a) OPAL_PMIX_USERID - effective userid of the tool
+ * (b) OPAL_PMIX_GRPID - effective groupid of the tool
+ * (c) OPAL_PMIX_FWD_STDOUT - forward any stdout to this tool
+ * (d) OPAL_PMIX_FWD_STDERR - forward any stderr to this tool
+ * (e) OPAL_PMIX_FWD_STDIN - forward stdin from this tool to any
+ *     processes spawned on its behalf
+ */
+typedef void (*opal_pmix_server_tool_connection_fn_t)(opal_list_t *info,
+                                                      opal_pmix_tool_connection_cbfunc_t cbfunc,
+                                                      void *cbdata);
+
 /* Callback function for incoming connection requests from
  * local clients */
 typedef void (*opal_pmix_connection_cbfunc_t)(int incoming_sd);
@@ -215,6 +236,8 @@ typedef struct opal_pmix_server_module_1_0_0_t {
     opal_pmix_server_register_events_fn_t       register_events;
     opal_pmix_server_deregister_events_fn_t     deregister_events;
     opal_pmix_server_notify_fn_t                notify_event;
+    opal_pmix_server_query_fn_t                 query;
+    opal_pmix_server_tool_connection_fn_t       tool_connected;
     opal_pmix_server_listener_fn_t              listener;
 } opal_pmix_server_module_t;
 

@@ -32,6 +32,7 @@
 #include <unistd.h>
 #endif
 
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
 
@@ -40,6 +41,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
+ #include "orte/mca/plm/base/plm_private.h"
 
 #include "pmix_server_internal.h"
 
@@ -338,4 +340,122 @@ void pmix_server_notify(int status, orte_process_name_t* sender,
         }
         OBJ_RELEASE(cd);
     }
+}
+
+static void _query(int sd, short args, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+    opal_value_t *kv;
+    orte_job_t *jdata;
+    int rc;
+    size_t nresults=0;
+    uint32_t key;
+    void *nptr;
+    char **nspaces=NULL, nspace[512];
+
+    /* see what they wanted */
+    OPAL_LIST_FOREACH(kv, cd->info, opal_value_t) {
+        if (0 == strcmp(kv->key, OPAL_PMIX_QUERY_NAMESPACES)) {
+            /* get the current jobids */
+            rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jdata, &nptr);
+            while (OPAL_SUCCESS == rc) {
+                if (ORTE_PROC_MY_NAME->jobid != jdata->jobid) {
+                    memset(nspace, 0, 512);
+                    (void)opal_snprintf_jobid(nspace, 512, jdata->jobid);
+                    opal_argv_append_nosize(&nspaces, nspace);
+                }
+                rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jdata, nptr, &nptr);
+            }
+            /* join the results into a single comma-delimited string */
+            kv->type = OPAL_STRING;
+            if (NULL != nspaces) {
+                kv->data.string = opal_argv_join(nspaces, ',');
+            } else {
+                kv->data.string = NULL;
+            }
+            ++nresults;
+        }
+    }
+    if (0 == nresults) {
+        rc = ORTE_ERR_NOT_FOUND;
+    } else if (nresults < opal_list_get_size(cd->info)) {
+        rc = ORTE_ERR_PARTIAL_SUCCESS;
+    } else {
+        rc = ORTE_SUCCESS;
+    }
+    cd->infocbfunc(rc, cd->info, cd->cbdata, NULL, NULL);
+}
+
+int pmix_server_query_fn(opal_process_name_t *requestor,
+                         opal_list_t *info, opal_list_t *directives,
+                         opal_pmix_info_cbfunc_t cbfunc, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd;
+
+    if (NULL == info || NULL == cbfunc) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    /* need to threadshift this request */
+    cd = OBJ_NEW(orte_pmix_server_op_caddy_t);
+    cd->proc = requestor;
+    cd->info = info;
+    cd->infocbfunc = cbfunc;
+    cd->cbdata = cbdata;
+
+    opal_event_set(orte_event_base, &(cd->ev), -1,
+                   OPAL_EV_WRITE, _query, cd);
+    opal_event_set_priority(&(cd->ev), ORTE_MSG_PRI);
+    opal_event_active(&(cd->ev), OPAL_EV_WRITE, 1);
+
+    return ORTE_SUCCESS;
+}
+
+static void _toolconn(int sd, short args, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+    orte_job_t jdata;
+    orte_process_name_t tool;
+    int rc;
+
+   /* if we are the HNP, we can directly assign the jobid */
+    if (ORTE_PROC_IS_HNP) {
+        OBJ_CONSTRUCT(&jdata, orte_job_t);
+        rc = orte_plm_base_create_jobid(&jdata);
+        tool.jobid = jdata.jobid;
+        tool.vpid = 0;
+        if (NULL != cd->toolcbfunc) {
+            cd->toolcbfunc(rc, tool, cd->cbdata);
+        }
+        OBJ_RELEASE(cd);
+        return;
+    }
+
+    /* otherwise, we have to send the request to the HNP.
+     * Eventually, when we switch to nspace instead of an
+     * integer jobid, we'll just locally assign this value */
+    if (NULL != cd->toolcbfunc) {
+        cd->toolcbfunc(ORTE_ERR_NOT_SUPPORTED, tool, cd->cbdata);
+    }
+    OBJ_RELEASE(cd);
+}
+void pmix_tool_connected_fn(opal_list_t *info,
+                            opal_pmix_tool_connection_cbfunc_t cbfunc,
+                            void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd;
+
+    opal_output(0, "TOOL CONNECTION REQUEST RECVD");
+
+    /* need to threadshift this request */
+    cd = OBJ_NEW(orte_pmix_server_op_caddy_t);
+    cd->info = info;
+    cd->toolcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+
+    opal_event_set(orte_event_base, &(cd->ev), -1,
+                   OPAL_EV_WRITE, _toolconn, cd);
+    opal_event_set_priority(&(cd->ev), ORTE_MSG_PRI);
+    opal_event_active(&(cd->ev), OPAL_EV_WRITE, 1);
+
 }

@@ -406,5 +406,23 @@ BEGIN_C_DECLS
  * when done with it */
  pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist);
 
+/* Query information about the system in general - can include
+ * a list of active nspaces, network topology, etc. We assume that
+ * the host RM will exercise appropriate access control to the
+ * information. The blocking form of the call will fill the
+ * returned values into the info array structs. The following
+ * return status codes are provided:
+ *
+ * PMIX_SUCCESS - all data has been returned
+ * PMIX_ERR_NOT_FOUND - none of the requested data was available
+ * PMIX_ERR_PARTIAL_SUCCESS - some of the data has been returned
+ * PMIX_ERR_NOT_SUPPORTED - the host RM does not support this function
+ */
+pmix_status_t PMIx_Query_info(pmix_info_t info[], size_t ninfo);
+
+pmix_status_t PMIx_Query_info_nb(pmix_info_t info[], size_t ninfo,
+                                 pmix_info_t *directives, size_t ndirectives,
+                                 pmix_info_cbfunc_t cbfunc, void *cbdata);
+
 END_C_DECLS
 #endif

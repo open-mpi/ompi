@@ -59,6 +59,24 @@ AC_DEFUN([MCA_opal_pmix_ext20_CONFIG],[
                               [AC_MSG_RESULT([no])
                                opal_pmix_ext20_happy=no])
 
+           # if we have 2.0, then check further to see if we have
+           # the PMIx_Query_info function as that is even newer
+           AS_IF([test "$opal_pmix_ext20_happy" = "yes"],
+                 [AC_MSG_CHECKING([if external component is series 2.0])
+                  OPAL_CHECK_PACKAGE([opal_pmix_ext20],
+                                     [pmix.h],
+                                     [pmix],
+                                     [PMIx_Query_info],
+                                     [-lpmix],
+                                     [$pmix_ext_install_dir],
+                                     [$pmix_ext_install_dir/lib],
+                                     [AC_MSG_RESULT([yes])
+                                      opal_pmix_query_happy=1],
+                                     [AC_MSG_RESULT([no])
+                                     opal_pmix_query_happy=0])])
+
+           AC_DEFINE_UNQUOTED([HAVE_PMIX_QUERY_FUNCTION], [$opal_pmix_query_happy],
+                              [Whether or not the external library has the PMIx_Query_info function])
            AC_SUBST(opal_pmix_ext20_CPPFLAGS)
            AC_SUBST(opal_pmix_ext20_LDFLAGS)
            AC_SUBST(opal_pmix_ext20_LIBS)

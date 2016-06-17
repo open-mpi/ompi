@@ -31,6 +31,7 @@ typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
     volatile bool active;
+    pmix_status_t status;
     pmix_proc_t proc;
     uid_t uid;
     gid_t gid;
@@ -83,12 +84,21 @@ typedef struct {
 } pmix_dmdx_local_t;
 PMIX_CLASS_DECLARATION(pmix_dmdx_local_t);
 
+/* define listener protocol types */
+typedef uint16_t pmix_listener_protocol_t;
+#define PMIX_PROTOCOL_V1        0
+#define PMIX_PROTOCOL_TOOL      1
+#define PMIX_PROTOCOL V2        2
+
 /* connection support */
 typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
-    uint16_t protocol;
+    pmix_listener_protocol_t protocol;
     int sd;
+    char nspace[PMIX_MAX_NSLEN+1];
+    char *msg;
+    pmix_status_t status;
     struct sockaddr_storage addr;
 } pmix_pending_connection_t;
 PMIX_CLASS_DECLARATION(pmix_pending_connection_t);
@@ -111,7 +121,7 @@ PMIX_CLASS_DECLARATION(pmix_regevents_info_t);
 /* listener objects */
 typedef struct pmix_listener_t {
     pmix_list_item_t super;
-    uint16_t protocol_type;
+    pmix_listener_protocol_t protocol;
     int socket;
     struct sockaddr_un address;
     char *varname;
@@ -135,6 +145,7 @@ typedef struct {
     pmix_buffer_t gdata;                    // cache of data given to me for passing to all clients
     pmix_list_t events;                     // list of pmix_regevents_info_t registered events
     pmix_ring_buffer_t notifications;       // ring buffer of pending notifications
+    bool tool_connections_allowed;
 } pmix_server_globals_t;
 
 typedef struct {
@@ -272,6 +283,11 @@ pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_buffer_t *buf,
                                                   pmix_op_cbfunc_t cbfunc,
                                                   void *cbdata);
+pmix_status_t pmix_server_query(pmix_peer_t *peer,
+                                pmix_buffer_t *buf,
+                                pmix_info_cbfunc_t cbfunc,
+                                void *cbdata);
+
 void pmix_server_execute_collective(int sd, short args, void *cbdata);
 
 void pmix_server_queue_message(int fd, short args, void *cbdata);

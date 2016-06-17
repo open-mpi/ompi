@@ -450,6 +450,7 @@ orte/test/system/pmi_abort
 orte/test/system/opal_hwloc
 orte/test/system/opal_db
 orte/test/system/ulfm
+orte/test/system/pmixtool
 
 orte/tools/orte-checkpoint/orte-checkpoint
 orte/tools/orte-checkpoint/orte-checkpoint.1

@@ -58,6 +58,8 @@ include src/client/Makefile.am
 include src/server/Makefile.am
 include src/sec/Makefile.am
 include src/event/Makefile.am
+include src/common/Makefile.am
+include src/tool/Makefile.am
 
 if WANT_DSTORE
 include src/sm/Makefile.am
@@ -74,6 +76,9 @@ else
 lib_LTLIBRARIES = libpmix.la
 libpmix_la_SOURCES = $(headers) $(sources)
 libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
+endif
+
+if PMIX_TESTS_EXAMPLES
 SUBDIRS = . test examples
 endif
 

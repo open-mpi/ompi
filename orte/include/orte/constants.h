@@ -87,6 +87,7 @@ enum {
     ORTE_ERR_AUTHENTICATION_FAILED          = OPAL_ERR_AUTHENTICATION_FAILED,
     ORTE_ERR_COMM_FAILURE                   = OPAL_ERR_COMM_FAILURE,
     ORTE_ERR_DEBUGGER_RELEASE               = OPAL_ERR_DEBUGGER_RELEASE,
+    ORTE_ERR_PARTIAL_SUCCESS                = OPAL_ERR_PARTIAL_SUCCESS,
 
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!

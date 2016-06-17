@@ -316,7 +316,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       stdarg.h sys/stat.h sys/time.h \
                       sys/types.h sys/un.h sys/uio.h net/uio.h \
                       sys/wait.h syslog.h \
-                      time.h unistd.h \
+                      time.h unistd.h dirent.h \
                       crt_externs.h signal.h \
                       ioLib.h sockLib.h hostLib.h limits.h])
 
@@ -648,6 +648,17 @@ AC_DEFUN([PMIX_DEFINE_ARGS],[
           [pmix_mode=standalone
            AC_MSG_RESULT([no])])
 
+    # Install tests and examples?
+    AC_MSG_CHECKING([if tests and examples are to be installed])
+    AC_ARG_WITH([tests-examples],
+        [AC_HELP_STRING([--with-tests-examples],
+                [Whether or not to install the tests and example programs.])])
+    AS_IF([test ! -z "$with_tests_examples" && test "$with_tests_examples" = "no"],
+          [pmix_tests=no
+           AC_MSG_RESULT([no])],
+          [pmix_tests=yes
+           AC_MSG_RESULT([yes])])
+
     # Change the symbol prefix?
     AC_ARG_WITH([pmix-symbol-prefix],
                 AC_HELP_STRING([--with-pmix-symbol-prefix=STRING],
@@ -827,6 +838,7 @@ AC_DEFUN([PMIX_SET_SYMBOL_PREFIX],[
 AC_DEFUN([PMIX_DO_AM_CONDITIONALS],[
     AS_IF([test "$pmix_did_am_conditionals" != "yes"],[
         AM_CONDITIONAL([PMIX_EMBEDDED_MODE], [test "x$pmix_mode" = "xembedded"])
+        AM_CONDITIONAL([PMIX_TESTS_EXAMPLES], [test "x$pmix_tests" = "xyes"])
         AM_CONDITIONAL([PMIX_COMPILE_TIMING], [test "$WANT_TIMING" = "1"])
         AM_CONDITIONAL([PMIX_WANT_MUNGE], [test "$pmix_munge_support" = "1"])
         AM_CONDITIONAL([PMIX_WANT_SASL], [test "$pmix_sasl_support" = "1"])

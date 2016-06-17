@@ -78,7 +78,7 @@ void pmix_usock_finalize(void)
     PMIX_LIST_DESTRUCT(&pmix_usock_globals.posted_recvs);
 }
 
-pmix_status_t  pmix_usock_set_nonblocking(int sd)
+pmix_status_t pmix_usock_set_nonblocking(int sd)
 {
     int flags;
      /* setup the socket as non-blocking */
