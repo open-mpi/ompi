@@ -27,13 +27,6 @@ AM_CPPFLAGS     += -DOMPI_BUILD_MPI_PROFILING=0
 # This file builds the C bindings for MPI extensions.  It must be
 # present in all MPI extensions.
 
-# Example program
-example: example.c
-	mpicc example.c -o example -g
-
-CLEANFILES = example
-
-
 include $(top_srcdir)/Makefile.ompi-rules
 
 # Convenience libtool library that will be slurped up into libmpi.la.
@@ -51,10 +44,10 @@ ompi_HEADERS = mpiext_split_c.h
 # conventions.
 libmpiext_split_c_la_SOURCES = 
 if BUILD_MPI_BINDINGS_LAYER
-libmpiext_split_c_la_SOURCES = += \
+libmpiext_split_c_la_SOURCES += \
         $(ompi_HEADERS) \
-        mpiext_isplit_recv.c
-        mpiext_isplit_send.c
+        mpiext_isplit_recv.c \
+        mpiext_isplit_send.c \
         mpiext_split_send.c
 endif
 
@@ -65,7 +58,7 @@ libmpiext_split_c_la_LIBADD = profile/libpmpiext_split_c.la
 nodist_man_MANS = OMPI_Split_send.3
 
 # Man page sources
-EXTRA_DIST = $(nodist_man_MANS:.3=.3in) example.c
+EXTRA_DIST = $(nodist_man_MANS:.3=.3in) 
 
 distclean-local:
 	rm -f $(nodist_man_MANS)
