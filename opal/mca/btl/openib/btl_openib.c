@@ -428,7 +428,6 @@ static int openib_btl_size_queues(struct mca_btl_openib_module_t* openib_btl)
     int rc = OPAL_SUCCESS;
     mca_btl_openib_device_t *device = openib_btl->device;
     uint32_t requested[BTL_OPENIB_MAX_CQ];
-    bool need_resize = false;
 
     opal_mutex_lock(&openib_btl->ib_lock);
 
@@ -455,7 +454,7 @@ static int openib_btl_size_queues(struct mca_btl_openib_module_t* openib_btl)
     for (int cq = 0 ; cq < BTL_OPENIB_MAX_CQ ; ++cq) {
         if (requested[cq] < mca_btl_openib_component.ib_cq_size[cq]) {
             requested[cq] = mca_btl_openib_component.ib_cq_size[cq];
-        } else if (requested[cq] > openib_btl->device->ib_dev_attr.max_cqe) {
+        } else if (requested[cq] > (uint32_t) openib_btl->device->ib_dev_attr.max_cqe) {
             requested[cq] = openib_btl->device->ib_dev_attr.max_cqe;
         }
 
