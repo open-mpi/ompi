@@ -986,7 +986,7 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
     pmix_status_t rc;
     pmix_status_t *codes = NULL;
     pmix_info_t *info = NULL;
-    size_t ninfo, ncodes, n, k;
+    size_t ninfo=0, ncodes, n, k;
     pmix_regevents_info_t *reginfo;
     pmix_peer_events_info_t *prev;
     pmix_notify_caddy_t *cd;
@@ -1089,7 +1089,6 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
                 prev->peer = peer;
                 prev->enviro_events = enviro_events;
                 pmix_list_append(&reginfo->peers, &prev->super);
-                found = true;
             }
         } else {
             /* if we get here, then we didn't find an existing registration for this code */
@@ -1171,10 +1170,8 @@ cleanup:
     return PMIX_SUCCESS;
 }
 
-pmix_status_t pmix_server_deregister_events(pmix_peer_t *peer,
-                                            pmix_buffer_t *buf,
-                                            pmix_op_cbfunc_t cbfunc,
-                                            void *cbdata)
+void pmix_server_deregister_events(pmix_peer_t *peer,
+                                   pmix_buffer_t *buf)
 {
     int32_t cnt;
     pmix_status_t rc, *codes = NULL, *cdptr, maxcode = PMIX_MAX_ERR_CONSTANT;
@@ -1191,29 +1188,13 @@ pmix_status_t pmix_server_deregister_events(pmix_peer_t *peer,
     cnt=1;
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ncodes, &cnt, PMIX_SIZE))) {
         PMIX_ERROR_LOG(rc);
-        return rc;
+        return;
     }
     /* unpack the array of codes */
     if (0 < ncodes) {
         codes = (pmix_status_t*)malloc(ncodes * sizeof(pmix_status_t));
         cnt=ncodes;
         if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, codes, &cnt, PMIX_STATUS))) {
-            PMIX_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-
-    /* unpack the number of info objects */
-    cnt=1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ninfo, &cnt, PMIX_SIZE))) {
-        PMIX_ERROR_LOG(rc);
-        return rc;
-    }
-    /* unpack the array of info objects */
-    if (0 < ninfo) {
-        PMIX_INFO_CREATE(info, ninfo);
-        cnt=ninfo;
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, info, &cnt, PMIX_INFO))) {
             PMIX_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -1258,7 +1239,7 @@ cleanup:
     if (NULL != info) {
         PMIX_INFO_FREE(info, ninfo);
     }
-    return rc;
+    return;
 }
 
 

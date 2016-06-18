@@ -265,10 +265,8 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
                                           pmix_op_cbfunc_t cbfunc,
                                           void *cbdata);
 
-pmix_status_t pmix_server_deregister_events(pmix_peer_t *peer,
-                                            pmix_buffer_t *buf,
-                                            pmix_op_cbfunc_t cbfunc,
-                                            void *cbdata);
+void pmix_server_deregister_events(pmix_peer_t *peer,
+                                   pmix_buffer_t *buf);
 
 pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_buffer_t *buf,
