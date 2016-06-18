@@ -527,7 +527,7 @@ static pmix_status_t notify_client_of_event(pmix_status_t status,
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix_server_notify_event status =%d, source = %s:%d, ninfo =%lu",
-                         status, source->nspace, source->rank, ninfo);
+                         status, cd->source.nspace, cd->source.rank, ninfo);
 
     /* we have to push this into our event library to avoid
      * potential threading issues */

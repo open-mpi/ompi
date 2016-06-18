@@ -396,7 +396,11 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
             }
             iptr = OBJ_NEW(opal_value_t);
             iptr->key = strdup(info[n].key);
-            pmix2x_value_unload(iptr, &info[n].value);
+            if (OPAL_SUCCESS != (rc = pmix2x_value_unload(iptr, &info[n].value))) {
+                OPAL_ERROR_LOG(rc);
+                OBJ_RELEASE(iptr);
+                continue;
+            }
             opal_list_append(cd->info, &iptr->super);
         }
     }

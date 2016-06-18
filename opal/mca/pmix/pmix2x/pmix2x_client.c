@@ -150,6 +150,7 @@ int pmix2x_abort(int flag, const char *msg,
                 }
             }
             if (NULL == job) {
+                PMIX_PROC_FREE(parray, cnt);
                 return OPAL_ERR_NOT_FOUND;
             }
             (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
@@ -319,6 +320,7 @@ int pmix2x_fencenb(opal_list_t *procs, int collect_data,
                 }
             }
             if (NULL == job) {
+                PMIX_PROC_FREE(parray, cnt);
                 return OPAL_ERR_NOT_FOUND;
             }
             (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
@@ -1043,6 +1045,7 @@ int pmix2x_connect(opal_list_t *procs)
         }
         if (NULL == job) {
             OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
+            PMIX_PROC_FREE(parray, cnt);
             return OPAL_ERR_NOT_FOUND;
         }
         (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);

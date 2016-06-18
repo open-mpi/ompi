@@ -1919,7 +1919,7 @@ static void cnct_cbfunc(pmix_status_t status, void *cbdata)
     PMIX_THREADSHIFT(scd, _cnct);
 }
 
-static void regevents_cbfunc (pmix_status_t status, void *cbdata)
+static void regevents_cbfunc(pmix_status_t status, void *cbdata)
 {
     pmix_status_t rc;
     pmix_server_caddy_t *cd = (pmix_server_caddy_t*) cbdata;
@@ -1929,23 +1929,6 @@ static void regevents_cbfunc (pmix_status_t status, void *cbdata)
                         "server:regevents_cbfunc called status = %d", status);
 
     reply = PMIX_NEW(pmix_buffer_t);
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, &status, 1, PMIX_STATUS))) {
-        PMIX_ERROR_LOG(rc);
-    }
-    // send reply
-    PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
-    PMIX_RELEASE(cd);
-}
-
-static void deregevents_cbfunc (pmix_status_t status, void *cbdata)
-{
-    pmix_status_t rc;
-    pmix_server_caddy_t *cd = (pmix_server_caddy_t*) cbdata;
-    pmix_buffer_t *reply = PMIX_NEW(pmix_buffer_t);
-
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "server:deregevents_cbfunc called status = %d", status);
-
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, &status, 1, PMIX_STATUS))) {
         PMIX_ERROR_LOG(rc);
     }
@@ -2128,12 +2111,10 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
         return rc;
     }
     if (PMIX_DEREGEVENTS_CMD == cmd) {
-        PMIX_PEER_CADDY(cd, peer, tag);
-        if (PMIX_SUCCESS != (rc = pmix_server_deregister_events(peer, buf, deregevents_cbfunc, cd))) {
-            PMIX_RELEASE(cd);
-        }
-        return rc;
+        pmix_server_deregister_events(peer, buf);
+        return PMIX_SUCCESS;
     }
+
     if (PMIX_NOTIFY_CMD == cmd) {
         PMIX_PEER_CADDY(cd, peer, tag);
         rc = pmix_server_event_recvd_from_client(peer, buf, notifyerror_cbfunc, cd);
