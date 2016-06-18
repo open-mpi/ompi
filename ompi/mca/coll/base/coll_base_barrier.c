@@ -46,44 +46,35 @@ ompi_coll_base_sendrecv_zero( int dest, int stag,
                               MPI_Comm comm )
 
 {
-    int err, rc, line = 0;
-    ompi_request_t *req;
+    int rc, line = 0;
+    ompi_request_t *req = MPI_REQUEST_NULL;
     ompi_status_public_t status;
 
     /* post new irecv */
-    err = MCA_PML_CALL(irecv( NULL, 0, MPI_BYTE, source, rtag,
-                              comm, &req ));
-    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+    rc = MCA_PML_CALL(irecv( NULL, 0, MPI_BYTE, source, rtag,
+                             comm, &req ));
+    if( MPI_SUCCESS != rc ) { line = __LINE__; goto error_handler; }
 
     /* send data to children */
     rc = MCA_PML_CALL(send( NULL, 0, MPI_BYTE, dest, stag,
                             MCA_PML_BASE_SEND_STANDARD, comm ));
-    if (rc != MPI_SUCCESS) { line = __LINE__; err = rc; goto error_handler; }
+    if( MPI_SUCCESS != rc ) { line = __LINE__; goto error_handler; }
 
-    err = ompi_request_wait( &req, &status );
-    if( MPI_ERR_IN_STATUS == err ) { line = __LINE__;
-        /* As we use wait_all we will get MPI_ERR_IN_STATUS which is not an error
-         * code that we can propagate up the stack. Instead, look for the real
-         * error code from the MPI_ERROR in the status.
-         */
-        err = status.MPI_ERROR;
-        OPAL_OUTPUT ((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred in the receive"
-                                              " stage of ompi_coll_base_sendrecv_zero\n",
-                      __FILE__, line, err));
-        return err;
-    }
-    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+    rc = ompi_request_wait( &req, &status );
+    if( MPI_SUCCESS != rc ) { line = __LINE__; goto error_handler; }
 
     return (MPI_SUCCESS);
 
  error_handler:
-    /* Error discovered during the posting of the irecv or isend,
-     * and no status is available.
-     */
+    if( MPI_REQUEST_NULL != req ) {  /* cancel and complete the receive request */
+        (void)ompi_request_cancel(req);
+        (void)ompi_request_wait(&req, &status);
+    }
+
     OPAL_OUTPUT ((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred\n",
-                  __FILE__, line, err));
+                  __FILE__, line, rc));
     (void)line;  // silence compiler warning
-    return err;
+    return rc;
 }
 
 /*
