@@ -513,7 +513,7 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
                 /* if there are no more handlers registered for this code, tell
                  * the server to dereg the handler for this code */
                 found = false;
-                PMIX_LIST_FOREACH(s2, &pmix_globals.events.single_events, pmix_single_event_t) {
+                PMIX_LIST_FOREACH(m2, &pmix_globals.events.single_events, pmix_single_event_t) {
                     if (m2->ncodes != multi->ncodes) {
                         continue;
                     }
