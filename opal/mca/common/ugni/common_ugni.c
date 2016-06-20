@@ -258,7 +258,8 @@ int opal_common_ugni_init (void)
     /* Create a communication domain */
 
     modes = GNI_CDM_MODE_FORK_FULLCOPY | GNI_CDM_MODE_CACHED_AMO_ENABLED |
-            GNI_CDM_MODE_ERR_NO_KILL | GNI_CDM_MODE_FAST_DATAGRAM_POLL;
+            GNI_CDM_MODE_ERR_NO_KILL | GNI_CDM_MODE_FAST_DATAGRAM_POLL |
+            GNI_CDM_MODE_FMA_SHARED;
 
     /* collect uGNI information */
     rc = get_ptag(&opal_common_ugni_module.ptag);
