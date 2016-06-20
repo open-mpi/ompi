@@ -95,6 +95,7 @@ BEGIN_C_DECLS
 /* size info */
 #define OPAL_PMIX_UNIV_SIZE                     "pmix.univ.size"        // (uint32_t) #procs in this nspace
 #define OPAL_PMIX_JOB_SIZE                      "pmix.job.size"         // (uint32_t) #procs in this job
+#define OPAL_PMIX_JOB_NUM_APPS                  "pmix.job.napps"        // (uint32_t) #apps in this job
 #define OPAL_PMIX_APP_SIZE                      "pmix.app.size"         // (uint32_t) #procs in this app
 #define OPAL_PMIX_LOCAL_SIZE                    "pmix.local.size"       // (uint32_t) #procs in this job on this node
 #define OPAL_PMIX_NODE_SIZE                     "pmix.node.size"        // (uint32_t) #procs across all jobs on this node
