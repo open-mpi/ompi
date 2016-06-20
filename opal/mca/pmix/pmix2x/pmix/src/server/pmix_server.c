@@ -1974,12 +1974,14 @@ static void notifyerror_cbfunc (pmix_status_t status, void *cbdata)
 static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
                                        pmix_buffer_t *buf)
 {
-    pmix_status_t rc;
+    pmix_status_t rc=PMIX_ERR_NOT_SUPPORTED;
     int32_t cnt;
     pmix_cmd_t cmd;
     pmix_server_caddy_t *cd;
     pmix_proc_t proc;
     pmix_buffer_t *reply;
+    pmix_regevents_info_t *reginfo;
+    pmix_peer_events_info_t *prev;
 
     /* retrieve the cmd */
     cnt = 1;
@@ -2036,6 +2038,18 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
             PMIX_PEER_CADDY(cd, peer, tag);
             (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
             proc.rank = peer->info->rank;
+            /* since the client is finalizing, remove them from any event
+             * registrations they may still have on our list */
+            PMIX_LIST_FOREACH(reginfo, &pmix_server_globals.events, pmix_regevents_info_t) {
+                PMIX_LIST_FOREACH(prev, &reginfo->peers, pmix_peer_events_info_t) {
+                    if (prev->peer == peer) {
+                        pmix_list_remove_item(&reginfo->peers, &prev->super);
+                        PMIX_RELEASE(prev);
+                        break;
+                    }
+                }
+            }
+            /* now tell the host server */
             if (PMIX_SUCCESS != (rc = pmix_host_server.client_finalized(&proc, peer->info->server_object,
                                                                         op_cbfunc, cd))) {
                 PMIX_RELEASE(cd);
