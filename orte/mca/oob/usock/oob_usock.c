@@ -72,7 +72,6 @@ static void accept_connection(const int accepted_fd,
                               const struct sockaddr *addr);
 static void ping(const orte_process_name_t *proc);
 static void send_nb(orte_rml_send_t *msg);
-static void ft_event(int state);
 
 mca_oob_usock_module_t mca_oob_usock_module = {
     {
@@ -81,7 +80,7 @@ mca_oob_usock_module_t mca_oob_usock_module = {
         accept_connection,
         ping,
         send_nb,
-        ft_event
+        NULL
     }
 };
 
@@ -416,73 +415,3 @@ static void recv_handler(int sd, short flags, void *cbdata)
  cleanup:
     OBJ_RELEASE(op);
 }
-
-/* Dummy function for when we are not using FT. */
-#if OPAL_ENABLE_FT_CR == 0
-static void ft_event(int state)
-{
-    return;
-}
-
-#else
-static void ft_event(int state) {
-#if 0
-    opal_list_item_t *item;
-#endif
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-#if 0
-        /*
-         * Disable event processing while we are working
-         */
-        opal_event_disable();
-#endif
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-#if 0
-        /*
-         * Resume event processing
-         */
-        opal_event_enable();
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        /*
-         * Clean out cached connection information
-         * Select pieces of finalize/init
-         */
-        for (item = opal_list_remove_first(&mod->peer_list);
-            item != NULL;
-            item = opal_list_remove_first(&mod->peer_list)) {
-            mca_oob_usock_peer_t* peer = (mca_oob_usock_peer_t*)item;
-            /* JJH: Use the below command for debugging restarts with invalid sockets
-             * mca_oob_usock_peer_dump(peer, "RESTART CLEAN")
-             */
-            MCA_OOB_USOCK_PEER_RETURN(peer);
-        }
-
-        OBJ_DESTRUCT(&mod->peer_free);
-        OBJ_DESTRUCT(&mod->peer_names);
-        OBJ_DESTRUCT(&mod->peers);
-        OBJ_DESTRUCT(&mod->peer_list);
-
-        OBJ_CONSTRUCT(&mod->peer_list,     opal_list_t);
-        OBJ_CONSTRUCT(&mod->peers,         opal_hash_table_t);
-        OBJ_CONSTRUCT(&mod->peer_names,    opal_hash_table_t);
-        OBJ_CONSTRUCT(&mod->peer_free,     opal_free_list_t);
-
-        /*
-         * Resume event processing
-         */
-        opal_event_enable();
-#endif
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return;
-}
-#endif
