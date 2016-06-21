@@ -13,6 +13,7 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      Broadcom Limited. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -46,7 +47,7 @@ AC_DEFUN([MCA_opal_timer_linux_CONFIG],[
                  [timer_linux_happy="no"])])
 
    case "${host}" in
-   i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc-*linux*|powerpc64-*linux*|sparc*-*linux*)
+   i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc-*linux*|powerpc64-*linux*|sparc*-*linux*|aarch64-*linux*)
         AS_IF([test "$timer_linux_happy" = "yes"],
               [AS_IF([test -r "/proc/cpuinfo"],
                      [timer_linux_happy="yes"],

@@ -2,6 +2,7 @@
  * Copyright (c) 2008      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Broadcom Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,12 +21,19 @@ static inline opal_timer_t
 opal_sys_timer_get_cycles(void)
 {
     opal_timer_t ret;
-    struct tms accurate_clock;
 
-    times(&accurate_clock);
-    ret = accurate_clock.tms_utime + accurate_clock.tms_stime;
+     __asm__ __volatile__ ("mrs %0,  CNTVCT_EL0" : "=r" (ret));
 
     return ret;
+}
+
+
+static inline opal_timer_t
+opal_sys_timer_freq(void)
+{
+        opal_timer_t freq;
+        __asm__ __volatile__ ("mrs %0,  CNTFRQ_EL0" : "=r" (freq));
+        return (opal_timer_t)(freq);
 }
 
 #define OPAL_HAVE_SYS_TIMER_GET_CYCLES 1
