@@ -430,16 +430,29 @@ mca_io_ompio_file_preallocate (ompi_file_t *fh,
 
     tmp = diskspace;
 
-    data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
-                                              1,
-                                              OMPI_OFFSET_DATATYPE,
-                                              OMPIO_ROOT,
-                                              data->ompio_fh.f_comm,
-                                              data->ompio_fh.f_comm->c_coll.coll_bcast_module);
+    ret = data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
+                                                    1,
+                                                    OMPI_OFFSET_DATATYPE,
+                                                    OMPIO_ROOT,
+                                                    data->ompio_fh.f_comm,
+                                                    data->ompio_fh.f_comm->c_coll.coll_bcast_module);
+    if ( OMPI_SUCCESS != ret ) {
+        return OMPI_ERROR;
+    }
 
     if (tmp != diskspace) {
         return OMPI_ERROR;
     }
+    ret = data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh,
+                                                 &current_size);
+    if ( OMPI_SUCCESS != ret ) {
+        return OMPI_ERROR;
+    }
+    
+    if ( current_size > diskspace ) {
+        return OMPI_SUCCESS;
+    }
+
 
     /* ROMIO explanation
        On file systems with no preallocation function, we have to
@@ -449,8 +462,8 @@ mca_io_ompio_file_preallocate (ompi_file_t *fh,
        preallocation is needed.
     */
     if (OMPIO_ROOT == data->ompio_fh.f_rank) {
-        ret = data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh,
-                                                     &current_size);
+        OMPI_MPI_OFFSET_TYPE prev_offset;
+        ompio_io_ompio_file_get_position (&data->ompio_fh, &prev_offset );
 
         size = diskspace;
         if (size > current_size) {
@@ -462,7 +475,8 @@ mca_io_ompio_file_preallocate (ompi_file_t *fh,
         buf = (char *) malloc (OMPIO_PREALLOC_MAX_BUF_SIZE);
         if (NULL == buf) {
             opal_output(1, "OUT OF MEMORY\n");
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
         }
         written = 0;
 
@@ -473,11 +487,11 @@ mca_io_ompio_file_preallocate (ompi_file_t *fh,
             }
             ret = mca_io_ompio_file_read (fh, buf, len, MPI_BYTE, status);
             if (ret != OMPI_SUCCESS) {
-                return OMPI_ERROR;
+                goto exit;
             }
             ret = mca_io_ompio_file_write (fh, buf, len, MPI_BYTE, status);
             if (ret != OMPI_SUCCESS) {
-                return OMPI_ERROR;
+                goto exit;
             }
             written += len;
         }
@@ -494,20 +508,25 @@ mca_io_ompio_file_preallocate (ompi_file_t *fh,
                 }
                 ret = mca_io_ompio_file_write (fh, buf, len, MPI_BYTE, status);
                 if (ret != OMPI_SUCCESS) {
-                    return OMPI_ERROR;
+                    goto exit;
                 }
                 written += len;
             }
         }
-        if (NULL != buf) {
-            free (buf);
-            buf = NULL;
-        }
-    }
-    ret = data->ompio_fh.f_fs->fs_file_set_size (&data->ompio_fh, diskspace);
 
-    fh->f_comm->c_coll.coll_barrier (fh->f_comm,
-                                     fh->f_comm->c_coll.coll_barrier_module);
+        // This operation should not affect file pointer position.
+        ompi_io_ompio_set_explicit_offset ( &data->ompio_fh, prev_offset);
+    }
+
+exit:     
+    free ( buf );
+    fh->f_comm->c_coll.coll_bcast ( &ret, 1, MPI_INT, OMPIO_ROOT, fh->f_comm,
+                                   fh->f_comm->c_coll.coll_bcast_module);
+    
+    if ( diskspace > current_size ) {
+        data->ompio_fh.f_fs->fs_file_set_size (&data->ompio_fh, diskspace);
+    }
+
     return ret;
 }
 
@@ -768,35 +787,36 @@ mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
 {
     mca_io_ompio_data_t *data;
     int i, k, index;
-    size_t position;
-    size_t total_bytes;
     size_t temp_offset;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
     temp_offset = data->ompio_fh.f_view_extent *
         (offset*data->ompio_fh.f_etype_size / data->ompio_fh.f_view_size);
+    
 
-    position = 0;
-    total_bytes = (offset*data->ompio_fh.f_etype_size) % data->ompio_fh.f_view_size;
+    i = (offset*data->ompio_fh.f_etype_size) % data->ompio_fh.f_view_size;
     index = 0;
-    i = total_bytes;
     k = 0;
 
     while (1) {
-        k += data->ompio_fh.f_decoded_iov[index].iov_len;
+        k = data->ompio_fh.f_decoded_iov[index].iov_len;
         if (i >= k) {
-            i = i - data->ompio_fh.f_decoded_iov[index].iov_len;
-            position += data->ompio_fh.f_decoded_iov[index].iov_len;
-            index = index+1;
+            i -= k;
+            index++;
+            if ( 0 == i ) {
+                k=0;
+                break;
+            }
         }
         else {
+            k=i;
             break;
         }
     }
 
     *disp = data->ompio_fh.f_disp + temp_offset +
-        (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_decoded_iov[index].iov_base;
+        (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_decoded_iov[index].iov_base + k;
 
     return OMPI_SUCCESS;
 }
