@@ -15,6 +15,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016 Broadcom Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,6 +107,10 @@ static int opal_timer_linux_find_freq(void)
     }
 
     opal_timer_linux_freq = 0;
+
+#if OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+	opal_timer_linux_freq = opal_sys_timer_freq();
+#endif
 
     if (0 == opal_timer_linux_freq) {
         /* first, look for a timebase field.  probably only on PPC,
