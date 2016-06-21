@@ -517,10 +517,10 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
         if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
             for (int i = 0 ; i < local_size ; ++i) {
-                total_size += temp[i].size;
                 if (local_rank == i) {
                     my_base_offset = total_size;
                 }
+                total_size += temp[i].size;
             }
         }
 
