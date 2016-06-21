@@ -137,7 +137,7 @@ int ompi_request_default_wait_any(size_t count,
          * marked as REQUEST_COMPLETE.
          */
         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
-            *index = i;
+            *index = (int) i;
         }
     }
 
