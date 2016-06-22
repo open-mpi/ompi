@@ -1128,6 +1128,8 @@ void ompi_java_releasePtrArray(JNIEnv *env, jlongArray array,
 
 jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
 {
+    jboolean jni_exception;
+
     if (rc < 0) {
         /* handle ompi error code */
         rc = ompi_errcode_get_mpi_code (rc);
@@ -1135,16 +1137,13 @@ jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
          * all Open MPI MPI error codes should be > 0. */
         assert (rc >= 0);
     }
+    jni_exception = (*env)->ExceptionCheck(env);
 
-    if(MPI_SUCCESS == rc)
+    if(MPI_SUCCESS == rc && JNI_FALSE == jni_exception)
     {
         return JNI_FALSE;
     }
-    else if((*env)->ExceptionCheck(env))
-    {
-        return JNI_TRUE;
-    }
-    else
+    else if(MPI_SUCCESS != rc)
     {
         int     errClass = ompi_mpi_errcode_get_class(rc);
         char    *message = ompi_mpi_errnum_get_string(rc);
@@ -1156,6 +1155,9 @@ jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
         (*env)->Throw(env, mpiex);
         (*env)->DeleteLocalRef(env, mpiex);
         (*env)->DeleteLocalRef(env, jmessage);
+        return JNI_TRUE;
+    }
+    else if (JNI_TRUE == jni_exception) {
         return JNI_TRUE;
     }
 }
