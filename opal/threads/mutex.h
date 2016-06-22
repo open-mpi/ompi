@@ -324,6 +324,20 @@ OPAL_THREAD_ADD_SIZE_T(volatile size_t *addr, int delta)
 #endif
 
 
+static inline void *opal_thread_swap_ptr (volatile void *ptr, void *newvalue)
+{
+    if (opal_using_threads ()) {
+        return opal_atomic_swap_ptr (ptr, newvalue);
+    }
+
+    void *old = ((void **) ptr)[0];
+    ((void **) ptr)[0] = newvalue;
+
+    return old;
+}
+
+#define OPAL_ATOMIC_SWAP_PTR(x, y) opal_thread_swap_ptr (x, y)
+
 END_C_DECLS
 
 #endif                          /* OPAL_MUTEX_H */
