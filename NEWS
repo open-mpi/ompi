@@ -111,6 +111,12 @@ Changes in behavior compared to prior versions:
   recompile MPI and OpenSHMEM applications to work with this version
   of Open MPI.
 - Removed checkpoint/restart code due to loss of maintainer. :-(
+- Change the behavior for handling certain signals when using PSM
+  and PSM2 libraries.  Previously, the PSM and PSM2 libraries would
+  trap certain signals in order to generate tracebacks.  The mechanism
+  was found to cause issues with Open MPI's own error reporting mechanism.
+  If not already set, Open MPI now sets the IPATH_NO_BACKTRACE and HFI_NO_BACKTRACE
+  environment variables to disable PSM/PSM2's handling these signals.
 
 Removed legacy support:
 
@@ -141,6 +147,14 @@ Bug fixes / minor enhancements:
   of libibverbs and OFED.
 - Numerous fixes/improvements to orte-dvm.  Special thanks to Mark
   Santcroos for his help.
+- Fix a problem with timer code on ia32 platforms.  Thanks to
+  Paul Hargrove for reporting this and providing a patch.
+- Fix a problem with use of a 64 bit atomic counter.  Thanks to
+  Paul Hargrove for reporting.
+- Fix a problem with singleton job launching.  Thanks to Lisandro
+  Dalcin for reporting.
+- Fix a problem with use of MPI_UNDEFINED with MPI_COMM_SPLIT_TYPE.
+  Thanks to Lisandro Dalcin for reporting.
 - Silence a compiler warning in PSM MTL.  Thanks to Adrian Reber for
   reporting this.
 - Properly detect Intel TrueScale and OmniPath devices in the ACTIVE
