@@ -30,8 +30,6 @@ typedef struct ompi_wait_sync_t {
 #define REQUEST_COMPLETED      (void*)1L
 
 #define SYNC_WAIT(sync)                 (opal_using_threads() ? sync_wait_mt (sync) : sync_wait_st (sync))
-#define PTHREAD_COND_INIT(a,b)          (opal_using_threads() ? pthread_cond_init (a,b) : 0)
-#define PTHREAD_MUTEX_INIT(a,b)         (opal_using_threads() ? pthread_mutex_init (a,b) : 0)
 
 #define WAIT_SYNC_RELEASE(sync)                       \
     if (opal_using_threads()) {                       \
@@ -64,8 +62,8 @@ static inline int sync_wait_st (ompi_wait_sync_t *sync)
         (sync)->prev = NULL;                                    \
         (sync)->status = 0;                                     \
         if (opal_using_threads()) {                             \
-            PTHREAD_COND_INIT(&(sync)->condition, NULL);        \
-            PTHREAD_MUTEX_INIT(&(sync)->lock, NULL);            \
+            pthread_cond_init (&(sync)->condition, NULL);       \
+            pthread_mutex_init (&(sync)->lock, NULL);           \
         }                                                       \
     } while(0)
 
