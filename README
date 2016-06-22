@@ -59,7 +59,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (April 2015):
+base as of this writing (June 2016):
 
 General notes
 -------------
@@ -84,11 +84,6 @@ General notes
   different environments and networks, it is still new and will likely
   experience growing pains typical of any new software package.
   End-user feedback is greatly appreciated.
-
-  This implementation will currently most likely provide optimal
-  performance on Mellanox hardware and software stacks.  Overall
-  performance is expected to improve as other network vendors and/or
-  institutions contribute platform specific optimizations.
 
   See below for details on how to enable the OpenSHMEM implementation.
 
@@ -286,6 +281,9 @@ Compiler Notes
   users these days (our informal testing shows that not many users are
   still using GCC 3.x).  Contact Pathscale support if you continue to
   have problems with Open MPI's C++ bindings.
+
+  Note the MPI C++ bindings have been deprecated by the MPI Forum and
+  may not be supported in future releases.
 
 - Using the Absoft compiler to build the MPI Fortran bindings on Suse
   9.3 is known to fail due to a Libtool compatibility issue.
