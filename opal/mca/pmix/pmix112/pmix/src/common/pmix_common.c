@@ -17,6 +17,7 @@
 #include <pmix/pmix_common.h>
 #include <pmix_server.h>
 #include "src/include/pmix_globals.h"
+#include "src/util/output.h"
 
 typedef struct {
     pmix_event_t ev;
