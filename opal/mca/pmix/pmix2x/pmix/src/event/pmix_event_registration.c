@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -482,7 +484,7 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
                  * the server to dereg the handler for this code */
                 found = false;
                 PMIX_LIST_FOREACH(s2, &pmix_globals.events.single_events, pmix_single_event_t) {
-                    if (s2->code = sing->code) {
+                    if (s2->code == sing->code) {
                         found = true;
                         break;
                     }
