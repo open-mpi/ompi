@@ -87,7 +87,7 @@
 #define OPAL_BTL_USNIC_NUM_COMPLETIONS 500
 
 /* MPI_THREAD_MULTIPLE_SUPPORT */
-opal_recursive_mutex_t btl_usnic_lock;
+opal_recursive_mutex_t btl_usnic_lock =  OPAL_RECURSIVE_MUTEX_STATIC_INIT;
 
 /* RNG buffer definition */
 opal_rng_buff_t opal_btl_usnic_rand_buff = {0};
