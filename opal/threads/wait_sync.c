@@ -3,6 +3,8 @@
  * Copyright (c) 2014-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,15 +22,6 @@ static ompi_wait_sync_t* wait_sync_list = NULL;
         pthread_cond_signal( &(who)->condition );      \
         pthread_mutex_unlock( &(who)->lock);           \
     } while(0)
-
-
-int sync_wait_st(ompi_wait_sync_t *sync)
-{
-    while(sync->count > 0) {
-        opal_progress();
-    }
-    return (0 == sync->status) ? OPAL_SUCCESS : OPAL_ERROR;
-}
 
 int sync_wait_mt(ompi_wait_sync_t *sync)
 {
