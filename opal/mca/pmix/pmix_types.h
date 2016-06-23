@@ -191,6 +191,7 @@ typedef enum {
 #define OPAL_PMIX_DATA_RANGE OPAL_UINT
 typedef enum {
     OPAL_PMIX_RANGE_UNDEF = 0,
+    OPAL_PMIX_RANGE_RM,          // data is intended for the host resource manager
     OPAL_PMIX_RANGE_LOCAL,       // available on local node only
     OPAL_PMIX_RANGE_NAMESPACE,   // data is available to procs in the same nspace only
     OPAL_PMIX_RANGE_SESSION,     // data available to all procs in session
