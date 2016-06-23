@@ -31,6 +31,7 @@
 #include "opal/mca/memory/base/empty.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/mca/patcher/base/base.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -41,8 +42,9 @@
 #include <dlfcn.h>
 #include <assert.h>
 #include <sys/time.h>
+#if defined(HAVE_SYS_SYSCALL_H)
 #include <sys/syscall.h>
-
+#endif
 #if defined(HAVE_LINUX_MMAN_H)
 #include <linux/mman.h>
 #endif
@@ -367,7 +369,9 @@ static int intercept_shmdt (const void *shmaddr)
     OPAL_PATCHER_BEGIN;
     int result;
 
-    opal_mem_hooks_release_hook (shmaddr, memory_patcher_get_shm_seg_size (shmaddr), false);
+    /* opal_mem_hooks_release_hook should probably be updated to take a const void *.
+     * for now just cast away the const */
+    opal_mem_hooks_release_hook ((void *) shmaddr, memory_patcher_get_shm_seg_size (shmaddr), false);
 
     if (original_shmdt) {
         result = original_shmdt (shmaddr);
@@ -393,11 +397,16 @@ static int patcher_register (void)
 
 static int patcher_query (int *priority)
 {
-    if (opal_patcher->patch_symbol) {
-        *priority = mca_memory_patcher_priority;
-    } else {
+    int rc;
+
+    rc = mca_base_framework_open (&opal_patcher_base_framework, 0);
+    if (OPAL_SUCCESS != rc) {
         *priority = -1;
+        return OPAL_SUCCESS;
     }
+
+    *priority = mca_memory_patcher_priority;
+
     return OPAL_SUCCESS;
 }
 
@@ -411,6 +420,12 @@ static int patcher_open (void)
     }
 
     was_executed_already = 1;
+
+    rc = opal_patcher_base_select ();
+    if (OPAL_SUCCESS != rc) {
+        mca_base_framework_close (&opal_patcher_base_framework);
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
 
     /* set memory hooks support level */
     opal_mem_hooks_set_support (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
@@ -459,6 +474,8 @@ static int patcher_open (void)
 
 static int patcher_close(void)
 {
+    mca_base_framework_close (&opal_patcher_base_framework);
+
     /* Note that we don't need to unpatch any symbols here; the
        patcher framework will take care of all of that for us. */
     return OPAL_SUCCESS;
