@@ -1157,9 +1157,8 @@ jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
         (*env)->DeleteLocalRef(env, jmessage);
         return JNI_TRUE;
     }
-    else if (JNI_TRUE == jni_exception) {
-        return JNI_TRUE;
-    }
+    /* If we get here, a JNI error has occurred. */
+    return JNI_TRUE;
 }
 
 void* ompi_java_attrSet(JNIEnv *env, jbyteArray jval)
