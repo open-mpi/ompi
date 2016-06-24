@@ -26,6 +26,7 @@ typedef struct ompi_wait_sync_t {
     pthread_mutex_t lock;
     struct ompi_wait_sync_t *next;
     struct ompi_wait_sync_t *prev;
+    volatile bool signaling;
 } ompi_wait_sync_t;
 
 #define REQUEST_PENDING        (void*)0L
@@ -33,10 +34,21 @@ typedef struct ompi_wait_sync_t {
 
 #define SYNC_WAIT(sync)                 (opal_using_threads() ? sync_wait_mt (sync) : sync_wait_st (sync))
 
+/* The loop in release handles a race condition between the signaling
+ * thread and the destruction of the condition variable. The signaling
+ * member will be set to false after the final signaling thread has
+ * finished opertating on the sync object. This is done to avoid
+ * extra atomics in the singalling function and keep it as fast
+ * as possible. Note that the race window is small so spinning here
+ * is more optimal than sleeping since this macro is called in
+ * the critical path. */
 #define WAIT_SYNC_RELEASE(sync)                       \
     if (opal_using_threads()) {                       \
-       pthread_cond_destroy(&(sync)->condition);      \
-       pthread_mutex_destroy(&(sync)->lock);          \
+        while ((sync)->signaling) {                  \
+            continue;                                 \
+        }                                             \
+        pthread_cond_destroy(&(sync)->condition);     \
+        pthread_mutex_destroy(&(sync)->lock);         \
     }
 
 #define WAIT_SYNC_SIGNAL(sync)                        \
@@ -44,6 +56,7 @@ typedef struct ompi_wait_sync_t {
         pthread_mutex_lock(&(sync->lock));            \
         pthread_cond_signal(&sync->condition);        \
         pthread_mutex_unlock(&(sync->lock));          \
+        sync->signaling = false;                     \
     }
 
 OPAL_DECLSPEC int sync_wait_mt(ompi_wait_sync_t *sync);
@@ -63,6 +76,7 @@ static inline int sync_wait_st (ompi_wait_sync_t *sync)
         (sync)->next = NULL;                                    \
         (sync)->prev = NULL;                                    \
         (sync)->status = 0;                                     \
+        (sync)->signaling = true;                               \
         if (opal_using_threads()) {                             \
             pthread_cond_init (&(sync)->condition, NULL);       \
             pthread_mutex_init (&(sync)->lock, NULL);           \
@@ -83,8 +97,9 @@ static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates, int sta
         }
     } else {
         /* this is an error path so just use the atomic */
-        opal_atomic_swap_32 (&sync->count, 0);
         sync->status = OPAL_ERROR;
+        opal_atomic_wmb ();
+        opal_atomic_swap_32 (&sync->count, 0);
     }
     WAIT_SYNC_SIGNAL(sync);
 }
