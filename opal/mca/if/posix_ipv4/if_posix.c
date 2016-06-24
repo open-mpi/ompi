@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -220,6 +220,15 @@ static int if_posix_open(void)
         memset(intf->if_name, 0, sizeof(intf->if_name));
         strncpy(intf->if_name, ifr->ifr_name, sizeof(intf->if_name) - 1);
         intf->if_flags = ifr->ifr_flags;
+
+        // JMS Hackaround for OpenVZ
+        if (strcmp(intf->if_name, "venet0") == 0) {
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
+                                "OpenVZ hack:%s:%d: skipping interface venet0",
+                                __FILE__, __LINE__);
+            OBJ_RELEASE(intf);
+            continue;
+        }
 
         /* every new address gets its own internal if_index */
         intf->if_index = opal_list_get_size(&opal_if_list)+1;
