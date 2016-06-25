@@ -69,6 +69,9 @@ typedef struct {
 static void construct(orte_data_object_t *ptr)
 {
     ptr->index = -1;
+    ptr->uid = UINT32_MAX;
+    ptr->range = OPAL_PMIX_RANGE_UNDEF;
+    ptr->persistence = OPAL_PMIX_PERSIST_SESSION;
     OBJ_CONSTRUCT(&ptr->values, opal_list_t);
 }
 
@@ -172,9 +175,10 @@ void orte_data_server(int status, orte_process_name_t* sender,
     char **keys = NULL, *str;
     bool ret_packed = false, wait = false, data_added;
     int room_number;
-    uint32_t uid;
+    uint32_t uid = UINT32_MAX;
     opal_pmix_data_range_t range;
     orte_data_req_t *req, *rqnext;
+    orte_jobid_t jobid;
 
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s data server got message from %s",
@@ -206,7 +210,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
     switch(command) {
     case ORTE_PMIX_PUBLISH_CMD:
         data = OBJ_NEW(orte_data_object_t);
-        /* unpack the requestor */
+        /* unpack the publisher */
         count = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &data->owner, &count, OPAL_NAME))) {
             ORTE_ERROR_LOG(rc);
@@ -221,7 +225,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
 
         /* unpack the range */
         count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &data->range, &count, OPAL_INT))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &data->range, &count, OPAL_PMIX_DATA_RANGE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(data);
             goto SEND_ERROR;
@@ -261,8 +265,13 @@ void orte_data_server(int status, orte_process_name_t* sender,
             if (req->uid != data->uid) {
                 continue;
             }
-            if (req->range != data->range) {
-                continue;
+            /* if the published range is constrained to namespace, then only
+             * consider this data if the publisher is
+             * in the same namespace as the requestor */
+            if (OPAL_PMIX_RANGE_NAMESPACE == data->range) {
+                if (jobid != data->owner.jobid) {
+                    continue;
+                }
             }
             for (i=0; NULL != req->keys[i]; i++) {
                 /* cycle thru the data keys for matches */
@@ -344,9 +353,16 @@ void orte_data_server(int status, orte_process_name_t* sender,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));
 
+        /* unpack the requestor's jobid */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &jobid, &count, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            goto SEND_ERROR;
+        }
+
         /* unpack the range - this sets some constraints on the range of data to be considered */
         count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &range, &count, OPAL_INT))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &range, &count, OPAL_PMIX_DATA_RANGE))) {
             ORTE_ERROR_LOG(rc);
             goto SEND_ERROR;
         }
@@ -409,13 +425,17 @@ void orte_data_server(int status, orte_process_name_t* sender,
                 if (NULL == data) {
                     continue;
                 }
-                /* can only access data posted by the same user id */
+                /* for security reasons, can only access data posted by the same user id */
                 if (uid != data->uid) {
                     continue;
                 }
-                /* if the range doesn't match, then we cannot consider it */
-                if (range != data->range) {
-                    continue;
+                /* if the published range is constrained to namespace, then only
+                 * consider this data if the publisher is
+                 * in the same namespace as the requestor */
+                if (OPAL_PMIX_RANGE_NAMESPACE == data->range) {
+                    if (jobid != data->owner.jobid) {
+                        continue;
+                    }
                 }
                 /* see if we have this key */
                 OPAL_LIST_FOREACH(iptr, &data->values, opal_value_t) {

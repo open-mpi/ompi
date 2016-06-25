@@ -121,7 +121,7 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     pset = false;
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
-            range = (opal_pmix_data_range_t)iptr->data.integer;
+            range = (opal_pmix_data_range_t)iptr->data.uint;
             if (pset) {
                 break;
             }
@@ -136,7 +136,7 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     }
 
     /* pack the range */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &range, 1, OPAL_INT))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &range, 1, OPAL_PMIX_DATA_RANGE))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(req);
         return rc;
@@ -211,10 +211,17 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
         return rc;
     }
 
+    /* pack the requesting process jobid */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &proc->jobid, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(req);
+        return rc;
+    }
+
     /* no help for it - need to search for range */
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
-            range = (opal_pmix_data_range_t)iptr->data.integer;
+            range = (opal_pmix_data_range_t)iptr->data.uint;
             break;
         }
     }
