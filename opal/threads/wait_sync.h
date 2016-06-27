@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,15 +34,16 @@ typedef struct ompi_wait_sync_t {
 
 #define WAIT_SYNC_RELEASE(sync)                       \
     if (opal_using_threads()) {                       \
+       while( (sync)->count >= 0 );                   \
        pthread_cond_destroy(&(sync)->condition);      \
        pthread_mutex_destroy(&(sync)->lock);          \
     }
 
 #define WAIT_SYNC_SIGNAL(sync)                        \
     if (opal_using_threads()) {                       \
-        pthread_mutex_lock(&(sync->lock));            \
-        pthread_cond_signal(&sync->condition);        \
-        pthread_mutex_unlock(&(sync->lock));          \
+        pthread_cond_signal(&(sync)->condition);      \
+        /* pthread_cond_signal assumes wmb() */       \
+        sync->count = -1;                             \
     }
 
 OPAL_DECLSPEC int sync_wait_mt(ompi_wait_sync_t *sync);
