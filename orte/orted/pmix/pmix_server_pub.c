@@ -227,7 +227,7 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
     }
 
     /* pack the range */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &range, 1, OPAL_INT))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &range, 1, OPAL_PMIX_DATA_RANGE))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(req);
         return rc;
