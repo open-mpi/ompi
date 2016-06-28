@@ -15,6 +15,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,6 +88,7 @@ int ompi_request_default_wait_any(size_t count,
     int rc = OMPI_SUCCESS;
     ompi_request_t *request=NULL;
     ompi_wait_sync_t sync;
+    int sync_sets = 0, sync_unsets = 0;
 
     WAIT_SYNC_INIT(&sync, 1);
     
@@ -108,6 +110,8 @@ int ompi_request_default_wait_any(size_t count,
             completed = i;
             *index = i;
             goto after_sync_wait;
+        } else {
+            sync_sets++;
         }
     }
 
@@ -116,7 +120,8 @@ int ompi_request_default_wait_any(size_t count,
         if (MPI_STATUS_IGNORE != status) {
             *status = ompi_status_empty;
         }
-        WAIT_SYNC_RELEASE(&sync);
+        /* No signal-in-flight can be in this case */
+        WAIT_SYNC_RELEASE_NOWAIT(&sync);
         return rc;
     }
 
@@ -138,8 +143,17 @@ int ompi_request_default_wait_any(size_t count,
          */
         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             *index = i;
+        } else {
+            sync_unsets++;
         }
     }
+    
+    if( sync_sets == sync_unsets ){
+        /* set signalled flag so we won't 
+         * block in WAIT_SYNC_RELEASE 
+         */
+        WAIT_SYNC_SIGNALLED(&sync);
+    }        
 
     request = requests[*index];
     assert( REQUEST_COMPLETE(request) );
@@ -361,6 +375,7 @@ int ompi_request_default_wait_some(size_t count,
     ompi_request_t **rptr = NULL;
     ompi_request_t *request = NULL;
     ompi_wait_sync_t sync;
+    bool will_be_signalled = false;
 
     WAIT_SYNC_INIT(&sync, 1);
 
@@ -383,13 +398,19 @@ int ompi_request_default_wait_some(size_t count,
         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync) ) {
             /* If the request is completed go ahead and mark it as such */
             assert( REQUEST_COMPLETE(request) );
+            /* TODO: make sure MPI spec is not strict about index order */
+            indices[num_requests_done] = i;
             num_requests_done++;
+            REQUEST_UNMARK(request);
+        } else {
+            REQUEST_MARK(request);
         }
     }
 
     if(num_requests_null_inactive == count) {
         *outcount = MPI_UNDEFINED;
-        WAIT_SYNC_RELEASE(&sync);
+        /* nobody will signall us */
+        WAIT_SYNC_RELEASE_NOWAIT(&sync);
         return rc;
     }
 
@@ -402,23 +423,33 @@ int ompi_request_default_wait_some(size_t count,
     /* Clean up the synchronization primitives */
 
     rptr = requests;
-    num_requests_done = 0;
     for (size_t i = 0; i < count; i++, rptr++) {
         request = *rptr;
 
-        if( request->req_state == OMPI_REQUEST_INACTIVE ) {
+        /* Skip inactive and already accounted requests */
+        if( request->req_state == OMPI_REQUEST_INACTIVE || !REQUEST_MARKED(request) ) {
             continue;
         }
-        /* Atomically mark the request as pending. If this succeed
-         * then the request was not completed, and it is now marked as
-         * pending. Otherwise, the request is complete )either it was
-         * before or it has been meanwhile). The major drawback here
-         * is that we will do all the atomics operations in all cases.
+        /* Atomically mark the request as pending. 
+         * If this succeed - then the request was not completed, 
+         * and it is now marked as pending.
+         * Otherwise, the request is complete meanwhile.
          */
-        if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
+         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             indices[num_requests_done] = i;
             num_requests_done++;
-        }
+            /* at least one of requests was completed during this call
+             * corresponding thread will signal us
+             */
+            will_be_signalled = true;
+        } 
+    }
+
+    if( !will_be_signalled ){
+        /* nobody knows about us,
+         * set signa-in-progress flag to false
+         */
+        WAIT_SYNC_SIGNALLED(&sync);
     }
 
     WAIT_SYNC_RELEASE(&sync);
