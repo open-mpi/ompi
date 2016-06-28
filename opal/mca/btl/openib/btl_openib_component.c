@@ -3743,7 +3743,9 @@ static int btl_openib_component_progress(void)
     for(i = 0; i < mca_btl_openib_component.devices_count; i++) {
         mca_btl_openib_device_t *device =
             (mca_btl_openib_device_t *) opal_pointer_array_get_item(&mca_btl_openib_component.devices, i);
-        count += progress_one_device(device);
+        if (NULL != device) {
+            count += progress_one_device(device);
+        }
     }
 
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
