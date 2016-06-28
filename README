@@ -655,25 +655,6 @@ Network Support
   Mellanox InfiniBand plugin driver is created.  The problem is fixed
   OFED v1.1 (and later).
 
-- Better memory management support is available for OFED-based
-  transports using the "ummunotify" Linux kernel module.  OFED memory
-  managers are necessary for better bandwidth when re-using the same
-  buffers for large messages (e.g., benchmarks and some applications).
-
-  Unfortunately, the ummunotify module was not accepted by the Linux
-  kernel community (and is still not distributed by OFED).  But it
-  still remains the best memory management solution for MPI
-  applications that used the OFED network transports.  If Open MPI is
-  able to find the <linux/ummunotify.h> header file, it will build
-  support for ummunotify and include it by default.  If MPI processes
-  then find the ummunotify kernel module loaded and active, then their
-  memory managers (which have been shown to be problematic in some
-  cases) will be disabled and ummunotify will be used.  Otherwise, the
-  same memory managers from prior versions of Open MPI will be used.
-  The ummunotify Linux kernel module can be downloaded from:
-
-    http://lwn.net/Articles/343351/
-
 - The use of fork() with OpenFabrics-based networks (i.e., the openib
   BTL) is only partially supported, and only on Linux kernels >=
   v2.6.15 with libibverbs v1.1 or later (first released as part of
