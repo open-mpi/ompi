@@ -375,8 +375,8 @@ int ompi_request_default_wait_some(size_t count,
     ompi_request_t **rptr = NULL;
     ompi_request_t *request = NULL;
     ompi_wait_sync_t sync;
-    size_t sync_sets = 0, sync_unsets = 0;
-    
+    bool will_be_signalled = false;
+
     WAIT_SYNC_INIT(&sync, 1);
 
     *outcount = 0;
@@ -398,9 +398,12 @@ int ompi_request_default_wait_some(size_t count,
         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync) ) {
             /* If the request is completed go ahead and mark it as such */
             assert( REQUEST_COMPLETE(request) );
+            /* TODO: make sure MPI spec is not strict about index order */
+            indices[num_requests_done] = i;
             num_requests_done++;
+            REQUEST_UNMARK(request);
         } else {
-            sync_sets++;
+            REQUEST_MARK(request);
         }
     }
 
@@ -420,29 +423,29 @@ int ompi_request_default_wait_some(size_t count,
     /* Clean up the synchronization primitives */
 
     rptr = requests;
-    num_requests_done = 0;
     for (size_t i = 0; i < count; i++, rptr++) {
         request = *rptr;
 
-        if( request->req_state == OMPI_REQUEST_INACTIVE ) {
+        /* Skip inactive and already accounted requests */
+        if( request->req_state == OMPI_REQUEST_INACTIVE || !REQUEST_MARKED(request) ) {
             continue;
         }
-        /* Atomically mark the request as pending. If this succeed
-         * then the request was not completed, and it is now marked as
-         * pending. Otherwise, the request is complete )either it was
-         * before or it has been meanwhile). The major drawback here
-         * is that we will do all the atomics operations in all cases.
+        /* Atomically mark the request as pending. 
+         * If this succeed - then the request was not completed, 
+         * and it is now marked as pending.
+         * Otherwise, the request is complete meanwhile.
          */
-        if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
+         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             indices[num_requests_done] = i;
             num_requests_done++;
-        } else {
-            /* request wasn't finished during this call */
-            sync_unsets++;
-        }
+            /* at least one of requests was completed during this call
+             * corresponding thread will signal us
+             */
+            will_be_signalled = true;
+        } 
     }
 
-    if( sync_sets == sync_unsets ){
+    if( !will_be_signalled ){
         /* nobody knows about us,
          * set signa-in-progress flag to false
          */

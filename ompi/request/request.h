@@ -15,6 +15,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -112,6 +113,7 @@ struct ompi_request_t {
     ompi_request_complete_fn_t req_complete_cb; /**< Called when the request is MPI completed */
     void *req_complete_cb_data;
     ompi_mpi_object_t req_mpi_object;           /**< Pointer to MPI object that created this request */
+    bool marked;
 };
 
 /**
@@ -151,6 +153,12 @@ typedef struct ompi_predefined_request_t ompi_predefined_request_t;
 
 
 #define REQUEST_COMPLETE(req)        (REQUEST_COMPLETED == (req)->req_complete)
+
+#define REQUEST_MARK(req)  ( (req)->marked = true )
+#define REQUEST_UNMARK(req)  ( (req)->marked = false )
+#define REQUEST_MARKED(req)  ( (req)->marked )
+
+
 /**
  * Finalize a request.  This is a macro to avoid function call
  * overhead, since this is typically invoked in the critical
