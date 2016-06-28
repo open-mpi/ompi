@@ -15,6 +15,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,6 +88,7 @@ int ompi_request_default_wait_any(size_t count,
     int rc = OMPI_SUCCESS;
     ompi_request_t *request=NULL;
     ompi_wait_sync_t sync;
+    int sync_sets = 0, sync_unsets = 0;
 
     WAIT_SYNC_INIT(&sync, 1);
     
@@ -108,6 +110,8 @@ int ompi_request_default_wait_any(size_t count,
             completed = i;
             *index = i;
             goto after_sync_wait;
+        } else {
+            sync_sets++;
         }
     }
 
@@ -116,7 +120,8 @@ int ompi_request_default_wait_any(size_t count,
         if (MPI_STATUS_IGNORE != status) {
             *status = ompi_status_empty;
         }
-        WAIT_SYNC_RELEASE(&sync);
+        /* No signal-in-flight can be in this case */
+        WAIT_SYNC_RELEASE_NOWAIT(&sync);
         return rc;
     }
 
@@ -138,8 +143,17 @@ int ompi_request_default_wait_any(size_t count,
          */
         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             *index = i;
+        } else {
+            sync_unsets++;
         }
     }
+    
+    if( sync_sets == sync_unsets ){
+        /* set signalled flag so we won't 
+         * block in WAIT_SYNC_RELEASE 
+         */
+        WAIT_SYNC_SIGNALLED(&sync);
+    }        
 
     request = requests[*index];
     assert( REQUEST_COMPLETE(request) );
@@ -361,7 +375,8 @@ int ompi_request_default_wait_some(size_t count,
     ompi_request_t **rptr = NULL;
     ompi_request_t *request = NULL;
     ompi_wait_sync_t sync;
-
+    size_t sync_sets = 0, sync_unsets = 0;
+    
     WAIT_SYNC_INIT(&sync, 1);
 
     *outcount = 0;
@@ -384,12 +399,15 @@ int ompi_request_default_wait_some(size_t count,
             /* If the request is completed go ahead and mark it as such */
             assert( REQUEST_COMPLETE(request) );
             num_requests_done++;
+        } else {
+            sync_sets++;
         }
     }
 
     if(num_requests_null_inactive == count) {
         *outcount = MPI_UNDEFINED;
-        WAIT_SYNC_RELEASE(&sync);
+        /* nobody will signall us */
+        WAIT_SYNC_RELEASE_NOWAIT(&sync);
         return rc;
     }
 
@@ -418,7 +436,17 @@ int ompi_request_default_wait_some(size_t count,
         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             indices[num_requests_done] = i;
             num_requests_done++;
+        } else {
+            /* request wasn't finished during this call */
+            sync_unsets++;
         }
+    }
+
+    if( sync_sets == sync_unsets ){
+        /* nobody knows about us,
+         * set signa-in-progress flag to false
+         */
+        WAIT_SYNC_SIGNALLED(&sync);
     }
 
     WAIT_SYNC_RELEASE(&sync);

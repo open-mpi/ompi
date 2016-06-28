@@ -43,20 +43,31 @@ typedef struct ompi_wait_sync_t {
  * the critical path. */
 #define WAIT_SYNC_RELEASE(sync)                       \
     if (opal_using_threads()) {                       \
-        while ((sync)->signaling) {                  \
+        while ((sync)->signaling) {                   \
             continue;                                 \
         }                                             \
         pthread_cond_destroy(&(sync)->condition);     \
         pthread_mutex_destroy(&(sync)->lock);         \
     }
 
+#define WAIT_SYNC_RELEASE_NOWAIT(sync)                \
+    if (opal_using_threads()) {                       \
+        pthread_cond_destroy(&(sync)->condition);     \
+        pthread_mutex_destroy(&(sync)->lock);         \
+    }
+
+
 #define WAIT_SYNC_SIGNAL(sync)                        \
     if (opal_using_threads()) {                       \
         pthread_mutex_lock(&(sync->lock));            \
         pthread_cond_signal(&sync->condition);        \
         pthread_mutex_unlock(&(sync->lock));          \
-        sync->signaling = false;                     \
+        sync->signaling = false;                      \
     }
+
+#define WAIT_SYNC_SIGNALLED(sync){                    \
+        (sync)->signaling = false;                    \
+}        
 
 OPAL_DECLSPEC int sync_wait_mt(ompi_wait_sync_t *sync);
 static inline int sync_wait_st (ompi_wait_sync_t *sync)
