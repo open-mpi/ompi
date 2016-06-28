@@ -4,6 +4,7 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,14 +64,6 @@ OBJ_CLASS_INSTANCE(oshmem_group_t, opal_object_t, NULL, NULL);
 
 int oshmem_proc_group_init(void)
 {
-    if (orte_process_info.num_procs != opal_list_get_size(&ompi_proc_list)) {
-        opal_output(0,
-                "Error: oshmem_group_all is not created: orte_process_info.num_procs = %d ompi_proc_list = %" PRIsize_t,
-		orte_process_info.num_procs,
-		opal_list_get_size(&ompi_proc_list));
-        return OSHMEM_ERROR;
-    }
-
     /* Setup communicator array */
     OBJ_CONSTRUCT(&oshmem_group_array, opal_pointer_array_t);
     if (OPAL_SUCCESS
