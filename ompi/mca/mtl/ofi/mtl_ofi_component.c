@@ -3,7 +3,7 @@
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  *
  * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -27,6 +27,30 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 static int param_priority;
 static char *prov_include;
 static char *prov_exclude;
+static int control_progress;
+static int data_progress;
+
+/*
+ * Enumerators
+ */
+
+enum {
+    MTL_OFI_PROG_AUTO=1,
+    MTL_OFI_PROG_MANUAL,
+    MTL_OFI_PROG_UNKNOWN,
+};
+
+mca_base_var_enum_value_t control_prog_type[] = {
+    {MTL_OFI_PROG_AUTO, "auto"},
+    {MTL_OFI_PROG_MANUAL, "manual"},
+    {0, NULL}
+};
+
+mca_base_var_enum_value_t data_prog_type[] = {
+    {MTL_OFI_PROG_AUTO, "auto"},
+    {MTL_OFI_PROG_MANUAL, "manual"},
+    {0, NULL}
+};
 
 mca_mtl_ofi_component_t mca_mtl_ofi_component = {
     {
@@ -56,6 +80,9 @@ mca_mtl_ofi_component_t mca_mtl_ofi_component = {
 static int
 ompi_mtl_ofi_component_register(void)
 {
+    int ret;
+    mca_base_var_enum_t *new_enum = NULL;
+
     param_priority = 25;   /* for now give a lower priority than the psm mtl */
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "priority", "Priority of the OFI MTL component",
@@ -81,6 +108,36 @@ ompi_mtl_ofi_component_register(void)
                                     OPAL_INFO_LVL_1,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &prov_exclude);
+
+    ret = mca_base_var_enum_create ("control_prog_type", control_prog_type, &new_enum);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    control_progress = MTL_OFI_PROG_MANUAL;
+    mca_base_component_var_register (&mca_mtl_ofi_component.super.mtl_version,
+                                     "control_progress",
+                                     "Specify control progress model (default: manual). Set to auto for auto progress.",
+                                     MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                     OPAL_INFO_LVL_3,
+                                     MCA_BASE_VAR_SCOPE_READONLY,
+                                     &control_progress);
+    OBJ_RELEASE(new_enum);
+
+    ret = mca_base_var_enum_create ("data_prog_type", data_prog_type, &new_enum);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    data_progress = MTL_OFI_PROG_AUTO;
+    mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
+                                    "data_progress",
+                                    "Specify data progress model (default: auto). Set to manual for manual progress.",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                    OPAL_INFO_LVL_3,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    &data_progress);
+    OBJ_RELEASE(new_enum);
 
     return OMPI_SUCCESS;
 }
@@ -239,7 +296,19 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->rx_attr->msg_order = FI_ORDER_SAS;
 
     hints->domain_attr->threading        = FI_THREAD_UNSPEC;
-    hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
+
+    if (MTL_OFI_PROG_AUTO == control_progress) {
+        hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
+    } else {
+        hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
+    }
+
+    if (MTL_OFI_PROG_MANUAL == data_progress) {
+        hints->domain_attr->data_progress = FI_PROGRESS_MANUAL;
+    } else {
+        hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
+    }
+
     hints->domain_attr->resource_mgmt    = FI_RM_ENABLED;
     hints->domain_attr->av_type          = FI_AV_MAP;
 
@@ -353,9 +422,10 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 
     /**
      * The remote fi_addr will be stored in the ofi_endpoint struct.
-     * So, we use the AV in "map" mode.
      */
+
     av_attr.type = FI_AV_MAP;
+
     ret = fi_av_open(ompi_mtl_ofi.domain, &av_attr, &ompi_mtl_ofi.av, NULL);
     if (ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
