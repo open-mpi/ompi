@@ -143,6 +143,8 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
         OPAL_VAR_SCOPE_POP
     ])
 
+   AM_CONDITIONAL(OPAL_HWLOC_USE_EXTERNAL,[test "x$opal_hwloc_external_support" = "xyes"])
+
    # Similar to above, if this m4 is being invoked "early" via AC
    # REQUIRE, print out a nice banner that we have now finished
    # pre-emption and are returning to the Normal Order Of Things.

@@ -10,6 +10,8 @@
 # $HEADER$
 #
 
+if !OPAL_PMIX_USE_EXTERNAL
+
 EXTRA_DIST = autogen.subdirs
 
 SUBDIRS = pmix
@@ -21,6 +23,12 @@ sources = \
         pmix2x_client.c \
         pmix2x_server_south.c \
         pmix2x_server_north.c
+else
+SUBDISR =
+
+endif
+
+DIST_SUBDIRS = $(SUBDIRS)
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

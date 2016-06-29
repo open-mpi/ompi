@@ -10,6 +10,8 @@
 # $HEADER$
 #
 
+if !OPAL_HWLOC_USE_EXTERNAL
+
 # Due to what might be a bug in Automake, we need to remove stamp-h?
 # files manually.  See
 # http://debbugs.gnu.org/cgi/bugreport.cgi?bug=19418.
@@ -26,6 +28,16 @@ EXTRA_DIST = \
         hwloc/utils/README.txt
 
 SUBDIRS = hwloc
+
+
+else
+
+SUBDIRS =
+
+endif
+
+DIST_SUBDIRS= $(SUBDIRS)
+
 
 # Headers and sources
 headers = hwloc1113.h

@@ -11,11 +11,21 @@
 # $HEADER$
 #
 
-EXTRA_DIST = autogen.subdirs
 
 AM_CPPFLAGS = -I$(srcdir)/libevent -I$(srcdir)/libevent/include -I$(builddir)/libevent/include -I$(srcdir)/libevent/compat
 
-SUBDIRS = libevent
+if !OPAL_EVENT_USE_EXTERNAL
+
+    SUBDIRS = libevent
+    EXTRA_DIST = autogen.subdirs
+
+else
+
+    SUBDIRS =
+
+endif
+
+DIST_SUBDIRS = $(SUBDIRS)
 
 headers = libevent2022.h
 
