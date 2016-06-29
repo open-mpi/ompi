@@ -51,7 +51,7 @@ AC_DEFUN([MCA_opal_pmix_ext20_CONFIG],[
                               [pmix.h],
                               [pmix],
                               [PMIx_Register_event_handler],
-                              [-lpmix],
+                              [],
                               [$pmix_ext_install_dir],
                               [$pmix_ext_install_dir/lib],
                               [AC_MSG_RESULT([yes])
