@@ -1173,7 +1173,7 @@ static void *call_disconnect_callback(int fd, int flags, void *v)
  */
 static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
 {
-    rdmacm_contents_t *contents;
+    rdmacm_contents_t *contents = NULL, *item;
     opal_event_t event;
 
     BTL_VERBOSE(("Start disconnecting..."));
@@ -1193,8 +1193,9 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
      * main thread and service thread.
      */
     opal_mutex_lock(&client_list_lock);
-    OPAL_LIST_FOREACH(contents, &client_list, rdmacm_contents_t) {
-        if (endpoint == contents->endpoint) {
+    OPAL_LIST_FOREACH(item, &client_list, rdmacm_contents_t) {
+        if (endpoint == item->endpoint) {
+            contents = item;
             opal_list_remove_item(&client_list, (opal_list_item_t *) contents);
             contents->on_client_list = false;
 
@@ -1223,12 +1224,14 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
     opal_atomic_wmb();
     opal_mutex_unlock(&client_list_lock);
 
-    /* Now wait for all the disconnect callbacks to occur */
-    pthread_mutex_lock(&rdmacm_disconnect_lock);
-    while (opal_list_get_size (&contents->ids)) {
-        pthread_cond_wait (&rdmacm_disconnect_cond, &rdmacm_disconnect_lock);
+    if (NULL != contents) {
+        /* Now wait for all the disconnect callbacks to occur */
+        pthread_mutex_lock(&rdmacm_disconnect_lock);
+        while (opal_list_get_size (&contents->ids)) {
+            pthread_cond_wait (&rdmacm_disconnect_cond, &rdmacm_disconnect_lock);
+        }
+        pthread_mutex_unlock(&rdmacm_disconnect_lock);
     }
-    pthread_mutex_unlock(&rdmacm_disconnect_lock);
 
     OPAL_OUTPUT((-1, "MAIN Endpoint finished finalizing"));
     return OPAL_SUCCESS;
