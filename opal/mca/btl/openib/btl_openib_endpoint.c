@@ -537,13 +537,11 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     ctl_hdr->type = MCA_BTL_OPENIB_CONTROL_CTS;
 
     /* Send the fragment */
-    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
     if (OPAL_SUCCESS != mca_btl_openib_endpoint_post_send(endpoint, sc_frag)) {
         BTL_ERROR(("Failed to post CTS send"));
         mca_btl_openib_endpoint_invoke_error(endpoint);
     }
     endpoint->endpoint_cts_sent = true;
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 }
 
 /*
@@ -588,6 +586,9 @@ void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t *endpoint)
                 OPAL_OUTPUT((-1, "cpc_complete to %s -- already got CTS, so marking endpoint as complete",
                              opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
                 mca_btl_openib_endpoint_connected(endpoint);
+            } else {
+                /* the caller hold the lock and expects us to drop it */
+                OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             }
         }
 

@@ -1246,6 +1246,7 @@ static void *local_endpoint_cpc_complete(void *context)
 
     OPAL_OUTPUT((-1, "MAIN local_endpoint_cpc_complete to %s",
                  opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
+    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
     mca_btl_openib_endpoint_cpc_complete(endpoint);
 
     return NULL;
