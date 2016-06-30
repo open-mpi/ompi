@@ -59,7 +59,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (April 2015):
+base as of this writing (June 2016):
 
 General notes
 -------------
@@ -84,11 +84,6 @@ General notes
   different environments and networks, it is still new and will likely
   experience growing pains typical of any new software package.
   End-user feedback is greatly appreciated.
-
-  This implementation will currently most likely provide optimal
-  performance on Mellanox hardware and software stacks.  Overall
-  performance is expected to improve as other network vendors and/or
-  institutions contribute platform specific optimizations.
 
   See below for details on how to enable the OpenSHMEM implementation.
 
@@ -287,6 +282,9 @@ Compiler Notes
   still using GCC 3.x).  Contact Pathscale support if you continue to
   have problems with Open MPI's C++ bindings.
 
+  Note the MPI C++ bindings have been deprecated by the MPI Forum and
+  may not be supported in future releases.
+
 - Using the Absoft compiler to build the MPI Fortran bindings on Suse
   9.3 is known to fail due to a Libtool compatibility issue.
 
@@ -450,22 +448,20 @@ MPI Functionality and Features
   deprecated_example.c:4: warning: 'MPI_Type_struct' is deprecated (declared at /opt/openmpi/include/mpi.h:1522)
   shell$
 
-- MPI_THREAD_MULTIPLE support is included, but is only lightly tested.
-  It likely does not work for thread-intensive applications.  Note
-  that *only* the MPI point-to-point communication functions for the
-  BTL's listed here are considered thread safe.  Other support
-  functions (e.g., MPI attributes) have not been certified as safe
-  when simultaneously used by multiple threads.
+- MPI_THREAD_MULTIPLE is supported.  Note that Open MPI must be
+  configured  with --enable-mpi-thread-multiple to get this
+  level of thread safety support.
+
+  The following BTLs support MPI_THREAD_MULTIPLE:
   - tcp
-  - sm
+  - openib
+  - vader (shared memory)
+  - ugni
   - self
 
-  Note that Open MPI's thread support is in a fairly early stage; the
-  above devices may *work*, but the latency is likely to be fairly
-  high.  Specifically, efforts so far have concentrated on
-  *correctness*, not *performance* (yet).
-
-  YMMV.
+  The following MTLs and PMLs support MPI_THREAD_MULTIPLE:
+  - MXM
+  - portals4
 
 - MPI_REAL16 and MPI_COMPLEX32 are only supported on platforms where a
   portable C datatype can be found that matches the Fortran type
@@ -658,25 +654,6 @@ Network Support
   will not work properly with Open MPI v1.2 (and later) due to how its
   Mellanox InfiniBand plugin driver is created.  The problem is fixed
   OFED v1.1 (and later).
-
-- Better memory management support is available for OFED-based
-  transports using the "ummunotify" Linux kernel module.  OFED memory
-  managers are necessary for better bandwidth when re-using the same
-  buffers for large messages (e.g., benchmarks and some applications).
-
-  Unfortunately, the ummunotify module was not accepted by the Linux
-  kernel community (and is still not distributed by OFED).  But it
-  still remains the best memory management solution for MPI
-  applications that used the OFED network transports.  If Open MPI is
-  able to find the <linux/ummunotify.h> header file, it will build
-  support for ummunotify and include it by default.  If MPI processes
-  then find the ummunotify kernel module loaded and active, then their
-  memory managers (which have been shown to be problematic in some
-  cases) will be disabled and ummunotify will be used.  Otherwise, the
-  same memory managers from prior versions of Open MPI will be used.
-  The ummunotify Linux kernel module can be downloaded from:
-
-    http://lwn.net/Articles/343351/
 
 - The use of fork() with OpenFabrics-based networks (i.e., the openib
   BTL) is only partially supported, and only on Linux kernels >=
