@@ -377,12 +377,15 @@ static inline int ompi_request_free(ompi_request_t** request)
 
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
-    if (opal_using_threads ()) {
+    if (opal_using_threads () && !REQUEST_COMPLETE(req)) {
         ompi_wait_sync_t sync;
         WAIT_SYNC_INIT(&sync, 1);
 
-        if(OPAL_ATOMIC_CMPSET_PTR(&req->req_complete, REQUEST_PENDING, &sync)) {
+        if (OPAL_ATOMIC_CMPSET_PTR(&req->req_complete, REQUEST_PENDING, &sync)) {
             SYNC_WAIT(&sync);
+        } else {
+            /* completed before we had a chance to swap in the sync object */
+            WAIT_SYNC_SIGNALLED(&sync);
         }
 
         assert(REQUEST_COMPLETE(req));
