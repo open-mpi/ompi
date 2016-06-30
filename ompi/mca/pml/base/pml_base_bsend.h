@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,10 @@ OMPI_DECLSPEC int mca_pml_base_bsend_request_start(ompi_request_t*);
 OMPI_DECLSPEC int mca_pml_base_bsend_request_fini(ompi_request_t*);
 OMPI_DECLSPEC void*  mca_pml_base_bsend_request_alloc_buf( size_t length );
 OMPI_DECLSPEC int mca_pml_base_bsend_request_free(void* addr);
+
+extern unsigned char   *mca_pml_bsend_userbase;   /* user provided buffer base */
+extern unsigned char   *mca_pml_bsend_base;       /* adjusted base of user buffer */
+extern unsigned char   *mca_pml_bsend_addr;       /* current offset into user buffer */
 
 END_C_DECLS
 
