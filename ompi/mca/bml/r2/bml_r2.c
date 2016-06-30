@@ -267,8 +267,9 @@ static int mca_bml_r2_endpoint_add_btl (struct ompi_proc_t *proc, mca_bml_base_e
         }
     }
 
-    /* always add rdma endpoints */
-    if ((btl_flags & MCA_BTL_FLAGS_RDMA) &&
+    /* always add rdma endpoints if they support full rdma */
+    if ((btl_in_use && (btl_flags & MCA_BTL_FLAGS_RDMA) ||
+         (btl_flags & (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) == (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) &&
         !((proc->super.proc_arch != ompi_proc_local_proc->super.proc_arch) &&
           (0 == (btl->btl_flags & MCA_BTL_FLAGS_HETEROGENEOUS_RDMA)))) {
         mca_bml_base_btl_t *bml_btl_rdma = mca_bml_base_btl_array_insert(&bml_endpoint->btl_rdma);
