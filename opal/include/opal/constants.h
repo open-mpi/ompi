@@ -82,7 +82,8 @@ enum {
     OPAL_ERR_SERVER_NOT_AVAIL               = (OPAL_ERR_BASE - 52),
     OPAL_ERR_IN_PROCESS                     = (OPAL_ERR_BASE - 53),
     OPAL_ERR_DEBUGGER_RELEASE               = (OPAL_ERR_BASE - 54),
-    OPAL_ERR_HANDLERS_COMPLETE              = (OPAL_ERR_BASE - 55)
+    OPAL_ERR_HANDLERS_COMPLETE              = (OPAL_ERR_BASE - 55),
+    OPAL_ERR_PARTIAL_SUCCESS                = (OPAL_ERR_BASE - 56)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

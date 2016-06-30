@@ -88,6 +88,17 @@
                                           pmix_data_range_t range,
                                           pmix_info_t info[], size_t ninfo,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
+ #if HAVE_PMIX_QUERY_FUNCTION
+static pmix_status_t server_query(pmix_proc_t *proct,
+                                  pmix_info_t *info, size_t ninfo,
+                                  pmix_info_t *directives, size_t ndirs,
+                                  pmix_info_cbfunc_t cbfunc,
+                                  void *cbdata);
+static void server_tool_connection(pmix_info_t *info, size_t ninfo,
+                                   pmix_tool_connection_cbfunc_t cbfunc,
+                                   void *cbdata);
+#endif
+
   pmix_server_module_t mymodule = {
     .client_connected = server_client_connected_fn,
     .client_finalized = server_client_finalized_fn,
@@ -102,7 +113,11 @@
     .disconnect = server_disconnect_fn,
     .register_events = server_register_events,
     .deregister_events = server_deregister_events,
-    .notify_event = server_notify_event
+    .notify_event = server_notify_event,
+#if HAVE_PMIX_QUERY_FUNCTION
+    .query = server_query,
+    .tool_connected = server_tool_connection
+#endif
 };
 
 opal_pmix_server_module_t *host_module = NULL;
@@ -787,3 +802,159 @@ static pmix_status_t server_notify_event(pmix_status_t code,
 {
     return PMIX_ERR_NOT_SUPPORTED;
 }
+
+#if HAVE_PMIX_QUERY_FUNCTION
+static void _info_rel(void *cbdata)
+{
+    pmix20_opcaddy_t *pcaddy = (pmix20_opcaddy_t*)cbdata;
+
+    OBJ_RELEASE(pcaddy);
+}
+static void info_cbfunc(int status,
+                        opal_list_t *info,
+                        void *cbdata,
+                        opal_pmix_release_cbfunc_t release_fn,
+                        void *release_cbdata)
+{
+    pmix20_opalcaddy_t *opalcaddy = (pmix20_opalcaddy_t*)cbdata;
+    pmix20_opcaddy_t *pcaddy;
+    opal_value_t *kv;
+    size_t n;
+
+    pcaddy = OBJ_NEW(pmix20_opcaddy_t);
+
+    /* convert the status */
+    pcaddy->status = pmix20_convert_opalrc(status);
+
+    /* convert the list to a pmix_info_t array */
+    if (NULL != info) {
+        pcaddy->ninfo = opal_list_get_size(info);
+        if (0 < pcaddy->ninfo) {
+            PMIX_INFO_CREATE(pcaddy->info, pcaddy->ninfo);
+            n = 0;
+            OPAL_LIST_FOREACH(kv, info, opal_value_t) {
+                (void)strncpy(pcaddy->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+                pmix20_value_load(&pcaddy->info[n].value, kv);
+            }
+        }
+    }
+    /* we are done with the incoming data */
+    if (NULL != release_fn) {
+        release_fn(release_cbdata);
+    }
+
+    /* provide the answer downward */
+    if (NULL != opalcaddy->infocbfunc) {
+        opalcaddy->infocbfunc(pcaddy->status, pcaddy->info, pcaddy->ninfo,
+                              opalcaddy->cbdata, _info_rel, pcaddy);
+    }
+    OBJ_RELEASE(opalcaddy);
+}
+
+static pmix_status_t server_query(pmix_proc_t *proct,
+                                  pmix_info_t *info, size_t ninfo,
+                                  pmix_info_t *directives, size_t ndirs,
+                                  pmix_info_cbfunc_t cbfunc,
+                                  void *cbdata)
+{
+    pmix20_opalcaddy_t *opalcaddy;
+    opal_process_name_t requestor;
+    int rc;
+    size_t n;
+    opal_value_t *oinfo;
+
+    if (NULL == host_module || NULL == host_module->query) {
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
+
+    /* setup the caddy */
+    opalcaddy = OBJ_NEW(pmix20_opalcaddy_t);
+    opalcaddy->infocbfunc = cbfunc;
+    opalcaddy->cbdata = cbdata;
+
+    /* convert the requestor */
+    if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&requestor.jobid, proct->nspace))) {
+        OBJ_RELEASE(opalcaddy);
+        return pmix20_convert_opalrc(rc);
+    }
+    requestor.vpid = proct->rank;
+
+    /* convert the info */
+    for (n=0; n < ninfo; n++) {
+        oinfo = OBJ_NEW(opal_value_t);
+        opal_list_append(&opalcaddy->info, &oinfo->super);
+        oinfo->key = strdup(info[n].key);
+        if (OPAL_SUCCESS != (rc = pmix20_value_unload(oinfo, &info[n].value))) {
+            OBJ_RELEASE(opalcaddy);
+            return pmix20_convert_opalrc(rc);
+        }
+    }
+
+    /* we ignore directives for now */
+
+    /* pass the call upwards */
+    if (OPAL_SUCCESS != (rc = host_module->query(&requestor,
+                                                 &opalcaddy->info, NULL,
+                                                 info_cbfunc, opalcaddy))) {
+        OBJ_RELEASE(opalcaddy);
+    }
+
+    return pmix20_convert_opalrc(rc);
+}
+
+static void toolcbfunc(int status,
+                       opal_process_name_t proc,
+                       void *cbdata)
+{
+    pmix20_opalcaddy_t *opalcaddy = (pmix20_opalcaddy_t*)cbdata;
+    pmix_status_t rc;
+    pmix_proc_t p;
+
+
+    /* convert the status */
+    rc = pmix20_convert_opalrc(status);
+
+    /* convert the process name */
+    (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc.jobid);
+    p.rank = proc.vpid;
+
+    /* pass it down */
+    if (NULL != opalcaddy->toolcbfunc) {
+        opalcaddy->toolcbfunc(rc, &p, opalcaddy->cbdata);
+    }
+    OBJ_RELEASE(opalcaddy);
+}
+
+static void server_tool_connection(pmix_info_t *info, size_t ninfo,
+                                   pmix_tool_connection_cbfunc_t cbfunc,
+                                   void *cbdata)
+{
+    pmix20_opalcaddy_t *opalcaddy;
+    size_t n;
+    opal_value_t *oinfo;
+    int rc;
+    pmix_status_t err;
+
+    /* setup the caddy */
+    opalcaddy = OBJ_NEW(pmix20_opalcaddy_t);
+    opalcaddy->toolcbfunc = cbfunc;
+    opalcaddy->cbdata = cbdata;
+
+    /* convert the info */
+    for (n=0; n < ninfo; n++) {
+        oinfo = OBJ_NEW(opal_value_t);
+        opal_list_append(&opalcaddy->info, &oinfo->super);
+        oinfo->key = strdup(info[n].key);
+        if (OPAL_SUCCESS != (rc = pmix20_value_unload(oinfo, &info[n].value))) {
+            OBJ_RELEASE(opalcaddy);
+            err = pmix20_convert_opalrc(rc);
+            if (NULL != cbfunc) {
+                cbfunc(err, NULL, cbdata);
+            }
+        }
+    }
+
+    /* pass it up */
+    host_module->tool_connected(&opalcaddy->info, toolcbfunc, opalcaddy);
+}
+#endif

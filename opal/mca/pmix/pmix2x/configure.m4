@@ -41,12 +41,14 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
            opal_pmix_pmix2x_save_LDFLAGS=$LDFLAGS
            opal_pmix_pmix2x_save_LIBS=$LIBS
 
-           opal_pmix_pmix2x_args="--enable-embedded-mode --with-pmix-symbol-prefix=opal_pmix_pmix2x_ --disable-visibility --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
+           opal_pmix_pmix2x_args="--without-tests-examples --with-pmix-symbol-prefix=opal_pmix_pmix2x_ --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --enable-embedded-hwloc --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
            AS_IF([test "$enable_debug" = "yes"],
                  [opal_pmix_pmix2x_args="--enable-debug $opal_pmix_pmix2x_args"
                   CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
                  [opal_pmix_pmix2x_args="--disable-debug $opal_pmix_pmix2x_args"
                   CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
+           AS_IF([test "$with_devel_headers" = "yes"], [],
+                 [opal_pmix_pmix2x_args="--enable-embedded-mode $opal_pmix_pmix2x_args"])
            CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
 
            OPAL_CONFIG_SUBDIR([$opal_pmix_pmix2x_basedir/pmix],

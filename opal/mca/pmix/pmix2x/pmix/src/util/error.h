@@ -56,6 +56,7 @@
 #define PMIX_ERR_SILENT                                 (PMIX_INTERNAL_ERR_BASE - 25)
 #define PMIX_ERR_UNKNOWN_DATATYPE                       (PMIX_INTERNAL_ERR_BASE - 26)
 #define PMIX_ERR_RESOURCE_BUSY                          (PMIX_INTERNAL_ERR_BASE - 27)
+#define PMIX_ERR_OPERATION_IN_PROGRESS                  (PMIX_INTERNAL_ERR_BASE - 28)
 
 #define PMIX_ERROR_LOG(r)                                           \
  do {                                                               \

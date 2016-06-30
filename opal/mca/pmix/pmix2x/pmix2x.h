@@ -130,6 +130,8 @@ typedef struct {
     pmix_modex_cbfunc_t mdxcbfunc;
     pmix_lookup_cbfunc_t lkupcbfunc;
     pmix_spawn_cbfunc_t spwncbfunc;
+    pmix_info_cbfunc_t infocbfunc;
+    pmix_tool_connection_cbfunc_t toolcbfunc;
     void *cbdata;
     opal_pmix_release_cbfunc_t odmdxfunc;
     void *ocbdata;
@@ -302,7 +304,7 @@ OPAL_MODULE_DECLSPEC pmix_scope_t pmix2x_convert_opalscope(opal_pmix_scope_t sco
 OPAL_MODULE_DECLSPEC pmix_data_range_t pmix2x_convert_opalrange(opal_pmix_data_range_t range);
 OPAL_MODULE_DECLSPEC opal_pmix_data_range_t pmix2x_convert_range(pmix_data_range_t range);
 OPAL_MODULE_DECLSPEC void pmix2x_value_load(pmix_value_t *v,
-                                           opal_value_t *kv);
+                                            opal_value_t *kv);
 OPAL_MODULE_DECLSPEC int pmix2x_value_unload(opal_value_t *kv,
                                             const pmix_value_t *v);
 

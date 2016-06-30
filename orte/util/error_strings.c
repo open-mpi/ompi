@@ -12,7 +12,7 @@
  * Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -236,6 +236,9 @@ int orte_err2str(int errnum, const char **errmsg)
         break;
     case ORTE_ERR_DEBUGGER_RELEASE:
         retval = "Debugger release";
+        break;
+    case ORTE_ERR_PARTIAL_SUCCESS:
+        retval = "Partial success";
         break;
     default:
         if (orte_report_silent_errors) {

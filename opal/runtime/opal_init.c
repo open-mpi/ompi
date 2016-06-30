@@ -259,6 +259,9 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_HANDLERS_COMPLETE:
         retval = "Event handler processing complete";
         break;
+    case OPAL_ERR_PARTIAL_SUCCESS:
+        retval = "Partial success";
+        break;
     default:
         retval = "UNRECOGNIZED";
     }

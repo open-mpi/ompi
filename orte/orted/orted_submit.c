@@ -1896,16 +1896,17 @@ static void launch_recv(int status, orte_process_name_t* sender,
     if (ORTE_SUCCESS == ret) {
         printf("[ORTE] Task: %d is launched! (Job ID: %s)\n", tool_job_index, ORTE_JOBID_PRINT(jobid));
     } else {
-        /* unpack the offending proc and node */
+        /* unpack the offending proc and node, if sent */
         cnt = 1;
-        opal_dss.unpack(buffer, &trk->jdata->state, &cnt, ORTE_JOB_STATE_T);
-        cnt = 1;
-        opal_dss.unpack(buffer, &proc, &cnt, ORTE_PROC);
-        proc->exit_code = ret;
-        app = (orte_app_context_t*)opal_pointer_array_get_item(trk->jdata->apps, proc->app_idx);
-        cnt = 1;
-        opal_dss.unpack(buffer, &node, &cnt, ORTE_NODE);
-        orte_print_aborted_job(trk->jdata, app, proc, node);
+        if (OPAL_SUCCESS == opal_dss.unpack(buffer, &trk->jdata->state, &cnt, ORTE_JOB_STATE_T)) {
+            cnt = 1;
+            opal_dss.unpack(buffer, &proc, &cnt, ORTE_PROC);
+            proc->exit_code = ret;
+            app = (orte_app_context_t*)opal_pointer_array_get_item(trk->jdata->apps, proc->app_idx);
+            cnt = 1;
+            opal_dss.unpack(buffer, &node, &cnt, ORTE_NODE);
+            orte_print_aborted_job(trk->jdata, app, proc, node);
+        }
     }
 
     /* Inform client */

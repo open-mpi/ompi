@@ -41,6 +41,11 @@ BEGIN_C_DECLS
  * these keys are RESERVED */
 #define OPAL_PMIX_ATTR_UNDEF      NULL
 
+#define OPAL_PMIX_SERVER_TOOL_SUPPORT            "pmix.srvr.tool"       // (bool) The host RM wants to declare itself as willing to
+                                                                        //        accept tool connection requests
+#define OPAL_PMIX_SERVER_PIDINFO                 "pmix.srvr.pidinfo"    // (uint32_t) pid of the target server
+
+
 /* identification attributes */
 #define OPAL_PMIX_USERID                        "pmix.euid"             // (uint32_t) effective user id
 #define OPAL_PMIX_GRPID                         "pmix.egid"             // (uint32_t) effective group id
@@ -166,6 +171,12 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_PRELOAD_FILES                 "pmix.preloadfiles"     // (char*) comma-delimited list of files to pre-position
 #define OPAL_PMIX_NON_PMI                       "pmix.nonpmi"           // (bool) spawned procs will not call PMIx_Init
 #define OPAL_PMIX_STDIN_TGT                     "pmix.stdin"            // (uint32_t) spawned proc rank that is to receive stdin
+#define OPAL_PMIX_FWD_STDIN                     "pmix.fwd.stdin"        // (bool) forward my stdin to the designated proc
+#define OPAL_PMIX_FWD_STDOUT                    "pmix.fwd.stdout"       // (bool) forward stdout from spawned procs to me
+#define OPAL_PMIX_FWD_STDERR                    "pmix.fwd.stderr"       // (bool) forward stderr from spawned procs to me
+
+/* query attributes */
+#define OPAL_PMIX_QUERY_NAMESPACES              "pmix.qry.ns"           // (char*) request a comma-delimited list of active nspaces
 
 
 /* define a scope for data "put" by PMI per the following:
@@ -356,6 +367,24 @@ typedef void (*opal_pmix_evhandler_reg_cbfunc_t)(int status,
 typedef void (*opal_pmix_value_cbfunc_t)(int status,
                                          opal_value_t *kv, void *cbdata);
 
+
+/* define a callback function for calls to PMIx_Query. The status
+ * indicates if requested data was found or not - a list of
+ * opal_value_t will contain the key/value pairs. */
+typedef void (*opal_pmix_info_cbfunc_t)(int status,
+                                        opal_list_t *info,
+                                        void *cbdata,
+                                        opal_pmix_release_cbfunc_t release_fn,
+                                        void *release_cbdata);
+
+/* Callback function for incoming tool connections - the host
+ * RTE shall provide a jobid/rank for the connecting tool. We
+ * assume that a rank=0 will be the normal assignment, but allow
+ * for the future possibility of a parallel set of tools
+ * connecting, and thus each proc requiring a rank */
+typedef void (*opal_pmix_tool_connection_cbfunc_t)(int status,
+                                                   opal_process_name_t proc,
+                                                   void *cbdata);
 
 
 END_C_DECLS

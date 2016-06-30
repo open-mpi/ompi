@@ -1026,41 +1026,41 @@ static pmix_status_t send_connect_ack(int sd)
 }
 
     /* receive the status reply */
-rc = pmix_usock_recv_blocking(sd, (char*)&reply, sizeof(int));
-if (PMIX_SUCCESS != rc) {
-    PMIX_ERROR_LOG(rc);
-    return rc;
-}
-
-    /* see if they want us to do the handshake */
-if (PMIX_ERR_READY_FOR_HANDSHAKE == reply) {
-    if (NULL == pmix_sec.client_handshake) {
-        return PMIX_ERR_HANDSHAKE_FAILED;
-    }
-    if (PMIX_SUCCESS != (rc = pmix_sec.client_handshake(sd))) {
+    rc = pmix_usock_recv_blocking(sd, (char*)&reply, sizeof(int));
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
         return rc;
     }
-} else if (PMIX_SUCCESS != reply) {
-    return reply;
-}
 
-pmix_output_verbose(2, pmix_globals.debug_output,
-                    "pmix: RECV CONNECT CONFIRMATION");
+    /* see if they want us to do the handshake */
+    if (PMIX_ERR_READY_FOR_HANDSHAKE == reply) {
+        if (NULL == pmix_sec.client_handshake) {
+            return PMIX_ERR_HANDSHAKE_FAILED;
+        }
+        if (PMIX_SUCCESS != (rc = pmix_sec.client_handshake(sd))) {
+            return rc;
+        }
+    } else if (PMIX_SUCCESS != reply) {
+        return reply;
+    }
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix: RECV CONNECT CONFIRMATION");
 
     /* receive our index into the server's client array */
-rc = pmix_usock_recv_blocking(sd, (char*)&pmix_globals.pindex, sizeof(int));
-if (PMIX_SUCCESS != rc) {
-    PMIX_ERROR_LOG(rc);
-    return rc;
-}
-if (sockopt) {
-        /* return the socket to normal */
-    if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
-        return PMIX_ERR_UNREACH;
+    rc = pmix_usock_recv_blocking(sd, (char*)&pmix_globals.pindex, sizeof(int));
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
     }
-}
+        if (sockopt) {
+            /* return the socket to normal */
+        if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
+            return PMIX_ERR_UNREACH;
+        }
+    }
 
-return PMIX_SUCCESS;
+    return PMIX_SUCCESS;
 }
 
 void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)

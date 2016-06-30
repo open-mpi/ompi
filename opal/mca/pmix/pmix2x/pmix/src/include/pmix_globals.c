@@ -191,3 +191,17 @@ PMIX_CLASS_INSTANCE(pmix_shift_caddy_t,
 PMIX_CLASS_INSTANCE(pmix_info_caddy_t,
                     pmix_list_item_t,
                     NULL, NULL);
+
+static void qcon(pmix_query_caddy_t *p)
+{
+    p->info = NULL;
+    p->ninfo = 0;
+    p->directives = NULL;
+    p->ndirs = 0;
+    p->cbfunc = NULL;
+    p->cbdata = NULL;
+    p->relcbfunc = NULL;
+}
+PMIX_CLASS_INSTANCE(pmix_query_caddy_t,
+                    pmix_object_t,
+                    qcon, NULL);

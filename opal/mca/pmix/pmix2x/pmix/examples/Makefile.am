@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/src/api
 
-noinst_PROGRAMS = client dmodex dynamic fault pub server
+noinst_PROGRAMS = client dmodex dynamic fault pub tool
 
 client_SOURCES = client.c
 client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
@@ -43,9 +43,9 @@ pub_SOURCES = pub.c
 pub_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pub_LDADD = $(top_builddir)/libpmix.la
 
-server_SOURCES = pub.c
-server_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
-server_LDADD = $(top_builddir)/libpmix.la
+tool_SOURCES = tool.c
+tool_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
+tool_LDADD = $(top_builddir)/libpmix.la
 
 distclean-local:
 	rm -f *.o client dmodex dynamic fault pub server

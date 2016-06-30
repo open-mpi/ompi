@@ -527,6 +527,8 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
 
     m = 1;
     switch (val->type) {
+        case PMIX_UNDEF:
+        break;
         case PMIX_BOOL:
         if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.flag, &m, PMIX_BOOL))) {
             return ret;
