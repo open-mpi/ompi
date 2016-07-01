@@ -1,5 +1,6 @@
 /**
   Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+  Copyright (c) 2016      IBM Corporation.  All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -50,6 +51,32 @@ static void mca_coll_hcoll_module_clear(mca_coll_hcoll_module_t *hcoll_module)
     hcoll_module->previous_iallgatherv = NULL;
     hcoll_module->previous_igatherv    = NULL;
     hcoll_module->previous_ireduce     = NULL;
+    hcoll_module->previous_ialltoall   = NULL;
+    hcoll_module->previous_ialltoallv  = NULL;
+
+    hcoll_module->previous_barrier_module = NULL;
+    hcoll_module->previous_bcast_module      = NULL;
+    hcoll_module->previous_allreduce_module  = NULL;
+    hcoll_module->previous_reduce_module     = NULL;
+    hcoll_module->previous_allgather_module  = NULL;
+    hcoll_module->previous_allgatherv_module = NULL;
+    hcoll_module->previous_gather_module     = NULL;
+    hcoll_module->previous_gatherv_module    = NULL;
+    hcoll_module->previous_alltoall_module   = NULL;
+    hcoll_module->previous_alltoallv_module  = NULL;
+    hcoll_module->previous_alltoallw_module  = NULL;
+    hcoll_module->previous_reduce_scatter_module  = NULL;
+    hcoll_module->previous_ibarrier_module    = NULL;
+    hcoll_module->previous_ibcast_module      = NULL;
+    hcoll_module->previous_iallreduce_module  = NULL;
+    hcoll_module->previous_ireduce_module     = NULL;
+    hcoll_module->previous_iallgather_module  = NULL;
+    hcoll_module->previous_iallgatherv_module = NULL;
+    hcoll_module->previous_igatherv_module    = NULL;
+    hcoll_module->previous_ialltoall_module   = NULL;
+    hcoll_module->previous_ialltoallv_module  = NULL;
+
+
 }
 
 static void mca_coll_hcoll_module_construct(mca_coll_hcoll_module_t *hcoll_module)
@@ -62,6 +89,8 @@ void mca_coll_hcoll_mem_release_cb(void *buf, size_t length,
 {
     hcoll_mem_unmap(buf, length, cbdata, from_alloc);
 }
+
+#define OBJ_RELEASE_IF_NOT_NULL( obj ) if( NULL != (obj) ) OBJ_RELEASE( obj );
 
 static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module)
 {
@@ -79,25 +108,25 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
        destroy hcoll context*/
 
     if (hcoll_module->hcoll_context != NULL){
-        OBJ_RELEASE(hcoll_module->previous_barrier_module);
-        OBJ_RELEASE(hcoll_module->previous_bcast_module);
-        OBJ_RELEASE(hcoll_module->previous_allreduce_module);
-        OBJ_RELEASE(hcoll_module->previous_allgather_module);
-        OBJ_RELEASE(hcoll_module->previous_allgatherv_module);
-        OBJ_RELEASE(hcoll_module->previous_gatherv_module);
-        OBJ_RELEASE(hcoll_module->previous_alltoall_module);
-        OBJ_RELEASE(hcoll_module->previous_alltoallv_module);
-        OBJ_RELEASE(hcoll_module->previous_reduce_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_barrier_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_bcast_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_allreduce_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_allgather_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_allgatherv_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_gatherv_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_alltoall_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_alltoallv_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_reduce_module);
 
-        OBJ_RELEASE(hcoll_module->previous_ibarrier_module);
-        OBJ_RELEASE(hcoll_module->previous_ibcast_module);
-        OBJ_RELEASE(hcoll_module->previous_iallreduce_module);
-        OBJ_RELEASE(hcoll_module->previous_iallgather_module);
-        OBJ_RELEASE(hcoll_module->previous_iallgatherv_module);
-        OBJ_RELEASE(hcoll_module->previous_igatherv_module);
-        OBJ_RELEASE(hcoll_module->previous_ialltoall_module);
-        OBJ_RELEASE(hcoll_module->previous_ialltoallv_module);
-        OBJ_RELEASE(hcoll_module->previous_ireduce_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ibarrier_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ibcast_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_iallreduce_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_iallgather_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_iallgatherv_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_igatherv_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ialltoall_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ialltoallv_module);
+        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ireduce_module);
 
         /*
         OBJ_RELEASE(hcoll_module->previous_allgatherv_module);
