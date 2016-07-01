@@ -688,6 +688,7 @@ int mca_pml_yalla_start(size_t count, ompi_request_t** requests)
 
     for (i = 0; i < count; ++i) {
         req = (mca_pml_yalla_base_request_t *)requests[i];
+        sreq = (mca_pml_yalla_send_request_t *)req;
 
         if ((req == NULL) || (OMPI_REQUEST_PML != req->ompi.req_type)) {
             /* Skip irrelevant requests */
@@ -696,10 +697,9 @@ int mca_pml_yalla_start(size_t count, ompi_request_t** requests)
 
         PML_YALLA_ASSERT(req->ompi.req_state != OMPI_REQUEST_INVALID);
         PML_YALLA_RESET_OMPI_REQ(&req->ompi, OMPI_REQUEST_ACTIVE);
-        PML_YALLA_RESET_PML_REQ(req);
+        PML_YALLA_RESET_PML_REQ(req, PML_YALLA_MXM_REQBASE(sreq));
 
         if (req->flags & MCA_PML_YALLA_REQUEST_FLAG_SEND) {
-            sreq = (mca_pml_yalla_send_request_t *)req;
             if (req->flags & MCA_PML_YALLA_REQUEST_FLAG_BSEND) {
                 PML_YALLA_VERBOSE(8, "start bsend request %p", (void *)sreq);
                 rc = mca_pml_yalla_bsend(&sreq->mxm);
