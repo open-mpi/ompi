@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +46,7 @@ static const char FUNC_NAME[] = "MPI_Ireduce_scatter";
 int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[],
                         MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
-    int i, err, size;
+    int i, err, size, count;
 
     MEMCHECKER(
         int rank;
@@ -108,6 +109,21 @@ int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts
           OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, recvcounts[i]);
           OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
+    }
+
+    /* MPI standard says that reductions have to have a count of at least 1,
+     * but some benchmarks (e.g., IMB) calls this function with a count of 0.
+     * So handle that case.
+     */
+    size = ompi_comm_size(comm);
+    for (count = i = 0; i < size; ++i) {
+        if (0 == recvcounts[i]) {
+            ++count;
+        }
+    }
+    if (size == count) {
+        *request = &ompi_request_empty;
+        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();
