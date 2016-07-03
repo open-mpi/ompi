@@ -87,6 +87,13 @@ pmix_status_t pmix_start_listening(pmix_listener_t *lt)
         printf("%s:%d socket() failed\n", __FILE__, __LINE__);
         return PMIX_ERROR;
     }
+    /* Set the socket to close-on-exec so that no children inherit
+     * this FD */
+    if (pmix_fd_set_cloexec(lt->socket) != PMIX_SUCCESS) {
+        CLOSE_THE_SOCKET(lt->socket);
+        return PMIX_ERROR;
+    }
+
 
 
     addrlen = sizeof(struct sockaddr_un);
@@ -296,8 +303,17 @@ static void* listen_thread(void *obj)
                     PMIX_RELEASE(pending_connection);
                     if (pmix_socket_errno != EAGAIN ||
                         pmix_socket_errno != EWOULDBLOCK) {
-                        if (EMFILE == pmix_socket_errno) {
+                        if (EMFILE == pmix_socket_errno ||
+                            ENOBUFS == pmix_socket_errno ||
+                            ENOMEM == pmix_socket_errno) {
                             PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);
+                        } else if (EINVAL == pmix_socket_errno ||
+                                   EINTR == pmix_socket_errno) {
+                            /* race condition at finalize */
+                            goto done;
+                        } else if (ECONNABORTED == pmix_socket_errno) {
+                            /* they aborted the attempt */
+                            continue;
                         } else {
                             pmix_output(0, "listen_thread: accept() failed: %s (%d).",
                                         strerror(pmix_socket_errno), pmix_socket_errno);
