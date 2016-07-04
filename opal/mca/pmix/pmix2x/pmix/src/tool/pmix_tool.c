@@ -218,9 +218,12 @@ pmix_output(0, "TOOL INIT");
             if (0 == strcmp(PMIX_EVENT_BASE, info[n].key)) {
                 pmix_globals.evbase = (pmix_event_base_t*)info[n].value.data.ptr;
                 pmix_globals.external_evbase = true;
+            } else if (strcmp(info[i].key, PMIX_SERVER_PIDINFO) == 0) {
+                server_pid = info[i].value.data.integer;
             }
         }
     }
+
     /* setup the globals */
     pmix_globals_init();
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
@@ -254,31 +257,19 @@ pmix_output(0, "TOOL INIT");
         }
     }
 
-     /* setup the path to the daemon rendezvous point */
-      memset(&address, 0, sizeof(struct sockaddr_un));
-      address.sun_family = AF_UNIX;
-      /* Get first 10 char's of hostname to match what the server is doing */
-       gethostname(hostname, hostnamelen);
+    /* setup the path to the daemon rendezvous point */
+    memset(&address, 0, sizeof(struct sockaddr_un));
+    address.sun_family = AF_UNIX;
+    /* Get first 10 char's of hostname to match what the server is doing */
+    gethostname(hostname, hostnamelen);
 
-     /* Get the local hostname, and look for a file named
-     * /tmp/pmix.hostname.tool - this file will contain
-     * the URI where the server is listening. The URI consists
-     * of 3 parts - the code below will parse the string read
-     * from the file and connect accordingly */
-
-    for (i = 0; i < (int)ninfo; i++) {
-        if (strcmp(info[i].key, PMIX_SERVER_PIDINFO) == 0) {
-            server_pid = info[i].value.data.integer;
-            break;
-        }
-    }
     /* if they gave us a specific pid, then look for that
      * particular server - otherwise, see if there is only
      * one on this node and default to it */
     if (server_pid != -1) {
         snprintf(address.sun_path, sizeof(address.sun_path)-1, "%s/pmix.%s.%d", tdir, hostname, server_pid);
         /* if the rendezvous file doesn't exist, that's an error */
-         if (0 != access(address.sun_path, R_OK)) {
+        if (0 != access(address.sun_path, R_OK)) {
             pmix_output_close(pmix_globals.debug_output);
             pmix_output_finalize();
             pmix_class_finalize();
@@ -294,6 +285,7 @@ pmix_output(0, "TOOL INIT");
         }
         /* search the entries for something that starts with pmix.hostname */
         if (0 > asprintf(&tmp, "pmix.%s", hostname)) {
+            closedir(cur_dirp);
             return PMIX_ERR_NOMEM;
         }
         evar = NULL;
@@ -301,6 +293,8 @@ pmix_output(0, "TOOL INIT");
             if (0 == strncmp(dir_entry->d_name, tmp, strlen(tmp))) {
                 /* found one - if more than one, then that's an error */
                 if (NULL != evar) {
+                    closedir(cur_dirp);
+                    free(evar);
                     free(tmp);
                     pmix_output_close(pmix_globals.debug_output);
                     pmix_output_finalize();
@@ -833,14 +827,12 @@ static pmix_status_t usock_connect(struct sockaddr_un *addr, int *fd)
                                     "timeout connecting to server");
                 CLOSE_THE_SOCKET(sd);
                 continue;
-            }
-
-            /* Some kernels (Linux 2.6) will automatically software
-               abort a connection that was ECONNREFUSED on the last
-               attempt, without even trying to establish the
-               connection.  Handle that case in a semi-rational
-               way by trying twice before giving up */
-               else if (ECONNABORTED == pmix_socket_errno) {
+            } else if (ECONNABORTED == pmix_socket_errno) {
+                /* Some kernels (Linux 2.6) will automatically software
+                  abort a connection that was ECONNREFUSED on the last
+                  attempt, without even trying to establish the
+                  connection.  Handle that case in a semi-rational
+                  way by trying twice before giving up */
                 pmix_output_verbose(2, pmix_globals.debug_output,
                                     "connection to server aborted by OS - retrying");
                 CLOSE_THE_SOCKET(sd);
@@ -848,9 +840,10 @@ static pmix_status_t usock_connect(struct sockaddr_un *addr, int *fd)
             } else {
               pmix_output_verbose(2, pmix_globals.debug_output,
                                   "Failed to connect, errno = %d, err= %s\n", errno, strerror(errno));
+              CLOSE_THE_SOCKET(sd);
               continue;
+            }
         }
-    }
         /* otherwise, the connect succeeded - so break out of the loop */
         break;
     }

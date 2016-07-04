@@ -434,6 +434,8 @@ static void _toolconn(int sd, short args, void *cbdata)
     /* otherwise, we have to send the request to the HNP.
      * Eventually, when we switch to nspace instead of an
      * integer jobid, we'll just locally assign this value */
+     tool.jobid = ORTE_JOBID_INVALID;
+     tool.vpid = ORTE_VPID_INVALID;
     if (NULL != cd->toolcbfunc) {
         cd->toolcbfunc(ORTE_ERR_NOT_SUPPORTED, tool, cd->cbdata);
     }
