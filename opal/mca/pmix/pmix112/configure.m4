@@ -14,7 +14,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -30,7 +30,7 @@ AC_DEFUN([MCA_opal_pmix_pmix112_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([PMIX_VERSION opal_pmix_pmix112_save_CPPFLAGS opal_pmix_pmix112_save_LDFLAGS opal_pmix_pmix112_save_LIBS opal_pmix_pmix112_basedir opal_pmix_pmix112_save_cflags])
 
-    AS_IF([test "$opal_external_pmix_happy" = "yes"],
+    AS_IF([false],
           [AC_MSG_WARN([using an external pmix; disqualifiying this component])
            opal_pmix_pmix112_happy=0],
           [PMIX_VERSION=
@@ -66,6 +66,16 @@ AC_DEFUN([MCA_opal_pmix_pmix112_CONFIG],[
            LDFLAGS=$opal_pmix_pmix112_save_LDFLAGS
            LIBS=$opal_pmix_pmix112_save_LIBS
           ])
+
+    # If we are not building the internal pmix, then indicate that
+    # this component should not be built.  NOTE: we still did all the
+    # above configury so that all the proper GNU Autotools
+    # infrastructure is setup properly (e.g., w.r.t. SUBDIRS=pmix in
+    # this directory's Makefile.am, we still need the Autotools "make
+    # distclean" infrastructure to work properly).
+    AS_IF([test "$opal_external_pmix_happy" = "yes"],
+          [AC_MSG_WARN([using an external pmix; disqualifying this component])
+           opal_pmix_pmix112_happy=0])
 
     AS_IF([test $opal_pmix_pmix112_happy -eq 1],
           [$1],
