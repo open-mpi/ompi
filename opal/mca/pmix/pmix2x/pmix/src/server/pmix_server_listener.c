@@ -648,10 +648,8 @@ static pmix_status_t pmix_server_authenticate(pmix_pending_connection_t *pnd,
                 pmix_output_verbose(2, pmix_globals.debug_output,
                                     "validation of client credential failed");
                 free(msg);
-                if (NULL != psave) {
-                    pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
-                    PMIX_RELEASE(psave);
-                }
+                pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
+                PMIX_RELEASE(psave);
                 /* send an error reply to the client */
                 goto error;
             }
