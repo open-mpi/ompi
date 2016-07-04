@@ -29,19 +29,22 @@ EXTRA_DIST = \
 
 SUBDIRS = hwloc
 
+# Headers and sources
+headers = hwloc1113.h
+sources = hwloc1113_component.c
 
 else
 
 SUBDIRS =
+
+headers =
+sources =
 
 endif
 
 DIST_SUBDIRS= $(SUBDIRS)
 
 
-# Headers and sources
-headers = hwloc1113.h
-sources = hwloc1113_component.c
 
 # We only ever build this component statically
 noinst_LTLIBRARIES = libmca_hwloc_hwloc1113.la
