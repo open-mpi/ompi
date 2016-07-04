@@ -15,6 +15,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +32,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/op/op.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -74,6 +76,25 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
 {
     if (op == &ompi_mpi_op_replace.op) {
         return OMPI_ERR_NOT_SUPPORTED;
+    }
+
+    /* TODO: Remove the following check when ompi adds support */
+    if(MPI_MINLOC == op || MPI_MAXLOC == op) {
+        if(MPI_SHORT_INT == datatype ||
+           MPI_DOUBLE_INT == datatype ||
+           MPI_LONG_INT == datatype ||
+           MPI_LONG_DOUBLE_INT == datatype) {
+           ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
+           opal_output(0, "Error: %s datatype is currently "
+                       "unsupported for MPI_MINLOC/MPI_MAXLOC "
+                       "operation\n", datatype->name);
+           opal_show_help("help-mpi-api.txt", "mpi-abort", true,
+                          comm->c_my_rank,
+                          ('\0' != comm->c_name[0]) ? comm->c_name : "<Unknown>",
+                          -1);
+
+           ompi_mpi_abort(comm, -1);
+        }
     }
 
     if (ompi_datatype_is_predefined(datatype)) {
