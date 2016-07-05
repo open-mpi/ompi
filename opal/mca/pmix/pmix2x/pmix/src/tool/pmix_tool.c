@@ -189,7 +189,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_kval_t *kptr;
     pmix_status_t rc;
     pmix_nspace_t *nptr, *nsptr;
-    int i, server_pid = -1;
+    int server_pid = -1;
     int hostnamelen = 10;
     char hostname[hostnamelen];
     DIR *cur_dirp = NULL;
@@ -218,8 +218,8 @@ pmix_output(0, "TOOL INIT");
             if (0 == strcmp(PMIX_EVENT_BASE, info[n].key)) {
                 pmix_globals.evbase = (pmix_event_base_t*)info[n].value.data.ptr;
                 pmix_globals.external_evbase = true;
-            } else if (strcmp(info[i].key, PMIX_SERVER_PIDINFO) == 0) {
-                server_pid = info[i].value.data.integer;
+            } else if (strcmp(info[n].key, PMIX_SERVER_PIDINFO) == 0) {
+                server_pid = info[n].value.data.integer;
             }
         }
     }
