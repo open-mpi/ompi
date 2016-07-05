@@ -36,16 +36,16 @@ int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param) {
 
 /* linear iscan
  * working principle:
- * 1. each node (but node 0) receives from left neigbor
+ * 1. each node (but node 0) receives from left neighbor
  * 2. performs op
- * 3. all but rank p-1 do sends to it's right neigbor and exits
+ * 3. all but rank p-1 do sends to it's right neighbor and exits
  *
  */
 int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                            struct ompi_communicator_t *comm, ompi_request_t ** request,
                            struct mca_coll_base_module_2_1_0_t *module) {
   int rank, p, res;
-  MPI_Aint ext;
+  ptrdiff_t gap, span;
   NBC_Schedule *schedule;
   char inplace;
   NBC_Handle *handle;
@@ -56,13 +56,7 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
-  res = ompi_datatype_type_extent (datatype, &ext);
-  if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
-    return res;
-  }
-
-  if ((rank == 0) && !inplace) {
+  if (!inplace) {
     /* copy data to receivebuf */
     res = NBC_Copy (sendbuf, count, datatype, recvbuf, count, datatype, comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -73,12 +67,6 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
   res = NBC_Init_handle(comm, &handle, libnbc_module);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
-  }
-
-  handle->tmpbuf = malloc (ext * count);
-  if (NULL == handle->tmpbuf) {
-    NBC_Return_handle (handle);
-    return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -103,8 +91,15 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
     handle->schedule = schedule;
 
     if(rank != 0) {
+      span = opal_datatype_span(&datatype->super, count, &gap);
+      handle->tmpbuf = malloc (span);
+      if (NULL == handle->tmpbuf) {
+        NBC_Return_handle (handle);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+      }
+
       /* we have to wait until we have the data */
-      res = NBC_Sched_recv (0, true, count, datatype, rank-1, schedule, true);
+      res = NBC_Sched_recv ((void *)(-gap), true, count, datatype, rank-1, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (handle);
         return res;
@@ -112,7 +107,7 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
 
       /* perform the reduce in my local buffer */
       /* this cannot be done until handle->tmpbuf is unused :-( so barrier after the op */
-      res = NBC_Sched_op (recvbuf, false, sendbuf, false, 0, true, count, datatype, op, schedule,
+      res = NBC_Sched_op ((void *)(-gap), true, recvbuf, false, count, datatype, op, schedule,
                           true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (handle);
