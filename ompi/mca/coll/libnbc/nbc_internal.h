@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -92,6 +92,7 @@ typedef struct {
   MPI_Datatype datatype;
   int dest;
   char tmpbuf;
+  bool local;
 } NBC_Args_send;
 
 /* the receive argument struct */
@@ -102,6 +103,7 @@ typedef struct {
   MPI_Datatype datatype;
   char tmpbuf;
   int source;
+  bool local;
 } NBC_Args_recv;
 
 /* the operation argument struct */
@@ -109,10 +111,8 @@ typedef struct {
   NBC_Fn_type type;
   char tmpbuf1;
   char tmpbuf2;
-  char tmpbuf3;
   const void *buf1;
   void *buf2;
-  void *buf3;
   MPI_Op op;
   MPI_Datatype datatype;
   int count;
@@ -144,8 +144,10 @@ typedef struct {
 
 /* internal function prototypes */
 int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_local_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest,NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier);
-int NBC_Sched_op (void* buf3, char tmpbuf3, const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+int NBC_Sched_local_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
                   MPI_Op op, NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount,
                     MPI_Datatype tgttype, NBC_Schedule *schedule, bool barrier);
