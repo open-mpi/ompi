@@ -296,7 +296,7 @@ static int rte_init(void)
          */
         if (ORTE_SUCCESS != (ret = orte_session_dir(false,
                                                     orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
+                                                    orte_process_info.nodename,
                                                     ORTE_PROC_MY_NAME))) {
             error = "orte_session_dir define";
             goto error;
@@ -309,7 +309,7 @@ static int rte_init(void)
         /* now actually create the directory tree */
         if (ORTE_SUCCESS != (ret = orte_session_dir(true,
                                                     orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
+                                                    orte_process_info.nodename,
                                                     ORTE_PROC_MY_NAME))) {
             error = "orte_session_dir";
             goto error;

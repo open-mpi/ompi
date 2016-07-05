@@ -121,7 +121,7 @@ BEGIN_C_DECLS
  *                "false") or created (if create is "true").
  */
 ORTE_DECLSPEC int orte_session_dir(bool create, char *prefix, char *hostid,
-                     char *batchid, orte_process_name_t *proc);
+                                   orte_process_name_t *proc);
 
 /*
  * Construct the session directory name from the input parameters.
@@ -131,7 +131,6 @@ ORTE_DECLSPEC int orte_session_dir_get_name(char **fulldirpath,
                                             char **prfx,
                                             char **frontend,
                                             char *hostid,
-                                            char *batchid,
                                             orte_process_name_t *proc);
 
 /** The orte_session_dir_finalize() function performs a cleanup of the

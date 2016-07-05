@@ -739,7 +739,7 @@ static int raw_link_local_files(orte_job_t *jdata,
         path = NULL;
         rc = orte_session_dir_get_name(&path, &prefix, NULL,
                                        orte_process_info.nodename,
-                                       NULL, &proc->name);
+                                       &proc->name);
         /* create it, if it doesn't already exist */
         if (OPAL_SUCCESS != (rc = opal_os_dirpath_create(path, S_IRWXU))) {
             ORTE_ERROR_LOG(rc);
