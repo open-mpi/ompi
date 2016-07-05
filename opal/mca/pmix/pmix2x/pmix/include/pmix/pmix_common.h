@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -58,6 +60,12 @@
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h> /* for struct timeval */
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h> /* for uid_t and gid_t */
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h> /* for uid_t and gid_t */
 #endif
 
 BEGIN_C_DECLS
