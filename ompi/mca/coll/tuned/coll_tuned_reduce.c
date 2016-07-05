@@ -623,7 +623,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     int i, rank, err, size;
     ptrdiff_t extent, dsize, gap;
     char *free_buffer = NULL, *pml_buffer = NULL;
-    char *inplace_temp = NULL, *inbuf;
+    char *inplace_temp_free = NULL, *inbuf;
 
     /* Initialize */
 
@@ -650,11 +650,11 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
     if (MPI_IN_PLACE == sbuf) {
         sbuf = rbuf;
-        inplace_temp = (char*)malloc(dsize);
-        if (NULL == inplace_temp) {
+        inplace_temp_free = (char*)malloc(dsize);
+        if (NULL == inplace_temp_free) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        rbuf = inplace_temp - gap;
+        rbuf = inplace_temp_free - gap;
     }
 
     if (size > 1) {
@@ -700,15 +700,14 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
         ompi_op_reduce(op, inbuf, rbuf, count, dtype);
     }
 
-    if (NULL != inplace_temp) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, 
-                                                  inplace_temp);
+    if (NULL != inplace_temp_free) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, rbuf);
     }
     err = MPI_SUCCESS;
 
   exit:
-    if (NULL != inplace_temp) {
-        free(inplace_temp);
+    if (NULL != inplace_temp_free) {
+        free(inplace_temp_free);
     }
     if (NULL != free_buffer) {
         free(free_buffer);
