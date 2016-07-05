@@ -6,6 +6,8 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  */
 
@@ -97,7 +99,8 @@ typedef struct {
     pmix_listener_protocol_t protocol;
     int sd;
     char nspace[PMIX_MAX_NSLEN+1];
-    char *msg;
+    pmix_info_t *info;
+    size_t ninfo;
     pmix_status_t status;
     struct sockaddr_storage addr;
 } pmix_pending_connection_t;
@@ -212,7 +215,8 @@ PMIX_CLASS_DECLARATION(pmix_usock_queue_t);
         event_active(&queue->ev, EV_WRITE, 1);                          \
     } while (0)
 
-pmix_status_t pmix_start_listening(pmix_listener_t *lt);
+pmix_status_t pmix_prepare_listening(pmix_listener_t *lt, bool *need_listener);
+pmix_status_t pmix_start_listening(void);
 void pmix_stop_listening(void);
 
 bool pmix_server_trk_update(pmix_server_trkr_t *trk);
@@ -279,15 +283,15 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
 void pmix_server_deregister_events(pmix_peer_t *peer,
                                    pmix_buffer_t *buf);
 
-pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
-                                                  pmix_buffer_t *buf,
-                                                  pmix_op_cbfunc_t cbfunc,
-                                                  void *cbdata);
 pmix_status_t pmix_server_query(pmix_peer_t *peer,
                                 pmix_buffer_t *buf,
                                 pmix_info_cbfunc_t cbfunc,
                                 void *cbdata);
 
+pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
+                                                  pmix_buffer_t *buf,
+                                                  pmix_op_cbfunc_t cbfunc,
+                                                  void *cbdata);
 void pmix_server_execute_collective(int sd, short args, void *cbdata);
 
 void pmix_server_queue_message(int fd, short args, void *cbdata);

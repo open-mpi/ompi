@@ -227,7 +227,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "sock:send_handler SENDING TO PEER %s:%d tag %d with %s msg",
                         peer->info->nptr->nspace, peer->info->rank,
-                        (NULL == msg) ? -1 : msg->hdr.tag,
+                        (NULL == msg) ? UINT_MAX : msg->hdr.tag,
                         (NULL == msg) ? "NULL" : "NON-NULL");
     if (NULL != msg) {
         if (!msg->hdr_sent) {

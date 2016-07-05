@@ -53,6 +53,7 @@
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/fd.h"
+#include "src/util/getid.h"
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
 #include "src/util/progress_threads.h"
@@ -73,7 +74,7 @@ static pthread_t engine;
 /*
  * start listening on our rendezvous file
  */
-pmix_status_t pmix_start_listening(pmix_listener_t *lt)
+pmix_status_t pmix_prepare_listening(pmix_listener_t *lt, bool *need_listener)
 {
     int flags;
     pmix_status_t rc;
@@ -93,7 +94,6 @@ pmix_status_t pmix_start_listening(pmix_listener_t *lt)
         CLOSE_THE_SOCKET(lt->socket);
         return PMIX_ERROR;
     }
-
 
 
     addrlen = sizeof(struct sockaddr_un);
@@ -137,16 +137,18 @@ pmix_status_t pmix_start_listening(pmix_listener_t *lt)
         goto sockerror;
     }
 
-    /* setup my version for validating connections - we
-     * only check the major version numbers */
-    myversion = strdup(PMIX_VERSION);
-    /* find the first '.' */
-    ptr = strchr(myversion, '.');
-    if (NULL != ptr) {
-        ++ptr;
-        /* stop it at the second '.', if present */
-        if (NULL != (ptr = strchr(ptr, '.'))) {
-            *ptr = '\0';
+    if (NULL == myversion) {
+        /* setup my version for validating connections - we
+         * only check the major version numbers */
+        myversion = strdup(PMIX_VERSION);
+        /* find the first '.' */
+        ptr = strchr(myversion, '.');
+        if (NULL != ptr) {
+            ++ptr;
+            /* stop it at the second '.', if present */
+            if (NULL != (ptr = strchr(ptr, '.'))) {
+                *ptr = '\0';
+            }
         }
     }
 
@@ -157,27 +159,7 @@ pmix_status_t pmix_start_listening(pmix_listener_t *lt)
     }
 
     if (PMIX_SUCCESS != rc && !pmix_server_globals.listen_thread_active) {
-        /*** spawn internal listener thread */
-        if (0 > pipe(pmix_server_globals.stop_thread)) {
-            PMIX_ERROR_LOG(PMIX_ERR_IN_ERRNO);
-            return PMIX_ERR_OUT_OF_RESOURCE;
-        }
-        /* Make sure the pipe FDs are set to close-on-exec so that
-           they don't leak into children */
-        if (pmix_fd_set_cloexec(pmix_server_globals.stop_thread[0]) != PMIX_SUCCESS ||
-            pmix_fd_set_cloexec(pmix_server_globals.stop_thread[1]) != PMIX_SUCCESS) {
-            PMIX_ERROR_LOG(PMIX_ERR_IN_ERRNO);
-            close(pmix_server_globals.stop_thread[0]);
-            close(pmix_server_globals.stop_thread[1]);
-            return PMIX_ERR_OUT_OF_RESOURCE;
-        }
-        /* fork off the listener thread */
-        if (0 > pthread_create(&engine, NULL, listen_thread, NULL)) {
-            pmix_server_globals.listen_thread_active = false;
-            return PMIX_ERROR;
-        } else {
-                pmix_server_globals.listen_thread_active = true;
-        }
+        *need_listener = true;
     }
 
     return PMIX_SUCCESS;
@@ -186,6 +168,31 @@ sockerror:
     (void)close(lt->socket);
     lt->socket = -1;
     return PMIX_ERROR;
+}
+
+pmix_status_t pmix_start_listening(void) {
+    /*** spawn internal listener thread */
+    if (0 > pipe(pmix_server_globals.stop_thread)) {
+        PMIX_ERROR_LOG(PMIX_ERR_IN_ERRNO);
+        return PMIX_ERR_OUT_OF_RESOURCE;
+    }
+    /* Make sure the pipe FDs are set to close-on-exec so that
+       they don't leak into children */
+    if (pmix_fd_set_cloexec(pmix_server_globals.stop_thread[0]) != PMIX_SUCCESS ||
+        pmix_fd_set_cloexec(pmix_server_globals.stop_thread[1]) != PMIX_SUCCESS) {
+        PMIX_ERROR_LOG(PMIX_ERR_IN_ERRNO);
+        close(pmix_server_globals.stop_thread[0]);
+        close(pmix_server_globals.stop_thread[1]);
+        return PMIX_ERR_OUT_OF_RESOURCE;
+    }
+    /* fork off the listener thread */
+    pmix_server_globals.listen_thread_active = true;
+    if (0 > pthread_create(&engine, NULL, listen_thread, NULL)) {
+        pmix_server_globals.listen_thread_active = false;
+        return PMIX_ERROR;
+    }
+
+    return PMIX_SUCCESS;
 }
 
 void pmix_stop_listening(void)
@@ -533,6 +540,8 @@ static pmix_status_t pmix_server_authenticate(pmix_pending_connection_t *pnd,
     pmix_peer_t *psave = NULL;
     bool found;
     pmix_proc_t proc;
+    uid_t uid;
+    gid_t gid;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "RECV CONNECT ACK FROM PEER ON SOCKET %d",
@@ -720,9 +729,24 @@ static pmix_status_t pmix_server_authenticate(pmix_pending_connection_t *pnd,
             }
         }
     } else {
+        /* get the tool socket's uid and gid so we can pass them to
+         * the host RM for validation */
+        if (PMIX_SUCCESS != (rc = pmix_util_getid(pnd->sd, &uid, &gid))) {
+            return rc;
+        }
+        /* we pass this info in an array of pmix_info_t structs,
+         * so set that up here */
+        pnd->ninfo = 2;
+        PMIX_INFO_CREATE(pnd->info, pnd->ninfo);
+        (void)strncpy(pnd->info[0].key, PMIX_USERID, PMIX_MAX_KEYLEN);
+        pnd->info[0].value.type = PMIX_UINT32;
+        pnd->info[0].value.data.uint32 = uid;
+        (void)strncpy(pnd->info[1].key, PMIX_GRPID, PMIX_MAX_KEYLEN);
+        pnd->info[0].value.type = PMIX_UINT32;
+        pnd->info[0].value.data.uint32 = gid;
         /* request an nspace for this requestor - it will
          * automatically be assigned rank=0 */
-        pmix_host_server.tool_connected(NULL, 0, cnct_cbfunc, pnd);
+        pmix_host_server.tool_connected(pnd->info, pnd->ninfo, cnct_cbfunc, pnd);
         return PMIX_ERR_OPERATION_IN_PROGRESS;
     }
     return rc;
@@ -799,7 +823,6 @@ static void tool_handler(int sd, short flags, void* cbdata)
 
     /* initiate the authentication handshake */
     if (PMIX_ERR_OPERATION_IN_PROGRESS != pmix_server_authenticate(pnd, NULL, NULL)) {
-        pmix_output(0, "SHOOT");
         CLOSE_THE_SOCKET(pnd->sd);
         PMIX_RELEASE(pnd);
     }

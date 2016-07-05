@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,8 +18,8 @@ AC_DEFUN([PMIX_LIBEVENT_CONFIG],[
                                 [The value that should be included in C files to include event.h])])
 
     AC_ARG_ENABLE([embedded-libevent],
-    			  [AC_HELP_STRING([--enable-embedded-libevent],
-    			                  [Enable use of locally embedded libevent])])
+                  [AC_HELP_STRING([--enable-embedded-libevent],
+                                  [Enable use of locally embedded libevent])])
 
     AS_IF([test "$enable_embedded_libevent" = "yes"],
           [_PMIX_LIBEVENT_EMBEDDED_MODE],

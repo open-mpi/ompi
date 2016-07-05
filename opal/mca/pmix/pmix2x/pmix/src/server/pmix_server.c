@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -227,7 +227,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     size_t n, m;
     pmix_kval_t kv;
     pmix_listener_t *lt;
-    int myhostnamelen = 10;
+    bool need_listener;
+    int myhostnamelen = 30;
     char myhostname[myhostnamelen];
     char *pmix_pid, *tdir;
     char **protected = NULL;
@@ -291,8 +292,10 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                 pmix_listener_t *tl = PMIX_NEW(pmix_listener_t);
                 tl -> address.sun_family = AF_UNIX;
                 tl->protocol = PMIX_PROTOCOL_TOOL;
-                /* Get up to 10 chars of hostname.*/
+                /* Get up to 30 chars of hostname.*/
                 gethostname(myhostname, myhostnamelen);
+                /* ensure it is NULL terminated */
+                myhostname[myhostnamelen-1] = '\0';
                 /* need to put this in the global tmpdir as opposed to
                  * where the server tmpdir might be */
                 if (NULL == (tdir = getenv("TMPDIR"))) {
@@ -328,8 +331,15 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     pmix_list_append(&pmix_usock_globals.posted_recvs, &req->super);
 
     /* start listening */
+    need_listener = false;
     PMIX_LIST_FOREACH(lt, &pmix_server_globals.listeners, pmix_listener_t) {
-        if (PMIX_SUCCESS != pmix_start_listening(lt)) {
+        if (PMIX_SUCCESS != pmix_prepare_listening(lt, &need_listener)) {
+            PMIx_server_finalize();
+            return PMIX_ERR_INIT;
+        }
+    }
+    if (need_listener) {
+        if (PMIX_SUCCESS != pmix_start_listening()) {
             PMIx_server_finalize();
             return PMIX_ERR_INIT;
         }
@@ -2006,6 +2016,7 @@ static void notifyerror_cbfunc (pmix_status_t status, void *cbdata)
     PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
     PMIX_RELEASE(cd);
 }
+
 
 static void query_cbfunc(pmix_status_t status,
                          pmix_info_t *info, size_t ninfo,

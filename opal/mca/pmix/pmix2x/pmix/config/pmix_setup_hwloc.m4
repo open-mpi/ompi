@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,8 +18,8 @@ AC_DEFUN([PMIX_HWLOC_CONFIG],[
                                 [The value that should be included in C files to include hwloc.h])])
 
     AC_ARG_ENABLE([embedded-hwloc],
-    			  [AC_HELP_STRING([--enable-embedded-hwloc],
-    			                  [Enable use of locally embedded hwloc])])
+                  [AC_HELP_STRING([--enable-embedded-hwloc],
+                                  [Enable use of locally embedded hwloc])])
 
     pmix_hwloc_support=0
     AS_IF([test "$enable_embedded_hwloc" = "yes"],

@@ -1118,7 +1118,7 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
         }
     }
 
-cleanup:
+  cleanup:
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "server register events: ninfo =%lu rc =%d", ninfo, rc);
     /* be sure to execute the callback */
@@ -1175,7 +1175,8 @@ void pmix_server_deregister_events(pmix_peer_t *peer,
 {
     int32_t cnt;
     pmix_status_t rc, *codes = NULL, *cdptr, maxcode = PMIX_MAX_ERR_CONSTANT;
-    size_t ncodes, ncds, n;
+    pmix_info_t *info = NULL;
+    size_t ninfo=0, ncodes, ncds, n;
     pmix_regevents_info_t *reginfo = NULL;
     pmix_regevents_info_t *reginfo_next;
     pmix_peer_events_info_t *prev;
@@ -1230,10 +1231,12 @@ void pmix_server_deregister_events(pmix_peer_t *peer,
         }
     }
 
-
 cleanup:
     if (NULL != codes) {
         free(codes);
+    }
+    if (NULL != info) {
+        PMIX_INFO_FREE(info, ninfo);
     }
     return;
 }
@@ -1384,7 +1387,6 @@ pmix_status_t pmix_server_query(pmix_peer_t *peer,
 
 
 
-
 /*****    INSTANCE SERVER LIBRARY CLASSES    *****/
 static void tcon(pmix_server_trkr_t *t)
 {
@@ -1520,13 +1522,14 @@ PMIX_CLASS_INSTANCE(pmix_dmdx_local_t,
 
 static void pccon(pmix_pending_connection_t *p)
 {
-    p->msg = NULL;
     memset(p->nspace, 0, PMIX_MAX_NSLEN+1);
+    p->info = NULL;
+    p->ninfo = 0;
 }
 static void pcdes(pmix_pending_connection_t *p)
 {
-    if (NULL != p->msg) {
-        free(p->msg);
+    if (NULL != p->info) {
+        PMIX_INFO_FREE(p->info, p->ninfo);
     }
 }
 PMIX_CLASS_INSTANCE(pmix_pending_connection_t,
