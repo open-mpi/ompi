@@ -46,12 +46,11 @@ mca_pml_yalla_check_request_state(mca_pml_yalla_base_request_t *req, mxm_req_bas
 static int mca_pml_yalla_send_request_free(ompi_request_t **request)
 {
     mca_pml_yalla_send_request_t *sreq = (mca_pml_yalla_send_request_t*)(*request);
-    mca_pml_yalla_base_request_t *req = (mca_pml_yalla_base_request_t*)sreq;
 
     PML_YALLA_VERBOSE(9, "free send request *%p=%p", (void *)request, (void *)*request);
 
-    if (mca_pml_yalla_check_request_state(req, PML_YALLA_MXM_REQBASE(sreq))) {
-        mca_pml_yalla_request_release(req, &ompi_pml_yalla.send_reqs);
+    if (mca_pml_yalla_check_request_state(&sreq->super, PML_YALLA_MXM_REQBASE(sreq))) {
+        mca_pml_yalla_request_release(&sreq->super, &ompi_pml_yalla.send_reqs);
     }
 
     *request = MPI_REQUEST_NULL;
@@ -86,12 +85,11 @@ static int mca_pml_yalla_send_request_cancel(ompi_request_t *request, int flag)
 static int mca_pml_yalla_recv_request_free(ompi_request_t **request)
 {
     mca_pml_yalla_recv_request_t *rreq = (mca_pml_yalla_recv_request_t*)(*request);
-    mca_pml_yalla_base_request_t *req = (mca_pml_yalla_base_request_t*)rreq;
 
     PML_YALLA_VERBOSE(9, "free receive request *%p=%p", (void *)request, (void *)*request);
 
-    if (mca_pml_yalla_check_request_state(req, PML_YALLA_MXM_REQBASE(rreq))) {
-        mca_pml_yalla_request_release(req, &ompi_pml_yalla.recv_reqs);
+    if (mca_pml_yalla_check_request_state(&rreq->super, PML_YALLA_MXM_REQBASE(rreq))) {
+        mca_pml_yalla_request_release(&rreq->super, &ompi_pml_yalla.recv_reqs);
     }
 
     *request = MPI_REQUEST_NULL;
