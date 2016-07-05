@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -48,23 +48,20 @@ mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
                                mca_coll_base_module_t *module)
 {
     int err, rank, root = 0;
-    ptrdiff_t lb, extent;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];
+    ptrdiff_t gap, span;
 
     rank = ompi_comm_rank(comm);
 
     /* Perform the reduction locally */
-    err = ompi_datatype_get_extent(dtype, &lb, &extent);
-    if (OMPI_SUCCESS != err) {
-	return OMPI_ERROR;
-    }
+    span = opal_datatype_span(&dtype->super, count, &gap);
 
-    tmpbuf = (char *) malloc(count * extent);
+    tmpbuf = (char *) malloc(span);
     if (NULL == tmpbuf) {
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    pml_buffer = tmpbuf - lb;
+    pml_buffer = tmpbuf - gap;
 
     err = comm->c_local_comm->c_coll.coll_reduce(sbuf, pml_buffer, count,
 						 dtype, op, root,
