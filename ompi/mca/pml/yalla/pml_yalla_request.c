@@ -34,7 +34,7 @@ static inline void mca_pml_yalla_request_release(mca_pml_yalla_base_request_t *r
 static inline int
 mca_pml_yalla_check_request_state(mca_pml_yalla_base_request_t *req, mxm_req_base_t *mxm_base)
 {
-    if ( mxm_base->state != MXM_REQ_COMPLETED) {
+    if (mxm_base->state != MXM_REQ_COMPLETED) {
          PML_YALLA_VERBOSE(8, "request %p free called before completed", (void*)req);
          req->flags |= MCA_PML_YALLA_REQUEST_FLAG_FREE_CALLED;
          return 0;
