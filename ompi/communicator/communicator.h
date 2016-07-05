@@ -351,7 +351,6 @@ static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id
  * Initialise MPI_COMM_WORLD and MPI_COMM_SELF
  */
 int ompi_comm_init(void);
-OMPI_DECLSPEC int ompi_comm_link_function(void);
 
 /**
  * extract the local group from a communicator
