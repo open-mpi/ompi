@@ -67,21 +67,17 @@ int mca_pml_monitoring_send(const void *buf,
                             mca_pml_base_send_mode_t mode,
                             struct ompi_communicator_t* comm)
 {
-
     ompi_proc_t *proc = ompi_group_get_proc_ptr(comm->c_remote_group, dst, true);
     int world_rank;
     uint64_t key = *((uint64_t*) &(proc->super.proc_name));
 
-    /**
-     * If this fails the destination is not part of my MPI_COM_WORLD
-     */
+    /* Are we sending to a peer from my own MPI_COMM_WORLD? */
     if(OPAL_SUCCESS == opal_hash_table_get_value_uint64(translation_ht, key, (void *)&world_rank)) {
         size_t type_size, data_size;
         ompi_datatype_type_size(datatype, &type_size);
         data_size = count*type_size;
         monitor_send_data(world_rank, data_size, tag);
     }
-
 
     return pml_selected_module.pml_send(buf, count, datatype,
                                         dst, tag, mode, comm);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The University of Tennessee and The University
+ * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Inria.  All rights reserved.
@@ -55,47 +55,60 @@ mca_pml_monitoring_module_t mca_pml_monitoring = {
     INT_MAX
 };
 
+/**
+ * This PML monitors only the processes in the MPI_COMM_WORLD. As OMPI is now lazily
+ * adding peers on the first call to add_procs we need to check how many processes
+ * are in the MPI_COMM_WORLD to create the storage with the right size.
+ */
 int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
                                  size_t nprocs)
 {
-    /**
-     * Create the monitoring hashtable only for my MPI_COMM_WORLD. We choose
-     * to ignore by now all other processes.
-     */
+    opal_process_name_t tmp, wp_name;
+    size_t i, peer_rank, nprocs_world;
+    uint64_t key;
+
     if(NULL == translation_ht) {
-        size_t i;
-        uint64_t key;
-        opal_process_name_t tmp;
-
-        nbprocs = nprocs;
-
         translation_ht = OBJ_NEW(opal_hash_table_t);
         opal_hash_table_init(translation_ht, 2048);
+        /* get my rank in the MPI_COMM_WORLD */
+        my_rank = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
+    }
 
+    nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
+    /* For all procs in the same MPI_COMM_WORLD we need to add them to the hash table */
+    for( i = 0; i < nprocs; i++ ) {
 
-        for( i = 0; i < nprocs; i++ ) {
-            /* rank : ompi_proc_local_proc in procs */
-            if( procs[i] == ompi_proc_local_proc)
-                my_rank = i;
-            /* Extract the peer procname from the procs array */
-            if( ompi_proc_is_sentinel(procs[i]) ) {
-                tmp = ompi_proc_sentinel_to_name((uintptr_t)procs[i]);
-            } else {
-                tmp = procs[i]->super.proc_name;
-            }
+        /* Extract the peer procname from the procs array */
+        if( ompi_proc_is_sentinel(procs[i]) ) {
+            tmp = ompi_proc_sentinel_to_name((uintptr_t)procs[i]);
+        } else {
+            tmp = procs[i]->super.proc_name;
+        }
+        if( tmp.jobid != ompi_proc_local_proc->super.proc_name.jobid )
+            continue;
+
+        for( peer_rank = 0; peer_rank < nprocs_world; peer_rank++ ) {
+            wp_name = ompi_group_get_proc_name(((ompi_communicator_t*)&ompi_mpi_comm_world)->c_remote_group, peer_rank);
+            if( 0 != opal_compare_proc( tmp, wp_name) )
+                continue;
+
+            /* Find the rank of the peer in MPI_COMM_WORLD */
             key = *((uint64_t*)&tmp);
             /* store the rank (in COMM_WORLD) of the process
-               with its name (a uniq opal ID) as key  in the hash table*/
+               with its name (a uniq opal ID) as key in the hash table*/
             if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(translation_ht,
-                                                                 key, (void*)(uintptr_t)i) ) {
+                                                                 key, (void*)(uintptr_t)peer_rank) ) {
                 return OMPI_ERR_OUT_OF_RESOURCE;  /* failed to allocate memory or growing the hash table */
             }
+            break;
         }
     }
     return pml_selected_module.pml_add_procs(procs, nprocs);
 }
 
-
+/**
+ * Pass the information down the PML stack.
+ */
 int mca_pml_monitoring_del_procs(struct ompi_proc_t **procs,
                                  size_t nprocs)
 {
@@ -117,11 +130,16 @@ void finalize_monitoring( void )
     free(messages_count);
     opal_hash_table_remove_all( translation_ht );
     free(translation_ht);
-
 }
 
+/**
+ * We have delayed the initialization until the first send so that we know that
+ * the MPI_COMM_WORLD (which is the only communicator we are interested on at
+ * this point) is correctly initialized.
+ */
 static void initialize_monitoring( void )
 {
+    nbprocs = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
     sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
     messages_count = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
     filtered_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
@@ -147,7 +165,7 @@ void monitor_send_data(int world_rank, size_t data_size, int tag)
         initialize_monitoring();
 
     /* distinguishses positive and negative tags if requested */
-    if((tag<0) && (1 == filter_monitoring())){
+    if( (tag < 0) && (1 == filter_monitoring()) ) {
         filtered_sent_data[world_rank] += data_size;
         filtered_messages_count[world_rank]++;
     } else { /* if filtered monitoring is not activated data is aggregated indifferently */
@@ -156,12 +174,13 @@ void monitor_send_data(int world_rank, size_t data_size, int tag)
     }
 }
 
-int mca_pml_monitoring_get_messages_count (const struct mca_base_pvar_t *pvar, void *value, void *obj_handle)
+int mca_pml_monitoring_get_messages_count(const struct mca_base_pvar_t *pvar,
+                                          void *value,
+                                          void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    int comm_size = ompi_comm_size (comm);
+    int i, comm_size = ompi_comm_size (comm);
     uint64_t *values = (uint64_t*) value;
-    int i;
 
     if(comm != &ompi_mpi_comm_world.comm || NULL == messages_count)
         return OMPI_ERROR;
@@ -173,7 +192,9 @@ int mca_pml_monitoring_get_messages_count (const struct mca_base_pvar_t *pvar, v
     return OMPI_SUCCESS;
 }
 
-int mca_pml_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar, void *value, void *obj_handle)
+int mca_pml_monitoring_get_messages_size(const struct mca_base_pvar_t *pvar,
+                                         void *value,
+                                         void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
     int comm_size = ompi_comm_size (comm);
