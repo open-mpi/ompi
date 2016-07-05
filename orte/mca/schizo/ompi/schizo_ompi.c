@@ -1106,7 +1106,7 @@ static int setup_child(orte_job_t *jdata,
     param = NULL;
     if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&param, &value, NULL,
                                                         orte_process_info.nodename,
-                                                        NULL, &child->name))) {
+                                                        &child->name))) {
         ORTE_ERROR_LOG(rc);
         if (NULL != value) {
             free(value);

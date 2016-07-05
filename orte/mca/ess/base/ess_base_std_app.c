@@ -138,7 +138,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
                              orte_process_info.nodename));
         if (ORTE_SUCCESS != (ret = orte_session_dir(true,
                                                     orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
+                                                    orte_process_info.nodename,
                                                     ORTE_PROC_MY_NAME))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_session_dir";

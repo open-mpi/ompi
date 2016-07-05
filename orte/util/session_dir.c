@@ -113,19 +113,18 @@ static int orte_create_dir(char *directory)
 }
 
 /*
- * Construct the fullpath to the session directory
+ * Construct the fullpath to the session directory - it
+ * will consist of "ompi.<hostname>.<pid>"
  */
 int
 orte_session_dir_get_name(char **fulldirpath,
                           char **return_prefix,  /* This will come back as the valid tmp dir */
                           char **return_frontend,
                           char *hostid,
-                          char *batchid,
                           orte_process_name_t *proc) {
     char *hostname  = NULL,
         *batchname = NULL,
         *sessions  = NULL,
-        *user      = NULL,
         *prefix = NULL,
         *frontend = NULL,
         *jobfam = NULL,
@@ -134,14 +133,9 @@ orte_session_dir_get_name(char **fulldirpath,
     bool prefix_provided = false;
     int exit_status = ORTE_SUCCESS;
     size_t len;
-    int uid;
 
     /* Ensure that system info is set */
     orte_proc_info();
-
-    /* get the name of the user */
-    uid = getuid();
-    asprintf(&user, "%d", uid);
 
     /*
      * set the 'hostname'
@@ -160,24 +154,12 @@ orte_session_dir_get_name(char **fulldirpath,
         }
     }
 
-    /*
-     * set the 'batchid'
-     */
-    if (NULL != batchid)
-        batchname = strdup(batchid);
-    else
-        batchname = strdup("0");
-
-    /*
-     * get the front part of the session directory
-     * Will look something like:
-     *    openmpi-sessions-USERNAME@HOSTNAME_BATCHID
-     */
+    /* construct the frontend of the session directory*/
     if (NULL != orte_process_info.top_session_dir) {
         frontend = strdup(orte_process_info.top_session_dir);
     }
     else { /* If not set then construct it */
-        if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
+        if (0 > asprintf(&frontend, "ompi.%s.%lu", hostname, (unsigned long)orte_process_info.pid)) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             exit_status = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
@@ -325,19 +307,30 @@ orte_session_dir_get_name(char **fulldirpath,
     }
 
  cleanup:
-    if(NULL != hostname)
+    if(NULL != hostname) {
         free(hostname);
-    if(NULL != batchname)
+    }
+    if(NULL != batchname) {
         free(batchname);
-    if(NULL != sessions)
+    }
+    if(NULL != sessions) {
         free(sessions);
-    if(NULL != user)
-        free(user);
-    if (NULL != prefix) free(prefix);
-    if (NULL != frontend) free(frontend);
-    if (NULL != jobfam) free(jobfam);
-    if (NULL != job) free(job);
-    if (NULL != vpidstr) free(vpidstr);
+    }
+    if (NULL != prefix) {
+        free(prefix);
+    }
+    if (NULL != frontend) {
+        free(frontend);
+    }
+    if (NULL != jobfam) {
+        free(jobfam);
+    }
+    if (NULL != job) {
+        free(job);
+    }
+    if (NULL != vpidstr) {
+        free(vpidstr);
+    }
 
     return exit_status;
 }
@@ -347,7 +340,7 @@ orte_session_dir_get_name(char **fulldirpath,
  */
 int orte_session_dir(bool create,
                      char *prefix, char *hostid,
-                     char *batchid, orte_process_name_t *proc)
+                     orte_process_name_t *proc)
 {
     char *fulldirpath = NULL,
     *frontend     = NULL,
@@ -367,7 +360,7 @@ int orte_session_dir(bool create,
                                                          &local_prefix,
                                                          &frontend,
                                                          hostid,
-                                                         batchid, proc))) {
+                                                         proc))) {
         if (ORTE_ERR_FATAL == rc) {
             /* this indicates we should abort quietly */
             rc = ORTE_ERR_SILENT;
