@@ -7,6 +7,10 @@
  *                         reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All 
  *                         rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+ * Copyright (c) 2015-2016 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -50,9 +54,9 @@ int NBC_Sched_create(NBC_Schedule* schedule) {
 }
 
 /* this function puts a send into the schedule */
-int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule) {
+static int NBC_Sched_send_internal (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, bool local, NBC_Schedule *schedule) {
   int size;
-  char* ptr;
+  char *ptr;
   NBC_Fn_type type = SEND;
   NBC_Args_send send_args;
   
@@ -63,11 +67,12 @@ int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int
   if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
   
   /* store the passed arguments */
-  send_args.buf=buf;
-  send_args.tmpbuf=tmpbuf;
-  send_args.count=count;
-  send_args.datatype=datatype;
-  send_args.dest=dest;
+  send_args.buf = buf;
+  send_args.tmpbuf = tmpbuf;
+  send_args.count = count;
+  send_args.datatype = datatype;
+  send_args.dest = dest;
+  send_args.local = local;
 
   /* append to the round-schedule */
   ptr = (char*)*schedule + size;
@@ -84,10 +89,18 @@ int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int
   return NBC_OK;
 }
 
+int NBC_Sched_send (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule) {
+  return NBC_Sched_send_internal (buf, tmpbuf, count, datatype, dest, false, schedule);
+}
+
+int NBC_Sched_local_send (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule) {
+  return NBC_Sched_send_internal (buf, tmpbuf, count, datatype, dest, true, schedule);
+}
+
 /* this function puts a receive into the schedule */
-int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule) {
+static int NBC_Sched_recv_internal (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, bool local, NBC_Schedule *schedule) {
   int size;
-  char* ptr;
+  char *ptr;
   NBC_Fn_type type = RECV;
   NBC_Args_recv recv_args;
   
@@ -98,11 +111,12 @@ int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int
   if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
   
   /* store the passed arguments */
-  recv_args.buf=buf;
-  recv_args.tmpbuf=tmpbuf;
-  recv_args.count=count;
-  recv_args.datatype=datatype;
-  recv_args.source=source;
+  recv_args.buf = buf;
+  recv_args.tmpbuf = tmpbuf;
+  recv_args.count = count;
+  recv_args.datatype = datatype;
+  recv_args.source = source;
+  recv_args.local = local;
 
   /* append to the round-schedule */
   ptr = (char*)*schedule + size;
@@ -119,10 +133,19 @@ int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int
   return NBC_OK;
 }
 
+int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule) {
+  return NBC_Sched_recv_internal(buf, tmpbuf, count, datatype, source, false, schedule);
+}
+
+int NBC_Sched_local_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule) {
+  return NBC_Sched_recv_internal(buf, tmpbuf, count, datatype, source, true, schedule);
+}
+
 /* this function puts an operation into the schedule */
-int NBC_Sched_op(void *buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule) {
+int NBC_Sched_op (void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+                  MPI_Op op, NBC_Schedule *schedule) {
   int size;
-  char* ptr;
+  char *ptr;
   NBC_Fn_type type = OP;
   NBC_Args_op op_args;
   
@@ -133,15 +156,13 @@ int NBC_Sched_op(void *buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2,
   if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
   
   /* store the passed arguments */
-  op_args.buf1=buf1;
-  op_args.buf2=buf2;
-  op_args.buf3=buf3;
-  op_args.tmpbuf1=tmpbuf1;
-  op_args.tmpbuf2=tmpbuf2;
-  op_args.tmpbuf3=tmpbuf3;
-  op_args.count=count;
-  op_args.op=op;
-  op_args.datatype=datatype;
+  op_args.buf1 = buf1;
+  op_args.buf2 = buf2;
+  op_args.tmpbuf1 = tmpbuf1;
+  op_args.tmpbuf2 = tmpbuf2;
+  op_args.count = count;
+  op_args.op = op;
+  op_args.datatype = datatype;
 
   /* append to the round-schedule */
   ptr = (char*)*schedule + size;
@@ -379,13 +400,13 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
   int i, res, ret=NBC_OK;
   char* ptr;
   NBC_Fn_type type;
-  NBC_Args_send     sendargs; 
-  NBC_Args_recv     recvargs; 
-  NBC_Args_op         opargs; 
-  NBC_Args_copy     copyargs; 
-  NBC_Args_unpack unpackargs; 
+  NBC_Args_send     sendargs;
+  NBC_Args_recv     recvargs;
+  NBC_Args_op         opargs;
+  NBC_Args_copy     copyargs;
+  NBC_Args_unpack unpackargs;
   NBC_Schedule myschedule;
-  void *buf1, *buf2, *buf3;
+  void *buf1,  *buf2;
 
   /* get round-schedule address */
   myschedule = (NBC_Schedule*)((char*)*handle->schedule + handle->row_offset);
@@ -412,10 +433,12 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 #ifdef NBC_TIMING
         Isend_time -= MPI_Wtime();
 #endif
-        handle->req_array = (MPI_Request*)realloc((void*)handle->req_array, (handle->req_count)*sizeof(MPI_Request));
+        handle->req_array = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count * sizeof (MPI_Request));
         NBC_CHECK_NULL(handle->req_array);
-        res = MCA_PML_CALL(isend(buf1, sendargs.count, sendargs.datatype, sendargs.dest, handle->tag, MCA_PML_BASE_SEND_STANDARD, handle->comm, handle->req_array+handle->req_count-1));
-        if(OMPI_SUCCESS != res) { printf("Error in MPI_Isend(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, sendargs.count, (unsigned long)sendargs.datatype, sendargs.dest, handle->tag, (unsigned long)handle->comm, res); ret=res; goto error; }
+        res = MCA_PML_CALL(isend(buf1, sendargs.count, sendargs.datatype, sendargs.dest, handle->tag,
+                                 MCA_PML_BASE_SEND_STANDARD, sendargs.local?handle->comm->c_local_comm:handle->comm,
+                                 handle->req_array+handle->req_count - 1));
+        if (OMPI_SUCCESS != res) { printf("Error in MPI_Isend(%lu, %i, %lu, %i, %i, %lu) (%i)", (unsigned long)buf1, sendargs.count, (unsigned long)sendargs.datatype, sendargs.dest, handle->tag, (unsigned long)handle->comm, res); ret=res; goto error; }
 #ifdef NBC_TIMING
         Isend_time += MPI_Wtime();
 #endif
@@ -435,18 +458,21 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 #ifdef NBC_TIMING
         Irecv_time -= MPI_Wtime();
 #endif
-        handle->req_array = (MPI_Request*)realloc((void*)handle->req_array, (handle->req_count)*sizeof(MPI_Request));
+        handle->req_array = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count * sizeof (MPI_Request));
         NBC_CHECK_NULL(handle->req_array);
-        res = MCA_PML_CALL(irecv(buf1, recvargs.count, recvargs.datatype, recvargs.source, handle->tag, handle->comm, handle->req_array+handle->req_count-1)); 
-        if(OMPI_SUCCESS != res) { printf("Error in MPI_Irecv(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, recvargs.count, (unsigned long)recvargs.datatype, recvargs.source, handle->tag, (unsigned long)handle->comm, res); ret=res; goto error; }
+
+        res = MCA_PML_CALL(irecv(buf1, recvargs.count, recvargs.datatype, recvargs.source, handle->tag, recvargs.local?handle->comm->c_local_comm:handle->comm,
+                                 handle->req_array+handle->req_count-1));
+        if (OMPI_SUCCESS != res) { printf("Error in MPI_Irecv(%lu, %i, %lu, %i, %i, %lu) (%i)", (unsigned long)buf1, recvargs.count, (unsigned long)recvargs.datatype, recvargs.source, handle->tag, (unsigned long)handle->comm, res); ret=res; goto error; }
 #ifdef NBC_TIMING
         Irecv_time += MPI_Wtime();
 #endif
         break;
       case OP:
-        NBC_DEBUG(5, "  OP   (offset %li) ", (long)ptr-(long)myschedule);
+        NBC_DEBUG(5, "  OP2  (offset %li) ", (long)ptr - (long)myschedule);
         NBC_GET_BYTES(ptr,opargs);
-        NBC_DEBUG(5, "*buf1: %p, buf2: %p, count: %i, type: %lu)\n", opargs.buf1, opargs.buf2, opargs.count, (unsigned long)opargs.datatype);
+        NBC_DEBUG(5, "*buf1: %p, buf2: %p, count: %i, type: %p)\n", opargs.buf1, opargs.buf2,
+                  opargs.count, opargs.datatype);
         /* get buffers */
         if(opargs.tmpbuf1) {
           buf1=(char*)handle->tmpbuf+(long)opargs.buf1;
@@ -458,12 +484,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         } else {
           buf2=opargs.buf2;
         }
-        if(opargs.tmpbuf3) {
-          buf3=(char*)handle->tmpbuf+(long)opargs.buf3;
-        } else {
-          buf3=opargs.buf3;
-        }
-        ompi_3buff_op_reduce(opargs.op, buf1, buf2, buf3, opargs.count, opargs.datatype);
+        ompi_op_reduce(opargs.op, buf1, buf2, opargs.count, opargs.datatype);
         break;
       case COPY:
         NBC_DEBUG(5, "  COPY   (offset %li) ", (long)ptr-(long)myschedule);

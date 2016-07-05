@@ -12,6 +12,8 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,7 +26,6 @@ EXTRA_DIST = .windows
 sources = \
         coll_libnbc.h \
 	coll_libnbc_component.c \
-	coll_libnbc_ireduce_scatter_block.c \
 	nbc.c \
 	nbc_internal.h \
 	libdict/dict.h \
@@ -51,6 +52,7 @@ sources = \
 	nbc_ineighbor_alltoallw.c \
 	nbc_ireduce.c \
 	nbc_ireduce_scatter.c \
+	nbc_ireduce_scatter_block.c \
 	nbc_iscan.c \
 	nbc_iscatter.c \
 	nbc_iscatterv.c \
