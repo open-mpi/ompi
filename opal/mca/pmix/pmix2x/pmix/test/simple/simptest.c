@@ -83,8 +83,8 @@ static pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
 static pmix_status_t register_event_fn(pmix_status_t *codes, size_t ncodes,
                                        const pmix_info_t info[], size_t ninfo,
                                        pmix_op_cbfunc_t cbfunc, void *cbdata);
-static pmix_status_t deregister_event_fn(pmix_status_t *codes, size_t ncodes,
-                                         pmix_op_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t deregister_events(pmix_status_t *codes, size_t ncodes,
+                                       pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t notify_event(pmix_status_t code,
                                   const pmix_proc_t *source,
                                   pmix_data_range_t range,
@@ -112,7 +112,7 @@ static pmix_server_module_t mymodule = {
     .connect = connect_fn,
     .disconnect = disconnect_fn,
     .register_events = register_event_fn,
-    .deregister_events = deregister_event_fn,
+    .deregister_events = deregister_events,
     .notify_event = notify_event,
     .query = query_fn,
     .tool_connected = tool_connect_fn
@@ -687,13 +687,9 @@ static pmix_status_t register_event_fn(pmix_status_t *codes, size_t ncodes,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t deregister_event_fn(pmix_status_t *codes, size_t ncodes,
-                                         pmix_op_cbfunc_t cbfunc, void *cbdata)
+static pmix_status_t deregister_events(pmix_status_t *codes, size_t ncodes,
+                                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output(0, "SERVER: DEREGISTER EVENT");
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, cbdata);
-    }
     return PMIX_SUCCESS;
 }
 

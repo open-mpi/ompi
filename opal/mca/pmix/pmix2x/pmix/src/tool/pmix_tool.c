@@ -190,12 +190,11 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_status_t rc;
     pmix_nspace_t *nptr, *nsptr;
     int server_pid = -1;
-    int hostnamelen = 10;
+    int hostnamelen = 30;
     char hostname[hostnamelen];
     DIR *cur_dirp = NULL;
     struct dirent * dir_entry;
 
-pmix_output(0, "TOOL INIT");
     if (NULL == proc) {
         return PMIX_ERR_BAD_PARAM;
     }
@@ -260,8 +259,10 @@ pmix_output(0, "TOOL INIT");
     /* setup the path to the daemon rendezvous point */
     memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;
-    /* Get first 10 char's of hostname to match what the server is doing */
+    /* Get hostname to match what the server is doing */
     gethostname(hostname, hostnamelen);
+    /* ensure it is NULL terminated */
+    hostname[hostnamelen-1] = '\0';
 
     /* if they gave us a specific pid, then look for that
      * particular server - otherwise, see if there is only
@@ -787,7 +788,6 @@ static pmix_status_t recv_connect_ack(int sd)
 
     if (sockopt) {
         if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
-            pmix_output(0, "FAILURE");
             return PMIX_ERR_UNREACH;
         }
     }

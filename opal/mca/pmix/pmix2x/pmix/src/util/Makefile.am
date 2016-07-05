@@ -35,7 +35,8 @@ headers += \
         src/util/os_path.h \
         src/util/basename.h \
         src/util/hash.h \
-        src/util/strnlen.h
+        src/util/strnlen.h \
+        src/util/getid.h
 
 sources += \
         src/util/argv.c \
@@ -49,4 +50,5 @@ sources += \
         src/util/timings.c \
         src/util/os_path.c \
         src/util/basename.c \
-        src/util/hash.c
+        src/util/hash.c \
+        src/util/getid.c
