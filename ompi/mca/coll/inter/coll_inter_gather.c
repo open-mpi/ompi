@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2015-2016 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,11 +47,7 @@ mca_coll_inter_gather_inter(void *sbuf, int scount,
 {
     int err;
     int rank;
-    int size,size_local;
-    char *ptmp = NULL;
-    MPI_Aint incr;
-    MPI_Aint extent;
-    MPI_Aint lb;
+    int size;
 
     size = ompi_comm_remote_size(comm);
     rank = ompi_comm_rank(comm);
@@ -59,20 +57,21 @@ mca_coll_inter_gather_inter(void *sbuf, int scount,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
 	/* Perform the gather locally with the first process as root */
-	err = ompi_datatype_get_extent(sdtype, &lb, &extent);
-	if (OMPI_SUCCESS != err) {
-	    return OMPI_ERROR;
-	}
-	
-	incr = extent * scount;
+        char *ptmp_free = NULL, *ptmp;
+        int size_local;
+        ptrdiff_t gap, span;
+
 	size_local = ompi_comm_size(comm->c_local_comm);
-	ptmp = (char*)malloc(size_local * incr); 
-	if (NULL == ptmp) {
+        span = opal_datatype_span(&sdtype->super, scount*size_local, &gap);
+
+	ptmp_free = (char*)malloc(span);
+	if (NULL == ptmp_free) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-	
-	err = comm->c_local_comm->c_coll.coll_gather(sbuf, scount, sdtype, 
-						     ptmp, scount, sdtype, 
+        ptmp = ptmp_free - gap;
+
+	err = comm->c_local_comm->c_coll.coll_gather(sbuf, scount, sdtype,
+						     ptmp, scount, sdtype,
 						     0, comm->c_local_comm,
                                                      comm->c_local_comm->c_coll.coll_gather_module);
 	if (0 == rank) { 
@@ -84,9 +83,7 @@ mca_coll_inter_gather_inter(void *sbuf, int scount,
                 return err;
             }
 	}
-	if (NULL != ptmp) {
-	    free(ptmp);
-	}
+        free(ptmp_free);
     } else {
         /* I am the root, loop receiving the data. */
 	err = MCA_PML_CALL(recv(rbuf, rcount*size, rdtype, 0,
