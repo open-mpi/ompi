@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -91,9 +91,10 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
-    int rank, root = 0, size, rsize, err, i;
-    char *tmpbuf = NULL, *ptmp;
-    ptrdiff_t rlb, slb, rextent, sextent, incr;
+    int rank, root = 0, size, rsize, i, err; 
+    char *tmpbuf_free = NULL, *tmpbuf, *ptmp;
+    ptrdiff_t rlb, rextent, incr;
+    ptrdiff_t gap, span;
     ompi_request_t *req;
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
     ompi_request_t **reqs = basic_module->mccb_reqs;
@@ -116,17 +117,13 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
                                 MCA_COLL_BASE_TAG_ALLGATHER,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
         if (OMPI_SUCCESS != err) {
-            return err;
+            goto exit;
         }
     } else {
         /* receive a msg. from all other procs. */
         err = ompi_datatype_get_extent(rdtype, &rlb, &rextent);
         if (OMPI_SUCCESS != err) {
-            return err;
-        }
-        err = ompi_datatype_get_extent(sdtype, &slb, &sextent);
-        if (OMPI_SUCCESS != err) {
-            return err;
+            goto exit;
         }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
@@ -135,14 +132,14 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
                                  MCA_PML_BASE_SEND_STANDARD,
                                  comm, &reqs[rsize]));
         if (OMPI_SUCCESS != err) {
-            return err;
+            goto exit;
         }
 
         err = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, 0,
                                  MCA_COLL_BASE_TAG_ALLGATHER, comm,
                                  &reqs[0]));
         if (OMPI_SUCCESS != err) {
-            return err;
+            goto exit;
         }
 
         incr = rextent * rcount;
@@ -152,20 +149,22 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
                                      MCA_COLL_BASE_TAG_ALLGATHER,
                                      comm, &reqs[i]));
             if (MPI_SUCCESS != err) {
-                return err;
+                goto exit;
             }
         }
 
         err = ompi_request_wait_all(rsize + 1, reqs, MPI_STATUSES_IGNORE);
         if (OMPI_SUCCESS != err) {
-            return err;
+            goto exit;
         }
 
-        /* Step 2: exchange the resuts between the root processes */
-        tmpbuf = (char *) malloc(scount * size * sextent);
-        if (NULL == tmpbuf) {
-            return err;
+        span = opal_datatype_span(&sdtype->super, scount * size, &gap);
+        tmpbuf_free = (char *) malloc(span);
+        if (NULL == tmpbuf_free) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
         }
+        tmpbuf = tmpbuf_free - gap;
 
         err = MCA_PML_CALL(isend(rbuf, rsize * rcount, rdtype, 0,
                                  MCA_COLL_BASE_TAG_ALLGATHER,
@@ -222,8 +221,8 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
     }
 
   exit:
-    if (NULL != tmpbuf) {
-        free(tmpbuf);
+    if (NULL != tmpbuf_free) {
+        free(tmpbuf_free);
     }
 
     return err;

@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
@@ -58,7 +58,7 @@ mca_coll_basic_reduce_scatter_block_intra(void *sbuf, void *rbuf, int rcount,
                                           mca_coll_base_module_t *module)
 {
     int rank, size, count, err = OMPI_SUCCESS;
-    ptrdiff_t extent, buf_size, gap;
+    ptrdiff_t gap, span;
     char *recv_buf = NULL, *recv_buf_free = NULL;
 
     /* Initialize */
@@ -72,8 +72,7 @@ mca_coll_basic_reduce_scatter_block_intra(void *sbuf, void *rbuf, int rcount,
     }
 
     /* get datatype information */
-    ompi_datatype_type_extent(dtype, &extent);
-    buf_size = opal_datatype_span(&dtype->super, count, &gap);
+    span = opal_datatype_span(&dtype->super, count, &gap);
 
     /* Handle MPI_IN_PLACE */
     if (MPI_IN_PLACE == sbuf) {
@@ -83,12 +82,12 @@ mca_coll_basic_reduce_scatter_block_intra(void *sbuf, void *rbuf, int rcount,
     if (0 == rank) {
         /* temporary receive buffer.  See coll_basic_reduce.c for
            details on sizing */
-        recv_buf_free = (char*) malloc(buf_size);
-        recv_buf = recv_buf_free - gap;
+        recv_buf_free = (char*) malloc(span);
         if (NULL == recv_buf_free) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
+        recv_buf = recv_buf_free - gap;
     }
 
     /* reduction */
@@ -126,8 +125,9 @@ mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
 {
     int err, i, rank, root = 0, rsize, lsize;
     int totalcounts;
-    ptrdiff_t lb, extent;
+    ptrdiff_t gap, span;
     char *tmpbuf = NULL, *tmpbuf2 = NULL;
+    char *lbuf, *buf;
     ompi_request_t *req;
 
     rank = ompi_comm_rank(comm);
@@ -151,16 +151,15 @@ mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
      *
      */
     if (rank == root) {
-        err = ompi_datatype_get_extent(dtype, &lb, &extent);
-        if (OMPI_SUCCESS != err) {
-            return OMPI_ERROR;
-        }
+        span = opal_datatype_span(&dtype->super, totalcounts, &gap);
 
-        tmpbuf = (char *) malloc(totalcounts * extent);
-        tmpbuf2 = (char *) malloc(totalcounts * extent);
+        tmpbuf = (char *) malloc(span);
+        tmpbuf2 = (char *) malloc(span);
         if (NULL == tmpbuf || NULL == tmpbuf2) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
+        lbuf = tmpbuf - gap;
+        buf = tmpbuf2 - gap;
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
         err = MCA_PML_CALL(isend(sbuf, totalcounts, dtype, 0,
@@ -170,7 +169,7 @@ mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
             goto exit;
         }
 
-        err = MCA_PML_CALL(recv(tmpbuf2, totalcounts, dtype, 0,
+        err = MCA_PML_CALL(recv(lbuf, totalcounts, dtype, 0,
                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
                                 MPI_STATUS_IGNORE));
         if (OMPI_SUCCESS != err) {
@@ -188,7 +187,8 @@ mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
          * tmpbuf2. 
          */
         for (i = 1; i < rsize; i++) {
-            err = MCA_PML_CALL(recv(tmpbuf, totalcounts, dtype, i,
+            char *tbuf;
+            err = MCA_PML_CALL(recv(buf, totalcounts, dtype, i,
                                     MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
@@ -196,7 +196,9 @@ mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
             }
 
             /* Perform the reduction */
-            ompi_op_reduce(op, tmpbuf, tmpbuf2, totalcounts, dtype);
+            ompi_op_reduce(op, lbuf, buf, totalcounts, dtype);
+            /* swap the buffers */
+            tbuf = lbuf; lbuf = buf; buf = tbuf;
         }
     } else {
         /* If not root, send data to the root. */
@@ -209,7 +211,7 @@ mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
     }
 
     /* Now do a scatterv on the local communicator */
-    err = comm->c_local_comm->c_coll.coll_scatter(tmpbuf2, rcount, dtype,
+    err = comm->c_local_comm->c_coll.coll_scatter(lbuf, rcount, dtype,
 				   rbuf, rcount, dtype, 0,
 				   comm->c_local_comm,
 				   comm->c_local_comm->c_coll.coll_scatter_module);
