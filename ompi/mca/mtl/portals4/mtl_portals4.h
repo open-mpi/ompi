@@ -42,23 +42,23 @@ struct mca_mtl_portals4_module_t {
     mca_mtl_base_module_t base;
 
     /* add_procs() can get called multiple times.  this prevents multiple calls to portals4_init_interface(). */
-    int need_init;
+    int32_t need_init;
 
     /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
-    int use_logical;
+    int32_t use_logical;
     /* Use flow control: 1 (true) : 0 (false) */
-    int use_flowctl;
+    int32_t use_flowctl;
 
     /** Eager limit; messages greater than this use a rendezvous protocol */
-    unsigned long long eager_limit;
+    uint64_t eager_limit;
     /** Size of short message blocks */
-    unsigned long long recv_short_size;
+    uint64_t recv_short_size;
     /** Number of short message blocks which should be created during startup */
-    int recv_short_num;
+    uint32_t recv_short_num;
     /** Length of the send event queues */
-    int send_queue_size;
+    uint32_t send_queue_size;
     /** Length of the receive event queues */
-    int recv_queue_size;
+    uint32_t recv_queue_size;
     /** Protocol for long message transfer */
     enum { eager, rndv } protocol;
 
