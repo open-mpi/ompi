@@ -91,6 +91,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PTL_EVENT_PUT with ni_fail_type: %d",
                                 __FILE__, __LINE__, ev->ni_fail_type);
+            ret = PTL_FAIL;
             goto callback_error;
         }
 
@@ -118,7 +119,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                to pull the second part of the message. */
             ret = read_msg((char*) ptl_request->delivery_ptr + ompi_mtl_portals4.eager_limit,
                            ((msg_length > ptl_request->delivery_len) ?
-                            ptl_request->delivery_len : msg_length) - ompi_mtl_portals4.eager_limit,
+                           ptl_request->delivery_len : msg_length) - ompi_mtl_portals4.eager_limit,
                            ev->initiator,
                            ev->hdr_data,
                            ompi_mtl_portals4.eager_limit,
@@ -159,6 +160,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PTL_EVENT_REPLY with ni_fail_type: %d",
                                 __FILE__, __LINE__, ev->ni_fail_type);
+            ret = PTL_FAIL;
             goto callback_error;
         }
 
@@ -204,6 +206,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PTL_EVENT_PUT_OVERFLOW with ni_fail_type: %d",
                                 __FILE__, __LINE__, ev->ni_fail_type);
+            ret = PTL_FAIL;
             goto callback_error;
         }
 
@@ -285,7 +288,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
 
             ret = read_msg((char*) ptl_request->delivery_ptr + ev->mlength,
                            ((msg_length > ptl_request->delivery_len) ?
-                            ptl_request->delivery_len : msg_length) - ev->mlength,
+                           ptl_request->delivery_len : msg_length) - ev->mlength,
                            ev->initiator,
                            ev->hdr_data,
                            ev->mlength,

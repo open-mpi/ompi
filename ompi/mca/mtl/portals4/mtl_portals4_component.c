@@ -224,7 +224,7 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.send_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.zero_md_h = PTL_INVALID_HANDLE;
-
+    ompi_mtl_portals4.send_md_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.long_overflow_me_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
     ompi_mtl_portals4.read_idx = (ptl_pt_index_t) ~0UL;
@@ -364,6 +364,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                          "My nid,pid = %x,%x",
                          id.phys.nid, id.phys.pid));
 
+    ompi_mtl_portals4.base.mtl_max_tag = MTL_PORTALS4_MAX_TAG;
     return &ompi_mtl_portals4.base;
 
  error:
