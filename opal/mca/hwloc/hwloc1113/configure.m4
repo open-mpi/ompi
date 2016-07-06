@@ -82,93 +82,91 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1113_CONFIG],[
           [opal_hwloc_external="no"],
           [opal_hwloc_external="yes"])
 
-    if true; then
-        opal_hwloc_hwloc1113_save_CPPFLAGS=$CPPFLAGS
-        opal_hwloc_hwloc1113_save_LDFLAGS=$LDFLAGS
-        opal_hwloc_hwloc1113_save_LIBS=$LIBS
+    opal_hwloc_hwloc1113_save_CPPFLAGS=$CPPFLAGS
+    opal_hwloc_hwloc1113_save_LDFLAGS=$LDFLAGS
+    opal_hwloc_hwloc1113_save_LIBS=$LIBS
 
-        # Run the hwloc configuration - if no external hwloc, then set the prefix
-        # to minimize the chance that someone will use the internal symbols
-        AS_IF([test "$opal_hwloc_external" = "no"],
-              [HWLOC_SET_SYMBOL_PREFIX([opal_hwloc1113_])])
+    # Run the hwloc configuration - if no external hwloc, then set the prefixi
+    # to minimize the chance that someone will use the internal symbols
+    AS_IF([test "$opal_hwloc_external" = "no"],
+          [HWLOC_SET_SYMBOL_PREFIX([opal_hwloc1113_])])
 
-        # save XML or graphical options
-        opal_hwloc_hwloc1113_save_cairo=$enable_cairo
-        opal_hwloc_hwloc1113_save_xml=$enable_xml
-        opal_hwloc_hwloc1113_save_static=$enable_static
-        opal_hwloc_hwloc1113_save_shared=$enable_shared
-        opal_hwloc_hwloc1113_save_plugins=$enable_plugins
+    # save XML or graphical options
+    opal_hwloc_hwloc1113_save_cairo=$enable_cairo
+    opal_hwloc_hwloc1113_save_xml=$enable_xml
+    opal_hwloc_hwloc1113_save_static=$enable_static
+    opal_hwloc_hwloc1113_save_shared=$enable_shared
+    opal_hwloc_hwloc1113_save_plugins=$enable_plugins
 
-        # never enable hwloc's graphical option
-        enable_cairo=no
+    # never enable hwloc's graphical option
+    enable_cairo=no
 
-        # never enable hwloc's plugin system
-        enable_plugins=no
-        enable_static=yes
-        enable_shared=no
+    # never enable hwloc's plugin system
+    enable_plugins=no
+    enable_static=yes
+    enable_shared=no
 
-        # Override -- disable hwloc's libxml2 support, but enable the
-        # native hwloc XML support
-        enable_libxml2=no
-        enable_xml=yes
+    # Override -- disable hwloc's libxml2 support, but enable the
+    # native hwloc XML support
+    enable_libxml2=no
+    enable_xml=yes
 
-        # hwloc checks for compiler visibility, and its needs to do
-        # this without "picky" flags.
-        opal_hwloc_hwloc1113_save_cflags=$CFLAGS
-        CFLAGS=$OPAL_CFLAGS_BEFORE_PICKY
-        HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc1113/hwloc],
-                  [AC_MSG_CHECKING([whether hwloc configure succeeded])
-                   AC_MSG_RESULT([yes])
-                   HWLOC_VERSION="internal v`$srcdir/$opal_hwloc_hwloc1113_basedir/hwloc/config/hwloc_get_version.sh $srcdir/$opal_hwloc_hwloc1113_basedir/hwloc/VERSION`"
+    # hwloc checks for compiler visibility, and its needs to do
+    # this without "picky" flags.
+    opal_hwloc_hwloc1113_save_cflags=$CFLAGS
+    CFLAGS=$OPAL_CFLAGS_BEFORE_PICKY
+    HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc1113/hwloc],
+              [AC_MSG_CHECKING([whether hwloc configure succeeded])
+               AC_MSG_RESULT([yes])
+               HWLOC_VERSION="internal v`$srcdir/$opal_hwloc_hwloc1113_basedir/hwloc/config/hwloc_get_version.sh $srcdir/$opal_hwloc_hwloc1113_basedir/hwloc/VERSION`"
 
-                   # Build flags for our Makefile.am
-                   opal_hwloc_hwloc1113_LDFLAGS='$(HWLOC_EMBEDDED_LDFLAGS)'
-                   opal_hwloc_hwloc1113_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_hwloc_hwloc1113_basedir"'/hwloc/src/libhwloc_embedded.la $(HWLOC_EMBEDDED_LIBS)'
-                   opal_hwloc_hwloc1113_support=yes
+               # Build flags for our Makefile.am
+               opal_hwloc_hwloc1113_LDFLAGS='$(HWLOC_EMBEDDED_LDFLAGS)'
+               opal_hwloc_hwloc1113_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_hwloc_hwloc1113_basedir"'/hwloc/src/libhwloc_embedded.la $(HWLOC_EMBEDDED_LIBS)'
+               opal_hwloc_hwloc1113_support=yes
 
-                   AC_DEFINE_UNQUOTED([HWLOC_HWLOC1113_HWLOC_VERSION],
-                       ["$HWLOC_VERSION"],
-                       [Version of hwloc])
+               AC_DEFINE_UNQUOTED([HWLOC_HWLOC1113_HWLOC_VERSION],
+                   ["$HWLOC_VERSION"],
+                   [Version of hwloc])
 
-                   # Do we have verbs support?
-                   CPPFLAGS_save=$CPPFLAGS
-                   AS_IF([test "$opal_want_verbs" = "yes"],
-                         [CPPFLAGS="-I$opal_verbs_dir/include $CPPFLAGS"])
-                   AC_CHECK_HEADERS([infiniband/verbs.h])
-                   CPPFLAGS=$CPPFLAGS_save
-                  ],
-                  [AC_MSG_CHECKING([whether hwloc configure succeeded])
-                   AC_MSG_RESULT([no])
-                   opal_hwloc_hwloc1113_support=no])
-        CFLAGS=$opal_hwloc_hwloc1113_save_cflags
+               # Do we have verbs support?
+               CPPFLAGS_save=$CPPFLAGS
+               AS_IF([test "$opal_want_verbs" = "yes"],
+                     [CPPFLAGS="-I$opal_verbs_dir/include $CPPFLAGS"])
+               AC_CHECK_HEADERS([infiniband/verbs.h])
+               CPPFLAGS=$CPPFLAGS_save
+              ],
+              [AC_MSG_CHECKING([whether hwloc configure succeeded])
+               AC_MSG_RESULT([no])
+               opal_hwloc_hwloc1113_support=no])
+    CFLAGS=$opal_hwloc_hwloc1113_save_cflags
 
-        # Restore some env variables, if necessary
-        AS_IF([test -n "$opal_hwloc_hwloc1113_save_cairo"],
-              [enable_cairo=$opal_hwloc_hwloc1113_save_cairo])
-        AS_IF([test -n "$opal_hwloc_hwloc1113_save_xml"],
-              [enable_xml=$opal_hwloc_hwloc1113_save_xml])
-        AS_IF([test -n "$opal_hwloc_hwloc1113_save_static"],
-              [enable_static=$opal_hwloc_hwloc1113_save_static])
-        AS_IF([test -n "$opal_hwloc_hwloc1113_save_shared"],
-              [enable_shared=$opal_hwloc_hwloc1113_save_shared])
-        AS_IF([test -n "$opal_hwloc_hwloc1113_save_plugins"],
-              [enable_plugins=$opal_hwloc_hwloc1113_save_shared])
+    # Restore some env variables, if necessary
+    AS_IF([test -n "$opal_hwloc_hwloc1113_save_cairo"],
+          [enable_cairo=$opal_hwloc_hwloc1113_save_cairo])
+    AS_IF([test -n "$opal_hwloc_hwloc1113_save_xml"],
+          [enable_xml=$opal_hwloc_hwloc1113_save_xml])
+    AS_IF([test -n "$opal_hwloc_hwloc1113_save_static"],
+          [enable_static=$opal_hwloc_hwloc1113_save_static])
+    AS_IF([test -n "$opal_hwloc_hwloc1113_save_shared"],
+          [enable_shared=$opal_hwloc_hwloc1113_save_shared])
+    AS_IF([test -n "$opal_hwloc_hwloc1113_save_plugins"],
+          [enable_plugins=$opal_hwloc_hwloc1113_save_shared])
 
-        CPPFLAGS=$opal_hwloc_hwloc1113_save_CPPFLAGS
-        LDFLAGS=$opal_hwloc_hwloc1113_save_LDFLAGS
-        LIBS=$opal_hwloc_hwloc1113_save_LIBS
+    CPPFLAGS=$opal_hwloc_hwloc1113_save_CPPFLAGS
+    LDFLAGS=$opal_hwloc_hwloc1113_save_LDFLAGS
+    LIBS=$opal_hwloc_hwloc1113_save_LIBS
 
-        AC_SUBST([opal_hwloc_hwloc1113_CFLAGS])
-        AC_SUBST([opal_hwloc_hwloc1113_CPPFLAGS])
-        AC_SUBST([opal_hwloc_hwloc1113_LDFLAGS])
-        AC_SUBST([opal_hwloc_hwloc1113_LIBS])
+    AC_SUBST([opal_hwloc_hwloc1113_CFLAGS])
+    AC_SUBST([opal_hwloc_hwloc1113_CPPFLAGS])
+    AC_SUBST([opal_hwloc_hwloc1113_LDFLAGS])
+    AC_SUBST([opal_hwloc_hwloc1113_LIBS])
 
-        # Finally, add some flags to the wrapper compiler so that our
-        # headers can be found.
-        hwloc_hwloc1113_WRAPPER_EXTRA_LDFLAGS="$HWLOC_EMBEDDED_LDFLAGS"
-        hwloc_hwloc1113_WRAPPER_EXTRA_LIBS="$HWLOC_EMBEDDED_LIBS"
-        hwloc_hwloc1113_WRAPPER_EXTRA_CPPFLAGS='-I${pkgincludedir}/'"$opal_hwloc_hwloc1113_basedir/hwloc/include"
-    fi
+    # Finally, add some flags to the wrapper compiler so that our
+    # headers can be found.
+    hwloc_hwloc1113_WRAPPER_EXTRA_LDFLAGS="$HWLOC_EMBEDDED_LDFLAGS"
+    hwloc_hwloc1113_WRAPPER_EXTRA_LIBS="$HWLOC_EMBEDDED_LIBS"
+    hwloc_hwloc1113_WRAPPER_EXTRA_CPPFLAGS='-I${pkgincludedir}/'"$opal_hwloc_hwloc1113_basedir/hwloc/include"
 
     # If we are not building the internal hwloc, then indicate that
     # this component should not be built.  NOTE: we still did all the
