@@ -59,7 +59,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (June 2016):
+base as of this writing (July 2016):
 
 General notes
 -------------
@@ -448,27 +448,33 @@ MPI Functionality and Features
   deprecated_example.c:4: warning: 'MPI_Type_struct' is deprecated (declared at /opt/openmpi/include/mpi.h:1522)
   shell$
 
-- MPI_THREAD_MULTIPLE is supported with some exceptions.  Note that Open MPI
-  must be configured  with --enable-mpi-thread-multiple to get this
-  level of thread safety support.
+- MPI_THREAD_MULTIPLE is supported with some exceptions.  Note that
+  Open MPI must be configured with --enable-mpi-thread-multiple to get
+  this level of thread safety support.
 
-  The following BTLs support MPI_THREAD_MULTIPLE:
-  - tcp
-  - openib
-  - vader (shared memory)
-  - ugni
-  - self
+  The following PMLs support MPI_THREAD_MULTIPLE:
+  - cm (see list (1) of supported MTLs, below)
+  - ob1 (see list (2) of supported BTLs, below)
+  - ucx
+  - yalla
 
-  The following MTLs and PMLs support MPI_THREAD_MULTIPLE:
-  - MXM
-  - portals4
+  (1) The cm PML and the following MTLs support MPI_THREAD_MULTIPLE:
+      - MXM
+      - portals4
 
-  Currently MPI File operations are not thread safe even if
-  MPI is initialized for MPI_THREAD_MULTIPLE support.
+  (2) The ob1 PML and the following BTLs support MPI_THREAD_MULTIPLE:
+      - openib (see exception below)
+      - self
+      - tcp
+      - ugni
+      - vader (shared memory)
 
-  The OpenIB BTL's RDMACM based connection setup mechanism is also
-  not thread safe.  The default UDCM method should be used for applications
-  requiring MPI_THREAD_MULTIPLE support.
+  The openib BTL's RDMACM based connection setup mechanism is also not
+  thread safe.  The default UDCM method should be used for
+  applications requiring MPI_THREAD_MULTIPLE support.
+
+  Currently, MPI File operations are not thread safe even if MPI is
+  initialized for MPI_THREAD_MULTIPLE support.
 
 - MPI_REAL16 and MPI_COMPLEX32 are only supported on platforms where a
   portable C datatype can be found that matches the Fortran type
@@ -605,12 +611,12 @@ Network Support
     - SMCUDA
     - Cisco usNIC
     - uGNI (Cray Gemini, Aries)
-    - vader (XPMEM, Linux CMA, Linux KNEM, and general shared memory)
+    - vader (XPMEM, Linux CMA, Linux KNEM, and copy-in/copy-out shared memory)
 
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better overall MPI performance:
 
-    - QLogic InfiniPath / Intel True Scale PSM
+    - Intel True Scale PSM (QLogic InfiniPath)
     - Intel Omni-Path PSM2
     - Mellanox MXM
     - Portals4
