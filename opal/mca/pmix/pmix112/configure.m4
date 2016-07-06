@@ -30,42 +30,38 @@ AC_DEFUN([MCA_opal_pmix_pmix112_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([PMIX_VERSION opal_pmix_pmix112_save_CPPFLAGS opal_pmix_pmix112_save_LDFLAGS opal_pmix_pmix112_save_LIBS opal_pmix_pmix112_basedir opal_pmix_pmix112_save_cflags])
 
-    AS_IF([false],
-          [AC_MSG_WARN([using an external pmix; disqualifiying this component])
-           opal_pmix_pmix112_happy=0],
-          [PMIX_VERSION=
-           opal_pmix_pmix112_basedir=opal/mca/pmix/pmix112
+    PMIX_VERSION=
+    opal_pmix_pmix112_basedir=opal/mca/pmix/pmix112
 
-           opal_pmix_pmix112_save_CFLAGS=$CFLAGS
-           opal_pmix_pmix112_save_CPPFLAGS=$CPPFLAGS
-           opal_pmix_pmix112_save_LDFLAGS=$LDFLAGS
-           opal_pmix_pmix112_save_LIBS=$LIBS
+    opal_pmix_pmix112_save_CFLAGS=$CFLAGS
+    opal_pmix_pmix112_save_CPPFLAGS=$CPPFLAGS
+    opal_pmix_pmix112_save_LDFLAGS=$LDFLAGS
+    opal_pmix_pmix112_save_LIBS=$LIBS
 
-           opal_pmix_pmix112_args="--enable-embedded-mode --with-pmix-symbol-prefix=opal_pmix_pmix112_ --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
-           AS_IF([test "$enable_debug" = "yes"],
-                 [opal_pmix_pmix112_args="--enable-debug $opal_pmix_pmix112_args"
-                  CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
-                 [opal_pmix_pmix112_args="--disable-debug $opal_pmix_pmix112_args"
-                  CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
-           CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
+    opal_pmix_pmix112_args="--enable-embedded-mode --with-pmix-symbol-prefix=opal_pmix_pmix112_ --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
+    AS_IF([test "$enable_debug" = "yes"],
+          [opal_pmix_pmix112_args="--enable-debug $opal_pmix_pmix112_args"
+           CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
+          [opal_pmix_pmix112_args="--disable-debug $opal_pmix_pmix112_args"
+           CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
+    CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
 
-           OPAL_CONFIG_SUBDIR([$opal_pmix_pmix112_basedir/pmix],
-               [$opal_pmix_pmix112_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
-               [opal_pmix_pmix112_happy=1], [opal_pmix_pmix112_happy=0])
+    OPAL_CONFIG_SUBDIR([$opal_pmix_pmix112_basedir/pmix],
+        [$opal_pmix_pmix112_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
+        [opal_pmix_pmix112_happy=1], [opal_pmix_pmix112_happy=0])
 
-           AS_IF([test $opal_pmix_pmix112_happy -eq 1],
-                 [PMIX_VERSION="internal v`$srcdir/$opal_pmix_pmix112_basedir/pmix/config/pmix_get_version.sh $srcdir/$opal_pmix_pmix112_basedir/pmix/VERSION`"
-                  # Build flags for our Makefile.am
-                  opal_pmix_pmix112_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_pmix_pmix112_basedir"'/pmix/libpmix.la'
-                  opal_pmix_pmix112_CPPFLAGS='-I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix112/pmix/include/pmix -I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix112/pmix/include -I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix112/pmix -I$(OPAL_TOP_SRCDIR)/opal/mca/pmix/pmix112/pmix'
-                  AC_SUBST([opal_pmix_pmix112_LIBS])
-                  AC_SUBST([opal_pmix_pmix112_CPPFLAGS])])
+    AS_IF([test $opal_pmix_pmix112_happy -eq 1],
+          [PMIX_VERSION="internal v`$srcdir/$opal_pmix_pmix112_basedir/pmix/config/pmix_get_version.sh $srcdir/$opal_pmix_pmix112_basedir/pmix/VERSION`"
+           # Build flags for our Makefile.am
+           opal_pmix_pmix112_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_pmix_pmix112_basedir"'/pmix/libpmix.la'
+           opal_pmix_pmix112_CPPFLAGS='-I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix112/pmix/include/pmix -I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix112/pmix/include -I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix112/pmix -I$(OPAL_TOP_SRCDIR)/opal/mca/pmix/pmix112/pmix'
+           AC_SUBST([opal_pmix_pmix112_LIBS])
+           AC_SUBST([opal_pmix_pmix112_CPPFLAGS])])
 
-           CFLAGS=$opal_pmix_pmix112_save_CFLAGS
-           CPPFLAGS=$opal_pmix_pmix112_save_CPPFLAGS
-           LDFLAGS=$opal_pmix_pmix112_save_LDFLAGS
-           LIBS=$opal_pmix_pmix112_save_LIBS
-          ])
+    CFLAGS=$opal_pmix_pmix112_save_CFLAGS
+    CPPFLAGS=$opal_pmix_pmix112_save_CPPFLAGS
+    LDFLAGS=$opal_pmix_pmix112_save_LDFLAGS
+    LIBS=$opal_pmix_pmix112_save_LIBS
 
     # If we are not building the internal pmix, then indicate that
     # this component should not be built.  NOTE: we still did all the

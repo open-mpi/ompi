@@ -91,15 +91,6 @@ AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
     AC_CONFIG_FILES([opal/mca/event/libevent2022/Makefile])
     libevent_basedir="opal/mca/event/libevent2022"
 
-    # If we're not building externally, configure this component
-    AS_IF([true],
-          [MCA_opal_event_libevent2022_DO_THE_CONFIG],
-          [AC_MSG_WARN([using an external libevent; disqualifiying this component])
-           $2])
-    OPAL_VAR_SCOPE_POP
-])
-
-AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     CFLAGS_save="$CFLAGS"
     CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
     CPPFLAGS_save="$CPPFLAGS"
@@ -205,4 +196,6 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
            $1],
           [$2
            OPAL_HAVE_WORKING_EVENTOPS=0])
+
+    OPAL_VAR_SCOPE_POP
 ])
