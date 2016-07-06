@@ -123,7 +123,6 @@ orte_session_dir_get_name(char **fulldirpath,
                           char *hostid,
                           orte_process_name_t *proc) {
     char *hostname  = NULL,
-        *batchname = NULL,
         *sessions  = NULL,
         *prefix = NULL,
         *frontend = NULL,
@@ -282,7 +281,6 @@ orte_session_dir_get_name(char **fulldirpath,
                 free(prefix);
                 free(sessions);
                 free(hostname);
-                free(batchname);
                 free(frontend);
                 return ORTE_ERR_FATAL;
             }
@@ -309,9 +307,6 @@ orte_session_dir_get_name(char **fulldirpath,
  cleanup:
     if(NULL != hostname) {
         free(hostname);
-    }
-    if(NULL != batchname) {
-        free(batchname);
     }
     if(NULL != sessions) {
         free(sessions);
