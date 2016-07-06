@@ -25,6 +25,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fcoll/fcoll.h"
+#include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 #include "ompi/mca/io/io.h"
 #include "math.h"
@@ -273,16 +274,16 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                                                  fh->f_comm->c_coll.coll_allgather_module);
     }
     else {
-        ret = fh->f_allgather_array (broken_total_lengths,
-                                     dynamic_gen2_num_io_procs,
-                                     MPI_LONG,
-                                     total_bytes_per_process,
-                                     dynamic_gen2_num_io_procs,
-                                     MPI_LONG,
-                                     0,
-                                     fh->f_procs_in_group,
-                                     fh->f_procs_per_group,
-                                     fh->f_comm);
+        ret = fcoll_base_coll_allgather_array (broken_total_lengths,
+                                               dynamic_gen2_num_io_procs,
+                                               MPI_LONG,
+                                               total_bytes_per_process,
+                                               dynamic_gen2_num_io_procs,
+                                               MPI_LONG,
+                                               0,
+                                               fh->f_procs_in_group,
+                                               fh->f_procs_per_group,
+                                               fh->f_comm);
     }
     
     if( OMPI_SUCCESS != ret){
@@ -332,16 +333,16 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                                                 fh->f_comm->c_coll.coll_allgather_module);            
     }
     else {
-        ret = fh->f_allgather_array (broken_counts,
-                                     dynamic_gen2_num_io_procs,
-                                     MPI_INT,
-                                     result_counts,
-                                     dynamic_gen2_num_io_procs,
-                                     MPI_INT,
-                                     0,
-                                     fh->f_procs_in_group,
-                                     fh->f_procs_per_group,
-                                     fh->f_comm);
+        ret = fcoll_base_coll_allgather_array (broken_counts,
+                                               dynamic_gen2_num_io_procs,
+                                               MPI_INT,
+                                               result_counts,
+                                               dynamic_gen2_num_io_procs,
+                                               MPI_INT,
+                                               0,
+                                               fh->f_procs_in_group,
+                                               fh->f_procs_per_group,
+                                               fh->f_comm);
     }
     if( OMPI_SUCCESS != ret){
         goto exit;
@@ -419,17 +420,17 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                                                       fh->f_comm->c_coll.coll_allgatherv_module );
         }
         else {
-            ret = fh->f_allgatherv_array (broken_iov_arrays[i],
-                                          broken_counts[i],
-                                          fh->f_iov_type,
-                                          aggr_data[i]->global_iov_array,
-                                          aggr_data[i]->fview_count,
-                                          displs,
-                                          fh->f_iov_type,
-                                          aggregators[i],
-                                          fh->f_procs_in_group,
-                                          fh->f_procs_per_group,
-                                          fh->f_comm);
+            ret = fcoll_base_coll_allgatherv_array (broken_iov_arrays[i],
+                                                    broken_counts[i],
+                                                    fh->f_iov_type,
+                                                    aggr_data[i]->global_iov_array,
+                                                    aggr_data[i]->fview_count,
+                                                    displs,
+                                                    fh->f_iov_type,
+                                                    aggregators[i],
+                                                    fh->f_procs_in_group,
+                                                    fh->f_procs_per_group,
+                                                    fh->f_comm);
         }
         if (OMPI_SUCCESS != ret){
             goto exit;

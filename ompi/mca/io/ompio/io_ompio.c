@@ -28,6 +28,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/topo/topo.h"
+#include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -1885,17 +1886,17 @@ int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
 
     //merge_aggrs[0] is considered the new aggregator
     //New aggregator collects group sizes of the groups to be merged
-    ompi_io_ompio_allgather_array (&fh->f_init_procs_per_group,
-     		                   1,
-				   MPI_INT,
-				   sizes_old_group,
-				   1,
-				   MPI_INT,
-				   0,
-				   merge_aggrs,
-				   num_merge_aggrs,
-				   fh->f_comm);
-
+    fcoll_base_coll_allgather_array (&fh->f_init_procs_per_group,
+                                     1,
+                                     MPI_INT,
+                                     sizes_old_group,
+                                     1,
+                                     MPI_INT,
+                                     0,
+                                     merge_aggrs,
+                                     num_merge_aggrs,
+                                     fh->f_comm);
+    
     fh->f_procs_per_group = 0;
 
 
@@ -1919,18 +1920,18 @@ int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
     //New aggregator also collects the grouping distribution
     //This is the actual merge
     //use allgatherv array
-    ompi_io_ompio_allgatherv_array (fh->f_init_procs_in_group,
-                                   fh->f_init_procs_per_group,
-                                   MPI_INT,
-                                   fh->f_procs_in_group,
-                                   sizes_old_group,
-				   displs,
-                                   MPI_INT,
-                                   0,
-                                   merge_aggrs,
-                                   num_merge_aggrs,
-                                   fh->f_comm);
-
+    fcoll_base_coll_allgatherv_array (fh->f_init_procs_in_group,
+                                      fh->f_init_procs_per_group,
+                                      MPI_INT,
+                                      fh->f_procs_in_group,
+                                      sizes_old_group,
+                                      displs,
+                                      MPI_INT,
+                                      0,
+                                      merge_aggrs,
+                                      num_merge_aggrs,
+                                      fh->f_comm);
+    
 
     free(displs);
     free (sizes_old_group);
@@ -2107,16 +2108,16 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
     }
 
     //Gather start offsets across processes in a group on aggregator
-    ompi_io_ompio_allgather_array (start_offset_len,
-                                   3,
-                                   OMPI_OFFSET_DATATYPE,
-                                   start_offsets_lens_tmp,
-                                   3,
-                                   OMPI_OFFSET_DATATYPE,
-                                   0,
-                                   fh->f_init_procs_in_group,
-                                   fh->f_init_procs_per_group,
-                                   fh->f_comm);
+    fcoll_base_coll_allgather_array (start_offset_len,
+                                     3,
+                                     OMPI_OFFSET_DATATYPE,
+                                     start_offsets_lens_tmp,
+                                     3,
+                                     OMPI_OFFSET_DATATYPE,
+                                     0,
+                                     fh->f_init_procs_in_group,
+                                     fh->f_init_procs_per_group,
+                                     fh->f_comm);
     for( k = 0 ; k < fh->f_init_procs_per_group; k++){
         end_offsets_tmp[k] = start_offsets_lens_tmp[3*k] + start_offsets_lens_tmp[3*k+1];
     }
@@ -2150,16 +2151,16 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     //Communicate bytes per group between all aggregators
-    ompi_io_ompio_allgather_array (bytes_per_group,
-                                   1,
-                                   OMPI_OFFSET_DATATYPE,
-                                   aggr_bytes_per_group_tmp,
-                                   1,
-                                   OMPI_OFFSET_DATATYPE,
-                                   0,
-                                   fh->f_init_aggr_list,
-                                   fh->f_init_num_aggrs,
-                                   fh->f_comm);
+    fcoll_base_coll_allgather_array (bytes_per_group,
+                                     1,
+                                     OMPI_OFFSET_DATATYPE,
+                                     aggr_bytes_per_group_tmp,
+                                     1,
+                                     OMPI_OFFSET_DATATYPE,
+                                     0,
+                                     fh->f_init_aggr_list,
+                                     fh->f_init_num_aggrs,
+                                     fh->f_comm);
 
     for( i = 0; i < fh->f_init_num_aggrs; i++){
        if((size_t)(aggr_bytes_per_group_tmp[i])>
@@ -2230,14 +2231,14 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
    *decision_list = &decision_list_tmp[0];
   }
     //Communicate flag to all group members
-    ompi_io_ompio_bcast_array (ompio_grouping_flag,
-                               1,
-                               MPI_INT,
-                               0,
-                               fh->f_init_procs_in_group,
-                               fh->f_init_procs_per_group,
-                               fh->f_comm);
-
+    fcoll_base_coll_bcast_array (ompio_grouping_flag,
+                                 1,
+                                 MPI_INT,
+                                 0,
+                                 fh->f_init_procs_in_group,
+                                 fh->f_init_procs_per_group,
+                                 fh->f_comm);
+    
 
 
     return OMPI_SUCCESS;

@@ -144,11 +144,6 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_sort=ompi_io_ompio_sort;
     ompio_fh->f_sort_iovec=ompi_io_ompio_sort_iovec;
 
-    ompio_fh->f_allgather_array=ompi_io_ompio_allgather_array;
-    ompio_fh->f_allgatherv_array=ompi_io_ompio_allgatherv_array;
-    ompio_fh->f_gather_array=ompi_io_ompio_gather_array;
-    ompio_fh->f_gatherv_array=ompi_io_ompio_gatherv_array;
-
     ompio_fh->f_get_num_aggregators=mca_io_ompio_get_num_aggregators;
     ompio_fh->f_get_bytes_per_agg=mca_io_ompio_get_bytes_per_agg;
     ompio_fh->f_set_aggregator_props=ompi_io_ompio_set_aggregator_props;

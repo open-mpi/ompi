@@ -224,52 +224,6 @@ typedef int (*mca_io_ompio_sort_iovec_fn_t) (struct iovec *iov,
 					     int num_entries,
 					     int *sorted);
 
-/* collective operations based on list of participating ranks instead of communicators*/
-typedef int (*mca_io_ompio_allgather_array_fn_t) (void *sbuf,
-						  int scount,
-						  ompi_datatype_t *sdtype,
-						  void *rbuf,
-						  int rcount,
-						  ompi_datatype_t *rdtype,
-						  int root_index,
-						  int *procs_in_group,
-						  int procs_per_group,
-						  ompi_communicator_t *comm);
-
-typedef int (*mca_io_ompio_allgatherv_array_fn_t) (void *sbuf,
-						   int scount,
-						   ompi_datatype_t *sdtype,
-						   void *rbuf,
-						   int *rcounts,
-						   int *disps,
-						   ompi_datatype_t *rdtype,
-						   int root_index,
-						   int *procs_in_group,
-						   int procs_per_group,
-						   ompi_communicator_t *comm);
-
-typedef int (*mca_io_ompio_gather_array_fn_t) (void *sbuf,
-					       int scount,
-					       ompi_datatype_t *sdtype,
-					       void *rbuf,
-					       int rcount,
-					       ompi_datatype_t *rdtype,
-					       int root_index,
-					       int *procs_in_group,
-					       int procs_per_group,
-					       ompi_communicator_t *comm);
-typedef int (*mca_io_ompio_gatherv_array_fn_t) (void *sbuf,
-						int scount,
-						ompi_datatype_t *sdtype,
-						void *rbuf,
-						int *rcounts,
-						int *disps,
-						ompi_datatype_t *rdtype,
-						int root_index,
-						int *procs_in_group,
-						int procs_per_group,
-						ompi_communicator_t *comm);
-
 /* functions to retrieve the number of aggregators and the size of the
    temporary buffer on aggregators from the fcoll modules */
 typedef void (*mca_io_ompio_get_num_aggregators_fn_t) ( int *num_aggregators);
@@ -372,11 +326,6 @@ struct mca_io_ompio_file_t {
 
     mca_io_ompio_sort_fn_t                                             f_sort;
     mca_io_ompio_sort_iovec_fn_t                                 f_sort_iovec;
-
-    mca_io_ompio_allgather_array_fn_t                       f_allgather_array;
-    mca_io_ompio_allgatherv_array_fn_t                     f_allgatherv_array;
-    mca_io_ompio_gather_array_fn_t                             f_gather_array;
-    mca_io_ompio_gatherv_array_fn_t                           f_gatherv_array;
 
     mca_io_ompio_get_num_aggregators_fn_t               f_get_num_aggregators;
     mca_io_ompio_get_bytes_per_agg_fn_t                   f_get_bytes_per_agg;
@@ -568,72 +517,6 @@ OMPI_DECLSPEC int ompi_io_ompio_break_file_view (mca_io_ompio_file_t *fh,
                                                  struct iovec **broken_iov,
                                                  int *broken_count);
 
-
-/*
- * Modified versions of Collective operations
- * Based on an array of procs in group
- */
-OMPI_DECLSPEC int ompi_io_ompio_gatherv_array (void *sbuf,
-                                               int scount,
-                                               ompi_datatype_t *sdtype,
-                                               void *rbuf,
-                                               int *rcounts,
-                                               int *disps,
-                                               ompi_datatype_t *rdtype,
-                                               int root_index,
-                                               int *procs_in_group,
-                                               int procs_per_group,
-                                               ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_scatterv_array (void *sbuf,
-                                                int *scounts,
-                                                int *disps,
-                                                ompi_datatype_t *sdtype,
-                                                void *rbuf,
-                                                int rcount,
-                                                ompi_datatype_t *rdtype,
-                                                int root_index,
-                                                int *procs_in_group,
-                                                int procs_per_group,
-                                                ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_allgather_array (void *sbuf,
-                                                 int scount,
-                                                 ompi_datatype_t *sdtype,
-                                                 void *rbuf,
-                                                 int rcount,
-                                                 ompi_datatype_t *rdtype,
-                                                 int root_index,
-                                                 int *procs_in_group,
-                                                 int procs_per_group,
-                                                 ompi_communicator_t *comm);
-
-OMPI_DECLSPEC int ompi_io_ompio_allgatherv_array (void *sbuf,
-                                                  int scount,
-                                                  ompi_datatype_t *sdtype,
-                                                  void *rbuf,
-                                                  int *rcounts,
-                                                  int *disps,
-                                                  ompi_datatype_t *rdtype,
-                                                  int root_index,
-                                                  int *procs_in_group,
-                                                  int procs_per_group,
-                                                  ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_gather_array (void *sbuf,
-                                              int scount,
-                                              ompi_datatype_t *sdtype,
-                                              void *rbuf,
-                                              int rcount,
-                                              ompi_datatype_t *rdtype,
-                                              int root_index,
-                                              int *procs_in_group,
-                                              int procs_per_group,
-                                              ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_bcast_array (void *buff,
-                                             int count,
-                                             ompi_datatype_t *datatype,
-                                             int root_index,
-                                             int *procs_in_group,
-                                             int procs_per_group,
-                                             ompi_communicator_t *comm);
 
 OMPI_DECLSPEC int ompi_io_ompio_register_print_entry (int queue_type,
 						      mca_io_ompio_print_entry x);
