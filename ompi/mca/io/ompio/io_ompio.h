@@ -568,41 +568,6 @@ OMPI_DECLSPEC int ompi_io_ompio_break_file_view (mca_io_ompio_file_t *fh,
                                                  struct iovec **broken_iov,
                                                  int *broken_count);
 
-OMPI_DECLSPEC int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
-                                                      struct iovec *broken_iov,
-                                                      int broken_count,
-                                                      int num_aggregators,
-                                                      size_t stripe_size,
-                                                      int **fview_count,
-                                                      struct iovec **iov,
-                                                      int *count);
-
-OMPI_DECLSPEC int ompi_io_ompio_gather_data (mca_io_ompio_file_t *fh,
-                                             void *send_buf,
-                                             size_t total_bytes_sent,
-                                             int *bytes_sent,
-                                             struct iovec *broken_iovec,
-                                             int broken_index,
-                                             size_t partial,
-                                             void *global_buf,
-                                             int *bytes_per_process,
-                                             int *displs,
-                                             int num_aggregators,
-                                             size_t stripe_size);
-
-OMPI_DECLSPEC int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
-                                              void *receive_buf,
-                                              size_t total_bytes_recv,
-                                              int *bytes_received,
-                                              struct iovec *broken_iovec,
-                                              int broken_index,
-                                              size_t partial,
-                                              void *global_buf,
-                                              int *bytes_per_process,
-                                              int *displs,
-                                              int num_aggregators,
-                                              size_t stripe_size);
-
 
 /*
  * Modified versions of Collective operations
