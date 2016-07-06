@@ -54,8 +54,8 @@ included in the vX.Y.Z section and be denoted as:
                                  included in release version vA.B.C.
 
 
-2.0.0 -- DATE
-------
+2.0.0 -- 11 July 2016
+---------------------
 
  **********************************************************************
  *  Open MPI is now fully MPI-3.1 compliant
@@ -111,12 +111,13 @@ Changes in behavior compared to prior versions:
   recompile MPI and OpenSHMEM applications to work with this version
   of Open MPI.
 - Removed checkpoint/restart code due to loss of maintainer. :-(
-- Change the behavior for handling certain signals when using PSM
-  and PSM2 libraries.  Previously, the PSM and PSM2 libraries would
-  trap certain signals in order to generate tracebacks.  The mechanism
-  was found to cause issues with Open MPI's own error reporting mechanism.
-  If not already set, Open MPI now sets the IPATH_NO_BACKTRACE and HFI_NO_BACKTRACE
-  environment variables to disable PSM/PSM2's handling these signals.
+- Change the behavior for handling certain signals when using PSM and
+  PSM2 libraries.  Previously, the PSM and PSM2 libraries would trap
+  certain signals in order to generate tracebacks.  The mechanism was
+  found to cause issues with Open MPI's own error reporting mechanism.
+  If not already set, Open MPI now sets the IPATH_NO_BACKTRACE and
+  HFI_NO_BACKTRACE environment variables to disable PSM/PSM2's
+  handling these signals.
 
 Removed legacy support:
 
