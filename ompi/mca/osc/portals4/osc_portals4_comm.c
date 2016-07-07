@@ -199,9 +199,9 @@ ompi_osc_portals4_rput(const void *origin_addr,
     size_t offset;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "rput: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
+                         "rput: 0x%lx, %d, %s, %d, %lu, %d, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
-                         origin_dt->name, target, (int) target_disp,
+                         origin_dt->name, target, (unsigned long) target_disp,
                          target_count, target_dt->name,
                          (unsigned long) win));
 
@@ -266,9 +266,9 @@ ompi_osc_portals4_rget(void *origin_addr,
     size_t offset;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "rget: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
+                         "rget: 0x%lx, %d, %s, %d, %lu, %d, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
-                         origin_dt->name, target, (int) target_disp,
+                         origin_dt->name, target, (unsigned long) target_disp,
                          target_count, target_dt->name,
                          (unsigned long) win));
 
@@ -334,9 +334,9 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
     ptl_datatype_t ptl_dt;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "raccumulate: 0x%lx, %d, %s, %d, %d, %d, %s, %s 0x%lx",
+                         "raccumulate: 0x%lx, %d, %s, %d, %lu, %d, %s, %s 0x%lx",
                          (unsigned long) origin_addr, origin_count,
-                         origin_dt->name, target, (int) target_disp,
+                         origin_dt->name, target, (unsigned long) target_disp,
                          target_count, target_dt->name,
                          op->o_name,
                          (unsigned long) win));
@@ -422,7 +422,7 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
                                   int result_count,
                                   struct ompi_datatype_t *result_dt,
                                   int target,
-                                  MPI_Aint target_disp,
+                                  OPAL_PTRDIFF_TYPE target_disp,
                                   int target_count,
                                   struct ompi_datatype_t *target_dt,
                                   struct ompi_op_t *op,
@@ -440,11 +440,11 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
     ptl_datatype_t ptl_dt;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "rget_accumulate: 0x%lx, %d, %s, 0x%lx, %d, %s, %d, %d, %d, %s, %s, 0x%lx",
+                         "rget_accumulate: 0x%lx, %d, %s, 0x%lx, %d, %s, %d, %lu, %d, %s, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, (unsigned long) result_addr,
                          result_count, result_dt->name,
-                         target, (int) target_disp,
+                         target, (unsigned long) target_disp,
                          target_count, target_dt->name,
                          op->o_name,
                          (unsigned long) win));
@@ -602,9 +602,9 @@ ompi_osc_portals4_put(const void *origin_addr,
     size_t offset;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "put: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
+                         "put: 0x%lx, %d, %s, %d, %lu, %d, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
-                         origin_dt->name, target, (int) target_disp,
+                         origin_dt->name, target, (unsigned long) target_disp,
                          target_count, target_dt->name,
                          (unsigned long) win));
 
@@ -659,9 +659,9 @@ ompi_osc_portals4_get(void *origin_addr,
     size_t offset;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "get: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
+                         "get: 0x%lx, %d, %s, %d, %lu, %d, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
-                         origin_dt->name, target, (int) target_disp,
+                         origin_dt->name, target, (unsigned long) target_disp,
                          target_count, target_dt->name,
                          (unsigned long) win));
 
@@ -717,9 +717,9 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
     ptl_datatype_t ptl_dt;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "accumulate: 0x%lx, %d, %s, %d, %d, %d, %s, %s, 0x%lx",
+                         "accumulate: 0x%lx, %d, %s, %d, %lu, %d, %s, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
-                         origin_dt->name, target, (int) target_disp,
+                         origin_dt->name, target, (unsigned long) target_disp,
                          target_count, target_dt->name,
                          op->o_name,
                          (unsigned long) win));
@@ -797,7 +797,7 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
                                  int result_count,
                                  struct ompi_datatype_t *result_dt,
                                  int target,
-                                 MPI_Aint target_disp,
+                                 OPAL_PTRDIFF_TYPE target_disp,
                                  int target_count,
                                  struct ompi_datatype_t *target_dt,
                                  struct ompi_op_t *op,
@@ -813,11 +813,11 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
     ptl_datatype_t ptl_dt;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "get_accumulate: 0x%lx, %d, %s, 0x%lx, %d, %s, %d, %d, %d, %s, %s, 0x%lx",
+                         "get_accumulate: 0x%lx, %d, %s, 0x%lx, %d, %s, %d, %lu, %d, %s, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, (unsigned long) result_addr,
                          result_count, result_dt->name,
-                         target, (int) target_disp,
+                         target, (unsigned long) target_disp,
                          target_count, target_dt->name,
                          op->o_name,
                          (unsigned long) win));
@@ -964,11 +964,11 @@ ompi_osc_portals4_compare_and_swap(const void *origin_addr,
     ptl_size_t result_md_offset, origin_md_offset;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "compare_and_swap: 0x%lx, 0x%lx, 0x%lx, %s, %d, %d, 0x%lx",
+                         "compare_and_swap: 0x%lx, 0x%lx, 0x%lx, %s, %d, %lu, 0x%lx",
                          (unsigned long) origin_addr,
                          (unsigned long) compare_addr,
                          (unsigned long) result_addr,
-                         dt->name, target, (int) target_disp,
+                         dt->name, target, (unsigned long) target_disp,
                          (unsigned long) win));
 
     ret = ompi_osc_portals4_get_dt(dt, &ptl_dt);
@@ -1027,10 +1027,10 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
     ptl_datatype_t ptl_dt;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "fetch_and_op: 0x%lx, 0x%lx, %s, %d, %d, %s, 0x%lx",
+                         "fetch_and_op: 0x%lx, 0x%lx, %s, %d, %lu, %s, 0x%lx",
                          (unsigned long) origin_addr,
                          (unsigned long) result_addr,
-                         dt->name, target, (int) target_disp,
+                         dt->name, target, (unsigned long) target_disp,
                          op->o_name,
                          (unsigned long) win));
 
