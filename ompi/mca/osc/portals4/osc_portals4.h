@@ -21,6 +21,8 @@
 
 #include "ompi/mca/mtl/portals4/mtl_portals4.h"
 
+#define REQ_OSC_TABLE_ID     4
+
 #define OSC_PORTALS4_MB_DATA    0x0000000000000000ULL
 #define OSC_PORTALS4_MB_CONTROL 0x1000000000000000ULL
 
