@@ -305,12 +305,19 @@ component_init(bool enable_progress_threads, bool enable_mpi_threads)
     ret = PtlPTAlloc(mca_osc_portals4_component.matching_ni_h,
                      0,
                      mca_osc_portals4_component.matching_eq_h,
-                     4,
+                     REQ_OSC_TABLE_ID,
                      &mca_osc_portals4_component.matching_pt_idx);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: PtlPTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
+        return ret;
+    }
+
+    if (mca_osc_portals4_component.matching_pt_idx != REQ_OSC_TABLE_ID) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc did not allocate the requested PT: %d\n",
+                            __FILE__, __LINE__, mca_osc_portals4_component.matching_pt_idx);
         return ret;
     }
 
