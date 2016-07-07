@@ -10,6 +10,8 @@
 # $HEADER$
 #
 
+if !OPAL_HWLOC_USE_EXTERNAL
+
 # Due to what might be a bug in Automake, we need to remove stamp-h?
 # files manually.  See
 # http://debbugs.gnu.org/cgi/bugreport.cgi?bug=19418.
@@ -30,6 +32,19 @@ SUBDIRS = hwloc
 # Headers and sources
 headers = hwloc1113.h
 sources = hwloc1113_component.c
+
+else
+
+SUBDIRS =
+
+headers =
+sources =
+
+endif
+
+DIST_SUBDIRS= $(SUBDIRS)
+
+
 
 # We only ever build this component statically
 noinst_LTLIBRARIES = libmca_hwloc_hwloc1113.la

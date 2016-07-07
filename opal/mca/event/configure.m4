@@ -61,5 +61,6 @@ AC_DEFUN([MCA_opal_event_CONFIG],[
     AC_DEFINE_UNQUOTED([MCA_event_IMPLEMENTATION_HEADER],
                        ["opal/mca/event/$opal_event_base_include"],
                        [Header to include for event implementation])
+    AM_CONDITIONAL(OPAL_EVENT_USE_EXTERNAL,[test "x$opal_event_external_support" = "xyes"])
     AC_MSG_RESULT([$opal_event_base_include])
 ])dnl

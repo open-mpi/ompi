@@ -79,5 +79,7 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
           [$1],
           [$2])
 
+    AM_CONDITIONAL(OPAL_PMIX_USE_EXTERNAL,[test "x$opal_external_pmix_happy" = "xyes"])
+
     OPAL_VAR_SCOPE_POP
 ])dnl
