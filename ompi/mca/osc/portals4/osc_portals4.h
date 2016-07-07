@@ -53,6 +53,7 @@ struct ompi_osc_portals4_component_t {
     ptl_size_t matching_atomic_max;
     ptl_size_t matching_fetch_atomic_max;
     ptl_size_t matching_atomic_ordered_size;
+    ptl_uid_t uid;
 
     opal_free_list_t requests; /* request free list for the r* communication variants */
 };
