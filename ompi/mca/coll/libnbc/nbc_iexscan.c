@@ -45,7 +45,7 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
                              struct ompi_communicator_t *comm, ompi_request_t ** request,
                              struct mca_coll_base_module_2_1_0_t *module) {
     int rank, p, res;
-    MPI_Aint ext;
+    ptrdiff_t gap, span;
     NBC_Schedule *schedule;
 #ifdef NBC_CACHE_SCHEDULE
     NBC_Scan_args *args, *found, search;
@@ -59,22 +59,17 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
     rank = ompi_comm_rank (comm);
     p = ompi_comm_size (comm);
 
-    res = ompi_datatype_type_extent(datatype, &ext);
-    if (MPI_SUCCESS != res) {
-        NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
-        return res;
-    }
-
     res = NBC_Init_handle(comm, &handle, libnbc_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
 
+    span = opal_datatype_span(&datatype->super, count, &gap);
     if (inplace && rank < p - 1) {
         /* need more buffer space for the inplace case */
-        handle->tmpbuf = malloc(ext * count * 2);
+        handle->tmpbuf = malloc(2 * span);
     } else {
-        handle->tmpbuf = malloc(ext * count);
+        handle->tmpbuf = malloc(span);
     }
 
     if (handle->tmpbuf == NULL) {
@@ -105,7 +100,7 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
             if (inplace && rank < p - 1) {
                 /* if sendbuf == recvbuf do not clobber the send buffer until it has been combined
                  * with the incoming data. */
-                res = NBC_Sched_recv ((void *) (ext * count), true, count, datatype, rank-1, schedule, false);
+                res = NBC_Sched_recv ((void *) (span - gap), true, count, datatype, rank-1, schedule, false);
             } else {
                 res = NBC_Sched_recv (recvbuf, false, count, datatype, rank-1, schedule, false);
             }
@@ -126,10 +121,10 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
                 /* perform the reduce in my temporary buffer */
                 /* this cannot be done until handle->tmpbuf is unused :-( so barrier after */
                 if (inplace) {
-                    res = NBC_Sched_op (0, true, sendbuf, false, (void *)(ext * count), true, count,
+                    res = NBC_Sched_op ((void *)(-gap), true, sendbuf, false, (void *)(span - gap), true, count,
                                         datatype, op, schedule, true);
                 } else {
-                    res = NBC_Sched_op (0, true, sendbuf, false, recvbuf, false, count, datatype, op,
+                    res = NBC_Sched_op ((void *)(-gap), true, sendbuf, false, recvbuf, false, count, datatype, op,
                                         schedule, true);
                 }
 
@@ -139,7 +134,7 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
                 }
 
                 /* send reduced data onward */
-                res = NBC_Sched_send (0, true, count, datatype, rank + 1, schedule, false);
+                res = NBC_Sched_send ((void *)(-gap), true, count, datatype, rank + 1, schedule, false);
                 if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
                     NBC_Return_handle (handle);
                     return res;
@@ -147,7 +142,7 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
 
                 if (inplace) {
                     /* copy the received data into the receive buffer */
-                    res = NBC_Sched_copy ((void *)(ext * count), true, count, datatype, recvbuf,
+                    res = NBC_Sched_copy ((void *)(span - gap), true, count, datatype, recvbuf,
                                           false, count, datatype, schedule, false);
                     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
                         NBC_Return_handle (handle);

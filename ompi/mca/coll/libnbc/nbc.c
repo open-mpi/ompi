@@ -10,7 +10,7 @@
  *                         rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -154,6 +154,33 @@ int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, in
   }
 
   NBC_DEBUG(10, "added receive - ends at byte %d\n", nbc_schedule_get_size (schedule));
+
+  return OMPI_SUCCESS;
+}
+
+/* this function puts an operation into the schedule */
+int NBC_Sched_op2 (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+                   MPI_Op op, NBC_Schedule *schedule, bool barrier) {
+  NBC_Args_op op_args;
+  int ret;
+
+  /* store the passed arguments */
+  op_args.type = OP2;
+  op_args.buf1 = buf1;
+  op_args.buf2 = buf2;
+  op_args.tmpbuf1 = tmpbuf1;
+  op_args.tmpbuf2 = tmpbuf2;
+  op_args.count = count;
+  op_args.op = op;
+  op_args.datatype = datatype;
+
+  /* append to the round-schedule */
+  ret = nbc_schedule_round_append (schedule, &op_args, sizeof (op_args), barrier);
+  if (OMPI_SUCCESS != ret) {
+    return ret;
+  }
+
+  NBC_DEBUG(10, "added op2 - ends at byte %i\n", nbc_schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
@@ -477,6 +504,24 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
           buf3=opargs.buf3;
         }
         ompi_3buff_op_reduce(opargs.op, buf1, buf2, buf3, opargs.count, opargs.datatype);
+        break;
+      case OP2:
+        NBC_DEBUG(5, "  OP2  (offset %li) ", offset);
+        NBC_GET_BYTES(ptr,opargs);
+        NBC_DEBUG(5, "*buf1: %p, buf2: %p, count: %i, type: %p)\n", opargs.buf1, opargs.buf2,
+                  opargs.count, opargs.datatype);
+        /* get buffers */
+        if(opargs.tmpbuf1) {
+          buf1=(char*)handle->tmpbuf+(long)opargs.buf1;
+        } else {
+          buf1=(void *)opargs.buf1;
+        }
+        if(opargs.tmpbuf2) {
+          buf2=(char*)handle->tmpbuf+(long)opargs.buf2;
+        } else {
+          buf2=opargs.buf2;
+        }
+        ompi_op_reduce(opargs.op, buf1, buf2, opargs.count, opargs.datatype);
         break;
       case COPY:
         NBC_DEBUG(5, "  COPY   (offset %li) ", offset);

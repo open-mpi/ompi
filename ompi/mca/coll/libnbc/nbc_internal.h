@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -80,6 +80,7 @@ typedef enum {
   SEND,
   RECV,
   OP,
+  OP2,
   COPY,
   UNPACK
 } NBC_Fn_type;
@@ -147,6 +148,8 @@ int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype dataty
 int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_op (void* buf3, char tmpbuf3, const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
                   MPI_Op op, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_op2 (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+                   MPI_Op op, NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount,
                     MPI_Datatype tgttype, NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf,
@@ -317,6 +320,7 @@ static inline void nbc_get_round_size (char *p, unsigned long *size) {
       offset += sizeof(NBC_Args_recv);
       break;
     case OP:
+    case OP2:
       /*printf("found a OP at offset %li\n", (long)p-(long)schedule); */
       offset += sizeof(NBC_Args_op);            \
       break;
@@ -393,6 +397,7 @@ static inline void nbc_schedule_inc_round (NBC_Schedule *schedule) {
          printf("*buf: %lu, count: %i, type: %lu, source: %i)\n", (unsigned long)recvargs.buf, recvargs.count, (unsigned long)recvargs.datatype, recvargs.source); \
          break; \
        case OP: \
+       case OP2: \
          printf("[%i]  OP   (offset %li) ", myrank, (long)p-(long)schedule); \
          NBC_GET_BYTES(p,opargs); \
          printf("*buf1: %lu, buf2: %lu, count: %i, type: %lu)\n", (unsigned long)opargs.buf1, (unsigned long)opargs.buf2, opargs.count, (unsigned long)opargs.datatype); \
