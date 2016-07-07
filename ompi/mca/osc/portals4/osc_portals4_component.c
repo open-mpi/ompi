@@ -360,7 +360,17 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                 struct ompi_communicator_t *comm, struct ompi_info_t *info,
                 int flavor)
 {
+    int ret;
+
     if (MPI_WIN_FLAVOR_SHARED == flavor) return -1;
+
+    ret = PtlGetUid(mca_osc_portals4_component.matching_ni_h, &mca_osc_portals4_component.uid);
+    if (PTL_OK != ret) {
+      opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                          "%s:%d: PtlGetUid failed: %d\n",
+                          __FILE__, __LINE__, ret);
+      return OMPI_ERROR;
+    }
 
     return 20;
 }
@@ -482,7 +492,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         me.length = size;
     }
     me.ct_handle = PTL_CT_NONE;
-    me.uid = PTL_UID_ANY;
+    me.uid = mca_osc_portals4_component.uid;
     me.options = PTL_ME_OP_PUT | PTL_ME_OP_GET | PTL_ME_NO_TRUNCATE | PTL_ME_EVENT_SUCCESS_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
@@ -505,7 +515,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     me.start = &module->state;
     me.length = sizeof(module->state);
     me.ct_handle = PTL_CT_NONE;
-    me.uid = PTL_UID_ANY;
+    me.uid = mca_osc_portals4_component.uid;
     me.options = PTL_ME_OP_PUT | PTL_ME_OP_GET | PTL_ME_NO_TRUNCATE | PTL_ME_EVENT_SUCCESS_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
