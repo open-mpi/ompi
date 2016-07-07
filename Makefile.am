@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
@@ -30,10 +30,12 @@ dist-hook:
 # Check for common symbols.  Use a "-hook" to increase the odds that a
 # developer will see it at the end of their installation process.
 install-exec-hook:
-	-@$(top_srcdir)/config/find_common_syms \
-	    --brief \
-	    --top_builddir=$(top_builddir) \
-	    --top_srcdir=$(top_srcdir) \
-	    --objext=$(OBJEXT)
+	-@if test -d "$(top_srcdir)/.git"; then \
+	    $(top_srcdir)/config/find_common_syms \
+	        --brief \
+	        --top_builddir=$(top_builddir) \
+	        --top_srcdir=$(top_srcdir) \
+	        --objext=$(OBJEXT); \
+	fi
 
 ACLOCAL_AMFLAGS = -I config
