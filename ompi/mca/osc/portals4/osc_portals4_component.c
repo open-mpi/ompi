@@ -218,6 +218,13 @@ process:
         count++;
 
         if (NULL != ev.user_ptr) {
+            /* be sure that we receive the PTL_EVENT_LINK */
+            if (ev.type == PTL_EVENT_LINK) {
+              *(int *)ev.user_ptr = *(int *)ev.user_ptr + 1;
+              opal_condition_broadcast(&mca_osc_portals4_component.cond);
+              continue;
+            }
+
             req = (ompi_osc_portals4_request_t*) ev.user_ptr;
             opal_atomic_add_size_t(&req->super.req_status._ucount, ev.mlength);
             ops = opal_atomic_add_32(&req->ops_committed, 1);
@@ -503,7 +510,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                       module->pt_idx,
                       &me,
                       PTL_PRIORITY_LIST,
-                      NULL,
+                      &module->ct_link,
                       &module->data_me_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -526,7 +533,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                       module->pt_idx,
                       &me,
                       PTL_PRIORITY_LIST,
-                      NULL,
+                      &module->ct_link,
                       &module->control_me_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -574,6 +581,13 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     PtlAtomicSync();
 
     /* Make sure that everyone's ready to receive. */
+    OPAL_THREAD_LOCK(&mca_osc_portals4_component.lock);
+    while (module->ct_link != 2) {
+        opal_condition_wait(&mca_osc_portals4_component.cond,
+                            &mca_osc_portals4_component.lock);
+    }
+    OPAL_THREAD_UNLOCK(&mca_osc_portals4_component.lock);
+
     module->comm->c_coll.coll_barrier(module->comm,
                                       module->comm->c_coll.coll_barrier_module);
 
@@ -618,6 +632,7 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
                                       module->comm->c_coll.coll_barrier_module);
 
     /* cleanup */
+    PtlMEUnlink(module->control_me_h);
     PtlMEUnlink(module->data_me_h);
     PtlMDRelease(module->md_h);
     PtlMDRelease(module->req_md_h);
