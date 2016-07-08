@@ -14,7 +14,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -45,7 +45,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
     int i, j, size, rank, err=MPI_SUCCESS;
     ompi_request_t **preq, **reqs;
-    char *tmp_buffer;
+    char *allocated_buffer, *tmp_buffer;
     size_t max_size, rdtype_size;
     OPAL_PTRDIFF_TYPE ext, gap;
 
@@ -69,11 +69,11 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     /* The gap will always be the same as we are working on the same datatype */
 
     /* Allocate a temporary buffer */
-    tmp_buffer = calloc (max_size, 1);
-    if (NULL == tmp_buffer) {
+    allocated_buffer = calloc (max_size, 1);
+    if (NULL == allocated_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    tmp_buffer += gap;
+    tmp_buffer = allocated_buffer - gap;
 
     /* Initiate all send/recv to/from others. */
     reqs = preq = coll_base_comm_get_reqs(base_module->base_data, 2);
@@ -126,7 +126,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
 
  error_hndl:
     /* Free the temporary buffer */
-    free (tmp_buffer);
+    free (allocated_buffer);
     if( MPI_SUCCESS != err ) {
         ompi_coll_base_free_reqs(reqs, 2 );
     }
