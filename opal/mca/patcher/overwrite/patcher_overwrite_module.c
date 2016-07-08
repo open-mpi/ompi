@@ -278,7 +278,7 @@ static int mca_patcher_overwrite_patch_symbol (const char *func_symbol_name, uin
     if (NULL == sym_addr) {
         sym_addr = dlsym(RTLD_DEFAULT, func_symbol_name);
         if ( (sym_addr == NULL) && ((error = dlerror()) != NULL) )  {
-            opal_output(0, "error locating symbol %s to patch. %s", func_symbol_name,
+            opal_output(-1, "error locating symbol %s to patch. %s", func_symbol_name,
                         error);
             return OPAL_ERR_NOT_FOUND;
         }
