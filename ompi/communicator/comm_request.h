@@ -21,7 +21,7 @@
 typedef struct ompi_comm_request_t {
     ompi_request_t super;
 
-    void *context;
+    opal_object_t *context;
     opal_list_t schedule;
 } ompi_comm_request_t;
 OBJ_CLASS_DECLARATION(ompi_comm_request_t);

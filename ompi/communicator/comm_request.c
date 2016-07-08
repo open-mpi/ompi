@@ -235,6 +235,7 @@ static void ompi_comm_request_destruct (ompi_comm_request_t *request)
 {
     OBJ_DESTRUCT(&request->schedule);
 }
+
 OBJ_CLASS_INSTANCE(ompi_comm_request_t, ompi_request_t,
                    ompi_comm_request_construct,
                    ompi_comm_request_destruct);
@@ -258,10 +259,10 @@ ompi_comm_request_t *ompi_comm_request_get (void)
 void ompi_comm_request_return (ompi_comm_request_t *request)
 {
     if (request->context) {
-        free (request->context);
-        request->context = NULL;
+        OBJ_RELEASE (request->context);
     }
 
+    OMPI_REQUEST_FINI(&request->super);
     opal_free_list_return (&ompi_comm_requests, (opal_free_list_item_t *) request);
 }
 
