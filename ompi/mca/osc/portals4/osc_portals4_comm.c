@@ -384,10 +384,18 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                              0);
             } else {
                 ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
-                if (OMPI_SUCCESS != ret) return ret;
+                if (OMPI_SUCCESS != ret) {
+                    opal_output(ompi_osc_base_framework.framework_output,
+                            "MPI_Raccumulate: datatype is not currently supported");
+                    return OMPI_ERR_NOT_SUPPORTED;
+                }
 
                 ret = ompi_osc_portals4_get_op(op, &ptl_op);
-                if (OMPI_SUCCESS != ret) return ret;
+                if (OMPI_SUCCESS != ret) {
+                    opal_output(ompi_osc_base_framework.framework_output,
+                            "MPI_Raccumulate: operation is not currently supported");
+                    return OMPI_ERR_NOT_SUPPORTED;
+                }
 
                 ret = PtlAtomic(module->req_md_h,
                                 offset + sent,
@@ -476,7 +484,9 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
             if (OMPI_SUCCESS != ret) {
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
-                return ret;
+                opal_output(ompi_osc_base_framework.framework_output,
+                        "MPI_Rget_accumulate: datatype is not currently supported");
+                return OMPI_ERR_NOT_SUPPORTED;
             }
             length *= origin_count;
 
@@ -547,10 +557,18 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             origin_md_offset = (ptl_size_t) origin_addr;
 
             ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
-            if (OMPI_SUCCESS != ret) return ret;
+            if (OMPI_SUCCESS != ret) {
+                 opal_output(ompi_osc_base_framework.framework_output,
+                        "MPI_Rget_accumulate: datatype is not currently supported");
+                return OMPI_ERR_NOT_SUPPORTED;
+            }
 
             ret = ompi_osc_portals4_get_op(op, &ptl_op);
-            if (OMPI_SUCCESS != ret) return ret;
+            if (OMPI_SUCCESS != ret) {
+                 opal_output(ompi_osc_base_framework.framework_output,
+                        "MPI_Rget_accumulate: operation is not currently supported");
+                return OMPI_ERR_NOT_SUPPORTED;
+            }
 
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
@@ -760,10 +778,18 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
                              0);
             } else {
                 ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
-                if (OMPI_SUCCESS != ret) return ret;
+                if (OMPI_SUCCESS != ret) {
+                    opal_output(ompi_osc_base_framework.framework_output,
+                            "MPI_Accumulate: datatype is not currently supported");
+                    return OMPI_ERR_NOT_SUPPORTED;
+                }
 
                 ret = ompi_osc_portals4_get_op(op, &ptl_op);
-                if (OMPI_SUCCESS != ret) return ret;
+                if (OMPI_SUCCESS != ret) {
+                    opal_output(ompi_osc_base_framework.framework_output,
+                            "MPI_Accumulate: operation is not currently supported");
+                    return OMPI_ERR_NOT_SUPPORTED;
+                }
 
                 ret = PtlAtomic(module->md_h,
                                 md_offset + sent,
@@ -842,7 +868,9 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             }
             ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
             if (OMPI_SUCCESS != ret) {
-                return ret;
+                opal_output(ompi_osc_base_framework.framework_output,
+                        "MPI_Get_accumulate: datatype is not currently supported");
+                return OMPI_ERR_NOT_SUPPORTED;
             }
             length *= origin_count;
 
@@ -909,11 +937,18 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             origin_md_offset = (ptl_size_t) origin_addr;
 
             ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
-            if (OMPI_SUCCESS != ret) return ret;
+            if (OMPI_SUCCESS != ret) {
+                opal_output(ompi_osc_base_framework.framework_output,
+                        "MPI_Get_accumulate: datatype is not currently supported");
+                return OMPI_ERR_NOT_SUPPORTED;
+            }
 
             ret = ompi_osc_portals4_get_op(op, &ptl_op);
-            if (OMPI_SUCCESS != ret) return ret;
-
+            if (OMPI_SUCCESS != ret) {
+                opal_output(ompi_osc_base_framework.framework_output,
+                        "MPI_Get_accumulate: operation is not currently supported");
+                return OMPI_ERR_NOT_SUPPORTED;
+            }
 
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
@@ -972,7 +1007,11 @@ ompi_osc_portals4_compare_and_swap(const void *origin_addr,
                          (unsigned long) win));
 
     ret = ompi_osc_portals4_get_dt(dt, &ptl_dt);
-    if (OMPI_SUCCESS != ret) return ret;
+    if (OMPI_SUCCESS != ret) {
+        opal_output(ompi_osc_base_framework.framework_output,
+                "MPI_Compare_and_swap: datatype is not currently supported");
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
 
     offset = get_displacement(module, target) * target_disp;
 
@@ -1035,7 +1074,11 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
                          (unsigned long) win));
 
     ret = ompi_osc_portals4_get_dt(dt, &ptl_dt);
-    if (OMPI_SUCCESS != ret) return ret;
+    if (OMPI_SUCCESS != ret) {
+        opal_output(ompi_osc_base_framework.framework_output,
+                "MPI_Fetch_and_op: datatype is not currently supported");
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
 
     offset = get_displacement(module, target) * target_disp;
 
@@ -1083,7 +1126,11 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
         ptl_size_t result_md_offset, origin_md_offset;
 
         ret = ompi_osc_portals4_get_op(op, &ptl_op);
-        if (OMPI_SUCCESS != ret) return ret;
+        if (OMPI_SUCCESS != ret) {
+            opal_output(ompi_osc_base_framework.framework_output,
+                    "MPI_Fetch_and_op: operation is not currently supported");
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
 
         result_md_offset = (ptl_size_t) result_addr;
         origin_md_offset = (ptl_size_t) origin_addr;
