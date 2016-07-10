@@ -152,7 +152,10 @@ orte_rml_oob_fini(void)
     OBJ_DESTRUCT(&orte_rml_oob_module.exceptions);
 
     /* clear the base receive */
+     //[A] 
+    /*3/25 -> this needs to be moved to stub?
     orte_rml_base_comm_stop();
+    */
 }
 
 #if OPAL_ENABLE_FT_CR == 1

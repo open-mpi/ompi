@@ -365,6 +365,26 @@ int orte_ess_base_orted_setup(char **hosts)
     /* obviously, we have "reported" */
     jdata->num_reported = 1;
 
+
+     //[A]
+    /* setup the PMIx framework - ensure it skips all non-PMIx components,
+     * but do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pmix_base_open";
+        goto error;
+    }
+
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
+        goto error;
+    }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
+    //[A]
+
     /* Setup the communication infrastructure */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -388,6 +408,13 @@ int orte_ess_base_orted_setup(char **hosts)
     }
     /* add our contact info */
     proc->rml_uri = orte_rml.get_contact_info();
+
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "pmix server init";
+        goto error;
+    }
 
     /* select the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
@@ -499,26 +526,27 @@ int orte_ess_base_orted_setup(char **hosts)
 
     /* setup the PMIx framework - ensure it skips all non-PMIx components,
      * but do not override anything we were given */
-    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_pmix_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_pmix_base_select";
-        goto error;
-    }
+//[A]
+//[A]    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+//[A]    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+//[A]        ORTE_ERROR_LOG(ret);
+//[A]        error = "orte_pmix_base_open";
+//[A]        goto error;
+//[A]    }
+
+//[A]    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+//[A]ORTE_ERROR_LOG(ret);
+//[A]        error = "opal_pmix_base_select";
+//[A]        goto error;
+//[A]    }
     /* set the event base */
-    opal_pmix_base_set_evbase(orte_event_base);
+//[A]    opal_pmix_base_set_evbase(orte_event_base);
     /* setup the PMIx server */
-    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
-        /* the server code already barked, so let's be quiet */
-        ret = ORTE_ERR_SILENT;
-        error = "pmix_server_init";
-        goto error;
-    }
+//[A]    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+//[A]        ORTE_ERROR_LOG(ret);
+//[A]        error = "pmix server init";
+//[A]        goto error;
+//[A]    }
 
     /* setup the routed info - the selected routed component
      * will know what to do.

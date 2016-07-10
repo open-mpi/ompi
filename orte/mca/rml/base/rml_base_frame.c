@@ -52,7 +52,10 @@ orte_rml_base_module_t orte_rml = {
     orte_rml_API_add_exception_handler,
     orte_rml_API_del_exception_handler,
     orte_rml_API_ft_event,
-    orte_rml_API_purge
+    orte_rml_API_purge,
+    orte_rml_API_query_transports,
+    orte_rml_API_send_transport_nb,
+    orte_rml_API_send_buffer_transport_nb
 };
 
 orte_rml_base_t orte_rml_base = {{{0}}};
@@ -173,12 +176,14 @@ int orte_rml_base_select(void)
 
        if (NULL == ((orte_rml_component_t *)component)->rml_init) {
            opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                               "orte_rml_base_select: no init function; ignoring component [%s]",component->mca_component_name);
+                               "orte_rml_base_select: no init function; ignoring component [%s]",
+                               component->mca_component_name);
        } else {
            module = (mca_base_module_t *) ((orte_rml_component_t *)component)->rml_init(&priority);
            if (NULL == module) {
                opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                                   "orte_rml_base_select: init returned failure [%s]",component->mca_component_name);
+                                   "orte_rml_base_select: init returned failure [%s]",
+                                   component->mca_component_name);
                continue;
            }
 
@@ -213,7 +218,7 @@ int orte_rml_base_select(void)
             opal_output(0, "\tComponent: %s Priority: %d", mod->component->mca_component_name, mod->pri);
         }
    }
-
+  
     return ORTE_SUCCESS;
 }
 
