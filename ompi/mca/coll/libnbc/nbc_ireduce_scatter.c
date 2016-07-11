@@ -243,16 +243,6 @@ int ompi_coll_libnbc_ireduce_scatter_inter (void* sendbuf, void* recvbuf, int *r
       tbuf = lbuf; lbuf = rbuf; rbuf = tbuf;
     }
 
-    /* exchange data with remote root for scatter phase (we *could* use the local communicator to do the scatter) */
-    res = NBC_Sched_recv (rbuf, true, count, datatype, 0, schedule);
-    if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-
-    res = NBC_Sched_send (lbuf, true, count, datatype, 0, schedule);
-    if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
-
-    res = NBC_Sched_barrier(schedule);
-    if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
-
     /* do the local scatterv with the local communicator */
     res = NBC_Sched_copy (lbuf, true, recvcounts[0], datatype, recvbuf, false,
                           recvcounts[0], datatype, schedule);
