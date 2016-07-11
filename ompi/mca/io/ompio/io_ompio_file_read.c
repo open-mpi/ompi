@@ -236,6 +236,8 @@ int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
 	ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
 	ompio_req->req_ompi.req_status._ucount = 0;
 	ompi_request_complete (&ompio_req->req_ompi, false);
+        *request = (ompi_request_t *) ompio_req;
+
 	return OMPI_SUCCESS;
     }
 
