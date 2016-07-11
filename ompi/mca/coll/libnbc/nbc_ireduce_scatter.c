@@ -283,19 +283,6 @@ int ompi_coll_libnbc_ireduce_scatter_inter (const void* sendbuf, void* recvbuf, 
       tbuf = lbuf; lbuf = rbuf; rbuf = tbuf;
     }
 
-    /* exchange data with remote root for scatter phase (we *could* use the local communicator to do the scatter) */
-    res = NBC_Sched_recv (rbuf, true, count, datatype, 0, schedule, false);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      NBC_Return_handle (handle);
-      return res;
-    }
-
-    res = NBC_Sched_send (lbuf, true, count, datatype, 0, schedule, true);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      NBC_Return_handle (handle);
-      return res;
-    }
-
     /* do the local scatterv with the local communicator */
     res = NBC_Sched_copy (lbuf, true, recvcounts[0], datatype, recvbuf, false,
                           recvcounts[0], datatype, schedule, false);
