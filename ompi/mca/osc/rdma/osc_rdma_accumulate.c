@@ -564,10 +564,11 @@ static void ompi_osc_rdma_cas_get_complete (struct mca_btl_base_module_t *btl, s
     if (OMPI_SUCCESS == status) {
         /* copy data to the user buffer (for gacc) */
         memcpy (request->result_addr, (void *) source, request->len);
-        memcpy ((void *) source, request->origin_addr, request->len);
 
         if (0 == memcmp ((void *) source, request->compare_addr, request->len)) {
             /* the target and compare buffers match so write the source to the target */
+            memcpy ((void *) source, request->origin_addr, request->len);
+
             ret = module->selected_btl->btl_put (module->selected_btl, peer->data_endpoint, local_address,
                                                  request->target_address, local_handle,
                                                  (mca_btl_base_registration_handle_t *) request->ctx,
