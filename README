@@ -173,6 +173,9 @@ Compiler Notes
             --enable-debug)
     pgi-13: 13.10 known GOOD
 
+  Users have reported hitting compiler internal errors using pgi-12/13
+  with the -m32 flag
+
 - Similarly, there is a known Fortran PGI compiler issue with long
   source directory path names that was resolved in 9.0-4 (9.0-3 is
   known to be broken in this regard).
@@ -246,6 +249,9 @@ Compiler Notes
   MPI applications.  As of 1 Feb 2012, if you upgrade to the latest
   version of the Intel 12.1 Linux compiler suite, the problem will go
   away.
+
+- It has been reported that Pathscale 5.0.5 and 6.0.527 compilers
+  give an internal compiler error when trying to Open MPI.
 
 - Early versions of the Portland Group 6.0 compiler have problems
   creating the C++ MPI bindings as a shared library (e.g., v6.0-1).
