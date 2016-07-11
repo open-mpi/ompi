@@ -45,6 +45,7 @@ static int s2_abort(int flag, const char msg[],
 static int s2_commit(void);
 static int s2_fencenb(opal_list_t *procs, int collect_data,
                       opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+static int s2_fence(opal_list_t *procs, int collect_data);
 static int s2_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s2_get(const opal_process_name_t *id,
@@ -68,6 +69,7 @@ const opal_pmix_base_module_t opal_pmix_s2_module = {
     .abort = s2_abort,
     .commit = s2_commit,
     .fence_nb = s2_fencenb,
+    .fence = s2_fence,
     .put = s2_put,
     .get = s2_get,
     .publish = s2_publish,
@@ -534,7 +536,7 @@ static int s2_commit(void)
 static void fencenb(int sd, short args, void *cbdata)
 {
     pmi_opcaddy_t *op = (pmi_opcaddy_t*)cbdata;
-    int rc;
+    int rc = OPAL_SUCCESS;
     int32_t i;
     opal_value_t *kp, kvn;
     opal_hwloc_locality_t locality;
@@ -623,6 +625,35 @@ static int s2_fencenb(opal_list_t *procs, int collect_data,
 
     return OPAL_SUCCESS;
 }
+
+#define S2_WAIT_FOR_COMPLETION(a)               \
+    do {                                        \
+        while ((a)) {                           \
+            usleep(10);                         \
+        }                                       \
+    } while (0)
+
+struct fence_result {
+    volatile int flag;
+    int status;
+};
+
+static void fence_release(int status, void *cbdata)
+{
+    struct fence_result *res = (struct fence_result*)cbdata;
+    res->status = status;
+    opal_atomic_wmb();
+    res->flag = 0;
+}
+
+static int s2_fence(opal_list_t *procs, int collect_data)
+{
+    struct fence_result result = { 1, OPAL_SUCCESS };
+    s2_fencenb(procs, collect_data, fence_release, (void*)&result);
+    S2_WAIT_FOR_COMPLETION(result.flag);
+    return result.status;
+}
+
 
 static int s2_get(const opal_process_name_t *id,
                   const char *key, opal_list_t *info,
