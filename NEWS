@@ -129,6 +129,52 @@ Removed legacy support:
 - Removed support for Alpha processors.
 - Removed --enable-mpi-profiling configure option.
 
+Known issues (to be addressed in v2.0.1):
+
+- See the list of fixes slated for v2.0.1 here:
+  https://github.com/open-mpi/ompi/milestone/16, and
+  https://github.com/open-mpi/ompi-release/milestone/16
+  (note that the "ompi-release" Github repo will be folded/absorbed
+  into the "ompi" Github repo at some point in the future)
+
+- ompi-release#986: Fix data size counter for large ops with fcoll/static
+- ompi-release#987: Fix OMPIO performance on Lustre
+- ompi-release#1013: Fix potential inconsistency in btl/openib default settings
+- ompi-release#1014: Do not return MPI_ERR_PENDING from collectives
+- ompi-release#1056: Remove dead profile code from oshmem
+- ompi-release#1081: Fix MPI_IN_PLACE checking for IALLTOALL{V|W}
+- ompi-release#1081: Fix memchecker in MPI_IALLTOALLW
+- ompi-release#1081: Support MPI_IN_PLACE in MPI_(I)ALLTOALLW and MPI_(I)EXSCAN
+- ompi-release#1107: Allow future PMIx support for RM spawn limits
+- ompi-release#1108: Fix sparse group process reference counting
+- ompi-release#1109: If specified to be oversubcribed, disable binding
+- ompi-release#1122: Allow NULL arrays for empty datatypes
+- ompi-release#1123: Fix signed vs. unsigned compiler warnings
+- ompi-release#1123: Make max hostname length uniform across code base
+- ompi-release#1127: Fix MPI_Compare_and_swap
+- ompi-release#1127: Fix MPI_Win_lock when used with MPI_Win_fence
+- ompi-release#1132: Fix typo in help message for --enable-mca-no-build
+- ompi-release#1154: Ensure pairwise coll algorithms disqualify themselves properly
+- ompi-release#1165: Fix typos in debugging/verbose message output
+- ompi-release#1178: Fix ROMIO filesystem check on OpenBSD 5.7
+- ompi-release#1197: Fix Fortran pthread configure check
+- ompi-release#1205: Allow using external PMIx 1.1.4 and 2.0
+- ompi-release#1215: Fix configure to support the NAG Fortran compiler
+- ompi-release#1220: Fix combiner args for MPI_HINDEXED_BLOCK
+- ompi-release#1225: Fix combiner args for MPI_DARRAY
+- ompi-release#1226: Disable old memory hooks with recent gcc versions
+- ompi-release#1231: Fix new "patcher" support for some XLC platforms
+- ompi-release#1244: Fix Java error handling
+- ompi-release#1250: Ensure TCP is not selected for RDMA operations
+- ompi-release#1252: Fix verbose output in coll selection
+- ompi-release#1253: Set a default name for user-defined MPI_Op
+- ompi-release#1254: Add count==0 checks in some non-blocking colls
+- ompi-release#1258: Fix "make distclean" when using external pmix/hwloc/libevent
+- ompi-release#1260: Clean up/uniform mca/coll/base memory management
+- ompi-release#1261: Remove "patcher" warning message for static builds
+- ompi-release#1263: Fix IO MPI_Request for 0-size read/write
+- ompi-release#1264: Add blocking fence for SLURM operations
+
 Bug fixes / minor enhancements:
 
 - Updated internal/embedded copies of third-party software:
