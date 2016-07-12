@@ -107,6 +107,8 @@ void orte_plm_base_set_slots(orte_node_t *node)
         /* must be a number */
         node->slots = strtol(orte_set_slots, NULL, 10);
     }
+    /* mark the node as having its slots "given" */
+    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
 }
 
 void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)

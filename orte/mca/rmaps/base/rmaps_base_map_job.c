@@ -105,7 +105,9 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     }
                 }
                 OPAL_LIST_DESTRUCT(&nodes);
-                nprocs += slots;
+                if (ORTE_MAPPING_PPR != ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+                    nprocs += slots;
+                }
             } else {
                 nprocs += app->num_procs;
             }
