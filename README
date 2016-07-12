@@ -169,12 +169,10 @@ Compiler Notes
     pgi-9 : 9.0-4 known GOOD
     pgi-10: 10.0-0 known GOOD
     pgi-11: NO known good version with --enable-debug
-    pgi-12: 12.10 known GOOD (and 12.8 and 12.9 both known BAD with
-            --enable-debug)
-    pgi-13: 13.10 known GOOD
-
-  Users have reported hitting compiler internal errors using pgi-12/13
-  with the -m32 flag
+    pgi-12: 12.10 known BAD with -m32, but known GOOD without -m32
+            (and 12.8 and 12.9 both known BAD with --enable-debug)
+    pgi-13: 13.9 known BAD with -m32, 13.10 known GOOD without -m32
+    pgi-15: 15.10 known BAD with -m32
 
 - Similarly, there is a known Fortran PGI compiler issue with long
   source directory path names that was resolved in 9.0-4 (9.0-3 is
