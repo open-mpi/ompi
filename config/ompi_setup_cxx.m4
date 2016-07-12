@@ -235,7 +235,8 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
     fi
 
     # Make sure we can link with the C compiler
-    if test "$ompi_cv_cxx_compiler_vendor" != "microsoft"; then
+    if test "$ompi_cv_cxx_compiler_vendor" != "microsoft" &&
+       test "$WANT_MPI_CXX_SUPPORT" -eq 1; then
       OPAL_LANG_LINK_WITH_C([C++], [],
         [cat <<EOF >&2
 **********************************************************************
