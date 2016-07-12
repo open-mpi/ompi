@@ -423,6 +423,7 @@ static int rte_init(void)
      * in the job won't be executing this step, so we would hang
      */
     if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
+        opal_pmix.commit();
         opal_pmix.fence(NULL, true);
     }
 

@@ -173,10 +173,6 @@ int orte_rml_ofi_send_transport_nb(int conduit_id,
 void free_conduit_resources( int conduit_id);
 void print_provider_list_info (struct fi_info *fi );
 
-
-//int orte_rml_ofi_progress(ofi_transport_conduit_t*);
-
-
 /** Send callback */
 int orte_rml_ofi_send_callback(struct fi_cq_data_entry *wc,
                           orte_rml_ofi_request_t*);
