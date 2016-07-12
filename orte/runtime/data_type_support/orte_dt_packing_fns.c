@@ -346,6 +346,13 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
+        /* pack the app rank */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                         (void*)(&(procs[i]->app_rank)), 1, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* pack the attributes that will go */
         count = 0;
         OPAL_LIST_FOREACH(kv, &procs[i]->attributes, orte_attribute_t) {

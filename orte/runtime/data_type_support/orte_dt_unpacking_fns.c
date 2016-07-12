@@ -380,6 +380,14 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
             return rc;
         }
 
+        /* unpack the app_rank */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                         (&(procs[i]->app_rank)), &n, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* unpack the attributes */
         n=1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &count,
