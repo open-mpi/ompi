@@ -261,6 +261,18 @@ component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_osc_portals4_no_locks);
 
+    mca_osc_portals4_component.ptl_max_msg_size = PTL_SIZE_MAX;
+    (void) mca_base_component_var_register(&mca_osc_portals4_component.super.osc_version,
+                                           "max_msg_size",
+                                           "Max size supported by portals4 (above that, a message is cut into messages less than that size)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_osc_portals4_component.ptl_max_msg_size);
+
     return OMPI_SUCCESS;
 }
 
@@ -293,6 +305,11 @@ component_init(bool enable_progress_threads, bool enable_mpi_threads)
     }
 
     /* BWB: FIX ME: Need to make sure our ID matches with the MTL... */
+
+    if (mca_osc_portals4_component.ptl_max_msg_size > actual.max_msg_size)
+        mca_osc_portals4_component.ptl_max_msg_size = actual.max_msg_size;
+    OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
+                         "max_size = %lu", mca_osc_portals4_component.ptl_max_msg_size));
 
     mca_osc_portals4_component.matching_atomic_max = actual.max_atomic_size;
     mca_osc_portals4_component.matching_fetch_atomic_max = actual.max_fetch_atomic_size;

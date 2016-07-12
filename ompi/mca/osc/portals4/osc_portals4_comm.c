@@ -178,6 +178,97 @@ ompi_osc_portals4_get_dt(struct ompi_datatype_t *dt, ptl_datatype_t *ptl_dt)
     return 0;
 }
 
+static  ptl_size_t
+number_of_fragment(ptl_size_t length, ptl_size_t maxlength)
+{
+    ptl_size_t nb_frag = length == 0 ? 1 : (length - 1) / maxlength + 1;
+    OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                         "%s,%d : %ld fragment(s)", __FUNCTION__, __LINE__, nb_frag));
+    return nb_frag;
+}
+
+static int
+splittedPtlPut(ptl_handle_md_t md_h,
+            ptl_size_t loc_offset,
+            ptl_size_t length,
+            ptl_ack_req_t ack_req,
+            ptl_process_t target_id,
+            ptl_pt_index_t pt_index,
+            ptl_match_bits_t match_b,
+            ptl_size_t rem_offset,
+            void *usr_ptr,
+            ptl_hdr_data_t hdr_data)
+{
+    ptl_size_t length_sent = 0;
+    do {
+        ptl_size_t length_frag;
+        int ret;
+
+        length_frag = (length > mca_osc_portals4_component.ptl_max_msg_size) ?
+            mca_osc_portals4_component.ptl_max_msg_size :
+            length;
+        OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                             "Put size : %lu/%lu, offset:%lu", length_frag, length, length_sent));
+        ret = PtlPut(md_h,
+                     loc_offset + length_sent,
+                     length_frag,
+                     ack_req,
+                     target_id,
+                     pt_index,
+                     match_b,
+                     rem_offset + length_sent,
+                     usr_ptr,
+                     hdr_data);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                                 "%s:%d PtlPut failed with return value %d",
+                                 __FUNCTION__, __LINE__, ret);
+            return ret;
+        }
+        length -= length_frag;
+        length_sent += length_frag;
+    } while (length);
+    return PTL_OK;
+}
+
+static int
+splittedPtlGet(ptl_handle_md_t md_h,
+               ptl_size_t loc_offset,
+               ptl_size_t length,
+               ptl_process_t target_id,
+               ptl_pt_index_t pt_index,
+               ptl_match_bits_t match_b,
+               ptl_size_t rem_offset,
+               void *usr_ptr)
+{
+    ptl_size_t length_submitted = 0;
+    OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output, "Get"));
+
+    do {
+        ptl_size_t length_frag;
+        int ret;
+        length_frag = (length > mca_osc_portals4_component.ptl_max_msg_size) ?
+            mca_osc_portals4_component.ptl_max_msg_size :
+            length;
+        ret = PtlGet(md_h,
+                     (ptl_size_t) loc_offset + length_submitted,
+                     length_frag,
+                     target_id,
+                     pt_index,
+                     match_b,
+                     rem_offset + length_submitted,
+                     usr_ptr);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                                 "%s:%d PtlGet failed with return value %d",
+                                 __FUNCTION__, __LINE__, ret);
+            return ret;
+        }
+        length -= length_frag;
+        length_submitted += length_frag;
+    } while (length);
+    return PTL_OK;
+}
 
 int
 ompi_osc_portals4_rput(const void *origin_addr,
@@ -218,15 +309,18 @@ ompi_osc_portals4_rput(const void *origin_addr,
                     "MPI_Rput: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
     } else {
-        (void)opal_atomic_add_64(&module->opcount, 1);
-        request->ops_expected = 1;
         ret = ompi_datatype_type_size(origin_dt, &length);
         if (OMPI_SUCCESS != ret) {
             OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
             return ret;
         }
         length *= origin_count;
-        ret = PtlPut(module->req_md_h,
+        request->ops_expected = number_of_fragment(length, mca_osc_portals4_component.ptl_max_msg_size);
+        opal_atomic_add_64(&module->opcount, request->ops_expected);
+        OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
+                             "%s,%d Put", __FUNCTION__, __LINE__));
+
+        ret = splittedPtlPut(module->req_md_h,
                      (ptl_size_t) origin_addr,
                      length,
                      PTL_ACK_REQ,
@@ -285,15 +379,17 @@ ompi_osc_portals4_rget(void *origin_addr,
                     "MPI_Rget: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
     } else {
-        (void)opal_atomic_add_64(&module->opcount, 1);
-        request->ops_expected = 1;
         ret = ompi_datatype_type_size(origin_dt, &length);
         if (OMPI_SUCCESS != ret) {
             OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
             return ret;
         }
         length *= origin_count;
-        ret = PtlGet(module->req_md_h,
+        request->ops_expected = number_of_fragment(length, mca_osc_portals4_component.ptl_max_msg_size);
+        opal_atomic_add_64(&module->opcount, request->ops_expected);
+        OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
+                             "%s,%d Get", __FUNCTION__, __LINE__));
+        ret = splittedPtlGet(module->req_md_h,
                      (ptl_size_t) origin_addr,
                      length,
                      peer,
@@ -368,11 +464,13 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
 
         do {
             size_t msg_length = MIN(module->atomic_max, length - sent);
-            (void)opal_atomic_add_64(&module->opcount, 1);
-            request->ops_expected++;
 
             if (MPI_REPLACE == op) {
-                ret = PtlPut(module->req_md_h,
+                request->ops_expected += number_of_fragment(msg_length, mca_osc_portals4_component.ptl_max_msg_size);
+                opal_atomic_add_64(&module->opcount, number_of_fragment(msg_length, mca_osc_portals4_component.ptl_max_msg_size));
+                OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                             "%s,%d Put", __FUNCTION__, __LINE__));
+                ret = splittedPtlPut(module->req_md_h,
                              md_offset + sent,
                              msg_length,
                              PTL_ACK_REQ,
@@ -383,6 +481,8 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                              request,
                              0);
             } else {
+                request->ops_expected++;
+                opal_atomic_add_64(&module->opcount, 1);
                 ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
                 if (OMPI_SUCCESS != ret) {
                     opal_output(ompi_osc_base_framework.framework_output,
@@ -396,7 +496,8 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                             "MPI_Raccumulate: operation is not currently supported");
                     return OMPI_ERR_NOT_SUPPORTED;
                 }
-
+                OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
+                                      "%s,%d Atomic", __FUNCTION__, __LINE__));
                 ret = PtlAtomic(module->req_md_h,
                                 offset + sent,
                                 msg_length,
@@ -499,6 +600,8 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
                 (void)opal_atomic_add_64(&module->opcount, 1);
                 request->ops_expected++;
 
+                OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                                      "%s,%d Swap", __FUNCTION__, __LINE__));
                 ret = PtlSwap(module->req_md_h,
                               result_md_offset + sent,
                               module->md_h,
@@ -530,10 +633,11 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
-                (void)opal_atomic_add_64(&module->opcount, 1);
-                request->ops_expected++;
-
-                ret = PtlGet(module->req_md_h,
+                opal_atomic_add_64(&module->opcount, number_of_fragment(msg_length, mca_osc_portals4_component.ptl_max_msg_size));
+                request->ops_expected += number_of_fragment(msg_length, mca_osc_portals4_component.ptl_max_msg_size);
+                OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                                     "%s,%d Get", __FUNCTION__, __LINE__));
+                ret = splittedPtlGet(module->req_md_h,
                              md_offset + sent,
                              msg_length,
                              peer,
@@ -558,14 +662,14 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
 
             ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
             if (OMPI_SUCCESS != ret) {
-                 opal_output(ompi_osc_base_framework.framework_output,
+                opal_output(ompi_osc_base_framework.framework_output,
                         "MPI_Rget_accumulate: datatype is not currently supported");
                 return OMPI_ERR_NOT_SUPPORTED;
             }
 
             ret = ompi_osc_portals4_get_op(op, &ptl_op);
             if (OMPI_SUCCESS != ret) {
-                 opal_output(ompi_osc_base_framework.framework_output,
+                opal_output(ompi_osc_base_framework.framework_output,
                         "MPI_Rget_accumulate: operation is not currently supported");
                 return OMPI_ERR_NOT_SUPPORTED;
             }
@@ -576,6 +680,8 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
                 (void)opal_atomic_add_64(&module->opcount, 1);
                 request->ops_expected++;
 
+                OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                                      "%s,%d FetchAtomic", __FUNCTION__, __LINE__));
                 ret = PtlFetchAtomic(module->req_md_h,
                                      result_md_offset + sent,
                                      module->md_h,
@@ -634,13 +740,15 @@ ompi_osc_portals4_put(const void *origin_addr,
                     "MPI_Put: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
     } else {
-        (void)opal_atomic_add_64(&module->opcount, 1);
         ret = ompi_datatype_type_size(origin_dt, &length);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
         length *= origin_count;
-        ret = PtlPut(module->md_h,
+        opal_atomic_add_64(&module->opcount, number_of_fragment(length, mca_osc_portals4_component.ptl_max_msg_size));
+        OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                             "%s,%d Put", __FUNCTION__, __LINE__));
+        ret = splittedPtlPut(module->md_h,
                      (ptl_size_t) origin_addr,
                      length,
                      PTL_ACK_REQ,
@@ -691,13 +799,15 @@ ompi_osc_portals4_get(void *origin_addr,
                     "MPI_Get: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
     } else {
-        (void)opal_atomic_add_64(&module->opcount, 1);
         ret = ompi_datatype_type_size(origin_dt, &length);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
         length *= origin_count;
-        ret = PtlGet(module->md_h,
+        opal_atomic_add_64(&module->opcount, number_of_fragment(length, mca_osc_portals4_component.ptl_max_msg_size));
+        OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
+                              "%s,%d Get", __FUNCTION__, __LINE__));
+        ret = splittedPtlGet(module->md_h,
                      (ptl_size_t) origin_addr,
                      length,
                      peer,
@@ -763,10 +873,12 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
 
         do {
             size_t msg_length = MIN(module->atomic_max, length - sent);
-            (void)opal_atomic_add_64(&module->opcount, 1);
 
             if (MPI_REPLACE == op) {
-                ret = PtlPut(module->md_h,
+                opal_atomic_add_64(&module->opcount, number_of_fragment(msg_length, mca_osc_portals4_component.ptl_max_msg_size));
+                OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                                     "%s,%d Put", __FUNCTION__, __LINE__));
+                ret = splittedPtlPut(module->md_h,
                              md_offset + sent,
                              msg_length,
                              PTL_ACK_REQ,
@@ -777,6 +889,7 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
                              NULL,
                              0);
             } else {
+                (void)opal_atomic_add_64(&module->opcount, 1);
                 ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
                 if (OMPI_SUCCESS != ret) {
                     opal_output(ompi_osc_base_framework.framework_output,
@@ -791,6 +904,8 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
                     return OMPI_ERR_NOT_SUPPORTED;
                 }
 
+                OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                             "%s,%d Atomic", __FUNCTION__, __LINE__));
                 ret = PtlAtomic(module->md_h,
                                 md_offset + sent,
                                 msg_length,
@@ -882,6 +997,8 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
 
                 (void)opal_atomic_add_64(&module->opcount, 1);
 
+                OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                                      "%s,%d Swap", __FUNCTION__, __LINE__));
                 ret = PtlSwap(module->md_h,
                               result_md_offset + sent,
                               module->md_h,
@@ -912,9 +1029,10 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             do {
                 size_t msg_length = MIN(module->fetch_atomic_max, length - sent);
 
-                (void)opal_atomic_add_64(&module->opcount, 1);
-
-                ret = PtlGet(module->md_h,
+                opal_atomic_add_64(&module->opcount, number_of_fragment(msg_length, mca_osc_portals4_component.ptl_max_msg_size));
+                OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                                     "%s,%d Get", __FUNCTION__, __LINE__));
+                ret = splittedPtlGet(module->md_h,
                              md_offset + sent,
                              msg_length,
                              peer,
@@ -955,6 +1073,8 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
 
                 (void)opal_atomic_add_64(&module->opcount, 1);
 
+                OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                                      "%s,%d FetchAtomic", __FUNCTION__, __LINE__));
                 ret = PtlFetchAtomic(module->md_h,
                                      result_md_offset + sent,
                                      module->md_h,
@@ -1025,6 +1145,8 @@ ompi_osc_portals4_compare_and_swap(const void *origin_addr,
 
     (void)opal_atomic_add_64(&module->opcount, 1);
 
+    OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
+                         "%s,%d Swap", __FUNCTION__, __LINE__));
     ret = PtlSwap(module->md_h,
                   result_md_offset,
                   module->md_h,
@@ -1087,14 +1209,15 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
 
     assert(length <= module->fetch_atomic_max);
 
-    (void)opal_atomic_add_64(&module->opcount, 1);
-
     if (MPI_REPLACE == op) {
         ptl_size_t result_md_offset, origin_md_offset;
 
         result_md_offset = (ptl_size_t) result_addr;
         origin_md_offset = (ptl_size_t) origin_addr;
 
+        (void)opal_atomic_add_64(&module->opcount, 1);
+        OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                             "%s,%d Swap", __FUNCTION__, __LINE__));
         ret = PtlSwap(module->md_h,
                       result_md_offset,
                       module->md_h,
@@ -1114,7 +1237,10 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
 
         md_offset = (ptl_size_t) result_addr;
 
-        ret = PtlGet(module->md_h,
+        opal_atomic_add_64(&module->opcount, number_of_fragment(length, mca_osc_portals4_component.ptl_max_msg_size));
+        OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                             "%s,%d Get", __FUNCTION__, __LINE__));
+        ret = splittedPtlGet(module->md_h,
                      md_offset,
                      length,
                      peer,
@@ -1124,6 +1250,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
                      NULL);
     } else {
         ptl_size_t result_md_offset, origin_md_offset;
+        (void)opal_atomic_add_64(&module->opcount, 1);
 
         ret = ompi_osc_portals4_get_op(op, &ptl_op);
         if (OMPI_SUCCESS != ret) {
@@ -1135,6 +1262,8 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
         result_md_offset = (ptl_size_t) result_addr;
         origin_md_offset = (ptl_size_t) origin_addr;
 
+        OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
+                             "%s,%d FetchAtomic", __FUNCTION__, __LINE__));
         ret = PtlFetchAtomic(module->md_h,
                              result_md_offset,
                              module->md_h,
