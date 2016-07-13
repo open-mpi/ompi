@@ -81,9 +81,15 @@ enum {
     OPAL_ERR_COMM_FAILURE                   = (OPAL_ERR_BASE - 51),
     OPAL_ERR_SERVER_NOT_AVAIL               = (OPAL_ERR_BASE - 52),
     OPAL_ERR_IN_PROCESS                     = (OPAL_ERR_BASE - 53),
+    /* PMIx equivalents for notification support */
     OPAL_ERR_DEBUGGER_RELEASE               = (OPAL_ERR_BASE - 54),
     OPAL_ERR_HANDLERS_COMPLETE              = (OPAL_ERR_BASE - 55),
-    OPAL_ERR_PARTIAL_SUCCESS                = (OPAL_ERR_BASE - 56)
+    OPAL_ERR_PARTIAL_SUCCESS                = (OPAL_ERR_BASE - 56),
+    OPAL_ERR_PROC_ABORTED                   = (OPAL_ERR_BASE - 57),
+    OPAL_ERR_PROC_REQUESTED_ABORT           = (OPAL_ERR_BASE - 58),
+    OPAL_ERR_PROC_ABORTING                  = (OPAL_ERR_BASE - 59),
+    OPAL_ERR_NODE_DOWN                      = (OPAL_ERR_BASE - 60),
+    OPAL_ERR_NODE_OFFLINE                   = (OPAL_ERR_BASE - 61)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

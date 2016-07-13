@@ -143,6 +143,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_EVENT_ENVIRO_LEVEL            "pmix.evenv"            // (bool) register for environment events only
 #define OPAL_PMIX_EVENT_ORDER_PREPEND           "pmix.evprepend"        // (bool) prepend this handler to the precedence list
 #define OPAL_PMIX_EVENT_CUSTOM_RANGE            "pmix.evrange"          // (pmix_proc_t*) array of pmix_proc_t defining range of event notification
+#define OPAL_PMIX_EVENT_AFFECTED_PROC           "pmix.evproc"           // (pmix_proc_t) single proc that was affected
 #define OPAL_PMIX_EVENT_AFFECTED_PROCS          "pmix.evaffected"       // (pmix_proc_t*) array of pmix_proc_t defining affected procs
 #define OPAL_PMIX_EVENT_NON_DEFAULT             "opal.evnondef"         // (bool) event is not to be delivered to default event handlers
 /* fault tolerance-related events */

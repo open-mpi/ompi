@@ -544,6 +544,11 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
             return ret;
         }
         break;
+        case PMIX_PROC:
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.proc, 1, PMIX_PROC))) {
+            return ret;
+        }
+        break;
         default:
         pmix_output(0, "PACK-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)p->type);
         return PMIX_ERROR;

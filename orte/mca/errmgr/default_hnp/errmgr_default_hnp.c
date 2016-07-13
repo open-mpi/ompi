@@ -339,8 +339,8 @@ static void proc_errors(int fd, short args, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
             /* remove from dependent routes, if it is one */
             orte_routed.route_lost(proc);
-	    /* if all my routes and local children are gone, then terminate ourselves */
-	    if (0 == orte_routed.num_routes()) {
+            /* if all my routes and local children are gone, then terminate ourselves */
+            if (0 == orte_routed.num_routes()) {
                 for (i=0; i < orte_local_children->size; i++) {
                     if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
                         ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_ALIVE) && proct->state < ORTE_PROC_STATE_UNTERMINATED) {
@@ -357,7 +357,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                                      "%s errmgr_hnp: all routes and children gone - ordering exit",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
-	    } else {
+            } else {
                 OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                                      "%s Comm failure: %d routes remain alive",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -398,7 +398,7 @@ static void proc_errors(int fd, short args, void *cbdata)
     }
 
     /* if we were ordered to terminate, mark this proc as dead and see if
-     * any of our routes or local  children remain alive - if not, then
+     * any of our routes or local children remain alive - if not, then
      * terminate ourselves. */
     if (orte_orteds_term_ordered) {
         for (i=0; i < orte_local_children->size; i++) {
@@ -419,6 +419,14 @@ static void proc_errors(int fd, short args, void *cbdata)
     }
 
  keep_going:
+    /* if this is a continuously operating job, then there is nothing more
+     * to do - we let the job continue to run */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, NULL, OPAL_BOOL)) {
+        /* always mark the waitpid as having fired */
+        ORTE_ACTIVATE_PROC_STATE(&pptr->name, ORTE_PROC_STATE_WAITPID_FIRED);
+        goto cleanup;
+    }
+
     /* ensure we record the failed proc properly so we can report
      * the error once we terminate
      */
@@ -490,7 +498,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                 /* this job has terminated */
                 ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
             }
-        }  
+        }
         break;
 
     case ORTE_PROC_STATE_TERM_WO_SYNC:

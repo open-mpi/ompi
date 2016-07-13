@@ -110,7 +110,6 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_SPIN_FOR_DEBUG         (ORTE_JOB_START_KEY + 18)    // bool - job consists of continuously operating apps
 #define ORTE_JOB_CONTINUOUS_OP          (ORTE_JOB_START_KEY + 19)    // bool - recovery policy defined for job
 #define ORTE_JOB_RECOVER_DEFINED        (ORTE_JOB_START_KEY + 20)    // bool - recovery policy has been defined
-#define ORTE_JOB_ENABLE_RECOVERY        (ORTE_JOB_START_KEY + 21)    // bool - enable recovery of these processes
 #define ORTE_JOB_NON_ORTE_JOB           (ORTE_JOB_START_KEY + 22)    // bool - non-orte job
 #define ORTE_JOB_STDOUT_TARGET          (ORTE_JOB_START_KEY + 23)    // orte_jobid_t - job that is to receive the stdout (on its stdin) from this one
 #define ORTE_JOB_POWER                  (ORTE_JOB_START_KEY + 24)    // string - power setting for nodes in job

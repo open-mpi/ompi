@@ -634,8 +634,13 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             return ret;
         }
         break;
+        case PMIX_PROC:
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.proc, &m, PMIX_PROC))) {
+            return ret;
+        }
+        break;
         default:
-        pmix_output(0, "UNPACK-PMIX-VALUE: UNSUPPORTED TYPE");
+        pmix_output(0, "UNPACK-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)val->type);
         return PMIX_ERROR;
     }
 
