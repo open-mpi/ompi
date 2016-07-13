@@ -257,10 +257,25 @@ opal_err2str(int errnum, const char **errmsg)
         retval = "Release debugger";
         break;
     case OPAL_ERR_HANDLERS_COMPLETE:
-        retval = "Event handler processing complete";
+        retval = "Event handlers complete";
         break;
     case OPAL_ERR_PARTIAL_SUCCESS:
         retval = "Partial success";
+        break;
+    case OPAL_ERR_PROC_ABORTED:
+        retval = "Process abnormally terminated";
+        break;
+    case OPAL_ERR_PROC_REQUESTED_ABORT:
+        retval = "Process requested abort";
+        break;
+    case OPAL_ERR_PROC_ABORTING:
+        retval = "Process is aborting";
+        break;
+    case OPAL_ERR_NODE_DOWN:
+        retval = "Node has gone down";
+        break;
+    case OPAL_ERR_NODE_OFFLINE:
+        retval = "Node has gone offline";
         break;
     default:
         retval = "UNRECOGNIZED";

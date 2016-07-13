@@ -204,6 +204,7 @@ BEGIN_C_DECLS
 #define PMIX_EVENT_ENVIRO_LEVEL             "pmix.evenv"            // (bool) register for environment events only
 #define PMIX_EVENT_ORDER_PREPEND            "pmix.evprepend"        // (bool) prepend this handler to the precedence list
 #define PMIX_EVENT_CUSTOM_RANGE             "pmix.evrange"          // (pmix_proc_t*) array of pmix_proc_t defining range of event notification
+#define PMIX_EVENT_AFFECTED_PROC            "pmix.evproc"           // (pmix_proc_t) single proc that was affected
 #define PMIX_EVENT_AFFECTED_PROCS           "pmix.evaffected"       // (pmix_proc_t*) array of pmix_proc_t defining affected procs
 #define PMIX_EVENT_NON_DEFAULT              "pmix.evnondef"         // (bool) event is not to be delivered to default event handlers
 /* fault tolerance-related events */
@@ -462,6 +463,7 @@ typedef struct pmix_value {
         double dval;
         struct timeval tv;
         pmix_status_t status;
+        pmix_proc_t proc;
         pmix_info_array_t array;
         pmix_byte_object_t bo;
         void *ptr;

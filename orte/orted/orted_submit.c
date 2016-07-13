@@ -678,6 +678,7 @@ int orte_submit_job(char *argv[], int *index,
 {
     opal_buffer_t *req;
     int rc;
+    orte_app_idx_t i;
     orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_SPAWN_JOB_CMD;
     char *param;
     orte_job_t *jdata = NULL, *daemons;
@@ -841,9 +842,26 @@ int orte_submit_job(char *argv[], int *index,
         orte_set_attribute(&jdata->attributes, ORTE_JOB_SLOT_LIST, ORTE_ATTR_GLOBAL, orte_cmd_options.slot_list, OPAL_STRING);
     }
 
-    /* if recovery was disabled on the cmd line, do so */
-    if (orte_cmd_options.enable_recovery) {
+    /* if recovery was enabled on the cmd line, do so */
+    if (orte_enable_recovery) {
         ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_RECOVERABLE);
+        if (0 == orte_max_restarts) {
+            /* mark this job as continuously operating */
+            orte_set_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+        }
+    }
+    /* record the max restarts */
+    if (0 < orte_max_restarts) {
+        for (i=0; i < jdata->num_apps; i++) {
+            if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                orte_set_attribute(&app->attributes, ORTE_APP_MAX_RESTARTS, ORTE_ATTR_GLOBAL, &orte_max_restarts, OPAL_INT32);
+            }
+        }
+    }
+    /* if continuous operation was specified */
+    if (orte_cmd_options.continuous) {
+        /* mark this job as continuously operating */
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
 
     /* check for suicide test directives */

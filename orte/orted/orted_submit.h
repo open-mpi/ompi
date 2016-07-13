@@ -90,7 +90,7 @@ struct orte_cmd_options_t {
     bool timestamp_output;
     char *output_filename;
     bool merge;
-    bool enable_recovery;
+    bool continuous;
     char *hnp;
     bool staged_exec;
     int timeout;

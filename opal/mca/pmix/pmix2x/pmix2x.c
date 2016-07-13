@@ -422,6 +422,24 @@ pmix_status_t pmix2x_convert_opalrc(int rc)
     case OPAL_ERR_DEBUGGER_RELEASE:
         return PMIX_ERR_DEBUGGER_RELEASE;
 
+    case OPAL_ERR_HANDLERS_COMPLETE:
+        return PMIX_EVENT_ACTION_COMPLETE;
+
+    case OPAL_ERR_PROC_ABORTED:
+        return PMIX_ERR_PROC_ABORTED;
+
+    case OPAL_ERR_PROC_REQUESTED_ABORT:
+        return PMIX_ERR_PROC_REQUESTED_ABORT;
+
+    case OPAL_ERR_PROC_ABORTING:
+        return PMIX_ERR_PROC_ABORTING;
+
+    case OPAL_ERR_NODE_DOWN:
+        return PMIX_ERR_NODE_DOWN;
+
+    case OPAL_ERR_NODE_OFFLINE:
+        return PMIX_ERR_NODE_OFFLINE;
+
     case OPAL_ERR_NOT_IMPLEMENTED:
     case OPAL_ERR_NOT_SUPPORTED:
         return PMIX_ERR_NOT_SUPPORTED;
@@ -452,6 +470,9 @@ pmix_status_t pmix2x_convert_opalrc(int rc)
     case OPAL_EXISTS:
         return PMIX_EXISTS;
 
+    case OPAL_ERR_PARTIAL_SUCCESS:
+        return PMIX_QUERY_PARTIAL_SUCCESS;
+
     case OPAL_ERROR:
         return PMIX_ERROR;
     case OPAL_SUCCESS:
@@ -466,6 +487,24 @@ int pmix2x_convert_rc(pmix_status_t rc)
     switch (rc) {
     case PMIX_ERR_DEBUGGER_RELEASE:
         return OPAL_ERR_DEBUGGER_RELEASE;
+
+    case PMIX_EVENT_ACTION_COMPLETE:
+        return OPAL_ERR_HANDLERS_COMPLETE;
+
+    case PMIX_ERR_PROC_ABORTED:
+        return OPAL_ERR_PROC_ABORTED;
+
+    case PMIX_ERR_PROC_REQUESTED_ABORT:
+        return OPAL_ERR_PROC_REQUESTED_ABORT;
+
+    case PMIX_ERR_PROC_ABORTING:
+        return OPAL_ERR_PROC_ABORTING;
+
+    case PMIX_ERR_NODE_DOWN:
+        return OPAL_ERR_NODE_DOWN;
+
+    case PMIX_ERR_NODE_OFFLINE:
+        return OPAL_ERR_NODE_OFFLINE;
 
     case PMIX_ERR_NOT_SUPPORTED:
         return OPAL_ERR_NOT_SUPPORTED;
@@ -499,6 +538,9 @@ int pmix2x_convert_rc(pmix_status_t rc)
 
     case PMIX_EXISTS:
         return OPAL_EXISTS;
+
+    case PMIX_QUERY_PARTIAL_SUCCESS:
+        return OPAL_ERR_PARTIAL_SUCCESS;
 
     case PMIX_ERROR:
         return OPAL_ERROR;
@@ -671,6 +713,11 @@ void pmix2x_value_load(pmix_value_t *v,
                 }
             }
             break;
+        case OPAL_NAME:
+            v->type = PMIX_PROC;
+            (void)opal_snprintf_jobid(v->data.proc.nspace, PMIX_MAX_NSLEN, kv->data.name.jobid);
+            v->data.proc.rank = kv->data.name.vpid;
+            break;
         default:
             /* silence warnings */
             break;
@@ -771,6 +818,13 @@ int pmix2x_value_unload(opal_value_t *kv,
             kv->data.bo.bytes = NULL;
             kv->data.bo.size = 0;
         }
+        break;
+    case PMIX_PROC:
+        kv->type = OPAL_NAME;
+        if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&kv->data.name.jobid, v->data.proc.nspace))) {
+            return pmix2x_convert_opalrc(rc);
+        }
+        kv->data.name.vpid = v->data.proc.rank;
         break;
     default:
         /* silence warnings */
