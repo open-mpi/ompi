@@ -73,7 +73,7 @@ AC_DEFINE_UNQUOTED([OSHMEM_SPEC_COMPAT], [$OSHMEM_SPEC_COMPAT],
 #
 AC_MSG_CHECKING([if want OSHMEM API parameter checking])
 AC_ARG_WITH(oshmem-param-check,
-    AC_HELP_STRING([--oshmem-param-check(=VALUE)],
+    AC_HELP_STRING([--with-oshmem-param-check(=VALUE)],
                    [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: always).]))
 if test "$enable_oshmem" != "no"; then
     if test "$with_oshmem_param_check" = "no" || \
@@ -86,10 +86,11 @@ if test "$enable_oshmem" != "no"; then
         shmem_param_check=1
         AC_MSG_RESULT([always])
     else
+        shmem_param_check=1
         AC_MSG_RESULT([unknown])
         AC_MSG_WARN([*** Unrecognized --with-oshmem-param-check value])
         AC_MSG_WARN([*** See "configure --help" output])
-        AC_MSG_WARN([*** Defaulting to "runtime"])
+        AC_MSG_WARN([*** Defaulting to "always"])
     fi
 else
     shmem_param_check=0
