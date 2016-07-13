@@ -13,6 +13,7 @@
 #include "oshmem/include/shmem.h"
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "oshmem/runtime/runtime.h"
+#include "oshmem/mca/spml/spml.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "stdio.h"
 
