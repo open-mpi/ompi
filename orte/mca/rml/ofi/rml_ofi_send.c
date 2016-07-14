@@ -327,18 +327,19 @@ int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t conduit_id)
 static void send_msg(int fd, short args, void *cbdata)
 {
     orte_rml_send_request_t *req = (orte_rml_send_request_t*)cbdata;
-	orte_process_name_t *peer = &(req->send.dst);
-	orte_rml_tag_t tag = req->send.tag;
-	char *dest_ep_name;
-	size_t dest_ep_namelen = 0;
-	int ret = OPAL_ERROR;
+    orte_process_name_t *peer = &(req->send.dst);
+    orte_rml_tag_t tag = req->send.tag;
+    char *dest_ep_name;
+    size_t dest_ep_namelen = 0;
+    int ret = OPAL_ERROR;
     uint32_t  total_packets;
-	fi_addr_t dest_fi_addr;
-	orte_rml_send_t *snd;
-	orte_rml_ofi_request_t* ofi_send_req = OBJ_NEW( orte_rml_ofi_request_t );
-	uint8_t conduit_id = req->conduit_id;
+    fi_addr_t dest_fi_addr;
+    orte_rml_send_t *snd;
+    orte_rml_ofi_request_t* ofi_send_req = OBJ_NEW( orte_rml_ofi_request_t );
+    uint8_t conduit_id = req->conduit_id;
     orte_rml_ofi_send_pkt_t* ofi_msg_pkt;
     size_t datalen_per_pkt, hdrsize, data_in_pkt;  // the length of data in per packet excluding the header size
+   
    
  	snd = OBJ_NEW(orte_rml_send_t);
     snd->dst = *peer;
@@ -367,20 +368,29 @@ static void send_msg(int fd, short args, void *cbdata)
     {
        case  FI_SOCKADDR_IN :
              OPAL_MODEX_RECV_STRING(ret, OPAL_RML_OFI_FI_SOCKADDR_IN, peer , (char **) &dest_ep_name, &dest_ep_namelen);
+                /*print the sockaddr - port and s_addr */
+                struct sockaddr_in* ep_sockaddr = (struct sockaddr_in*) dest_ep_name;
+	            opal_output_verbose(10,orte_rml_base_framework.framework_output,
+                       "%s obtained for peer %s port = 0x%printinx, InternetAddr = %s  ",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_NAME_PRINT(peer),ntohs(ep_sockaddr->sin_port),
+                        inet_ntoa(ep_sockaddr->sin_addr));
              break;
        case  FI_ADDR_PSMX :
              OPAL_MODEX_RECV_STRING(ret, OPAL_RML_OFI_FI_ADDR_PSMX, peer , (char **) &dest_ep_name, &dest_ep_namelen);
              break;
+       default:
+	        /* we shouldn't be getting here as only above are supported and address sent 
+             *  to PMIX (OPAL_MODEX_SEND) in orte_component_init() */
+            opal_output_verbose(1, orte_rml_base_framework.framework_output, 
+                  "%s Error:  Unhandled address format type in ofi_send_msg", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
+			ORTE_RML_SEND_COMPLETE(snd);
+             return;
     }
-    opal_output_verbose(10, orte_rml_base_framework.framework_output,
+    opal_output_verbose(50, orte_rml_base_framework.framework_output,
                          "%s  Return value from OPAL_MODEX_RECV_STRING - %d, length returned - %d", 
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ret, dest_ep_namelen);
-    /*print the sockaddr - port and s_addr */
-	struct sockaddr_in* ep_sockaddr = (struct sockaddr_in*) dest_ep_name;
-	opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                       "%s obtained for peer %s port = 0x%x, InternetAddr = 0x%x  ",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_NAME_PRINT(peer),ep_sockaddr->sin_port,
-                        ep_sockaddr->sin_addr.s_addr);
+   
 
 	if ( OPAL_SUCCESS == ret) {
 		opal_output_verbose(10, orte_rml_base_framework.framework_output,
@@ -395,8 +405,8 @@ static void send_msg(int fd, short args, void *cbdata)
 			/* call the send-callback fn with error and return, also return failure status */
 			snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
 			ORTE_RML_SEND_COMPLETE(snd);
-			snd = NULL;
 			//OBJ_RELEASE( ofi_send_req);
+            return;
 		}
 		
 	} else {
@@ -408,8 +418,8 @@ static void send_msg(int fd, short args, void *cbdata)
 			/* call the send-callback fn with error and return, also return failure status */
 			snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
 			ORTE_RML_SEND_COMPLETE(snd);
-			snd = NULL;
 			//OBJ_RELEASE( ofi_send_req);
+            return;
 	}
 	
 	ofi_send_req->send = snd;
@@ -562,7 +572,7 @@ int orte_rml_ofi_send_transport_nb(int conduit_id,
                          ORTE_NAME_PRINT(peer), tag);
 
 	
-	if( (0 > conduit_id) || ( conduit_id > orte_rml_ofi.conduit_open_num ) ) {
+	if( (0 > conduit_id) || ( conduit_id >= orte_rml_ofi.conduit_open_num ) ) {
 		/* Invalid conduit ID provided */
 	    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;	
@@ -614,7 +624,7 @@ int orte_rml_ofi_send_buffer_transport_nb(int conduit_id,
                          ORTE_NAME_PRINT(peer), tag);
 
 	
-	if( (0 > conduit_id) || ( conduit_id > orte_rml_ofi.conduit_open_num ) ) {
+	if( (0 > conduit_id) || ( conduit_id >= orte_rml_ofi.conduit_open_num ) ) {
 		/* Invalid conduit ID provided */
 	    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;	

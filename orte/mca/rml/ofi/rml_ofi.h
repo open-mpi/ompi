@@ -28,7 +28,7 @@
 
 
 /** the maximum open conduit - assuming system will have no more than 20 transports*/
-#define MAX_CONDUIT  20
+#define MAX_CONDUIT  40
 
 /** The OPAL key values  **/
 /* (char*)  ofi socket address (type IN) of the node process is running on */
