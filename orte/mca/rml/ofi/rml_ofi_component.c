@@ -656,7 +656,7 @@ rml_ofi_component_init(int* priority)
         *   (fi_info_list) and store it in the ofi_conduits array **/
         orte_rml_ofi.conduit_open_num = 0;
         for( fabric_info = orte_rml_ofi.fi_info_list ; 
-                 NULL != fabric_info; fabric_info = fabric_info->next)
+                 NULL != fabric_info && orte_rml_ofi.conduit_open_num < MAX_CONDUIT ; fabric_info = fabric_info->next)
         {
             opal_output_verbose(100,orte_rml_base_framework.framework_output,
                  "%s:%d beginning to add endpoint for conduit_id=%d ",__FILE__,__LINE__,orte_rml_ofi.conduit_open_num);
@@ -839,8 +839,8 @@ rml_ofi_component_init(int* priority)
                     /*[debug] - print the sockaddr - port and s_addr */
                     struct sockaddr_in* ep_sockaddr = (struct sockaddr_in*)orte_rml_ofi.ofi_conduits[cur_conduit].ep_name;
                     opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                            "%s port = 0x%x, InternetAddr = 0x%x  ",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ep_sockaddr->sin_port,ep_sockaddr->sin_addr.s_addr);
+                            "%s port = 0x%x, InternetAddr = %s  ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
                     /*[end debug]*/
                     OPAL_MODEX_SEND_STRING( ret, OPAL_PMIX_GLOBAL,
                                             OPAL_RML_OFI_FI_SOCKADDR_IN,
@@ -964,6 +964,11 @@ rml_ofi_component_init(int* priority)
                  "%s:%d Conduit id - %d created ",__FILE__,__LINE__,orte_rml_ofi.conduit_open_num);
            orte_rml_ofi.conduit_open_num++;
         } 
+        if (fabric_info != NULL &&  orte_rml_ofi.conduit_open_num >= MAX_CONDUIT ) {
+            opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                 "%s:%d fi_getinfo list not fully parsed as MAX_CONDUIT - %d reached ",__FILE__,__LINE__,orte_rml_ofi.conduit_open_num);
+        }
+        
 
     }
     /**
