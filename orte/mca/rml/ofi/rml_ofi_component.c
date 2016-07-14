@@ -191,15 +191,27 @@ rml_ofi_component_close(void)
     return ORTE_SUCCESS;
 }
 
+/* Find the index of the conduit_id in the ofi_conduits[] array
+   Error checking is done prior to calling this function
+   so no error handling implemented here*/
+uint8_t conduit_index(uint8_t conduit_id)
+{
+    uint8_t index=0;
+    for( index = 0; index <= orte_rml_ofi.conduit_open_num && orte_rml_ofi.ofi_conduits[index].conduit_id != conduit_id ; index++);
+    if ( index > orte_rml_ofi.conduit_open_num) {
+        index = 0xFF;
+        opal_output_verbose(10,orte_rml_base_framework.framework_output,
+                            " Conduit_id %d provided not found in array, mismatch in id assignment\n",conduit_id);     
+    }
+    
+    return index;
+}
 
 void print_provider_list_info (struct fi_info *fi )
 {
-
-    
-    //Display all the details in the fi_info structure
     struct fi_info *cur_fi = fi;
     int fi_count = 0;
-
+    //Display all the details in the fi_info structure
     opal_output_verbose(1,orte_rml_base_framework.framework_output,
                         " %s - Print_provider_list_info() ", 
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -661,7 +673,7 @@ rml_ofi_component_init(int* priority)
             opal_output_verbose(100,orte_rml_base_framework.framework_output,
                  "%s:%d beginning to add endpoint for conduit_id=%d ",__FILE__,__LINE__,orte_rml_ofi.conduit_open_num);
             cur_conduit = orte_rml_ofi.conduit_open_num;
-            orte_rml_ofi.ofi_conduits[cur_conduit].conduit_id = orte_rml_ofi.conduit_open_num;  //make this +1 to start the id from 1
+            orte_rml_ofi.ofi_conduits[cur_conduit].conduit_id = orte_rml_ofi.conduit_open_num + 1;  //start the conduit id from 1
             orte_rml_ofi.ofi_conduits[cur_conduit].fabric_info = fabric_info;
 
             // set FI_MULTI_RECV flag for all recv operations
@@ -808,7 +820,7 @@ rml_ofi_component_init(int* priority)
                 continue;                               
             }
             opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                            "%s:%d ep enabled for conduit_id - %d ",__FILE__,__LINE__,cur_conduit);
+                            "%s:%d ep enabled for conduit_id - %d ",__FILE__,__LINE__,orte_rml_ofi.ofi_conduits[cur_conduit].conduit_id);
 
 
             /**

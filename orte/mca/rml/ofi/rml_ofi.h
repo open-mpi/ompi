@@ -183,6 +183,10 @@ int orte_rml_ofi_error_callback(struct fi_cq_err_entry *error,
 
 /* OFI Recv handler */
 int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t conduit_id);
+
+/* Find the index of the conduit_id in the ofi_conduits[] array*/
+uint8_t conduit_index(uint8_t conduit_id);
+
 END_C_DECLS
 
 #endif

@@ -336,7 +336,7 @@ static void send_msg(int fd, short args, void *cbdata)
     fi_addr_t dest_fi_addr;
     orte_rml_send_t *snd;
     orte_rml_ofi_request_t* ofi_send_req = OBJ_NEW( orte_rml_ofi_request_t );
-    uint8_t conduit_id = req->conduit_id;
+    uint8_t conduit_idx = req->conduit_id;        // This is the index of the orte_rml_ofi.ofi_conduits[] array that holds the conduit_id user requested
     orte_rml_ofi_send_pkt_t* ofi_msg_pkt;
     size_t datalen_per_pkt, hdrsize, data_in_pkt;  // the length of data in per packet excluding the header size
    
@@ -364,7 +364,7 @@ static void send_msg(int fd, short args, void *cbdata)
 	/* get the peer address by doing modex_receive 	*/
     opal_output_verbose(10, orte_rml_base_framework.framework_output,
                          "%s calling OPAL_MODEX_RECV_STRING ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) );
-    switch ( orte_rml_ofi.ofi_conduits[conduit_id].fabric_info->addr_format)
+    switch ( orte_rml_ofi.ofi_conduits[conduit_idx].fabric_info->addr_format)
     {
        case  FI_SOCKADDR_IN :
              OPAL_MODEX_RECV_STRING(ret, OPAL_RML_OFI_FI_SOCKADDR_IN, peer , (char **) &dest_ep_name, &dest_ep_namelen);
@@ -397,7 +397,7 @@ static void send_msg(int fd, short args, void *cbdata)
                          "%s OPAL_MODEX_RECV succeded, %s peer ep name obtained. length=%d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer), dest_ep_namelen);
-		ret = fi_av_insert(orte_rml_ofi.ofi_conduits[conduit_id].av, dest_ep_name,1,&dest_fi_addr,0,NULL);
+		ret = fi_av_insert(orte_rml_ofi.ofi_conduits[conduit_idx].av, dest_ep_name,1,&dest_fi_addr,0,NULL);
 		if( ret != 1) {	
 			opal_output_verbose(1, orte_rml_base_framework.framework_output,
                          "%s fi_av_insert failed in send_msg() returned %d",
@@ -539,10 +539,10 @@ static void send_msg(int fd, short args, void *cbdata)
                          cur_hdr->msgid, ORTE_NAME_PRINT(peer), tag);
         /* end debug*/
 
-    	RML_OFI_RETRY_UNTIL_DONE(fi_send(orte_rml_ofi.ofi_conduits[conduit_id].ep,
+    	RML_OFI_RETRY_UNTIL_DONE(fi_send(orte_rml_ofi.ofi_conduits[conduit_idx].ep,
 									 ofi_msg_pkt->data,
 									 ofi_msg_pkt->pkt_size,
-							         fi_mr_desc(orte_rml_ofi.ofi_conduits[conduit_id].mr_multi_recv),  
+							         fi_mr_desc(orte_rml_ofi.ofi_conduits[conduit_idx].mr_multi_recv),  
 									 dest_fi_addr,
 								     (void *)&ofi_send_req->ctx));
 
@@ -557,12 +557,12 @@ static void send_msg(int fd, short args, void *cbdata)
 }
 
 int orte_rml_ofi_send_transport_nb(int conduit_id,
-                                              orte_process_name_t* peer,
-                                              struct iovec* iov,
-                                              int count, 
-                                              orte_rml_tag_t tag,
-                                              orte_rml_callback_fn_t cbfunc,
-                                              void* cbdata)
+                                   orte_process_name_t* peer,
+                                   struct iovec* iov,
+                                   int count, 
+                                   orte_rml_tag_t tag,
+                                   orte_rml_callback_fn_t cbfunc,
+                                   void* cbdata)
 {
     orte_rml_send_request_t *req;
 
@@ -572,7 +572,7 @@ int orte_rml_ofi_send_transport_nb(int conduit_id,
                          ORTE_NAME_PRINT(peer), tag);
 
 	
-	if( (0 > conduit_id) || ( conduit_id >= orte_rml_ofi.conduit_open_num ) ) {
+	if( (0 >= conduit_id) || ( conduit_id > orte_rml_ofi.conduit_open_num ) ) {
 		/* Invalid conduit ID provided */
 	    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;	
@@ -592,7 +592,8 @@ int orte_rml_ofi_send_transport_nb(int conduit_id,
      * race conditions and threads
      */
 	req = OBJ_NEW(orte_rml_send_request_t);   
-	req->conduit_id = conduit_id;
+    /* get the index into the orte_rml_ofi.ofi_conduits[] array that holds the conduit information for conduit_id provided by user */
+	req->conduit_id = conduit_index(conduit_id);  
     req->send.dst = *peer;
     req->send.iov = iov;
 	req->send.count = count;
@@ -624,7 +625,7 @@ int orte_rml_ofi_send_buffer_transport_nb(int conduit_id,
                          ORTE_NAME_PRINT(peer), tag);
 
 	
-	if( (0 > conduit_id) || ( conduit_id >= orte_rml_ofi.conduit_open_num ) ) {
+	if( (0 >= conduit_id) || ( conduit_id > orte_rml_ofi.conduit_open_num ) ) {
 		/* Invalid conduit ID provided */
 	    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;	
@@ -643,8 +644,9 @@ int orte_rml_ofi_send_buffer_transport_nb(int conduit_id,
     /* get ourselves into an event to protect against
      * race conditions and threads
      */
-	req = OBJ_NEW(orte_rml_send_request_t);   
-	req->conduit_id = conduit_id;
+	req = OBJ_NEW(orte_rml_send_request_t);  
+    /* get the index into the orte_rml_ofi.ofi_conduits[] array that holds the conduit information for conduit_id provided by user */
+	req->conduit_id = conduit_index(conduit_id);   
     req->send.dst = *peer;
     req->send.buffer = buffer;
     req->send.tag = tag;

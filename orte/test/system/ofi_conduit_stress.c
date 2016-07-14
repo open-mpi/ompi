@@ -98,7 +98,7 @@ main(int argc, char *argv[]){
     double maxpower;
     opal_buffer_t *buf;
     orte_rml_recv_cb_t blob;
-    int conduit_id = 0;  
+    int conduit_id = 1;  
     struct timeval start, end;
     
 
