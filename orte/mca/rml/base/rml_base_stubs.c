@@ -87,10 +87,7 @@ void orte_rml_API_finalize(void)
             active->module->finalize();
         }
     }
-    //[A] 
-    //3/25 -> moving here to avoid multiple calls from each plugin to this base fn
-    orte_rml_base_comm_stop();
-    
+    orte_rml_base_comm_stop();   
 }
 
 /** Get contact information for local process */

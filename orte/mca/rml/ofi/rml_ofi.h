@@ -26,7 +26,7 @@
 
 #include "rml_ofi_request.h"
 
-//[A]
+
 /** the maximum open conduit - assuming system will have no more than 20 transports*/
 #define MAX_CONDUIT  20
 

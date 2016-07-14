@@ -320,7 +320,7 @@ int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t conduit_id)
             
         }
     }
-	
+  return ORTE_SUCCESS;	
 }
 
 
