@@ -25,15 +25,6 @@ struct pml_yalla_base_request {
     ompi_request_t               ompi;
     mca_pml_yalla_convertor_t    *convertor;
     int                          flags;
-    /* overlaps with base of send/recv
-     * In ISO C90, you would have to give contents a length of 1,
-     * which means either you waste space or complicate the argument to malloc.
-     * Note:
-     *  - 1 was the portable way to go, though it was rather strange
-     *  - 0 was better at indicating intent, but not legal as far as
-     *  the Standard was concerned and supported as an extension by some compilers (including gcc)
-     */
-    mxm_req_base_t               mxm_base[1];
 };
 
 struct pml_yalla_send_request {
@@ -58,6 +49,8 @@ OBJ_CLASS_DECLARATION(mca_pml_yalla_recv_request_t);
 
 void mca_pml_yalla_init_reqs(void);
 
+#define PML_YALLA_MXM_REQBASE( x ) ( &((x)->mxm.base) )
+
 #define PML_YALLA_RESET_OMPI_REQ(_ompi_req, _state) \
     { \
         (_ompi_req)->req_state = _state; \
@@ -72,9 +65,9 @@ void mca_pml_yalla_init_reqs(void);
         OBJ_RETAIN(_comm); \
     }
 
-#define PML_YALLA_RESET_PML_REQ(_pml_req) \
+#define PML_YALLA_RESET_PML_REQ(_pml_req, mxm_base) \
     { \
-        (_pml_req)->mxm_base[0].state = MXM_REQ_NEW; \
+        mxm_base->state = MXM_REQ_NEW; \
         PML_YALLA_RESET_PML_REQ_DATA(_pml_req); \
     }
 
