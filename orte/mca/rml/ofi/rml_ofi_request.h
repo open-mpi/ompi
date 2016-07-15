@@ -15,12 +15,11 @@
     container_of((_ptr_ctx), orte_rml_ofi_request_t, ctx)
 
 typedef enum {
-    ORTE_RML_OFI_SEND,
-    ORTE_RML_OFI_RECV,
-    ORTE_RML_OFI_ACK,
-    ORTE_RML_OFI_PROBE
+  ORTE_RML_OFI_SEND,
+  ORTE_RML_OFI_RECV,
+  ORTE_RML_OFI_ACK,
+  ORTE_RML_OFI_PROBE
 } orte_rml_ofi_request_type_t;
-
 /* orte_rml_ofi_msg_header_t contains the header information for the message being sent.  
 The header and data is passed on to the destination. The destination will re-construct the 
 orte_rml_sent_t struct once it receives this header and data.This header has the required information 

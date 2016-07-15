@@ -29,6 +29,7 @@
 
 /** the maximum open conduit - assuming system will have no more than 20 transports*/
 #define MAX_CONDUIT  40
+#define RML_OFI_CONDUIT_ID_INVALID 0xFF
 
 /** The OPAL key values  **/
 /* (char*)  ofi socket address (type IN) of the node process is running on */
@@ -183,9 +184,6 @@ int orte_rml_ofi_error_callback(struct fi_cq_err_entry *error,
 
 /* OFI Recv handler */
 int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t conduit_id);
-
-/* Find the index of the conduit_id in the ofi_conduits[] array*/
-uint8_t conduit_index(uint8_t conduit_id);
 
 END_C_DECLS
 

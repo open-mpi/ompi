@@ -92,6 +92,7 @@ rml_ofi_component_open(void)
         orte_rml_ofi.ofi_conduits[conduit_id].rxbuf = NULL;
         orte_rml_ofi.ofi_conduits[conduit_id].rxbuf_size = 0;
         orte_rml_ofi.ofi_conduits[conduit_id].progress_ev_active = false;
+        orte_rml_ofi.ofi_conduits[conduit_id].conduit_id = RML_OFI_CONDUIT_ID_INVALID;
     }
 
     opal_output_verbose(1,orte_rml_base_framework.framework_output," from %s:%d rml_ofi_component_open()",__FILE__,__LINE__);
@@ -156,6 +157,7 @@ void free_conduit_resources( int conduit_id)
     orte_rml_ofi.ofi_conduits[conduit_id].rxbuf_size = 0;
     orte_rml_ofi.ofi_conduits[conduit_id].fabric_info = NULL;
     orte_rml_ofi.ofi_conduits[conduit_id].mr_multi_recv = NULL;
+    orte_rml_ofi.ofi_conduits[conduit_id].conduit_id = RML_OFI_CONDUIT_ID_INVALID;
     OPAL_LIST_DESTRUCT(&orte_rml_ofi.recv_msg_queue_list);
     
 
@@ -189,22 +191,6 @@ rml_ofi_component_close(void)
     opal_output_verbose(10,orte_rml_base_framework.framework_output,
                         " %s - rml_ofi_component_close() end",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     return ORTE_SUCCESS;
-}
-
-/* Find the index of the conduit_id in the ofi_conduits[] array
-   Error checking is done prior to calling this function
-   so no error handling implemented here*/
-uint8_t conduit_index(uint8_t conduit_id)
-{
-    uint8_t index=0;
-    for( index = 0; index <= orte_rml_ofi.conduit_open_num && orte_rml_ofi.ofi_conduits[index].conduit_id != conduit_id ; index++);
-    if ( index > orte_rml_ofi.conduit_open_num) {
-        index = 0xFF;
-        opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                            " Conduit_id %d provided not found in array, mismatch in id assignment\n",conduit_id);     
-    }
-    
-    return index;
 }
 
 void print_provider_list_info (struct fi_info *fi )
@@ -666,14 +652,14 @@ rml_ofi_component_init(int* priority)
 
         /** create the OFI objects for each transport in the system 
         *   (fi_info_list) and store it in the ofi_conduits array **/
-        orte_rml_ofi.conduit_open_num = 0;
+        orte_rml_ofi.conduit_open_num = 0;   // start the conduit_id from 0
         for( fabric_info = orte_rml_ofi.fi_info_list ; 
                  NULL != fabric_info && orte_rml_ofi.conduit_open_num < MAX_CONDUIT ; fabric_info = fabric_info->next)
         {
             opal_output_verbose(100,orte_rml_base_framework.framework_output,
                  "%s:%d beginning to add endpoint for conduit_id=%d ",__FILE__,__LINE__,orte_rml_ofi.conduit_open_num);
             cur_conduit = orte_rml_ofi.conduit_open_num;
-            orte_rml_ofi.ofi_conduits[cur_conduit].conduit_id = orte_rml_ofi.conduit_open_num + 1;  //start the conduit id from 1
+            orte_rml_ofi.ofi_conduits[cur_conduit].conduit_id = orte_rml_ofi.conduit_open_num ;  
             orte_rml_ofi.ofi_conduits[cur_conduit].fabric_info = fabric_info;
 
             // set FI_MULTI_RECV flag for all recv operations
