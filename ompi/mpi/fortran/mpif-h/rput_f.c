@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -90,7 +90,7 @@ void ompi_rput_f(char *origin_addr, MPI_Fint *origin_count,
                       c_target_datatype, c_win, &c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
-    if (MPI_SUCCESS != c_ierr) {
-        *request = MPI_Request_c2f(c_req);
+    if (MPI_SUCCESS == c_ierr) {
+        *request = PMPI_Request_c2f(c_req);
     }
 }
