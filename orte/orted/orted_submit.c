@@ -2367,23 +2367,28 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
      * message by checking here
      */
     if (MPIR_proctable || 0 == jdata->num_procs) {
+
         /* already initialized */
         opal_output_verbose(5, orte_debug_output,
                             "%s: debugger already initialized or zero procs",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        OBJ_RELEASE(caddy);
-        if (!mpir_breakpoint_fired) {
-            /* record that we have triggered the debugger */
-            mpir_breakpoint_fired = true;
 
-            /* trigger the debugger */
-            MPIR_Breakpoint();
+        if (MPIR_being_debugged || NULL != orte_debugger_test_daemon ||
+            NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
+            OBJ_RELEASE(caddy);
+            if (!mpir_breakpoint_fired) {
+                /* record that we have triggered the debugger */
+                mpir_breakpoint_fired = true;
 
-            opal_output_verbose(5, orte_debug_output,
-                                "%s NOTIFYING DEBUGGER RELEASE",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            /* notify all procs that the debugger is ready */
-            _send_notification();
+                /* trigger the debugger */
+                MPIR_Breakpoint();
+
+                opal_output_verbose(5, orte_debug_output,
+                                    "%s NOTIFYING DEBUGGER RELEASE",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                /* notify all procs that the debugger is ready */
+                _send_notification();
+            }
         }
         return;
     }

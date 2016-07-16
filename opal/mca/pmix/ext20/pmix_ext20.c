@@ -1183,6 +1183,7 @@ static void tscon(pmix20_threadshift_t *p)
     p->event_codes = NULL;
     p->info = NULL;
     p->evhandler = NULL;
+    p-<nondefault = false;
     p->cbfunc = NULL;
     p->opcbfunc = NULL;
     p->cbdata = NULL;
