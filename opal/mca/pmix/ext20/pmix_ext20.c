@@ -5,6 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1183,7 +1184,7 @@ static void tscon(pmix20_threadshift_t *p)
     p->event_codes = NULL;
     p->info = NULL;
     p->evhandler = NULL;
-    p-<nondefault = false;
+    p->nondefault = false;
     p->cbfunc = NULL;
     p->opcbfunc = NULL;
     p->cbdata = NULL;
