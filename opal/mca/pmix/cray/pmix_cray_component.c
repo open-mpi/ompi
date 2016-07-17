@@ -3,6 +3,7 @@
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,29 +49,29 @@ opal_pmix_cray_component_t mca_pmix_cray_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-        .base_version = {
-            /* Indicate that we are a pmix v1.1.0 component (which also
-               implies a specific MCA version) */
+	.base_version = {
+	    /* Indicate that we are a pmix v1.1.0 component (which also
+	       implies a specific MCA version) */
 
-            OPAL_PMIX_BASE_VERSION_2_0_0,
+	    OPAL_PMIX_BASE_VERSION_2_0_0,
 
-            /* Component name and version */
+	    /* Component name and version */
 
-            .mca_component_name = "cray",
-            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-                                  OPAL_RELEASE_VERSION),
+	    .mca_component_name = "cray",
+	    MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+				  OPAL_RELEASE_VERSION),
 
-            /* Component open and close functions */
+	    /* Component open and close functions */
 
-            .mca_open_component = pmix_cray_component_open,
-            .mca_close_component = pmix_cray_component_close,
-            .mca_query_component = pmix_cray_component_query,
-        },
-        /* Next the MCA v1.0.0 component meta data */
-        .base_data = {
-            /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+	    .mca_open_component = pmix_cray_component_open,
+	    .mca_close_component = pmix_cray_component_close,
+	    .mca_query_component = pmix_cray_component_query,
+	},
+	/* Next the MCA v1.0.0 component meta data */
+	.base_data = {
+	    /* The component is checkpoint ready */
+	    MCA_BASE_METADATA_PARAM_CHECKPOINT
+	}
     },
     .cache_local = NULL,
     .cache_global = NULL,
@@ -92,23 +93,23 @@ static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
        were launched by the orte/mpirun launcher */
     fd = fopen(proc_job_file, "r");
     if ((fd == NULL) || (getenv("OMPI_NO_USE_CRAY_PMI") != NULL)) {
-        *priority = 0;
-        *module = NULL;
-        rc = OPAL_ERROR;
+	*priority = 0;
+	*module = NULL;
+	rc = OPAL_ERROR;
     } else {
-        snprintf(task_is_app_fname,sizeof(task_is_app_fname),
-                 "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
-        fd_task_is_app = fopen(task_is_app_fname, "r");
-        if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container,
-                                           and we are an app task (not just a process
-                                           running on a mom node, for example),
-                                           so we should give cray pmi a shot. */
-            *priority = 90;
-            *module = (mca_base_module_t *)&opal_pmix_cray_module;
-            fclose(fd_task_is_app);
-            rc = OPAL_SUCCESS;
-        }
-        fclose(fd);
+	snprintf(task_is_app_fname,sizeof(task_is_app_fname),
+		 "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
+	fd_task_is_app = fopen(task_is_app_fname, "r");
+	if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container,
+					   and we are an app task (not just a process
+					   running on a mom node, for example),
+					   so we should give cray pmi a shot. */
+	    *priority = 90;
+	    *module = (mca_base_module_t *)&opal_pmix_cray_module;
+	    fclose(fd_task_is_app);
+	    rc = OPAL_SUCCESS;
+	}
+	fclose(fd);
     }
 
     return rc;
@@ -118,4 +119,3 @@ static int pmix_cray_component_close(void)
 {
     return OPAL_SUCCESS;
 }
-

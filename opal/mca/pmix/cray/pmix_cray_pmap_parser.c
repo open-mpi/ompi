@@ -4,6 +4,7 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * Additional copyrights may follow
  *
@@ -31,14 +32,14 @@ slurm block distro of 4 ranks over 2 nodes:
  Tuple can be visualized as a rectangle on two
  dimensional (Hosts, Local Ranks) plane:
 
-           ------------------------------------ Hosts ->
-           |              H
-           |           +--------+
-           |<- base -->|        |
-           |           |        | L
-           |           +--------+
-        Local Ranks
-           V
+	   ------------------------------------ Hosts ->
+	   |              H
+	   |           +--------+
+	   |<- base -->|        |
+	   |           |        | L
+	   |           +--------+
+	Local Ranks
+	   V
 
 Note that ranks increase by column. Tuple (0,2,3) looks like:
 0 3
@@ -58,14 +59,14 @@ static int find_my_node(char *map, int me)
     p = map;
     abs_rank = 0;
     while (NULL != (p = strstr(p+1, ",("))) {
-        if (3 != sscanf(p, ",(%d,%d,%d)", &base, &H, &L)) {
-            return -1;
-        }
-        if (me >= abs_rank && me < abs_rank + H*L) {
-            /* found my rectangle, compute node */
-            return base + (me - abs_rank)/L;
-        }
-        abs_rank += H*L;
+	if (3 != sscanf(p, ",(%d,%d,%d)", &base, &H, &L)) {
+	    return -1;
+	}
+	if (me >= abs_rank && me < abs_rank + H*L) {
+	    /* found my rectangle, compute node */
+	    return base + (me - abs_rank)/L;
+	}
+	abs_rank += H*L;
     }
     return -1;
 }
@@ -85,34 +86,34 @@ static int *find_lrs(char *map, int my_node, int *nlrs)
     max_lr = 16;
     lrs = malloc(max_lr * sizeof(int));
     while (NULL != (p = strstr(p+1, ",("))) {
-        if (3 != sscanf(p, ",(%d,%d,%d)", &base, &H, &L)) {
-            free(lrs);
-            return NULL;
-        }
-        if (base <= my_node && my_node < base + H) {
-            if (*nlrs + L >= max_lr) {
-                lrs = realloc(lrs, (max_lr + L) * sizeof(int));
-                if (NULL == lrs) {
-                    *nlrs = 0;
-                    free(lrs);
-                    return NULL;
-                }
-                max_lr += L;
-            }
-            /* skip (my_node - base) columns of L elems,
-             * numbers in my column are local to me
-             */
-            for (i = 0; i < L; i++) {
-                lrs[*nlrs] = (my_node - base) * L + i + abs_rank;
-                (*nlrs) ++;
-            }
-        }
-        abs_rank += H*L;
+	if (3 != sscanf(p, ",(%d,%d,%d)", &base, &H, &L)) {
+	    free(lrs);
+	    return NULL;
+	}
+	if (base <= my_node && my_node < base + H) {
+	    if (*nlrs + L >= max_lr) {
+		lrs = realloc(lrs, (max_lr + L) * sizeof(int));
+		if (NULL == lrs) {
+		    *nlrs = 0;
+		    free(lrs);
+		    return NULL;
+		}
+		max_lr += L;
+	    }
+	    /* skip (my_node - base) columns of L elems,
+	     * numbers in my column are local to me
+	     */
+	    for (i = 0; i < L; i++) {
+		lrs[*nlrs] = (my_node - base) * L + i + abs_rank;
+		(*nlrs) ++;
+	    }
+	}
+	abs_rank += H*L;
     }
 
     if (0 == *nlrs) {
-        free(lrs);
-        lrs = 0;
+	free(lrs);
+	lrs = 0;
     }
     return lrs;
 }
@@ -128,13 +129,13 @@ static int *find_lrs(char *map, int my_node, int *nlrs)
  * on failure. Array must be freed by the caller.
  */
 int *pmix_cray_parse_pmap(char *pmap, int my_rank,
-                          int *node, int *nlrs)
+			  int *node, int *nlrs)
 {
     char *p;
 
     p = strstr(pmap, "(vector");
     if (NULL == p) {
-        return NULL;
+	return NULL;
     }
 
     *node = find_my_node(p, my_rank);
@@ -154,7 +155,7 @@ static void dump_lrs(int *lrs, int me, int node, int n)
 
     printf("Total %d ranks/node, node %d me %d\n", n, node, me);
     for (i = 0; i < n; i++) {
-        printf("%d ", lrs[i]);
+	printf("%d ", lrs[i]);
     }
     printf("\n");
     free(lrs);
@@ -174,14 +175,14 @@ int main(int argc, char **argv)
 
 
     if (argc == 3) {
-        me = atoi(argv[1]);
-        lrs = orte_grpcomm_pmi2_parse_pmap(argv[2], me, &node, &n);
-        if (NULL == lrs) {
-            printf("can not parse pmap\n");
-            exit(1);
-        }
-        dump_lrs(lrs, me, node, n);
-        exit(0);
+	me = atoi(argv[1]);
+	lrs = orte_grpcomm_pmi2_parse_pmap(argv[2], me, &node, &n);
+	if (NULL == lrs) {
+	    printf("can not parse pmap\n");
+	    exit(1);
+	}
+	dump_lrs(lrs, me, node, n);
+	exit(0);
     }
     /* built in cases */
 
