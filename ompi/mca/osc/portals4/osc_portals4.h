@@ -54,6 +54,7 @@ struct ompi_osc_portals4_component_t {
     ptl_size_t matching_fetch_atomic_max;
     ptl_size_t matching_atomic_ordered_size;
     ptl_size_t ptl_max_msg_size; /* max size given by portals (cf PtlNIInit) */
+    bool no_locks;
     ptl_uid_t uid;
     opal_mutex_t lock;
     opal_condition_t cond;
