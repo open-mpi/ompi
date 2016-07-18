@@ -176,6 +176,7 @@ typedef unsigned int uint;
 
 #define MAXPATHLEN _MAX_PATH
 #define MAXHOSTNAMELEN _MAX_PATH
+#define OPAL_MAXHOSTNAMELEN (MAXHOSTNAMELEN + 1)
 #define PATH_MAX _MAX_PATH
 #define WTERMSIG(EXIT_CODE)    (1)
 #define WIFEXITED(EXIT_CODE)   (1)

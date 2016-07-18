@@ -48,6 +48,8 @@
  * Version: 0.1b
  */
 
+#include "opal_config.h"
+
 #include <sys/types.h>
 #include "event2/event-config.h"
 
@@ -120,10 +122,6 @@
 #define EVDNS_LOG_DEBUG 0
 #define EVDNS_LOG_WARN 1
 #define EVDNS_LOG_MSG 2
-
-#ifndef HOST_NAME_MAX
-#define HOST_NAME_MAX 255
-#endif
 
 #include <stdio.h>
 
@@ -3108,7 +3106,7 @@ evdns_search_ndots_set(const int ndots) {
 
 static void
 search_set_from_hostname(struct evdns_base *base) {
-	char hostname[HOST_NAME_MAX + 1], *domainname;
+	char hostname[OPAL_MAXHOSTNAMELEN], *domainname;
 
 	ASSERT_LOCKED(base);
 	search_postfix_clear(base);

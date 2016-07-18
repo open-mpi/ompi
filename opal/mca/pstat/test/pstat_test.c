@@ -65,7 +65,7 @@ static int query(pid_t pid,
                  opal_node_stats_t *nstats)
 {
     double dtime;
-    char hostname[128];
+    char hostname[OPAL_MAXHOSTNAMELEN];
 
     if (NULL != stats) {
         /* record the time of this sample */
@@ -83,7 +83,7 @@ static int query(pid_t pid,
     }
 
     if (NULL != stats) {
-        gethostname(hostname, 128);
+        gethostname(hostname, sizeof(hostname));
         strncpy(stats->node, hostname, OPAL_PSTAT_MAX_STRING_LEN);
 
         stats->pid = pid;

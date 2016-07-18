@@ -21,7 +21,7 @@
 
 int pml_v_output_open(char *output, int verbosity) {
     opal_output_stream_t lds;
-    char hostname[32] = "NA";
+    char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
 
     OBJ_CONSTRUCT(&lds, opal_output_stream_t);
     if(!output) {
@@ -40,7 +40,7 @@ int pml_v_output_open(char *output, int verbosity) {
             lds.lds_file_suffix = output;
         }
         lds.lds_is_debugging = true;
-        gethostname(hostname, 32);
+        gethostname(hostname, sizeof(hostname));
         asprintf(&lds.lds_prefix, "[%s:%05d] pml_v: ", hostname, getpid());
         lds.lds_verbose_level = verbosity;
         mca_pml_v.output = opal_output_open(&lds);
