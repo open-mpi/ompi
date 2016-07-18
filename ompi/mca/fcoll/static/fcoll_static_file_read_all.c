@@ -26,6 +26,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fcoll/fcoll.h"
+#include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 #include "ompi/mca/io/io.h"
 #include "math.h"
@@ -291,16 +292,16 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rexch = MPI_Wtime();
 #endif
-    ret = fh->f_allgather_array (&iov_size,
-                                 1,
-                                 MPI_INT,
-                                 iovec_count_per_process,
-                                 1,
-                                 MPI_INT,
-                                 fh->f_aggregator_index,
-                                 fh->f_procs_in_group,
-                                 fh->f_procs_per_group,
-                                 fh->f_comm);
+    ret = fcoll_base_coll_allgather_array (&iov_size,
+                                           1,
+                                           MPI_INT,
+                                           iovec_count_per_process,
+                                           1,
+                                           MPI_INT,
+                                           fh->f_aggregator_index,
+                                           fh->f_procs_in_group,
+                                           fh->f_procs_per_group,
+                                           fh->f_comm);
 
     if( OMPI_SUCCESS != ret){
         goto exit;
@@ -334,17 +335,17 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rexch = MPI_Wtime();
 #endif
-    ret = fh->f_gatherv_array (local_iov_array,
-                               iov_size,
-                               io_array_type,
-                               global_iov_array,
-                               iovec_count_per_process,
-                               displs,
-                               io_array_type,
-                               fh->f_aggregator_index,
-                               fh->f_procs_in_group,
-                               fh->f_procs_per_group,
-                               fh->f_comm);
+    ret = fcoll_base_coll_gatherv_array (local_iov_array,
+                                         iov_size,
+                                         io_array_type,
+                                         global_iov_array,
+                                         iovec_count_per_process,
+                                         displs,
+                                         io_array_type,
+                                         fh->f_aggregator_index,
+                                         fh->f_procs_in_group,
+                                         fh->f_procs_per_group,
+                                         fh->f_comm);
 
     if (OMPI_SUCCESS != ret){
         fprintf(stderr,"global_iov_array gather error!\n");
@@ -493,16 +494,16 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rexch = MPI_Wtime();
 #endif
-        fh->f_gather_array (&bytes_to_read_in_cycle,
-                            1,
-                            MPI_INT,
-                            bytes_per_process,
-                            1,
-                            MPI_INT,
-                            fh->f_aggregator_index,
-                            fh->f_procs_in_group,
-                            fh->f_procs_per_group,
-                            fh->f_comm);
+        fcoll_base_coll_gather_array (&bytes_to_read_in_cycle,
+                                      1,
+                                      MPI_INT,
+                                      bytes_per_process,
+                                      1,
+                                      MPI_INT,
+                                      fh->f_aggregator_index,
+                                      fh->f_procs_in_group,
+                                      fh->f_procs_per_group,
+                                      fh->f_comm);
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
         end_rcomm_time = MPI_Wtime();

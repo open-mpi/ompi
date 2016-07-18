@@ -23,6 +23,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fcoll/fcoll.h"
+#include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 #include "ompi/mca/io/io.h"
 #include "math.h"
@@ -161,16 +162,16 @@ mca_fcoll_dynamic_gen2_file_read_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rcomm_time = MPI_Wtime();
 #endif
-    ret = fh->f_allgather_array (&max_data,
-                                 1,
-                                 MPI_LONG,
-                                 total_bytes_per_process,
-                                 1,
-                                 MPI_LONG,
-                                 fh->f_aggregator_index,
-                                 fh->f_procs_in_group,
-                                 fh->f_procs_per_group,
-                                 fh->f_comm);
+    ret = fcoll_base_coll_allgather_array (&max_data,
+                                           1,
+                                           MPI_LONG,
+                                           total_bytes_per_process,
+                                           1,
+                                           MPI_LONG,
+                                           fh->f_aggregator_index,
+                                           fh->f_procs_in_group,
+                                           fh->f_procs_per_group,
+                                           fh->f_comm);
     if (OMPI_SUCCESS != ret){
         goto exit;
     }
@@ -213,17 +214,17 @@ mca_fcoll_dynamic_gen2_file_read_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rcomm_time = MPI_Wtime();
 #endif
-    ret = fh->f_allgather_array (&local_count,
-                                 1,
-                                 MPI_INT,
-                                 fview_count,
-                                 1,
-                                 MPI_INT,
-                                 fh->f_aggregator_index,
-                                 fh->f_procs_in_group,
-                                 fh->f_procs_per_group,
-                                 fh->f_comm);
-
+    ret = fcoll_base_coll_allgather_array (&local_count,
+                                           1,
+                                           MPI_INT,
+                                           fview_count,
+                                           1,
+                                           MPI_INT,
+                                           fh->f_aggregator_index,
+                                           fh->f_procs_in_group,
+                                           fh->f_procs_per_group,
+                                           fh->f_comm);
+    
     if (OMPI_SUCCESS != ret){
         goto exit;
     }
@@ -271,17 +272,17 @@ mca_fcoll_dynamic_gen2_file_read_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rcomm_time = MPI_Wtime();
 #endif
-    ret =  fh->f_allgatherv_array (local_iov_array,
-                                   local_count,
-                                   fh->f_iov_type,
-                                   global_iov_array,
-                                   fview_count,
-                                   displs,
-                                   fh->f_iov_type,
-                                   fh->f_aggregator_index,
-                                   fh->f_procs_in_group,
-                                   fh->f_procs_per_group,
-                                   fh->f_comm);
+    ret =  fcoll_base_coll_allgatherv_array (local_iov_array,
+                                             local_count,
+                                             fh->f_iov_type,
+                                             global_iov_array,
+                                             fview_count,
+                                             displs,
+                                             fh->f_iov_type,
+                                             fh->f_aggregator_index,
+                                             fh->f_procs_in_group,
+                                             fh->f_procs_per_group,
+                                             fh->f_comm);
 
     if (OMPI_SUCCESS != ret){
         goto exit;

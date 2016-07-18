@@ -46,7 +46,6 @@ sources = \
         io_ompio.c \
         io_ompio_component.c \
         io_ompio_module.c \
-        io_ompio_coll_array.c \
         io_ompio_file_set_view.c \
         io_ompio_file_open.c \
         io_ompio_file_write.c \

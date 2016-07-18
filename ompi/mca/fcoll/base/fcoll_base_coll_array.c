@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,20 +28,21 @@
 #include "ompi/request/request.h"
 
 #include <math.h>
-#include "io_ompio.h"
+#include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
+#include "ompi/mca/io/ompio/io_ompio.h"
 
 
-int ompi_io_ompio_allgatherv_array (void *sbuf,
-                                    int scount,
-                                    ompi_datatype_t *sdtype,
-                                    void *rbuf,
-                                    int *rcounts,
-                                    int *disps,
-                                    ompi_datatype_t *rdtype,
-                                    int root_index,
-                                    int *procs_in_group,
-                                    int procs_per_group,
-                                    ompi_communicator_t *comm)
+int fcoll_base_coll_allgatherv_array (void *sbuf,
+                                      int scount,
+                                      ompi_datatype_t *sdtype,
+                                      void *rbuf,
+                                      int *rcounts,
+                                      int *disps,
+                                      ompi_datatype_t *rdtype,
+                                      int root_index,
+                                      int *procs_in_group,
+                                      int procs_per_group,
+                                      ompi_communicator_t *comm)
 {
     int err = OMPI_SUCCESS;
     OPAL_PTRDIFF_TYPE extent, lb;
@@ -73,17 +74,17 @@ int ompi_io_ompio_allgatherv_array (void *sbuf,
         send_type = sdtype;
     }
 
-    err = ompi_io_ompio_gatherv_array (send_buf,
-                                       rcounts[j],
-                                       send_type,
-                                       rbuf,
-                                       rcounts,
-                                       disps,
-                                       rdtype,
-                                       root_index,
-                                       procs_in_group,
-                                       procs_per_group,
-                                       comm);
+    err = fcoll_base_coll_gatherv_array (send_buf,
+                                         rcounts[j],
+                                         send_type,
+                                         rbuf,
+                                         rcounts,
+                                         disps,
+                                         rdtype,
+                                         root_index,
+                                         procs_in_group,
+                                         procs_per_group,
+                                         comm);
     if (OMPI_SUCCESS != err) {
         return err;
     }
@@ -100,31 +101,31 @@ int ompi_io_ompio_allgatherv_array (void *sbuf,
     if(MPI_SUCCESS != err) {
         return err;
     }
-
-    ompi_io_ompio_bcast_array (rbuf,
-                               1,
-                               newtype,
-                               root_index,
-                               procs_in_group,
-                               procs_per_group,
-                               comm);
-
+    
+    fcoll_base_coll_bcast_array (rbuf,
+                                 1,
+                                 newtype,
+                                 root_index,
+                                 procs_in_group,
+                                 procs_per_group,
+                                 comm);
+    
     ompi_datatype_destroy (&newtype);
 
     return OMPI_SUCCESS;
 }
 
-int ompi_io_ompio_gatherv_array (void *sbuf,
-                                 int scount,
-                                 ompi_datatype_t *sdtype,
-                                 void *rbuf,
-                                 int *rcounts,
-                                 int *disps,
-                                 ompi_datatype_t *rdtype,
-                                 int root_index,
-                                 int *procs_in_group,
-                                 int procs_per_group,
-                                 struct ompi_communicator_t *comm)
+int fcoll_base_coll_gatherv_array (void *sbuf,
+                                   int scount,
+                                   ompi_datatype_t *sdtype,
+                                   void *rbuf,
+                                   int *rcounts,
+                                   int *disps,
+                                   ompi_datatype_t *rdtype,
+                                   int root_index,
+                                   int *procs_in_group,
+                                   int procs_per_group,
+                                   struct ompi_communicator_t *comm)
 {
     int i, rank;
     int err = OMPI_SUCCESS;
@@ -140,7 +141,7 @@ int ompi_io_ompio_gatherv_array (void *sbuf,
                                      scount,
                                      sdtype,
                                      procs_in_group[root_index],
-                                     OMPIO_TAG_GATHERV,
+                                     FCOLL_TAG_GATHERV,
                                      MCA_PML_BASE_SEND_STANDARD,
                                      comm));
         }
@@ -181,7 +182,7 @@ int ompi_io_ompio_gatherv_array (void *sbuf,
                                          rcounts[i],
                                          rdtype,
                                          procs_in_group[i],
-                                         OMPIO_TAG_GATHERV,
+                                         FCOLL_TAG_GATHERV,
                                          comm,
                                          &reqs[i]));
             }
@@ -203,17 +204,17 @@ int ompi_io_ompio_gatherv_array (void *sbuf,
     return err;
 }
 
-int ompi_io_ompio_scatterv_array (void *sbuf,
-                                  int *scounts,
-                                  int *disps,
-                                  ompi_datatype_t *sdtype,
-                                  void *rbuf,
-                                  int rcount,
-                                  ompi_datatype_t *rdtype,
-                                  int root_index,
-                                  int *procs_in_group,
-                                  int procs_per_group,
-                                  struct ompi_communicator_t *comm)
+int fcoll_base_coll_scatterv_array (void *sbuf,
+                                    int *scounts,
+                                    int *disps,
+                                    ompi_datatype_t *sdtype,
+                                    void *rbuf,
+                                    int rcount,
+                                    ompi_datatype_t *rdtype,
+                                    int root_index,
+                                    int *procs_in_group,
+                                    int procs_per_group,
+                                    struct ompi_communicator_t *comm)
 {
     int i, rank;
     int err = OMPI_SUCCESS;
@@ -229,7 +230,7 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
                                     rcount,
                                     rdtype,
                                     procs_in_group[root_index],
-                                    OMPIO_TAG_SCATTERV,
+                                    FCOLL_TAG_SCATTERV,
                                     comm,
                                     MPI_STATUS_IGNORE));
         }
@@ -271,7 +272,7 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
                                          scounts[i],
                                          sdtype,
                                          procs_in_group[i],
-                                         OMPIO_TAG_SCATTERV,
+                                         FCOLL_TAG_SCATTERV,
                                          MCA_PML_BASE_SEND_STANDARD,
                                          comm,
 				         &reqs[i]));
@@ -293,16 +294,16 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
     return err;
 }
 
-int ompi_io_ompio_allgather_array (void *sbuf,
-                                   int scount,
-                                   ompi_datatype_t *sdtype,
-                                   void *rbuf,
-                                   int rcount,
-                                   ompi_datatype_t *rdtype,
-                                   int root_index,
-                                   int *procs_in_group,
-                                   int procs_per_group,
-                                   ompi_communicator_t *comm)
+int fcoll_base_coll_allgather_array (void *sbuf,
+                                     int scount,
+                                     ompi_datatype_t *sdtype,
+                                     void *rbuf,
+                                     int rcount,
+                                     ompi_datatype_t *rdtype,
+                                     int root_index,
+                                     int *procs_in_group,
+                                     int procs_per_group,
+                                     ompi_communicator_t *comm)
 {
     int err = OMPI_SUCCESS;
     int rank;
@@ -321,41 +322,41 @@ int ompi_io_ompio_allgather_array (void *sbuf,
     }
 
     /* Gather and broadcast. */
-    err = ompi_io_ompio_gather_array (sbuf,
-                                      scount,
-                                      sdtype,
-                                      rbuf,
-                                      rcount,
-                                      rdtype,
-                                      root_index,
-                                      procs_in_group,
-                                      procs_per_group,
-                                      comm);
-
+    err = fcoll_base_coll_gather_array (sbuf,
+                                        scount,
+                                        sdtype,
+                                        rbuf,
+                                        rcount,
+                                        rdtype,
+                                        root_index,
+                                        procs_in_group,
+                                        procs_per_group,
+                                        comm);
+    
     if (OMPI_SUCCESS == err) {
-        err = ompi_io_ompio_bcast_array (rbuf,
-                                         rcount * procs_per_group,
-                                         rdtype,
-                                         root_index,
-                                         procs_in_group,
-                                         procs_per_group,
-                                         comm);
+        err = fcoll_base_coll_bcast_array (rbuf,
+                                           rcount * procs_per_group,
+                                           rdtype,
+                                           root_index,
+                                           procs_in_group,
+                                           procs_per_group,
+                                           comm);
     }
     /* All done */
 
     return err;
 }
 
-int ompi_io_ompio_gather_array (void *sbuf,
-                                int scount,
-                                ompi_datatype_t *sdtype,
-                                void *rbuf,
-                                int rcount,
-                                ompi_datatype_t *rdtype,
-                                int root_index,
-                                int *procs_in_group,
-                                int procs_per_group,
-                                struct ompi_communicator_t *comm)
+int fcoll_base_coll_gather_array (void *sbuf,
+                                  int scount,
+                                  ompi_datatype_t *sdtype,
+                                  void *rbuf,
+                                  int rcount,
+                                  ompi_datatype_t *rdtype,
+                                  int root_index,
+                                  int *procs_in_group,
+                                  int procs_per_group,
+                                  struct ompi_communicator_t *comm)
 {
     int i;
     int rank;
@@ -373,7 +374,7 @@ int ompi_io_ompio_gather_array (void *sbuf,
                                 scount,
                                 sdtype,
                                 procs_in_group[root_index],
-                                OMPIO_TAG_GATHER,
+                                FCOLL_TAG_GATHER,
                                 MCA_PML_BASE_SEND_STANDARD,
                                 comm));
         return err;
@@ -410,7 +411,7 @@ int ompi_io_ompio_gather_array (void *sbuf,
                                      rcount,
                                      rdtype,
                                      procs_in_group[i],
-                                     OMPIO_TAG_GATHER,
+                                     FCOLL_TAG_GATHER,
                                      comm,
                                      &reqs[i]));
             /*
@@ -436,13 +437,13 @@ int ompi_io_ompio_gather_array (void *sbuf,
     return err;
 }
 
-int ompi_io_ompio_bcast_array (void *buff,
-                               int count,
-                               ompi_datatype_t *datatype,
-                               int root_index,
-                               int *procs_in_group,
-                               int procs_per_group,
-                               ompi_communicator_t *comm)
+int fcoll_base_coll_bcast_array (void *buff,
+                                 int count,
+                                 ompi_datatype_t *datatype,
+                                 int root_index,
+                                 int *procs_in_group,
+                                 int procs_per_group,
+                                 ompi_communicator_t *comm)
 {
     int i, rank;
     int err = OMPI_SUCCESS;
@@ -456,7 +457,7 @@ int ompi_io_ompio_bcast_array (void *buff,
                                 count,
                                 datatype,
                                 procs_in_group[root_index],
-                                OMPIO_TAG_BCAST,
+                                FCOLL_TAG_BCAST,
                                 comm,
                                 MPI_STATUS_IGNORE));
         return err;
@@ -478,7 +479,7 @@ int ompi_io_ompio_bcast_array (void *buff,
                                  count,
                                  datatype,
                                  procs_in_group[i],
-                                 OMPIO_TAG_BCAST,
+                                 FCOLL_TAG_BCAST,
                                  MCA_PML_BASE_SEND_STANDARD,
                                  comm,
 			         &reqs[i]));
