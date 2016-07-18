@@ -198,7 +198,7 @@ progress_callback(void)
                                 "%s:%d: PtlEQGet reported dropped event",
                                 __FILE__, __LINE__);
             goto process;
-        } else if (PTL_EQ_EMPTY) {
+        } else if (PTL_EQ_EMPTY == ret) {
             return 0;
         } else {
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
