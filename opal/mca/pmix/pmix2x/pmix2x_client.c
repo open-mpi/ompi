@@ -6,6 +6,8 @@
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -435,7 +437,7 @@ int pmix2x_get(const opal_process_name_t *proc, const char *key,
 	    n=0;
 	    OPAL_LIST_FOREACH(ival, info, opal_value_t) {
 		(void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
-		pmix2x_value_load(&pinfo[n].value, ival);
+		pmix2x_value_load(&pinfo[n++].value, ival);
 	    }
 	} else {
 	    pinfo = NULL;
@@ -645,7 +647,7 @@ int pmix2x_lookup(opal_list_t *data, opal_list_t *info)
 	PMIX_INFO_CREATE(pinfo, ninfo);
 	n=0;
 	OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-	    (void)strncpy(pinfo[n++].key, iptr->key, PMIX_MAX_KEYLEN);
+	    (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
 	    pmix2x_value_load(&pinfo[n].value, iptr);
 	    ++n;
 	}
@@ -823,7 +825,7 @@ int pmix2x_unpublish(char **keys, opal_list_t *info)
 	PMIX_INFO_CREATE(pinfo, ninfo);
 	n=0;
 	OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-	    (void)strncpy(pinfo[n++].key, iptr->key, PMIX_MAX_KEYLEN);
+	    (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
 	    pmix2x_value_load(&pinfo[n].value, iptr);
 	    ++n;
 	}
