@@ -250,7 +250,7 @@ component_open(void)
 static int
 component_register(void)
 {
-    bool ompi_osc_portals4_no_locks = false;
+    mca_osc_portals4_component.no_locks = false;
     (void) mca_base_component_var_register(&mca_osc_portals4_component.super.osc_version,
                                            "no_locks",
                                            "Enable optimizations available only if MPI_LOCK is "
@@ -259,7 +259,7 @@ component_register(void)
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_osc_portals4_no_locks);
+                                           &mca_osc_portals4_component.no_locks);
 
     mca_osc_portals4_component.ptl_max_msg_size = PTL_SIZE_MAX;
     (void) mca_base_component_var_register(&mca_osc_portals4_component.super.osc_version,
