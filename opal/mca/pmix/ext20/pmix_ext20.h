@@ -4,6 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -163,58 +164,58 @@ OBJ_CLASS_DECLARATION(pmix20_threadshift_t);
 
 #define OPAL_PMIX_OPCD_THREADSHIFT(i, s, sr, if, nif, fn, cb, cd)   \
     do {                                                    \
-        pmix20_opalcaddy_t *_cd;                            \
-        _cd = OBJ_NEW(pmix20_opalcaddy_t);                  \
-        _cd->id = (i);                                      \
-        _cd->status = (s);                                  \
-        _cd->source = (sr);                                 \
-        _cd->info = (i);                                    \
-        _cd->evcbfunc = (cb);                               \
-        _cd->cbdata = (cd);                                 \
-        event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
-                     -1, EV_WRITE, (fn), (_cd));            \
-        event_active(&((_cd)->ev), EV_WRITE, 1);            \
+	pmix20_opalcaddy_t *_cd;                            \
+	_cd = OBJ_NEW(pmix20_opalcaddy_t);                  \
+	_cd->id = (i);                                      \
+	_cd->status = (s);                                  \
+	_cd->source = (sr);                                 \
+	_cd->info = (i);                                    \
+	_cd->evcbfunc = (cb);                               \
+	_cd->cbdata = (cd);                                 \
+	event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
+		     -1, EV_WRITE, (fn), (_cd));            \
+	event_active(&((_cd)->ev), EV_WRITE, 1);            \
     } while(0)
 
 #define OPAL_PMIX_OP_THREADSHIFT(e, fn, cb, cd)             \
     do {                                                    \
-        pmix20_threadshift_t *_cd;                          \
-        _cd = OBJ_NEW(pmix20_threadshift_t);                \
-        _cd->handler = (e);                                 \
-        _cd->opcbfunc = (cb);                               \
-        _cd->cbdata = (cd);                                 \
-        event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
-                     -1, EV_WRITE, (fn), (_cd));            \
-        event_active(&((_cd)->ev), EV_WRITE, 1);            \
+	pmix20_threadshift_t *_cd;                          \
+	_cd = OBJ_NEW(pmix20_threadshift_t);                \
+	_cd->handler = (e);                                 \
+	_cd->opcbfunc = (cb);                               \
+	_cd->cbdata = (cd);                                 \
+	event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
+		     -1, EV_WRITE, (fn), (_cd));            \
+	event_active(&((_cd)->ev), EV_WRITE, 1);            \
     } while(0)
 
 #define OPAL_PMIX_THREADSHIFT(e, i, eh, fn, cb, cd)         \
     do {                                                    \
-        pmix20_threadshift_t *_cd;                          \
-        _cd = OBJ_NEW(pmix20_threadshift_t);                \
-        _cd->event_codes = (e);                             \
-        _cd->info = (i);                                    \
-        _cd->evhandler = (eh);                              \
-        _cd->cbfunc = (cb);                                 \
-        _cd->cbdata = (cd);                                 \
-        event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
-                     -1, EV_WRITE, (fn), (_cd));            \
-        event_active(&((_cd)->ev), EV_WRITE, 1);            \
+	pmix20_threadshift_t *_cd;                          \
+	_cd = OBJ_NEW(pmix20_threadshift_t);                \
+	_cd->event_codes = (e);                             \
+	_cd->info = (i);                                    \
+	_cd->evhandler = (eh);                              \
+	_cd->cbfunc = (cb);                                 \
+	_cd->cbdata = (cd);                                 \
+	event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
+		     -1, EV_WRITE, (fn), (_cd));            \
+	event_active(&((_cd)->ev), EV_WRITE, 1);            \
     } while(0)
 
 #define OPAL_PMIX_NOTIFY_THREADSHIFT(s, sr, r, i, fn, cb, cd)   \
     do {                                                        \
-        pmix20_threadshift_t *_cd;                              \
-        _cd = OBJ_NEW(pmix20_threadshift_t);                    \
-        _cd->status = (s);                                      \
-        _cd->source = (sr);                                     \
-        _cd->range = (r);                                       \
-        _cd->info = (i);                                        \
-        _cd->opcbfunc = (cb);                                   \
-        _cd->cbdata = (cd);                                     \
-        event_assign(&((_cd)->ev), opal_pmix_base.evbase,       \
-                     -1, EV_WRITE, (fn), (_cd));                \
-        event_active(&((_cd)->ev), EV_WRITE, 1);                \
+	pmix20_threadshift_t *_cd;                              \
+	_cd = OBJ_NEW(pmix20_threadshift_t);                    \
+	_cd->status = (s);                                      \
+	_cd->source = (sr);                                     \
+	_cd->range = (r);                                       \
+	_cd->info = (i);                                        \
+	_cd->opcbfunc = (cb);                                   \
+	_cd->cbdata = (cd);                                     \
+	event_assign(&((_cd)->ev), opal_pmix_base.evbase,       \
+		     -1, EV_WRITE, (fn), (_cd));                \
+	event_active(&((_cd)->ev), EV_WRITE, 1);                \
     } while(0)
 
 /****  CLIENT FUNCTIONS  ****/
@@ -222,93 +223,93 @@ OPAL_MODULE_DECLSPEC int pmix20_client_init(void);
 OPAL_MODULE_DECLSPEC int pmix20_client_finalize(void);
 OPAL_MODULE_DECLSPEC int pmix20_initialized(void);
 OPAL_MODULE_DECLSPEC int pmix20_abort(int flag, const char *msg,
-                                     opal_list_t *procs);
+				     opal_list_t *procs);
 OPAL_MODULE_DECLSPEC int pmix20_commit(void);
 OPAL_MODULE_DECLSPEC int pmix20_fence(opal_list_t *procs, int collect_data);
 OPAL_MODULE_DECLSPEC int pmix20_fencenb(opal_list_t *procs, int collect_data,
-                                       opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+				       opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_put(opal_pmix_scope_t scope,
-                                     opal_value_t *val);
+				     opal_value_t *val);
 OPAL_MODULE_DECLSPEC int pmix20_get(const opal_process_name_t *proc, const char *key,
-                                   opal_list_t *info, opal_value_t **val);
+				   opal_list_t *info, opal_value_t **val);
 OPAL_MODULE_DECLSPEC int pmix20_getnb(const opal_process_name_t *proc, const char *key,
-                                     opal_list_t *info,
-                                     opal_pmix_value_cbfunc_t cbfunc, void *cbdata);
+				     opal_list_t *info,
+				     opal_pmix_value_cbfunc_t cbfunc, void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_publish(opal_list_t *info);
 OPAL_MODULE_DECLSPEC int pmix20_publishnb(opal_list_t *info,
-                                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+					 opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_lookup(opal_list_t *data, opal_list_t *info);
 OPAL_MODULE_DECLSPEC int pmix20_lookupnb(char **keys, opal_list_t *info,
-                                        opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
+					opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_unpublish(char **keys, opal_list_t *info);
 OPAL_MODULE_DECLSPEC int pmix20_unpublishnb(char **keys, opal_list_t *info,
-                                           opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+					   opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid);
 OPAL_MODULE_DECLSPEC int pmix20_spawnnb(opal_list_t *job_info, opal_list_t *apps,
-                                       opal_pmix_spawn_cbfunc_t cbfunc, void *cbdata);
+				       opal_pmix_spawn_cbfunc_t cbfunc, void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_connect(opal_list_t *procs);
 OPAL_MODULE_DECLSPEC int pmix20_connectnb(opal_list_t *procs,
-                                         opal_pmix_op_cbfunc_t cbfunc,
-                                         void *cbdata);
+					 opal_pmix_op_cbfunc_t cbfunc,
+					 void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_disconnect(opal_list_t *procs);
 OPAL_MODULE_DECLSPEC int pmix20_disconnectnb(opal_list_t *procs,
-                                            opal_pmix_op_cbfunc_t cbfunc,
-                                            void *cbdata);
+					    opal_pmix_op_cbfunc_t cbfunc,
+					    void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_resolve_peers(const char *nodename, opal_jobid_t jobid,
-                                             opal_list_t *procs);
+					     opal_list_t *procs);
 OPAL_MODULE_DECLSPEC int pmix20_resolve_nodes(opal_jobid_t jobid, char **nodelist);
 
 /****  COMMON FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC int pmix20_store_local(const opal_process_name_t *proc,
-                                             opal_value_t *val);
+					     opal_value_t *val);
 
 /****  SERVER SOUTHBOUND FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC int pmix20_server_init(opal_pmix_server_module_t *module,
-                                           opal_list_t *info);
+					   opal_list_t *info);
 OPAL_MODULE_DECLSPEC int pmix20_server_finalize(void);
 OPAL_MODULE_DECLSPEC int pmix20_server_gen_regex(const char *input, char **regex);
 OPAL_MODULE_DECLSPEC int pmix20_server_gen_ppn(const char *input, char **ppn);
 OPAL_MODULE_DECLSPEC int pmix20_server_register_nspace(opal_jobid_t jobid,
-                                                      int nlocalprocs,
-                                                      opal_list_t *info,
-                                                      opal_pmix_op_cbfunc_t cbfunc,
-                                                      void *cbdata);
+						      int nlocalprocs,
+						      opal_list_t *info,
+						      opal_pmix_op_cbfunc_t cbfunc,
+						      void *cbdata);
 OPAL_MODULE_DECLSPEC void pmix20_server_deregister_nspace(opal_jobid_t jobid,
-                                                          opal_pmix_op_cbfunc_t cbfunc,
-                                                          void *cbdata);
+							  opal_pmix_op_cbfunc_t cbfunc,
+							  void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_server_register_client(const opal_process_name_t *proc,
-                                                      uid_t uid, gid_t gid,
-                                                      void *server_object,
-                                                      opal_pmix_op_cbfunc_t cbfunc,
-                                                      void *cbdata);
+						      uid_t uid, gid_t gid,
+						      void *server_object,
+						      opal_pmix_op_cbfunc_t cbfunc,
+						      void *cbdata);
 OPAL_MODULE_DECLSPEC void pmix20_server_deregister_client(const opal_process_name_t *proc,
-                                                          opal_pmix_op_cbfunc_t cbfunc,
-                                                          void *cbdata);
+							  opal_pmix_op_cbfunc_t cbfunc,
+							  void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_server_setup_fork(const opal_process_name_t *proc, char ***env);
 OPAL_MODULE_DECLSPEC int pmix20_server_dmodex(const opal_process_name_t *proc,
-                                             opal_pmix_modex_cbfunc_t cbfunc, void *cbdata);
+					     opal_pmix_modex_cbfunc_t cbfunc, void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix20_server_notify_event(int status,
-                                                    const opal_process_name_t *source,
-                                                    opal_list_t *info,
-                                                    opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+						    const opal_process_name_t *source,
+						    opal_list_t *info,
+						    opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 
 /****  COMPONENT UTILITY FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC void pmix20_event_hdlr(size_t evhdlr_registration_id,
-                                            pmix_status_t status, const pmix_proc_t *source,
-                                            pmix_info_t info[], size_t ninfo,
-                                            pmix_info_t results[], size_t nresults,
-                                            pmix_event_notification_cbfunc_fn_t cbfunc,
-                                            void *cbdata);
+					    pmix_status_t status, const pmix_proc_t *source,
+					    pmix_info_t info[], size_t ninfo,
+					    pmix_info_t results[], size_t nresults,
+					    pmix_event_notification_cbfunc_fn_t cbfunc,
+					    void *cbdata);
 OPAL_MODULE_DECLSPEC pmix_status_t pmix20_convert_opalrc(int rc);
 OPAL_MODULE_DECLSPEC int pmix20_convert_rc(pmix_status_t rc);
 OPAL_MODULE_DECLSPEC pmix_scope_t pmix20_convert_opalscope(opal_pmix_scope_t scope);
 OPAL_MODULE_DECLSPEC pmix_data_range_t pmix20_convert_opalrange(opal_pmix_data_range_t range);
 OPAL_MODULE_DECLSPEC opal_pmix_data_range_t pmix20_convert_range(pmix_data_range_t range);
 OPAL_MODULE_DECLSPEC void pmix20_value_load(pmix_value_t *v,
-                                           opal_value_t *kv);
+					   opal_value_t *kv);
 OPAL_MODULE_DECLSPEC int pmix20_value_unload(opal_value_t *kv,
-                                            const pmix_value_t *v);
+					    const pmix_value_t *v);
 
 END_C_DECLS
 

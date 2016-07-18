@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,12 +41,12 @@ static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {
     opal_pmix_base_async_modex = false;
     (void) mca_base_var_register("opal", "pmix", "base", "async_modex", "Use asynchronous modex mode",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base_async_modex);
+				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+				 MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base_async_modex);
     opal_pmix_collect_all_data = true;
     (void) mca_base_var_register("opal", "pmix", "base", "collect_data", "Collect all data during modex",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_collect_all_data);
+				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+				 MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_collect_all_data);
     return OPAL_SUCCESS;
 }
 
@@ -74,10 +74,10 @@ static int opal_pmix_base_frame_open(mca_base_open_flag_t flags)
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, "OPAL PMI Client Framework",
-                           opal_pmix_base_frame_register,
-                           opal_pmix_base_frame_open,
-                           opal_pmix_base_frame_close,
-                           mca_pmix_base_static_components, 0);
+			   opal_pmix_base_frame_register,
+			   opal_pmix_base_frame_open,
+			   opal_pmix_base_frame_close,
+			   mca_pmix_base_static_components, 0);
 
 /****  PMIX FRAMEWORK OBJECTS  ****/
 static void lkcon(opal_pmix_pdata_t *p)
@@ -91,8 +91,8 @@ static void lkdes(opal_pmix_pdata_t *p)
     OBJ_DESTRUCT(&p->value);
 }
 OBJ_CLASS_INSTANCE(opal_pmix_pdata_t,
-                   opal_list_item_t,
-                   lkcon, lkdes);
+		   opal_list_item_t,
+		   lkcon, lkdes);
 
 static void mdcon(opal_pmix_modex_data_t *p)
 {
@@ -104,12 +104,12 @@ static void mdcon(opal_pmix_modex_data_t *p)
 static void mddes(opal_pmix_modex_data_t *p)
 {
     if (NULL != p->blob) {
-        free(p->blob);
+	free(p->blob);
     }
 }
 OBJ_CLASS_INSTANCE(opal_pmix_modex_data_t,
-                   opal_list_item_t,
-                   mdcon, mddes);
+		   opal_list_item_t,
+		   mdcon, mddes);
 
 static void apcon(opal_pmix_app_t *p)
 {
@@ -123,16 +123,16 @@ static void apcon(opal_pmix_app_t *p)
 static void apdes(opal_pmix_app_t *p)
 {
     if (NULL != p->cmd) {
-        free(p->cmd);
+	free(p->cmd);
     }
     if (NULL != p->argv) {
-        opal_argv_free(p->argv);
+	opal_argv_free(p->argv);
     }
     if (NULL != p->env) {
-        opal_argv_free(p->env);
+	opal_argv_free(p->env);
     }
     OPAL_LIST_DESTRUCT(&p->info);
 }
 OBJ_CLASS_INSTANCE(opal_pmix_app_t,
-                   opal_list_item_t,
-                   apcon, apdes);
+		   opal_list_item_t,
+		   apcon, apdes);
