@@ -49,7 +49,7 @@ endif
 lib@OPAL_LIB_PREFIX@mca_common_ompio_la_SOURCES = $(headers) $(sources)
 lib@OPAL_LIB_PREFIX@mca_common_ompio_la_CPPFLAGS = $(common_ompio_CPPFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_ompio_la_LDFLAGS =  \
-        -version-info $(libmca_opal_common_ompio_so_version) \
+        -version-info $(libmca_ompi_common_ompio_so_version) \
         $(common_ompio_LDFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_ompio_la_LIBADD = $(common_ompio_LIBS)
 lib@OPAL_LIB_PREFIX@mca_common_ompio_noinst_la_SOURCES = $(headers) $(sources)
