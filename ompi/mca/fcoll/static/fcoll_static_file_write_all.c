@@ -278,14 +278,14 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
         }
     }
 
-    iovec_count_per_process = (int *) malloc (fh->f_procs_per_group * sizeof(int));
+    iovec_count_per_process = (int *) calloc (fh->f_procs_per_group, sizeof(int));
     if (NULL == iovec_count_per_process){
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
     }
 
-    displs = (int *) malloc (fh->f_procs_per_group * sizeof(int));
+    displs = (int *) calloc (fh->f_procs_per_group, sizeof(int));
     if (NULL == displs){
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1048,6 +1048,11 @@ exit:
     if (NULL != sorted) {
         free(sorted);
         sorted = NULL;
+    }
+
+    if (NULL != displs) {
+        free(displs);
+        displs = NULL;
     }
 
     return ret;

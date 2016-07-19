@@ -1864,7 +1864,7 @@ int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
 {
     int i = 0;
     int *sizes_old_group;
-
+    int ret = OMPI_SUCCESS;
     int *displs;
 
 
@@ -1886,17 +1886,22 @@ int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
 
     //merge_aggrs[0] is considered the new aggregator
     //New aggregator collects group sizes of the groups to be merged
-    fcoll_base_coll_allgather_array (&fh->f_init_procs_per_group,
-                                     1,
-                                     MPI_INT,
-                                     sizes_old_group,
-                                     1,
-                                     MPI_INT,
-                                     0,
-                                     merge_aggrs,
-                                     num_merge_aggrs,
-                                     fh->f_comm);
+    ret = fcoll_base_coll_allgather_array (&fh->f_init_procs_per_group,
+                                           1,
+                                           MPI_INT,
+                                           sizes_old_group,
+                                           1,
+                                           MPI_INT,
+                                           0,
+                                           merge_aggrs,
+                                           num_merge_aggrs,
+                                           fh->f_comm);
     
+    if ( OMPI_SUCCESS != ret ) {
+        free (displs);
+        free (sizes_old_group);
+        return ret;
+    }
     fh->f_procs_per_group = 0;
 
 
@@ -1920,23 +1925,22 @@ int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
     //New aggregator also collects the grouping distribution
     //This is the actual merge
     //use allgatherv array
-    fcoll_base_coll_allgatherv_array (fh->f_init_procs_in_group,
-                                      fh->f_init_procs_per_group,
-                                      MPI_INT,
-                                      fh->f_procs_in_group,
-                                      sizes_old_group,
-                                      displs,
-                                      MPI_INT,
-                                      0,
-                                      merge_aggrs,
-                                      num_merge_aggrs,
-                                      fh->f_comm);
+    ret = fcoll_base_coll_allgatherv_array (fh->f_init_procs_in_group,
+                                            fh->f_init_procs_per_group,
+                                            MPI_INT,
+                                            fh->f_procs_in_group,
+                                            sizes_old_group,
+                                            displs,
+                                            MPI_INT,
+                                            0,
+                                            merge_aggrs,
+                                            num_merge_aggrs,
+                                            fh->f_comm);
     
-
-    free(displs);
+    free (displs);
     free (sizes_old_group);
 
-    return OMPI_SUCCESS;
+    return ret;
 
 }
 
