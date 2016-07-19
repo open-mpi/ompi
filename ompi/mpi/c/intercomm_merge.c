@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,6 +15,8 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,26 +120,16 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 
-    /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,              /* new comm */
-                             intercomm,            /* old comm */
-                             NULL,                 /* bridge comm */
-                             NULL,                 /* local leader */
-                             NULL,                 /* remote_leader */
-                             OMPI_COMM_CID_INTER,  /* mode */
-                             -1 );                 /* send_first */
+    /* Determine context id */
+    rc = ompi_comm_nextcid (newcomp, intercomm, NULL, NULL, NULL, false,
+                            OMPI_COMM_CID_INTER);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate( &newcomp,             /* new comm */
-                             intercomm,            /* old comm */
-                             NULL,                 /* bridge comm */
-                             NULL,                 /* local leader */
-                             NULL,                 /* remote_leader */
-                             OMPI_COMM_CID_INTER,  /* mode */
-                             -1 );                 /* send_first */
+    rc = ompi_comm_activate (&newcomp, intercomm, NULL, NULL, NULL, false,
+                             OMPI_COMM_CID_INTER);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }

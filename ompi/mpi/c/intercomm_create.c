@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,6 +15,8 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -199,26 +202,15 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     new_group_pointer = MPI_GROUP_NULL;
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,                     /* new comm */
-                             local_comm,                  /* old comm */
-                             bridge_comm,                 /* bridge comm */
-                             &lleader,                    /* local leader */
-                             &rleader,                    /* remote_leader */
-                             OMPI_COMM_CID_INTRA_BRIDGE,  /* mode */
-                             -1 );                        /* send_first */
-
+    rc = ompi_comm_nextcid (newcomp, local_comm, bridge_comm, &lleader,
+                            &rleader, false, OMPI_COMM_CID_INTRA_BRIDGE);
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;
     }
 
     /* activate comm and init coll-module */
-    rc = ompi_comm_activate ( &newcomp,
-                             local_comm,                  /* old comm */
-                             bridge_comm,                 /* bridge comm */
-                             &lleader,                    /* local leader */
-                             &rleader,                    /* remote_leader */
-                             OMPI_COMM_CID_INTRA_BRIDGE,  /* mode */
-                             -1 );                        /* send_first */
+    rc = ompi_comm_activate (&newcomp, local_comm, bridge_comm, &lleader, &rleader,
+                             false, OMPI_COMM_CID_INTRA_BRIDGE);
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;
     }
