@@ -79,6 +79,9 @@ struct mca_btl_portals4_component_t {
 
     /** Event queue handles table used in PtlEQPoll */
     ptl_handle_eq_t *eqs_h;
+
+    /** Upper limit for message sizes */
+    unsigned long portals_max_msg_size;
 };
 
 typedef struct mca_btl_portals4_component_t mca_btl_portals4_component_t;
@@ -255,6 +258,8 @@ struct mca_btl_base_registration_handle_t {
     ptl_match_bits_t key;
     /** Portals4 me_h */
     ptl_handle_me_t me_h;
+    /** Remote offset */
+    ptl_size_t remote_offset;
 };
 
 /*
