@@ -19,7 +19,8 @@
 #
 
 headers = \
-	common_ompio_print_queue.h
+	common_ompio_print_queue.h \
+	common_ompio.h
 
 sources = \
 	common_ompio_print_queue.c

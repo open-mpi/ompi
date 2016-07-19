@@ -131,11 +131,8 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_split_coll_in_use = false;
 
     /*Initialize the print_queues queues here!*/
-    coll_write_time = (mca_io_ompio_print_queue *) malloc (sizeof(mca_io_ompio_print_queue));
-    coll_read_time = (mca_io_ompio_print_queue *) malloc (sizeof(mca_io_ompio_print_queue));
-
-    ompi_io_ompio_initialize_print_queue(coll_write_time);
-    ompi_io_ompio_initialize_print_queue(coll_read_time);
+    mca_common_ompio_initialize_print_queue(&ompio_fh->f_coll_write_queue);
+    mca_common_ompio_initialize_print_queue(&ompio_fh->f_coll_read_queue);
 
     /* set some function pointers required for fcoll, fbtls and sharedfp modules*/
     ompio_fh->f_decode_datatype=ompi_io_ompio_decode_datatype;
@@ -147,9 +144,6 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_get_num_aggregators=mca_io_ompio_get_num_aggregators;
     ompio_fh->f_get_bytes_per_agg=mca_io_ompio_get_bytes_per_agg;
     ompio_fh->f_set_aggregator_props=ompi_io_ompio_set_aggregator_props;
-
-    ompio_fh->f_full_print_queue=ompi_io_ompio_full_print_queue;
-    ompio_fh->f_register_print_entry=ompi_io_ompio_register_print_entry;
 
     /* This fix is needed for data seiving to work with
        two-phase collective I/O */
@@ -292,20 +286,20 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
 
     if(mca_io_ompio_coll_timing_info){
         strcpy (name, "WRITE");
-        if (!ompi_io_ompio_empty_print_queue(WRITE_PRINT_QUEUE)){
-            ret = ompi_io_ompio_print_time_info(WRITE_PRINT_QUEUE,
-                                                name,
-                                                ompio_fh);
+        if (!mca_common_ompio_empty_print_queue(ompio_fh->f_coll_write_queue)){
+            ret = mca_common_ompio_print_time_info(ompio_fh->f_coll_write_queue,
+                                                   name,
+                                                   ompio_fh);
             if (OMPI_SUCCESS != ret){
                 printf("Error in print_time_info ");
             }
 
         }
         strcpy (name, "READ");
-        if (!ompi_io_ompio_empty_print_queue(READ_PRINT_QUEUE)){
-            ret = ompi_io_ompio_print_time_info(READ_PRINT_QUEUE,
-                                                name,
-                                                ompio_fh);
+        if (!mca_common_ompio_empty_print_queue(ompio_fh->f_coll_read_queue)){
+            ret = mca_common_ompio_print_time_info(ompio_fh->f_coll_read_queue,
+                                                   name,
+                                                   ompio_fh);
             if (OMPI_SUCCESS != ret){
                 printf("Error in print_time_info ");
             }
@@ -373,6 +367,16 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
         ompio_fh->f_datarep = NULL;
     }
 
+
+    if ( NULL != ompio_fh->f_coll_write_queue ) {
+        free ( ompio_fh->f_coll_write_queue );
+        ompio_fh->f_coll_write_queue = NULL;
+    }
+
+    if ( NULL != ompio_fh->f_coll_read_queue ) {
+        free ( ompio_fh->f_coll_read_queue );
+        ompio_fh->f_coll_read_queue = NULL;
+    }
 
     if (MPI_DATATYPE_NULL != ompio_fh->f_iov_type) {
         ompi_datatype_destroy (&ompio_fh->f_iov_type);

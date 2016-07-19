@@ -41,6 +41,8 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
 
+#include "ompi/mca/common/ompio/common_ompio.h"
+
 extern int mca_io_ompio_cycle_buffer_size;
 extern int mca_io_ompio_bytes_per_agg;
 extern int mca_io_ompio_num_aggregators;
@@ -91,9 +93,6 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define OMPIO_MODE_APPEND            128
 #define OMPIO_MODE_SEQUENTIAL        256
 
-/* PRINT QUEUES*/
-#define WRITE_PRINT_QUEUE 1809
-#define READ_PRINT_QUEUE 2178
 /*---------------------------*/
 
 
@@ -162,19 +161,6 @@ typedef struct mca_io_ompio_offlen_array_t{
     int                  process_id;
 }mca_io_ompio_offlen_array_t;
 
-/*To extract time-information */
-typedef struct {
-    double time[3];
-    int nprocs_for_coll;
-    int aggregator;
-}mca_io_ompio_print_entry;
-
-typedef struct {
-    mca_io_ompio_print_entry entry[QUEUESIZE + 1];
-    int first;
-    int last;
-    int count;
-} mca_io_ompio_print_queue;
 
 typedef struct {
 	int ndims;
@@ -232,10 +218,6 @@ typedef int (*mca_io_ompio_set_aggregator_props_fn_t) (struct mca_io_ompio_file_
 							int num_aggregators,
 							size_t bytes_per_proc);
 
-
-typedef int (*mca_io_ompio_full_print_queue_fn_t) (int queue_type);
-typedef int (*mca_io_ompio_register_print_entry_fn_t) (int queue_type,
-							mca_io_ompio_print_entry x);
 
 
 /**
@@ -306,10 +288,9 @@ struct mca_io_ompio_file_t {
     mca_fbtl_base_module_t     *f_fbtl;
     mca_sharedfp_base_module_t *f_sharedfp;
 
-    /* No Error handling done yet
-    struct ompi_errhandler_t *error_handler;
-    ompi_errhandler_type_t errhandler_type;
-    */
+    /* Timing information  */
+    mca_common_ompio_print_queue *f_coll_write_queue;
+    mca_common_ompio_print_queue *f_coll_read_queue;
 
     /*initial list of aggregators and groups*/
     int *f_init_aggr_list;
@@ -330,9 +311,6 @@ struct mca_io_ompio_file_t {
     mca_io_ompio_get_num_aggregators_fn_t               f_get_num_aggregators;
     mca_io_ompio_get_bytes_per_agg_fn_t                   f_get_bytes_per_agg;
     mca_io_ompio_set_aggregator_props_fn_t             f_set_aggregator_props;
-
-    mca_io_ompio_full_print_queue_fn_t                     f_full_print_queue;
-    mca_io_ompio_register_print_entry_fn_t             f_register_print_entry;
 };
 typedef struct mca_io_ompio_file_t mca_io_ompio_file_t;
 
@@ -341,8 +319,6 @@ struct mca_io_ompio_data_t {
 };
 typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 
-//OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_write_time;
-// OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_read_time;
 
 /* functions to retrieve the number of aggregators and the size of the
    temporary buffer on aggregators from the fcoll modules */
@@ -516,24 +492,6 @@ OMPI_DECLSPEC int ompi_io_ompio_break_file_view (mca_io_ompio_file_t *fh,
                                                  size_t stripe_size,
                                                  struct iovec **broken_iov,
                                                  int *broken_count);
-
-
-OMPI_DECLSPEC int ompi_io_ompio_register_print_entry (int queue_type,
-						      mca_io_ompio_print_entry x);
-
-OMPI_DECLSPEC int ompi_io_ompio_unregister_print_entry (int queue_type, mca_io_ompio_print_entry *x);
-
-OMPI_DECLSPEC int ompi_io_ompio_empty_print_queue(int queue_type);
-
-OMPI_DECLSPEC int ompi_io_ompio_full_print_queue(int queue_type);
-
-OMPI_DECLSPEC int ompi_io_ompio_initialize_print_queue(mca_io_ompio_print_queue *q);
-
-OMPI_DECLSPEC int ompi_io_ompio_print_time_info(int queue_type,
-						char *name_operation,
-						mca_io_ompio_file_t *fh);
-int ompi_io_ompio_set_print_queue (mca_io_ompio_print_queue **q,
-				   int queue_type);
 
 
 /*

@@ -11,10 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,38 +24,13 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
 
-#include "common_ompio_print_queue.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
-mca_common_ompio_print_queue *coll_write_time=NULL;
-mca_common_ompio_print_queue *coll_read_time=NULL;
 
 /* Print queue related function implementations */
-int common_ompio_set_print_queue (mca_common_ompio_print_queue **q,
-				   int queue_type){
+int mca_common_ompio_initialize_print_queue( mca_common_ompio_print_queue  **r){
 
-    int  ret = OMPI_SUCCESS;
-
-    switch(queue_type) {
-
-    case WRITE_PRINT_QUEUE:
-	*q = coll_write_time;
-	break;
-    case READ_PRINT_QUEUE:
-	*q = coll_read_time;
-	break;
-    }
-
-    if (NULL == q){
-	ret = OMPI_ERROR;
-    }
-    return ret;
-
-}
-
-
-int common_ompio_initialize_print_queue(void *r){
-
-    mca_common_ompio_print_queue *q;
+    mca_common_ompio_print_queue *q=NULL;
     int ret = OMPI_SUCCESS;
 
     q = (mca_common_ompio_print_queue *) malloc ( sizeof(mca_common_ompio_print_queue));
@@ -66,100 +38,74 @@ int common_ompio_initialize_print_queue(void *r){
         ret = OMPI_ERR_OUT_OF_RESOURCE;
     }
     q->first = 0;
-    q->last = COMMON_OMPIO_QUEUESIZE - 1;
+    q->last = MCA_COMMON_OMPIO_QUEUESIZE - 1;
     q->count = 0;
     
-    *r = ( void *) *q;
-    return ret;
-}
-int common_ompio_register_print_entry (int queue_type,
-                                     mca_common_ompio_print_entry x){
-
-    int ret = OMPI_SUCCESS;
-    mca_common_ompio_print_queue *q=NULL;
-
-    ret = common_ompio_set_print_queue(&q, queue_type);
-
-    if (ret != OMPI_ERROR){
-	if (q->count >= COMMON_OMPIO_QUEUESIZE){
-	    return OMPI_ERROR;
-	}
-	else{
-	    q->last = (q->last + 1) % COMMON_OMPIO_QUEUESIZE;
-	    q->entry[q->last] = x;
-	    q->count = q->count + 1;
-	}
-    }
+    *r = q;
     return ret;
 }
 
-int  common_ompio_unregister_print_entry (int queue_type,
-					   mca_common_ompio_print_entry *x){
-
-    int ret = OMPI_SUCCESS;
-    mca_common_ompio_print_queue *q=NULL;
-    ret = common_ompio_set_print_queue(&q, queue_type);
-    if (ret != OMPI_ERROR){
-	if (q->count <= 0){
-	    return OMPI_ERROR;
-	}
-	else{
-	    *x = q->entry[q->first];
-	    q->first = (q->first+1) % COMMON_OMPIO_QUEUESIZE;
-	    q->count = q->count - 1;
-	}
+int mca_common_ompio_register_print_entry ( mca_common_ompio_print_queue *q,
+                                        mca_common_ompio_print_entry x)
+{
+    if (q->count >= MCA_COMMON_OMPIO_QUEUESIZE){
+        return OMPI_ERROR;
     }
+    else{
+        q->last = (q->last + 1) % MCA_COMMON_OMPIO_QUEUESIZE;
+        q->entry[q->last] = x;
+        q->count = q->count + 1;
+    }
+
     return OMPI_SUCCESS;
 }
 
-int common_ompio_empty_print_queue(int queue_type){
+int  mca_common_ompio_unregister_print_entry ( mca_common_ompio_print_queue *q,
+                                               mca_common_ompio_print_entry *x)
+{
 
-    int ret = OMPI_SUCCESS;
-    mca_common_ompio_print_queue *q=NULL;
-    ret =  common_ompio_set_print_queue(&q, queue_type);
+    if (q->count <= 0){
+        return OMPI_ERROR;
+    }
+    else{
+        *x = q->entry[q->first];
+        q->first = (q->first+1) % MCA_COMMON_OMPIO_QUEUESIZE;
+        q->count = q->count - 1;
+    }
 
-    assert (ret != OMPI_ERROR);
-    (void)ret;  // silence compiler warning
-    if (q->count == 0)
-	    return 1;
-    else
-	return 0;
-
-
+    return OMPI_SUCCESS;
 }
 
-int common_ompio_full_print_queue(int queue_type){
+int mca_common_ompio_empty_print_queue(mca_common_ompio_print_queue *q)
+{
+    if (q->count == 0) {
+        return 1;
+    }
+    
+    return 0;
+}
 
+int mca_common_ompio_full_print_queue(mca_common_ompio_print_queue *q)
+{
+    if (q->count < MCA_COMMON_OMPIO_QUEUESIZE) {
+        return 0;
+    }
 
-    int ret = OMPI_SUCCESS;
-    mca_common_ompio_print_queue *q=NULL;
-    ret =  common_ompio_set_print_queue(&q, queue_type);
-
-    assert ( ret != OMPI_ERROR);
-    (void)ret;  // silence compiler warning
-    if (q->count < COMMON_OMPIO_QUEUESIZE)
-	    return 0;
-    else
-	return 1;
-
+    return 1;
 }
 
 
-int common_ompio_print_time_info(int queue_type,
-				  char *name,
-				  mca_io_ompio_file_t *fh){
+int mca_common_ompio_print_time_info( mca_common_ompio_print_queue *q,
+                                      char *name,
+                                      struct mca_io_ompio_file_t *fh){
 
     int i = 0, j=0, nprocs_for_coll = 0, ret = OMPI_SUCCESS, count = 0;
     double *time_details = NULL, *final_sum = NULL;
     double *final_max = NULL, *final_min = NULL;
     double *final_time_details=NULL;
-    mca_common_ompio_print_queue *q=NULL;
 
-    ret =  common_ompio_set_print_queue(&q, queue_type);
-
-    assert (ret != OMPI_ERROR);
     nprocs_for_coll = q->entry[0].nprocs_for_coll;
-    time_details = (double *) malloc (4*sizeof(double));
+    time_details = (double *) calloc (4,sizeof(double));
     if ( NULL == time_details){
 	ret = OMPI_ERR_OUT_OF_RESOURCE;
 	goto exit;
@@ -187,24 +133,13 @@ int common_ompio_print_time_info(int queue_type,
 	    goto exit;
 	}
 
-	final_time_details =
-	    (double *)malloc
-	    (fh->f_size * 4 * sizeof(double));
+	final_time_details = (double *)calloc (fh->f_size, 4 * sizeof(double));
 	if (NULL == final_time_details){
 	    ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
 	}
 
 	count = 4 * fh->f_size;
-	for(i=0;i<count;i++){
-	    final_time_details[i] = 0.0;
-	}
-
-
-    }
-
-    for (i = 0; i < 4; i++){
-	time_details[i] = 0.0;
     }
 
     if (q->count > 0){
@@ -221,17 +156,18 @@ int common_ompio_print_time_info(int queue_type,
 	}
     }
 
-    fh->f_comm->c_coll.coll_gather(time_details,
-				   4,
-				   MPI_DOUBLE,
-				   final_time_details,
-				   4,
-				   MPI_DOUBLE,
-				   0,
-				   fh->f_comm,
-				   fh->f_comm->c_coll.coll_gather_module);
-
-
+    ret = fh->f_comm->c_coll.coll_gather(time_details,
+                                         4,
+                                         MPI_DOUBLE,
+                                         final_time_details,
+                                         4,
+                                         MPI_DOUBLE,
+                                         0,
+                                         fh->f_comm,
+                                         fh->f_comm->c_coll.coll_gather_module);
+    
+    if ( OMPI_SUCCESS != ret ) {
+    }
 
     if (!fh->f_rank){
 
