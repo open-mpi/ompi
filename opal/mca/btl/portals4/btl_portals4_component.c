@@ -201,6 +201,18 @@ mca_btl_portals4_component_register(void)
                            OPAL_INFO_LVL_5,
                            MCA_BASE_VAR_SCOPE_READONLY,
                            &(mca_btl_portals4_component.portals_recv_mds_size));
+
+    mca_btl_portals4_component.portals_max_msg_size = PTL_SIZE_MAX;
+    (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
+                           "max_msg_size",
+                           "Max size supported by portals4 (above that, a message is cut into messages less than that size)",
+                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+                           NULL,
+                           0,
+                           0,
+                           OPAL_INFO_LVL_5,
+                           MCA_BASE_VAR_SCOPE_READONLY,
+                           &(mca_btl_portals4_component.portals_max_msg_size));
     return OPAL_SUCCESS;
 }
 
@@ -216,6 +228,8 @@ mca_btl_portals4_component_open(void)
     mca_btl_portals4_module.super.btl_eager_limit = 32 * 1024;
     mca_btl_portals4_module.super.btl_rndv_eager_limit = 32 * 1024;
     mca_btl_portals4_module.super.btl_max_send_size = 64 * 1024;
+    if (mca_btl_portals4_module.super.btl_max_send_size > mca_btl_portals4_component.portals_max_msg_size)
+        mca_btl_portals4_module.super.btl_max_send_size = mca_btl_portals4_component.portals_max_msg_size;
     mca_btl_portals4_module.super.btl_rdma_pipeline_send_length = 64 * 1024;
     mca_btl_portals4_module.super.btl_rdma_pipeline_frag_size = INT_MAX;
     mca_btl_portals4_module.super.btl_min_rdma_pipeline_size = 0;
@@ -227,6 +241,8 @@ mca_btl_portals4_component_open(void)
     mca_btl_portals4_module.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
 
     mca_btl_portals4_module.super.btl_get_limit = SIZE_MAX;
+    if (mca_btl_portals4_module.super.btl_get_limit > mca_btl_portals4_component.portals_max_msg_size)
+         mca_btl_portals4_module.super.btl_get_limit = mca_btl_portals4_component.portals_max_msg_size;
     mca_btl_portals4_module.super.btl_put_limit = 0;        /* not implemented */
     mca_btl_portals4_module.super.btl_get_alignment = 0;
     mca_btl_portals4_module.super.btl_put_alignment = 0;
@@ -293,6 +309,7 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
     mca_btl_base_module_t **btls = NULL;
     unsigned int ret, interface;
     ptl_handle_ni_t *portals4_nis_h = NULL;
+    ptl_ni_limits_t portals4_ni_limits ;
     ptl_process_t *ptl_process_ids = NULL;
 
     opal_output_verbose(50, opal_btl_base_framework.framework_output, "mca_btl_portals4_component_init\n");
@@ -325,14 +342,14 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
                     PTL_NI_LOGICAL | PTL_NI_MATCHING,
                     PTL_PID_ANY,       /* let library assign our pid */
                     NULL,              /* no desired limits */
-                    NULL,              /* actual limits */
+                    &portals4_ni_limits, /* actual limits */
                     &portals4_nis_h[*num_btls] /* our interface handle */
                     );
         else ret = PtlNIInit((1 == mca_btl_portals4_component.max_btls) ? PTL_IFACE_DEFAULT : interface,
                     PTL_NI_PHYSICAL | PTL_NI_MATCHING,
                     PTL_PID_ANY,       /* let library assign our pid */
                     NULL,              /* no desired limits */
-                    NULL,              /* actual limits */
+                    &portals4_ni_limits, /* actual limits */
                     &portals4_nis_h[*num_btls] /* our interface handle */
                     );
         if (PTL_OK != ret) {
@@ -340,7 +357,15 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
                             "%s:%d: PtlNIInit failed for NI %d: %d\n", __FILE__, __LINE__, interface, ret);
         }
         else {
-            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlNIInit OK for NI %d\n", *num_btls));
+            if (mca_btl_portals4_component.portals_max_msg_size > portals4_ni_limits.max_msg_size)
+                mca_btl_portals4_component.portals_max_msg_size = portals4_ni_limits.max_msg_size;
+            if (mca_btl_portals4_module.super.btl_max_send_size > portals4_ni_limits.max_msg_size)
+                mca_btl_portals4_module.super.btl_max_send_size = portals4_ni_limits.max_msg_size;
+            if (mca_btl_portals4_module.super.btl_get_limit > portals4_ni_limits.max_msg_size)
+                mca_btl_portals4_module.super.btl_get_limit = portals4_ni_limits.max_msg_size;
+            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlNIInit OK for NI %d max_msg_size=%ld",
+                                 *num_btls, mca_btl_portals4_component.portals_max_msg_size));
+
             (*num_btls)++;
         }
     }
@@ -698,7 +723,7 @@ mca_btl_portals4_component_progress(void)
                                  frag->peer_proc,
                                  portals4_btl->recv_idx,
                                  frag->match_bits, /* match bits */
-                                 0,
+                                 0, // Warning : should be  ev.remote_offset but it is not defined,
                                  frag);
                     if (OPAL_UNLIKELY(PTL_OK != ret)) {
                         opal_output_verbose(1, opal_btl_base_framework.framework_output,

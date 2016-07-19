@@ -99,7 +99,6 @@ btl_portals4_init_interface(void)
 
         /* Create recv_idx portal table entry */
         ret = PtlPTAlloc(portals4_btl->portals_ni_h,
-                     PTL_PT_ONLY_USE_ONCE |
                      PTL_PT_ONLY_TRUNCATE,
                      portals4_btl->recv_eq_h,
                      REQ_BTL_TABLE_ID,
@@ -429,7 +428,7 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
         opal_bitmap_set_bit(reachable, i);
 
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-            "add_procs: rank=%x nid=%x pid=%x for NI %d\n",
+            "add_procs: rank=%lx nid=%x pid=%x for NI %d",
             i,
             btl_peer_data[i]->ptl_proc.phys.nid,
             btl_peer_data[i]->ptl_proc.phys.pid,
@@ -591,7 +590,7 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
         ret = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
 
         *size  = max_data;
-        if ( ret < 0 ) {
+        if (ret < 0) {
             mca_btl_portals4_free(btl_base, (mca_btl_base_descriptor_t *) frag);
             return NULL;
         }
@@ -624,53 +623,52 @@ mca_btl_portals4_register_mem(mca_btl_base_module_t *btl_base,
     }
 
     handle->key = OPAL_THREAD_ADD64(&(portals4_btl->portals_rdma_key), 1);
+    handle->remote_offset = 0;
 
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-        "mca_btl_portals4_register_mem NI=%d base=%p size=%ld handle=%p key=%ld\n",
-        portals4_btl->interface_num, base, size, (void *)handle, handle->key));
+        "mca_btl_portals4_register_mem NI=%d base=%p size=%ld handle=%p key=%ld flags=%d",
+        portals4_btl->interface_num, base, size, (void *)handle, handle->key, flags));
 
-    if (MCA_BTL_FLAGS_PUT == flags) {
-        /* create a match entry */
-        me.start = base;
-        me.length = size;
-        me.ct_handle = PTL_CT_NONE;
-        me.min_free = 0;
-        me.uid = PTL_UID_ANY;
-        me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE |
-            PTL_ME_EVENT_LINK_DISABLE |
-            PTL_ME_EVENT_COMM_DISABLE |
-            PTL_ME_EVENT_UNLINK_DISABLE;
+    /* create a match entry */
+    me.start = base;
+    me.length = size;
+    me.ct_handle = PTL_CT_NONE;
+    me.min_free = 0;
+    me.uid = PTL_UID_ANY;
+    me.options = PTL_ME_OP_GET |
+        PTL_ME_EVENT_LINK_DISABLE |
+        PTL_ME_EVENT_COMM_DISABLE |
+        PTL_ME_EVENT_UNLINK_DISABLE;
 
-        if (mca_btl_portals4_component.use_logical) {
-            me.match_id.rank = endpoint->ptl_proc.rank;
-        } else {
-            me.match_id.phys.nid = endpoint->ptl_proc.phys.nid;
-            me.match_id.phys.pid = endpoint->ptl_proc.phys.pid;
-        }
-        me.match_bits = handle->key;
-        me.ignore_bits = BTL_PORTALS4_PROTOCOL_MASK |
-            BTL_PORTALS4_CONTEXT_MASK |
-            BTL_PORTALS4_SOURCE_MASK;
-        me.ignore_bits = 0;
-
-        ret = PtlMEAppend(portals4_btl->portals_ni_h,
-                          portals4_btl->recv_idx,
-                          &me,
-                          PTL_PRIORITY_LIST,
-                          handle,
-                          &(handle->me_h));
-        if (PTL_OK != ret) {
-            opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                                "%s:%d: PtlMEAppend failed: %d\n",
-                                __FILE__, __LINE__, ret);
-            OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
-            return NULL;
-        }
-        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-            "PtlMEAppend (mca_btl_portals4_register_mem) handle=%p, me_h=%d start=%p length=%ld rank=%x nid=%x pid=%x match_bits=%lx\n",
-            (void *)handle, handle->me_h, me.start, me.length,
-            me.match_id.rank, me.match_id.phys.nid, me.match_id.phys.pid, me.match_bits));
+    if (mca_btl_portals4_component.use_logical) {
+        me.match_id.rank = endpoint->ptl_proc.rank;
+    } else {
+        me.match_id.phys.nid = endpoint->ptl_proc.phys.nid;
+        me.match_id.phys.pid = endpoint->ptl_proc.phys.pid;
     }
+    me.match_bits = handle->key;
+    me.ignore_bits = BTL_PORTALS4_PROTOCOL_MASK |
+        BTL_PORTALS4_CONTEXT_MASK |
+        BTL_PORTALS4_SOURCE_MASK;
+    me.ignore_bits = 0;
+
+    ret = PtlMEAppend(portals4_btl->portals_ni_h,
+                      portals4_btl->recv_idx,
+                      &me,
+                      PTL_PRIORITY_LIST,
+                      handle,
+                      &(handle->me_h));
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: PtlMEAppend failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
+        return NULL;
+    }
+    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+        "PtlMEAppend (mca_btl_portals4_register_mem) handle=%p, me_h=%d start=%p length=%ld rank=%x nid=%x pid=%x match_bits=%lx\n",
+        (void *)handle, handle->me_h, me.start, me.length,
+        me.match_id.rank, me.match_id.phys.nid, me.match_id.phys.pid, me.match_bits));
     return handle;
 }
 
@@ -678,11 +676,22 @@ int
 mca_btl_portals4_deregister_mem(mca_btl_base_module_t *btl_base,
                                 mca_btl_base_registration_handle_t *handle)
 {
+    int ret;
     struct mca_btl_portals4_module_t   *portals4_btl = (struct mca_btl_portals4_module_t*) btl_base;
 
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-        "mca_btl_portals4_deregister_mem NI=%d handle=%p key=%ld\n",
-        portals4_btl->interface_num, (void *)handle, handle->key));
+        "mca_btl_portals4_deregister_mem NI=%d handle=%p key=%ld me_h=%d\n",
+        portals4_btl->interface_num, (void *)handle, handle->key, handle->me_h));
+
+    if (!PtlHandleIsEqual(handle->me_h, PTL_INVALID_HANDLE)) {
+        ret = PtlMEUnlink(handle->me_h);
+        if (PTL_OK !=  ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                "%s:%d: PtlMEUnlink failed: %d\n",__FILE__, __LINE__, ret);
+            return OPAL_ERROR;
+        }
+        handle->me_h = PTL_INVALID_HANDLE;
+    }
 
     free(handle);
 

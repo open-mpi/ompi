@@ -50,7 +50,6 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
 {
     mca_btl_portals4_module_t *portals4_btl = (mca_btl_portals4_module_t *) btl_base;
     mca_btl_portals4_frag_t   *frag         = NULL;
-    ptl_md_t md;
     int ret;
 
     /* reserve space in the event queue for rdma operations immediately */
@@ -83,8 +82,8 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
     frag->length = size;
     frag->peer_proc = btl_peer->ptl_proc;
 
-    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlGet start=%p length=%ld nid=%x pid=%x match_bits=%lx\n",
-        md.start, md.length, btl_peer->ptl_proc.phys.nid, btl_peer->ptl_proc.phys.pid, frag->match_bits));
+    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlGet offset=%p length=%ld remote_offset=%p nid=%x pid=%x match_bits=%lx",
+        local_address, size, (void*)local_handle->remote_offset, btl_peer->ptl_proc.phys.nid, btl_peer->ptl_proc.phys.pid, frag->match_bits));
 
     ret = PtlGet(portals4_btl->send_md_h,
                  (ptl_size_t) local_address,
@@ -92,7 +91,7 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
                  btl_peer->ptl_proc,
                  portals4_btl->recv_idx,
                  frag->match_bits, /* match bits */
-                 0,
+                 local_handle->remote_offset,
                  frag);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
         opal_output_verbose(1, opal_btl_base_framework.framework_output,
@@ -100,8 +99,7 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
                             __FILE__, __LINE__, ret);
         return OPAL_ERROR;
     }
-    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "SUCCESS: PtlGet start=%p length=%ld nid=%x pid=%x match_bits=%lx\n",
-        md.start, md.length, btl_peer->ptl_proc.phys.nid, btl_peer->ptl_proc.phys.pid, frag->match_bits));
+    local_handle->remote_offset += size;
 
     return OPAL_SUCCESS;
 }
