@@ -244,39 +244,32 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
             goto exit;
         }
 
-        bytes_remaining = (int *) malloc (fh->f_procs_per_group * sizeof(int));
+        bytes_remaining = (int *) calloc (fh->f_procs_per_group, sizeof(int));
         if (NULL == bytes_remaining){
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
 
-        current_index = (int *) malloc (fh->f_procs_per_group * sizeof(int));
+        current_index = (int *) calloc (fh->f_procs_per_group, sizeof(int));
         if (NULL == current_index){
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
 
-        blocklen_per_process = (int **)malloc (fh->f_procs_per_group * sizeof (int*));
+        blocklen_per_process = (int **)calloc (fh->f_procs_per_group, sizeof (int*));
         if (NULL == blocklen_per_process) {
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
 
-        displs_per_process = (MPI_Aint **)malloc (fh->f_procs_per_group * sizeof (MPI_Aint*));
+        displs_per_process = (MPI_Aint **)calloc (fh->f_procs_per_group, sizeof (MPI_Aint*));
         if (NULL == displs_per_process) {
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
-        }
-
-        for(i=0;i<fh->f_procs_per_group;i++){
-            current_index[i] = 0;
-            bytes_remaining[i] = 0;
-            blocklen_per_process[i] = NULL;
-            displs_per_process[i] = NULL;
         }
     }
 
@@ -646,8 +639,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
                                                                 global_iov_count,
                                                                 sorted);
                         if (current_index[i] == -1){
-                            bytes_per_process = 0; /* no more entries left
-                                                      to service this request*/
+                            bytes_per_process[i] = 0; /* no more entries left
+                                                         to service this request*/
                             continue;
                         }
                     }
@@ -960,9 +953,8 @@ exit:
     if (my_aggregator == fh->f_rank) {
 
         for(l=0;l<fh->f_procs_per_group;l++){
-            if (NULL != blocklen_per_process[l]){
+            if (blocklen_per_process) {
                 free(blocklen_per_process[l]);
-                blocklen_per_process[l] = NULL;
             }
             if (NULL != displs_per_process[l]){
                 free(displs_per_process[l]);

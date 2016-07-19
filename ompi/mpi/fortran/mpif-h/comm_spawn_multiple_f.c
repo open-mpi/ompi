@@ -12,6 +12,8 @@
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -150,4 +152,5 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 	}
     }
     free(c_array_argv);
+    free(c_info);
 }
