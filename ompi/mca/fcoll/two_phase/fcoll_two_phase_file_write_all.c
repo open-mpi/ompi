@@ -168,7 +168,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     mca_io_ompio_access_array_t *my_req=NULL, *others_req=NULL;
     MPI_Aint send_buf_addr;
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-    mca_io_ompio_print_entry nentry;
+    mca_common_ompio_print_entry nentry;
 #endif
 
 
@@ -543,9 +543,9 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	nentry.aggregator = 0;
     }
     nentry.nprocs_for_coll = two_phase_num_io_procs;
-    if (!fh->f_full_print_queue(WRITE_PRINT_QUEUE)){
-	fh->f_register_print_entry(WRITE_PRINT_QUEUE,
-					 nentry);
+    if (!mca_common_ompio_full_print_queue(fh->f_coll_write_time)){
+	mca_common_ompio_register_print_entry(fh->f_coll_write_time,
+                                              nentry);
     }
 #endif
 

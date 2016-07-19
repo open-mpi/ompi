@@ -131,8 +131,8 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_split_coll_in_use = false;
 
     /*Initialize the print_queues queues here!*/
-    mca_common_ompio_initialize_print_queue(&ompio_fh->f_coll_write_queue);
-    mca_common_ompio_initialize_print_queue(&ompio_fh->f_coll_read_queue);
+    mca_common_ompio_initialize_print_queue(&ompio_fh->f_coll_write_time);
+    mca_common_ompio_initialize_print_queue(&ompio_fh->f_coll_read_time);
 
     /* set some function pointers required for fcoll, fbtls and sharedfp modules*/
     ompio_fh->f_decode_datatype=ompi_io_ompio_decode_datatype;
@@ -286,8 +286,8 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
 
     if(mca_io_ompio_coll_timing_info){
         strcpy (name, "WRITE");
-        if (!mca_common_ompio_empty_print_queue(ompio_fh->f_coll_write_queue)){
-            ret = mca_common_ompio_print_time_info(ompio_fh->f_coll_write_queue,
+        if (!mca_common_ompio_empty_print_queue(ompio_fh->f_coll_write_time)){
+            ret = mca_common_ompio_print_time_info(ompio_fh->f_coll_write_time,
                                                    name,
                                                    ompio_fh);
             if (OMPI_SUCCESS != ret){
@@ -296,8 +296,8 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
 
         }
         strcpy (name, "READ");
-        if (!mca_common_ompio_empty_print_queue(ompio_fh->f_coll_read_queue)){
-            ret = mca_common_ompio_print_time_info(ompio_fh->f_coll_read_queue,
+        if (!mca_common_ompio_empty_print_queue(ompio_fh->f_coll_read_time)){
+            ret = mca_common_ompio_print_time_info(ompio_fh->f_coll_read_time,
                                                    name,
                                                    ompio_fh);
             if (OMPI_SUCCESS != ret){
@@ -368,14 +368,14 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     }
 
 
-    if ( NULL != ompio_fh->f_coll_write_queue ) {
-        free ( ompio_fh->f_coll_write_queue );
-        ompio_fh->f_coll_write_queue = NULL;
+    if ( NULL != ompio_fh->f_coll_write_time ) {
+        free ( ompio_fh->f_coll_write_time );
+        ompio_fh->f_coll_write_time = NULL;
     }
 
-    if ( NULL != ompio_fh->f_coll_read_queue ) {
-        free ( ompio_fh->f_coll_read_queue );
-        ompio_fh->f_coll_read_queue = NULL;
+    if ( NULL != ompio_fh->f_coll_read_time ) {
+        free ( ompio_fh->f_coll_read_time );
+        ompio_fh->f_coll_read_time = NULL;
     }
 
     if (MPI_DATATYPE_NULL != ompio_fh->f_iov_type) {
