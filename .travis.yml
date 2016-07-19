@@ -58,6 +58,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "5" ]] ; then brew update; brew unlink gcc ; brew install gcc; fi
     - mkdir -p $HOME/bogus/include $HOME/bogus/lib
+    - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install libtool; fi
 
 # Note that we use "make -k" to do the entire build, even if there was a
 # build error in there somewhere.  This prevents us from needing to submit
