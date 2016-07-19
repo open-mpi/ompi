@@ -341,8 +341,8 @@ struct mca_io_ompio_data_t {
 };
 typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 
-OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_write_time;
-OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_read_time;
+//OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_write_time;
+// OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_read_time;
 
 /* functions to retrieve the number of aggregators and the size of the
    temporary buffer on aggregators from the fcoll modules */
