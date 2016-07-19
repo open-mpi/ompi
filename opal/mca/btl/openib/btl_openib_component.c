@@ -1183,6 +1183,16 @@ static void init_apm_port(mca_btl_openib_device_t *device, int port, uint16_t li
     }
 }
 
+static int get_var_source (const char *var_name, mca_base_var_source_t *source)
+{
+    int vari = mca_base_var_find ("opal", "btl", "openib", var_name);
+    if (0 > vari) {
+        return vari;
+    }
+
+    return mca_base_var_get_value (vari, NULL, source, NULL);
+}
+
 static int setup_qps(void)
 {
     char **queues, **params = NULL;
@@ -1391,6 +1401,33 @@ static int setup_qps(void)
                        mca_btl_openib_module.super.btl_max_send_size) ?
         mca_btl_openib_module.super.btl_eager_limit :
         mca_btl_openib_module.super.btl_max_send_size;
+
+    if (max_qp_size < max_size_needed) {
+        mca_base_var_source_t eager_source = MCA_BASE_VAR_SOURCE_DEFAULT;
+        mca_base_var_source_t max_send_source = MCA_BASE_VAR_SOURCE_DEFAULT;
+
+        (void) get_var_source ("max_send_size", &max_send_source);
+        (void) get_var_source ("eager_limit", &eager_source);
+
+        /* the largest queue pair is too small for either the max send size or eager
+         * limit. check where we got the max_send_size and eager_limit and adjust if
+         * the user did not specify one or the other. */
+        if (mca_btl_openib_module.super.btl_eager_limit > max_qp_size &&
+            MCA_BASE_VAR_SOURCE_DEFAULT == eager_source) {
+            mca_btl_openib_module.super.btl_eager_limit = max_qp_size;
+        }
+
+        if (mca_btl_openib_module.super.btl_max_send_size > max_qp_size &&
+            MCA_BASE_VAR_SOURCE_DEFAULT == max_send_source) {
+            mca_btl_openib_module.super.btl_max_send_size = max_qp_size;
+        }
+
+        max_size_needed = (mca_btl_openib_module.super.btl_eager_limit >
+                       mca_btl_openib_module.super.btl_max_send_size) ?
+        mca_btl_openib_module.super.btl_eager_limit :
+        mca_btl_openib_module.super.btl_max_send_size;
+    }
+
     if (max_qp_size < max_size_needed) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "biggest qp size is too small", true,
@@ -2090,16 +2127,14 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
              * altered it via MPI_T */
             int index;
             mca_base_var_source_t source;
-            index = mca_base_var_find("opal","btl","openib","receive_queues");
-            if (index >= 0) {
-                if (OPAL_SUCCESS != (ret = mca_base_var_get_value(index, NULL, &source, NULL))) {
-                    BTL_ERROR(("mca_base_var_get_value failed to get value for receive_queues: %s:%d",
-                               __FILE__, __LINE__));
-                    goto error;
-                } else {
-                    mca_btl_openib_component.receive_queues_source = source;
-                }
+
+            if (OPAL_SUCCESS != (ret = get_var_source ("receive_queues", &source))) {
+                BTL_ERROR(("mca_base_var_get_value failed to get value for receive_queues: %s:%d",
+                           __FILE__, __LINE__));
+                goto error;
             }
+
+            mca_btl_openib_component.receive_queues_source = source;
         }
 
         /* If the MCA param was specified, skip all the checks */
