@@ -762,7 +762,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         {
             const int* a_i[8] = {&i[0], &i[1], &i[2], &i[3 + 0 * i[0]], &i[3 + 1 * i[0]], &i[3 + 2 * i[0]],
                                  &i[3 + 3 * i[0]], &i[3 + 4 * i[0]]};
-            ompi_datatype_set_args( datatype, 4 * i[0] + 4,a_i, 0, NULL, 1, d, MPI_COMBINER_DARRAY);
+            ompi_datatype_set_args( datatype, 4 * i[2] + 4, a_i, 0, NULL, 1, d, MPI_COMBINER_DARRAY);
         }
         break;
         /******************************************************************/
