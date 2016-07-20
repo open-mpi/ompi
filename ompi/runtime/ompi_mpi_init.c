@@ -100,7 +100,7 @@
 #include "ompi/runtime/ompi_cr.h"
 
 /* newer versions of gcc have poisoned this deprecated feature */
-#if HAVE___MALLOC_INITIALIZE_HOOK
+#ifdef HAVE___MALLOC_INITIALIZE_HOOK
 #include "opal/mca/memory/base/base.h"
 /* So this sucks, but with OPAL in its own library that is brought in
    implicity from libmpi, there are times when the malloc initialize
