@@ -231,7 +231,6 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
                     AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],
                    [AC_MSG_RESULT([no])])
     AC_LANG_POP([C])
-m4_ifdef([project_ompi],[
     # Output goes into globally-visible $rpath_args.  Run this in a
     # sub-process so that we don't pollute the current process
     # environment.
@@ -269,7 +268,7 @@ EOF
 end program]])],
                    [runpath_fc_args="${wl_fc}--enable-new-dtags"],
                    [runpath_fc_args=""])
-    AC_LANG_POP([Fortran])])
+    AC_LANG_POP([Fortran])
     LDFLAGS=$LDFLAGS_save
 
     OPAL_VAR_SCOPE_POP
@@ -302,9 +301,7 @@ AC_DEFUN([RPATHIFY_LDFLAGS_INTERNAL],[
 
 AC_DEFUN([RPATHIFY_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_args], [runpath_args])])
 
-m4_ifdef([project_ompi],
-         [AC_DEFUN([RPATHIFY_FC_LDFLAGS],
-                   [RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_fc_args], [runpath_fc_args])])])
+AC_DEFUN([RPATHIFY_FC_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_fc_args], [runpath_fc_args])])
 
 
 dnl
