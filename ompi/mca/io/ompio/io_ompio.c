@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -547,40 +547,6 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
     return OMPI_SUCCESS;
 }
 
-int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
-                                       OMPI_MPI_OFFSET_TYPE offset)
-{
-    int i = 0;
-    int k = 0;
-
-    if ( fh->f_view_size  > 0 ) {
-	/* starting offset of the current copy of the filew view */
-	fh->f_offset = (fh->f_view_extent *
-			((offset*fh->f_etype_size) / fh->f_view_size)) + fh->f_disp;
-
-
-	/* number of bytes used within the current copy of the file view */
-	fh->f_total_bytes = (offset*fh->f_etype_size) % fh->f_view_size;
-	i = fh->f_total_bytes;
-
-
-	/* Initialize the block id and the starting offset of the current block
-	   within the current copy of the file view to zero */
-	fh->f_index_in_file_view = 0;
-	fh->f_position_in_file_view = 0;
-
-	/* determine block id that the offset is located in and
-	   the starting offset of that block */
-	k = fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-	while (i >= k) {
-	    fh->f_position_in_file_view = k;
-	    fh->f_index_in_file_view++;
-	    k += fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-	}
-    }
-
-    return OMPI_SUCCESS;
-}
 
 int ompi_io_ompio_decode_datatype (struct mca_io_ompio_file_t *fh,
                                    ompi_datatype_t *datatype,
@@ -1077,92 +1043,6 @@ int ompi_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
 
     return OMPI_SUCCESS;
  }
-
-
-
-
-int ompi_io_ompio_break_file_view (mca_io_ompio_file_t *fh,
-                                   struct iovec *iov,
-                                   int count,
-                                   int stripe_count,
-                                   size_t stripe_size,
-                                   struct iovec **broken_iov,
-                                   int *broken_count)
-{
-
-
-
-    struct iovec *temp_iov = NULL;
-    int i = 0;
-    int k = 0;
-    int block = 1;
-    int broken = 0;
-    size_t remaining = 0;
-    size_t temp = 0;
-    OPAL_PTRDIFF_TYPE current_offset = 0;
-
-
-    /* allocate an initial iovec, will grow if needed */
-    temp_iov = (struct iovec *) malloc
-        (count * sizeof (struct iovec));
-    if (NULL == temp_iov) {
-        opal_output(1, "OUT OF MEMORY\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    while (i < count) {
-        if (count*block <= k) {
-            block ++;
-            temp_iov = (struct iovec *)realloc
-                (temp_iov, count * block *sizeof(struct iovec));
-            if (NULL == temp_iov) {
-                opal_output(1, "OUT OF MEMORY\n");
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-        }
-        if (0 == broken) {
-            temp = (OPAL_PTRDIFF_TYPE)(iov[i].iov_base)%stripe_size;
-            if ((stripe_size-temp) >= iov[i].iov_len) {
-                temp_iov[k].iov_base = iov[i].iov_base;
-                temp_iov[k].iov_len = iov[i].iov_len;
-                i++;
-                k++;
-            }
-            else {
-                temp_iov[k].iov_base = iov[i].iov_base;
-                temp_iov[k].iov_len = stripe_size-temp;
-                current_offset = (OPAL_PTRDIFF_TYPE)(temp_iov[k].iov_base) +
-                    temp_iov[k].iov_len;
-                remaining = iov[i].iov_len - temp_iov[k].iov_len;
-                k++;
-                broken ++;
-            }
-            continue;
-        }
-        temp = current_offset%stripe_size;
-        if ((stripe_size-temp) >= remaining) {
-            temp_iov[k].iov_base = (IOVBASE_TYPE *)current_offset;
-            temp_iov[k].iov_len = remaining;
-            i++;
-            k++;
-            broken = 0;
-            current_offset = 0;
-            remaining = 0;
-        }
-        else {
-            temp_iov[k].iov_base = (IOVBASE_TYPE *)current_offset;
-            temp_iov[k].iov_len = stripe_size-temp;
-            current_offset += temp_iov[k].iov_len;
-            remaining -= temp_iov[k].iov_len;
-            k++;
-            broken ++;
-        }
-    }
-    *broken_iov = temp_iov;
-    *broken_count = k;
-
-    return 1;
-}
 
 void mca_io_ompio_get_num_aggregators ( int *num_aggregators)
 {

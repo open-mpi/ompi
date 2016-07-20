@@ -331,21 +331,6 @@ OMPI_DECLSPEC void mca_io_ompio_get_bytes_per_agg ( int *bytes_per_agg);
 
 OMPI_DECLSPEC int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh);
 
-OMPI_DECLSPEC int ompio_io_ompio_file_open (ompi_communicator_t *comm,
-                                            const char *filename,
-                                            int amode,
-                                            ompi_info_t *info,
-                                            mca_io_ompio_file_t *fh,bool use_sharedfp);
-
-OMPI_DECLSPEC int ompio_io_ompio_file_close (mca_io_ompio_file_t *fh);
-
-
-OMPI_DECLSPEC int ompio_io_ompio_file_get_size (mca_io_ompio_file_t *fh,
-                                                OMPI_MPI_OFFSET_TYPE *size);
-
-OMPI_DECLSPEC int ompio_io_ompio_file_get_position (mca_io_ompio_file_t *fh,
-						    OMPI_MPI_OFFSET_TYPE *offset);
-
 /*
  * Function that takes in a datatype and buffer, and decodes that datatype
  * into an iovec using the convertor_raw function
@@ -374,10 +359,6 @@ OMPI_DECLSPEC int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_arr
                                              int num_entries,
                                              int *sorted);
 
-
-
-OMPI_DECLSPEC int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
-						     OMPI_MPI_OFFSET_TYPE offset);
 
 OMPI_DECLSPEC int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
                                                             size_t max_data,
@@ -408,15 +389,6 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
 int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
                                            int num_groups,
                                            contg *contg_groups);
-
-
-OMPI_DECLSPEC int ompi_io_ompio_break_file_view (mca_io_ompio_file_t *fh,
-                                                 struct iovec *iov,
-                                                 int count,
-                                                 int num_aggregators,
-                                                 size_t stripe_size,
-                                                 struct iovec **broken_iov,
-                                                 int *broken_count);
 
 
 /*

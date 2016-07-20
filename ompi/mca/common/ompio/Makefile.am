@@ -24,6 +24,7 @@ headers = \
 
 sources = \
 	common_ompio_print_queue.c \
+	common_ompio_file_open.c   \
 	common_ompio_file_read.c   \
 	common_ompio_file_write.c
 

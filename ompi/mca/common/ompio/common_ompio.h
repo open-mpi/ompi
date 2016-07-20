@@ -74,5 +74,15 @@ OMPI_DECLSPEC int mca_common_ompio_file_iread_at_all (mca_io_ompio_file_t *fp, O
                                                       void *buf, int count, struct ompi_datatype_t *datatype,
                                                       ompi_request_t **request);
 
+OMPI_DECLSPEC int mca_common_ompio_file_open (ompi_communicator_t *comm, const char *filename,
+                                              int amode, ompi_info_t *info,
+                                              mca_io_ompio_file_t *ompio_fh, bool use_sharedfp);
+
+OMPI_DECLSPEC int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh);
+OMPI_DECLSPEC int mca_common_ompio_file_get_size (mca_io_ompio_file_t *ompio_fh, OMPI_MPI_OFFSET_TYPE *size);
+OMPI_DECLSPEC int mca_common_ompio_file_get_position (mca_io_ompio_file_t *fh,OMPI_MPI_OFFSET_TYPE *offset);
+OMPI_DECLSPEC int mca_common_ompio_set_explicit_offset (mca_io_ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset);
+
+ 
 
 #endif /* MCA_COMMON_OMPIO_H */

@@ -129,9 +129,9 @@ int mca_common_ompio_file_write_at (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
+    mca_common_ompio_file_get_position (fh, &prev_offset );
 
-    ompi_io_ompio_set_explicit_offset (fh, offset);
+    mca_common_ompio_set_explicit_offset (fh, offset);
     ret = mca_common_ompio_file_write (fh,
                                      buf,
                                      count,
@@ -140,7 +140,7 @@ int mca_common_ompio_file_write_at (mca_io_ompio_file_t *fh,
     // An explicit offset file operation is not suppsed to modify
     // the internal file pointer. So reset the pointer
     // to the previous value
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset );
+    mca_common_ompio_set_explicit_offset (fh, prev_offset );
     return ret;
 }
 
@@ -241,9 +241,9 @@ int mca_common_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
+    mca_common_ompio_file_get_position (fh, &prev_offset );
 
-    ompi_io_ompio_set_explicit_offset (fh, offset);
+    mca_common_ompio_set_explicit_offset (fh, offset);
     ret = mca_common_ompio_file_iwrite (fh,
                                     buf,
                                     count,
@@ -258,7 +258,7 @@ int mca_common_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
     ** the entire array of <offset, length, memaddress> have
     ** already been constructed in the file_iwrite operation
     */
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    mca_common_ompio_set_explicit_offset (fh, prev_offset);
 
     return ret;
 }
@@ -275,16 +275,16 @@ int mca_common_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
+    mca_common_ompio_file_get_position (fh, &prev_offset );
 
-    ompi_io_ompio_set_explicit_offset (fh, offset);
+    mca_common_ompio_set_explicit_offset (fh, offset);
     ret = fh->f_fcoll->fcoll_file_write_all (fh,
                                              buf,
                                              count,
                                              datatype,
                                              status);
 
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    mca_common_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
 
@@ -299,9 +299,9 @@ int mca_common_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp,
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
 
-    ompio_io_ompio_file_get_position (fp, &prev_offset );
+    mca_common_ompio_file_get_position (fp, &prev_offset );
 
-    ompi_io_ompio_set_explicit_offset (fp, offset);
+    mca_common_ompio_set_explicit_offset (fp, offset);
 
     if ( NULL != fp->f_fcoll->fcoll_file_iwrite_all ) {
 	ret = fp->f_fcoll->fcoll_file_iwrite_all (fp,
@@ -317,7 +317,7 @@ int mca_common_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp,
 	ret = mca_common_ompio_file_iwrite ( fp, buf, count, datatype, request );
     }
 
-    ompi_io_ompio_set_explicit_offset (fp, prev_offset);
+    mca_common_ompio_set_explicit_offset (fp, prev_offset);
     return ret;
 }
 

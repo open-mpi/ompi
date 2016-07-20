@@ -155,9 +155,9 @@ int mca_common_ompio_file_read_at (mca_io_ompio_file_t *fh,
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
 
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
+    mca_common_ompio_file_get_position (fh, &prev_offset );
 
-    ompi_io_ompio_set_explicit_offset (fh, offset);
+    mca_common_ompio_set_explicit_offset (fh, offset);
     ret = mca_common_ompio_file_read (fh,
 				    buf,
 				    count,
@@ -167,7 +167,7 @@ int mca_common_ompio_file_read_at (mca_io_ompio_file_t *fh,
     // An explicit offset file operation is not suppsed to modify
     // the internal file pointer. So reset the pointer
     // to the previous value
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    mca_common_ompio_set_explicit_offset (fh, prev_offset);
 
     return ret;
 }
@@ -274,9 +274,9 @@ int mca_common_ompio_file_iread_at (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
+    mca_common_ompio_file_get_position (fh, &prev_offset );
 
-    ompi_io_ompio_set_explicit_offset (fh, offset);
+    mca_common_ompio_set_explicit_offset (fh, offset);
     ret = mca_common_ompio_file_iread (fh,
 				    buf,
 				    count,
@@ -291,7 +291,7 @@ int mca_common_ompio_file_iread_at (mca_io_ompio_file_t *fh,
     ** the entire array of <offset, length, memaddress> have
     ** already been constructed in the file_iread operation
     */
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    mca_common_ompio_set_explicit_offset (fh, prev_offset);
 
     return ret;
 }
@@ -307,16 +307,16 @@ int mca_common_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
+    mca_common_ompio_file_get_position (fh, &prev_offset );
 
-    ompi_io_ompio_set_explicit_offset (fh, offset);
+    mca_common_ompio_set_explicit_offset (fh, offset);
     ret = fh->f_fcoll->fcoll_file_read_all (fh,
                                             buf,
                                             count,
                                             datatype,
                                             status);
 
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    mca_common_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
 
@@ -330,8 +330,8 @@ int mca_common_ompio_file_iread_at_all (mca_io_ompio_file_t *fp,
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
 
-    ompio_io_ompio_file_get_position (fp, &prev_offset );
-    ompi_io_ompio_set_explicit_offset (fp, offset);
+    mca_common_ompio_file_get_position (fp, &prev_offset );
+    mca_common_ompio_set_explicit_offset (fp, offset);
 
     if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
 	ret = fp->f_fcoll->fcoll_file_iread_all (fp,
@@ -348,6 +348,41 @@ int mca_common_ompio_file_iread_at_all (mca_io_ompio_file_t *fp,
     }
 
 
-    ompi_io_ompio_set_explicit_offset (fp, prev_offset);
+    mca_common_ompio_set_explicit_offset (fp, prev_offset);
     return ret;
+}
+
+int mca_common_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
+                                          OMPI_MPI_OFFSET_TYPE offset)
+{
+    int i = 0;
+    int k = 0;
+
+    if ( fh->f_view_size  > 0 ) {
+	/* starting offset of the current copy of the filew view */
+	fh->f_offset = (fh->f_view_extent *
+			((offset*fh->f_etype_size) / fh->f_view_size)) + fh->f_disp;
+
+
+	/* number of bytes used within the current copy of the file view */
+	fh->f_total_bytes = (offset*fh->f_etype_size) % fh->f_view_size;
+	i = fh->f_total_bytes;
+
+
+	/* Initialize the block id and the starting offset of the current block
+	   within the current copy of the file view to zero */
+	fh->f_index_in_file_view = 0;
+	fh->f_position_in_file_view = 0;
+
+	/* determine block id that the offset is located in and
+	   the starting offset of that block */
+	k = fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
+	while (i >= k) {
+	    fh->f_position_in_file_view = k;
+	    fh->f_index_in_file_view++;
+	    k += fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
+	}
+    }
+
+    return OMPI_SUCCESS;
 }
