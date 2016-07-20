@@ -32,33 +32,36 @@ struct mca_io_ompio_file_t;
 #define MCA_COMMON_OMPIO_QUEUESIZE 2048
 
 /*To extract time-information */
-typedef struct {
+struct mca_common_ompio_print_entry{
     double time[3];
     int nprocs_for_coll;
     int aggregator;
-}mca_common_ompio_print_entry;
+};
 
-typedef struct {
+typedef struct mca_common_ompio_print_entry mca_common_ompio_print_entry;
+
+struct mca_common_ompio_print_queue {
     mca_common_ompio_print_entry entry[MCA_COMMON_OMPIO_QUEUESIZE + 1];
     int first;
     int last;
     int count;
-} mca_common_ompio_print_queue;
+};
+typedef struct mca_common_ompio_print_queue mca_common_ompio_print_queue;
 
 
-OMPI_DECLSPEC int mca_common_ompio_register_print_entry (mca_common_ompio_print_queue *q,
+OMPI_DECLSPEC int mca_common_ompio_register_print_entry (struct mca_common_ompio_print_queue *q,
                                                          mca_common_ompio_print_entry x);
 
-OMPI_DECLSPEC int mca_common_ompio_unregister_print_entry (mca_common_ompio_print_queue *q,
+OMPI_DECLSPEC int mca_common_ompio_unregister_print_entry (struct mca_common_ompio_print_queue *q,
                                                            mca_common_ompio_print_entry *x);
 
-OMPI_DECLSPEC int mca_common_ompio_empty_print_queue(mca_common_ompio_print_queue *q);
+OMPI_DECLSPEC int mca_common_ompio_empty_print_queue( struct mca_common_ompio_print_queue *q);
 
-OMPI_DECLSPEC int mca_common_ompio_full_print_queue(mca_common_ompio_print_queue *q);
+OMPI_DECLSPEC int mca_common_ompio_full_print_queue( struct mca_common_ompio_print_queue *q);
 
-OMPI_DECLSPEC int mca_common_ompio_initialize_print_queue(mca_common_ompio_print_queue **q);
+OMPI_DECLSPEC int mca_common_ompio_initialize_print_queue(struct mca_common_ompio_print_queue **q);
 
-OMPI_DECLSPEC int mca_common_ompio_print_time_info( mca_common_ompio_print_queue *q,
+OMPI_DECLSPEC int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
                                                     char *name_operation, struct mca_io_ompio_file_t *fh);
 
 

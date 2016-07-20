@@ -27,7 +27,7 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
 /*
  * This structure is needed so that we can close the modules

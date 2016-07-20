@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -80,7 +80,7 @@ int mca_sharedfp_lockedfile_write (mca_io_ompio_file_t *fh,
                         "sharedfp_lockedfile_write: Offset received is %lld\n",offset);
 	}
         /* Write to the file */
-        ret = ompio_io_ompio_file_write_at ( sh->sharedfh, offset, buf, count, datatype, status);
+        ret = mca_common_ompio_file_write_at ( sh->sharedfh, offset, buf, count, datatype, status);
     }
 
     return ret;
@@ -199,7 +199,7 @@ int mca_sharedfp_lockedfile_write_ordered (mca_io_ompio_file_t *fh,
     }
 
     /* write to the file */
-    ret = ompio_io_ompio_file_write_at_all(sh->sharedfh,offset,buf,count,datatype,status);
+    ret = mca_common_ompio_file_write_at_all(sh->sharedfh,offset,buf,count,datatype,status);
 
 exit:
     if ( NULL != buff ) {

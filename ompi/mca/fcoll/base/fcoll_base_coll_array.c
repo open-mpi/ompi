@@ -29,7 +29,7 @@
 
 #include <math.h>
 #include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
 
 int fcoll_base_coll_allgatherv_array (void *sbuf,

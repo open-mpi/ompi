@@ -23,7 +23,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/mca.h"
 #include "ompi/mca/fbtl/fbtl.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 #include <plfs.h>
 
 extern int mca_fbtl_plfs_priority;

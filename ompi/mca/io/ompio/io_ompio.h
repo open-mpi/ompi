@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -41,7 +41,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
 
-#include "ompi/mca/common/ompio/common_ompio.h"
 
 extern int mca_io_ompio_cycle_buffer_size;
 extern int mca_io_ompio_bytes_per_agg;
@@ -219,6 +218,7 @@ typedef int (*mca_io_ompio_set_aggregator_props_fn_t) (struct mca_io_ompio_file_
 							size_t bytes_per_proc);
 
 
+struct mca_common_ompio_print_queue;
 
 /**
  * Back-end structure for MPI_File
@@ -289,8 +289,8 @@ struct mca_io_ompio_file_t {
     mca_sharedfp_base_module_t *f_sharedfp;
 
     /* Timing information  */
-    mca_common_ompio_print_queue *f_coll_write_time;
-    mca_common_ompio_print_queue *f_coll_read_time;
+    struct mca_common_ompio_print_queue *f_coll_write_time;
+    struct mca_common_ompio_print_queue *f_coll_read_time;
 
     /*initial list of aggregators and groups*/
     int *f_init_aggr_list;
@@ -320,16 +320,14 @@ struct mca_io_ompio_data_t {
 typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 
 
+#include "ompi/mca/common/ompio/common_ompio.h"
+
+
 /* functions to retrieve the number of aggregators and the size of the
    temporary buffer on aggregators from the fcoll modules */
 OMPI_DECLSPEC void mca_io_ompio_get_num_aggregators ( int *num_aggregators);
 OMPI_DECLSPEC void mca_io_ompio_get_bytes_per_agg ( int *bytes_per_agg);
 
-
-OMPI_DECLSPEC int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles,
-						size_t bpc, int max_data, uint32_t iov_count,
-						struct iovec *decoded_iov, int *ii, int *jj,
-						size_t *tbw );
 
 OMPI_DECLSPEC int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh);
 
@@ -339,82 +337,9 @@ OMPI_DECLSPEC int ompio_io_ompio_file_open (ompi_communicator_t *comm,
                                             ompi_info_t *info,
                                             mca_io_ompio_file_t *fh,bool use_sharedfp);
 
-OMPI_DECLSPEC int ompio_io_ompio_file_write_at (mca_io_ompio_file_t *fh,
-                                                OMPI_MPI_OFFSET_TYPE offset,
-                                                const void *buf,
-                                                int count,
-                                                struct ompi_datatype_t *datatype,
-                                                ompi_status_public_t *status);
-
-OMPI_DECLSPEC int ompio_io_ompio_file_write (mca_io_ompio_file_t *fh,
-                                             const void *buf,
-                                             int count,
-                                             struct ompi_datatype_t *datatype,
-                                             ompi_status_public_t *status);
-
 OMPI_DECLSPEC int ompio_io_ompio_file_close (mca_io_ompio_file_t *fh);
 
-OMPI_DECLSPEC int ompio_io_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
-                                                    OMPI_MPI_OFFSET_TYPE offset,
-                                                    const void *buf,
-                                                    int count,
-                                                    struct ompi_datatype_t *datatype,
-                                                    ompi_status_public_t *status);
 
-OMPI_DECLSPEC int ompio_io_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
-                                                 OMPI_MPI_OFFSET_TYPE offset,
-                                                 const void *buf,
-                                                 int count,
-                                                 struct ompi_datatype_t *datatype,
-                                                 ompi_request_t **request);
-
-OMPI_DECLSPEC int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
-                                              const void *buf,
-                                              int count,
-                                              struct ompi_datatype_t *datatype,
-                                              ompi_request_t **request);
-
-OMPI_DECLSPEC int ompio_io_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fh,
-						     OMPI_MPI_OFFSET_TYPE offset,
-						     const void *buf,
-						     int count,
-						     struct ompi_datatype_t *datatype,
-						     ompi_request_t **request);
-OMPI_DECLSPEC int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
-					     void *buf,
-					     int count,
-					     struct ompi_datatype_t *datatype,
-					     ompi_request_t **request);
-
-OMPI_DECLSPEC int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
-                                            void *buf,
-                                            int count,
-                                            struct ompi_datatype_t *datatype,
-                                            ompi_status_public_t *status);
-OMPI_DECLSPEC int ompio_io_ompio_file_iread_at (mca_io_ompio_file_t *fh,
-                                                OMPI_MPI_OFFSET_TYPE offset,
-                                                void *buf,
-                                                int count,
-                                                struct ompi_datatype_t *datatype,
-                                                ompi_request_t **request);
-OMPI_DECLSPEC int ompio_io_ompio_file_iread_at_all (mca_io_ompio_file_t *fh,
-						    OMPI_MPI_OFFSET_TYPE offset,
-						    void *buf,
-						    int count,
-						    struct ompi_datatype_t *datatype,
-						    ompi_request_t **request);
-OMPI_DECLSPEC int ompio_io_ompio_file_read_at (mca_io_ompio_file_t *fh,
-                                               OMPI_MPI_OFFSET_TYPE offset,
-                                               void *buf,
-                                               int count,
-                                               struct ompi_datatype_t *datatype,
-                                               ompi_status_public_t * status);
-OMPI_DECLSPEC int ompio_io_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
-                                                   OMPI_MPI_OFFSET_TYPE offset,
-                                                   void *buf,
-                                                   int count,
-                                                   struct ompi_datatype_t *datatype,
-                                                   ompi_status_public_t * status);
 OMPI_DECLSPEC int ompio_io_ompio_file_get_size (mca_io_ompio_file_t *fh,
                                                 OMPI_MPI_OFFSET_TYPE *size);
 

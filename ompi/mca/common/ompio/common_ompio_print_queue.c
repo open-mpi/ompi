@@ -25,15 +25,16 @@
 #include "ompi/datatype/ompi_datatype.h"
 
 #include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/io/ompio/io_ompio.h"
 
 
 /* Print queue related function implementations */
-int mca_common_ompio_initialize_print_queue( mca_common_ompio_print_queue  **r){
+int mca_common_ompio_initialize_print_queue( struct mca_common_ompio_print_queue  **r){
 
-    mca_common_ompio_print_queue *q=NULL;
+    struct mca_common_ompio_print_queue *q=NULL;
     int ret = OMPI_SUCCESS;
 
-    q = (mca_common_ompio_print_queue *) malloc ( sizeof(mca_common_ompio_print_queue));
+    q = (struct mca_common_ompio_print_queue *) malloc ( sizeof(mca_common_ompio_print_queue));
     if ( NULL == q ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -45,8 +46,8 @@ int mca_common_ompio_initialize_print_queue( mca_common_ompio_print_queue  **r){
     return ret;
 }
 
-int mca_common_ompio_register_print_entry ( mca_common_ompio_print_queue *q,
-                                        mca_common_ompio_print_entry x)
+int mca_common_ompio_register_print_entry ( struct mca_common_ompio_print_queue *q,
+                                            mca_common_ompio_print_entry x)
 {
     if (q->count >= MCA_COMMON_OMPIO_QUEUESIZE){
         return OMPI_ERROR;
@@ -60,7 +61,7 @@ int mca_common_ompio_register_print_entry ( mca_common_ompio_print_queue *q,
     return OMPI_SUCCESS;
 }
 
-int  mca_common_ompio_unregister_print_entry ( mca_common_ompio_print_queue *q,
+int  mca_common_ompio_unregister_print_entry ( struct mca_common_ompio_print_queue *q,
                                                mca_common_ompio_print_entry *x)
 {
 
@@ -76,7 +77,7 @@ int  mca_common_ompio_unregister_print_entry ( mca_common_ompio_print_queue *q,
     return OMPI_SUCCESS;
 }
 
-int mca_common_ompio_empty_print_queue(mca_common_ompio_print_queue *q)
+int mca_common_ompio_empty_print_queue( struct mca_common_ompio_print_queue *q)
 {
     if (q->count == 0) {
         return 1;
@@ -85,7 +86,7 @@ int mca_common_ompio_empty_print_queue(mca_common_ompio_print_queue *q)
     return 0;
 }
 
-int mca_common_ompio_full_print_queue(mca_common_ompio_print_queue *q)
+int mca_common_ompio_full_print_queue( struct mca_common_ompio_print_queue *q)
 {
     if (q->count < MCA_COMMON_OMPIO_QUEUESIZE) {
         return 0;
@@ -95,7 +96,7 @@ int mca_common_ompio_full_print_queue(mca_common_ompio_print_queue *q)
 }
 
 
-int mca_common_ompio_print_time_info( mca_common_ompio_print_queue *q,
+int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
                                       char *name,
                                       struct mca_io_ompio_file_t *fh){
 

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,7 +64,7 @@ int mca_sharedfp_addproc_iwrite(mca_io_ompio_file_t *fh,
                         "sharedfp_addproc_iwrite: Offset received is %lld\n",offset);
 	}
         /* Write to the file */
-        ret = ompio_io_ompio_file_iwrite_at(sh->sharedfh,offset,buf,count,datatype,request);
+        ret = mca_common_ompio_file_iwrite_at(sh->sharedfh,offset,buf,count,datatype,request);
     }
 
     return ret;
@@ -176,7 +176,7 @@ int mca_sharedfp_addproc_write_ordered_begin(mca_io_ompio_file_t *fh,
     }
 
     /* write to the file */
-    ret = ompio_io_ompio_file_iwrite_at_all(sh->sharedfh,offset,buf,count,datatype,&fh->f_split_coll_req);
+    ret = mca_common_ompio_file_iwrite_at_all(sh->sharedfh,offset,buf,count,datatype,&fh->f_split_coll_req);
     fh->f_split_coll_in_use = true;
 
 exit:

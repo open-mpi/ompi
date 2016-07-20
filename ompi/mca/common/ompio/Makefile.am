@@ -23,7 +23,9 @@ headers = \
 	common_ompio.h
 
 sources = \
-	common_ompio_print_queue.c
+	common_ompio_print_queue.c \
+	common_ompio_file_read.c   \
+	common_ompio_file_write.c
 
 
 # To simplify components that link to this library, we will *always*
