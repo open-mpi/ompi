@@ -17,7 +17,7 @@
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -172,8 +172,6 @@ static ompi_comm_cid_context_t *mca_comm_cid_context_alloc (ompi_communicator_t 
                                                             int mode)
 {
     ompi_comm_cid_context_t *context;
-    ompi_comm_request_t *request;
-    int ret;
 
     context = OBJ_NEW(ompi_comm_cid_context_t);
     if (OPAL_UNLIKELY(NULL == context)) {
@@ -256,7 +254,6 @@ int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *com
 {
     ompi_comm_cid_context_t *context;
     ompi_comm_request_t *request;
-    int ret;
 
     context = mca_comm_cid_context_alloc (newcomm, comm, bridgecomm, arg0, arg1,
                                           "nextcid", send_first, mode);
@@ -434,8 +431,6 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     ompi_comm_cid_context_t *context;
     ompi_comm_request_t *request;
     ompi_request_t *subreq;
-    int local_leader;
-    int remote_leader;
     int ret = 0;
 
     context = mca_comm_cid_context_alloc (*newcomm, comm, bridgecomm, arg0, arg1, "activate",
@@ -777,7 +772,6 @@ static int ompi_comm_allreduce_intra_bridge_nb (int *inbuf, int *outbuf,
     int local_rank = ompi_comm_rank (comm);
     ompi_comm_request_t *request;
     ompi_request_t *subreq;
-    int i;
     int rc;
 
     context = ompi_comm_allreduce_context_alloc (inbuf, outbuf, count, op, cid_context);
