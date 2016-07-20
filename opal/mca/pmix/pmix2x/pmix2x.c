@@ -385,7 +385,7 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
 	    OBJ_RELEASE(cd);
 	    return;
 	}
-	cd->pname.vpid = source->rank;
+	cd->pname.vpid = pmix2x_convert_rank(source->rank);
     }
 
     /* convert the array of info */
@@ -414,6 +414,30 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
      * so let them go */
     if (NULL != cbfunc) {
 	cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
+    }
+}
+
+opal_vpid_t pmix2x_convert_rank(int rank)
+{
+    switch(rank) {
+    case PMIX_RANK_UNDEF:
+        return OPAL_VPID_INVALID;
+    case PMIX_RANK_WILDCARD:
+        return OPAL_VPID_WILDCARD;
+    default:
+        return (opal_vpid_t)rank;
+    }
+}
+
+int pmix2x_convert_opalrank(opal_vpid_t vpid)
+{
+    switch(vpid) {
+    case OPAL_VPID_WILDCARD:
+        return PMIX_RANK_WILDCARD;
+    case OPAL_VPID_INVALID:
+        return PMIX_RANK_UNDEF;
+    default:
+        return (int)vpid;
     }
 }
 
@@ -717,7 +741,7 @@ void pmix2x_value_load(pmix_value_t *v,
 	case OPAL_NAME:
 	    v->type = PMIX_PROC;
 	    (void)opal_snprintf_jobid(v->data.proc.nspace, PMIX_MAX_NSLEN, kv->data.name.jobid);
-	    v->data.proc.rank = kv->data.name.vpid;
+	    v->data.proc.rank = pmix2x_convert_opalrank(kv->data.name.vpid);
 	    break;
 	default:
 	    /* silence warnings */
@@ -825,7 +849,7 @@ int pmix2x_value_unload(opal_value_t *kv,
 	if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&kv->data.name.jobid, v->data.proc.nspace))) {
 	    return pmix2x_convert_opalrc(rc);
 	}
-	kv->data.name.vpid = v->data.proc.rank;
+	kv->data.name.vpid = pmix2x_convert_rank(v->data.proc.rank);
 	break;
     default:
 	/* silence warnings */

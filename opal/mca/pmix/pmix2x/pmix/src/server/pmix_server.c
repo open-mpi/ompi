@@ -983,10 +983,9 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char *
     pmix_setenv("PMIX_RANK", rankstr, true, env);
     /* pass our rendezvous info */
     PMIX_LIST_FOREACH(lt, &pmix_server_globals.listeners, pmix_listener_t) {
-        if (NULL == lt->uri) {
-            continue;
+        if (NULL != lt->uri && NULL != lt->varname) {
+            pmix_setenv(lt->varname, lt->uri, true, env);
         }
-        pmix_setenv(lt->varname, lt->uri, true, env);
     }
     /* pass our active security mode */
     pmix_setenv("PMIX_SECURITY_MODE", security_mode, true, env);

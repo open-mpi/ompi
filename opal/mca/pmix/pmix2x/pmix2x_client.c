@@ -94,7 +94,7 @@ int pmix2x_client_init(void)
     job->jobid = pname.jobid;
     opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
 
-    pname.vpid = my_proc.rank;
+    pname.vpid = pmix2x_convert_rank(my_proc.rank);
     opal_proc_set_name(&pname);
 
     /* register the default event handler */
@@ -157,7 +157,7 @@ int pmix2x_abort(int flag, const char *msg,
 		return OPAL_ERR_NOT_FOUND;
 	    }
 	    (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
-	    parray[n].rank = ptr->name.vpid;
+	    parray[n].rank = pmix2x_convert_opalrank(ptr->name.vpid);
 	    ++n;
 	}
     }
@@ -196,11 +196,11 @@ int pmix2x_store_local(const opal_process_name_t *proc, opal_value_t *val)
 	    return OPAL_ERR_NOT_FOUND;
 	}
 	(void)strncpy(p.nspace, job->nspace, PMIX_MAX_NSLEN);
-	p.rank = proc->vpid;
+	p.rank = pmix2x_convert_opalrank(proc->vpid);
     } else {
 	/* use our name */
 	(void)strncpy(p.nspace, my_proc.nspace, PMIX_MAX_NSLEN);
-	p.rank = OPAL_PROC_MY_NAME.vpid;
+	p.rank = pmix2x_convert_opalrank(OPAL_PROC_MY_NAME.vpid);
     }
 
     PMIX_VALUE_CONSTRUCT(&kv);
@@ -261,7 +261,7 @@ int pmix2x_fence(opal_list_t *procs, int collect_data)
 		return OPAL_ERR_NOT_FOUND;
 	    }
 	    (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
-	    parray[n].rank = ptr->name.vpid;
+	    parray[n].rank = pmix2x_convert_opalrank(ptr->name.vpid);
 	    ++n;
 	}
     }
@@ -327,7 +327,7 @@ int pmix2x_fencenb(opal_list_t *procs, int collect_data,
 		return OPAL_ERR_NOT_FOUND;
 	    }
 	    (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
-	    parray[n].rank = ptr->name.vpid;
+	    parray[n].rank = pmix2x_convert_opalrank(ptr->name.vpid);
 	    ++n;
 	}
     }
@@ -412,7 +412,7 @@ int pmix2x_get(const opal_process_name_t *proc, const char *key,
 	    return OPAL_ERR_NOT_FOUND;
 	}
 	(void)strncpy(p.nspace, job->nspace, PMIX_MAX_NSLEN);
-	p.rank = proc->vpid;
+	p.rank = pmix2x_convert_opalrank(proc->vpid);
 	pptr = &p;
     } else {
 	/* if they are asking for our jobid, then return it */
@@ -424,7 +424,7 @@ int pmix2x_get(const opal_process_name_t *proc, const char *key,
 	} else if (0 == strcmp(key, OPAL_PMIX_RANK)) {
 	    (*val) = OBJ_NEW(opal_value_t);
 	    (*val)->type = OPAL_INT;
-	    (*val)->data.integer = my_proc.rank;
+	    (*val)->data.integer = pmix2x_convert_rank(my_proc.rank);
 	    return OPAL_SUCCESS;
 	}
 	pptr = NULL;
@@ -520,10 +520,10 @@ int pmix2x_getnb(const opal_process_name_t *proc, const char *key,
 	    return OPAL_ERR_NOT_FOUND;
 	}
 	(void)strncpy(op->p.nspace, job->nspace, PMIX_MAX_NSLEN);
-	op->p.rank = proc->vpid;
+	op->p.rank = pmix2x_convert_opalrank(proc->vpid);
     } else {
 	(void)strncpy(op->p.nspace, my_proc.nspace, PMIX_MAX_NSLEN);
-	op->p.rank = PMIX_RANK_WILDCARD;
+	op->p.rank = pmix2x_convert_rank(PMIX_RANK_WILDCARD);
     }
 
     if (NULL != info) {
@@ -686,11 +686,7 @@ int pmix2x_lookup(opal_list_t *data, opal_list_t *info)
 		job->jobid = d->proc.jobid;
 		opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
 	    }
-	    if (PMIX_RANK_WILDCARD == pdata[n].proc.rank) {
-		d->proc.vpid = OPAL_VPID_WILDCARD;
-	    } else {
-		d->proc.vpid = pdata[n].proc.rank;
-	    }
+            d->proc.vpid = pmix2x_convert_rank(pdata[n].proc.rank);
 	    rc = pmix2x_value_unload(&d->value, &pdata[n].value);
 	    if (OPAL_SUCCESS != rc) {
 		OPAL_ERROR_LOG(rc);
@@ -753,11 +749,7 @@ static void lk_cbfunc(pmix_status_t status,
 		job->jobid = d->proc.jobid;
 		opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
 	    }
-	    if (PMIX_RANK_WILDCARD == data[n].proc.rank) {
-		d->proc.vpid = OPAL_VPID_WILDCARD;
-	    } else {
-		d->proc.vpid = data[n].proc.rank;
-	    }
+            d->proc.vpid = pmix2x_convert_rank(data[n].proc.rank);
 	    d->value.key = strdup(data[n].key);
 	    rc = pmix2x_value_unload(&d->value, &data[n].value);
 	    if (OPAL_SUCCESS != rc) {
@@ -1052,11 +1044,7 @@ int pmix2x_connect(opal_list_t *procs)
 	    return OPAL_ERR_NOT_FOUND;
 	}
 	(void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
-	if (OPAL_VPID_WILDCARD == ptr->name.vpid) {
-	    parray[n].rank = PMIX_RANK_WILDCARD;
-	} else {
-	    parray[n].rank = ptr->name.vpid;
-	}
+        parray[n].rank = pmix2x_convert_opalrank(ptr->name.vpid);
 	++n;
     }
 
@@ -1103,11 +1091,7 @@ int pmix2x_connectnb(opal_list_t *procs,
 		break;
 	    }
 	}
-	if (OPAL_VPID_WILDCARD == ptr->name.vpid) {
-	    op->procs[n].rank = PMIX_RANK_WILDCARD;
-	} else {
-	    op->procs[n].rank = ptr->name.vpid;
-	}
+        op->procs[n].rank = pmix2x_convert_opalrank(ptr->name.vpid);
 	++n;
     }
 
@@ -1142,11 +1126,7 @@ int pmix2x_disconnect(opal_list_t *procs)
 		break;
 	    }
 	}
-	if (OPAL_VPID_WILDCARD == ptr->name.vpid) {
-	    parray[n].rank = PMIX_RANK_WILDCARD;
-	} else {
-	    parray[n].rank = ptr->name.vpid;
-	}
+        parray[n].rank = pmix2x_convert_opalrank(ptr->name.vpid);
 	++n;
     }
 
@@ -1193,11 +1173,7 @@ int pmix2x_disconnectnb(opal_list_t *procs,
 		break;
 	    }
 	}
-	if (OPAL_VPID_WILDCARD == ptr->name.vpid) {
-	    op->procs[n].rank = PMIX_RANK_WILDCARD;
-	} else {
-	    op->procs[n].rank = ptr->name.vpid;
-	}
+        op->procs[n].rank = pmix2x_convert_opalrank(ptr->name.vpid);
 	++n;
     }
 
@@ -1267,7 +1243,7 @@ int pmix2x_resolve_peers(const char *nodename, opal_jobid_t jobid,
 		job->jobid = jobid;
 		opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
 	    }
-	    nm->name.vpid = array[n].rank;
+	    nm->name.vpid = pmix2x_convert_rank(array[n].rank);
 	}
     }
     PMIX_PROC_FREE(array, nprocs);

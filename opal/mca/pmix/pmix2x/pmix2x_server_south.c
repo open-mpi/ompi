@@ -345,7 +345,7 @@ int pmix2x_server_register_client(const opal_process_name_t *proc,
 
     /* convert the jobid */
     (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc->jobid);
-    p.rank = proc->vpid;
+    p.rank = pmix2x_convert_opalrank(proc->vpid);
 
     OBJ_CONSTRUCT(&op, pmix2x_opcaddy_t);
     op.active = true;
@@ -370,7 +370,7 @@ static void _dereg_client(int sd, short args, void *cbdata)
 	if (jptr->jobid == cd->source->jobid) {
 	    /* found it - tell the server to deregister */
 	    (void)strncpy(p.nspace, jptr->nspace, PMIX_MAX_NSLEN);
-	    p.rank = cd->source->vpid;
+	    p.rank = pmix2x_convert_opalrank(cd->source->vpid);
 	    cd->active = true;
 	    PMIx_server_deregister_client(&p, tdcbfunc, (void*)cd);
 	    PMIX_WAIT_FOR_COMPLETION(cd->active);
@@ -411,7 +411,7 @@ int pmix2x_server_setup_fork(const opal_process_name_t *proc, char ***env)
 
     /* convert the jobid */
     (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc->jobid);
-    p.rank = proc->vpid;
+    p.rank = pmix2x_convert_opalrank(proc->vpid);
 
     rc = PMIx_server_setup_fork(&p, env);
     return pmix2x_convert_rc(rc);
@@ -446,7 +446,7 @@ int pmix2x_server_dmodex(const opal_process_name_t *proc,
 
     /* convert the jobid */
     (void)opal_snprintf_jobid(op->p.nspace, PMIX_MAX_NSLEN, proc->jobid);
-    op->p.rank = proc->vpid;
+    op->p.rank = pmix2x_convert_opalrank(proc->vpid);
 
     /* find the internally-cached data for this proc */
     rc = PMIx_server_dmodex_request(&op->p, dmdx_response, op);
@@ -490,10 +490,10 @@ int pmix2x_server_notify_event(int status,
     /* convert the jobid */
     if (NULL == source) {
 	(void)opal_snprintf_jobid(op->p.nspace, PMIX_MAX_NSLEN, OPAL_JOBID_INVALID);
-	op->p.rank = OPAL_VPID_INVALID;
+	op->p.rank = pmix2x_convert_opalrank(OPAL_VPID_INVALID);
     } else {
 	(void)opal_snprintf_jobid(op->p.nspace, PMIX_MAX_NSLEN, source->jobid);
-	op->p.rank = source->vpid;
+	op->p.rank = pmix2x_convert_opalrank(source->vpid);
     }
 
 

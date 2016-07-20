@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     pmix_value_t *val = &value;
     test_params params;
     INIT_TEST_PARAMS(params);
-    pmix_proc_t myproc;
+    pmix_proc_t myproc, proc;
 
     parse_cmd(argc, argv, &params);
 
@@ -102,7 +102,9 @@ int main(int argc, char **argv)
     }
     TEST_VERBOSE((" Client ns %s rank %d: PMIx_Init success", myproc.nspace, myproc.rank));
 
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc,PMIX_UNIV_SIZE,NULL, 0,&val))) {
+    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
+    proc.rank = PMIX_RANK_WILDCARD;
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
         TEST_ERROR(("rank %d: PMIx_Get universe size failed: %d", myproc.rank, rc));
         FREE_TEST_PARAMS(params);
         exit(0);

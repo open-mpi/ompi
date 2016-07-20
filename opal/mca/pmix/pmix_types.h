@@ -95,7 +95,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_NODEID                        "pmix.nodeid"           // (uint32_t) node identifier
 #define OPAL_PMIX_LOCAL_PEERS                   "pmix.lpeers"           // (char*) comma-delimited string of ranks on this node within the specified nspace
 #define OPAL_PMIX_LOCAL_CPUSETS                 "pmix.lcpus"            // (char*) colon-delimited cpusets of local peers within the specified nspace
-#define OPAL_PMIX_PROC_URI                      "pmix.puri"             // (char*) URI containing contact info for proc
+#define OPAL_PMIX_PROC_URI                      "opal.puri"             // (char*) URI containing contact info for proc - NOTE: this is published by procs and
+                                                                        //            thus cannot be prefixed with "pmix"
 
 /* size info */
 #define OPAL_PMIX_UNIV_SIZE                     "pmix.univ.size"        // (uint32_t) #procs in this nspace
