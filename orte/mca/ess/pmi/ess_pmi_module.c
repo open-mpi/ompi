@@ -136,6 +136,10 @@ static int rte_init(void)
     ORTE_PROC_MY_NAME->jobid = OPAL_PROC_MY_NAME.jobid;
     ORTE_PROC_MY_NAME->vpid = OPAL_PROC_MY_NAME.vpid;
 
+    /* setup a name for retrieving data associated with the job */
+    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    name.vpid = ORTE_NAME_WILDCARD->vpid;
+    
     /* get our local rank from PMI */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_RANK,
                           ORTE_PROC_MY_NAME, &u16ptr, OPAL_UINT16);
@@ -154,9 +158,9 @@ static int rte_init(void)
     }
     orte_process_info.my_node_rank = u16;
 
-    /* get max procs */
+    /* get max procs for this application */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_MAX_PROCS,
-                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+                          &name, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
         error = "getting max procs";
         goto error;
@@ -165,7 +169,7 @@ static int rte_init(void)
 
     /* get job size */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_JOB_SIZE,
-                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+                          &name, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
         error = "getting job size";
         goto error;

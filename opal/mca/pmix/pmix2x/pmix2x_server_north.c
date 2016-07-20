@@ -149,7 +149,7 @@ static pmix_status_t server_client_connected_fn(const pmix_proc_t *p, void *serv
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
 	return pmix2x_convert_opalrc(rc);
     }
-    proc.vpid = p->rank;
+    proc.vpid = pmix2x_convert_rank(p->rank);
 
     /* pass it up */
     rc = host_module->client_connected(&proc, server_object,
@@ -172,7 +172,7 @@ static pmix_status_t server_client_finalized_fn(const pmix_proc_t *p, void* serv
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
 	return pmix2x_convert_opalrc(rc);
     }
-    proc.vpid = p->rank;
+    proc.vpid = pmix2x_convert_rank(p->rank);
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -206,7 +206,7 @@ static pmix_status_t server_abort_fn(const pmix_proc_t *p, void *server_object,
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
 	return pmix2x_convert_opalrc(rc);
     }
-    proc.vpid = p->rank;
+    proc.vpid = pmix2x_convert_rank(p->rank);
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -221,11 +221,7 @@ static pmix_status_t server_abort_fn(const pmix_proc_t *p, void *server_object,
 	    OBJ_RELEASE(opalcaddy);
 	    return pmix2x_convert_opalrc(rc);
 	}
-	if (PMIX_RANK_WILDCARD == procs[n].rank) {
-	    nm->name.vpid = OPAL_VPID_WILDCARD;
-	} else {
-	    nm->name.vpid = procs[n].rank;
-	}
+        nm->name.vpid = pmix2x_convert_rank(procs[n].rank);
     }
 
     /* pass it up */
@@ -292,11 +288,7 @@ static pmix_status_t server_fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
 	    OBJ_RELEASE(opalcaddy);
 	    return pmix2x_convert_opalrc(rc);
 	}
-	if (PMIX_RANK_WILDCARD == procs[n].rank) {
-	    nm->name.vpid = OPAL_VPID_WILDCARD;
-	} else {
-	    nm->name.vpid = procs[n].rank;
-	}
+        nm->name.vpid = pmix2x_convert_rank(procs[n].rank);
     }
 
     /* convert the array of pmix_info_t to the list of info */
@@ -337,11 +329,7 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
 	return pmix2x_convert_opalrc(rc);
     }
-    if (PMIX_RANK_WILDCARD == p->rank) {
-	proc.vpid = OPAL_VPID_WILDCARD;
-    } else {
-	proc.vpid = p->rank;
-    }
+    proc.vpid = pmix2x_convert_rank(p->rank);
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -388,11 +376,7 @@ static pmix_status_t server_publish_fn(const pmix_proc_t *p,
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
 	return pmix2x_convert_opalrc(rc);
     }
-    if (PMIX_RANK_WILDCARD == p->rank) {
-	proc.vpid = OPAL_VPID_WILDCARD;
-    } else {
-	proc.vpid = p->rank;
-    }
+    proc.vpid = pmix2x_convert_rank(p->rank);
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -439,7 +423,7 @@ static void opal_lkupcbfunc(int status,
 	    OPAL_LIST_FOREACH(p, data, opal_pmix_pdata_t) {
 		/* convert the jobid */
 		(void)opal_snprintf_jobid(d[n].proc.nspace, PMIX_MAX_NSLEN, p->proc.jobid);
-		d[n].proc.rank = p->proc.vpid;
+		d[n].proc.rank = pmix2x_convert_opalrank(p->proc.vpid);
 		(void)strncpy(d[n].key, p->value.key, PMIX_MAX_KEYLEN);
 		pmix2x_value_load(&d[n].value, &p->value);
 	    }
@@ -467,11 +451,7 @@ static pmix_status_t server_lookup_fn(const pmix_proc_t *p, char **keys,
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
 	return pmix2x_convert_opalrc(rc);
     }
-    if (PMIX_RANK_WILDCARD == p->rank) {
-	proc.vpid = OPAL_VPID_WILDCARD;
-    } else {
-	proc.vpid = p->rank;
-    }
+    proc.vpid = pmix2x_convert_rank(p->rank);
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -517,11 +497,7 @@ static pmix_status_t server_unpublish_fn(const pmix_proc_t *p, char **keys,
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
 	return pmix2x_convert_opalrc(rc);
     }
-    if (PMIX_RANK_WILDCARD == p->rank) {
-	proc.vpid = OPAL_VPID_WILDCARD;
-    } else {
-	proc.vpid = p->rank;
-    }
+    proc.vpid = pmix2x_convert_rank(p->rank);
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -583,11 +559,7 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&proc.jobid, p->nspace))) {
 	return pmix2x_convert_opalrc(rc);
     }
-    if (PMIX_RANK_WILDCARD == p->rank) {
-	proc.vpid = OPAL_VPID_WILDCARD;
-    } else {
-	proc.vpid = p->rank;
-    }
+    proc.vpid = pmix2x_convert_rank(p->rank);
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -669,11 +641,7 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
 	    OBJ_RELEASE(opalcaddy);
 	    return pmix2x_convert_opalrc(rc);
 	}
-	if (PMIX_RANK_WILDCARD == procs[n].rank) {
-	    nm->name.vpid = OPAL_VPID_WILDCARD;
-	} else {
-	    nm->name.vpid = procs[n].rank;
-	}
+        nm->name.vpid = pmix2x_convert_rank(procs[n].rank);
     }
 
     /* convert the info */
@@ -724,11 +692,7 @@ static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t npro
 	    OBJ_RELEASE(opalcaddy);
 	    return pmix2x_convert_opalrc(rc);
 	}
-	if (PMIX_RANK_WILDCARD == procs[n].rank) {
-	    nm->name.vpid = OPAL_VPID_WILDCARD;
-	} else {
-	    nm->name.vpid = procs[n].rank;
-	}
+        nm->name.vpid = pmix2x_convert_rank(procs[n].rank);
     }
 
     /* convert the info */
@@ -874,7 +838,7 @@ static pmix_status_t server_query(pmix_proc_t *proct,
 	OBJ_RELEASE(opalcaddy);
 	return pmix2x_convert_opalrc(rc);
     }
-    requestor.vpid = proct->rank;
+    requestor.vpid = pmix2x_convert_rank(proct->rank);
 
     /* convert the info */
     for (n=0; n < ninfo; n++) {
@@ -912,7 +876,7 @@ static void toolcbfunc(int status,
 
     /* convert the process name */
     (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc.jobid);
-    p.rank = proc.vpid;
+    p.rank = pmix2x_convert_opalrank(proc.vpid);
 
     /* pass it down */
     if (NULL != opalcaddy->toolcbfunc) {

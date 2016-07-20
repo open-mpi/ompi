@@ -877,7 +877,6 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
      * needs to be reworked to take advantage of it. */
     OPAL_PMIX_EXCHANGE(rc, &info, &pdat, 60);
     OBJ_DESTRUCT(&info);
-    fprintf (stderr, "OPAL_PMIX_EXCHANGE returned %d\n", rc);
     if (OPAL_SUCCESS != rc) {
         OBJ_DESTRUCT(&pdat);
         return rc;
