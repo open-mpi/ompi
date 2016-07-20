@@ -70,7 +70,7 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
             memchecker_datatype(recvtypes[i]);
             ompi_datatype_type_extent(recvtypes[i], &recv_ext);
             memchecker_call(&opal_memchecker_base_isaddressable,
-                            (char *)(recvbuf)+sdispls[i]*recv_ext,
+                            (char *)(recvbuf)+rdispls[i]*recv_ext,
                             recvcounts[i], recvtypes[i]);
         }
     );
@@ -84,6 +84,12 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
+        }
+
+        if (MPI_IN_PLACE == sendbuf) {
+            sendcounts = recvcounts;
+            sdispls    = rdispls;
+            sendtypes  = recvtypes;
         }
 
         if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
