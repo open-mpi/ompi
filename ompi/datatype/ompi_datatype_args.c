@@ -786,7 +786,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         ompi_datatype_create_hindexed_block( i[0], i[1], a, d[0], &datatype );
         {
             const int* a_i[2] = {&i[0], &i[1]};
-            ompi_datatype_set_args( datatype, 2 + i[0], a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
+            ompi_datatype_set_args( datatype, 2, a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
         }
         break;
         /******************************************************************/
