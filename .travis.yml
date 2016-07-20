@@ -44,19 +44,19 @@ env:
         - LD_LIBRARY_PATH="$HOME/bogus/lib"
     matrix:
         - GCC_VERSION=default
-        - GCC_VERSION=5
+        - GCC_VERSION=6
 
 # Install dependencies for the verbs and usnic providers.  Open MPI is
 # not currently using the verbs provider in Libfabric, so we might as
 # well not build it.
 before_install:
-    - if [[ "GCC_VERSION" == "5" ]]; then COMPILERS="CC=gcc-5 CXX=g++-5 FC=gfortran-5"; fi
+    - if [[ "GCC_VERSION" == "6" ]]; then COMPILERS="CC=gcc-6 CXX=g++-6 FC=gfortran-6"; fi
     - export CONFIGURE_ARGS="--prefix=$HOME/bogus $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - export DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "5" ]] ; then sudo apt-get --assume-yes install gcc-5 g++-5 gfortran-5; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "6" ]] ; then sudo apt-get --assume-yes install gcc-6 g++-6 gfortran-6; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "5" ]] ; then brew update; brew unlink gcc ; brew install gcc; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "6" ]] ; then brew update; brew upgrade automake libtool gcc; fi
     - mkdir -p $HOME/bogus/include $HOME/bogus/lib
 
 # Note that we use "make -k" to do the entire build, even if there was a
@@ -78,5 +78,5 @@ script:
 
 matrix:
   exclude:
-    - env: GCC_VERSION=5
+    - env: GCC_VERSION=6
       compiler: clang
