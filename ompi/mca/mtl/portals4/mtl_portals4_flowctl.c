@@ -219,15 +219,16 @@ ompi_mtl_portals4_flowctl_init(void)
 int
 ompi_mtl_portals4_flowctl_fini(void)
 {
-    PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.flowctl_idx);
-    PtlCTFree(ompi_mtl_portals4.flowctl.trigger_ct_h);
     PtlMEUnlink(ompi_mtl_portals4.flowctl.trigger_me_h);
-    PtlCTFree(ompi_mtl_portals4.flowctl.alert_ct_h);
+    PtlCTFree(ompi_mtl_portals4.flowctl.trigger_ct_h);
     PtlMEUnlink(ompi_mtl_portals4.flowctl.alert_me_h);
-    PtlCTFree(ompi_mtl_portals4.flowctl.fanin_ct_h);
+    PtlCTFree(ompi_mtl_portals4.flowctl.alert_ct_h);
     PtlMEUnlink(ompi_mtl_portals4.flowctl.fanin_me_h);
-    PtlCTFree(ompi_mtl_portals4.flowctl.fanout_ct_h);
+    PtlCTFree(ompi_mtl_portals4.flowctl.fanin_ct_h);
     PtlMEUnlink(ompi_mtl_portals4.flowctl.fanout_me_h);
+    PtlCTFree(ompi_mtl_portals4.flowctl.fanout_ct_h);
+
+    PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.flowctl_idx);
 
     return OMPI_SUCCESS;
 }

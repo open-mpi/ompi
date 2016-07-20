@@ -224,7 +224,7 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.send_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.zero_md_h = PTL_INVALID_HANDLE;
-
+    ompi_mtl_portals4.send_md_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.long_overflow_me_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
     ompi_mtl_portals4.read_idx = (ptl_pt_index_t) ~0UL;
@@ -277,6 +277,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 {
     int ret;
     ptl_process_t id;
+    ptl_ni_limits_t actual_limits;
 
     if (enable_mpi_threads && ompi_mpi_thread_multiple) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
@@ -298,19 +299,38 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                     PTL_NI_LOGICAL | PTL_NI_MATCHING,
                     PTL_PID_ANY,
                     NULL,
-                    NULL,
+                    &actual_limits,
                     &ompi_mtl_portals4.ni_h);
     else ret = PtlNIInit(PTL_IFACE_DEFAULT,
                     PTL_NI_PHYSICAL | PTL_NI_MATCHING,
                     PTL_PID_ANY,
                     NULL,
-                    NULL,
+                    &actual_limits,
                     &ompi_mtl_portals4.ni_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlNIInit failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
+    }
+
+    if (ompi_comm_rank(MPI_COMM_WORLD) == 0) {
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_entries=%d", actual_limits.max_entries);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_unexpected_headers=%d", actual_limits.max_unexpected_headers);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_mds=%d", actual_limits.max_mds);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_eqs=%d", actual_limits.max_eqs);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_cts=%d", actual_limits.max_cts);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_pt_index=%d", actual_limits.max_pt_index);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_iovecs=%d", actual_limits.max_iovecs);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_list_size=%d", actual_limits.max_list_size);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_triggered_ops=%d", actual_limits.max_triggered_ops);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_msg_size=%ld", actual_limits.max_msg_size);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_atomic_size=%ld", actual_limits.max_atomic_size);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_fetch_atomic_size=%ld", actual_limits.max_fetch_atomic_size);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_waw_ordered_size=%ld", actual_limits.max_waw_ordered_size);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_war_ordered_size=%ld", actual_limits.max_war_ordered_size);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_volatile_size=%ld", actual_limits.max_volatile_size);
+        opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "features=%u", actual_limits.features);
     }
 
     ret = PtlGetUid(ompi_mtl_portals4.ni_h, &ompi_mtl_portals4.uid);
@@ -344,6 +364,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                          "My nid,pid = %x,%x",
                          id.phys.nid, id.phys.pid));
 
+    ompi_mtl_portals4.base.mtl_max_tag = MTL_PORTALS4_MAX_TAG;
     return &ompi_mtl_portals4.base;
 
  error:
