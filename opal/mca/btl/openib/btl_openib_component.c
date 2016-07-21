@@ -793,7 +793,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             }
 #endif
 
-#ifdef HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXT_ATOMIC_CAP
+#ifdef HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXP_ATOMIC_CAP
             switch (openib_btl->device->ib_exp_dev_attr.exp_atomic_cap)
 #else
             switch (openib_btl->device->ib_dev_attr.atomic_cap)
