@@ -90,6 +90,7 @@ static int rte_init(void)
     char *val;
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
+    orte_process_name_t name;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (rc = orte_ess_base_std_prolog())) {
@@ -198,6 +199,8 @@ static int rte_init(void)
      * so carry it forward here */
     ORTE_PROC_MY_NAME->jobid = OPAL_PROC_MY_NAME.jobid;
     ORTE_PROC_MY_NAME->vpid = OPAL_PROC_MY_NAME.vpid;
+    name.jobid = OPAL_PROC_MY_NAME.jobid;
+    name.vpid = ORTE_VPID_WILDCARD;
 
     /* get our local rank from PMI */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_RANK,
@@ -219,7 +222,7 @@ static int rte_init(void)
 
     /* get max procs */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_MAX_PROCS,
-                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+                          &name, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
         error = "getting max procs";
         goto error;
@@ -274,7 +277,7 @@ static int rte_init(void)
 
     /* retrieve our topology */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_TOPO,
-                          ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+                          &name, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
         /* load the topology */
         if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
