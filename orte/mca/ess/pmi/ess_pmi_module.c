@@ -139,7 +139,7 @@ static int rte_init(void)
     /* setup a name for retrieving data associated with the job */
     name.jobid = ORTE_PROC_MY_NAME->jobid;
     name.vpid = ORTE_NAME_WILDCARD->vpid;
-    
+
     /* get our local rank from PMI */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_RANK,
                           ORTE_PROC_MY_NAME, &u16ptr, OPAL_UINT16);
@@ -203,7 +203,7 @@ static int rte_init(void)
     /* get the number of local peers - required for wireup of
      * shared memory BTL */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_SIZE,
-                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+                          &name, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS == ret) {
         orte_process_info.num_local_peers = u32 - 1;  // want number besides ourselves
     } else {
@@ -234,7 +234,7 @@ static int rte_init(void)
     /* retrieve our topology */
     val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_TOPO,
-                                   ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+                                   &name, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
         /* load the topology */
         if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
@@ -293,7 +293,7 @@ static int rte_init(void)
             error = "topology export";
             goto error;
         }
-        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_NAME, kv))) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(&name, kv))) {
             error = "topology store";
             goto error;
         }
@@ -310,12 +310,12 @@ static int rte_init(void)
         }
         /* retrieve the local peers */
         OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
-                              ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+                              &name, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
             peers = opal_argv_split(val, ',');
             free(val);
             /* and their cpusets, if available */
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS, ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS, &name, &val, OPAL_STRING);
             if (OPAL_SUCCESS == ret && NULL != val) {
                 cpusets = opal_argv_split(val, ':');
                 free(val);
