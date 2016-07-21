@@ -428,7 +428,7 @@ ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
         OMPI_COLL_PORTALS4_REQUEST_RETURN(request);
     }
 
-    puts("ireduce");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "ireduce");
     return (OMPI_SUCCESS);
 }
 

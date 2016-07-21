@@ -409,9 +409,9 @@ bcast_kary_tree_top(void *buff, int count,
          */
 
         if (rank != root) {
-            ack_thr = segment_nb;
+            trig_thr = segment_nb;
             if (is_sync) {
-                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, ack_thr, &ct)) != 0) {
+                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, trig_thr, &ct)) != 0) {
                     opal_stderr("PtlCTWait failed", __FILE__, __LINE__, ret);
                 }
             }
@@ -421,7 +421,7 @@ bcast_kary_tree_top(void *buff, int count,
                         mca_coll_portals4_component.finish_pt_idx,
                         0, 0, NULL, (uintptr_t) request,
                         request->u.bcast.trig_ct_h,
-                        ack_thr)) != 0) {
+                        trig_thr)) != 0) {
                     return opal_stderr("PtlTriggeredPut failed", __FILE__, __LINE__, ret);
                 }
 
@@ -696,8 +696,9 @@ bcast_pipeline_top(void *buff, int count,
          */
 
         if (rank != root) {
+            trig_thr = segment_nb;
             if (is_sync) {
-                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, segment_nb, &ct)) != 0) {
+                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, trig_thr, &ct)) != 0) {
                     opal_stderr("PtlCTWait failed", __FILE__, __LINE__, ret);
                 }
             }
@@ -707,7 +708,7 @@ bcast_pipeline_top(void *buff, int count,
                         mca_coll_portals4_component.finish_pt_idx,
                         0, 0, NULL, (uintptr_t) request,
                         request->u.bcast.trig_ct_h,
-                        segment_nb)) != 0) {
+                        trig_thr)) != 0) {
                     return opal_stderr("PtlTriggeredPut failed", __FILE__, __LINE__, ret);
                 }
             }
@@ -831,7 +832,7 @@ ompi_coll_portals4_ibcast_intra(void *buff, int count,
         return OMPI_ERROR;
     }
 
-    puts("ibcast");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "ibcast_intra");
     return (OMPI_SUCCESS);
 }
 
@@ -860,5 +861,6 @@ ompi_coll_portals4_ibcast_intra_fini(ompi_coll_portals4_request_t *request)
     ompi_request_complete(&request->super, true);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "ibcast_intra_fini");
     return (OMPI_SUCCESS);
 }
