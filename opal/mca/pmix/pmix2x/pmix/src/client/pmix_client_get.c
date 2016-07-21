@@ -598,13 +598,13 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     /* if we are seeking "pmix" data for our own nspace, then we must fail
      * as it was provided at startup - any updates would have come via
      * event notifications */
-    if (0 == strncmp(cb->key, "pmix", 4) &&
+    if (NULL != cb->key && 0 == strncmp(cb->key, "pmix", 4) &&
         0 == strncmp(cb->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN)) {
         cb->value_cbfunc(PMIX_ERR_NOT_FOUND, NULL, cb->cbdata);
         PMIX_RELEASE(cb);
         return;
     }
-    
+
     /* see if we already have a request in place with the server for data from
      * this nspace:rank. If we do, then no need to ask again as the
      * request will return _all_ data from that proc */
@@ -631,7 +631,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                         "%s:%d REQUESTING DATA FROM SERVER FOR %s:%d KEY %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
                         cb->nspace, cb->rank, cb->key);
-    
+
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */

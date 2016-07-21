@@ -103,7 +103,9 @@ static pmix_status_t create_local_tracker(char nspace[], int rank,
 static void relfn(void *cbdata)
 {
     char *data = (char*)cbdata;
-    free(data);
+    if (NULL != data) {
+        free(data);
+    }
 }
 
 
@@ -199,7 +201,7 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         cbfunc(PMIX_SUCCESS, data, sz, cbdata, relfn, data);
         return PMIX_SUCCESS;
     }
-     
+
     /* We have to wait for all local clients to be registered before
      * we can know whether this request is for data from a local or a
      * remote client because one client might ask for data about another
@@ -419,7 +421,8 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, int rank,  pmix_serve
         cur_rank = PMIX_RANK_WILDCARD;
         if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(&pbkt, &cur_rank, 1, PMIX_INT))) {
             PMIX_ERROR_LOG(rc);
-            cbfunc(rc, NULL, 0, cbdata, relfn, data);
+            PMIX_DESTRUCT(&pbkt);
+            cbfunc(rc, NULL, 0, cbdata, NULL, NULL);
             return rc;
         }
         /* the client is expecting this to arrive as a byte object
@@ -427,11 +430,12 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, int rank,  pmix_serve
         pbptr = &nptr->server->job_info;
         if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(&pbkt, &pbptr, 1, PMIX_BUFFER))) {
             PMIX_ERROR_LOG(rc);
-            cbfunc(rc, NULL, 0, cbdata, relfn, data);
+            PMIX_DESTRUCT(&pbkt);
+            cbfunc(rc, NULL, 0, cbdata, NULL, NULL);
             return rc;
         }
     }
-    
+
     while (NULL != *htptr) {
         cur_rank = rank;
         if (PMIX_RANK_UNDEF == rank) {
