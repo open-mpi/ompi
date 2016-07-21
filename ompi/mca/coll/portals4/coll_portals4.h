@@ -314,7 +314,7 @@ is_reduce_optimizable(struct ompi_datatype_t *dtype, size_t length, struct ompi_
     }
 
     *ptl_dtype = ompi_coll_portals4_atomic_datatype[dtype->id];
-    if (*ptl_dtype == COLL_PORTALS4_NO_DTYPE){
+    if (*ptl_dtype == COLL_PORTALS4_NO_DTYPE) {
         opal_output_verbose(50, ompi_coll_base_framework.framework_output,
                 "datatype %d not supported\n",
                 dtype->id);
