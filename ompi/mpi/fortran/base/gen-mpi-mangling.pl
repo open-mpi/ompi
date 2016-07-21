@@ -108,6 +108,25 @@ $fortran->{statuses_ignore} = {
 
 ###############################################################
 
+sub mangle_all {
+    my $name = shift;
+    my @all_names = ();
+
+    if (!$plain_arg &&
+        !$caps_arg &&
+        !$single_underscore_arg &&
+        !$double_underscore_arg ) {
+        die "Unknown name mangling type";
+    }
+
+    push( @all_names, $name );
+    push( @all_names, uc($name) );
+    push( @all_names, $name . "_" );
+    push( @all_names, $name . "__" );
+
+    return @all_names;
+}
+
 sub mangle {
     my $name = shift;
 
@@ -146,9 +165,19 @@ sub gen_c_constants_decl {
     foreach my $key (sort(keys(%{$fortran}))) {
         my $f = $fortran->{$key};
         my $m = mangle($f->{c_name});
-        print OUT "extern $f->{c_type} $m;
-#define OMPI_IS_FORTRAN_" . uc($key) . "(addr) \\
-        (addr == (void*) &$m)\n\n";
+        my @all_names = mangle_all($f->{c_name});
+        foreach my $n (@all_names) {
+            print OUT "extern $f->{c_type} $n;\n";
+        }
+        print OUT "#define OMPI_IS_FORTRAN_" . uc($key) . "(addr) \\
+        (";
+        for( my $i = 0; $i < scalar(@all_names); ++$i ) {
+            print OUT "addr == (void*) &".$all_names[$i];
+            if( scalar(@all_names)-1 != $i ) {
+                print OUT " || \\\n         ";
+            }
+        }
+        print OUT ")\n\n";
     }
 
     close(OUT);
@@ -171,7 +200,11 @@ sub gen_c_constants {
     foreach my $key (sort(keys(%{$fortran}))) {
         my $f = $fortran->{$key};
         my $m = mangle($f->{c_name});
-        print OUT "$f->{c_type} $m;\n";
+        my @all_names = mangle_all($f->{c_name});
+        foreach my $n (@all_names) {
+            print OUT "$f->{c_type} $n;\n";
+        }
+        print OUT "\n";
     }
 
     close (OUT);
@@ -193,7 +226,15 @@ sub gen_f08_types {
 
     foreach my $key (sort(keys(%{$fortran}))) {
         my $f = $fortran->{$key};
-        print OUT "$f->{f_type}, bind(C, name=\"".mangle($f->{c_name})."\") :: $f->{f_name}\n";
+        my $m = mangle($f->{c_name});
+        my @all_names = mangle_all($f->{c_name});
+# I think we can only bind each var to one place, so I'm short-circuiting the
+# above to replace @all_names with its first element.
+        @all_names = ($all_names[0]);
+        foreach my $n (@all_names) {
+            print OUT "$f->{f_type}, bind(C, name=\"".$n."\") :: $f->{f_name}\n";
+        }
+        print OUT "\n";
     }
 
     close (OUT);
