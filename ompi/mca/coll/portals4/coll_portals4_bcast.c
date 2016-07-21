@@ -137,9 +137,9 @@ bcast_kary_tree_top(void *buff, int count,
         mca_coll_portals4_module_t *portals4_module)
 {
     bool is_sync = request->is_sync;
-    int ret, seg;
-    unsigned int i;
-    int segment_nb = request->u.bcast.segment_nb;
+    int ret;
+    unsigned int i, seg, seg_size, nb_long;
+    unsigned int segment_nb = request->u.bcast.segment_nb;
     unsigned int child_nb;
     int size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
@@ -201,15 +201,22 @@ bcast_kary_tree_top(void *buff, int count,
     COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 0, 0,
             COLL_PORTALS4_BCAST, 0, internal_count);
 
+    /* The data will be cut in segment_nb segments.
+     * nb_long segments will have a size of (seg_size + 1)
+     * and (segment_nb - nb_long) segments will have a size of seg_size
+     */
+    seg_size = request->u.bcast.tmpsize / segment_nb;
+    nb_long = request->u.bcast.tmpsize % segment_nb;
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "seg_size=%d nb_long=%d segment_nb=%d", seg_size, nb_long, segment_nb);
+
     if (rank != root) {
         for (seg = 1, offset = 0, length = 0 ;
                 seg <= segment_nb ;
                 seg++, offset += length) {
 
             /* Divide buffer into segments */
-            length = (seg < segment_nb) ?
-                    (request->u.bcast.tmpsize + segment_nb - 1) / segment_nb :
-                    request->u.bcast.tmpsize - ((request->u.bcast.tmpsize + segment_nb - 1) / segment_nb) * (segment_nb - 1);
+            if (seg <= nb_long) length = seg_size + 1;
+            else length = seg_size;
 
             /*
              ** Prepare Data ME
@@ -352,9 +359,10 @@ bcast_kary_tree_top(void *buff, int count,
                 seg++, offset += length) {
 
             /* Divide buffer into segments */
-            length = (seg < segment_nb) ?
-                    (request->u.bcast.tmpsize + segment_nb - 1) / segment_nb :
-                    request->u.bcast.tmpsize - ((request->u.bcast.tmpsize + segment_nb - 1) / segment_nb) * (segment_nb - 1);
+            if (seg <= nb_long) length = seg_size + 1;
+            else length = seg_size;
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                "bcast with k-ary tree : segment of size %ld", length);
 
             /* compute the triggering threshold to send data to the children */
             trig_thr = (rank == root) ? (segment_nb) :
@@ -440,8 +448,9 @@ bcast_pipeline_top(void *buff, int count,
         mca_coll_portals4_module_t *portals4_module)
 {
     bool is_sync = request->is_sync;
-    int ret, seg;
-    int segment_nb = request->u.bcast.segment_nb;
+    int ret;
+    unsigned int seg, seg_size, nb_long;
+    unsigned int segment_nb = request->u.bcast.segment_nb;
     int size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
     ptl_rank_t parent, child;
@@ -492,6 +501,13 @@ bcast_pipeline_top(void *buff, int count,
 
     COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 0, 0,
             COLL_PORTALS4_BCAST, 0, internal_count);
+    /* The data will be cut in segment_nb segments.
+     * nb_long segments will have a size of (seg_size + 1)
+     * and (segment_nb - nb_long) segments will have a size of seg_size
+     */
+    seg_size = request->u.bcast.tmpsize / segment_nb;
+    nb_long = request->u.bcast.tmpsize % segment_nb;
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "seg_size=%d nb_long=%d", seg_size, nb_long);
 
     if (rank != root) {
         for (seg = 1, offset = 0, length = 0 ;
@@ -499,9 +515,8 @@ bcast_pipeline_top(void *buff, int count,
                 seg++, offset += length) {
 
             /* Divide buffer into segments */
-            length = (seg < segment_nb) ?
-                    (request->u.bcast.tmpsize + segment_nb - 1) / segment_nb :
-                    request->u.bcast.tmpsize - ((request->u.bcast.tmpsize + segment_nb - 1) / segment_nb) * (segment_nb - 1);
+            if (seg <= nb_long) length = seg_size + 1;
+            else length = seg_size;
 
             /*
              ** Prepare Data ME
@@ -642,9 +657,10 @@ bcast_pipeline_top(void *buff, int count,
                 seg++, offset += length) {
 
             /* Divide buffer into segments */
-            length = (seg < segment_nb) ?
-                    (request->u.bcast.tmpsize + segment_nb - 1) / segment_nb :
-                    request->u.bcast.tmpsize - ((request->u.bcast.tmpsize + segment_nb - 1) / segment_nb) * (segment_nb - 1);
+            if (seg <= nb_long) length = seg_size + 1;
+            else length = seg_size;
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                "bcast with pipeline  :  segment of size %ld \n", length);
 
             /* compute the triggering threshold to send data to the children */
             trig_thr = (rank == root) ? (segment_nb) :
