@@ -361,12 +361,10 @@ bcast_kary_tree_top(void *buff, int count,
             /* Divide buffer into segments */
             if (seg <= nb_long) length = seg_size + 1;
             else length = seg_size;
-            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                "bcast with k-ary tree : segment of size %ld", length);
 
             /* compute the triggering threshold to send data to the children */
-            trig_thr = (rank == root) ? (segment_nb) :
-                    (segment_nb + seg);
+            trig_thr = segment_nb + seg - 1; /* To be sure the set of PtlTriggeredPut of DATA will be executed in order */
+            if (rank != root) trig_thr ++;
 
             /*
              ** Send Data to children
@@ -386,6 +384,17 @@ bcast_kary_tree_top(void *buff, int count,
                         return opal_stderr("PtlTriggeredPut failed", __FILE__, __LINE__, ret);
                     }
                 }
+            }
+        }
+
+        if (rank == root) {
+            trig_thr = segment_nb;
+            ct_inc.success = segment_nb;
+            ct_inc.failure = 0;
+
+            if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                   request->u.bcast.trig_ct_h, trig_thr)) != 0) {
+                return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
             }
         }
 
@@ -419,7 +428,26 @@ bcast_kary_tree_top(void *buff, int count,
         if (rank != root) {
             trig_thr = segment_nb;
             if (is_sync) {
-                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, trig_thr, &ct)) != 0) {
+                /* Each leaf has a pending PtlTriggeredPut (to send the final ACK). We must call PtlTriggeredCTInc twice.
+                   Otherwise, we could pass the PtlCTWait and then free the CT too early and the Put wouldn't be triggered.
+
+                   This is necessary because portals4 does not insure the order in the triggered operations associated
+                   with the same threshold. In the case where PtlCTWait is not called (else case), this is not necessary. */
+
+                ct_inc.success = 1;
+                ct_inc.failure = 0;
+
+                if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                        request->u.bcast.trig_ct_h, trig_thr)) != 0) {
+                    return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+                }
+
+                if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                        request->u.bcast.trig_ct_h, trig_thr + 1)) != 0) {
+                    return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+                }
+
+                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, trig_thr + 2, &ct)) != 0) {
                     opal_stderr("PtlCTWait failed", __FILE__, __LINE__, ret);
                 }
             }
@@ -659,12 +687,10 @@ bcast_pipeline_top(void *buff, int count,
             /* Divide buffer into segments */
             if (seg <= nb_long) length = seg_size + 1;
             else length = seg_size;
-            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                "bcast with pipeline  :  segment of size %ld \n", length);
 
             /* compute the triggering threshold to send data to the children */
-            trig_thr = (rank == root) ? (segment_nb) :
-                    (segment_nb + seg);
+            trig_thr = segment_nb + seg - 1; /* To be sure the PtlTriggeredPut will be executed in order */
+            if (rank != root) trig_thr ++;
 
             /*
              ** Send Data to children
@@ -682,6 +708,16 @@ bcast_pipeline_top(void *buff, int count,
                         0, request->u.bcast.trig_ct_h, trig_thr)) != 0) {
                     return opal_stderr("PtlTriggeredPut failed", __FILE__, __LINE__, ret);
                 }
+            }
+        }
+        if (rank == root) {
+            trig_thr = segment_nb;
+            ct_inc.success = segment_nb;
+            ct_inc.failure = 0;
+
+            if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                   request->u.bcast.trig_ct_h, trig_thr)) != 0) {
+                return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
             }
         }
 
@@ -713,8 +749,28 @@ bcast_pipeline_top(void *buff, int count,
 
         if (rank != root) {
             trig_thr = segment_nb;
+
             if (is_sync) {
-                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, trig_thr, &ct)) != 0) {
+                /* Each leaf has a pending PtlTriggeredPut (to send the final ACK). We must call PtlTriggeredCTInc twice.
+                   Otherwise, we could pass the PtlCTWait and then free the CT too early and the Put wouldn't be triggered.
+
+                   This is necessary because portals4 does not insure the order in the triggered operations associated
+                   with the same threshold. In the case where PtlCTWait is not called (else case), this is not necessary. */
+
+                ct_inc.success = 1;
+                ct_inc.failure = 0;
+
+                if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                        request->u.bcast.trig_ct_h, trig_thr)) != 0) {
+                    return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+                }
+
+                if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                        request->u.bcast.trig_ct_h, trig_thr + 1)) != 0) {
+                    return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+                }
+
+                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, trig_thr + 2, &ct)) != 0) {
                     opal_stderr("PtlCTWait failed", __FILE__, __LINE__, ret);
                 }
             }
