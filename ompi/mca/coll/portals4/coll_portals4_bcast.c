@@ -89,12 +89,20 @@ static int prepare_bcast_data (struct ompi_communicator_t *comm,
     }
 
     /* Number of segments */
-    request->u.bcast.segment_nb =  (request->u.bcast.tmpsize > COLL_PORTALS4_MAX_BW) ?
-            (((request->u.bcast.tmpsize + COLL_PORTALS4_MAX_BW -1)  / COLL_PORTALS4_MAX_BW) < COLL_PORTALS4_MAX_SEGMENT ?
-                    ((request->u.bcast.tmpsize + COLL_PORTALS4_MAX_BW -1)  / COLL_PORTALS4_MAX_BW) :
-                    COLL_PORTALS4_MAX_SEGMENT) :
+    {
+        size_t max_msg_size = (COLL_PORTALS4_MAX_BW >  mca_coll_portals4_component.ni_limits.max_msg_size) ?
+            mca_coll_portals4_component.ni_limits.max_msg_size :
+            COLL_PORTALS4_MAX_BW;
+
+        //TODO : Either make compatible Portals size limits and COLL_PORTALS4_MAX_SEGMENT or remove COLL_PORTALS4_MAX_SEGMENT
+        request->u.bcast.segment_nb =  (request->u.bcast.tmpsize > max_msg_size) ?
+            (((request->u.bcast.tmpsize + max_msg_size -1)  / max_msg_size) < COLL_PORTALS4_MAX_SEGMENT ?
+                ((request->u.bcast.tmpsize + max_msg_size -1)  / max_msg_size) : COLL_PORTALS4_MAX_SEGMENT) :
                     1;
 
+        OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
+                "seg_number=%d , seg_size_max=%lu", request->u.bcast.segment_nb, max_msg_size));
+    }
     if (request->u.bcast.segment_nb > COLL_PORTALS4_BCAST_ALGO_THRESHOLD) {
         request->u.bcast.algo = OMPI_COLL_PORTALS4_BCAST_PIPELINE_ALGO;
     }
@@ -361,6 +369,8 @@ bcast_kary_tree_top(void *buff, int count,
             /* Divide buffer into segments */
             if (seg <= nb_long) length = seg_size + 1;
             else length = seg_size;
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                "bcast with k-ary tree : segment of size %ld", length);
 
             /* compute the triggering threshold to send data to the children */
             trig_thr = segment_nb + seg - 1; /* To be sure the set of PtlTriggeredPut of DATA will be executed in order */
@@ -687,6 +697,8 @@ bcast_pipeline_top(void *buff, int count,
             /* Divide buffer into segments */
             if (seg <= nb_long) length = seg_size + 1;
             else length = seg_size;
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                "bcast with pipeline  :  segment of size %ld \n", length);
 
             /* compute the triggering threshold to send data to the children */
             trig_thr = segment_nb + seg - 1; /* To be sure the PtlTriggeredPut will be executed in order */

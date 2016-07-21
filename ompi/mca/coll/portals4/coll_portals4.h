@@ -65,6 +65,7 @@ struct mca_coll_portals4_component_t {
     opal_free_list_t requests; /* request free list for the i collectives */
 
     ptl_ni_limits_t ni_limits;
+    ptl_size_t portals_max_msg_size;
 
     int use_binomial_gather_algorithm;
 

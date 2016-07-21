@@ -211,6 +211,16 @@ portals4_register(void)
             MCA_BASE_VAR_SCOPE_READONLY,
             &mca_coll_portals4_component.use_binomial_gather_algorithm);
 
+    mca_coll_portals4_component.portals_max_msg_size = PTL_SIZE_MAX;
+    (void) mca_base_component_var_register(&mca_coll_portals4_component.super.collm_version,
+            "max_msg_size",
+            "Max size supported by portals4 (above that, a message is cut into messages less than that size)",
+            MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+            NULL, 0, 0,
+            OPAL_INFO_LVL_9,
+            MCA_BASE_VAR_SCOPE_READONLY,
+            &mca_coll_portals4_component.portals_max_msg_size);
+
     return OMPI_SUCCESS;
 }
 
@@ -369,7 +379,13 @@ portals4_init_query(bool enable_progress_threads,
                 __FILE__, __LINE__, ret);
         return OMPI_ERROR;
     }
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+        "ni_limits.max_atomic_size=%ld", mca_coll_portals4_component.ni_limits.max_atomic_size);
 
+    if (mca_coll_portals4_component.portals_max_msg_size < mca_coll_portals4_component.ni_limits.max_msg_size)
+        mca_coll_portals4_component.ni_limits.max_msg_size = mca_coll_portals4_component.portals_max_msg_size;
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+        "ni_limits.max_msg_size=%lu", mca_coll_portals4_component.ni_limits.max_msg_size);
 
     ret = PtlGetId(mca_coll_portals4_component.ni_h, &mca_coll_portals4_component.id);
     if (PTL_OK != ret) {
