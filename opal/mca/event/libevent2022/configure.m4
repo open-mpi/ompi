@@ -3,7 +3,7 @@
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
@@ -91,15 +91,6 @@ AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
     AC_CONFIG_FILES([opal/mca/event/libevent2022/Makefile])
     libevent_basedir="opal/mca/event/libevent2022"
 
-    # If we're not building externally, configure this component
-    AS_IF([test "$with_libevent" = "internal" || test -z "$with_libevent" || test "$with_libevent" = "yes"],
-          [MCA_opal_event_libevent2022_DO_THE_CONFIG],
-          [AC_MSG_WARN([using an external libevent; disqualifiying this component])
-           $2])
-    OPAL_VAR_SCOPE_POP
-])
-
-AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     CFLAGS_save="$CFLAGS"
     CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
     CPPFLAGS_save="$CPPFLAGS"
@@ -188,9 +179,23 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     # libevent/include/event2/event-config.h!).  Otherwise, set it to
     # 0.
     libevent_file=$libevent_basedir/libevent/config.h
+
+    # If we are not building the internal libevent, then indicate that
+    # this component should not be built.  NOTE: we still did all the
+    # above configury so that all the proper GNU Autotools
+    # infrastructure is setup properly (e.g., w.r.t. SUBDIRS=libevent in
+    # this directory's Makefile.am, we still need the Autotools "make
+    # distclean" infrastructure to work properly).
+
+    AS_IF([test "$with_libevent" != "internal" && test -n "$with_libevent" && test "$with_libevent" != "yes"],
+          [AC_MSG_WARN([using an external libevent; disqualifying this component])
+           libevent_happy=no])
+
     AS_IF([test "$libevent_happy" = "yes" && test -r $libevent_file],
           [OPAL_HAVE_WORKING_EVENTOPS=`grep HAVE_WORKING_EVENTOPS $libevent_file | awk '{print [$]3 }'`
            $1],
           [$2
            OPAL_HAVE_WORKING_EVENTOPS=0])
+
+    OPAL_VAR_SCOPE_POP
 ])
