@@ -18,7 +18,7 @@
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -910,8 +910,6 @@ static int ompi_comm_allreduce_intra_pmix_nb (int *inbuf, int *outbuf,
     ompi_comm_request_t *request;
     ompi_request_t *subreq;
     int rc;
-
-    fprintf (stderr, "Calling ompi_comm_allreduce_intra_pmix_nb. rank %d\n", local_rank);
 
     context = ompi_comm_allreduce_context_alloc (inbuf, outbuf, count, op, cid_context);
     if (OPAL_UNLIKELY(NULL == context)) {
