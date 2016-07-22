@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -22,7 +22,7 @@
 
 #include "ompi/mca/bml/base/base.h"
 
-#define NODE_ID_TO_RANK(module, node_id) ((node_id) * ((ompi_comm_size ((module)->comm) + (module)->node_count - 1) / (module)->node_count))
+#define NODE_ID_TO_RANK(module, peer_data, node_id) ((int)(peer_data)->len)
 
 /**
  * @brief find the btl endpoint for a process
@@ -102,7 +102,7 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     ompi_osc_rdma_rank_data_t rank_data;
     int registration_handle_size = 0;
     int node_id, node_rank, array_index;
-    int ret, disp_unit;
+    int ret, disp_unit, comm_size;
     char *peer_data;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "configuring peer for rank %d", peer->rank);
@@ -111,13 +111,18 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
         registration_handle_size = module->selected_btl->btl_registration_handle_size;
     }
 
+    comm_size = ompi_comm_size (module->comm);
+
     /* each node is responsible for holding a part of the rank -> node/local rank mapping array. this code
      * calculates the node and offset the mapping can be found. once the mapping has been read the state
      * part of the peer structure can be initialized. */
-    node_id = (peer->rank * module->node_count) / ompi_comm_size (module->comm);
-    node_rank = NODE_ID_TO_RANK(module, node_id);
-    array_index = peer->rank - node_rank;
+    node_id = (peer->rank * module->node_count) / comm_size;
     array_peer_data = (ompi_osc_rdma_region_t *) ((intptr_t) module->node_comm_info + node_id * module->region_size);
+
+    /* the node leader rank is stored in the length field */
+    node_rank = NODE_ID_TO_RANK(module, array_peer_data, node_id);
+    array_index = peer->rank % ((comm_size + module->node_count - 1) / module->node_count);
+
     array_pointer = array_peer_data->base + array_index * sizeof (rank_data);
 
     /* lookup the btl endpoint needed to retrieve the mapping */
@@ -126,8 +131,8 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
         return OMPI_ERR_UNREACH;
     }
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "reading region data from rank: %d pointer: 0x%" PRIx64
-                     ", size: %lu", node_rank, array_pointer, sizeof (rank_data));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "reading region data for %d from rank: %d, index: %d, pointer: 0x%" PRIx64
+                     ", size: %lu", peer->rank, node_rank, array_index, array_pointer, sizeof (rank_data));
 
     ret = ompi_osc_get_data_blocking (module, array_endpoint, array_pointer, (mca_btl_base_registration_handle_t *) array_peer_data->btl_handle_data,
                                       &rank_data, sizeof (rank_data));
@@ -146,7 +151,7 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
         peer->state_handle = (mca_btl_base_registration_handle_t *) node_peer_data->btl_handle_data;
     }
 
-    peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, NODE_ID_TO_RANK(module, rank_data.node_id));
+    peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, NODE_ID_TO_RANK(module, node_peer_data, rank_data.node_id));
     if (OPAL_UNLIKELY(NULL == peer->state_endpoint)) {
         return OPAL_ERR_UNREACH;
     }
