@@ -93,6 +93,8 @@
 #include "ompi/dpm/dpm.h"
 #include "ompi/mpiext/mpiext.h"
 
+/* newer versions of gcc have poisoned this deprecated feature */
+#if HAVE___MALLOC_INITIALIZE_HOOK
 #include "opal/mca/memory/base/base.h"
 /* So this sucks, but with OPAL in its own library that is brought in
    implicity from libmpi, there are times when the malloc initialize
@@ -100,6 +102,7 @@
    from here, since any MPI code is going to call MPI_Init... */
 OPAL_DECLSPEC void (*__malloc_initialize_hook) (void) =
     opal_memory_base_malloc_init_hook;
+#endif
 
 /* This is required for the boundaries of the hash tables used to store
  * the F90 types returned by the MPI_Type_create_f90_XXX functions.
