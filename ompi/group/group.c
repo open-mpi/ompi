@@ -16,7 +16,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -453,9 +453,11 @@ int ompi_group_intersection(ompi_group_t* group1,ompi_group_t* group2,
 
     k = 0;
     /* allocate the max required memory */
-    ranks_included = (int *)malloc(group1_pointer->grp_proc_count*(sizeof(int)));
-    if (NULL == ranks_included) {
-        return MPI_ERR_NO_MEM;
+    if (0 < group1_pointer->grp_proc_count) {
+        ranks_included = (int *)malloc(group1_pointer->grp_proc_count*(sizeof(int)));
+        if (NULL == ranks_included) {
+            return MPI_ERR_NO_MEM;
+        }
     }
     /* determine the list of included processes for the incl-method */
     k = 0;
