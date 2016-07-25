@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -48,9 +48,9 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
-    int rank, root = 0, size, rsize, err;
-    char *ptmp = NULL;
-    ptrdiff_t slb, sextent, incr;
+    int rank, root = 0, size, rsize, err = OMPI_SUCCESS;
+    char *ptmp_free = NULL, *ptmp = NULL;
+    ptrdiff_t gap, span;
     ompi_request_t *req[2];
 
     rank = ompi_comm_rank(comm);
@@ -58,17 +58,13 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
     rsize = ompi_comm_remote_size(comm);
 
     /* Perform the gather locally at the root */
-    err = ompi_datatype_get_extent(sdtype, &slb, &sextent);
-    if (OMPI_SUCCESS != err) {
-	return OMPI_ERROR;
-    }
-
     if ( scount > 0 ) {
-	incr = sextent * scount;
-	ptmp = (char*)malloc(size * incr);
-	if (NULL == ptmp) {
+        span = opal_datatype_span(&sdtype->super, (int64_t)scount*(int64_t)size, &gap);
+	ptmp_free = (char*)malloc(span);
+	if (NULL == ptmp_free) {
 	    return OMPI_ERR_OUT_OF_RESOURCE;
 	}
+        ptmp = ptmp_free - gap;
 
 	err = comm->c_local_comm->c_coll.coll_gather(sbuf, scount, sdtype,
 						     ptmp, scount, sdtype,
@@ -112,8 +108,8 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
     }
 
  exit:
-    if (NULL != ptmp) {
-        free(ptmp);
+    if (NULL != ptmp_free) {
+        free(ptmp_free);
     }
 
     return err;

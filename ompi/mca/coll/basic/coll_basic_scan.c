@@ -47,7 +47,7 @@ mca_coll_basic_scan_intra(const void *sbuf, void *rbuf, int count,
                           mca_coll_base_module_t *module)
 {
     int size, rank, err;
-    ptrdiff_t true_lb, true_extent, lb, extent;
+    ptrdiff_t dsize, gap;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
 
@@ -74,14 +74,12 @@ mca_coll_basic_scan_intra(const void *sbuf, void *rbuf, int count,
          * listed in coll_basic_reduce.c.  Use this temporary buffer to
          * receive into, later. */
 
-        ompi_datatype_get_extent(dtype, &lb, &extent);
-        ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-
-        free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
+        dsize = opal_datatype_span(&dtype->super, count, &gap);
+        free_buffer = malloc(dsize);
         if (NULL == free_buffer) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        pml_buffer = free_buffer - true_lb;
+        pml_buffer = free_buffer - gap;
 
         /* Copy the send buffer into the receive buffer. */
 

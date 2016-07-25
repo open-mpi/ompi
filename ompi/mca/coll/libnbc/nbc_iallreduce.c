@@ -7,7 +7,7 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -16,16 +16,17 @@
 #include "nbc_internal.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/op/op.h"
 
 #include <assert.h>
 
-static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf,
-                                    void *recvbuf, MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
+static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf,
+                                    void *recvbuf, MPI_Op op, char inplace, NBC_Schedule *schedule, NBC_Handle *handle);
 static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule,
                                     NBC_Handle *handle);
 static inline int allred_sched_linear(int rank, int p, const void *sendbuf, void *recvbuf, int count,
-                                      MPI_Datatype datatype, MPI_Op op, int ext, int size,
+                                      MPI_Datatype datatype, ptrdiff_t gap, MPI_Op op, int ext, int size,
                                       NBC_Schedule *schedule, NBC_Handle *handle);
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -62,6 +63,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
   char inplace;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+  ptrdiff_t span, gap;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
@@ -85,7 +87,8 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
     return res;
   }
 
-  handle->tmpbuf = malloc (ext * count);
+  span = opal_datatype_span(&datatype->super, count, &gap);
+  handle->tmpbuf = malloc (span);
   if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
     NBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;
@@ -101,7 +104,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
   }
 
   /* algorithm selection */
-  if(p < 4 || size*count < 65536 || inplace) {
+  if(p < 4 || size*count < 65536 || !ompi_op_is_commute(op) || inplace) {
     alg = NBC_ARED_BINOMIAL;
   } else {
     alg = NBC_ARED_RING;
@@ -128,7 +131,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
 
     switch(alg) {
       case NBC_ARED_BINOMIAL:
-        res = allred_sched_diss(rank, p, count, datatype, sendbuf, recvbuf, op, schedule, handle);
+        res = allred_sched_diss(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, handle);
         break;
       case NBC_ARED_RING:
         res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, handle);
@@ -199,6 +202,7 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
   NBC_Schedule *schedule;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+  ptrdiff_t span, gap;
 
   rank = ompi_comm_rank (comm);
   rsize = ompi_comm_remote_size (comm);
@@ -220,7 +224,8 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
     return res;
   }
 
-  handle->tmpbuf = malloc (ext * count);
+  span = opal_datatype_span(&datatype->super, count, &gap);
+  handle->tmpbuf = malloc (span);
   if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
     NBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;
@@ -235,7 +240,7 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
   /* ensure the schedule is released with the handle on error */
   handle->schedule = schedule;
 
-  res = allred_sched_linear (rank, rsize, sendbuf, recvbuf, count, datatype, op,
+  res = allred_sched_linear (rank, rsize, sendbuf, recvbuf, count, datatype, gap, op,
                              ext, size, schedule, handle);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     NBC_Return_handle (handle);
@@ -296,13 +301,33 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
   if (vrank == 0) rank = root; \
   if (vrank == root) rank = 0; \
 }
-static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf, void *recvbuf,
-                                    MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle) {
+static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf, void *recvbuf,
+                                    MPI_Op op, char inplace, NBC_Schedule *schedule, NBC_Handle *handle) {
   int root, vrank, maxr, vpeer, peer, res;
+  char *rbuf, *lbuf, *buf;
+  int tmprbuf, tmplbuf;
 
   root = 0; /* this makes the code for ireduce and iallreduce nearly identical - could be changed to improve performance */
   RANK2VRANK(rank, vrank, root);
   maxr = (int)ceil((log((double)p)/LOG2));
+  /* ensure the result ends up in recvbuf on vrank 0 */
+  if (0 == (maxr%2)) {
+    rbuf = (void *)(-gap);
+    tmprbuf = true;
+    lbuf = recvbuf;
+    tmplbuf = false;
+  } else {
+    lbuf = (void *)(-gap);
+    tmplbuf = true;
+    rbuf = recvbuf;
+    tmprbuf = false;
+    if (inplace) {
+        res = NBC_Copy(rbuf, count, datatype, ((char *)handle->tmpbuf) - gap, count, datatype, MPI_COMM_SELF);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+          return res;
+        }
+    }
+  }
 
   for (int r = 1, firstred = 1 ; r <= maxr ; ++r) {
     if ((vrank % (1 << r)) == 0) {
@@ -311,35 +336,37 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
       VRANK2RANK(peer, vpeer, root)
       if (peer < p) {
         /* we have to wait until we have the data */
-        res = NBC_Sched_recv (0, true, count, datatype, peer, schedule, true);
+        res = NBC_Sched_recv (rbuf, tmprbuf, count, datatype, peer, schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }
 
         /* this cannot be done until handle->tmpbuf is unused :-( so barrier after the op */
-        if (firstred && MPI_IN_PLACE != sendbuf) {
+        if (firstred && !inplace) {
           /* perform the reduce with the senbuf */
-          res = NBC_Sched_op (recvbuf, false, sendbuf, false, 0, true, count, datatype, op, schedule, true);
+          res = NBC_Sched_op (sendbuf, false, rbuf, tmprbuf, count, datatype, op, schedule, true);
           firstred = 0;
         } else {
           /* perform the reduce in my local buffer */
-          res = NBC_Sched_op (recvbuf, false, recvbuf, false, 0, true, count, datatype, op, schedule, true);
+          res = NBC_Sched_op (lbuf, tmplbuf, rbuf, tmprbuf, count, datatype, op, schedule, true);
         }
-
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }
+        /* swap left and right buffers */
+        buf = rbuf; rbuf = lbuf ; lbuf = buf;
+        tmprbuf ^= 1; tmplbuf ^= 1;
       }
     } else {
       /* we have to send this round */
       vpeer = vrank - (1 << (r - 1));
       VRANK2RANK(peer, vpeer, root)
-      if (firstred && MPI_IN_PLACE != sendbuf) {
+      if (firstred && !inplace) {
         /* we have to use the sendbuf in the first round .. */
         res = NBC_Sched_send (sendbuf, false, count, datatype, peer, schedule, false);
       } else {
-        /* and the recvbuf in all remeining rounds */
-        res = NBC_Sched_send (recvbuf, false, count, datatype, peer, schedule, false);
+        /* and the recvbuf in all remaining rounds */
+        res = NBC_Sched_send (lbuf, tmplbuf, count, datatype, peer, schedule, false);
       }
 
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -373,6 +400,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
     }
   }
 
+  if (0 == vrank) assert(lbuf == recvbuf);
   /* now send to the right hosts */
   for (int r = 0; r < maxr; ++r) {
     if (((vrank + (1 << r) < p) && (vrank < (1 << r))) || (vrank == 0)) {
@@ -550,9 +578,8 @@ static inline int allred_sched_ring (int r, int p, int count, MPI_Datatype datat
       break;
     }
 
-    res = NBC_Sched_op ((char *) recvbuf + roffset, false, (char *) sendbuf + roffset, false,
-                        (char *) recvbuf + roffset, false, segsizes[relement], datatype, op, schedule,
-                        true);
+    res = NBC_Sched_op ((char *) sendbuf + roffset, false, (char *) recvbuf + roffset, false,
+                         segsizes[relement], datatype, op, schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       break;
     }
@@ -590,7 +617,7 @@ static inline int allred_sched_ring (int r, int p, int count, MPI_Datatype datat
 }
 
 static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-				      MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle) {
+				      ptrdiff_t gap, MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle) {
   int res;
 
   if (0 == count) {
@@ -603,34 +630,56 @@ static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, 
     return res;
   }
 
-  res = NBC_Sched_recv (recvbuf, false, count, datatype, 0, schedule, false);
+  /* recv my data to the remote root */
+  if (0 != rank || 1 ==(rsize%2)) {
+    res = NBC_Sched_recv (recvbuf, false, count, datatype, 0, schedule, false);
+  } else {
+    res = NBC_Sched_recv ((void *)(-gap), true, count, datatype, 0, schedule, false);
+  }
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
   }
 
   if (0 == rank) {
-    /* wait for data from the remote root */
+    char *rbuf, *lbuf, *buf;
+    int tmprbuf, tmplbuf;
+
     res = NBC_Sched_barrier (schedule);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
 
+    /* ensure the result ends up in recvbuf */
+    if (0 == (rsize%2)) {
+      lbuf = (void *)(-gap);
+      tmplbuf = true;
+      rbuf = recvbuf;
+      tmprbuf = false;
+    } else {
+      rbuf = (void *)(-gap);
+      tmprbuf = true;
+      lbuf = recvbuf;
+      tmplbuf = false;
+    }
+
     /* get data from remote peers and reduce */
     for (int rpeer = 1 ; rpeer < rsize ; ++rpeer) {
-      res = NBC_Sched_recv (0, true, count, datatype, rpeer, schedule, true);
+      res = NBC_Sched_recv (rbuf, tmprbuf, count, datatype, rpeer, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
 
-      res = NBC_Sched_op (recvbuf, false, 0, true, recvbuf, false, count, datatype, op,
-                          schedule, true);
+      res = NBC_Sched_op (lbuf, tmplbuf, rbuf, tmprbuf, count, datatype, op, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
+      /* swap left and right buffers */
+      buf = rbuf; rbuf = lbuf ; lbuf = buf;
+      tmprbuf ^= 1; tmplbuf ^= 1;
     }
 
     /* exchange our result with the remote root (each root will broadcast to the other's peers) */
-    res = NBC_Sched_recv (0, true, count, datatype, 0, schedule, false);
+    res = NBC_Sched_recv ((void *)(-gap), true, count, datatype, 0, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
@@ -643,7 +692,7 @@ static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, 
 
     /* broadcast the result to all remote peers */
     for (int rpeer = 1 ; rpeer < rsize ; ++rpeer) {
-      res = NBC_Sched_send (0, true, count, datatype, rpeer, schedule, false);
+      res = NBC_Sched_send ((void *)(-gap), true, count, datatype, rpeer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }

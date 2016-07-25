@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -45,12 +45,9 @@ mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
 {
-    int i, rank, size, err, total, size_local;
+    int i, rank, size, err, total=0, size_local;
     int *counts=NULL,*displace=NULL;
-    char *ptmp=NULL;
-    MPI_Aint incr;
-    MPI_Aint extent;
-    MPI_Aint lb;
+    char *ptmp_free=NULL, *ptmp=NULL;
     ompi_datatype_t *ndtype;
 
     /* Initialize */
@@ -72,24 +69,18 @@ mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
 	    if (OMPI_SUCCESS != err) {
 		return err;
 	    }
-	    /* calculate the whole buffer size and recieve it from root */
-	    err = ompi_datatype_get_extent(rdtype, &lb, &extent);
-	    if (OMPI_SUCCESS != err) {
-		return OMPI_ERROR;
-	    }
-	    incr = 0;
-	    for (i = 0; i < size_local; i++) {
-		incr = incr + extent*counts[i];
-	    }
-	    if ( incr > 0 ) {
-		ptmp = (char*)malloc(incr);
-		if (NULL == ptmp) {
-		    return OMPI_ERR_OUT_OF_RESOURCE;
-		}
-	    }
-	    total = 0;
+	    /* calculate the whole buffer size and receive it from root */
 	    for (i = 0; i < size_local; i++) {
 		total = total + counts[i];
+	    }
+	    if ( total > 0 ) {
+                ptrdiff_t gap, span;
+                span = opal_datatype_span(&rdtype->super, total, &gap);
+		ptmp_free = (char*)malloc(span);
+		if (NULL == ptmp_free) {
+		    return OMPI_ERR_OUT_OF_RESOURCE;
+		}
+                ptmp = ptmp_free - gap;
 	    }
 	    err = MCA_PML_CALL(recv(ptmp, total, rdtype,
 				    root, MCA_COLL_BASE_TAG_SCATTERV,
@@ -113,8 +104,8 @@ mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
 	    return err;
 	}
 
-	if (NULL != ptmp) {
-	    free(ptmp);
+	if (NULL != ptmp_free) {
+	    free(ptmp_free);
 	}
 	if (NULL != displace) {
 	    free(displace);

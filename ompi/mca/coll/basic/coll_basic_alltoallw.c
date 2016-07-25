@@ -14,7 +14,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -41,10 +41,10 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
 {
-    int i, j, size, rank, err=MPI_SUCCESS, max_size;
-    ompi_request_t **preq, **reqs = NULL;
-    char *tmp_buffer;
-    ptrdiff_t ext;
+    int i, j, size, rank, err = MPI_SUCCESS, max_size;
+    MPI_Request *preq, *reqs = NULL;
+    char *tmp_buffer, *save_buffer = NULL;
+    ptrdiff_t ext, gap;
 
     /* Initialize. */
 
@@ -58,17 +58,17 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
 
     /* Find the largest receive amount */
     for (i = 0, max_size = 0 ; i < size ; ++i) {
-        ompi_datatype_type_extent (rdtypes[i], &ext);
-        ext *= rcounts[i];
+        ext = opal_datatype_span(&rdtypes[i]->super, rcounts[i], &gap);
 
         max_size = ext > max_size ? ext : max_size;
     }
 
     /* Allocate a temporary buffer */
-    tmp_buffer = calloc (max_size, 1);
+    tmp_buffer = save_buffer = calloc (max_size, 1);
     if (NULL == tmp_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    tmp_buffer -= gap;
 
     reqs = coll_base_comm_get_reqs( module->base_data, 2);
     if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; goto error_hndl; }
@@ -128,7 +128,7 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
 
  error_hndl:
     /* Free the temporary buffer */
-    free (tmp_buffer);
+    free (save_buffer);
     if( MPI_SUCCESS != err ) {  /* Free the requests. */
         if( NULL != reqs ) {
             ompi_coll_base_free_reqs(reqs, 2);
