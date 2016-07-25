@@ -374,11 +374,18 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         kv->data.uint32 = pptr->node_rank;
         opal_list_append(pmap, &kv->super);
 
-        /* node id */
+        /* hostname */
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_HOSTNAME);
         kv->type = OPAL_STRING;
         kv->data.string = strdup(pptr->node->name);
+        opal_list_append(pmap, &kv->super);
+
+        /* node ID */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_NODEID);
+        kv->type = OPAL_UINT32;
+        kv->data.uint32 = node->index;
         opal_list_append(pmap, &kv->super);
     }
 

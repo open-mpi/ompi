@@ -198,7 +198,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         OPAL_MODEX_RECV_VALUE(err, OPAL_PMIX_NODEID, &(proc->super.proc_name), &pval, OPAL_UINT32);
         if( OPAL_SUCCESS != err ) {
             opal_output(0, "Unable to extract peer %s nodeid from the modex.\n",
-                        OMPI_NAME_PRINT(&(proc->super)));
+                        OMPI_NAME_PRINT(&(proc->super.proc_name)));
             vpids[i] = colors[i] = -1;
             continue;
         }
