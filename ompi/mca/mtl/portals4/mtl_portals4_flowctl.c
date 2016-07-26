@@ -70,6 +70,13 @@ ompi_mtl_portals4_flowctl_init(void)
         goto error;
     }
 
+    if (ompi_mtl_portals4.flowctl_idx != REQ_FLOWCTL_TABLE_ID) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc did not allocate the requested PT: %d\n",
+                            __FILE__, __LINE__, ompi_mtl_portals4.flowctl_idx);
+        goto error;
+    }
+
     ret = PtlCTAlloc(ompi_mtl_portals4.ni_h,
                      &ompi_mtl_portals4.flowctl.trigger_ct_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
@@ -291,9 +298,7 @@ ompi_mtl_portals4_flowctl_trigger(void)
 {
     int ret;
 
-    if (false == ompi_mtl_portals4.flowctl.flowctl_active) {
-        ompi_mtl_portals4.flowctl.flowctl_active = true;
-
+    if (true == OPAL_ATOMIC_CMPSET_32(&ompi_mtl_portals4.flowctl.flowctl_active, false, true)) {
         /* send trigger to root */
         ret = PtlPut(ompi_mtl_portals4.zero_md_h,
                      0,
