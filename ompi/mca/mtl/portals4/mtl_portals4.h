@@ -46,6 +46,10 @@ struct mca_mtl_portals4_module_t {
 
     /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
     int32_t use_logical;
+
+    /* Process_id */
+    ptl_process_t ptl_process_id;
+
     /* Use flow control: 1 (true) : 0 (false) */
     int32_t use_flowctl;
 
