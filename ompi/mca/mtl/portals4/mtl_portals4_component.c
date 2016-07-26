@@ -100,6 +100,18 @@ ompi_mtl_portals4_component_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &param_priority);
+    ompi_mtl_portals4.short_limit = 2 * 1024;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "short_limit",
+                                           "Size limit for short messages",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.short_limit);
+
 
     ompi_mtl_portals4.eager_limit = 2 * 1024;
     (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
@@ -196,6 +208,9 @@ ompi_mtl_portals4_component_open(void)
                         "no"
 #endif
                         );
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Short limit: %d", (int)
+                        ompi_mtl_portals4.short_limit);
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Eager limit: %d", (int)
                         ompi_mtl_portals4.eager_limit);

@@ -53,6 +53,8 @@ struct mca_mtl_portals4_module_t {
     /* Use flow control: 1 (true) : 0 (false) */
     int32_t use_flowctl;
 
+    /** Short limit; Size limit for short messages */
+    uint64_t short_limit;
     /** Eager limit; messages greater than this use a rendezvous protocol */
     uint64_t eager_limit;
     /** Size of short message blocks */

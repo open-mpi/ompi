@@ -52,6 +52,7 @@ struct ompi_mtl_portals4_isend_request_t {
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     struct ompi_mtl_portals4_pending_request_t *pending;
 #endif
+    ptl_size_t length;
     uint32_t event_count;
 };
 typedef struct ompi_mtl_portals4_isend_request_t ompi_mtl_portals4_isend_request_t;
