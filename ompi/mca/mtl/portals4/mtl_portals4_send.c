@@ -91,9 +91,11 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
 
     if ((PTL_EVENT_ACK == ev->type) &&
         (PTL_PRIORITY_LIST == ev->ptl_list) &&
-        (eager == ompi_mtl_portals4.protocol) &&
+        (ev->mlength == ptl_request->length) &&
         (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE))) {
-        /* long expected messages with the eager protocol won't see a
+        /* long expected messages with the eager protocol
+           (and also with the rndv protocol if the length
+           is less or egal to eager_limit) won't see a
            get event to complete the message.  Give them an extra
            count to cause the message to complete with just the SEND
            and ACK events and remove the ME. (we wait for the counter
@@ -307,8 +309,10 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
                          "Send %lu long send with hdr_data 0x%lx (0x%lx)",
                          ptl_request->opcount, hdr_data, match_bits));
 
-    put_length = (rndv == ompi_mtl_portals4.protocol) ?
-        (ptl_size_t) ompi_mtl_portals4.eager_limit : (ptl_size_t) length;
+    if ((rndv == ompi_mtl_portals4.protocol) && ((ptl_size_t) length > (ptl_size_t) ompi_mtl_portals4.eager_limit))
+        put_length = (ptl_size_t) ompi_mtl_portals4.eager_limit;
+    else put_length = (ptl_size_t) length;
+
 
     ret = PtlPut(ompi_mtl_portals4.send_md_h,
                  (ptl_size_t) start,
@@ -355,7 +359,7 @@ ompi_mtl_portals4_pending_list_progress()
         }
 
         pending = (ompi_mtl_portals4_pending_request_t*) item;
-        if (pending->length <= ompi_mtl_portals4.eager_limit) {
+        if (pending->length <= ompi_mtl_portals4.short_limit) {
             ret = ompi_mtl_portals4_short_isend(pending->mode,
                                                 pending->start,
                                                 pending->length,
@@ -414,6 +418,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
 
     ptl_request->opcount = OPAL_THREAD_ADD64((int64_t*)&ompi_mtl_portals4.opcount, 1);
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
+    ptl_request->length = length;
     ptl_request->event_count = 0;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
@@ -461,7 +466,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
         return OMPI_SUCCESS;
     }
 #endif
-    if (length <= ompi_mtl_portals4.eager_limit) {
+    if (length <= ompi_mtl_portals4.short_limit) {
         ret = ompi_mtl_portals4_short_isend(mode,
                                             start,
                                             length,
