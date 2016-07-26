@@ -113,6 +113,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         ptl_request->hdr_data = ev->hdr_data;
 #endif
 
+        ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
         if (!MTL_PORTALS4_IS_SHORT_MSG(ev->match_bits) && ompi_mtl_portals4.protocol == rndv) {
             /* If it's not a short message and we're doing rndv, we
                only have the first part of the message.  Issue the get
@@ -142,8 +143,6 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                     __FILE__, __LINE__, ret);
                 ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
             }
-            ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
-
             OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                                  "Recv %lu (0x%lx) completed, expected",
                                  ptl_request->opcount, ptl_request->hdr_data));
@@ -166,11 +165,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
 
         /* set the received length in the status, now that we know
            excatly how much data was sent. */
-        ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
-        if (ompi_mtl_portals4.protocol == rndv) {
-            ptl_request->super.super.ompi_req->req_status._ucount +=
-                ompi_mtl_portals4.eager_limit;
-        }
+        ptl_request->super.super.ompi_req->req_status._ucount += ev->mlength;
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
         OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
@@ -281,10 +276,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             ptl_request->super.super.completion_callback(&ptl_request->super.super);
 
         } else {
-            if (ev->mlength > 0) {
-                /* if rndv or triggered, copy the eager part to the right place */
-                memcpy(ptl_request->delivery_ptr, ev->start, ev->mlength);
-            }
+
+            /* For long messages in the overflow list, ev->mlength = 0 */
+            ptl_request->super.super.ompi_req->req_status._ucount = 0;
 
             ret = read_msg((char*) ptl_request->delivery_ptr + ev->mlength,
                            ((msg_length > ptl_request->delivery_len) ?
