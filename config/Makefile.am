@@ -12,6 +12,8 @@
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
 #                         reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,8 +23,9 @@
 
 EXTRA_DIST = \
         distscript.csh \
-	opal_get_version.m4sh \
-	ltmain_pgi_tp.diff \
+        opal_get_version.m4sh \
+        ltmain_nag_pthread.diff \
+        ltmain_pgi_tp.diff \
         ompi_mca_priority_sort.pl
 
 maintainer-clean-local:
