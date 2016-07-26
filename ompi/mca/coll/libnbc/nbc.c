@@ -18,6 +18,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  *
  */
+
 #include "nbc_internal.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/op/op.h"
@@ -257,6 +258,23 @@ int NBC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype dataty
   return OMPI_SUCCESS;
 }
 
+/* this function schedule the release of one datatype */
+int NBC_Sched_datatype (MPI_Datatype datatype, NBC_Schedule *schedule) {
+  int ret;
+  NBC_Args_datatype datatype_args;
+  datatype_args.type = DATATYPE;
+  datatype_args.datatype = datatype;
+  ret = nbc_schedule_round_append (schedule, &datatype_args, sizeof (datatype_args), false);
+  if (OMPI_SUCCESS != ret) {
+    return ret;
+  }
+  OBJ_RETAIN(datatype);
+
+  NBC_DEBUG(10, "added datatype - ends at byte %i\n", nbc_schedule_get_size (schedule));
+
+  return OMPI_SUCCESS;
+}
+
 /* this function ends a round of a schedule */
 int NBC_Sched_barrier (NBC_Schedule *schedule) {
   return nbc_schedule_round_append (schedule, NULL, 0, true);
@@ -390,6 +408,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
   NBC_Args_copy     copyargs;
   NBC_Args_unpack unpackargs;
   void *buf1,  *buf2;
+  NBC_Args_datatype datatypeargs;
 
   /* get round-schedule address */
   ptr = handle->schedule->data + handle->row_offset;
@@ -535,6 +554,15 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         }
 
         break;
+
+      case DATATYPE:
+        NBC_DEBUG(5, "  DATATYPE(offset %li) ", offset);
+        NBC_GET_BYTES(ptr,datatypeargs);
+        OBJ_RELEASE(datatypeargs.datatype);
+        res = OMPI_SUCCESS;
+     
+        break;
+
       default:
         NBC_Error ("NBC_Start_round: bad type %li at offset %li", (long)type, offset);
         return OMPI_ERROR;
