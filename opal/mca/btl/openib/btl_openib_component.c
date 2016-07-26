@@ -793,7 +793,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             }
 #endif
 
-#ifdef HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXT_ATOMIC_CAP
+#ifdef HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXP_ATOMIC_CAP
             switch (openib_btl->device->ib_exp_dev_attr.exp_atomic_cap)
 #else
             switch (openib_btl->device->ib_dev_attr.atomic_cap)
@@ -2521,7 +2521,7 @@ btl_openib_component_init(int *num_btl_modules,
     mca_btl_openib_frag_init_data_t *init_data;
     struct dev_distance *dev_sorted;
     float distance;
-    int index, value;
+    int index;
     bool found;
     mca_base_var_source_t source;
     int list_count = 0;
@@ -2886,13 +2886,6 @@ btl_openib_component_init(int *num_btl_modules,
         opal_argv_free(mca_btl_openib_component.if_exclude_list);
         mca_btl_openib_component.if_exclude_list = NULL;
     }
-
-    /* If we are using ptmalloc2 and there are no posix threads
-       available, this will cause memory corruption.  Refuse to run.
-       Right now, ptmalloc2 is the only memory manager that we have on
-       OS's that support OpenFabrics that provide both FREE and MUNMAP
-       support, so the following test is [currently] good enough... */
-    value = opal_mem_hooks_support_level();
 
 #if OPAL_CUDA_SUPPORT
    if (mca_btl_openib_component.cuda_want_gdr && (0 == opal_leave_pinned)) {
