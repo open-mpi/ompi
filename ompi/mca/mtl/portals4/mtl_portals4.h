@@ -73,6 +73,8 @@ struct mca_mtl_portals4_module_t {
 
     /** Network interface handle for matched interface */
     ptl_handle_ni_t ni_h;
+    /** Limit given by portals after NIInit */
+    uint64_t max_msg_size_mtl;
     /** Uid for current user */
     ptl_uid_t uid;
 
