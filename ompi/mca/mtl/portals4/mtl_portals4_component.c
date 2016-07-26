@@ -350,6 +350,10 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
+    ompi_mtl_portals4.ptl_process_id = id;
+    OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output,
+        "PtlGetPhysId rank=%x nid=%x pid=%x\n", id.rank, id.phys.nid, id.phys.pid));
+
     OPAL_MODEX_SEND(ret, OPAL_PMIX_GLOBAL,
                     &mca_mtl_portals4_component.mtl_version,
                     &id, sizeof(id));
