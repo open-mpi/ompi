@@ -171,6 +171,7 @@ static int cray_init(void)
     opal_process_name_t ldr;
     char nmtmp[64];
     char *str, **localranks = NULL;
+    opal_process_name_t name;
 
     ++pmix_init_count;
 
@@ -274,12 +275,16 @@ static int cray_init(void)
     // setup hash table
     opal_pmix_base_hash_init();
 
+    /* setup a name for retrieving data associated with the job */
+    name.jobid = pmix_jobid;
+    name.vpid = OPAL_VPID_WILDCARD;
+
     /* save the job size */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_JOB_SIZE);
     kv.type = OPAL_UINT32;
     kv.data.uint32 = pmix_size;
-    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&name, &kv))) {
 	OPAL_ERROR_LOG(rc);
 	OBJ_DESTRUCT(&kv);
 	goto err_exit;
@@ -321,8 +326,8 @@ static int cray_init(void)
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_MAX_PROCS);
     kv.type = OPAL_UINT32;
-    kv.data.uint32 = atoi(buf);
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    kv.data.uint32 = pmix_usize;
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&name, &kv))) {
 	OPAL_ERROR_LOG(ret);
 	OBJ_DESTRUCT(&kv);
 	goto err_exit;
@@ -333,7 +338,7 @@ static int cray_init(void)
     kv.key = strdup(OPAL_PMIX_JOBID);
     kv.type = OPAL_UINT32;
     kv.data.uint32 = pmix_jobid;
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&name, &kv))) {
 	OPAL_ERROR_LOG(ret);
 	OBJ_DESTRUCT(&kv);
 	goto err_exit;
@@ -345,7 +350,7 @@ static int cray_init(void)
     kv.key = strdup(OPAL_PMIX_LOCAL_SIZE);
     kv.type = OPAL_UINT32;
     kv.data.uint32 = pmix_nlranks;
-    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&name, &kv))) {
 	OPAL_ERROR_LOG(rc);
 	OBJ_DESTRUCT(&kv);
 	goto err_exit;
