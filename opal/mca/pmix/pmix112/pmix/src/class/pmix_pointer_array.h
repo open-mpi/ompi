@@ -23,7 +23,7 @@
 #ifndef PMIX_POINTER_ARRAY_H
 #define PMIX_POINTER_ARRAY_H
 
-#include <private/autogen/config.h>
+#include <src/include/pmix_config.h>
 
 #if HAVE_STDBOOL_H
 #include <stdbool.h>

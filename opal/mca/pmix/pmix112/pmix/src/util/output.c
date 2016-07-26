@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -20,11 +20,12 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 #include <pmix/pmix_common.h>
 
 #include <stdio.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #ifdef HAVE_SYSLOG_H
@@ -175,7 +176,9 @@ bool pmix_output_init(void)
     }
     gethostname(hostname, sizeof(hostname));
     hostname[sizeof(hostname)-1] = '\0';
-    asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
+    if (0 > asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid())) {
+        return PMIX_ERR_NOMEM;
+    }
 
     for (i = 0; i < PMIX_OUTPUT_MAX_STREAMS; ++i) {
         info[i].ldi_used = false;
@@ -194,7 +197,9 @@ bool pmix_output_init(void)
 
     /* Set some defaults */
 
-    asprintf(&output_prefix, "output-pid%d-", getpid());
+    if (0 > asprintf(&output_prefix, "output-pid%d-", getpid())) {
+        return false;
+    }
     output_dir = strdup(pmix_tmp_directory());
 
     /* Open the default verbose stream */
@@ -263,48 +268,10 @@ void pmix_output_reopen_all(void)
         free(verbose.lds_prefix);
         verbose.lds_prefix = NULL;
     }
-    asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
-#if 0
-    int i;
-    pmix_output_stream_t lds;
-
-    for (i = 0; i < PMIX_OUTPUT_MAX_STREAMS; ++i) {
-
-        /* scan till we find ldi_used == 0, which is the end-marker */
-
-        if (!info[i].ldi_used) {
-            break;
-        }
-
-        /*
-         * set this to zero to ensure that pmix_output_open will
-         * return this same index as the output stream id
-         */
-        info[i].ldi_used = false;
-
-#if USE_SYSLOG
-        lds.lds_want_syslog = info[i].ldi_syslog;
-        lds.lds_syslog_priority = info[i].ldi_syslog_priority;
-        lds.lds_syslog_ident = info[i].ldi_syslog_ident;
-#else
-        lds.lds_want_syslog = false;
-#endif
-        lds.lds_prefix = info[i].ldi_prefix;
-        lds.lds_suffix = info[i].ldi_suffix;
-        lds.lds_want_stdout = info[i].ldi_stdout;
-        lds.lds_want_stderr = info[i].ldi_stderr;
-        lds.lds_want_file = (-1 == info[i].ldi_fd) ? false : true;
-        /* open all streams in append mode */
-        lds.lds_want_file_append = true;
-        lds.lds_file_suffix = info[i].ldi_file_suffix;
-
-        /*
-         * call pmix_output_open to open the stream. The return value
-         * is guaranteed to be i.  So we can ignore it.
-         */
-        pmix_output_open(&lds);
+    if (0 > asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid())) {
+        verbose.lds_prefix = NULL;
+        return;
     }
-#endif
 }
 
 
@@ -465,6 +432,56 @@ void pmix_output_set_output_file_info(const char *dir,
     if (NULL != prefix) {
         free(output_prefix);
         output_prefix = strdup(prefix);
+    }
+}
+
+void pmix_output_hexdump(int verbose_level, int output_id,
+                         void *ptr, int buflen)
+{
+    unsigned char *buf = (unsigned char *) ptr;
+    char out_buf[120];
+    int ret = 0;
+    int out_pos = 0;
+    int i, j;
+
+    if (output_id >= 0 && output_id < PMIX_OUTPUT_MAX_STREAMS &&
+        info[output_id].ldi_verbose_level >= verbose_level) {
+        pmix_output_verbose(verbose_level, output_id, "dump data at %p %d bytes\n", ptr, buflen);
+        for (i = 0; i < buflen; i += 16) {
+            out_pos = 0;
+            ret = sprintf(out_buf + out_pos, "%06x: ", i);
+            if (ret < 0)
+            return;
+            out_pos += ret;
+            for (j = 0; j < 16; j++) {
+                if (i + j < buflen)
+                ret = sprintf(out_buf + out_pos, "%02x ",
+                        buf[i + j]);
+                else
+                ret = sprintf(out_buf + out_pos, "   ");
+                if (ret < 0)
+                return;
+                out_pos += ret;
+            }
+            ret = sprintf(out_buf + out_pos, " ");
+            if (ret < 0)
+            return;
+            out_pos += ret;
+            for (j = 0; j < 16; j++)
+            if (i + j < buflen) {
+                ret = sprintf(out_buf + out_pos, "%c",
+                        isprint(buf[i+j]) ?
+                        buf[i + j] :
+                        '.');
+                if (ret < 0)
+                return;
+                out_pos += ret;
+            }
+            ret = sprintf(out_buf + out_pos, "\n");
+            if (ret < 0)
+            return;
+            pmix_output_verbose(verbose_level, output_id, "%s", out_buf);
+        }
     }
 }
 
@@ -803,7 +820,9 @@ static int make_string(char **no_newline_string, output_desc_t *ldi,
 
     /* Make the formatted string */
 
-    vasprintf(no_newline_string, format, arglist);
+    if (0 > vasprintf(no_newline_string, format, arglist)) {
+        return PMIX_ERR_NOMEM;
+    }
     total_len = len = strlen(*no_newline_string);
     if ('\n' != (*no_newline_string)[len - 1]) {
         want_newline = true;
@@ -911,15 +930,19 @@ static int output(int output_id, const char *format, va_list arglist)
 
         /* stdout output */
         if (ldi->ldi_stdout) {
-            write(fileno(stdout), out, (int)strlen(out));
+            if (0 > write(fileno(stdout), out, (int)strlen(out))) {
+                return PMIX_ERROR;
+            }
             fflush(stdout);
         }
 
         /* stderr output */
         if (ldi->ldi_stderr) {
-            write((-1 == default_stderr_fd) ?
-                  fileno(stderr) : default_stderr_fd,
-                  out, (int)strlen(out));
+            if (0 > write((-1 == default_stderr_fd) ?
+                          fileno(stderr) : default_stderr_fd,
+                          out, (int)strlen(out))) {
+                return PMIX_ERROR;
+            }
             fflush(stderr);
         }
 
@@ -939,7 +962,9 @@ static int output(int output_id, const char *format, va_list arglist)
                     snprintf(buffer, BUFSIZ - 1,
                              "[WARNING: %d lines lost because the PMIx process session directory did\n not exist when pmix_output() was invoked]\n",
                              ldi->ldi_file_num_lines_lost);
-                    write(ldi->ldi_fd, buffer, (int)strlen(buffer));
+                    if (0 > write(ldi->ldi_fd, buffer, (int)strlen(buffer))) {
+                        return PMIX_ERROR;
+                    }
                     ldi->ldi_file_num_lines_lost = 0;
                     if (out != buffer) {
                         free(out);
@@ -947,7 +972,9 @@ static int output(int output_id, const char *format, va_list arglist)
                 }
             }
             if (ldi->ldi_fd != -1) {
-                write(ldi->ldi_fd, out, (int)strlen(out));
+                if (0 > write(ldi->ldi_fd, out, (int)strlen(out))) {
+                    return PMIX_ERROR;
+                }
             }
         }
         free(str);

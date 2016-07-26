@@ -13,8 +13,8 @@
 
 BEGIN_C_DECLS
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 extern pmix_sec_base_module_t pmix_munge_module;
 

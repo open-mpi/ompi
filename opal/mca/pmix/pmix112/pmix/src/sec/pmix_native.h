@@ -11,8 +11,8 @@
 #ifndef PMIX_NATIVE_H
 #define PMIX_NATIVE_H
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 #include "src/sec/pmix_sec.h"
 

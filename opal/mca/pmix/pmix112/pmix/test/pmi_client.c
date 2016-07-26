@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -17,7 +17,6 @@
 
 #include "pmi.h"
 
-
 /* Target is legacy SLURM pmi library implementation */
 static int _legacy = 0;
 /* Verbose level 0-silent, 1-fatal, 2-error, 3+ debug*/
@@ -30,10 +29,10 @@ static int _verbose = 1;
             exit(rc);    \
     } while (0)
 
-#define log_error(fmt) \
+#define log_error(fmt, ...) \
     do {                                                     \
         if (_verbose > 1)                          \
-            fprintf(stderr, "ERROR " fmt);    \
+            fprintf(stderr, "ERROR " fmt, ##__VA_ARGS__);    \
     } while (0)
 
 #define log_info(fmt, ...) \
@@ -45,7 +44,7 @@ static int _verbose = 1;
 #define log_assert(e, msg) \
     do {                                                                \
         if (!(e)) {                                                     \
-            log_fatal("%s at %s:%d\n", msg, __FUNCTION__, __LINE__);    \
+            log_fatal("%s at %s:%d\n", msg, __func__, __LINE__);    \
             rc = -1;                                                    \
         }                                                               \
     } while (0)
@@ -62,7 +61,6 @@ static int test_item4(void);
 static int test_item5(void);
 static int test_item6(void);
 static int test_item7(void);
-static int test_item8(void);
 
 static int spawned, size, rank, appnum;
 static char jobid[255];
@@ -78,8 +76,6 @@ int main(int argc, char **argv)
     srand(time(NULL));
     str = getenv("VERBOSE");
     _verbose = (str ? atoi(str) : _verbose);
-    str = getenv("LEGACY");
-    _legacy = (str ? atoi(str) : _legacy);
 
     spawned = random_value(10, 20);
     size = random_value(10, 20);
@@ -89,6 +85,9 @@ int main(int argc, char **argv)
         log_fatal("PMI_Init failed: %d\n", rc);
         return rc;
     }
+
+    str = getenv("PMIX_NAMESPACE");
+    _legacy = (str ? 0 : 1);
 
     /* this test should be always run */
     if (1) {
@@ -131,12 +130,6 @@ int main(int argc, char **argv)
         rc = test_item7();
         ret += (rc ? 1 : 0);
         log_info("TI7  : %s\n", (rc ? "FAIL" : "PASS"));
-    }
-
-    if (!ti || 8 == ti) {
-        rc = test_item8();
-        ret += (rc ? 1 : 0);
-        log_info("TI8  : %s\n", (rc ? "FAIL" : "PASS"));
     }
 
     if (PMI_SUCCESS != (rc = PMI_Finalize())) {
@@ -191,32 +184,32 @@ static int test_item1(void)
         log_assert(sizeof(jobid) == val, "Check PMIX_MAX_NSLEN value in pmix_common.h");
     }
 
-    sprintf(jobid, "%s", __FUNCTION__);
+    sprintf(jobid, "%s", __func__);
     if (PMI_SUCCESS != (rc = PMI_Get_id(jobid, sizeof(jobid)))) {
         log_fatal("PMI_Get_id failed: %d\n", rc);
         return rc;
     }
 
     log_info("jobid=%s\n", jobid);
-    log_assert(memcmp(jobid, __FUNCTION__, sizeof(__FUNCTION__)), "");
+    log_assert(memcmp(jobid, __func__, sizeof(__func__)), "");
 
-    sprintf(jobid, "%s", __FUNCTION__);
+    sprintf(jobid, "%s", __func__);
     if (PMI_SUCCESS != (rc = PMI_Get_kvs_domain_id(jobid, sizeof(jobid)))) {
         log_fatal("PMI_Get_kvs_domain_id failed: %d\n", rc);
         return rc;
     }
 
     log_info("PMI_Get_kvs_domain_id=%s\n", jobid);
-    log_assert(memcmp(jobid, __FUNCTION__, sizeof(__FUNCTION__)), "");
+    log_assert(memcmp(jobid, __func__, sizeof(__func__)), "");
 
-    sprintf(jobid, "%s", __FUNCTION__);
+    sprintf(jobid, "%s", __func__);
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_my_name(jobid, sizeof(jobid)))) {
         log_fatal("PMI_KVS_Get_my_name failed: %d\n", rc);
         return rc;
     }
 
     log_info("PMI_KVS_Get_my_name=%s\n", jobid);
-    log_assert(memcmp(jobid, __FUNCTION__, sizeof(__FUNCTION__)), "");
+    log_assert(memcmp(jobid, __func__, sizeof(__func__)), "");
 
     return rc;
 }
@@ -278,12 +271,12 @@ static int test_item4(void)
     log_info("PMI_Get_clique_size=%d\n", val);
     log_assert((0 < val) && (val <= size), "");
 
-    ranks = alloca(val);
+    ranks = alloca(val*sizeof(int));
     if (!ranks) {
         return PMI_FAIL;
     }
 
-    memset(ranks, (-1), val);
+    memset(ranks, (-1), val*sizeof(int));
     if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(ranks, val))) {
         log_fatal("PMI_Get_clique_ranks failed: %d\n", rc);
         return rc;
@@ -311,6 +304,11 @@ static int test_item5(void)
     };
     const char **ptr = tkeys;
 
+    if (_legacy || !_legacy) {
+        log_error("PMIx and SLURM/PMI1 do not set 'PMI_process_mapping' %s\n", "(Do not mark test as failed)");
+        return rc;
+    }
+
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_value_length_max(&val_size))) {
         log_fatal("PMI_KVS_Get_value_length_max failed: %d\n", rc);
         return rc;
@@ -336,16 +334,8 @@ static int test_item5(void)
 static int test_item6(void)
 {
     int rc = 0;
-
-    log_error("pmix does not support this functionality\n");
-    return rc;
-}
-
-static int test_item7(void)
-{
-    int rc = 0;
     char val[100];
-    const char *tkey = __FUNCTION__;
+    const char *tkey = __func__;
     const char *tval = __FILE__;
 
     if (PMI_SUCCESS != (rc = PMI_KVS_Put(jobid, tkey, tval))) {
@@ -365,7 +355,7 @@ static int test_item7(void)
     return rc;
 }
 
-static int test_item8(void)
+static int test_item7(void)
 {
     int rc = 0;
     char tkey[100];
@@ -382,17 +372,21 @@ static int test_item8(void)
                 return rc;
             }
         }
+    }
 
-        if (PMI_SUCCESS != (rc = PMI_KVS_Commit(jobid))) {
-            log_fatal("PMI_KVS_Commit %d\n", rc);
-            return rc;
-        }
+    if (PMI_SUCCESS != (rc = PMI_KVS_Commit(jobid))) {
+        log_fatal("PMI_KVS_Commit %d\n", rc);
+        return rc;
+    }
 
-        if (PMI_SUCCESS != (rc = PMI_Barrier())) {
-            log_fatal("PMI_Barrier %d\n", rc);
-            return rc;
-        }
+    if (PMI_SUCCESS != (rc = PMI_Barrier())) {
+        log_fatal("PMI_Barrier %d\n", rc);
+        return rc;
+    }
 
+    for (i = 0; i < size; i++) {
+        sprintf(tkey, "KEY-%d", i);
+        sprintf(tval, "VALUE-%d", i);
         if (PMI_SUCCESS != (rc = PMI_KVS_Get(jobid, tkey, val, sizeof(val)))) {
             log_fatal("PMI_KVS_Get [%s=?] %d\n", tkey, rc);
             return rc;

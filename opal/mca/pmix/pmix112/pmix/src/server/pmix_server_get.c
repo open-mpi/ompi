@@ -5,8 +5,9 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
- * Copyright (c) 2015      Mellanox Technologies, Inc.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,11 +15,11 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
-#include <private/types.h>
-#include <private/pmix_stdint.h>
-#include <private/pmix_socket_errno.h>
+#include <src/include/pmix_config.h>
+
+#include <src/include/types.h>
+#include <pmix/autogen/pmix_stdint.h>
+#include <src/include/pmix_socket_errno.h>
 
 #include <pmix_server.h>
 #include "src/include/pmix_globals.h"
@@ -83,8 +84,8 @@ PMIX_CLASS_INSTANCE(pmix_dmdx_reply_caddy_t,
 static void dmdx_cbfunc(pmix_status_t status, const char *data,
                         size_t ndata, void *cbdata,
                         pmix_release_cbfunc_t relfn, void *relcbdata);
-static pmix_status_t _satisfy_request(pmix_hash_table_t *ht, int rank,
-                                      pmix_modex_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t _satisfy_request(pmix_nspace_t *ns, int rank,
+                                      pmix_modex_cbfunc_t cbfunc, void *cbdata, bool *scope);
 static pmix_status_t create_local_tracker(char nspace[], int rank,
                                           pmix_info_t info[], size_t ninfo,
                                           pmix_modex_cbfunc_t cbfunc,
@@ -115,8 +116,6 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     pmix_info_t *info=NULL;
     size_t ninfo=0;
     pmix_dmdx_local_t *lcd;
-    pmix_rank_info_t *iptr;
-    pmix_hash_table_t *ht;
     bool local;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -191,28 +190,26 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         return rc;
     }
 
-    /* Since we know about all the local clients in this nspace,
-     * let's first try to satisfy the request with any available data.
-     * By default, we assume we are looking for data from a remote
-     * client, and then check to see if this is one of my local
-     * clients - if so, then we look in that hash table */
-    ht = &nptr->server->remote;
-    local = false;
-    PMIX_LIST_FOREACH(iptr, &nptr->server->ranks, pmix_rank_info_t) {
-        if (iptr->rank == rank) {
-            /* it is known local client - check the local table */
-            ht = &nptr->server->mylocal;
-            local = true;
-            break;
-        }
-    }
-
     /* see if we already have this data */
-    rc = _satisfy_request(ht, rank, cbfunc, cbdata);
+    rc = _satisfy_request(nptr, rank, cbfunc, cbdata, &local);
     if( PMIX_SUCCESS == rc ){
         /* request was successfully satisfied */
         PMIX_INFO_FREE(info, ninfo);
         return rc;
+    }
+
+    /* do not force dmodex logic for non-specific ranks
+     * let return not found status instead of doing fence with
+     * data exchange. User can make a decision to do such call getting
+     * not found status
+     */
+    if (PMIX_RANK_UNDEF == rank || PMIX_RANK_WILDCARD == rank) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "%s:%d not found data for namespace = %s, rank = %d "
+                            "(do not request resource manager server for non-specified rank)",
+                            pmix_globals.myid.nspace,
+                            pmix_globals.myid.rank, nspace, rank);
+        return PMIX_ERR_NOT_FOUND;
     }
 
     /* If we get here, then we don't have the data at this time. Check
@@ -355,38 +352,94 @@ void pmix_pending_nspace_requests(pmix_nspace_t *nptr)
     }
 }
 
-static pmix_status_t _satisfy_request(pmix_hash_table_t *ht, int rank,
-                                      pmix_modex_cbfunc_t cbfunc, void *cbdata)
+static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, int rank,
+                                      pmix_modex_cbfunc_t cbfunc, void *cbdata, bool *scope)
 {
     pmix_status_t rc;
     pmix_value_t *val;
     char *data;
     size_t sz;
+    int cur_rank;
+    int found = 0;
     pmix_buffer_t xfer, pbkt, *xptr;
+    void *last;
+    pmix_hash_table_t *hts[3];
+    pmix_hash_table_t **htptr;
+    pmix_rank_info_t *iptr;
+    bool local;
+
+    /* Since we know about all the local clients in this nspace,
+     * let's first try to satisfy the request with any available data.
+     * By default, we assume we are looking for data from a remote
+     * client, and then check to see if this is one of my local
+     * clients - if so, then we look in that hash table */
+    memset(hts, 0, sizeof(hts));
+    if (PMIX_RANK_UNDEF == rank) {
+        local = true;
+        hts[0] = &nptr->server->remote;
+        hts[1] = &nptr->server->mylocal;
+    } else {
+        local = false;
+        hts[0] = &nptr->server->remote;
+        PMIX_LIST_FOREACH(iptr, &nptr->server->ranks, pmix_rank_info_t) {
+            if (iptr->rank == rank) {
+                /* it is known local client - check the local table */
+                hts[0] = &nptr->server->mylocal;
+                local = true;
+                break;
+            }
+        }
+    }
+
+    if (NULL != scope) {
+        *scope = local;
+    }
 
     /* check to see if this data already has been
      * obtained as a result of a prior direct modex request from
      * a remote peer, or due to data from a local client
      * having been committed */
-    rc = pmix_hash_fetch(ht, rank, "modex", &val);
-    if (PMIX_SUCCESS == rc && NULL != val) {
-        /* the client is expecting this to arrive as a byte object
-         * containing a buffer, so package it accordingly */
-        PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
-        PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
-        xptr = &xfer;
-        PMIX_LOAD_BUFFER(&xfer, val->data.bo.bytes, val->data.bo.size);
-        pmix_bfrop.pack(&pbkt, &xptr, 1, PMIX_BUFFER);
-        xfer.base_ptr = NULL; // protect the passed data
-        xfer.bytes_used = 0;
-        PMIX_DESTRUCT(&xfer);
-        PMIX_UNLOAD_BUFFER(&pbkt, data, sz);
-        PMIX_DESTRUCT(&pbkt);
-        PMIX_VALUE_RELEASE(val);
-        /* pass it back */
-        cbfunc(rc, data, sz, cbdata, relfn, data);
-        return rc;
+    htptr = hts;
+    PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
+    while (NULL != *htptr) {
+        cur_rank = rank;
+        if (PMIX_RANK_UNDEF == rank) {
+            rc = pmix_hash_fetch_by_key(*htptr, "modex", &cur_rank, &val, &last);
+        } else {
+            rc = pmix_hash_fetch(*htptr, cur_rank, "modex", &val);
+        }
+        while (PMIX_SUCCESS == rc) {
+            if (NULL != val) {
+                pmix_bfrop.pack(&pbkt, &cur_rank, 1, PMIX_INT);
+                /* the client is expecting this to arrive as a byte object
+                 * containing a buffer, so package it accordingly */
+                PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
+                xptr = &xfer;
+                PMIX_LOAD_BUFFER(&xfer, val->data.bo.bytes, val->data.bo.size);
+                pmix_bfrop.pack(&pbkt, &xptr, 1, PMIX_BUFFER);
+                xfer.base_ptr = NULL; // protect the passed data
+                xfer.bytes_used = 0;
+                PMIX_DESTRUCT(&xfer);
+                PMIX_VALUE_RELEASE(val);
+                found++;
+            }
+            if (PMIX_RANK_UNDEF == rank) {
+                rc = pmix_hash_fetch_by_key(*htptr, NULL, &cur_rank, &val, &last);
+            } else {
+                break;
+            }
+        }
+        htptr++;
     }
+    PMIX_UNLOAD_BUFFER(&pbkt, data, sz);
+    PMIX_DESTRUCT(&pbkt);
+
+    if (found) {
+        /* pass it back */
+        cbfunc(PMIX_SUCCESS, data, sz, cbdata, relfn, data);
+        return PMIX_SUCCESS;
+    }
+
     return PMIX_ERR_NOT_FOUND;
 }
 
@@ -420,23 +473,10 @@ pmix_status_t pmix_pending_resolve(pmix_nspace_t *nptr, int rank,
             }
         } else if (NULL != nptr) {
             /* if we've got the blob - try to satisfy requests */
-            pmix_hash_table_t *ht;
-            pmix_rank_info_t *iptr;
-
-            /* by default we are looking for the remote data */
-            ht = &nptr->server->remote;
-            /* check if this rank is local */
-            PMIX_LIST_FOREACH(iptr, &nptr->server->ranks, pmix_rank_info_t) {
-                if (iptr->rank == rank) {
-                    ht = &nptr->server->mylocal;
-                    break;
-                }
-            }
-
             /* run through all the requests to this rank */
             PMIX_LIST_FOREACH(req, &lcd->loc_reqs, pmix_dmdx_request_t) {
                 pmix_status_t rc;
-                rc = _satisfy_request(ht, rank, req->cbfunc, req->cbdata);
+                rc = _satisfy_request(nptr, rank, req->cbfunc, req->cbdata, NULL);
                 if( PMIX_SUCCESS != rc ){
                     /* if we can't satisfy this particular request (missing key?) */
                     req->cbfunc(rc, NULL, 0, req->cbdata, NULL, NULL);

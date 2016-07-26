@@ -12,6 +12,7 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +20,7 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
+#include <src/include/pmix_config.h>
 
 #include <string.h>
 #include <stdlib.h>

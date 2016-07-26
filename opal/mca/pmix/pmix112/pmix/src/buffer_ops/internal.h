@@ -14,6 +14,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,8 +25,8 @@
 #ifndef PMIX_BFROP_INTERNAL_H_
 #define PMIX_BFROP_INTERNAL_H_
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h> /* for struct timeval */
@@ -201,9 +202,9 @@ extern pmix_data_type_t pmix_bfrop_num_reg_types;
 
 /* macro for registering data types */
 #define PMIX_REGISTER_TYPE(n, t, p, u, c, pr)                           \
-    do {                                                                \
+     do {                                                               \
         pmix_bfrop_type_info_t *_info;                                  \
-        _info = PMIX_NEW(pmix_bfrop_type_info_t);                        \
+        _info = PMIX_NEW(pmix_bfrop_type_info_t);                       \
         _info->odti_name = strdup((n));                                 \
         _info->odti_type = (t);                                         \
         _info->odti_pack_fn = (pmix_bfrop_pack_fn_t)(p);                \
@@ -212,7 +213,7 @@ extern pmix_data_type_t pmix_bfrop_num_reg_types;
         _info->odti_print_fn = (pmix_bfrop_print_fn_t)(pr) ;            \
         pmix_pointer_array_set_item(&pmix_bfrop_types, (t), _info);     \
         ++pmix_bfrop_num_reg_types;                                     \
-    } while(0);
+    } while (0)
 
 /*
  * Implementations of API functions

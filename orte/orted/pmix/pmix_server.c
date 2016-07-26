@@ -188,6 +188,7 @@ int pmix_server_init(void)
 {
     int rc;
     opal_list_t info;
+    opal_value_t *kv;
 
     if (orte_pmix_server_globals.initialized) {
         return ORTE_SUCCESS;
@@ -230,7 +231,6 @@ int pmix_server_init(void)
     if (NULL != opal_hwloc_topology) {
         char *xmlbuffer=NULL;
         int len;
-        opal_value_t *kv;
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
         if (0 != hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len)) {
@@ -242,6 +242,12 @@ int pmix_server_init(void)
         kv->type = OPAL_STRING;
         opal_list_append(&info, &kv->super);
     }
+    /* tell the server our temp directory */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_SERVER_TMPDIR);
+    kv->type = OPAL_STRING;
+    kv->data.string = strdup(orte_process_info.tmpdir_base);
+    opal_list_append(&info, &kv->super);
 
     /* setup the local server */
     if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server, &info))) {

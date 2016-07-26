@@ -9,9 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,8 +20,8 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 #include "src/util/argv.h"
 #include "src/util/error.h"
@@ -166,7 +167,58 @@ pmix_status_t pmix_bfrop_copy_payload(pmix_buffer_t *dest, pmix_buffer_t *src)
 
     return PMIX_SUCCESS;
 }
-
+/* compare function for pmix_value_t*/
+bool pmix_value_cmp(pmix_value_t *p, pmix_value_t *p1)
+{
+    bool rc = false;
+    switch (p->type) {
+        case PMIX_BOOL:
+            rc = (p->data.flag == p1->data.flag);
+            break;
+        case PMIX_BYTE:
+            rc = (p->data.byte == p1->data.byte);
+            break;
+        case PMIX_SIZE:
+            rc = (p->data.size == p1->data.size);
+            break;
+        case PMIX_INT:
+            rc = (p->data.integer == p1->data.integer);
+            break;
+        case PMIX_INT8:
+            rc = (p->data.int8 == p1->data.int8);
+            break;
+        case PMIX_INT16:
+            rc = (p->data.int16 == p1->data.int16);
+            break;
+        case PMIX_INT32:
+            rc = (p->data.int32 == p1->data.int32);
+            break;
+        case PMIX_INT64:
+            rc = (p->data.int64 == p1->data.int64);
+            break;
+        case PMIX_UINT:
+            rc = (p->data.uint == p1->data.uint);
+            break;
+        case PMIX_UINT8:
+            rc = (p->data.uint8 == p1->data.int8);
+            break;
+        case PMIX_UINT16:
+            rc = (p->data.uint16 == p1->data.uint16);
+            break;
+        case PMIX_UINT32:
+            rc = (p->data.uint32 == p1->data.uint32);
+            break;
+        case PMIX_UINT64:
+            rc = (p->data.uint64 == p1->data.uint64);
+            break;
+        case PMIX_STRING:
+            rc = strcmp(p->data.string, p1->data.string);
+            break;
+        default:
+            pmix_output(0, "COMPARE-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)p->type);
+    }
+    return rc;
+}
 /* COPY FUNCTIONS FOR GENERIC PMIX TYPES */
 pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
 {
@@ -245,7 +297,7 @@ pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
     case PMIX_INFO_ARRAY:
         p->data.array.size = src->data.array.size;
         if (0 < src->data.array.size) {
-            p->data.array.array = (struct pmix_info_t*)malloc(src->data.array.size * sizeof(pmix_info_t));
+            p->data.array.array = (pmix_info_t*)malloc(src->data.array.size * sizeof(pmix_info_t));
             p1 = (pmix_info_t*)p->data.array.array;
             s1 = (pmix_info_t*)src->data.array.array;
             memcpy(p1, s1, src->data.array.size * sizeof(pmix_info_t));
@@ -349,7 +401,7 @@ pmix_status_t pmix_bfrop_copy_array(pmix_info_array_t **dest,
 
     *dest = (pmix_info_array_t*)malloc(sizeof(pmix_info_array_t));
     (*dest)->size = src->size;
-    (*dest)->array = (struct pmix_info_t*)malloc(src->size * sizeof(pmix_info_t));
+    (*dest)->array = (pmix_info_t*)malloc(src->size * sizeof(pmix_info_t));
     d1 = (pmix_info_t*)(*dest)->array;
     s1 = (pmix_info_t*)src->array;
     memcpy(d1, s1, src->size * sizeof(pmix_info_t));

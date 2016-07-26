@@ -22,7 +22,7 @@
 #ifndef PMIX_TYPES_H
 #define PMIX_TYPES_H
 
-#include <private/autogen/config.h>
+#include <src/include/pmix_config.h>
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>

@@ -10,8 +10,8 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 #include <pmix/pmix_common.h>
 
 #include "src/include/pmix_globals.h"
@@ -118,7 +118,7 @@ static int validate_cred(pmix_peer_t *peer, char *cred)
     munge_err_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "sec: munge validate_cred %s", cred);
+                        "sec: munge validate_cred %s", cred ? cred : "NULL");
 
     /* parse the inbound string */
     if (EMUNGE_SUCCESS != (rc = munge_decode(cred, NULL, NULL, NULL, &uid, &gid))) {

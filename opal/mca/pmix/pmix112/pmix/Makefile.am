@@ -31,9 +31,9 @@ EXTRA_DIST =
 # Only install the valgrind suppressions file if we're building in
 # standalone mode
 dist_pmixdata_DATA =
+
 if ! PMIX_EMBEDDED_MODE
 dist_pmixdata_DATA += contrib/pmix-valgrind.supp
-endif
 
 man_MANS = \
         man/man3/pmix_init.3 \
@@ -42,8 +42,12 @@ man_MANS = \
         man/man3/pmix_abort.3 \
         man/man3/pmix_put.3 \
         man/man3/pmix_commit.3 \
+        man/man3/pmix_fence.3 \
+        man/man3/pmix_get.3 \
         man/man7/pmix.7 \
         man/man7/pmix_constants.7
+
+endif
 
 include config/Makefile.am
 include include/Makefile.am
@@ -61,17 +65,22 @@ if PMIX_EMBEDDED_MODE
 noinst_LTLIBRARIES = libpmix.la
 libpmix_la_SOURCES = $(headers) $(sources)
 libpmix_la_LDFLAGS =
+
 else
+
 lib_LTLIBRARIES = libpmix.la
 libpmix_la_SOURCES = $(headers) $(sources)
 libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
+SUBDIRS = . test examples
 endif
 
-
-if ! PMIX_EMBEDDED_MODE
-SUBDIRS = . test
+if WANT_INSTALL_HEADERS
 pmixdir = $(pmixincludedir)/$(subdir)
 nobase_pmix_HEADERS = $(headers)
+
+else
+
+noinst_HEADERS = $(headers)
 endif
 
 nroff:
@@ -82,14 +91,15 @@ nroff:
 
 EXTRA_DIST += README INSTALL VERSION LICENSE autogen.sh \
              config/pmix_get_version.sh $(man_MANS) \
-             contrib/platform/optimized \
-             test/test_common.h test/cli_stages.h \
-             test/server_callbacks.h test/test_fence.h \
-             test/test_publish.h test/test_resolve_peers.h \
-             test/test_spawn.h test/utils.h test/test_cd.h \
-             examples/client.c examples/dmodex.c examples/dynamic.c \
-             examples/fault.c examples/pub.c
+             contrib/platform/optimized
 
+if ! PMIX_EMBEDDED_MODE
+
+EXTRA_DIST += test/test_common.h test/cli_stages.h \
+              test/server_callbacks.h test/test_fence.h \
+              test/test_publish.h test/test_resolve_peers.h \
+              test/test_spawn.h test/utils.h test/test_cd.h
+endif
 
 dist-hook:
 	env LS_COLORS= sh "$(top_srcdir)/config/distscript.sh" "$(top_srcdir)" "$(distdir)" "$(PMIX_VERSION)" "$(PMIX_REPO_REV)"

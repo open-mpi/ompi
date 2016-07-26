@@ -32,6 +32,9 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_USERID                "pmix.euid"         // (uint32_t) effective user id
 #define OPAL_PMIX_GRPID                 "pmix.egid"         // (uint32_t) effective group id
 
+#define OPAL_PMIX_SERVER_TMPDIR         "pmix.srvr.tmpdir"  // (char*) temp directory where PMIx server will place
+                                                            //         client rendezvous points
+
 /* general proc-level attributes */
 #define OPAL_PMIX_CPUSET                "pmix.cpuset"       // (char*) hwloc bitmap applied to proc upon launch
 #define OPAL_PMIX_CREDENTIAL            "pmix.cred"         // (char*) security credential assigned to proc

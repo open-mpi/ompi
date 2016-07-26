@@ -249,8 +249,12 @@ void errhandler(pmix_status_t status,
                 pmix_proc_t procs[], size_t nprocs,
                 pmix_info_t info[], size_t ninfo)
 {
-    TEST_ERROR(("Error handler with status = %d", status))
-    test_abort = true;
+    TEST_ERROR((" PMIX server Error handler with status = %d", status));
+    /* notify clients of error */
+    PMIx_Notify_error(status,
+                      NULL, 0,
+                      NULL, 0, NULL, 0,
+                      op_callbk, NULL);
 }
 
 void op_callbk(pmix_status_t status,

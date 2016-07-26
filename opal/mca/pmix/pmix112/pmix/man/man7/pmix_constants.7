@@ -1,4 +1,4 @@
-.TH "pmix_constants" "7" "2015\-10\-25" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.TH "pmix_constants" "7" "2016\-03\-01" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 PMIx Constants
@@ -72,19 +72,6 @@ Each access domain belongs to a single fabric domain.
 .PP
 \f[I]PMIX_ERROR\f[] : A general error code \- an error occurred, but no
 specific reason can be provided.
-.PP
-\f[I]fi_rma \- Remote Memory Access\f[] : RMA transfers are one\-sided
-operations that read or write data directly to a remote memory region.
-Other than defining the appropriate memory region, RMA operations do not
-require interaction at the target side for the data transfer to
-complete.
-.PP
-\f[I]fi_atomic \- Atomic\f[] : Atomic operations can perform one of
-several operations on a remote memory region.
-Atomic operations include well\-known functionality, such as atomic\-add
-and compare\-and\-swap, plus several other pre\-defined calls.
-Unlike other data transfer interfaces, atomic operations are aware of
-the data formatting at the target memory region.
 .SH SEE ALSO
 .PP
 \f[C]pmix\f[](7)

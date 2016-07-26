@@ -64,7 +64,7 @@ static void add_noise(char *noise_param, char *my_nspace, int my_rank)
     } else {                                                                                                        \
         (void)snprintf(key, sizeof(key)-1, "key-f%d:%d", fence_num, ind);                                             \
     }                                                                                                               \
-} while (0);
+} while (0)
 
 #define PUT(dtype, data, flag, fence_num, ind, use_same_keys) do {                                                  \
     char key[50];                                                                                                   \
@@ -77,7 +77,7 @@ static void add_noise(char *noise_param, char *my_nspace, int my_rank)
         rc = PMIX_ERROR;                                                                                            \
     }                                                                                                               \
     PMIX_VALUE_DESTRUCT(&value);                                                                                    \
-} while (0);
+} while (0)
 
 #define GET(dtype, data, ns, r, fence_num, ind, use_same_keys, blocking, ok_notfnd) do {                        \
     char key[50];                                                                                                   \
@@ -137,7 +137,7 @@ static void add_noise(char *noise_param, char *my_nspace, int my_rank)
         TEST_VERBOSE(("%s:%d: GET OF %s from %s:%d SUCCEEDED", my_nspace, my_rank, key, ns, r));                 \
         PMIX_VALUE_RELEASE(val);                                                                                    \
     }                                                                                                               \
-} while(0);
+} while (0)
 
 #define FENCE(blocking, data_ex, pcs, nprocs) do {                              \
     if( blocking ){                                                             \
@@ -172,7 +172,7 @@ static void add_noise(char *noise_param, char *my_nspace, int my_rank)
         TEST_VERBOSE(("%s:%d: Fence successfully completed",                    \
                         my_nspace, my_rank));                                   \
     }                                                                           \
-} while (0);
+} while (0)
 
 int test_fence(test_params params, char *my_nspace, int my_rank)
 {
@@ -283,7 +283,7 @@ int test_fence(test_params params, char *my_nspace, int my_rank)
             pmix_proc_t *ranks;
             size_t nranks;
             PMIX_LIST_FOREACH_SAFE(p, next, desc->participants, participant_t) {
-                if (-1 == p->proc.rank) {
+                if (PMIX_RANK_WILDCARD == p->proc.rank) {
                     rc = get_all_ranks_from_namespace(params, p->proc.nspace, &ranks, &nranks);
                     if (PMIX_SUCCESS != rc) {
                         TEST_ERROR(("%s:%d: Can't parse --ns-dist value in order to get ranks for namespace %s", my_nspace, my_rank, p->proc.nspace));

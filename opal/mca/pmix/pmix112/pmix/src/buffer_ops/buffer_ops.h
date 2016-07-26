@@ -14,6 +14,8 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,24 +31,14 @@
 #ifndef PMIX_BFROP_H_
 #define PMIX_BFROP_H_
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
-#include <private/types.h>
+#include <src/include/pmix_config.h>
+
+#include <src/include/types.h>
 
 #include "src/include/pmix_globals.h"
 #include "src/buffer_ops/types.h"
 
 BEGIN_C_DECLS
-
-/* internally used object for transferring data
- * to/from the server and for storing in the
- * hash tables */
-typedef struct {
-    pmix_list_item_t super;
-    char *key;
-    pmix_value_t *value;
-} pmix_kval_t;
-PMIX_CLASS_DECLARATION(pmix_kval_t);
 
 /* A non-API function for something that happens in a number
  * of places throughout the code base - transferring a value to
@@ -57,6 +49,7 @@ PMIX_DECLSPEC void pmix_value_load(pmix_value_t *v, void *data,
                                    pmix_data_type_t type);
 PMIX_DECLSPEC pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
                                               size_t *sz, pmix_data_type_t type);
+PMIX_DECLSPEC bool pmix_value_cmp(pmix_value_t *p, pmix_value_t *p1);
 
 
 #define PMIX_LOAD_BUFFER(b, d, s)                       \
@@ -68,7 +61,7 @@ PMIX_DECLSPEC pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
         (b)->unpack_ptr = (b)->base_ptr;                \
         (d) = NULL;                                     \
         (s) = 0;                                        \
-    } while(0);
+    } while (0)
 
 #define PMIX_UNLOAD_BUFFER(b, d, s)             \
     do {                                        \
@@ -79,7 +72,7 @@ PMIX_DECLSPEC pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
         (b)->bytes_allocated = 0;               \
         (b)->pack_ptr = NULL;                   \
         (b)->unpack_ptr = NULL;                 \
-    } while (0);
+    } while (0)
 
 
 /**

@@ -22,8 +22,8 @@
  * Buffer safe printf functions for portability to archaic platforms.
  */
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 #include <errno.h>
 #include <stdio.h>

@@ -12,6 +12,9 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,8 +34,8 @@
 #ifndef PMIX_HASH_TABLE_H
 #define PMIX_HASH_TABLE_H
 
-#include <private/autogen/config.h>
-#include <private/prefetch.h>
+#include <src/include/pmix_config.h>
+#include <src/include/prefetch.h>
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>

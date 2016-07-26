@@ -20,6 +20,9 @@ dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 dnl Copyright (c) 2013-2015 Intel, Inc. All rights reserved
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2016      Mellanox Technologies, Inc.
+dnl                         All rights reserved.
+dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -82,6 +85,34 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(PMIX_RELEASE_DATE)
     AC_MSG_RESULT([$PMIX_VERSION])
 
+    # Save the breakdown the version information
+    AC_MSG_CHECKING([for pmix major version])
+    PMIX_MAJOR_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --major`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_MAJOR_VERSION)
+    AC_DEFINE_UNQUOTED([PMIX_MAJOR_VERSION], ["$PMIX_MAJOR_VERSION"],
+                       [The library major version is always available, contrary to VERSION])
+
+    AC_MSG_CHECKING([for pmix minor version])
+    PMIX_MINOR_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --minor`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_MINOR_VERSION)
+    AC_DEFINE_UNQUOTED([PMIX_MINOR_VERSION], ["$PMIX_MINOR_VERSION"],
+                       [The library minor version is always available, contrary to VERSION])
+
+    AC_MSG_CHECKING([for pmix release version])
+    PMIX_RELEASE_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --release`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_RELEASE_VERSION)
+    AC_DEFINE_UNQUOTED([PMIX_RELEASE_VERSION], ["$PMIX_RELEASE_VERSION"],
+                       [The library release version is always available, contrary to VERSION])
+
     # Debug mode?
     AC_MSG_CHECKING([if want pmix maintainer support])
     pmix_debug=
@@ -99,11 +130,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_MSG_CHECKING([for pmix directory prefix])
     AC_MSG_RESULT(m4_ifval([$1], pmix_config_prefix, [(none)]))
 
-    # Note that private/config.h *MUST* be listed first so that it
-    # becomes the "main" config header file.  Any AC-CONFIG-HEADERS
-    # after that (pmix/config.h) will only have selective #defines
-    # replaced, not the entire file.
-    AC_CONFIG_HEADERS(pmix_config_prefix[include/private/autogen/config.h])
     AC_CONFIG_HEADERS(pmix_config_prefix[include/pmix/autogen/config.h])
 
     # What prefix are we using?
@@ -430,7 +456,11 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                          #endif
                      ])
 
-    #
+    AC_CHECK_MEMBERS([struct ucred.uid, struct ucred.cr_uid, struct sockpeercred.uid],
+                     [], [],
+                     [#include <sys/types.h>
+                      #include <sys/socket.h> ])
+
     # Check for ptrdiff type.  Yes, there are platforms where
     # sizeof(void*) != sizeof(long) (64 bit Windows, apparently).
     #
@@ -465,7 +495,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
     PMIX_SEARCH_LIBS_CORE([ceil], [m])
 
-    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep])
+    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep getpeereid])
 
     # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
     # confused.  On others, it's in the standard library, but stubbed with
@@ -580,7 +610,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         # rather than have successive assignments to these shell
         # variables, lest the $(foo) names try to get evaluated here.
         # Yuck!
-        CPPFLAGS='-I$(PMIX_top_srcdir) -I$(PMIX_top_builddir) -I$(PMIX_top_srcdir)/src -I$(PMIX_top_srcdir)/include -I$(PMIX_top_builddir)/include'" $CPPFLAGS"
+        CPPFLAGS='-I$(PMIX_top_builddir) -I$(PMIX_top_srcdir) -I$(PMIX_top_srcdir)/src -I$(PMIX_top_builddir)/include -I$(PMIX_top_srcdir)/include'" $CPPFLAGS"
     else
         CPPFLAGS='-I$(PMIX_top_srcdir) -I$(PMIX_top_srcdir)/src -I$(PMIX_top_srcdir)/include'" $CPPFLAGS"
     fi
@@ -608,12 +638,15 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
 AC_DEFUN([PMIX_DEFINE_ARGS],[
     # Embedded mode, or standalone?
+    AC_MSG_CHECKING([if embedded mode is enabled])
     AC_ARG_ENABLE([embedded-mode],
         [AC_HELP_STRING([--enable-embedded-mode],
                 [Using --enable-embedded-mode causes PMIx to skip a few configure checks and install nothing.  It should only be used when building PMIx within the scope of a larger package.])])
     AS_IF([test ! -z "$enable_embedded_mode" && test "$enable_embedded_mode" = "yes"],
-          [pmix_mode=embedded],
-          [pmix_mode=standalone])
+          [pmix_mode=embedded
+           AC_MSG_RESULT([yes])],
+          [pmix_mode=standalone
+           AC_MSG_RESULT([no])])
 
     # Change the symbol prefix?
     AC_ARG_WITH([pmix-symbol-prefix],
@@ -684,6 +717,22 @@ AC_DEFINE_UNQUOTED(PMIX_ENABLE_DEBUG, $WANT_DEBUG,
 AC_ARG_ENABLE(debug-symbols,
               AC_HELP_STRING([--disable-debug-symbols],
                              [Disable adding compiler flags to enable debugging symbols if --enable-debug is specified.  For non-debugging builds, this flag has no effect.]))
+
+#
+# Do we want to install the internal devel headers?
+#
+AC_MSG_CHECKING([if want to install project-internal header files])
+AC_ARG_WITH(devel-headers,
+    AC_HELP_STRING([--with-devel-headers],
+                   [normal PMIx users/applications do not need this (pmix.h and friends are ALWAYS installed).  Developer headers are only necessary for authors doing deeper integration (default: disabled).]))
+if test "$with_devel_headers" = "yes"; then
+    AC_MSG_RESULT([yes])
+    WANT_INSTALL_HEADERS=1
+else
+    AC_MSG_RESULT([no])
+    WANT_INSTALL_HEADERS=0
+fi
+AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 
 #
 # Do we want the pretty-print stack trace feature?

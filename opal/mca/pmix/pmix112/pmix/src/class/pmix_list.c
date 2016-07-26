@@ -19,7 +19,7 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
+#include <src/include/pmix_config.h>
 
 #include "src/class/pmix_list.h"
 #include <pmix.h>

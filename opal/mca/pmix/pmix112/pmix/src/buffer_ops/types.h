@@ -28,8 +28,8 @@
 #ifndef PMIX_BFROP_TYPES_H_
 #define PMIX_BFROP_TYPES_H_
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 #include "src/class/pmix_object.h"
 #include "src/class/pmix_pointer_array.h"

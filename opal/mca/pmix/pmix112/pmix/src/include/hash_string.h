@@ -42,7 +42,7 @@
         _hash ^= (_hash >> 11);               \
         (hash) = (_hash + (_hash << 15));     \
         (length)  = _len;                     \
-    } while(0)
+    } while (0)
 
 /**
  *  Compute the hash value
@@ -64,6 +64,6 @@
         _hash += (_hash << 3);                \
         _hash ^= (_hash >> 11);               \
         (hash) = (_hash + (_hash << 15));     \
-    } while(0)
+    } while (0)
 
 #endif  /* PMIX_HASH_STRING_H */

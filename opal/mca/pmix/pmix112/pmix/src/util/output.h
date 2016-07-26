@@ -64,8 +64,8 @@
 #ifndef PMIX_OUTPUT_H_
 #define PMIX_OUTPUT_H_
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
@@ -506,6 +506,12 @@ struct pmix_output_stream_t {
                                                         const char *prefix,
                                                         char **olddir,
                                                         char **oldprefix);
+
+    /**
+     * Same as pmix_output_verbose(), but pointer to buffer and size.
+     */
+    PMIX_DECLSPEC void pmix_output_hexdump(int verbose_level, int output_id,
+                                           void *ptr, int buflen);
 
 #if PMIX_ENABLE_DEBUG
     /**

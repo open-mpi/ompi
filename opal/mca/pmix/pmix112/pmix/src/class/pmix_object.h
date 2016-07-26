@@ -118,14 +118,13 @@
 #ifndef PMIX_OBJECT_H
 #define PMIX_OBJECT_H
 
-#include <private/autogen/config.h>
+#include <src/include/pmix_config.h>
 
 #include <assert.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif  /* HAVE_STDLIB_H */
 
-#include "include/pmix/rename.h"
 
 BEGIN_C_DECLS
 
@@ -288,11 +287,11 @@ static inline pmix_object_t *pmix_obj_new_debug(pmix_class_t* type, const char* 
     do {                                                        \
         ((pmix_object_t*)(OBJECT))->cls_init_file_name = FILE;  \
         ((pmix_object_t*)(OBJECT))->cls_init_lineno = LINENO;   \
-    } while(0)
+    } while (0)
 #define PMIX_SET_MAGIC_ID( OBJECT, VALUE )                       \
     do {                                                        \
         ((pmix_object_t*)(OBJECT))->obj_magic_id = (VALUE);     \
-    } while(0)
+    } while (0)
 #else
 #define PMIX_REMEMBER_FILE_AND_LINENO( OBJECT, FILE, LINENO )
 #define PMIX_SET_MAGIC_ID( OBJECT, VALUE )
