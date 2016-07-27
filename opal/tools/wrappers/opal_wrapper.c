@@ -673,7 +673,7 @@ int main(int argc, char *argv[])
                               == strncmp(user_argv[i], "--showme:version",
                                          strlen("--showme:version"))) {
                 char *str;
-                str = opal_show_help_string("help-opal-wrapper.txt", "version", false, argv[0],
+                str = opal_show_help_string("help-opal-wrapper.txt", "version", false, base_argv0,
                                             options_data[user_data_idx].project,
                                             options_data[user_data_idx].version,
                                             options_data[user_data_idx].language, NULL);
@@ -685,7 +685,7 @@ int main(int argc, char *argv[])
             } else if (0 == strncmp(user_argv[i], "-showme:help", strlen("-showme:help"))
                        || 0 == strncmp(user_argv[i], "--showme:help", strlen("--showme:help"))) {
                 char *str;
-                str = opal_show_help_string("help-opal-wrapper.txt", "usage", false, argv[0],
+                str = opal_show_help_string("help-opal-wrapper.txt", "usage", false, base_argv0,
                                             options_data[user_data_idx].project, NULL);
                 if (NULL != str) {
                     printf("%s", str);
@@ -696,7 +696,7 @@ int main(int argc, char *argv[])
                 goto cleanup;
             } else if (0 == strncmp(user_argv[i], "-showme:", strlen("-showme:"))
                        || 0 == strncmp(user_argv[i], "--showme:", strlen("--showme:"))) {
-                fprintf(stderr, "%s: unrecognized option: %s\n", argv[0], user_argv[i]);
+                fprintf(stderr, "%s: unrecognized option: %s\n", base_argv0, user_argv[i]);
                 fprintf(stderr, "Type '%s --showme:help' for usage.\n", argv[0]);
                 exit_status = 1;
                 goto cleanup;
