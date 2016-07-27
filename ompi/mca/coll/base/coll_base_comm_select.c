@@ -19,6 +19,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,6 +53,7 @@ struct avail_coll_t {
 
     int ac_priority;
     mca_coll_base_module_2_1_0_t *ac_module;
+    const char * ac_component_name;
 };
 typedef struct avail_coll_t avail_coll_t;
 
@@ -110,7 +112,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
     int ret;
 
     /* Announce */
-    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+    opal_output_verbose(9, ompi_coll_base_framework.framework_output,
                         "coll:base:comm_select: new communicator: %s (cid %d)",
                         comm->c_name, comm->c_contextid);
 
@@ -143,6 +145,12 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
 
         /* initialize the module */
         ret = avail->ac_module->coll_module_enable(avail->ac_module, comm);
+
+        opal_output_verbose(9, ompi_coll_base_framework.framework_output,
+                            "coll:base:comm_select: selecting  %10s, priority %3d, %s",
+                            avail->ac_component_name, avail->ac_priority,
+                            (OMPI_SUCCESS == ret ? "Enabled": "Disabled") );
+
         if (OMPI_SUCCESS == ret) {
 
             /* copy over any of the pointers */
@@ -295,8 +303,22 @@ static opal_list_t *check_components(opal_list_t * components,
             avail = OBJ_NEW(avail_coll_t);
             avail->ac_priority = priority;
             avail->ac_module = module;
+            // Point to the string so we don't have to free later
+            avail->ac_component_name = component->mca_component_name;
 
             opal_list_append(selectable, &avail->super);
+        }
+        else {
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                                "coll:base:comm_select: component disqualified: %s (priority %d < 0)",
+                                component->mca_component_name, priority );
+
+            // If the disqualified collective returned a module make sure we
+            // release it here, since it will become a leak otherwise.
+            if( NULL != module ) {
+                OBJ_RELEASE(module);
+                module = NULL;
+            }
         }
     }
 
