@@ -3,7 +3,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -152,16 +152,14 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     info->type = OPAL_BOOL;
     info->data.flag = true;
     opal_list_append(&mlist, &info->super);
-    if (0 < timeout) {
-        /* give it a decent timeout as we don't know when
-         * the other side will publish - it doesn't
-         * have to be simultaneous */
-        info = OBJ_NEW(opal_value_t);
-        info->key = strdup(OPAL_PMIX_TIMEOUT);
-        info->type = OPAL_INT;
-        info->data.integer = timeout;
-        opal_list_append(&mlist, &info->super);
-    }
+    /* give it a decent timeout as we don't know when
+     * the other side will publish - it doesn't
+     * have to be simultaneous */
+    info = OBJ_NEW(opal_value_t);
+    info->key = strdup(OPAL_PMIX_TIMEOUT);
+    info->type = OPAL_INT;
+    info->data.integer = timeout;
+    opal_list_append(&mlist, &info->super);
 
     /* if a non-blocking version of lookup isn't
      * available, then use the blocking version */
