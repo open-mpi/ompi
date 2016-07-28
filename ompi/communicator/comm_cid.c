@@ -875,7 +875,7 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
 
     /* this macro is not actually non-blocking. if a non-blocking version becomes available this function
      * needs to be reworked to take advantage of it. */
-    OPAL_PMIX_EXCHANGE(rc, &info, &pdat, 60);
+    OPAL_PMIX_EXCHANGE(rc, &info, &pdat, 600);  // give them 10 minutes
     OBJ_DESTRUCT(&info);
     if (OPAL_SUCCESS != rc) {
         OBJ_DESTRUCT(&pdat);
