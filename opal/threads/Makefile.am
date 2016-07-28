@@ -29,7 +29,8 @@ headers += \
         threads/mutex_unix.h \
         threads/threads.h \
         threads/tsd.h \
-        threads/wait_sync.h
+        threads/wait_sync.h \
+	threads/thread_usage.h
 
 lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
         threads/condition.c \
