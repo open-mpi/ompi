@@ -116,7 +116,6 @@ This may have caused other processes in the application to be
 terminated by signals sent by %s (as reported here).
 
 You can avoid this message by specifying -quiet on the %s command line.
-
 #
 [orterun:proc-exit-no-sync-unknown]
 %s has exited due to a process exiting without calling "finalize",
