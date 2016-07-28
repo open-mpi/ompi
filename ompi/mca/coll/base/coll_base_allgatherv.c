@@ -629,6 +629,7 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
         for (i = 0; i < rank; ++i) {
             send_buf += ((ptrdiff_t)rcounts[i] * extent);
         }
+        scount = rcounts[rank];
     } else {
         send_buf = (char*)sbuf;
         send_type = sdtype;
