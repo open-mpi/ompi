@@ -8,6 +8,8 @@
  * $HEADER$
  */
 
+#include "opal_config.h"
+
 #include <stdio.h>
 #include <mpi.h>
 #include <unistd.h>
