@@ -14,7 +14,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -42,10 +42,10 @@ mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdis
                                        mca_coll_base_module_t *module)
 {
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    int i, j, size, rank, err=MPI_SUCCESS, max_size;
-    MPI_Request *preq;
-    char *tmp_buffer;
-    ptrdiff_t ext;
+    int i, j, size, rank, err = MPI_SUCCESS, max_size;
+    MPI_Request *preq, *reqs = NULL;
+    char *tmp_buffer, *save_buffer = NULL;
+    ptrdiff_t ext, gap;
 
     /* Initialize. */
 
@@ -59,17 +59,17 @@ mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdis
 
     /* Find the largest receive amount */
     for (i = 0, max_size = 0 ; i < size ; ++i) {
-        ompi_datatype_type_extent (rdtypes[i], &ext);
-        ext *= rcounts[i];
+        ext = opal_datatype_span(&rdtypes[i]->super, rcounts[i], &gap);
 
         max_size = ext > max_size ? ext : max_size;
     }
 
     /* Allocate a temporary buffer */
-    tmp_buffer = calloc (max_size, 1);
+    tmp_buffer = save_buffer = calloc (max_size, 1);
     if (NULL == tmp_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    tmp_buffer -= gap;
 
     /* in-place alltoallw slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
@@ -129,7 +129,12 @@ mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdis
 
  error_hndl:
     /* Free the temporary buffer */
-    free (tmp_buffer);
+    free (save_buffer);
+    if( MPI_SUCCESS != err ) {  /* Free the requests. */
+        if( NULL != reqs ) {
+            mca_coll_basic_free_reqs(basic_module->mccb_reqs, 2);
+        }
+    }
 
     /* All done */
 

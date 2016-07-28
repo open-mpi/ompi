@@ -42,7 +42,7 @@ int ompi_coll_libnbc_iexscan(void* sendbuf, void* recvbuf, int count, MPI_Dataty
                              struct ompi_communicator_t *comm, ompi_request_t ** request,
                              struct mca_coll_base_module_2_0_0_t *module) {
     int rank, p, res;
-    MPI_Aint ext;
+    ptrdiff_t gap, span;
     NBC_Schedule *schedule;
 #ifdef NBC_CACHE_SCHEDULE
     NBC_Scan_args *args, *found, search;
@@ -54,25 +54,24 @@ int ompi_coll_libnbc_iexscan(void* sendbuf, void* recvbuf, int count, MPI_Dataty
 
     NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
+    rank = ompi_comm_rank (comm);
+    p = ompi_comm_size (comm);
+
     res = NBC_Init_handle(comm, coll_req, libnbc_module);
     if (res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
 
     handle = (*coll_req);
 
-    res = MPI_Comm_rank(comm, &rank);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-    res = MPI_Comm_size(comm, &p);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-    res = MPI_Type_extent(datatype, &ext);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
-
-    if (inplace && rank < p - 1)
-        /* need more buffer space for the inplace case */
-        handle->tmpbuf = malloc(ext * count * 2);
-    else
-        handle->tmpbuf = malloc(ext * count);
-
-    if (handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
+    span = opal_datatype_span(&datatype->super, count, &gap);
+    if (0 < rank) {
+        handle->tmpbuf = malloc(span);
+        if (handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
+        if (inplace) {
+            res = NBC_Copy(recvbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
+        } else {
+            res = NBC_Copy(sendbuf, count, datatype, (char *)handle->tmpbuf-gap, count, datatype, comm);
+        }
+    }
 
 #ifdef NBC_CACHE_SCHEDULE
     fprintf (stderr, "NBC_CACHE_SCHEDULE\n");
@@ -92,12 +91,7 @@ int ompi_coll_libnbc_iexscan(void* sendbuf, void* recvbuf, int count, MPI_Dataty
         if (res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
 
         if (rank != 0) {
-            if (inplace && rank < p - 1)
-                /* if sendbuf == recvbuf do not clobber the send buffer until it has been combined
-                 * with the incoming data. */
-                res = NBC_Sched_recv((void *)(ext * count), true, count, datatype, rank-1, schedule);
-            else
-                res = NBC_Sched_recv(recvbuf, false, count, datatype, rank-1, schedule);
+            res = NBC_Sched_recv (recvbuf, false, count, datatype, rank-1, schedule);
 
             if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
 
@@ -106,27 +100,22 @@ int ompi_coll_libnbc_iexscan(void* sendbuf, void* recvbuf, int count, MPI_Dataty
                 res = NBC_Sched_barrier(schedule);
                 if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 
-                /* perform the reduce in my temporary buffer */
-                if (inplace)
-                    res = NBC_Sched_op(0, true, sendbuf, false, (void *)(ext * count), true, count, datatype, op, schedule);
-                else
-                    res = NBC_Sched_op(0, true, sendbuf, false, recvbuf, false, count, datatype, op, schedule);
+                res = NBC_Sched_op (recvbuf, false, (void *)(-gap), true, count, datatype, op, schedule);
                 if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
 
-                /* this cannot be done until handle->tmpbuf is unused :-( */
                 res = NBC_Sched_barrier(schedule);
                 if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 
                 /* send reduced data onward */
-                res = NBC_Sched_send(0, true, count, datatype, rank + 1, schedule);
+                res = NBC_Sched_send ((void *)(-gap), true, count, datatype, rank + 1, schedule);
                 if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
-
-                if (inplace)
-                    /* copy the received data into the receive buffer */
-                    NBC_Sched_copy ((void *)(ext * count), true, count, datatype, recvbuf, false, count, datatype, schedule);
             }
         } else if (p > 1) {
-            res = NBC_Sched_send(sendbuf, false, count, datatype, 1, schedule);
+            if (inplace) {
+              res = NBC_Sched_send (recvbuf, false, count, datatype, 1, schedule);
+            } else {
+              res = NBC_Sched_send (sendbuf, false, count, datatype, 1, schedule);
+            }
             if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
         }
 

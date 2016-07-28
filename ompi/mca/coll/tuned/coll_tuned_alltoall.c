@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -63,10 +63,10 @@ mca_coll_tuned_alltoall_intra_basic_inplace(void *rbuf, int rcount,
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     int i, j, size, rank, err=MPI_SUCCESS;
+    OPAL_PTRDIFF_TYPE gap;
     MPI_Request *preq;
-    char *tmp_buffer;
+    char *allocated_buffer = NULL, *tmp_buffer;
     size_t max_size;
-    ptrdiff_t ext;
 
     /* Initialize. */
 
@@ -79,14 +79,14 @@ mca_coll_tuned_alltoall_intra_basic_inplace(void *rbuf, int rcount,
     }
 
     /* Find the largest receive amount */
-    ompi_datatype_type_extent (rdtype, &ext);
-    max_size = ext * rcount;
+    max_size = opal_datatype_span(&rdtype->super, rcount, &gap);
 
     /* Allocate a temporary buffer */
-    tmp_buffer = calloc (max_size, 1);
-    if (NULL == tmp_buffer) {
+    allocated_buffer = calloc (max_size, 1);
+    if (NULL == allocated_buffer) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    tmp_buffer = allocated_buffer - gap;
 
     /* in-place alltoall slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
@@ -139,7 +139,7 @@ mca_coll_tuned_alltoall_intra_basic_inplace(void *rbuf, int rcount,
 
  error_hndl:
     /* Free the temporary buffer */
-    free (tmp_buffer);
+    free (allocated_buffer);
 
     /* All done */
 
@@ -214,7 +214,7 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     int i, k, line = -1, rank, size, err = 0, weallocated = 0;
     int sendto, recvfrom, distance, *displs = NULL, *blen = NULL;
     char *tmpbuf = NULL, *tmpbuf_free = NULL;
-    ptrdiff_t rlb, slb, tlb, sext, rext, tsext;
+    OPAL_PTRDIFF_TYPE sext, rext, span, gap;
     struct ompi_datatype_t *new_ddt;
 #ifdef blahblah
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
@@ -232,15 +232,12 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:alltoall_intra_bruck rank %d", rank));
 
-    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
+    err = ompi_datatype_type_extent (sdtype, &sext);
+
+    err = ompi_datatype_type_extent (rdtype, &rext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
-    err = ompi_datatype_get_true_extent(sdtype, &tlb,  &tsext);
-    if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
-
-    err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
-    if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
-
+    span = opal_datatype_span(&sdtype->super, size * scount, &gap);
 
 #ifdef blahblah
     /* try and SAVE memory by using the data segment hung off 
@@ -263,9 +260,9 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
 #endif
 
     /* tmp buffer allocation for message data */
-    tmpbuf_free = (char *) malloc(tsext + ((ptrdiff_t)scount * (ptrdiff_t)size - 1) * sext);
+    tmpbuf_free = (char *) malloc(span);
     if (tmpbuf_free == NULL) { line = __LINE__; err = -1; goto err_hndl; }
-    tmpbuf = tmpbuf_free - slb;
+    tmpbuf = tmpbuf_free - gap;
 
     /* Step 1 - local rotation - shift up by rank */
     err = ompi_datatype_copy_content_same_ddt (sdtype, 

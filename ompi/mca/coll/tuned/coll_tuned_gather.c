@@ -64,8 +64,8 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     char *ptmp     = NULL, *tempbuf  = NULL;
     ompi_coll_tree_t* bmtree;
     MPI_Status status;
-    MPI_Aint sextent, slb, strue_lb, strue_extent; 
-    MPI_Aint rextent, rlb, rtrue_lb, rtrue_extent;
+    MPI_Aint sextent, sgap, ssize;
+    MPI_Aint rextent, rgap, rsize;
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
@@ -79,14 +79,14 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, tuned_module, root );
     bmtree = data->cached_in_order_bmtree;
 
-    ompi_datatype_get_extent(sdtype, &slb, &sextent);
-    ompi_datatype_get_true_extent(sdtype, &strue_lb, &strue_extent);
+    ompi_datatype_type_extent(sdtype, &sextent);
+    ompi_datatype_type_extent(rdtype, &rextent);
+    ssize = opal_datatype_span(&sdtype->super, scount * size, &sgap);
+    rsize = opal_datatype_span(&rdtype->super, rcount * size, &rgap);
 
     vrank = (rank - root + size) % size;
 
     if (rank == root) {
-        ompi_datatype_get_extent(rdtype, &rlb, &rextent);
-        ompi_datatype_get_true_extent(rdtype, &rtrue_lb, &rtrue_extent);
         if (0 == root){
             /* root on 0, just use the recv buffer */
             ptmp = (char *) rbuf;
@@ -98,12 +98,12 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
         } else {
             /* root is not on 0, allocate temp buffer for recv,
              * rotate data at the end */
-            tempbuf = (char *) malloc(rtrue_extent + ((ptrdiff_t)rcount * (ptrdiff_t)size - 1) * rextent);
+            tempbuf = (char *) malloc(rsize);
             if (NULL == tempbuf) {
                 err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
             }
 
-            ptmp = tempbuf - rlb;
+            ptmp = tempbuf - rgap;
             if (sbuf != MPI_IN_PLACE) {
                 /* copy from sbuf to temp buffer */
                 err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
@@ -121,12 +121,12 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
         /* other non-leaf nodes, allocate temp buffer for data received from
          * children, the most we need is half of the total data elements due
          * to the property of binimoal tree */
-        tempbuf = (char *) malloc(strue_extent + ((ptrdiff_t)scount * (ptrdiff_t)size - 1) * sextent);
+        tempbuf = (char *) malloc(ssize);
         if (NULL == tempbuf) {
             err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
         }
 
-        ptmp = tempbuf - slb;
+        ptmp = tempbuf - sgap;
         /* local copy to tempbuf */
         err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
                                    ptmp, scount, sdtype);
