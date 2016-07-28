@@ -635,7 +635,7 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
     }
 
     err = comm->c_coll.coll_gatherv(send_buf,
-                                    rcounts[rank], send_type,rbuf,
+                                    scount, send_type,rbuf,
                                     rcounts, disps, rdtype, 0,
                                     comm, comm->c_coll.coll_gatherv_module);
     if (MPI_SUCCESS != err) {
