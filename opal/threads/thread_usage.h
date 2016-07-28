@@ -93,82 +93,87 @@ static inline bool opal_set_using_threads(bool have)
  * indicates that threads are in use by the application or library.
  */
 
-static inline int32_t
-OPAL_THREAD_ADD32(volatile int32_t *addr, int delta)
-{
-    int32_t ret;
-
-    if (OPAL_UNLIKELY(opal_using_threads())) {
-        ret = opal_atomic_add_32(addr, delta);
-    } else {
-        ret = (*addr += delta);
-    }
-
-    return ret;
+#define OPAL_THREAD_DEFINE_ATOMIC_ADD(type, suffix)     \
+static inline type opal_thread_add_ ## suffix (volatile type *addr, type delta) \
+{                                                                       \
+    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
+        return opal_atomic_add_ ## suffix (addr, delta);                \
+    }                                                                   \
+                                                                        \
+    return (*addr += delta);                                            \
 }
 
+#define OPAL_THREAD_DEFINE_ATOMIC_CMPSET(type, addr_type, suffix)       \
+static inline bool opal_thread_cmpset_bool_ ## suffix (volatile addr_type *addr, type compare, type value) \
+{                                                                       \
+    type ret;                                                           \
+                                                                        \
+    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
+        return opal_atomic_cmpset_ ## suffix ((volatile type *) addr, compare, value); \
+    }                                                                   \
+                                                                        \
+    if ((type) *addr == compare) {                                      \
+        ((type *) addr)[0] = value;                                     \
+        return true;                                                    \
+    }                                                                   \
+                                                                        \
+    return false;                                                       \
+}
+
+#define OPAL_THREAD_DEFINE_ATOMIC_SWAP(type, addr_type, suffix)         \
+static inline type opal_thread_swap_ ## suffix (volatile addr_type *ptr, type newvalue) \
+{                                                                       \
+    if (opal_using_threads ()) {                                        \
+        return opal_atomic_swap_ ## suffix ((volatile type *) ptr, newvalue); \
+    }                                                                   \
+                                                                        \
+    type old = ((type *) ptr)[0];                                       \
+    ((type *) ptr)[0] = newvalue;                                       \
+                                                                        \
+    return old;                                                         \
+}
+
+OPAL_THREAD_DEFINE_ATOMIC_ADD(int32_t, 32)
+OPAL_THREAD_DEFINE_ATOMIC_ADD(size_t, size_t)
+OPAL_THREAD_DEFINE_ATOMIC_CMPSET(int32_t, int32_t, 32)
+OPAL_THREAD_DEFINE_ATOMIC_CMPSET(void *, intptr_t, ptr)
+OPAL_THREAD_DEFINE_ATOMIC_SWAP(int32_t, int32_t, 32)
+OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
+
+#define OPAL_THREAD_ADD32 opal_thread_add_32
+#define OPAL_ATOMIC_ADD32 opal_thread_add_32
+
+#define OPAL_THREAD_ADD_SIZE_T opal_thread_add_size_t
+#define OPAL_ATOMIC_ADD_SIZE_T opal_thread_add_size_t
+
+#define OPAL_THREAD_CMPSET_32 opal_thread_cmpset_bool_32
+#define OPAL_ATOMIC_CMPSET_32 opal_thread_cmpset_bool_32
+
+#define OPAL_THREAD_CMPSET_PTR(x, y, z) opal_thread_cmpset_bool_ptr ((volatile intptr_t *) x, (void *) y, (void *) z)
+#define OPAL_ATOMIC_CMPSET_PTR OPAL_THREAD_CMPSET_PTR
+
+#define OPAL_THREAD_SWAP_32 opal_thread_swap_32
+#define OPAL_ATOMIC_SWAP_32 opal_thread_swap_32
+
+#define OPAL_THREAD_SWAP_PTR(x, y) opal_thread_swap_ptr ((volatile intptr_t *) x, (void *) y)
+#define OPAL_ATOMIC_SWAP_PTR OPAL_THREAD_SWAP_PTR
+
+/* define 64-bit macros is 64-bit atomic math is available */
 #if OPAL_HAVE_ATOMIC_MATH_64
-static inline int64_t
-OPAL_THREAD_ADD64(volatile int64_t *addr, int delta)
-{
-    int64_t ret;
 
-    if (OPAL_UNLIKELY(opal_using_threads())) {
-        ret = opal_atomic_add_64(addr, delta);
-    } else {
-        ret = (*addr += delta);
-    }
+OPAL_THREAD_DEFINE_ATOMIC_ADD(int64_t, 64)
+OPAL_THREAD_DEFINE_ATOMIC_CMPSET(int64_t, int64_t, 64)
+OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
-    return ret;
-}
+#define OPAL_THREAD_ADD64 opal_thread_add_64
+#define OPAL_ATOMIC_ADD64 opal_thread_add_64
+
+#define OPAL_THREAD_CMPSET_64 opal_thread_cmpset_bool_64
+#define OPAL_ATOMIC_CMPSET_64 opal_thread_cmpset_bool_64
+
+#define OPAL_THREAD_SWAP_64 opal_thread_swap_64
+#define OPAL_ATOMIC_SWAP_64 opal_thread_swap_64
+
 #endif
-
-static inline size_t
-OPAL_THREAD_ADD_SIZE_T(volatile size_t *addr, int delta)
-{
-    size_t ret;
-
-    if (OPAL_UNLIKELY(opal_using_threads())) {
-        ret = opal_atomic_add_size_t(addr, delta);
-    } else {
-        ret = (*addr += delta);
-    }
-
-    return ret;
-}
-
-/* BWB: FIX ME: remove if possible */
-#define OPAL_CMPSET(x, y, z) ((*(x) == (y)) ? ((*(x) = (z)), 1) : 0)
-
-#if OPAL_HAVE_ATOMIC_CMPSET_32
-#define OPAL_ATOMIC_CMPSET_32(x, y, z) \
-    (opal_using_threads() ? opal_atomic_cmpset_32(x, y, z) : OPAL_CMPSET(x, y, z))
-#endif
-#if OPAL_HAVE_ATOMIC_CMPSET_64
-#define OPAL_ATOMIC_CMPSET_64(x, y, z) \
-    (opal_using_threads() ? opal_atomic_cmpset_64(x, y, z) : OPAL_CMPSET(x, y, z))
-#endif
-#if OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64
-#define OPAL_ATOMIC_CMPSET(x, y, z) \
-    (opal_using_threads() ? opal_atomic_cmpset(x, y, z) : OPAL_CMPSET(x, y, z))
-#endif
-#if OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64
-#define OPAL_ATOMIC_CMPSET_PTR(x, y, z) \
-    (opal_using_threads() ? opal_atomic_cmpset_ptr(x, y, z) : OPAL_CMPSET(x, y, z))
-#endif
-
-static inline void *opal_thread_swap_ptr (volatile void *ptr, void *newvalue)
-{
-    if (opal_using_threads ()) {
-        return opal_atomic_swap_ptr (ptr, newvalue);
-    }
-
-    void *old = ((void **) ptr)[0];
-    ((void **) ptr)[0] = newvalue;
-
-    return old;
-}
-
-#define OPAL_ATOMIC_SWAP_PTR(x, y) opal_thread_swap_ptr (x, y)
 
 #endif /* !defined(OPAL_THREAD_USAGE_H) */
