@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -70,7 +72,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
     }
 
     err = comm->c_coll.coll_gatherv(send_buf,
-                                    rcounts[rank], send_type,rbuf,
+                                    scount, send_type,rbuf,
                                     rcounts, disps, rdtype, 0,
                                     comm, comm->c_coll.coll_gatherv_module);
 
