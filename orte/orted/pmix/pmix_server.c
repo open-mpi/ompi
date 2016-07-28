@@ -151,11 +151,18 @@ static void eviction_cbfunc(struct opal_hotel_t *hotel,
                             int room_num, void *occupant)
 {
     pmix_server_req_t *req = (pmix_server_req_t*)occupant;
+    bool timeout = false;
     int rc;
 
     /* decrement the request timeout */
     req->timeout -= orte_pmix_server_globals.timeout;
-    if (0 < req->timeout) {
+    if (req->timeout > 0) {
+        req->timeout -= orte_pmix_server_globals.timeout;
+        if (0 >= req->timeout) {
+            timeout = true;
+        }
+    }
+    if (!timeout) {
         /* not done yet - check us back in */
         if (OPAL_SUCCESS == (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
             return;

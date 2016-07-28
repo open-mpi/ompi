@@ -211,7 +211,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         info.data.string = opal_argv_join(members, ':');
         pdat.value.type = OPAL_STRING;
 
-        OPAL_PMIX_EXCHANGE(rc, &info, &pdat, 60);
+        OPAL_PMIX_EXCHANGE(rc, &info, &pdat, 600);  // give them 10 minutes
         OBJ_DESTRUCT(&info);
         if (OPAL_SUCCESS != rc) {
             OBJ_DESTRUCT(&pdat);
@@ -531,7 +531,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
         } else {
             proc_name = proct->super.proc_name;
         }
-      
+
         /* add to the list of peers */
         nm = OBJ_NEW(opal_namelist_t);
         nm->name = proc_name;

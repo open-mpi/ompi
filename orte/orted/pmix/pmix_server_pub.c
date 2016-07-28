@@ -156,11 +156,16 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
         return rc;
     }
 
-    /* if we have items, pack those too - ignore persistence
+    /* if we have items, pack those too - ignore persistence, timeout
      * and range values */
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE) ||
             0 == strcmp(iptr->key, OPAL_PMIX_PERSISTENCE)) {
+            continue;
+        }
+        if (0 == strcmp(iptr->key, OPAL_PMIX_TIMEOUT)) {
+            /* record the timeout value, but don't pack it */
+            req->timeout = iptr->data.integer;
             continue;
         }
         opal_output_verbose(5, orte_pmix_server_globals.output,
@@ -257,9 +262,14 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
         }
     }
 
-    /* if we have items, pack those too - ignore range value */
+    /* if we have items, pack those too - ignore range and timeout value */
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
+            continue;
+        }
+        if (0 == strcmp(iptr->key, OPAL_PMIX_TIMEOUT)) {
+            /* record the timeout value, but don't pack it */
+            req->timeout = iptr->data.integer;
             continue;
         }
         if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &iptr, 1, OPAL_VALUE))) {
@@ -347,9 +357,14 @@ int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
         }
     }
 
-    /* if we have items, pack those too - ignore range value */
+    /* if we have items, pack those too - ignore range and timeout value */
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
+            continue;
+        }
+        if (0 == strcmp(iptr->key, OPAL_PMIX_TIMEOUT)) {
+            /* record the timeout value, but don't pack it */
+            req->timeout = iptr->data.integer;
             continue;
         }
         if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &iptr, 1, OPAL_VALUE))) {
