@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
  *
  * $COPYRIGHT$
@@ -475,15 +475,15 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
             }
         }
 
-        if (local_cycles > index) {
-            if ((index == local_cycles-1) && (max_data % bytes_per_cycle)) {
-                bytes_to_read_in_cycle = max_data % bytes_per_cycle;
+        if (index < local_cycles ) {
+            if ((index == local_cycles-1) && (max_data % (bytes_per_cycle/fh->f_procs_per_group))) {
+                bytes_to_read_in_cycle = max_data - position;
             }
-            else if (max_data <= bytes_per_cycle) {
+            else if (max_data <= bytes_per_cycle/fh->f_procs_per_group) {
                 bytes_to_read_in_cycle = max_data;
             }
             else {
-                bytes_to_read_in_cycle = bytes_per_cycle;
+                bytes_to_read_in_cycle = bytes_per_cycle/fh->f_procs_per_group;
             }
         }
         else {
