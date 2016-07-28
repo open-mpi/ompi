@@ -66,6 +66,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
         for (i = 0; i < rank; ++i) {
             send_buf += (rcounts[i] * extent);
         }
+        scount = rcounts[rank];
     } else {
         send_buf = (char*)sbuf;
         send_type = sdtype;
