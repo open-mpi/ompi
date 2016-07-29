@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,7 +50,7 @@ int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
     /*Open the same file again without shared file pointer*/
     /*-------------------------------------------------*/
     shfileHandle =  (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
-    ret = ompio_io_ompio_file_open(comm,filename,amode,info,shfileHandle,false);
+    ret = mca_common_ompio_file_open(comm,filename,amode,info,shfileHandle,false);
     if ( OMPI_SUCCESS != ret) {
         opal_output(0, "mca_sharedfp_addproc_file_open: Error during file open\n");
         return ret;
@@ -167,7 +167,7 @@ int mca_sharedfp_addproc_file_close (mca_io_ompio_file_t *fh)
     }
 
     /* Close the main file opened by this component*/
-    err = ompio_io_ompio_file_close(sh->sharedfh);
+    err = mca_common_ompio_file_close(sh->sharedfh);
 
     /*free shared file pointer data struct*/
     free(sh);

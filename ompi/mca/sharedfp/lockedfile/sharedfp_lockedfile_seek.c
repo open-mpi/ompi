@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,7 +88,7 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
         }
 	else if( MPI_SEEK_END == whence ){
             OMPI_MPI_OFFSET_TYPE end_position=0;
-            ompio_io_ompio_file_get_size(sh->sharedfh,&end_position);
+            mca_common_ompio_file_get_size(sh->sharedfh,&end_position);
             offset = end_position + offset;
 	    opal_output(ompi_sharedfp_base_framework.framework_output,
 			"MPI_SEEK_END: file_get_size=%lld\n",end_position);

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -95,7 +95,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
         }
         else if( MPI_SEEK_END == whence){
             end_position=0;
-            ompio_io_ompio_file_get_size(sh->sharedfh,&end_position);
+            mca_common_ompio_file_get_size(sh->sharedfh,&end_position);
 
             offset = end_position + offset;
             if ( mca_sharedfp_sm_verbose ) {

@@ -33,6 +33,8 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_io_ompio_la_SOURCES = $(sources)
 mca_io_ompio_la_LDFLAGS = -module -avoid-version
+mca_io_ompio_la_LIBADD = $(io_ompio_LIBS) \
+    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/ompio/lib@OPAL_LIB_PREFIX@mca_common_ompio.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_io_ompio_la_SOURCES = $(sources)

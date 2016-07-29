@@ -104,7 +104,7 @@ mca_fcoll_dynamic_gen2_file_read_all (mca_io_ompio_file_t *fh,
     double read_time = 0.0, start_read_time = 0.0, end_read_time = 0.0;
     double rcomm_time = 0.0, start_rcomm_time = 0.0, end_rcomm_time = 0.0;
     double read_exch = 0.0, start_rexch = 0.0, end_rexch = 0.0;
-    mca_io_ompio_print_entry nentry;
+    mca_common_ompio_print_entry nentry;
 #endif
 
     /**************************************************************************
@@ -866,9 +866,9 @@ mca_fcoll_dynamic_gen2_file_read_all (mca_io_ompio_file_t *fh,
     else
         nentry.aggregator = 0;
     nentry.nprocs_for_coll = dynamic_gen2_num_io_procs;
-    if (!fh->f_full_print_queue(READ_PRINT_QUEUE)){
-        fh->f_register_print_entry(READ_PRINT_QUEUE,
-                                   nentry);
+    if (!mca_common_ompio_full_print_queue(fh->f_coll_read_time)){
+        mca_common_ompio_register_print_entry(fh->f_coll_read_time,
+                                              nentry);
     }
 #endif
 

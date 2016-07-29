@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +25,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 
 #include <stdlib.h>
@@ -175,7 +176,7 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
         }
 
 	/*Read from the local data file*/
-	ompio_io_ompio_file_read_at ( headnode->datafilehandle,
+	mca_common_ompio_file_read_at ( headnode->datafilehandle,
 				      local_off[i], buff, ind_recordlength[i],
 				      MPI_BYTE, &status);
 
@@ -188,7 +189,7 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
         }
 
 	/*Write into main data file*/
-	ompio_io_ompio_file_write_at( sh->sharedfh, offsetbuff[idx], buff,
+	mca_common_ompio_file_write_at( sh->sharedfh, offsetbuff[idx], buff,
 				      ind_recordlength[i], MPI_BYTE, &status);
 
     }
@@ -275,7 +276,7 @@ int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long
         ctr = 0;
         for (i = 0; i < headnode->numofrecordsonfile ; i++)  {
 
-            ompio_io_ompio_file_read_at(headnode->metadatafilehandle,metaoffset, &rec, 32, MPI_BYTE,&status);
+            mca_common_ompio_file_read_at(headnode->metadatafilehandle,metaoffset, &rec, 32, MPI_BYTE,&status);
 
             *(*rec_length + ctr) = rec.recordlength;
             *(*buff + ctr) = rec.timestamp;

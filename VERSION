@@ -98,6 +98,7 @@ liboshmem_so_version=0:0:0
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
+libmca_ompi_common_ompio_so_version=0:0:0
 
 # ORTE layer
 libmca_orte_common_alps_so_version=0:0:0

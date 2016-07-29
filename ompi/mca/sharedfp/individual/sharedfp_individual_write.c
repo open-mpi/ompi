@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -71,9 +71,9 @@ int mca_sharedfp_individual_write (mca_io_ompio_file_t *fh,
         mca_sharedfp_individual_insert_metadata(OMPI_FILE_WRITE_SHARED, totalbytes, sh);
 
         /*Write the data into individual file*/
-        ret = ompio_io_ompio_file_write_at ( headnode->datafilehandle,
-					     headnode->datafile_offset,
-					     buf, count, datatype, status);
+        ret = mca_common_ompio_file_write_at ( headnode->datafilehandle,
+                                               headnode->datafile_offset,
+                                               buf, count, datatype, status);
         if ( OMPI_SUCCESS != ret ) {
             opal_output(0,"mca_sharedfp_individual_write: Error while writing the datafile \n");
             return -1;
@@ -191,7 +191,7 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
     sh->global_offset = global_offset;
 
     /*use file_write_at_all to ensure the order*/
-    ret = ompio_io_ompio_file_write_at_all(sh->sharedfh,offset, buf,count,datatype,status);
+    ret = mca_common_ompio_file_write_at_all(sh->sharedfh,offset, buf,count,datatype,status);
     if ( OMPI_SUCCESS != ret )  {
 	opal_output(0,"sharedfp_individual_write_ordered: Error while writing the datafile \n");
     }

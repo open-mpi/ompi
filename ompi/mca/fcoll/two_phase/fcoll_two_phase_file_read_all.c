@@ -140,7 +140,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     Flatlist_node *flat_buf=NULL;
     mca_io_ompio_access_array_t *my_req=NULL, *others_req=NULL;
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-    mca_io_ompio_print_entry nentry;
+    mca_common_ompio_print_entry nentry;
 #endif
 //    if (opal_datatype_is_predefined(&datatype->super)) {
 //	fh->f_flags = fh->f_flags |  OMPIO_CONTIGUOUS_MEMORY;
@@ -479,9 +479,9 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     nentry.nprocs_for_coll = two_phase_num_io_procs;
 
 
-    if (!fh->f_full_print_queue(READ_PRINT_QUEUE)){
-	fh->f_register_print_entry(READ_PRINT_QUEUE,
-				   nentry);
+    if (!mca_common_ompio_full_print_queue(fh->f_coll_read_time)){
+	mca_common_ompio_register_print_entry(fh->f_coll_read_time,
+                                              nentry);
     }
 #endif
 

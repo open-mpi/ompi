@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -56,7 +56,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    err = ompio_io_ompio_file_open ( comm, filename, amode, info, shfileHandle, false);
+    err = mca_common_ompio_file_open ( comm, filename, amode, info, shfileHandle, false);
     if ( OMPI_SUCCESS != err )  {
         opal_output(0, "mca_sharedfp_individual_file_open: Error during file open\n");
         return err;
@@ -111,7 +111,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
         free ( datafilename );
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    err = ompio_io_ompio_file_open(MPI_COMM_SELF, datafilename,
+    err = mca_common_ompio_file_open(MPI_COMM_SELF, datafilename,
                                    MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                    MPI_INFO_NULL, datafilehandle, false);
     if ( OMPI_SUCCESS != err) {
@@ -154,7 +154,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    err = ompio_io_ompio_file_open ( MPI_COMM_SELF,metadatafilename,
+    err = mca_common_ompio_file_open ( MPI_COMM_SELF,metadatafilename,
                                      MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                      MPI_INFO_NULL, metadatafilehandle, false);
     if ( OMPI_SUCCESS != err) {
@@ -206,7 +206,7 @@ int mca_sharedfp_individual_file_close (mca_io_ompio_file_t *fh)
         /*Close datafile*/
         if (headnode->datafilehandle)  {
             /*TODO: properly deal with returned error code*/
-            err = ompio_io_ompio_file_close(headnode->datafilehandle);
+            err = mca_common_ompio_file_close(headnode->datafilehandle);
             /* NOTE: No neeed to manually delete the file,
 	    ** the amode should have been set to delete on close
 	    */
@@ -218,7 +218,7 @@ int mca_sharedfp_individual_file_close (mca_io_ompio_file_t *fh)
         /*Close metadatafile*/
         if (headnode->metadatafilehandle)  {
             /*TODO: properly deal with returned error code*/
-            err = ompio_io_ompio_file_close(headnode->metadatafilehandle);
+            err = mca_common_ompio_file_close(headnode->metadatafilehandle);
             /* NOTE: No neeed to manually delete the file,
 	    ** the amode should have been set to delete on close
 	    */
@@ -229,7 +229,7 @@ int mca_sharedfp_individual_file_close (mca_io_ompio_file_t *fh)
     }
 
     /* Close the main file opened by this component*/
-    err = ompio_io_ompio_file_close(sh->sharedfh);
+    err = mca_common_ompio_file_close(sh->sharedfh);
 
     /*free shared file pointer data struct*/
     free(sh);
