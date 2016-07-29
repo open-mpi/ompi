@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -133,7 +133,7 @@ ompi_osc_sm_start(struct ompi_group_t *group,
 
     OBJ_RETAIN(group);
 
-    if (!OPAL_ATOMIC_CMPSET(&module->start_group, NULL, group)) {
+    if (!OPAL_ATOMIC_CMPSET_PTR(&module->start_group, NULL, group)) {
         OBJ_RELEASE(group);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -185,7 +185,7 @@ ompi_osc_sm_complete(struct ompi_win_t *win)
     opal_atomic_mb();
 
     group = module->start_group;
-    if (NULL == group || !OPAL_ATOMIC_CMPSET(&module->start_group, group, NULL)) {
+    if (NULL == group || !OPAL_ATOMIC_CMPSET_PTR(&module->start_group, group, NULL)) {
         return OMPI_ERR_RMA_SYNC;
     }
 
