@@ -106,8 +106,6 @@ static inline type opal_thread_add_ ## suffix (volatile type *addr, type delta) 
 #define OPAL_THREAD_DEFINE_ATOMIC_CMPSET(type, addr_type, suffix)       \
 static inline bool opal_thread_cmpset_bool_ ## suffix (volatile addr_type *addr, type compare, type value) \
 {                                                                       \
-    type ret;                                                           \
-                                                                        \
     if (OPAL_UNLIKELY(opal_using_threads())) {                          \
         return opal_atomic_cmpset_ ## suffix ((volatile type *) addr, compare, value); \
     }                                                                   \
