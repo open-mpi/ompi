@@ -67,6 +67,8 @@ pmix_server_globals_t pmix_server_globals = {{{0}}};
 // local variables
 static char *security_mode = NULL;
 static pid_t mypid;
+static char *mytmpdir = NULL;
+static char *systmpdir = NULL;
 
 // local functions for connection support
 static void server_message_handler(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
@@ -181,7 +183,9 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     security_mode = strdup(pmix_sec.name);
 
     /* find the temp dir */
-    if (NULL == (tdir = getenv("PMIX_SERVER_TMPDIR"))) {
+    if (NULL != mytmpdir) {
+        tdir = mytmpdir;
+    } else if (NULL == (tdir = getenv("PMIX_SERVER_TMPDIR"))) {
         if (NULL == (tdir = getenv("TMPDIR"))) {
             if (NULL == (tdir = getenv("TEMP"))) {
                 if (NULL == (tdir = getenv("TMP"))) {
@@ -233,6 +237,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     char *pmix_pid, *tdir;
     char **protected = NULL;
     bool protect;
+    bool tool_support = false;
 
     ++pmix_globals.init_cntr;
     if (1 < pmix_globals.init_cntr) {
@@ -289,40 +294,51 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                     lt->mode = info[n].value.data.uint32;
                 }
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_TOOL_SUPPORT)) {
-                pmix_listener_t *tl = PMIX_NEW(pmix_listener_t);
-                tl -> address.sun_family = AF_UNIX;
-                tl->protocol = PMIX_PROTOCOL_TOOL;
-                /* Get up to 30 chars of hostname.*/
-                gethostname(myhostname, myhostnamelen);
-                /* ensure it is NULL terminated */
-                myhostname[myhostnamelen-1] = '\0';
-                /* need to put this in the global tmpdir as opposed to
-                 * where the server tmpdir might be */
-                if (NULL == (tdir = getenv("TMPDIR"))) {
-                    if (NULL == (tdir = getenv("TEMP"))) {
-                        if (NULL == (tdir = getenv("TMP"))) {
-                            tdir = "/tmp";
-                        }
-                    }
-                }
-                if (0 > asprintf(&pmix_pid, "%s/pmix.%s.tool.%d", tdir, myhostname, mypid)) {
-                    return PMIX_ERR_NOMEM;
-                }
-                if ((strlen(pmix_pid) + 1) > sizeof(tl->address.sun_path)-1) {
-                    free(pmix_pid);
-                    return PMIX_ERR_INVALID_LENGTH;
-                }
-                snprintf(tl->address.sun_path, sizeof(tl->address.sun_path) - 1, "%s", pmix_pid);
-                free(pmix_pid);
-                /* we don't provide a URI for this listener as we don't pass
-                 * the TOOL connection URI to a child process */
-                pmix_server_globals.tool_connections_allowed = true;
-                pmix_list_append(&pmix_server_globals.listeners, &tl->super);
-                /* push this onto our protected list of keys not
-                 * to be passed to the clients */
-                pmix_argv_append_nosize(&protected, PMIX_SERVER_TOOL_SUPPORT);
+                /* defer processing to ensure we pickup any tmpdir
+                 * directives before setting location */
+                tool_support = true;
+            } else if (0 == strcmp(info[n].key, PMIX_SERVER_TMPDIR)) {
+                mytmpdir = strdup(info[n].value.data.string);
+            } else if (0 == strcmp(info[n].key, PMIX_SYSTEM_TMPDIR)) {
+                systmpdir = strdup(info[n].value.data.string);
             }
         }
+    }
+    if (tool_support) {
+        pmix_listener_t *tl = PMIX_NEW(pmix_listener_t);
+        tl -> address.sun_family = AF_UNIX;
+        tl->protocol = PMIX_PROTOCOL_TOOL;
+        /* Get up to 30 chars of hostname.*/
+        gethostname(myhostname, myhostnamelen);
+        /* ensure it is NULL terminated */
+        myhostname[myhostnamelen-1] = '\0';
+        /* need to put this in the global tmpdir as opposed to
+         * where the server tmpdir might be */
+        if (NULL != systmpdir) {
+            tdir = systmpdir;
+        } else if (NULL == (tdir = getenv("TMPDIR"))) {
+            if (NULL == (tdir = getenv("TEMP"))) {
+                if (NULL == (tdir = getenv("TMP"))) {
+                    tdir = "/tmp";
+                }
+            }
+        }
+        if (0 > asprintf(&pmix_pid, "%s/pmix.%s.tool.%d", tdir, myhostname, mypid)) {
+            return PMIX_ERR_NOMEM;
+        }
+        if ((strlen(pmix_pid) + 1) > sizeof(tl->address.sun_path)-1) {
+            free(pmix_pid);
+            return PMIX_ERR_INVALID_LENGTH;
+        }
+        snprintf(tl->address.sun_path, sizeof(tl->address.sun_path) - 1, "%s", pmix_pid);
+        free(pmix_pid);
+        /* we don't provide a URI for this listener as we don't pass
+         * the TOOL connection URI to a child process */
+        pmix_server_globals.tool_connections_allowed = true;
+        pmix_list_append(&pmix_server_globals.listeners, &tl->super);
+        /* push this onto our protected list of keys not
+         * to be passed to the clients */
+        pmix_argv_append_nosize(&protected, PMIX_SERVER_TOOL_SUPPORT);
     }
 
     /* setup the wildcard recv for inbound messages from clients */
@@ -406,6 +422,14 @@ static void cleanup_server_state(void)
 
     if (NULL != security_mode) {
         free(security_mode);
+    }
+
+    if (NULL != mytmpdir) {
+        free(mytmpdir);
+    }
+
+    if (NULL != systmpdir) {
+        free(systmpdir);
     }
 
     pmix_bfrop_close();
