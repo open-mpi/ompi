@@ -382,13 +382,11 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         opal_list_append(pmap, &kv->super);
 
         /* node ID */
-        if (NULL != node) {
-            kv = OBJ_NEW(opal_value_t);
-            kv->key = strdup(OPAL_PMIX_NODEID);
-            kv->type = OPAL_UINT32;
-            kv->data.uint32 = node->index;
-            opal_list_append(pmap, &kv->super);
-        }
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_NODEID);
+        kv->type = OPAL_UINT32;
+        kv->data.uint32 = pptr->node->index;
+        opal_list_append(pmap, &kv->super);
     }
 
     /* mark the job as registered */
