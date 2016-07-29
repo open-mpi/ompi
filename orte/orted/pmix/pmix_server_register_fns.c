@@ -18,6 +18,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation. All rights reservered.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -171,12 +172,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         OPAL_LIST_RELEASE(info);
         return ORTE_ERR_NOT_FOUND;
     }
-    /* pass our node ID */
-    kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_NODEID);
-    kv->type = OPAL_UINT32;
-    kv->data.uint32 = node->index;
-    opal_list_append(info, &kv->super);
 
     /* identify our local node object within the map,
      * if we were included */
@@ -233,30 +228,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
             }
         }
 
-        /* construct the list of peers for transmission */
-        if (NULL != list) {
-            tmp = opal_argv_join(list, ',');
-            opal_argv_free(list);
-            list = NULL;
-            /* pass the list of peers */
-            kv = OBJ_NEW(opal_value_t);
-            kv->key = strdup(OPAL_PMIX_LOCAL_PEERS);
-            kv->type = OPAL_STRING;
-            kv->data.string = tmp;
-            opal_list_append(info, &kv->super);
-        }
-        /* construct the list of cpusets for transmission */
-        if (NULL != procs) {
-            tmp = opal_argv_join(procs, ':');
-            opal_argv_free(procs);
-            procs = NULL;
-            /* pass the list of cpusets */
-            kv = OBJ_NEW(opal_value_t);
-            kv->key = strdup(OPAL_PMIX_LOCAL_CPUSETS);
-            kv->type = OPAL_STRING;
-            kv->data.string = tmp;
-            opal_list_append(info, &kv->super);
-        }
         /* pass the local ldr */
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_LOCALLDR);
@@ -284,13 +255,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     kv->key = strdup(OPAL_PMIX_JOB_NUM_APPS);
     kv->type = OPAL_UINT32;
     kv->data.uint32 = jdata->num_apps;
-    opal_list_append(info, &kv->super);
-
-    /* local size */
-    kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_LOCAL_SIZE);
-    kv->type = OPAL_UINT32;
-    kv->data.uint32 = jdata->num_local_procs;
     opal_list_append(info, &kv->super);
 
     /* max procs */
@@ -323,6 +287,43 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         kv->type = OPAL_INT;
         kv->data.integer = pptr->name.vpid;
         opal_list_append(pmap, &kv->super);
+
+        /* local size - same for all on host, but not same across namespace */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_LOCAL_SIZE);
+        kv->type = OPAL_UINT32;
+        kv->data.uint32 = jdata->num_local_procs;
+        opal_list_append(pmap, &kv->super);
+
+        /* pass our node ID - same for all on host, but not same across namespace */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_NODEID);
+        kv->type = OPAL_UINT32;
+        kv->data.uint32 = node->index;
+        opal_list_append(pmap, &kv->super);
+
+        /* construct the list of peers for transmission */
+        /* - same for all on host, but not same across namespace */
+        if (NULL != list) {
+            tmp = opal_argv_join(list, ',');
+            /* pass the list of peers */
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_LOCAL_PEERS);
+            kv->type = OPAL_STRING;
+            kv->data.string = tmp;
+            opal_list_append(pmap, &kv->super);
+        }
+        /* construct the list of cpusets for transmission */
+        /* - same for all on host, but not same across namespace */
+        if (NULL != procs) {
+            tmp = opal_argv_join(procs, ':');
+            /* pass the list of cpusets */
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_LOCAL_CPUSETS);
+            kv->type = OPAL_STRING;
+            kv->data.string = tmp;
+            opal_list_append(pmap, &kv->super);
+        }
 
         /* appnum */
         kv = OBJ_NEW(opal_value_t);
@@ -387,6 +388,15 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         kv->type = OPAL_UINT32;
         kv->data.uint32 = pptr->node->index;
         opal_list_append(pmap, &kv->super);
+    }
+
+    if (NULL != procs) {
+        opal_argv_free(procs);
+        procs = NULL;
+    }
+    if (NULL != list) {
+        opal_argv_free(list);
+        list = NULL;
     }
 
     /* mark the job as registered */
