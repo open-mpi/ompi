@@ -7,8 +7,7 @@
 #####
 
 # e-mail address to send results to
-#results_addr=hwloc-devel@open-mpi.org
-results_addr=testing@open-mpi.org
+results_addr=hwloc-devel@open-mpi.org
 
 # git repository URL
 code_uri=https://github.com/open-mpi/hwloc.git
