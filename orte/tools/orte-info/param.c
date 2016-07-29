@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -35,6 +35,7 @@
 #endif
 
 #include MCA_timer_IMPLEMENTATION_HEADER
+#include "opal/include/opal/version.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_pointer_array.h"
@@ -367,6 +368,7 @@ void orte_info_do_config(bool want_all)
     orte_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
     orte_info_out("Configured on", "config:timestamp", OPAL_CONFIGURE_DATE);
     orte_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
+    orte_info_out("Configure command line", "config:cli", OPAL_CONFIGURE_CLI);
 
     orte_info_out("Built by", "build:user", OMPI_BUILD_USER);
     orte_info_out("Built on", "build:timestamp", OMPI_BUILD_DATE);

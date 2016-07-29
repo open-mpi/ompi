@@ -54,6 +54,8 @@ AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 
+OPAL_CAPTURE_CONFIGURE_CLI([OPAL_CONFIGURE_CLI])
+
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
 OPAL_LOAD_PLATFORM
