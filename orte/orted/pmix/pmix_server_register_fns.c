@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -382,11 +382,13 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         opal_list_append(pmap, &kv->super);
 
         /* node ID */
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_NODEID);
-        kv->type = OPAL_UINT32;
-        kv->data.uint32 = node->index;
-        opal_list_append(pmap, &kv->super);
+        if (NULL != node) {
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_NODEID);
+            kv->type = OPAL_UINT32;
+            kv->data.uint32 = node->index;
+            opal_list_append(pmap, &kv->super);
+        }
     }
 
     /* mark the job as registered */
