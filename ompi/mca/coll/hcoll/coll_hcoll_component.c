@@ -17,6 +17,7 @@
 
 #include "coll_hcoll.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "coll_hcoll_dtypes.h"
 
 /*
  * Public string showing the coll ompi_hcol component version number
@@ -173,7 +174,15 @@ static int hcoll_register(void)
                   1,
                   &mca_coll_hcoll_component.hcoll_datatype_fallback,
                   0));
-
+#if HCOLL_API >= HCOLL_VERSION(3,6)
+    CHECK(reg_int("dts",NULL,
+                  "[1|0|] Enable/Disable derived types support",
+                  1,
+                  &mca_coll_hcoll_component.derived_types_support_enabled,
+                  0));
+#else
+    mca_coll_hcoll_component.derived_types_support_enabled = 0;
+#endif
     mca_coll_hcoll_component.compiletime_version = HCOLL_VERNO_STRING;
     mca_base_component_var_register(&mca_coll_hcoll_component.super.collm_version,
             MCA_COMPILETIME_VER,
@@ -244,7 +253,7 @@ static int hcoll_close(void)
 
     HCOL_VERBOSE(5,"HCOLL FINALIZE");
     rc = hcoll_finalize();
-
+    OBJ_DESTRUCT(&cm->dtypes);
     opal_progress_unregister(mca_coll_hcoll_progress);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(1,"Hcol library finalize failed");

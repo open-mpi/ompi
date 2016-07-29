@@ -49,6 +49,11 @@ typedef struct mca_coll_hcoll_ops_t {
     int (*hcoll_barrier)(void *);
 } mca_coll_hcoll_ops_t;
 
+typedef struct {
+    opal_free_list_item_t super;
+    dte_data_representation_t type;
+} mca_coll_hcoll_dtype_t;
+OBJ_CLASS_DECLARATION(mca_coll_hcoll_dtype_t);
 
 struct mca_coll_hcoll_component_t {
     /** Base coll component */
@@ -89,6 +94,8 @@ struct mca_coll_hcoll_component_t {
     /* FCA global stuff */
     mca_coll_hcoll_ops_t hcoll_ops;
     opal_free_list_t requests;
+    opal_free_list_t dtypes;
+    int derived_types_support_enabled;
 };
 typedef struct mca_coll_hcoll_component_t mca_coll_hcoll_component_t;
 
