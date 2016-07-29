@@ -106,6 +106,10 @@ BEGIN_C_DECLS
 #define PMIX_SERVER_TOOL_SUPPORT            "pmix.srvr.tool"        // (bool) The host RM wants to declare itself as willing to
                                                                     //        accept tool connection requests
 #define PMIX_SERVER_PIDINFO                 "pmix.srvr.pidinfo"     // (uint32_t) pid of the target server
+#define PMIX_SERVER_TMPDIR                  "pmix.srvr.tmpdir"      // (char*) temp directory where PMIx server will place
+                                                                    //        client rendezvous points
+#define PMIX_SYSTEM_TMPDIR                  "pmix.sys.tmpdir"       // (char*) temp directory for this system, where PMIx
+                                                                    //        server will place tool rendezvous points
 
 /* identification attributes */
 #define PMIX_USERID                         "pmix.euid"             // (uint32_t) effective user id

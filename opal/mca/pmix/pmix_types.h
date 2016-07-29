@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +44,10 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_SERVER_TOOL_SUPPORT           "pmix.srvr.tool"        // (bool) The host RM wants to declare itself as willing to
                                                                         //        accept tool connection requests
 #define OPAL_PMIX_SERVER_PIDINFO                "pmix.srvr.pidinfo"     // (uint32_t) pid of the target server
+#define OPAL_PMIX_SERVER_TMPDIR                 "pmix.srvr.tmpdir"      // (char*) temp directory where PMIx server will place
+                                                                        //        client rendezvous points
+#define OPAL_PMIX_SYSTEM_TMPDIR                 "pmix.sys.tmpdir"       // (char*) temp directory where PMIx server will place
+                                                                        //        tool rendezvous points
 
 
 /* identification attributes */
