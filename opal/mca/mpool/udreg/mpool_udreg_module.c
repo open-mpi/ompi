@@ -221,9 +221,12 @@ static uint32_t mca_mpool_udreg_dereg_func (void *device_data, void *dreg_contex
 {
     mca_mpool_udreg_module_t *mpool_udreg = (mca_mpool_udreg_module_t *) dreg_context;
     mca_mpool_base_registration_t *udreg_reg = (mca_mpool_base_registration_t *) device_data;
+    int32_t ref_count = OPAL_THREAD_ADD32(&udreg_reg->ref_count, -1);
     int rc;
 
-    if (udreg_reg->ref_count) {
+    assert(ref_count >= 0);
+
+    if (ref_count) {
         /* there are still users of this registration. leave it alone */
         return 0;
     }
@@ -442,7 +445,7 @@ int mca_mpool_udreg_register(mca_mpool_base_module_t *mpool, void *addr,
     udreg_reg->flags = flags;
 
     *reg = udreg_reg;
-    udreg_reg->ref_count++;
+    OPAL_THREAD_ADD32(&udreg_reg->ref_count, 1);
 
     return OPAL_SUCCESS;
 }
@@ -489,10 +492,6 @@ int mca_mpool_udreg_deregister(struct mca_mpool_base_module_t *mpool,
                                mca_mpool_base_registration_t *reg)
 {
     mca_mpool_udreg_module_t *mpool_udreg = (mca_mpool_udreg_module_t *) mpool;
-
-    assert(reg->ref_count > 0);
-
-    --reg->ref_count;
 
     if (!(reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS)) {
         OPAL_THREAD_LOCK(&mpool_udreg->lock);
