@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -150,11 +150,17 @@ static void eviction_cbfunc(struct opal_hotel_t *hotel,
                             int room_num, void *occupant)
 {
     pmix_server_req_t *req = (pmix_server_req_t*)occupant;
+    bool timeout = false;
     int rc;
 
     /* decrement the request timeout */
-    req->timeout -= orte_pmix_server_globals.timeout;
-    if (0 < req->timeout) {
+    if (req->timeout > 0) {
+        req->timeout -= orte_pmix_server_globals.timeout;
+        if (0 >= req->timeout) {
+            timeout = true;
+        }
+    }
+    if (!timeout) {
         /* not done yet - check us back in */
         if (OPAL_SUCCESS == (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
             return;
