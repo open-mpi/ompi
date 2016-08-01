@@ -39,6 +39,7 @@
 #include "io_ompio.h"
 
 static OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *);
+
 static int datatype_duplicate (ompi_datatype_t *oldtype, ompi_datatype_t **newtype );
 static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newtype )
 {
@@ -71,7 +72,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     size_t max_data = 0;
     int i;
     int num_groups = 0;
-    contg *contg_groups;
+    mca_io_ompio_contg *contg_groups;
 
     size_t ftype_size;
     OPAL_PTRDIFF_TYPE ftype_extent, lb, ub;
@@ -153,7 +154,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
         }
     }
 
-    contg_groups = (contg*) calloc ( 1, fh->f_size * sizeof(contg));
+    contg_groups = (mca_io_ompio_contg*) calloc ( 1, fh->f_size * sizeof(mca_io_ompio_contg));
     if (NULL == contg_groups) {
         opal_output (1, "OUT OF MEMORY\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -173,9 +174,9 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
 
     if ( SIMPLE != mca_io_ompio_grouping_option ) {
         if( OMPI_SUCCESS != mca_io_ompio_fview_based_grouping(fh,
-                                                          &num_groups,
-                                                          contg_groups)){
-            opal_output(1, "mca_io_ompio_fview_based_grouping() failed\n");
+                                                              &num_groups,
+                                                              contg_groups)){
+            opal_output(1, "mca_io_ompio_set_view_internal: mca_io_ompio_fview_based_grouping failed\n");
             free(contg_groups);
             return OMPI_ERROR;
         }
@@ -184,16 +185,20 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
         if( OMPI_SUCCESS != mca_io_ompio_simple_grouping(fh,
                                                          &num_groups,
                                                          contg_groups)){
-            opal_output(1, "mca_io_ompio_simple_grouping() failed\n");
+            opal_output(1, "mca_io_ompio_set_view_internal: mca_io_ompio_simple_grouping failed\n");
             free(contg_groups);
             return OMPI_ERROR;
         }
     }
     
     
-    mca_io_ompio_finalize_initial_grouping(fh,
-                                           num_groups,
-                                           contg_groups);
+    if ( OMPI_SUCCESS != mca_io_ompio_finalize_initial_grouping(fh,
+                                                                num_groups,
+                                                                contg_groups) ){
+        opal_output(1, "mca_io_ompio_set_view_internal: mca_io_ompio_finalize_initial_grouping failed\n");
+        free(contg_groups);
+        return OMPI_ERROR;        
+    }
     for( i = 0; i < fh->f_size; i++){
        free(contg_groups[i].procs_in_contg_group);
     }
@@ -207,7 +212,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
 
 
     if (OMPI_SUCCESS != mca_fcoll_base_file_select (fh, NULL)) {
-        opal_output(1, "mca_fcoll_base_file_select() failed\n");
+        opal_output(1, "mca_io_ompio_set_view_internal: mca_fcoll_base_file_select() failed\n");
         return OMPI_ERROR;
     }
 
@@ -334,168 +339,4 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
     return global_avg[0];
 }
 
-int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
-                                 int *num_groups,
-                                 contg *contg_groups)
-{
-    size_t stripe_size = (size_t) fh->f_stripe_size;
-    int group_size  = 0;
-    int k=0, p=0, g=0;
-    int total_procs = 0; 
-
-    if ( 0 < fh->f_stripe_size ) {
-        stripe_size = OMPIO_DEFAULT_STRIPE_SIZE;
-    }
-
-    if ( 0 != fh->f_cc_size && stripe_size > fh->f_cc_size ) {
-        group_size  = (((int)stripe_size/(int)fh->f_cc_size) > fh->f_size ) ? fh->f_size : ((int)stripe_size/(int)fh->f_cc_size);
-        *num_groups = fh->f_size / group_size;
-    }
-    else if ( fh->f_cc_size <= OMPIO_CONTG_FACTOR * stripe_size) {
-        *num_groups = fh->f_size/OMPIO_CONTG_FACTOR > 0 ? (fh->f_size/OMPIO_CONTG_FACTOR) : 1 ;
-        group_size  = OMPIO_CONTG_FACTOR;
-    } 
-    else {
-        *num_groups = fh->f_size;
-        group_size  = 1;
-    }
-
-    for ( k=0, p=0; p<*num_groups; p++ ) {
-        if ( p == (*num_groups - 1) ) {
-            contg_groups[p].procs_per_contg_group = fh->f_size - total_procs;
-        }
-        else {
-            contg_groups[p].procs_per_contg_group = group_size;
-            total_procs +=group_size;
-        }
-        for ( g=0; g<contg_groups[p].procs_per_contg_group; g++ ) {
-            contg_groups[p].procs_in_contg_group[g] = k;
-            k++;
-        }
-    }
-    return OMPI_SUCCESS;
-}
-
-int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
-                     		      int *num_groups,
-				      contg *contg_groups)
-{
-
-    int k = 0;
-    int p = 0;
-    int g = 0;
-    OMPI_MPI_OFFSET_TYPE start_offset_len[3] = {0};
-    OMPI_MPI_OFFSET_TYPE *end_offsets = NULL;
-    OMPI_MPI_OFFSET_TYPE *start_offsets_lens = NULL;
-
-    //Store start offset,length and corresponding rank in an array
-    if(NULL == fh->f_decoded_iov){
-      start_offset_len[0] = 0;
-      start_offset_len[1] = 0;
-    }
-    else{
-       start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_decoded_iov[0].iov_base;
-       start_offset_len[1] = fh->f_decoded_iov[0].iov_len;
-    }
-    start_offset_len[2] = fh->f_rank;
-
-    start_offsets_lens = (OMPI_MPI_OFFSET_TYPE* )malloc (3 * fh->f_size * sizeof(OMPI_MPI_OFFSET_TYPE));
-    if (NULL == start_offsets_lens) {
-        opal_output (1, "OUT OF MEMORY\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    end_offsets = (OMPI_MPI_OFFSET_TYPE* )malloc (fh->f_size * sizeof(OMPI_MPI_OFFSET_TYPE));
-    if (NULL == end_offsets) {
-        opal_output (1, "OUT OF MEMORY\n");
-        free(start_offsets_lens);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    
-    //Allgather start offsets across processes in a group on aggregator
-    fh->f_comm->c_coll.coll_allgather (start_offset_len,
-                                       3,
-                                       OMPI_OFFSET_DATATYPE,
-                                       start_offsets_lens,
-                                       3,
-                                       OMPI_OFFSET_DATATYPE,
-                                       fh->f_comm,
-                                       fh->f_comm->c_coll.coll_allgather_module);
-    
-    //Calculate contg chunk size and contg subgroups
-    for( k = 0 ; k < fh->f_size; k++){
-        end_offsets[k] = start_offsets_lens[3*k] + start_offsets_lens[3*k+1];
-        contg_groups[k].contg_chunk_size = 0;
-    }
-    k = 0;
-    while( k < fh->f_size){
-        if( k == 0){
-            contg_groups[p].contg_chunk_size += start_offsets_lens[3*k+1];
-            contg_groups[p].procs_in_contg_group[g] = start_offsets_lens[3*k + 2];
-            g++;
-            contg_groups[p].procs_per_contg_group = g;
-            k++;
-        }
-        else if( start_offsets_lens[3*k] == end_offsets[k - 1] ){
-            contg_groups[p].contg_chunk_size += start_offsets_lens[3*k+1];
-            contg_groups[p].procs_in_contg_group[g] = start_offsets_lens[3*k + 2];
-            g++;
-            contg_groups[p].procs_per_contg_group = g;
-            k++;
-        }
-        else{
-            p++;
-            g = 0;
-            contg_groups[p].contg_chunk_size += start_offsets_lens[3*k+1];
-            contg_groups[p].procs_in_contg_group[g] = start_offsets_lens[3*k + 2];
-            g++;
-            contg_groups[p].procs_per_contg_group = g;
-            k++;
-        }
-    }
-    
-    *num_groups = p+1;
-    free (start_offsets_lens);
-    free (end_offsets);
- 
-    return OMPI_SUCCESS;
-}
-
-int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
-		                           int num_groups,
-					   contg *contg_groups)
-{
-
-    int z = 0;
-    int y = 0;
-
-    fh->f_init_num_aggrs = num_groups;
-    fh->f_init_aggr_list = (int*)malloc (fh->f_init_num_aggrs * sizeof(int));
-    if (NULL == fh->f_init_aggr_list) {
-        opal_output (1, "OUT OF MEMORY\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    for( z = 0 ;z < num_groups; z++){
-        for( y = 0; y < contg_groups[z].procs_per_contg_group; y++){
-            if ( fh->f_rank == contg_groups[z].procs_in_contg_group[y] ) {
-                fh->f_init_procs_per_group = contg_groups[z].procs_per_contg_group;
-                fh->f_init_procs_in_group = (int*)malloc (fh->f_init_procs_per_group * sizeof(int));
-                if (NULL == fh->f_init_procs_in_group) {
-                    opal_output (1, "OUT OF MEMORY\n");
-                    return OMPI_ERR_OUT_OF_RESOURCE;
-                }
-                memcpy ( fh->f_init_procs_in_group, contg_groups[z].procs_in_contg_group, 
-                         contg_groups[z].procs_per_contg_group * sizeof (int));
-                
-            }
-        }
-    }
-
-    for( z = 0 ;z < num_groups; z++){
-        fh->f_init_aggr_list[z] = contg_groups[z].procs_in_contg_group[0];
-    }
-
-
-   return OMPI_SUCCESS;
-}
 

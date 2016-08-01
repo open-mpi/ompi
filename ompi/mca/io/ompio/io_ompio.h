@@ -161,23 +161,6 @@ typedef struct mca_io_ompio_offlen_array_t{
 }mca_io_ompio_offlen_array_t;
 
 
-typedef struct {
-	int ndims;
-	int *dims;
-	int *periods;
-	int *coords;
-	int reorder;
-} cart_topo_components;
-
-
-typedef struct{
-        OMPI_MPI_OFFSET_TYPE contg_chunk_size;
-        int *procs_in_contg_group;
-	int procs_per_contg_group;
-} contg;
-
-
-
 /*
  * Function that takes in a datatype and buffer, and decodes that datatype
  * into an iovec using the convertor_raw function
@@ -321,7 +304,7 @@ typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 
 
 #include "ompi/mca/common/ompio/common_ompio.h"
-
+#include "io_ompio_aggregators.h"
 
 /* functions to retrieve the number of aggregators and the size of the
    temporary buffer on aggregators from the fcoll modules */
@@ -370,26 +353,6 @@ OMPI_DECLSPEC int ompi_io_ompio_generate_groups (mca_io_ompio_file_t *fh,
                                                  int *root,
                                                  int *procs_per_group,
 						 int **ranks);
-
-/*Aggregator selection methods*/
-OMPI_DECLSPEC int ompi_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
-                                                      int num_aggregators,
-                                                      size_t bytes_per_proc);
-
-
-int mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh);
-
-int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
-		                                    int *num_groups,
-						    contg *contg_groups);
-int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
-                                 int *num_groups,
-                                 contg *contg_groups);
-
-int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
-                                           int num_groups,
-                                           contg *contg_groups);
-
 
 /*
  * ******************************************************************
