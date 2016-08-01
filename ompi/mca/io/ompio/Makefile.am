@@ -31,21 +31,25 @@ endif
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_io_ompio_la_SOURCES = $(sources)
+mca_io_ompio_la_SOURCES = $(headers) $(sources)
 mca_io_ompio_la_LDFLAGS = -module -avoid-version
 mca_io_ompio_la_LIBADD = $(io_ompio_LIBS) \
     $(OMPI_TOP_BUILDDIR)/ompi/mca/common/ompio/lib@OPAL_LIB_PREFIX@mca_common_ompio.la
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_io_ompio_la_SOURCES = $(sources)
+libmca_io_ompio_la_SOURCES = $(headers) $(sources)
 libmca_io_ompio_la_LDFLAGS = -module -avoid-version
 
 # Source files
 
+headers = \
+	io_ompio.h \
+	io_ompio_request.h \
+	io_ompio_aggregators.h
+
 sources = \
-        io_ompio.h \
-        io_ompio_request.h \
         io_ompio.c \
+        io_ompio_aggregators.c \
         io_ompio_component.c \
         io_ompio_module.c \
         io_ompio_file_set_view.c \
