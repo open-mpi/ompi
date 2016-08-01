@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -298,6 +298,15 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
         if (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, &bptr, &cnt, PMIX_BUFFER))) {
             /* if the rank is WILDCARD, then this is an nspace blob */
             if (PMIX_RANK_WILDCARD == cur_rank) {
+                char *nspace;
+                /* unpack the nspace - we don't really need it, but have to
+                 * unpack it to maintain sequence */
+                cnt = 1;
+                if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(bptr, &nspace, &cnt, PMIX_STRING))) {
+                    PMIX_ERROR_LOG(rc);
+                    return;
+                }
+                free(nspace);
                 pmix_client_process_nspace_blob(cb->nspace, bptr);
             } else {
                 cnt = 1;
