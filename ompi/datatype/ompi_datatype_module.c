@@ -109,7 +109,7 @@ ompi_predefined_datatype_t ompi_mpi_cxx_bool =       OMPI_DATATYPE_INIT_PREDEFIN
 /*
  * Complex datatypes for C (base types), C++, and fortran
  */
-ompi_predefined_datatype_t ompi_mpi_c_float_complex =       OMPI_DATATYPE_INIT_PREDEFINED (C_FLOAT_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+ompi_predefined_datatype_t ompi_mpi_c_float_complex =       OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, C_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_c_complex =             OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE (C_FLOAT_COMPLEX, C_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_c_double_complex =      OMPI_DATATYPE_INIT_PREDEFINED (C_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 #if HAVE_LONG_DOUBLE
@@ -255,7 +255,7 @@ ompi_predefined_datatype_t ompi_mpi_integer8 =       OMPI_DATATYPE_INIT_UNAVAILA
 #if OMPI_HAVE_FORTRAN_INTEGER16
 ompi_predefined_datatype_t ompi_mpi_integer16 =      OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN (INT, INTEGER16, OMPI_SIZEOF_FORTRAN_INTEGER16, OMPI_ALIGNMENT_FORTRAN_INTEGER16, OMPI_DATATYPE_FLAG_DATA_INT);
 #else
-ompi_predefined_datatype_t ompi_mpi_integer16 =      OMPI_DATATYPE_INIT_UNAVAILABLE (INTEGER8, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_INT);
+ompi_predefined_datatype_t ompi_mpi_integer16 =      OMPI_DATATYPE_INIT_UNAVAILABLE (INTEGER16, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_INT);
 #endif
 
 /*
@@ -533,7 +533,7 @@ int32_t ompi_datatype_init( void )
     }
 
     /*
-     * This MUST match the order of ompi/include/mpif-common.h
+     * This MUST match the order of ompi/include/mpif-values.pl
      * Any change will break binary compatibility of Fortran programs.
      */
     MOOG(datatype_null, 0);
@@ -614,7 +614,7 @@ int32_t ompi_datatype_init( void )
     MOOG(uint64_t, 65);
     MOOG(aint, 66);
     MOOG(offset, 67);
-    MOOG(c_complex, 68);
+    MOOG(c_bool, 68);
     MOOG(c_float_complex, 69);
     MOOG(c_double_complex, 70);
     MOOG(c_long_double_complex, 71);

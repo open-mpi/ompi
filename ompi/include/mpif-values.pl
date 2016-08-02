@@ -3,6 +3,7 @@
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -105,6 +106,7 @@ $handles->{MPI_BXOR} = 10;
 $handles->{MPI_MAXLOC} = 11;
 $handles->{MPI_MINLOC} = 12;
 $handles->{MPI_REPLACE} = 13;
+$handles->{MPI_NO_OP} = 14;
 
 $handles->{MPI_COMM_NULL} = 2;
 $handles->{MPI_DATATYPE_NULL} = 0;
@@ -160,20 +162,22 @@ $handles->{MPI_UNSIGNED} = 40;
 $handles->{MPI_LONG} = 41;
 $handles->{MPI_UNSIGNED_LONG} = 42;
 $handles->{MPI_LONG_LONG_INT} = 43;
+$handles->{MPI_LONG_LONG} = $handles->{MPI_LONG_LONG_INT};
 $handles->{MPI_UNSIGNED_LONG_LONG} = 44;
 $handles->{MPI_FLOAT} = 45;
 $handles->{MPI_DOUBLE} = 46;
 $handles->{MPI_LONG_DOUBLE} = 47;
 $handles->{MPI_FLOAT_INT} = 48;
 $handles->{MPI_DOUBLE_INT} = 49;
-$handles->{MPI_LONGDBL_INT} = 50;
+$handles->{MPI_LONG_DOUBLE_INT} = 50;
 $handles->{MPI_LONG_INT} = 51;
 $handles->{MPI_2INT} = 52;
 $handles->{MPI_SHORT_INT} = 53;
 $handles->{MPI_CXX_BOOL} = 54;
-$handles->{MPI_CXX_CPLEX} = 55;
-$handles->{MPI_CXX_DBLCPLEX} = 56;
-$handles->{MPI_CXX_LDBLCPLEX} = 57;
+$handles->{MPI_CXX_FLOAT_COMPLEX} = 55;
+$handles->{MPI_CXX_COMPLEX} = $handles->{MPI_CXX_FLOAT_COMPLEX};
+$handles->{MPI_CXX_DOUBLE_COMPLEX} = 56;
+$handles->{MPI_CXX_LONG_DOUBLE_COMPLEX} = 57;
 $handles->{MPI_INT8_T} = 58;
 $handles->{MPI_UINT8_T} = 59;
 $handles->{MPI_INT16_T} = 60;
@@ -184,8 +188,9 @@ $handles->{MPI_INT64_T} = 64;
 $handles->{MPI_UINT64_T} = 65;
 $handles->{MPI_AINT} = 66;
 $handles->{MPI_OFFSET} = 67;
-$handles->{MPI_C_COMPLEX} = 68;
-$handles->{MPI_C_FLOAT_COMPLEX} = 69;
+$handles->{MPI_C_BOOL} = 68;
+$handles->{MPI_C_COMPLEX} = 69;
+$handles->{MPI_C_FLOAT_COMPLEX} = $handles->{MPI_C_COMPLEX};
 $handles->{MPI_C_DOUBLE_COMPLEX} = 70;
 $handles->{MPI_C_LONG_DOUBLE_COMPLEX} = 71;
 $handles->{MPI_COUNT} = 72;
@@ -235,6 +240,8 @@ $constants->{MPI_WIN_FLAVOR_CREATE} = 1;
 $constants->{MPI_WIN_FLAVOR_ALLOCATE} = 2;
 $constants->{MPI_WIN_FLAVOR_DYNAMIC} = 3;
 $constants->{MPI_WIN_FLAVOR_SHARED} = 4;
+$constants->{MPI_WIN_UNIFIED} = 0;
+$constants->{MPI_WIN_SEPARATE} = 1;
 
 $constants->{MPI_BSEND_OVERHEAD} = 128;
 $constants->{MPI_ORDER_C} = 0;
