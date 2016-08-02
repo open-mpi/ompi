@@ -14,6 +14,8 @@
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  */
+#include "opal/include/opal/align.h"
+
 #include "nbc_internal.h"
 
 /* an reduce_csttare schedule can not be cached easily because the contents
@@ -75,9 +77,11 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
 
   if (0 < count) {
     char *rbuf, *lbuf, *buf;
+    ptrdiff_t span_align;
 
     span = opal_datatype_span(&datatype->super, count, &gap);
-    handle->tmpbuf = malloc (2*span);
+    span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);
+    handle->tmpbuf = malloc (span_align + span);
     if (NULL == handle->tmpbuf) {
       OMPI_COLL_LIBNBC_REQUEST_RETURN(handle);
       OBJ_RELEASE(schedule);
@@ -85,8 +89,8 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
     }
 
     rbuf = (void *)(-gap);
-    lbuf = (char *)(span - gap);
-    redbuf = (char *) handle->tmpbuf + span - gap;
+    lbuf = (char *)(span_align - gap);
+    redbuf = (char *) handle->tmpbuf + span_align - gap;
 
     /* copy data to redbuf if we only have a single node */
     if ((p == 1) && !inplace) {
@@ -206,7 +210,7 @@ int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sendbuf, void *recv
 						 ompi_request_t **request, struct mca_coll_base_module_2_1_0_t *module) {
   int rank, res, count, lsize, rsize;
   MPI_Aint ext;
-  ptrdiff_t gap, span;
+  ptrdiff_t gap, span, span_align;
   NBC_Schedule *schedule;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -229,9 +233,10 @@ int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sendbuf, void *recv
   count = rcount * lsize;
 
   span = opal_datatype_span(&dtype->super, count, &gap);
+  span_align = OPAL_ALIGN(span, dtype->super.align, ptrdiff_t);
 
   if (count > 0) {
-    handle->tmpbuf = malloc (2 * span);
+    handle->tmpbuf = malloc (span_align + span);
     if (NULL == handle->tmpbuf) {
       NBC_Return_handle (handle);
       return OMPI_ERR_OUT_OF_RESOURCE;
@@ -257,7 +262,7 @@ int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sendbuf, void *recv
   if (0 == rank) {
     char *lbuf, *rbuf;
     lbuf = (char *)(-gap);
-    rbuf = (char *)(span-gap);
+    rbuf = (char *)(span_align-gap);
     res = NBC_Sched_recv (lbuf, true, count, dtype, 0, schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       NBC_Return_handle (handle);
