@@ -230,7 +230,6 @@ static void mca_mpool_hugepage_find_hugepages (void) {
 
         do {
             if (0 == strncmp (tok, "pagesize", 8)) {
-                free(opts);
                 break;
             }
             tok = strtok_r (NULL, ",", &ctx);
