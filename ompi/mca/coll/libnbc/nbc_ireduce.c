@@ -13,6 +13,7 @@
  *
  */
 
+#include "opal/include/opal/align.h"
 #include "ompi/op/op.h"
 
 #include "nbc_internal.h"
@@ -90,8 +91,9 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
       redbuf = recvbuf;
     } else {
       /* recvbuf may not be valid on non-root nodes */
-      handle->tmpbuf = malloc (2*span);
-      redbuf = (char*) handle->tmpbuf + span - gap;
+      ptrdiff_t span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);
+      handle->tmpbuf = malloc (span_align + span);
+      redbuf = (char*) handle->tmpbuf + span_align - gap;
     }
   } else {
     handle->tmpbuf = malloc (span);
