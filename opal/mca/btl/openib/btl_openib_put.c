@@ -85,7 +85,6 @@ int mca_btl_openib_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
 
     /* post descriptor */
     to_out_frag(frag)->sr_desc.opcode = IBV_WR_RDMA_WRITE;
-    to_out_frag(frag)->sr_desc.send_flags = ib_send_flags(size, &(ep->qps[qp]), 1);
     to_out_frag(frag)->sr_desc.wr.rdma.remote_addr = remote_address;
 
     qp_inflight_wqe_to_frag(ep, qp, to_com_frag(frag));
@@ -140,11 +139,14 @@ int mca_btl_openib_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base
     struct ibv_send_wr *bad_wr;
     int rc;
 
+    /* NTH: the inline send size and remote SRQ number are only available once the endpoint is
+     * connected. By setting these values here instead of mca_btl_openib_put we guarantee
+     * both fields are initialized */
+    to_out_frag(frag)->sr_desc.send_flags = ib_send_flags (to_com_frag(frag)->sg_entry.length,
+                                                           &(ep->qps[qp]), 1);
+
 #if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
-        /* NTH: the remote SRQ number is only available once the endpoint is connected. By
-         * setting the value here instead of mca_btl_openib_put we guarantee the rem_srqs
-         * array is initialized. */
 #if OPAL_HAVE_CONNECTX_XRC
         to_out_frag(frag)->sr_desc.xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
 #elif OPAL_HAVE_CONNECTX_XRC_DOMAINS
