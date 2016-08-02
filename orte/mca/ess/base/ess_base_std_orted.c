@@ -455,33 +455,6 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rml.enable_comm";
         goto error;
     }
-#if ORTE_ENABLE_STATIC_PORTS
-    /* if we are using static ports, then we need to setup
-     * the daemon info so the RML can function properly
-     * without requiring a wireup stage. This must be done
-     * after we enable_comm as that function determines our
-     * own port, which we need in order to construct the nidmap
-     */
-    if (orte_static_ports) {
-        /* define the routing tree so we know the pattern
-         * if we are trying to setup common or static ports
-         */
-        orte_routed.update_routing_plan();
-        /* extract the node info from the environment and
-         * build a nidmap from it
-         */
-        if (ORTE_SUCCESS != (ret = orte_util_build_daemon_nidmap(hosts))) {
-            ORTE_ERROR_LOG(ret);
-            error = "construct daemon map from static ports";
-            goto error;
-        }
-    }
-#endif
-    /* be sure to update the routing tree so the initial "phone home"
-     * to mpirun goes through the tree if static ports were enabled - still
-     * need to do it anyway just to initialize things
-     */
-    orte_routed.update_routing_plan();
     /* Now provide a chance for the PLM
      * to perform any module-specific init functions. This
      * needs to occur AFTER the communications are setup
@@ -519,6 +492,33 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "pmix_server_init";
         goto error;
     }
+#if ORTE_ENABLE_STATIC_PORTS
+    /* if we are using static ports, then we need to setup
+     * the daemon info so the RML can function properly
+     * without requiring a wireup stage. This must be done
+     * after we enable_comm as that function determines our
+     * own port, which we need in order to construct the nidmap
+     */
+    if (orte_static_ports) {
+        /* define the routing tree so we know the pattern
+         * if we are trying to setup common or static ports
+         */
+        orte_routed.update_routing_plan();
+        /* extract the node info from the environment and
+         * build a nidmap from it
+         */
+        if (ORTE_SUCCESS != (ret = orte_util_build_daemon_nidmap(hosts))) {
+            ORTE_ERROR_LOG(ret);
+            error = "construct daemon map from static ports";
+            goto error;
+        }
+    }
+#endif
+    /* be sure to update the routing tree so the initial "phone home"
+     * to mpirun goes through the tree if static ports were enabled - still
+     * need to do it anyway just to initialize things
+     */
+    orte_routed.update_routing_plan();
 
     /* setup the routed info - the selected routed component
      * will know what to do.
