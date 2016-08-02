@@ -18,7 +18,7 @@
 
 #include "nbc_internal.h"
 
-static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, void *redbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, void *redbuf, char tmpredbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, char inplace, NBC_Schedule *schedule, NBC_Handle *handle);
 static inline int red_sched_chain (int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                    MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
@@ -52,6 +52,7 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
   MPI_Aint ext;
   NBC_Schedule *schedule;
   char *redbuf=NULL, inplace;
+  char tmpredbuf = 0;
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Reduce_args *args, *found, search;
 #endif
@@ -93,7 +94,8 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
       /* recvbuf may not be valid on non-root nodes */
       ptrdiff_t span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);
       handle->tmpbuf = malloc (span_align + span);
-      redbuf = (char*) handle->tmpbuf + span_align - gap;
+      redbuf = (char*)span_align - gap;
+      tmpredbuf = 1;
     }
   } else {
     handle->tmpbuf = malloc (span);
@@ -121,7 +123,7 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
 
     switch(alg) {
       case NBC_RED_BINOMIAL:
-        res = red_sched_binomial(rank, p, root, sendbuf, redbuf, count, datatype, op, inplace, schedule, handle);
+        res = red_sched_binomial(rank, p, root, sendbuf, redbuf, tmpredbuf, count, datatype, op, inplace, schedule, handle);
         break;
       case NBC_RED_CHAIN:
         res = red_sched_chain(rank, p, root, sendbuf, recvbuf, count, datatype, op, ext, size, schedule, handle, segsize);
@@ -232,10 +234,10 @@ int ompi_coll_libnbc_ireduce_inter(void* sendbuf, void* recvbuf, int count, MPI_
   if (vrank == 0) rank = root; \
   if (vrank == root) rank = 0; \
 }
-static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, void *redbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, void *redbuf, char tmpredbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, char inplace, NBC_Schedule *schedule, NBC_Handle *handle) {
   int firstred, vroot, vrank, vpeer, peer, res, maxr, r;
-  char *rbuf, *lbuf, *buf;
+  char *rbuf, *lbuf, *buf, tmpbuf;
   int tmprbuf, tmplbuf;
   ptrdiff_t gap;
   (void)opal_datatype_span(&datatype->super, count, &gap);
@@ -253,12 +255,12 @@ static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, 
     rbuf = (void *)(-gap);
     tmprbuf = true;
     lbuf = redbuf;
-    tmplbuf = false;
+    tmplbuf = tmpredbuf;
   } else {
     lbuf = (void *)(-gap);
     tmplbuf = true;
     rbuf = redbuf;
-    tmprbuf = false;
+    tmprbuf = tmpredbuf;
     if (inplace) {
         res = NBC_Copy(rbuf, count, datatype, ((char *)handle->tmpbuf)-gap, count, datatype, MPI_COMM_SELF);
         if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
@@ -295,7 +297,7 @@ static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, 
 
         /* swap left and right buffers */
         buf = rbuf; rbuf = lbuf ; lbuf = buf;
-        tmprbuf ^= 1; tmplbuf ^= 1;
+        tmpbuf = tmprbuf; tmprbuf = tmplbuf; tmplbuf = tmpbuf;
       }
     } else {
       /* we have to send this round */
@@ -316,10 +318,10 @@ static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, 
   /* send to root if vroot ! root */
   if (vroot != root) {
     if (0 == rank) {
-      res = NBC_Sched_send (redbuf, false, count, datatype, root, schedule);
+      res = NBC_Sched_send (redbuf, tmpredbuf, count, datatype, root, schedule);
       if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
     } else if (root == rank) {
-      res = NBC_Sched_recv (redbuf, false, count, datatype, vroot, schedule);
+      res = NBC_Sched_recv (redbuf, tmpredbuf, count, datatype, vroot, schedule);
       if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
     }
   }
