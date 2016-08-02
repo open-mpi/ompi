@@ -3,6 +3,7 @@
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -105,6 +106,7 @@ $handles->{MPI_BXOR} = 10;
 $handles->{MPI_MAXLOC} = 11;
 $handles->{MPI_MINLOC} = 12;
 $handles->{MPI_REPLACE} = 13;
+$handles->{MPI_NO_OP} = 14;
 
 $handles->{MPI_COMM_NULL} = 2;
 $handles->{MPI_DATATYPE_NULL} = 0;
@@ -235,6 +237,8 @@ $constants->{MPI_WIN_FLAVOR_CREATE} = 1;
 $constants->{MPI_WIN_FLAVOR_ALLOCATE} = 2;
 $constants->{MPI_WIN_FLAVOR_DYNAMIC} = 3;
 $constants->{MPI_WIN_FLAVOR_SHARED} = 4;
+$constants->{MPI_WIN_UNIFIED} = 0;
+$constants->{MPI_WIN_SEPARATE} = 1;
 
 $constants->{MPI_BSEND_OVERHEAD} = 128;
 $constants->{MPI_ORDER_C} = 0;
