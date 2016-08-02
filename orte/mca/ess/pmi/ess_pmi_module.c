@@ -161,7 +161,17 @@ static int rte_init(void)
         error = "getting univ size";
         goto error;
     }
+    orte_process_info.max_procs = u32;
+
+    /* get job size */
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_JOB_SIZE,
+                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+    if (OPAL_SUCCESS != ret) {
+        error = "getting job size";
+        goto error;
+    }
     orte_process_info.num_procs = u32;
+
     /* push into the environ for pickup in MPI layer for
      * MPI-3 required info key
      */
