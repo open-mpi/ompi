@@ -207,7 +207,13 @@ static int rte_init(void)
     /* get the number of local peers - required for wireup of
      * shared memory BTL */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_SIZE,
+<<<<<<< 82240f579ae6343dcc55ea3f54a2295b81e8f80e
                           &wildcard_rank, &u32ptr, OPAL_UINT32);
+||||||| merged common ancestors
+                          &name, &u32ptr, OPAL_UINT32);
+=======
+                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+>>>>>>> Work on providing info on a per-rank basis for all local values - e.g., cpusets
     if (OPAL_SUCCESS == ret) {
         orte_process_info.num_local_peers = u32 - 1;  // want number besides ourselves
     } else {
@@ -314,12 +320,25 @@ static int rte_init(void)
         }
         /* retrieve the local peers */
         OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
+<<<<<<< 82240f579ae6343dcc55ea3f54a2295b81e8f80e
                               &wildcard_rank, &val, OPAL_STRING);
+||||||| merged common ancestors
+                              &name, &val, OPAL_STRING);
+=======
+                              ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+>>>>>>> Work on providing info on a per-rank basis for all local values - e.g., cpusets
         if (OPAL_SUCCESS == ret && NULL != val) {
             peers = opal_argv_split(val, ',');
             free(val);
             /* and their cpusets, if available */
+<<<<<<< 82240f579ae6343dcc55ea3f54a2295b81e8f80e
             OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS, &wildcard_rank, &val, OPAL_STRING);
+||||||| merged common ancestors
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS, &name, &val, OPAL_STRING);
+=======
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS,
+                                           ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+>>>>>>> Work on providing info on a per-rank basis for all local values - e.g., cpusets
             if (OPAL_SUCCESS == ret && NULL != val) {
                 cpusets = opal_argv_split(val, ':');
                 free(val);
