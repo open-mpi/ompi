@@ -180,18 +180,6 @@ typedef int (*mca_io_ompio_generate_current_file_view_fn_t) (struct mca_io_ompio
 							     struct iovec **f_iov,
 							     int *iov_count);
 
-/*
- * Function that sorts an io_array according to the offset by filling
- * up an array of the indices into the array (HEAP SORT)
- */
-typedef int (*mca_io_ompio_sort_fn_t) (mca_io_ompio_io_array_t *io_array,
-				       int num_entries,
-				       int *sorted);
-
-typedef int (*mca_io_ompio_sort_iovec_fn_t) (struct iovec *iov,
-					     int num_entries,
-					     int *sorted);
-
 /* functions to retrieve the number of aggregators and the size of the
    temporary buffer on aggregators from the fcoll modules */
 typedef void (*mca_io_ompio_get_num_aggregators_fn_t) ( int *num_aggregators);
@@ -288,9 +276,6 @@ struct mca_io_ompio_file_t {
     mca_io_ompio_decode_datatype_fn_t                       f_decode_datatype;
     mca_io_ompio_generate_current_file_view_fn_t f_generate_current_file_view;
 
-    mca_io_ompio_sort_fn_t                                             f_sort;
-    mca_io_ompio_sort_iovec_fn_t                                 f_sort_iovec;
-
     mca_io_ompio_get_num_aggregators_fn_t               f_get_num_aggregators;
     mca_io_ompio_get_bytes_per_agg_fn_t                   f_get_bytes_per_agg;
     mca_io_ompio_set_aggregator_props_fn_t             f_set_aggregator_props;
@@ -311,9 +296,6 @@ typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 OMPI_DECLSPEC void mca_io_ompio_get_num_aggregators ( int *num_aggregators);
 OMPI_DECLSPEC void mca_io_ompio_get_bytes_per_agg ( int *bytes_per_agg);
 
-
-OMPI_DECLSPEC int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh);
-
 /*
  * Function that takes in a datatype and buffer, and decodes that datatype
  * into an iovec using the convertor_raw function
@@ -330,14 +312,6 @@ OMPI_DECLSPEC int ompi_io_ompio_decode_datatype (struct mca_io_ompio_file_t *fh,
  * Function that sorts an io_array according to the offset by filling
  * up an array of the indices into the array (HEAP SORT)
  */
-OMPI_DECLSPEC int ompi_io_ompio_sort (mca_io_ompio_io_array_t *io_array,
-                                      int num_entries,
-                                      int *sorted);
-
-OMPI_DECLSPEC int ompi_io_ompio_sort_iovec (struct iovec *iov,
-					    int num_entries,
-					    int *sorted);
-
 OMPI_DECLSPEC int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
                                              int num_entries,
                                              int *sorted);
@@ -366,13 +340,6 @@ int mca_io_ompio_file_set_view (struct ompi_file_t *fh,
                                 struct ompi_datatype_t *filetype,
                                 const char *datarep,
                                 struct ompi_info_t *info);
-
-int mca_io_ompio_set_view_internal (struct mca_io_ompio_file_t *fh,
-				    OMPI_MPI_OFFSET_TYPE disp,
-				    struct ompi_datatype_t *etype,
-				    struct ompi_datatype_t *filetype,
-				    const char *datarep,
-				    struct ompi_info_t *info);
 
 int mca_io_ompio_file_get_view (struct ompi_file_t *fh,
                                 OMPI_MPI_OFFSET_TYPE *disp,

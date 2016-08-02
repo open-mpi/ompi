@@ -455,7 +455,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
-            fh->f_sort_iovec (aggr_data[i]->global_iov_array, total_fview_count, aggr_data[i]->sorted);
+            fcoll_base_sort_iovec (aggr_data[i]->global_iov_array, total_fview_count, aggr_data[i]->sorted);
         }
         
         if (NULL != local_iov_array){
