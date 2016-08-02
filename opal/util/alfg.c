@@ -10,6 +10,8 @@
 
 #include "opal_config.h"
 
+#include <string.h>
+
 #include "alfg.h"
 
 /* Mask corresponding to the primitive polynomial
@@ -52,6 +54,9 @@ static uint32_t galois(unsigned int *seed){
     return lsb;
 }
 
+/* OPAL global rng buffer */
+static opal_rng_buff_t alfg_buffer;
+
 /**
  * @brief   Routine to seed the ALFG register
  *
@@ -80,6 +85,8 @@ int opal_srand(opal_rng_buff_t *buff, uint32_t seed) {
             buff->alfg[j] = buff->alfg[j] ^ ((galois(&seed_cpy))<<i);
         }
     }
+    /* copy the ALFG to the global buffer */
+    memcpy(&alfg_buffer, buff, sizeof(alfg_buffer));
 
     return 1;
 
@@ -114,4 +121,12 @@ uint32_t opal_rand(opal_rng_buff_t *buff){
 
 }
 
-
+/**
+ * @brief      A wrapper for opal_rand() with our global ALFG buffer;
+ *
+ * @param[in]  none
+ * @param[out] int, the same as normal rand(3)
+ */
+int opal_random(void){
+    return (int)opal_rand(&alfg_buffer);
+}
