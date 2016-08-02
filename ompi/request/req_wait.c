@@ -90,14 +90,13 @@ int ompi_request_default_wait_any(size_t count,
     ompi_wait_sync_t sync;
 
     WAIT_SYNC_INIT(&sync, 1);
-    
+
     num_requests_null_inactive = 0;
     for (i = 0; i < count; i++) {
         request = requests[i];
 
-        /*
-         * Check for null or completed persistent request.
-         * For MPI_REQUEST_NULL, the req_state is always OMPI_REQUEST_INACTIVE.
+        /* Check for null or completed persistent request. For
+         * MPI_REQUEST_NULL, the req_state is always OMPI_REQUEST_INACTIVE.
          */
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
             num_requests_null_inactive++;
@@ -125,32 +124,33 @@ int ompi_request_default_wait_any(size_t count,
     SYNC_WAIT(&sync);
 
   after_sync_wait:
-    /* recheck the complete status and clean up the sync primitives. Do it backward to
-     * return the earliest complete request to the user. */
+    /* recheck the complete status and clean up the sync primitives.
+     * Do it backward to return the earliest complete request to the
+     * user.
+     */
     for(i = completed-1; (i+1) > 0; i--) {
         request = requests[i];
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
             continue;
         }
-        /* Atomically mark the request as pending. If this succeed then the
-         * request was not completed, and it is now marked as pending. Otherwise,
-         * the request has been completed meanwhile, and it has been atomically
-         * marked as REQUEST_COMPLETE.
+        /* Atomically mark the request as pending. If this succeed then
+         * the request was not completed, and it is now marked as pending.
+         * Otherwise, the request has been completed meanwhile, and it
+         * has been atomically marked as REQUEST_COMPLETE.
          */
         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             *index = i;
         }
     }
-    
-    if( *index == completed ){
-        /* Only one request has triggered. There was no
-         * in-flight completions.
-         * Drop the signalled flag so we won't block
+
+    if( *index == (int)completed ) {
+        /* Only one request has triggered. There was no in-flight
+         * completions. Drop the signalled flag so we won't block
          * in WAIT_SYNC_RELEASE 
          */
         WAIT_SYNC_SIGNALLED(&sync);
-    }        
+    }
 
     request = requests[*index];
     assert( REQUEST_COMPLETE(request) );
