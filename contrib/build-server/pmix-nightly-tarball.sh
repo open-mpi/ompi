@@ -116,18 +116,19 @@ for branch in $branches; do
         test "$branch" = "master"; then
         echo "=== Saving output for a Coverity run"
         echo "$outputroot/$branch/pmix-$latest_snapshot.tar.bz2" >> $pending_coverity
-        echo "=== Posting tarball to open-mpi.org"
-        # tell the web server to cleanup old nightly tarballs
-        ssh -p 2222 ompiteam@192.185.39.252 "git/ompi/contrib/build-server/remove-old.pl 7 public_html/software/pmix/nightly/$branch"
-        # upload the new ones
-        scp -P 2222 $outputroot/$branch/pmix-$latest_snapshot.tar.* ompiteam@192.185.39.252:public_html/software/pmix/nightly/$branch/
-        scp -P 2222 $outputroot/$branch/latest_snapshot.txt ompiteam@192.185.39.252:public_html/software/pmix/nightly/$branch/
-        # direct the web server to regenerate the checksums
-        ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/software/pmix/nightly/$branch && md5sum pmix* > md5sums.txt"
-        ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/software/pmix/nightly/$branch && sha1sum pmix* > sha1sums.txt"
     else
         echo "=== NOT saving output for a Coverity run"
     fi
+
+    echo "=== Posting tarball to open-mpi.org"
+    # tell the web server to cleanup old nightly tarballs
+    ssh -p 2222 ompiteam@192.185.39.252 "git/ompi/contrib/build-server/remove-old.pl 7 public_html/software/pmix/nightly/$branch"
+    # upload the new ones
+    scp -P 2222 $outputroot/$branch/pmix-$latest_snapshot.tar.* ompiteam@192.185.39.252:public_html/software/pmix/nightly/$branch/
+    scp -P 2222 $outputroot/$branch/latest_snapshot.txt ompiteam@192.185.39.252:public_html/software/pmix/nightly/$branch/
+    # direct the web server to regenerate the checksums
+    ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/software/pmix/nightly/$branch && md5sum pmix* > md5sums.txt"
+    ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/software/pmix/nightly/$branch && sha1sum pmix* > sha1sums.txt"
 
     # Failed builds are not removed.  But if a human forgets to come
     # in here and clean up the old failed builds, we can accumulate
