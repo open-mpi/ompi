@@ -193,7 +193,7 @@ mca_pml_ob1_imrecv( void *buf,
     recvreq->req_pending = false;
     recvreq->req_ack_sent = false;
 
-    MCA_PML_BASE_RECV_START(&recvreq->req_recv.req_base);
+    MCA_PML_BASE_RECV_START(&recvreq->req_recv);
 
     /* Note - sequence number already assigned */
     recvreq->req_recv.req_base.req_sequence = seq;
@@ -285,7 +285,7 @@ mca_pml_ob1_mrecv( void *buf,
     recvreq->req_rdma_idx = 0;
     recvreq->req_pending = false;
 
-    MCA_PML_BASE_RECV_START(&recvreq->req_recv.req_base);
+    MCA_PML_BASE_RECV_START(&recvreq->req_recv);
 
     /* Note - sequence number already assigned */
     recvreq->req_recv.req_base.req_sequence = seq;
