@@ -14,11 +14,12 @@
  *
  */
 
+#include "opal/include/opal/align.h"
 #include "ompi/op/op.h"
 
 #include "nbc_internal.h"
 
-static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *redbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *redbuf, char tmpredbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, char inplace, NBC_Schedule *schedule, NBC_Handle *handle);
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                    MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
@@ -55,6 +56,7 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
   MPI_Aint ext;
   NBC_Schedule *schedule;
   char *redbuf=NULL, inplace;
+  char tmpredbuf = 0;
   enum { NBC_RED_BINOMIAL, NBC_RED_CHAIN } alg;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -104,8 +106,10 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
       redbuf = recvbuf;
     } else {
       /* recvbuf may not be valid on non-root nodes */
-      handle->tmpbuf = malloc (2*span);
-      redbuf = (char*) handle->tmpbuf + span - gap;
+      ptrdiff_t span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);
+      handle->tmpbuf = malloc (span_align + span);
+      redbuf = (char*)span_align - gap;
+      tmpredbuf = 1;
     }
   } else {
     handle->tmpbuf = malloc (span);
@@ -142,7 +146,7 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
 
     switch(alg) {
       case NBC_RED_BINOMIAL:
-        res = red_sched_binomial(rank, p, root, sendbuf, redbuf, count, datatype, op, inplace, schedule, handle);
+        res = red_sched_binomial(rank, p, root, sendbuf, redbuf, tmpredbuf, count, datatype, op, inplace, schedule, handle);
         break;
       case NBC_RED_CHAIN:
         res = red_sched_chain(rank, p, root, sendbuf, recvbuf, count, datatype, op, ext, size, schedule, handle, segsize);
@@ -289,10 +293,10 @@ int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count
   if (vrank == 0) rank = root; \
   if (vrank == root) rank = 0; \
 }
-static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *redbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *redbuf, char tmpredbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, char inplace, NBC_Schedule *schedule, NBC_Handle *handle) {
   int vroot, vrank, vpeer, peer, res, maxr;
-  char *rbuf, *lbuf, *buf;
+  char *rbuf, *lbuf, *buf, tmpbuf;
   int tmprbuf, tmplbuf;
   ptrdiff_t gap;
   (void)opal_datatype_span(&datatype->super, count, &gap);
@@ -310,12 +314,12 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
     rbuf = (void *)(-gap);
     tmprbuf = true;
     lbuf = redbuf;
-    tmplbuf = false;
+    tmplbuf = tmpredbuf;
   } else {
     lbuf = (void *)(-gap);
     tmplbuf = true;
     rbuf = redbuf;
-    tmprbuf = false;
+    tmprbuf = tmpredbuf;
     if (inplace) {
         res = NBC_Copy(rbuf, count, datatype, ((char *)handle->tmpbuf)-gap, count, datatype, MPI_COMM_SELF);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -352,7 +356,7 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
         }
         /* swap left and right buffers */
         buf = rbuf; rbuf = lbuf ; lbuf = buf;
-        tmprbuf ^= 1; tmplbuf ^= 1;
+        tmpbuf = tmprbuf; tmprbuf = tmplbuf; tmplbuf = tmpbuf;
       }
     } else {
       /* we have to send this round */
@@ -377,9 +381,9 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
   /* send to root if vroot ! root */
   if (vroot != root) {
     if (0 == rank) {
-      res = NBC_Sched_send (redbuf, false, count, datatype, root, schedule, false);
+      res = NBC_Sched_send (redbuf, tmpredbuf, count, datatype, root, schedule, false);
     } else if (root == rank) {
-      res = NBC_Sched_recv (redbuf, false, count, datatype, vroot, schedule, false);
+      res = NBC_Sched_recv (redbuf, tmpredbuf, count, datatype, vroot, schedule, false);
     }
   }
 
