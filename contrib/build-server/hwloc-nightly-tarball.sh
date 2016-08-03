@@ -102,23 +102,23 @@ for branch in $branches; do
     # master (for now).
     latest_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
     echo "=== Latest snapshot: $latest_snapshot"
-    if test "$prev_snapshot" != "$latest_snapshot" && \
-        test "$branch" = "master"; then
-        echo "=== Saving output for a Coverity run"
-        echo "$outputroot/$branch/hwloc-$latest_snapshot.tar.bz2" >> $pending_coverity
-    else
-        echo "=== NOT saving output for a Coverity run"
+    if test "$prev_snapshot" != "$latest_snapshot"; then
+        if test "$branch" = "master"; then
+            echo "=== Saving output for a Coverity run"
+            echo "$outputroot/$branch/hwloc-$latest_snapshot.tar.bz2" >> $pending_coverity
+        else
+            echo "=== NOT saving output for a Coverity run"
+        fi
+        echo "=== Posting tarball to open-mpi.org"
+        # tell the web server to cleanup old nightly tarballs
+        ssh -p 2222 ompiteam@192.185.39.252 "git/ompi/contrib/build-server/remove-old.pl 7 public_html/software/hwloc/nightly/$branch"
+        # upload the new ones
+        scp -P 2222 $outputroot/$branch/hwloc-$latest_snapshot.tar.* ompiteam@192.185.39.252:public_html/software/hwloc/nightly/$branch/
+        scp -P 2222 $outputroot/$branch/latest_snapshot.txt ompiteam@192.185.39.252:public_html/software/hwloc/nightly/$branch/
+        # direct the web server to regenerate the checksums
+        ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/software/hwloc/nightly/$branch && md5sum hwloc* > md5sums.txt"
+        ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/software/hwloc/nightly/$branch && sha1sum hwloc* > sha1sums.txt"
     fi
-
-    echo "=== Posting tarball to open-mpi.org"
-    # tell the web server to cleanup old nightly tarballs
-    ssh -p 2222 ompiteam@192.185.39.252 "git/ompi/contrib/build-server/remove-old.pl 7 public_html/software/hwloc/nightly/$branch"
-    # upload the new ones
-    scp -P 2222 $outputroot/$branch/hwloc-$latest_snapshot.tar.* ompiteam@192.185.39.252:public_html/software/hwloc/nightly/$branch/
-    scp -P 2222 $outputroot/$branch/latest_snapshot.txt ompiteam@192.185.39.252:public_html/software/hwloc/nightly/$branch/
-    # direct the web server to regenerate the checksums
-    ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/software/hwloc/nightly/$branch && md5sum hwloc* > md5sums.txt"
-    ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/software/hwloc/nightly/$branch && sha1sum hwloc* > sha1sums.txt"
 
     # Failed builds are not removed.  But if a human forgets to come
     # in here and clean up the old failed builds, we can accumulate
