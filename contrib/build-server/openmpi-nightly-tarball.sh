@@ -7,7 +7,7 @@
 #####
 
 # e-mail address to send results to
-results_addr=testing@open-mpi.org
+results_addr=testing@lists.open-mpi.org
 #results_addr=rhc@open-mpi.org
 
 # svn repository uri
