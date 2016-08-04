@@ -159,8 +159,13 @@ AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
 
     AC_MSG_RESULT([$event_args])
 
+    # We define "random" to be "opal_random" so that Libevent will not
+    # use random(3) internally (and potentially unexpectedly perturb
+    # values returned by rand(3) to the application).
+
+    CPPFLAGS="$CPPFLAGS -Drandom=opal_random"
     OPAL_CONFIG_SUBDIR([$libevent_basedir/libevent],
-        [$event_args $opal_subdir_args],
+        [$event_args $opal_subdir_args 'CPPFLAGS=$CPPFLAGS'],
         [libevent_happy="yes"], [libevent_happy="no"])
     if test "$libevent_happy" = "no"; then
         AC_MSG_WARN([Event library failed to configure])
