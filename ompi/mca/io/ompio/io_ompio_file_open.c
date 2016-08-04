@@ -294,6 +294,13 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     int delete_flag = 0;
     char name[256];
 
+    ret = ompio_fh->f_comm->c_coll.coll_barrier ( ompio_fh->f_comm, ompio_fh->f_comm->c_coll.coll_barrier_module);
+    if ( OMPI_SUCCESS != ret ) {
+        /* Not sure what to do */
+        opal_output (1,"mca_common_ompio_file_close: error in Barrier \n");
+        return ret;
+    }
+
     if(mca_io_ompio_coll_timing_info){
         strcpy (name, "WRITE");
         if (!ompi_io_ompio_empty_print_queue(WRITE_PRINT_QUEUE)){
@@ -542,18 +549,33 @@ mca_io_ompio_file_set_size (ompi_file_t *fh,
 
     tmp = size;
 
-    data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
-                                              1,
-                                              OMPI_OFFSET_DATATYPE,
-                                              OMPIO_ROOT,
-                                              data->ompio_fh.f_comm,
-                                              data->ompio_fh.f_comm->c_coll.coll_bcast_module);
+    ret = data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
+                                                    1,
+                                                    OMPI_OFFSET_DATATYPE,
+                                                    OMPIO_ROOT,
+                                                    data->ompio_fh.f_comm,
+                                                    data->ompio_fh.f_comm->c_coll.coll_bcast_module);
+    if ( OMPI_SUCCESS != ret ) {
+        opal_output(1, ",mca_io_ompio_file_set_size: error in bcast\n");
+        return ret;
+    }
 
     if (tmp != size) {
         return OMPI_ERROR;
     }
 
     ret = data->ompio_fh.f_fs->fs_file_set_size (&data->ompio_fh, size);
+    if ( OMPI_SUCCESS != ret ) {
+        opal_output(1, ",mca_io_ompio_file_set_size: error in fs->set_size\n");
+        return ret;
+    }
+    
+    ret = data->ompio_fh.f_comm->c_coll.coll_barrier (data->ompio_fh.f_comm,
+                                                      data->ompio_fh.f_comm->c_coll.coll_barrier_module);
+    if ( OMPI_SUCCESS != ret ) {
+        opal_output(1, ",mca_io_ompio_file_set_size: error in barrier\n");
+        return ret;
+    }
 
     return ret;
 }
