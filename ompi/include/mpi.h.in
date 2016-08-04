@@ -1163,6 +1163,7 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_C_LONG_DOUBLE_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_long_double_complex)
 #endif
 #define MPI_CXX_BOOL              OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_bool)
+#define MPI_CXX_COMPLEX           OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_cplex)
 #define MPI_CXX_FLOAT_COMPLEX     OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_cplex)
 #define MPI_CXX_DOUBLE_COMPLEX    OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_dblcplex)
 #define MPI_CXX_LONG_DOUBLE_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_ldblcplex)

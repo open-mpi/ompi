@@ -162,6 +162,7 @@ $handles->{MPI_UNSIGNED} = 40;
 $handles->{MPI_LONG} = 41;
 $handles->{MPI_UNSIGNED_LONG} = 42;
 $handles->{MPI_LONG_LONG_INT} = 43;
+$handles->{MPI_LONG_LONG} = $handles->{MPI_LONG_LONG_INT};
 $handles->{MPI_UNSIGNED_LONG_LONG} = 44;
 $handles->{MPI_FLOAT} = 45;
 $handles->{MPI_DOUBLE} = 46;
@@ -173,7 +174,8 @@ $handles->{MPI_LONG_INT} = 51;
 $handles->{MPI_2INT} = 52;
 $handles->{MPI_SHORT_INT} = 53;
 $handles->{MPI_CXX_BOOL} = 54;
-$handles->{MPI_CXX_COMPLEX} = 55;
+$handles->{MPI_CXX_FLOAT_COMPLEX} = 55;
+$handles->{MPI_CXX_COMPLEX} = $handles->{MPI_CXX_FLOAT_COMPLEX};
 $handles->{MPI_CXX_DOUBLE_COMPLEX} = 56;
 $handles->{MPI_CXX_LONG_DOUBLE_COMPLEX} = 57;
 $handles->{MPI_INT8_T} = 58;
@@ -191,6 +193,7 @@ $handles->{MPI_C_FLOAT_COMPLEX} = 69;
 $handles->{MPI_C_DOUBLE_COMPLEX} = 70;
 $handles->{MPI_C_LONG_DOUBLE_COMPLEX} = 71;
 $handles->{MPI_COUNT} = 72;
+$handles->{MPI_C_BOOL} = 73;
 
 $handles->{MPI_MESSAGE_NO_PROC} = 1;
 
