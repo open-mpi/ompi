@@ -231,6 +231,14 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     int delete_flag = 0;
     char name[256];
 
+    ret = ompio_fh->f_comm->c_coll.coll_barrier ( ompio_fh->f_comm, ompio_fh->f_comm->c_coll.coll_barrier_module);
+    if ( OMPI_SUCCESS != ret ) {
+        /* Not sure what to do */
+        opal_output (1,"mca_common_ompio_file_close: error in Barrier \n");
+        return ret;
+    }
+
+
     if(mca_io_ompio_coll_timing_info){
         strcpy (name, "WRITE");
         if (!mca_common_ompio_empty_print_queue(ompio_fh->f_coll_write_time)){
