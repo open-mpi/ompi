@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +63,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_CPUSET                        "pmix.cpuset"           // (char*) hwloc bitmap applied to proc upon launch
 #define OPAL_PMIX_CREDENTIAL                    "pmix.cred"             // (char*) security credential assigned to proc
 #define OPAL_PMIX_SPAWNED                       "pmix.spawned"          // (bool) true if this proc resulted from a call to PMIx_Spawn
-#define OPAL_PMIX_ARCH                          "pmix.arch"             // (uint32_t) datatype architecture flag
+#define OPAL_PMIX_ARCH                          "opal.pmix.arch"        // (uint32_t) datatype architecture flag
+                                                                        // not set at job startup, so cannot have the pmix prefix
 
 /* scratch directory locations for use by applications */
 #define OPAL_PMIX_TMPDIR                        "pmix.tmpdir"           // (char*) top-level tmp dir assigned to session
