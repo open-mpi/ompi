@@ -457,7 +457,14 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
                  data, (void *) ep, remote_id));
 
     /* NTH: TODO -- error handling */
+    opal_mutex_lock (&ep->lock);
+    if (handle != ugni_module->wildcard_ep) {
+        /* directed post complete */
+        ep->dg_posted = false;
+    }
+
     (void) mca_btl_ugni_ep_connect_progress (ep);
+    opal_mutex_unlock (&ep->lock);
 
     if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state) {
         /*  process messages waiting in the endpoint's smsg mailbox */
