@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All Rights
  *                         reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -343,7 +343,8 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
                                                mca_coll_base_module_t *module,
                                                int max_outstanding_reqs)
 {
-    int line, error, ri, si, rank, size, nreqs, nrreqs, nsreqs, total_reqs;
+    int line, error, ri, si, rank, size, nrreqs, nsreqs, total_reqs;
+    int nreqs = 0;
     char *psnd, *prcv;
     ptrdiff_t slb, sext, rlb, rext;
 
@@ -565,7 +566,8 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
                                                struct ompi_communicator_t *comm,
                                                mca_coll_base_module_t *module)
 {
-    int i, rank, size, err, nreqs, line;
+    int i, rank, size, err, line;
+    int nreqs = 0;
     char *psnd, *prcv;
     MPI_Aint lb, sndinc, rcvinc;
     ompi_request_t **req, **sreq, **rreq;
