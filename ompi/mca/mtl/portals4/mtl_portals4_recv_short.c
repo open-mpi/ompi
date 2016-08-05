@@ -37,6 +37,7 @@ static int
 ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
                                      ompi_mtl_portals4_base_request_t* ptl_base_request)
 {
+    int ret = OMPI_SUCCESS;
     ompi_mtl_portals4_recv_short_request_t *ptl_request =
         (ompi_mtl_portals4_recv_short_request_t*) ptl_base_request;
     ompi_mtl_portals4_recv_short_block_t *block = ptl_request->block;
@@ -59,10 +60,10 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
                         opal_list_remove_item(&ompi_mtl_portals4.recv_short_blocks,
                                               &block->base);
                         OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
-                        ompi_mtl_portals4_recv_short_block_free(block);
+                        ret = ompi_mtl_portals4_recv_short_block_free(block);
                     } else {
                         OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
-                        ompi_mtl_portals4_activate_block(block);
+                        ret = ompi_mtl_portals4_activate_block(block);
                     }
                     break;
 
@@ -85,6 +86,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
             break;
 
         case PTL_EVENT_AUTO_UNLINK:
+            block->me_h = PTL_INVALID_HANDLE;
 #if OMPI_ENABLE_THREAD_MULTIPLE
             OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
             switch (block->status) {
@@ -99,12 +101,12 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
                         opal_list_remove_item(&ompi_mtl_portals4.recv_short_blocks,
                                               &block->base);
                         OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
-                        ompi_mtl_portals4_recv_short_block_free(block);
+                        ret = ompi_mtl_portals4_recv_short_block_free(block);
                     } else {
                         OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
                         OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_framework.framework_output,
                                         "mtl:portals4 PTL_EVENT_AUTO_UNLINK received after PTL_EVENT_AUTO_FREE"));
-                        ompi_mtl_portals4_activate_block(block);
+                        ret = ompi_mtl_portals4_activate_block(block);
                     }
                     break;
 
@@ -150,7 +152,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
             break;
     }
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 
@@ -210,6 +212,7 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     me.uid = ompi_mtl_portals4.uid;
     me.options =
         PTL_ME_OP_PUT |
+        PTL_ME_EVENT_COMM_DISABLE |
         PTL_ME_MANAGE_LOCAL |
         PTL_ME_MAY_ALIGN;
     if (ompi_mtl_portals4.use_logical) {
@@ -244,7 +247,8 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
 int
 ompi_mtl_portals4_recv_short_init(void)
 {
-    int i;
+    int ret = OMPI_SUCCESS;
+    uint32_t i;
 
     OBJ_CONSTRUCT(&ompi_mtl_portals4.short_block_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&(ompi_mtl_portals4.recv_short_blocks), opal_list_t);
@@ -258,10 +262,10 @@ ompi_mtl_portals4_recv_short_init(void)
         }
         opal_list_append(&ompi_mtl_portals4.recv_short_blocks,
                          &block->base);
-        ompi_mtl_portals4_activate_block(block);
+        ret = ompi_mtl_portals4_activate_block(block);
     }
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 
@@ -269,35 +273,45 @@ int
 ompi_mtl_portals4_recv_short_fini(void)
 {
     opal_list_item_t *item;
+    int ret = OMPI_SUCCESS;
 
     OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
     while (NULL !=  (item = opal_list_remove_first(&ompi_mtl_portals4.recv_short_blocks))) {
         ompi_mtl_portals4_recv_short_block_t *block =
             (ompi_mtl_portals4_recv_short_block_t*) item;
-        ompi_mtl_portals4_recv_short_block_free(block);
+        ret = ompi_mtl_portals4_recv_short_block_free(block);
+        ompi_mtl_portals4.active_recv_short_blocks--;
     }
     OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 
 int
 ompi_mtl_portals4_recv_short_link(int count)
 {
+    int ret = OMPI_SUCCESS;
     int active = ompi_mtl_portals4.active_recv_short_blocks;
     int i;
 
     if (active < count) {
         for (i = 0 ; i < (count - active) ; ++i) {
             ompi_mtl_portals4_recv_short_block_t *block =
-                ompi_mtl_portals4_recv_short_block_alloc(false);
+                ompi_mtl_portals4_recv_short_block_alloc(true);
             if (NULL == block) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            ompi_mtl_portals4_activate_block(block);
+            OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
+            opal_list_append(&ompi_mtl_portals4.recv_short_blocks,
+                         &block->base);
+            OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_framework.framework_output,
+             "recv_short_link: total=%d active=%d",
+             (int) opal_list_get_size(&ompi_mtl_portals4.recv_short_blocks), ompi_mtl_portals4.active_recv_short_blocks));
+            OPAL_THREAD_UNLOCK(&ompi_mtl_portals4.short_block_mutex);
+            ret = ompi_mtl_portals4_activate_block(block);
         }
     }
 
-    return OMPI_SUCCESS;
+    return ret;
 }

@@ -86,9 +86,11 @@ portals4_init_interface(void)
 
     /* Create send and long message (read) portal table entries */
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+                     PTL_PT_FLOWCTRL |
+#endif
                      PTL_PT_ONLY_USE_ONCE |
-                     PTL_PT_ONLY_TRUNCATE |
-                     PTL_PT_FLOWCTRL,
+                     PTL_PT_ONLY_TRUNCATE,
                      ompi_mtl_portals4.recv_eq_h,
                      REQ_RECV_TABLE_ID,
                      &ompi_mtl_portals4.recv_idx);
