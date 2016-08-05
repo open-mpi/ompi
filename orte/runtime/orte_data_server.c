@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -178,7 +178,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
     uint32_t uid = UINT32_MAX;
     opal_pmix_data_range_t range;
     orte_data_req_t *req, *rqnext;
-    orte_jobid_t jobid;
+    orte_jobid_t jobid = ORTE_JOBID_INVALID;
 
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s data server got message from %s",
