@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2015 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -780,7 +780,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
 #if HAVE_DECL_IBV_ATOMIC_HCA
             openib_btl->atomic_ops_be = false;
 
-#if HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXT_ATOM
+#ifdef HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXT_ATOM
             /* check that 8-byte atomics are supported */
             if (!(device->ib_exp_dev_attr.ext_atom.log_atomic_arg_sizes & (1<<3ull))) {
                 openib_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
@@ -790,7 +790,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             }
 #endif
 
-#if HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXT_ATOMIC_CAP
+#ifdef HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXP_ATOMIC_CAP
             switch (openib_btl->device->ib_exp_dev_attr.exp_atomic_cap)
 #else
             switch (openib_btl->device->ib_dev_attr.atomic_cap)
@@ -2125,7 +2125,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         {
             /* we need to read this MCA param at this point in case someone
              * altered it via MPI_T */
-            int index;
             mca_base_var_source_t source;
 
             if (OPAL_SUCCESS != (ret = get_var_source ("receive_queues", &source))) {
