@@ -173,6 +173,7 @@ static int s2_init(void)
     char **localranks;
     char *str;
     char nmtmp[64];
+    opal_process_name_t wildcard_rank;
 
     /* if we can't startup PMI, we can't be used */
     if ( PMI2_Initialized () ) {
@@ -232,6 +233,10 @@ static int s2_init(void)
 			"%s pmix:s2: assigned tmp name",
 			OPAL_NAME_PRINT(s2_pname));
 
+    /* setup wildcard rank*/
+    wildcard_rank = OPAL_PROC_MY_NAME;
+    wildcard_rank.vpid = OPAL_VPID_WILDCARD;
+
     /* Slurm PMI provides the job id as an integer followed
      * by a '.', followed by essentially a stepid. The first integer
      * defines an overall job number. The second integer is the number of
@@ -241,7 +246,7 @@ static int s2_init(void)
     kv.key = strdup(OPAL_PMIX_JOBID);
     kv.type = OPAL_UINT32;
     kv.data.uint32 = s2_pname.jobid;
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&wildcard_rank, &kv))) {
 	OPAL_ERROR_LOG(ret);
 	OBJ_DESTRUCT(&kv);
 	goto err_exit;
@@ -253,7 +258,7 @@ static int s2_init(void)
     kv.key = strdup(OPAL_PMIX_JOB_SIZE);
     kv.type = OPAL_UINT32;
     kv.data.uint32 = size;
-    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&wildcard_rank, &kv))) {
 	OPAL_ERROR_LOG(rc);
 	OBJ_DESTRUCT(&kv);
 	goto err_exit;
@@ -282,7 +287,7 @@ static int s2_init(void)
     kv.key = strdup(OPAL_PMIX_UNIV_SIZE);
     kv.type = OPAL_UINT32;
     kv.data.uint32 = atoi(buf);
-    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&wildcard_rank, &kv))) {
 	OPAL_ERROR_LOG(rc);
 	OBJ_DESTRUCT(&kv);
 	goto err_exit;
@@ -293,7 +298,7 @@ static int s2_init(void)
     kv.key = strdup(OPAL_PMIX_MAX_PROCS);
     kv.type = OPAL_UINT32;
     kv.data.uint32 = atoi(buf);
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&wildcard_rank, &kv))) {
 	OPAL_ERROR_LOG(ret);
 	OBJ_DESTRUCT(&kv);
 	goto err_exit;
@@ -327,7 +332,7 @@ static int s2_init(void)
     kv.key = strdup(OPAL_PMIX_LOCAL_SIZE);
     kv.type = OPAL_UINT32;
     kv.data.uint32 = s2_nlranks;
-    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&wildcard_rank, &kv))) {
 	OPAL_ERROR_LOG(rc);
 	OBJ_DESTRUCT(&kv);
 	goto err_exit;
@@ -359,7 +364,7 @@ static int s2_init(void)
 	kv.key = strdup(OPAL_PMIX_LOCAL_PEERS);
 	kv.type = OPAL_STRING;
 	kv.data.string = str;
-	if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+	if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&wildcard_rank, &kv))) {
 	    OPAL_ERROR_LOG(ret);
 	    OBJ_DESTRUCT(&kv);
 	    goto err_exit;
