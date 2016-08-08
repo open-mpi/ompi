@@ -65,6 +65,7 @@ struct mca_coll_portals4_component_t {
     opal_free_list_t requests; /* request free list for the i collectives */
 
     ptl_ni_limits_t ni_limits;
+    ptl_size_t portals_max_msg_size;
 
     int use_binomial_gather_algorithm;
 
@@ -314,7 +315,7 @@ is_reduce_optimizable(struct ompi_datatype_t *dtype, size_t length, struct ompi_
     }
 
     *ptl_dtype = ompi_coll_portals4_atomic_datatype[dtype->id];
-    if (*ptl_dtype == COLL_PORTALS4_NO_DTYPE){
+    if (*ptl_dtype == COLL_PORTALS4_NO_DTYPE) {
         opal_output_verbose(50, ompi_coll_base_framework.framework_output,
                 "datatype %d not supported\n",
                 dtype->id);

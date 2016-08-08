@@ -21,6 +21,7 @@
 #include "coll_portals4.h"
 #include "coll_portals4_request.h"
 
+#include <string.h> // included for ffs in get_tree_numdescendants_of
 
 #undef RTR_USES_TRIGGERED_PUT
 
@@ -55,6 +56,22 @@
  *                        |
  *                        15
  */
+
+static int32_t get_tree_numdescendants_of(struct ompi_communicator_t* comm,
+                                          int vrank)
+{
+    int max;
+    int size = ompi_comm_size(comm);
+
+    if (0  == vrank) {
+        return  size - 1;
+    } else {
+        max = 1 << ffs(vrank - 1);
+        return ((vrank + max <= size ) ? max : size - vrank) -1;
+    }
+
+}
+
 static ompi_coll_portals4_tree_t*
 ompi_coll_portals4_build_in_order_bmtree( struct ompi_communicator_t* comm,
                                             int root )
@@ -506,8 +523,10 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
     int32_t expected_ops =0;
     int32_t expected_acks=0;
 
+    ptl_size_t number_of_fragment_gathered = 0;
+    ptl_size_t number_of_fragment_send = 1;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_binomial_top enter rank %d", request->u.gather.my_rank));
 
     request->type = OMPI_COLL_PORTALS4_TYPE_GATHER;
@@ -579,6 +598,23 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
     ret = setup_sync_handles(comm, request, portals4_module);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
 
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
+                         "%s:%d: packed_size=%lu, fragment_size=%lu",
+                         __FILE__, __LINE__, request->u.gather.packed_size, mca_coll_portals4_component.ni_limits.max_msg_size));
+
+    for (int i =0; i < bmtree->tree_nextsize; i++) {
+        int child_vrank = VRANK(bmtree->tree_next[i], request->u.gather.root_rank, request->u.gather.size);
+        int sub_tree_size = get_tree_numdescendants_of(comm, child_vrank) + 1;
+        ptl_size_t local_number_of_fragment = ((sub_tree_size * request->u.gather.packed_size) + mca_coll_portals4_component.ni_limits.max_msg_size -1) / mca_coll_portals4_component.ni_limits.max_msg_size;
+
+        OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
+                             "%s:%d: %d is child of %d(%d) with %d descendants (nb_frag += %lu)",
+                             __FILE__, __LINE__, bmtree->tree_next[i], vrank, request->u.gather.root_rank , sub_tree_size, local_number_of_fragment));
+        number_of_fragment_gathered += local_number_of_fragment;
+    }
+
+    number_of_fragment_send = (request->u.gather.gather_bytes + mca_coll_portals4_component.ni_limits.max_msg_size -1) / mca_coll_portals4_component.ni_limits.max_msg_size;
+
     /***********************************************/
     /* Chain the RTR and Recv-ACK to the Gather CT */
     /***********************************************/
@@ -603,7 +639,7 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
     if (vrank == 0) {
         /* root, so do nothing */
 
-        expected_ops=bmtree->tree_nextsize; /* gather put from each child */
+        expected_ops=number_of_fragment_gathered ; /* gather put from each child */
         expected_acks=0;
 
     } else {
@@ -617,22 +653,32 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
                             __FILE__, __LINE__, vrank,
                             remote_offset, vrank, vparent, request->u.gather.packed_size);
 
-        expected_ops=bmtree->tree_nextsize + 1; /* gather put from each child + a chained RTR */
+        expected_ops=number_of_fragment_gathered + 1; /* gather puts from each child + a chained RTR */
         expected_acks=1;                        /* Recv-ACK from parent */
 
-        ret = PtlTriggeredPut(request->u.gather.gather_mdh,
-                              request->u.gather.gather_offset,
-                              request->u.gather.gather_bytes,
+        ptl_size_t size_sent = 0;
+        ptl_size_t size_left = request->u.gather.gather_bytes;
+
+        for (ptl_size_t i = 0 ; i < number_of_fragment_send; i++) {
+            ptl_size_t frag_size = (size_left > mca_coll_portals4_component.ni_limits.max_msg_size) ?
+                mca_coll_portals4_component.ni_limits.max_msg_size:
+                size_left;
+            ret = PtlTriggeredPut(request->u.gather.gather_mdh,
+                              request->u.gather.gather_offset + size_sent,
+                              frag_size,
                               PTL_NO_ACK_REQ,
                               ompi_coll_portals4_get_peer(comm, parent),
                               mca_coll_portals4_component.pt_idx,
                               request->u.gather.gather_match_bits,
-                              remote_offset,
+                              remote_offset + size_sent,
                               NULL,
                               0,
                               request->u.gather.gather_cth,
                               expected_ops);
-        if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
+            if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
+            size_left -= frag_size;
+            size_sent += frag_size;
+        }
     }
 
     /************************************/
@@ -734,7 +780,7 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
 
     ompi_coll_portals4_destroy_tree(&(portals4_module->cached_in_order_bmtree));
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_binomial_top exit rank %d", request->u.gather.my_rank));
 
     return OMPI_SUCCESS;
@@ -773,8 +819,9 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
     int32_t expected_ops =0;
     int32_t expected_acks=0;
 
+    ptl_size_t number_of_fragment = 1;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_linear_top enter rank %d", request->u.gather.my_rank));
 
     request->type = OMPI_COLL_PORTALS4_TYPE_GATHER;
@@ -843,6 +890,13 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
     ret = setup_sync_handles(comm, request, portals4_module);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
 
+    number_of_fragment = (request->u.gather.packed_size > mca_coll_portals4_component.ni_limits.max_msg_size) ?
+        (request->u.gather.packed_size + mca_coll_portals4_component.ni_limits.max_msg_size - 1) / mca_coll_portals4_component.ni_limits.max_msg_size :
+        1;
+    opal_output_verbose(90, ompi_coll_base_framework.framework_output,
+        "%s:%d:rank %d:number_of_fragment = %lu",
+        __FILE__, __LINE__, request->u.gather.my_rank, number_of_fragment);
+
     /***********************************************/
     /* Chain the RTR and Recv-ACK to the Gather CT */
     /***********************************************/
@@ -867,11 +921,13 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
     if (i_am_root) {
         /* root, so do nothing */
 
-        expected_ops=request->u.gather.size-1; /* gather put from all other ranks */
+        expected_ops=(request->u.gather.size-1) * number_of_fragment; /* gather put from all other ranks */
         expected_acks=0;
 
     } else {
         ptl_size_t remote_offset=request->u.gather.my_rank * request->u.gather.packed_size;
+        ptl_size_t split_offset = 0;
+        ptl_size_t size_left = request->u.gather.gather_bytes;
 
         opal_output_verbose(30, ompi_coll_base_framework.framework_output,
                             "%s:%d:rank(%d): remote_offset(%lu)=rank(%d) * packed_size(%ld)",
@@ -881,19 +937,34 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
         expected_ops=1;  /* chained RTR */
         expected_acks=1; /* Recv-ACK from root */
 
-        ret = PtlTriggeredPut(request->u.gather.gather_mdh,
-                              request->u.gather.gather_offset,
-                              request->u.gather.gather_bytes,
+        for (ptl_size_t j=0; j<number_of_fragment; j++) {
+
+            ptl_size_t frag_size = (size_left >  mca_coll_portals4_component.ni_limits.max_msg_size) ?
+                mca_coll_portals4_component.ni_limits.max_msg_size :
+                size_left;
+
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                "%s:%d:rank(%d): frag(%lu),offset_frag (%lu) frag_size(%lu)",
+                __FILE__, __LINE__, request->u.gather.my_rank,
+                j, split_offset, frag_size);
+
+            ret = PtlTriggeredPut(request->u.gather.gather_mdh,
+                              request->u.gather.gather_offset + split_offset,
+                              frag_size,
                               PTL_NO_ACK_REQ,
                               ompi_coll_portals4_get_peer(comm, request->u.gather.root_rank),
                               mca_coll_portals4_component.pt_idx,
                               request->u.gather.gather_match_bits,
-                              remote_offset,
+                              remote_offset + split_offset,
                               NULL,
                               0,
                               request->u.gather.gather_cth,
                               expected_ops);
-        if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
+            if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
+
+            size_left -= frag_size;
+            split_offset += frag_size;
+        }
     }
 
     /*****************************************/
@@ -997,7 +1068,7 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
                 "completed CTWait(expected_ops=%d)\n", expected_ops);
     }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_linear_top exit rank %d", request->u.gather.my_rank));
 
     return OMPI_SUCCESS;
@@ -1020,7 +1091,7 @@ ompi_coll_portals4_gather_intra_binomial_bottom(struct ompi_communicator_t *comm
     int ret, line;
     int i;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_binomial_bottom enter rank %d", request->u.gather.my_rank));
 
     ret = cleanup_gather_handles(request);
@@ -1065,7 +1136,7 @@ ompi_coll_portals4_gather_intra_binomial_bottom(struct ompi_communicator_t *comm
     ompi_request_complete(&request->super, true);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_binomial_bottom exit rank %d", request->u.gather.my_rank));
 
     return OMPI_SUCCESS;
@@ -1090,7 +1161,7 @@ ompi_coll_portals4_gather_intra_linear_bottom(struct ompi_communicator_t *comm,
     int ret, line;
     int i;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_linear_bottom enter rank %d", request->u.gather.my_rank));
 
     ret = cleanup_gather_handles(request);
@@ -1128,7 +1199,7 @@ ompi_coll_portals4_gather_intra_linear_bottom(struct ompi_communicator_t *comm,
     ompi_request_complete(&request->super, true);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_linear_bottom exit rank %d", request->u.gather.my_rank));
 
     return OMPI_SUCCESS;
@@ -1157,7 +1228,7 @@ ompi_coll_portals4_gather_intra(const void *sbuf, int scount, struct ompi_dataty
 
     ompi_coll_portals4_request_t *request;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra enter rank %d", ompi_comm_rank(comm)));
 
     /*
@@ -1204,7 +1275,7 @@ ompi_coll_portals4_gather_intra(const void *sbuf, int scount, struct ompi_dataty
      */
     OMPI_COLL_PORTALS4_REQUEST_RETURN(request);
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra exit rank %d", request->u.gather.my_rank));
 
     return OMPI_SUCCESS;
@@ -1230,7 +1301,7 @@ ompi_coll_portals4_igather_intra(const void *sbuf, int scount, struct ompi_datat
 
     ompi_coll_portals4_request_t *request;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:igather_intra enter rank %d", ompi_comm_rank(comm)));
 
     /*
@@ -1267,7 +1338,7 @@ ompi_coll_portals4_igather_intra(const void *sbuf, int scount, struct ompi_datat
         if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
     }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:igather_intra exit rank %d", request->u.gather.my_rank));
 
     return OMPI_SUCCESS;
@@ -1286,7 +1357,7 @@ ompi_coll_portals4_igather_intra_fini(ompi_coll_portals4_request_t *request)
 {
     int ret, line;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:igather_intra_fini enter rank %d", request->u.gather.my_rank));
 
     /*
@@ -1300,7 +1371,7 @@ ompi_coll_portals4_igather_intra_fini(ompi_coll_portals4_request_t *request)
         if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
     }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:igather_intra_fini exit rank %d", request->u.gather.my_rank));
 
     return OMPI_SUCCESS;

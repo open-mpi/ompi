@@ -265,7 +265,7 @@ allreduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
                             ompi_coll_portals4_get_peer(comm, child[i]),
                             mca_coll_portals4_component.pt_idx,
                             match_bits_rtr, 0, NULL, 0)) != PTL_OK)
-                        return opal_stderr("Put RTR failed", __FILE__, __LINE__, ret);
+                        return opal_stderr("Put RTR failed %d", __FILE__, __LINE__, ret);
                 }
             }
         }
@@ -408,7 +408,7 @@ int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, int 
     allreduce_kary_tree_top(sendbuf, recvbuf, count,
             dtype, op, comm, request, portals4_module);
 
-    puts("iallreduce");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "iallreduce");
     return (OMPI_SUCCESS);
 }
 

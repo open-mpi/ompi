@@ -89,12 +89,20 @@ static int prepare_bcast_data (struct ompi_communicator_t *comm,
     }
 
     /* Number of segments */
-    request->u.bcast.segment_nb =  (request->u.bcast.tmpsize > COLL_PORTALS4_MAX_BW) ?
-            (((request->u.bcast.tmpsize + COLL_PORTALS4_MAX_BW -1)  / COLL_PORTALS4_MAX_BW) < COLL_PORTALS4_MAX_SEGMENT ?
-                    ((request->u.bcast.tmpsize + COLL_PORTALS4_MAX_BW -1)  / COLL_PORTALS4_MAX_BW) :
-                    COLL_PORTALS4_MAX_SEGMENT) :
+    {
+        size_t max_msg_size = (COLL_PORTALS4_MAX_BW >  mca_coll_portals4_component.ni_limits.max_msg_size) ?
+            mca_coll_portals4_component.ni_limits.max_msg_size :
+            COLL_PORTALS4_MAX_BW;
+
+        //TODO : Either make compatible Portals size limits and COLL_PORTALS4_MAX_SEGMENT or remove COLL_PORTALS4_MAX_SEGMENT
+        request->u.bcast.segment_nb =  (request->u.bcast.tmpsize > max_msg_size) ?
+            (((request->u.bcast.tmpsize + max_msg_size -1)  / max_msg_size) < COLL_PORTALS4_MAX_SEGMENT ?
+                ((request->u.bcast.tmpsize + max_msg_size -1)  / max_msg_size) : COLL_PORTALS4_MAX_SEGMENT) :
                     1;
 
+        OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
+                "seg_number=%d , seg_size_max=%lu", request->u.bcast.segment_nb, max_msg_size));
+    }
     if (request->u.bcast.segment_nb > COLL_PORTALS4_BCAST_ALGO_THRESHOLD) {
         request->u.bcast.algo = OMPI_COLL_PORTALS4_BCAST_PIPELINE_ALGO;
     }
@@ -137,9 +145,9 @@ bcast_kary_tree_top(void *buff, int count,
         mca_coll_portals4_module_t *portals4_module)
 {
     bool is_sync = request->is_sync;
-    int ret, seg;
-    unsigned int i;
-    int segment_nb = request->u.bcast.segment_nb;
+    int ret;
+    unsigned int i, seg, seg_size, nb_long;
+    unsigned int segment_nb = request->u.bcast.segment_nb;
     unsigned int child_nb;
     int size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
@@ -201,15 +209,22 @@ bcast_kary_tree_top(void *buff, int count,
     COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 0, 0,
             COLL_PORTALS4_BCAST, 0, internal_count);
 
+    /* The data will be cut in segment_nb segments.
+     * nb_long segments will have a size of (seg_size + 1)
+     * and (segment_nb - nb_long) segments will have a size of seg_size
+     */
+    seg_size = request->u.bcast.tmpsize / segment_nb;
+    nb_long = request->u.bcast.tmpsize % segment_nb;
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "seg_size=%d nb_long=%d segment_nb=%d", seg_size, nb_long, segment_nb);
+
     if (rank != root) {
         for (seg = 1, offset = 0, length = 0 ;
                 seg <= segment_nb ;
                 seg++, offset += length) {
 
             /* Divide buffer into segments */
-            length = (seg < segment_nb) ?
-                    (request->u.bcast.tmpsize + segment_nb - 1) / segment_nb :
-                    request->u.bcast.tmpsize - ((request->u.bcast.tmpsize + segment_nb - 1) / segment_nb) * (segment_nb - 1);
+            if (seg <= nb_long) length = seg_size + 1;
+            else length = seg_size;
 
             /*
              ** Prepare Data ME
@@ -352,13 +367,14 @@ bcast_kary_tree_top(void *buff, int count,
                 seg++, offset += length) {
 
             /* Divide buffer into segments */
-            length = (seg < segment_nb) ?
-                    (request->u.bcast.tmpsize + segment_nb - 1) / segment_nb :
-                    request->u.bcast.tmpsize - ((request->u.bcast.tmpsize + segment_nb - 1) / segment_nb) * (segment_nb - 1);
+            if (seg <= nb_long) length = seg_size + 1;
+            else length = seg_size;
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                "bcast with k-ary tree : segment of size %ld", length);
 
             /* compute the triggering threshold to send data to the children */
-            trig_thr = (rank == root) ? (segment_nb) :
-                    (segment_nb + seg);
+            trig_thr = segment_nb + seg - 1; /* To be sure the set of PtlTriggeredPut of DATA will be executed in order */
+            if (rank != root) trig_thr ++;
 
             /*
              ** Send Data to children
@@ -378,6 +394,17 @@ bcast_kary_tree_top(void *buff, int count,
                         return opal_stderr("PtlTriggeredPut failed", __FILE__, __LINE__, ret);
                     }
                 }
+            }
+        }
+
+        if (rank == root) {
+            trig_thr = segment_nb;
+            ct_inc.success = segment_nb;
+            ct_inc.failure = 0;
+
+            if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                   request->u.bcast.trig_ct_h, trig_thr)) != 0) {
+                return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
             }
         }
 
@@ -409,9 +436,28 @@ bcast_kary_tree_top(void *buff, int count,
          */
 
         if (rank != root) {
-            ack_thr = segment_nb;
+            trig_thr = segment_nb;
             if (is_sync) {
-                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, ack_thr, &ct)) != 0) {
+                /* Each leaf has a pending PtlTriggeredPut (to send the final ACK). We must call PtlTriggeredCTInc twice.
+                   Otherwise, we could pass the PtlCTWait and then free the CT too early and the Put wouldn't be triggered.
+
+                   This is necessary because portals4 does not insure the order in the triggered operations associated
+                   with the same threshold. In the case where PtlCTWait is not called (else case), this is not necessary. */
+
+                ct_inc.success = 1;
+                ct_inc.failure = 0;
+
+                if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                        request->u.bcast.trig_ct_h, trig_thr)) != 0) {
+                    return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+                }
+
+                if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                        request->u.bcast.trig_ct_h, trig_thr + 1)) != 0) {
+                    return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+                }
+
+                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, trig_thr + 2, &ct)) != 0) {
                     opal_stderr("PtlCTWait failed", __FILE__, __LINE__, ret);
                 }
             }
@@ -421,7 +467,7 @@ bcast_kary_tree_top(void *buff, int count,
                         mca_coll_portals4_component.finish_pt_idx,
                         0, 0, NULL, (uintptr_t) request,
                         request->u.bcast.trig_ct_h,
-                        ack_thr)) != 0) {
+                        trig_thr)) != 0) {
                     return opal_stderr("PtlTriggeredPut failed", __FILE__, __LINE__, ret);
                 }
 
@@ -440,8 +486,9 @@ bcast_pipeline_top(void *buff, int count,
         mca_coll_portals4_module_t *portals4_module)
 {
     bool is_sync = request->is_sync;
-    int ret, seg;
-    int segment_nb = request->u.bcast.segment_nb;
+    int ret;
+    unsigned int seg, seg_size, nb_long;
+    unsigned int segment_nb = request->u.bcast.segment_nb;
     int size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
     ptl_rank_t parent, child;
@@ -492,6 +539,13 @@ bcast_pipeline_top(void *buff, int count,
 
     COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 0, 0,
             COLL_PORTALS4_BCAST, 0, internal_count);
+    /* The data will be cut in segment_nb segments.
+     * nb_long segments will have a size of (seg_size + 1)
+     * and (segment_nb - nb_long) segments will have a size of seg_size
+     */
+    seg_size = request->u.bcast.tmpsize / segment_nb;
+    nb_long = request->u.bcast.tmpsize % segment_nb;
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "seg_size=%d nb_long=%d", seg_size, nb_long);
 
     if (rank != root) {
         for (seg = 1, offset = 0, length = 0 ;
@@ -499,9 +553,8 @@ bcast_pipeline_top(void *buff, int count,
                 seg++, offset += length) {
 
             /* Divide buffer into segments */
-            length = (seg < segment_nb) ?
-                    (request->u.bcast.tmpsize + segment_nb - 1) / segment_nb :
-                    request->u.bcast.tmpsize - ((request->u.bcast.tmpsize + segment_nb - 1) / segment_nb) * (segment_nb - 1);
+            if (seg <= nb_long) length = seg_size + 1;
+            else length = seg_size;
 
             /*
              ** Prepare Data ME
@@ -642,13 +695,14 @@ bcast_pipeline_top(void *buff, int count,
                 seg++, offset += length) {
 
             /* Divide buffer into segments */
-            length = (seg < segment_nb) ?
-                    (request->u.bcast.tmpsize + segment_nb - 1) / segment_nb :
-                    request->u.bcast.tmpsize - ((request->u.bcast.tmpsize + segment_nb - 1) / segment_nb) * (segment_nb - 1);
+            if (seg <= nb_long) length = seg_size + 1;
+            else length = seg_size;
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                "bcast with pipeline  :  segment of size %ld \n", length);
 
             /* compute the triggering threshold to send data to the children */
-            trig_thr = (rank == root) ? (segment_nb) :
-                    (segment_nb + seg);
+            trig_thr = segment_nb + seg - 1; /* To be sure the PtlTriggeredPut will be executed in order */
+            if (rank != root) trig_thr ++;
 
             /*
              ** Send Data to children
@@ -666,6 +720,16 @@ bcast_pipeline_top(void *buff, int count,
                         0, request->u.bcast.trig_ct_h, trig_thr)) != 0) {
                     return opal_stderr("PtlTriggeredPut failed", __FILE__, __LINE__, ret);
                 }
+            }
+        }
+        if (rank == root) {
+            trig_thr = segment_nb;
+            ct_inc.success = segment_nb;
+            ct_inc.failure = 0;
+
+            if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                   request->u.bcast.trig_ct_h, trig_thr)) != 0) {
+                return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
             }
         }
 
@@ -696,8 +760,29 @@ bcast_pipeline_top(void *buff, int count,
          */
 
         if (rank != root) {
+            trig_thr = segment_nb;
+
             if (is_sync) {
-                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, segment_nb, &ct)) != 0) {
+                /* Each leaf has a pending PtlTriggeredPut (to send the final ACK). We must call PtlTriggeredCTInc twice.
+                   Otherwise, we could pass the PtlCTWait and then free the CT too early and the Put wouldn't be triggered.
+
+                   This is necessary because portals4 does not insure the order in the triggered operations associated
+                   with the same threshold. In the case where PtlCTWait is not called (else case), this is not necessary. */
+
+                ct_inc.success = 1;
+                ct_inc.failure = 0;
+
+                if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                        request->u.bcast.trig_ct_h, trig_thr)) != 0) {
+                    return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+                }
+
+                if ((ret = PtlTriggeredCTInc(request->u.bcast.trig_ct_h, ct_inc,
+                        request->u.bcast.trig_ct_h, trig_thr + 1)) != 0) {
+                    return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+                }
+
+                if ((ret = PtlCTWait(request->u.bcast.trig_ct_h, trig_thr + 2, &ct)) != 0) {
                     opal_stderr("PtlCTWait failed", __FILE__, __LINE__, ret);
                 }
             }
@@ -707,7 +792,7 @@ bcast_pipeline_top(void *buff, int count,
                         mca_coll_portals4_component.finish_pt_idx,
                         0, 0, NULL, (uintptr_t) request,
                         request->u.bcast.trig_ct_h,
-                        segment_nb)) != 0) {
+                        trig_thr)) != 0) {
                     return opal_stderr("PtlTriggeredPut failed", __FILE__, __LINE__, ret);
                 }
             }
@@ -831,7 +916,7 @@ ompi_coll_portals4_ibcast_intra(void *buff, int count,
         return OMPI_ERROR;
     }
 
-    puts("ibcast");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "ibcast_intra");
     return (OMPI_SUCCESS);
 }
 
@@ -860,5 +945,6 @@ ompi_coll_portals4_ibcast_intra_fini(ompi_coll_portals4_request_t *request)
     ompi_request_complete(&request->super, true);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "ibcast_intra_fini");
     return (OMPI_SUCCESS);
 }
