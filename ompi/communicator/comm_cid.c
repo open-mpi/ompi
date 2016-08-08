@@ -840,8 +840,6 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
     opal_buffer_t sbuf;
     int rc;
 
-    fprintf (stderr, "reduce complete\n");
-
     OBJ_CONSTRUCT(&sbuf, opal_buffer_t);
 
     if (OPAL_SUCCESS != (rc = opal_dss.pack(&sbuf, context->tmpbuf, (int32_t)context->count, OPAL_INT))) {
@@ -870,8 +868,6 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
         (void)asprintf(&pdat.value.key, "%s:%s:send:%d", cid_context->port_string, cid_context->pmix_tag,
                        cid_context->iter);
     }
-
-    fprintf (stderr, "%s, %s\n", info.key, pdat.value.key);
 
     /* this macro is not actually non-blocking. if a non-blocking version becomes available this function
      * needs to be reworked to take advantage of it. */
