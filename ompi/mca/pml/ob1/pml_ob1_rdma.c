@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -42,6 +42,7 @@ size_t mca_pml_ob1_rdma_btls(
     mca_pml_ob1_com_btl_t* rdma_btls)
 {
     int num_btls = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
+    int num_eager_btls = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_eager);
     double weight_total = 0;
     int num_btls_used = 0;
 
@@ -57,6 +58,22 @@ size_t mca_pml_ob1_rdma_btls(
                     (bml_endpoint->btl_rdma_index + n) % num_btls);
         mca_btl_base_registration_handle_t *reg_handle = NULL;
         mca_btl_base_module_t *btl = bml_btl->btl;
+        /* NTH: go ahead and use an rdma btl if is the only one */
+        bool ignore = !mca_pml_ob1.use_all_rdma;
+
+        /* do not use rdma btls that are not in the eager list. this is necessary to avoid using
+         * btls that exist on the endpoint only to support RMA. */
+        for (int i = 0 ; i < num_eager_btls && ignore ; ++i) {
+            mca_bml_base_btl_t *eager_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_eager, i);
+            if (eager_btl->btl_endpoint == bml_btl->btl_endpoint) {
+                ignore = false;
+                break;
+            }
+        }
+
+        if (ignore) {
+            continue;
+        }
 
         if (btl->btl_register_mem) {
             /* do not use the RDMA protocol with this btl if 1) leave pinned is disabled,
@@ -95,22 +112,66 @@ size_t mca_pml_ob1_rdma_btls(
     return num_btls_used;
 }
 
+size_t mca_pml_ob1_rdma_pipeline_btls_count (mca_bml_base_endpoint_t* bml_endpoint)
+{
+    int num_btls = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_rdma);
+    int num_eager_btls = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_eager);
+    int rdma_count = 0;
+
+    for(int i = 0; i < num_btls && i < mca_pml_ob1.max_rdma_per_request; ++i) {
+        mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
+        /* NTH: go ahead and use an rdma btl if is the only one */
+        bool ignore = !mca_pml_ob1.use_all_rdma;
+
+        for (int i = 0 ; i < num_eager_btls && ignore ; ++i) {
+            mca_bml_base_btl_t *eager_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_eager, i);
+            if (eager_btl->btl_endpoint == bml_btl->btl_endpoint) {
+                ignore = false;
+                break;
+            }
+        }
+
+        if (!ignore) {
+            ++rdma_count;
+        }
+    }
+
+    return rdma_count;
+}
+
 size_t mca_pml_ob1_rdma_pipeline_btls( mca_bml_base_endpoint_t* bml_endpoint,
                                        size_t size,
                                        mca_pml_ob1_com_btl_t* rdma_btls )
 {
-    int i, num_btls = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
+    int num_btls = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_rdma);
+    int num_eager_btls = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_eager);
     double weight_total = 0;
+    int rdma_count = 0;
 
-    for(i = 0; i < num_btls && i < mca_pml_ob1.max_rdma_per_request; i++) {
-        rdma_btls[i].bml_btl =
-            mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
-        rdma_btls[i].btl_reg = NULL;
+    for(int i = 0; i < num_btls && i < mca_pml_ob1.max_rdma_per_request; i++) {
+        mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
+        /* NTH: go ahead and use an rdma btl if is the only one */
+        bool ignore = !mca_pml_ob1.use_all_rdma;
 
-        weight_total += rdma_btls[i].bml_btl->btl_weight;
+        for (int i = 0 ; i < num_eager_btls && ignore ; ++i) {
+            mca_bml_base_btl_t *eager_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_eager, i);
+            if (eager_btl->btl_endpoint == bml_btl->btl_endpoint) {
+                ignore = false;
+                break;
+            }
+        }
+
+        if (ignore) {
+            continue;
+        }
+
+        rdma_btls[rdma_count].bml_btl = bml_btl;
+        rdma_btls[rdma_count++].btl_reg = NULL;
+
+        weight_total += bml_btl->btl_weight;
     }
 
-    mca_pml_ob1_calc_weighted_length(rdma_btls, i, size, weight_total);
+    mca_pml_ob1_calc_weighted_length (rdma_btls, rdma_count, size, weight_total);
 
-    return i;
+    return rdma_count;
 }

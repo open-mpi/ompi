@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,5 +40,8 @@ size_t mca_pml_ob1_rdma_btls(struct mca_bml_base_endpoint_t* endpoint,
  * bandwidth */
 size_t mca_pml_ob1_rdma_pipeline_btls(struct mca_bml_base_endpoint_t* endpoint,
                 size_t size, mca_pml_ob1_com_btl_t* rdma_btls);
+
+size_t mca_pml_ob1_rdma_pipeline_btls_count (mca_bml_base_endpoint_t* bml_endpoint);
+
 #endif
 
