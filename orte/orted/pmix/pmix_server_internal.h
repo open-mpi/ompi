@@ -190,11 +190,17 @@ extern int pmix_server_deregister_events_fn(opal_list_t *info,
                                             opal_pmix_op_cbfunc_t cbfunc,
                                             void *cbdata);
 extern int pmix_server_query_fn(opal_process_name_t *requestor,
-                                opal_list_t *info, opal_list_t *directives,
+                                opal_list_t *queries,
                                 opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
 extern void pmix_tool_connected_fn(opal_list_t *info,
                                    opal_pmix_tool_connection_cbfunc_t cbfunc,
                                    void *cbdata);
+
+extern void pmix_server_log_fn(opal_process_name_t *requestor,
+                               opal_list_t *info,
+                               opal_list_t *directives,
+                               opal_pmix_op_cbfunc_t cbfunc,
+                               void *cbdata);
 
 /* declare the RML recv functions for responses */
 extern void pmix_server_launch_resp(int status, orte_process_name_t* sender,

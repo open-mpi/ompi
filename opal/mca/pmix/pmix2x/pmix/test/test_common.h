@@ -99,7 +99,7 @@ typedef struct {
     uint32_t nprocs;
     int timeout;
     int verbose;
-    int rank;
+    pmix_rank_t rank;
     int early_fail;
     int test_job_fence;
     int collect_bad;
@@ -111,7 +111,7 @@ typedef struct {
     char *ns_dist;
     int ns_size;
     int ns_id;
-    int base_rank;
+    pmix_rank_t base_rank;
     int test_publish;
     int test_spawn;
     int test_connect;
@@ -122,7 +122,7 @@ typedef struct {
 #define INIT_TEST_PARAMS(params) do { \
     params.nprocs = 1;                \
     params.verbose = 0;               \
-    params.rank = -1;                 \
+    params.rank = PMIX_RANK_UNDEF;    \
     params.base_rank = 0;             \
     params.early_fail = 0;            \
     params.ns_size = -1;              \

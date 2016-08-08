@@ -480,7 +480,7 @@ static void cnct_cbfunc(pmix_status_t status,
 static pmix_status_t parse_connect_ack (char *msg,
                                         pmix_listener_protocol_t protocol,
                                         int len,
-                                        char **nspace, int *rank,
+                                        char **nspace, pmix_rank_t *rank,
                                         char **version, char **cred)
 {
     int msglen;
@@ -497,9 +497,9 @@ static pmix_status_t parse_connect_ack (char *msg,
 
         PMIX_STRNLEN(msglen, msg, len);
         if (msglen <= len) {
-            memcpy(rank, msg, sizeof(int));
-            msg += sizeof(int);
-            len -= sizeof(int);
+            memcpy(rank, msg, sizeof(pmix_rank_t));
+            msg += sizeof(pmix_rank_t);
+            len -= sizeof(pmix_rank_t);
         } else {
             return PMIX_ERR_BAD_PARAM;
         }
@@ -528,12 +528,12 @@ static pmix_status_t parse_connect_ack (char *msg,
  *  connected socket and verify the expected response.
  */
 static pmix_status_t pmix_server_authenticate(pmix_pending_connection_t *pnd,
-                                              int *out_rank,
+                                              pmix_rank_t *out_rank,
                                               pmix_peer_t **peer)
 {
     char *msg, *nspace, *version, *cred;
     pmix_status_t rc;
-    int rank;
+    pmix_rank_t rank;
     pmix_usock_hdr_t hdr;
     pmix_nspace_t *nptr, *tmp;
     pmix_rank_info_t *info;
@@ -586,15 +586,6 @@ static pmix_status_t pmix_server_authenticate(pmix_pending_connection_t *pnd,
     /* if the attaching process is not a tool, then set it up as
      * a known peer */
     if (PMIX_PROTOCOL_TOOL != pnd->protocol) {
-        pmix_globals.myid.rank = rank;
-
-        /* get the nspace */
-        nspace = msg;  // a NULL terminator is in the data
-
-        /* get the rank */
-        memcpy(&rank, msg+strlen(nspace)+1, sizeof(int));
-
-
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "connect-ack recvd from peer %s:%d:%s",
                             nspace, rank, version);
@@ -766,7 +757,7 @@ static void connection_handler(int sd, short flags, void* cbdata)
 {
     pmix_pending_connection_t *pnd = (pmix_pending_connection_t*)cbdata;
     pmix_peer_t *peer;
-    int rank;
+    pmix_rank_t rank;
     pmix_status_t status;
     pmix_output_verbose(8, pmix_globals.debug_output,
                         "connection_handler: new connection: %d",
@@ -796,7 +787,7 @@ static void connection_handler(int sd, short flags, void* cbdata)
     event_assign(&peer->send_event, pmix_globals.evbase, pnd->sd,
                  EV_WRITE|EV_PERSIST, pmix_usock_send_handler, peer);
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix:server client %s:%d has connected on socket %d",
+                        "pmix:server client %s:%u has connected on socket %d",
                         peer->info->nptr->nspace, peer->info->rank, peer->sd);
     PMIX_RELEASE(pnd);
 }

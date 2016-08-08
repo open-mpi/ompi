@@ -168,6 +168,8 @@ static void scon(pmix_shift_caddy_t *p)
     p->ndata = 0;
     p->info = NULL;
     p->ninfo = 0;
+    p->directives = NULL;
+    p->ndirs = 0;
     p->evhdlr = NULL;
     p->kv = NULL;
     p->vptr = NULL;
@@ -194,10 +196,8 @@ PMIX_CLASS_INSTANCE(pmix_info_caddy_t,
 
 static void qcon(pmix_query_caddy_t *p)
 {
-    p->info = NULL;
-    p->ninfo = 0;
-    p->directives = NULL;
-    p->ndirs = 0;
+    p->queries = NULL;
+    p->nqueries = 0;
     p->cbfunc = NULL;
     p->cbdata = NULL;
     p->relcbfunc = NULL;

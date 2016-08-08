@@ -66,8 +66,12 @@ typedef enum {
     PMIX_NOTIFY_CMD,
     PMIX_REGEVENTS_CMD,
     PMIX_DEREGEVENTS_CMD,
-    PMIX_QUERY_CMD
+    PMIX_QUERY_CMD,
+    PMIX_LOG_CMD
 } pmix_cmd_t;
+
+/* provide a "pretty-print" function for cmds */
+const char* pmix_command_string(pmix_cmd_t cmd);
 
 /* define a set of flags to direct collection
  * of data during operations */
@@ -158,7 +162,7 @@ PMIX_CLASS_DECLARATION(pmix_nspace_t);
 typedef struct pmix_rank_info_t {
     pmix_list_item_t super;
     pmix_nspace_t *nptr;
-    int rank;
+    pmix_rank_t rank;
     uid_t uid;
     gid_t gid;
     bool modex_recvd;
@@ -221,10 +225,8 @@ typedef struct {
     pmix_event_t ev;
     volatile bool active;
     pmix_status_t status;
-    pmix_info_t *info;
-    size_t ninfo;
-    pmix_info_t *directives;
-    size_t ndirs;
+    pmix_query_t *queries;
+    size_t nqueries;
     pmix_info_cbfunc_t cbfunc;
     pmix_release_cbfunc_t relcbfunc;
     void *cbdata;
@@ -262,12 +264,14 @@ PMIX_CLASS_DECLARATION(pmix_server_trkr_t);
     pmix_status_t *codes;
     size_t ncodes;
     const char *nspace;
-    int rank;
+    pmix_rank_t rank;
     const char *data;
     size_t ndata;
     const char *key;
     pmix_info_t *info;
     size_t ninfo;
+    pmix_info_t *directives;
+    size_t ndirs;
     pmix_notification_fn_t evhdlr;
     pmix_kval_t *kv;
     pmix_value_t *vptr;

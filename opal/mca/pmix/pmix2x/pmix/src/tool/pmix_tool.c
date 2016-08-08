@@ -189,11 +189,17 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_kval_t *kptr;
     pmix_status_t rc;
     pmix_nspace_t *nptr, *nsptr;
-    int server_pid = -1;
+    pid_t server_pid;
+    bool server_pid_given = false;
     int hostnamelen = 30;
     char hostname[hostnamelen];
     DIR *cur_dirp = NULL;
     struct dirent * dir_entry;
+    bool connect_to_system_server = false;
+    bool connect_to_system_first = false;
+    bool connection_defined = false;
+    char *mytmpdir = NULL;
+    char *systmpdir = NULL;
 
     if (NULL == proc) {
         return PMIX_ERR_BAD_PARAM;
@@ -218,7 +224,18 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                 pmix_globals.evbase = (pmix_event_base_t*)info[n].value.data.ptr;
                 pmix_globals.external_evbase = true;
             } else if (strcmp(info[n].key, PMIX_SERVER_PIDINFO) == 0) {
-                server_pid = info[n].value.data.integer;
+                server_pid = info[n].value.data.pid;
+                server_pid_given = true;
+            } else if (strcmp(info[n].key, PMIX_CONNECT_TO_SYSTEM) == 0) {
+                connect_to_system_server = info[n].value.data.flag;
+                connection_defined = true;
+            } else if (strcmp(info[n].key, PMIX_CONNECT_SYSTEM_FIRST) == 0) {
+                connect_to_system_first = info[n].value.data.flag;
+                connection_defined = true;
+            } else if (strcmp(info[n].key, PMIX_SERVER_TMPDIR) == 0) {
+                mytmpdir = strdup(info[n].value.data.string);
+            } else if (strcmp(info[n].key, PMIX_SYSTEM_TMPDIR) == 0) {
+                systmpdir = strdup(info[n].value.data.string);
             }
         }
     }
@@ -247,15 +264,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: init called");
 
-    /* find the temp dir */
-    if (NULL == (tdir = getenv("TMPDIR"))) {
-        if (NULL == (tdir = getenv("TEMP"))) {
-            if (NULL == (tdir = getenv("TMP"))) {
-                tdir = "/tmp";
-            }
-        }
-    }
-
     /* setup the path to the daemon rendezvous point */
     memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;
@@ -264,59 +272,108 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     /* ensure it is NULL terminated */
     hostname[hostnamelen-1] = '\0';
 
-    /* if they gave us a specific pid, then look for that
-     * particular server - otherwise, see if there is only
-     * one on this node and default to it */
-    if (server_pid != -1) {
-        snprintf(address.sun_path, sizeof(address.sun_path)-1, "%s/pmix.%s.%d", tdir, hostname, server_pid);
-        /* if the rendezvous file doesn't exist, that's an error */
-        if (0 != access(address.sun_path, R_OK)) {
-            pmix_output_close(pmix_globals.debug_output);
-            pmix_output_finalize();
-            pmix_class_finalize();
-            return PMIX_ERR_NOT_FOUND;
-        }
-    } else {
-        /* open up the temp directory */
-        if (NULL == (cur_dirp = opendir(tdir))) {
-            pmix_output_close(pmix_globals.debug_output);
-            pmix_output_finalize();
-            pmix_class_finalize();
-            return PMIX_ERR_NOT_FOUND;
-        }
-        /* search the entries for something that starts with pmix.hostname */
-        if (0 > asprintf(&tmp, "pmix.%s", hostname)) {
-            closedir(cur_dirp);
-            return PMIX_ERR_NOMEM;
-        }
-        evar = NULL;
-        while (NULL != (dir_entry = readdir(cur_dirp))) {
-            if (0 == strncmp(dir_entry->d_name, tmp, strlen(tmp))) {
-                /* found one - if more than one, then that's an error */
-                if (NULL != evar) {
-                    closedir(cur_dirp);
-                    free(evar);
-                    free(tmp);
-                    pmix_output_close(pmix_globals.debug_output);
-                    pmix_output_finalize();
-                    pmix_class_finalize();
-                    return PMIX_ERR_INIT;
+    /* if we are to connect solely to the system-level daemon,
+     * or to preferentially connect to the system-level daemon,
+     * or nothing was specified at all, then look to see if a
+     * rendezvous point in that location exists */
+    if (connect_to_system_server || connect_to_system_first || !connection_defined) {
+        /* find the temp dir */
+        if (NULL != systmpdir) {
+            tdir = systmpdir;
+        } else if (NULL == (tdir = getenv("TMPDIR"))) {
+            if (NULL == (tdir = getenv("TEMP"))) {
+                if (NULL == (tdir = getenv("TMP"))) {
+                    tdir = "/tmp";
                 }
-                evar = strdup(dir_entry->d_name);
             }
         }
-        free(tmp);
-        closedir(cur_dirp);
-        if (NULL == evar) {
-            /* none found */
-            pmix_output_close(pmix_globals.debug_output);
-            pmix_output_finalize();
-            pmix_class_finalize();
-            return PMIX_ERR_INIT;
+        snprintf(address.sun_path, sizeof(address.sun_path)-1, "%s/pmix.sys.%s", tdir, hostname);
+        /* see if the rendezvous file exists */
+        if (0 != access(address.sun_path, R_OK)) {
+            /* if it was a requirement, then error out */
+            if (connect_to_system_server) {
+                return PMIX_ERR_UNREACH;
+            }
+            /* otherwise, this isn't a fatal error - reset the addr */
+            memset(&address, 0, sizeof(struct sockaddr_un));
+            connection_defined = false;
+        } else {
+            /* connect to this server */
+            connection_defined = true;
         }
-        /* use the found one as our contact point */
-        snprintf(address.sun_path, sizeof(address.sun_path)-1, "%s/%s", tdir, evar);
-        free(evar);
+    }
+
+    if (!connection_defined) {
+        /* if we get here, then either we are to connect to
+         * a non-system daemon, or a system-level daemon was
+         * not found - so now look for the session daemon */
+
+
+        /* find the temp dir */
+        if (NULL != mytmpdir) {
+            tdir = mytmpdir;
+        } else if (NULL == (tdir = getenv("TMPDIR"))) {
+            if (NULL == (tdir = getenv("TEMP"))) {
+                if (NULL == (tdir = getenv("TMP"))) {
+                    tdir = "/tmp";
+                }
+            }
+        }
+
+        /* if they gave us a specific pid, then look for that
+         * particular server - otherwise, see if there is only
+         * one on this node and default to it */
+        if (server_pid_given) {
+            snprintf(address.sun_path, sizeof(address.sun_path)-1, "%s/pmix.%s.%d", tdir, hostname, server_pid);
+            /* if the rendezvous file doesn't exist, that's an error */
+            if (0 != access(address.sun_path, R_OK)) {
+                pmix_output_close(pmix_globals.debug_output);
+                pmix_output_finalize();
+                pmix_class_finalize();
+                return PMIX_ERR_NOT_FOUND;
+            }
+        } else {
+            /* open up the temp directory */
+            if (NULL == (cur_dirp = opendir(tdir))) {
+                pmix_output_close(pmix_globals.debug_output);
+                pmix_output_finalize();
+                pmix_class_finalize();
+                return PMIX_ERR_NOT_FOUND;
+            }
+            /* search the entries for something that starts with pmix.hostname */
+            if (0 > asprintf(&tmp, "pmix.%s", hostname)) {
+                closedir(cur_dirp);
+                return PMIX_ERR_NOMEM;
+            }
+            evar = NULL;
+            while (NULL != (dir_entry = readdir(cur_dirp))) {
+                if (0 == strncmp(dir_entry->d_name, tmp, strlen(tmp))) {
+                    /* found one - if more than one, then that's an error */
+                    if (NULL != evar) {
+                        closedir(cur_dirp);
+                        free(evar);
+                        free(tmp);
+                        pmix_output_close(pmix_globals.debug_output);
+                        pmix_output_finalize();
+                        pmix_class_finalize();
+                        return PMIX_ERR_INIT;
+                    }
+                    evar = strdup(dir_entry->d_name);
+                }
+            }
+            free(tmp);
+            closedir(cur_dirp);
+            if (NULL == evar) {
+                /* none found */
+                pmix_output_close(pmix_globals.debug_output);
+                pmix_output_finalize();
+                pmix_class_finalize();
+                return PMIX_ERR_INIT;
+            }
+            /* use the found one as our contact point */
+            snprintf(address.sun_path, sizeof(address.sun_path)-1, "%s/%s", tdir, evar);
+            free(evar);
+        }
     }
 
     pmix_bfrop_open();

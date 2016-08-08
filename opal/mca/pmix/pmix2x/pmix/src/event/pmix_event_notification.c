@@ -226,6 +226,8 @@ static void progress_local_event_hdlr(pmix_status_t status,
             if (sing->code == chain->status) {
                 PMIX_RETAIN(chain);
                 chain->sing = sing;
+                /* add any cbobject - the info struct for it is at the end */
+                chain->info[chain->ninfo-1].value.data.ptr = sing->cbobject;
                 sing->evhdlr(sing->index,
                              chain->status, &chain->source,
                              chain->info, chain->ninfo,
@@ -251,6 +253,8 @@ static void progress_local_event_hdlr(pmix_status_t status,
                      * callback function to our progression function */
                     PMIX_RETAIN(chain);
                     chain->multi = multi;
+                    /* add any cbobject - the info struct for it is at the end */
+                    chain->info[chain->ninfo-1].value.data.ptr = multi->cbobject;
                     multi->evhdlr(multi->index,
                                   chain->status, &chain->source,
                                   chain->info, chain->ninfo,
@@ -277,6 +281,8 @@ static void progress_local_event_hdlr(pmix_status_t status,
             def = (pmix_default_event_t*)nxt;
             PMIX_RETAIN(chain);
             chain->def = def;
+            /* add any cbobject - the info struct for it is at the end */
+            chain->info[chain->ninfo-1].value.data.ptr = def->cbobject;
             def->evhdlr(def->index,
                         chain->status, &chain->source,
                         chain->info, chain->ninfo,
@@ -332,6 +338,8 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
              * callback function to our progression function */
             PMIX_RETAIN(chain);
             chain->sing = sing;
+            /* add any cbobject - the info struct for it is at the end */
+            chain->info[chain->ninfo-1].value.data.ptr = sing->cbobject;
             pmix_output_verbose(2, pmix_globals.debug_output,
                                 "[%s:%d] CALLING SINGLE EVHDLR",
                                 pmix_globals.myid.nspace, pmix_globals.myid.rank);
@@ -353,6 +361,8 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
                  * callback function to our progression function */
                 PMIX_RETAIN(chain);
                 chain->multi = multi;
+                /* add any cbobject - the info struct for it is at the end */
+                chain->info[chain->ninfo-1].value.data.ptr = multi->cbobject;
                 pmix_output_verbose(2, pmix_globals.debug_output,
                                     "[%s:%d] CALLING MULTI EVHDLR",
                                     pmix_globals.myid.nspace, pmix_globals.myid.rank);
@@ -375,6 +385,8 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     PMIX_LIST_FOREACH(def, &pmix_globals.events.default_events, pmix_default_event_t) {
         PMIX_RETAIN(chain);
         chain->def = def;
+        /* add any cbobject - the info struct for it is at the end */
+        chain->info[chain->ninfo-1].value.data.ptr = def->cbobject;
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "[%s:%d] CALLING DEFAULT EVHDLR",
                             pmix_globals.myid.nspace, pmix_globals.myid.rank);
@@ -493,7 +505,7 @@ static pmix_status_t notify_client_of_event(pmix_status_t status,
     }
 
     /* pack the status */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(cd->buf, &status, 1, PMIX_INT))) {
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(cd->buf, &status, 1, PMIX_STATUS))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(cd);
         return rc;
@@ -539,6 +551,7 @@ static void sevcon(pmix_single_event_t *p)
 {
     p->name = NULL;
     p->evhdlr = NULL;
+    p->cbobject = NULL;
 }
 static void sevdes(pmix_single_event_t *p)
 {
@@ -556,6 +569,7 @@ static void mevcon(pmix_multi_event_t *p)
     p->codes = NULL;
     p->ncodes = 0;
     p->evhdlr = NULL;
+    p->cbobject = NULL;
 }
 static void mevdes(pmix_multi_event_t *p)
 {
@@ -574,6 +588,7 @@ static void devcon(pmix_default_event_t *p)
 {
     p->name = NULL;
     p->evhdlr = NULL;
+    p->cbobject = NULL;
 }
 static void devdes(pmix_default_event_t *p)
 {

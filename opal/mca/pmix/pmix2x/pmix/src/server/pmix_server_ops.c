@@ -74,7 +74,7 @@ pmix_status_t pmix_server_abort(pmix_peer_t *peer, pmix_buffer_t *buf,
 
     /* unpack the status */
     cnt = 1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &status, &cnt, PMIX_INT))) {
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &status, &cnt, PMIX_STATUS))) {
         return rc;
     }
     /* unpack the message */
@@ -576,7 +576,7 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
                     /* pack the proc so we know the source */
                     char *foobar = rkinfo->nptr->nspace;
                     pmix_bfrop.pack(&rankbuf, &foobar, 1, PMIX_STRING);
-                    pmix_bfrop.pack(&rankbuf, &rkinfo->rank, 1, PMIX_INT);
+                    pmix_bfrop.pack(&rankbuf, &rkinfo->rank, 1, PMIX_PROC_RANK);
                     PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
                     PMIX_LOAD_BUFFER(&xfer, val->data.bo.bytes, val->data.bo.size);
                     PMIX_VALUE_RELEASE(val);
@@ -1277,7 +1277,7 @@ pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
 
     /* unpack status */
     cnt = 1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->status, &cnt, PMIX_INT))) {
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->status, &cnt, PMIX_STATUS))) {
         PMIX_ERROR_LOG(rc);
         goto exit;
     }
@@ -1336,13 +1336,73 @@ pmix_status_t pmix_server_query(pmix_peer_t *peer,
 
     cd = PMIX_NEW(pmix_query_caddy_t);
     cd->cbdata = cbdata;
-    /* unpack the number of info */
+    /* unpack the number of queries */
+    cnt = 1;
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->nqueries, &cnt, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        goto exit;
+    }
+    /* unpack the queries */
+    if (0 < cd->nqueries) {
+        PMIX_QUERY_CREATE(cd->queries, cd->nqueries);
+        cnt = cd->nqueries;
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, cd->queries, &cnt, PMIX_QUERY))) {
+            PMIX_ERROR_LOG(rc);
+            goto exit;
+        }
+    }
+
+    /* setup the requesting peer name */
+    (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
+    proc.rank = peer->info->rank;
+
+    /* ask the host for the info */
+    if (PMIX_SUCCESS != (rc = pmix_host_server.query(&proc, cd->queries, cd->nqueries,
+                                                     cbfunc, cd))) {
+        goto exit;
+    }
+    return PMIX_SUCCESS;
+
+  exit:
+    PMIX_RELEASE(cd);
+    return rc;
+}
+
+static void logcbfn(pmix_status_t status, void *cbdata)
+{
+    pmix_shift_caddy_t *cd = (pmix_shift_caddy_t*)cbdata;
+    if (NULL != cd->cbfunc.opcbfn) {
+        cd->cbfunc.opcbfn(status, cd->cbdata);
+    }
+    PMIX_RELEASE(cd);
+}
+pmix_status_t pmix_server_log(pmix_peer_t *peer,
+                              pmix_buffer_t *buf,
+                              pmix_op_cbfunc_t cbfunc,
+                              void *cbdata)
+{
+    int32_t cnt;
+    pmix_status_t rc;
+    pmix_shift_caddy_t *cd;
+    pmix_proc_t proc;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "recvd log from client");
+
+    if (NULL == pmix_host_server.log) {
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
+
+    cd = PMIX_NEW(pmix_shift_caddy_t);
+    cd->cbfunc.opcbfn = cbfunc;
+    cd->cbdata = cbdata;
+    /* unpack the number of data */
     cnt = 1;
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->ninfo, &cnt, PMIX_SIZE))) {
         PMIX_ERROR_LOG(rc);
         goto exit;
     }
-    /* unpack the info */
+    /* unpack the data */
     if (0 < cd->ninfo) {
         PMIX_INFO_CREATE(cd->info, cd->ninfo);
         cnt = cd->ninfo;
@@ -1351,13 +1411,13 @@ pmix_status_t pmix_server_query(pmix_peer_t *peer,
             goto exit;
         }
     }
-
-    /* unpack any directives */
+    /* unpack the number of directives */
     cnt = 1;
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->ndirs, &cnt, PMIX_SIZE))) {
         PMIX_ERROR_LOG(rc);
         goto exit;
     }
+    /* unpack the directives */
     if (0 < cd->ndirs) {
         PMIX_INFO_CREATE(cd->directives, cd->ndirs);
         cnt = cd->ndirs;
@@ -1371,20 +1431,16 @@ pmix_status_t pmix_server_query(pmix_peer_t *peer,
     (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
     proc.rank = peer->info->rank;
 
-    /* ask the host for the info */
-    if (PMIX_SUCCESS != (rc = pmix_host_server.query(&proc, cd->info, cd->ninfo,
-                                                     cd->directives, cd->ndirs,
-                                                     cbfunc, cd))) {
-        PMIX_RELEASE(cd);
-        return rc;
-    }
+    /* ask the host to log the info */
+    pmix_host_server.log(&proc, cd->info, cd->ninfo,
+                         cd->directives, cd->ndirs,
+                         logcbfn, cd);
     return PMIX_SUCCESS;
 
   exit:
     PMIX_RELEASE(cd);
     return rc;
 }
-
 
 
 /*****    INSTANCE SERVER LIBRARY CLASSES    *****/

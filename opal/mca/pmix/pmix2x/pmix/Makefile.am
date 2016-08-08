@@ -31,11 +31,11 @@ EXTRA_DIST =
 # Only install the valgrind suppressions file if we're building in
 # standalone mode
 dist_pmixdata_DATA =
+man_MANS = 
+
 if ! PMIX_EMBEDDED_MODE
 dist_pmixdata_DATA += contrib/pmix-valgrind.supp
-endif
-
-man_MANS = \
+man_MANS += \
         man/man3/pmix_init.3 \
         man/man3/pmix_finalize.3 \
         man/man3/pmix_initialized.3 \
@@ -46,6 +46,7 @@ man_MANS = \
         man/man3/pmix_get.3 \
         man/man7/pmix.7 \
         man/man7/pmix_constants.7
+endif
 
 include config/Makefile.am
 include include/Makefile.am

@@ -300,11 +300,19 @@ OPAL_MODULE_DECLSPEC void pmix2x_event_hdlr(size_t evhdlr_registration_id,
                                             void *cbdata);
 OPAL_MODULE_DECLSPEC pmix_status_t pmix2x_convert_opalrc(int rc);
 OPAL_MODULE_DECLSPEC int pmix2x_convert_rc(pmix_status_t rc);
+
 OPAL_MODULE_DECLSPEC opal_vpid_t pmix2x_convert_rank(int rank);
-OPAL_MODULE_DECLSPEC int pmix2x_convert_opalrank(opal_vpid_t vpid);
+OPAL_MODULE_DECLSPEC pmix_rank_t pmix2x_convert_opalrank(opal_vpid_t vpid);
+
+OPAL_MODULE_DECLSPEC opal_pmix_scope_t pmix2x_convert_scope(pmix_scope_t scope);
 OPAL_MODULE_DECLSPEC pmix_scope_t pmix2x_convert_opalscope(opal_pmix_scope_t scope);
+
 OPAL_MODULE_DECLSPEC pmix_data_range_t pmix2x_convert_opalrange(opal_pmix_data_range_t range);
 OPAL_MODULE_DECLSPEC opal_pmix_data_range_t pmix2x_convert_range(pmix_data_range_t range);
+
+OPAL_MODULE_DECLSPEC opal_pmix_persistence_t pmix2x_convert_persist(pmix_persistence_t scope);
+OPAL_MODULE_DECLSPEC pmix_persistence_t pmix2x_convert_opalpersist(opal_pmix_persistence_t scope);
+
 OPAL_MODULE_DECLSPEC void pmix2x_value_load(pmix_value_t *v,
                                             opal_value_t *kv);
 OPAL_MODULE_DECLSPEC int pmix2x_value_unload(opal_value_t *kv,

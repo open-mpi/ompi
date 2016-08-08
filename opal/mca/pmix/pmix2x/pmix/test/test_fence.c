@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -35,7 +35,7 @@ static void get_cb(pmix_status_t status, pmix_value_t *kv, void *cbdata)
     cb->status = status;
 }
 
-static void add_noise(char *noise_param, char *my_nspace, int my_rank)
+static void add_noise(char *noise_param, char *my_nspace, pmix_rank_t my_rank)
 {
     bool participate = false;
     participant_t *p;
@@ -127,7 +127,7 @@ static void add_noise(char *noise_param, char *my_nspace, int my_rank)
             rc = PMIX_ERROR;                                                                                        \
         }                                                                                                           \
         else if (val->type != PMIX_VAL_TYPE_ ## dtype || PMIX_VAL_CMP(dtype, PMIX_VAL_FIELD_ ## dtype((val)), data)) {  \
-            TEST_VERBOSE(("%s:%d: from %s:%d Key %s value or type mismatch,"                                        \
+            TEST_VERBOSE(("%s:%u: from %s:%d Key %s value or type mismatch,"                                        \
                         " want type %d get type %d",                                                                \
                         my_nspace, my_rank, ns, r, key, PMIX_VAL_TYPE_ ## dtype, val->type));                    \
             rc = PMIX_ERROR;                                                                                        \
@@ -174,7 +174,7 @@ static void add_noise(char *noise_param, char *my_nspace, int my_rank)
     }                                                                           \
 } while (0)
 
-int test_fence(test_params params, char *my_nspace, int my_rank)
+int test_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
 {
     int len;
     int rc;
@@ -313,7 +313,7 @@ int test_fence(test_params params, char *my_nspace, int my_rank)
                     PMIX_LIST_DESTRUCT(&test_fences);
                     return rc;
                 }
-                GET(int, fence_num+p->proc.rank, p->proc.nspace, p->proc.rank, fence_num, put_ind++, params.use_same_keys, 0, 0);
+                GET(uint32_t, fence_num+p->proc.rank, p->proc.nspace, p->proc.rank, fence_num, put_ind++, params.use_same_keys, 0, 0);
                 if (PMIX_SUCCESS != rc) {
                     TEST_ERROR(("%s:%d: PMIx_Get failed (%d) from %s:%d", my_nspace, my_rank, rc, p->proc.nspace, p->proc.rank));
                     PMIX_PROC_FREE(pcs, npcs);
@@ -354,12 +354,12 @@ int test_fence(test_params params, char *my_nspace, int my_rank)
     return PMIX_SUCCESS;
 }
 
-static int get_local_peers(char *my_nspace, int my_rank, int **_peers, int *count)
+static int get_local_peers(char *my_nspace, int my_rank, pmix_rank_t **_peers, pmix_rank_t *count)
 {
     pmix_value_t *val;
-    int *peers = NULL;
+    pmix_rank_t *peers = NULL;
     char *sptr, *token, *eptr, *str;
-    int npeers;
+    pmix_rank_t npeers;
     int rc;
     pmix_proc_t proc;
 
@@ -382,7 +382,7 @@ static int get_local_peers(char *my_nspace, int my_rank, int **_peers, int *coun
         return PMIX_ERROR;
     }
     npeers = val->data.uint32;
-    peers = malloc(sizeof(int) * npeers);
+    peers = malloc(sizeof(pmix_rank_t) * npeers);
 
     /* get ranks of neighbours on this node */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_LOCAL_PEERS, NULL, 0, &val))) {
@@ -437,12 +437,12 @@ static int get_local_peers(char *my_nspace, int my_rank, int **_peers, int *coun
     return PMIX_SUCCESS;
 }
 
-int test_job_fence(test_params params, char *my_nspace, int my_rank)
+int test_job_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
 {
     int rc;
     int i, j;
     char sval[50];
-    int *peers, npeers;
+    pmix_rank_t *peers, npeers;
     pmix_value_t value;
     pmix_value_t *val = &value;
     pmix_proc_t proc;
@@ -493,7 +493,8 @@ int test_job_fence(test_params params, char *my_nspace, int my_rank)
 
         for (j=0; j < 3; j++) {
 
-            int local = 0, k;
+            int local = 0;
+            pmix_rank_t k;
             for(k=0; k<npeers; k++){
                 if( peers[k] == i+params.base_rank){
                     local = 1;
