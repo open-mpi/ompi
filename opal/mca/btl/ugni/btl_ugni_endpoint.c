@@ -202,11 +202,14 @@ int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
 
     if (GNI_SMSG_TYPE_INVALID == ep->remote_attr.smsg_attr.msg_type) {
         /* use datagram to exchange connection information with the remote peer */
-        rc = mca_btl_ugni_directed_ep_post (ep);
-        if (OPAL_SUCCESS == rc) {
-            rc = OPAL_ERR_RESOURCE_BUSY;
+        if (!ep->dg_posted) {
+            rc = mca_btl_ugni_directed_ep_post (ep);
+            if (OPAL_SUCCESS == rc) {
+                ep->dg_posted = true;
+                rc = OPAL_ERR_RESOURCE_BUSY;
+            }
+            return rc;
         }
-        return rc;
     }
 
     return mca_btl_ugni_ep_connect_finish (ep);
