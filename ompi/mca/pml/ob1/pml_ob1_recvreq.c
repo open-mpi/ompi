@@ -263,7 +263,7 @@ static int mca_pml_ob1_recv_request_ack(
     /* by default copy everything */
     recvreq->req_send_offset = bytes_received;
     if(hdr->hdr_msg_length > bytes_received) {
-        size_t rdma_num = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
+        size_t rdma_num = mca_pml_ob1_rdma_pipeline_btls_count (bml_endpoint);
         /*
          * lookup request buffer to determine if memory is already
          * registered.
