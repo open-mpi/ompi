@@ -230,18 +230,34 @@ int mca_io_ompio_file_set_size (ompi_file_t *fh,
 
     tmp = size;
 
-    data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
-                                              1,
-                                              OMPI_OFFSET_DATATYPE,
-                                              OMPIO_ROOT,
-                                              data->ompio_fh.f_comm,
-                                              data->ompio_fh.f_comm->c_coll.coll_bcast_module);
+    ret = data->ompio_fh.f_comm->c_coll.coll_bcast (&tmp,
+                                                    1,
+                                                    OMPI_OFFSET_DATATYPE,
+                                                    OMPIO_ROOT,
+                                                    data->ompio_fh.f_comm,
+                                                    data->ompio_fh.f_comm->c_coll.coll_bcast_module);
+    if ( OMPI_SUCCESS != ret ) {
+        opal_output(1, ",mca_io_ompio_file_set_size: error in bcast\n");
+        return ret;
+    }
+    
 
     if (tmp != size) {
         return OMPI_ERROR;
     }
 
     ret = data->ompio_fh.f_fs->fs_file_set_size (&data->ompio_fh, size);
+    if ( OMPI_SUCCESS != ret ) {
+        opal_output(1, ",mca_io_ompio_file_set_size: error in fs->set_size\n");
+        return ret;
+    }
+    
+    ret = data->ompio_fh.f_comm->c_coll.coll_barrier (data->ompio_fh.f_comm,
+                                                      data->ompio_fh.f_comm->c_coll.coll_barrier_module);
+    if ( OMPI_SUCCESS != ret ) {
+        opal_output(1, ",mca_io_ompio_file_set_size: error in barrier\n");
+        return ret;
+    }
 
     return ret;
 }
