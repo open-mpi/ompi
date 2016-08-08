@@ -13,7 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -70,27 +70,25 @@ void mca_pml_ob1_recv_request_process_pending(void)
 static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
 {
     mca_pml_ob1_recv_request_t* recvreq = *(mca_pml_ob1_recv_request_t**)request;
+    assert (false == recvreq->req_recv.req_base.req_free_called);
 
-    if(false == recvreq->req_recv.req_base.req_free_called){
+    recvreq->req_recv.req_base.req_free_called = true;
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
+                             &(recvreq->req_recv.req_base), PERUSE_RECV );
 
-        recvreq->req_recv.req_base.req_free_called = true;
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
-                                 &(recvreq->req_recv.req_base), PERUSE_RECV );
+    if( true == recvreq->req_recv.req_base.req_pml_complete ) {
+        /* make buffer defined when the request is compeleted,
+           and before releasing the objects. */
+        MEMCHECKER(
+                   memchecker_call(&opal_memchecker_base_mem_defined,
+                                   recvreq->req_recv.req_base.req_addr,
+                                   recvreq->req_recv.req_base.req_count,
+                                   recvreq->req_recv.req_base.req_datatype);
+                   );
 
-        if( true == recvreq->req_recv.req_base.req_pml_complete ) {
-            /* make buffer defined when the request is compeleted,
-               and before releasing the objects. */
-            MEMCHECKER(
-                memchecker_call(&opal_memchecker_base_mem_defined,
-                                recvreq->req_recv.req_base.req_addr,
-                                recvreq->req_recv.req_base.req_count,
-                                recvreq->req_recv.req_base.req_datatype);
-            );
-
-            MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
-        }
-
+        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
     }
+
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
@@ -1171,7 +1169,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     req->req_pending = false;
     req->req_ack_sent = false;
 
-    MCA_PML_BASE_RECV_START(&req->req_recv.req_base);
+    MCA_PML_BASE_RECV_START(&req->req_recv);
 
     OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
     /**
