@@ -18,6 +18,8 @@
 # $HEADER$
 #
 
+if OMPI_PROVIDE_MPI_FILE_INTERFACE
+
 headers = \
 	common_ompio_print_queue.h \
 	common_ompio.h
@@ -25,6 +27,7 @@ headers = \
 sources = \
 	common_ompio_print_queue.c \
 	common_ompio_file_open.c   \
+	common_ompio_file_view.c   \
 	common_ompio_file_read.c   \
 	common_ompio_file_write.c
 
@@ -84,3 +87,14 @@ clean-local:
 	if test -z "$(lib_LTLIBRARIES)"; then \
 	  rm -f "$(comp_inst)"; \
 	fi
+
+else
+
+# Need to have empty targets because AM can't handle having an
+# AM_CONDITIONAL was targets in the "if" statement but not in the
+# "else".  :-(
+
+all-local:
+clean-local:
+
+endif

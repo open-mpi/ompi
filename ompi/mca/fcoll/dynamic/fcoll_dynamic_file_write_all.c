@@ -327,7 +327,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
             ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
         }
-	fh->f_sort_iovec (global_iov_array, total_fview_count, sorted);
+	fcoll_base_sort_iovec (global_iov_array, total_fview_count, sorted);
     }
 
     if (NULL != local_iov_array){

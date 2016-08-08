@@ -91,7 +91,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_info   = info;
     ompio_fh->f_atomicity = 0;
 
-    ompi_io_ompio_set_file_defaults (ompio_fh);
+    mca_common_ompio_set_file_defaults (ompio_fh);
     ompio_fh->f_filename = filename;
 
     ompio_fh->f_split_coll_req    = NULL;
@@ -104,9 +104,6 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     /* set some function pointers required for fcoll, fbtls and sharedfp modules*/
     ompio_fh->f_decode_datatype=ompi_io_ompio_decode_datatype;
     ompio_fh->f_generate_current_file_view=ompi_io_ompio_generate_current_file_view;
-
-    ompio_fh->f_sort=ompi_io_ompio_sort;
-    ompio_fh->f_sort_iovec=ompi_io_ompio_sort_iovec;
 
     ompio_fh->f_get_num_aggregators=mca_io_ompio_get_num_aggregators;
     ompio_fh->f_get_bytes_per_agg=mca_io_ompio_get_bytes_per_agg;
@@ -375,6 +372,80 @@ int mca_common_ompio_file_get_position (mca_io_ompio_file_t *fh,
 
     *offset = off;
     return OMPI_SUCCESS;
+}
+
+int mca_common_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
+{
+
+   if (NULL != fh) {
+        ompi_datatype_t *types[2];
+        int blocklen[2] = {1, 1};
+        OPAL_PTRDIFF_TYPE d[2], base;
+        int i;
+
+        fh->f_io_array = NULL;
+        fh->f_perm = OMPIO_PERM_NULL;
+        fh->f_flags = 0;
+        fh->f_bytes_per_agg = mca_io_ompio_bytes_per_agg;
+        fh->f_datarep = strdup ("native");
+
+        fh->f_offset = 0;
+        fh->f_disp = 0;
+        fh->f_position_in_file_view = 0;
+        fh->f_index_in_file_view = 0;
+        fh->f_total_bytes = 0;
+
+        fh->f_init_procs_per_group = -1;
+        fh->f_init_procs_in_group = NULL;
+
+	fh->f_procs_per_group = -1;
+        fh->f_procs_in_group = NULL;
+
+        fh->f_init_num_aggrs = -1;
+        fh->f_init_aggr_list = NULL;
+
+
+        /* Default file View */
+        fh->f_iov_type = MPI_DATATYPE_NULL;
+        fh->f_stripe_size = mca_io_ompio_bytes_per_agg;
+	/*Decoded iovec of the file-view*/
+	fh->f_decoded_iov = NULL;
+        fh->f_etype = NULL;
+        fh->f_filetype = NULL;
+        fh->f_orig_filetype = NULL;
+
+	mca_common_ompio_set_view(fh,
+                                  0,
+                                  &ompi_mpi_byte.dt,
+                                  &ompi_mpi_byte.dt,
+                                  "native",
+                                  fh->f_info);
+
+
+	/*Create a derived datatype for the created iovec */
+	types[0] = &ompi_mpi_long.dt;
+        types[1] = &ompi_mpi_long.dt;
+
+        d[0] = (OPAL_PTRDIFF_TYPE) fh->f_decoded_iov;
+        d[1] = (OPAL_PTRDIFF_TYPE) &fh->f_decoded_iov[0].iov_len;
+
+        base = d[0];
+        for (i=0 ; i<2 ; i++) {
+            d[i] -= base;
+        }
+
+        ompi_datatype_create_struct (2,
+                                     blocklen,
+                                     d,
+                                     types,
+                                     &fh->f_iov_type);
+        ompi_datatype_commit (&fh->f_iov_type);
+
+        return OMPI_SUCCESS;
+    }
+    else {
+        return OMPI_ERROR;
+    }
 }
 
 
