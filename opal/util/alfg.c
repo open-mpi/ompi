@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -128,5 +130,6 @@ uint32_t opal_rand(opal_rng_buff_t *buff){
  * @param[out] int, the same as normal rand(3)
  */
 int opal_random(void){
-    return (int)opal_rand(&alfg_buffer);
+    /* always return a positive int */
+    return (int)(opal_rand(&alfg_buffer) & 0x7FFFFFFF);
 }
