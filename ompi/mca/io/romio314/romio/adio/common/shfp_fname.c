@@ -42,17 +42,16 @@ void ADIOI_Shfp_fname(ADIO_File fd, int rank, int *error_code)
     int len;
     char *slash, *ptr, tmp[128];
     int pid = 0;
-    opal_rng_buff_t adio_rand_buff;
 
     fd->shared_fp_fname = (char *) ADIOI_Malloc(PATH_MAX);
 
     if (!rank) {
         /*
-         * Open MPI: we have to use internal opal_random() instead of rand(3)
+         * Open MPI: we have to use internal opal_rand_helper() instead of rand(3)
          * to prevent pertubing user's randon seed
+         * internal number generator is already seed'ed, so there is no need to do it here.
          */
-	opal_srand(&adio_rand_buff,time(NULL));
-        i = opal_random();
+        i = opal_rand_helper();
 
 	pid = (int)getpid();
 
