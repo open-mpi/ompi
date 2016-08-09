@@ -38,6 +38,7 @@ typedef struct {
     size_t index;
     pmix_status_t code;
     pmix_notification_fn_t evhdlr;
+    void *cbobject;
 } pmix_single_event_t;
 PMIX_CLASS_DECLARATION(pmix_single_event_t);
 
@@ -51,6 +52,7 @@ typedef struct {
     pmix_status_t *codes;
     size_t ncodes;
     pmix_notification_fn_t evhdlr;
+    void *cbobject;
 } pmix_multi_event_t;
 PMIX_CLASS_DECLARATION(pmix_multi_event_t);
 
@@ -60,6 +62,7 @@ typedef struct {
     char *name;
     size_t index;
     pmix_notification_fn_t evhdlr;
+    void *cbobject;
 } pmix_default_event_t;
 PMIX_CLASS_DECLARATION(pmix_default_event_t);
 

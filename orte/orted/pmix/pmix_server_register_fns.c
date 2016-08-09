@@ -260,8 +260,8 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         /* pass the local ldr */
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_LOCALLDR);
-        kv->type = OPAL_UINT32;
-        kv->data.uint32 = vpid;
+        kv->type = OPAL_VPID;
+        kv->data.name.vpid = vpid;
         opal_list_append(info, &kv->super);
     }
 
@@ -320,8 +320,8 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         /* rank */
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_RANK);
-        kv->type = OPAL_INT;
-        kv->data.integer = pptr->name.vpid;
+        kv->type = OPAL_VPID;
+        kv->data.name.vpid = pptr->name.vpid;
         opal_list_append(pmap, &kv->super);
 
         /* appnum */
@@ -335,22 +335,22 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_APPLDR);
-        kv->type = OPAL_UINT32;
-        kv->data.uint32 = app->first_rank;
+        kv->type = OPAL_VPID;
+        kv->data.name.vpid = app->first_rank;
         opal_list_append(pmap, &kv->super);
 
         /* global/univ rank */
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_GLOBAL_RANK);
-        kv->type = OPAL_UINT32;
-        kv->data.uint32 = pptr->name.vpid + jdata->offset;
+        kv->type = OPAL_VPID;
+        kv->data.name.vpid = pptr->name.vpid + jdata->offset;
         opal_list_append(pmap, &kv->super);
 
         /* app rank */
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_APP_RANK);
-        kv->type = OPAL_UINT32;
-        kv->data.uint32 = pptr->app_rank;
+        kv->type = OPAL_VPID;
+        kv->data.name.vpid = pptr->app_rank;
         opal_list_append(pmap, &kv->super);
 
         /* app size */

@@ -30,63 +30,57 @@
 
 #include <pmix_tool.h>
 
+static void cbfunc(pmix_status_t status,
+                   pmix_info_t *info, size_t ninfo,
+                   void *cbdata,
+                   pmix_release_cbfunc_t release_fn,
+                   void *release_cbdata)
+{
+    volatile bool *active = (volatile bool*)cbdata;
+
+    /* do something with the returned info - it will be
+     * released in the release_fn */
+
+    if (NULL != release_fn) {
+        release_fn(release_cbdata);
+    }
+    *active = false;
+}
+
 int main(int argc, char **argv)
 {
     pmix_status_t rc;
     pmix_proc_t myproc;
-    pmix_info_t *info;
-    size_t ninfo;
+    pmix_query_t *query;
+    size_t nq;
+    volatile bool active;
 
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_tool_init(&myproc, NULL, 0))) {
         fprintf(stderr, "PMIx_tool_init failed: %d\n", rc);
         exit(rc);
     }
-    fprintf(stderr, "Tool ns %s rank %d: Running\n", myproc.nspace, myproc.rank);
 
     /* query something */
-    ninfo = 2;
-    PMIX_INFO_CREATE(info, ninfo);
-    (void)strncpy(info[0].key, "foobar", PMIX_MAX_KEYLEN);
-    (void)strncpy(info[1].key, "spastic", PMIX_MAX_KEYLEN);
-    if (PMIX_SUCCESS != (rc = PMIx_Query_info(info, ninfo))) {
+    nq = 2;
+    PMIX_QUERY_CREATE(query, nq);
+    query[0].keys = (char**)malloc(2 * sizeof(char*));
+    query[0].keys[0] = strdup("foobar");
+    query[0].keys[1] = NULL;
+    query[1].keys = (char**)malloc(2 * sizeof(char*));
+    query[1].keys[0] = strdup("spastic");
+    query[1].keys[1] = NULL;
+    active = true;
+    if (PMIX_SUCCESS != (rc = PMIx_Query_info_nb(query, nq, cbfunc, (void*)&active))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Query_info failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }
-    if (0 != strncmp(info[0].key, "foobar", PMIX_MAX_KEYLEN)) {
-        fprintf(stderr, "Client ns %s rank %d: PMIx_Query_info key[0] wrong: %s vs foobar\n",
-                    myproc.nspace, myproc.rank, info[0].key);
+    while(active) {
+        usleep(10);
     }
-    if (0 != strncmp(info[1].key, "spastic", PMIX_MAX_KEYLEN)) {
-        fprintf(stderr, "Client ns %s rank %d: PMIx_Query_info key[0] wrong: %s vs spastic\n",
-                    myproc.nspace, myproc.rank, info[1].key);
-    }
-    if (PMIX_STRING != info[0].value.type) {
-        fprintf(stderr, "Client ns %s rank %d: PMIx_Query_info key[0] wrong type: %d vs %d\n",
-                    myproc.nspace, myproc.rank, info[0].value.type, PMIX_STRING);
-    }
-    if (PMIX_STRING != info[1].value.type) {
-        fprintf(stderr, "Client ns %s rank %d: PMIx_Query_info key[1] wrong type: %d vs %d\n",
-                    myproc.nspace, myproc.rank, info[1].value.type, PMIX_STRING);
-    }
-    if (0 != strcmp(info[0].value.data.string, "0")) {
-        fprintf(stderr, "Client ns %s rank %d: PMIx_Query_info key[0] wrong value: %s vs 0\n",
-                    myproc.nspace, myproc.rank, info[1].value.data.string);
-    }
-    if (0 != strcmp(info[1].value.data.string, "1")) {
-        fprintf(stderr, "Client ns %s rank %d: PMIx_Query_info key[1] wrong value: %s vs 1\n",
-                    myproc.nspace, myproc.rank, info[1].value.data.string);
-    }
-    PMIX_INFO_FREE(info, ninfo);
 
  done:
     /* finalize us */
-    fprintf(stderr, "Client ns %s rank %d: Finalizing\n", myproc.nspace, myproc.rank);
-    if (PMIX_SUCCESS != (rc = PMIx_Finalize(NULL, 0))) {
-        fprintf(stderr, "Client ns %s rank %d:PMIx_Finalize failed: %d\n", myproc.nspace, myproc.rank, rc);
-    } else {
-        fprintf(stderr, "Client ns %s rank %d:PMIx_Finalize successfully completed\n", myproc.nspace, myproc.rank);
-    }
-    fflush(stderr);
+    PMIx_Finalize(NULL, 0);
     return(rc);
 }

@@ -342,64 +342,76 @@ void pmix_server_notify(int status, orte_process_name_t* sender,
     }
 }
 
+static void qrel(void *cbdata)
+{
+    opal_list_t *l = (opal_list_t*)cbdata;
+    OPAL_LIST_RELEASE(l);
+}
 static void _query(int sd, short args, void *cbdata)
 {
     orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+    opal_pmix_query_t *q;
     opal_value_t *kv;
     orte_job_t *jdata;
     int rc;
-    size_t nresults=0;
+    opal_list_t *results;
+    size_t n;
     uint32_t key;
     void *nptr;
     char **nspaces=NULL, nspace[512];
 
+    results = OBJ_NEW(opal_list_t);
+
     /* see what they wanted */
-    OPAL_LIST_FOREACH(kv, cd->info, opal_value_t) {
-        if (0 == strcmp(kv->key, OPAL_PMIX_QUERY_NAMESPACES)) {
-            /* get the current jobids */
-            rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jdata, &nptr);
-            while (OPAL_SUCCESS == rc) {
-                if (ORTE_PROC_MY_NAME->jobid != jdata->jobid) {
-                    memset(nspace, 0, 512);
-                    (void)opal_snprintf_jobid(nspace, 512, jdata->jobid);
-                    opal_argv_append_nosize(&nspaces, nspace);
+    OPAL_LIST_FOREACH(q, cd->info, opal_pmix_query_t) {
+        for (n=0; NULL != q->keys[n]; n++) {
+            if (0 == strcmp(q->keys[n], OPAL_PMIX_QUERY_NAMESPACES)) {
+                /* get the current jobids */
+                rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jdata, &nptr);
+                while (OPAL_SUCCESS == rc) {
+                    if (ORTE_PROC_MY_NAME->jobid != jdata->jobid) {
+                        memset(nspace, 0, 512);
+                        (void)opal_snprintf_jobid(nspace, 512, jdata->jobid);
+                        opal_argv_append_nosize(&nspaces, nspace);
+                    }
+                    rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jdata, nptr, &nptr);
                 }
-                rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jdata, nptr, &nptr);
+                /* join the results into a single comma-delimited string */
+                kv = OBJ_NEW(opal_value_t);
+                kv->type = OPAL_STRING;
+                if (NULL != nspaces) {
+                    kv->data.string = opal_argv_join(nspaces, ',');
+                } else {
+                    kv->data.string = NULL;
+                }
+                opal_list_append(results, &kv->super);
             }
-            /* join the results into a single comma-delimited string */
-            kv->type = OPAL_STRING;
-            if (NULL != nspaces) {
-                kv->data.string = opal_argv_join(nspaces, ',');
-            } else {
-                kv->data.string = NULL;
-            }
-            ++nresults;
         }
     }
-    if (0 == nresults) {
+    if (0 == opal_list_get_size(results)) {
         rc = ORTE_ERR_NOT_FOUND;
-    } else if (nresults < opal_list_get_size(cd->info)) {
+    } else if (opal_list_get_size(results) < opal_list_get_size(cd->info)) {
         rc = ORTE_ERR_PARTIAL_SUCCESS;
     } else {
         rc = ORTE_SUCCESS;
     }
-    cd->infocbfunc(rc, cd->info, cd->cbdata, NULL, NULL);
+    cd->infocbfunc(rc, results, cd->cbdata, qrel, results);
 }
 
 int pmix_server_query_fn(opal_process_name_t *requestor,
-                         opal_list_t *info, opal_list_t *directives,
+                         opal_list_t *queries,
                          opal_pmix_info_cbfunc_t cbfunc, void *cbdata)
 {
     orte_pmix_server_op_caddy_t *cd;
 
-    if (NULL == info || NULL == cbfunc) {
+    if (NULL == queries || NULL == cbfunc) {
         return OPAL_ERR_BAD_PARAM;
     }
 
     /* need to threadshift this request */
     cd = OBJ_NEW(orte_pmix_server_op_caddy_t);
     cd->proc = requestor;
-    cd->info = info;
+    cd->info = queries;
     cd->infocbfunc = cbfunc;
     cd->cbdata = cbdata;
 
@@ -461,3 +473,26 @@ void pmix_tool_connected_fn(opal_list_t *info,
     opal_event_active(&(cd->ev), OPAL_EV_WRITE, 1);
 
 }
+
+void pmix_server_log_fn(opal_process_name_t *requestor,
+                        opal_list_t *info,
+                        opal_list_t *directives,
+                        opal_pmix_op_cbfunc_t cbfunc,
+                        void *cbdata)
+{
+    opal_value_t *val;
+
+    /* for now, we only support logging show_help messages */
+    OPAL_LIST_FOREACH(val, info, opal_value_t) {
+        /* we ignore the key as irrelevant - we only want to
+         * pull out the string value */
+        if (OPAL_STRING != val->type) {
+            continue;
+        }
+        opal_output(0, "SHOWHELP: %s", val->data.string);
+    }
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, cbdata);
+    }
+}
+

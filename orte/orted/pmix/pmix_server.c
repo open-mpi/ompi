@@ -99,7 +99,8 @@ static opal_pmix_server_module_t pmix_server = {
     .register_events = pmix_server_register_events_fn,
     .deregister_events = pmix_server_deregister_events_fn,
     .query = pmix_server_query_fn,
-    .tool_connected = pmix_tool_connected_fn
+    .tool_connected = pmix_tool_connected_fn,
+    .log = pmix_server_log_fn
 };
 
 void pmix_server_register_params(void)

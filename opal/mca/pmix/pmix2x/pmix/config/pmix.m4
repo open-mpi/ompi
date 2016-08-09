@@ -95,6 +95,9 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_DEFINE_UNQUOTED([PMIX_MAJOR_VERSION], ["$PMIX_MAJOR_VERSION"],
                        [The library major version is always available, contrary to VERSION])
 
+    AC_DEFINE_UNQUOTED([PMIX_VERSION_MAJOR], [${PMIX_MAJOR_VERSION}L],
+                       [The library major version as integer])
+
     AC_MSG_CHECKING([for pmix minor version])
     PMIX_MINOR_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --minor`"
     if test "$?" != "0"; then
@@ -103,6 +106,9 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(PMIX_MINOR_VERSION)
     AC_DEFINE_UNQUOTED([PMIX_MINOR_VERSION], ["$PMIX_MINOR_VERSION"],
                        [The library minor version is always available, contrary to VERSION])
+
+    AC_DEFINE_UNQUOTED([PMIX_VERSION_MINOR], [${PMIX_MINOR_VERSION}L],
+                       [The library minor version as integer])
 
     AC_MSG_CHECKING([for pmix release version])
     PMIX_RELEASE_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --release`"

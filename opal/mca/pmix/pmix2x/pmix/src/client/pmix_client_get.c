@@ -60,7 +60,7 @@
 
 #include "pmix_client_ops.h"
 
-static pmix_buffer_t* _pack_get(char *nspace, int rank,
+static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
                                const pmix_info_t info[], size_t ninfo,
                                pmix_cmd_t cmd);
 
@@ -72,8 +72,8 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
 static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata);
 
 PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
-                         const pmix_info_t info[], size_t ninfo,
-                         pmix_value_t **val)
+                                   const pmix_info_t info[], size_t ninfo,
+                                   pmix_value_t **val)
 {
     pmix_cb_t *cb;
     pmix_status_t rc;
@@ -155,7 +155,7 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
     }
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix: get_nb value for proc %s:%d key %s",
+                        "pmix: get_nb value for proc %s:%u key %s",
                         nm, rank, (NULL == key) ? "NULL" : key);
 
     /* thread-shift so we can check global objects */
@@ -187,7 +187,7 @@ static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata)
     cb->active = false;
 }
 
-static pmix_buffer_t* _pack_get(char *nspace, int rank,
+static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
                                const pmix_info_t info[], size_t ninfo,
                                pmix_cmd_t cmd)
 {
@@ -209,7 +209,7 @@ static pmix_buffer_t* _pack_get(char *nspace, int rank,
         PMIX_RELEASE(msg);
         return NULL;
     }
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &rank, 1, PMIX_INT))) {
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &rank, 1, PMIX_PROC_RANK))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return NULL;
@@ -242,8 +242,8 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     pmix_value_t *val = NULL;
     int32_t cnt;
     pmix_nspace_t *ns, *nptr;
-    int rank;
-    int cur_rank;
+    pmix_rank_t rank;
+    pmix_rank_t cur_rank;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: get_nb callback recvd");
@@ -259,7 +259,7 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
 
     /* unpack the status */
     cnt = 1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ret, &cnt, PMIX_INT))) {
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ret, &cnt, PMIX_STATUS))) {
         PMIX_ERROR_LOG(rc);
         return;
     }
@@ -290,7 +290,7 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
      * unpack and store it in the modex - this could consist
      * of buffers from multiple scopes */
     cnt = 1;
-    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, &cur_rank, &cnt, PMIX_INT))) {
+    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, &cur_rank, &cnt, PMIX_PROC_RANK))) {
         pmix_kval_t *cur_kval;
         pmix_buffer_t *bptr;
 
@@ -387,6 +387,53 @@ done:
     }
 }
 
+static pmix_status_t process_val(pmix_value_t *val,
+                                 size_t *num_vals,
+                                 pmix_pointer_array_t *results)
+{
+    pmix_info_t *info;
+    size_t n, nsize, nvals;
+
+    if (NULL == val) {
+        /* this is an error */
+        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+        return PMIX_ERR_BAD_PARAM;
+    }
+    /* since we didn't provide them with a key, the hash function
+     * must return the results in the pmix_data_array field of the
+     * value */
+    /* must account for the deprecated pmix_info_array_t */
+    if (PMIX_DATA_ARRAY != val->type &&
+        PMIX_INFO_ARRAY != val->type) {
+        /* this is an error */
+        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+        return PMIX_ERR_BAD_PARAM;
+    }
+    /* save the results */
+    if (PMIX_DATA_ARRAY == val->type) {
+        info = (pmix_info_t*)val->data.darray.array;
+        nsize = val->data.darray.size;
+    } else {
+        info = (pmix_info_t*)val->data.array.array;
+        nsize = val->data.array.size;
+    }
+    nvals = 0;
+    for (n=0; n < nsize; n++) {
+        pmix_pointer_array_add(results, &info[n]);
+        ++nvals;
+    }
+    if (PMIX_DATA_ARRAY == val->type) {
+        val->data.darray.array = NULL;  // protect the data
+        val->data.darray.size = 0;
+    } else {
+        val->data.array.array = NULL;
+        val->data.array.size = 0;
+    }
+    /* increment the number of values */
+    (*num_vals) += nvals;
+    return PMIX_SUCCESS;
+}
+
 static void _getnbfn(int fd, short flags, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
@@ -444,28 +491,17 @@ static void _getnbfn(int fd, short flags, void *cbdata)
 #endif /* PMIX_ENABLE_DSTORE */
                 pmix_output_verbose(2, pmix_globals.debug_output,
                                     "pmix_get[%d]: value retrieved from dstore", __LINE__);
-                /* since we didn't provide them with a key, the hash function
-                 * must return the results in the pmix_info_array field of the
-                 * value */
-                if (NULL == val || PMIX_INFO_ARRAY != val->type) {
-                    /* this is an error */
-                    PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-                    cb->value_cbfunc(PMIX_ERR_BAD_PARAM, NULL, cb->cbdata);
+                if (PMIX_SUCCESS != (rc = process_val(val, &nvals, &results))) {
+                    cb->value_cbfunc(rc, NULL, cb->cbdata);
+                    /* cleanup */
+                    if (NULL != val) {
+                        PMIX_VALUE_RELEASE(val);
+                    }
                     PMIX_RELEASE(cb);
                     return;
                 }
-                /* save the results */
-                info = (pmix_info_t*)val->data.array.array;
-                for (n=0; n < val->data.array.size; n++) {
-                    pmix_pointer_array_add(&results, &info[n]);
-                    ++nvals;
-                }
-                val->data.array.array = NULL;  // protect the data
-                val->data.array.size = 0;
                 /* cleanup */
-                if (NULL != val) {
-                    PMIX_VALUE_RELEASE(val);
-                }
+                PMIX_VALUE_RELEASE(val);
             } else {
                 /* if we didn't find a modex for this rank, then we need
                  * to go get it. Thus, the caller wants -all- information for
@@ -475,35 +511,25 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         }
         /* now get any data from the job-level info */
         if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->internal, PMIX_RANK_WILDCARD, NULL, &val))) {
-            /* since we didn't provide them with a key, the hash function
-             * must return the results in the pmix_info_array field of the
-             * value */
-            if (NULL == val || PMIX_INFO_ARRAY != val->type) {
-                /* this is an error */
-                PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-                cb->value_cbfunc(PMIX_ERR_BAD_PARAM, NULL, cb->cbdata);
+            if (PMIX_SUCCESS != (rc = process_val(val, &nvals, &results))) {
+                cb->value_cbfunc(rc, NULL, cb->cbdata);
+                /* cleanup */
+                if (NULL != val) {
+                    PMIX_VALUE_RELEASE(val);
+                }
                 PMIX_RELEASE(cb);
                 return;
             }
-            /* save the results */
-            info = (pmix_info_t*)val->data.array.array;
-            for (n=0; n < val->data.array.size; n++) {
-                pmix_pointer_array_add(&results, &info[n]);
-                ++nvals;
-            }
-            val->data.array.array = NULL;  // protect the data
-            val->data.array.size = 0;
             /* cleanup */
-            if (NULL != val) {
-                PMIX_VALUE_RELEASE(val);
-            }
+            PMIX_VALUE_RELEASE(val);
         }
         /* now let's package up the results */
         PMIX_VALUE_CREATE(val, 1);
-        val->type = PMIX_INFO_ARRAY;
-        val->data.array.size = nvals;
+        val->type = PMIX_DATA_ARRAY;
+        val->data.darray.type = PMIX_INFO;
+        val->data.darray.size = nvals;
         PMIX_INFO_CREATE(iptr, nvals);
-        val->data.array.array = (pmix_info_t*)iptr;
+        val->data.darray.array = (void*)iptr;
         for (n=0; n < (size_t)results.size && n < nvals; n++) {
             if (NULL != (info = (pmix_info_t*)pmix_pointer_array_get_item(&results, n))) {
                 (void)strncpy(iptr[n].key, info->key, PMIX_MAX_KEYLEN);

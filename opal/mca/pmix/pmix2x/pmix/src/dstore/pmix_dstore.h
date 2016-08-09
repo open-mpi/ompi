@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,8 +24,10 @@ BEGIN_C_DECLS
 
 int pmix_dstore_init(void);
 void pmix_dstore_finalize(void);
-int pmix_dstore_store(const char *nspace, int rank, pmix_kval_t *kv);
-int pmix_dstore_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs);
+int pmix_dstore_store(const char *nspace,
+                      int rank, pmix_kval_t *kv);
+int pmix_dstore_fetch(const char *nspace, int rank,
+                      const char *key, pmix_value_t **kvs);
 
 /**
  * Initialize the module. Returns an error if the module cannot
@@ -49,7 +52,9 @@ typedef int (*pmix_dstore_base_module_fini_fn_t)(void);
 *
 * @return PMIX_SUCCESS on success.
 */
-typedef int (*pmix_dstore_base_module_store_fn_t)(const char *nspace, int rank, pmix_kval_t *kv);
+typedef int (*pmix_dstore_base_module_store_fn_t)(const char *nspace,
+                                                  pmix_rank_t rank,
+                                                  pmix_kval_t *kv);
 
 /**
 * fetch value in datastore.
@@ -62,7 +67,10 @@ typedef int (*pmix_dstore_base_module_store_fn_t)(const char *nspace, int rank, 
 *
 * @return kvs(key/value pair) and PMIX_SUCCESS on success.
 */
-typedef int (*pmix_dstrore_base_module_fetch_fn_t)(const char *nspace, int rank, const char *key, pmix_value_t **kvs);
+typedef int (*pmix_dstrore_base_module_fetch_fn_t)(const char *nspace,
+                                                   pmix_rank_t rank,
+                                                   const char *key,
+                                                   pmix_value_t **kvs);
 
 
 /**

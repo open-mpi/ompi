@@ -327,7 +327,7 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "usock:recv:handler called with peer %s:%d",
                         (NULL == peer) ? "NULL" : peer->info->nptr->nspace,
-                        (NULL == peer) ? -1 : peer->info->rank);
+                        (NULL == peer) ? PMIX_RANK_UNDEF : peer->info->rank);
 
     if (NULL == peer) {
         return;

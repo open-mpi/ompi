@@ -91,13 +91,16 @@ static pmix_status_t notify_event(pmix_status_t code,
                                   pmix_info_t info[], size_t ninfo,
                                   pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t query_fn(pmix_proc_t *proct,
-                              pmix_info_t *info, size_t ninfo,
-                              pmix_info_t *directives, size_t ndir,
+                              pmix_query_t *queries, size_t nqueries,
                               pmix_info_cbfunc_t cbfunc,
                               void *cbdata);
 static void tool_connect_fn(pmix_info_t *info, size_t ninfo,
                             pmix_tool_connection_cbfunc_t cbfunc,
                             void *cbdata);
+static void log_fn(const pmix_proc_t *client,
+                   const pmix_info_t data[], size_t ndata,
+                   const pmix_info_t directives[], size_t ndirs,
+                   pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 static pmix_server_module_t mymodule = {
     .client_connected = connected,
@@ -115,7 +118,8 @@ static pmix_server_module_t mymodule = {
     .deregister_events = deregister_events,
     .notify_event = notify_event,
     .query = query_fn,
-    .tool_connected = tool_connect_fn
+    .tool_connected = tool_connect_fn,
+    .log = log_fn
 };
 
 typedef struct {
@@ -708,12 +712,12 @@ typedef struct query_data_t {
 } query_data_t;
 
 static pmix_status_t query_fn(pmix_proc_t *proct,
-                              pmix_info_t *info, size_t ninfo,
-                              pmix_info_t *directives, size_t ndirs,
+                              pmix_query_t *queries, size_t nqueries,
                               pmix_info_cbfunc_t cbfunc,
                               void *cbdata)
 {
     size_t n;
+    pmix_info_t *info;
 
     pmix_output(0, "SERVER: QUERY");
 
@@ -721,13 +725,15 @@ static pmix_status_t query_fn(pmix_proc_t *proct,
         return PMIX_ERROR;
     }
     /* keep this simple */
-    for (n=0; n < ninfo; n++) {
+    PMIX_INFO_CREATE(info, nqueries);
+    for (n=0; n < nqueries; n++) {
+        (void)strncpy(info[n].key, queries[n].keys[0], PMIX_MAX_KEYLEN);
         info[n].value.type = PMIX_STRING;
         if (0 > asprintf(&info[n].value.data.string, "%d", (int)n)) {
             return PMIX_ERROR;
         }
     }
-    cbfunc(PMIX_SUCCESS, info, ninfo, cbdata, NULL, NULL);
+    cbfunc(PMIX_SUCCESS, info, nqueries, cbdata, NULL, NULL);
     return PMIX_SUCCESS;
 }
 
@@ -745,6 +751,18 @@ static void tool_connect_fn(pmix_info_t *info, size_t ninfo,
 
     if (NULL != cbfunc) {
         cbfunc(PMIX_SUCCESS, &proc, cbdata);
+    }
+}
+
+static void log_fn(const pmix_proc_t *client,
+                   const pmix_info_t data[], size_t ndata,
+                   const pmix_info_t directives[], size_t ndirs,
+                   pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    pmix_output(0, "SERVER: LOG");
+
+    if (NULL != cbfunc) {
+        cbfunc(PMIX_SUCCESS, cbdata);
     }
 }
 

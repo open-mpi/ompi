@@ -33,38 +33,26 @@
 
 #include "src/class/pmix_object.h"
 #include "src/buffer_ops/types.h"
+#include "src/util/argv.h"
 #include "src/util/output.h"
 #include "src/util/printf.h"
 
-int main(int argc, char **argv)
+static pmix_proc_t myproc;
+
+static void cbfunc(pmix_status_t status,
+                   pmix_info_t *info, size_t ninfo,
+                   void *cbdata,
+                   pmix_release_cbfunc_t release_fn,
+                   void *release_cbdata)
 {
-    pmix_status_t rc;
-    pmix_proc_t myproc;
-    pmix_info_t *info;
-    size_t ninfo;
+    volatile bool *active = (volatile bool*)cbdata;
 
-    /* init us */
-    if (PMIX_SUCCESS != (rc = PMIx_tool_init(&myproc, NULL, 0))) {
-        fprintf(stderr, "PMIx_tool_init failed: %d\n", rc);
-        exit(rc);
-    }
-    pmix_output(0, "Tool ns %s rank %d: Running", myproc.nspace, myproc.rank);
-
-    /* query something */
-    ninfo = 2;
-    PMIX_INFO_CREATE(info, ninfo);
-    (void)strncpy(info[0].key, "foobar", PMIX_MAX_KEYLEN);
-    (void)strncpy(info[1].key, "spastic", PMIX_MAX_KEYLEN);
-    if (PMIX_SUCCESS != (rc = PMIx_Query_info(info, ninfo))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Query_info failed: %d", myproc.nspace, myproc.rank, rc);
-        goto done;
-    }
     if (0 != strncmp(info[0].key, "foobar", PMIX_MAX_KEYLEN)) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Query_info key[0] wrong: %s vs foobar",
+        pmix_output(0, "Client ns %s rank %d: PMIx_Query_info[0] key wrong: %s vs foobar",
                     myproc.nspace, myproc.rank, info[0].key);
     }
     if (0 != strncmp(info[1].key, "spastic", PMIX_MAX_KEYLEN)) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Query_info key[0] wrong: %s vs spastic",
+        pmix_output(0, "Client ns %s rank %d: PMIx_Query_info[1] key wrong: %s vs spastic",
                     myproc.nspace, myproc.rank, info[1].key);
     }
     if (PMIX_STRING != info[0].value.type) {
@@ -83,8 +71,39 @@ int main(int argc, char **argv)
         pmix_output(0, "Client ns %s rank %d: PMIx_Query_info key[1] wrong value: %s vs 1",
                     myproc.nspace, myproc.rank, info[1].value.data.string);
     }
-    PMIX_INFO_FREE(info, ninfo);
 
+    if (NULL != release_fn) {
+        release_fn(release_cbdata);
+    }
+    *active = false;
+}
+
+int main(int argc, char **argv)
+{
+    pmix_status_t rc;
+    pmix_query_t *query;
+    size_t nq;
+    volatile bool active;
+    /* init us */
+    if (PMIX_SUCCESS != (rc = PMIx_tool_init(&myproc, NULL, 0))) {
+        fprintf(stderr, "PMIx_tool_init failed: %d\n", rc);
+        exit(rc);
+    }
+    pmix_output(0, "Tool ns %s rank %d: Running", myproc.nspace, myproc.rank);
+
+    /* query something */
+    nq = 2;
+    PMIX_QUERY_CREATE(query, nq);
+    pmix_argv_append_nosize(&query[0].keys, "foobar");
+    pmix_argv_append_nosize(&query[1].keys, "spastic");
+    active = true;
+    if (PMIX_SUCCESS != (rc = PMIx_Query_info_nb(query, nq, cbfunc, (void*)&active))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Query_info failed: %d", myproc.nspace, myproc.rank, rc);
+        goto done;
+    }
+    while(active) {
+        usleep(10);
+    }
  done:
     /* finalize us */
     pmix_output(0, "Client ns %s rank %d: Finalizing", myproc.nspace, myproc.rank);

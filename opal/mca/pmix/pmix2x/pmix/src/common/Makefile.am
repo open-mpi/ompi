@@ -8,4 +8,6 @@
 #
 
 sources += \
-        src/common/pmix_query.c
+        src/common/pmix_query.c \
+        src/common/pmix_strings.c \
+        src/common/pmix_log.c

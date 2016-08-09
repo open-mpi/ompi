@@ -311,12 +311,6 @@ pmix_status_t pmix_bfrop_open(void)
                        pmix_bfrop_copy_value,
                        pmix_bfrop_print_value);
 
-    PMIX_REGISTER_TYPE("PMIX_INFO_ARRAY", PMIX_INFO_ARRAY,
-                       pmix_bfrop_pack_array,
-                       pmix_bfrop_unpack_array,
-                       pmix_bfrop_copy_array,
-                       pmix_bfrop_print_array);
-
     PMIX_REGISTER_TYPE("PMIX_PROC", PMIX_PROC,
                        pmix_bfrop_pack_proc,
                        pmix_bfrop_unpack_proc,
@@ -368,7 +362,7 @@ pmix_status_t pmix_bfrop_open(void)
     PMIX_REGISTER_TYPE("PMIX_PERSIST", PMIX_PERSIST,
                        pmix_bfrop_pack_persist,
                        pmix_bfrop_unpack_persist,
-                       pmix_bfrop_copy_persist,
+                       pmix_bfrop_std_copy,
                        pmix_bfrop_print_persist);
 
     PMIX_REGISTER_TYPE("PMIX_POINTER", PMIX_POINTER,
@@ -376,6 +370,68 @@ pmix_status_t pmix_bfrop_open(void)
                        pmix_bfrop_unpack_ptr,
                        pmix_bfrop_std_copy,
                        pmix_bfrop_print_ptr);
+
+    PMIX_REGISTER_TYPE("PMIX_SCOPE", PMIX_SCOPE,
+                       pmix_bfrop_pack_scope,
+                       pmix_bfrop_unpack_scope,
+                       pmix_bfrop_std_copy,
+                       pmix_bfrop_print_scope);
+
+    PMIX_REGISTER_TYPE("PMIX_DATA_RANGE", PMIX_DATA_RANGE,
+                       pmix_bfrop_pack_range,
+                       pmix_bfrop_unpack_range,
+                       pmix_bfrop_std_copy,
+                       pmix_bfrop_print_range);
+
+    PMIX_REGISTER_TYPE("PMIX_COMMAND", PMIX_COMMAND,
+                       pmix_bfrop_pack_cmd,
+                       pmix_bfrop_unpack_cmd,
+                       pmix_bfrop_std_copy,
+                       pmix_bfrop_print_cmd);
+
+    PMIX_REGISTER_TYPE("PMIX_INFO_DIRECTIVES", PMIX_INFO_DIRECTIVES,
+                       pmix_bfrop_pack_infodirs,
+                       pmix_bfrop_unpack_infodirs,
+                       pmix_bfrop_std_copy,
+                       pmix_bfrop_print_infodirs);
+
+    PMIX_REGISTER_TYPE("PMIX_PROC_STATE", PMIX_PROC_STATE,
+                       pmix_bfrop_pack_pstate,
+                       pmix_bfrop_unpack_pstate,
+                       pmix_bfrop_std_copy,
+                       pmix_bfrop_print_pstate);
+
+    PMIX_REGISTER_TYPE("PMIX_PROC_INFO", PMIX_PROC_INFO,
+                       pmix_bfrop_pack_pinfo,
+                       pmix_bfrop_unpack_pinfo,
+                       pmix_bfrop_copy_pinfo,
+                       pmix_bfrop_print_pinfo);
+
+    PMIX_REGISTER_TYPE("PMIX_DATA_ARRAY", PMIX_DATA_ARRAY,
+                       pmix_bfrop_pack_darray,
+                       pmix_bfrop_unpack_darray,
+                       pmix_bfrop_copy_darray,
+                       pmix_bfrop_print_darray);
+
+    PMIX_REGISTER_TYPE("PMIX_PROC_RANK", PMIX_PROC_RANK,
+                       pmix_bfrop_pack_rank,
+                       pmix_bfrop_unpack_rank,
+                       pmix_bfrop_std_copy,
+                       pmix_bfrop_print_rank);
+
+    PMIX_REGISTER_TYPE("PMIX_QUERY", PMIX_QUERY,
+                       pmix_bfrop_pack_query,
+                       pmix_bfrop_unpack_query,
+                       pmix_bfrop_copy_query,
+                       pmix_bfrop_print_query);
+
+    /**** DEPRECATED ****/
+    PMIX_REGISTER_TYPE("PMIX_INFO_ARRAY", PMIX_INFO_ARRAY,
+                       pmix_bfrop_pack_array,
+                       pmix_bfrop_unpack_array,
+                       pmix_bfrop_copy_array,
+                       pmix_bfrop_print_array);
+    /********************/
 
     /* All done */
     pmix_bfrop_initialized = true;
@@ -484,18 +540,7 @@ PMIX_EXPORT void pmix_value_load(pmix_value_t *v, void *data,
         case PMIX_POINTER:
             memcpy(&(v->data.ptr), data, sizeof(void*));
             break;
-        case PMIX_TIME:
-        case PMIX_HWLOC_TOPO:
-        case PMIX_VALUE:
-        case PMIX_INFO_ARRAY:
-        case PMIX_APP:
-        case PMIX_INFO:
-        case PMIX_PDATA:
-        case PMIX_BUFFER:
-        case PMIX_KVAL:
-        case PMIX_MODEX:
-        case PMIX_PERSIST:
-        case PMIX_PROC:
+        default:
             /* silence warnings */
             break;
         }
@@ -609,18 +654,7 @@ pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
             memcpy(*data, &(kv->data.ptr), sizeof(void*));
             *sz = sizeof(void*);
             break;
-        case PMIX_TIME:
-        case PMIX_HWLOC_TOPO:
-        case PMIX_VALUE:
-        case PMIX_INFO_ARRAY:
-        case PMIX_APP:
-        case PMIX_INFO:
-        case PMIX_PDATA:
-        case PMIX_BUFFER:
-        case PMIX_KVAL:
-        case PMIX_MODEX:
-        case PMIX_PERSIST:
-        case PMIX_PROC:
+        default:
             /* silence warnings */
             rc = PMIX_ERROR;
             break;

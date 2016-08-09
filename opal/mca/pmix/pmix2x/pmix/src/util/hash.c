@@ -66,7 +66,7 @@ static pmix_proc_data_t* lookup_proc(pmix_hash_table_t *jtable,
                                      uint64_t id, bool create);
 
 pmix_status_t pmix_hash_store(pmix_hash_table_t *table,
-                    int rank, pmix_kval_t *kin)
+                              pmix_rank_t rank, pmix_kval_t *kin)
 {
     pmix_proc_data_t *proc_data;
     uint64_t id;
@@ -98,7 +98,7 @@ pmix_status_t pmix_hash_store(pmix_hash_table_t *table,
     return PMIX_SUCCESS;
 }
 
-pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, int rank,
+pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
                               const char *key, pmix_value_t **kvs)
 {
     pmix_status_t rc = PMIX_SUCCESS;
@@ -174,7 +174,7 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, int rank,
 }
 
 pmix_status_t pmix_hash_fetch_by_key(pmix_hash_table_t *table, const char *key,
-                                     int *rank, pmix_value_t **kvs, void **last)
+                                     pmix_rank_t *rank, pmix_value_t **kvs, void **last)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_proc_data_t *proc_data;
@@ -230,7 +230,7 @@ pmix_status_t pmix_hash_fetch_by_key(pmix_hash_table_t *table, const char *key,
 }
 
 pmix_status_t pmix_hash_remove_data(pmix_hash_table_t *table,
-                          int rank, const char *key)
+                                    pmix_rank_t rank, const char *key)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_proc_data_t *proc_data;

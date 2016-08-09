@@ -284,6 +284,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     char *name = NULL;
     pmix_list_t xfer;
     pmix_info_caddy_t *ixfer;
+    void *cbobject = NULL;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: register event_hdlr with %d infos", (int)cd->ninfo);
@@ -301,6 +302,8 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
                 name = cd->info[n].value.data.string;
             } else if (0 == strcmp(cd->info[n].key, PMIX_EVENT_ENVIRO_LEVEL)) {
                 cd->enviro = cd->info[n].value.data.flag;
+            } else if (0 == strcmp(cd->info[n].key, PMIX_EVENT_RETURN_OBJECT)) {
+                cbobject = cd->info[n].value.data.ptr;
             } else {
                 ixfer = PMIX_NEW(pmix_info_caddy_t);
                 ixfer->info = &cd->info[n];
@@ -320,6 +323,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
         ++pmix_globals.events.nhdlrs;
         def->index = index;
         def->evhdlr = cd->evhdlr;
+        def->cbobject = cbobject;
         rc = _add_hdlr(&pmix_globals.events.default_events, &def->super,
                        index, prepend, &xfer, cd);
         PMIX_LIST_DESTRUCT(&xfer);
@@ -348,6 +352,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
         index = pmix_globals.events.nhdlrs;
         sing->index = index;
         ++pmix_globals.events.nhdlrs;
+        sing->cbobject = cbobject;
         rc = _add_hdlr(&pmix_globals.events.single_events, &sing->super,
                        index, prepend, &xfer, cd);
         PMIX_LIST_DESTRUCT(&xfer);
@@ -377,6 +382,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     index = pmix_globals.events.nhdlrs;
     multi->index = index;
     ++pmix_globals.events.nhdlrs;
+    multi->cbobject = cbobject;
     rc = _add_hdlr(&pmix_globals.events.multi_events, &multi->super,
                    index, prepend, &xfer, cd);
     PMIX_LIST_DESTRUCT(&xfer);

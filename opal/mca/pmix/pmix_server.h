@@ -183,9 +183,9 @@ typedef int (*opal_pmix_server_disconnect_fn_t)(opal_list_t *procs, opal_list_t 
 typedef int (*opal_pmix_server_notify_fn_t)(int code, opal_list_t *procs, opal_list_t *info,
                                             opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-/* Query the RTE for information */
+/* Query the RTE for information - the list is composed of opal_pmix_query_t items */
 typedef int (*opal_pmix_server_query_fn_t)(opal_process_name_t *requestor,
-                                           opal_list_t *info, opal_list_t *directives,
+                                           opal_list_t *queries,
                                            opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /* Register that a tool has connected to the server, and request
@@ -203,6 +203,14 @@ typedef int (*opal_pmix_server_query_fn_t)(opal_process_name_t *requestor,
 typedef void (*opal_pmix_server_tool_connection_fn_t)(opal_list_t *info,
                                                       opal_pmix_tool_connection_cbfunc_t cbfunc,
                                                       void *cbdata);
+
+/* Log data on behalf of the client */
+typedef void (*opal_pmix_server_log_fn_t)(opal_process_name_t *requestor,
+                                          opal_list_t *info,
+                                          opal_list_t *directives,
+                                          opal_pmix_op_cbfunc_t cbfunc,
+                                          void *cbdata);
+
 
 /* Callback function for incoming connection requests from
  * local clients */
@@ -238,6 +246,7 @@ typedef struct opal_pmix_server_module_1_0_0_t {
     opal_pmix_server_notify_fn_t                notify_event;
     opal_pmix_server_query_fn_t                 query;
     opal_pmix_server_tool_connection_fn_t       tool_connected;
+    opal_pmix_server_log_fn_t                   log;
     opal_pmix_server_listener_fn_t              listener;
 } opal_pmix_server_module_t;
 

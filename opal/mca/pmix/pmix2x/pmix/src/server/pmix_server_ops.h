@@ -222,7 +222,7 @@ void pmix_stop_listening(void);
 bool pmix_server_trk_update(pmix_server_trkr_t *trk);
 
 void pmix_pending_nspace_requests(pmix_nspace_t *nptr);
-pmix_status_t pmix_pending_resolve(pmix_nspace_t *nptr, int rank,
+pmix_status_t pmix_pending_resolve(pmix_nspace_t *nptr, pmix_rank_t rank,
                                    pmix_status_t status, pmix_dmdx_local_t *lcd);
 
 
@@ -287,6 +287,11 @@ pmix_status_t pmix_server_query(pmix_peer_t *peer,
                                 pmix_buffer_t *buf,
                                 pmix_info_cbfunc_t cbfunc,
                                 void *cbdata);
+
+pmix_status_t pmix_server_log(pmix_peer_t *peer,
+                              pmix_buffer_t *buf,
+                              pmix_op_cbfunc_t cbfunc,
+                              void *cbdata);
 
 pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_buffer_t *buf,
