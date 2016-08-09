@@ -47,6 +47,7 @@
 BEGIN_C_DECLS
 
 struct ompi_osc_pt2pt_frag_t;
+struct ompi_osc_pt2pt_receive_t;
 
 struct ompi_osc_pt2pt_component_t {
     /** Extend the basic osc component interface */
@@ -60,6 +61,9 @@ struct ompi_osc_pt2pt_component_t {
 
     /** module count */
     int module_count;
+
+    /** number of buffers per window */
+    int receive_count;
 
     /** free list of ompi_osc_pt2pt_frag_t structures */
     opal_free_list_t frags;
@@ -75,6 +79,12 @@ struct ompi_osc_pt2pt_component_t {
 
     /** List of operations that need to be processed */
     opal_list_t pending_operations;
+
+    /** List of receives to be processed */
+    opal_list_t pending_receives;
+
+    /** Lock for pending_receives */
+    opal_mutex_t pending_receives_lock;
 
     /** Is the progress function enabled? */
     bool progress_enable;
@@ -192,8 +202,11 @@ struct ompi_osc_pt2pt_module_t {
     /** origin side list of locks currently outstanding */
     opal_hash_table_t outstanding_locks;
 
-    unsigned char *incoming_buffer;
-    ompi_request_t *frag_request;
+    /** receive fragments */
+    struct ompi_osc_pt2pt_receive_t *recv_frags;
+
+    /** number of receive fragments */
+    int recv_frag_count;
 
     /* enforce accumulate semantics */
     opal_atomic_lock_t accumulate_lock;
@@ -242,6 +255,15 @@ struct ompi_osc_pt2pt_pending_t {
 };
 typedef struct ompi_osc_pt2pt_pending_t ompi_osc_pt2pt_pending_t;
 OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_pending_t);
+
+struct ompi_osc_pt2pt_receive_t {
+    opal_list_item_t super;
+    ompi_osc_pt2pt_module_t *module;
+    ompi_request_t *pml_request;
+    void *buffer;
+};
+typedef struct ompi_osc_pt2pt_receive_t ompi_osc_pt2pt_receive_t;
+OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_receive_t);
 
 #define GET_MODULE(win) ((ompi_osc_pt2pt_module_t*) win->w_osc_module)
 
