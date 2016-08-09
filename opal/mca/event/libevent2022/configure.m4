@@ -159,11 +159,11 @@ AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
 
     AC_MSG_RESULT([$event_args])
 
-    # We define "random" to be "opal_random" so that Libevent will not
+    # We define "random" to be "opal_random_helper" so that Libevent will not
     # use random(3) internally (and potentially unexpectedly perturb
-    # values returned by rand(3) to the application).
+    # values returned by rand(3) and/or random(3) to the application).
 
-    CPPFLAGS="$CPPFLAGS -Drandom=opal_random"
+    CPPFLAGS="$CPPFLAGS -Drandom=opal_random_helper"
     OPAL_CONFIG_SUBDIR([$libevent_basedir/libevent],
         [$event_args $opal_subdir_args 'CPPFLAGS=$CPPFLAGS'],
         [libevent_happy="yes"], [libevent_happy="no"])
