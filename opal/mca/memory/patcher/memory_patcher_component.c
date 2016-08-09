@@ -90,7 +90,7 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
        it out) */
 };
 
-#if OPAL_MEMORY_PATCHER_HAVE___SYSCALL_PROTO && OPAL_MEMORY_PATCHER_HAVE___SYSCALL
+#if HAVE_DECL___SYSCALL && defined(HAVE___SYSCALL)
 /* calling __syscall is preferred on some systems when some arguments may be 64-bit. it also
  * has the benefit of having an off_t return type */
 #define memory_patcher_syscall __syscall
@@ -108,7 +108,7 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
  */
 #if 0
 
-#if OPAL_MEMORY_PATCHER_HAVE___MMAP && !OPAL_MEMORY_PATCHER_HAVE___MMAP_PROTO
+#if defined(HAVE___MMAP) && !HAVE_DECL___MMAP
 /* prototype for Apple's internal mmap function */
 void *__mmap (void *start, size_t length, int prot, int flags, int fd, off_t offset);
 #endif
@@ -125,7 +125,7 @@ static void *intercept_mmap(void *start, size_t length, int prot, int flags, int
     }
 
     if (!original_mmap) {
-#if OPAL_MEMORY_PATCHER_HAVE___MMAP
+#ifdef HAVE___MMAP
         /* the darwin syscall returns an int not a long so call the underlying __mmap function */
         result = __mmap (start, length, prot, flags, fd, offset);
 #else
@@ -248,7 +248,7 @@ static int intercept_madvise (void *start, size_t length, int advice)
 
 #if defined SYS_brk
 
-#if OPAL_MEMORY_PATCHER_HAVE___CURBRK
+#ifdef HAVE___CURBRK
 extern void *__curbrk; /* in libc */
 #endif
 
@@ -260,7 +260,7 @@ static int intercept_brk (void *addr)
     int result = 0;
     void *old_addr, *new_addr;
 
-#if OPAL_MEMORY_PATCHER_HAVE___CURBRK
+#ifdef HAVE___CURBRK
     old_addr = __curbrk;
 #else
     old_addr = sbrk (0);
@@ -270,7 +270,7 @@ static int intercept_brk (void *addr)
         /* get the current_addr */
         new_addr = (void *) (intptr_t) memory_patcher_syscall(SYS_brk, addr);
 
-#if OPAL_MEMORY_PATCHER_HAVE___CURBRK
+#ifdef HAVE___CURBRK
         /*
          * Note: if we were using glibc brk/sbrk, their __curbrk would get
          * updated, but since we're going straight to the syscall, we have
@@ -280,7 +280,7 @@ static int intercept_brk (void *addr)
 #endif
     } else {
         result = original_brk (addr);
-#if OPAL_MEMORY_PATCHER_HAVE___CURBRK
+#ifdef HAVE___CURBRK
         new_addr = __curbrk;
 #else
         new_addr = sbrk (0);
