@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -76,6 +77,11 @@ int MPI_Startall(int count, MPI_Request requests[])
     OPAL_CR_ENTER_LIBRARY();
 
     for (i = 0; i < count; ++i) {
+        /* Per MPI it is invalid to start an active request */
+        if (OMPI_REQUEST_INACTIVE != requests[i]->req_state) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
+        }
+
         if (OMPI_REQUEST_NOOP == requests[i]->req_type) {
             /**
              * We deal with a MPI_PROC_NULL request. If the request is
@@ -83,9 +89,7 @@ int MPI_Startall(int count, MPI_Request requests[])
              * Otherwise, mark it active so we can correctly handle it in
              * the wait*.
              */
-            if( OMPI_REQUEST_INACTIVE == requests[i]->req_state ) {
-                requests[i]->req_state = OMPI_REQUEST_ACTIVE;
-            }
+            requests[i]->req_state = OMPI_REQUEST_ACTIVE;
         }
     }
 
