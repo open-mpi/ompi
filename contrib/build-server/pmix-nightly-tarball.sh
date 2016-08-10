@@ -23,7 +23,7 @@ outputroot=$HOME/pmix/nightly
 script_uri=contrib/nightly/create_tarball.sh
 
 # helper scripts dir
-script_dir=$HOME/scripts
+script_dir=$HOME/ompi/contrib/build-server
 
 # The tarballs to make
 if [ $# -eq 0 ] ; then
@@ -139,14 +139,14 @@ done
 
 # If we had any new snapshots to send to coverity, process them now
 
-#for tarball in `cat $pending_coverity`; do
-#    echo "=== Submitting $tarball to Coverity..."
-#    /home/common/mpiteam/scripts/pmix-nightly-coverity.pl \
-#        --filename=$tarball \
-#        --coverity-token=$coverity_token \
-#        --verbose \
-#        --logfile-dir=$HOME/coverity \
-#        --make-args=-j8 \
-#        --configure-args="$coverity_configure_args"
-#done
+for tarball in `cat $pending_coverity`; do
+    echo "=== Submitting $tarball to Coverity..."
+    ${script_dir}/pmix-nightly-coverity.pl \
+        --filename=$tarball \
+        --coverity-token=$coverity_token \
+        --verbose \
+        --logfile-dir=$HOME/coverity \
+        --make-args=-j8 \
+        --configure-args="$coverity_configure_args"
+done
 rm -f $pending_coverity

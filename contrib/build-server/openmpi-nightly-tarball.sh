@@ -24,7 +24,7 @@ outputroot=$HOME/openmpi/nightly
 script_uri=contrib/nightly/create_tarball.sh
 
 # helper scripts dir
-script_dir=$HOME/scripts
+script_dir=$HOME/ompi/contrib/build-server
 
 # The tarballs to make
 if [ $# -eq 0 ] ; then
@@ -144,7 +144,7 @@ done
 
 for tarball in `cat $pending_coverity`; do
     echo "=== Submitting $tarball to Coverity..."
-    $HOME/scripts/openmpi-nightly-coverity.pl \
+    ${script_dir}/openmpi-nightly-coverity.pl \
         --filename=$tarball \
         --coverity-token=$coverity_token \
         --verbose \

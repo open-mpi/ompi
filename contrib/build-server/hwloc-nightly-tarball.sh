@@ -21,7 +21,7 @@ outputroot=$HOME/hwloc/nightly
 script_uri=contrib/nightly/make_snapshot_tarball
 
 # helper scripts dir
-script_dir=$HOME/scripts
+script_dir=$HOME/ompi/contrib/build-server
 
 # The tarballs to make
 if [ $# -eq 0 ] ; then
@@ -130,12 +130,12 @@ done
 
 # If we had any new snapshots to send to coverity, process them now
 
-#for tarball in `cat $pending_coverity`; do
-#    /home/common/mpiteam/scripts/hwloc-nightly-coverity.pl \
-#        --filename=$tarball \
-#        --coverity-token=$coverity_token \
-#        --verbose \
-#        --logfile-dir=$HOME/coverity \
-#        --make-args="-j8"
-#done
+for tarball in `cat $pending_coverity`; do
+    ${script_dir}/hwloc-nightly-coverity.pl \
+        --filename=$tarball \
+        --coverity-token=$coverity_token \
+        --verbose \
+        --logfile-dir=$HOME/coverity \
+        --make-args="-j8"
+done
 rm -f $pending_coverity
