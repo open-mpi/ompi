@@ -72,6 +72,10 @@ liboshmem_la_LDFLAGS = \
         -version-info $(liboshmem_so_version) \
         $(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)
 
+if HAVE_LD_VERSION_SCRIPT
+liboshmem_la_LDFLAGS += -Wl,--version-script=$(top_srcdir)/oshmem/liboshmem.map
+endif
+
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =

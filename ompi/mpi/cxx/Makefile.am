@@ -45,6 +45,10 @@ endif
 libmpi_cxx_la_LIBADD = $(top_builddir)/ompi/libmpi.la
 libmpi_cxx_la_LDFLAGS = -version-info $(libmpi_cxx_so_version)
 
+if HAVE_LD_VERSION_SCRIPT
+libmpi_cxx_la_LDFLAGS += -Wl,--version-script=$(top_srcdir)/ompi/mpi/cxx/libmpi_cxx.map
+endif
+
 headers = \
 	mpicxx.h \
         constants.h \

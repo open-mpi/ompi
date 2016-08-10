@@ -826,6 +826,10 @@ libmpi_usempif08_la_LIBADD = \
 libmpi_usempif08_la_DEPENDENCIES = $(module_sentinel_file)
 libmpi_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
 
+if HAVE_LD_VERSION_SCRIPT
+libmpi_usempif08_la_LDFLAGS += -Wl,--version-script=$(top_srcdir)/ompi/mpi/fortran/use-mpi-f08/libmpi_usempif08.map
+endif
+
 #
 # Automake doesn't do Fortran dependency analysis, so must list them
 # manually here.  Bummer!

@@ -58,6 +58,10 @@ libmpi_usempi_ignore_tkr_la_LDFLAGS = \
         -version-info $(libmpi_usempi_ignore_tkr_so_version) \
         $(OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS)
 
+if HAVE_LD_VERSION_SCRIPT
+libmpi_usempi_ignore_tkr_la_LDFLAGS += -Wl,--version-script=$(top_srcdir)/ompi/mpi/fortran/use-mpi-ignore-tkr/libmpi_usempi_ignore_tkr.map
+endif
+
 #
 # mpi-ignore-tkr-sizeof.* are generated based on some results from
 # configure tests.

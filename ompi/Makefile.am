@@ -87,7 +87,6 @@ SUBDIRS = \
         mpi/cxx \
         $(OMPI_MPIEXT_MPIFH_DIRS) \
         mpi/fortran/mpif-h \
-        $(OMPI_MPIEXT_USEMPI_DIR) \
         $(OMPI_FORTRAN_USEMPI_DIR) \
         $(OMPI_MPIEXT_USEMPIF08_DIRS) \
         $(OMPI_FORTRAN_USEMPIF08_DIR) \
@@ -153,6 +152,10 @@ libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
 libmpi_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \
         $(OMPI_LIBMPI_EXTRA_LDFLAGS)
+
+if HAVE_LD_VERSION_SCRIPT
+libmpi_la_LDFLAGS += -Wl,--version-script=$(top_srcdir)/ompi/libmpi.map
+endif
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
