@@ -105,7 +105,7 @@ my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
 my $now = time();
 if (!defined($mtime) || $mtime < $now - 24*60*60) {
     verbose "*** Downloading new copy of the coverity tool\n";
-    safe_system(0, "wget $coverity_tool_url --post-data \"token=$coverity_token_arg\&project=$coverity_project\" -O coverity_tool.tgz");
+    safe_system(0, "wget $coverity_tool_url --post-data \"token=$coverity_token_arg&project=$coverity_project\" -O coverity_tool.tgz");
     safe_system(0, "cp coverity_tool.tgz $cdir");
 }
 
