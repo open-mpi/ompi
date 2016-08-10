@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -150,8 +150,6 @@ static void init_base_req(mca_pml_yalla_base_request_t *req)
     OMPI_REQUEST_INIT(&req->ompi, false);
     req->ompi.req_type             = OMPI_REQUEST_PML;
     req->ompi.req_cancel           = NULL;
-    req->ompi.req_complete_cb      = NULL;
-    req->ompi.req_complete_cb_data = NULL;
     req->convertor                  = NULL;
 }
 

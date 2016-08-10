@@ -5,7 +5,7 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -358,7 +358,6 @@ static void* get_coll_handle(void)
     }
     ompi_req = (ompi_request_t *)item;
     OMPI_REQUEST_INIT(ompi_req,false);
-    ompi_req->req_complete_cb = NULL;
     ompi_req->req_status.MPI_ERROR = MPI_SUCCESS;
     ompi_req->req_state = OMPI_REQUEST_ACTIVE;
     ompi_req->req_free = request_free;
