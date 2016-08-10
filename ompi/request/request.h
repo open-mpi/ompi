@@ -412,10 +412,9 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
  */
 static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
-    if( NULL != request->req_complete_cb) {
-        request->req_complete_cb( request );
-        request->req_complete_cb = NULL;
-    }
+    ompi_request_complete_fn_t complete_cb = request->req_complete_cb;
+
+    request->req_complete_cb = NULL;
 
     if( OPAL_LIKELY(with_signal) ) {
         if(!OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, REQUEST_COMPLETED)) {
@@ -430,6 +429,12 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
 
     if( OPAL_UNLIKELY(MPI_SUCCESS != request->req_status.MPI_ERROR) ) {
         ompi_request_failed++;
+    }
+
+    /* call the completion callback last. this allows the callback to call ompi_request_free()
+     * safely from the callback. */
+    if (complete_cb) {
+        complete_cb (request);
     }
 
     return OMPI_SUCCESS;
