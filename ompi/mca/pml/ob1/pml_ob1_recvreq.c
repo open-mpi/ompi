@@ -16,7 +16,7 @@
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -189,7 +189,7 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t *) frag->rdma_req;
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
 
-    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
+    OPAL_THREAD_SUB_SIZE_T(&recvreq->req_pipeline_depth, 1);
 
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
 

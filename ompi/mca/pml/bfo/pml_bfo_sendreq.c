@@ -14,6 +14,8 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -357,7 +359,7 @@ mca_pml_bfo_frag_completion( mca_btl_base_module_t* btl,
                                                               des->des_local_count,
                                                               sizeof(mca_pml_bfo_frag_hdr_t));
 
-    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, -1);
+    OPAL_THREAD_SUB_SIZE_T(&sendreq->req_pipeline_depth, 1);
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
 #if PML_BFO
