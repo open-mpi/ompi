@@ -103,7 +103,7 @@ const size_t pmix_var_type_sizes[] = {
     sizeof (double)
 };
 
-const char *var_source_names[] = {
+const char *pmix_var_source_names[] = {
     "default",
     "command line",
     "environment",
@@ -1921,7 +1921,7 @@ static char *source_name(pmix_mca_base_var_t *var)
         return strdup ("unknown(!!)");
     }
 
-    return strdup (var_source_names[var->mbv_source]);
+    return strdup (pmix_var_source_names[var->mbv_source]);
 }
 
 static int var_value_string (pmix_mca_base_var_t *var, char **value_string)
