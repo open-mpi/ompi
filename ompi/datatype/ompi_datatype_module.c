@@ -258,7 +258,7 @@ ompi_predefined_datatype_t ompi_mpi_integer8 =       OMPI_DATATYPE_INIT_UNAVAILA
 #if OMPI_HAVE_FORTRAN_INTEGER16
 ompi_predefined_datatype_t ompi_mpi_integer16 =      OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN (INT, INTEGER16, OMPI_SIZEOF_FORTRAN_INTEGER16, OMPI_ALIGNMENT_FORTRAN_INTEGER16, OMPI_DATATYPE_FLAG_DATA_INT);
 #else
-ompi_predefined_datatype_t ompi_mpi_integer16 =      OMPI_DATATYPE_INIT_UNAVAILABLE (INTEGER8, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_INT);
+ompi_predefined_datatype_t ompi_mpi_integer16 =      OMPI_DATATYPE_INIT_UNAVAILABLE (INTEGER16, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_INT);
 #endif
 
 /*
@@ -536,7 +536,7 @@ int32_t ompi_datatype_init( void )
     }
 
     /*
-     * This MUST match the order of ompi/include/mpif-common.h
+     * This MUST match the order of ompi/include/mpif-values.pl
      * Any change will break binary compatibility of Fortran programs.
      */
     MOOG(datatype_null, 0);
@@ -624,6 +624,9 @@ int32_t ompi_datatype_init( void )
 
     /* MPI 3.0 types */
     MOOG(count, 72);
+
+    /* MPI 2.2 types (again) */
+    MOOG(c_bool, 73);
 
     /**
      * Now make sure all non-contiguous types are marked as such.
