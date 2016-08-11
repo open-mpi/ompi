@@ -23,7 +23,7 @@
 
 #include <src/include/pmix_config.h>
 
-#include <pmix/autogen/pmix_stdint.h>
+#include <src/include/pmix_stdint.h>
 
 #include <stdio.h>
 #ifdef HAVE_TIME_H

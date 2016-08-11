@@ -1,6 +1,5 @@
 #
 # Copyright 2015-2016 Intel, Inc. All rights reserved
-# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -11,26 +10,13 @@
 
 # Only install the headers if we're in standalone mode
 
-
 if ! PMIX_EMBEDDED_MODE
 include_HEADERS = \
-        include/pmix.h \
-        include/pmix_server.h \
-        include/pmi.h \
-        include/pmi2.h \
-        include/pmix_tool.h
-
-include_pmixdir = $(includedir)/pmix
-include_pmix_HEADERS = \
-    include/pmix/rename.h \
-    include/pmix/pmix_common.h
-
-include_pmix_autogendir = $(includedir)/pmix/autogen
-include_pmix_autogen_HEADERS = \
-        include/pmix/autogen/pmix_config_top.h \
-        include/pmix/autogen/pmix_config_bottom.h \
-        include/pmix/autogen/pmix_stdint.h
-nodist_include_pmix_autogen_HEADERS = \
-        include/pmix/autogen/config.h
+        pmix.h \
+        pmix_common.h \
+        pmix_server.h \
+        pmi.h \
+        pmi2.h \
+        pmix_tool.h
 
 endif ! PMIX_EMBEDDED_MODE

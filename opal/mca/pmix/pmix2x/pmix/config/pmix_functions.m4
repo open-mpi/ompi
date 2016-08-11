@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc. All rights reserved
 dnl
 dnl $COPYRIGHT$
@@ -77,6 +77,15 @@ pmix_show_subsubsubtitle() {
 --- ${1}
 EOF
   PMIX_LOG_MSG([--- ${1}], 1)
+}
+
+pmix_show_verbose() {
+  if test "$V" = "1"; then
+      cat <<EOF
++++ VERBOSE: ${1}
+EOF
+      PMIX_LOG_MSG([--- ${1}], 1)
+  fi
 }
 
 #
@@ -341,6 +350,35 @@ for arg in $2; do
     fi
 done
 unset pmix_found
+])
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+# PMIX_FLAGS_APPEND_UNIQ(variable, new_argument)
+# ----------------------------------------------
+# Append new_argument to variable if:
+#
+# - the argument does not begin with -I, -L, or -l, or
+# - the argument begins with -I, -L, or -l, and it's not already in variable
+#
+# This macro assumes a space seperated list.
+AC_DEFUN([PMIX_FLAGS_APPEND_UNIQ], [
+    PMIX_VAR_SCOPE_PUSH([pmix_tmp pmix_append])
+
+    for arg in $2; do
+        pmix_tmp=`echo $arg | cut -c1-2`
+        pmix_append=1
+        AS_IF([test "$pmix_tmp" = "-I" || test "$pmix_tmp" = "-L" || test "$pmix_tmp" = "-l"],
+              [for val in ${$1}; do
+                   AS_IF([test "x$val" = "x$arg"], [pmix_append=0])
+               done])
+        AS_IF([test "$pmix_append" = "1"],
+              [AS_IF([test -z "$$1"], [$1=$arg], [$1="$$1 $arg"])])
+    done
+
+    PMIX_VAR_SCOPE_POP
 ])
 
 dnl #######################################################################

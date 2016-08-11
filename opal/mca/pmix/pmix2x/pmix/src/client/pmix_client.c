@@ -18,7 +18,7 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <pmix/autogen/pmix_stdint.h>
+#include <src/include/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
 #include <pmix.h>
@@ -61,7 +61,7 @@
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/output.h"
-#include "src/util/progress_threads.h"
+#include "src/runtime/pmix_progress_threads.h"
 #include "src/usock/usock.h"
 #include "src/sec/pmix_sec.h"
 #include "src/include/pmix_globals.h"
@@ -183,6 +183,8 @@ static void job_data(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
      * unpack it to maintain sequence */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &nspace, &cnt, PMIX_STRING))) {
         PMIX_ERROR_LOG(rc);
+        cb->status = PMIX_ERROR;
+        cb->active = false;
         return;
     }
     /* decode it */
@@ -374,8 +376,11 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
 
     /* setup the support */
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    if (PMIX_SUCCESS != (rc = pmix_dstore_init())) {
-        return rc;
+    if (PMIX_SUCCESS != (rc = pmix_dstore_init(NULL, 0))) {
+        pmix_output_close(pmix_globals.debug_output);
+        pmix_output_finalize();
+        pmix_class_finalize();
+        return PMIX_ERR_DATA_VALUE_NOT_FOUND;
     }
 #endif /* PMIX_ENABLE_DSTORE */
     pmix_bfrop_open();
@@ -384,7 +389,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
 
     if (!pmix_globals.external_evbase) {
         /* create an event base and progress thread for us */
-        if (NULL == (pmix_globals.evbase = pmix_start_progress_thread())) {
+        if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
             pmix_sec_finalize();
             pmix_usock_finalize();
             pmix_bfrop_close();
@@ -402,7 +407,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     /* connect to the server - returns job info if successful */
     if (PMIX_SUCCESS != (rc = connect_to_server(&address, &cb))){
         PMIX_DESTRUCT(&cb);
-        pmix_stop_progress_thread(pmix_globals.evbase);
+        pmix_progress_thread_finalize(NULL);
         pmix_sec_finalize();
         pmix_usock_finalize();
         pmix_bfrop_close();
@@ -498,7 +503,10 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
      }
 
      if (!pmix_globals.external_evbase) {
-         pmix_stop_progress_thread(pmix_globals.evbase);
+        #ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
+            libevent_global_shutdown();
+        #endif
+         pmix_progress_thread_finalize(NULL);
      }
 
      pmix_usock_finalize();
@@ -508,10 +516,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
      if (0 <= pmix_client_globals.myserver.sd) {
         CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
     }
-    event_base_free(pmix_globals.evbase);
-#ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
-    libevent_global_shutdown();
-#endif
+
     pmix_bfrop_close();
     pmix_sec_finalize();
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)

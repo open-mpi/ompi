@@ -66,7 +66,7 @@ AC_DEFUN([MCA_opal_pmix_ext20_CONFIG],[
                   OPAL_CHECK_PACKAGE([opal_pmix_ext20],
                                      [pmix.h],
                                      [pmix],
-                                     [PMIx_Query_info],
+                                     [PMIx_Query_info_nb],
                                      [-lpmix],
                                      [$pmix_ext_install_dir],
                                      [$pmix_ext_install_dir/lib],

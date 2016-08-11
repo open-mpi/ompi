@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013-2016 Intel, Inc. All rights reserved
 # $COPYRIGHT$
@@ -23,64 +23,28 @@
 # via AC_CONFIG_MACRO_DIR in configure.ac.
 ACLOCAL_AMFLAGS = -I ./config
 
+SUBDIRS = config include src
+
+
 headers =
 sources =
 nodist_headers =
-EXTRA_DIST =
+EXTRA_DIST = AUTHORS README INSTALL VERSION LICENSE autogen.pl
 
-# Only install the valgrind suppressions file if we're building in
-# standalone mode
+# Only install the valgrind suppressions file and man pages
+# if we're building in standalone mode
 dist_pmixdata_DATA =
-man_MANS = 
-
 if ! PMIX_EMBEDDED_MODE
 dist_pmixdata_DATA += contrib/pmix-valgrind.supp
-man_MANS += \
-        man/man3/pmix_init.3 \
-        man/man3/pmix_finalize.3 \
-        man/man3/pmix_initialized.3 \
-        man/man3/pmix_abort.3 \
-        man/man3/pmix_put.3 \
-        man/man3/pmix_commit.3 \
-        man/man3/pmix_fence.3 \
-        man/man3/pmix_get.3 \
-        man/man7/pmix.7 \
-        man/man7/pmix_constants.7
+
+if PMIX_HAVE_PANDOC
+SUBDIRS += man
 endif
 
-include config/Makefile.am
-include include/Makefile.am
-include src/class/Makefile.am
-include src/include/Makefile.am
-include src/buffer_ops/Makefile.am
-include src/util/Makefile.am
-include src/usock/Makefile.am
-include src/client/Makefile.am
-include src/server/Makefile.am
-include src/sec/Makefile.am
-include src/event/Makefile.am
-include src/common/Makefile.am
-include src/tool/Makefile.am
-
-if WANT_DSTORE
-include src/sm/Makefile.am
-include src/dstore/Makefile.am
-endif
-
-if PMIX_EMBEDDED_MODE
-noinst_LTLIBRARIES = libpmix.la
-libpmix_la_SOURCES = $(headers) $(sources)
-libpmix_la_LDFLAGS =
-
-else
-
-lib_LTLIBRARIES = libpmix.la
-libpmix_la_SOURCES = $(headers) $(sources)
-libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
 endif
 
 if PMIX_TESTS_EXAMPLES
-SUBDIRS = . test examples
+SUBDIRS += . test examples
 endif
 
 if WANT_INSTALL_HEADERS
@@ -93,19 +57,7 @@ noinst_HEADERS = $(headers)
 endif
 
 nroff:
-	@for file in $(man_MANS); do \
-	    source=`echo $$file | sed -e 's@/man[0-9]@@'`; \
-	    contrib/md2nroff.pl --source=$$source.md; \
-	done
-
-EXTRA_DIST += AUTHORS README INSTALL VERSION LICENSE autogen.sh \
-             config/pmix_get_version.sh $(man_MANS) \
-             contrib/platform/optimized \
-             test/test_common.h test/cli_stages.h \
-             test/server_callbacks.h test/test_fence.h \
-             test/test_publish.h test/test_resolve_peers.h \
-             test/test_spawn.h test/utils.h test/test_cd.h
-
+	(cd man; $(MAKE) nroff)
 
 dist-hook:
 	env LS_COLORS= sh "$(top_srcdir)/config/distscript.sh" "$(top_srcdir)" "$(distdir)" "$(PMIX_VERSION)" "$(PMIX_REPO_REV)"

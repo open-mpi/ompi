@@ -18,7 +18,7 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <pmix/autogen/pmix_stdint.h>
+#include <src/include/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
 #include <pmix_server.h>
@@ -56,7 +56,6 @@
 #include "src/util/getid.h"
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
-#include "src/util/progress_threads.h"
 #include "src/util/strnlen.h"
 #include "src/usock/usock.h"
 #include "src/sec/pmix_sec.h"
@@ -533,7 +532,7 @@ static pmix_status_t pmix_server_authenticate(pmix_pending_connection_t *pnd,
 {
     char *msg, *nspace, *version, *cred;
     pmix_status_t rc;
-    pmix_rank_t rank;
+    pmix_rank_t rank=PMIX_RANK_UNDEF;
     pmix_usock_hdr_t hdr;
     pmix_nspace_t *nptr, *tmp;
     pmix_rank_info_t *info;

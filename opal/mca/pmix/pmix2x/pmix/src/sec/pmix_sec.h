@@ -132,11 +132,11 @@ typedef struct {
     pmix_sec_base_module_server_hndshk_fn_t  server_handshake;
 } pmix_sec_base_module_t;
 
-PMIX_DECLSPEC extern pmix_sec_base_module_t pmix_sec;
+extern pmix_sec_base_module_t pmix_sec;
 
 /* initialize and finalize the security system */
-PMIX_DECLSPEC int pmix_sec_init(void);
-PMIX_DECLSPEC void pmix_sec_finalize(void);
+int pmix_sec_init(void);
+void pmix_sec_finalize(void);
 
 END_C_DECLS
 

@@ -23,7 +23,7 @@
  */
 
 #include <src/include/pmix_config.h>
-#include "include/pmix/pmix_common.h"
+#include "include/pmix_common.h"
 #include "src/include/pmix_socket_errno.h"
 
 #ifdef HAVE_UNISTD_H

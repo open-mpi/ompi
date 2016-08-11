@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "pmix/pmix_common.h"
+#include "pmix_common.h"
 #include "src/class/pmix_ring_buffer.h"
 #include "src/util/output.h"
 

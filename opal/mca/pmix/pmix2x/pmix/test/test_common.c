@@ -13,7 +13,7 @@
  */
 
 #include <src/include/pmix_config.h>
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 
 #include "test_common.h"
 #include <stdarg.h>

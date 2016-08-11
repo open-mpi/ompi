@@ -64,7 +64,7 @@ extern pmix_client_globals_t pmix_client_globals;
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/output.h"
-#include "src/util/progress_threads.h"
+#include "src/runtime/pmix_progress_threads.h"
 #include "src/usock/usock.h"
 #include "src/sec/pmix_sec.h"
 #include "src/include/pmix_globals.h"
@@ -73,6 +73,9 @@ extern pmix_client_globals_t pmix_client_globals;
 #endif /* PMIX_ENABLE_DSTORE */
 
 #define PMIX_MAX_RETRIES 10
+
+static char *mytmpdir = NULL;
+static char *systmpdir = NULL;
 
 static pmix_status_t usock_connect(struct sockaddr_un *address, int *fd);
 
@@ -189,7 +192,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_kval_t *kptr;
     pmix_status_t rc;
     pmix_nspace_t *nptr, *nsptr;
-    pid_t server_pid;
+    pid_t server_pid=0;
     bool server_pid_given = false;
     int hostnamelen = 30;
     char hostname[hostnamelen];
@@ -198,8 +201,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     bool connect_to_system_server = false;
     bool connect_to_system_first = false;
     bool connection_defined = false;
-    char *mytmpdir = NULL;
-    char *systmpdir = NULL;
 
     if (NULL == proc) {
         return PMIX_ERR_BAD_PARAM;
@@ -327,17 +328,11 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
             snprintf(address.sun_path, sizeof(address.sun_path)-1, "%s/pmix.%s.%d", tdir, hostname, server_pid);
             /* if the rendezvous file doesn't exist, that's an error */
             if (0 != access(address.sun_path, R_OK)) {
-                pmix_output_close(pmix_globals.debug_output);
-                pmix_output_finalize();
-                pmix_class_finalize();
                 return PMIX_ERR_NOT_FOUND;
             }
         } else {
             /* open up the temp directory */
             if (NULL == (cur_dirp = opendir(tdir))) {
-                pmix_output_close(pmix_globals.debug_output);
-                pmix_output_finalize();
-                pmix_class_finalize();
                 return PMIX_ERR_NOT_FOUND;
             }
             /* search the entries for something that starts with pmix.hostname */
@@ -353,9 +348,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                         closedir(cur_dirp);
                         free(evar);
                         free(tmp);
-                        pmix_output_close(pmix_globals.debug_output);
-                        pmix_output_finalize();
-                        pmix_class_finalize();
                         return PMIX_ERR_INIT;
                     }
                     evar = strdup(dir_entry->d_name);
@@ -365,9 +357,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
             closedir(cur_dirp);
             if (NULL == evar) {
                 /* none found */
-                pmix_output_close(pmix_globals.debug_output);
-                pmix_output_finalize();
-                pmix_class_finalize();
                 return PMIX_ERR_INIT;
             }
             /* use the found one as our contact point */
@@ -382,13 +371,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
 
     if (!pmix_globals.external_evbase) {
         /* create an event base and progress thread for us */
-        if (NULL == (pmix_globals.evbase = pmix_start_progress_thread())) {
-            pmix_sec_finalize();
-            pmix_usock_finalize();
-            pmix_bfrop_close();
-            pmix_output_close(pmix_globals.debug_output);
-            pmix_output_finalize();
-            pmix_class_finalize();
+        if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
             return -1;
 
         }
@@ -396,13 +379,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
 
     /* connect to the server */
     if (PMIX_SUCCESS != (rc = connect_to_server(&address))) {
-        pmix_stop_progress_thread(pmix_globals.evbase);
-        pmix_sec_finalize();
-        pmix_usock_finalize();
-        pmix_bfrop_close();
-        pmix_output_close(pmix_globals.debug_output);
-        pmix_output_finalize();
-        pmix_class_finalize();
         return rc;
     }
     /* increment our init reference counter */
@@ -424,14 +400,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         }
     }
     if (NULL == nsptr) {
-        /* should never happen */
-        pmix_stop_progress_thread(pmix_globals.evbase);
-        pmix_sec_finalize();
-        pmix_usock_finalize();
-        pmix_bfrop_close();
-        pmix_output_close(pmix_globals.debug_output);
-        pmix_output_finalize();
-        pmix_class_finalize();
         return PMIX_ERR_NOT_FOUND;
     }
 
@@ -678,7 +646,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
                         "pmix:tool finalize called");
 
     if (!pmix_globals.external_evbase) {
-        pmix_stop_progress_thread(pmix_globals.evbase);
+        pmix_progress_thread_finalize(NULL);
     }
 
     pmix_usock_finalize();
@@ -695,6 +663,12 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
     pmix_bfrop_close();
     pmix_sec_finalize();
 
+    if (NULL != mytmpdir) {
+        free(mytmpdir);
+    }
+    if (NULL != systmpdir) {
+        free(systmpdir);
+    }
     pmix_globals_finalize();
 
     pmix_output_close(pmix_globals.debug_output);

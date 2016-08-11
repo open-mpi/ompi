@@ -42,7 +42,7 @@ BEGIN_C_DECLS
 #define PMIX_CSUM_ZERO  0
 
 
-PMIX_DECLSPEC unsigned long
+unsigned long
 pmix_bcopy_csum_partial(
     const void *  source,
     void *  destination,
@@ -65,7 +65,7 @@ pmix_bcopy_csum (
     return pmix_bcopy_csum_partial(source, destination, copylen, csumlen, &plong, &plength);
 }
 
-PMIX_DECLSPEC unsigned int
+unsigned int
 pmix_bcopy_uicsum_partial (
     const void *  source,
     void *  destination,
@@ -88,7 +88,7 @@ pmix_bcopy_uicsum (
     return pmix_bcopy_uicsum_partial(source, destination, copylen, csumlen, &pint, &plength);
 }
 
-PMIX_DECLSPEC unsigned long
+unsigned long
 pmix_csum_partial (
     const void *  source,
     size_t csumlen,
@@ -127,7 +127,7 @@ pmix_csum16 (const void *  source, size_t csumlen)
     return csum;
 }
 
-PMIX_DECLSPEC unsigned int
+unsigned int
 pmix_uicsum_partial (
     const void *  source,
     size_t csumlen,
@@ -149,7 +149,7 @@ pmix_uicsum(const void *  source, size_t csumlen)
 
 void pmix_initialize_crc_table(void);
 
-PMIX_DECLSPEC unsigned int
+unsigned int
 pmix_bcopy_uicrc_partial(
     const void *  source,
     void *  destination,
@@ -167,7 +167,7 @@ pmix_bcopy_uicrc(
     return pmix_bcopy_uicrc_partial(source, destination, copylen, crclen, CRC_INITIAL_REGISTER);
 }
 
-PMIX_DECLSPEC unsigned int
+unsigned int
 pmix_uicrc_partial(
     const void *  source,
     size_t crclen,

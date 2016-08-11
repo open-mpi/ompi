@@ -31,11 +31,9 @@
 #include <stdlib.h>
 #endif
 
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 
 #include "src/util/error.h"
-#include "src/include/pmix_globals.h"
-#include "src/buffer_ops/buffer_ops.h"
 
 const char* PMIx_Error_string(pmix_status_t errnum)
 {
@@ -139,9 +137,16 @@ const char* PMIx_Error_string(pmix_status_t errnum)
         return "SILENT_ERROR";
     case PMIX_ERROR:
         return "ERROR";
+    case PMIX_ERR_NOT_AVAILABLE:
+        return "PMIX_ERR_NOT_AVAILABLE";
+    case PMIX_ERR_FATAL:
+        return "PMIX_ERR_FATAL";
+    case PMIX_ERR_VALUE_OUT_OF_BOUNDS:
+        return "PMIX_ERR_VALUE_OUT_OF_BOUNDS";
+    case PMIX_ERR_PERM:
+        return "PMIX_ERR_PERM";
     case PMIX_SUCCESS:
         return "SUCCESS";
-
     default:
         return "ERROR STRING NOT FOUND";
     }

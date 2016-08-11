@@ -59,15 +59,12 @@
 #ifndef PMIx_SERVER_API_H
 #define PMIx_SERVER_API_H
 
-#include <pmix/autogen/config.h>
-
-/* Symbol transforms */
-#include <pmix/rename.h>
-
 /* Structure and constant definitions */
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 
-BEGIN_C_DECLS
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /****    SERVER FUNCTION-SHIPPED APIs    ****/
 /* NOTE: for performance purposes, the host server is required to
@@ -80,7 +77,6 @@ BEGIN_C_DECLS
  * PMIX server support library and MUST NOT be free'd. Data returned
  * by the host server via callback function is owned by the host
  * server, which is free to release it upon return from the callback */
-
 
 /* Notify the host server that a client connected to us - note
  * that the client will be in a blocked state until the host server
@@ -487,6 +483,8 @@ pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
                                          pmix_dmodex_response_fn_t cbfunc,
                                          void *cbdata);
 
-END_C_DECLS
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

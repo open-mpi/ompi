@@ -11,7 +11,7 @@
 #define PMIX_GETID_H
 
 #include <src/include/pmix_config.h>
-#include "include/pmix/pmix_common.h"
+#include "include/pmix_common.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
