@@ -45,6 +45,7 @@ main(int argc, char *argv[]){
     double maxpower;
     opal_buffer_t *buf;
     orte_rml_recv_cb_t blob;
+    int sock_conduit_id = 0;  //use the first conduit
     struct timeval start, end;
     /*
      * Init
@@ -66,7 +67,7 @@ main(int argc, char *argv[]){
         peer.vpid = 0;
     }
 
-    gettimeofday(&start,NULL);
+    gettimeofday(&start, NULL);
     for (j=1; j < count+1; j++) {
         /* rank0 starts ring */
         if (ORTE_PROC_MY_NAME->vpid == 0) {
@@ -79,7 +80,7 @@ main(int argc, char *argv[]){
             msg = (uint8_t*)malloc(msgsize);
             opal_dss.pack(buf, msg, msgsize, OPAL_BYTE);
             free(msg);
-            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
+            orte_rml.send_buffer_transport_nb(sock_conduit_id,&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
 
             /* wait for it to come around */
             OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
@@ -107,14 +108,14 @@ main(int argc, char *argv[]){
             opal_dss.copy_payload(buf, &blob.data);
             OBJ_DESTRUCT(&blob);
             msg_active = true;
-            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, send_callback, NULL);
+            orte_rml.send_buffer_transport_nb(sock_conduit_id,&peer, buf, MY_TAG, send_callback, NULL);
             ORTE_WAIT_FOR_COMPLETION(msg_active);
         }
     }
-    gettimeofday(&end,NULL);
-    printf("Total minutes = %d, Total seconds = %d",(end.tv_sec - start.tv_sec)/60,(end.tv_sec - start.tv_sec));
-
+    gettimeofday(&end, NULL);
     orte_finalize();
-
+    printf("start: %d secs, %d usecs\n",start.tv_sec,start.tv_usec);
+    printf("end: %d secs, %d usecs\n",end.tv_sec,end.tv_usec);
+    printf("Total minutes = %d, Total seconds = %d", (end.tv_sec - start.tv_sec)/60, (end.tv_sec - start.tv_sec)   );
     return 0;
 }

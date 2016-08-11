@@ -34,6 +34,59 @@ static void send_callback(int status, orte_process_name_t *peer,
     msg_active = false;
 }
 
+//debug routine to print the opal_value_t returned by query interface
+void print_transports_query()
+{
+    opal_value_t *providers=NULL;
+    char* prov_name = NULL;
+    int ret;
+    int32_t *protocol_ptr, protocol;
+    int8_t conduit_id;
+    int8_t *prov_num=&conduit_id;
+    
+    protocol_ptr = &protocol;
+     opal_output(0, "\n Current conduits loaded in rml-ofi ==>");	
+    /*opal_output(0,"\n print_transports_query() Begin- %s:%d",__FILE__,__LINE__);
+    opal_output(0,"\n calling the orte_rml_ofi_query_transports() ");*/
+    if( ORTE_SUCCESS == orte_rml.query_transports(&providers))
+    {
+	//opal_output(0,"\n query_transports() completed, printing details\n");
+	while (providers)
+	{
+
+		//get the first opal_list_t;
+        opal_list_t temp;
+		opal_list_t *prov = &temp;
+
+		ret = opal_value_unload(providers,(void **)&prov,OPAL_PTR);
+		if (ret == OPAL_SUCCESS) {
+    		    //opal_output(0,"\n %s:%d opal_value_unload() succeeded, opal_list* prov = %x",__FILE__,__LINE__,prov); 
+            if( orte_get_attribute( prov, ORTE_CONDUIT_ID, (void **)&prov_num,OPAL_UINT8)) {
+                opal_output(0," Provider conduit_id  : %d",*prov_num);
+            }	
+		    if( orte_get_attribute( prov, ORTE_PROTOCOL, (void **)&protocol_ptr,OPAL_UINT32)) {
+		      	opal_output(0," Protocol  : %d",*protocol_ptr);
+		    }
+		    if( orte_get_attribute( prov, ORTE_PROV_NAME, (void **)&prov_name ,OPAL_STRING)) {
+		      	opal_output(0," Provider name : %s",prov_name);
+		    } else {
+			opal_output(0," Error in getting Provider name");
+		    }
+		} else {
+    		    opal_output(0," %s:%d opal_value_unload() failed, opal_list* prov = %x",__FILE__,__LINE__,prov); 	
+		}
+		providers = (opal_value_t *)providers->super.opal_list_next;
+    	//	opal_output_verbose(1,orte_rml_base_framework.framework_output,"\n %s:%d - 
+        //                                Moving on to next provider provders=%x",__FILE__,__LINE__,providers);
+	}
+    } else {
+        opal_output(0,"\n query_transports() returned Error ");
+    }
+    //opal_output(0,"\n End of print_transports_query() from ofi_query_test.c \n");
+
+  //need to free all the providers here
+}
+
 
 int
 main(int argc, char *argv[]){
@@ -45,11 +98,17 @@ main(int argc, char *argv[]){
     double maxpower;
     opal_buffer_t *buf;
     orte_rml_recv_cb_t blob;
+    int conduit_id = 0;  //use the first available conduit
     struct timeval start, end;
+    
+
     /*
      * Init
      */
     orte_init(&argc, &argv, ORTE_PROC_NON_MPI);
+
+    print_transports_query();
+    opal_output(0, "Using conduit-id %d ", conduit_id);
 
     if (argc > 1) {
         count = atoi(argv[1]);
@@ -66,7 +125,7 @@ main(int argc, char *argv[]){
         peer.vpid = 0;
     }
 
-    gettimeofday(&start,NULL);
+    gettimeofday(&start, NULL);
     for (j=1; j < count+1; j++) {
         /* rank0 starts ring */
         if (ORTE_PROC_MY_NAME->vpid == 0) {
@@ -79,7 +138,7 @@ main(int argc, char *argv[]){
             msg = (uint8_t*)malloc(msgsize);
             opal_dss.pack(buf, msg, msgsize, OPAL_BYTE);
             free(msg);
-            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
+            orte_rml.send_buffer_transport_nb(conduit_id,&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
 
             /* wait for it to come around */
             OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
@@ -107,14 +166,14 @@ main(int argc, char *argv[]){
             opal_dss.copy_payload(buf, &blob.data);
             OBJ_DESTRUCT(&blob);
             msg_active = true;
-            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, send_callback, NULL);
+            orte_rml.send_buffer_transport_nb(conduit_id,&peer, buf, MY_TAG, send_callback, NULL);
             ORTE_WAIT_FOR_COMPLETION(msg_active);
         }
     }
-    gettimeofday(&end,NULL);
-    printf("Total minutes = %d, Total seconds = %d",(end.tv_sec - start.tv_sec)/60,(end.tv_sec - start.tv_sec));
-
+    gettimeofday(&end, NULL);
     orte_finalize();
-
+    printf("start: %d secs, %d usecs\n",start.tv_sec,start.tv_usec);
+    printf("end: %d secs, %d usecs\n",end.tv_sec,end.tv_usec);
+    printf("Total minutes = %d, Total seconds = %d", (end.tv_sec - start.tv_sec)/60, (end.tv_sec - start.tv_sec)   );
     return 0;
 }

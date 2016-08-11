@@ -168,8 +168,19 @@ BEGIN_C_DECLS
 
 #define ORTE_RML_TAG_MAX                   100
 
+/*** RML OFI keys ***/
+#define ORTE_OFI_START_KEY  ORTE_QOS_MAX_KEY
+#define ORTE_PROV_NAME      (ORTE_OFI_START_KEY + 1)  	//char * - null terminated string containing provider name
+#define ORTE_PROTOCOL       (ORTE_OFI_START_KEY + 2)    //uint32 - protocol type as returned by fi_info
+#define ORTE_CONDUIT_ID     (ORTE_OFI_START_KEY + 3)    //uint8 - conduit_id for this transport         
+
 #define ORTE_RML_TAG_NTOH(t) ntohl(t)
 #define ORTE_RML_TAG_HTON(t) htonl(t)
+
+/*** length of the tag. change this when type of orte_rml_tag_t is changed ***/
+/*** max valu in unit32_t is 0xFFFF_FFFF when converted to char this is 8  **
+#define ORTE_RML_TAG_T_CHAR_LEN   8
+#define ORTE_RML_TAG_T_SPRINT	 "%8x" */
 
 /**
  * Message matching tag

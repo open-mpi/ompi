@@ -43,9 +43,9 @@ int orte_rml_API_enable_comm(void)
     orte_rml_base_active_t *active, *next;
     int rc;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:enable_comm",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* cycle thru the actives and let each one enable their comm */
     OPAL_LIST_FOREACH_SAFE(active, next, &orte_rml_base.actives, orte_rml_base_active_t) {
@@ -77,9 +77,9 @@ void orte_rml_API_finalize(void)
 {
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:finalize()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* cycle thru the actives and see who can send it */
     OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
@@ -87,6 +87,7 @@ void orte_rml_API_finalize(void)
             active->module->finalize();
         }
     }
+    orte_rml_base_comm_stop();   
 }
 
 /** Get contact information for local process */
@@ -95,9 +96,9 @@ char* orte_rml_API_get_contact_info(void)
     char **rc = NULL, *tmp;
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:get_contact_info()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* cycle thru the actives and see who can send it */
     OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
@@ -122,9 +123,9 @@ void orte_rml_API_set_contact_info(const char *contact_info)
 {
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:set_contact_info()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* cycle thru the actives and let all modules parse the info
      * to extract their relevant portions */
@@ -142,9 +143,9 @@ int orte_rml_API_ping(const char* contact_info,
     int rc = ORTE_ERR_UNREACH;
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:ping()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* cycle thru the actives and see if anyone can confirm connection */
     OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
@@ -170,11 +171,10 @@ int orte_rml_API_send_nb(orte_process_name_t* peer,
     int rc = ORTE_ERR_UNREACH;
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:send_nb() to peer %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer)));
-
+                         ORTE_NAME_PRINT(peer));
     /* cycle thru the actives and see who can send it */
     OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
         if (NULL != active->module->send_nb) {
@@ -198,10 +198,9 @@ int orte_rml_API_send_buffer_nb(orte_process_name_t* peer,
     int rc = ORTE_ERR_UNREACH;
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:send_buffer_nb()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     /* cycle thru the actives and see who can send it */
     OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
         if (NULL != active->module->send_buffer_nb) {
@@ -224,10 +223,10 @@ void orte_rml_API_recv_nb(orte_process_name_t* peer,
     orte_rml_base_active_t *active;
     orte_rml_recv_request_t *req;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
+    opal_output_verbose(10, orte_rml_base_framework.framework_output,
                          "%s rml_recv_nb for peer %s tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer), tag));
+                         ORTE_NAME_PRINT(peer), tag);
 
     /* cycle thru the actives and give each module a chance
      * to do whatever module-specific things they need to do */
@@ -263,10 +262,10 @@ void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
     orte_rml_base_active_t *active;
     orte_rml_recv_request_t *req;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
+    opal_output_verbose(10, orte_rml_base_framework.framework_output,
                          "%s rml_recv_buffer_nb for peer %s tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer), tag));
+                         ORTE_NAME_PRINT(peer), tag);
 
     /* cycle thru the actives and give each module a chance
      * to do whatever module-specific things they need to do */
@@ -299,10 +298,10 @@ void orte_rml_API_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag)
     orte_rml_base_active_t *active;
     orte_rml_recv_request_t *req;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
+    opal_output_verbose(10, orte_rml_base_framework.framework_output,
                          "%s rml_recv_cancel for peer %s tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer), tag));
+                         ORTE_NAME_PRINT(peer), tag);
 
     /* cycle thru the actives and give each module a chance
      * to do whatever module-specific things they need to do */
@@ -332,9 +331,9 @@ int orte_rml_API_add_exception_handler(orte_rml_exception_callback_t cbfunc)
     int rc = ORTE_ERROR;
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:add_exception_handler()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* cycle thru the actives and see who can send it */
     OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
@@ -353,9 +352,9 @@ int orte_rml_API_del_exception_handler(orte_rml_exception_callback_t cbfunc)
     int rc = ORTE_ERROR;
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:del_exception_handler()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* cycle thru the actives and see who can send it */
     OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
@@ -374,9 +373,9 @@ int orte_rml_API_ft_event(int state)
    int rc = ORTE_ERROR;
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:ft_event()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* cycle thru the actives and let them all handle this event */
     OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
@@ -395,9 +394,9 @@ void orte_rml_API_purge(orte_process_name_t *peer)
 {
     orte_rml_base_active_t *active;
 
-    OPAL_OUTPUT_VERBOSE((1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
                          "%s rml:base:purge() - calling the respective plugin that implements this",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* cycle thru the actives and let everyone purge related info */
     OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
@@ -406,3 +405,88 @@ void orte_rml_API_purge(orte_process_name_t *peer)
         }
     }
 }
+
+int orte_rml_API_query_transports(opal_value_t **providers)
+{
+
+    int rc = ORTE_ERROR;
+    orte_rml_base_active_t *active;
+
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
+                         "%s rml:base:orte_rml_API_query_transports()",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    /* cycle thru the actives and let them all handle this event */
+    OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
+        if (NULL != active->module->query_transports) {
+            	  opal_output_verbose(10,orte_rml_base_framework.framework_output,
+                                     "\n calling  module: %s->query_transports() \n",
+                                          active->component->mca_component_name);
+            if (ORTE_SUCCESS == (rc = active->module->query_transports(providers))) {
+                break;
+            }
+        }
+    }
+    return rc;
+
+}
+
+/** Send non-blocking iovec message through a specific transport */
+int orte_rml_API_send_transport_nb(int conduit_id,
+                         orte_process_name_t* peer,
+                         struct iovec* msg,
+                         int count,
+                         orte_rml_tag_t tag,
+                         orte_rml_callback_fn_t cbfunc,
+                         void* cbdata)
+{
+    int rc = ORTE_ERR_UNREACH;
+    orte_rml_base_active_t *active;
+
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
+                         "%s rml:base:send_transport_nb() to peer %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(peer));
+
+    /* cycle thru the actives and see who can send it */
+    OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
+        if (NULL != active->module->send_transport_nb) {
+            rc = active->module->send_transport_nb(conduit_id,peer, msg, count, tag, cbfunc, cbdata);
+            if (ORTE_SUCCESS == rc) {
+                /* someone was able to send it */
+                break;
+            }
+        }
+    }
+    return rc;
+}
+
+
+/** Send non-blocking buffer message through a specific transport */
+int orte_rml_API_send_buffer_transport_nb(int conduit_id,
+                                              orte_process_name_t* peer,
+                                              struct opal_buffer_t* buffer,
+                                              orte_rml_tag_t tag,
+                                              orte_rml_buffer_callback_fn_t cbfunc,
+                                              void* cbdata)
+{
+    int rc = ORTE_ERR_UNREACH;
+    orte_rml_base_active_t *active;
+
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
+                         "%s rml:base:send_buffer_transport_nb()",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    /* cycle thru the actives and see who can send it */
+    OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
+        if (NULL != active->module->send_buffer_transport_nb) {
+            if (ORTE_SUCCESS == (rc = active->module->send_buffer_transport_nb(conduit_id,peer, buffer, tag, cbfunc, cbdata))) {
+                break;
+            }
+        }
+    }
+    return rc;
+}
+
+
+

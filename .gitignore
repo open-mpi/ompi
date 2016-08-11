@@ -456,6 +456,8 @@ orte/test/system/pmi_abort
 orte/test/system/opal_hwloc
 orte/test/system/opal_db
 orte/test/system/ulfm
+orte/test/system/ofi_query_test
+orte/test/system/ofi_stress
 orte/test/system/pmixtool
 
 orte/tools/orte-checkpoint/orte-checkpoint
