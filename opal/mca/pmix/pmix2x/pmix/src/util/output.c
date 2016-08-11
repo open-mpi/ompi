@@ -22,7 +22,7 @@
 
 #include <src/include/pmix_config.h>
 
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 
 #include <stdio.h>
 #include <ctype.h>

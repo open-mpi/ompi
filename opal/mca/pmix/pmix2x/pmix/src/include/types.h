@@ -215,7 +215,47 @@ static inline uint64_t pmix_swap_bytes8(uint64_t val)
 #define pmix_swap_bytes8 hton64
 #endif /* WORDS_BIGENDIAN || !HAVE_UNIX_BYTESWAP */
 
+#define PMIX_EV_TIMEOUT EV_TIMEOUT
+#define PMIX_EV_READ    EV_READ
+#define PMIX_EV_WRITE   EV_WRITE
+#define PMIX_EV_SIGNAL  EV_SIGNAL
+/* Persistent event: won't get removed automatically when activated. */
+#define PMIX_EV_PERSIST EV_PERSIST
+
+#define PMIX_EVLOOP_ONCE     EVLOOP_ONCE        /**< Block at most once. */
+#define PMIX_EVLOOP_NONBLOCK EVLOOP_NONBLOCK    /**< Do not block. */
+
 typedef struct event_base pmix_event_base_t;
 typedef struct event pmix_event_t;
+
+#define pmix_event_base_create() event_base_new()
+
+#define pmix_event_base_free(b) event_base_free(b)
+
+#define pmix_event_base_loopbreak(b) event_base_loopbreak(b)
+
+#define pmix_event_base_loopexit(b) event_base_loopexit(b, NULL)
+
+/* thread support APIs */
+#define pmix_event_use_threads() evthread_use_pthreads()
+
+/* Basic event APIs */
+#define pmix_event_enable_debug_mode() event_enable_debug_mode()
+
+#define pmix_event_set(b, x, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+
+#define pmix_event_add(ev, tv) event_add((ev), (tv))
+
+#define pmix_event_del(ev) event_del((ev))
+
+#define pmix_event_active(x, y, z) event_active((x), (y), (z))
+
+#define pmix_event_new(b, fd, fg, cb, arg) event_new((b), (fd), (fg), (event_callback_fn) (cb), (arg))
+
+#define pmix_event_loop(b, fg) event_base_loop((b), (fg))
+
+#ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
+#define pmix_libevent_global_shutdown() libevent_global_shutdown()
+#endif
 
 #endif /* PMIX_TYPES_H */

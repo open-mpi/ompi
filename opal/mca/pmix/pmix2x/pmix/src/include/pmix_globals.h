@@ -30,7 +30,7 @@
 #endif
 #include PMIX_EVENT_HEADER
 
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 
 #include "src/buffer_ops/types.h"
 #include "src/class/pmix_hash_table.h"
@@ -81,6 +81,14 @@ typedef enum {
     PMIX_COLLECT_YES,
     PMIX_COLLECT_MAX
 } pmix_collect_t;
+
+/* define a process type */
+typedef enum {
+    PMIX_PROC_UNDEF,
+    PMIX_PROC_CLIENT,
+    PMIX_PROC_SERVER,
+    PMIX_PROC_TOOL
+} pmix_proc_type_t;
 
 
 /****    MESSAGING STRUCTURES    ****/

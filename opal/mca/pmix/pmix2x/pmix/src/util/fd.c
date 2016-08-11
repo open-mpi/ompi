@@ -13,7 +13,7 @@
 
 #include <src/include/pmix_config.h>
 
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

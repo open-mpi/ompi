@@ -34,7 +34,7 @@
 #include "src/class/pmix_object.h"
 #include "src/class/pmix_pointer_array.h"
 #include "src/class/pmix_list.h"
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 
 BEGIN_C_DECLS
 

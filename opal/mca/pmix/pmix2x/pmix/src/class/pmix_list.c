@@ -20,9 +20,8 @@
  */
 
 #include <src/include/pmix_config.h>
-
+#include "include/pmix_common.h"
 #include "src/class/pmix_list.h"
-#include <pmix.h>
 
 /*
  *  List classes

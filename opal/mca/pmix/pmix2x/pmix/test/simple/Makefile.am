@@ -27,46 +27,46 @@ simptest_SOURCES = \
         simptest.c
 simptest_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simptest_LDADD = \
-	$(top_builddir)/libpmix.la
+    $(top_builddir)/src/libpmix.la
 
 simpclient_SOURCES = \
         simpclient.c
 simpclient_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpclient_LDADD = \
-	$(top_builddir)/libpmix.la
+    $(top_builddir)/src/libpmix.la
 
 simppub_SOURCES = \
         simppub.c
 simppub_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simppub_LDADD = \
-	$(top_builddir)/libpmix.la
+    $(top_builddir)/src/libpmix.la
 
 simpdmodex_SOURCES = \
         simpdmodex.c
 simpdmodex_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpdmodex_LDADD = \
-	$(top_builddir)/libpmix.la
+    $(top_builddir)/src/libpmix.la
 
 simpft_SOURCES = \
         simpft.c
 simpft_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpft_LDADD = \
-	$(top_builddir)/libpmix.la
+    $(top_builddir)/src/libpmix.la
 
 simpdyn_SOURCES = \
         simpdyn.c
 simpdyn_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpdyn_LDADD = \
-	$(top_builddir)/libpmix.la
+    $(top_builddir)/src/libpmix.la
 
 test_pmix_SOURCES = \
         test_pmix.c
 test_pmix_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 test_pmix_LDADD = \
-	$(top_builddir)/libpmix.la
+    $(top_builddir)/src/libpmix.la
 
 simptool_SOURCES = \
         simptool.c
 simptool_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simptool_LDADD = \
-	$(top_builddir)/libpmix.la
+    $(top_builddir)/src/libpmix.la

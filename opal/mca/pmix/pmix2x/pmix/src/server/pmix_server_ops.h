@@ -16,7 +16,7 @@
 
 #include <src/include/pmix_config.h>
 
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 #include <src/class/pmix_ring_buffer.h>
 #include <pmix_server.h>
 #include "src/usock/usock.h"

@@ -10,8 +10,8 @@
 #
 
 headers += \
-        src/usock/usock.h
+        usock/usock.h
 
 sources += \
-        src/usock/usock.c \
-        src/usock/usock_sendrecv.c
+        usock/usock.c \
+        usock/usock_sendrecv.c

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -33,14 +33,21 @@
 # Initialization, version number, and other random setup/init stuff
 ############################################################################
 
+# Load in everything found by autogen.pl
+m4_include([config/autogen_found_items.m4])
+
+# We don't have the version number to put in here yet, and we can't
+# call PMIX_GET_VERSION (etc.) before AC_INIT.  So use the shell
+# version.
+
 AC_INIT([pmix],
         [m4_normalize(esyscmd([config/pmix_get_version.sh VERSION --tarball]))],
-        [http://www.open-mpi.org/projects/pmix/], [pmix])
+        [http://pmix.github.io/master], [pmix])
 AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR(./config)
 # Note that this directory must *exactly* match what was specified via
 # -I in ACLOCAL_AMFLAGS in the top-level Makefile.am.
-AC_CONFIG_MACRO_DIR(./config)
+AC_CONFIG_MACRO_DIRS(./config)
 
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
@@ -103,11 +110,11 @@ AH_TOP([/* -*- c -*-
 #ifndef PMIX_CONFIG_H
 #define PMIX_CONFIG_H
 
-#include <pmix/autogen/pmix_config_top.h>
+#include <src/include/pmix_config_top.h>
 
 ])
 AH_BOTTOM([
-#include <pmix/autogen/pmix_config_bottom.h>
+#include <src/include/pmix_config_bottom.h>
 #endif /* PMIX_CONFIG_H */
 ])
 
@@ -137,6 +144,7 @@ AM_DISABLE_STATIC
 # This did not exist pre AM 1.11.x (where x is somewhere >0 and <3),
 # but it is necessary in AM 1.12.x.
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+AM_PROG_LEX
 
 LT_INIT()
 LT_LANG([C])
@@ -160,7 +168,7 @@ AS_IF([test "$pmix_debug" = "1"],
 ############################################################################
 
 # Setup the pmix core
-PMIX_SETUP_CORE([])
+PMIX_SETUP_CORE()
 
 # Run the AM_CONDITIONALs
 PMIX_DO_AM_CONDITIONALS
@@ -209,6 +217,7 @@ AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 AC_SUBST([libpmix_so_version])
 
 AC_CONFIG_FILES(pmix_config_prefix[examples/Makefile]
+                pmix_config_prefix[man/Makefile]
                 pmix_config_prefix[test/Makefile]
                 pmix_config_prefix[test/simple/Makefile])
 

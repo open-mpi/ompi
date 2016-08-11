@@ -18,11 +18,11 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <pmix/autogen/pmix_stdint.h>
+#include <src/include/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
 #include <pmix_server.h>
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 #include "src/include/pmix_globals.h"
 
 #ifdef HAVE_STRING_H
@@ -52,7 +52,7 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
-#include "src/util/progress_threads.h"
+#include "src/runtime/pmix_progress_threads.h"
 #include "src/usock/usock.h"
 #include "src/sec/pmix_sec.h"
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
@@ -240,20 +240,39 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     bool session_tool = false;
     pmix_listener_t *tl;
 
-    ++pmix_globals.init_cntr;
-    if (1 < pmix_globals.init_cntr) {
+    if (0 < pmix_globals.init_cntr) {
         return PMIX_SUCCESS;
     }
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server init called");
 
+    /* Check for the info keys that are not independent from
+     * initialize_server_base() and even may be needed there */
+    if (NULL != info) {
+        for (n=0; n < ninfo; n++) {
+            if (0 == strcmp(info[n].key, PMIX_SERVER_TMPDIR) &&
+                NULL == mytmpdir) {
+                mytmpdir = strdup(info[n].value.data.string);
+                /* push this onto our protected list of keys not
+                 * to be passed to the clients */
+                pmix_argv_append_nosize(&protected, PMIX_SERVER_TMPDIR);
+            } else if (0 == strcmp(info[n].key, PMIX_SYSTEM_TMPDIR) &&
+                       NULL == systmpdir) {
+                systmpdir = strdup(info[n].value.data.string);
+                /* push this onto our protected list of keys not
+                 * to be passed to the clients */
+                pmix_argv_append_nosize(&protected, PMIX_SYSTEM_TMPDIR);
+            }
+        }
+    }
+
     if (0 != (rc = initialize_server_base(module))) {
         return rc;
     }
 
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    if (PMIX_SUCCESS != (rc = pmix_dstore_init())) {
+    if (PMIX_SUCCESS != (rc = pmix_dstore_init(info, ninfo))) {
         return rc;
     }
 #endif /* PMIX_ENABLE_DSTORE */
@@ -262,13 +281,12 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     pmix_usock_init(NULL);
 
     /* create an event base and progress thread for us */
-    if (NULL == (pmix_globals.evbase = pmix_start_progress_thread())) {
+    if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
         return PMIX_ERR_INIT;
     }
 
     /* check the info keys for a directive about the uid/gid
-     * to be set for the rendezvous file, and for indication
-     * of willingness to support tool connections */
+     * to be set for the rendezvous file */
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strcmp(info[n].key, PMIX_USERID)) {
@@ -309,16 +327,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                 /* push this onto our protected list of keys not
                  * to be passed to the clients */
                 pmix_argv_append_nosize(&protected, PMIX_SERVER_TOOL_SUPPORT);
-            } else if (0 == strcmp(info[n].key, PMIX_SERVER_TMPDIR)) {
-                mytmpdir = strdup(info[n].value.data.string);
-                /* push this onto our protected list of keys not
-                 * to be passed to the clients */
-                pmix_argv_append_nosize(&protected, PMIX_SERVER_TMPDIR);
-            } else if (0 == strcmp(info[n].key, PMIX_SYSTEM_TMPDIR)) {
-                systmpdir = strdup(info[n].value.data.string);
-                /* push this onto our protected list of keys not
-                 * to be passed to the clients */
-                pmix_argv_append_nosize(&protected, PMIX_SYSTEM_TMPDIR);
             }
         }
     }
@@ -447,6 +455,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         PMIX_DESTRUCT(&kv);
     }
 
+    ++pmix_globals.init_cntr;
+
     return PMIX_SUCCESS;
 }
 
@@ -492,7 +502,6 @@ static void cleanup_server_state(void)
 
 PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
 {
-
     if (1 != pmix_globals.init_cntr) {
         --pmix_globals.init_cntr;
         return PMIX_SUCCESS;
@@ -506,8 +515,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
         pmix_stop_listening();
     }
 
-    pmix_stop_progress_thread(pmix_globals.evbase);
-    event_base_free(pmix_globals.evbase);
+    pmix_progress_thread_finalize(NULL);
 #ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
     libevent_global_shutdown();
 #endif
@@ -675,6 +683,13 @@ static void _register_nspace(int sd, short args, void *cbdata)
         }
     }
     /* do not destruct the kv object - no memory leak will result */
+
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    if (0 > pmix_dstore_nspace_add(cd->proc.nspace)) {
+        PMIX_ERROR_LOG(rc);
+        goto release;
+    }
+#endif
 
  release:
     if (NULL != nodes) {
@@ -1061,6 +1076,11 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char *
     }
     /* pass our active security mode */
     pmix_setenv("PMIX_SECURITY_MODE", security_mode, true, env);
+
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    /* pass dstore path to files */
+    pmix_dstore_patch_env(env);
+#endif
 
     return PMIX_SUCCESS;
 }

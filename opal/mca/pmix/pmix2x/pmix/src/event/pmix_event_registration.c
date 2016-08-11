@@ -8,10 +8,10 @@
  * $HEADER$
  */
 #include <src/include/pmix_config.h>
-#include <pmix/rename.h>
+#include <src/include/rename.h>
 
 #include <pmix.h>
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 #include <pmix_server.h>
 
 #include "src/util/error.h"

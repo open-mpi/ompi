@@ -23,7 +23,7 @@
 #include <src/include/pmix_config.h>
 
 
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 #include "src/util/output.h"
 
  BEGIN_C_DECLS
@@ -56,7 +56,11 @@
 #define PMIX_ERR_SILENT                                 (PMIX_INTERNAL_ERR_BASE - 25)
 #define PMIX_ERR_UNKNOWN_DATATYPE                       (PMIX_INTERNAL_ERR_BASE - 26)
 #define PMIX_ERR_RESOURCE_BUSY                          (PMIX_INTERNAL_ERR_BASE - 27)
-#define PMIX_ERR_OPERATION_IN_PROGRESS                  (PMIX_INTERNAL_ERR_BASE - 28)
+#define PMIX_ERR_NOT_AVAILABLE                          (PMIX_INTERNAL_ERR_BASE - 28)
+#define PMIX_ERR_FATAL                                  (PMIX_INTERNAL_ERR_BASE - 29)
+#define PMIX_ERR_VALUE_OUT_OF_BOUNDS                    (PMIX_INTERNAL_ERR_BASE - 30)
+#define PMIX_ERR_PERM                                   (PMIX_INTERNAL_ERR_BASE - 31)
+#define PMIX_ERR_OPERATION_IN_PROGRESS                  (PMIX_INTERNAL_ERR_BASE - 32)
 
 #define PMIX_ERROR_LOG(r)                                           \
  do {                                                               \

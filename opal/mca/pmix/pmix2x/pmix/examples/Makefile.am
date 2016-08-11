@@ -25,27 +25,27 @@ noinst_PROGRAMS = client dmodex dynamic fault pub tool
 
 client_SOURCES = client.c
 client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
-client_LDADD =  $(top_builddir)/libpmix.la
+client_LDADD =  $(top_builddir)/src/libpmix.la
 
 dmodex_SOURCES = dmodex.c
 dmodex_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
-dmodex_LDADD =  $(top_builddir)/libpmix.la
+dmodex_LDADD =  $(top_builddir)/src/libpmix.la
 
 dynamic_SOURCES = dynamic.c
 dynamic_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
-dynamic_LDADD = $(top_builddir)/libpmix.la
+dynamic_LDADD = $(top_builddir)/src/libpmix.la
 
 fault_SOURCES = fault.c
 fault_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
-fault_LDADD = $(top_builddir)/libpmix.la
+fault_LDADD = $(top_builddir)/src/libpmix.la
 
 pub_SOURCES = pub.c
 pub_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
-pub_LDADD = $(top_builddir)/libpmix.la
+pub_LDADD = $(top_builddir)/src/libpmix.la
 
 tool_SOURCES = tool.c
 tool_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
-tool_LDADD = $(top_builddir)/libpmix.la
+tool_LDADD = $(top_builddir)/src/libpmix.la
 
 distclean-local:
 	rm -f *.o client dmodex dynamic fault pub server

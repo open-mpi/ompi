@@ -54,7 +54,7 @@
 #include <src/include/pmix_config.h>
 #include "src/include/types.h"
 #include "src/include/prefetch.h"
-#include "pmix/pmix_common.h"
+#include "pmix_common.h"
 #include "src/class/pmix_object.h"
 #include PMIX_EVENT_HEADER
 
@@ -157,7 +157,7 @@ PMIX_CLASS_DECLARATION(pmix_hotel_t);
  * @return PMIX_SUCCESS if all initializations were succesful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-PMIX_DECLSPEC int pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
+int pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
                                   pmix_event_base_t *evbase,
                                   uint32_t eviction_timeout,
                                   int eviction_event_priority,

@@ -30,7 +30,7 @@
 #endif
 
 #include "src/class/pmix_object.h"
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 
 BEGIN_C_DECLS
 
@@ -63,7 +63,7 @@ typedef struct pmix_pointer_array_t pmix_pointer_array_t;
 /**
  * Class declaration
  */
-PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_pointer_array_t);
+PMIX_CLASS_DECLARATION(pmix_pointer_array_t);
 
 /**
  * Initialize the pointer array with an initial size of initial_allocation.
@@ -79,7 +79,7 @@ PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_pointer_array_t);
  * @return PMIX_SUCCESS if all initializations were succesfull. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-PMIX_DECLSPEC pmix_status_t pmix_pointer_array_init(pmix_pointer_array_t* array,
+pmix_status_t pmix_pointer_array_init(pmix_pointer_array_t* array,
                                                     int initial_allocation,
                                                     int max_size, int block_size );
 
@@ -92,7 +92,7 @@ PMIX_DECLSPEC pmix_status_t pmix_pointer_array_init(pmix_pointer_array_t* array,
  * @return Index of inserted array element.  Return value of
  *  (-1) indicates an error.
  */
-PMIX_DECLSPEC int pmix_pointer_array_add(pmix_pointer_array_t *array, void *ptr);
+int pmix_pointer_array_add(pmix_pointer_array_t *array, void *ptr);
 
 /**
  * Set the value of an element in array
@@ -104,7 +104,7 @@ PMIX_DECLSPEC int pmix_pointer_array_add(pmix_pointer_array_t *array, void *ptr)
  * @return PMIX_SUCCESS if item was inserted. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-PMIX_DECLSPEC pmix_status_t pmix_pointer_array_set_item(pmix_pointer_array_t *array,
+pmix_status_t pmix_pointer_array_set_item(pmix_pointer_array_t *array,
                                                         int index, void *value);
 
 /**
@@ -157,7 +157,7 @@ static inline int pmix_pointer_array_get_size(pmix_pointer_array_t *array)
  * Simple function to set the size of the array in order to
  * hide the member field from external users.
  */
-PMIX_DECLSPEC pmix_status_t pmix_pointer_array_set_size(pmix_pointer_array_t *array, int size);
+pmix_status_t pmix_pointer_array_set_size(pmix_pointer_array_t *array, int size);
 
 /**
  * Test whether a certain element is already in use. If not yet
@@ -173,7 +173,7 @@ PMIX_DECLSPEC pmix_status_t pmix_pointer_array_set_size(pmix_pointer_array_t *ar
  * In contrary to array_set, this function does not allow to overwrite
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-PMIX_DECLSPEC bool pmix_pointer_array_test_and_set_item (pmix_pointer_array_t *table,
+bool pmix_pointer_array_test_and_set_item (pmix_pointer_array_t *table,
                                           int index,
                                           void *value);
 

@@ -8,11 +8,11 @@
  * $HEADER$
  */
 #include <src/include/pmix_config.h>
-#include <pmix/rename.h>
+#include <src/include/rename.h>
 
-#include <pmix.h>
-#include <pmix/pmix_common.h>
-#include <pmix_server.h>
+#include "include/pmix.h"
+#include "include/pmix_common.h"
+#include "include/pmix_server.h"
 
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -321,13 +321,20 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     pmix_single_event_t *sing;
     pmix_multi_event_t *multi;
     pmix_default_event_t *def;
+    pmix_status_t rc = PMIX_SUCCESS;
+
+    /* sanity check */
+    if (NULL == chain->info) {
+        /* should never happen as the return object must
+         * at least be there, even if it is NULL */
+        rc = PMIX_ERR_BAD_PARAM;
+        goto complete;
+    }
 
     /* check for directives */
-    if (NULL != chain->info) {
-        for (i=0; i < chain->ninfo; i++) {
-            if (0 == strncmp(chain->info[i].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
-                chain->nondefault = true;
-            }
+    for (i=0; i < chain->ninfo; i++) {
+        if (0 == strncmp(chain->info[i].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
+            chain->nondefault = true;
         }
     }
 
@@ -401,7 +408,7 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
   complete:
     /* we still have to call their final callback */
     if (NULL != chain->final_cbfunc) {
-        chain->final_cbfunc(PMIX_SUCCESS, chain->final_cbdata);
+        chain->final_cbfunc(rc, chain->final_cbdata);
     }
     return;
 }

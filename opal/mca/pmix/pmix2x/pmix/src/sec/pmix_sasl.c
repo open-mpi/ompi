@@ -18,7 +18,7 @@
 #include <src/include/pmix_config.h>
 
 #include <src/include/types.h>
-#include <pmix/autogen/pmix_stdint.h>
+#include <src/include/pmix_stdint.h>
 #include <src/include/pmix_socket_errno.h>
 
 #include "src/include/pmix_globals.h"
@@ -51,7 +51,6 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
-#include "src/util/progress_threads.h"
 #include "src/usock/usock.h"
 
 #include "pmix_sasl.h"
@@ -76,7 +75,7 @@ static int sasl_init(void)
 {
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "sec: sasl init");
-    
+
     return PMIX_ERR_NOT_SUPPORTED;
 }
 

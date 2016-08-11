@@ -53,7 +53,7 @@ typedef struct pmix_ring_buffer_t pmix_ring_buffer_t;
 /**
  * Class declaration
  */
-PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_ring_buffer_t);
+PMIX_CLASS_DECLARATION(pmix_ring_buffer_t);
 
 /**
  * Initialize the ring buffer, defining its size.
@@ -64,7 +64,7 @@ PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_ring_buffer_t);
  * @return PMIX_SUCCESS if all initializations were succesful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-PMIX_DECLSPEC int pmix_ring_buffer_init(pmix_ring_buffer_t* ring, int size);
+int pmix_ring_buffer_init(pmix_ring_buffer_t* ring, int size);
 
 /**
  * Push an item onto the ring buffer, displacing the oldest
@@ -76,7 +76,7 @@ PMIX_DECLSPEC int pmix_ring_buffer_init(pmix_ring_buffer_t* ring, int size);
  * @return Pointer to displaced item, NULL if ring
  *         is not yet full
  */
-PMIX_DECLSPEC void* pmix_ring_buffer_push(pmix_ring_buffer_t *ring, void *ptr);
+void* pmix_ring_buffer_push(pmix_ring_buffer_t *ring, void *ptr);
 
 
 /**
@@ -88,14 +88,14 @@ PMIX_DECLSPEC void* pmix_ring_buffer_push(pmix_ring_buffer_t *ring, void *ptr);
  * @return Error code.  NULL indicates an error.
  */
 
-PMIX_DECLSPEC void* pmix_ring_buffer_pop(pmix_ring_buffer_t *ring);
+void* pmix_ring_buffer_pop(pmix_ring_buffer_t *ring);
 
 /*
  * Access an element of the ring, without removing it, indexed
  * starting at the tail - a value of -1 will return the element
  * at the head of the ring
  */
-PMIX_DECLSPEC void* pmix_ring_buffer_poke(pmix_ring_buffer_t *ring, int i);
+void* pmix_ring_buffer_poke(pmix_ring_buffer_t *ring, int i);
 
 END_C_DECLS
 

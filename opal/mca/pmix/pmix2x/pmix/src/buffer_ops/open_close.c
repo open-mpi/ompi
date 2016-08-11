@@ -26,7 +26,7 @@
  */
 #include <src/include/pmix_config.h>
 
-#include <pmix/pmix_common.h>
+#include <pmix_common.h>
 
 #ifdef HAVE_STRING_H
 #include <string.h>

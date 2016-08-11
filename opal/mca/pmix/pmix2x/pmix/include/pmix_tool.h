@@ -59,18 +59,12 @@
 #ifndef PMIx_TOOL_API_H
 #define PMIx_TOOL_API_H
 
-#include <pmix/autogen/config.h>
-
-/* Symbol transforms */
-#include <pmix/rename.h>
-
-/* Structure and constant definitions */
-#include <pmix/pmix_common.h>
-
 /* provide access to the rest of the client functions */
 #include <pmix.h>
 
-BEGIN_C_DECLS
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /****    TOOL INIT/FINALIZE FUNCTIONS    ****/
 
@@ -104,6 +98,8 @@ pmix_status_t PMIx_tool_init(pmix_proc_t *proc,
  * operation. */
 pmix_status_t PMIx_tool_finalize(void);
 
-END_C_DECLS
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

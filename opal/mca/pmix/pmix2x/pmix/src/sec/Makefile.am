@@ -8,25 +8,25 @@
 #
 
 headers += \
-        src/sec/pmix_sec.h \
-        src/sec/pmix_native.h
+        sec/pmix_sec.h \
+        sec/pmix_native.h
 
 sources += \
-        src/sec/pmix_sec.c \
-        src/sec/pmix_native.c
+        sec/pmix_sec.c \
+        sec/pmix_native.c
 
 if PMIX_WANT_MUNGE
 headers += \
-        src/sec/pmix_munge.h
+        sec/pmix_munge.h
 
 sources += \
-        src/sec/pmix_munge.c
+        sec/pmix_munge.c
 endif
 
 if PMIX_WANT_SASL
 headers += \
-        src/sec/pmix_sasl.h
+        sec/pmix_sasl.h
 
 sources += \
-        src/sec/pmix_sasl.c
+        sec/pmix_sasl.c
 endif
