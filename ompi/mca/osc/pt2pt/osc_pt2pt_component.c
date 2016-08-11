@@ -492,7 +492,7 @@ static void ompi_osc_pt2pt_peer_construct (ompi_osc_pt2pt_peer_t *peer)
     OBJ_CONSTRUCT(&peer->lock, opal_mutex_t);
     peer->active_frag = NULL;
     peer->passive_incoming_frag_count = 0;
-    peer->unexpected_post = false;
+    peer->flags = 0;
 }
 
 static void ompi_osc_pt2pt_peer_destruct (ompi_osc_pt2pt_peer_t *peer)
