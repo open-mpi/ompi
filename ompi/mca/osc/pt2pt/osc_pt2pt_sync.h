@@ -164,7 +164,9 @@ static inline void ompi_osc_pt2pt_sync_expected (ompi_osc_pt2pt_sync_t *sync)
     int32_t new_value = OPAL_THREAD_ADD32 (&sync->sync_expected, -1);
     if (0 == new_value) {
         OPAL_THREAD_LOCK(&sync->lock);
-        sync->eager_send_active = true;
+        if (!(sync->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK && sync->num_peers > 1)) {
+            sync->eager_send_active = true;
+        }
         opal_condition_broadcast (&sync->cond);
         OPAL_THREAD_UNLOCK(&sync->lock);
     }
