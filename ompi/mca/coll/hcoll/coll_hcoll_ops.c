@@ -44,9 +44,9 @@ int mca_coll_hcoll_bcast(void *buff, int count,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL BCAST");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    dtype = ompi_dtype_2_hcoll_dtype(datatype, TRY_FIND_DERIVED);
-
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(dtype))) {
+    dtype = ompi_dtype_2_dte_dtype(datatype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(dtype) || HCOL_DTE_IS_COMPLEX(dtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -76,12 +76,11 @@ int mca_coll_hcoll_allgather(void *sbuf, int scount,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL ALLGATHER");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    stype = ompi_dtype_2_hcoll_dtype(sdtype, TRY_FIND_DERIVED);
-    rtype = ompi_dtype_2_hcoll_dtype(rdtype, TRY_FIND_DERIVED);
-    if (sbuf == MPI_IN_PLACE) {
-        stype = rtype;
-    }
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -118,9 +117,11 @@ int mca_coll_hcoll_allgatherv(const void *sbuf, int scount,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL ALLGATHERV");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
-    rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -160,9 +161,11 @@ int mca_coll_hcoll_gather(const void *sbuf, int scount,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL GATHER");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
-    rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -198,8 +201,9 @@ int mca_coll_hcoll_allreduce(void *sbuf, void *rbuf, int count,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL ALLREDUCE");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    Dtype = ompi_dtype_2_hcoll_dtype(dtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(Dtype))){
+    Dtype = ompi_dtype_2_dte_dtype(dtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(Dtype) || HCOL_DTE_IS_COMPLEX(Dtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -246,8 +250,9 @@ int mca_coll_hcoll_reduce(const void *sbuf, void *rbuf, int count,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL REDUCE");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    Dtype = ompi_dtype_2_hcoll_dtype(dtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(Dtype))){
+    Dtype = ompi_dtype_2_dte_dtype(dtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(Dtype) || HCOL_DTE_IS_COMPLEX(Dtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -297,9 +302,11 @@ int mca_coll_hcoll_alltoall(const void *sbuf, int scount,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL ALLTOALL");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
-    rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -335,9 +342,11 @@ int mca_coll_hcoll_alltoallv(void *sbuf, int *scounts, int *sdisps,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL ALLTOALLV");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
-    rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         HCOL_VERBOSE(20,"Ompi_datatype is not supported: sdtype = %s, rdtype = %s; calling fallback alltoallv;",
                      sdtype->super.name,
                      rdtype->super.name);
@@ -371,9 +380,11 @@ int mca_coll_hcoll_gatherv(void* sbuf, int scount,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL GATHERV");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
-    rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -425,8 +436,9 @@ int mca_coll_hcoll_ibcast(void *buff, int count,
     HCOL_VERBOSE(20,"RUNNING HCOL NON-BLOCKING BCAST");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     rt_handle = (void**) request;
-    dtype = ompi_dtype_2_hcoll_dtype(datatype, TRY_FIND_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(dtype))){
+    dtype = ompi_dtype_2_dte_dtype(datatype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(dtype) || HCOL_DTE_IS_COMPLEX(dtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -459,9 +471,11 @@ int mca_coll_hcoll_iallgather(void *sbuf, int scount,
     HCOL_VERBOSE(20,"RUNNING HCOL NON-BLOCKING ALLGATHER");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     rt_handle = (void**) request;
-    stype = ompi_dtype_2_hcoll_dtype(sdtype, TRY_FIND_DERIVED);
-    rtype = ompi_dtype_2_hcoll_dtype(rdtype, TRY_FIND_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -502,10 +516,12 @@ int mca_coll_hcoll_iallgatherv(const void *sbuf, int scount,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL NON-BLOCKING ALLGATHERV");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
-    rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
     void **rt_handle = (void **) request;
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -550,8 +566,9 @@ int mca_coll_hcoll_iallreduce(const void *sbuf, void *rbuf, int count,
     HCOL_VERBOSE(20,"RUNNING HCOL NON-BLOCKING ALLREDUCE");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     rt_handle = (void**) request;
-    Dtype = ompi_dtype_2_hcoll_dtype(dtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(Dtype))){
+    Dtype = ompi_dtype_2_dte_dtype(dtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(Dtype) || HCOL_DTE_IS_COMPLEX(Dtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -599,9 +616,10 @@ int mca_coll_hcoll_ireduce(const void *sbuf, void *rbuf, int count,
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL NON-BLOCKING REDUCE");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
-    Dtype = ompi_dtype_2_hcoll_dtype(dtype, NO_DERIVED);
+    Dtype = ompi_dtype_2_dte_dtype(dtype);
     void **rt_handle = (void**) request;
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(Dtype))){
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(Dtype) || HCOL_DTE_IS_COMPLEX(Dtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -658,9 +676,11 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
     HCOL_VERBOSE(20,"RUNNING HCOL IGATHERV");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     rt_handle = (void**) request;
-    stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
-    rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
