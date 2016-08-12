@@ -231,16 +231,18 @@ char *opal_path_access(char *fname, char *path, int mode)
 {
     char *fullpath = NULL;
     struct stat buf;
+    bool relative;
 
     /* Allocate space for the full pathname. */
     if (NULL == path) {
         fullpath = opal_os_path(false, fname, NULL);
     } else {
-        fullpath = opal_os_path(false, path, fname, NULL);
+        relative = !opal_path_is_absolute(path);
+        fullpath = opal_os_path(relative, path, fname, NULL);
     }
-    if (NULL == fullpath)
+    if (NULL == fullpath) {
         return NULL;
-
+    }
     /* first check to see - is this a file or a directory? We
      * only want files
      */
@@ -447,7 +449,7 @@ static char *opal_check_mtab(char *dev_path)
  *
  * @fname[in]          File name to check
  * @fstype[out]        File system type if retval is true
- * 
+ *
  * @retval true                If fname is on NFS, Lustre, Panasas or GPFS
  * @retval false               otherwise
  *
