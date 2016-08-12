@@ -258,8 +258,10 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
     char *tmp;
 
     /* Check if we are under Grid Engine parallel environment by looking at several
-     * environment variables.  If so, setup the path and argv[0]. */
-    if (NULL == mca_plm_rsh_component.agent) {
+     * environment variables.  If so, setup the path and argv[0].
+     * Note that we allow the user to specify the launch agent
+     * even if they are in a Grid Engine environment */
+    if (0 == strcmp(mca_plm_rsh_component.agent, "ssh : rsh")) {
         if (!mca_plm_rsh_component.disable_qrsh &&
             NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
             NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
