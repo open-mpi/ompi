@@ -80,6 +80,7 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
     pmix_info_t *pinfo;
     size_t sz, n;
     volatile bool active;
+    opal_pmix2x_jobid_trkr_t *job;
 
     if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
         asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
@@ -100,6 +101,13 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
         sz = 0;
         pinfo = NULL;
     }
+
+    /* insert ourselves into our list of jobids - it will be the
+     * first, and so we'll check it first */
+    job = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
+    (void)opal_snprintf_jobid(job->nspace, PMIX_MAX_NSLEN, OPAL_PROC_MY_NAME.jobid);
+    job->jobid = OPAL_PROC_MY_NAME.jobid;
+    opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
 
     if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, pinfo, sz))) {
         PMIX_INFO_FREE(pinfo, sz);
