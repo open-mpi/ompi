@@ -392,6 +392,7 @@ static pmix_status_t process_val(pmix_value_t *val,
 {
     pmix_info_t *info;
     size_t n, nsize, nvals;
+    pmix_status_t rc;
 
     if (NULL == val) {
         /* this is an error */
@@ -418,7 +419,9 @@ static pmix_status_t process_val(pmix_value_t *val,
     }
     nvals = 0;
     for (n=0; n < nsize; n++) {
-        pmix_pointer_array_add(results, &info[n]);
+        if (PMIX_SUCCESS != (rc = pmix_pointer_array_add(results, &info[n]))) {
+            return rc;
+        }
         ++nvals;
     }
     if (PMIX_DATA_ARRAY == val->type) {

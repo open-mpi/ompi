@@ -233,9 +233,11 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
             } else if (strcmp(info[n].key, PMIX_CONNECT_SYSTEM_FIRST) == 0) {
                 connect_to_system_first = info[n].value.data.flag;
                 connection_defined = true;
-            } else if (strcmp(info[n].key, PMIX_SERVER_TMPDIR) == 0) {
+            } else if (strcmp(info[n].key, PMIX_SERVER_TMPDIR) == 0 &&
+                       NULL == mytmpdir) {
                 mytmpdir = strdup(info[n].value.data.string);
-            } else if (strcmp(info[n].key, PMIX_SYSTEM_TMPDIR) == 0) {
+            } else if (strcmp(info[n].key, PMIX_SYSTEM_TMPDIR) == 0 &&
+                       NULL == systmpdir) {
                 systmpdir = strdup(info[n].value.data.string);
             }
         }
