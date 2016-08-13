@@ -52,6 +52,10 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
+#include "src/util/show_help.h"
+#include "src/mca/base/base.h"
+#include "src/mca/base/pmix_mca_base_var.h"
+#include "src/mca/pinstalldirs/base/base.h"
 #include "src/runtime/pmix_progress_threads.h"
 #include "src/usock/usock.h"
 #include "src/sec/pmix_sec.h"
@@ -121,11 +125,25 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     char *tdir, *evar;
     char * pmix_pid;
     pmix_listener_t *listener;
+    pmix_status_t ret;
 
     /* initialize the output system */
     if (!pmix_output_init()) {
+        fprintf(stderr, "PMIx server was unable to initialize its output system\n");
         return PMIX_ERR_INIT;
     }
+    /* initialize install dirs code */
+    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_pinstalldirs_base_framework, 0))) {
+        fprintf(stderr, "pmix_pinstalldirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of PMIX_SUCCESS)\n",
+                __FILE__, __LINE__, ret);
+        return ret;
+    }
+
+    if (PMIX_SUCCESS != pmix_show_help_init()) {
+        fprintf(stderr, "PMIx server was unable to initialize its show_help system\n");
+        return PMIX_ERR_INIT;
+    }
+
     /* setup the globals */
     pmix_globals_init();
     memset(&pmix_server_globals, 0, sizeof(pmix_server_globals));
@@ -198,7 +216,9 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     if (0 > asprintf(&pmix_pid, "%s/pmix-%d", tdir, mypid)) {
         return PMIX_ERR_NOMEM;
     }
+
     if ((strlen(pmix_pid) + 1) > sizeof(listener->address.sun_path)-1) {
+        pmix_show_help("help-pmix-server.txt", "rnd-path-too-long", true, tdir, pmix_pid);
         free(pmix_pid);
         return PMIX_ERR_INVALID_LENGTH;
     }
@@ -352,6 +372,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                 return PMIX_ERR_NOMEM;
             }
             if ((strlen(pmix_pid) + 1) > sizeof(tl->address.sun_path)-1) {
+                pmix_show_help("help-pmix-server.txt", "rnd-path-too-long", true, tdir, pmix_pid);
                 free(pmix_pid);
                 return PMIX_ERR_INVALID_LENGTH;
             }
@@ -380,6 +401,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                 return PMIX_ERR_NOMEM;
             }
             if ((strlen(pmix_pid) + 1) > sizeof(tl->address.sun_path)-1) {
+                pmix_show_help("help-pmix-server.txt", "rnd-path-too-long", true, tdir, pmix_pid);
                 free(pmix_pid);
                 return PMIX_ERR_INVALID_LENGTH;
             }
@@ -413,6 +435,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     }
     if (need_listener) {
         if (PMIX_SUCCESS != pmix_start_listening()) {
+            pmix_show_help("help-pmix-server.txt", "listener-failed-start", true, tl->address.sun_path);
             PMIx_server_finalize();
             return PMIX_ERR_INIT;
         }
@@ -441,6 +464,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
             kv.value = &info[n].value;
             if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(&pmix_server_globals.gdata, &kv, 1, PMIX_KVAL))) {
                 PMIX_ERROR_LOG(rc);
+                pmix_show_help("help-pmix-server.txt", "data-store-failed", true, kv.key);
                 /* protect the incoming data */
                 kv.key = NULL;
                 kv.value = NULL;
