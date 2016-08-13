@@ -340,14 +340,14 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
             kv = OBJ_NEW(opal_value_t);
             kv->key = strdup(OPAL_PMIX_LOCAL_PEERS);
             kv->type = OPAL_STRING;
-            kv->data.string = peerlist;
+            kv->data.string = strdup(peerlist);
             opal_list_append(pmap, &kv->super);
 
             /* pass the list of cpusets */
             kv = OBJ_NEW(opal_value_t);
             kv->key = strdup(OPAL_PMIX_LOCAL_CPUSETS);
             kv->type = OPAL_STRING;
-            kv->data.string = cpulist;
+            kv->data.string = strdup(cpulist);
             opal_list_append(pmap, &kv->super);
 
             /* appnum */
