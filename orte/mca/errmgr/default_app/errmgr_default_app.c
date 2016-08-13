@@ -82,10 +82,25 @@ static void notify_cbfunc(int status,
                           opal_list_t *info, opal_list_t *results,
                           opal_pmix_notification_complete_fn_t cbfunc, void *cbdata)
 {
+    orte_proc_state_t state;
+
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                         "%s errmgr:default_app: pmix event handler called with status %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_ERROR_NAME(status)));
+
+    /* we must convert the incoming status into an equivalent state
+     * so we can activate the state machine */
+    switch(status) {
+        case OPAL_ERR_PROC_ABORTED:
+            state = ORTE_PROC_STATE_ABORTED;
+            break;
+        case OPAL_ERR_PROC_REQUESTED_ABORT:
+            state = ORTE_PROC_STATE_CALLED_ABORT;
+            break;
+        default:
+            state = ORTE_PROC_STATE_TERMINATED;
+    }
 
     /* let the caller know we processed this, but allow the
      * chain to continue */
@@ -94,7 +109,7 @@ static void notify_cbfunc(int status,
     }
 
     /* push it into our event base */
-    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, status);
+    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, state);
 }
 
 /************************

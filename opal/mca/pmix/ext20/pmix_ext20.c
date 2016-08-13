@@ -179,6 +179,9 @@ static void progress_local_event_hdlr(int status,
             if (sing->code == chain->status) {
                 OBJ_RETAIN(chain);
                 chain->sing = sing;
+                opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                    "%s PROGRESS CALLING SINGLE EVHDLR",
+                                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                 sing->handler(chain->status, &chain->source,
                               chain->info, &chain->results,
                               progress_local_event_hdlr, (void*)chain);
@@ -204,6 +207,9 @@ static void progress_local_event_hdlr(int status,
                      * callback function to our progression function */
                     OBJ_RETAIN(chain);
                     chain->multi = multi;
+                    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                        "%s PROGRESS CALLING MULTI EVHDLR",
+                                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                     multi->handler(chain->status, &chain->source,
                                    chain->info, &chain->results,
                                    progress_local_event_hdlr, (void*)chain);
@@ -230,6 +236,9 @@ static void progress_local_event_hdlr(int status,
             def = (opal_ext20_default_event_t*)nxt;
             OBJ_RETAIN(chain);
             chain->def = def;
+            opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                "%s PROGRESS CALLING DEFAULT EVHDLR",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
             def->handler(chain->status, &chain->source,
                          chain->info, &chain->results,
                          progress_local_event_hdlr, (void*)chain);
@@ -259,7 +268,7 @@ static void _event_hdlr(int sd, short args, void *cbdata)
     opal_ext20_default_event_t *def;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "%s RECEIVED NOTIFICATION OF STATUS %d",
+                        "%s _EVENT_HDLR RECEIVED NOTIFICATION OF STATUS %d",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), cd->status);
 
     chain = OBJ_NEW(opal_ext20_event_chain_t);
@@ -281,7 +290,7 @@ static void _event_hdlr(int sd, short args, void *cbdata)
             OBJ_RETAIN(chain);
             chain->sing = sing;
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "%s CALLING SINGLE EVHDLR",
+                                "%s _EVENT_HDLR CALLING SINGLE EVHDLR",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
             sing->handler(chain->status, &chain->source,
                           chain->info, &chain->results,
@@ -300,7 +309,7 @@ static void _event_hdlr(int sd, short args, void *cbdata)
                 OBJ_RETAIN(chain);
                 chain->multi = multi;
                 opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                    "%s CALLING MULTI EVHDLR",
+                                    "%s _EVENT_HDLR CALLING MULTI EVHDLR",
                                     OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
                 multi->handler(chain->status, &chain->source,
                                chain->info, &chain->results,
@@ -327,7 +336,7 @@ static void _event_hdlr(int sd, short args, void *cbdata)
         OBJ_RETAIN(chain);
         chain->def = def;
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                            "%s CALLING DEFAULT EVHDLR",
+                            "%s _EVENT_HDLR CALLING DEFAULT EVHDLR",
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         def->handler(chain->status, &chain->source,
                      chain->info, &chain->results,
@@ -812,6 +821,10 @@ void ext20_value_load(pmix_value_t *v,
              * so the ORTE layer is responsible for converting it */
             memcpy(&v->data.state, &kv->data.uint8, sizeof(uint8_t));
             break;
+        case OPAL_PTR:
+            v->type = PMIX_POINTER;
+            v->data.ptr = kv->data.ptr;
+            break;
         default:
             /* silence warnings */
             break;
@@ -943,11 +956,17 @@ int ext20_value_unload(opal_value_t *kv,
     case PMIX_DATA_RANGE:
         kv->type = OPAL_DATA_RANGE;
         kv->data.uint8 = ext20_convert_range(v->data.persist);
+        break;
     case PMIX_PROC_STATE:
         kv->type = OPAL_PROC_STATE;
         /* the OPAL layer doesn't have any concept of proc state,
          * so the ORTE layer is responsible for converting it */
         memcpy(&kv->data.uint8, &v->data.state, sizeof(uint8_t));
+        break;
+    case PMIX_POINTER:
+        kv->type = OPAL_PTR;
+        kv->data.ptr = v->data.ptr;
+        break;
     default:
         /* silence warnings */
         rc = OPAL_ERROR;
