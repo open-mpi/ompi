@@ -11,6 +11,8 @@
 # $HEADER$
 #
 
+dist_pmixdata_DATA += server/help-pmix-server.txt
+
 headers += \
         server/pmix_server_ops.h
 
