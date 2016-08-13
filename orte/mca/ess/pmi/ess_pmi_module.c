@@ -314,12 +314,12 @@ static int rte_init(void)
         }
         /* retrieve the local peers */
         OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
-                              &wildcard_rank, &val, OPAL_STRING);
+                              ORTE_PROC_MY_NAME, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
             peers = opal_argv_split(val, ',');
             free(val);
             /* and their cpusets, if available */
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS, &wildcard_rank, &val, OPAL_STRING);
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS, ORTE_PROC_MY_NAME, &val, OPAL_STRING);
             if (OPAL_SUCCESS == ret && NULL != val) {
                 cpusets = opal_argv_split(val, ':');
                 free(val);
