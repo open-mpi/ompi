@@ -127,7 +127,7 @@ setup_scatter_handles(struct ompi_communicator_t   *comm,
 
     ptl_me_t  me;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:setup_scatter_handles enter rank %d", request->u.scatter.my_rank));
 
     /**********************************/
@@ -136,7 +136,7 @@ setup_scatter_handles(struct ompi_communicator_t   *comm,
     COLL_PORTALS4_SET_BITS(request->u.scatter.scatter_match_bits, ompi_comm_get_cid(comm),
             0, 0, COLL_PORTALS4_SCATTER, 0, request->u.scatter.coll_count);
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:setup_scatter_handles rank(%d) scatter_match_bits(0x%016lX)",
                  request->u.scatter.my_rank, request->u.scatter.scatter_match_bits));
 
@@ -166,7 +166,7 @@ setup_scatter_handles(struct ompi_communicator_t   *comm,
                       &request->u.scatter.scatter_meh);
     if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:setup_scatter_handles exit rank %d", request->u.scatter.my_rank));
 
     return OMPI_SUCCESS;
@@ -188,7 +188,7 @@ setup_sync_handles(struct ompi_communicator_t   *comm,
 
     ptl_me_t  me;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:setup_sync_handles enter rank %d", request->u.scatter.my_rank));
 
     /**********************************/
@@ -197,7 +197,7 @@ setup_sync_handles(struct ompi_communicator_t   *comm,
     COLL_PORTALS4_SET_BITS(request->u.scatter.sync_match_bits, ompi_comm_get_cid(comm),
             0, 1, COLL_PORTALS4_SCATTER, 0, request->u.scatter.coll_count);
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:setup_sync_handles rank(%d) sync_match_bits(0x%016lX)",
                  request->u.scatter.my_rank, request->u.scatter.sync_match_bits));
 
@@ -227,7 +227,7 @@ setup_sync_handles(struct ompi_communicator_t   *comm,
                       &request->u.scatter.sync_meh);
     if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:setup_sync_handles exit rank %d", request->u.scatter.my_rank));
 
     return OMPI_SUCCESS;
@@ -245,7 +245,7 @@ cleanup_scatter_handles(ompi_coll_portals4_request_t *request)
 {
     int ret, line;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:cleanup_scatter_handles enter rank %d", request->u.scatter.my_rank));
 
     /**********************************/
@@ -265,7 +265,7 @@ cleanup_scatter_handles(ompi_coll_portals4_request_t *request)
     ret = PtlCTFree(request->u.scatter.scatter_cth);
     if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:cleanup_scatter_handles exit rank %d", request->u.scatter.my_rank));
 
     return OMPI_SUCCESS;
@@ -284,7 +284,7 @@ cleanup_sync_handles(ompi_coll_portals4_request_t *request)
     int ret, line;
     int ptl_ret;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:cleanup_sync_handles enter rank %d", request->u.scatter.my_rank));
 
     /**********************************/
@@ -304,7 +304,7 @@ cleanup_sync_handles(ompi_coll_portals4_request_t *request)
     ret = PtlCTFree(request->u.scatter.sync_cth);
     if (PTL_OK != ret) { ptl_ret = ret; ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:cleanup_sync_handles exit rank %d", request->u.scatter.my_rank));
 
     return OMPI_SUCCESS;
@@ -341,8 +341,9 @@ ompi_coll_portals4_scatter_intra_linear_top(const void *sbuf, int scount, struct
     int32_t expected_chained_rtrs = 0;
     int32_t expected_chained_acks = 0;
 
+    ptl_size_t number_of_fragment = 1;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:scatter_intra_linear_top enter rank %d", request->u.scatter.my_rank));
 
     request->type                   = OMPI_COLL_PORTALS4_TYPE_SCATTER;
@@ -409,6 +410,13 @@ ompi_coll_portals4_scatter_intra_linear_top(const void *sbuf, int scount, struct
     ret = setup_sync_handles(comm, request, portals4_module);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
 
+    number_of_fragment = (request->u.scatter.packed_size > mca_coll_portals4_component.ni_limits.max_msg_size) ?
+        (request->u.scatter.packed_size + mca_coll_portals4_component.ni_limits.max_msg_size - 1) / mca_coll_portals4_component.ni_limits.max_msg_size :
+        1;
+    opal_output_verbose(90, ompi_coll_base_framework.framework_output,
+        "%s:%d:rank %d:number_of_fragment = %lu",
+        __FILE__, __LINE__, request->u.scatter.my_rank, number_of_fragment);
+
     /**********************************/
     /* do the scatter                 */
     /**********************************/
@@ -445,25 +453,42 @@ ompi_coll_portals4_scatter_intra_linear_top(const void *sbuf, int scount, struct
             }
 
             ptl_size_t offset = request->u.scatter.packed_size * i;
+            ptl_size_t size_sent = 0;
+            ptl_size_t size_left = request->u.scatter.packed_size;
 
-            opal_output_verbose(30, ompi_coll_base_framework.framework_output,
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                                 "%s:%d:rank(%d): offset(%lu)=rank(%d) * packed_size(%ld)",
                                 __FILE__, __LINE__, request->u.scatter.my_rank,
                                 offset, i, request->u.scatter.packed_size);
 
-            ret = PtlTriggeredPut(request->u.scatter.scatter_mdh,
-                                  (ptl_size_t)request->u.scatter.scatter_buf + offset,
-                                  request->u.scatter.packed_size,
-                                  PTL_NO_ACK_REQ,
-                                  ompi_coll_portals4_get_peer(comm, i),
-                                  mca_coll_portals4_component.pt_idx,
-                                  request->u.scatter.scatter_match_bits,
-                                  0,
-                                  NULL,
-                                  0,
-                                  request->u.scatter.scatter_cth,
-                                  expected_chained_rtrs);
-            if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
+            for (ptl_size_t j=0; j<number_of_fragment; j++) {
+
+                ptl_size_t frag_size = (size_left >  mca_coll_portals4_component.ni_limits.max_msg_size) ?
+                    mca_coll_portals4_component.ni_limits.max_msg_size :
+                    size_left;
+
+                OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
+                                     "%s:%d:rank(%d): frag(%lu),offset_frag (%lu) frag_size(%lu)",
+                                     __FILE__, __LINE__, request->u.scatter.my_rank,
+                                     j, size_sent, frag_size));
+
+                ret = PtlTriggeredPut(request->u.scatter.scatter_mdh,
+                                      (ptl_size_t)request->u.scatter.scatter_buf + offset + size_sent,
+                                      frag_size,
+                                      PTL_NO_ACK_REQ,
+                                      ompi_coll_portals4_get_peer(comm, i),
+                                      mca_coll_portals4_component.pt_idx,
+                                      request->u.scatter.scatter_match_bits,
+                                      size_sent,
+                                      NULL,
+                                      0,
+                                      request->u.scatter.scatter_cth,
+                                      expected_chained_rtrs);
+                if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
+
+                size_left -= frag_size;
+                size_sent += frag_size;
+            }
         }
     } else {
         /* non-root, so do nothing */
@@ -473,7 +498,7 @@ ompi_coll_portals4_scatter_intra_linear_top(const void *sbuf, int scount, struct
         expected_acks = 0;
 
         /* operations on the scatter counter */
-        expected_puts         = 1;  /* scatter put from root */
+        expected_puts         = number_of_fragment;  /* scatter put from root */
         expected_chained_rtrs = 0;
         expected_chained_acks = 0;
     }
@@ -552,7 +577,7 @@ ompi_coll_portals4_scatter_intra_linear_top(const void *sbuf, int scount, struct
                 "completed CTWait(expected_ops=%d)\n", expected_ops);
     }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:scatter_intra_linear_top exit rank %d", request->u.scatter.my_rank));
 
     return OMPI_SUCCESS;
@@ -574,7 +599,7 @@ ompi_coll_portals4_scatter_intra_linear_bottom(struct ompi_communicator_t *comm,
 {
     int ret, line;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:scatter_intra_linear_bottom enter rank %d", request->u.scatter.my_rank));
 
     ret = cleanup_scatter_handles(request);
@@ -616,7 +641,7 @@ ompi_coll_portals4_scatter_intra_linear_bottom(struct ompi_communicator_t *comm,
     ompi_request_complete(&request->super, true);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:scatter_intra_linear_bottom exit rank %d", request->u.scatter.my_rank));
 
     return OMPI_SUCCESS;
@@ -645,7 +670,7 @@ ompi_coll_portals4_scatter_intra(const void *sbuf, int scount, struct ompi_datat
 
     ompi_coll_portals4_request_t *request;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:scatter_intra enter rank %d", ompi_comm_rank(comm)));
 
     /*
@@ -679,7 +704,7 @@ ompi_coll_portals4_scatter_intra(const void *sbuf, int scount, struct ompi_datat
      */
     OMPI_COLL_PORTALS4_REQUEST_RETURN(request);
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:scatter_intra exit rank %d", request->u.scatter.my_rank));
 
     return OMPI_SUCCESS;
@@ -705,7 +730,7 @@ ompi_coll_portals4_iscatter_intra(const void *sbuf, int scount, struct ompi_data
 
     ompi_coll_portals4_request_t *request;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:iscatter_intra enter rank %d", ompi_comm_rank(comm)));
 
     /*
@@ -732,7 +757,7 @@ ompi_coll_portals4_iscatter_intra(const void *sbuf, int scount, struct ompi_data
                                                       module);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:iscatter_intra exit rank %d", request->u.scatter.my_rank));
 
     return OMPI_SUCCESS;
@@ -751,7 +776,7 @@ ompi_coll_portals4_iscatter_intra_fini(ompi_coll_portals4_request_t *request)
 {
     int ret, line;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:iscatter_intra_fini enter rank %d", request->u.scatter.my_rank));
 
     /*
@@ -760,7 +785,7 @@ ompi_coll_portals4_iscatter_intra_fini(ompi_coll_portals4_request_t *request)
     ret = ompi_coll_portals4_scatter_intra_linear_bottom(request->super.req_mpi_object.comm, request);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:iscatter_intra_fini exit rank %d", request->u.scatter.my_rank));
 
     return OMPI_SUCCESS;
