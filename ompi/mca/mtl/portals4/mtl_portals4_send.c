@@ -44,6 +44,29 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
     ompi_mtl_portals4_isend_request_t* ptl_request =
         (ompi_mtl_portals4_isend_request_t*) ptl_base_request;
 
+    if (PTL_EVENT_GET == ev->type) {
+        ret = OPAL_THREAD_ADD32(&(ptl_request->pending_get), -1);
+        if (ret > 0) {
+            /* wait for other gets */
+            OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "PTL_EVENT_GET received now pending_get=%d",ret));
+            return retval;
+        }
+        assert(ptl_request->pending_get == 0);
+
+        /* last get received */
+        OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "PTL_EVENT_GET: PtlMEUnlink is called ptl_request->me_h=%d (pending get=%d)", ptl_request->me_h, ret));
+
+        if (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
+            ret = PtlMEUnlink(ptl_request->me_h);
+            if (PTL_OK != ret) {
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: send callback PtlMEUnlink returned %d",
+                                __FILE__, __LINE__, ret);
+            }
+            ptl_request->me_h = PTL_INVALID_HANDLE;
+        }
+    }
+
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     if (OPAL_UNLIKELY(ev->ni_fail_type == PTL_NI_PT_DISABLED)) {
         ompi_mtl_portals4_pending_request_t *pending =
@@ -66,6 +89,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
                                     "%s:%d: send callback PtlMEUnlink returned %d",
                                     __FILE__, __LINE__, ret);
             }
+            ptl_request->me_h = PTL_INVALID_HANDLE;
         }
 
         opal_list_append(&ompi_mtl_portals4.flowctl.pending_sends,
@@ -89,11 +113,40 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
                          "send %lu got event of type %d",
                          ptl_request->opcount, ev->type));
 
+    /* First put achieved successfully (In the Priority List), so it may be necessary to decrement the number of pending get
+     * If the protocol is eager, just decrement pending_get 
+     * Else (the protocol is rndv), decrement pending_get only if length % max_msg_size <= eager_limit
+     * (This is the case where the eager part allows to save one get)
+     */
     if ((PTL_EVENT_ACK == ev->type) &&
         (PTL_PRIORITY_LIST == ev->ptl_list) &&
-        (eager == ompi_mtl_portals4.protocol) &&
+        (0 <  ptl_request->pending_get)) {
+
+        if ((eager == ompi_mtl_portals4.protocol) ||
+             (ptl_request->length % ompi_mtl_portals4.max_msg_size_mtl <= ompi_mtl_portals4.eager_limit)) {
+           val = OPAL_THREAD_ADD32(&(ptl_request->pending_get), -1);
+        }
+        if (0 == val) {
+            add = 2; /* We haven't to wait for any get, so we have to add an extra count to cause the message to complete */
+            if (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
+                ret = PtlMEUnlink(ptl_request->me_h);
+                if (PTL_OK != ret) {
+                    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: send callback PtlMEUnlink returned %d",
+                                __FILE__, __LINE__, ret);
+                }
+                ptl_request->me_h = PTL_INVALID_HANDLE;
+            }
+        }
+    }
+
+    if ((PTL_EVENT_ACK == ev->type) &&
+        (PTL_PRIORITY_LIST == ev->ptl_list) &&
+        (ev->mlength == ptl_request->length) &&
         (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE))) {
-        /* long expected messages with the eager protocol won't see a
+        /* long expected messages with the eager protocol
+           (and also with the rndv protocol if the length
+           is less or egal to eager_limit) won't see a
            get event to complete the message.  Give them an extra
            count to cause the message to complete with just the SEND
            and ACK events and remove the ME. (we wait for the counter
@@ -105,10 +158,10 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
                                 "%s:%d: send callback PtlMEUnlink returned %d",
                                 __FILE__, __LINE__, ret);
         }
+        ptl_request->me_h = PTL_INVALID_HANDLE;
         add++;
     }
     val = OPAL_THREAD_ADD32((int32_t*)&ptl_request->event_count, add);
-
     assert(val <= 3);
 
     if (val == 3) {
@@ -191,6 +244,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
 
     MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length,
                               (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) ? 1 : 0);
+    ptl_request->me_h = PTL_INVALID_HANDLE;
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) {
         me.start = NULL;
@@ -217,6 +271,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlMEAppend failed: %d",
                                 __FILE__, __LINE__, ret);
+            ptl_request->me_h = PTL_INVALID_HANDLE;
             return ompi_mtl_portals4_get_error(ret);
         }
 
@@ -225,7 +280,6 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                              ptl_request->opcount, hdr_data, match_bits));
     } else {
         ptl_request->event_count = 1;
-        ptl_request->me_h = PTL_INVALID_HANDLE;
 
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                              "Send %lu short send with hdr_data 0x%lx (0x%lx)",
@@ -236,6 +290,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                          "Send %lu, start: %p",
                          ptl_request->opcount, start));
 
+    ptl_request->pending_get = 0;
     ret = PtlPut(ompi_mtl_portals4.send_md_h,
                  (ptl_size_t) start,
                  length,
@@ -252,6 +307,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                             __FILE__, __LINE__, ret);
         if (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) {
             PtlMEUnlink(ptl_request->me_h);
+            ptl_request->me_h = PTL_INVALID_HANDLE;
         }
         return ompi_mtl_portals4_get_error(ret);
     }
@@ -283,7 +339,6 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
     me.uid = ompi_mtl_portals4.uid;
     me.options =
         PTL_ME_OP_GET |
-        PTL_ME_USE_ONCE |
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id = ptl_proc;
@@ -307,8 +362,32 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
                          "Send %lu long send with hdr_data 0x%lx (0x%lx)",
                          ptl_request->opcount, hdr_data, match_bits));
 
-    put_length = (rndv == ompi_mtl_portals4.protocol) ?
-        (ptl_size_t) ompi_mtl_portals4.eager_limit : (ptl_size_t) length;
+    if (rndv == ompi_mtl_portals4.protocol) {
+        ptl_size_t min = (OPAL_LIKELY (ompi_mtl_portals4.eager_limit < ompi_mtl_portals4.max_msg_size_mtl)) ?
+            ompi_mtl_portals4.eager_limit :
+            ompi_mtl_portals4.max_msg_size_mtl;
+        if ((ptl_size_t) length > (ptl_size_t) min) {
+            OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output,
+                                 "msg truncated by %ld", length - min));
+            put_length = (ptl_size_t) min;
+        }
+        else
+            put_length = (ptl_size_t) length;
+    } else { // eager protocol
+        if (length >  ompi_mtl_portals4.max_msg_size_mtl)
+            put_length = (ptl_size_t) ompi_mtl_portals4.max_msg_size_mtl;
+        else
+            put_length = (ptl_size_t) length;
+    }
+
+    /* We have to wait for some GET events.
+       If the first put falls in overflow list, the number of GET event is egal to:
+           (length - 1) / ompi_mtl_portals4.max_msg_size_mtl + 1
+       else we will re-calculate this number when we received the first ACK event (with remote overflow list)
+     */
+
+    ptl_request->pending_get = (length - 1) / ompi_mtl_portals4.max_msg_size_mtl + 1;
+    OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "pending_get=%d", ptl_request->pending_get));
 
     ret = PtlPut(ompi_mtl_portals4.send_md_h,
                  (ptl_size_t) start,
@@ -324,7 +403,8 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
-	PtlMEUnlink(ptl_request->me_h);
+        PtlMEUnlink(ptl_request->me_h);
+        ptl_request->me_h = PTL_INVALID_HANDLE;
         return ompi_mtl_portals4_get_error(ret);
     }
 
@@ -355,7 +435,7 @@ ompi_mtl_portals4_pending_list_progress()
         }
 
         pending = (ompi_mtl_portals4_pending_request_t*) item;
-        if (pending->length <= ompi_mtl_portals4.eager_limit) {
+        if (pending->length <= ompi_mtl_portals4.short_limit) {
             ret = ompi_mtl_portals4_short_isend(pending->mode,
                                                 pending->start,
                                                 pending->length,
@@ -414,6 +494,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
 
     ptl_request->opcount = OPAL_THREAD_ADD64((int64_t*)&ompi_mtl_portals4.opcount, 1);
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
+    ptl_request->length = length;
     ptl_request->event_count = 0;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
@@ -461,7 +542,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
         return OMPI_SUCCESS;
     }
 #endif
-    if (length <= ompi_mtl_portals4.eager_limit) {
+    if (length <= ompi_mtl_portals4.short_limit) {
         ret = ompi_mtl_portals4_short_isend(mode,
                                             start,
                                             length,

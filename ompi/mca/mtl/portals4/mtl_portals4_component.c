@@ -100,6 +100,18 @@ ompi_mtl_portals4_component_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &param_priority);
+    ompi_mtl_portals4.short_limit = 2 * 1024;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "short_limit",
+                                           "Size limit for short messages",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.short_limit);
+
 
     ompi_mtl_portals4.eager_limit = 2 * 1024;
     (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
@@ -173,6 +185,19 @@ ompi_mtl_portals4_component_register(void)
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.protocol);
+
+    ompi_mtl_portals4.max_msg_size_mtl = PTL_SIZE_MAX;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "max_msg_size",
+                                           "Max size supported by portals4 (above that, a message is cut into messages less than that size)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.max_msg_size_mtl);
+
     OBJ_RELEASE(new_enum);
     if (0 > ret) {
         return OMPI_ERR_NOT_SUPPORTED;
@@ -196,6 +221,12 @@ ompi_mtl_portals4_component_open(void)
                         "no"
 #endif
                         );
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Max message size: %lu", (unsigned long)
+                        ompi_mtl_portals4.max_msg_size_mtl);
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Short limit: %d", (int)
+                        ompi_mtl_portals4.short_limit);
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Eager limit: %d", (int)
                         ompi_mtl_portals4.eager_limit);
@@ -314,6 +345,11 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
+    if (actual_limits.max_msg_size < ompi_mtl_portals4.max_msg_size_mtl)
+        ompi_mtl_portals4.max_msg_size_mtl = actual_limits.max_msg_size;
+    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_framework.framework_output,
+        "Due to portals4 and user configuration messages will not go over the size of %lu", ompi_mtl_portals4.max_msg_size_mtl));
+
     if (ompi_comm_rank(MPI_COMM_WORLD) == 0) {
         opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_entries=%d", actual_limits.max_entries);
         opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "max_unexpected_headers=%d", actual_limits.max_unexpected_headers);
@@ -349,6 +385,10 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__, ret);
         goto error;
     }
+
+    ompi_mtl_portals4.ptl_process_id = id;
+    OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output,
+        "PtlGetPhysId rank=%x nid=%x pid=%x\n", id.rank, id.phys.nid, id.phys.pid));
 
     OPAL_MODEX_SEND(ret, OPAL_PMIX_GLOBAL,
                     &mca_mtl_portals4_component.mtl_version,
