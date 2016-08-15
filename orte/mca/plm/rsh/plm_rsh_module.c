@@ -1557,15 +1557,10 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
         struct passwd *p;
 
         p = getpwuid(getuid());
-        if( NULL == p ) {
-            /* This user is unknown to the system. Therefore, there is no reason we
-             * spawn whatsoever in his name. Give up with a HUGE error message.
-             */
-            orte_show_help( "help-plm-rsh.txt", "unknown-user", true, (int)getuid() );
-            return ORTE_ERR_FATAL;
+        if( NULL != p ) {
+            param = p->pw_shell;
+            local_shell = find_shell(p->pw_shell);
         }
-        param = p->pw_shell;
-        local_shell = find_shell(p->pw_shell);
     }
 #endif
 
