@@ -85,7 +85,7 @@ int pmix2x_client_init(void)
     } else {
         /* we were launched by someone else, so make the
          * jobid just be the hash of the nspace */
-        OPAL_HASH_STR(my_proc.nspace, pname.jobid);
+        OPAL_HASH_JOBID(my_proc.nspace, pname.jobid);
     }
     /* insert this into our list of jobids - it will be the
      * first, and so we'll check it first */
@@ -672,7 +672,7 @@ int pmix2x_lookup(opal_list_t *data, opal_list_t *info)
             } else {
                 /* we were launched by someone else, so make the
                  * jobid just be the hash of the nspace */
-                OPAL_HASH_STR(pdata[n].proc.nspace, d->proc.jobid);
+                OPAL_HASH_JOBID(pdata[n].proc.nspace, d->proc.jobid);
             }
             /* if we don't already have it, add this to our jobid tracker */
             job = NULL;
@@ -735,7 +735,7 @@ static void lk_cbfunc(pmix_status_t status,
             } else {
                 /* we were launched by someone else, so make the
                  * jobid just be the hash of the nspace */
-                OPAL_HASH_STR(data[n].proc.nspace, d->proc.jobid);
+                OPAL_HASH_JOBID(data[n].proc.nspace, d->proc.jobid);
             }
             /* if we don't already have it, add this to our jobid tracker */
             job = NULL;
@@ -916,7 +916,7 @@ int pmix2x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
         } else {
             /* we were launched by someone else, so make the
              * jobid just be the hash of the nspace */
-            OPAL_HASH_STR(nspace, *jobid);
+            OPAL_HASH_JOBID(nspace, *jobid);
         }
         /* add this to our jobid tracker */
         job = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
@@ -950,7 +950,7 @@ static void spcbfunc(pmix_status_t status,
         } else {
             /* we were launched by someone else, so make the
              * jobid just be the hash of the nspace */
-            OPAL_HASH_STR(nspace, jobid);
+            OPAL_HASH_JOBID(nspace, jobid);
         }
         /* add this to our jobid tracker */
         job = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
@@ -1229,7 +1229,7 @@ int pmix2x_resolve_peers(const char *nodename, opal_jobid_t jobid,
             } else {
                 /* we were launched by someone else, so make the
                  * jobid just be the hash of the nspace */
-                OPAL_HASH_STR(array[n].nspace, nm->name.jobid);
+                OPAL_HASH_JOBID(array[n].nspace, nm->name.jobid);
             }
             /* if we don't already have it, add this to our jobid tracker */
             job = NULL;
