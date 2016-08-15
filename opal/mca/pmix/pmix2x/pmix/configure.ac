@@ -47,7 +47,7 @@ AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR(./config)
 # Note that this directory must *exactly* match what was specified via
 # -I in ACLOCAL_AMFLAGS in the top-level Makefile.am.
-AC_CONFIG_MACRO_DIRS(./config)
+AC_CONFIG_MACRO_DIR(./config)
 
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
