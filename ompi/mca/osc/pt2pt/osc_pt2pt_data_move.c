@@ -1717,30 +1717,31 @@ int ompi_osc_pt2pt_irecv_w_cb (void *ptr, int count, ompi_datatype_t *datatype, 
                               ompi_communicator_t *comm, ompi_request_t **request_out,
                               ompi_request_complete_fn_t cb, void *ctx)
 {
-    ompi_request_t *request;
+    ompi_request_t *dummy;
     int ret;
+
+    if (NULL == request_out) {
+        request_out = &dummy;
+    }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: ompi_osc_pt2pt_irecv_w_cb receiving %d bytes from %d with tag %d",
                          count, target, tag));
 
-    ret = MCA_PML_CALL(irecv_init(ptr, count, datatype, target, tag, comm, &request));
+    ret = MCA_PML_CALL(irecv_init(ptr, count, datatype, target, tag, comm, request_out));
     if (OMPI_SUCCESS != ret) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "error posting receive. ret = %d", ret));
         return ret;
     }
 
-    request->req_complete_cb = cb;
-    request->req_complete_cb_data = ctx;
+    (*request_out)->req_complete_cb = cb;
+    (*request_out)->req_complete_cb_data = ctx;
 
-    ret = MCA_PML_CALL(start(1, &request));
-    if (request_out && MPI_REQUEST_NULL != request) {
-        *request_out = request;
-    }
+    ret = MCA_PML_CALL(start(1, request_out));
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc pt2pt: pml start returned %d. state: %d", ret, request->req_state));
+                         "osc pt2pt: pml start returned %d", ret));
 
     return ret;
 }
