@@ -36,57 +36,17 @@ AC_DEFUN([MCA_opal_memory_patcher_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_memory_patcher_CONFIG],[
     AC_CONFIG_FILES([opal/mca/memory/patcher/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([memory_patcher_have___curbrk memory_patcher_have___mmap memory_patcher_have___syscall memory_patcher_have___mmap_prototype memory_patcher_have___syscall_prototype])
-
-    memory_patcher_have___curbrk=0
-    memory_patcher_have___mmap=0
-    memory_patcher_have___mmap_prototype=0
-    memory_patcher_have___syscall=0
-    memory_patcher_have___syscall_prototype=0
-
-    AC_MSG_CHECKING([for __curbrk symbol])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([extern char *__curbrk;],[char *tmp = __curbrk;])],
-                   [AC_MSG_RESULT([yes])
-                    memory_patcher_have___curbrk=1],
-                   [AC_MSG_RESULT([no])])
-    AC_DEFINE_UNQUOTED([OPAL_MEMORY_PATCHER_HAVE___CURBRK], [$memory_patcher_have___curbrk],
-                       [Whether the glibc __curbrk exists])
-
-    AC_MSG_CHECKING([whether __mmap prototype exists])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/mman.h>],[char *tmp = __mmap (NULL, 0, 0, 0, 0, 0);])],
-                   [AC_MSG_RESULT([yes])
-                    memory_patcher_have___mmap_prototype=1],
-                   [AC_MSG_RESULT([no])])
-    AC_DEFINE_UNQUOTED([OPAL_MEMORY_PATCHER_HAVE___MMAP_PROTO], [$memory_patcher_have___mmap_prototype],
-                       [Whether the internal __mmap call has a prototype])
-
-    AC_MSG_CHECKING([whether __mmap symbol exists])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([void *__mmap ();],[char *tmp = __mmap ();])],
-                   [AC_MSG_RESULT([yes])
-                    memory_patcher_have___mmap=1],
-                   [AC_MSG_RESULT([no])])
-    AC_DEFINE_UNQUOTED([OPAL_MEMORY_PATCHER_HAVE___MMAP], [$memory_patcher_have___mmap],
-                       [Whether the internal __mmap call exists])
-
-    AC_MSG_CHECKING([whether __syscall prototype exists])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/syscall.h>],[char *tmp = __syscall (SYS_mmap, NULL);])],
-                   [AC_MSG_RESULT([yes])
-                    memory_patcher_have___syscall_prototype=1],
-                   [AC_MSG_RESULT([no])])
-    AC_DEFINE_UNQUOTED([OPAL_MEMORY_PATCHER_HAVE___SYSCALL_PROTO], [$memory_patcher_have___syscall_prototype],
-                       [Whether the internal __syscall call has a prototype])
-
-    AC_MSG_CHECKING([whether __syscall symbol exists])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([void *__syscall ();],[char *tmp = __syscall ();])],
-                   [AC_MSG_RESULT([yes])
-                    memory_patcher_have___syscall=1],
-                   [AC_MSG_RESULT([no])])
-    AC_DEFINE_UNQUOTED([OPAL_MEMORY_PATCHER_HAVE___SYSCALL], [$memory_patcher_have___syscall],
-                       [Whether the internal __syscall call exists])
+    AC_CHECK_FUNCS([__curbrk])
 
     AC_CHECK_HEADERS([linux/mman.h sys/syscall.h])
 
-    [$1]
+    AC_CHECK_DECLS([__mmap], [], [], [#include <sys/mman.h>])
 
-    OPAL_VAR_SCOPE_POP
+    AC_CHECK_FUNCS([__mmap])
+
+    AC_CHECK_DECLS([__syscall], [], [], [#include <sys/syscall.h>])
+
+    AC_CHECK_FUNCS([__syscall])
+
+    [$1]
 ])
