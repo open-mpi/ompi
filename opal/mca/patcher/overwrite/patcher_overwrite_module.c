@@ -28,9 +28,9 @@
 #include <dlfcn.h>
 #include <assert.h>
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_IA64) || (OPAL_ASSEMBLY_ARCH == OPAL_AMD64)
 
-#if defined(__ia64__)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_IA64)
 
 #define INSERT_BIT(d,p,v) do {                  \
         unsigned char c=*(d);                     \
@@ -87,18 +87,18 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
     uintptr_t func_new_addr = patch->patch_value;
 
     {
-#if defined(__i386__)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32)
         patch->patch_data_size = 5;
         *(unsigned char *)(patch->patch_data+0) = 0xe9;
         *(unsigned int *) (patch->patch_data+1) = (unsigned int)(func_new_addr - patch->patch_orig - 5);
-#elif defined(__x86_64__)
+#elif (OPAL_ASSEMBLY_ARCH == OPAL_AMD64)
         patch->patch_data_size = 13;
         *(unsigned short*)(patch->patch_data + 0) = 0xbb49;
         *(unsigned long* )(patch->patch_data + 2) = (unsigned long) func_new_addr;
         *(unsigned char*) (patch->patch_data +10) = 0x41;
         *(unsigned char*) (patch->patch_data +11) = 0xff;
         *(unsigned char*) (patch->patch_data +12) = 0xe3;
-#elif defined(__ia64__)
+#elif (OPAL_ASSEMBLY_ARCH == OPAL_IA64)
       {
 /*
  * target64 = IP + ((i << 59 | imm39 << 20 | imm20) << 4)
@@ -155,7 +155,7 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
 
 /* end of #if defined(__i386__) || defined(__x86_64__) || defined(__ia64__) */
 // ------------------------------------------------- PPC equivalent:
-#elif defined(__PPC__)
+#elif (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32) || (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
 
 // PowerPC instructions used in patching
 // Reference: "PowerPC User Instruction Set Architecture"
@@ -183,7 +183,7 @@ static unsigned int rldicr(unsigned int RT, unsigned int RS, unsigned int SH, un
 static int
 PatchLoadImm(uintptr_t addr, unsigned int reg, size_t value)
 {
-#if defined(__PPC64__)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
     *(unsigned int *) (addr + 0) = addis ( reg, 0,   (value >> 48));
     *(unsigned int *) (addr + 4) = ori   ( reg, reg, (value >> 32));
     *(unsigned int *) (addr + 8) = rldicr( reg, reg, 32, 31);
@@ -208,7 +208,7 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
     hook_addr = mca_patcher_base_addr_text(patch->patch_value);
 
 // Patch for hook function:
-#if (defined(__PPC64__) || defined(__powerpc64__) || defined(__PPC__))
+#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
     rc = mca_patcher_base_patch_hook (&mca_patcher_overwrite_module, hook_addr);
     if (OPAL_SUCCESS != rc) {
         return rc;
@@ -286,7 +286,7 @@ static int mca_patcher_overwrite_patch_symbol (const char *func_symbol_name, uin
 
     old_addr = (unsigned long)sym_addr;
 
-#if defined(__ia64__)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_IA64)
     /* On IA64 addresses are all indirect */
     func_new_addr = *(unsigned long *)func_new_addr;
     old_addr = *(unsigned long *) old_addr;
