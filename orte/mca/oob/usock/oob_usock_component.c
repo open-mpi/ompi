@@ -205,6 +205,7 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
 static int component_startup(void)
 {
     int rc=ORTE_SUCCESS;
+    char *session;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s USOCK STARTUP",
@@ -213,11 +214,18 @@ static int component_startup(void)
     /* setup the path to the daemon rendezvous point */
     memset(&mca_oob_usock_component.address, 0, sizeof(struct sockaddr_un));
     mca_oob_usock_component.address.sun_family = AF_UNIX;
+    session = opal_os_path(false, orte_process_info.tmpdir_base,
+                           orte_process_info.top_session_dir,
+                           orte_process_info.jobfam_session_dir,
+                           "usock", NULL);
+    if ((strlen(session) + 1) > sizeof(mca_oob_usock_component.address.sun_path)-1) {
+        opal_output(0, "SESSION DIR TOO LONG");
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
     snprintf(mca_oob_usock_component.address.sun_path,
              sizeof(mca_oob_usock_component.address.sun_path)-1,
-             "%s/%s/%s/0/%s", orte_process_info.tmpdir_base,
-             orte_process_info.top_session_dir,
-             ORTE_JOB_FAMILY_PRINT(ORTE_PROC_MY_NAME->jobid), "usock");
+             "%s", session);
+    free(session);
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "SUNPATH: %s", mca_oob_usock_component.address.sun_path);
 
@@ -231,7 +239,7 @@ static int component_startup(void)
         /* if the rendezvous point isn't there, then that's an error */
         /* if the rendezvous file doesn't exist, that's an error */
         if (0 != access(mca_oob_usock_component.address.sun_path, R_OK)) {
-            opal_output_verbose(2, orte_oob_base_framework.framework_output,
+           opal_output_verbose(2, orte_oob_base_framework.framework_output,
                                 "SUNPATH: %s NOT READABLE", mca_oob_usock_component.address.sun_path);
             return OPAL_ERR_NOT_FOUND;
         }

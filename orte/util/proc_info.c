@@ -12,7 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,6 +80,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     .num_local_peers =                 0,
     .tmpdir_base =                     NULL,
     .top_session_dir =                 NULL,
+    .jobfam_session_dir =              NULL,
     .job_session_dir =                 NULL,
     .proc_session_dir =                NULL,
     .sock_stdin =                      NULL,
@@ -292,6 +293,11 @@ int orte_proc_info_finalize(void)
     if (NULL != orte_process_info.top_session_dir) {
         free(orte_process_info.top_session_dir);
         orte_process_info.top_session_dir = NULL;
+    }
+
+    if (NULL != orte_process_info.jobfam_session_dir) {
+        free(orte_process_info.jobfam_session_dir);
+        orte_process_info.jobfam_session_dir = NULL;
     }
 
     if (NULL != orte_process_info.job_session_dir) {

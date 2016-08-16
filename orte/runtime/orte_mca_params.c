@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -51,6 +51,7 @@ static char *orte_tmpdir_base = NULL;
 static char *orte_local_tmpdir_base = NULL;
 static char *orte_remote_tmpdir_base = NULL;
 static char *orte_top_session_dir = NULL;
+static char *orte_jobfam_session_dir = NULL;
 
 int orte_register_params(void)
 {
@@ -163,6 +164,20 @@ int orte_register_params(void)
             free(orte_process_info.top_session_dir);
         }
         orte_process_info.top_session_dir = strdup(orte_top_session_dir);
+    }
+
+    orte_jobfam_session_dir = NULL;
+    (void) mca_base_var_register ("orte", "orte", NULL, "jobfam_session_dir",
+                                  "The jobfamily session directory for applications",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &orte_jobfam_session_dir);
+
+    if (NULL != orte_jobfam_session_dir) {
+        if (NULL != orte_process_info.jobfam_session_dir) {
+            free(orte_process_info.jobfam_session_dir);
+        }
+        orte_process_info.jobfam_session_dir = strdup(orte_jobfam_session_dir);
     }
 
     orte_prohibited_session_dirs = NULL;

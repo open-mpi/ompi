@@ -114,7 +114,16 @@ static int orte_create_dir(char *directory)
 
 /*
  * Construct the fullpath to the session directory - it
- * will consist of "ompi.<hostname>.<pid>"
+ * will consist of "ompi.<hostname>.<effective-uid>", and
+ * have subdirs:
+ *
+ * pid - the pid of the mpirun that oversees this job. Note
+ *       that direct-launched processes will have manufactured
+ *       this value
+ *
+ * jobid - jobid of the application being executed
+ *
+ * vpid - vpid of the process
  */
 int
 orte_session_dir_get_name(char **fulldirpath,
@@ -132,9 +141,13 @@ orte_session_dir_get_name(char **fulldirpath,
     bool prefix_provided = false;
     int exit_status = ORTE_SUCCESS;
     size_t len;
+    uid_t uid;
 
     /* Ensure that system info is set */
     orte_proc_info();
+
+    /* get the effective uid */
+    uid = geteuid();
 
     /*
      * set the 'hostname'
@@ -156,30 +169,48 @@ orte_session_dir_get_name(char **fulldirpath,
     /* construct the frontend of the session directory*/
     if (NULL != orte_process_info.top_session_dir) {
         frontend = strdup(orte_process_info.top_session_dir);
-    }
-    else { /* If not set then construct it */
-        if (0 > asprintf(&frontend, "ompi.%s.%lu", hostname, (unsigned long)orte_process_info.pid)) {
+    } else { /* If not set then construct it */
+        if (0 > asprintf(&frontend, "ompi.%s.%lu", hostname, (unsigned long)uid)) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             exit_status = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
     }
 
-    /*
-     * Construct the session directory
-     */
-    /* If we were given a valid vpid then we can construct it fully into:
-     *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/JOB-FAMILY/JOBID/VPID
-     */
-    if( NULL != proc) {
-        if (ORTE_VPID_INVALID != proc->vpid) {
-
-            if (0 > asprintf(&jobfam, "%d", ORTE_JOB_FAMILY(proc->jobid))) {
+    /* construct the next level down, which belongs to the
+     * job family. This is related to the mpirun that launched
+     * the job, or is an arbitrary (agreed upon) value if
+     * direct launched */
+    if (ORTE_PROC_IS_HNP) {
+        if (0 > asprintf(&jobfam, "pid.%lu", (unsigned long)orte_process_info.pid)) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            exit_status = ORTE_ERR_OUT_OF_RESOURCE;
+            goto cleanup;
+        }
+        orte_process_info.jobfam_session_dir = strdup(jobfam);
+    } else if (NULL != orte_process_info.jobfam_session_dir) {
+        /* we had a job family session dir passed down to us by mpirun */
+        jobfam = strdup(orte_process_info.jobfam_session_dir);
+    } else {
+        /* we were not given one, so define it */
+        if (NULL == proc) {
+            jobfam = strdup("jobfam");
+        } else {
+            if (0 > asprintf(&jobfam, "jf.%d", ORTE_JOB_FAMILY(proc->jobid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 exit_status = ORTE_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
             }
+        }
+        orte_process_info.jobfam_session_dir = strdup(jobfam);
+    }
 
+    /*
+     * Construct the session directory
+     */
+    /* If we were given a valid vpid then we can construct it fully */
+    if( NULL != proc) {
+        if (ORTE_VPID_INVALID != proc->vpid) {
             if (0 > asprintf(&job, "%d", ORTE_LOCAL_JOBID(proc->jobid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 exit_status = ORTE_ERR_OUT_OF_RESOURCE;
@@ -192,23 +223,13 @@ orte_session_dir_get_name(char **fulldirpath,
                 goto cleanup;
             }
 
-            sessions = opal_os_path( false, frontend, jobfam, job, vpidstr, NULL );
+            sessions = opal_os_path(false, frontend, jobfam, job, vpidstr, NULL);
             if( NULL == sessions ) {
                 ORTE_ERROR_LOG(ORTE_ERROR);
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
-        }
-        /* If we were given a valid jobid then we can construct it partially into:
-         *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/JOB-FAMILY/JOBID
-         */
-        else if (ORTE_JOBID_INVALID != proc->jobid) {
-            if (0 > asprintf(&jobfam, "%d", ORTE_JOB_FAMILY(proc->jobid))) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                exit_status = ORTE_ERR_OUT_OF_RESOURCE;
-                goto cleanup;
-            }
-
+        } else if (ORTE_JOBID_INVALID != proc->jobid) {
             if (0 > asprintf(&job, "%d", ORTE_LOCAL_JOBID(proc->jobid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 exit_status = ORTE_ERR_OUT_OF_RESOURCE;
@@ -221,14 +242,12 @@ orte_session_dir_get_name(char **fulldirpath,
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
-        } /* if both are invalid */
-        else {
+        } else {
             sessions = strdup(frontend); /* must dup this to avoid double-free later */
         }
 
-    }    /* If we were not given a proc at all, then we just set it to frontend
-          */
-    else {
+    } else {
+        /* If we were not given a proc at all, then we just set it to frontend */
         sessions = strdup(frontend); /* must dup this to avoid double-free later */
     }
 
@@ -666,13 +685,7 @@ static char *orte_build_job_session_dir(char *top_dir,
                                         orte_process_name_t *proc,
                                         orte_jobid_t jobid)
 {
-    char *jobfam = NULL;
     char *job_session_dir;
-
-    if (0 > asprintf(&jobfam, "%d", ORTE_JOB_FAMILY(proc->jobid))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return NULL;
-    }
 
     if (ORTE_JOBID_WILDCARD != jobid) {
         char *job = NULL;
@@ -682,19 +695,18 @@ static char *orte_build_job_session_dir(char *top_dir,
             job_session_dir = NULL;
             goto out;
         }
-        job_session_dir = opal_os_path(false, top_dir, jobfam, job, NULL);
+        job_session_dir = opal_os_path(false, top_dir, orte_process_info.jobfam_session_dir, job, NULL);
         free(job);
         if (NULL == job_session_dir) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         }
     } else {
-        job_session_dir = opal_os_path(false, top_dir, jobfam, NULL);
+        job_session_dir = opal_os_path(false, top_dir, orte_process_info.jobfam_session_dir, NULL);
         if( NULL == job_session_dir) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         }
     }
 
 out:
-    free(jobfam);
     return job_session_dir;
 }
