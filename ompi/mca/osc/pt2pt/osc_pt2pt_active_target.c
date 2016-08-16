@@ -261,13 +261,13 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
         for (int i = 0 ; i < sync->num_peers ; ++i) {
             ompi_osc_pt2pt_peer_t *peer = sync->peer_list.peers[i];
 
-            if (peer->unexpected_post) {
+            if (ompi_osc_pt2pt_peer_unex (peer)) {
                 /* the peer already sent a post message for this pscw access epoch */
                 OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                                      "found unexpected post from %d",
                                      peer->rank));
                 OPAL_THREAD_ADD32 (&sync->sync_expected, -1);
-                peer->unexpected_post = false;
+                ompi_osc_pt2pt_peer_set_unex (peer, false);
             }
         }
         OPAL_THREAD_UNLOCK(&sync->lock);
@@ -600,7 +600,7 @@ void osc_pt2pt_incoming_post (ompi_osc_pt2pt_module_t *module, int source)
                              "received unexpected post message from %d for future PSCW synchronization",
                              source));
 
-        peer->unexpected_post = true;
+        ompi_osc_pt2pt_peer_set_unex (peer, true);
         OPAL_THREAD_UNLOCK(&sync->lock);
     } else {
         OPAL_THREAD_UNLOCK(&sync->lock);

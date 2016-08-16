@@ -49,10 +49,6 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
         opal_atomic_rmb();
 #endif
 
-        if (OMPI_REQUEST_ACTIVE == pml_request->req_ompi.req_state) {
-            return OMPI_ERR_REQUEST;
-        }
-
         /* start the request */
         switch(pml_request->req_type) {
             case MCA_PML_REQUEST_SEND:

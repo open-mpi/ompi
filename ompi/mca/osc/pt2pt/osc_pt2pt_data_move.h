@@ -144,4 +144,16 @@ void ompi_osc_pt2pt_process_flush_ack (ompi_osc_pt2pt_module_t *module, int sour
  */
 int ompi_osc_pt2pt_frag_start_receive (ompi_osc_pt2pt_module_t *module);
 
+/**
+ * ompi_osc_pt2pt_process_receive:
+ *
+ * @short Report a receive request
+ *
+ * @param[in] recv     - Receive structure
+ *
+ * @long This function reposts a receive request. This function should not be called from
+ *       a pml request callback as it can lead to deep recursion during heavy load.
+ */
+int ompi_osc_pt2pt_process_receive (ompi_osc_pt2pt_receive_t *recv);
+
 #endif
