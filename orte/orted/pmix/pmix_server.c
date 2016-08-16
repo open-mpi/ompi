@@ -57,6 +57,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/os_path.h"
 #include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -261,9 +262,12 @@ int pmix_server_init(void)
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_SERVER_TMPDIR);
     kv->type = OPAL_STRING;
-    kv->data.string = strdup(orte_process_info.tmpdir_base);
+    kv->data.string = opal_os_path(false, orte_process_info.tmpdir_base,
+                                   orte_process_info.top_session_dir,
+                                   orte_process_info.jobfam_session_dir, NULL);
     opal_list_append(&info, &kv->super);
-    /* use the same for the system temp directory */
+    /* use the same for the system temp directory - this is
+     * where the system-level tool connections will go */
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_SYSTEM_TMPDIR);
     kv->type = OPAL_STRING;
