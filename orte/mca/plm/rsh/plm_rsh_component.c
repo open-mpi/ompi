@@ -15,7 +15,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights
  *                         reserved.
- * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -70,6 +70,7 @@ static int rsh_launch_agent_lookup(const char *agent_list, char *path);
 
 /* Local variables */
 static char *mca_plm_rsh_delay_string = NULL;
+static int agent_var_id = -1;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -186,6 +187,7 @@ static int rsh_component_register(void)
                                               &mca_plm_rsh_component.agent);
     (void) mca_base_var_register_synonym (var_id, "orte", "pls", NULL, "rsh_agent", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     (void) mca_base_var_register_synonym (var_id, "orte", "orte", NULL, "rsh_agent", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    agent_var_id = var_id;
 
     mca_plm_rsh_component.assume_same_shell = true;
     var_id = mca_base_component_var_register (c, "assume_same_shell",
@@ -261,7 +263,13 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
      * environment variables.  If so, setup the path and argv[0].
      * Note that we allow the user to specify the launch agent
      * even if they are in a Grid Engine environment */
-    if (0 == strcmp(mca_plm_rsh_component.agent, "ssh : rsh")) {
+    int ret;
+    mca_base_var_source_t source;
+    ret = mca_base_var_get_value(agent_var_id, NULL, &source, NULL);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+    if (MCA_BASE_VAR_SOURCE_DEFAULT != source) {
         if (!mca_plm_rsh_component.disable_qrsh &&
             NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
             NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
