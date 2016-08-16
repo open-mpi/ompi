@@ -15,6 +15,8 @@
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  */
+#include "opal/include/opal/align.h"
+
 #include "nbc_internal.h"
 
 /* an reduce_csttare schedule can not be cached easily because the contents
@@ -39,7 +41,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
                                      struct mca_coll_base_module_2_0_0_t *module) {
   int peer, rank, maxr, p, r, res, count, offset, firstred;
   MPI_Aint ext;
-  ptrdiff_t gap, span;
+  ptrdiff_t gap, span, span_align;
   char *sbuf, inplace;
   NBC_Schedule *schedule;
   NBC_Handle *handle;
@@ -87,11 +89,12 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
 
   span = opal_datatype_span(&datatype->super, count, &gap);
   
-  handle->tmpbuf = malloc (span * 2);
+  span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);
+  handle->tmpbuf = malloc (span_align + span);
   if(handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
 
   rbuf = (char *)(-gap);
-  lbuf = (char *)(span - gap);
+  lbuf = (char *)(span_align - gap);
 
   firstred = 1;
   for(r=1; r<=maxr; r++) {
@@ -177,7 +180,7 @@ int ompi_coll_libnbc_ireduce_scatter_inter (void* sendbuf, void* recvbuf, int *r
                                             struct mca_coll_base_module_2_0_0_t *module) {
   int rank, res, count, lsize, rsize;
   MPI_Aint ext;
-  ptrdiff_t gap, span;
+  ptrdiff_t gap, span, span_align;
   NBC_Schedule *schedule;
   NBC_Handle *handle;
   ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
@@ -206,9 +209,11 @@ int ompi_coll_libnbc_ireduce_scatter_inter (void* sendbuf, void* recvbuf, int *r
   }
 
   span = opal_datatype_span(&datatype->super, count, &gap);
+  span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);
 
   if (count > 0) {
     handle->tmpbuf = malloc (2 * span);
+    handle->tmpbuf = malloc (span_align + span);
     if(handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
   }
 
@@ -219,7 +224,7 @@ int ompi_coll_libnbc_ireduce_scatter_inter (void* sendbuf, void* recvbuf, int *r
   if (0 == rank) {
     char *lbuf, *rbuf;
     lbuf = (char *)(-gap);
-    rbuf = (char *)(span-gap);
+    rbuf = (char *)(span_align-gap);
     res = NBC_Sched_recv (lbuf, true, count, datatype, 0, schedule);
     if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
 
