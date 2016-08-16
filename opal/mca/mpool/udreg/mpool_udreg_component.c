@@ -33,8 +33,24 @@
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
 
 #include <fcntl.h>
+#include <mntent.h>
 
 /*
  * Local functions
@@ -122,23 +138,19 @@ static int page_compare (opal_list_item_t **a,
 
 static void udreg_find_hugepages (void) {
     FILE *fh;
-    char *path;
-    char buffer[1024];
+    struct mntent *mntent;
     char *ctx, *tok;
+    unsigned long page_size = 0;
+    mca_mpool_udreg_hugepage_t *pool;
 
-    fh = fopen ("/proc/mounts", "r");
+    fh = setmntent ("/proc/mounts", "r");
     if (NULL == fh) {
         return;
     }
 
-    while (fgets (buffer, 1024, fh)) {
-        mca_mpool_udreg_hugepage_t *pool;
+    while (NULL != (mntent = getmntent(fh))) {
 
-        (void) strtok_r (buffer, " ", &ctx);
-        path = strtok_r (NULL, " ", &ctx);
-        tok = strtok_r (NULL, " ", &ctx);
-
-        if (0 != strcmp (tok, "hugetlbfs")) {
+        if (0 != strcmp(mntent->mnt_type, "hugetlbfs")) {
             continue;
         }
 
@@ -147,10 +159,12 @@ static void udreg_find_hugepages (void) {
             break;
         }
 
-        pool->path = strdup (path);
+        pool->path = strdup(mntent->mnt_opts);
+        if (NULL == pool->path) {
+            break;
+        }
 
-        tok = strtok_r (NULL, " ", &ctx);
-        tok = strtok_r (tok, ",", &ctx);
+        tok = strtok_r (pool->path, ",", &ctx);
 
         do {
             if (0 == strncmp (tok, "pagesize", 8)) {
@@ -158,17 +172,36 @@ static void udreg_find_hugepages (void) {
             }
             tok = strtok_r (NULL, ",", &ctx);
         } while (tok);
-        sscanf (tok, "pagesize=%lu", &pool->page_size);
+
+        if (!tok) {
+#if defined(USE_STATFS)
+            struct statfs info;
+
+            statfs (mntent->mnt_dir, &info);
+#elif defined(HAVE_STATVFS)
+            struct statvfs info;
+            statvfs (mntent->mnt_dir, &info);
+#endif
+            page_size = info.f_bsize;
+        } else {
+            (void) sscanf (tok, "pagesize=%lu", &page_size);
+        }
+
+        if (0 == page_size) {
+            /* could not get page size */
+            continue;
+        }
 
         opal_list_append (&mca_mpool_udreg_component.huge_pages, &pool->super);
-    }
 
-    fclose (fh);
+    }
 
     opal_list_sort (&mca_mpool_udreg_component.huge_pages, page_compare);
 
     mca_mpool_udreg_component.use_huge_pages =
         !!(opal_list_get_size (&mca_mpool_udreg_component.huge_pages));
+
+    endmntent (fh);
 }
 
 
