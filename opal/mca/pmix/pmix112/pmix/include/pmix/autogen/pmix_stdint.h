@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
  * Include what we can and define what is missing.
  */
 #include <limits.h>
+#include <stdint.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

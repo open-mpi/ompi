@@ -17,8 +17,8 @@
 #ifndef PMIX_UTIL_FD_H_
 #define PMIX_UTIL_FD_H_
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 BEGIN_C_DECLS
 

@@ -49,7 +49,10 @@ pmix_status_t connect_fn(const pmix_proc_t procs[], size_t nprocs,
 pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                             const pmix_info_t info[], size_t ninfo,
                             pmix_op_cbfunc_t cbfunc, void *cbdata);
-
+pmix_status_t regevents_fn(const pmix_info_t info[], size_t ninfo,
+                            pmix_op_cbfunc_t cbfunc, void *cbdata);
+pmix_status_t deregevents_fn(const pmix_info_t info[], size_t ninfo,
+                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 extern pmix_server_module_t mymodule;
 
 #endif

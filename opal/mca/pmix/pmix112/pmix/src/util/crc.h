@@ -23,8 +23,8 @@
 #ifndef _PMIX_CRC_H_
 #define _PMIX_CRC_H_
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 #include <stddef.h>
 

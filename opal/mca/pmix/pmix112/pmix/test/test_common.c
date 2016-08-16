@@ -12,7 +12,7 @@
  *
  */
 
-#include <private/autogen/config.h>
+#include <src/include/pmix_config.h>
 #include <pmix/pmix_common.h>
 
 #include "test_common.h"
@@ -76,6 +76,7 @@ void parse_cmd(int argc, char **argv, test_params *params)
             fprintf(stderr, "\t--test-spawn       test spawn api.\n");
             fprintf(stderr, "\t--test-connect     test connect/disconnect api.\n");
             fprintf(stderr, "\t--test-resolve-peers    test resolve_peers api.\n");
+            fprintf(stderr, "t--test-error test error handling api.\n");
             exit(0);
         } else if (0 == strcmp(argv[i], "--exec") || 0 == strcmp(argv[i], "-e")) {
             i++;
@@ -166,6 +167,8 @@ void parse_cmd(int argc, char **argv, test_params *params)
             params->test_connect = 1;
         } else if( 0 == strcmp(argv[i], "--test-resolve-peers") ){
             params->test_resolve_peers = 1;
+        } else if( 0 == strcmp(argv[i], "--test-error") ){
+            params->test_error = 1;
         }
 
         else {

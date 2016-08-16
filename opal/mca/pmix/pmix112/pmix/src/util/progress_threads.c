@@ -1,7 +1,10 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,9 +12,9 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
-#include <private/types.h>
+#include <src/include/pmix_config.h>
+
+#include <src/include/types.h>
 
 #include <unistd.h>
 #include PMIX_EVENT_HEADER
@@ -110,7 +113,9 @@ void pmix_stop_progress_thread(pmix_event_base_t *ev_base)
      * a long time */
     if (block_active) {
         i=1;
-        write(block_pipe[1], &i, sizeof(int));
+        if (0 > write(block_pipe[1], &i, sizeof(int))) {
+            return;
+        }
     }
     /* break the event loop - this will cause the loop to exit
      * upon completion of any current event */

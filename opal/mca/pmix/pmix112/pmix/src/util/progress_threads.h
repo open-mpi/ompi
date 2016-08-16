@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,9 +13,9 @@
 #ifndef PROGRESS_THREADS_H
 #define PROGRESS_THREADS_H
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
-#include <private/types.h>
+#include <src/include/pmix_config.h>
+
+#include <src/include/types.h>
 
 #include PMIX_EVENT_HEADER
 

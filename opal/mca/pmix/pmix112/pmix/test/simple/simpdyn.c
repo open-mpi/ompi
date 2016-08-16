@@ -23,7 +23,7 @@
  *
  */
 
-#include <private/autogen/config.h>
+#include <src/include/pmix_config.h>
 #include <pmix.h>
 
 #include <stdio.h>
@@ -53,9 +53,9 @@ int main(int argc, char **argv)
     pmix_proc_t *peers;
     size_t npeers, ntmp=0;
     char *nodelist;
-    
+
     gethostname(hostname, sizeof(hostname));
-    
+
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Init failed: %d", myproc.nspace, myproc.rank, rc);

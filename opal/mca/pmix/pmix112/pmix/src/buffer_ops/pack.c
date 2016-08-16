@@ -13,8 +13,9 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Mellanox Technologies, Inc.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,9 +23,9 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
-#include <private/types.h>
+#include <src/include/pmix_config.h>
+
+#include <src/include/types.h>
 
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
@@ -331,7 +332,9 @@ pmix_status_t pmix_bfrop_pack_float(pmix_buffer_t *buffer, const void *src,
     char *convert;
 
     for (i = 0; i < num_vals; ++i) {
-        asprintf(&convert, "%f", ssrc[i]);
+        if (0 > asprintf(&convert, "%f", ssrc[i])) {
+            return PMIX_ERR_NOMEM;
+        }
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &convert, 1, PMIX_STRING))) {
             free(convert);
             return ret;
@@ -352,7 +355,9 @@ pmix_status_t pmix_bfrop_pack_double(pmix_buffer_t *buffer, const void *src,
     char *convert;
 
     for (i = 0; i < num_vals; ++i) {
-        asprintf(&convert, "%f", ssrc[i]);
+        if (0 > asprintf(&convert, "%f", ssrc[i])) {
+            return PMIX_ERR_NOMEM;
+        }
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &convert, 1, PMIX_STRING))) {
             free(convert);
             return ret;

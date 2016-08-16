@@ -30,7 +30,7 @@ AC_DEFUN([PMIX_CHECK_VISIBILITY],[
         AC_HELP_STRING([--enable-visibility],
             [enable visibility feature of certain compilers/linkers (default: enabled)]))
 
-    pmix_visibility_define=0
+    WANT_VISIBILITY=0
     pmix_msg="whether to enable symbol visibility"
 
     if test "$enable_visibility" = "no"; then
@@ -73,7 +73,8 @@ AC_DEFUN([PMIX_CHECK_VISIBILITY],[
         PMIX_VISIBILITY_CFLAGS=$pmix_add
 
         if test "$pmix_add" != "" ; then
-            pmix_visibility_define=1
+            WANT_VISIBILITY=1
+            CFLAGS="$CFLAGS $PMIX_VISIBILITY_CFLAGS"
             AC_MSG_CHECKING([$pmix_msg])
             AC_MSG_RESULT([yes (via $pmix_add)])
         elif test "$enable_visibility" = "yes"; then
@@ -85,6 +86,7 @@ AC_DEFUN([PMIX_CHECK_VISIBILITY],[
         unset pmix_add
     fi
 
-    AC_DEFINE_UNQUOTED([PMIX_C_HAVE_VISIBILITY], [$pmix_visibility_define],
+    AC_DEFINE_UNQUOTED([PMIX_C_HAVE_VISIBILITY], [$WANT_VISIBILITY],
             [Whether C compiler supports symbol visibility or not])
+    AM_CONDITIONAL([WANT_HIDDEN],[test "$WANT_VISIBILITY" = "1"])
 ])

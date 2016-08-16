@@ -22,8 +22,8 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -33,8 +33,6 @@
 #endif  /* HAVE_STRING_H */
 
 #include "src/util/argv.h"
-
-#include <pmix.h>
 
 #define ARGSIZE 128
 

@@ -1,4 +1,4 @@
-.TH "pmix_finalize" "3" "2015\-10\-27" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.TH "pmix_finalize" "3" "2016\-03\-01" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 PMIx_Finalize \- Finalize the PMIx Client
@@ -8,14 +8,28 @@ PMIx_Finalize \- Finalize the PMIx Client
 \f[C]
 #include\ <pmix.h>
 
-pmix_status_t\ PMIx_Finalize(void);
+pmix\\_status\\_t\ PMIx\\_Finalize(const\ pmix\\_info\\_t\ info[],\ size_t\ ninfo);
 \f[]
 .fi
 .SH ARGUMENTS
+.PP
+\f[I]info\f[] : An optional array of pmix_info_t structures
+.PP
+\f[I]ninfo\f[] : Number of pmix_info_t structures in the pmix_info_t
+array
 .SH DESCRIPTION
 .PP
 Finalize the PMIx client, closing the connection with the local PMIx
-server.
+server and releasing all malloc\[aq]d memory.
+.PP
+The info array is used to pass user requests regarding the fence
+operation.
+This can include:
+.IP "(a)" 4
+PMIX_EMBED_BARRIER \- By default, \f[I]PMIx_Finalize\f[] does not
+include an internal barrier operation.
+This attribute directs \f[I]PMIx_Finalize\f[] to execute a barrier as
+part of the finalize operation.
 .SH RETURN VALUE
 .PP
 Returns PMIX_SUCCESS on success.

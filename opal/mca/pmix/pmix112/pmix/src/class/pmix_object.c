@@ -23,9 +23,9 @@
  * Implementation of pmix_object_t, the base pmix foundation class
  */
 
-#include <private/autogen/config.h>
+#include <src/include/pmix_config.h>
 /* Symbol transforms */
-#include <pmix/rename.h>
+
 
 #include <stdio.h>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -47,12 +47,6 @@
 #define PMIx_H
 
 #include <pmix/autogen/config.h>
-
-#include <stdint.h>
-#include <string.h>
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h> /* for struct timeval */
-#endif
 
 /* Symbol transforms */
 #include <pmix/rename.h>

@@ -24,8 +24,8 @@
 /** @file:
  *
  */
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
+#include <src/include/pmix_config.h>
+
 #include <pmix/pmix_common.h>
 
 #ifdef HAVE_STRING_H
@@ -34,7 +34,6 @@
 
 #include "src/util/argv.h"
 #include "src/buffer_ops/internal.h"
-
 
 /**
  * globals
@@ -46,7 +45,10 @@ pmix_pointer_array_t pmix_bfrop_types = {{0}};
 pmix_data_type_t pmix_bfrop_num_reg_types = PMIX_UNDEF;
 static pmix_bfrop_buffer_type_t pmix_default_buf_type = PMIX_BFROP_BUFFER_NON_DESC;
 
-pmix_bfrop_t pmix_bfrop = {
+PMIX_EXPORT pmix_status_t pmix_bfrop_open(void);
+PMIX_EXPORT pmix_status_t pmix_bfrop_close(void);
+
+PMIX_EXPORT pmix_bfrop_t pmix_bfrop = {
     pmix_bfrop_pack,
     pmix_bfrop_unpack,
     pmix_bfrop_copy,
@@ -394,9 +396,11 @@ pmix_status_t pmix_bfrop_close(void)
 }
 
 /**** UTILITY SUPPORT ****/
-void pmix_value_load(pmix_value_t *v, void *data,
-                     pmix_data_type_t type)
+PMIX_EXPORT void pmix_value_load(pmix_value_t *v, void *data,
+                                 pmix_data_type_t type)
 {
+    pmix_byte_object_t *bo;
+
     v->type = type;
     if (NULL == data) {
         /* just set the fields to zero */
@@ -460,8 +464,9 @@ void pmix_value_load(pmix_value_t *v, void *data,
             memcpy(&(v->data.tv), data, sizeof(struct timeval));
             break;
         case PMIX_BYTE_OBJECT:
-            v->data.bo.bytes = data;
-            memcpy(&(v->data.bo.size), data, sizeof(size_t));
+            bo = (pmix_byte_object_t*)data;
+            v->data.bo.bytes = bo->bytes;
+            memcpy(&(v->data.bo.size), &bo->size, sizeof(size_t));
             break;
         case PMIX_TIME:
         case PMIX_HWLOC_TOPO:

@@ -61,25 +61,6 @@
 
 #include <pmix/autogen/config.h>
 
-#include <stdint.h>
-#include <string.h>
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h> /* for struct timeval */
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
-#endif
-#ifdef HAVE_NET_UIO_H
-#include <net/uio.h>
-#endif
-
-
 /* Symbol transforms */
 #include <pmix/rename.h>
 

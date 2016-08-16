@@ -5,6 +5,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -13,10 +15,10 @@
  * $HEADER$
  */
 
-#include <private/autogen/config.h>
-#include <pmix/rename.h>
-#include <private/types.h>
-#include <private/pmix_stdint.h>
+#include <src/include/pmix_config.h>
+
+#include <src/include/types.h>
+#include <pmix/autogen/pmix_stdint.h>
 
 #include <pmix.h>
 
@@ -58,9 +60,9 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata);
 static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata);
 
-pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
-               const pmix_app_t apps[], size_t napps,
-               char nspace[])
+PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
+                           const pmix_app_t apps[], size_t napps,
+                           char nspace[])
 {
     pmix_status_t rc;
     pmix_cb_t *cb;
@@ -102,9 +104,9 @@ pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     return rc;
 }
 
-pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t ninfo,
-                            const pmix_app_t apps[], size_t napps,
-                            pmix_spawn_cbfunc_t cbfunc, void *cbdata)
+PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t ninfo,
+                                        const pmix_app_t apps[], size_t napps,
+                                        pmix_spawn_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_SPAWNNB_CMD;
@@ -151,10 +153,12 @@ pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t ninfo,
         PMIX_RELEASE(msg);
         return rc;
     }
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, apps, napps, PMIX_APP))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(msg);
-        return rc;
+    if (0 < napps) {
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, apps, napps, PMIX_APP))) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_RELEASE(msg);
+            return rc;
+        }
     }
 
     /* create a callback object as we need to pass it to the

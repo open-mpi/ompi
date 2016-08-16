@@ -20,6 +20,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -88,6 +89,7 @@ AH_TOP([/* -*- c -*-
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -206,7 +208,8 @@ AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 . $srcdir/VERSION
 AC_SUBST([libpmix_so_version])
 
-AC_CONFIG_FILES(pmix_config_prefix[test/Makefile]
+AC_CONFIG_FILES(pmix_config_prefix[examples/Makefile]
+                pmix_config_prefix[test/Makefile]
                 pmix_config_prefix[test/simple/Makefile])
 
 pmix_show_title "Configuration complete"

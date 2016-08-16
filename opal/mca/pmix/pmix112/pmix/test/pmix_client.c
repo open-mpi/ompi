@@ -22,7 +22,7 @@
  * $HEADER$
  *
  */
-#include <private/autogen/config.h>
+#include <src/include/pmix_config.h>
 #include <pmix.h>
 
 #include <stdio.h>
@@ -38,6 +38,29 @@
 #include "test_spawn.h"
 #include "test_cd.h"
 #include "test_resolve_peers.h"
+#include "test_error.h"
+
+
+static void errhandler(pmix_status_t status,
+                pmix_proc_t procs[], size_t nprocs,
+                pmix_info_t info[], size_t ninfo)
+{
+    TEST_ERROR(("PMIX client: Error handler with status = %d", status))
+}
+
+static void op_callbk(pmix_status_t status,
+               void *cbdata)
+{
+    TEST_VERBOSE(( "OP CALLBACK CALLED WITH STATUS %d", status));
+}
+
+static void errhandler_reg_callbk (pmix_status_t status,
+                            int errhandler_ref,
+                            void *cbdata)
+{
+    TEST_VERBOSE(("PMIX client ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%d",
+                  status, errhandler_ref));
+}
 
 int main(int argc, char **argv)
 {
@@ -64,7 +87,7 @@ int main(int argc, char **argv)
         FREE_TEST_PARAMS(params);
         exit(0);
     }
-
+    PMIx_Register_errhandler(NULL, 0, errhandler, errhandler_reg_callbk, NULL);
     if (myproc.rank != params.rank) {
         TEST_ERROR(("Client ns %s Rank returned in PMIx_Init %d does not match to rank from command line %d.", myproc.nspace, myproc.rank, params.rank));
         FREE_TEST_PARAMS(params);
@@ -156,8 +179,25 @@ int main(int argc, char **argv)
         }
     }
 
-    TEST_VERBOSE(("Client ns %s rank %d: PASSED", myproc.nspace, myproc.rank));
+    if (0 != params.test_error) {
+        rc = test_error(myproc.nspace, myproc.rank, params);
+        if (PMIX_SUCCESS != rc) {
+            FREE_TEST_PARAMS(params);
+            TEST_ERROR(("%s:%d error registration and event handling test failed: %d", myproc.nspace, myproc.rank, rc));
+            exit(0);
+        }
+    }
 
+    TEST_VERBOSE(("Client ns %s rank %d: PASSED", myproc.nspace, myproc.rank));
+    PMIx_Deregister_errhandler(1, op_callbk, NULL);
+
+    /* In case of direct modex we want to delay Finalize
+       until everybody has finished. Otherwise some processes
+       will fail to get data from others who already exited */
+    PMIx_Fence(NULL, 0, NULL, 0);
+
+    TEST_VERBOSE(("Client ns %s rank %d: PASSED", myproc.nspace, myproc.rank));
+    PMIx_Deregister_errhandler(1, op_callbk, NULL);
     /* finalize us */
     TEST_VERBOSE(("Client ns %s rank %d: Finalizing", myproc.nspace, myproc.rank));
     if (PMIX_SUCCESS != (rc = PMIx_Finalize())) {

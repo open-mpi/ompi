@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -19,15 +19,21 @@
 # $HEADER$
 #
 
+if !WANT_HIDDEN
+# these tests use interanl symbols
+# use --disable-visibility
 SUBDIRS = simple
+endif
 
-headers = test_common.h cli_stages.h server_callbacks.h utils.h test_fence.h test_publish.h test_spawn.h test_cd.h test_resolve_peers.h
+headers = test_common.h cli_stages.h server_callbacks.h utils.h test_fence.h test_publish.h test_spawn.h test_cd.h test_resolve_peers.h test_error.h
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/src/api
 
-check_PROGRAMS = pmix_test pmix_client pmi_client pmi2_client pmix_regex
-
-# TESTS = pmix_test
+noinst_SCRIPTS = pmix_client_otheruser.sh
+noinst_PROGRAMS = pmi_client pmi2_client
+if !WANT_HIDDEN
+noinst_PROGRAMS += pmix_test pmix_client pmix_regex
+endif
 
 pmix_test_SOURCES = $(headers) \
         pmix_test.c test_common.c cli_stages.c server_callbacks.c utils.c
@@ -48,7 +54,7 @@ pmi2_client_LDADD = \
 	$(top_builddir)/libpmix.la
 
 pmix_client_SOURCES = $(headers) \
-        pmix_client.c test_fence.c test_common.c test_publish.c test_spawn.c test_cd.c test_resolve_peers.c
+        pmix_client.c test_fence.c test_common.c test_publish.c test_spawn.c test_cd.c test_resolve_peers.c test_error.c
 pmix_client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmix_client_LDADD = \
 	$(top_builddir)/libpmix.la
@@ -59,3 +65,4 @@ pmix_regex_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmix_regex_LDADD = \
 	$(top_builddir)/libpmix.la
 
+EXTRA_DIST = $(noinst_SCRIPTS)
