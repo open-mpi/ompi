@@ -581,6 +581,7 @@ test/class/opal_value_array
 
 test/datatype/ddt_test
 test/datatype/ddt_pack
+test/datatype/external32
 test/datatype/to_self
 test/datatype/checksum
 test/datatype/position
