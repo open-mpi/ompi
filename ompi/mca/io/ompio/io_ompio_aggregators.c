@@ -442,7 +442,7 @@ int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
                                         &ompio_grouping_flag);
     if ( OMPI_SUCCESS != ret ) {
         opal_output (1, "mca_io_ompio_create_groups: error in mca_io_ompio_prepare_to_group\n");
-        return ret;
+        goto exit;
     }
 
     switch(ompio_grouping_flag){
@@ -471,7 +471,7 @@ int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
     }
     if ( OMPI_SUCCESS != ret ) {
         opal_output (1, "mca_io_ompio_create_groups: error in subroutine called within switch statement\n");
-        return ret;
+        goto exit;
     }
     
     //Set aggregator index
@@ -490,27 +490,13 @@ int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
                                              fh->f_comm->c_coll.coll_allreduce_module);
     if ( OMPI_SUCCESS != ret ) {
         opal_output (1, "mca_io_ompio_create_groups: error in allreduce\n");
-        return ret;
     }
     
     //Set final number of aggregators in file handle
     fh->f_final_num_aggrs = final_num_aggrs;
 
-    //Print final number of aggregators if required
-    /*if(fh->f_rank == 0){
-        printf("Rank %d : has final_num_aggrs = %d\n",fh->f_rank,final_num_aggrs);
-    }*/
+exit:
 
-    //Print final grouping
-    /*if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank)  {
-        for (j=0 ; j<fh->f_procs_per_group; j++) {
-            printf ("%d: Proc %d: %d\n", fh->f_rank, j, fh->f_procs_in_group[j]);
-        }
-
-	printf("\n\n");
-    }
-
-   */
     if (NULL != start_offsets_lens) {
         free (start_offsets_lens);
         start_offsets_lens =  NULL;
