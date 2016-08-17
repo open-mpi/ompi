@@ -100,6 +100,8 @@ typedef struct {
     /** The port number of this port, also used to locate the source
         endpoint when an UD CM request arrives */
     uint8_t mm_port_num;
+    /** Global ID (needed when routers are in use) */
+    union ibv_gid mm_gid;
 } modex_msg_t;
 
 /*
@@ -738,9 +740,17 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
     m->modex.mm_port_num    = btl->port_num;
     m->modex.mm_qp_num      = m->listen_qp->qp_num;
 
-    BTL_VERBOSE(("my modex = LID: %d, Port: %d, QPN: %d",
-                 m->modex.mm_lid, m->modex.mm_port_num,
-                 m->modex.mm_qp_num));
+    rc = ibv_query_gid (btl->device->ib_dev_context, btl->port_num,
+                        mca_btl_openib_component.gid_index, &m->modex.mm_gid);
+    if (0 != rc) {
+        BTL_VERBOSE(("error querying port GID"));
+        return OPAL_ERROR;
+    }
+
+    BTL_VERBOSE(("my modex = LID: %d, Port: %d, QPN: %d, GID: %08x %08x",
+                 m->modex.mm_lid, m->modex.mm_port_num, m->modex.mm_qp_num,
+                 m->modex.mm_gid.global.interface_id,
+                 m->modex.mm_gid.global.subnet_prefix));
 
     m->cpc.data.cbm_modex_message_len = sizeof(m->modex);
 
@@ -1528,6 +1538,7 @@ static int udcm_endpoint_init_data (mca_btl_base_endpoint_t *lcl_ep)
 {
     modex_msg_t *remote_msg = UDCM_ENDPOINT_REM_MODEX(lcl_ep);
     udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
+    udcm_module_t *m = UDCM_ENDPOINT_MODULE(lcl_ep);
     struct ibv_ah_attr ah_attr;
     int rc = OPAL_SUCCESS;
 
@@ -1542,6 +1553,18 @@ static int udcm_endpoint_init_data (mca_btl_base_endpoint_t *lcl_ep)
         ah_attr.port_num      = remote_msg->mm_port_num;
         ah_attr.sl            = mca_btl_openib_component.ib_service_level;
         ah_attr.src_path_bits = lcl_ep->endpoint_btl->src_path_bits;
+        if (0 != memcmp (&remote_msg->mm_gid, &m->modex.mm_gid, sizeof (m->modex.mm_gid))) {
+            ah_attr.is_global = 1;
+            ah_attr.grh.flow_label = 0;
+            ah_attr.grh.dgid = remote_msg->mm_gid;
+            ah_attr.grh.sgid_index = mca_btl_openib_component.gid_index;
+            /* NTH: probably won't need to go over more than a single router. changeme if this
+             * assumption is wrong. this value should never be <= 1 as it will not leave the
+             * the subnet. */
+            ah_attr.grh.hop_limit = 2;
+            /* Seems reasonable to set this to 0 for connection messages. */
+            ah_attr.grh.traffic_class = 0;
+        }
 
         udep->ah = ibv_create_ah (lcl_ep->endpoint_btl->device->ib_pd, &ah_attr);
         if (!udep->ah) {
@@ -1957,6 +1980,7 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
     udcm_msg_t *message = NULL;
     udcm_message_recv_t *item;
     struct ibv_wc wc[20];
+    struct ibv_grh *grh;
     udcm_endpoint_t *udep;
     uint64_t dir;
 
@@ -1969,17 +1993,20 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
     for (i = 0 ; i < count ; i++) {
         dir = wc[i].wr_id & UDCM_WR_DIR_MASK;
 
-        BTL_VERBOSE(("WC: wr_id: 0x%016" PRIu64 ", status: %d, opcode: 0x%x, byte_len: %x, imm_data: 0x%08x, "
-                     "qp_num: 0x%08x, src_qp: 0x%08x, wc_flags: 0x%x, slid: 0x%04x",
-                     wc[i].wr_id, wc[i].status, wc[i].opcode, wc[i].byte_len,
-                     wc[i].imm_data, wc[i].qp_num, wc[i].src_qp, wc[i].wc_flags, wc[i].slid));
-
         if (UDCM_WR_RECV_ID != dir) {
             opal_output (0, "unknown packet");
             continue;
         }
 
         msg_num = (int)(wc[i].wr_id & (~UDCM_WR_DIR_MASK));
+
+        grh = (wc[i].wc_flags & IBV_WC_GRH) ? (struct ibv_grh *) udcm_module_get_recv_buffer (m, msg_num, false) : NULL;
+
+        BTL_VERBOSE(("WC: wr_id: 0x%016" PRIu64 ", status: %d, opcode: 0x%x, byte_len: %x, imm_data: 0x%08x, "
+                     "qp_num: 0x%08x, src_qp: 0x%08x, wc_flags: 0x%x, slid: 0x%04x grh_present: %s",
+                     wc[i].wr_id, wc[i].status, wc[i].opcode, wc[i].byte_len,
+                     wc[i].imm_data, wc[i].qp_num, wc[i].src_qp, wc[i].wc_flags, wc[i].slid,
+                     grh ? "yes" : "no"));
 
         if (IBV_WC_SUCCESS != wc[i].status) {
             BTL_ERROR(("recv work request for buffer %d failed, code = %d",
