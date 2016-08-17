@@ -48,7 +48,7 @@ BEGIN_C_DECLS
 struct mca_fs_pvfs2_s {
     PVFS_credentials credentials;
     PVFS_object_ref object_ref;
-} mca_fs_pvfs2_s;
+};
 typedef struct mca_fs_pvfs2_s mca_fs_pvfs2;
 
 int mca_fs_pvfs2_component_init_query(bool enable_progress_threads,
