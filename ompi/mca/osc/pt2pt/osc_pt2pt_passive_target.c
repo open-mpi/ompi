@@ -13,7 +13,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -324,7 +324,7 @@ static int ompi_osc_pt2pt_lock_internal (int lock_type, int target, int assert, 
     lock->sync.lock.target = target;
     lock->sync.lock.type = lock_type;
     lock->sync.lock.assert = assert;
-    lock->num_peers = (-1 == target) ? ompi_comm_size (&module->comm) : 1;
+    lock->num_peers = (-1 == target) ? ompi_comm_size (module->comm) : 1;
     lock->sync_expected = 0;
 
     /* delay all eager sends until we've heard back.. */
