@@ -80,6 +80,7 @@ pmix_status_t pmix_prepare_listening(pmix_listener_t *lt, bool *need_listener)
     socklen_t addrlen;
     char *ptr;
     struct sockaddr_un *address = &lt->address;
+    int ret;
 
     /* create a listen socket for incoming connection attempts */
     lt->socket = socket(PF_UNIX, SOCK_STREAM, 0);
@@ -96,8 +97,9 @@ pmix_status_t pmix_prepare_listening(pmix_listener_t *lt, bool *need_listener)
 
 
     addrlen = sizeof(struct sockaddr_un);
-    if (bind(lt->socket, (struct sockaddr*)address, addrlen) < 0) {
-        printf("%s:%d bind() failed\n", __FILE__, __LINE__);
+    if (ret = bind(lt->socket, (struct sockaddr*)address, addrlen) < 0) {
+        printf("%s:%d bind() failed, rc = %d, address = %s\n",
+            __FILE__, __LINE__, ret, address->sun_path);
         return PMIX_ERROR;
     }
     /* chown as required */
