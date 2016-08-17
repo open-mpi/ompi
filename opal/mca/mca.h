@@ -256,6 +256,12 @@ typedef int (*mca_base_register_component_params_2_0_0_fn_t)(void);
  */
 #define MCA_BASE_MAX_COMPONENT_NAME_LEN 63
 
+struct mca_base_component_filter_t {
+    const char *mca_filter_include[256];
+    const char reserved[32];
+};
+typedef struct mca_base_component_filter_t mca_base_component_filter_t;
+
 /**
  * Common type for all MCA components.
  *
@@ -315,9 +321,11 @@ struct mca_base_component_2_1_0_t {
   mca_base_register_component_params_2_0_0_fn_t mca_register_component_params;
   /**< Method for registering the component's MCA parameters */
 
+  mca_base_component_filter_t *mca_filter;
+
   /** Extra space to allow for expansion in the future without
       breaking older components. */
-  char reserved[32];
+  char reserved[24];
 };
 /** Unversioned convenience typedef; use this name in
     frameworks/components to stay forward source-compatible */

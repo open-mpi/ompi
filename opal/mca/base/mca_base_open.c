@@ -50,6 +50,12 @@ char *mca_base_user_default_path = NULL;
 bool mca_base_component_show_load_errors = true;
 bool mca_base_component_disable_dlopen = false;
 
+char *mca_base_component_enable = NULL;
+char *mca_base_component_disable = NULL;
+
+char **mca_base_component_enable_list = NULL;
+char **mca_base_component_disable_list = NULL;
+
 static char *mca_base_verbose = NULL;
 
 /*
@@ -142,6 +148,28 @@ int mca_base_open(void)
     opal_output_reopen(0, &lds);
     opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, 0, "mca: base: opening components");
     free(lds.lds_prefix);
+
+    mca_base_component_enable = NULL;
+    (void) mca_base_var_register ("opal", "mca", "base", "component_enable",
+                                  "Types of components to be enabled. Can not be used with mca_base_component_disable",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &mca_base_component_enable);
+
+    mca_base_component_disable = NULL;
+    (void) mca_base_var_register ("opal", "mca", "base", "component_disable",
+                                  "Types of components to be disabled. Can not be used with mca_base_component_enable",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &mca_base_component_disable);
+
+    if (mca_base_component_enable && mca_base_component_disable) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    if (mca_base_component_enable) {
+        mca_base_component_enable_list = opal_argv_split (mca_base_component_enable, ',');
+    } else if (mca_base_component_disable) {
+        mca_base_component_disable_list = opal_argv_split (mca_base_component_disable, ',');
+    }
 
     /* Open up the component repository */
 

@@ -68,6 +68,26 @@ int mca_base_framework_components_open (mca_base_framework_t *framework,
     return open_components (framework);
 }
 
+static bool mca_base_component_filter (const mca_base_component_t *component)
+{
+    bool enable = mca_base_component_enable_list ? true : false;
+    char **list = enable ? mca_base_component_enable_list : mca_base_component_disable_list;
+
+    if (NULL == component->mca_filter || (NULL == mca_base_component_enable_list && NULL == mca_base_component_disable_list)) {
+        return true;
+    }
+
+    for (int i = 0 ; list[i] ; ++i) {
+        for (int j = 0 ; component->mca_filter->mca_filter_include[j] ; ++j) {
+            if (0 == strcmp (list[i], component->mca_filter->mca_filter_include[j])) {
+                return enable;
+            }
+        }
+    }
+
+    return !enable;
+}
+
 /*
  * Traverse the entire list of found components (a list of
  * mca_base_component_t instances).  If the requested_component_names
@@ -115,52 +135,64 @@ static int open_components(mca_base_framework_t *framework)
     /* Traverse the list of components */
     OPAL_LIST_FOREACH_SAFE(cli, next, components, mca_base_component_list_item_t) {
         const mca_base_component_t *component = cli->cli_component;
+        bool enabled;
 
         opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
                              "mca: base: components_open: found loaded component %s",
                              component->mca_component_name);
 
-	if (NULL != component->mca_open_component) {
-	    /* Call open if register didn't call it already */
-            ret = component->mca_open_component();
+        enabled = mca_base_component_filter (component);
 
-            if (OPAL_SUCCESS == ret) {
+        if (enabled) {
+            if (NULL != component->mca_open_component) {
+                /* Call open if register didn't call it already */
+                ret = component->mca_open_component();
+                if (OPAL_SUCCESS == ret) {
+                    opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                         "mca: base: components_open: "
+                                         "component %s open function successful",
+                                         component->mca_component_name);
+                }
+            } else {
+                ret = OPAL_SUCCESS;
+            }
+        } else {
+            ret = OPAL_ERR_NOT_AVAILABLE;
+        }
+
+        if (OPAL_SUCCESS != ret) {
+            if (OPAL_ERR_NOT_AVAILABLE != ret) {
+                /* If the component returns OPAL_ERR_NOT_AVAILABLE,
+                   it's a cue to "silently ignore me" -- it's not a
+                   failure, it's just a way for the component to say
+                   "nope!".
+
+                   Otherwise, however, display an error.  We may end
+                   up displaying this twice, but it may go to separate
+                   streams.  So better to be redundant than to not
+                   display the error in the stream where it was
+                   expected. */
+
+                if (mca_base_component_show_load_errors) {
+                    opal_output_verbose (MCA_BASE_VERBOSE_ERROR, output_id,
+                                         "mca: base: components_open: component %s "
+                                         "/ %s open function failed",
+                                         component->mca_type_name,
+                                         component->mca_component_name);
+                }
                 opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
                                      "mca: base: components_open: "
-                                     "component %s open function successful",
+                                     "component %s open function failed",
                                      component->mca_component_name);
-            } else {
-		if (OPAL_ERR_NOT_AVAILABLE != ret) {
-		    /* If the component returns OPAL_ERR_NOT_AVAILABLE,
-		       it's a cue to "silently ignore me" -- it's not a
-		       failure, it's just a way for the component to say
-		       "nope!".
+            }
 
-		       Otherwise, however, display an error.  We may end
-		       up displaying this twice, but it may go to separate
-		       streams.  So better to be redundant than to not
-		       display the error in the stream where it was
-		       expected. */
-
-		    if (mca_base_component_show_load_errors) {
-			opal_output_verbose (MCA_BASE_VERBOSE_ERROR, output_id,
-                                             "mca: base: components_open: component %s "
-                                             "/ %s open function failed",
-                                             component->mca_type_name,
-                                             component->mca_component_name);
-		    }
-		    opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
-                                         "mca: base: components_open: "
-                                         "component %s open function failed",
-                                         component->mca_component_name);
-		}
-
+            if (enabled) {
                 mca_base_component_close (component, output_id);
+            }
 
-		opal_list_remove_item (components, &cli->super);
-		OBJ_RELEASE(cli);
-	    }
-	}
+            opal_list_remove_item (components, &cli->super);
+            OBJ_RELEASE(cli);
+        }
     }
 
     /* All done */
