@@ -14,7 +14,7 @@
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -466,13 +466,13 @@ ompi_osc_pt2pt_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
 
 OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_pending_t, opal_list_item_t, NULL, NULL);
 
-void ompi_osc_pt2pt_receive_construct (ompi_osc_pt2pt_receive_t *recv)
+static void ompi_osc_pt2pt_receive_construct (ompi_osc_pt2pt_receive_t *recv)
 {
     recv->buffer = NULL;
     recv->pml_request = NULL;
 }
 
-void ompi_osc_pt2pt_receive_destruct (ompi_osc_pt2pt_receive_t *recv)
+static void ompi_osc_pt2pt_receive_destruct (ompi_osc_pt2pt_receive_t *recv)
 {
     free (recv->buffer);
     if (recv->pml_request && MPI_REQUEST_NULL != recv->pml_request) {
