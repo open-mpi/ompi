@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -79,8 +79,7 @@ int oshmem_proc_group_init(void)
             == (oshmem_group_all =
                     oshmem_proc_group_create(0,
                                              1,
-					     oshmem_num_procs()))) {
-        oshmem_proc_group_destroy(oshmem_group_all);
+					     ompi_comm_size(oshmem_comm_world)))) {
         return OSHMEM_ERROR;
     }
 
@@ -151,7 +150,7 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
 
         group->my_pe = oshmem_proc_pe(oshmem_proc_local());
         group->is_member = 0;
-        for (i = 0 ; i < oshmem_num_procs() ; i++) {
+        for (i = 0 ; i < ompi_comm_size(oshmem_comm_world) ; i++) {
             proc = oshmem_proc_find(i);
             if (NULL == proc) {
                 opal_output(0,

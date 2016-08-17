@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -637,6 +637,12 @@ int mca_spml_yoda_add_procs(oshmem_proc_t** procs, size_t nprocs)
     }
 
     rc = mca_bml.bml_register_error(mca_spml_yoda_error_handler);
+    if (OMPI_SUCCESS != rc) {
+        goto cleanup_and_return;
+    }
+
+    /* create_btl_idx requires the proc was add_proc'ed, so do it now */
+    rc = MCA_PML_CALL(add_procs(procs, nprocs));
     if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
     }
