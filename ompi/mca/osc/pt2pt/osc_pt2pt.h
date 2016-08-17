@@ -256,7 +256,7 @@ struct ompi_osc_pt2pt_module_t {
     struct ompi_osc_pt2pt_receive_t *recv_frags;
 
     /** number of receive fragments */
-    int recv_frag_count;
+    unsigned int recv_frag_count;
 
     /* enforce accumulate semantics */
     opal_atomic_lock_t accumulate_lock;

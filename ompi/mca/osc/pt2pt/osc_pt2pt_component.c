@@ -145,7 +145,7 @@ static int component_register (void)
     mca_osc_pt2pt_component.receive_count = 4;
     (void) mca_base_component_var_register (&mca_osc_pt2pt_component.super.osc_version, "receive_count",
                                             "Number of receives to post for each window for incoming fragments "
-                                            "(default: 4)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_4,
+                                            "(default: 4)", MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_4,
                                             MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_pt2pt_component.receive_count);
 
     return OMPI_SUCCESS;
