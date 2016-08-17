@@ -29,6 +29,11 @@ static int hcoll_open(void);
 static int hcoll_close(void);
 static int hcoll_register(void);
 int mca_coll_hcoll_output = -1;
+
+mca_base_component_filter_t mca_coll_hcoll_filter = {
+    .mca_filter_include = {"infiniband", "mxm", NULL},
+};
+
 mca_coll_hcoll_component_t mca_coll_hcoll_component = {
 
     /* First, the mca_component_t struct containing meta information
@@ -46,6 +51,7 @@ mca_coll_hcoll_component_t mca_coll_hcoll_component = {
             .mca_open_component = hcoll_open,
             .mca_close_component = hcoll_close,
             .mca_register_component_params = hcoll_register,
+            .mca_filter = &mca_coll_hcoll_filter,
         },
         .collm_data = {
             /* The component is not checkpoint ready */

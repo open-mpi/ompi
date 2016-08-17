@@ -49,6 +49,10 @@ static int ompi_mtl_psm2_component_register(void);
 static mca_mtl_base_module_t* ompi_mtl_psm2_component_init( bool enable_progress_threads,
                                                           bool enable_mpi_threads );
 
+mca_base_component_filter_t mca_mtl_psm2_filter = {
+    .mca_filter_include = {"infiniband", "psm2", "omnipath", NULL},
+};
+
 mca_mtl_psm2_component_t mca_mtl_psm2_component = {
 
     {
@@ -65,6 +69,7 @@ mca_mtl_psm2_component_t mca_mtl_psm2_component = {
             .mca_close_component = ompi_mtl_psm2_component_close,
             .mca_query_component = ompi_mtl_psm2_component_query,
             .mca_register_component_params = ompi_mtl_psm2_component_register,
+            .mca_filter = &mca_mtl_psm2_filter,
         },
         .mtl_data = {
             /* The component is not checkpoint ready */

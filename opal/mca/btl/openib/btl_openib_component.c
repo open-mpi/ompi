@@ -112,6 +112,10 @@ static void btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
 static mca_btl_openib_device_t *receive_queues_device = NULL;
 static int num_devices_intentionally_ignored = 0;
 
+mca_base_component_filter_t mca_btl_openib_filter = {
+    .mca_filter_include = {"infiniband", "ib", NULL},
+};
+
 mca_btl_openib_component_t mca_btl_openib_component = {
     .super = {
         /* First, the mca_base_component_t struct containing meta information
@@ -122,6 +126,7 @@ mca_btl_openib_component_t mca_btl_openib_component = {
             .mca_open_component = btl_openib_component_open,
             .mca_close_component = btl_openib_component_close,
             .mca_register_component_params = btl_openib_component_register,
+            .mca_filter = &mca_btl_openib_filter,
         },
         .btl_data = {
             /* The component is checkpoint ready */

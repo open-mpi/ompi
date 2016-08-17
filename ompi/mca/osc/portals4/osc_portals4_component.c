@@ -34,6 +34,10 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
                             int flavor, int *model);
 
 
+mca_base_component_filter_t mca_osc_portals4_filter = {
+    .mca_filter_include = {"portals", NULL},
+};
+
 ompi_osc_portals4_component_t mca_osc_portals4_component = {
     { /* ompi_osc_base_component_t */
         .osc_version = {
@@ -43,6 +47,7 @@ ompi_osc_portals4_component_t mca_osc_portals4_component = {
                                   OMPI_RELEASE_VERSION),
             .mca_open_component = component_open,
             .mca_register_component_params = component_register,
+            .mca_filter = &mca_osc_portals4_filter,
         },
         .osc_data = {
             /* The component is not checkpoint ready */

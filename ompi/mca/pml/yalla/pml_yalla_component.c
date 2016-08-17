@@ -25,6 +25,9 @@ mca_pml_yalla_component_init(int* priority, bool enable_progress_threads,
                              bool enable_mpi_threads);
 static int mca_pml_yalla_component_fini(void);
 
+mca_base_component_filter_t mca_pml_yalla_filter = {
+    .mca_filter_include = {"infiniband", "mxm", NULL},
+};
 
 mca_pml_base_component_2_0_0_t mca_pml_yalla_component = {
 
@@ -39,6 +42,7 @@ mca_pml_base_component_2_0_0_t mca_pml_yalla_component = {
         .mca_open_component = mca_pml_yalla_component_open,
         .mca_close_component = mca_pml_yalla_component_close,
         .mca_register_component_params = mca_pml_yalla_component_register,
+        .mca_filter = &mca_pml_yalla_filter,
     },
     .pmlm_data = {
         /* This component is not checkpoint ready */

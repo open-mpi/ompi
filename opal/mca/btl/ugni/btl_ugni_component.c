@@ -32,6 +32,10 @@ static mca_btl_base_module_t **mca_btl_ugni_component_init(int *, bool, bool);
 static int mca_btl_ugni_component_progress(void);
 static unsigned long mca_btl_ugni_ugni_page_size = 0;
 
+mca_base_component_filter_t mca_btl_ugni_filter = {
+    .mca_filter_include = {"gni", "gemini", "aries", NULL},
+};
+
 mca_btl_ugni_component_t mca_btl_ugni_component = {
     .super = {
         /* First, the mca_base_component_t struct containing meta information
@@ -41,6 +45,7 @@ mca_btl_ugni_component_t mca_btl_ugni_component = {
             .mca_open_component = btl_ugni_component_open,
             .mca_close_component = btl_ugni_component_close,
             .mca_register_component_params = btl_ugni_component_register,
+            .mca_filter = &mca_btl_ugni_filter,
         },
         .btl_data = {
             .param_field = MCA_BASE_METADATA_PARAM_CHECKPOINT

@@ -45,6 +45,10 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 
 OMPI_MODULE_DECLSPEC extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
 
+mca_base_component_filter_t mca_mtl_portals4_filter = {
+    .mca_filter_include = {"portals", NULL},
+};
+
 mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
 
     /* First, the mca_base_component_t struct containing meta
@@ -60,6 +64,7 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
         .mca_close_component = ompi_mtl_portals4_component_close,
         .mca_query_component = ompi_mtl_portals4_component_query,
         .mca_register_component_params = ompi_mtl_portals4_component_register,
+        .mca_filter = &mca_mtl_portals4_filter,
     },
     .mtl_data = {
         /* The component is not checkpoint ready */

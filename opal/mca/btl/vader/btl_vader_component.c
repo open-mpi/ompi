@@ -72,6 +72,10 @@ static mca_base_var_enum_value_t single_copy_mechanisms[] = {
     {.value = 0, .string = NULL}
 };
 
+mca_base_component_filter_t mca_btl_vader_filter = {
+    .mca_filter_include = {"shared-memory", "sm", NULL},
+};
+
 /*
  * Shared Memory (VADER) component instance.
  */
@@ -84,6 +88,7 @@ mca_btl_vader_component_t mca_btl_vader_component = {
             .mca_open_component = mca_btl_vader_component_open,
             .mca_close_component = mca_btl_vader_component_close,
             .mca_register_component_params = mca_btl_vader_component_register,
+            .mca_filter = &mca_btl_vader_filter,
         },
         .btl_data = {
             /* The component is checkpoint ready */
