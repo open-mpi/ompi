@@ -1700,7 +1700,7 @@ int ompi_osc_pt2pt_frag_start_receive (ompi_osc_pt2pt_module_t *module)
     int rc;
 
     module->recv_frag_count = mca_osc_pt2pt_component.receive_count;
-    if (module->recv_frag_count < 0) {
+    if (0 == module->recv_frag_count) {
         module->recv_frag_count = 1;
     }
 
