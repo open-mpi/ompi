@@ -101,13 +101,14 @@ static void do_check (pid_t pid, int *in, int *out)
 
 	# If the user specifically requests CMA go ahead and enable it even
 	# if the glibc version does not support process_vm_readv
-	if test "x$with_cma" = "xyes" || test "$ompi_check_cma_happy" = "yes" ; then
+	if test "x$with_cma" = "xyes" && test ! "$ompi_check_cma_happy" = "yes" ; then
+	    AC_ERROR([CMA support requested but could not be enabled])
             ompi_check_cma_happy="yes"
-            AC_DEFINE_UNQUOTED([OPAL_CMA_NEED_SYSCALL_DEFS],
-                [$ompi_check_cma_need_defs],
-                [Need CMA syscalls defined])
             AC_CHECK_HEADERS([sys/prctl.h])
 	fi
+
+        AC_DEFINE_UNQUOTED([OPAL_CMA_NEED_SYSCALL_DEFS], [$ompi_check_cma_need_defs],
+			   [Need CMA syscalls defined])
 
 	OPAL_VAR_SCOPE_POP
 
