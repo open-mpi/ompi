@@ -123,9 +123,10 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     size_t ninfo=0;
     pmix_dmdx_local_t *lcd;
     bool local;
+    bool localonly = false;
     pmix_buffer_t pbkt;
     char *data;
-    size_t sz;
+    size_t sz, n;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "recvd GET");
@@ -162,6 +163,17 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         }
     }
 
+    /* search for directives we can deal with here */
+    for (n=0; n < ninfo; n++) {
+        if (0 == strcmp(info[n].key, PMIX_TIMEOUT)) {
+            if (0 == info[n].value.data.integer) {
+                /* just check our own data - don't wait
+                 * or request it from someone else */
+                localonly = true;
+            }
+        }
+    }
+
     /* find the nspace object for this client */
     nptr = NULL;
     PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_nspace_t) {
@@ -179,6 +191,9 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
                         cd->peer->info->rank);
 
     if (NULL == nptr || NULL == nptr->server) {
+        if (localonly) {
+            return PMIX_ERR_NOT_FOUND;
+        }
         /* this is for an nspace we don't know about yet, so
          * record the request for data from this process and
          * give the host server a chance to tell us about it */
@@ -208,6 +223,9 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
      * we do know how many clients to expect, so first check to see if
      * all clients have been registered with us */
      if (!nptr->server->all_registered) {
+        if (localonly) {
+            return PMIX_ERR_NOT_FOUND;
+        }
         /* we cannot do anything further, so just track this request
          * for now */
         rc = create_local_tracker(nspace, rank, info, ninfo,
@@ -223,8 +241,13 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         return rc;
     }
 
-    /* If we get here, then we don't have the data at this time. Check
-     * to see if we already have a pending request for the data - if
+    /* If we get here, then we don't have the data at this time. If
+     * the user doesn't want to look for it, then we are done */
+    if (localonly) {
+        return PMIX_ERR_NOT_FOUND;
+    }
+
+    /* Check to see if we already have a pending request for the data - if
      * we do, then we can just wait for it to arrive */
     rc = create_local_tracker(nspace, rank, info, ninfo,
                               cbfunc, cbdata, &lcd);
