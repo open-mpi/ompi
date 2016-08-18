@@ -811,7 +811,7 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     tmp[3] = -key;
 
     rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &tmp, 4, MPI_INT, MPI_MAX, comm,
-                                      comm->c_coll.coll_allgather_module);
+                                      comm->c_coll.coll_allreduce_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
     }
