@@ -97,9 +97,9 @@ pmix_status_t pmix_prepare_listening(pmix_listener_t *lt, bool *need_listener)
 
 
     addrlen = sizeof(struct sockaddr_un);
-    if (ret = bind(lt->socket, (struct sockaddr*)address, addrlen) < 0) {
+    if ( bind(lt->socket, (struct sockaddr*)address, addrlen) < 0) {
         printf("%s:%d bind() failed, rc = %d, address = %s\n",
-            __FILE__, __LINE__, ret, address->sun_path);
+            __FILE__, __LINE__, errno , address->sun_path);
         return PMIX_ERROR;
     }
     /* chown as required */
