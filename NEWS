@@ -53,6 +53,75 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+2.0.1 -- 23 August 2016
+-----------------------
+
+Bug fixes/minor improvements:
+
+- Short message latency and message rate performance improvements for
+  all transports.
+- Fix shared memory performance when using RDMA-capable networks.
+  Thanks to Tetsuya Mishima and Christoph Niethammer for reporting.
+- Fix OpenSHMEM crash when running on non-Mellanox MXM-based networks.
+  Thanks to Debendra Das for reporting the issue.
+- Fix various runtime issues by updating the PMIx internal component
+  to v1.15.
+- Fix process startup failures on Intel MIC platforms due to very
+  large entries in /proc/mounts.
+- Fix a problem with use of relative path for specifing executables to
+  mpirun/oshrun.  Thanks to David Schneider for reporting.
+- Various improvements when running over portals-based networks.
+- Fix thread-based race conditions with GNI-based networks.
+- Fix a problem with MPI_FILE_CLOSE and MPI_FILE_SET_SIZE.  Thanks
+  to Cihan Altinay for reporting.
+- Remove all use of rand(3) from within Open MPI so as not to perturb
+  applications use of it.  Thanks to Matias Cabral and Noel Rycroft
+  for reporting.
+- Fix types for MPI_UNWEIGHTED and MPI_WEIGHTS_EMPTY.  Thanks to
+  Lisandro Dalcin for reporting.
+- Correctly report the name of MPI_INTEGER16.
+- Add some missing MPI constants to the Fortran bindings.
+- Fixed compile error when configuring Open MPI with --enable-timing.
+- Correctly set the shared library version of libompitrace.so.  Thanks
+  to Alastair McKinstry for reporting.
+- Fix errors in the MPI_RPUT, MPI_RGET, MPI_RACCUMULATE, and
+  MPI_RGET_ACCUMULATE Fortran bindings.  Thanks to Alfio Lazzaro and
+  Joost VandeVondele for tracking this down.
+- Fix problems with use of derived datatypes in non-blocking
+  collectives.  Thanks to Yuki Matsumoto for reporting.
+- Fix problems with OpenSHMEM header files when using CMake.  Thanks to
+  Paul Kapinos for reporting the issue.
+- Fix problem with use use of non-zero lower bound datatypes in
+  collectives.  Thanks to Hristo Iliev for reporting.
+- Fix a problem with memory allocation within MPI_GROUP_INTERSECTION.
+  Thanks to Lisandro Dalcin for reporting.
+- Fix an issue with MPI_ALLGATHER for communicators that don't consist
+  of two ranks.  Thanks to David Love for reporting.
+- Various fixes for collectives when used with esoteric MPI datatypes.
+- Fixed corner cases of handling DARRAY and HINDEXED_BLOCK datatypes.
+- Fix a problem with filesystem type check for OpenBSD.
+  Thanks to Paul Hargrove for reporting.
+- Fix some debug input within Open MPI internal functions.  Thanks to 
+  Durga Choudhury for reporting.
+- Fix a typo in a configury help message.  Thanks to Paul Hargrove for
+  reporting.
+- Correctly support MPI_IN_PLACE in MPI_[I]ALLTOALL[V|W] and
+  MPI_[I]EXSCAN.
+
+Known issues (to be addressed in v2.0.2):
+
+- See the list of fixes slated for v2.0.2 here:
+  https://github.com/open-mpi/ompi/milestone/20, and
+  https://github.com/open-mpi/ompi-release/milestone/19
+  (note that the "ompi-release" Github repo will be folded/absorbed
+  into the "ompi" Github repo at some point in the future)
+
+- ompi-release#1014: Do not return MPI_ERR_PENDING from collectives
+- ompi-release#1215: Fix configure to support the NAG Fortran compiler
+
+Known issues (to be addressed in v2.1):
+
+- ompi-release#987: Fix OMPIO performance on Lustre
 
 2.0.0 -- 12 July 2016
 ---------------------
