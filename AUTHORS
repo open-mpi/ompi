@@ -8,6 +8,8 @@ Github.com pull request).  Note that these email addresses are not
 guaranteed to be current; they are simply a unique indicator of the
 individual who committed them.
 
+-----
+
 Abhishek Joshi, Broadcom
   abhishek.joshi@broadcom.com
 Abhishek Kulkarni, Indiana University
@@ -31,7 +33,6 @@ Anandhi S Jayakumar, Intel
 Andreas Knüpfer, Technische Universitaet Dresden
   andreas.knuepfer@tu-dresden.de
 Andrew Friedley, Indiana University, Sandia National Laboratory, Intel
-  afriedle-intel@users.noreply.github.com
   afriedle@osl.iu.edu
   andrew.friedley@intel.com
 Andrew Lumsdaine, Indiana University
@@ -42,7 +43,7 @@ Anya Tatashina, Sun
   anya.tatashina@sun.com
 Artem Polyakov, Individual, Mellanox
   artpol84@gmail.com
-Aurélien Bouteiller, University of Tennessee-Knoxville
+Aur�lien Bouteiller, University of Tennessee-Knoxville
   bouteill@icl.utk.edu
   darter4.nics.utk.edu
 Avneesh Pant, QLogic
@@ -79,7 +80,6 @@ David Daniel, Los Alamos National Laboratory
 Denis Dimick, Los Alamos National Laboratory
   dgdimick@lnal.gov
 Devendar Bureddy, Mellanox
-  bureddy@users.noreply.github.com
   devendar@mellanox.com
 Dimitar Pashov, Individual
   d.pashov@gmail.com
@@ -87,9 +87,8 @@ Donald Kerr, Sun, Oracle
   donald.kerr@oracle.com
 Doron Shoham, Mellanox
   dorons@mellanox.com
-Edagr Gabriel, High Performance Computing Center, Stuttgart, University of Tennessee-Knoxville, University of Houston
+Edgar Gabriel, High Performance Computing Center, Stuttgart, University of Tennessee-Knoxville, University of Houston
   gabriel@Peggys-MacBook-Air.local
-  edgargabriel@users.noreply.github.com
   gabriel@cs.uh.edu
 Elena Elkina, Mellanox
   elena.elkina@itseez.com
@@ -112,9 +111,8 @@ Geoffrey Paulsen, IBM
 George Bosilca, University of Tennessee-Knoxville
   bosilca@eecs.utk.edu
   bosilca@icl.utk.edu
-  bosilca@users.noreply.github.com
 Gilles Gouaillardet, Research Organization for Information Science and Technology
-  ggouaillardet@users.noreply.github.com
+
   gilles.gouaillardet@iferc.org
   gilles@rist.or.jp
 Ginger Young, Los Alamos National Laboratory
@@ -136,7 +134,6 @@ Hadi Montakhabi, University of Houston
 Howard Pritchard, Los Alamos National Laboratory
   howardp@lanl.gov
   hppritcha@gmail.com
-  hppritcha@users.noreply.github.com
 Iain Bason, Sun, Oracle
   iain.bason@oracle.com
 Igor Ivanov, Mellanox
@@ -147,7 +144,6 @@ Igor Usarov, Mellanox
 Jeff Squyres, University of Indiana, Cisco
   jeff@squyres.com
   jsquyres@cisco.com
-  jsquyres@users.noreply.github.com
 Jelena Pjesivac-Grbovic, University of Tennessee-Knoxville
   pjesa@icl.iu.edu
 Jithin Jose, Intel
@@ -197,7 +193,6 @@ Mark Taylor, Los Alamos National Laboratory
   mt@lanl.gov
 Matias A Cabral, Intel
   matias.a.cabral@intel.com
-  matcabral@users.noreply.github.com
 Matthias Jurenz, Technische Universitaet Dresden
   matthias.jurenz@tu-dresden.de
 Maximilien Levesque, Individual
@@ -235,7 +230,6 @@ Patrick Geoffray, Myricom
   patrick@myri.com
 Pavel Shamis, Mellanox, Oak Ridge National Laboratory
   shamisp@ornl.gov
-  shamisp@users.noreply.github.com
 Pierre Lemarinier, University of Tennessee-Knoxville
   lemarini@icl.utk.edu
 Piotr Lesnicki, Bull
@@ -307,7 +301,6 @@ Tim Woodall, Los Alamos National Laboratory
 Todd Kordenbrock, Sandia National Laboratory
   thkgcode@gmail.com
   thkorde@sandia.gov
-  tkordenbrock@users.noreply.github.com
 Tom Naughton, Oak Ridge National Laboratory
   naughtont@ornl.gov
 Tomislav Janjusic, Mellanox
@@ -333,7 +326,6 @@ Yael Dayan, Mellanox
 Yevgeny Kliteynik, Mellanox
   kliteyn@mellanox.co.il
 Yohann Burette, Intel
-  yburette@users.noreply.github.com
   yohann.burette@intel.com
 Yossi Itigin, Mellanox
   yosefe@mellanox.com
