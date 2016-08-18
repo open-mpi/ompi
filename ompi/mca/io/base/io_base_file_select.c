@@ -46,6 +46,7 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 
+opal_mutex_t ompi_mpi_ompio_bootstrap_mutex = OPAL_MUTEX_STATIC_INIT;
 /*
  * Local types
  */
@@ -201,18 +202,24 @@ int mca_io_base_file_select(ompi_file_t *file,
                  "ompio")) {
         int ret;
 
+        opal_mutex_lock(&ompi_mpi_ompio_bootstrap_mutex);
         if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_fs_base_framework, 0))) {
+            opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
             return err;
         }
         if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_fcoll_base_framework, 0))) {
+            opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
             return err;
         }
         if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_fbtl_base_framework, 0))) {
+            opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
             return err;
         }
         if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_sharedfp_base_framework, 0))) {
+            opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
             return err;
         }
+        opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
 
         if (OMPI_SUCCESS !=
             (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
@@ -230,6 +237,7 @@ int mca_io_base_file_select(ompi_file_t *file,
             (ret = mca_sharedfp_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
+
     }
     /* Finally -- intialize the selected module. */
 

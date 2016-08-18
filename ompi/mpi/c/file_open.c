@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,9 @@
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/memchecker.h"
+
+
+extern opal_mutex_t ompi_mpi_file_bootstrap_mutex;
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -81,10 +85,20 @@ int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
        and MPI_FILE_DELETE are the only two places that it will be
        initialized). */
 
+    /* For multi-threaded scenarios, initializing the file i/o
+       framework and mca infrastructure needs to be protected
+       by a mutex, similarly to the other frameworks in
+       ompi/runtime/ompi_mpi_init.c
+    */
+
+    opal_mutex_lock(&ompi_mpi_file_bootstrap_mutex);
+
     rc = mca_base_framework_open(&ompi_io_base_framework, 0);
     if (OMPI_SUCCESS != rc) {
+        opal_mutex_unlock(&ompi_mpi_file_bootstrap_mutex);
         return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
     }
+    opal_mutex_unlock(&ompi_mpi_file_bootstrap_mutex);
 
     OPAL_CR_ENTER_LIBRARY();
 
@@ -96,6 +110,5 @@ int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
     /* Creating the file handle also selects a component to use,
        creates a module, and calls file_open() on the module.  So
        we're good to go. */
-
     OMPI_ERRHANDLER_RETURN(rc, *fh, rc, FUNC_NAME);
 }

@@ -31,6 +31,10 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/info/info.h"
 
+
+opal_mutex_t ompi_mpi_file_bootstrap_mutex = OPAL_MUTEX_STATIC_INIT;
+
+
 /*
  * Table for Fortran <-> C file handle conversion
  */
