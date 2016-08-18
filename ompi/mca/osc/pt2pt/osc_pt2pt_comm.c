@@ -45,10 +45,9 @@ static int ompi_osc_pt2pt_comm_complete (ompi_request_t *request)
 
     mark_outgoing_completion(module);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
+    ompi_request_free (&request);
 
-    return OMPI_SUCCESS;
+    return 1;
 }
 
 static int ompi_osc_pt2pt_req_comm_complete (ompi_request_t *request)
@@ -101,10 +100,9 @@ static int ompi_osc_pt2pt_dt_send_complete (ompi_request_t *request)
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
     assert (NULL != module);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
+    ompi_request_free (&request);
 
-    return OMPI_SUCCESS;
+    return 1;
 }
 
 /* self communication optimizations */

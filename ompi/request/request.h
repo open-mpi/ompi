@@ -67,8 +67,10 @@ typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag
 
 /*
  * Optional function called when the request is completed from the MPI
- * library perspective. This function is not allowed to release any
- * ressources related to the request.
+ * library perspective. This function is allowed to release the request if
+ * the request will not be used with ompi_request_wait* or ompi_request_test.
+ * If the function reposts (using start) a request or calls ompi_request_free()
+ * on the request it *MUST* return 1. It should return 0 otherwise.
  */
 typedef int (*ompi_request_complete_fn_t)(struct ompi_request_t* request);
 
@@ -412,24 +414,28 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
  */
 static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
+    int rc = 0;
+
     if( NULL != request->req_complete_cb) {
-        request->req_complete_cb( request );
+        rc = request->req_complete_cb( request );
         request->req_complete_cb = NULL;
     }
 
-    if( OPAL_LIKELY(with_signal) ) {
-        if(!OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, REQUEST_COMPLETED)) {
-            ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
-                                                                                   REQUEST_COMPLETED);
-            /* In the case where another thread concurrently changed the request to REQUEST_PENDING */
-            if( REQUEST_PENDING != tmp_sync )
-                wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
-        }
-    } else
-        request->req_complete = REQUEST_COMPLETED;
+    if (0 == rc) {
+        if( OPAL_LIKELY(with_signal) ) {
+            if(!OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, REQUEST_COMPLETED)) {
+                ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
+                                                                                       REQUEST_COMPLETED);
+                /* In the case where another thread concurrently changed the request to REQUEST_PENDING */
+                if( REQUEST_PENDING != tmp_sync )
+                    wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
+            }
+        } else
+            request->req_complete = REQUEST_COMPLETED;
 
-    if( OPAL_UNLIKELY(MPI_SUCCESS != request->req_status.MPI_ERROR) ) {
-        ompi_request_failed++;
+        if( OPAL_UNLIKELY(MPI_SUCCESS != request->req_status.MPI_ERROR) ) {
+            ompi_request_failed++;
+        }
     }
 
     return OMPI_SUCCESS;

@@ -79,7 +79,6 @@ int ompi_osc_pt2pt_free(ompi_win_t *win)
     OPAL_LIST_DESTRUCT(&module->pending_acc);
 
     osc_pt2pt_gc_clean (module);
-    OPAL_LIST_DESTRUCT(&module->request_gc);
     OPAL_LIST_DESTRUCT(&module->buffer_gc);
     OBJ_DESTRUCT(&module->gc_lock);
 

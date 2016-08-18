@@ -238,10 +238,8 @@ static int ompi_osc_pt2pt_control_send_unbuffered_cb (ompi_request_t *request)
     /* free the temporary buffer */
     free (ctx);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 /**
@@ -437,10 +435,8 @@ static int osc_pt2pt_incoming_req_complete (ompi_request_t *request)
 
     mark_incoming_completion (module, rank);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 struct osc_pt2pt_get_post_send_cb_data_t {
@@ -460,10 +456,8 @@ static int osc_pt2pt_get_post_send_cb (ompi_request_t *request)
     /* mark this as a completed "incoming" request */
     mark_incoming_completion (module, rank);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 /**
@@ -699,9 +693,7 @@ static int accumulate_cb (ompi_request_t *request)
         osc_pt2pt_gc_add_buffer (module, &acc_data->super);
     }
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
+    ompi_request_free (&request);
     return ret;
 }
 
@@ -771,13 +763,11 @@ static int replace_cb (ompi_request_t *request)
 
     mark_incoming_completion (module, rank);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
     /* unlock the accumulate lock */
     ompi_osc_pt2pt_accumulate_unlock (module);
 
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 /**
@@ -1435,13 +1425,11 @@ static int process_large_datatype_request_cb (ompi_request_t *request)
         return OMPI_ERROR;
     }
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
     /* free the datatype buffer */
     osc_pt2pt_gc_add_buffer (module, &ddt_buffer->super);
 
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 /**
