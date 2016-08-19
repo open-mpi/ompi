@@ -140,7 +140,8 @@ ompi_dtype_2_hcoll_dtype( ompi_datatype_t *dtype,
     int opal_type_id = dtype->super.id;
     dte_data_representation_t dte_data_rep = DTE_ZERO;
 
-    if (ompi_type_id < OMPI_DATATYPE_MPI_MAX_PREDEFINED) {
+    if (ompi_type_id < OMPI_DATATYPE_MPI_MAX_PREDEFINED &&
+        dtype->super.flags & OMPI_DATATYPE_FLAG_PREDEFINED) {
         if (opal_type_id > 0 && opal_type_id < OPAL_DATATYPE_MAX_PREDEFINED) {
             dte_data_rep =  *ompi_datatype_2_dte_data_rep[opal_type_id];
         }
