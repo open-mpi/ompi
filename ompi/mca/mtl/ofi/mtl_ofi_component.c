@@ -457,7 +457,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * The remote fi_addr will be stored in the ofi_endpoint struct.
      */
 
-    av_attr.type = (MTL_OFI_AV_TABLE == av_type) ? FI_AV_MAP: FI_AV_TABLE;
+    av_attr.type = (MTL_OFI_AV_TABLE == av_type) ? FI_AV_TABLE: FI_AV_MAP;
 
     ret = fi_av_open(ompi_mtl_ofi.domain, &av_attr, &ompi_mtl_ofi.av, NULL);
     if (ret) {
