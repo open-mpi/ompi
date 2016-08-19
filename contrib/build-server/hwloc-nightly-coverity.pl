@@ -7,6 +7,10 @@ use Getopt::Long;
 use File::Temp qw/ tempfile tempdir /;
 use File::Basename;
 
+my $coverity_project = "hwloc";
+# Coverity changes this URL periodically
+my $coverity_tool_url = "https://scan.coverity.com/download/cxx/linux64";
+
 my $filename_arg;
 my $coverity_token_arg;
 my $dry_run_arg = 0;
@@ -72,7 +76,7 @@ sub safe_system {
         # that it can be removed upon exit.
         chdir("/");
         print "Command $cmd failed: exit status $rc\n";
-        if (-f $stdout_file) {
+        if (defined($stdout_file) && -f $stdout_file) {
             print "Last command output:\n";
             system("cat $stdout_file");
         }
@@ -86,7 +90,7 @@ sub safe_system {
 
 # Make an area to work
 
-my $dir = tempdir(CLEANUP => 1);
+my $dir = tempdir(CLEANUP => 0);
 chdir($dir);
 verbose "*** Working in $dir\n";
 
@@ -94,9 +98,24 @@ verbose "*** Working in $dir\n";
 
 # Get the coverity tool, put it in our path
 
-verbose "*** Downloading coverity tool\n";
-safe_system(0, "wget https://scan.coverity.com/download/linux-64 --post-data \"token=$coverity_token_arg\&project=hwloc\" -O coverity_tool.tgz");
-safe_system(0, "tar xf coverity_tool.tgz");
+my $cdir = "$ENV{HOME}/coverity";
+safe_system(0, "mkdir $cdir")
+    if (! -d $cdir);
+
+# Optimization: the tool is pretty large.  If our local copy is less
+# than a day old, just use that without re-downloading.
+my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+    $atime,$mtime,$ctime,$blksize,$blocks) =
+    stat("$cdir/coverity_tool.tgz");
+my $now = time();
+if (!defined($mtime) || $mtime < $now - 24*60*60) {
+    verbose "*** Downloading new copy of the coverity tool\n";
+    safe_system(0, "wget $coverity_tool_url --post-data \"token=$coverity_token_arg&project=$coverity_project\" -O coverity_tool.tgz");
+    safe_system(0, "cp coverity_tool.tgz $cdir");
+}
+
+verbose "*** Expanding coverity tool tarball\n";
+safe_system(0, "tar xf $cdir/coverity_tool.tgz");
 opendir(my $dh, ".") ||
     die "Can't opendir .";
 my @files = grep { /^cov/ && -d "./$_" } readdir($dh);
@@ -122,9 +141,6 @@ safe_system(0, "./configure $configure_args", "configure");
 verbose "*** Building HWLOC tarball\n";
 safe_system(0, "cov-build --dir cov-int make $make_args", "cov-build");
 
-verbose "*** Checking HWLOC tarball\n";
-safe_system(0, "cov-build --dir cov-int make check $make_args", "cov-build-check");
-
 # Tar up the Coverity results
 verbose "*** Tarring up results\n";
 safe_system(0, "tar jcf $hwloc_ver-analyzed.tar.bz2 cov-int");
@@ -135,7 +151,7 @@ if ($dry_run_arg) {
 } else {
     verbose "*** Submitting results\n";
     safe_system(0, "curl --form token=$coverity_token_arg " .
-                "--form email=jsquyres\@cisco.com " .
+                "--form email=brice.goglin\@labri.fr " .
                 "--form file=\@$hwloc_ver-analyzed.tar.bz2 " .
                 "--form version=$hwloc_ver " .
                 "--form description=nightly-master " .
