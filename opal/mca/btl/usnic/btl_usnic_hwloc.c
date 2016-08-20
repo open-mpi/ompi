@@ -162,7 +162,7 @@ static hwloc_obj_t find_device_numa(opal_btl_usnic_module_t *module)
     if (obj->type != HWLOC_OBJ_NODE) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:filter_numa: could not find NUMA node for %s; filtering by NUMA distance not possible",
-                            module->fabric_info->fabric_attr->name);
+                            module->linux_device_name);
         return NULL;
     }
 
@@ -218,7 +218,7 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
 
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:filter_numa: %s is distance %d from me",
-                            module->fabric_info->fabric_attr->name,
+                            module->linux_device_name,
                             module->numa_distance);
     }
 

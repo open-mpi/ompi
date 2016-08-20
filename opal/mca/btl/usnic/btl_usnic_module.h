@@ -103,8 +103,10 @@ typedef struct opal_btl_usnic_module_t {
 
     /* Cache for use during component_init to associate a module with
        the libfabric device that it came from. */
+    uint32_t libfabric_api;
     struct fid_fabric *fabric;
     struct fid_domain *domain;
+    char *linux_device_name;
     struct fi_info *fabric_info;
     struct fi_usnic_ops_fabric *usnic_fabric_ops;
     struct fi_usnic_ops_av *usnic_av_ops;
