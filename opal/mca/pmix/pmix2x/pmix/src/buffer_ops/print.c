@@ -865,26 +865,44 @@ pmix_status_t pmix_bfrop_print_status(char **output, char *prefix,
                       PMIx_Error_string(src->data.status));
         break;
         case PMIX_PROC:
+        if (NULL == src->data.proc) {
+            rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PROC\tNULL", prefx);
+        } else {
+            rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PROC\t%s:%lu",
+                          prefx, src->data.proc->nspace, (unsigned long)src->data.proc->rank);
+        }
+        break;
         case PMIX_BYTE_OBJECT:
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: BYTE_OBJECT\tSIZE: %ld",
+                      prefx, (long)src->data.bo.size);
+        break;
         case PMIX_PERSIST:
         rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PERSIST\tValue: %d",
                       prefx, (int)src->data.persist);
         break;
         case PMIX_SCOPE:
-        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PERSIST\tValue: %d",
-                      prefx, (int)src->data.persist);
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_SCOPE\tValue: %d",
+                      prefx, (int)src->data.scope);
         break;
         case PMIX_DATA_RANGE:
-        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PERSIST\tValue: %d",
-                      prefx, (int)src->data.persist);
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_DATA_RANGE\tValue: %d",
+                      prefx, (int)src->data.range);
         break;
         case PMIX_PROC_STATE:
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_STATE\tValue: %d",
+                      prefx, (int)src->data.state);
+        break;
         case PMIX_PROC_INFO:
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PROC_INFO\tValue: %s:%lu",
+                      prefx, src->data.proc->nspace, (unsigned long)src->data.proc->rank);
+        break;
         case PMIX_DATA_ARRAY:
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: DATA_ARRAY\tARRAY SIZE: %ld",
+                      prefx, (long)src->data.darray->size);
         /**** DEPRECATED ****/
         case PMIX_INFO_ARRAY:
         rc = asprintf(output, "%sPMIX_VALUE: Data type: INFO_ARRAY\tARRAY SIZE: %ld",
-                      prefx, (long)src->data.array.size);
+                      prefx, (long)src->data.array->size);
         break;
         /********************/
         default:

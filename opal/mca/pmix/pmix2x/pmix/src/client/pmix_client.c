@@ -45,6 +45,7 @@
 #include <sys/types.h>
 #endif
 #include PMIX_EVENT_HEADER
+#include PMIX_EVENT2_THREAD_HEADER
 
 #if PMIX_CC_USE_PRAGMA_IDENT
 #pragma ident PMIX_VERSION
@@ -388,6 +389,9 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     pmix_sec_init();
 
     if (!pmix_globals.external_evbase) {
+        /* tell the event library we need thread support */
+        pmix_event_use_threads();
+
         /* create an event base and progress thread for us */
         if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
             pmix_sec_finalize();

@@ -74,6 +74,10 @@ include common/Makefile.include
 include buffer_ops/Makefile.am
 include usock/Makefile.am
 include sec/Makefile.am
+if WANT_DSTORE
+include sm/Makefile.include
+include dstore/Makefile.include
+endif
 
 MAINTAINERCLEANFILES = Makefile.in config.h config.h.in
 DISTCLEANFILES = Makefile

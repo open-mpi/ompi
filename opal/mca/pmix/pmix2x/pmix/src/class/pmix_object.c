@@ -187,7 +187,11 @@ static void expand_array(void)
     int i;
 
     max_classes += increment;
-    classes = (void**)realloc(classes, sizeof(void *) * max_classes);
+    if (NULL == classes) {
+        classes = (void**)calloc(max_classes, sizeof(void*));
+    } else {
+        classes = (void**)realloc(classes, sizeof(void *) * max_classes);
+    }
     if (NULL == classes) {
         perror("class malloc failed");
         exit(-1);

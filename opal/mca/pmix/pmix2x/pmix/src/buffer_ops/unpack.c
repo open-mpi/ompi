@@ -631,7 +631,7 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             }
             break;
         case PMIX_PROC:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.proc, &m, PMIX_PROC))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.proc, &m, PMIX_PROC))) {
                 return ret;
             }
             break;
@@ -666,23 +666,23 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             }
             break;
         case PMIX_PROC_INFO:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.pinfo, &m, PMIX_PROC_INFO))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.pinfo, &m, PMIX_PROC_INFO))) {
                 return ret;
             }
             break;
         case PMIX_DATA_ARRAY:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.darray, &m, PMIX_DATA_ARRAY))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.darray, &m, PMIX_DATA_ARRAY))) {
                 return ret;
             }
             break;
         case PMIX_QUERY:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.darray, &m, PMIX_QUERY))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.darray, &m, PMIX_QUERY))) {
                 return ret;
             }
             break;
         /**** DEPRECATED ****/
         case PMIX_INFO_ARRAY:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.array, &m, PMIX_INFO_ARRAY))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.array, &m, PMIX_INFO_ARRAY))) {
                 return ret;
             }
             break;

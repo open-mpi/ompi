@@ -356,7 +356,7 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
     char hostname[PMIX_MAXHOSTNAMELEN];
 
     gethostname(hostname, sizeof(hostname));
-    x->ninfo = 6;
+    x->ninfo = 7;
 
     PMIX_INFO_CREATE(x->info, x->ninfo);
     (void)strncpy(x->info[0].key, PMIX_UNIV_SIZE, PMIX_MAX_KEYLEN);
@@ -384,6 +384,10 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
     (void)strncpy(x->info[5].key, PMIX_PROC_MAP, PMIX_MAX_KEYLEN);
     x->info[5].value.type = PMIX_STRING;
     x->info[5].value.data.string = ppn;
+
+    (void)strncpy(x->info[6].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN);
+    x->info[6].value.type = PMIX_UINT32;
+    x->info[6].value.data.uint32 = nprocs;
 
     PMIx_server_register_nspace(nspace, nprocs, x->info, x->ninfo,
                                 cbfunc, x);
