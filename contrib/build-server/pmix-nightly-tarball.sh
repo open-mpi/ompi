@@ -7,8 +7,8 @@
 #####
 
 # e-mail address to send results to
-results_addr=testing@lists.open-mpi.org
-#results_addr=rhc@open-mpi.org
+#results_addr=testing@lists.open-mpi.org
+results_addr=rhc@open-mpi.org
 
 # svn repository uri
 master_code_uri=https://github.com/pmix/master.git
