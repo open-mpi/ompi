@@ -6,7 +6,7 @@
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -216,9 +216,10 @@ static void _reg_nspace(int sd, short args, void *cbdata)
                 pmapinfo = (opal_list_t*)kv->data.ptr;
                 szmap = opal_list_get_size(pmapinfo);
                 PMIX_INFO_CREATE(pmap, szmap);
-                pinfo[n].value.data.darray.type = PMIX_INFO;
-                pinfo[n].value.data.darray.array = (struct pmix_info_t*)pmap;
-                pinfo[n].value.data.darray.size = szmap;
+                pinfo[n].value.data.darray = (pmix_data_array_t*)calloc(1, sizeof(pmix_data_array_t));
+                pinfo[n].value.data.darray->type = PMIX_INFO;
+                pinfo[n].value.data.darray->array = (struct pmix_info_t*)pmap;
+                pinfo[n].value.data.darray->size = szmap;
                 m = 0;
                 OPAL_LIST_FOREACH(k2, pmapinfo, opal_value_t) {
                     (void)strncpy(pmap[m].key, k2->key, PMIX_MAX_KEYLEN);

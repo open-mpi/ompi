@@ -540,7 +540,7 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
             }
             break;
         case PMIX_PROC:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.proc, 1, PMIX_PROC))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, p->data.proc, 1, PMIX_PROC))) {
                 return ret;
             }
             break;
@@ -575,23 +575,23 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
             }
             break;
         case PMIX_PROC_INFO:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.pinfo, 1, PMIX_PROC_INFO))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, p->data.pinfo, 1, PMIX_PROC_INFO))) {
                 return ret;
             }
             break;
         case PMIX_DATA_ARRAY:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.darray, 1, PMIX_DATA_ARRAY))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, p->data.darray, 1, PMIX_DATA_ARRAY))) {
                 return ret;
             }
             break;
         case PMIX_QUERY:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.darray, 1, PMIX_QUERY))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, p->data.darray, 1, PMIX_QUERY))) {
                 return ret;
             }
             break;
         /**** DEPRECATED ****/
         case PMIX_INFO_ARRAY:
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.array, 1, PMIX_INFO_ARRAY))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, p->data.array, 1, PMIX_INFO_ARRAY))) {
                 return ret;
             }
             break;

@@ -145,6 +145,7 @@ static void* progress_engine(pmix_object_t *obj)
     pmix_progress_tracker_t *trk = (pmix_progress_tracker_t*)t->t_arg;
 
     while (trk->ev_active) {
+
         pmix_event_loop(trk->ev_base, PMIX_EVLOOP_ONCE);
     }
 

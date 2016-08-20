@@ -49,6 +49,7 @@
 #endif  /* HAVE_DIRENT_H */
 
 #include PMIX_EVENT_HEADER
+#include PMIX_EVENT2_THREAD_HEADER
 
 #if PMIX_CC_USE_PRAGMA_IDENT
 #pragma ident PMIX_VERSION
@@ -299,6 +300,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
             }
             /* otherwise, this isn't a fatal error - reset the addr */
             memset(&address, 0, sizeof(struct sockaddr_un));
+            address.sun_family = AF_UNIX;
             connection_defined = false;
         } else {
             /* connect to this server */
@@ -370,6 +372,10 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_bfrop_open();
     pmix_usock_init(pmix_tool_notify_recv);
     pmix_sec_init();
+
+
+    /* tell the event library we need thread support */
+    pmix_event_use_threads();
 
     if (!pmix_globals.external_evbase) {
         /* create an event base and progress thread for us */
@@ -836,7 +842,8 @@ static pmix_status_t usock_connect(struct sockaddr_un *addr, int *fd)
     int retries = 0;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "usock_peer_try_connect: attempting to connect to server");
+                        "usock_peer_try_connect: attempting to connect to server at %s",
+                        addr->sun_path);
 
     addrlen = sizeof(struct sockaddr_un);
     while (retries < PMIX_MAX_RETRIES) {

@@ -5,7 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -789,8 +789,9 @@ void pmix2x_value_load(pmix_value_t *v,
         case OPAL_NAME:
             v->type = PMIX_PROC;
             /* have to stringify the jobid */
-            (void)opal_snprintf_jobid(v->data.proc.nspace, PMIX_MAX_NSLEN, kv->data.name.vpid);
-            v->data.proc.rank = pmix2x_convert_opalrank(kv->data.name.vpid);
+            PMIX_PROC_CREATE(v->data.proc, 1);
+            (void)opal_snprintf_jobid(v->data.proc->nspace, PMIX_MAX_NSLEN, kv->data.name.vpid);
+            v->data.proc->rank = pmix2x_convert_opalrank(kv->data.name.vpid);
             break;
         case OPAL_BYTE_OBJECT:
             v->type = PMIX_BYTE_OBJECT;
@@ -929,10 +930,10 @@ int pmix2x_value_unload(opal_value_t *kv,
         break;
     case PMIX_PROC:
         kv->type = OPAL_NAME;
-        if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&kv->data.name.jobid, v->data.proc.nspace))) {
+        if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&kv->data.name.jobid, v->data.proc->nspace))) {
             return pmix2x_convert_opalrc(rc);
         }
-        kv->data.name.vpid = pmix2x_convert_rank(v->data.proc.rank);
+        kv->data.name.vpid = pmix2x_convert_rank(v->data.proc->rank);
         break;
     case PMIX_BYTE_OBJECT:
         kv->type = OPAL_BYTE_OBJECT;

@@ -55,15 +55,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#ifdef HAVE_SYS_TIME_H
+#include <time.h>
 #include <sys/time.h> /* for struct timeval */
-#endif
-#ifdef HAVE_UNISTD_H
 #include <unistd.h> /* for uid_t and gid_t */
-#endif
-#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h> /* for uid_t and gid_t */
-#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -182,7 +177,9 @@ typedef uint32_t pmix_rank_t;
 
 /* request-related info */
 #define PMIX_COLLECT_DATA                   "pmix.collect"          // (bool) collect data and return it at the end of the operation
-#define PMIX_TIMEOUT                        "pmix.timeout"          // (int) time in sec before specified operation should time out
+#define PMIX_TIMEOUT                        "pmix.timeout"          // (int) time in sec before specified operation should time out (0 => infinite)
+#define PMIX_IMMEDIATE                      "pmix.immediate"        // (bool) specified operation should immediately return an error if requested
+                                                                    //        data cannot be found - do not request it from the host RM
 #define PMIX_WAIT                           "pmix.wait"             // (int) caller requests that the server wait until at least the specified
                                                                     //       #values are found (0 => all and is the default)
 #define PMIX_COLLECTIVE_ALGO                "pmix.calgo"            // (char*) comma-delimited list of algorithms to use for collective
@@ -606,17 +603,17 @@ typedef struct pmix_value {
         time_t time;
         pmix_status_t status;
         pmix_rank_t rank;
-        pmix_proc_t proc;
+        pmix_proc_t *proc;
         pmix_byte_object_t bo;
         pmix_persistence_t persist;
         pmix_scope_t scope;
         pmix_data_range_t range;
         pmix_proc_state_t state;
-        pmix_proc_info_t pinfo;
-        pmix_data_array_t darray;
+        pmix_proc_info_t *pinfo;
+        pmix_data_array_t *darray;
         void *ptr;
         /**** DEPRECATED ****/
-        pmix_info_array_t array;
+        pmix_info_array_t *array;
         /********************/
     } data;
 } pmix_value_t;
@@ -661,41 +658,23 @@ typedef struct pmix_value {
                 free((m)->data.bo.bytes);                                       \
             }                                                                   \
         } else if (PMIX_DATA_ARRAY == (m)->type) {                              \
-            if (PMIX_STRING == (m)->data.darray.type) {                         \
-                char **_str = (char**)(m)->data.darray.array;                   \
-                for (_n=0; _n < (m)->data.darray.size; _n++) {                  \
+            if (PMIX_STRING == (m)->data.darray->type) {                        \
+                char **_str = (char**)(m)->data.darray->array;                  \
+                for (_n=0; _n < (m)->data.darray->size; _n++) {                 \
                     if (NULL != _str[_n]) {                                     \
                         free(_str[_n]);                                         \
                     }                                                           \
                 }                                                               \
-            } else if (PMIX_PROC_INFO == (m)->data.darray.type) {               \
+            } else if (PMIX_PROC_INFO == (m)->data.darray->type) {              \
                 pmix_proc_info_t *_info =                                       \
-                            (pmix_proc_info_t*)(m)->data.darray.array;          \
-                for (_n=0; _n < (m)->data.darray.size; _n++) {                  \
+                            (pmix_proc_info_t*)(m)->data.darray->array;         \
+                for (_n=0; _n < (m)->data.darray->size; _n++) {                 \
                     PMIX_PROC_INFO_DESTRUCT(&_info[_n]);                        \
                 }                                                               \
-                /**** DEPRECATED ****/                                          \
-            } else if (PMIX_INFO_ARRAY == (m)->type) {                          \
-                pmix_info_t *_p = (pmix_info_t*)((m)->data.array.array);        \
-                for (_n=0; _n < (m)->data.array.size; _n++) {                   \
-                    if (PMIX_STRING == _p[_n].value.type) {                     \
-                        if (NULL != _p[_n].value.data.string) {                 \
-                            free(_p[_n].value.data.string);                     \
-                        }                                                       \
-                    } else if (PMIX_BYTE_OBJECT == _p[_n].value.type) {         \
-                        if (NULL != _p[_n].value.data.bo.bytes) {               \
-                            free(_p[_n].value.data.bo.bytes);                   \
-                        }                                                       \
-                    } else if (PMIX_PROC_INFO == _p[_n].value.type) {           \
-                        PMIX_PROC_INFO_DESTRUCT(&_p[_n].value.data.pinfo);      \
-                    }                                                           \
-                }                                                               \
-                free(_p);                                                       \
-                /********************/                                          \
-            } else if (PMIX_INFO == (m)->data.darray.type) {                    \
+            } else if (PMIX_INFO == (m)->data.darray->type) {                   \
                 pmix_info_t *_info =                                            \
-                            (pmix_info_t*)(m)->data.darray.array;               \
-                for (_n=0; _n < (m)->data.darray.size; _n++) {                  \
+                            (pmix_info_t*)(m)->data.darray->array;              \
+                for (_n=0; _n < (m)->data.darray->size; _n++) {                 \
                     /* cannot use info destruct as that loops back */           \
                     if (PMIX_STRING == _info[_n].value.type) {                  \
                         if (NULL != _info[_n].value.data.string) {              \
@@ -706,21 +685,39 @@ typedef struct pmix_value {
                             free(_info[_n].value.data.bo.bytes);                \
                         }                                                       \
                     } else if (PMIX_PROC_INFO == _info[_n].value.type) {        \
-                        PMIX_PROC_INFO_DESTRUCT(&_info[_n].value.data.pinfo);   \
+                        PMIX_PROC_INFO_DESTRUCT(_info[_n].value.data.pinfo);    \
                     }                                                           \
                 }                                                               \
-            } else if (PMIX_BYTE_OBJECT == (m)->data.darray.type) {             \
+            } else if (PMIX_BYTE_OBJECT == (m)->data.darray->type) {            \
                 pmix_byte_object_t *_obj =                                      \
-                            (pmix_byte_object_t*)(m)->data.darray.array;        \
-                for (_n=0; _n < (m)->data.darray.size; _n++) {                  \
+                            (pmix_byte_object_t*)(m)->data.darray->array;       \
+                for (_n=0; _n < (m)->data.darray->size; _n++) {                 \
                     if (NULL != _obj[_n].bytes) {                               \
                         free(_obj[_n].bytes);                                   \
                     }                                                           \
                 }                                                               \
             }                                                                   \
-            if (NULL != (m)->data.darray.array) {                               \
-                free((m)->data.darray.array);                                   \
+            if (NULL != (m)->data.darray->array) {                              \
+                free((m)->data.darray->array);                                  \
             }                                                                   \
+        /**** DEPRECATED ****/                                                  \
+        } else if (PMIX_INFO_ARRAY == (m)->type) {                              \
+            pmix_info_t *_p = (pmix_info_t*)((m)->data.array->array);           \
+            for (_n=0; _n < (m)->data.array->size; _n++) {                      \
+                if (PMIX_STRING == _p[_n].value.type) {                         \
+                    if (NULL != _p[_n].value.data.string) {                     \
+                        free(_p[_n].value.data.string);                         \
+                    }                                                           \
+                } else if (PMIX_BYTE_OBJECT == _p[_n].value.type) {             \
+                    if (NULL != _p[_n].value.data.bo.bytes) {                   \
+                        free(_p[_n].value.data.bo.bytes);                       \
+                    }                                                           \
+                } else if (PMIX_PROC_INFO == _p[_n].value.type) {               \
+                    PMIX_PROC_INFO_DESTRUCT(_p[_n].value.data.pinfo);           \
+                }                                                               \
+            }                                                                   \
+            free(_p);                                                           \
+        /********************/                                                  \
         }                                                                       \
     } while (0)
 

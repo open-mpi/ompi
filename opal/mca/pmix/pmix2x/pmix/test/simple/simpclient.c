@@ -94,10 +94,21 @@ int main(int argc, char **argv)
 
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Init failed: %d", myproc.nspace, myproc.rank, rc);
+        pmix_output(0, "Client ns %s rank %d: PMIx_Init failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         exit(rc);
     }
     pmix_output(0, "Client ns %s rank %d: Running", myproc.nspace, myproc.rank);
+
+    /* test something */
+    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
+    proc.rank = PMIX_RANK_WILDCARD;
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
+        exit(rc);
+    }
+    PMIX_VALUE_RELEASE(val);
 
     /* register our errhandler */
     active = true;
@@ -111,7 +122,8 @@ int main(int argc, char **argv)
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
     if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Get universe size failed: %d", myproc.nspace, myproc.rank, rc);
+        pmix_output(0, "Client ns %s rank %d: PMIx_Get universe size failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         goto done;
     }
     nprocs = val->data.uint32;
@@ -123,7 +135,8 @@ int main(int argc, char **argv)
     value.type = PMIX_UINT32;
     value.data.uint32 = 1234;
     if (PMIX_SUCCESS != (rc = PMIx_Store_internal(&myproc, tmp, &value))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Store_internal failed: %d", myproc.nspace, myproc.rank, rc);
+        pmix_output(0, "Client ns %s rank %d: PMIx_Store_internal failed: %s",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         goto done;
     }
 
@@ -132,7 +145,8 @@ int main(int argc, char **argv)
         value.type = PMIX_UINT64;
         value.data.uint64 = 1234;
         if (PMIX_SUCCESS != (rc = PMIx_Put(PMIX_LOCAL, tmp, &value))) {
-            pmix_output(0, "Client ns %s rank %d: PMIx_Put internal failed: %d", myproc.nspace, myproc.rank, rc);
+            pmix_output(0, "Client ns %s rank %d: PMIx_Put internal failed: %s",
+                        myproc.nspace, myproc.rank, PMIx_Error_string(rc));
             goto done;
         }
 
@@ -140,12 +154,14 @@ int main(int argc, char **argv)
         value.type = PMIX_STRING;
         value.data.string = "1234";
         if (PMIX_SUCCESS != (rc = PMIx_Put(PMIX_REMOTE, tmp, &value))) {
-            pmix_output(0, "Client ns %s rank %d: PMIx_Put internal failed: %d", myproc.nspace, myproc.rank, rc);
+            pmix_output(0, "Client ns %s rank %d: PMIx_Put internal failed: %s",
+                        myproc.nspace, myproc.rank, PMIx_Error_string(rc));
             goto done;
         }
 
         if (PMIX_SUCCESS != (rc = PMIx_Commit())) {
-            pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Commit failed: %d", myproc.nspace, myproc.rank, cnt, rc);
+            pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Commit failed: %s",
+                        myproc.nspace, myproc.rank, cnt, PMIx_Error_string(rc));
             goto done;
         }
 
@@ -154,7 +170,8 @@ int main(int argc, char **argv)
         (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
         proc.rank = PMIX_RANK_WILDCARD;
         if (PMIX_SUCCESS != (rc = PMIx_Fence(&proc, 1, NULL, 0))) {
-            pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Fence failed: %d", myproc.nspace, myproc.rank, cnt, rc);
+            pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Fence failed: %s",
+                        myproc.nspace, myproc.rank, cnt, PMIx_Error_string(rc));
             goto done;
         }
 
@@ -165,7 +182,8 @@ int main(int argc, char **argv)
                 proc.rank = n;
                 (void)asprintf(&tmp, "%s-%d-local-%d", myproc.nspace, n, j);
                 if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, tmp, NULL, 0, &val))) {
-                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s failed: %d", myproc.nspace, myproc.rank, j, tmp, rc);
+                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s failed: %s",
+                                myproc.nspace, myproc.rank, j, tmp, PMIx_Error_string(rc));
                     continue;
                 }
                 if (PMIX_UINT64 != val->type) {
@@ -186,7 +204,8 @@ int main(int argc, char **argv)
 
                 (void)asprintf(&tmp, "%s-%d-remote-%d", proc.nspace, n, j);
                 if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, tmp, NULL, 0, &val))) {
-                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s failed: %d", myproc.nspace, myproc.rank, j, tmp, rc);
+                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s failed: %s",
+                                myproc.nspace, myproc.rank, j, tmp, PMIx_Error_string(rc));
                     continue;
                 }
                 if (PMIX_STRING != val->type) {
@@ -235,7 +254,8 @@ int main(int argc, char **argv)
     /* finalize us */
     pmix_output(0, "Client ns %s rank %d: Finalizing", myproc.nspace, myproc.rank);
     if (PMIX_SUCCESS != (rc = PMIx_Finalize(NULL, 0))) {
-        fprintf(stderr, "Client ns %s rank %d:PMIx_Finalize failed: %d\n", myproc.nspace, myproc.rank, rc);
+        fprintf(stderr, "Client ns %s rank %d:PMIx_Finalize failed: %s\n",
+                myproc.nspace, myproc.rank, PMIx_Error_string(rc));
     } else {
         fprintf(stderr, "Client ns %s rank %d:PMIx_Finalize successfully completed\n", myproc.nspace, myproc.rank);
     }
