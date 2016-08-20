@@ -409,10 +409,10 @@ int base_bcol_basesmuma_setup_ctl_struct(
         cs->basesmuma_num_regions_per_bank;
     ctl_mgmt->size_of_group=
         sm_bcol_module->super.sbgp_partner_module->group_size;
-    roundup_to_power_radix(2,cs->basesmuma_num_regions_per_bank,&n_levels);
+    ompi_roundup_to_power_radix(2,cs->basesmuma_num_regions_per_bank,&n_levels);
     ctl_mgmt->log2_num_buffs_per_mem_bank=n_levels;
 
-    roundup_to_power_radix(2,n_ctl_structs,&n_levels);
+    ompi_roundup_to_power_radix(2,n_ctl_structs,&n_levels);
     ctl_mgmt->log2_number_of_buffs=n_levels;
     ctl_mgmt->mask=n_ctl_structs-1;
     sm_bcol_module->super.n_poll_loops=cs->n_poll_loops;

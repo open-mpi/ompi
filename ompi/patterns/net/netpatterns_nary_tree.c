@@ -321,7 +321,7 @@ Error:
  * than size, with the specified radix.  The resulting tree is of
  * depth n_lvls.
  */
-OMPI_DECLSPEC int roundup_to_power_radix ( int radix, int size, int *n_lvls )
+int ompi_roundup_to_power_radix ( int radix, int size, int *n_lvls )
 {
     int n_levels=0, return_value=1;
     int result;

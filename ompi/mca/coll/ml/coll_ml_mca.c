@@ -179,12 +179,12 @@ static int mca_coll_ml_verify_params(void)
 
     /* Make sure that the the number of memory banks is a power of 2 */
     mca_coll_ml_component.n_payload_mem_banks =
-        roundup_to_power_radix(2, mca_coll_ml_component.n_payload_mem_banks,
+        ompi_roundup_to_power_radix(2, mca_coll_ml_component.n_payload_mem_banks,
                 &dummy);
 
     /* Make sure that the the number of buffers is a power of 2 */
     mca_coll_ml_component.n_payload_buffs_per_bank =
-        roundup_to_power_radix(2, mca_coll_ml_component.n_payload_buffs_per_bank,
+        ompi_roundup_to_power_radix(2, mca_coll_ml_component.n_payload_buffs_per_bank,
                 &dummy);
 
     return OMPI_SUCCESS;

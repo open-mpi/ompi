@@ -188,7 +188,7 @@ static int basesmuma_open(void)
      * Make sure that the number of banks is a power of 2
      */
     cs->basesmuma_num_mem_banks=
-        roundup_to_power_radix(2,cs->basesmuma_num_mem_banks, &dummy);
+        ompi_roundup_to_power_radix(2,cs->basesmuma_num_mem_banks, &dummy);
     if ( 0 == cs->basesmuma_num_mem_banks ) {
         ret=OMPI_ERROR;
         goto exit_ERROR;
@@ -198,7 +198,7 @@ static int basesmuma_open(void)
      * Make sure that the the number of buffers is a power of 2
      */
     cs->basesmuma_num_regions_per_bank=
-        roundup_to_power_radix(2,cs->basesmuma_num_regions_per_bank, &dummy);
+        ompi_roundup_to_power_radix(2,cs->basesmuma_num_regions_per_bank, &dummy);
     if ( 0 == cs->basesmuma_num_regions_per_bank ) {
         ret=OMPI_ERROR;
         goto exit_ERROR;
