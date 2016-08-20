@@ -216,7 +216,7 @@ opal_btl_usnic_endpoint_send_segment(
                     "CHUNK" : "FRAG",
                     sseg->ss_base.us_btl_header->pkt_seq,
                     sseg->ss_base.us_btl_header->sender,
-                    endpoint->endpoint_module->fabric_info->fabric_attr->name,
+                    endpoint->endpoint_module->linux_device_name,
                     local_ip,
                     module->local_modex.ports[sseg->ss_channel],
                     (void*)sseg,

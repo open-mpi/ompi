@@ -197,7 +197,7 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     /* Ensure to NULL-terminate the passed strings */
     strncpy(cmd.nodename, opal_process_info.nodename,
             CONNECTIVITY_NODENAME_LEN - 1);
-    strncpy(cmd.usnic_name, module->fabric_info->fabric_attr->name,
+    strncpy(cmd.usnic_name, module->linux_device_name,
             CONNECTIVITY_IFNAME_LEN - 1);
 
     if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(cmd), &cmd)) {
