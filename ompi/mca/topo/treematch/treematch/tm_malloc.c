@@ -55,9 +55,10 @@ void my_mem_check(void){
     hash_t  *s;
     int nb_errors = 0;
     for(s=size_hash; s != NULL; s=s->hh.next) {
-      if(get_verbose_level()>=ERROR)
+      if(get_verbose_level() >= ERROR) {
         printf("pointer %p of size %ld has not been freed!\n", s->key, s->size);
-	nb_errors ++;
+      }
+      nb_errors ++;
     }
 
     if(get_verbose_level() >= INFO)
@@ -88,7 +89,7 @@ void *my_malloc(size_t size, char *file, int line){
   ptr = malloc(size);
 
   if(get_verbose_level()>=DEBUG)
-    printf("my_malloc of size %ld: %p (%s: %d)\n",size-2*EXTRA_BYTE,ptr,file,line);
+    printf("my_malloc of size %ld: %p (%s: %d)\n",size-2*EXTRA_BYTE,(void*)ptr,file,line);
 
   save_size(ptr,size);
 
@@ -97,7 +98,7 @@ void *my_malloc(size_t size, char *file, int line){
 
 
   if(get_verbose_level()>=DEBUG)
-    printf("my_malloc returning: %p\n",ptr+EXTRA_BYTE);
+    printf("my_malloc returning: %p\n",(void*)(ptr+EXTRA_BYTE));
 
   return (void *)(ptr + EXTRA_BYTE);
 }
@@ -115,14 +116,14 @@ void *my_calloc(size_t count, size_t size, char *file, int line){
   save_size(ptr, full_size);
 
   if(get_verbose_level()>=DEBUG)
-    printf("my_calloc of size %ld: %p (%s: %d)\n",full_size-2*EXTRA_BYTE,ptr, file, line);
+    printf("my_calloc of size %ld: %p (%s: %d)\n",full_size-2*EXTRA_BYTE,(void*)ptr, file, line);
 
 
   memcpy(ptr, extra_data, EXTRA_BYTE);
   memcpy(ptr + full_size - EXTRA_BYTE, extra_data, EXTRA_BYTE);
 
   if(get_verbose_level()>=DEBUG)
-    printf("my_calloc returning: %p\n",ptr+EXTRA_BYTE);
+    printf("my_calloc returning: %p\n",(void*)(ptr+EXTRA_BYTE));
 
   return (void *)(ptr+EXTRA_BYTE);
 }
@@ -147,7 +148,7 @@ void my_free(void *ptr){
   }
 
   if(get_verbose_level()>=DEBUG)
-    printf("my_free freeing: %p\n",original_ptr);
+    printf("my_free freeing: %p\n",(void*)original_ptr);
 
 
   free(original_ptr);

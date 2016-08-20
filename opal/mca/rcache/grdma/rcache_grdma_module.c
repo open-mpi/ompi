@@ -235,6 +235,7 @@ static int mca_rcache_grdma_check_cached (mca_rcache_base_registration_t *grdma_
         int32_t ref_cnt = opal_atomic_add_32 (&grdma_reg->ref_count, 1);
         OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
                              "returning existing registration %p. references %d", (void *) grdma_reg, ref_cnt));
+        (void)ref_cnt;
         args->reg = grdma_reg;
         return 1;
     }
@@ -347,7 +348,7 @@ static int mca_rcache_grdma_register (mca_rcache_base_module_t *rcache, void *ad
 
     OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
                          "created new registration %p for region {%p, %p} with flags 0x%x",
-                         (void *) grdma_reg, base, bound, grdma_reg->flags));
+                         (void *)grdma_reg, (void*)base, (void*)bound, grdma_reg->flags));
 
     *reg = grdma_reg;
 

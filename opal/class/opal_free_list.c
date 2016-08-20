@@ -165,7 +165,7 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements)
 {
     unsigned char *ptr, *payload_ptr = NULL;
     opal_free_list_memory_t *alloc_ptr;
-    size_t alloc_size, head_size, elem_size = 0, buffer_size, align;
+    size_t alloc_size, head_size, elem_size = 0, buffer_size = 0, align = 0;
     mca_rcache_base_registration_t *reg = NULL;
     int rc = OPAL_SUCCESS;
 
