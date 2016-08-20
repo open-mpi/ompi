@@ -749,7 +749,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         mca_btl_usnic_component.cq_readerr_try_again_value = -FI_EAGAIN;
     }
 
-    /* libnl initialization */
     opal_proc_t *me = opal_proc_local_get();
     opal_process_name_t *name = &(me->proc_name);
     mca_btl_usnic_component.my_hashed_rte_name =
