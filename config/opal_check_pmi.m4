@@ -227,6 +227,8 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 
 AC_DEFUN([OPAL_CHECK_PMIX],[
 
+    OPAL_VAR_SCOPE_PUSH([opal_external_pmix_save_CPPFLAGS opal_external_pmix_save_LDFLAGS opal_external_pmix_save_LIBS])
+
     AC_ARG_WITH([pmix],
                 [AC_HELP_STRING([--with-pmix(=DIR)],
                                 [Build PMIx support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of PMIx.  "external" forces Open MPI to use an external installation of PMIx.  Supplying a valid directory name also forces Open MPI to use an external installation of PMIx, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI does not support --without-pmix.])])
@@ -241,14 +243,38 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
     AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_pmix" = "internal"],
           [AC_MSG_RESULT([no])
            opal_external_pmix_happy=no],
+
           [AC_MSG_RESULT([yes])
            # check for external pmix lib */
            AS_IF([test "$with_pmix" = "external"],
                  [pmix_ext_install_dir=/usr],
                  [pmix_ext_install_dir=$with_pmix])
+
            # Make sure we have the headers and libs in the correct location
            OPAL_CHECK_WITHDIR([external-pmix], [$pmix_ext_install_dir/include], [pmix.h])
            OPAL_CHECK_WITHDIR([external-libpmix], [$pmix_ext_install_dir/lib], [libpmix.*])
+
+           # check the version
+           opal_external_pmix_save_CPPFLAGS=$CPPFLAGS
+           opal_external_pmix_save_LDFLAGS=$LDFLAGS
+           opal_external_pmix_save_LIBS=$LIBS
+
+           LDFLAGS="-L$pmix_ext_install_dir/lib $LDFLAGS"
+           AC_SEARCH_LIBS([PMIx_Register_event_handler], [pmix],
+                          [opal_external_pmix_version=2],
+                          [opal_external_pmix_version=1])
+
+           AC_MSG_CHECKING([PMIx version])
+           AC_MSG_RESULT([$opal_external_pmix_version])
+
+           CPPFLAGS=$opal_external_pmix_save_CPPFLAGS
+           LDFLAGS=$opal_external_pmix_save_LDFLAGS
+           LIBS=$opal_external_pmix_save_LIBS
+
+           opal_external_pmix_CPPFLAGS="-I$pmix_ext_install_dir/include"
+           opal_external_pmix_LDFLAGS=-L$pmix_ext_install_dir/lib
+           opal_external_pmix_LIBS=-lpmix
            opal_external_pmix_happy=yes])
 
+    OPAL_VAR_SCOPE_POP
 ])

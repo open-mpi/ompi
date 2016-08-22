@@ -28,6 +28,8 @@
 AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
     AC_CONFIG_FILES([opal/mca/pmix/pmix2x/Makefile])
 
+    AC_REQUIRE([OPAL_CHECK_PMIX])
+
     OPAL_VAR_SCOPE_PUSH([PMIX_VERSION opal_pmix_pmix2x_save_CPPFLAGS opal_pmix_pmix2x_save_LDFLAGS opal_pmix_pmix2x_save_LIBS opal_pmix_pmix2x_basedir opal_pmix_pmix2x_save_cflags])
 
     PMIX_VERSION=
@@ -49,31 +51,47 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
 
     OPAL_CONFIG_SUBDIR([$opal_pmix_pmix2x_basedir/pmix],
-        [$opal_pmix_pmix2x_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
-        [opal_pmix_pmix2x_happy=1], [opal_pmix_pmix2x_happy=0])
-
-    AS_IF([test $opal_pmix_pmix2x_happy -eq 1],
-          [PMIX_VERSION="internal v`$srcdir/$opal_pmix_pmix2x_basedir/pmix/config/pmix_get_version.sh $srcdir/$opal_pmix_pmix2x_basedir/pmix/VERSION`"
-           # Build flags for our Makefile.am
-           opal_pmix_pmix2x_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_pmix_pmix2x_basedir"'/pmix/src/libpmix.la'
-           opal_pmix_pmix2x_CPPFLAGS='-I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix2x/pmix/include/pmix -I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix2x/pmix/include -I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix2x/pmix -I$(OPAL_TOP_SRCDIR)/opal/mca/pmix/pmix2x/pmix'
-           AC_SUBST([opal_pmix_pmix2x_LIBS])
-           AC_SUBST([opal_pmix_pmix2x_CPPFLAGS])])
+                       [$opal_pmix_pmix2x_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
+                       [opal_pmix_pmix2x_happy=1], [opal_pmix_pmix2x_happy=0])
 
     CFLAGS=$opal_pmix_pmix2x_save_CFLAGS
     CPPFLAGS=$opal_pmix_pmix2x_save_CPPFLAGS
     LDFLAGS=$opal_pmix_pmix2x_save_LDFLAGS
     LIBS=$opal_pmix_pmix2x_save_LIBS
 
-    # If we are not building the internal pmix, then indicate that
-    # this component should not be built.  NOTE: we still did all the
+    # If we are not building the internal pmix, then check to see
+    # if we are linking to an external v2.x library. If not, then
+    # do not use this component.  NOTE: we still did all the
     # above configury so that all the proper GNU Autotools
     # infrastructure is setup properly (e.g., w.r.t. SUBDIRS=pmix in
     # this directory's Makefile.am, we still need the Autotools "make
     # distclean" infrastructure to work properly).
+    AC_MSG_CHECKING([if v2.x component is to be used])
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
-          [AC_MSG_WARN([using an external pmix; disqualifying this component])
-           opal_pmix_pmix2x_happy=0])
+          [AS_IF([test "$opal_external_pmix_version" = "2"],
+                 [AC_MSG_RESULT([yes - using an external v2.x library])
+                  # Build flags for our Makefile.am
+                  opal_pmix_pmix2x_CPPFLAGS=$opal_external_pmix_CPPFLAGS
+                  opal_pmix_pmix2x_LDFLAGS=$opal_external_pmix_LDFLAGS
+                  opal_pmix_pmix2x_LIBS=$opal_external_pmix_LIBS
+                  opal_pmix_pmix2x_DEPENDENCIES=
+                  # setup wrapper flags
+                  pmix_pmix2x_WRAPPER_EXTRA_LDFLAGS=$opal_external_pmix_LDFLAGS
+                  pmix_pmix2x_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS],
+                 [AC_MSG_RESULT([no - using an external v1.x pmix; disqualifying this component])
+                  opal_pmix_pmix2x_happy=0])],
+          [AC_MSG_RESULT([yes - using the internal v2.x library])
+           PMIX_VERSION="internal v`$srcdir/$opal_pmix_pmix2x_basedir/pmix/config/pmix_get_version.sh $srcdir/$opal_pmix_pmix2x_basedir/pmix/VERSION`"
+           # Build flags for our Makefile.am
+           opal_pmix_pmix2x_LDFLAGS=
+           opal_pmix_pmix2x_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_pmix_pmix2x_basedir"'/pmix/src/libpmix.la'
+           opal_pmix_pmix2x_CPPFLAGS='-I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix2x/pmix/include -I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix2x/pmix -I$(OPAL_TOP_SRCDIR)/opal/mca/pmix/pmix2x/pmix/include -I$(OPAL_TOP_SRCDIR)/opal/mca/pmix/pmix2x/pmix'
+           opal_pmix_pmix2x_DEPENDENCIES='$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix2x/pmix/src/libpmix.la'])
+
+   AC_SUBST([opal_pmix_pmix2x_LIBS])
+   AC_SUBST([opal_pmix_pmix2x_CPPFLAGS])
+   AC_SUBST([opal_pmix_pmix2x_LDFLAGS])
+   AC_SUBST([opal_pmix_pmix2x_DEPENDENCIES])
 
     AS_IF([test $opal_pmix_pmix2x_happy -eq 1],
           [$1],
