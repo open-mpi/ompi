@@ -43,31 +43,29 @@ AC_DEFUN([MCA_opal_pmix_ext114_CONFIG],[
                   AC_MSG_WARN([LIBRARY THIS LIBRARY MUST POINT TO THE SAME ONE USED ])
                   AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
                   AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
-           external_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/$opal_pmix_external_basedir/pmix -I${includedir}/openmpi/$opal_pmix_external_basedir/pmix/include'
-           # check for the 1.1.4 version by looking for a function
-           # which was later removed
-           AC_MSG_CHECKING([if external component is version 1.1.4])
-           OPAL_CHECK_PACKAGE([opal_pmix_ext114],
-                              [pmix.h],
-                              [pmix],
-                              [PMIx_Register_errhandler],
-                              [-lpmix],
-                              [$pmix_ext_install_dir],
-                              [$pmix_ext_install_dir/lib],
-                              [AC_MSG_RESULT([yes])
-                               opal_pmix_external_114_happy=yes],
-                              [AC_MSG_RESULT([no])
-                               opal_pmix_external_114_happy=no])
 
-           AC_SUBST(opal_pmix_ext114_CPPFLAGS)
-           AC_SUBST(opal_pmix_ext114_LDFLAGS)
-           AC_SUBST(opal_pmix_ext114_LIBS)
+           # check for the 1.1.4 version
+           AC_MSG_CHECKING([if external component is version 1.x])
+           AS_IF([test "$opal_external_pmix_version" = "1"],
+                 [AC_MSG_RESULT([yes])
+                  opal_pmix_external_114_happy=yes],
+                 [AC_MSG_RESULT([no])
+                  opal_pmix_external_114_happy=no])
 
            AS_IF([test "$opal_pmix_external_114_happy" = "yes"],
                  [$1
-                 # need to set the wrapper flags for static builds
-                 pmix_ext114_WRAPPER_EXTRA_LDFLAGS="$opal_pmix_ext114_LDFLAGS"
-                 pmix_ext114_WRAPPER_EXTRA_LIBS="$opal_pmix_ext114_LIBS"],
+                  # need to set the wrapper flags for static builds
+                  pmix_ext114_WRAPPER_EXTRA_LDFLAGS=$opal_external_pmix_LDFLAGS
+                  pmix_ext114_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS],
                  [$2])],
           [$2])
+
+    opal_pmix_ext114_CPPFLAGS=$opal_external_pmix_CPPFLAGS
+    opal_pmix_ext114_LDFLAGS=$opal_external_pmix_LDFLAGS
+    opal_pmix_ext114_LIBS=$opal_external_pmix_LIBS
+
+    AC_SUBST([opal_pmix_ext114_CPPFLAGS])
+    AC_SUBST([opal_pmix_ext114_LDFLAGS])
+    AC_SUBST([opal_pmix_ext114_LIBS])
+
 ])dnl

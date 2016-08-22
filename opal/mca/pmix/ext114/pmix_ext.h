@@ -29,7 +29,6 @@
 
 #include "opal/mca/pmix/pmix.h"
 #include "pmix_server.h"
-#include "pmix_server.h"
 #include "pmix/pmix_common.h"
 
 BEGIN_C_DECLS
