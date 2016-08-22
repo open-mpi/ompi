@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -28,7 +28,7 @@
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sync_reduce(void *sbuf, void *rbuf, int count,
+int mca_coll_sync_reduce(const void *sbuf, void *rbuf, int count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op,
                          int root, struct ompi_communicator_t *comm,
@@ -40,7 +40,7 @@ int mca_coll_sync_reduce(void *sbuf, void *rbuf, int count,
         return s->c_coll.coll_reduce(sbuf, rbuf, count, dtype, op, root, comm,
                                     s->c_coll.coll_reduce_module);
     } else {
-        COLL_SYNC(s, s->c_coll.coll_reduce(sbuf, rbuf, count, dtype, 
+        COLL_SYNC(s, s->c_coll.coll_reduce(sbuf, rbuf, count, dtype,
                                            op, root, comm,
                                            s->c_coll.coll_reduce_module));
     }
