@@ -14,6 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,10 @@
 #include "ompi/runtime/params.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/info/info.h"
+
+
+opal_mutex_t ompi_mpi_file_bootstrap_mutex = OPAL_MUTEX_STATIC_INIT;
+
 
 /*
  * Table for Fortran <-> C file handle conversion
@@ -102,6 +107,7 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+
     /* Save the params */
 
     file->f_comm = comm;
@@ -127,6 +133,9 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    /* Create the mutex */
+    OBJ_CONSTRUCT(&file->f_mutex, opal_mutex_t);
+
     /* Select a module and actually open the file */
 
     if (OMPI_SUCCESS != (ret = mca_io_base_file_select(file, NULL))) {
@@ -146,6 +155,9 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
  */
 int ompi_file_close(ompi_file_t **file)
 {
+
+    OBJ_DESTRUCT(&(*file)->f_mutex);
+
     (*file)->f_flags |= OMPI_FILE_ISCLOSED;
     OBJ_RELEASE(*file);
     *file = &ompi_mpi_file_null.file;
