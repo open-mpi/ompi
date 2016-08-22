@@ -93,7 +93,7 @@ int ompi_osc_pt2pt_free(ompi_win_t *win)
     OBJ_DESTRUCT(&module->peer_lock);
 
     if (NULL != module->recv_frags) {
-        for (int i = 0 ; i < module->recv_frag_count ; ++i) {
+        for (unsigned int i = 0 ; i < module->recv_frag_count ; ++i) {
             OBJ_DESTRUCT(module->recv_frags + i);
         }
 
