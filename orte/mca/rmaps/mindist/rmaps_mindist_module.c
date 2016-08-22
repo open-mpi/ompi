@@ -220,7 +220,7 @@ static int mindist_map(orte_job_t *jdata)
                 total_npus = opal_hwloc_base_get_nbobjs_by_type(node->topology, HWLOC_OBJ_CORE, 0, OPAL_HWLOC_AVAILABLE);
             }
             if (bynode) {
-                if (total_npus < num_procs_to_assign * orte_rmaps_base.cpus_per_rank) {
+                if (total_npus < num_procs_to_assign) {
                     /* check if oversubscribing is allowed */
                     if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
@@ -262,9 +262,9 @@ static int mindist_map(orte_job_t *jdata)
                     }
                     npus = opal_hwloc_base_get_npus(node->topology, obj);
                     if (bynode) {
-                        required = ((num_procs_to_assign-j) > npus/orte_rmaps_base.cpus_per_rank) ? (npus/orte_rmaps_base.cpus_per_rank) : (num_procs_to_assign-j);
+                        required = ((num_procs_to_assign-j) > npus) ? (npus) : (num_procs_to_assign-j);
                     } else {
-                        required = npus/orte_rmaps_base.cpus_per_rank;
+                        required = npus;
                     }
                     for (k = 0; (k < required) && (nprocs_mapped < app->num_procs); k++) {
                         if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, i))) {
@@ -367,7 +367,7 @@ static int mindist_map(orte_job_t *jdata)
                         nprocs_mapped++;
                         k++;
                         orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
-                        if (k > npus/orte_rmaps_base.cpus_per_rank-1) {
+                        if (k > npus-1) {
                             numa_item = opal_list_get_next(numa_item);
                             if (numa_item == opal_list_get_end(&numa_list)) {
                                 numa_item = opal_list_get_first(&numa_list);
