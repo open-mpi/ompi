@@ -15,6 +15,8 @@
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -546,6 +548,8 @@ static int fork_hnp(void)
         exit(1);
 
     } else {
+        int count;
+
         free(cmd);
         /* I am the parent - wait to hear something back and
          * report results
@@ -612,12 +616,13 @@ static int fork_hnp(void)
 
         /* split the pmix_uri into its parts */
         argv = opal_argv_split(cptr, ',');
-        if (4 != opal_argv_count(argv)) {
+        count = opal_argv_count(argv);
+        if (4 > count) {
             opal_argv_free(argv);
             return ORTE_ERR_BAD_PARAM;
         }
         /* push each piece into the environment */
-        for (i=0; i < 4; i++) {
+        for (i=0; i < count; i++) {
             pmixenvars[i] = strdup(argv[i]);
             putenv(pmixenvars[i]);
         }
