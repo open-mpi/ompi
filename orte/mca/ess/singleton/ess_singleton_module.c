@@ -617,10 +617,6 @@ static int fork_hnp(void)
         /* split the pmix_uri into its parts */
         argv = opal_argv_split(cptr, ',');
         count = opal_argv_count(argv);
-        if (4 > count) {
-            opal_argv_free(argv);
-            return ORTE_ERR_BAD_PARAM;
-        }
         /* push each piece into the environment */
         for (i=0; i < count; i++) {
             pmixenvars[i] = strdup(argv[i]);
