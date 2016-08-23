@@ -403,6 +403,7 @@ orte/test/mpi/thread_init
 orte/test/mpi/memcached-dummy
 orte/test/mpi/coll_test
 orte/test/mpi/badcoll
+orte/test/mpi/iof
 
 orte/test/system/radix
 orte/test/system/sigusr_trap
