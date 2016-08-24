@@ -116,7 +116,7 @@ static inline int ompi_osc_pt2pt_put_self (ompi_osc_pt2pt_sync_t *pt2pt_sync, co
     int ret;
 
     /* if we are in active target mode wait until all post messages arrive */
-    ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+    ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
 
     ret = ompi_datatype_sndrcv ((void *)source, source_count, source_datatype,
                                 target, target_count, target_datatype);
@@ -140,7 +140,7 @@ static inline int ompi_osc_pt2pt_get_self (ompi_osc_pt2pt_sync_t *pt2pt_sync, vo
     int ret;
 
     /* if we are in active target mode wait until all post messages arrive */
-    ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+    ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
 
     ret = ompi_datatype_sndrcv (source, source_count, source_datatype,
                                 target, target_count, target_datatype);
@@ -162,7 +162,7 @@ static inline int ompi_osc_pt2pt_cas_self (ompi_osc_pt2pt_sync_t *pt2pt_sync, co
         ((unsigned long) target_disp * module->disp_unit);
 
     /* if we are in active target mode wait until all post messages arrive */
-    ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+    ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
 
     ompi_osc_pt2pt_accumulate_lock (module);
 
@@ -186,7 +186,7 @@ static inline int ompi_osc_pt2pt_acc_self (ompi_osc_pt2pt_sync_t *pt2pt_sync, co
     int ret;
 
     /* if we are in active target mode wait until all post messages arrive */
-    ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+    ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
 
     ompi_osc_pt2pt_accumulate_lock (module);
 
@@ -336,7 +336,7 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
 
     if (is_long_msg) {
         /* wait for eager sends to be active before starting a long put */
-        ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+        ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -495,7 +495,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
 
     if (is_long_msg) {
         /* wait for synchronization before posting a long message */
-        ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+        ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
     }
 
     header = (ompi_osc_pt2pt_header_acc_t*) ptr;
@@ -802,7 +802,7 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
 
     if (!release_req) {
         /* wait for epoch to begin before starting rget operation */
-        ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+        ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
     }
 
     header = (ompi_osc_pt2pt_header_get_t*) ptr;
@@ -968,7 +968,7 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
 
     if (!release_req) {
         /* wait for epoch to begin before starting operation */
-        ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+        ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
     }
 
     /* optimize the self case. TODO: optimize the local case */
