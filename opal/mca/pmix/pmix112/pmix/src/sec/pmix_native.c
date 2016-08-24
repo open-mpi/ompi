@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +24,9 @@
 #include <unistd.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_UCRED_H
+#include <ucred.h>
 #endif
 
 #include "pmix_sec.h"
@@ -64,6 +70,9 @@ static pmix_status_t validate_cred(pmix_peer_t *peer, char *cred)
 #endif
     socklen_t crlen = sizeof (ucred);
 #endif
+#ifdef HAVE_GETPEERUCRED
+    ucred_t *ucred = NULL;
+#endif
     uid_t euid;
     gid_t gid;
 
@@ -97,7 +106,24 @@ static pmix_status_t validate_cred(pmix_peer_t *peer, char *cred)
                             strerror (pmix_socket_errno));
         return PMIX_ERR_INVALID_CRED;
     }
+#elif defined(HAVE_GETPEERUCRED)
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "sec:native checking getpeerucred for peer credentials");
+    if (0 != getpeerucred(peer->sd, &ucred)) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "sec: getsockopt getpeerucred failed: %s",
+                            strerror (pmix_socket_errno));
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "sec: getsockopt getpeerucred failed: %s",
+                            strerror (errno));
+        return PMIX_ERR_INVALID_CRED;
+    }
+    euid = ucred_geteuid(ucred);
+    gid = ucred_getrgid(ucred);
+    ucred_free(ucred);
 #else
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "sec: native cannot validate_cred on this system");
     return PMIX_ERR_NOT_SUPPORTED;
 #endif
 
