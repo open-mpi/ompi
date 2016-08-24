@@ -15,6 +15,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -702,7 +704,7 @@ opal_path_df(const char *path,
 
     /* now set the amount of free space available on path */
                                /* sometimes buf.f_bavail is negative */
-    *out_avail = buf.f_bsize * ((int)buf.f_bavail < 0 ? 0 : buf.f_bavail);
+    *out_avail = buf.f_bsize * ((long)buf.f_bavail < 0 ? 0 : buf.f_bavail);
 
     OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: stat(v)fs states "
                          "path: %s has %"PRIu64 " B of free space.",
