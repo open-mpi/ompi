@@ -76,7 +76,7 @@ static int sync_register(void)
 {
     mca_base_component_t *c = &mca_coll_sync_component.super.collm_version;
 
-    mca_coll_sync_component.priority = 30;
+    mca_coll_sync_component.priority = 50;
     (void) mca_base_component_var_register(c, "priority",
                                            "Priority of the sync coll component; only relevant if barrier_before or barrier_after is > 0",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -84,7 +84,7 @@ static int sync_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_sync_component.priority);
 
-    mca_coll_sync_component.barrier_before_nops = 1000;
+    mca_coll_sync_component.barrier_before_nops = 0;
     (void) mca_base_component_var_register(c, "barrier_before",
                                            "Do a synchronization before each Nth collective",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
