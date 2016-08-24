@@ -67,6 +67,30 @@
 static void finalize_one_channel(opal_btl_usnic_module_t *module,
                                  struct opal_btl_usnic_channel_t *channel);
 
+static int channel_addr2str(opal_btl_usnic_module_t *module, int channel,
+                            char *str, size_t len_param)
+{
+    size_t len;
+
+    len = len_param;
+    fi_av_straddr(module->av, module->mod_channels[channel].info->src_addr,
+                  str, &len);
+    if (len > len_param) {
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "libfabric API failed",
+                       true,
+                       opal_process_info.nodename,
+                       module->linux_device_name,
+                       "fi_av_straddr", __FILE__, __LINE__,
+                       FI_ENODATA,
+                       "Failed to convert address to string: buffer too short");
+
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    return OPAL_SUCCESS;
+}
+
 
 /*
  * Loop over a block of procs sent to us in add_procs and see if we
@@ -157,12 +181,29 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
                                           modex->ipv4_addr,
                                           modex->netmask);
 
+        char local_pri_addr[64] = {0};
+        rc = channel_addr2str(module, USNIC_PRIORITY_CHANNEL,
+                              local_pri_addr, sizeof(local_pri_addr));
+        if (OPAL_SUCCESS != rc) {
+            OBJ_RELEASE(usnic_proc);
+            continue;
+        }
+
+        char local_data_addr[64] = {0};
+        rc = channel_addr2str(module, USNIC_DATA_CHANNEL,
+                              local_data_addr, sizeof(local_data_addr));
+        if (OPAL_SUCCESS != rc) {
+            OBJ_RELEASE(usnic_proc);
+            continue;
+        }
+
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic:add_procs:%s: new usnic peer endpoint: %s, proirity port %d, data port %d",
+                            "btl:usnic:add_procs:%s: new usnic peer endpoint: pri=%s:%d, data=%s:%d (local: pri=%s, data=%s)",
                             module->linux_device_name,
-                            str,
-                            modex->ports[USNIC_PRIORITY_CHANNEL],
-                            modex->ports[USNIC_DATA_CHANNEL]);
+                            str, modex->ports[USNIC_PRIORITY_CHANNEL],
+                            str, modex->ports[USNIC_DATA_CHANNEL],
+                            local_pri_addr,
+                            local_data_addr);
 
         endpoints[i] = usnic_endpoint;
         ++num_created;
@@ -1626,6 +1667,21 @@ static int create_ep(opal_btl_usnic_module_t* module,
         }
         assert(0 != sin->sin_port);
     }
+
+    char *str;
+    if (USNIC_PRIORITY_CHANNEL == channel->chan_index) {
+        str = "priority";
+    } else if (USNIC_DATA_CHANNEL == channel->chan_index) {
+        str = "data";
+    } else {
+        str = "UNKNOWN";
+    }
+    opal_output_verbose(15, USNIC_OUT,
+                        "btl:usnic:create_ep:%s: new usnic local endpoint channel %s: %s:%d",
+                        module->fabric_info->fabric_attr->name,
+                        str,
+                        inet_ntoa(sin->sin_addr),
+                        ntohs(sin->sin_port));
 
     /* actual sizes */
     channel->chan_rd_num = channel->info->rx_attr->size;
