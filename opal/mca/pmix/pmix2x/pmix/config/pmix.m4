@@ -302,7 +302,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       crt_externs.h signal.h \
                       ioLib.h sockLib.h hostLib.h limits.h \
                       sys/statfs.h sys/statvfs.h \
-                      netdb.h])
+                      netdb.h ucred.h])
 
     # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
     # have both Portland and GNU installed; using pgcc will find GNU's
@@ -508,7 +508,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
     PMIX_SEARCH_LIBS_CORE([ceil], [m])
 
-    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid strnlen])
+    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen])
 
     # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
     # confused.  On others, it's in the standard library, but stubbed with
