@@ -153,6 +153,37 @@ int ompi_osc_pt2pt_frag_flush_target (ompi_osc_pt2pt_module_t *module, int targe
     return ret;
 }
 
+int ompi_osc_pt2pt_frag_flush_target_locked (ompi_osc_pt2pt_module_t *module, int target)
+{
+    ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
+    ompi_osc_pt2pt_frag_t *frag;
+    int ret = OMPI_SUCCESS;
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "osc pt2pt: frag flush to target target %d. queue fragments: %lu",
+                         target, (unsigned long) opal_list_get_size (&peer->queued_frags)));
+
+    /* walk through the pending list and send */
+    while (NULL != (frag = ((ompi_osc_pt2pt_frag_t *) opal_list_remove_first (&peer->queued_frags)))) {
+        ret = frag_send(module, frag);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
+        }
+    }
+
+    /* XXX -- TODO -- better error handling */
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* flush the active frag */
+    ret = ompi_osc_pt2pt_flush_active_frag (module, peer);
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "osc pt2pt: frag flush target %d finished", target));
+
+    return ret;
+}
 
 int ompi_osc_pt2pt_frag_flush_all (ompi_osc_pt2pt_module_t *module)
 {

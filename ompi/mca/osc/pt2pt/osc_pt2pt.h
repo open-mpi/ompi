@@ -955,13 +955,14 @@ static inline bool ompi_osc_pt2pt_access_epoch_active (ompi_osc_pt2pt_module_t *
 static inline bool ompi_osc_pt2pt_peer_sends_active (ompi_osc_pt2pt_module_t *module, int rank)
 {
     ompi_osc_pt2pt_sync_t *sync;
+    ompi_osc_pt2pt_peer_t *peer;
 
-    sync = ompi_osc_pt2pt_module_sync_lookup (module, rank, NULL);
+    sync = ompi_osc_pt2pt_module_sync_lookup (module, rank, &peer);
     if (!sync) {
         return false;
     }
 
-    return sync->eager_send_active;
+    return sync->eager_send_active || ompi_osc_pt2pt_peer_eager_active (peer);
 }
 
 END_C_DECLS
