@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2015-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +14,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/file.h>
 
 #include <src/include/pmix_config.h>
