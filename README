@@ -126,7 +126,7 @@ General notes
   - Linux (various flavors/distros), 32 bit, with gcc
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
     Intel, and Portland (*)
-  - OS X (10.6, 10.7, 10.8, 10.9, 10.10), 32 and 64 bit (x86_64), with
+  - OS X (10.8, 10.9, 10.10, 10.11), 32 and 64 bit (x86_64), with
     XCode and Absoft compilers (*)
 
   (*) Be sure to read the Compiler Notes, below.
@@ -136,7 +136,7 @@ General notes
   - ARMv4, ARMv5, ARMv6, ARMv7, ARMv8
   - Other 64 bit platforms (e.g., Linux on PPC64)
   - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
-    with Oracle Solaris Studio 12.2, 12.3, and 12.4
+    with Oracle Solaris Studio 12.5
 
 Compiler Notes
 --------------
