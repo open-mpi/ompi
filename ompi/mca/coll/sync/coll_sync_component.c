@@ -76,7 +76,7 @@ static int sync_register(void)
 {
     mca_base_component_t *c = &mca_coll_sync_component.super.collm_version;
 
-    mca_coll_sync_component.priority = 50;
+    mca_coll_sync_component.priority = 5;
     (void) mca_base_component_var_register(c, "priority",
                                            "Priority of the sync coll component; only relevant if barrier_before or barrier_after is > 0",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
