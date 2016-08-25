@@ -12,6 +12,10 @@
  *
  * $HEADER$
  */
+
+#if !defined(OPAL_THREADS_WAIT_SYNC_H)
+#define OPAL_THREADS_WAIT_SYNC_H
+
 #include "opal/sys/atomic.h"
 #include "opal/threads/condition.h"
 #include <pthread.h>
@@ -115,3 +119,5 @@ static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates, int sta
 }
 
 END_C_DECLS
+
+#endif /* defined(OPAL_THREADS_WAIT_SYNC_H) */
