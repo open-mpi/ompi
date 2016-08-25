@@ -322,9 +322,7 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
     char str[128];
     unsigned unlp;
     struct fi_usnic_info *uip;
-    struct fi_info *info;
 
-    info = module->fabric_info;
     uip = &module->usnic_info;
 
     /* Note: we add one to num_local_procs to account for *this*
