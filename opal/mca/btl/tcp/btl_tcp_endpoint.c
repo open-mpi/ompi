@@ -251,7 +251,7 @@ mca_btl_tcp_endpoint_dump(int level,
         if (used >= DEBUG_LENGTH) goto out;
 #if MCA_BTL_TCP_ENDPOINT_CACHE
         used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "\n\t[cache %p used %lu/%lu]",
-                         btl_endpoint->endpoint_cache, btl_endpoint->endpoint_cache_pos - btl_endpoint->endpoint_cache,
+                         (void*)btl_endpoint->endpoint_cache, btl_endpoint->endpoint_cache_pos - btl_endpoint->endpoint_cache,
                          btl_endpoint->endpoint_cache_length);
         if (used >= DEBUG_LENGTH) goto out;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
@@ -511,6 +511,7 @@ void mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
  */
 void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
 {
+    MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, false, "[close]");
     if(btl_endpoint->endpoint_sd < 0)
         return;
     btl_endpoint->endpoint_retries++;
@@ -518,14 +519,16 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
     opal_event_del(&btl_endpoint->endpoint_recv_event);
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, false, "event_del(send) [close]");
     opal_event_del(&btl_endpoint->endpoint_send_event);
-    CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
-    btl_endpoint->endpoint_sd = -1;
+
 #if MCA_BTL_TCP_ENDPOINT_CACHE
     free( btl_endpoint->endpoint_cache );
     btl_endpoint->endpoint_cache        = NULL;
     btl_endpoint->endpoint_cache_pos    = NULL;
     btl_endpoint->endpoint_cache_length = 0;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
+
+    CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
+    btl_endpoint->endpoint_sd = -1;
     /**
      * If we keep failing to connect to the peer let the caller know about
      * this situation by triggering all the pending fragments callback and
@@ -683,9 +686,9 @@ void mca_btl_tcp_set_socket_options(int sd)
 /*
  *  Start a connection to the endpoint. This will likely not complete,
  *  as the socket is set to non-blocking, so register for event
- *  notification of connect completion. On connection we send
- *  our globally unique process identifier to the endpoint and wait for
- *  the endpoints response.
+ *  notification of connect completion. On connection we send our
+ *  globally unique process identifier to the endpoint and wait for
+ *  the endpoint response.
  */
 static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpoint)
 {
