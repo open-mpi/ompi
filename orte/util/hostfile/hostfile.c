@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,9 @@
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#if HAVE_ARPA_INET_H
+#include <arpa/inet.h>
 #endif
 #include <errno.h>
 #include <string.h>
@@ -164,6 +168,19 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         }
         opal_argv_free (argv);
 
+        // Strip off the FQDN if present
+        if( !orte_keep_fqdn_hostnames ) {
+            char *ptr;
+            struct in_addr buf;
+            /* if the nodename is an IP address, do not mess with it! */
+            if (0 == inet_pton(AF_INET, node_name, &buf) &&
+                0 == inet_pton(AF_INET6, node_name, &buf)) {
+                if (NULL != (ptr = strchr(node_name, '.'))) {
+                    *ptr = '\0';
+                }
+            }
+        }
+
         /* if the first letter of the name is '^', then this is a node
          * to be excluded. Remove the ^ character so the nodename is
          * usable, and put it on the exclude list
@@ -270,6 +287,20 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
         }
         opal_argv_free (argv);
+
+        // Strip off the FQDN if present
+        if( !orte_keep_fqdn_hostnames ) {
+            char *ptr;
+            struct in_addr buf;
+            /* if the nodename is an IP address, do not mess with it! */
+            if (0 == inet_pton(AF_INET, node_name, &buf) &&
+                0 == inet_pton(AF_INET6, node_name, &buf)) {
+                if (NULL != (ptr = strchr(node_name, '.'))) {
+                    *ptr = '\0';
+                }
+            }
+        }
+
         /* Do we need to make a new node object? */
         if (NULL == (node = hostfile_lookup(updates, node_name))) {
             node = OBJ_NEW(orte_node_t);
