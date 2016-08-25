@@ -58,7 +58,9 @@ int mca_io_ompio_file_open (ompi_communicator_t *comm,
 
     /*save pointer back to the file_t structure */
     data->ompio_fh.f_fh = fh;
-
+    /* No lock required for file_open even in multi-threaded scenarios,
+       since only one collective operation per communicator
+       is allowed anyway */
     ret = mca_common_ompio_file_open(comm,filename,amode,info,&data->ompio_fh,use_sharedfp);
 
     if ( OMPI_SUCCESS == ret ) {
@@ -174,11 +176,11 @@ int mca_io_ompio_file_preallocate (ompi_file_t *fh,
             if (len > size-written) {
                 len = size - written;
             }
-            ret = mca_io_ompio_file_read (fh, buf, len, MPI_BYTE, status);
+            ret = mca_common_ompio_file_read (&data->ompio_fh, buf, len, MPI_BYTE, status);
             if (ret != OMPI_SUCCESS) {
                 goto exit;
             }
-            ret = mca_io_ompio_file_write (fh, buf, len, MPI_BYTE, status);
+            ret = mca_common_ompio_file_write (&data->ompio_fh, buf, len, MPI_BYTE, status);
             if (ret != OMPI_SUCCESS) {
                 goto exit;
             }
@@ -195,7 +197,7 @@ int mca_io_ompio_file_preallocate (ompi_file_t *fh,
                 if (len > diskspace-written) {
                     len = diskspace - written;
                 }
-                ret = mca_io_ompio_file_write (fh, buf, len, MPI_BYTE, status);
+                ret = mca_common_ompio_file_write (&data->ompio_fh, buf, len, MPI_BYTE, status);
                 if (ret != OMPI_SUCCESS) {
                     goto exit;
                 }
