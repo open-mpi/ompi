@@ -30,7 +30,11 @@ sources = \
 	common_ompio_file_view.c   \
 	common_ompio_file_read.c   \
 	common_ompio_file_write.c
+else
 
+headers = 
+sources = 
+endif
 
 # To simplify components that link to this library, we will *always*
 # have an output libtool library named libmca_<type>_<name>.la -- even
@@ -88,13 +92,3 @@ clean-local:
 	  rm -f "$(comp_inst)"; \
 	fi
 
-else
-
-# Need to have empty targets because AM can't handle having an
-# AM_CONDITIONAL was targets in the "if" statement but not in the
-# "else".  :-(
-
-all-local:
-clean-local:
-
-endif
