@@ -31,7 +31,6 @@ EXTRA_DIST =
 # Only install the valgrind suppressions file if we're building in
 # standalone mode
 dist_pmixdata_DATA =
-
 if ! PMIX_EMBEDDED_MODE
 dist_pmixdata_DATA += contrib/pmix-valgrind.supp
 
@@ -46,7 +45,6 @@ man_MANS = \
         man/man3/pmix_get.3 \
         man/man7/pmix.7 \
         man/man7/pmix_constants.7
-
 endif
 
 include config/Makefile.am
@@ -91,15 +89,12 @@ nroff:
 
 EXTRA_DIST += README INSTALL VERSION LICENSE autogen.sh \
              config/pmix_get_version.sh $(man_MANS) \
-             contrib/platform/optimized
+             contrib/platform/optimized \
+             test/test_common.h test/cli_stages.h \
+             test/server_callbacks.h test/test_fence.h \
+             test/test_publish.h test/test_resolve_peers.h \
+             test/test_spawn.h test/utils.h test/test_cd.h
 
-if ! PMIX_EMBEDDED_MODE
-
-EXTRA_DIST += test/test_common.h test/cli_stages.h \
-              test/server_callbacks.h test/test_fence.h \
-              test/test_publish.h test/test_resolve_peers.h \
-              test/test_spawn.h test/utils.h test/test_cd.h
-endif
 
 dist-hook:
 	env LS_COLORS= sh "$(top_srcdir)/config/distscript.sh" "$(top_srcdir)" "$(distdir)" "$(PMIX_VERSION)" "$(PMIX_REPO_REV)"
