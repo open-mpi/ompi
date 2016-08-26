@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -30,8 +30,8 @@ static int map_compare_modules(const void *aa, const void *bb)
     opal_btl_usnic_module_t *a = *((opal_btl_usnic_module_t**) aa);
     opal_btl_usnic_module_t *b = *((opal_btl_usnic_module_t**) bb);
 
-    return strcmp(a->fabric_info->fabric_attr->name,
-                  b->fabric_info->fabric_attr->name);
+    return strcmp(a->linux_device_name,
+                  b->linux_device_name);
 }
 
 /*
@@ -74,7 +74,7 @@ static int map_output_modules(FILE *fp)
                                         prefix_len);
 
         fprintf(fp, "device=%s,ip=%s,mss=%" PRIsize_t "\n",
-                modules[i]->fabric_info->fabric_attr->name,
+                modules[i]->linux_device_name,
                 ipv4, modules[i]->fabric_info->ep_attr->max_msg_size);
     }
 
@@ -102,8 +102,8 @@ static int map_compare_endpoints(const void *aa, const void *bb)
         return -1;
     }
 
-    return strcmp(a->endpoint_module->fabric_info->fabric_attr->name,
-                  b->endpoint_module->fabric_info->fabric_attr->name);
+    return strcmp(a->endpoint_module->linux_device_name,
+                  b->endpoint_module->linux_device_name);
 }
 
 /*
@@ -148,7 +148,7 @@ static int map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
                                           eps[i]->endpoint_remote_modex.netmask);
 
         fprintf(fp, "device=%s@peer_ip=%s",
-                eps[i]->endpoint_module->fabric_info->fabric_attr->name,
+                eps[i]->endpoint_module->linux_device_name,
                 ipv4);
         ++num_output;
     }

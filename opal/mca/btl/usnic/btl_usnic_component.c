@@ -327,9 +327,7 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
     char str[128];
     unsigned unlp;
     struct fi_usnic_info *uip;
-    struct fi_info *info;
 
-    info = module->fabric_info;
     uip = &module->usnic_info;
 
     /* Note: we add one to num_local_procs to account for *this*
@@ -378,7 +376,7 @@ static int check_usnic_config(opal_btl_usnic_module_t *module,
                    "not enough usnic resources",
                    true,
                    opal_process_info.nodename,
-                   info->fabric_attr->name,
+                   module->linux_device_name,
                    str);
     return OPAL_ERROR;
 }
@@ -543,10 +541,12 @@ static bool filter_module(opal_btl_usnic_module_t *module,
     struct fi_usnic_info *uip;
     struct fi_info *info;
     bool match;
+    const char *linux_device_name;
 
     info = module->fabric_info;
     uip = &module->usnic_info;
     src = info->src_addr;
+    linux_device_name = module->linux_device_name;
     module_mask = src->sin_addr.s_addr & uip->ui.v1.ui_netmask_be;
     match = false;
     for (i = 0; i < filter->n_elt; ++i) {
@@ -559,7 +559,7 @@ static bool filter_module(opal_btl_usnic_module_t *module,
             }
         }
         else {
-            if (strcmp(filter->elts[i].if_name, info->fabric_attr->name) == 0) {
+            if (strcmp(filter->elts[i].if_name, linux_device_name) == 0) {
                 match = true;
                 break;
             }
@@ -590,6 +590,25 @@ static void free_filter(usnic_if_filter_t *filter)
     free(filter);
 }
 
+static int do_fi_getinfo(uint32_t version, struct fi_info **info_list)
+{
+    struct fi_info hints = {0};
+    struct fi_ep_attr ep_attr = {0};
+    struct fi_fabric_attr fabric_attr = {0};
+
+    /* We only want providers named "usnic" that are of type EP_DGRAM */
+    fabric_attr.prov_name = "usnic";
+    ep_attr.type = FI_EP_DGRAM;
+
+    hints.caps = FI_MSG;
+    hints.mode = FI_LOCAL_MR | FI_MSG_PREFIX;
+    hints.addr_format = FI_SOCKADDR;
+    hints.ep_attr = &ep_attr;
+    hints.fabric_attr = &fabric_attr;
+
+    return fi_getinfo(version, NULL, 0, 0, &hints, info_list);
+}
+
 /*
  *  UD component initialization:
  *  (1) read interface list from kernel and compare against component
@@ -611,9 +630,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     int min_distance, num_local_procs;
     struct fi_info *info_list;
     struct fi_info *info;
-    struct fi_info hints = {0};
-    struct fi_ep_attr ep_attr = {0};
-    struct fi_fabric_attr fabric_attr = {0};
     struct fid_fabric *fabric;
     struct fid_domain *domain;
     int ret;
@@ -636,19 +652,9 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     OBJ_CONSTRUCT(&btl_usnic_lock, opal_recursive_mutex_t);
 
-    /* We only want providers named "usnic that are of type EP_DGRAM */
-    fabric_attr.prov_name = "usnic";
-    ep_attr.type = FI_EP_DGRAM;
-
-    hints.caps = FI_MSG;
-    hints.mode = FI_LOCAL_MR | FI_MSG_PREFIX;
-    hints.addr_format = FI_SOCKADDR;
-    hints.ep_attr = &ep_attr;
-    hints.fabric_attr = &fabric_attr;
-
-    /* This code understands libfabric API v1.0 and v1.1.  Even if we
-       were compiled with libfabric API v1.0, we still want to request
-       v1.1 -- here's why:
+    /* This code understands libfabric API versions v1.0, v1.1, and
+       v1.4.  Even if we were compiled with libfabric API v1.0, we
+       still want to request v1.1 -- here's why:
 
        - In libfabric v1.0.0 (i.e., API v1.0), the usnic provider did
          not check the value of the "version" parameter passed into
@@ -664,6 +670,17 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
        So never request API v1.0 -- always request a minimum of
        v1.1.
 
+       The usnic provider changed the strings in the fabric and domain
+       names in API v1.4.  With API <= v1.3:
+
+       - fabric name is "usnic_X" (device name)
+       - domain name is NULL
+
+       With libfabric API >= v1.4:
+
+       - fabric name is "a.b.c.d/e" (CIDR notation of network)
+       - domain name is "usnic_X" (device name)
+
        NOTE: The configure.m4 in this component will require libfabric
        >= v1.1.0 (i.e., it won't accept v1.0.0) because of a critical
        bug in the usnic provider in libfabric v1.0.0.  However, the
@@ -677,9 +694,17 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
        Someday, #2 may no longer be true, and we may therefore rip out
        the libfabric v1.0.0 compatibility code. */
+
+    /* First try API version 1.4.  If that doesn't work, try API
+       version 1.1. */
     uint32_t libfabric_api;
-    libfabric_api = FI_VERSION(1, 1);
-    ret = fi_getinfo(libfabric_api, NULL, 0, 0, &hints, &info_list);
+    libfabric_api = FI_VERSION(1, 4);
+    ret = do_fi_getinfo(libfabric_api, &info_list);
+    // Libfabric core will return -FI_ENOSYS if it is too old
+    if (-FI_ENOSYS == ret) {
+        libfabric_api = FI_VERSION(1, 1);
+        ret = do_fi_getinfo(libfabric_api, &info_list);
+    }
     if (0 != ret) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: disqualifiying myself due to fi_getinfo failure: %s (%d)", strerror(-ret), ret);
@@ -736,7 +761,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         mca_btl_usnic_component.cq_readerr_try_again_value = -FI_EAGAIN;
     }
 
-    /* libnl initialization */
     opal_proc_t *me = opal_proc_local_get();
     opal_process_name_t *name = &(me->proc_name);
     mca_btl_usnic_component.my_hashed_rte_name =
@@ -800,13 +824,21 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
               i < mca_btl_usnic_component.max_modules);
              ++i, info = info->next) {
 
+        // The fabric/domain names changed at libfabric API v1.4 (see above).
+        char *linux_device_name;
+        if (libfabric_api <= FI_VERSION(1, 3)) {
+            linux_device_name = info->fabric_attr->name;
+        } else {
+            linux_device_name = info->domain_attr->name;
+        }
+
         ret = fi_fabric(info->fabric_attr, &fabric, NULL);
         if (0 != ret) {
             opal_show_help("help-mpi-btl-usnic.txt",
                            "libfabric API failed",
                            true,
                            opal_process_info.nodename,
-                           info->fabric_attr->name,
+                           linux_device_name,
                            "fi_fabric()", __FILE__, __LINE__,
                            ret,
                            strerror(-ret));
@@ -820,7 +852,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                            "libfabric API failed",
                            true,
                            opal_process_info.nodename,
-                           info->fabric_attr->name,
+                           linux_device_name,
                            "fi_domain()", __FILE__, __LINE__,
                            ret,
                            strerror(-ret));
@@ -829,8 +861,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         opal_memchecker_base_mem_defined(&domain, sizeof(domain));
 
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: found: usNIC direct device %s",
-                            info->fabric_attr->name);
+                            "btl:usnic: found: usNIC device %s",
+                            linux_device_name);
 
         /* Save a little info on the module that we have already
            gathered.  The rest of the module will be filled in
@@ -841,6 +873,12 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         module->fabric = fabric;
         module->domain = domain;
         module->fabric_info = info;
+        module->libfabric_api = libfabric_api;
+        module->linux_device_name = strdup(linux_device_name);
+        if (NULL == module->linux_device_name) {
+            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+            goto error;
+        }
 
         /* Obtain usnic-specific device info (e.g., netmask) that
            doesn't come in the normal fi_getinfo(). This allows us to
@@ -850,7 +888,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         if (ret != 0) {
             opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: device %s fabric_open_ops failed %d (%s)",
-                        info->fabric_attr->name, ret, fi_strerror(-ret));
+                        module->linux_device_name, ret, fi_strerror(-ret));
             fi_close(&domain->fid);
             fi_close(&fabric->fid);
             continue;
@@ -863,14 +901,14 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         if (ret != 0) {
             opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: device %s usnic_getinfo failed %d (%s)",
-                        info->fabric_attr->name, ret, fi_strerror(-ret));
+                        module->linux_device_name, ret, fi_strerror(-ret));
             fi_close(&domain->fid);
             fi_close(&fabric->fid);
             continue;
         }
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: device %s usnic_info: link speed=%d, netmask=0x%x, ifname=%s, num_vf=%d, qp/vf=%d, cq/vf=%d",
-                            info->fabric_attr->name,
+                            module->linux_device_name,
                             (unsigned int) module->usnic_info.ui.v1.ui_link_speed,
                             (unsigned int) module->usnic_info.ui.v1.ui_netmask_be,
                             module->usnic_info.ui.v1.ui_ifname,
@@ -884,7 +922,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: %s %s due to %s",
                                 (keep_module ? "keeping" : "skipping"),
-                                info->fabric_attr->name,
+                                module->linux_device_name,
                                 (filter_incl ? "if_include" : "if_exclude"));
             if (!keep_module) {
                 fi_close(&domain->fid);
@@ -902,7 +940,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             check_usnic_config(module, num_local_procs) != OPAL_SUCCESS) {
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: device %s is not provisioned with enough resources -- skipping",
-                                info->fabric_attr->name);
+                                module->linux_device_name);
             fi_close(&domain->fid);
             fi_close(&fabric->fid);
 
@@ -916,7 +954,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: device %s looks good!",
-                            info->fabric_attr->name);
+                            module->linux_device_name);
 
         /* Let this module advance to the next round! */
         btls[j++] = &(module->super);
@@ -966,7 +1004,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         btls[num_final_modules++] = &(module->super);
 
         /* Output all of this module's values. */
-        const char *devname = module->fabric_info->fabric_attr->name;
+        const char *devname = module->linux_device_name;
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: %s num sqe=%d, num rqe=%d, num cqe=%d, num aveqe=%d",
                             devname,
@@ -1212,7 +1250,7 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
 
     if (cq_ret != -FI_EAVAIL) {
         BTL_ERROR(("%s: cq_read ret = %d (%s)",
-               module->fabric_info->fabric_attr->name, cq_ret,
+               module->linux_device_name, cq_ret,
                fi_strerror(-cq_ret)));
         channel->chan_error = true;
     }
@@ -1222,7 +1260,7 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
         return;
     } else if (rc != mca_btl_usnic_component.cq_readerr_success_value) {
         BTL_ERROR(("%s: cq_readerr ret = %d (expected %d)",
-                   module->fabric_info->fabric_attr->name, rc,
+                   module->linux_device_name, rc,
                    (int) mca_btl_usnic_component.cq_readerr_success_value));
         channel->chan_error = true;
     }
@@ -1235,7 +1273,7 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
         static int once = 0;
         if (once++ == 0) {
             BTL_ERROR(("%s: Channel %d, %s",
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        channel->chan_index,
                        FI_ECRC == err_entry.prov_errno ?
                        "CRC error" : "message truncation"));
@@ -1256,7 +1294,7 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
         }
     } else {
         BTL_ERROR(("%s: CQ[%d] prov_err = %d",
-               module->fabric_info->fabric_attr->name, channel->chan_index,
+                   module->linux_device_name, channel->chan_index,
                    err_entry.prov_errno));
         channel->chan_error = true;
     }
@@ -1469,7 +1507,7 @@ void opal_btl_usnic_component_debug(void)
         module = mca_btl_usnic_component.usnic_active_modules[i];
 
         opal_output(0, "active_modules[%d]=%p %s max{frag,chunk,tiny}=%llu,%llu,%llu\n",
-               i, (void *)module, module->fabric_info->fabric_attr->name,
+               i, (void *)module, module->linux_device_name,
                (unsigned long long)module->max_frag_payload,
                (unsigned long long)module->max_chunk_payload,
                (unsigned long long)module->max_tiny_payload);
