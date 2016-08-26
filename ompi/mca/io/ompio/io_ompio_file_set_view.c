@@ -71,6 +71,8 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
        file pointer, once for the shared file pointer (if it is existent)
     */
     fh = &data->ompio_fh;
+
+    OPAL_THREAD_LOCK(&fp->f_mutex);
     ret = mca_common_ompio_set_view(fh, disp, etype, filetype, datarep, info);
 
     if ( NULL != fh->f_sharedfp_data) {
@@ -78,6 +80,7 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
         ret = mca_common_ompio_set_view(sh, disp, etype, filetype, datarep, info);
     }
 
+    OPAL_THREAD_UNLOCK(&fp->f_mutex);
     return ret;
 }
 
@@ -93,10 +96,12 @@ int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
+    OPAL_THREAD_LOCK(&fp->f_mutex);
     *disp = fh->f_disp;
     datatype_duplicate (fh->f_etype, etype);
     datatype_duplicate (fh->f_orig_filetype, filetype);
     strcpy (datarep, fh->f_datarep);
+    OPAL_THREAD_UNLOCK(&fp->f_mutex);
 
     return OMPI_SUCCESS;
 }
