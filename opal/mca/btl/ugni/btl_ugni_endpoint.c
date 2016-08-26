@@ -17,7 +17,7 @@ static void mca_btl_ugni_ep_construct (mca_btl_base_endpoint_t *ep)
 {
     memset ((char *) ep + sizeof(ep->super), 0, sizeof (*ep) - sizeof (ep->super));
     OBJ_CONSTRUCT(&ep->frag_wait_list, opal_list_t);
-    OBJ_CONSTRUCT(&ep->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ep->lock, opal_recursive_mutex_t);
 }
 
 static void mca_btl_ugni_ep_destruct (mca_btl_base_endpoint_t *ep)
