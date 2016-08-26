@@ -175,7 +175,10 @@ int mca_patcher_base_patch_hook (mca_patcher_base_module_t *module, uintptr_t ho
     }
 
     // generate code to restore TOC
-    register unsigned long toc asm("r2");
+    unsigned long toc;
+
+    asm volatile ("std 2, %0" : "=m" (toc));
+
     hook_patch->patch_data_size = PatchLoadImm((uintptr_t)hook_patch->patch_data, 2, toc);
 
     /* put the hook patch on the patch list so it will be undone on finalize */

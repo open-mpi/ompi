@@ -98,6 +98,12 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
 #define memory_patcher_syscall syscall
 #endif
 
+/* All the hooks in this file have two levels. The first level has the OPAL_PATCHER_* macros
+ * around the call to the second level. This was done because with xlc the compiler was
+ * generating an access to r2 before the OPAL_PATCHER_* assembly. This was loading invalid
+ * data. If this can be resolved the two levels can be joined.
+ */
+
 /*
  * The following block of code is #if 0'ed out because we do not need
  * to intercept mmap() any more (mmap() only deals with memory
@@ -148,9 +154,8 @@ static void *intercept_mmap(void *start, size_t length, int prot, int flags, int
 
 static int (*original_munmap) (void *, size_t);
 
-static int intercept_munmap(void *start, size_t length)
+static int _intercept_munmap(void *start, size_t length)
 {
-    OPAL_PATCHER_BEGIN;
     int result = 0;
 
     /* could be in a malloc implementation */
@@ -162,6 +167,13 @@ static int intercept_munmap(void *start, size_t length)
         result = original_munmap (start, length);
     }
 
+    return result;
+}
+
+static int intercept_munmap(void *start, size_t length)
+{
+    OPAL_PATCHER_BEGIN;
+    int result = _intercept_munmap (start, length);
     OPAL_PATCHER_END;
     return result;
 }
@@ -178,12 +190,11 @@ static void *(*original_mremap) (void *, size_t, void *, size_t, int);
 #endif
 
 #if defined(__linux__)
-static void *intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, void *new_address)
+static void *_intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, void *new_address)
 #else
-static void *intercept_mremap (void *start, size_t oldlen, void *new_address, size_t newlen, int flags)
+static void *_intercept_mremap (void *start, size_t oldlen, void *new_address, size_t newlen, int flags)
 #endif
 {
-    OPAL_PATCHER_BEGIN;
     void *result = MAP_FAILED;
 
     if (MAP_FAILED != start && oldlen > 0) {
@@ -210,9 +221,26 @@ static void *intercept_mremap (void *start, size_t oldlen, void *new_address, si
     }
 #endif
 
+    return result;
+}
+
+#if defined(__linux__)
+static void *intercept_mremap (void *start, size_t oldlen, size_t newlen, int flags, void *new_address)
+{
+    OPAL_PATCHER_BEGIN;
+    void *result = _intercept_mremap (start, oldlen, newlen, flags, new_address);
     OPAL_PATCHER_END;
     return result;
 }
+#else
+static void *intercept_mremap (void *start, size_t oldlen, void *new_address, size_t newlen, int flags)
+{
+    OPAL_PATCHER_BEGIN;
+    void *result = _intercept_mremap (start, oldlen, new_address, newlen, flags);
+    OPAL_PATCHER_END;
+    return result;
+}
+#endif
 
 #endif
 
@@ -220,9 +248,8 @@ static void *intercept_mremap (void *start, size_t oldlen, void *new_address, si
 
 static int (*original_madvise) (void *, size_t, int);
 
-static int intercept_madvise (void *start, size_t length, int advice)
+static int _intercept_madvise (void *start, size_t length, int advice)
 {
-    OPAL_PATCHER_BEGIN;
     int result = 0;
 
     if (advice == MADV_DONTNEED ||
@@ -240,6 +267,12 @@ static int intercept_madvise (void *start, size_t length, int advice)
         result = original_madvise (start, length, advice);
     }
 
+    return result;
+}
+static int intercept_madvise (void *start, size_t length, int advice)
+{
+    OPAL_PATCHER_BEGIN;
+    int result = _intercept_madvise (start, length, advice);
     OPAL_PATCHER_END;
     return result;
 }
@@ -254,9 +287,8 @@ extern void *__curbrk; /* in libc */
 
 static int (*original_brk) (void *);
 
-static int intercept_brk (void *addr)
+static int _intercept_brk (void *addr)
 {
-    OPAL_PATCHER_BEGIN;
     int result = 0;
     void *old_addr, *new_addr;
 
@@ -293,6 +325,13 @@ static int intercept_brk (void *addr)
     } else if (new_addr < old_addr) {
         opal_mem_hooks_release_hook (new_addr, (intptr_t) old_addr - (intptr_t) new_addr, true);
     }
+    return result;
+}
+
+static int intercept_brk (void *addr)
+{
+    OPAL_PATCHER_BEGIN;
+    int result = _intercept_brk (addr);
     OPAL_PATCHER_END;
     return result;
 }
@@ -364,9 +403,8 @@ static size_t memory_patcher_get_shm_seg_size (const void *shmaddr)
 
 static int (*original_shmdt) (const void *);
 
-static int intercept_shmdt (const void *shmaddr)
+static int _intercept_shmdt (const void *shmaddr)
 {
-    OPAL_PATCHER_BEGIN;
     int result;
 
     /* opal_mem_hooks_release_hook should probably be updated to take a const void *.
@@ -379,6 +417,13 @@ static int intercept_shmdt (const void *shmaddr)
         result = memory_patcher_syscall (SYS_shmdt, shmaddr);
     }
 
+    return result;
+}
+
+static int intercept_shmdt (const void *shmaddr)
+{
+    OPAL_PATCHER_BEGIN;
+    int result = _intercept_shmdt (shmaddr);
     OPAL_PATCHER_END;
     return result;
 }
