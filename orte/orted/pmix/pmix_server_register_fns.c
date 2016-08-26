@@ -96,7 +96,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     map = jdata->map;
     for (i=0; i < map->nodes->size; i++) {
         micro = NULL;
-        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
             opal_argv_append_nosize(&list, node->name);
             /* assemble all the ranks for this job that are on this node */
             for (k=0; k < node->procs->size; k++) {
@@ -183,6 +183,13 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     kv->key = strdup(OPAL_PMIX_NODE_SIZE);
     kv->type = OPAL_UINT32;
     kv->data.uint32 = mynode->num_procs;
+    opal_list_append(info, &kv->super);
+
+    /* pass the number of nodes in the job */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_NUM_NODES);
+    kv->type = OPAL_UINT32;
+    kv->data.uint32 = map->num_nodes;
     opal_list_append(info, &kv->super);
 
     /* univ size */
