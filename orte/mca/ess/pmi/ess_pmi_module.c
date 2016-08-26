@@ -214,6 +214,13 @@ static int rte_init(void)
         orte_process_info.num_local_peers = 0;
     }
 
+    /* get number of nodes in the job */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NUM_NODES,
+                                   &wildcard_rank, &u32ptr, OPAL_UINT32);
+    if (OPAL_SUCCESS == ret) {
+        orte_process_info.num_nodes = u32;
+    }
+
     /* setup transport keys in case the MPI layer needs them -
      * we can use the jobfam and stepid as unique keys
      * because they are unique values assigned by the RM
