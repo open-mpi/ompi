@@ -704,7 +704,7 @@ opal_path_df(const char *path,
 
     /* now set the amount of free space available on path */
                                /* sometimes buf.f_bavail is negative */
-    *out_avail = (uint64_t)buf.f_bsize * (uint64_t)(buf.f_bavail < 0 ? 0 : buf.f_bavail);
+    *out_avail = (uint64_t)buf.f_bsize * (uint64_t)((long)buf.f_bavail < 0 ? 0 : buf.f_bavail);
 
     OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: stat(v)fs states "
                          "path: %s has %"PRIu64 " B of free space.",
