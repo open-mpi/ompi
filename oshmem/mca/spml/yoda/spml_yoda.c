@@ -6,6 +6,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -642,7 +643,11 @@ int mca_spml_yoda_add_procs(oshmem_proc_t** procs, size_t nprocs)
     }
 
     /* create_btl_idx requires the proc was add_proc'ed, so do it now */
-    rc = MCA_PML_CALL(add_procs(procs, nprocs));
+    /* procs are of type (oshmem_proc_t**), which is techincally
+       different than (ompi_proc_t**).  But these two types were
+       (separately) declared to be functionally identical, so the cast
+       here is functionally ok (this should really be cleaned up). */
+    rc = MCA_PML_CALL(add_procs((ompi_proc_t**) procs, nprocs));
     if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
     }
