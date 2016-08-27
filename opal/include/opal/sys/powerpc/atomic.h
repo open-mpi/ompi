@@ -236,7 +236,7 @@ static inline int64_t opal_atomic_ll_64(volatile int64_t *addr)
    __asm__ __volatile__ ("ldarx   %0, 0, %1  \n\t"
                          : "=&r" (ret)
                          : "r" (addr)
-                         :);
+                         );
    return ret;
 }
 
