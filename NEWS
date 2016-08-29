@@ -53,7 +53,7 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-2.0.1 -- 23 August 2016
+2.0.1 -- 30 August 2016
 -----------------------
 
 Bug fixes/minor improvements:
@@ -64,8 +64,10 @@ Bug fixes/minor improvements:
   Thanks to Tetsuya Mishima and Christoph Niethammer for reporting.
 - Fix OpenSHMEM crash when running on non-Mellanox MXM-based networks.
   Thanks to Debendra Das for reporting the issue.
-- Fix various runtime issues by updating the PMIx internal component
-  to v1.15.
+- Fix stdin propagation to MPI processes.  Thanks to Jingchao Zhang
+  for reporting the issue.
+- Fix various runtime and portability issues by updating the PMIx
+  internal component to v1.1.5.
 - Fix process startup failures on Intel MIC platforms due to very
   large entries in /proc/mounts.
 - Fix a problem with use of relative path for specifing executables to
@@ -115,13 +117,6 @@ Known issues (to be addressed in v2.0.2):
   https://github.com/open-mpi/ompi-release/milestone/19
   (note that the "ompi-release" Github repo will be folded/absorbed
   into the "ompi" Github repo at some point in the future)
-
-- ompi-release#1014: Do not return MPI_ERR_PENDING from collectives
-- ompi-release#1215: Fix configure to support the NAG Fortran compiler
-
-Known issues (to be addressed in v2.1):
-
-- ompi-release#987: Fix OMPIO performance on Lustre
 
 2.0.0 -- 12 July 2016
 ---------------------
