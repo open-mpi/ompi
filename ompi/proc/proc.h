@@ -65,13 +65,16 @@ BEGIN_C_DECLS
  * a tag increases the memory consumed by Open MPI, so should only be done
  * if unavoidable.
  */
+
+#define OMPI_PROC_PADDING_SIZE 16
+
 struct ompi_proc_t {
     opal_proc_t                     super;
 
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
 
-    char padding[16];         /* for future extensions (OSHMEM uses this area also)*/
+    char padding[OMPI_PROC_PADDING_SIZE]; /* for future extensions (OSHMEM uses this area also)*/
 };
 typedef struct ompi_proc_t ompi_proc_t;
 OBJ_CLASS_DECLARATION(ompi_proc_t);

@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
@@ -93,7 +93,7 @@ int mca_memheap_seg_cmp(const void *k, const void *v)
  */
 static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
 {
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
     int i, n, tr_id;
     sshmem_mkey_t *mkey;
 
@@ -111,7 +111,7 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
     MEMHEAP_VERBOSE(5, "found %d transports to %d", n, pe);
     for (i = 0; i < n; i++) {
         if (!all_trs) {
-            tr_id = proc->transport_ids[i];
+            tr_id = OSHMEM_PROC_DATA(proc)->transport_ids[i];
         }
         else {
             tr_id = i;
@@ -171,7 +171,7 @@ static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
     int32_t n;
     int32_t tr_id;
     int i;
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
 
     proc = oshmem_proc_group_find(oshmem_group_all, remote_pe);
     cnt = 1;

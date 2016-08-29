@@ -2,6 +2,8 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +59,7 @@ OSHMEM_DECLSPEC int mca_spml_base_spml_selected(const char *name);
  * Verify that all new procs are using the currently selected component
  */
 OSHMEM_DECLSPEC int mca_spml_base_spml_check_selected(const char *my_spml,
-                                                      oshmem_proc_t **procs,
+                                                      ompi_proc_t **procs,
                                                       size_t nprocs);
 
 OSHMEM_DECLSPEC int mca_spml_base_wait(void* addr,
