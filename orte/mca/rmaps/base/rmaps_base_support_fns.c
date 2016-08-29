@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -147,7 +148,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     orte_job_t *daemons;
     bool novm;
     opal_list_t nodes;
-    char *hosts;
+    char *hosts = NULL;
 
     /** set default answer */
     *total_num_slots = 0;

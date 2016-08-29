@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,9 @@
 #include "orte_config.h"
 
 #include <string.h>
+#if HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -205,6 +209,19 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             ndname = orte_process_info.nodename;
         } else {
             ndname = mini_map[i];
+        }
+
+        // Strip off the FQDN if present
+        if( !orte_keep_fqdn_hostnames ) {
+            char *ptr;
+            struct in_addr buf;
+            /* if the nodename is an IP address, do not mess with it! */
+            if (0 == inet_pton(AF_INET, ndname, &buf) &&
+                0 == inet_pton(AF_INET6, ndname, &buf)) {
+                if (NULL != (ptr = strchr(ndname, '.'))) {
+                    *ptr = '\0';
+                }
+            }
         }
 
         /* see if the node is already on the list */

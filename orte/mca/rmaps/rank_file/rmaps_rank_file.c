@@ -17,6 +17,7 @@
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -33,6 +34,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
+#if HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 #include <string.h>
 
 #include "opal/util/argv.h"
@@ -488,6 +492,20 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                             goto unlock;
                         }
                         opal_argv_free (argv);
+
+                        // Strip off the FQDN if present
+                        if( !orte_keep_fqdn_hostnames ) {
+                            char *ptr;
+                            struct in_addr buf;
+                            /* if the nodename is an IP address, do not mess with it! */
+                            if (0 == inet_pton(AF_INET, node_name, &buf) &&
+                                0 == inet_pton(AF_INET6, node_name, &buf)) {
+                                if (NULL != (ptr = strchr(node_name, '.'))) {
+                                    *ptr = '\0';
+                                }
+                            }
+                        }
+
                         /* check the rank item */
                         if (NULL == rfmap) {
                             orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
