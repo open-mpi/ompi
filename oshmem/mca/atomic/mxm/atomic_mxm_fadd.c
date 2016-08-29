@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,7 +64,7 @@ int mca_atomic_mxm_fadd(void *target,
         return OSHMEM_ERR_BAD_PARAM;
     }
 
-    ptl_id = oshmem_proc_group_all(pe)->transport_ids[0];
+    ptl_id = OSHMEM_PROC_DATA(oshmem_proc_group_all(pe))->transport_ids[0];
     if (MXM_PTL_SHM == ptl_id) {
         ptl_id = MXM_PTL_RDMA;
     }

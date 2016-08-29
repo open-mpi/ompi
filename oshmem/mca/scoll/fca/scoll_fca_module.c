@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -106,7 +106,7 @@ static int have_remote_peers(struct oshmem_group_t *group,
                              size_t size,
                              int *local_peers)
 {
-    struct oshmem_proc_t *proc;
+    struct ompi_proc_t *proc;
     size_t i;
     int ret;
 
@@ -130,7 +130,7 @@ static int have_remote_peers(struct oshmem_group_t *group,
 static int _get_local_ranks(mca_scoll_fca_module_t *fca_module)
 {
     struct oshmem_group_t *comm = fca_module->comm;
-    oshmem_proc_t* proc;
+    ompi_proc_t* proc;
     int i, rank;
 
     /* Count the local ranks */

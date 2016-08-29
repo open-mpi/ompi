@@ -4,6 +4,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -126,9 +128,9 @@ extern sshmem_mkey_t *mca_spml_yoda_register(void* addr,
                                                uint64_t shmid,
                                                int *count);
 extern int mca_spml_yoda_deregister(sshmem_mkey_t *mkeys);
-extern int mca_spml_yoda_add_procs(oshmem_proc_t** procs,
+extern int mca_spml_yoda_add_procs(ompi_proc_t** procs,
                                    size_t nprocs);
-extern int mca_spml_yoda_del_procs(oshmem_proc_t** procs,
+extern int mca_spml_yoda_del_procs(ompi_proc_t** procs,
                                    size_t nprocs);
 extern int mca_spml_yoda_fence(void);
 extern void* mca_spml_yoda_get_remote_context(void*);

@@ -539,7 +539,7 @@ static int _find_btl_id(mca_bml_base_btl_t *bml_btl)
  */
 static int create_btl_idx(int dst_pe)
 {
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
     int btl_id;
     mca_bml_base_endpoint_t* endpoint;
     mca_bml_base_btl_t* bml_btl = 0;
@@ -573,11 +573,11 @@ static int create_btl_idx(int dst_pe)
         }
     }
 
-    proc->transport_ids = (char *) malloc(size * sizeof(char));
-    if (!proc->transport_ids)
+    OSHMEM_PROC_DATA(proc)->transport_ids = (char *) malloc(size * sizeof(char));
+    if (NULL == OSHMEM_PROC_DATA(proc)->transport_ids)
         return OSHMEM_ERROR;
 
-    proc->num_transports = size;
+    OSHMEM_PROC_DATA(proc)->num_transports = size;
 
     for (i = 0; i < size; i++) {
         bml_btl = mca_bml_base_btl_array_get_index(btl_array,
@@ -592,7 +592,7 @@ static int create_btl_idx(int dst_pe)
                        dst_pe, bml_btl->btl->btl_component->btl_version.mca_component_name, btl_id);
             return OSHMEM_ERROR;
         }
-        proc->transport_ids[i] = btl_id;
+        OSHMEM_PROC_DATA(proc)->transport_ids[i] = btl_id;
         mca_spml_yoda.btl_type_map[btl_id].bml_btl = bml_btl;
         mca_spml_yoda.btl_type_map[btl_id].use_cnt++;
     }
@@ -610,17 +610,17 @@ static int destroy_btl_list(void)
 
 static int destroy_btl_idx(int dst_pe)
 {
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
 
     proc = oshmem_proc_group_find(oshmem_group_all, dst_pe);
-    if (proc->transport_ids) {
-        free(proc->transport_ids);
+    if (NULL != OSHMEM_PROC_DATA(proc)->transport_ids) {
+        free(OSHMEM_PROC_DATA(proc)->transport_ids);
     }
 
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_yoda_add_procs(oshmem_proc_t** procs, size_t nprocs)
+int mca_spml_yoda_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     opal_bitmap_t reachable;
     int rc;
@@ -666,7 +666,7 @@ cleanup_and_return:
     return rc;
 }
 
-int mca_spml_yoda_del_procs(oshmem_proc_t** procs, size_t nprocs)
+int mca_spml_yoda_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
     size_t i;
 
@@ -682,7 +682,7 @@ static inline mca_bml_base_btl_t *get_next_btl(int dst, int *btl_id)
 {
     mca_bml_base_endpoint_t* endpoint;
     mca_bml_base_btl_t* bml_btl = NULL;
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
     mca_bml_base_btl_array_t *btl_array = 0;
     int shmem_index = -1;
     int size = 0;
@@ -718,7 +718,7 @@ static inline mca_bml_base_btl_t *get_next_btl(int dst, int *btl_id)
         bml_btl = mca_bml_base_btl_array_get_index(btl_array, shmem_index);
     }
 
-    *btl_id = proc->transport_ids[0];
+    *btl_id = OSHMEM_PROC_DATA(proc)->transport_ids[0];
 
 #if SPML_YODA_DEBUG == 1
     assert(*btl_id >= 0 && *btl_id < YODA_BTL_MAX);

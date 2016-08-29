@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -80,7 +80,7 @@ int mca_spml_ucx_enable(bool enable)
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_ucx_del_procs(oshmem_proc_t** procs, size_t nprocs)
+int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
     size_t i, n;
     int my_rank = oshmem_my_proc_id();
@@ -177,7 +177,7 @@ static void dump_address(int pe, char *addr, size_t len)
 
 static char spml_ucx_transport_ids[1] = { 0 };
 
-int mca_spml_ucx_add_procs(oshmem_proc_t** procs, size_t nprocs)
+int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     size_t i, n;
     int rc = OSHMEM_ERROR;
@@ -219,8 +219,8 @@ int mca_spml_ucx_add_procs(oshmem_proc_t** procs, size_t nprocs)
             SPML_ERROR("ucp_ep_create failed!!!\n");
             goto error2;
         }
-        procs[i]->num_transports = 1;
-        procs[i]->transport_ids = spml_ucx_transport_ids;
+        OSHMEM_PROC_DATA(procs[i])->num_transports = 1;
+        OSHMEM_PROC_DATA(procs[i])->transport_ids = spml_ucx_transport_ids;
     }
 
     ucp_worker_release_address(mca_spml_ucx.ucp_worker, wk_local_addr);
