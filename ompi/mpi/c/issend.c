@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -30,6 +30,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -45,6 +46,8 @@ int MPI_Issend(const void *buf, int count, MPI_Datatype type, int dest,
                int tag, MPI_Comm comm, MPI_Request *request)
 {
     int rc = MPI_SUCCESS;
+
+    SPC_RECORD(OMPI_SPC_ISSEND, 1);
 
     MEMCHECKER(
         memchecker_datatype(type);

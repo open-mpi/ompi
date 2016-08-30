@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2015 The University of Tennessee and The University
+# Copyright (c) 2004-2018 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -286,6 +286,24 @@ AM_CONDITIONAL([PROJECT_ORTE], [test "$project_orte_amc" = "true"])
 AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshmem_amc=false])
 m4_ifndef([project_oshmem], [project_oshmem_amc=false])
 AM_CONDITIONAL([PROJECT_OSHMEM], [test "$project_oshmem_amc" = "true"])
+
+# Enable/Disable Software-Based Performance Counters Capability
+AC_ARG_ENABLE(spc,
+    AC_HELP_STRING([--enable-spc],
+                   [Enable software-based performance counters capability (default: disabled)]))
+if test "$enable_spc" = "yes"; then
+    AC_MSG_RESULT([yes])
+    SPC_ENABLE=1
+else
+    AC_MSG_RESULT([no])
+    SPC_ENABLE=0
+fi
+AC_DEFINE_UNQUOTED([SPC_ENABLE],
+                   [$SPC_ENABLE],
+                   [If the software-based performance counters capability should be enabled.])
+AM_CONDITIONAL(SPC_ENABLE, test "$SPC_ENABLE" = "1")
+
+AS_IF([test "$enable_spc" != "no"], [project_spc_amc=true], [project_spc_amc=false])
 
 if test "$enable_binaries" = "no" && test "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
@@ -1427,7 +1445,7 @@ AC_CONFIG_FILES([
     test/util/Makefile
 ])
 
-m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile])])
+m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile test/spc/Makefile])])
 
 AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
                 [chmod +x contrib/dist/mofed/debian/rules])

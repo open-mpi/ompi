@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -29,6 +29,7 @@
 #include "ompi_config.h"
 #include "opal/prefetch.h"
 #include "opal/mca/mpool/mpool.h"
+#include "ompi/runtime/ompi_spc.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "pml_ob1.h"
@@ -206,6 +207,8 @@ mca_pml_ob1_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
     }
 
     OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
+    SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)req_bytes_delivered,
+                    OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
 
     /* advance the request */
     OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
@@ -262,6 +265,8 @@ mca_pml_ob1_rget_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t rdma_length)
     /* count bytes of user data actually delivered and check for request completion */
     if (OPAL_LIKELY(0 < rdma_length)) {
         OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, (size_t) rdma_length);
+        SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)rdma_length,
+                        OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
     }
 
     send_request_pml_complete_check(sendreq);
@@ -315,6 +320,8 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
 
     OPAL_THREAD_ADD_FETCH32(&sendreq->req_pipeline_depth, -1);
     OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
+    SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)req_bytes_delivered,
+                    OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
 
     if(send_request_pml_complete_check(sendreq) == false) {
         mca_pml_ob1_send_request_schedule(sendreq);
@@ -497,6 +504,8 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
                                  &des);
         if( OPAL_LIKELY(OMPI_SUCCESS == rc) ) {
             /* signal request completion */
+            SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)size,
+                            OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
             send_request_pml_complete(sendreq);
             return OMPI_SUCCESS;
         }
@@ -567,6 +576,8 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
 
     /* send */
     rc = mca_bml_base_send_status(bml_btl, des, MCA_PML_OB1_HDR_TYPE_MATCH);
+    SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)size,
+                    OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
     if( OPAL_LIKELY( rc >= OPAL_SUCCESS ) ) {
         if( OPAL_LIKELY( 1 == rc ) ) {
             mca_pml_ob1_match_completion_free_request( bml_btl, sendreq );
@@ -627,6 +638,8 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
 
     /* send */
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_MATCH);
+    SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)size,
+                    OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
     if( OPAL_LIKELY( rc >= OPAL_SUCCESS ) ) {
         if( OPAL_LIKELY( 1 == rc ) ) {
             mca_pml_ob1_match_completion_free_request( bml_btl, sendreq );
@@ -1127,6 +1140,8 @@ static void mca_pml_ob1_put_completion (mca_btl_base_module_t* btl, struct mca_b
 
         /* check for request completion */
         OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length);
+        SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)frag->rdma_length,
+                        OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
 
         send_request_pml_complete_check(sendreq);
     } else {
@@ -1177,6 +1192,8 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
     rc = mca_bml_base_put (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,
                            0, MCA_BTL_NO_ORDER, mca_pml_ob1_put_completion, frag);
+    /* Count the bytes put even though they probably haven't been sent yet */
+    SPC_RECORD(OMPI_SPC_BYTES_PUT, (ompi_spc_value_t)frag->rdma_length);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         mca_pml_ob1_send_request_put_frag_failed (frag, rc);
         return rc;

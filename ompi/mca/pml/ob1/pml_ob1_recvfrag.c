@@ -39,6 +39,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/memchecker.h"
+#include "ompi/runtime/ompi_spc.h"
 
 #include "pml_ob1.h"
 #include "pml_ob1_comm.h"
@@ -388,6 +389,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
             MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
             MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
             append_frag_to_ordered_list(&proc->frags_cant_match, frag, proc->expected_sequence);
+            SPC_RECORD(OMPI_SPC_OUT_OF_SEQUENCE, 1);
             OB1_MATCHING_UNLOCK(&comm->matching_lock);
             return;
         }
@@ -453,6 +455,8 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
                                    &iov_count,
                                    &bytes_received );
             match->req_bytes_received = bytes_received;
+            SPC_USER_OR_MPI(match->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
+                            OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
             /*
              *  Unpacking finished, make the user buffer unaccessable again.
              */
@@ -777,6 +781,11 @@ match_one(mca_btl_base_module_t *btl,
           mca_pml_ob1_comm_proc_t *proc,
           mca_pml_ob1_recv_frag_t* frag)
 {
+#if SPC_ENABLE == 1
+    opal_timer_t timer = 0;
+#endif
+    SPC_TIMER_START(OMPI_SPC_MATCH_TIME, &timer);
+
     mca_pml_ob1_recv_request_t *match;
     mca_pml_ob1_comm_t *comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
 
@@ -814,19 +823,25 @@ match_one(mca_btl_base_module_t *btl,
                                                        num_segments);
                 /* this frag is already processed, so we want to break out
                    of the loop and not end up back on the unexpected queue. */
+                SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);
                 return NULL;
             }
 
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,
                                     &(match->req_recv.req_base), PERUSE_RECV);
+            SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);
             return match;
         }
 
         /* if no match found, place on unexpected queue */
         append_frag_to_list(&proc->unexpected_frags, btl, hdr, segments,
                             num_segments, frag);
+        SPC_RECORD(OMPI_SPC_UNEXPECTED, 1);
+        SPC_RECORD(OMPI_SPC_UNEXPECTED_IN_QUEUE, 1);
+        SPC_UPDATE_WATERMARK(OMPI_SPC_MAX_UNEXPECTED_IN_QUEUE, OMPI_SPC_UNEXPECTED_IN_QUEUE);
         PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm_ptr,
                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+        SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);
         return NULL;
     } while(true);
 }
@@ -920,6 +935,11 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
         MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
         MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
         append_frag_to_ordered_list(&proc->frags_cant_match, frag, next_msg_seq_expected);
+
+        SPC_RECORD(OMPI_SPC_OUT_OF_SEQUENCE, 1);
+        SPC_RECORD(OMPI_SPC_OOS_IN_QUEUE, 1);
+        SPC_UPDATE_WATERMARK(OMPI_SPC_MAX_OOS_IN_QUEUE, OMPI_SPC_OOS_IN_QUEUE);
+
         OB1_MATCHING_UNLOCK(&comm->matching_lock);
         return OMPI_SUCCESS;
     }
