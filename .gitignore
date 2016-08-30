@@ -450,6 +450,7 @@ orte/test/mpi/init-exit77
 orte/test/mpi/mpi_info
 orte/test/mpi/thread_init
 orte/test/mpi/errhandler_fatal
+orte/test/mpi/badcoll
 orte/test/system/radix
 orte/test/system/sigusr_trap
 orte/test/system/orte_no_op
