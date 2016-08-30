@@ -25,6 +25,12 @@
 #ifndef OPAL_SYS_ARCH_ATOMIC_H
 #define OPAL_SYS_ARCH_ATOMIC_H 1
 
+/* Suppress numerous warnings from Studio compilers */
+#if OPAL_GCC_INLINE_ASSEMBLY && (defined(__SUNPRO_C) || defined(__SUNPRO_CC))
+#  pragma error_messages(off, E_ASM_UNUSED_PARAM)
+#endif
+
+
 /*
  * On ia32, we use cmpxchg.
  */
@@ -218,5 +224,9 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
+
+#if OPAL_GCC_INLINE_ASSEMBLY && (defined(__SUNPRO_C) || defined(__SUNPRO_CC))
+#  pragma error_messages(default, E_ASM_UNUSED_PARAM)
+#endif
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */
