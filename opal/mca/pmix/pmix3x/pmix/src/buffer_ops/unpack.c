@@ -631,6 +631,11 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             }
             break;
         case PMIX_PROC:
+            /* this field is now a pointer, so we must allocate storage for it */
+            PMIX_PROC_CREATE(val->data.proc, 1);
+            if (NULL == val->data.proc) {
+                return PMIX_ERR_NOMEM;
+            }
             if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.proc, &m, PMIX_PROC))) {
                 return ret;
             }
@@ -666,11 +671,21 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             }
             break;
         case PMIX_PROC_INFO:
+            /* this is now a pointer, so allocate storage for it */
+            PMIX_PROC_INFO_CREATE(val->data.pinfo, 1);
+            if (NULL == val->data.pinfo) {
+                return PMIX_ERR_NOMEM;
+            }
             if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.pinfo, &m, PMIX_PROC_INFO))) {
                 return ret;
             }
             break;
         case PMIX_DATA_ARRAY:
+            /* this is now a pointer, so allocate storage for it */
+            val->data.darray = (pmix_data_array_t*)malloc(sizeof(val->data.darray));
+            if (NULL == val->data.darray) {
+                return PMIX_ERR_NOMEM;
+            }
             if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.darray, &m, PMIX_DATA_ARRAY))) {
                 return ret;
             }
@@ -682,6 +697,11 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             break;
         /**** DEPRECATED ****/
         case PMIX_INFO_ARRAY:
+            /* this field is now a pointer, so we must allocate storage for it */
+            val->data.array = (pmix_info_array_t*)malloc(sizeof(val->data.array));
+            if (NULL == val->data.array) {
+                return PMIX_ERR_NOMEM;
+            }
             if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.array, &m, PMIX_INFO_ARRAY))) {
                 return ret;
             }

@@ -27,9 +27,9 @@ static void notification_fn(int status,
  {
     int peer_rank;
 
-    fprintf(stderr, "orte_notify: Name %s Host: %s Pid %ld source %s\n",
+    fprintf(stderr, "orte_notify: Name %s Host: %s Pid %ld status %d source %s\n",
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            hostname, (long)pid, ORTE_NAME_PRINT(source));
+            hostname, (long)pid, status, ORTE_NAME_PRINT(source));
 
     /** let the notifier know we are done */
     if (cbfunc) {
