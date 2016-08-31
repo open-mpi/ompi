@@ -182,6 +182,7 @@ typedef struct {
     float percent_cpu;
     int32_t priority;
     int16_t num_threads;
+    float pss;   /* in MBytes */
     float vsize;  /* in MBytes */
     float rss;  /* in MBytes */
     float peak_vsize;  /* in MBytes */

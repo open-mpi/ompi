@@ -83,6 +83,9 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* for debug purposes, get stack traces from all application procs */
 #define ORTE_DAEMON_GET_STACK_TRACES        (orte_daemon_cmd_flag_t) 31
 
+/* for memory profiling */
+#define ORTE_DAEMON_GET_MEMPROFILE          (orte_daemon_cmd_flag_t) 32
+
 /*
  * Struct written up the pipe from the child to the parent.
  */

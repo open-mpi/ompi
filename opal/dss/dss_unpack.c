@@ -643,6 +643,11 @@ int opal_dss_unpack_pstat(opal_buffer_t *buffer, void *dest,
             return ret;
         }
         m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_float(buffer, &ptr[i]->pss, &m, OPAL_FLOAT))) {
+            OPAL_ERROR_LOG(ret);
+            return ret;
+        }
+        m=1;
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_float(buffer, &ptr[i]->vsize, &m, OPAL_FLOAT))) {
             OPAL_ERROR_LOG(ret);
             return ret;
