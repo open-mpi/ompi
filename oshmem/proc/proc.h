@@ -41,8 +41,8 @@ struct oshmem_group_t;
  * so the size of oshmem_proc_data_t must be less or equal than
  * OMPI_PROC_PADDING_SIZE */
 struct oshmem_proc_data_t {
-    int num_transports;
     char * transport_ids;
+    int num_transports;
 };
 
 typedef struct oshmem_proc_data_t oshmem_proc_data_t;
