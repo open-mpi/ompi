@@ -32,6 +32,7 @@ static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newt
 {
     ompi_datatype_t *type;
     if( ompi_datatype_is_predefined(oldtype) ) {
+	OBJ_RETAIN(oldtype);
         *newtype = oldtype;
         return OMPI_SUCCESS;
     }
