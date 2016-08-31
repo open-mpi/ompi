@@ -258,6 +258,7 @@ int pmix3x_fence(opal_list_t *procs, int collect_data)
                 }
             }
             if (NULL == job) {
+                PMIX_PROC_FREE(parray, cnt);
                 return OPAL_ERR_NOT_FOUND;
             }
             (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);

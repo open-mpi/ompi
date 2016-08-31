@@ -682,7 +682,7 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             break;
         case PMIX_DATA_ARRAY:
             /* this is now a pointer, so allocate storage for it */
-            val->data.darray = (pmix_data_array_t*)malloc(sizeof(val->data.darray));
+            val->data.darray = (pmix_data_array_t*)malloc(sizeof(pmix_data_array_t));
             if (NULL == val->data.darray) {
                 return PMIX_ERR_NOMEM;
             }
@@ -698,7 +698,7 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
         /**** DEPRECATED ****/
         case PMIX_INFO_ARRAY:
             /* this field is now a pointer, so we must allocate storage for it */
-            val->data.array = (pmix_info_array_t*)malloc(sizeof(val->data.array));
+            val->data.array = (pmix_info_array_t*)malloc(sizeof(pmix_info_array_t));
             if (NULL == val->data.array) {
                 return PMIX_ERR_NOMEM;
             }
