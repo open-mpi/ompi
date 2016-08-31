@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -247,7 +247,7 @@ m4_ifdef([project_ompi],[
 # (because if script A sources script B, and B calls "exit", then both
 # B and A will exit).  Instead, we have to send the output to a file
 # and then source that.
-$OPAL_TOP_BUILDDIR/libtool --tag=FC--config > $rpath_outfile
+$OPAL_TOP_BUILDDIR/libtool --tag=FC --config > $rpath_outfile
 
 chmod +x $rpath_outfile
 . ./$rpath_outfile
