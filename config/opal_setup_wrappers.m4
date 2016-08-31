@@ -181,7 +181,7 @@ EOF
 # (because if script A sources script B, and B calls "exit", then both
 # B and A will exit).  Instead, we have to send the output to a file
 # and then source that.
-$OPAL_TOP_BUILDDIR/libtool --tag=FC --config > $rpath_outfile
+$OMPI_TOP_BUILDDIR/libtool --tag=FC --config > $rpath_outfile
 
 chmod +x $rpath_outfile
 . ./$rpath_outfile
@@ -246,7 +246,7 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
 # (because if script A sources script B, and B calls "exit", then both
 # B and A will exit).  Instead, we have to send the output to a file
 # and then source that.
-$OPAL_TOP_BUILDDIR/libtool --tag=FC--config > $rpath_outfile
+$OMPI_TOP_BUILDDIR/libtool --tag=FC --config > $rpath_outfile
 
 chmod +x $rpath_outfile
 . ./$rpath_outfile
