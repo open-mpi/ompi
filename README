@@ -36,8 +36,8 @@ sign up on the user's and/or developer's mailing list (for user-level
 and developer-level questions; when in doubt, send to the user's
 list):
 
-        users@open-mpi.org
-        devel@open-mpi.org
+        users@lists.open-mpi.org
+        devel@lists.open-mpi.org
 
 Because of spam, only subscribers are allowed to post to these lists
 (ensure that you subscribe with and post from exactly the same e-mail
@@ -45,8 +45,8 @@ address -- joe@example.com is considered different than
 joe@mycomputer.example.com!).  Visit these pages to subscribe to the
 lists:
 
-     http://www.open-mpi.org/mailman/listinfo.cgi/users
-     http://www.open-mpi.org/mailman/listinfo.cgi/devel
+     http://lists.open-mpi.org/mailman/listinfo/users
+     http://lists.open-mpi.org/mailman/listinfo/devel
 
 Thanks for your time.
 
@@ -54,7 +54,7 @@ Thanks for your time.
 
 Much, much more information is also available in the Open MPI FAQ:
 
-    http://www.open-mpi.org/faq/
+    https://www.open-mpi.org/faq/
 
 ===========================================================================
 
@@ -108,7 +108,7 @@ General notes
 
 - The majority of Open MPI's documentation is here in this file, the
   included man pages, and on the web site FAQ
-  (http://www.open-mpi.org/).
+  (https://www.open-mpi.org/).
 
 - Note that Open MPI documentation uses the word "component"
   frequently; the word "plugin" is probably more familiar to most
@@ -2064,7 +2064,7 @@ Common Questions
 Many common questions about building and using Open MPI are answered
 on the FAQ:
 
-    http://www.open-mpi.org/faq/
+    https://www.open-mpi.org/faq/
 
 ===========================================================================
 
@@ -2078,24 +2078,24 @@ When submitting questions and problems, be sure to include as much
 extra information as possible.  This web page details all the
 information that we request in order to provide assistance:
 
-     http://www.open-mpi.org/community/help/
+     https://www.open-mpi.org/community/help/
 
 User-level questions and comments should generally be sent to the
-user's mailing list (users@open-mpi.org).  Because of spam, only
+user's mailing list (users@lists.open-mpi.org).  Because of spam, only
 subscribers are allowed to post to this list (ensure that you
 subscribe with and post from *exactly* the same e-mail address --
 joe@example.com is considered different than
 joe@mycomputer.example.com!).  Visit this page to subscribe to the
 user's list:
 
-     http://www.open-mpi.org/mailman/listinfo.cgi/users
+     http://lists.open-mpi.org/mailman/listinfo/users
 
 Developer-level bug reports, questions, and comments should generally
-be sent to the developer's mailing list (devel@open-mpi.org).  Please
+be sent to the developer's mailing list (devel@lists.open-mpi.org).  Please
 do not post the same question to both lists.  As with the user's list,
 only subscribers are allowed to post to the developer's list.  Visit
 the following web page to subscribe:
 
-     http://www.open-mpi.org/mailman/listinfo.cgi/devel
+     http://lists.open-mpi.org/mailman/listinfo/devel
 
 Make today an Open MPI day!
