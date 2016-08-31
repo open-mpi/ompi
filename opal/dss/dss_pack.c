@@ -499,6 +499,9 @@ int opal_dss_pack_pstat(opal_buffer_t *buffer, const void *src,
         if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->num_threads, 1, OPAL_INT16))) {
             return ret;
         }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_float(buffer, &ptr[i]->pss, 1, OPAL_FLOAT))) {
+            return ret;
+        }
         if (OPAL_SUCCESS != (ret = opal_dss_pack_float(buffer, &ptr[i]->vsize, 1, OPAL_FLOAT))) {
             return ret;
         }

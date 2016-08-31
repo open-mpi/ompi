@@ -45,6 +45,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/pstat/pstat.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
@@ -115,6 +116,8 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     FILE *fp;
     char gscmd[256], path[1035], *pathptr;
     char string[256], *string_ptr = string;
+    float pss;
+    opal_pstats_t pstat;
 
     /* unpack the command */
     n = 1;
@@ -1151,6 +1154,44 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         }
         break;
 
+    case ORTE_DAEMON_GET_MEMPROFILE:
+        answer = OBJ_NEW(opal_buffer_t);
+        /* pack our hostname so they know where it came from */
+        opal_dss.pack(answer, &orte_process_info.nodename, 1, OPAL_STRING);
+        /* collect my memory usage */
+        OBJ_CONSTRUCT(&pstat, opal_pstats_t);
+        opal_pstat.query(orte_process_info.pid, &pstat, NULL);
+        opal_dss.pack(answer, &pstat.pss, 1, OPAL_FLOAT);
+        OBJ_DESTRUCT(&pstat);
+        /* collect the memory usage of all my children */
+        pss = 0.0;
+        num_replies = 0;
+        for (i=0; i < orte_local_children->size; i++) {
+            if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
+                ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_ALIVE)) {
+                /* collect the stats on this proc */
+                OBJ_CONSTRUCT(&pstat, opal_pstats_t);
+                if (OPAL_SUCCESS == opal_pstat.query(proct->pid, &pstat, NULL)) {
+                    pss += pstat.pss;
+                    ++num_replies;
+                }
+                OBJ_DESTRUCT(&pstat);
+            }
+        }
+        /* compute the average value */
+        if (0 < num_replies) {
+            pss /= (float)num_replies;
+        }
+        opal_dss.pack(answer, &pss, 1, OPAL_FLOAT);
+        /* send it back */
+        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, answer,
+                                               ORTE_RML_TAG_MEMPROFILE,
+                                               orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(answer);
+        }
+        break;
+
     default:
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
     }
@@ -1221,6 +1262,9 @@ static char *get_orted_comm_cmd_str(int command)
 
     case ORTE_DAEMON_GET_STACK_TRACES:
         return strdup("ORTE_DAEMON_GET_STACK_TRACES");
+
+    case ORTE_DAEMON_GET_MEMPROFILE:
+        return strdup("ORTE_DAEMON_GET_MEMPROFILE");
 
     default:
         return strdup("Unknown Command!");
