@@ -96,23 +96,23 @@ static inline int osc_rdma_get_remote_segment (ompi_osc_rdma_module_t *module, o
 
 /* prototypes for implementations of MPI RMA window functions. these will be called from the
  * mpi interface (ompi/mpi/c) */
-int ompi_osc_rdma_put (const void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
+int ompi_osc_rdma_put (const void *origin_addr, int origin_count, ompi_datatype_t *origin_dt,
                        int target, OPAL_PTRDIFF_TYPE target_disp, int target_count,
-                       struct ompi_datatype_t *target_dt, struct ompi_win_t *win);
+                       ompi_datatype_t *target_dt, ompi_win_t *win);
 
-int ompi_osc_rdma_get (void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
+int ompi_osc_rdma_get (void *origin_addr, int origin_count, ompi_datatype_t *origin_dt,
                        int target, OPAL_PTRDIFF_TYPE target_disp, int target_count,
-                       struct ompi_datatype_t *target_dt, struct ompi_win_t *win);
+                       ompi_datatype_t *target_dt, ompi_win_t *win);
 
-int ompi_osc_rdma_rput (const void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
+int ompi_osc_rdma_rput (const void *origin_addr, int origin_count, ompi_datatype_t *origin_dt,
                         int target, OPAL_PTRDIFF_TYPE target_disp, int target_count,
-                        struct ompi_datatype_t *target_dt, struct ompi_win_t *win,
-                        struct ompi_request_t **request);
+                        ompi_datatype_t *target_dt, ompi_win_t *win,
+                        ompi_request_t **request);
 
-int ompi_osc_rdma_rget (void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
+int ompi_osc_rdma_rget (void *origin_addr, int origin_count, ompi_datatype_t *origin_dt,
                         int target, OPAL_PTRDIFF_TYPE target_disp, int target_count,
-                        struct ompi_datatype_t *target_dt, struct ompi_win_t *win,
-                        struct ompi_request_t **request);
+                        ompi_datatype_t *target_dt, ompi_win_t *win,
+                        ompi_request_t **request);
 
 /**
  * @brief read data from a remote memory region (blocking)
