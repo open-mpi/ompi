@@ -521,6 +521,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_process_name_t *proc = &caddy->name;
+    orte_process_name_t wildcard_rank;
     orte_proc_state_t state = caddy->proc_state;
     orte_job_t *jdata;
     orte_proc_t *pdata;
@@ -628,6 +629,12 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         jdata->num_terminated++;
         if (jdata->num_terminated == jdata->num_procs) {
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
+            /* if they requested notification upon completion, provide it */
+            if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NOTIFY_COMPLETION, NULL, OPAL_BOOL)) {
+                wildcard_rank.jobid = jdata->jobid;
+                wildcard_rank.vpid = ORTE_VPID_WILDCARD;
+                _send_notification(OPAL_ERR_JOB_TERMINATED, &wildcard_rank);
+            }
         } else if (ORTE_PROC_STATE_TERMINATED < pdata->state &&
                    !orte_job_term_ordered) {
             /* if this was an abnormal term, notify the other procs of the termination */
@@ -756,7 +763,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
      * we call the errmgr so that any attempt to restart the job will
      * avoid doing so in the exact same place as the current job
      */
-    if (NULL != jdata->map  && jdata->state == ORTE_JOB_STATE_TERMINATED) {
+    if (NULL != jdata->map && jdata->state == ORTE_JOB_STATE_TERMINATED) {
         map = jdata->map;
         for (index = 0; index < map->nodes->size; index++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, index))) {

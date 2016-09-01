@@ -275,6 +275,10 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "ORTE-JOB-TAG-OUTPUT";
         case ORTE_JOB_TIMESTAMP_OUTPUT:
             return "ORTE-JOB-TIMESTAMP-OUTPUT";
+        case ORTE_JOB_MULTI_DAEMON_SIM:
+            return "ORTE_JOB_MULTI_DAEMON_SIM";
+        case ORTE_JOB_NOTIFY_COMPLETION:
+            return "ORTE_JOB_NOTIFY_COMPLETION";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";

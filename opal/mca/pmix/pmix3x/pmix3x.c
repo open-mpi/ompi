@@ -474,6 +474,21 @@ pmix_status_t pmix3x_convert_opalrc(int rc)
     case OPAL_ERR_NODE_OFFLINE:
         return PMIX_ERR_NODE_OFFLINE;
 
+    case OPAL_ERR_JOB_TERMINATED:
+        return PMIX_ERR_JOB_TERMINATED;
+
+    case OPAL_ERR_PROC_RESTART:
+        return PMIX_ERR_PROC_RESTART;
+
+    case OPAL_ERR_PROC_CHECKPOINT:
+        return PMIX_ERR_PROC_CHECKPOINT;
+
+    case OPAL_ERR_PROC_MIGRATE:
+        return PMIX_ERR_PROC_MIGRATE;
+
+    case OPAL_ERR_EVENT_REGISTRATION:
+        return PMIX_ERR_EVENT_REGISTRATION;
+
     case OPAL_ERR_NOT_IMPLEMENTED:
     case OPAL_ERR_NOT_SUPPORTED:
         return PMIX_ERR_NOT_SUPPORTED;
@@ -539,6 +554,21 @@ int pmix3x_convert_rc(pmix_status_t rc)
 
     case PMIX_ERR_NODE_OFFLINE:
         return OPAL_ERR_NODE_OFFLINE;
+
+    case PMIX_ERR_JOB_TERMINATED:
+        return OPAL_ERR_JOB_TERMINATED;
+
+    case PMIX_ERR_PROC_RESTART:
+        return OPAL_ERR_PROC_RESTART;
+
+    case PMIX_ERR_PROC_CHECKPOINT:
+        return OPAL_ERR_PROC_CHECKPOINT;
+
+    case PMIX_ERR_PROC_MIGRATE:
+        return OPAL_ERR_PROC_MIGRATE;
+
+    case PMIX_ERR_EVENT_REGISTRATION:
+        return OPAL_ERR_EVENT_REGISTRATION;
 
     case PMIX_ERR_NOT_SUPPORTED:
         return OPAL_ERR_NOT_SUPPORTED;

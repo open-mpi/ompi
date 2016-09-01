@@ -89,7 +89,12 @@ enum {
     OPAL_ERR_PROC_REQUESTED_ABORT           = (OPAL_ERR_BASE - 58),
     OPAL_ERR_PROC_ABORTING                  = (OPAL_ERR_BASE - 59),
     OPAL_ERR_NODE_DOWN                      = (OPAL_ERR_BASE - 60),
-    OPAL_ERR_NODE_OFFLINE                   = (OPAL_ERR_BASE - 61)
+    OPAL_ERR_NODE_OFFLINE                   = (OPAL_ERR_BASE - 61),
+    OPAL_ERR_JOB_TERMINATED                 = (OPAL_ERR_BASE - 62),
+    OPAL_ERR_PROC_RESTART                   = (OPAL_ERR_BASE - 63),
+    OPAL_ERR_PROC_CHECKPOINT                = (OPAL_ERR_BASE - 64),
+    OPAL_ERR_PROC_MIGRATE                   = (OPAL_ERR_BASE - 65),
+    OPAL_ERR_EVENT_REGISTRATION             = (OPAL_ERR_BASE - 66)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

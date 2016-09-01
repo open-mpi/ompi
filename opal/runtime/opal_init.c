@@ -277,6 +277,21 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_NODE_OFFLINE:
         retval = "Node has gone offline";
         break;
+    case OPAL_ERR_JOB_TERMINATED:
+        retval = "Job terminated";
+        break;
+    case OPAL_ERR_PROC_RESTART:
+        retval = "Process restarted";
+        break;
+    case OPAL_ERR_PROC_CHECKPOINT:
+        retval = "Process checkpoint";
+        break;
+    case OPAL_ERR_PROC_MIGRATE:
+        retval = "Process migrate";
+        break;
+    case OPAL_ERR_EVENT_REGISTRATION:
+        retval = "Event registration";
+        break;
     default:
         retval = "UNRECOGNIZED";
     }

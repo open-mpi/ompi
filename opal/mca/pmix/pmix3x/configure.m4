@@ -28,7 +28,7 @@
 AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
     AC_CONFIG_FILES([opal/mca/pmix/pmix3x/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([PMIX_VERSION opal_pmix_pmix3x_save_CPPFLAGS opal_pmix_pmix3x_save_LDFLAGS opal_pmix_pmix3x_save_LIBS opal_pmix_pmix3x_basedir opal_pmix_pmix3x_save_cflags])
+    OPAL_VAR_SCOPE_PUSH([PMIX_VERSION opal_pmix_pmix3x_save_CPPFLAGS opal_pmix_pmix3x_save_LDFLAGS opal_pmix_pmix3x_save_LIBS opal_pmix_pmix3x_basedir opal_pmix_pmix3x_save_cflags opal_pmix_pmix3x_sm_flag])
 
     opal_pmix_pmix3x_basedir=opal/mca/pmix/pmix3x
 
@@ -37,7 +37,19 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
     opal_pmix_pmix3x_save_LDFLAGS=$LDFLAGS
     opal_pmix_pmix3x_save_LIBS=$LIBS
 
-    opal_pmix_pmix3x_args="--without-tests-examples --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --enable-embedded-hwloc --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
+    AC_ARG_ENABLE([pmix3-dstore],
+                  [AC_HELP_STRING([--enable-pmix3-dstore],
+                                  [Enable PMIx shared memory data store (default: disabled)])])
+    AC_MSG_CHECKING([if PMIx3 shared memory data store is enabled])
+    if test "$enable_pmix3_dstore" = "yes"; then
+        AC_MSG_RESULT([yes])
+        opal_pmix_pmix3x_sm_flag=--enable-dstore
+    else
+        AC_MSG_RESULT([no (disabled)])
+        opal_pmix_pmix3x_sm_flag=--disable-dstore
+    fi
+
+    opal_pmix_pmix3x_args="$opal_pmix_pmix3x_sm_flag --without-tests-examples --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --enable-embedded-hwloc --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix3x_args="--enable-debug $opal_pmix_pmix3x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
