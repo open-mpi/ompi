@@ -90,7 +90,7 @@ protected CartComm(long[] commRequest)
  * Duplicates this communicator.
  * <p>Java binding of {@code MPI_COMM_DUP}.
  * @return copy of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public CartComm dup() throws MPIException
 {
@@ -104,7 +104,7 @@ protected CartComm(long[] commRequest)
  * <p>The new communicator can't be used before the operation completes.
  * The request object must be obtained calling {@link #getRequest}.
  * @return copy of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public CartComm iDup() throws MPIException
 {
@@ -119,7 +119,7 @@ protected CartComm(long[] commRequest)
  * <p>The number of dimensions can be obtained from the size of (eg)
  * {@code dims} field of the returned object.
  * @return object containing dimensions, periods and local coordinates
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public CartParms getTopo() throws MPIException
 {
@@ -134,7 +134,7 @@ private native CartParms getTopo(long comm) throws MPIException;
  * <p>Java binding of the MPI operation {@code MPI_CART_RANK}.
  * @param coords Cartesian coordinates of a process
  * @return rank of the specified process
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int getRank(int[] coords) throws MPIException
 {
@@ -149,7 +149,7 @@ private native int getRank(long comm, int[] coords) throws MPIException;
  * <p>Java binding of the MPI operation {@code MPI_CART_COORDS}.
  * @param rank rank of a process
  * @return Cartesian coordinates of the specified process
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int[] getCoords(int rank) throws MPIException
 {
@@ -165,7 +165,7 @@ private native int[] getCoords(long comm, int rank) throws MPIException;
  * @param direction coordinate dimension of shift
  * @param disp      displacement
  * @return object containing ranks of source and destination processes
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public ShiftParms shift(int direction, int disp) throws MPIException
 {
@@ -182,7 +182,7 @@ private native ShiftParms shift(long comm, int direction, int disp)
  * @param remainDims by dimension, {@code true} if dimension is to be kept,
  *                   {@code false} otherwise
  * @return communicator containing subgrid including this process
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public CartComm sub(boolean[] remainDims) throws MPIException
 {
@@ -200,7 +200,7 @@ private native long sub(long comm, boolean[] remainDims) throws MPIException;
  * @param periods {@code true} if grid is periodic,
  *                {@code false} if not, in each dimension
  * @return reordered rank of calling process
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int map(int[] dims, boolean[] periods) throws MPIException
 {
@@ -216,7 +216,7 @@ private native int map(long comm, int[] dims, boolean[] periods)
  * <p>Java binding of the MPI operation {@code MPI_DIMS_CREATE}.
  * @param nnodes number of nodes in a grid
  * @param dims   array specifying the number of nodes in each dimension
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static void createDims(int nnodes, int[] dims) throws MPIException
 {

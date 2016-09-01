@@ -27,6 +27,8 @@ private final int iOff, iSize;
 
 /**
  * The struct object will be created only in MPI class.
+ * @param intOff	int offset
+ * @param intSize	int size
  * @see MPI#int2
  */
 protected Int2(int intOff, int intSize)

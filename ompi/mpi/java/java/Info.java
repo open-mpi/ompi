@@ -28,6 +28,7 @@ protected static final long NULL = getNull();
 
 /**
  * Java binding of the MPI operation {@code MPI_INFO_CREATE}.
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public Info() throws MPIException
 {
@@ -54,7 +55,7 @@ private native static long getNull();
  * Java binding of the MPI operation {@code MPI_INFO_SET}.
  * @param key   key
  * @param value value
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public void set(String key, String value) throws MPIException
 {
@@ -69,7 +70,7 @@ private native void set(long handle, String key, String value)
  * Java binding of the MPI operation {@code MPI_INFO_SET}.
  * @param key key
  * @return value or {@code null} if key is not defined
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public String get(String key) throws MPIException
 {
@@ -82,7 +83,7 @@ private native String get(long handle, String key) throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_INFO_SET}.
  * @param key key
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public void delete(String key) throws MPIException
 {
@@ -95,7 +96,7 @@ private native void delete(long handle, String key) throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_INFO_GET_NKEYS}.
  * @return number of defined keys
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public int size() throws MPIException
 {
@@ -109,7 +110,7 @@ private native int size(long handle) throws MPIException;
  * Java binding of the MPI operation {@code MPI_INFO_GET_NTHKEY}.
  * @param i key number
  * @return key
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public String getKey(int i) throws MPIException
 {
@@ -140,7 +141,7 @@ private native String getKey(long handle, int i) throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_INFO_DUP}.
  * @return info object
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public Info dup() throws MPIException
 {
@@ -152,7 +153,7 @@ private native long dup(long handle) throws MPIException;
 
 /**
  * Java binding of the MPI operation {@code MPI_INFO_FREE}.
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 @Override public void free() throws MPIException
 {

@@ -58,6 +58,7 @@ public abstract class UserFunction
  * @param inOutVec in-out array of accumulator locations
  * @param count    number of items in arrays 
  * @param datatype type of each item
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void call(Object inVec, Object inOutVec, int count, Datatype datatype)
         throws MPIException
@@ -71,6 +72,7 @@ public void call(Object inVec, Object inOutVec, int count, Datatype datatype)
  * @param inOut    in-out direct byte buffer of accumulator locations
  * @param count    number of items in buffers
  * @param datatype type of each item
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void call(ByteBuffer in, ByteBuffer inOut, int count, Datatype datatype)
         throws MPIException

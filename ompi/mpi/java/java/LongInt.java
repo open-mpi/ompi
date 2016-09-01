@@ -27,6 +27,9 @@ private final int lSize, iOff, iSize;
 
 /**
  * The struct object will be created only in MPI class.
+ * @param longSize	size of long
+ * @param intOff	int offset
+ * @param intSize	int size
  * @see MPI#longInt
  */
 protected LongInt(int longSize, int intOff, int intSize)

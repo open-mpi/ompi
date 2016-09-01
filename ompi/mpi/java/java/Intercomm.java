@@ -83,7 +83,7 @@ protected Intercomm(long[] commRequest)
  * Duplicates this communicator.
  * <p>Java binding of {@code MPI_COMM_DUP}.
  * @return copy of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public Intercomm dup() throws MPIException
 {
@@ -97,7 +97,7 @@ protected Intercomm(long[] commRequest)
  * <p>The new communicator can't be used before the operation completes.
  * The request object must be obtained calling {@link #getRequest}.
  * @return copy of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public Intercomm iDup() throws MPIException
 {
@@ -111,7 +111,7 @@ protected Intercomm(long[] commRequest)
  * Size of remote group.
  * <p>Java binding of the MPI operation {@code MPI_COMM_REMOTE_SIZE}.
  * @return number of process in remote group of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int getRemoteSize() throws MPIException
 {
@@ -125,7 +125,7 @@ private native int getRemoteSize_jni() throws MPIException;
  * Return the remote group.
  * <p>Java binding of the MPI operation {@code MPI_COMM_REMOTE_GROUP}.
  * @return remote group of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public Group getRemoteGroup() throws MPIException
 {
@@ -140,7 +140,7 @@ private native long getRemoteGroup_jni();
  * <p>Java binding of the MPI operation {@code MPI_INTERCOMM_MERGE}.
  * @param high true if the local group has higher ranks in combined group
  * @return new intra-communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public Intracomm merge(boolean high) throws MPIException
 {
@@ -153,7 +153,7 @@ private native long merge_jni(boolean high);
 /**
  * Java binding of {@code MPI_COMM_GET_PARENT}.
  * @return the parent communicator
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public static Intercomm getParent() throws MPIException
 {
