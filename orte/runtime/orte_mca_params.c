@@ -160,7 +160,7 @@ int orte_register_params(void)
                                   &orte_top_session_dir);
 
     if (NULL != orte_top_session_dir) {
-        if (NULL != orte_process_info.top_session_dir) {
+         if (NULL != orte_process_info.top_session_dir) {
             free(orte_process_info.top_session_dir);
         }
         orte_process_info.top_session_dir = strdup(orte_top_session_dir);

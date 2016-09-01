@@ -237,10 +237,7 @@ int orte_ess_base_orted_setup(char **hosts)
         /* take a pass thru the session directory code to fillin the
          * tmpdir names - don't create anything yet
          */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(false,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename,
-                                                    ORTE_PROC_MY_NAME))) {
+        if (ORTE_SUCCESS != (ret = orte_session_dir(false, ORTE_PROC_MY_NAME))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_session_dir define";
             goto error;
@@ -250,10 +247,7 @@ int orte_ess_base_orted_setup(char **hosts)
          */
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
         /* now actually create the directory tree */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename,
-                                                    ORTE_PROC_MY_NAME))) {
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true, ORTE_PROC_MY_NAME))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_session_dir";
             goto error;
@@ -277,11 +271,8 @@ int orte_ess_base_orted_setup(char **hosts)
             /* define a log file name in the session directory */
             snprintf(log_file, PATH_MAX, "output-orted-%s-%s.log",
                      jobidstring, orte_process_info.nodename);
-            log_path = opal_os_path(false,
-                                    orte_process_info.tmpdir_base,
-                                    orte_process_info.top_session_dir,
-                                    log_file,
-                                    NULL);
+            log_path = opal_os_path(false, orte_process_info.top_session_dir,
+                                    log_file, NULL);
 
             fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0640);
             if (fd < 0) {

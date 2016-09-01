@@ -164,8 +164,7 @@ static int component_available(void)
 
     /* if session directories were forbidden, then we cannot be used */
     if (!orte_create_session_dirs ||
-        NULL == orte_process_info.tmpdir_base ||
-        NULL == orte_process_info.top_session_dir) {
+        NULL == orte_process_info.jobfam_session_dir ) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
 
@@ -216,9 +215,7 @@ static int component_startup(void)
     /* setup the path to the daemon rendezvous point */
     memset(&mca_oob_usock_component.address, 0, sizeof(struct sockaddr_un));
     mca_oob_usock_component.address.sun_family = AF_UNIX;
-    session = opal_os_path(false, orte_process_info.tmpdir_base,
-                           orte_process_info.top_session_dir,
-                           orte_process_info.jobfam_session_dir,
+    session = opal_os_path(false, orte_process_info.jobfam_session_dir,
                            "usock", NULL);
     if ((strlen(session) + 1) > sizeof(mca_oob_usock_component.address.sun_path)-1) {
         opal_output(0, "SESSION DIR TOO LONG");

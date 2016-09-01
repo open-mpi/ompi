@@ -242,6 +242,43 @@ static int rte_init(void)
         free(string_key);
     }
 
+    /* retrieve temp directories info */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_TMPDIR, &wildcard_rank, &val, OPAL_STRING);
+    if (OPAL_SUCCESS == ret && NULL != val) {
+        /* TODO: who has precedence - pmix of MCA setting??? */
+        if( NULL == orte_process_info.top_session_dir ){
+            orte_process_info.top_session_dir = val;
+        } else {
+            /* keep the MCA setting */
+            free(val);
+        }
+        val = NULL;
+    }
+
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NSDIR, &wildcard_rank, &val, OPAL_STRING);
+    if (OPAL_SUCCESS == ret && NULL != val) {
+        /* TODO: who has precedence - pmix of MCA setting??? */
+        if( NULL == orte_process_info.job_session_dir ){
+            orte_process_info.job_session_dir = val;
+        } else {
+            /* keep the MCA setting */
+            free(val);
+        }
+        val = NULL;
+    }
+
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_PROCDIR, &wildcard_rank, &val, OPAL_STRING);
+    if (OPAL_SUCCESS == ret && NULL != val) {
+        /* TODO: who has precedence - pmix of MCA setting??? */
+        if( NULL == orte_process_info.proc_session_dir ){
+            orte_process_info.proc_session_dir = val;
+        } else {
+            /* keep the MCA setting */
+            free(val);
+        }
+        val = NULL;
+    }
+
     /* retrieve our topology */
     val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_TOPO,
