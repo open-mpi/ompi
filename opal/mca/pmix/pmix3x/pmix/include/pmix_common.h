@@ -256,7 +256,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_QUERY_LOCAL_PROC_TABLE         "pmix.qry.lptable"       // (char*) input nspace of job whose info is being requested
                                                                      //     returns (pmix_data_array_t) an array of pmix_proc_info_t for
                                                                      //     procs in job on same node
-#define PMIX_QUERY_AUTHORIZATIONS           "pmix.qry.auths"         // return operations tool is authorized to perform"
+#define PMIX_QUERY_AUTHORIZATIONS           "pmix.qry.auths"         // return operations tool is authorized to perform
+#define PMIX_QUERY_MEMPROFILE               "pmix.qry.mempfle"       // (pmix_usage_t) return an array of memory usage stats
 
 /* log attributes */
 #define PMIX_LOG_STDERR                     "pmix.log.stderr"        // (bool) log data to stderr
@@ -556,6 +557,29 @@ typedef struct pmix_proc_info {
             free((m));                              \
         }                                           \
     } while (0)
+
+
+/****    PMIX USAGE STRUCT    ****/
+typedef struct pmix_usage {
+    pmix_proc_t proc;
+    char key[PMIX_MAX_KEYLEN+1];
+    float usage;
+} pmix_usage_t;
+#define PMIX_USAGE_CREATE(m, n)                                     \
+    do {                                                            \
+        (m) = (pmix_usage_t*)calloc((n) , sizeof(pmix_usage_t));    \
+    } while (0)
+
+#define PMIX_USAGE_RELEASE(m)  PMIX_USAGE_FREE((m))
+
+#define PMIX_USAGE_CONSTRUCT(m)                 \
+    do {                                        \
+        memset((m), 0, sizeof(pmix_usage_t));   \
+    } while (0)
+
+#define PMIX_USAGE_DESTRUCT(m)
+
+#define PMIX_USAGE_FREE(m, n)  free((m))
 
 
 /****    PMIX VALUE STRUCT    ****/
