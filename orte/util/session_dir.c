@@ -444,8 +444,6 @@ int
 orte_session_dir_finalize(orte_process_name_t *proc)
 {
     int rc;
-    char *tmp;
-    char *job_session_dir, *vpid, *proc_session_dir;
 
     if (!orte_create_session_dirs || orte_process_info.rm_session_dirs ) {
         /* we haven't created them or RM will clean them up for us*/
@@ -512,7 +510,7 @@ orte_session_dir_finalize(orte_process_name_t *proc)
             if (orte_debug_flag) {
                 opal_output(0, "sess_dir_finalize: found top session dir empty - deleting");
             }
-            rmdir(tmp);
+            rmdir(orte_process_info.top_session_dir);
         } else {
             if (orte_debug_flag) {
                 if (OPAL_ERR_NOT_FOUND ==
