@@ -217,6 +217,10 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
 
             memcpy (ex_peer->super.base_handle, base_region->btl_handle_data, registration_handle_size);
         }
+
+        if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
+            ex_peer->super.super.data_endpoint = ex_peer->super.super.state_endpoint;
+        }
     }
 
     return OMPI_SUCCESS;
