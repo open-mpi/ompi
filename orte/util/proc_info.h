@@ -122,6 +122,7 @@ struct orte_proc_info_t {
     char *jobfam_session_dir;           /**< Session directory for this family of jobs (i.e., share same mpirun) */
     char *job_session_dir;              /**< Session directory for job */
     char *proc_session_dir;             /**< Session directory for the process */
+    bool rm_session_dirs;               /**< Session directories will be cleaned up by RM */
 
     char *sock_stdin;                   /**< Path name to temp file for stdin. */
     char *sock_stdout;                  /**< Path name to temp file for stdout. */

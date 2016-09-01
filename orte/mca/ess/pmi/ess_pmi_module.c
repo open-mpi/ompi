@@ -94,6 +94,7 @@ static int rte_init(void)
     uint16_t u16, *u16ptr;
     char **peers=NULL, *mycpuset, **cpusets=NULL;
     opal_process_name_t wildcard_rank, pname;
+    bool bool_val, tdir_mca_override = false;
     size_t i;
 
     /* run the prolog */
@@ -246,37 +247,51 @@ static int rte_init(void)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_TMPDIR, &wildcard_rank, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
         /* TODO: who has precedence - pmix of MCA setting??? */
-        if( NULL == orte_process_info.top_session_dir ){
+        if( NULL != orte_process_info.top_session_dir ){
             orte_process_info.top_session_dir = val;
         } else {
             /* keep the MCA setting */
+            tdir_mca_override = true;
             free(val);
         }
         val = NULL;
     }
 
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NSDIR, &wildcard_rank, &val, OPAL_STRING);
-    if (OPAL_SUCCESS == ret && NULL != val) {
-        /* TODO: who has precedence - pmix of MCA setting??? */
-        if( NULL == orte_process_info.job_session_dir ){
-            orte_process_info.job_session_dir = val;
-        } else {
-            /* keep the MCA setting */
-            free(val);
+    if( !tdir_mca_override ){
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NSDIR, &wildcard_rank, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != val) {
+            /* TODO: who has precedence - pmix of MCA setting??? */
+            if( NULL == orte_process_info.job_session_dir ){
+                orte_process_info.job_session_dir = val;
+            } else {
+                /* keep the MCA setting */
+                free(val);
+                tdir_mca_override = true;
+            }
+            val = NULL;
         }
-        val = NULL;
     }
 
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_PROCDIR, &wildcard_rank, &val, OPAL_STRING);
-    if (OPAL_SUCCESS == ret && NULL != val) {
-        /* TODO: who has precedence - pmix of MCA setting??? */
-        if( NULL == orte_process_info.proc_session_dir ){
-            orte_process_info.proc_session_dir = val;
-        } else {
-            /* keep the MCA setting */
-            free(val);
+    if( !tdir_mca_override ){
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_PROCDIR, &wildcard_rank, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != val) {
+            /* TODO: who has precedence - pmix of MCA setting??? */
+            if( NULL == orte_process_info.proc_session_dir ){
+                orte_process_info.proc_session_dir = val;
+            } else {
+                /* keep the MCA setting */
+                tdir_mca_override = true;
+                free(val);
+            }
+            val = NULL;
         }
-        val = NULL;
+    }
+
+    if( !tdir_mca_override ){
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_TDIR_RMCLEAN, &wildcard_rank, &bool_val, OPAL_BOOL);
+        if (OPAL_SUCCESS == ret ) {
+            orte_process_info.rm_session_dirs = val;
+        }
     }
 
     /* retrieve our topology */

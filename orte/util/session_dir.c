@@ -366,8 +366,8 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
 {
     int rc = ORTE_SUCCESS;
 
-    if (!orte_create_session_dirs ) {
-        /* we haven't created them */
+    if (!orte_create_session_dirs || orte_process_info.rm_session_dirs ) {
+        /* we haven't created them or RM will clean them up for us*/
         return ORTE_SUCCESS;
     }
 
@@ -447,8 +447,8 @@ orte_session_dir_finalize(orte_process_name_t *proc)
     char *tmp;
     char *job_session_dir, *vpid, *proc_session_dir;
 
-    if (!orte_create_session_dirs ) {
-        /* we haven't created them */
+    if (!orte_create_session_dirs || orte_process_info.rm_session_dirs ) {
+        /* we haven't created them or RM will clean them up for us*/
         return ORTE_SUCCESS;
     }
 
