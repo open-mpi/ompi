@@ -53,7 +53,7 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-2.0.1 -- 30 August 2016
+2.0.1 -- 2 September 2016
 -----------------------
 
 Bug fixes/minor improvements:
@@ -62,6 +62,8 @@ Bug fixes/minor improvements:
   all transports.
 - Fix shared memory performance when using RDMA-capable networks.
   Thanks to Tetsuya Mishima and Christoph Niethammer for reporting.
+- Fix bandwith performance degredation in the yalla (MXM) PML.  Thanks
+  to Andreas Kempf for reporting the issue.
 - Fix OpenSHMEM crash when running on non-Mellanox MXM-based networks.
   Thanks to Debendra Das for reporting the issue.
 - Fix stdin propagation to MPI processes.  Thanks to Jingchao Zhang
@@ -79,6 +81,7 @@ Bug fixes/minor improvements:
 - Remove all use of rand(3) from within Open MPI so as not to perturb
   applications use of it.  Thanks to Matias Cabral and Noel Rycroft
   for reporting.
+- Fix crash in MPI_COMM_SPAWN.
 - Fix types for MPI_UNWEIGHTED and MPI_WEIGHTS_EMPTY.  Thanks to
   Lisandro Dalcin for reporting.
 - Correctly report the name of MPI_INTEGER16.
@@ -117,6 +120,7 @@ Known issues (to be addressed in v2.0.2):
   https://github.com/open-mpi/ompi-release/milestone/19
   (note that the "ompi-release" Github repo will be folded/absorbed
   into the "ompi" Github repo at some point in the future)
+
 
 2.0.0 -- 12 July 2016
 ---------------------
