@@ -229,7 +229,7 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
                                 (m)->iov, (m)->count,                   \
                                 (m)->tag, (m)->cbdata);                 \
             }                                                           \
-        } else {                                                        \
+        } else if (NULL != (m)->cbfunc.buffer) {                        \
             /* non-blocking buffer send */                              \
             (m)->cbfunc.buffer((m)->status, &((m)->origin),             \
                                (m)->buffer,                             \
