@@ -20,11 +20,11 @@
 
 #define FCA_VERBOSE(level, format, ...) \
         opal_output_verbose(level, mca_scoll_fca_output, "%s:%d - %s() " format, \
-                                        __FCA_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
+                                        __FCA_FILE__, __LINE__, __func__, ## __VA_ARGS__)
 
 #define FCA_ERROR(format, ... ) \
         opal_output_verbose(0, mca_scoll_fca_output, "Error: %s:%d - %s() " format, \
-                                        __FCA_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
+                                        __FCA_FILE__, __LINE__, __func__, ## __VA_ARGS__)
 
 #define FCA_MODULE_VERBOSE(fca_module, level, format, ...) \
             FCA_VERBOSE(level, "[%p:%d] " format, (void*)(fca_module)->comm, (fca_module)->rank, ## __VA_ARGS__)

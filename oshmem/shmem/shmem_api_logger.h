@@ -29,13 +29,13 @@ OSHMEM_DECLSPEC extern int shmem_api_logger_output;
 #ifdef OPAL_ENABLE_DEBUG
 #define SHMEM_API_VERBOSE(level, ...) \
     oshmem_output_verbose(level, shmem_api_logger_output, \
-        "%s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "%s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 #else
 #define SHMEM_API_VERBOSE(level, ...)
 #endif
 
 #define SHMEM_API_ERROR(...) \
     oshmem_output(shmem_api_logger_output, \
-        "Error: %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "Error: %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 
 #endif /*SHMEM_API_LOGGER_H*/

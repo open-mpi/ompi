@@ -42,14 +42,14 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_atomic_base_framework;
 #ifdef OPAL_ENABLE_DEBUG
 #define ATOMIC_VERBOSE(level, ...) \
     oshmem_output_verbose(level, oshmem_atomic_base_framework.framework_output, \
-        "%s:%d - %s()", __ATOMIC_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "%s:%d - %s()", __ATOMIC_FILE__, __LINE__, __func__, __VA_ARGS__)
 #else
 #define ATOMIC_VERBOSE(level, ...)
 #endif
 
 #define ATOMIC_ERROR(...) \
     oshmem_output(oshmem_atomic_base_framework.framework_output, \
-        "Error %s:%d - %s()", __ATOMIC_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "Error %s:%d - %s()", __ATOMIC_FILE__, __LINE__, __func__, __VA_ARGS__)
 
 END_C_DECLS
 
