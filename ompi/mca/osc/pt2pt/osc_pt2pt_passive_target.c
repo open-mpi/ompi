@@ -143,21 +143,12 @@ int ompi_osc_pt2pt_lock_remote (ompi_osc_pt2pt_module_t *module, int target, omp
     lock_req.lock_ptr = (uint64_t) (uintptr_t) lock;
     OSC_PT2PT_HTON(&lock_req, module, target);
 
-    do {
-        ret = ompi_osc_pt2pt_control_send (module, target, &lock_req, sizeof (lock_req));
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            break;
-        }
-
-        /* make sure the request gets sent, so we can start eager sending... */
-        ret = ompi_osc_pt2pt_frag_flush_target_locked (module, target);
-    } while (0);
-
+    ret = ompi_osc_pt2pt_control_send_unbuffered (module, target, &lock_req, sizeof (lock_req));
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         OPAL_THREAD_ADD32(&lock->sync_expected, -1);
+    } else {
+        ompi_osc_pt2pt_peer_set_locked (peer, true);
     }
-
-    ompi_osc_pt2pt_peer_set_locked (peer, true);
 
     OPAL_THREAD_UNLOCK(&peer->lock);
 
