@@ -309,6 +309,10 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
   RANK2VRANK(rank, vrank, vroot);
   maxr = (int)ceil((log((double)p)/LOG2));
 
+  if (rank != root) {
+    inplace = 0;
+  }
+
   /* ensure the result ends up in redbuf on vrank 0 */
   if (0 == (maxr%2)) {
     rbuf = (void *)(-gap);
