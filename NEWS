@@ -66,6 +66,9 @@ Bug fixes/minor improvements:
   to Andreas Kempf for reporting the issue.
 - Fix OpenSHMEM crash when running on non-Mellanox MXM-based networks.
   Thanks to Debendra Das for reporting the issue.
+- Fix a crash occuring after repeated calls to MPI_FILE_SET_VIEW with
+  predefined datatypes.  Thanks to Eric Chamberland and Matthew
+  Knepley for reporting and helping chase down this issue.
 - Fix stdin propagation to MPI processes.  Thanks to Jingchao Zhang
   for reporting the issue.
 - Fix various runtime and portability issues by updating the PMIx
@@ -468,8 +471,9 @@ Bug fixes / minor enhancements:
   reporting it
 - Fix Java support on OSX 10.11. Thanks to Alexander Daryin
   for reporting the problem
-- Fix some compilation issues on Solaris 11.2. Thanks to
-  Paul Hargrove for his continued help in such areas
+- Fix some compilation and run-time issues on Solaris 11.2. Thanks to
+  Paul Hargrove and Siegmar Gross for their continued help in such
+  areas.
 
 
 1.10.1: 4 Nov 2015
