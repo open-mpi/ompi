@@ -515,7 +515,7 @@ int mca_oob_usock_peer_recv_connect_ack(mca_oob_usock_peer_t* pr, int sd,
     size_t credsize;
     mca_oob_usock_peer_t *peer;
     mca_oob_usock_hdr_t hdr;
-    uint64_t *ui64;
+    uint64_t ui64;
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s RECV CONNECT ACK FROM %s ON SOCKET %d",
@@ -590,8 +590,8 @@ int mca_oob_usock_peer_recv_connect_ack(mca_oob_usock_peer_t* pr, int sd,
             peer->name = hdr.origin;
             peer->state = MCA_OOB_USOCK_ACCEPTING;
             peer->sd = sd;
-            ui64 = (uint64_t*)(&peer->name);
-            if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), peer)) {
+            memcpy(&ui64, &peer->name, sizeof(uint64_t));
+            if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, ui64, peer)) {
                 OBJ_RELEASE(peer);
                 CLOSE_THE_SOCKET(sd);
                 return ORTE_ERR_UNREACH;

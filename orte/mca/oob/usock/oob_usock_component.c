@@ -15,6 +15,8 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -315,8 +317,9 @@ static int component_set_addr(orte_process_name_t *peer,
 {
     orte_proc_t *proc;
     mca_oob_usock_peer_t *pr;
-    uint64_t *ui64;
+    uint64_t ui64;
 
+    memcpy(&ui64, peer, sizeof(uint64_t));
     /* if I am an application, then everything is addressable
      * by me via my daemon
      */
@@ -324,12 +327,11 @@ static int component_set_addr(orte_process_name_t *peer,
         /* if this is my daemon, then take it - otherwise, ignore */
         if (ORTE_PROC_MY_DAEMON->jobid == peer->jobid &&
             ORTE_PROC_MY_DAEMON->vpid == peer->vpid) {
-            ui64 = (uint64_t*)peer;
             if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_usock_module.peers,
-                                                                 (*ui64), (void**)&pr) || NULL == pr) {
+                                                                 ui64, (void**)&pr) || NULL == pr) {
                 pr = OBJ_NEW(mca_oob_usock_peer_t);
                 pr->name = *peer;
-                opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), pr);
+                opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, ui64, pr);
             }
             /* we have to initiate the connection because otherwise the
              * daemon has no way to communicate to us via this component
@@ -354,12 +356,11 @@ static int component_set_addr(orte_process_name_t *peer,
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
     /* indicate that this peer is addressable by this component */
-    ui64 = (uint64_t*)peer;
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_usock_module.peers,
-                                                         (*ui64), (void**)&pr) || NULL == pr) {
+                                                         ui64, (void**)&pr) || NULL == pr) {
         pr = OBJ_NEW(mca_oob_usock_peer_t);
         pr->name = *peer;
-        opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), pr);
+        opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, ui64, pr);
     }
     return ORTE_SUCCESS;
 }
