@@ -12,6 +12,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +44,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/attr.h"
 
 #include "orte/util/pre_condition_transports.h"
 
@@ -160,6 +162,9 @@ int orte_pre_condition_transports(orte_job_t *jdata)
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+
+    /* record it in case this job executes a dynamic spawn */
+    orte_set_attribute(&jdata->attributes, ORTE_JOB_TRANSPORT_KEY, ORTE_ATTR_LOCAL, string_key, OPAL_STRING);
 
     if (OPAL_SUCCESS != mca_base_var_env_name ("orte_precondition_transports", &cs_env)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
