@@ -74,3 +74,20 @@ Fall back to the normal progress.
   Local host: %s
   Value:      %s
   Message:    %s
+#
+[peer hung up]
+An MPI communication peer process has unexpectedly disconnected.  This
+usually indicates a failure in the peer process (e.g., a crash or
+otherwise exiting without calling MPI_FINALIZE first).
+
+Although this local MPI process will likely now behave unpredictably
+(it may even hang or crash), the root cause of this problem is the
+failure of the peer -- that is what you need to investigate.  For
+example, there may be a core file that you can examine.  More
+generally: such peer hangups are frequently caused by application bugs
+or other external events.
+
+  Local host: %s
+  Local PID:  %d
+  Peer host:  %s
+#
