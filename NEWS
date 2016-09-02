@@ -216,7 +216,25 @@ Master (not on release branches yet)
   Alastair McKinstry for reporting.
 
 
-1.10.3 - DATE
+1.10.4 - 01 Sept 2016
+------
+
+- Fix assembler support for MIPS
+- Improve memory handling for temp buffers in collectives
+- Fix [all]reduce with non-zero lower bound datatypes
+  Thanks Hristo Iliev for the report
+- Fix non-standard ddt handling. Thanks Yuki Matsumoto for the report
+- Various libnbc fixes. Thanks Yuki Matsumoto for the report
+- Fix typos in request RMA bindings for Fortran. Thanks to @alazzaro
+  and @vondele for the assist
+- Various bug fixes and enhancements to collective support
+- Fix predefined types mapping in hcoll
+- Revive the coll/sync component to resolve unexpected message issues
+  during tight loops across collectives
+- Fix typo in wrapper compiler for Fortran static builds
+
+
+1.10.3 - 15 June 2016
 ------
 
 - Minor manpage cleanups
