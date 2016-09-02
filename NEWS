@@ -115,6 +115,7 @@ Bug fixes/minor improvements:
   reporting.
 - Correctly support MPI_IN_PLACE in MPI_[I]ALLTOALL[V|W] and
   MPI_[I]EXSCAN.
+- Fix alignment issues on SPARC platforms.
 
 Known issues (to be addressed in v2.0.2):
 
@@ -471,9 +472,8 @@ Bug fixes / minor enhancements:
   reporting it
 - Fix Java support on OSX 10.11. Thanks to Alexander Daryin
   for reporting the problem
-- Fix some compilation and run-time issues on Solaris 11.2. Thanks to
-  Paul Hargrove and Siegmar Gross for their continued help in such
-  areas.
+- Fix some compilation issues on Solaris 11.2. Thanks to
+  Paul Hargrove for his continued help in such areas
 
 
 1.10.1: 4 Nov 2015
