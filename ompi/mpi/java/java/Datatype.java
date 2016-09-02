@@ -137,7 +137,7 @@ private Datatype(int baseType, int baseSize, long handle)
  * Returns the lower bound of a datatype.
  * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_EXTENT}.
  * @return lower bound of datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int getLb() throws MPIException
 {
@@ -151,7 +151,7 @@ public int getLb() throws MPIException
  * Returns the extent of a datatype.
  * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_EXTENT}.
  * @return datatype extent
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int getExtent() throws MPIException
 {
@@ -176,7 +176,7 @@ private native void getLbExtent(long handle, int[] lbExt);
  * Returns the true lower bound of a datatype.
  * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_TRUE_EXTENT}.
  * @return lower bound of datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int getTrueLb() throws MPIException
 {
@@ -190,7 +190,7 @@ public int getTrueLb() throws MPIException
  * Returns the true extent of a datatype.
  * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_TRUE_EXTENT}.
  * @return datatype true extent
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int getTrueExtent() throws MPIException
 {
@@ -216,7 +216,7 @@ private native void getTrueLbExtent(long handle, int[] lbExt);
  * elements it represents.
  * <p>Java binding of the MPI operation {@code MPI_TYPE_SIZE}.
  * @return datatype size
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int getSize() throws MPIException
 {
@@ -229,7 +229,7 @@ private native int getSize(long type);
 /**
  * Commits a derived datatype.
  * Java binding of the MPI operation {@code MPI_TYPE_COMMIT}.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void commit() throws MPIException
 {
@@ -242,7 +242,7 @@ private native void commit(long type);
 /**
  * Frees the datatype.
  * <p>Java binding of the MPI operation {@code MPI_TYPE_FREE}.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public void free() throws MPIException
 {
@@ -282,7 +282,7 @@ public boolean isNull()
 /**
  * Java binding of {@code MPI_TYPE_DUP}.
  * @return new datatype
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public Datatype dup() throws MPIException
 {
@@ -301,7 +301,7 @@ private native long dup(long type) throws MPIException;
  * @param count   replication count
  * @param oldType old datatype
  * @return new datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static Datatype createContiguous(int count, Datatype oldType)
         throws MPIException
@@ -323,7 +323,7 @@ private static native long getContiguous(int count, long oldType);
  * @param stride      number of elements between start of each block
  * @param oldType     old datatype
  * @return new datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static Datatype createVector(int count, int blockLength,
                                     int stride, Datatype oldType)
@@ -348,7 +348,7 @@ private static native long getVector(
  * @param stride      number of bytes between start of each block
  * @param oldType     old datatype
  * @return new datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static Datatype createHVector(int count, int blockLength,
                                      int stride, Datatype oldType)
@@ -376,7 +376,7 @@ private static native long getHVector(
  * @param displacements displacement of each block in units of old type
  * @param oldType       old datatype
  * @return new datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static Datatype createIndexed(int[] blockLengths,
                                      int[] displacements, Datatype oldType)
@@ -400,7 +400,7 @@ private static native long getIndexed(
  * @param displacements byte displacement in buffer for each block
  * @param oldType       old datatype
  * @return new datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static Datatype createHIndexed(int[] blockLengths,
                                       int[] displacements, Datatype oldType)
@@ -425,7 +425,7 @@ private static native long getHIndexed(
  * @param displacements byte displacement of each block
  * @param types         type of elements in each block
  * @return new datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static Datatype createStruct(int[] blockLengths,
                                     int[] displacements, Datatype[] types)
@@ -452,7 +452,7 @@ private static native long getStruct(
  * @param lb      new lower bound of datatype (address integer)
  * @param extent  new extent of datatype (address integer)
  * @return new datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static Datatype createResized(Datatype oldType, int lb, int extent)
         throws MPIException
@@ -467,7 +467,7 @@ private static native long getResized(long oldType, int lb, int extent);
 /**
  * Sets the print name for the datatype.
  * @param name name for the datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void setName(String name) throws MPIException
 {
@@ -480,7 +480,7 @@ private native void setName(long handle, String name) throws MPIException;
 /**
  * Return the print name from the datatype.
  * @return name of the datatype
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public String getName() throws MPIException
 {
@@ -494,7 +494,7 @@ private native String getName(long handle) throws MPIException;
  * Create a new attribute key.
  * <p>Java binding of the MPI operation {@code MPI_TYPE_CREATE_KEYVAL}.
  * @return attribute key for future access
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static int createKeyval() throws MPIException
 {
@@ -508,7 +508,7 @@ private static native int createKeyval_jni() throws MPIException;
  * Frees an attribute key.
  * <p>Java binding of the MPI operation {@code MPI_TYPE_FREE_KEYVAL}.
  * @param keyval attribute key
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static void freeKeyval(int keyval) throws MPIException
 {
@@ -523,7 +523,7 @@ private static native void freeKeyval_jni(int keyval) throws MPIException;
  * <p>Java binding of the MPI operation {@code MPI_TYPE_SET_ATTR}.
  * @param keyval attribute key
  * @param value  attribute value
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void setAttr(int keyval, Object value) throws MPIException
 {
@@ -539,7 +539,7 @@ private native void setAttr(long type, int keyval, byte[] value)
  * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_ATTR}.
  * @param keyval attribute key
  * @return attribute value or null if no attribute is associated with the key.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public Object getAttr(int keyval) throws MPIException
 {
@@ -554,7 +554,7 @@ private native Object getAttr(long type, int keyval) throws MPIException;
  * Deletes an attribute value associated with a key.
  * <p>Java binding of the MPI operation {@code MPI_TYPE_DELETE_ATTR}.
  * @param keyval attribute key
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void deleteAttr(int keyval) throws MPIException
 {

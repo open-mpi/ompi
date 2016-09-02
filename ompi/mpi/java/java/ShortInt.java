@@ -27,6 +27,9 @@ private final int sSize, iOff, iSize;
 
 /**
  * The struct object will be created only in MPI class.
+ * @param shortSize	short size
+ * @param intOff	int offset
+ * @param intSize	int size
  * @see MPI#shortInt
  */
 protected ShortInt(int shortSize, int intOff, int intSize)

@@ -52,6 +52,7 @@ public final class Prequest extends Request
 {
 /**
  * Constructor used by {@code sendInit}, etc.
+ * @param handle	Handle for the Prequest object
  */
 protected Prequest(long handle)
 {
@@ -65,6 +66,7 @@ protected Prequest(long handle)
  * one of the {@code wait} or {@code test} operations.
  * On successful completion the request becomes inactive again.
  * It can be reactivated by a further call to {@code Start}.
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void start() throws MPIException
 {
@@ -77,7 +79,7 @@ private native long start(long request) throws MPIException;
  * Activate a list of communication requests.
  * <p>Java binding of the MPI operation {@code MPI_STARTALL}.
  * @param requests array of requests
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public static void startAll(Prequest[] requests) throws MPIException
 {

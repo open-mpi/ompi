@@ -34,7 +34,7 @@ private long handle;
  * @param dispUnit local unit size for displacements (buffer elements)
  * @param info     info object
  * @param comm     communicator
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public Win(Buffer base, int size, int dispUnit, Info info, Comm comm)
     throws MPIException
@@ -82,7 +82,7 @@ private int getBaseType(Datatype orgType, Datatype targetType)
 /**
  * Java binding of the MPI operation {@code MPI_GET_GROUP}.
  * @return group of processes which share access to the window
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public Group getGroup() throws MPIException
 {
@@ -101,7 +101,7 @@ private native long getGroup(long win) throws MPIException;
  * @param targetDisp  displacement from start of window to target buffer
  * @param targetCount number of entries in target buffer
  * @param targetType  datatype of each entry in target buffer
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void put(Buffer origin, int orgCount, Datatype orgType,
                 int targetRank, int targetDisp, int targetCount,
@@ -132,6 +132,7 @@ private native void put(
  * @param targetDisp  displacement from start of window to target buffer
  * @param targetCount number of entries in target buffer
  * @param targetType  datatype of each entry in target buffer
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void get(Buffer origin, int orgCount, Datatype orgType,
                 int targetRank, int targetDisp, int targetCount,
@@ -163,6 +164,7 @@ private native void get(
  * @param targetCount number of entries in target buffer
  * @param targetType  datatype of each entry in target buffer
  * @param op          reduce operation
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void accumulate(Buffer origin, int orgCount, Datatype orgType,
                        int targetRank, int targetDisp, int targetCount,
@@ -187,6 +189,7 @@ private native void accumulate(
 /**
  * Java binding of {@code MPI_WIN_FENCE}.
  * @param assertion program assertion
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void fence(int assertion) throws MPIException
 {
@@ -200,7 +203,7 @@ private native void fence(long win, int assertion) throws MPIException;
  * Java binding of the MPI operation {@code MPI_WIN_START}.
  * @param group     group of target processes
  * @param assertion program assertion
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public void start(Group group, int assertion) throws MPIException
 {
@@ -213,7 +216,7 @@ private native void start(long win, long group, int assertion)
 
 /**
  * Java binding of the MPI operation {@code MPI_WIN_COMPLETE}.
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public void complete() throws MPIException
 {
@@ -227,7 +230,7 @@ private native void complete(long win) throws MPIException;
  * Java binding of the MPI operation {@code MPI_WIN_POST}.
  * @param group     group of origin processes
  * @param assertion program assertion
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public void post(Group group, int assertion) throws MPIException
 {
@@ -240,7 +243,7 @@ private native void post(long win, long group, int assertion)
 
 /**
  * Java binding of the MPI operation {@code MPI_WIN_WAIT}.
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public void waitFor() throws MPIException
 {
@@ -253,7 +256,7 @@ private native void waitFor(long win) throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_WIN_TEST}.
  * @return true if success
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public boolean test() throws MPIException
 {
@@ -268,7 +271,7 @@ private native boolean test(long win) throws MPIException;
  * @param lockType  either MPI.LOCK_EXCLUSIVE or MPI.LOCK_SHARED
  * @param rank      rank of locked window
  * @param assertion program assertion
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public void lock(int lockType, int rank, int assertion) throws MPIException
 {
@@ -282,7 +285,7 @@ private native void lock(long win, int lockType, int rank, int assertion)
 /**
  * Java binding of the MPI operation {@code MPI_WIN_UNLOCK}.
  * @param rank rank of window
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public void unlock(int rank) throws MPIException
 {
@@ -295,7 +298,7 @@ private native void unlock(long win, int rank) throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_WIN_SET_ERRHANDLER}.
  * @param errhandler new MPI error handler for window
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void setErrhandler(Errhandler errhandler) throws MPIException
 {
@@ -309,7 +312,7 @@ private native void setErrhandler(long win, long errhandler)
 /**
  * Java binding of the MPI operation {@code MPI_WIN_CALL_ERRHANDLER}.
  * @param errorCode error code
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public void callErrhandler(int errorCode) throws MPIException
 {
@@ -323,7 +326,7 @@ private native void callErrhandler(long handle, int errorCode)
  * Create a new attribute key.
  * <p>Java binding of the MPI operation {@code MPI_WIN_CREATE_KEYVAL}.
  * @return attribute key for future access
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static int createKeyval() throws MPIException
 {
@@ -337,7 +340,7 @@ private static native int createKeyval_jni() throws MPIException;
  * Frees an attribute key.
  * <p>Java binding of the MPI operation {@code MPI_WIN_FREE_KEYVAL}.
  * @param keyval attribute key
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static void freeKeyval(int keyval) throws MPIException
 {
@@ -352,7 +355,7 @@ private static native void freeKeyval_jni(int keyval) throws MPIException;
  * <p>Java binding of the MPI operation {@code MPI_WIN_SET_ATTR}.
  * @param keyval attribute key
  * @param value  attribute value
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void setAttr(int keyval, Object value) throws MPIException
 {
@@ -368,7 +371,7 @@ private native void setAttr(long win, int keyval, byte[] value)
  * <p>Java binding of the MPI operation {@code MPI_WIN_GET_ATTR}.
  * @param keyval attribute key
  * @return attribute value or null if no attribute is associated with the key.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public Object getAttr(int keyval) throws MPIException
 {
@@ -383,7 +386,7 @@ private native Object getAttr(long win, int keyval) throws MPIException;
  * Deletes an attribute value associated with a key.
  * <p>Java binding of the MPI operation {@code MPI_WIN_DELETE_ATTR}.
  * @param keyval attribute key
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void deleteAttr(int keyval) throws MPIException
 {
@@ -395,7 +398,7 @@ private native void deleteAttr(long win, int keyval) throws MPIException;
 
 /**
  * Java binding of {@code MPI_WIN_FREE}.
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 @Override public void free() throws MPIException
 {

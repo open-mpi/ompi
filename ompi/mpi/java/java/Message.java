@@ -76,7 +76,7 @@ public boolean isNoProc()
  * @param tag    message tag
  * @param comm   communicator
  * @return status object
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public Status mProbe(int source, int tag, Comm comm) throws MPIException
 {
@@ -95,7 +95,7 @@ private native long mProbe(int source, int tag, long comm, long[] status)
  * @param tag    message tag
  * @param comm   communicator
  * @return status object if there is a message, {@code null} otherwise
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public Status imProbe(int source, int tag, Comm comm) throws MPIException
 {
@@ -112,6 +112,7 @@ private native Status imProbe(int source, int tag, long comm)
  * @param count number of elements in receve buffer
  * @param type  datatype of each receive buffer element
  * @return status object
+ * @throws MPIException	Signals that an MPI exception of some sort has occurred.
  */
 public Status mRecv(Object buf, int count, Datatype type) throws MPIException
 {
@@ -142,7 +143,7 @@ private native long mRecv(
  * @param count number of elements in receve buffer
  * @param type  datatype of each receive buffer element
  * @return request object
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public Request imRecv(Buffer buf, int count, Datatype type)
     throws MPIException

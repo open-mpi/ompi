@@ -90,7 +90,7 @@ protected GraphComm(long[] commRequest)
  * Duplicates this communicator.
  * <p>Java binding of {@code MPI_COMM_DUP}.
  * @return copy of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public GraphComm dup() throws MPIException
 {
@@ -104,7 +104,7 @@ protected GraphComm(long[] commRequest)
  * The request object must be obtained calling {@link #getRequest}.
  * <p>Java binding of {@code MPI_COMM_IDUP}.
  * @return copy of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public GraphComm iDup() throws MPIException
 {
@@ -120,7 +120,7 @@ protected GraphComm(long[] commRequest)
  * from the sizes of the {@code index} and {@code edges} fields
  * of the returned object.
  * @return object defining node degress and edges of graph
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public GraphParms getDims() throws MPIException
 {
@@ -137,7 +137,7 @@ private native GraphParms getDims(long comm) throws MPIException;
  * <p>The number of neighbors can be extracted from the size of the result.
  * @param rank rank of a process in the group of this communicator
  * @return array of ranks of neighbouring processes to one specified
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int[] getNeighbors(int rank) throws MPIException
 {
@@ -150,7 +150,7 @@ private native int[] getNeighbors(long comm, int rank) throws MPIException;
 /**
  * Gets the adjacency information for a distributed graph topology.
  * @return adjacency information for a distributed graph topology
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred. 
  */
 public DistGraphNeighbors getDistGraphNeighbors() throws MPIException
 {
@@ -168,7 +168,7 @@ private native DistGraphNeighbors getDistGraphNeighbors(long comm)
  * @param index node degrees
  * @param edges graph edges
  * @return reordered rank of calling process
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public int map(int[] index, int[] edges) throws MPIException
 {
