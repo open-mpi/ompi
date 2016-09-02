@@ -1,5 +1,5 @@
 enable_orcm=no
-enable_oshmem=no
+enable_oshmem=yes
 enable_sensors=no
 enable_orterun_prefix_by_default=yes
 enable_mpi_thread_multiple=no
