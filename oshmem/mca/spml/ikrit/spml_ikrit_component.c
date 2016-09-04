@@ -167,6 +167,21 @@ static inline void mca_spml_ikrit_param_register_int(const char* param_name,
                                            storage);
 }
 
+static inline void mca_spml_ikrit_param_register_size_t(const char* param_name,
+                                                        size_t default_value,
+                                                        const char *help_msg,
+                                                        size_t *storage)
+{
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_spml_ikrit_component.spmlm_version,
+                                           param_name,
+                                           help_msg,
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           storage);
+}
+
 static inline void  mca_spml_ikrit_param_register_string(const char* param_name,
                                                     char* default_value,
                                                     const char *help_msg,
@@ -230,6 +245,9 @@ static int mca_spml_ikrit_component_register(void)
                                       &mca_spml_ikrit.unsync_conn_max);
 #endif
 
+    mca_spml_ikrit_param_register_size_t("put_zcopy_threshold", 16384ULL,
+                                         "[size_t] Use zero copy put if message size is greater than the threshold",
+                                      &mca_spml_ikrit.put_zcopy_threshold);
     if (oshmem_num_procs() < mca_spml_ikrit.np) {
         SPML_VERBOSE(1,
                      "Not enough ranks (%d<%d), disqualifying spml/ikrit",

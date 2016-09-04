@@ -106,6 +106,8 @@ struct mca_spml_ikrit_t {
 #if MXM_API >= MXM_VERSION(2,0)
     int unsync_conn_max;
 #endif
+    size_t put_zcopy_threshold; /* enable zcopy in put if message size is
+                                   greater than the threshold */
 };
 
 typedef struct mca_spml_ikrit_t mca_spml_ikrit_t;
