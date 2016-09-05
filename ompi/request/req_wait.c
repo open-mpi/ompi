@@ -16,6 +16,8 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,6 +90,11 @@ int ompi_request_default_wait_any(size_t count,
     int rc = OMPI_SUCCESS;
     ompi_request_t *request=NULL;
     ompi_wait_sync_t sync;
+
+    if (OPAL_UNLIKELY(0 == count)) {
+        *index = MPI_UNDEFINED;
+        return OMPI_SUCCESS;
+    }
 
     WAIT_SYNC_INIT(&sync, 1);
 
@@ -196,6 +203,10 @@ int ompi_request_default_wait_all( size_t count,
     ompi_request_t *request;
     int mpi_error = OMPI_SUCCESS;
     ompi_wait_sync_t sync;
+
+    if (OPAL_UNLIKELY(0 == count)) {
+        return OMPI_SUCCESS;
+    }
 
     WAIT_SYNC_INIT(&sync, count);
     rptr = requests;
@@ -374,6 +385,11 @@ int ompi_request_default_wait_some(size_t count,
     ompi_wait_sync_t sync;
     size_t sync_sets = 0, sync_unsets = 0;
     
+    if (OPAL_UNLIKELY(0 == count)) {
+        *outcount = MPI_UNDEFINED;
+        return OMPI_SUCCESS;
+    }
+
     WAIT_SYNC_INIT(&sync, 1);
 
     *outcount = 0;
