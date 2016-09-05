@@ -15,6 +15,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1144,6 +1146,9 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 }
                 OBJ_RELEASE(relay_msg);
             }
+        }
+        if (NULL != gstack_exec) {
+            free(gstack_exec);
         }
         /* always send our response */
         if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, answer,

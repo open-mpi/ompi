@@ -15,7 +15,7 @@
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -1291,7 +1291,7 @@ static int create_app(int argc, char* argv[],
     char *param, *value;
     orte_app_context_t *app = NULL;
     bool found = false;
-    char *appname;
+    char *appname = NULL;
 
     *made_app = false;
 
@@ -1704,7 +1704,6 @@ static int create_app(int argc, char* argv[],
             free(value);
         }
     }
-    free(appname);
 
     *app_ptr = app;
     app = NULL;
@@ -1715,6 +1714,9 @@ static int create_app(int argc, char* argv[],
  cleanup:
     if (NULL != app) {
         OBJ_RELEASE(app);
+    }
+    if (NULL != appname) {
+        free(appname);
     }
     return rc;
 }
