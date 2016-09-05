@@ -14,7 +14,7 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -854,7 +854,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     char *rml_uri = NULL, *ptr;
     int rc, idx;
     orte_proc_t *daemon=NULL;
-    char *nodename;
     orte_node_t *node;
     orte_job_t *jdata;
     orte_process_name_t dname;
@@ -875,6 +874,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     /* multiple daemons could be in this buffer, so unpack until we exhaust the data */
     idx = 1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(buffer, &dname, &idx, ORTE_NAME))) {
+        char *nodename;
         /* unpack its contact info */
         idx = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
@@ -1145,6 +1145,11 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                              ORTE_NAME_PRINT(&dname),
                              (NULL == daemon) ? "UNKNOWN" : daemon->rml_uri));
 
+        if (NULL != nodename) {
+            free(nodename);
+            nodename = NULL;
+        }
+
         if (orted_failed_launch) {
             ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_FAILED_TO_START);
             return;
@@ -1179,10 +1184,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_DAEMONS_REPORTED);
                 }
             }
-        }
-        if (NULL != nodename) {
-            free(nodename);
-            nodename = NULL;
         }
         idx = 1;
     }
