@@ -13,6 +13,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,6 +68,14 @@ static inline void opal_atomic_wmb(void)
  * Atomic math operations
  *
  *********************************************************************/
+
+/*
+ * Suppress numerous (spurious ?) warnings from Oracle Studio compilers
+ * see https://community.oracle.com/thread/3968347
+ */ 
+#if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#pragma error_messages(off, E_ARG_INCOMPATIBLE_WITH_ARG_L)
+#endif
 
 static inline int opal_atomic_cmpset_acq_32( volatile int32_t *addr,
                                              int32_t oldval, int32_t newval)
@@ -209,6 +219,10 @@ static inline void opal_atomic_unlock (opal_atomic_lock_t *lock)
                        __ATOMIC_RELEASE | __ATOMIC_HLE_RELEASE);
 }
 
+#endif
+
+#if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#pragma error_messages(default, E_ARG_INCOMPATIBLE_WITH_ARG_L)
 #endif
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */
