@@ -15,7 +15,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -642,7 +642,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     int rc=ORTE_SUCCESS;
     orte_std_cntr_t proc_rank;
     char basedir[MAXPATHLEN];
-    char **argvsav=NULL;
     int inm, j, idx;
     int total_num_local_procs = 0;
     orte_odls_launch_local_t *caddy = (orte_odls_launch_local_t*)cbdata;
@@ -816,6 +815,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
 
         /* okay, now let's launch all the local procs for this app using the provided fork_local fn */
         for (proc_rank = 0, idx=0; idx < orte_local_children->size; idx++) {
+            char **argvsav=NULL;
             if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, idx))) {
                 continue;
             }
