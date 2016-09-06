@@ -34,13 +34,11 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#if HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
 #include <string.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/hwloc/base/base.h"
 
@@ -493,16 +491,11 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                         }
                         opal_argv_free (argv);
 
-                        // Strip off the FQDN if present
-                        if( !orte_keep_fqdn_hostnames ) {
+                        // Strip off the FQDN if present, ignore IP addresses
+                        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(node_name) ) {
                             char *ptr;
-                            struct in_addr buf;
-                            /* if the nodename is an IP address, do not mess with it! */
-                            if (0 == inet_pton(AF_INET, node_name, &buf) &&
-                                0 == inet_pton(AF_INET6, node_name, &buf)) {
-                                if (NULL != (ptr = strchr(node_name, '.'))) {
-                                    *ptr = '\0';
-                                }
+                            if (NULL != (ptr = strchr(node_name, '.'))) {
+                                *ptr = '\0';
                             }
                         }
 

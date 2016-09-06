@@ -35,6 +35,7 @@
 #include <ctype.h>
 
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/util/show_help.h"
@@ -191,17 +192,11 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 sq->cpuset = strdup(sep);
             }
 
-            // Strip off the FQDN if present
-            if( !orte_keep_fqdn_hostnames ) {
+            // Strip off the FQDN if present, ignore IP addresses
+            if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(hstname) ) {
                 char *ptr;
-                struct in_addr buf;
-
-                /* if the nodename is an IP address, do not mess with it! */
-                if (0 == inet_pton(AF_INET, hstname, &buf) &&
-                    0 == inet_pton(AF_INET6, hstname, &buf)) {
-                    if (NULL != (ptr = strchr(hstname, '.'))) {
-                        *ptr = '\0';
-                    }
+                if (NULL != (ptr = strchr(hstname, '.'))) {
+                    *ptr = '\0';
                 }
             }
 
@@ -305,16 +300,11 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                     sq->cpuset = strdup(sep);
                 }
 
-                // Strip off the FQDN if present
-                if( !orte_keep_fqdn_hostnames ) {
+                // Strip off the FQDN if present, ignore IP addresses
+                if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(hstname) ) {
                     char *ptr;
-                    struct in_addr buf;
-                    /* if the nodename is an IP address, do not mess with it! */
-                    if (0 == inet_pton(AF_INET, hstname, &buf) &&
-                        0 == inet_pton(AF_INET6, hstname, &buf)) {
-                        if (NULL != (ptr = strchr(hstname, '.'))) {
-                            (*ptr) = '\0';
-                        }
+                    if (NULL != (ptr = strchr(hstname, '.'))) {
+                        (*ptr) = '\0';
                     }
                 }
 
