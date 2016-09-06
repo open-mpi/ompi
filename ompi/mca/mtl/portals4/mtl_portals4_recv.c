@@ -39,7 +39,9 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
          ptl_match_bits_t match_bits, ptl_size_t remote_offset,
          ompi_mtl_portals4_recv_request_t *request)
 {
-    int ret;
+    int ret, i;
+    ptl_size_t rest = length, asked = 0, frag_size;
+    int32_t pending_reply;
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     while (OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1) < 0)) {
@@ -48,19 +50,29 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
     }
 #endif
 
-    ret = PtlGet(ompi_mtl_portals4.send_md_h,
-                 (ptl_size_t) start,
-                 length,
-                 target,
-                 ompi_mtl_portals4.read_idx,
-                 match_bits,
-                 remote_offset,
-                 request);
-    if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: PtlGet failed: %d",
-                            __FILE__, __LINE__, ret);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    request->pending_reply = (length + ompi_mtl_portals4.max_msg_size_mtl - 1) / ompi_mtl_portals4.max_msg_size_mtl;
+    pending_reply = request->pending_reply;
+
+    for (i = 0 ; i < pending_reply ; i++) {
+        OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "GET (fragment %d/%d) send",
+                             i + 1, pending_reply));
+        frag_size = (OPAL_UNLIKELY(rest > ompi_mtl_portals4.max_msg_size_mtl)) ? ompi_mtl_portals4.max_msg_size_mtl : rest;
+        ret = PtlGet(ompi_mtl_portals4.send_md_h,
+                     (ptl_size_t) start + i * ompi_mtl_portals4.max_msg_size_mtl,
+                     frag_size,
+                     target,
+                     ompi_mtl_portals4.read_idx,
+                     match_bits,
+                     remote_offset + i * ompi_mtl_portals4.max_msg_size_mtl,
+                     request);
+        if (OPAL_UNLIKELY(PTL_OK != ret)) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: PtlGet failed: %d",
+                                __FILE__, __LINE__, ret);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        rest -= frag_size;
+        asked += frag_size;
     }
 
     return OMPI_SUCCESS;
@@ -109,26 +121,30 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
         }
 
+        if (ev->mlength < msg_length)
+             OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "Truncated message, some PtlGet are required (protocol = %d)",
+                                 ompi_mtl_portals4.protocol));
+
 #if OPAL_ENABLE_DEBUG
         ptl_request->hdr_data = ev->hdr_data;
 #endif
 
-        if (!MTL_PORTALS4_IS_SHORT_MSG(ev->match_bits) && ompi_mtl_portals4.protocol == rndv) {
-            /* If it's not a short message and we're doing rndv, we
+        ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
+        if (!MTL_PORTALS4_IS_SHORT_MSG(ev->match_bits) && msg_length > ev->mlength) {
+            /* If it's not a short message and we're doing rndv and the message is not complete,  we
                only have the first part of the message.  Issue the get
                to pull the second part of the message. */
-            ret = read_msg((char*) ptl_request->delivery_ptr + ompi_mtl_portals4.eager_limit,
+            ret = read_msg((char*) ptl_request->delivery_ptr + ev->mlength,
                            ((msg_length > ptl_request->delivery_len) ?
-                           ptl_request->delivery_len : msg_length) - ompi_mtl_portals4.eager_limit,
+                           ptl_request->delivery_len : msg_length) - ev->mlength,
                            ev->initiator,
                            ev->hdr_data,
-                           ompi_mtl_portals4.eager_limit,
+                           ev->mlength,
                            ptl_request);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
                 goto callback_error;
             }
-
         } else {
             /* If we're either using the eager protocol or were a
                short message, all data has been received, so complete
@@ -142,8 +158,6 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                     __FILE__, __LINE__, ret);
                 ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
             }
-            ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
-
             OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                                  "Recv %lu (0x%lx) completed, expected",
                                  ptl_request->opcount, ptl_request->hdr_data));
@@ -165,12 +179,14 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         }
 
         /* set the received length in the status, now that we know
-           excatly how much data was sent. */
-        ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
-        if (ompi_mtl_portals4.protocol == rndv) {
-            ptl_request->super.super.ompi_req->req_status._ucount +=
-                ompi_mtl_portals4.eager_limit;
+           exactly how much data was sent. */
+        ptl_request->super.super.ompi_req->req_status._ucount += ev->mlength;
+
+        ret = OPAL_THREAD_ADD32(&(ptl_request->pending_reply), -1);
+        if (ret > 0) {
+            return OMPI_SUCCESS;
         }
+        assert(ptl_request->pending_reply == 0);
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
         OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
@@ -192,8 +208,8 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         }
 
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
-                             "Recv %lu (0x%lx) completed, reply",
-                             ptl_request->opcount, ptl_request->hdr_data));
+                             "Recv %lu (0x%lx) completed , reply (pending_reply: %d)",
+                             ptl_request->opcount, ptl_request->hdr_data, ptl_request->pending_reply));
         ptl_request->super.super.completion_callback(&ptl_request->super.super);
         break;
 
@@ -281,17 +297,16 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             ptl_request->super.super.completion_callback(&ptl_request->super.super);
 
         } else {
-            if (ev->mlength > 0) {
-                /* if rndv or triggered, copy the eager part to the right place */
-                memcpy(ptl_request->delivery_ptr, ev->start, ev->mlength);
-            }
 
-            ret = read_msg((char*) ptl_request->delivery_ptr + ev->mlength,
-                           ((msg_length > ptl_request->delivery_len) ?
-                           ptl_request->delivery_len : msg_length) - ev->mlength,
+            /* For long messages in the overflow list, ev->mlength = 0 */
+            ptl_request->super.super.ompi_req->req_status._ucount = 0;
+
+            ret = read_msg((char*) ptl_request->delivery_ptr,
+                           (msg_length > ptl_request->delivery_len) ?
+                           ptl_request->delivery_len : msg_length,
                            ev->initiator,
                            ev->hdr_data,
-                           ev->mlength,
+                           0,
                            ptl_request);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
@@ -373,6 +388,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->delivery_len = length;
     ptl_request->req_started = false;
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
+    ptl_request->pending_reply = 0;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Recv %lu from %x,%x of length %ld (0x%lx, 0x%lx, 0x%lx)\n",
@@ -389,7 +405,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
         PTL_ME_OP_PUT |
         PTL_ME_USE_ONCE |
         PTL_ME_EVENT_UNLINK_DISABLE;
-    if (length <= ompi_mtl_portals4.eager_limit) {
+    if (length <= ompi_mtl_portals4.short_limit) {
         me.options |= PTL_ME_EVENT_LINK_DISABLE;
     }
     me.match_id = remote_proc;
@@ -413,7 +429,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     /* if a long message, spin until we either have a comm event or a
        link event, guaranteeing progress for long unexpected
        messages. */
-    if (length > ompi_mtl_portals4.eager_limit) {
+    if (length > ompi_mtl_portals4.short_limit) {
         while (true != ptl_request->req_started) {
             ompi_mtl_portals4_progress();
         }
@@ -454,6 +470,7 @@ ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->delivery_ptr = start;
     ptl_request->delivery_len = length;
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
+    ptl_request->pending_reply = 0;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Mrecv %lu of length %ld (0x%lx)\n",
