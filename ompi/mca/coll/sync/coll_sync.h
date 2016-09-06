@@ -157,26 +157,26 @@ OMPI_MODULE_DECLSPEC extern mca_coll_sync_component_t mca_coll_sync_component;
 
 /* Macro used in most of the collectives */
 
-#define COLL_SYNC(module, op) \
+#define COLL_SYNC(m, op) \
 do { \
     int err = MPI_SUCCESS; \
-    s->in_operation = true; \
-    if (OPAL_UNLIKELY(++s->before_num_operations == \
-                      mca_coll_sync_component.barrier_before_nops)) { \
-        s->before_num_operations = 0; \
-        err = s->c_coll.coll_barrier(comm, s->c_coll.coll_barrier_module); \
-    } \
-    if (OPAL_LIKELY(MPI_SUCCESS == err)) { \
-        err = op; \
-    } \
-    if (OPAL_UNLIKELY(++s->after_num_operations == \
-                      mca_coll_sync_component.barrier_after_nops) && \
-        OPAL_LIKELY(MPI_SUCCESS == err)) { \
-        s->after_num_operations = 0; \
-        err = s->c_coll.coll_barrier(comm, s->c_coll.coll_barrier_module); \
-    } \
-    s->in_operation = false; \
-    return err; \
+    (m)->in_operation = true; \
+    if (OPAL_UNLIKELY(++((m)->before_num_operations) ==                         \
+                      mca_coll_sync_component.barrier_before_nops)) {           \
+        (m)->before_num_operations = 0;                                         \
+        err = (m)->c_coll.coll_barrier(comm, (m)->c_coll.coll_barrier_module);  \
+    }                                                                           \
+    if (OPAL_LIKELY(MPI_SUCCESS == err)) {                                      \
+        err = op;                                                               \
+    }                                                                           \
+    if (OPAL_UNLIKELY(++((m)->after_num_operations) ==                          \
+                      mca_coll_sync_component.barrier_after_nops) &&            \
+        OPAL_LIKELY(MPI_SUCCESS == err)) {                                      \
+        (m)->after_num_operations = 0;                                          \
+        err = (m)->c_coll.coll_barrier(comm, (m)->c_coll.coll_barrier_module);  \
+    }                                                                           \
+    (m)->in_operation = false;                                                  \
+    return err;                                                                 \
 } while(0)
 
 END_C_DECLS
