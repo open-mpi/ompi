@@ -266,6 +266,10 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             seq_list = &sq_list;
         } else if (orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
             char *hstname;
+            if (NULL == hosts) {
+                rc = ORTE_ERR_NOT_FOUND;
+                goto error;
+            }
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:seq: using hostfile %s nodes on app %s", hosts, app->app);
             OBJ_CONSTRUCT(&sq_list, opal_list_t);
