@@ -13,6 +13,7 @@
 #                         reserved.
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,7 +21,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = -DBTL_IN_OPAL=1 $(opal_common_libfabric_CPPFLAGS)
+AM_CPPFLAGS = -DBTL_IN_OPAL=1 $(opal_common_libfabric_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
 
 EXTRA_DIST = README.txt README.test
 
