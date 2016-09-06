@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2012 University of Houston. All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -34,7 +35,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_io_ompio_la_SOURCES = $(headers) $(sources)
 mca_io_ompio_la_LDFLAGS = -module -avoid-version
 mca_io_ompio_la_LIBADD = $(io_ompio_LIBS) \
-    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/ompio/lib@OPAL_LIB_PREFIX@mca_common_ompio.la
+    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/ompio/libmca_common_ompio.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_io_ompio_la_SOURCES = $(headers) $(sources)

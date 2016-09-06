@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,7 +29,7 @@ headers += \
         runtime/params.h \
 	runtime/ompi_info_support.h
 
-libmpi_la_SOURCES += \
+lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_abort.c \
         runtime/ompi_mpi_dynamics.c \
         runtime/ompi_mpi_init.c \

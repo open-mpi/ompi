@@ -3,6 +3,7 @@
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -18,7 +19,7 @@ if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              -I$(top_srcdir) $(FCFLAGS)
 
-lib_LTLIBRARIES = libmpi_usempif08.la
+lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08.la
 
 #
 # This list is a subset of the full MPI API used for testing Fortran
@@ -35,7 +36,7 @@ mpi_api_files = \
         type_contiguous_f08.f90 \
         type_vector_f08.f90
 
-libmpi_usempif08_la_SOURCES = \
+lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \
         mpi-f08-types.f90 \
         mpi-f08-interfaces.F90 \

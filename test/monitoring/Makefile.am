@@ -5,6 +5,7 @@
 # Copyright (c) 2013-2015 Inria.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,13 +19,13 @@ if PROJECT_OMPI
     noinst_PROGRAMS = monitoring_test
     monitoring_test_SOURCES = monitoring_test.c
     monitoring_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-    monitoring_test_LDADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/opal/libopen-pal.la
+    monitoring_test_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la $(top_builddir)/opal/libopen-pal.la
 
 if MCA_BUILD_ompi_pml_monitoring_DSO
     lib_LTLIBRARIES = monitoring_prof.la
     monitoring_prof_la_SOURCES = monitoring_prof.c
     monitoring_prof_la_LDFLAGS=-module -avoid-version -shared $(WRAPPER_EXTRA_LDFLAGS)
-    monitoring_prof_la_LIBADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/opal/libopen-pal.la
+    monitoring_prof_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la $(top_builddir)/opal/libopen-pal.la
 endif
 
 endif

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -157,7 +158,7 @@ static int _check_pathname(struct map_segment_desc *seg)
         if (0 == strncmp(p+1, "libshmem.so", 11))
         return OSHMEM_ERROR;
 
-        if (0 == strncmp(p+1, "libmpi.so", 9))
+        if (0 == strncmp(p+1, "lib" OMPI_LIBMPI_NAME ".so", 9))
         return OSHMEM_ERROR;
 
         if (0 == strncmp(p+1, "libmca_common_sm.so", 19))

@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,5 +23,5 @@
 headers += \
         info/info.h
 
-libmpi_la_SOURCES += \
+lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         info/info.c
