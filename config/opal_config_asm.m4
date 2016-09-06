@@ -848,34 +848,28 @@ AC_DEFUN([OPAL_CHECK_INLINE_C_GCC],[
 
     AC_MSG_CHECKING([if $CC supports GCC inline assembly])
 
-    if test "$opal_cv_c_compiler_vendor" = "portland group" ; then
-        # PGI seems to have some issues with our inline assembly.
-        # Disable for now.
-        asm_result="no (Portland Group)"
+    if test ! "$assembly" = "" ; then
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
+int ret = 1;
+int negone = -1;
+__asm__ __volatile__ ($assembly);
+return ret;
+                                                             ]])],
+                      [asm_result="yes"], [asm_result="no"],
+                      [asm_result="unknown"])
     else
-        if test ! "$assembly" = "" ; then
-                AC_RUN_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT],
-[[int ret = 1;
-int negone = -1;
-__asm__ __volatile__ ($assembly);
-return ret;]])],
-            [asm_result="yes"], [asm_result="no"],
-            [asm_result="unknown"])
-        else
-            assembly="test skipped - assuming no"
-        fi
+        assembly="test skipped - assuming no"
+    fi
 
-        # if we're cross compiling, just try to compile and figure good enough
-        if test "$asm_result" = "unknown" ; then
-            AC_LINK_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT],
-[[int ret = 1;
+    # if we're cross compiling, just try to compile and figure good enough
+    if test "$asm_result" = "unknown" ; then
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
+int ret = 1;
 int negone = -1;
 __asm__ __volatile__ ($assembly);
-return ret;]])],
-            [asm_result="yes"], [asm_result="no"])
-        fi
+return ret;
+                                                              ]])],
+                       [asm_result="yes"], [asm_result="no"])
     fi
 
     AC_MSG_RESULT([$asm_result])
