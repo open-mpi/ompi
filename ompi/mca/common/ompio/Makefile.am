@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2016 University of Houston. All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -43,8 +44,8 @@ sources = \
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = lib@OPAL_LIB_PREFIX@mca_common_ompio.la
-comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_ompio_noinst.la
+comp_inst = libmca_common_ompio.la
+comp_noinst = libmca_common_ompio_noinst.la
 
 if MCA_BUILD_ompi_common_ompio_DSO
 lib_LTLIBRARIES += $(comp_inst)
@@ -52,13 +53,13 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-lib@OPAL_LIB_PREFIX@mca_common_ompio_la_SOURCES = $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_ompio_la_CPPFLAGS = $(common_ompio_CPPFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ompio_la_LDFLAGS =  \
+libmca_common_ompio_la_SOURCES = $(headers) $(sources)
+libmca_common_ompio_la_CPPFLAGS = $(common_ompio_CPPFLAGS)
+libmca_common_ompio_la_LDFLAGS =  \
         -version-info $(libmca_ompi_common_ompio_so_version) \
         $(common_ompio_LDFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ompio_la_LIBADD = $(common_ompio_LIBS)
-lib@OPAL_LIB_PREFIX@mca_common_ompio_noinst_la_SOURCES = $(headers) $(sources)
+libmca_common_ompio_la_LIBADD = $(common_ompio_LIBS)
+libmca_common_ompio_noinst_la_SOURCES = $(headers) $(sources)
 
 # Conditionally install the header files
 

@@ -12,7 +12,7 @@ Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
-Copyright (c) 2008      IBM Corporation.  All rights reserved.
+Copyright (c) 2008-2016 IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
 Copyright (c) 2013-2015 Intel, Inc. All rights reserved
@@ -829,6 +829,14 @@ INSTALLATION OPTIONS
   Load configure options for the build from FILE.  Options on the
   command line that are not in FILE are also used.  Options on the
   command line and in FILE are replaced by what is in FILE.
+
+--with-libmpi-name=STRING
+  Replace libmpi.* and libmpi_FOO.* (where FOO is one of the fortran
+  supporting libraries installed in lib) with libSTRING.* and
+  libSTRING_FOO.*. This is provided as a convenience mechanism for
+  third-party packagers of Open MPI that might want to rename these
+  libraries for their own purposes. This option is *not* intended for
+  typical users of Open MPI.
 
 NETWORKING SUPPORT / OPTIONS
 
