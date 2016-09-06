@@ -1047,6 +1047,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             if (ORTE_SUCCESS != (rc = fork_local(app, child, app->env, jobdat))) {
                 child->exit_code = rc; /* error message already output */
                 ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_START);
+                continue;
             }
             orte_wait_cb(child, odls_base_default_wait_local_proc, NULL);
             /* if we indexed the argv, we need to restore it to
@@ -1055,7 +1056,12 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             if (index_argv) {
                 /* restore the argv[0] */
                 char *param;
-                param = strrchr(app->argv[0], '-');
+                if (NULL == (param = strrchr(app->argv[0], '-'))) {
+                    child->exit_code = ORTE_ERR_NOT_FOUND;
+                    rc = ORTE_ERR_NOT_FOUND;
+                    ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_START);
+                    continue;
+                }
                 *param = '\0';
             }
             if (ORTE_SUCCESS != rc) {

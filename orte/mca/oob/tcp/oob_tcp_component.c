@@ -822,6 +822,10 @@ static int component_set_addr(orte_process_name_t *peer,
                             ORTE_NAME_PRINT(peer), uris[i]);
         /* separate the ports from the network addrs */
         ports = strrchr(tcpuri, ':');
+        if (NULL == ports) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            continue;
+        }
         *ports = '\0';
         ports++;
 

@@ -222,6 +222,7 @@ static int component_startup(void)
                            "usock", NULL);
     if ((strlen(session) + 1) > sizeof(mca_oob_usock_component.address.sun_path)-1) {
         opal_output(0, "SESSION DIR TOO LONG");
+        free(session);
         return ORTE_ERR_NOT_SUPPORTED;
     }
     snprintf(mca_oob_usock_component.address.sun_path,
