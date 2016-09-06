@@ -265,9 +265,6 @@ struct ompi_osc_pt2pt_module_t {
     /** Lock for garbage collection lists */
     opal_mutex_t gc_lock;
 
-    /** List of requests that need to be freed */
-    opal_list_t request_gc;
-
     /** List of buffers that need to be freed */
     opal_list_t buffer_gc;
 };
@@ -658,14 +655,13 @@ static inline void osc_pt2pt_copy_for_send (void *target, size_t target_len, con
 }
 
 /**
- * osc_pt2pt_request_gc_clean:
+ * osc_pt2pt_gc_clean:
  *
  * @short Release finished PML requests and accumulate buffers.
  *
- * @long This function exists because it is not possible to free a PML request
- *       or buffer from a request completion callback. We instead put requests
- *       and buffers on the module's garbage collection lists and release then
- *       at a later time.
+ * @long This function exists because it is not possible to free a buffer from
+ *     a request completion callback. We instead put requests and buffers on the
+ *     module's garbage collection lists and release then at a later time.
  */
 static inline void osc_pt2pt_gc_clean (ompi_osc_pt2pt_module_t *module)
 {
@@ -673,24 +669,10 @@ static inline void osc_pt2pt_gc_clean (ompi_osc_pt2pt_module_t *module)
     opal_list_item_t *item;
 
     OPAL_THREAD_LOCK(&module->gc_lock);
-
-    while (NULL != (request = (ompi_request_t *) opal_list_remove_first (&module->request_gc))) {
-        OPAL_THREAD_UNLOCK(&module->gc_lock);
-        ompi_request_free (&request);
-        OPAL_THREAD_LOCK(&module->gc_lock);
-    }
-
     while (NULL != (item = opal_list_remove_first (&module->buffer_gc))) {
         OBJ_RELEASE(item);
     }
-
     OPAL_THREAD_UNLOCK(&module->gc_lock);
-}
-
-static inline void osc_pt2pt_gc_add_request (ompi_osc_pt2pt_module_t *module, ompi_request_t *request)
-{
-    OPAL_THREAD_SCOPED_LOCK(&module->gc_lock,
-                            opal_list_append (&module->request_gc, (opal_list_item_t *) request));
 }
 
 static inline void osc_pt2pt_gc_add_buffer (ompi_osc_pt2pt_module_t *module, opal_list_item_t *buffer)
