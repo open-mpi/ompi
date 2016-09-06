@@ -6,6 +6,8 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,11 +86,11 @@ static inline int sync_wait_st (ompi_wait_sync_t *sync)
 
 #define WAIT_SYNC_INIT(sync,c)                                  \
     do {                                                        \
-        (sync)->count = c;                                      \
+        (sync)->count = (c);                                    \
         (sync)->next = NULL;                                    \
         (sync)->prev = NULL;                                    \
         (sync)->status = 0;                                     \
-        (sync)->signaling = true;                               \
+        (sync)->signaling = (0 != (c));                         \
         if (opal_using_threads()) {                             \
             pthread_cond_init (&(sync)->condition, NULL);       \
             pthread_mutex_init (&(sync)->lock, NULL);           \
