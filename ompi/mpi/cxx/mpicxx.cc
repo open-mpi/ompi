@@ -34,14 +34,13 @@ namespace MPI {
     const char ompi_libcxx_version_string[] = OMPI_IDENT_STRING;
 }
 
-#include "ompi/errhandler/errhandler.h"
-
 namespace MPI {
 
 #if ! OMPI_HAVE_CXX_EXCEPTION_SUPPORT
 int mpi_errno = MPI_SUCCESS;
 #endif
 
+extern ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
 
 void* const BOTTOM = (void*) MPI_BOTTOM;
 void* const IN_PLACE = (void*) MPI_IN_PLACE;
