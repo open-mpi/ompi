@@ -943,6 +943,7 @@ static int setup_fork(orte_job_t *jdata,
 
     /* forcibly set the local tmpdir base and top session dir to match ours */
     opal_setenv("OMPI_MCA_orte_tmpdir_base", orte_process_info.tmpdir_base, true, &app->env);
+    /* TODO: should we use PMIx key to pass this data? */
     opal_setenv("OMPI_MCA_orte_top_session_dir", orte_process_info.top_session_dir, true, &app->env);
     opal_setenv("OMPI_MCA_orte_jobfam_session_dir", orte_process_info.jobfam_session_dir, true, &app->env);
 
@@ -1102,24 +1103,8 @@ static int setup_child(orte_job_t *jdata,
         ORTE_FLAG_SET(child, ORTE_PROC_FLAG_IOF_COMPLETE);
     }
 
-    /* construct the proc's session dir name */
-    if (NULL != orte_process_info.tmpdir_base) {
-        value = strdup(orte_process_info.tmpdir_base);
-    } else {
-        value = NULL;
-    }
-    param = NULL;
-    if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&param, &value, NULL,
-                                                        orte_process_info.nodename,
-                                                        &child->name))) {
-        ORTE_ERROR_LOG(rc);
-        if (NULL != value) {
-            free(value);
-        }
-        return rc;
-    }
-    free(value);
     /* pass an envar so the proc can find any files it had prepositioned */
+    param = orte_process_info.proc_session_dir;
     opal_setenv("OMPI_FILE_LOCATION", param, true, &app->env);
 
     /* if the user wanted the cwd to be the proc's session dir, then
@@ -1132,12 +1117,10 @@ static int setup_child(orte_job_t *jdata,
             /* doesn't exist with correct permissions, and/or we can't
              * create it - either way, we are done
              */
-            free(param);
             return rc;
         }
         /* change to it */
         if (0 != chdir(param)) {
-            free(param);
             return ORTE_ERROR;
         }
         /* It seems that chdir doesn't
@@ -1154,6 +1137,5 @@ static int setup_child(orte_job_t *jdata,
         /* update the initial wdir value too */
         opal_setenv("OMPI_MCA_initial_wdir", param, true, &app->env);
     }
-    free(param);
     return ORTE_SUCCESS;
 }
