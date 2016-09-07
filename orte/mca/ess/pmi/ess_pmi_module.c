@@ -246,7 +246,9 @@ static int rte_init(void)
     /* retrieve temp directories info */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_TMPDIR, &wildcard_rank, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
-        /* TODO: who has precedence - pmix of MCA setting??? */
+        /* We want to provide user with ability 
+         * to override RM settings at his own risk
+         */
         if( NULL == orte_process_info.top_session_dir ){
             orte_process_info.top_session_dir = val;
         } else {
@@ -260,7 +262,9 @@ static int rte_init(void)
     if( !tdir_mca_override ){
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NSDIR, &wildcard_rank, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
-            /* TODO: who has precedence - pmix of MCA setting??? */
+            /* We want to provide user with ability 
+             * to override RM settings at his own risk
+             */
             if( NULL == orte_process_info.job_session_dir ){
                 orte_process_info.job_session_dir = val;
             } else {
@@ -275,7 +279,9 @@ static int rte_init(void)
     if( !tdir_mca_override ){
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_PROCDIR, &wildcard_rank, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
-            /* TODO: who has precedence - pmix of MCA setting??? */
+            /* We want to provide user with ability 
+             * to override RM settings at his own risk
+             */
             if( NULL == orte_process_info.proc_session_dir ){
                 orte_process_info.proc_session_dir = val;
             } else {
