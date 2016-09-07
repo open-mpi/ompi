@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved
@@ -101,7 +101,6 @@ int orte_proc_info(void)
     char hostname[OPAL_MAXHOSTNAMELEN];
     char **prefixes;
     bool match;
-    struct in_addr buf;
 
     if (init) {
         return ORTE_SUCCESS;
