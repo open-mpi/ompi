@@ -15,7 +15,7 @@ libdir=@libdir@
 # dependencies), so only list these in Libs.private.
 #
 Libs: -L${libdir} @ORTE_PKG_CONFIG_LDFLAGS@ -lopen-rte
-Libs.private: @ORTE_WRAPPER_EXTRA_LIBS@
+Libs.private: -lopen-pal @ORTE_WRAPPER_EXTRA_LIBS@
 #
 # It is safe to hard-wire the -I before the EXTRA_INCLUDES because we
 # will not be installing this .pc file unless --enable-devel-headers is
