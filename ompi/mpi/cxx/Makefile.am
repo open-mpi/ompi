@@ -36,7 +36,8 @@ lib@OMPI_LIBMPI_NAME@_cxx_la_SOURCES = \
 	intercepts.cc \
 	comm.cc \
 	datatype.cc \
-	win.cc
+	win.cc \
+	cxx_glue.c
 
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
 lib@OMPI_LIBMPI_NAME@_cxx_la_SOURCES += \
@@ -77,7 +78,8 @@ headers = \
         group_inln.h \
         op_inln.h \
         errhandler_inln.h \
-        status_inln.h
+        status_inln.h \
+        cxx_glue.h
 
 ompidir = $(ompiincludedir)/ompi/mpi/cxx
 ompi_HEADERS = \
