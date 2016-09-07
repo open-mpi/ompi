@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -205,7 +207,10 @@ JNIEXPORT jlongArray JNICALL Java_mpi_Comm_iDup(
     MPI_Comm newcomm;
     MPI_Request request;
     int rc = MPI_Comm_idup((MPI_Comm)comm, &newcomm, &request);
-    ompi_java_exceptionCheck(env, rc);
+    
+    if(ompi_java_exceptionCheck(env, rc))
+        return NULL;
+    
     jlongArray jcr = (*env)->NewLongArray(env, 2);
     jlong *cr = (jlong*)(*env)->GetPrimitiveArrayCritical(env, jcr, NULL);
     cr[0] = (jlong)newcomm;
@@ -332,6 +337,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_recv(
         jobject buf, jboolean db, jint offset, jint count,
         jlong jType, jint bType, jint source, jint tag, jlongArray jStatus)
 {
+    jboolean exception;
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
 
@@ -341,10 +347,12 @@ JNIEXPORT void JNICALL Java_mpi_Comm_recv(
 
     MPI_Status status;
     int rc = MPI_Recv(ptr, count, type, source, tag, comm, &status);
-    ompi_java_exceptionCheck(env, rc);
+    exception = ompi_java_exceptionCheck(env, rc);
 
     ompi_java_releaseWritePtr(ptr,item,env,buf,db,offset,count,type,bType);
-    ompi_java_status_set(env, jStatus, &status);
+    
+    if(!exception)
+        ompi_java_status_set(env, jStatus, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
@@ -355,6 +363,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
         jlong rjType, jint rBType, jint source, jint rTag,
         jlongArray jStatus)
 {
+    jboolean exception;
     MPI_Comm     comm  = (MPI_Comm)jComm;
     MPI_Datatype sType = (MPI_Datatype)sjType;
     MPI_Datatype rType = (MPI_Datatype)rjType;
@@ -369,10 +378,12 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
     int rc = MPI_Sendrecv(sPtr, sCount, sType, dest, sTag,
                           rPtr, rCount, rType, source, rTag, comm, &status);
 
-    ompi_java_exceptionCheck(env, rc);
+    exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
     ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,rCount,rType,rBType);
-    ompi_java_status_set(env, jStatus, &status);
+    
+    if(!exception)
+        ompi_java_status_set(env, jStatus, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sendRecvReplace(
@@ -392,8 +403,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecvReplace(
     int rc = MPI_Sendrecv_replace(ptr, count, type, dest,
                                   sTag, source, rTag, comm, &status);
 
-    ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(env, jStatus, &status);
+    if(!ompi_java_exceptionCheck(env, rc))
+        ompi_java_status_set(env, jStatus, &status);
+
     ompi_java_releaseWritePtr(ptr,item,env,buf,db,offset,count,type,bType);
 }
 
@@ -662,8 +674,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_probe(
 {
     MPI_Status status;
     int rc = MPI_Probe(source, tag, (MPI_Comm)comm, &status);
-    ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(env, jStatus, &status);
+    
+    if(!ompi_java_exceptionCheck(env, rc))
+        ompi_java_status_set(env, jStatus, &status);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Comm_getTopology(

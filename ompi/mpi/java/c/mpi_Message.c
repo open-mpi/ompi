@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,8 +43,10 @@ JNIEXPORT jlong JNICALL Java_mpi_Message_mProbe(
     MPI_Message message;
     MPI_Status  status;
     int rc = MPI_Mprobe(source, tag, comm, &message, &status);
-    ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(env, jStatus, &status);
+    
+    if(!ompi_java_exceptionCheck(env, rc))
+        ompi_java_status_set(env, jStatus, &status);
+    
     return (jlong)message;
 }
 
@@ -75,9 +79,10 @@ JNIEXPORT jlong JNICALL Java_mpi_Message_mRecv(
 
     MPI_Status status;
     int rc = MPI_Mrecv(ptr, count, type, &message, &status);
-    ompi_java_exceptionCheck(env, rc);
-
-    ompi_java_status_set(env, jStatus, &status);
+    
+    if(!ompi_java_exceptionCheck(env, rc))
+        ompi_java_status_set(env, jStatus, &status);
+    
     ompi_java_releaseWritePtr(ptr, item, env, buf, db, off, count, type, bType);
     return (jlong)message;
 }
