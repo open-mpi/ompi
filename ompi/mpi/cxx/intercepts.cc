@@ -12,6 +12,8 @@
 //                         All rights reserved.
 // Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+//                         reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -21,12 +23,10 @@
 
 
 #include "mpicxx.h"
-#include <stdio.h>
+#include <cstdio>
 
 #include "ompi_config.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/datatype/ompi_datatype.h"
+#include "cxx_glue.h"
 
 extern "C"
 void ompi_mpi_cxx_throw_exception(int *errcode)
@@ -78,14 +78,14 @@ void ompi_mpi_cxx_win_throw_excptn_fctn(MPI_Win *, int *errcode, ...)
 void
 MPI::InitializeIntercepts()
 {
-    ompi_mpi_errors_throw_exceptions.eh.eh_comm_fn =
-        ompi_mpi_cxx_comm_throw_excptn_fctn;
+    ompi_cxx_errhandler_set_callbacks ((struct ompi_errhandler_t *) &ompi_mpi_errors_throw_exceptions,
+                                       ompi_mpi_cxx_comm_throw_excptn_fctn,
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
-    ompi_mpi_errors_throw_exceptions.eh.eh_file_fn =
-        ompi_mpi_cxx_file_throw_excptn_fctn;
+                                       ompi_mpi_cxx_file_throw_excptn_fctn,
+#else
+                                       NULL,
 #endif
-    ompi_mpi_errors_throw_exceptions.eh.eh_win_fn =
-        ompi_mpi_cxx_win_throw_excptn_fctn;
+                                       ompi_mpi_cxx_win_throw_excptn_fctn);
 }
 
 
@@ -93,16 +93,15 @@ MPI::InitializeIntercepts()
 // the express purpose of having a C++ entity call back the C++
 // function (so that types can be converted, etc.).
 extern "C"
-void ompi_mpi_cxx_comm_errhandler_invoke(ompi_errhandler_t *c_errhandler,
-                                         MPI_Comm *c_comm, int *err,
-                                         const char *message)
+void ompi_mpi_cxx_comm_errhandler_invoke(MPI_Comm *c_comm, int *err,
+                                         const char *message, void *comm_fn)
 {
     // MPI::Comm is an abstract base class; can't instantiate one of
     // those.  So fake it by instantiating an MPI::Intracomm and then
     // casting it down to an (MPI::Comm&) when invoking the callback.
     MPI::Intracomm cxx_comm(*c_comm);
     MPI::Comm::Errhandler_function *cxx_fn =
-        (MPI::Comm::Errhandler_function*) c_errhandler->eh_comm_fn;
+        (MPI::Comm::Errhandler_function*) comm_fn;
 
     cxx_fn((MPI::Comm&) cxx_comm, err, message);
 }
@@ -112,13 +111,12 @@ void ompi_mpi_cxx_comm_errhandler_invoke(ompi_errhandler_t *c_errhandler,
 // the express purpose of having a C++ entity call back the C++
 // function (so that types can be converted, etc.).
 extern "C"
-void ompi_mpi_cxx_file_errhandler_invoke(ompi_errhandler_t *c_errhandler,
-                                         MPI_File *c_file, int *err,
-                                         const char *message)
+void ompi_mpi_cxx_file_errhandler_invoke(MPI_File *c_file, int *err,
+                                         const char *message, void *file_fn)
 {
     MPI::File cxx_file(*c_file);
     MPI::File::Errhandler_function *cxx_fn =
-        (MPI::File::Errhandler_function*) c_errhandler->eh_file_fn;
+        (MPI::File::Errhandler_function*) file_fn;
 
     cxx_fn(cxx_file, err, message);
 }
@@ -128,13 +126,12 @@ void ompi_mpi_cxx_file_errhandler_invoke(ompi_errhandler_t *c_errhandler,
 // the express purpose of having a C++ entity call back the C++
 // function (so that types can be converted, etc.).
 extern "C"
-void ompi_mpi_cxx_win_errhandler_invoke(ompi_errhandler_t *c_errhandler,
-                                        MPI_Win *c_win, int *err,
-                                        const char *message)
+void ompi_mpi_cxx_win_errhandler_invoke(MPI_Win *c_win, int *err,
+                                        const char *message, void *win_fn)
 {
     MPI::Win cxx_win(*c_win);
     MPI::Win::Errhandler_function *cxx_fn =
-        (MPI::Win::Errhandler_function*) c_errhandler->eh_win_fn;
+        (MPI::Win::Errhandler_function*) win_fn;
 
     cxx_fn(cxx_win, err, message);
 }
@@ -290,27 +287,34 @@ ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm comm, int keyval,
   bool bflag = OPAL_INT_TO_BOOL(*flag);
 
   if (NULL != kid->cxx_copy_fn) {
-      if (OMPI_COMM_IS_GRAPH(comm)) {
+      ompi_cxx_communicator_type_t comm_type =
+          ompi_cxx_comm_get_type (comm);
+      switch (comm_type) {
+      case OMPI_CXX_COMM_TYPE_GRAPH:
           graphcomm = MPI::Graphcomm(comm);
           ret = kid->cxx_copy_fn(graphcomm, keyval, kid->extra_state,
                                  attribute_val_in, attribute_val_out,
                                  bflag);
-      } else if (OMPI_COMM_IS_CART(comm)) {
+          break;
+      case OMPI_CXX_COMM_TYPE_CART:
           cartcomm = MPI::Cartcomm(comm);
           ret = kid->cxx_copy_fn(cartcomm, keyval, kid->extra_state,
                                  attribute_val_in, attribute_val_out,
                                  bflag);
-      } else if (OMPI_COMM_IS_INTRA(comm)) {
+          break;
+      case OMPI_CXX_COMM_TYPE_INTRACOMM:
           intracomm = MPI::Intracomm(comm);
           ret = kid->cxx_copy_fn(intracomm, keyval, kid->extra_state,
                                  attribute_val_in, attribute_val_out,
                                  bflag);
-      } else if (OMPI_COMM_IS_INTER(comm)) {
+          break;
+      case OMPI_CXX_COMM_TYPE_INTERCOMM:
           intercomm = MPI::Intercomm(comm);
           ret = kid->cxx_copy_fn(intercomm, keyval, kid->extra_state,
                                  attribute_val_in, attribute_val_out,
                                  bflag);
-      } else {
+          break;
+      default:
           ret = MPI::ERR_COMM;
       }
   } else {
@@ -344,23 +348,30 @@ ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval,
   MPI::Cartcomm cartcomm;
 
   if (NULL != kid->cxx_delete_fn) {
-      if (OMPI_COMM_IS_GRAPH(comm)) {
+      ompi_cxx_communicator_type_t comm_type =
+          ompi_cxx_comm_get_type (comm);
+      switch (comm_type) {
+      case OMPI_CXX_COMM_TYPE_GRAPH:
           graphcomm = MPI::Graphcomm(comm);
           ret = kid->cxx_delete_fn(graphcomm, keyval, attribute_val,
                                    kid->extra_state);
-      } else if (OMPI_COMM_IS_CART(comm)) {
+          break;
+      case OMPI_CXX_COMM_TYPE_CART:
           cartcomm = MPI::Cartcomm(comm);
           ret = kid->cxx_delete_fn(cartcomm, keyval, attribute_val,
                                    kid->extra_state);
-      } else if (OMPI_COMM_IS_INTRA(comm)) {
+          break;
+      case OMPI_CXX_COMM_TYPE_INTRACOMM:
           intracomm = MPI::Intracomm(comm);
           ret = kid->cxx_delete_fn(intracomm, keyval, attribute_val,
                                    kid->extra_state);
-      } else if (OMPI_COMM_IS_INTER(comm)) {
+          break;
+      case OMPI_CXX_COMM_TYPE_INTERCOMM:
           intercomm = MPI::Intercomm(comm);
           ret = kid->cxx_delete_fn(intercomm, keyval, attribute_val,
                                    kid->extra_state);
-      } else {
+          break;
+      default:
           ret = MPI::ERR_COMM;
       }
   } else {

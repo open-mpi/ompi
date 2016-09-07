@@ -13,6 +13,8 @@
 // Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
+// Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+//                         reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -96,21 +98,6 @@ struct opal_mutex_t;
 extern "C" void
 ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len,
                           MPI_Datatype *datatype, MPI_User_function *fn);
-
-extern "C" void
-ompi_mpi_cxx_comm_errhandler_invoke(ompi_errhandler_t *c_errhandler,
-                                    MPI_Comm *mpi_comm, int *err,
-                                    const char *message);
-extern "C" void
-ompi_mpi_cxx_win_errhandler_invoke(ompi_errhandler_t *c_errhandler,
-                                   MPI_Win *mpi_comm, int *err,
-                                   const char *message);
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-extern "C" void
-ompi_mpi_cxx_file_errhandler_invoke(ompi_errhandler_t *c_errhandler,
-                                    MPI_File *mpi_comm, int *err,
-                                    const char *message);
-#endif
 
 //used for attr intercept functions
 enum CommType { eIntracomm, eIntercomm, eCartcomm, eGraphcomm};

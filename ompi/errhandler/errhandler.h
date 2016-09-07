@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,7 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,9 +93,8 @@ struct ompi_errhandler_t;
 /**
  * C++ invocation function signature
  */
-typedef void (ompi_errhandler_cxx_dispatch_fn_t)(struct ompi_errhandler_t *errhandler,
-                                                 void *handle, int *err_code,
-                                                 const char *message);
+typedef void (ompi_errhandler_cxx_dispatch_fn_t)(void *handle, int *err_code,
+                                                 const char *message, void *fn);
 
 /**
  * Back-end type for MPI_Errorhandler.
