@@ -881,12 +881,13 @@ int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
 {
     int i = 0;
     int *sizes_old_group;
-    int ret = OMPI_SUCCESS;
-    int *displs;
+    int ret;
+    int *displs = NULL;
 
     sizes_old_group = (int*)malloc(num_merge_aggrs * sizeof(int));
     if (NULL == sizes_old_group) {
         opal_output (1, "OUT OF MEMORY\n");
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
     }
 
