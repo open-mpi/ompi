@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -331,31 +331,31 @@ int mca_spml_ikrit_enable(bool enable)
 
 static int create_ptl_idx(int dst_pe)
 {
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
 
     proc = oshmem_proc_group_find(oshmem_group_all, dst_pe);
 
-    proc->transport_ids = (char *) malloc(MXM_PTL_LAST * sizeof(char));
-    if (!proc->transport_ids)
+    OSHMEM_PROC_DATA(proc)->transport_ids = (char *) malloc(MXM_PTL_LAST * sizeof(char));
+    if (NULL == OSHMEM_PROC_DATA(proc)->transport_ids)
         return OSHMEM_ERROR;
 
-    proc->num_transports = 1;
+    OSHMEM_PROC_DATA(proc)->num_transports = 1;
 #if MXM_API < MXM_VERSION(2,0)
     if (oshmem_my_proc_id() == dst_pe)
-        proc->transport_ids[0] = MXM_PTL_SELF;
+        OSHMEM_PROC_DATA(proc)->transport_ids[0] = MXM_PTL_SELF;
     else
 #endif
-        proc->transport_ids[0] = MXM_PTL_RDMA;
+        OSHMEM_PROC_DATA(proc)->transport_ids[0] = MXM_PTL_RDMA;
     return OSHMEM_SUCCESS;
 }
 
 static void destroy_ptl_idx(int dst_pe)
 {
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
 
     proc = oshmem_proc_group_find(oshmem_group_all, dst_pe);
-    if (proc->transport_ids)
-        free(proc->transport_ids);
+    if (NULL != OSHMEM_PROC_DATA(proc)->transport_ids)
+        free(OSHMEM_PROC_DATA(proc)->transport_ids);
 }
 
 static void mxm_peer_construct(mxm_peer_t *p)
@@ -375,7 +375,7 @@ OBJ_CLASS_INSTANCE( mxm_peer_t,
                    mxm_peer_construct,
                    mxm_peer_destruct);
 
-int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
+int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
     size_t i, n;
     int my_rank = oshmem_my_proc_id();
@@ -406,7 +406,7 @@ int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
+int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     spml_ikrit_mxm_ep_conn_info_t *ep_info = NULL;
     spml_ikrit_mxm_ep_conn_info_t *ep_hw_rdma_info = NULL;
@@ -420,7 +420,7 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     mxm_error_t err;
     size_t i, n;
     int rc = OSHMEM_ERROR;
-    oshmem_proc_t *proc_self;
+    ompi_proc_t *proc_self;
     int my_rank = oshmem_my_proc_id();
 
     OBJ_CONSTRUCT(&mca_spml_ikrit.active_peers, opal_list_t);
@@ -588,9 +588,9 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
             continue;
 
         /* use zcopy for put/get via sysv shared memory */
-        procs[i]->transport_ids[0] = MXM_PTL_SHM;
-        procs[i]->transport_ids[1] = MXM_PTL_RDMA;
-        procs[i]->num_transports = 2;
+        OSHMEM_PROC_DATA(procs[i])->transport_ids[0] = MXM_PTL_SHM;
+        OSHMEM_PROC_DATA(procs[i])->transport_ids[1] = MXM_PTL_RDMA;
+        OSHMEM_PROC_DATA(procs[i])->num_transports = 2;
     }
 
     SPML_VERBOSE(50, "*** ADDED PROCS ***");
@@ -742,7 +742,7 @@ int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys)
 
 static inline int get_ptl_id(int dst)
 {
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
 
     /* get endpoint and btl */
     proc = oshmem_proc_group_all(dst);
@@ -751,7 +751,7 @@ static inline int get_ptl_id(int dst)
         oshmem_shmem_abort(-1);
         return -1;
     }
-    return proc->transport_ids[0];
+    return OSHMEM_PROC_DATA(proc)->transport_ids[0];
 }
 
 int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)

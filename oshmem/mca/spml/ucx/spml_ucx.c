@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -79,7 +79,7 @@ int mca_spml_ucx_enable(bool enable)
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_ucx_del_procs(oshmem_proc_t** procs, size_t nprocs)
+int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
     size_t i, n;
     int my_rank = oshmem_my_proc_id();
@@ -174,7 +174,7 @@ static void dump_address(int pe, char *addr, size_t len)
 #endif
 }
 
-int mca_spml_ucx_add_procs(oshmem_proc_t** procs, size_t nprocs)
+int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     size_t i, n;
     int rc = OSHMEM_ERROR;

@@ -42,7 +42,10 @@ int oshmem_proc_init(void)
 {
     OBJ_CONSTRUCT(&oshmem_proc_lock, opal_mutex_t);
 
-    assert(sizeof(ompi_proc_t) >= sizeof(oshmem_proc_t));
+    /* check oshmem_proc_data_t can fit within ompi_proc_t padding */
+    assert(sizeof(oshmem_proc_data_t) <= OMPI_PROC_PADDING_SIZE);
+    /* check ompi_proc_t padding is aligned on a pointer */
+    assert(0 == (offsetof(ompi_proc_t, padding) & (sizeof(char *)-1)));
 
     return OSHMEM_SUCCESS;
 }
@@ -127,8 +130,8 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
     int cur_pe, count_pe;
     int i;
     oshmem_group_t* group = NULL;
-    oshmem_proc_t** proc_array = NULL;
-    oshmem_proc_t* proc = NULL;
+    ompi_proc_t** proc_array = NULL;
+    ompi_proc_t* proc = NULL;
 
     assert(oshmem_proc_local());
 
@@ -141,7 +144,7 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
         OPAL_THREAD_LOCK(&oshmem_proc_lock);
 
         /* allocate an array */
-        proc_array = (oshmem_proc_t**) malloc(pe_size * sizeof(oshmem_proc_t*));
+        proc_array = (ompi_proc_t**) malloc(pe_size * sizeof(ompi_proc_t*));
         if (NULL == proc_array) {
             OBJ_RELEASE(group);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
