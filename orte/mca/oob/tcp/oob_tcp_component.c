@@ -16,7 +16,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -824,6 +824,7 @@ static int component_set_addr(orte_process_name_t *peer,
         ports = strrchr(tcpuri, ':');
         if (NULL == ports) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            free(tcpuri);
             continue;
         }
         *ports = '\0';
