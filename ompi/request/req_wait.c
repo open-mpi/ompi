@@ -407,8 +407,8 @@ int ompi_request_default_wait_some(size_t count,
             num_requests_null_inactive++;
             continue;
         }
-
-        if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync) ) {
+        indices[i] = OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync);
+        if( !indices[i] ) {
             /* If the request is completed go ahead and mark it as such */
             assert( REQUEST_COMPLETE(request) );
             num_requests_done++;
@@ -439,15 +439,23 @@ int ompi_request_default_wait_some(size_t count,
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
             continue;
         }
-        /* Atomically mark the request as pending. If this succeed
-         * then the request was not completed, and it is now marked as
-         * pending. Otherwise, the request is complete )either it was
-         * before or it has been meanwhile). The major drawback here
-         * is that we will do all the atomics operations in all cases.
+        /* Here we have 3 possibilities:
+         * a) request was found completed in the first loop
+         *    => ( indices[i] == 0 )
+         * b) request was completed between first loop and this check
+         *    => ( indices[i] == 1 ) and we can NOT atomically mark the 
+         *    request as pending.
+         * c) request wasn't finished yet
+         *    => ( indices[i] == 1 ) and we CAN  atomically mark the 
+         *    request as pending.
+         * NOTE that in any case (i >= num_requests_done) as latter grows
+         * either slowly (in case of partial completion)
+         * OR in parallel with `i` (in case of full set completion)  
          */
-        if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
-            indices[num_requests_done] = i;
-            num_requests_done++;
+        if( !indices[i] ){
+            indices[num_requests_done++] = i;
+        } else if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
+            indices[num_requests_done++] = i;
         }
     }
     sync_unsets = count - num_requests_null_inactive - num_requests_done;
