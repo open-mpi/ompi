@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -145,8 +147,10 @@ JNIEXPORT jlong JNICALL Java_mpi_Request_waitStatus(
     MPI_Request req = (MPI_Request)handle;
     MPI_Status status;
     int rc = MPI_Wait(&req, &status);
-    ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(env, stat, &status);
+    
+    if(!ompi_java_exceptionCheck(env, rc))
+        ompi_java_status_set(env, stat, &status);
+    
     return (jlong)req;
 }
 
@@ -166,8 +170,10 @@ JNIEXPORT jobject JNICALL Java_mpi_Request_testStatus(
     int flag;
     MPI_Status status;
     int rc = MPI_Test(&req, &flag, &status);
-    ompi_java_exceptionCheck(env, rc);
-    (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    
+    if(!ompi_java_exceptionCheck(env, rc))
+        (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    
     return flag ? ompi_java_status_new(env, &status) : NULL;
 }
 
@@ -178,8 +184,10 @@ JNIEXPORT jobject JNICALL Java_mpi_Request_getStatus(
     int flag;
     MPI_Status status;
     int rc = MPI_Request_get_status(req, &flag, &status);
-    ompi_java_exceptionCheck(env, rc);
-    (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    
+    if(!ompi_java_exceptionCheck(env, rc))
+        (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    
     return flag ? ompi_java_status_new(env, &status) : NULL;
 }
 
@@ -189,14 +197,17 @@ JNIEXPORT jboolean JNICALL Java_mpi_Request_test(
     MPI_Request req = (MPI_Request)handle;
     int flag;
     int rc = MPI_Test(&req, &flag, MPI_STATUS_IGNORE);
-    ompi_java_exceptionCheck(env, rc);
-    (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    
+    if(!ompi_java_exceptionCheck(env, rc))
+        (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    
     return flag ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Request_waitAnyStatus(
         JNIEnv *env, jclass clazz, jlongArray requests, jobject stat)
 {
+    jboolean exception;
     int count = (*env)->GetArrayLength(env, requests);
     jlong* jReq;
     MPI_Request *cReq;
@@ -204,9 +215,11 @@ JNIEXPORT void JNICALL Java_mpi_Request_waitAnyStatus(
     int index;
     MPI_Status status;
     int rc = MPI_Waitany(count, cReq, &index, &status);
-    ompi_java_exceptionCheck(env, rc);
+    exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
-    ompi_java_status_setIndex(env, stat, &status, index);
+    
+    if(!exception)
+        ompi_java_status_setIndex(env, stat, &status, index);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Request_waitAny(
@@ -333,6 +346,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_Request_waitSomeStatus(
 JNIEXPORT jintArray JNICALL Java_mpi_Request_waitSome(
         JNIEnv *env, jclass clazz, jlongArray requests)
 {
+    jboolean exception;
     int incount = (*env)->GetArrayLength(env, requests);
     jlong* jReq;
     MPI_Request *cReq;
@@ -340,8 +354,14 @@ JNIEXPORT jintArray JNICALL Java_mpi_Request_waitSome(
     int *indices = (int*)calloc(incount, sizeof(int));
     int outcount;
     int rc = MPI_Waitsome(incount, cReq, &outcount, indices, MPI_STATUSES_IGNORE);
-    ompi_java_exceptionCheck(env, rc);
+    exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
+    
+    if(exception) {
+        free(indices);
+        return NULL;
+    }
+
     jintArray jindices = NULL;
 
     if(outcount != MPI_UNDEFINED)
@@ -376,6 +396,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_Request_testSomeStatus(
 JNIEXPORT jintArray JNICALL Java_mpi_Request_testSome(
         JNIEnv *env, jclass clazz, jlongArray requests)
 {
+    jboolean exception;
     int incount = (*env)->GetArrayLength(env, requests);
     jlong* jReq;
     MPI_Request *cReq;
@@ -383,8 +404,14 @@ JNIEXPORT jintArray JNICALL Java_mpi_Request_testSome(
     int *indices = (int*)calloc(incount, sizeof(int));
     int outcount;
     int rc = MPI_Testsome(incount, cReq, &outcount, indices, MPI_STATUSES_IGNORE);
-    ompi_java_exceptionCheck(env, rc);
+    exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
+    
+    if(exception) {
+        free(indices);
+        return NULL;
+    }
+    
     jintArray jindices = NULL;
 
     if(outcount != MPI_UNDEFINED)
