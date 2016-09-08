@@ -151,7 +151,6 @@ int ompi_osc_pt2pt_frag_flush_target (ompi_osc_pt2pt_module_t *module, int targe
     return ret;
 }
 
-
 int ompi_osc_pt2pt_frag_flush_all (ompi_osc_pt2pt_module_t *module)
 {
     int ret = OMPI_SUCCESS;

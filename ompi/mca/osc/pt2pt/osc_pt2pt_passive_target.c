@@ -122,6 +122,12 @@ int ompi_osc_pt2pt_lock_remote (ompi_osc_pt2pt_module_t *module, int target, omp
 
     int ret;
 
+    OPAL_THREAD_LOCK(&peer->lock);
+    if (ompi_osc_pt2pt_peer_locked (peer)) {
+        OPAL_THREAD_UNLOCK(&peer->lock);
+        return OMPI_SUCCESS;
+    }
+
     (void) OPAL_THREAD_ADD32(&lock->sync_expected, 1);
 
     assert (lock->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK);
@@ -137,16 +143,14 @@ int ompi_osc_pt2pt_lock_remote (ompi_osc_pt2pt_module_t *module, int target, omp
     lock_req.lock_ptr = (uint64_t) (uintptr_t) lock;
     OSC_PT2PT_HTON(&lock_req, module, target);
 
-    ret = ompi_osc_pt2pt_control_send (module, target, &lock_req, sizeof (lock_req));
+    ret = ompi_osc_pt2pt_control_send_unbuffered (module, target, &lock_req, sizeof (lock_req));
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return ret;
-    }
-
-    /* make sure the request gets sent, so we can start eager sending... */
-    ret = ompi_osc_pt2pt_frag_flush_target (module, target);
-    if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
+        OPAL_THREAD_ADD32(&lock->sync_expected, -1);
+    } else {
         ompi_osc_pt2pt_peer_set_locked (peer, true);
     }
+
+    OPAL_THREAD_UNLOCK(&peer->lock);
 
     return ret;
 }
@@ -316,6 +320,8 @@ static int ompi_osc_pt2pt_lock_internal (int lock_type, int target, int assert, 
         if (OPAL_UNLIKELY(NULL == lock)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
+
+        lock->peer_list.peer = ompi_osc_pt2pt_peer_lookup (module, target);
     } else {
         lock = &module->all_sync;
     }

@@ -121,7 +121,7 @@ struct ompi_osc_pt2pt_peer_t {
     int32_t passive_incoming_frag_count;
 
     /** peer flags */
-    int32_t flags;
+    volatile int32_t flags;
 };
 typedef struct ompi_osc_pt2pt_peer_t ompi_osc_pt2pt_peer_t;
 
@@ -144,11 +144,15 @@ static inline bool ompi_osc_pt2pt_peer_eager_active (ompi_osc_pt2pt_peer_t *peer
 
 static inline void ompi_osc_pt2pt_peer_set_flag (ompi_osc_pt2pt_peer_t *peer, int32_t flag, bool value)
 {
-    if (value) {
-        peer->flags |= flag;
-    } else {
-        peer->flags &= ~flag;
-    }
+    int32_t peer_flags, new_flags;
+    do {
+        peer_flags = peer->flags;
+        if (value) {
+            new_flags = peer_flags | flag;
+        } else {
+            new_flags = peer_flags & ~flag;
+        }
+    } while (!OPAL_ATOMIC_CMPSET_32 (&peer->flags, peer_flags, new_flags));
 }
 
 static inline void ompi_osc_pt2pt_peer_set_locked (ompi_osc_pt2pt_peer_t *peer, bool value)
@@ -937,13 +941,14 @@ static inline bool ompi_osc_pt2pt_access_epoch_active (ompi_osc_pt2pt_module_t *
 static inline bool ompi_osc_pt2pt_peer_sends_active (ompi_osc_pt2pt_module_t *module, int rank)
 {
     ompi_osc_pt2pt_sync_t *sync;
+    ompi_osc_pt2pt_peer_t *peer;
 
-    sync = ompi_osc_pt2pt_module_sync_lookup (module, rank, NULL);
+    sync = ompi_osc_pt2pt_module_sync_lookup (module, rank, &peer);
     if (!sync) {
         return false;
     }
 
-    return sync->eager_send_active;
+    return sync->eager_send_active || ompi_osc_pt2pt_peer_eager_active (peer);
 }
 
 END_C_DECLS

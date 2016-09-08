@@ -1546,12 +1546,6 @@ static inline int process_frag (ompi_osc_pt2pt_module_t *module,
                 ret = process_acc_long (module, frag->source, &header->acc);
                 break;
 
-            case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_REQ:
-                ret = ompi_osc_pt2pt_process_lock(module, frag->source, &header->lock);
-                if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
-                    ret = sizeof (header->lock);
-                }
-                break;
             case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_REQ:
                 ret = process_unlock(module, frag->source, &header->unlock);
                 break;
@@ -1654,6 +1648,9 @@ int ompi_osc_pt2pt_process_receive (ompi_osc_pt2pt_receive_t *recv)
         break;
     case OMPI_OSC_PT2PT_HDR_TYPE_POST:
         osc_pt2pt_incoming_post (module, source);
+        break;
+    case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_REQ:
+        ompi_osc_pt2pt_process_lock(module, source, (ompi_osc_pt2pt_header_lock_t *) base_header);
         break;
     case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_ACK:
         ompi_osc_pt2pt_process_lock_ack(module, (ompi_osc_pt2pt_header_lock_ack_t *) base_header);
