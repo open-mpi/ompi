@@ -372,7 +372,7 @@ static int ompi_comm_checkcid (ompi_comm_request_t *request)
 
     ++context->iter;
 
-    ret = context->allreduce_fn (&context->flag, &context->rflag, 1, MPI_MAX, context, &subreq);
+    ret = context->allreduce_fn (&context->flag, &context->rflag, 1, MPI_MIN, context, &subreq);
     if (OMPI_SUCCESS == ret) {
         ompi_comm_request_schedule_append (request, ompi_comm_nextcid_check_flag, &subreq, 1);
     }
@@ -478,7 +478,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     /* Step 1: the barrier, after which it is allowed to
      * send messages over the new communicator
      */
-    ret = context->allreduce_fn (&context->ok, &context->ok, 1, MPI_MAX, context,
+    ret = context->allreduce_fn (&context->ok, &context->ok, 1, MPI_MIN, context,
                                  &subreq);
     if (OMPI_SUCCESS != ret) {
         ompi_comm_request_return (request);
