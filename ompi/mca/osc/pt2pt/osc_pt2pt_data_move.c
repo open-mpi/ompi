@@ -1694,7 +1694,7 @@ int ompi_osc_pt2pt_frag_start_receive (ompi_osc_pt2pt_module_t *module)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for (int i = 0 ; i < module->recv_frag_count ; ++i) {
+    for (unsigned int i = 0 ; i < module->recv_frag_count ; ++i) {
         OBJ_CONSTRUCT(module->recv_frags + i, ompi_osc_pt2pt_receive_t);
         module->recv_frags[i].module = module;
         module->recv_frags[i].buffer = malloc (mca_osc_pt2pt_component.buffer_size + sizeof (ompi_osc_pt2pt_frag_header_t));
