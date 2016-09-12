@@ -206,8 +206,11 @@ int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
                 ep->dg_posted = true;
                 rc = OPAL_ERR_RESOURCE_BUSY;
             }
+
             return rc;
         }
+
+        return OPAL_SUCCESS;
     }
 
     return mca_btl_ugni_ep_connect_finish (ep);
