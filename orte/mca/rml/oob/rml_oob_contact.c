@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,8 +29,9 @@
 
 #include "rml_oob.h"
 
-char* orte_rml_oob_get_uri(void)
+char* orte_rml_oob_get_uri(void *mod)
 {
+    orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
     char *ret;
 
     ORTE_OOB_GET_URI(&ret);
@@ -38,14 +39,19 @@ char* orte_rml_oob_get_uri(void)
 }
 
 
-void orte_rml_oob_set_uri(const char* uri)
+void orte_rml_oob_set_uri(void *mod,
+                          const char* uri)
 {
+    orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
     ORTE_OOB_SET_URI(uri);
 }
 
 
-void orte_rml_oob_purge(orte_process_name_t *peer)
+void orte_rml_oob_purge(void *mod,
+                        orte_process_name_t *peer)
 {
+orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
+
 #if 0
     opal_list_item_t *item, *next;
     orte_rml_oob_queued_msg_t *qmsg;

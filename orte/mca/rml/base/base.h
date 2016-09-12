@@ -99,6 +99,7 @@ OBJ_CLASS_DECLARATION(orte_rml_base_active_t);
 /* a global struct containing framework-level values */
 typedef struct {
     opal_list_t actives;  /* list to hold the active plugins */
+    opal_pointer_array_t conduits;  /* array to hold the open conduits */
     opal_list_t posted_recvs;
     opal_list_t unmatched_msgs;
 #if OPAL_ENABLE_TIMING
@@ -131,11 +132,8 @@ typedef struct {
     union {
         orte_rml_callback_fn_t        iov;
         orte_rml_buffer_callback_fn_t buffer;
-        /* for the conduits (ofi) */
-        orte_rml_transport_callback_fn_t iov_transport;
-        orte_rml_buffer_transport_callback_fn_t buf_transport;
     } cbfunc;
-    void *cbdata;    
+    void *cbdata;
     /* pointer to the user's iovec array */
     struct iovec *iov;
     int count;
@@ -226,21 +224,6 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
         opal_event_active(&(m)->ev, OPAL_EV_WRITE, 1);          \
     } while(0);
 
-/*
- reactivates rcv msg on the unposted rcvd list when a match occurs
- need a different path as the QoS recv processing was already done
- for this process
-*/
-#define ORTE_RML_REACTIVATE_MESSAGE(m)                         \
-    do {                                                      \
-    /* setup the event */                                   \
-    opal_event_set(orte_event_base, &(m)->ev, -1,           \
-                   OPAL_EV_WRITE,                           \
-                   orte_rml_base_reprocess_msg, (m));         \
-    opal_event_set_priority(&(m)->ev, ORTE_MSG_PRI);        \
-    opal_event_active(&(m)->ev, OPAL_EV_WRITE, 1);          \
-} while(0);
-
 #define ORTE_RML_SEND_COMPLETE(m)                                       \
     do {                                                                \
         opal_output_verbose(5, orte_rml_base_framework.framework_output, \
@@ -264,17 +247,13 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
         OBJ_RELEASE(m);                                                 \
     }while(0);
 
-#define ORTE_RML_INVALID_CHANNEL_NUM  UINT32_MAX
 /* common implementations */
 ORTE_DECLSPEC void orte_rml_base_post_recv(int sd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_process_msg(int fd, short flags, void *cbdata);
-ORTE_DECLSPEC void orte_rml_base_process_error(int fd, short flags, void *cbdata);
-ORTE_DECLSPEC void orte_rml_base_reprocess_msg(int fd, short flags, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_complete_recv_msg (orte_rml_recv_t **recv_msg);
 
 
 /* Stub API interfaces to cycle through active plugins and call highest priority */
-ORTE_DECLSPEC int orte_rml_API_enable_comm(void);
 ORTE_DECLSPEC void orte_rml_API_finalize(void);
 ORTE_DECLSPEC char* orte_rml_API_get_contact_info(void);
 ORTE_DECLSPEC void orte_rml_API_set_contact_info(const char *contact_info);
@@ -301,25 +280,9 @@ ORTE_DECLSPEC void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
 
 ORTE_DECLSPEC void orte_rml_API_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag);
 
-ORTE_DECLSPEC int orte_rml_API_add_exception_handler(orte_rml_exception_callback_t cbfunc);
-
-ORTE_DECLSPEC int orte_rml_API_del_exception_handler(orte_rml_exception_callback_t cbfunc);
-
-ORTE_DECLSPEC int orte_rml_API_ft_event(int state);
-
 ORTE_DECLSPEC void orte_rml_API_purge(orte_process_name_t *peer);
 
 ORTE_DECLSPEC int orte_rml_API_query_transports(opal_value_t **providers);
-
-ORTE_DECLSPEC int orte_rml_API_send_transport_nb(int conduit_id,orte_process_name_t* peer, struct iovec* msg,
-                                       int count, orte_rml_tag_t tag,
-                                       orte_rml_callback_fn_t cbfunc, void* cbdata);
-ORTE_DECLSPEC int orte_rml_API_send_buffer_transport_nb(int conduit_id,
-                                              orte_process_name_t* peer,
-                                              struct opal_buffer_t* buffer,
-                                              orte_rml_tag_t tag,
-                                              orte_rml_buffer_callback_fn_t cbfunc,
-                                              void* cbdata);
 
 END_C_DECLS
 

@@ -39,23 +39,17 @@
 
 /* Initialising stub fns in the global var used by other modules */
 orte_rml_base_module_t orte_rml = {
-    orte_rml_API_enable_comm,
-    orte_rml_API_finalize,
-    orte_rml_API_get_contact_info,
-    orte_rml_API_set_contact_info,
-    orte_rml_API_ping,
-    orte_rml_API_send_nb,
-    orte_rml_API_send_buffer_nb,
-    orte_rml_API_recv_nb,
-    orte_rml_API_recv_buffer_nb,
-    orte_rml_API_recv_cancel,
-    orte_rml_API_add_exception_handler,
-    orte_rml_API_del_exception_handler,
-    orte_rml_API_ft_event,
-    orte_rml_API_purge,
-    orte_rml_API_query_transports,
-    orte_rml_API_send_transport_nb,
-    orte_rml_API_send_buffer_transport_nb
+    .finalize = orte_rml_API_finalize,
+    .get_contact_info = orte_rml_API_get_contact_info,
+    .set_contact_info = orte_rml_API_set_contact_info,
+    .ping = orte_rml_API_ping,
+    .send_nb = orte_rml_API_send_nb,
+    .send_buffer_nb = orte_rml_API_send_buffer_nb,
+    .recv_nb = orte_rml_API_recv_nb,
+    .recv_buffer_nb = orte_rml_API_recv_buffer_nb,
+    .recv_cancel = orte_rml_API_recv_cancel,
+    .purge = orte_rml_API_purge,
+    .query_transports = orte_rml_API_query_transports
 };
 
 orte_rml_base_t orte_rml_base = {{{0}}};
@@ -218,7 +212,7 @@ int orte_rml_base_select(void)
             opal_output(0, "\tComponent: %s Priority: %d", mod->component->mca_component_name, mod->pri);
         }
    }
-  
+
     return ORTE_SUCCESS;
 }
 

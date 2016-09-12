@@ -54,6 +54,8 @@
 static orte_rml_base_module_t* rml_oob_init(int* priority);
 static int rml_oob_open(void);
 static int rml_oob_close(void);
+static orte_rml_base_module_t *open_conduit(opal_list_t *attributes);
+static int query_transports(opal_list_t *providers);
 
 /**
  * component definition
@@ -63,7 +65,7 @@ orte_rml_component_t mca_rml_oob_component = {
          information about the component itself */
 
     .rml_version = {
-        ORTE_RML_BASE_VERSION_2_0_0,
+        ORTE_RML_BASE_VERSION_3_0_0,
 
         .mca_component_name = "oob",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
@@ -75,11 +77,12 @@ orte_rml_component_t mca_rml_oob_component = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    .rml_init = rml_oob_init,
+    .open_conduit = open_conduit,
+    .query_transports = query_transports
 };
 
 orte_rml_oob_module_t orte_rml_oob_module = {
-    {
+    .api = {
         .finalize = orte_rml_oob_fini,
 
         .get_contact_info = orte_rml_oob_get_uri,
@@ -90,9 +93,6 @@ orte_rml_oob_module_t orte_rml_oob_module = {
         .send_nb = orte_rml_oob_send_nb,
         .send_buffer_nb = orte_rml_oob_send_buffer_nb,
 
-        .add_exception_handler = orte_rml_oob_add_exception,
-        .del_exception_handler = orte_rml_oob_del_exception,
-        .ft_event = orte_rml_oob_ft_event,
         .purge = orte_rml_oob_purge
     }
 };
@@ -100,117 +100,44 @@ orte_rml_oob_module_t orte_rml_oob_module = {
 /* Local variables */
 static bool init_done = false;
 
-static int
-rml_oob_open(void)
+static int rml_oob_open(void)
 {
     return ORTE_SUCCESS;
 }
 
 
-static int
-rml_oob_close(void)
+static int rml_oob_close(void)
 {
     return ORTE_SUCCESS;
 }
 
-
-static orte_rml_base_module_t*
-rml_oob_init(int* priority)
+static orte_rml_base_module_t *open_conduit(opal_list_t *attributes)
 {
-    if (init_done) {
-        *priority = 1;
-        return &orte_rml_oob_module.super;
-    }
+    orte_rml_oob_module_t *mod;
 
-    *priority = 1;
+    /* check the list of attributes to see if we should respond */
 
-    OBJ_CONSTRUCT(&orte_rml_oob_module.exceptions, opal_list_t);
-
-    init_done = true;
-    return &orte_rml_oob_module.super;
+    /* we will provide this module, so allocate the space for it */
+    mod = (orte_rml_oob_module_t*)calloc(1, sizeof(orte_rml_oob_module_t));
+    /* copy the function pointers across */
+    memcpy(&mod->api, orte_rml_oob_module, sizeof(&orte_rml_oob_module.api));
+    /* setup the remaining data locations */
+    OBJ_CONSTRUCT(&mod->queued_routing_messages, opal_list_t);
+    mod->timer_event = NULL;
+    /* the timeout struct was already zero'd */
+    return mod;
 }
 
-int
-orte_rml_oob_init(void)
+static int query_transports(opal_list_t *providers)
 {
-    /* enable the base receive to get updates on contact info */
-    orte_rml_base_comm_start();
+    opal_value_t *val;
+
+    /* we only support Ethernet */
+    val = OBJ_NEW(opal_value_t);
+    val->key = strdup(ORTE_TRANSPORT);
+    val->type = OPAL_STRING;
+    val->data.string = strdup("Ethernet");
+    opal_list_append(providers, &val->super);
 
     return ORTE_SUCCESS;
 }
-
-
-void
-orte_rml_oob_fini(void)
-{
-    opal_list_item_t *item;
-
-    while (NULL !=
-           (item = opal_list_remove_first(&orte_rml_oob_module.exceptions))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_rml_oob_module.exceptions);
-
-    /* the rml_base_stub takes care of clearing the base receive */
-}
-
-#if OPAL_ENABLE_FT_CR == 1
-int
-orte_rml_oob_ft_event(int state) {
-    int exit_status = ORTE_SUCCESS;
-    int ret;
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CHECKPOINT);
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CONTINUE);
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_RESTART);
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        (void) mca_base_framework_close(&orte_oob_base_framework);
-
-        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        if( ORTE_SUCCESS != (ret = orte_oob_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
- cleanup:
-    return exit_status;
-}
-#else
-int
-orte_rml_oob_ft_event(int state) {
-    return ORTE_SUCCESS;
-}
-#endif

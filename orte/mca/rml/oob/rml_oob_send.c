@@ -203,13 +203,15 @@ static void send_msg(int fd, short args, void *cbdata)
     OBJ_RELEASE(req);
 }
 
-int orte_rml_oob_send_nb(orte_process_name_t* peer,
+int orte_rml_oob_send_nb(void *mod,
+                         orte_process_name_t* peer,
                          struct iovec* iov,
                          int count,
                          orte_rml_tag_t tag,
                          orte_rml_callback_fn_t cbfunc,
                          void* cbdata)
 {
+    orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
     orte_rml_send_request_t *req;
 
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
@@ -246,12 +248,14 @@ int orte_rml_oob_send_nb(orte_process_name_t* peer,
     return ORTE_SUCCESS;
 }
 
-int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
+int orte_rml_oob_send_buffer_nb(void *mod,
+                                orte_process_name_t* peer,
                                 opal_buffer_t* buffer,
                                 orte_rml_tag_t tag,
                                 orte_rml_buffer_callback_fn_t cbfunc,
                                 void* cbdata)
 {
+    orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
     orte_rml_send_request_t *req;
 
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,

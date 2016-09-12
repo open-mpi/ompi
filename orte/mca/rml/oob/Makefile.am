@@ -22,7 +22,6 @@ sources = \
 	rml_oob.h \
 	rml_oob_component.c \
 	rml_oob_contact.c \
-	rml_oob_exception.c \
 	rml_oob_ping.c \
 	rml_oob_send.c
 

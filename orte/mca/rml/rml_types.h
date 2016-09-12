@@ -168,11 +168,10 @@ BEGIN_C_DECLS
 
 #define ORTE_RML_TAG_MAX                   100
 
-/*** RML OFI keys ***/
-#define ORTE_OFI_START_KEY  ORTE_QOS_MAX_KEY
-#define ORTE_PROV_NAME      (ORTE_OFI_START_KEY + 1)  	//char * - null terminated string containing provider name
-#define ORTE_PROTOCOL       (ORTE_OFI_START_KEY + 2)    //uint32 - protocol type as returned by fi_info
-#define ORTE_CONDUIT_ID     (ORTE_OFI_START_KEY + 3)    //uint8 - conduit_id for this transport         
+/*** RML ATTRIBUTE keys ***/
+#define ORTE_TRANSPORT      "orte.rml.transport"    // char* - type of transport
+#define ORTE_PROV_NAME      "orte.rml.prov.name"    // char * - null terminated string containing provider name
+#define ORTE_PROTOCOL       "orte.rml.protocol"     // uint32 - protocol type as returned by fi_info
 
 #define ORTE_RML_TAG_NTOH(t) ntohl(t)
 #define ORTE_RML_TAG_HTON(t) htonl(t)
