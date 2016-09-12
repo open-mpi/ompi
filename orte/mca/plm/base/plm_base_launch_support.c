@@ -16,6 +16,7 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1491,7 +1492,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     bool one_filter = false;
     int num_nodes;
     bool default_hostfile_used;
-    char *hosts;
+    char *hosts = NULL;
     bool singleton=false;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,

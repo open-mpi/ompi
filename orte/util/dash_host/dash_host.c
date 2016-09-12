@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/plm/plm_types.h"
@@ -205,6 +207,14 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             ndname = orte_process_info.nodename;
         } else {
             ndname = mini_map[i];
+        }
+
+        // Strip off the FQDN if present, ignore IP addresses
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(ndname) ) {
+            char *ptr;
+            if (NULL != (ptr = strchr(ndname, '.'))) {
+                *ptr = '\0';
+            }
         }
 
         /* see if the node is already on the list */
