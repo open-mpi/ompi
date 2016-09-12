@@ -3,6 +3,7 @@
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -91,6 +92,7 @@ libopen_rte_so_version=0:0:0
 libopen_pal_so_version=0:0:0
 libmpi_java_so_version=0:0:0
 liboshmem_so_version=0:0:0
+libompitrace_so_version=0:0:0
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
