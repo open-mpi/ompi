@@ -523,7 +523,7 @@ static int check_for_cuda_freed_memory(mca_mpool_base_module_t *mpool, void *add
     /* This memory has been freed.  Find all registrations and delete. Ensure they are deregistered
      * now by passing dereg_mem as the delete function. This is safe because the rcache lock is
      * recursive and this is only called from register. */
-    return mpool->rcache->rcache_iterate (mpool->rcache, addr, size, gc_add, NULL);
+    return mpool->rcache->rcache_iterate (mpool->rcache, base, size, gc_add, NULL);
 }
 #endif /* OPAL_CUDA_GDR_SUPPORT */
 
