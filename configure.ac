@@ -22,6 +22,7 @@
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 # Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -132,7 +133,8 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
           AC_SUBST(libmpi_usempif08_so_version)
-          AC_SUBST(libmpi_java_so_version)])
+          AC_SUBST(libmpi_java_so_version)
+          AC_SUBST(libompitrace_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 m4_ifdef([project_oshmem],
