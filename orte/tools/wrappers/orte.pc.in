@@ -9,6 +9,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 includedir=@includedir@
 libdir=@libdir@
+pkgincludedir=@opalincludedir@
 #
 # Note that -lopen-pal and all the EXTRA_LIBS are only necessary when
 # static linking (they're pulled in by libopen-rte.so's implicit
