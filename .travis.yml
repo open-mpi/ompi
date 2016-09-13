@@ -12,29 +12,12 @@ language: c
 # Iterate over 2 different compilers
 compiler:
     - gcc
-    - clang
 
 # Iterate over 2 different OSs
 os:
-    - linux
     - osx
 
-addons:
-    # For Linux, make sure we have some extra packages that we like to
-    # build with
-    apt:
-        packages:
-            - autoconf
-            - automake
-            - libtool
-            - libnl-3-200
-            - libnl-3-dev
-            - libnl-route-3-200
-            - libnl-route-3-dev
-            - libibverbs-dev
-            - librdmacm-dev
-        sources:
-            - ubuntu-toolchain-r-test
+osx_image: xcode8
 
 env:
     global:
@@ -42,41 +25,35 @@ env:
         - CPPFLAGS="-I$HOME/bogus/include"
         - LDFLAGS="-L$HOME/bogus/lib"
         - LD_LIBRARY_PATH="$HOME/bogus/lib"
-    matrix:
-        - GCC_VERSION=default
-        - GCC_VERSION=6
-
-# Install dependencies for the verbs and usnic providers.  Open MPI is
-# not currently using the verbs provider in Libfabric, so we might as
-# well not build it.
-before_install:
-    - if [[ "GCC_VERSION" == "6" ]]; then COMPILERS="CC=gcc-6 CXX=g++-6 FC=gfortran-6"; fi
-    - export CONFIGURE_ARGS="--prefix=$HOME/bogus $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
-    - export DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "6" ]] ; then sudo apt-get --assume-yes install gcc-6 g++-6 gfortran-6; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "6" ]] ; then brew update; brew upgrade automake libtool gcc; fi
-    - mkdir -p $HOME/bogus/include $HOME/bogus/lib
 
 # Note that we use "make -k" to do the entire build, even if there was a
 # build error in there somewhere.  This prevents us from needing to submit
 # to Travis, see the first error, fix that first error, submit again, ...etc.
 install:
-    - m4 --version
-    - autoconf --version
-    - automake --version
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then libtool --version; else glibtool --version; fi
-    - ./autogen.pl
-    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then ./configure $CONFIGURE_ARGS --with-libfabric=$HOME/bogus --with-usnic --with-verbs; else ./configure $CONFIGURE_ARGS; fi
-    - make -k
+    - uname -a
+    - sw_vers -productVersion || true
+    - sudo apt-get update || true
+    - echo $TRAVIS_PYTHON_VERSION
+    - python -V
+    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
+      else
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+      fi
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda config --add channels conda-forge
+    - conda update -q conda
+    - conda install gcc perl conda-build
+    - git clone -b fortran-osx https://github.com/ggouaillardet/openmpi-feedstock.git
+    - cd openmpi-feedstock
+    - conda build .
+
 
 # We only need to distcheck on one OS / compiler combination (this is just
 # a minor optimization to make the overall set of builds faster).
 script:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then make distcheck; else make check; fi
+    - echo YEAH !
 
-matrix:
-  exclude:
-    - env: GCC_VERSION=6
-      compiler: clang
