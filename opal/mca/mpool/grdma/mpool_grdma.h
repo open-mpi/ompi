@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
- * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -28,7 +28,6 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_lifo.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/mpool/mpool.h"
 #if HAVE_SYS_MMAN_H
@@ -43,7 +42,7 @@ struct mca_mpool_grdma_pool_t {
     opal_list_item_t super;
     char *pool_name;
     opal_list_t lru_list;
-    opal_lifo_t gc_lifo;
+    opal_list_t gc_list;
     struct mca_rcache_base_module_t *rcache;
 };
 typedef struct mca_mpool_grdma_pool_t mca_mpool_grdma_pool_t;

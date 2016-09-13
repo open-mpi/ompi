@@ -1,4 +1,3 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,8 +13,6 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
- *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -42,9 +39,9 @@ void mca_rcache_vma_module_init( mca_rcache_vma_module_t* rcache ) {
     rcache->base.rcache_find_all = mca_rcache_vma_find_all;
     rcache->base.rcache_insert = mca_rcache_vma_insert;
     rcache->base.rcache_delete = mca_rcache_vma_delete;
+    rcache->base.rcache_clean = mca_rcache_vma_clean;
     rcache->base.rcache_finalize = mca_rcache_vma_finalize;
     rcache->base.rcache_dump_range = mca_rcache_vma_dump_range;
-    rcache->base.rcache_iterate = mca_rcache_vma_iterate;
     OBJ_CONSTRUCT(&rcache->base.lock, opal_recursive_mutex_t);
     mca_rcache_vma_tree_init(rcache);
 }
@@ -142,13 +139,29 @@ int mca_rcache_vma_delete(struct mca_rcache_base_module_t* rcache,
     return mca_rcache_vma_tree_delete(vma_rcache, reg);
 }
 
-int mca_rcache_vma_iterate (struct mca_rcache_base_module_t* rcache,
-                            unsigned char *base, size_t size,
-                            int (*callback_fn) (mca_mpool_base_registration_t *, void *),
-                            void *ctx)
+int mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache)
 {
     mca_rcache_vma_module_t *vma_rcache = (mca_rcache_vma_module_t*)rcache;
-    return mca_rcache_vma_tree_iterate (vma_rcache, base, size, callback_fn, ctx);
+    mca_rcache_vma_t *vma;
+    opal_list_item_t *i;
+
+    do {
+	OPAL_THREAD_LOCK(&rcache->lock);
+	i = opal_list_get_first(&vma_rcache->vma_delete_list);
+	if(opal_list_get_end(&vma_rcache->vma_delete_list) == i) {
+	    vma = NULL;
+	    OPAL_THREAD_UNLOCK(&rcache->lock);
+	} else {
+	    vma = (mca_rcache_vma_t *)i;
+	    opal_list_remove_item(&vma_rcache->vma_delete_list, &vma->super);
+
+	    /* Need to drop the rcache lock before destroying the vma */
+	    OPAL_THREAD_UNLOCK(&rcache->lock);
+
+	    mca_rcache_vma_destroy(vma);
+	}
+    } while (NULL != vma);
+    return OPAL_SUCCESS;
 }
 
 /**

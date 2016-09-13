@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -528,17 +528,6 @@ static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
     ep->fifo = NULL;
 }
 
-#if OPAL_BTL_VADER_HAVE_XPMEM
-static int mca_btl_vader_endpoint_rcache_cleanup (mca_mpool_base_registration_t *reg, void *ctx)
-{
-    struct mca_rcache_base_module_t *rcache = (struct mca_rcache_base_module_t *) ctx;
-    /* otherwise dereg will fail on assert */
-    reg->ref_count = 0;
-    (void) rcache->rcache_delete (rcache, reg);
-    return OPAL_SUCCESS;
-}
-#endif
-
 static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
 {
     OBJ_DESTRUCT(&ep->pending_frags);
@@ -548,10 +537,21 @@ static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
         if (ep->segment_data.xpmem.rcache) {
             /* clean out the registration cache */
-            (void) ep->segment_data.xpmem.rcache->rcache_iterate (ep->segment_data.xpmem.rcache,
-                                                                  NULL, (size_t) -1,
-                                                                  mca_btl_vader_endpoint_rcache_cleanup,
-                                                                  (void *) ep->segment_data.xpmem.rcache);
+            const int nregs = 100;
+            mca_mpool_base_registration_t *regs[nregs];
+            int reg_cnt;
+
+            do {
+                reg_cnt = ep->segment_data.xpmem.rcache->rcache_find_all(ep->segment_data.xpmem.rcache, 0, (size_t)-1,
+                                                                          regs, nregs);
+
+                for (int i = 0 ; i < reg_cnt ; ++i) {
+                    /* otherwise dereg will fail on assert */
+                    regs[i]->ref_count = 0;
+                    OBJ_RELEASE(regs[i]);
+                }
+            } while (reg_cnt == nregs);
+
             ep->segment_data.xpmem.rcache = NULL;
         }
 
