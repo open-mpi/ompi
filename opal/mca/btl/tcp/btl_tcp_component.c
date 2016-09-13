@@ -394,7 +394,7 @@ static int mca_btl_tcp_component_open(void)
 
 static int mca_btl_tcp_component_close(void)
 {
-    opal_list_item_t *item;
+    mca_btl_tcp_event_t *event, *next;
 
 #if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
     /**
@@ -454,8 +454,7 @@ static int mca_btl_tcp_component_close(void)
 
     /* remove all pending events. Do not lock the tcp_events list as
        the event themselves will unregister during the destructor. */
-    while( NULL != (item = opal_list_remove_first(&mca_btl_tcp_component.tcp_events)) ) {
-        mca_btl_tcp_event_t* event = (mca_btl_tcp_event_t*)item;
+    OPAL_LIST_FOREACH_SAFE(event, next, &mca_btl_tcp_component.tcp_events, mca_btl_tcp_event_t) {
         opal_event_del(&event->event);
         OBJ_RELEASE(event);
     }
