@@ -15,7 +15,7 @@
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -113,11 +113,11 @@ static inline bool mca_mpool_rgpusm_deregister_lru (mca_mpool_base_module_t *mpo
     mpool->rcache->rcache_delete(mpool->rcache, old_reg);
 
     /* Drop the rcache lock while we deregister the memory */
-    opal_mutex_unlock (&mpool->rcache->lock);
+    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
     assert(old_reg->ref_count == 0);
     rc = mpool_rgpusm->resources.deregister_mem(mpool_rgpusm->resources.reg_data,
                                                 old_reg);
-    opal_mutex_lock (&mpool->rcache->lock);
+    OPAL_THREAD_LOCK(&mpool->rcache->lock);
 
     /* This introduces a potential leak of registrations if
        the deregistration fails to occur as we no longer have
@@ -242,7 +242,7 @@ int mca_mpool_rgpusm_register (mca_mpool_base_module_t *mpool, void *addr,
     }
 
     /* Check to see if memory is registered and stored in the cache. */
-    opal_mutex_lock (&mpool->rcache->lock);
+    OPAL_THREAD_LOCK(&mpool->rcache->lock);
     mpool->rcache->rcache_find(mpool->rcache, addr, size, reg);
 
     /* If *reg is not NULL, we have a registration.  Let us see if the
@@ -306,7 +306,7 @@ int mca_mpool_rgpusm_register (mca_mpool_base_module_t *mpool, void *addr,
                                   (opal_list_item_t*)(*reg));
         }
         (*reg)->ref_count++;
-        opal_mutex_unlock (&mpool->rcache->lock);
+        OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         opal_output(-1, "reg->ref_count=%d", (int)(*reg)->ref_count);
         opal_output_verbose(80, mca_mpool_rgpusm_component.output,
                            "RGPUSM: Found entry in cache addr=%p, size=%d", addr, (int)size);
@@ -322,7 +322,7 @@ int mca_mpool_rgpusm_register (mca_mpool_base_module_t *mpool, void *addr,
 
     item = opal_free_list_get (&mpool_rgpusm->reg_list);
     if(NULL == item) {
-        opal_mutex_unlock (&mpool->rcache->lock);
+        OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     rgpusm_reg = (mca_mpool_common_cuda_reg_t*)item;
@@ -399,7 +399,7 @@ int mca_mpool_rgpusm_register (mca_mpool_base_module_t *mpool, void *addr,
     }
 
     if(rc != OPAL_SUCCESS) {
-        opal_mutex_unlock (&mpool->rcache->lock);
+        OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         opal_free_list_return (&mpool_rgpusm->reg_list, item);
         return rc;
     }
@@ -439,7 +439,7 @@ int mca_mpool_rgpusm_register (mca_mpool_base_module_t *mpool, void *addr,
     }
 
     if(rc != OPAL_SUCCESS) {
-        opal_mutex_unlock (&mpool->rcache->lock);
+        OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         opal_free_list_return (&mpool_rgpusm->reg_list, item);
         /* We cannot recover from this.  We can be here if the size of
          * the cache is smaller than the amount of memory we are
@@ -454,8 +454,10 @@ int mca_mpool_rgpusm_register (mca_mpool_base_module_t *mpool, void *addr,
 
     rgpusm_reg->base.ref_count++;
     *reg = (mca_mpool_base_registration_t *)rgpusm_reg;
-    opal_mutex_unlock (&mpool->rcache->lock);
+    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
 
+    /* Cleanup any vmas that we have deferred deletion on */
+    mpool->rcache->rcache_clean(mpool->rcache);
     return OPAL_SUCCESS;
 }
 
@@ -481,7 +483,7 @@ int mca_mpool_rgpusm_find(struct mca_mpool_base_module_t *mpool, void *addr,
     base = addr;
     bound = base + size - 1; /* To keep cache hits working correctly */
 
-    opal_mutex_lock (&mpool->rcache->lock);
+    OPAL_THREAD_LOCK(&mpool->rcache->lock);
     opal_output(-1, "Looking for addr=%p, size=%d", addr, (int)size);
     rc = mpool->rcache->rcache_find(mpool->rcache, addr, size, reg);
     if(*reg != NULL && mca_mpool_rgpusm_component.leave_pinned) {
@@ -493,12 +495,12 @@ int mca_mpool_rgpusm_find(struct mca_mpool_base_module_t *mpool, void *addr,
     } else {
         mpool_rgpusm->stat_cache_notfound++;
     }
-    opal_mutex_unlock (&mpool->rcache->lock);
+    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
 
     return rc;
 }
 
-static inline bool registration_is_cacheable(mca_mpool_base_registration_t *reg)
+static inline bool registration_is_cachebale(mca_mpool_base_registration_t *reg)
 {
      return !(reg->flags &
              (MCA_MPOOL_FLAGS_CACHE_BYPASS |
@@ -512,14 +514,14 @@ int mca_mpool_rgpusm_deregister(struct mca_mpool_base_module_t *mpool,
     int rc = OPAL_SUCCESS;
     assert(reg->ref_count > 0);
 
-    opal_mutex_lock (&mpool->rcache->lock);
+    OPAL_THREAD_LOCK(&mpool->rcache->lock);
     reg->ref_count--;
     opal_output(-1, "Deregister: reg->ref_count=%d", (int)reg->ref_count);
     if(reg->ref_count > 0) {
-        opal_mutex_unlock (&mpool->rcache->lock);
+        OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         return OPAL_SUCCESS;
     }
-    if(mca_mpool_rgpusm_component.leave_pinned && registration_is_cacheable(reg))
+    if(mca_mpool_rgpusm_component.leave_pinned && registration_is_cachebale(reg))
     {
         /* if leave_pinned is set don't deregister memory, but put it
          * on LRU list for future use */
@@ -533,7 +535,7 @@ int mca_mpool_rgpusm_deregister(struct mca_mpool_base_module_t *mpool,
             mpool->rcache->rcache_delete(mpool->rcache, reg);
 
         /* Drop the rcache lock before deregistring the memory */
-        opal_mutex_unlock (&mpool->rcache->lock);
+        OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
 
         {
              mca_mpool_rgpusm_module_t *mpool_rgpusm = (mca_mpool_rgpusm_module_t *)mpool;
@@ -543,14 +545,17 @@ int mca_mpool_rgpusm_deregister(struct mca_mpool_base_module_t *mpool,
                                                          reg);
          }
 
-        opal_mutex_lock (&mpool->rcache->lock);
+        OPAL_THREAD_LOCK(&mpool->rcache->lock);
 
         if(OPAL_SUCCESS == rc) {
             opal_free_list_return (&mpool_rgpusm->reg_list,
                                    (opal_free_list_item_t*)reg);
         }
     }
-    opal_mutex_unlock (&mpool->rcache->lock);
+    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+
+    /* Cleanup any vmas that we have deferred deletion on */
+    mpool->rcache->rcache_clean(mpool->rcache);
 
     return rc;
 }
@@ -567,7 +572,7 @@ int mca_mpool_rgpusm_deregister_no_lock(struct mca_mpool_base_module_t *mpool,
     if(reg->ref_count > 0) {
         return OPAL_SUCCESS;
     }
-    if(mca_mpool_rgpusm_component.leave_pinned && registration_is_cacheable(reg))
+    if(mca_mpool_rgpusm_component.leave_pinned && registration_is_cachebale(reg))
     {
         /* if leave_pinned is set don't deregister memory, but put it
          * on LRU list for future use */
@@ -594,28 +599,15 @@ int mca_mpool_rgpusm_deregister_no_lock(struct mca_mpool_base_module_t *mpool,
     return rc;
 }
 
-static int iterate_dereg_finalize (mca_mpool_base_registration_t *rgpusm_reg, void *ctx)
-{
-    mca_mpool_rgpusm_module_t *mpool_rgpusm = (mca_mpool_rgpusm_module_t *) ctx;
-
-    if ((mca_mpool_base_module_t *) mpool_rgpusm != rgpusm_reg->mpool) {
-        return 0;
-    }
-
-    if (registration_is_cacheable (rgpusm_reg)) {
-        opal_list_remove_item (&mpool_rgpusm->lru_list, (opal_list_item_t *) rgpusm_reg);
-    }
-
-    /* set the reference count to 0 otherwise dereg will fail on assert */
-    rgpusm_reg->ref_count = 0;
-    (void) mpool_rgpusm->resources.deregister_mem (mpool_rgpusm->resources.reg_data, rgpusm_reg);
-
-    return 0;
-}
+#define RGPUSM_MPOOL_NREGS 100
 
 void mca_mpool_rgpusm_finalize(struct mca_mpool_base_module_t *mpool)
 {
     mca_mpool_rgpusm_module_t *mpool_rgpusm = (mca_mpool_rgpusm_module_t*)mpool;
+    mca_mpool_base_registration_t *reg;
+    mca_mpool_base_registration_t *regs[RGPUSM_MPOOL_NREGS];
+    int reg_cnt, i;
+    int rc;
 
     /* Statistic */
     if(true == mca_mpool_rgpusm_component.print_stats) {
@@ -627,11 +619,49 @@ void mca_mpool_rgpusm_finalize(struct mca_mpool_base_module_t *mpool)
                 mpool_rgpusm->stat_evicted);
     }
 
+    OPAL_THREAD_LOCK(&mpool->rcache->lock);
+    do {
+        reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, 0, (size_t)-1,
+                regs, RGPUSM_MPOOL_NREGS);
+        opal_output(-1, "Registration size at finalize = %d", reg_cnt);
 
-    (void) mpool->rcache->rcache_iterate (mpool->rcache, NULL, (size_t) -1,
-                                          iterate_dereg_finalize, (void *) mpool);
+        for(i = 0; i < reg_cnt; i++) {
+            reg = regs[i];
+
+            if(reg->ref_count) {
+                reg->ref_count = 0; /* otherway dereg will fail on assert */
+            } else if (mca_mpool_rgpusm_component.leave_pinned) {
+                opal_list_remove_item(&mpool_rgpusm->lru_list,
+                        (opal_list_item_t*)reg);
+            }
+
+            /* Remove from rcache first */
+            mpool->rcache->rcache_delete(mpool->rcache, reg);
+
+            /* Drop lock before deregistering memory */
+            OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+            assert(reg->ref_count == 0);
+            rc = mpool_rgpusm->resources.deregister_mem(mpool_rgpusm->resources.reg_data,
+                                                   reg);
+            OPAL_THREAD_LOCK(&mpool->rcache->lock);
+
+            if(rc != OPAL_SUCCESS) {
+                /* Potentially lose track of registrations
+                   do we have to put it back? */
+                continue;
+            }
+
+            opal_free_list_return (&mpool_rgpusm->reg_list,
+                                   (opal_free_list_item_t *) reg);
+        }
+    } while(reg_cnt == RGPUSM_MPOOL_NREGS);
 
     OBJ_DESTRUCT(&mpool_rgpusm->lru_list);
     OBJ_DESTRUCT(&mpool_rgpusm->reg_list);
+    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+
+    /* Cleanup any vmas that we have deferred deletion on */
+    mpool->rcache->rcache_clean(mpool->rcache);
+
 }
 
