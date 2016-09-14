@@ -34,14 +34,6 @@
 #  endif
 #endif
 
-#ifndef OSHMEM_DESTRUCTOR
-#    if defined(OPAL_C_HAVE_VISIBILITY) && (OPAL_C_HAVE_VISIBILITY == 1)
-#       define OSHMEM_DESTRUCTOR  __attribute__((__destructor__))
-#    else
-#       define OSHMEM_DESTRUCTOR
-#    endif
-#endif
-
 #include <pshmemx.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -61,7 +53,7 @@ OSHMEM_DECLSPEC  void pshmem_global_exit(int status);
 /*
  * Finalization routines
  */
-OSHMEM_DECLSPEC  void pshmem_finalize(void) OSHMEM_DESTRUCTOR;
+OSHMEM_DECLSPEC  void pshmem_finalize(void);
 
 /*
  * Query routines
