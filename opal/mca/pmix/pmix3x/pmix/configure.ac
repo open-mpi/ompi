@@ -21,6 +21,8 @@
 #                         All rights reserved.
 # Copyright (c) 2014-2015 Intel, Inc. All rights reserved
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -146,10 +148,6 @@ AM_DISABLE_STATIC
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AM_PROG_LEX
 
-LT_INIT()
-LT_LANG([C])
-LT_LANG([C++])
-
 ############################################################################
 # Configuration options
 ############################################################################
@@ -162,6 +160,10 @@ PMIX_BASIC_SETUP
 # If debug mode, add -g
 AS_IF([test "$pmix_debug" = "1"],
       [CFLAGS="$CFLAGS -g"])
+
+LT_INIT()
+LT_LANG([C])
+LT_LANG([C++])
 
 ############################################################################
 # Setup the core
