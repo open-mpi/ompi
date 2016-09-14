@@ -56,6 +56,10 @@ BEGIN_C_DECLS
  * at other times as needed or as tuning dictates.
  */
 extern uint64_t opal_btl_usnic_ticks;
+
+/* Lock for MPU_THREAD_MULTIPLE support */
+extern opal_recursive_mutex_t btl_usnic_lock;
+
 static inline uint64_t
 get_nsec(void)
 {

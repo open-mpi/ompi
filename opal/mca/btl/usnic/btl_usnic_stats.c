@@ -86,7 +86,7 @@ void opal_btl_usnic_print_stats(
              prefix,
              opal_proc_local_get()->proc_name.vpid,
 
-             module->fabric_info->fabric_attr->name,
+             module->linux_device_name,
 
              module->stats.num_total_sends,
              module->mod_channels[USNIC_PRIORITY_CHANNEL].num_channel_sends,
@@ -394,7 +394,7 @@ static void setup_mpit_pvars_enum(void)
 
         devices[i].value = i;
         rc = asprintf(&str, "%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
-                      m->fabric_info->fabric_attr->name,
+                      m->linux_device_name,
                       c[0], c[1], c[2], c[3],
                       usnic_netmask_to_cidrlen(sin->sin_addr.s_addr));
         assert(rc > 0);

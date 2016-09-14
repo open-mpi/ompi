@@ -197,7 +197,7 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     /* Ensure to NULL-terminate the passed strings */
     strncpy(cmd.nodename, opal_process_info.nodename,
             CONNECTIVITY_NODENAME_LEN - 1);
-    strncpy(cmd.usnic_name, module->fabric_info->fabric_attr->name,
+    strncpy(cmd.usnic_name, module->linux_device_name,
             CONNECTIVITY_IFNAME_LEN - 1);
 
     if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(cmd), &cmd)) {
@@ -234,6 +234,9 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
         return OPAL_SUCCESS;
     }
 
+    /* Protect opal_fd_write for multithreaded case */
+    OPAL_THREAD_LOCK(&btl_usnic_lock);
+
     /* Send the PING command */
     int id = CONNECTIVITY_AGENT_CMD_PING;
     if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(id), &id)) {
@@ -259,6 +262,9 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
         ABORT("usnic connectivity client IPC write failed");
         /* Will not return */
     }
+
+    /* Unlock and return */
+    OPAL_THREAD_UNLOCK(&btl_usnic_lock);
 
     return OPAL_SUCCESS;
 }
