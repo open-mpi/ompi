@@ -8,7 +8,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2013      Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
@@ -24,60 +24,34 @@ source code form, most likely through a developer's tree (i.e., a
 Git clone).
 
 
-Debugging vs. Optimized Builds
-==============================
+Developer Builds: Compiler Pickyness by Default
+===============================================
 
-If you are building Open MPI from a Git clone, the default build
-includes a lot of debugging features.  This happens automatically when
-when configure detects the hidden ".git" Git meta directory (that is
-present in all Git clones) in your source tree, and therefore
-activates a number of developer-only debugging features in the Open
-MPI code base.
+If you are building Open MPI from a Git clone (i.e., there is a ".git"
+directory in your build tree), the default build includes extra
+compiler pickyness, which will result in more compiler warnings than
+in non-developer builds.  Getting these extra compiler warnings is
+helpful to Open MPI developers in making the code base as clean as
+possible.
 
-By definition, debugging builds will perform [much] slower than
-optimized builds of Open MPI.  You should *NOT* conduct timing tests
-or try to run production performance numbers with debugging builds.
+Developers can disable this picky-by-default behavior by using the
+--disable-picky configure option.  Also note that extra-picky compiles
+do *not* happen automatically when you do a VPATH build (e.g., if
+".git" is in your source tree, but not in your build tree).
 
-If you wish to build an optimized version of Open MPI from a
-developer's checkout, you have three main options:
+Prior versions of Open MPI would automatically activate a lot of
+(performance-reducing) debugging code by default if ".git" was found
+in your build tree.  This is no longer true.  You can manually enable
+these (performance-reducing) debugging features in the Open MPI code
+base with these configure options:
 
-1. Use the "--with-platform=optimized" switch to configure.  This is
-   the preferred (and probably easiest) method.  For example:
+    --enable-debug
+    --enable-mem-debug
+    --enable-mem-profile
 
-     shell$ git clone git@github.com:open-mpi/ompi.git
-     shell$ cd ompi
-     shell$ ./autogen.pl
-     shell$ mkdir build
-     shell$ cd build
-     shell$ ../configure --with-platform=optimized ...
-     [...lots of output...]
-     shell$ make all install
-
-2. Use a VPATH build.  Simply build Open MPI from a different
-   directory than the source tree -- one where the .git subdirectory
-   is not present.  For example:
-
-     shell$ git clone git@github.com:open-mpi/ompi.git
-     shell$ cd ompi
-     shell$ ./autogen.pl
-     shell$ mkdir build
-     shell$ cd build
-     shell$ ../configure ...
-     [...lots of output...]
-     shell$ make all install
-
-3. Manually specify configure options to disable all the debugging
-   options (note that this is exactly what "--with-platform=optimized"
-   does behind the scenes).  You'll need to carefully examine the
-   output of "./configure --help" to see which options to disable.
-   They are all listed, but some are less obvious than others (they
-   are not listed here because it is a changing set of flags; by
-   Murphy's Law, listing them here will pretty much guarantee that
-   this file will get out of date):
-
-     shell$ ./configure --disable-debug ...
-     [...lots of output...]
-     shell$ make all install
+NOTE: These options are really only relevant to those who are
+developing Open MPI itself.  They are not generally helpful for
+debugging general MPI applications.
 
 
 Use of GNU Autoconf, Automake, and Libtool (and m4)
