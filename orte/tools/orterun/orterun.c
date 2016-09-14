@@ -17,6 +17,7 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -135,6 +136,7 @@ static void open_fifo (void);
 static int attach_fd = -1;
 static bool fifo_active=false;
 static opal_event_t *attach=NULL;
+static int timeout_seconds;
 
 ORTE_DECLSPEC void* MPIR_Breakpoint(void);
 
@@ -181,6 +183,17 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "report-uri", "report-uri", 1,
       &orterun_globals.report_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Printout URI on stdout [-], stderr [+], or a file [anything else]" },
+
+    /* testing options */
+    { NULL, '\0', "timeout", "timeout", 1,
+      &orterun_globals.timeout, OPAL_CMD_LINE_TYPE_INT,
+      "Timeout the job after the specified number of seconds" },
+    { NULL, '\0', "report-state-on-timeout", "report-state-on-timeout", 0,
+      &orterun_globals.report_state_on_timeout, OPAL_CMD_LINE_TYPE_BOOL,
+      "Report all job and process states upon timeout" },
+    { NULL, '\0', "get-stack-traces", "get-stack-traces", 0,
+      &orterun_globals.get_stack_traces, OPAL_CMD_LINE_TYPE_BOOL,
+      "Get stack traces of all application procs on timeout" },
 
     /* exit status reporting */
     { "orte_report_child_jobs_separately", '\0', "report-child-jobs-separately", "report-child-jobs-separately", 0,
@@ -1035,13 +1048,26 @@ int orterun(int argc, char *argv[])
     /* check for a job timeout specification, to be provided in seconds
      * as that is what MPICH used
      */
-    if (NULL != (param = getenv("MPIEXEC_TIMEOUT"))) {
+    param = NULL;
+    if (0 < orterun_globals.timeout ||
+        NULL != (param = getenv("MPIEXEC_TIMEOUT"))) {
+        if (NULL != param) {
+            timeout_seconds = strtol(param, NULL, 10);
+            /* both cannot be present, or they must agree */
+            if (0 < orterun_globals.timeout && timeout_seconds != orterun_globals.timeout) {
+                orte_show_help("help-orterun.txt", "orterun:timeoutconflict", false,
+                               orte_basename, orterun_globals.timeout, param);
+                exit(1);
+            }
+        } else {
+            timeout_seconds = orterun_globals.timeout;
+        }
         if (NULL == (orte_mpiexec_timeout = OBJ_NEW(orte_timer_t))) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             ORTE_UPDATE_EXIT_STATUS(ORTE_ERR_OUT_OF_RESOURCE);
             goto DONE;
         }
-        orte_mpiexec_timeout->tv.tv_sec = strtol(param, NULL, 10);
+        orte_mpiexec_timeout->tv.tv_sec = timeout_seconds;
         orte_mpiexec_timeout->tv.tv_usec = 0;
         opal_event_evtimer_set(orte_event_base, orte_mpiexec_timeout->ev,
                                orte_timeout_wakeup, jdata);
@@ -1145,7 +1171,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
             if (NULL == fp) {
                 orte_show_help("help-orterun.txt", "orterun:write_file", false,
                                orte_basename, "pid", orterun_globals.report_pid);
-                exit(0);
+                exit(1);
             }
             fprintf(fp, "%d\n", (int)getpid());
             fclose(fp);
@@ -2803,22 +2829,158 @@ static void build_debugger_args(orte_app_context_t *debugger)
     }
 }
 
+static uint32_t ntraces = 0;
+static orte_timer_t stack_trace_timer;
+
+static void stack_trace_recv(int status, orte_process_name_t* sender,
+                             opal_buffer_t *buffer, orte_rml_tag_t tag,
+                             void* cbdata)
+{
+    opal_buffer_t *blob;
+    char *st;
+    int32_t cnt;
+    orte_process_name_t name;
+    char *hostname;
+    pid_t pid;
+
+    /* unpack the stack_trace blob */
+    cnt = 1;
+    while (OPAL_SUCCESS == opal_dss.unpack(buffer, &blob, &cnt, OPAL_BUFFER)) {
+        /* first piece is the name of the process */
+        cnt = 1;
+        if (OPAL_SUCCESS != opal_dss.unpack(blob, &name, &cnt, ORTE_NAME) ||
+            OPAL_SUCCESS != opal_dss.unpack(blob, &hostname, &cnt, OPAL_STRING) ||
+            OPAL_SUCCESS != opal_dss.unpack(blob, &pid, &cnt, OPAL_PID)) {
+            OBJ_RELEASE(blob);
+            continue;
+        }
+        fprintf(stderr, "STACK TRACE FOR PROC %s (%s, PID %lu)\n", ORTE_NAME_PRINT(&name), hostname, (unsigned long) pid);
+        free(hostname);
+        /* unpack the stack_trace until complete */
+        cnt = 1;
+        while (OPAL_SUCCESS == opal_dss.unpack(blob, &st, &cnt, OPAL_STRING)) {
+            fprintf(stderr, "\t%s", st);  // has its own newline
+            free(st);
+            cnt = 1;
+        }
+        fprintf(stderr, "\n");
+        OBJ_RELEASE(blob);
+        cnt = 1;
+    }
+    ++ntraces;
+    if (orte_process_info.num_procs == ntraces) {
+        /* cancel the timeout */
+        OBJ_DESTRUCT(&stack_trace_timer);
+        /* abort the job */
+        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
+        /* set the global abnormal exit flag  */
+        orte_abnormal_term_ordered = true;
+    }
+}
+
+static void stack_trace_timeout(int sd, short args, void *cbdata)
+{
+    /* abort the job */
+    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
+    /* set the global abnormal exit flag  */
+    orte_abnormal_term_ordered = true;
+}
+
 void orte_timeout_wakeup(int sd, short args, void *cbdata)
 {
-    char *tm;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
+    int i, j;
+    int rc;
 
     /* this function gets called when the job execution time
      * has hit a prescribed limit - so just abort
      */
-    tm = getenv("MPIEXEC_TIMEOUT");
     orte_show_help("help-orterun.txt", "orterun:timeout",
-                   true, (NULL == tm) ? "NULL" : tm);
+                   true, timeout_seconds);
     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
     /* if we are testing HNP suicide, then just exit */
-    if (NULL != getenv("ORTE_TEST_HNP_SUICIDE")) {
+    if (ORTE_PROC_IS_HNP &&
+        NULL != getenv("ORTE_TEST_HNP_SUICIDE")) {
         opal_output(0, "HNP exiting w/o cleanup");
         exit(1);
     }
+    if (orterun_globals.report_state_on_timeout) {
+        /* cycle across all the jobs and report their state */
+        for (j=0; j < orte_job_data->size; j++) {
+            jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, j);
+            if (NULL == jdata ) {
+                continue;
+            }
+
+            /* don't use the opal_output system as it may be borked */
+            fprintf(stderr, "DATA FOR JOB: %s\n", ORTE_JOBID_PRINT(jdata->jobid));
+            fprintf(stderr, "\tNum apps: %d\tNum procs: %d\tJobState: %s\tAbort: %s\n",
+                    (int)jdata->num_apps, (int)jdata->num_procs,
+                    orte_job_state_to_str(jdata->state),
+                    (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) ? "True" : "False");
+            fprintf(stderr, "\tNum launched: %ld\tNum reported: %ld\tNum terminated: %ld\n",
+                    (long)jdata->num_launched, (long)jdata->num_reported, (long)jdata->num_terminated);
+            fprintf(stderr, "\n\tProcs:\n");
+            for (i=0; i < jdata->procs->size; i++) {
+                if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                    fprintf(stderr, "\t\tRank: %s\tNode: %s\tPID: %u\tState: %s\tExitCode %d\n",
+                            ORTE_VPID_PRINT(proc->name.vpid),
+                            (NULL == proc->node) ? "UNKNOWN" : proc->node->name,
+                            (unsigned int)proc->pid,
+                            orte_proc_state_to_str(proc->state), proc->exit_code);
+                }
+            }
+            fprintf(stderr, "\n");
+        }
+    }
+    /* if they asked for stack_traces, attempt to get them, but timeout
+     * if we cannot do so */
+    if (orterun_globals.get_stack_traces) {
+        orte_daemon_cmd_flag_t command = ORTE_DAEMON_GET_STACK_TRACES;
+        opal_buffer_t *buffer;
+        orte_grpcomm_signature_t *sig;
+
+        fprintf(stderr, "Waiting for stack traces (this may take a few moments)...\n");
+
+        /* set the recv */
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_STACK_TRACE,
+                                ORTE_RML_PERSISTENT, stack_trace_recv, NULL);
+
+        /* setup the buffer */
+        buffer = OBJ_NEW(opal_buffer_t);
+        /* pack the command */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buffer);
+            goto giveup;
+        }
+        /* goes to all daemons */
+        sig = OBJ_NEW(orte_grpcomm_signature_t);
+        sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+        sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+        sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+        sig->sz = 1;
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, buffer))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buffer);
+            OBJ_RELEASE(sig);
+            goto giveup;
+        }
+        OBJ_RELEASE(buffer);
+        /* maintain accounting */
+        OBJ_RELEASE(sig);
+        /* we will terminate after we get the stack_traces, but set a timeout
+         * just in case we never hear back from everyone */
+        OBJ_CONSTRUCT(&stack_trace_timer, orte_timer_t);
+        opal_event_evtimer_set(orte_event_base,
+                               stack_trace_timer.ev, stack_trace_timeout, NULL);
+        opal_event_set_priority(stack_trace_timer.ev, ORTE_ERROR_PRI);
+        stack_trace_timer.tv.tv_sec = 30;
+        opal_event_evtimer_add(stack_trace_timer.ev, &stack_trace_timer.tv);
+        return;
+    }
+ giveup:
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
     /* set the global abnormal exit flag  */

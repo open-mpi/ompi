@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
@@ -47,6 +47,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/path.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss.h"
@@ -113,6 +114,9 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     bool found = false;
     orte_node_t *node;
     orte_grpcomm_signature_t *sig;
+    FILE *fp;
+    char gscmd[256], path[1035], *pathptr;
+    char string[256], *string_ptr = string;
 
     /* unpack the command */
     n = 1;
@@ -1137,6 +1141,82 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         }
         break;
 
+    case ORTE_DAEMON_GET_STACK_TRACES:
+        /* prep the response */
+        answer = OBJ_NEW(opal_buffer_t);
+        pathptr = path;
+
+        // Try to find the "gstack" executable.  Failure to find the
+        // executable will be handled below, because the receiver
+        // expects to have the process name, hostname, and PID in the
+        // buffer before finding an error message.
+        char *gstack_exec;
+        gstack_exec = opal_find_absolute_path("gstack");
+
+        /* hit each local process with a gstack command */
+        for (i=0; i < orte_local_children->size; i++) {
+            if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
+                ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_ALIVE)) {
+                relay_msg = OBJ_NEW(opal_buffer_t);
+                if (OPAL_SUCCESS != opal_dss.pack(relay_msg, &proct->name, 1, ORTE_NAME) ||
+                    OPAL_SUCCESS != opal_dss.pack(relay_msg, &proct->node->name, 1, OPAL_STRING) ||
+                    OPAL_SUCCESS != opal_dss.pack(relay_msg, &proct->pid, 1, OPAL_PID)) {
+                    OBJ_RELEASE(relay_msg);
+                    break;
+                }
+
+                // If we were able to find the gstack executable,
+                // above, then run the command here.
+                fp = NULL;
+                if (NULL != gstack_exec) {
+                    (void) snprintf(gscmd, sizeof(gscmd), "%s %lu",
+                                    gstack_exec, (unsigned long) proct->pid);
+                    fp = popen(gscmd, "r");
+                }
+
+                // If either we weren't able to find or run the gstack
+                // exectuable, send back a nice error message here.
+                if (NULL == gstack_exec || NULL == fp) {
+                    (void) snprintf(string, sizeof(string),
+                                    "Failed to %s \"%s\" on %s to obtain stack traces",
+                                    (NULL == gstack_exec) ? "find" : "run",
+                                    (NULL == gstack_exec) ? "gstack" : gstack_exec,
+                                    proct->node->name);
+                    if (OPAL_SUCCESS ==
+                        opal_dss.pack(relay_msg, &string_ptr, 1, OPAL_STRING)) {
+                        opal_dss.pack(answer, &relay_msg, 1, OPAL_BUFFER);
+                    }
+                    OBJ_RELEASE(relay_msg);
+                    break;
+                }
+                /* Read the output a line at a time and pack it for transmission */
+                memset(path, 0, sizeof(path));
+                while (fgets(path, sizeof(path)-1, fp) != NULL) {
+                    if (OPAL_SUCCESS != opal_dss.pack(relay_msg, &pathptr, 1, OPAL_STRING)) {
+                        OBJ_RELEASE(relay_msg);
+                        break;
+                    }
+                    memset(path, 0, sizeof(path));
+                }
+                /* close */
+                pclose(fp);
+                /* transfer this load */
+                if (OPAL_SUCCESS != opal_dss.pack(answer, &relay_msg, 1, OPAL_BUFFER)) {
+                    OBJ_RELEASE(relay_msg);
+                    break;
+                }
+                OBJ_RELEASE(relay_msg);
+            }
+        }
+        /* always send our response */
+        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, answer,
+                                               ORTE_RML_TAG_STACK_TRACE,
+                                               orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(answer);
+        }
+        break;
+
     default:
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
     }
@@ -1200,6 +1280,9 @@ static char *get_orted_comm_cmd_str(int command)
         return strdup("ORTE_DAEMON_ABORT_PROCS_CALLED");
     case ORTE_DAEMON_NEW_COLL_ID:
         return strdup("ORTE_DAEMON_NEW_COLL_ID");
+
+    case ORTE_DAEMON_GET_STACK_TRACES:
+        return strdup("ORTE_DAEMON_GET_STACK_TRACES");
 
     default:
         return strdup("Unknown Command!");

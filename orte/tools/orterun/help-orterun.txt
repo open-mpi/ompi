@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
+# Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -644,11 +644,11 @@ Please correct this value and try again.
 The user-provided time limit for job execution has been
 reached:
 
-  MPIEXEC_TIMEOUT: %s seconds
+  MPIEXEC_TIMEOUT: %d seconds
 
-The job will now be aborted. Please check your code and/or
-adjust/remove the job execution time limit (as specified
-by MPIEXEC_TIMEOUT in your environment).
+The job will now be aborted.  Please check your code and/or
+adjust/remove the job execution time limit (as specified by
+MPIEXEC_TIMEOUT in your environment or --timeout on the command line).
 #
 [orterun:conflict-env-set]
 ERROR: You have attempted to pass environment variables to Open MPI
@@ -666,3 +666,12 @@ be restored in a future version of Open MPI.
 
 Please see https://github.com/open-mpi/ompi/issues/1225 for details.
 
+#
+[orterun:timeoutconflict]
+Conflicting requests for timeout were given:
+
+  --timeout command line option: %d
+  MPIEXEC_TIMEOUT envar:         %s
+
+Only one method should be provided, or else they must agree. Please
+correct and retry.

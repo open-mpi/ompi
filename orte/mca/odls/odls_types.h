@@ -9,7 +9,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -77,6 +77,9 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* new daemon collective id */
 #define ORTE_DAEMON_NEW_COLL_ID             (orte_daemon_cmd_flag_t) 29
 
+
+/* for debug purposes, get stack traces from all application procs */
+#define ORTE_DAEMON_GET_STACK_TRACES        (orte_daemon_cmd_flag_t) 31
 
 /*
  * Struct written up the pipe from the child to the parent.

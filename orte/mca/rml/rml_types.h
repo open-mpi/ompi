@@ -165,6 +165,9 @@ BEGIN_C_DECLS
 /* error notifications */
 #define ORTE_RML_TAG_NOTIFICATION           59
 
+/* stacktrace for debug */
+#define ORTE_RML_TAG_STACK_TRACE            60
+
 #define ORTE_RML_TAG_MAX                   100
 
 #define ORTE_RML_TAG_NTOH(t) ntohl(t)
