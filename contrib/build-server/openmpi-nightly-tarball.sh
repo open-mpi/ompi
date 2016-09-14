@@ -29,7 +29,7 @@ script_dir=$HOME/ompi/contrib/build-server
 # The tarballs to make
 if [ $# -eq 0 ] ; then
     # We're no longer ever checking the 1.0 - 1.8 branches anymore
-    branches="master v1.10 v2.x"
+    branches="master v1.10 v2.x v2.0.x"
 else
     branches=$@
 fi
