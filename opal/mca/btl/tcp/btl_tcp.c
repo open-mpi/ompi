@@ -149,7 +149,7 @@ int mca_btl_tcp_del_procs(struct mca_btl_base_module_t* btl,
 {
     mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*)btl;
     size_t i;
-    for(i=0; i<nprocs; i++) {
+    for( i = 0; i < nprocs; i++ ) {
         mca_btl_tcp_endpoint_t* tcp_endpoint = endpoints[i];
         if(tcp_endpoint->endpoint_proc != mca_btl_tcp_proc_local()) {
             opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t*)tcp_endpoint);
