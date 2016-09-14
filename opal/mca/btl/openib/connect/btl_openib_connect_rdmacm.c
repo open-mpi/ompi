@@ -2072,7 +2072,8 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, opal_btl_
     sin.sin_addr.s_addr = rdmacm_addr;
     sin.sin_port = (uint16_t) rdmacm_port;
 #else
-    rc = ibv_query_gid(openib_btl->device->ib_pd->context, openib_btl->port_num, 0, &server->gid);
+    rc = ibv_query_gid(openib_btl->device->ib_pd->context, openib_btl->port_num,
+                       mca_btl_openib_component.gid_index, &server->gid);
     if (0 != rc) {
         BTL_ERROR(("local gid query failed"));
         goto out4;
