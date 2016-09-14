@@ -2,7 +2,9 @@
  *
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,18 +54,12 @@
 #    ifndef OSHMEM_MODULE_DECLSPEC
 #      define OSHMEM_MODULE_DECLSPEC     __opal_attribute_visibility__("default")
 #    endif
-#    ifndef OSHMEM_DESTRUCTOR
-#      define OSHMEM_DESTRUCTOR     	__opal_attribute_destructor__
-#    endif
 #  else
 #    ifndef OSHMEM_DECLSPEC
 #      define OSHMEM_DECLSPEC
 #    endif
 #    ifndef OSHMEM_MODULE_DECLSPEC
 #      define OSHMEM_MODULE_DECLSPEC
-#    endif
-#    ifndef OSHMEM_DESTRUCTOR
-#      define OSHMEM_DESTRUCTOR
 #    endif
 #  endif
 #endif  /* defined(__WINDOWS__) */
