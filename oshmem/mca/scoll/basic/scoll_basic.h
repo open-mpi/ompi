@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -77,6 +77,14 @@ int mca_scoll_basic_reduce(struct oshmem_group_t *group,
                            long *pSync,
                            void *pWrk,
                            int alg);
+int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
+                             void *target,
+                             const void *source,
+                             ptrdiff_t dst, ptrdiff_t sst,
+                             size_t nelems,
+                             size_t element_size,
+                             long *pSync,
+                             int alg);
 
 static inline unsigned int scoll_log2(unsigned long val)
 {
