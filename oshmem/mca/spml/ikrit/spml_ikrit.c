@@ -880,12 +880,8 @@ int mca_spml_ikrit_get(void *src_addr, size_t size, void *dst_addr, int src)
         return OSHMEM_ERROR;
     }
 
-#if MXM_API < MXM_VERSION(2,0)
-    sreq.base.flags = MXM_REQ_FLAG_BLOCKING;
-#else
-    sreq.flags = MXM_REQ_SEND_FLAG_BLOCKING;
-#endif
     sreq.base.completed_cb = NULL;
+    sreq.flags = 0;
 
     SPML_IKRIT_MXM_POST_SEND(sreq);
 
@@ -1139,7 +1135,11 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
         put_req->mxm_req.opcode = MXM_REQ_OP_PUT;
     }
     if (!zcopy) {
-        put_req->mxm_req.flags |= MXM_REQ_SEND_FLAG_BLOCKING;
+        if (size < mca_spml_ikrit.put_zcopy_threshold) {
+            put_req->mxm_req.flags |= MXM_REQ_SEND_FLAG_BLOCKING;
+        } else {
+            put_req->mxm_req.opcode = MXM_REQ_OP_PUT_SYNC;
+        }
     }
 #endif
 
