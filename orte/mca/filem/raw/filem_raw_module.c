@@ -105,7 +105,7 @@ static void recv_ack(int status, orte_process_name_t* sender,
                      void* cbdata);
 static void write_handler(int fd, short event, void *cbdata);
 
-static char *filem_session_dir()
+static char *filem_session_dir(void)
 {
     char *session_dir = orte_process_info.jobfam_session_dir;
     if( NULL == session_dir ){

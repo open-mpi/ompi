@@ -77,7 +77,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 {
     int ret;
     char *error = NULL;
-    opal_value_t kv;
 
     /*
      * stdout/stderr buffering
