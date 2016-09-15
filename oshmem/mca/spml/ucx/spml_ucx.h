@@ -18,12 +18,17 @@
 
 #include "oshmem_config.h"
 #include "oshmem/request/request.h"
+#include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/spml/spml.h"
 #include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/spml/base/spml_base_putreq.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/spml/base/spml_base_request.h"
 #include "oshmem/mca/spml/base/spml_base_getreq.h"
+#include "oshmem/runtime/runtime.h"
+
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/base/base.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -99,6 +104,29 @@ extern int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ucx_fence(void);
 extern int mca_spml_ucx_quiet(void);
 extern int spml_ucx_progress(void);
+
+
+
+static inline spml_ucx_mkey_t * 
+mca_spml_ucx_get_mkey(int pe, void *va, void **rva)
+{
+    sshmem_mkey_t *r_mkey;
+
+    r_mkey = mca_memheap_base_get_cached_mkey(pe, va, 0, rva);
+    if (OPAL_UNLIKELY(!r_mkey)) {
+        SPML_ERROR("pe=%d: %p is not address of symmetric variable",
+                   pe, va);
+        oshmem_shmem_abort(-1);
+        return NULL;
+    }
+    return (spml_ucx_mkey_t *)(r_mkey->spml_context);
+}
+
+static inline int ucx_status_to_oshmem(ucs_status_t status)
+{
+    return OPAL_LIKELY(UCS_OK == status) ? OSHMEM_SUCCESS : OSHMEM_ERROR;
+}
+
 
 END_C_DECLS
 
