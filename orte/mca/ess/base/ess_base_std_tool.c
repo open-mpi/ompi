@@ -146,7 +146,7 @@ int orte_ess_base_tool_setup(void)
      * this node might be located
      */
 
-    ret = orte_session_setup_base(NULL);
+    ret = orte_session_setup_base(ORTE_PROC_MY_NAME);
     if (ORTE_SUCCESS != ret ) {
         ORTE_ERROR_LOG(ret);
         error = "define session dir names";
