@@ -231,7 +231,7 @@ static inline int64_t opal_atomic_add_64 (volatile int64_t* v, int64_t inc)
                         "     add     %0, %2, %0   \n\t"
                         "     stdcx.  %0, 0, %3    \n\t"
                         "     bne-    1b           \n\t"
-                        : "=&r" (t), "+m" (*v)
+                        : "=&r" (t), "=m" (*v)
                         : "r" (OPAL_ASM_VALUE64(inc)), "r" OPAL_ASM_ADDR(v)
                         : "cc");
 
@@ -248,7 +248,7 @@ static inline int64_t opal_atomic_sub_64 (volatile int64_t* v, int64_t dec)
                         "     subf    %0,%2,%0     \n\t"
                         "     stdcx.  %0,0,%3      \n\t"
                         "     bne-    1b           \n\t"
-                        : "=&r" (t), "+m" (*v)
+                        : "=&r" (t), "=m" (*v)
                         : "r" (OPAL_ASM_VALUE64(dec)), "r" OPAL_ASM_ADDR(v)
                         : "cc");
 
@@ -267,7 +267,7 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                          "   stdcx.  %4, 0, %2  \n\t"
                          "   bne-    1b         \n\t"
                          "2:"
-                         : "=&r" (ret), "+m" (*addr)
+                         : "=&r" (ret), "=m" (*addr)
                          : "r" (addr), "r" (OPAL_ASM_VALUE64(oldval)), "r" (OPAL_ASM_VALUE64(newval))
                          : "cc", "memory");
 
