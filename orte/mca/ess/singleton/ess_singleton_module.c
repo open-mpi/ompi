@@ -165,6 +165,8 @@ static int rte_init(void)
         /* ensure we use the isolated pmix component */
         opal_setenv (OPAL_MCA_PREFIX"pmix", "isolated", true, &environ);
     } else {
+        /* we want to use PMIX_NAMESPACE that will be sent by the hnp as a jobid */
+        opal_setenv(OPAL_MCA_PREFIX"orte_launch", "1", true, &environ);
         /* spawn our very own HNP to support us */
         if (ORTE_SUCCESS != (rc = fork_hnp())) {
             ORTE_ERROR_LOG(rc);
