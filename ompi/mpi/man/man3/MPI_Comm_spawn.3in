@@ -125,7 +125,7 @@ A spawn call with the default behavior is called hard. A spawn call for which fe
 .sp
 The \fIinfo\fP Argument
 .sp
-The \fIinfo\fP argument is an opaque handle of type MPI_Info in C, MPI::Info in C++ and INTEGER in Fortran. It is a container for a number of user-speci ed (\fIkey,value\fP) pairs. \fIkey\fP and \fIvalue\fP are strings (null-terminated char* in C, character*(*) in Fortran). Routines to create and manipulate the \fIinfo\fP argument are described in Section 4.10 of the MPI-2 standard.
+The \fIinfo\fP argument is an opaque handle of type MPI_Info in C, MPI::Info in C++ and INTEGER in Fortran. It is a container for a number of user-specified (\fIkey,value\fP) pairs. \fIkey\fP and \fIvalue\fP are strings (null-terminated char* in C, character*(*) in Fortran). Routines to create and manipulate the \fIinfo\fP argument are described in Section 4.10 of the MPI-2 standard.
 .sp
 For the SPAWN calls, \fIinfo\fP provides additional, implementation-dependent instructions to MPI and the runtime system on how to start processes. An application may pass MPI_INFO_NULL in C or Fortran. Portable programs not requiring detailed control over process locations should use MPI_INFO_NULL.
 .sp
