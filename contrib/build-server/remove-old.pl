@@ -28,7 +28,7 @@ my $to_delete;
 # Check everything in the dir; if is a dir, is not . or .., and is
 # older than the save date, keep it for deleting later.
 foreach my $file (@files) {
-  if (-d "$dir/$file" && $file ne "." && $file ne "..") {
+  if (-f "$dir/$file" && $file ne "index.php" && $file ne "md5sums.txt" && $file ne "sha1sums.txt" && $file ne "latest_snapshot.txt" && $file ne "." && $file ne "..") {
     my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
         $atime,$mtime,$ctime,$blksize,$blocks) = stat("$dir/$file");
     my $str = "SAVE";
