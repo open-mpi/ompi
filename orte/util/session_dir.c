@@ -73,10 +73,6 @@ static int orte_create_dir(char *directory);
 
 static bool orte_dir_check_file(const char *root, const char *path);
 
-static char *orte_build_job_session_dir(char *top_dir,
-                                        orte_process_name_t *proc,
-                                        orte_jobid_t jobid);
-
 #define OMPI_PRINTF_FIX_STRING(a) ((NULL == a) ? "(null)" : a)
 
 /****************************
@@ -674,9 +670,9 @@ orte_dir_check_file(const char *root, const char *path)
     return true;
 }
 
-static char *orte_build_job_session_dir(char *top_dir,
-                                        orte_process_name_t *proc,
-                                        orte_jobid_t jobid)
+char *orte_build_job_session_dir(char *top_dir,
+                                 orte_process_name_t *proc,
+                                 orte_jobid_t jobid)
 {
     char *jobfam = NULL;
     char *job_session_dir;
