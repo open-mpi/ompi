@@ -80,6 +80,7 @@ I	3	2	860 bytes	24 msgs sent
 static MPI_T_pvar_handle flush_handle;
 static const char flush_pvar_name[] = "pml_monitoring_flush";
 static int flush_pvar_idx;
+static int with_mpit = 0;
 
 int main(int argc, char* argv[])
 {
@@ -100,37 +101,39 @@ int main(int argc, char* argv[])
     from = (rank - 1) % size;
     tagno = 201;
 
-    MPIT_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
-    if (MPIT_result != MPI_SUCCESS)
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+    if( with_mpit ) {
+        MPIT_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
+        if (MPIT_result != MPI_SUCCESS)
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
 
-    MPIT_result = MPI_T_pvar_get_index(flush_pvar_name, MPI_T_PVAR_CLASS_GENERIC, &flush_pvar_idx);
-    if (MPIT_result != MPI_SUCCESS) {
-        printf("cannot find monitoring MPI_T \"%s\" pvar, check that you have monitoring pml\n",
-               flush_pvar_name);
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
-    }
+        MPIT_result = MPI_T_pvar_get_index(flush_pvar_name, MPI_T_PVAR_CLASS_GENERIC, &flush_pvar_idx);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("cannot find monitoring MPI_T \"%s\" pvar, check that you have monitoring pml\n",
+                   flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
 
-    MPIT_result = MPI_T_pvar_session_create(&session);
-    if (MPIT_result != MPI_SUCCESS) {
-        printf("cannot create a session for \"%s\" pvar\n", flush_pvar_name);
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
-    }
+        MPIT_result = MPI_T_pvar_session_create(&session);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("cannot create a session for \"%s\" pvar\n", flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
 
-    /* Allocating a new PVAR in a session will reset the counters */
-    MPIT_result = MPI_T_pvar_handle_alloc(session, flush_pvar_idx,
-                                          MPI_COMM_WORLD, &flush_handle, &count);
-    if (MPIT_result != MPI_SUCCESS) {
-        printf("failed to allocate handle on \"%s\" pvar, check that you have monitoring pml\n",
-               flush_pvar_name);
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
-    }
+        /* Allocating a new PVAR in a session will reset the counters */
+        MPIT_result = MPI_T_pvar_handle_alloc(session, flush_pvar_idx,
+                                              MPI_COMM_WORLD, &flush_handle, &count);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("failed to allocate handle on \"%s\" pvar, check that you have monitoring pml\n",
+                   flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
 
-    MPIT_result = MPI_T_pvar_start(session, flush_handle);
-    if (MPIT_result != MPI_SUCCESS) {
-        printf("failed to start handle on \"%s\" pvar, check that you have monitoring pml\n",
-               flush_pvar_name);
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        MPIT_result = MPI_T_pvar_start(session, flush_handle);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("failed to start handle on \"%s\" pvar, check that you have monitoring pml\n",
+                   flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
     }
 
     if (rank == 0) {
@@ -138,10 +141,10 @@ int main(int argc, char* argv[])
         MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD,&request);
     }
     while (1) {
-        MPI_Irecv(&n,1,MPI_INT,from,tagno,MPI_COMM_WORLD, &request);
-        MPI_Wait(&request,&status);
+        MPI_Irecv(&n, 1, MPI_INT, from, tagno, MPI_COMM_WORLD, &request);
+        MPI_Wait(&request, &status);
         if (rank == 0) {n--;tagno++;}
-        MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD, &request);
+        MPI_Isend(&n, 1, MPI_INT, to, tagno, MPI_COMM_WORLD, &request);
         if (rank != 0) {n--;tagno++;}
         if (n<0){
             break;
@@ -158,29 +161,31 @@ int main(int argc, char* argv[])
       and the process rank for ease of parsing with
       aggregate_profile.pl script
     */
-    sprintf(filename,"prof/phase_1_%d.prof",rank);
-    if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
-        fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
-    }
-    /* Force the writing of the monitoring data */
-    MPIT_result = MPI_T_pvar_stop(session, flush_handle);
-    if (MPIT_result != MPI_SUCCESS) {
-        printf("failed to stop handle on \"%s\" pvar, check that you have monitoring pml\n",
-               flush_pvar_name);
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
-    }
+    if( with_mpit ) {
+        sprintf(filename,"prof/phase_1_%d.prof",rank);
+        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
+            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+        }
+        /* Force the writing of the monitoring data */
+        MPIT_result = MPI_T_pvar_stop(session, flush_handle);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("failed to stop handle on \"%s\" pvar, check that you have monitoring pml\n",
+                   flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
 
-    MPIT_result = MPI_T_pvar_start(session, flush_handle);
-    if (MPIT_result != MPI_SUCCESS) {
-        printf("failed to start handle on \"%s\" pvar, check that you have monitoring pml\n",
-               flush_pvar_name);
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
-    }
-    /* Don't set a filename. If we stop the session before setting it, then no output ile
-     * will be generated.
-     */
-    if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, NULL) ) {
-        fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+        MPIT_result = MPI_T_pvar_start(session, flush_handle);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("failed to start handle on \"%s\" pvar, check that you have monitoring pml\n",
+                   flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
+        /* Don't set a filename. If we stop the session before setting it, then no output ile
+         * will be generated.
+         */
+        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, NULL) ) {
+            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+        }
     }
 
     /*
@@ -210,9 +215,6 @@ int main(int argc, char* argv[])
                 MPI_Send(&n, 1, MPI_INT, to, tagno, newcomm);
                 if (rank != 0) {n--; tagno++;}
                 if (n<0){
-                    if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
-                        fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
-                    }
                     break;
                 }
             }
@@ -225,32 +227,35 @@ int main(int argc, char* argv[])
         MPI_Alltoall(send_buff, 10240/size, MPI_INT, recv_buff, 10240/size, MPI_INT, newcomm);
         MPI_Comm_split(newcomm, rank%2, rank, &newcomm);
         MPI_Barrier(newcomm);
+    }
+
+    if( with_mpit ) {
         if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
         }
-    }
 
-    MPIT_result = MPI_T_pvar_stop(session, flush_handle);
-    if (MPIT_result != MPI_SUCCESS) {
-        printf("failed to stop handle on \"%s\" pvar, check that you have monitoring pml\n",
-               flush_pvar_name);
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
-    }
+        MPIT_result = MPI_T_pvar_stop(session, flush_handle);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("failed to stop handle on \"%s\" pvar, check that you have monitoring pml\n",
+                   flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
 
-    MPIT_result = MPI_T_pvar_handle_free(session, &flush_handle);
-    if (MPIT_result != MPI_SUCCESS) {
-        printf("failed to free handle on \"%s\" pvar, check that you have monitoring pml\n",
-               flush_pvar_name);
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
-    }
+        MPIT_result = MPI_T_pvar_handle_free(session, &flush_handle);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("failed to free handle on \"%s\" pvar, check that you have monitoring pml\n",
+                   flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
 
-    MPIT_result = MPI_T_pvar_session_free(&session);
-    if (MPIT_result != MPI_SUCCESS) {
-        printf("cannot close a session for \"%s\" pvar\n", flush_pvar_name);
-        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
-    }
+        MPIT_result = MPI_T_pvar_session_free(&session);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("cannot close a session for \"%s\" pvar\n", flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
 
-    (void)PMPI_T_finalize();
+        (void)MPI_T_finalize();
+    }
 
     /* Now, in MPI_Finalize(), the pml_monitoring library outputs, in
        STDERR, the aggregated recorded monitoring of all the phases*/
