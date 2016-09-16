@@ -105,14 +105,7 @@ int orte_proc_info(void)
     if (init) {
         return ORTE_SUCCESS;
     }
-    
-    {
-        int delay = 0;
-        while( delay ){
-            sleep(1);
-        }
-    }
-    
+
     init = true;
 
     OBJ_CONSTRUCT(&orte_process_info.super, opal_proc_t);
