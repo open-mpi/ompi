@@ -23,9 +23,6 @@ uint64_t* messages_count = NULL;
 uint64_t* filtered_sent_data = NULL;
 uint64_t* filtered_messages_count = NULL;
 
-static int init_done = 0;
-static int nbprocs = -1;
-static int my_rank = -1;
 opal_hash_table_t *translation_ht = NULL;
 
 
@@ -67,14 +64,17 @@ int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
     size_t i, peer_rank, nprocs_world;
     uint64_t key;
 
-    if(NULL == translation_ht) {
+    nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
+    if( NULL == translation_ht ) {
         translation_ht = OBJ_NEW(opal_hash_table_t);
         opal_hash_table_init(translation_ht, 2048);
-        /* get my rank in the MPI_COMM_WORLD */
-        my_rank = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
+
+        sent_data               = (uint64_t*)calloc(4 * nprocs_world, sizeof(uint64_t));
+        messages_count          = sent_data + nprocs_world;
+        filtered_sent_data      = messages_count + nprocs_world;
+        filtered_messages_count = filtered_sent_data + nprocs_world;
     }
 
-    nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
     /* For all procs in the same MPI_COMM_WORLD we need to add them to the hash table */
     for( i = 0; i < nprocs; i++ ) {
 
@@ -87,15 +87,14 @@ int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
         if( tmp.jobid != ompi_proc_local_proc->super.proc_name.jobid )
             continue;
 
+        /* each process will only be added once, so there is no way it already exists in the hash */
         for( peer_rank = 0; peer_rank < nprocs_world; peer_rank++ ) {
             wp_name = ompi_group_get_proc_name(((ompi_communicator_t*)&ompi_mpi_comm_world)->c_remote_group, peer_rank);
             if( 0 != opal_compare_proc( tmp, wp_name) )
                 continue;
 
-            /* Find the rank of the peer in MPI_COMM_WORLD */
             key = *((uint64_t*)&tmp);
-            /* store the rank (in COMM_WORLD) of the process
-               with its name (a uniq opal ID) as key in the hash table*/
+            /* save the rank of the process in MPI_COMM_WORLD in the hash using the proc_name as the key */
             if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(translation_ht,
                                                                  key, (void*)(uintptr_t)peer_rank) ) {
                 return OMPI_ERR_OUT_OF_RESOURCE;  /* failed to allocate memory or growing the hash table */
@@ -124,33 +123,14 @@ int mca_pml_monitoring_dump(struct ompi_communicator_t* comm,
 
 void finalize_monitoring( void )
 {
-    free(filtered_sent_data);
-    free(filtered_messages_count);
-    free(sent_data);
-    free(messages_count);
+    free(sent_data);  /* a single allocation */
     opal_hash_table_remove_all( translation_ht );
     free(translation_ht);
 }
 
-/**
- * We have delayed the initialization until the first send so that we know that
- * the MPI_COMM_WORLD (which is the only communicator we are interested on at
- * this point) is correctly initialized.
- */
-static void initialize_monitoring( void )
-{
-    nbprocs = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
-    sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
-    messages_count = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
-    filtered_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
-    filtered_messages_count = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
-
-    init_done = 1;
-}
-
 void mca_pml_monitoring_reset( void )
 {
-    if( !init_done ) return;
+    int nbprocs = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
     memset(sent_data, 0, nbprocs * sizeof(uint64_t));
     memset(messages_count, 0, nbprocs * sizeof(uint64_t));
     memset(filtered_sent_data, 0, nbprocs * sizeof(uint64_t));
@@ -160,9 +140,6 @@ void mca_pml_monitoring_reset( void )
 void monitor_send_data(int world_rank, size_t data_size, int tag)
 {
     if( 0 == filter_monitoring() ) return;  /* right now the monitoring is not started */
-
-    if ( !init_done )
-        initialize_monitoring();
 
     /* distinguishses positive and negative tags if requested */
     if( (tag < 0) && (1 == filter_monitoring()) ) {
@@ -215,6 +192,9 @@ static void output_monitoring( FILE *pf )
 {
     if( 0 == filter_monitoring() ) return;  /* if disabled do nothing */
 
+    int nbprocs = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
+    int my_rank = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
+
     for (int i = 0 ; i < nbprocs ; i++) {
         if(sent_data[i] > 0) {
             fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
@@ -245,20 +225,17 @@ static void output_monitoring( FILE *pf )
 */
 int ompi_mca_pml_monitoring_flush(char* filename)
 {
-    FILE *pf = stderr;
-
-    if ( !init_done ) return -1;
+    FILE *pf = NULL;
+    int my_rank = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
 
     if( NULL != filename )
         pf = fopen(filename, "w");
-
-    if(!pf)
+    if(NULL == pf)  /* No filename or error during open */
         return -1;
 
     fprintf(stderr, "Proc %d flushing monitoring to: %s\n", my_rank, filename);
     output_monitoring( pf );
 
-    if( NULL != filename )
-        fclose(pf);
+    fclose(pf);
     return 0;
 }
