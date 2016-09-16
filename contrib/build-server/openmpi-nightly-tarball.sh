@@ -7,7 +7,8 @@
 #####
 
 # e-mail address to send results to
-results_addr=testing@open-mpi.org
+results_addr=testing@lists.open-mpi.org
+#results_addr=rhc@open-mpi.org
 
 # svn repository uri
 master_code_uri=https://github.com/open-mpi/ompi.git
@@ -15,32 +16,33 @@ master_raw_uri=https://raw.github.com/open-mpi/ompi
 release_code_uri=https://github.com/open-mpi/ompi-release.git
 release_raw_uri=https://raw.github.com/open-mpi/ompi-release
 
-# where to put built tarballs
-outputroot=/l/osl/www/www.open-mpi.org/nightly
+# where to put built tarballs - needs to be
+# adjusted to match your site!
+outputroot=$HOME/openmpi/nightly
 
 # where to find the build script
 script_uri=contrib/nightly/create_tarball.sh
 
 # helper scripts dir
-script_dir=/u/mpiteam/scripts
+script_dir=$HOME/ompi/contrib/build-server
 
 # The tarballs to make
 if [ $# -eq 0 ] ; then
-    # We're no longer ever checking the 1.0 - 1.6 branches anymore
-    branches="master v1.8 v1.10 v2.x"
+    # We're no longer ever checking the 1.0 - 1.8 branches anymore
+    branches="master v1.10 v2.x v2.0.x"
 else
     branches=$@
 fi
 
 # Build root - scratch space
-build_root=/home/mpiteam/openmpi/nightly-tarball-build-root
+build_root=$HOME/openmpi/nightly-tarball-build-root
 
 # Coverity stuff
 coverity_token=`cat $HOME/coverity/openmpi-token.txt`
-coverity_configure_args="--enable-debug --enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --enable-oshmem-java --with-mxm=/opt/mellanox/mxm --with-psm --with-usnic --with-libfabric=/u/mpiteam/libfabric-current/install"
+coverity_configure_args="--enable-debug --enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --with-psm --with-usnic --with-libfabric"
 
-export PATH=$HOME/local/bin:$PATH
-export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
+export PATH=$HOME_PREFIX/bin:$PATH
+export LD_LIBRARY_PATH=$HOME_PREFIX/lib:$LD_LIBRARY_PATH
 
 #####
 #
@@ -49,8 +51,8 @@ export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
 #####
 
 # load the modules configuration
-. /etc/profile.d/modules.sh
-module use ~/modules
+. $MODULE_INIT
+module use $AUTOTOOL_MODULE
 
 # get our nightly build script
 mkdir -p $build_root
@@ -111,26 +113,38 @@ for branch in $branches; do
     # master (for now).
     latest_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
     echo "=== Latest snapshot: $latest_snapshot"
-    if test "$prev_snapshot" != "$latest_snapshot" && \
-        test "$branch" = "master"; then
-        echo "=== Saving output for a Coverity run"
-        echo "$outputroot/$branch/openmpi-$latest_snapshot.tar.bz2" >> $pending_coverity
-    else
-        echo "=== NOT saving output for a Coverity run"
+    if test "$prev_snapshot" != "$latest_snapshot"; then
+        if test "$branch" = "master"; then
+            echo "=== Saving output for a Coverity run"
+            echo "$outputroot/$branch/openmpi-$latest_snapshot.tar.bz2" >> $pending_coverity
+        else
+            echo "=== NOT saving output for a Coverity run"
+        fi
+        echo "=== Posting tarball to open-mpi.org"
+        # tell the web server to cleanup old nightly tarballs
+        ssh -p 2222 ompiteam@192.185.39.252 "git/ompi/contrib/build-server/remove-old.pl 7 public_html/nightly/$branch"
+        # upload the new ones
+        scp -P 2222 $outputroot/$branch/openmpi-$latest_snapshot.tar.* ompiteam@192.185.39.252:public_html/nightly/$branch/
+        scp -P 2222 $outputroot/$branch/latest_snapshot.txt ompiteam@192.185.39.252:public_html/nightly/$branch/
+        # direct the web server to regenerate the checksums
+        ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/nightly/$branch && md5sum openmpi* > md5sums.txt"
+        ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/nightly/$branch && sha1sum openmpi* > sha1sums.txt"
     fi
 
     # Failed builds are not removed.  But if a human forgets to come
     # in here and clean up the old failed builds, we can accumulate
-    # many over time.  So remove any old failed bbuilds that are over
+    # many over time.  So remove any old failed builds that are over
     # 4 weeks old.
     ${script_dir}/remove-old.pl 7 $build_root/$branch
+
 done
+
 
 # If we had any new snapshots to send to coverity, process them now
 
 for tarball in `cat $pending_coverity`; do
     echo "=== Submitting $tarball to Coverity..."
-    $HOME/scripts/openmpi-nightly-coverity.pl \
+    ${script_dir}/openmpi-nightly-coverity.pl \
         --filename=$tarball \
         --coverity-token=$coverity_token \
         --verbose \

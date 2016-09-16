@@ -12,7 +12,7 @@
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -47,6 +47,7 @@
 BEGIN_C_DECLS
 
 struct ompi_osc_pt2pt_frag_t;
+struct ompi_osc_pt2pt_receive_t;
 
 struct ompi_osc_pt2pt_component_t {
     /** Extend the basic osc component interface */
@@ -60,6 +61,9 @@ struct ompi_osc_pt2pt_component_t {
 
     /** module count */
     int module_count;
+
+    /** number of buffers per window */
+    int receive_count;
 
     /** free list of ompi_osc_pt2pt_frag_t structures */
     opal_free_list_t frags;
@@ -76,10 +80,25 @@ struct ompi_osc_pt2pt_component_t {
     /** List of operations that need to be processed */
     opal_list_t pending_operations;
 
+    /** List of receives to be processed */
+    opal_list_t pending_receives;
+
+    /** Lock for pending_receives */
+    opal_mutex_t pending_receives_lock;
+
     /** Is the progress function enabled? */
     bool progress_enable;
 };
 typedef struct ompi_osc_pt2pt_component_t ompi_osc_pt2pt_component_t;
+
+enum {
+    /** peer has sent an unexpected post message (no matching start) */
+    OMPI_OSC_PT2PT_PEER_FLAG_UNEX = 1,
+    /** eager sends are active on this peer */
+    OMPI_OSC_PT2PT_PEER_FLAG_EAGER = 2,
+    /** peer has been locked (on-demand locking for lock_all) */
+    OMPI_OSC_PT2PT_PEER_FLAG_LOCK = 4,
+};
 
 
 struct ompi_osc_pt2pt_peer_t {
@@ -101,10 +120,55 @@ struct ompi_osc_pt2pt_peer_t {
     /** number of fragments incomming (negative - expected, positive - unsynchronized) */
     int32_t passive_incoming_frag_count;
 
-    /** unexpected post message arrived */
-    bool unexpected_post;
+    /** peer flags */
+    volatile int32_t flags;
 };
 typedef struct ompi_osc_pt2pt_peer_t ompi_osc_pt2pt_peer_t;
+
+OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_peer_t);
+
+static inline bool ompi_osc_pt2pt_peer_locked (ompi_osc_pt2pt_peer_t *peer)
+{
+    return !!(peer->flags & OMPI_OSC_PT2PT_PEER_FLAG_LOCK);
+}
+
+static inline bool ompi_osc_pt2pt_peer_unex (ompi_osc_pt2pt_peer_t *peer)
+{
+    return !!(peer->flags & OMPI_OSC_PT2PT_PEER_FLAG_UNEX);
+}
+
+static inline bool ompi_osc_pt2pt_peer_eager_active (ompi_osc_pt2pt_peer_t *peer)
+{
+    return !!(peer->flags & OMPI_OSC_PT2PT_PEER_FLAG_EAGER);
+}
+
+static inline void ompi_osc_pt2pt_peer_set_flag (ompi_osc_pt2pt_peer_t *peer, int32_t flag, bool value)
+{
+    int32_t peer_flags, new_flags;
+    do {
+        peer_flags = peer->flags;
+        if (value) {
+            new_flags = peer_flags | flag;
+        } else {
+            new_flags = peer_flags & ~flag;
+        }
+    } while (!OPAL_ATOMIC_CMPSET_32 (&peer->flags, peer_flags, new_flags));
+}
+
+static inline void ompi_osc_pt2pt_peer_set_locked (ompi_osc_pt2pt_peer_t *peer, bool value)
+{
+    ompi_osc_pt2pt_peer_set_flag (peer, OMPI_OSC_PT2PT_PEER_FLAG_LOCK, value);
+}
+
+static inline void ompi_osc_pt2pt_peer_set_unex (ompi_osc_pt2pt_peer_t *peer, bool value)
+{
+    ompi_osc_pt2pt_peer_set_flag (peer, OMPI_OSC_PT2PT_PEER_FLAG_UNEX, value);
+}
+
+static inline void ompi_osc_pt2pt_peer_set_eager_active (ompi_osc_pt2pt_peer_t *peer, bool value)
+{
+    ompi_osc_pt2pt_peer_set_flag (peer, OMPI_OSC_PT2PT_PEER_FLAG_EAGER, value);
+}
 
 OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_peer_t);
 
@@ -192,8 +256,11 @@ struct ompi_osc_pt2pt_module_t {
     /** origin side list of locks currently outstanding */
     opal_hash_table_t outstanding_locks;
 
-    unsigned char *incoming_buffer;
-    ompi_request_t *frag_request;
+    /** receive fragments */
+    struct ompi_osc_pt2pt_receive_t *recv_frags;
+
+    /** number of receive fragments */
+    unsigned int recv_frag_count;
 
     /* enforce accumulate semantics */
     opal_atomic_lock_t accumulate_lock;
@@ -201,9 +268,6 @@ struct ompi_osc_pt2pt_module_t {
 
     /** Lock for garbage collection lists */
     opal_mutex_t gc_lock;
-
-    /** List of requests that need to be freed */
-    opal_list_t request_gc;
 
     /** List of buffers that need to be freed */
     opal_list_t buffer_gc;
@@ -242,6 +306,15 @@ struct ompi_osc_pt2pt_pending_t {
 };
 typedef struct ompi_osc_pt2pt_pending_t ompi_osc_pt2pt_pending_t;
 OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_pending_t);
+
+struct ompi_osc_pt2pt_receive_t {
+    opal_list_item_t super;
+    ompi_osc_pt2pt_module_t *module;
+    ompi_request_t *pml_request;
+    void *buffer;
+};
+typedef struct ompi_osc_pt2pt_receive_t ompi_osc_pt2pt_receive_t;
+OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_receive_t);
 
 #define GET_MODULE(win) ((ompi_osc_pt2pt_module_t*) win->w_osc_module)
 
@@ -408,6 +481,8 @@ int ompi_osc_pt2pt_component_irecv(ompi_osc_pt2pt_module_t *module,
                                   int src,
                                   int tag,
                                   struct ompi_communicator_t *comm);
+
+int ompi_osc_pt2pt_lock_remote (ompi_osc_pt2pt_module_t *module, int target, ompi_osc_pt2pt_sync_t *lock);
 
 /**
  * ompi_osc_pt2pt_progress_pending_acc:
@@ -584,39 +659,23 @@ static inline void osc_pt2pt_copy_for_send (void *target, size_t target_len, con
 }
 
 /**
- * osc_pt2pt_request_gc_clean:
+ * osc_pt2pt_gc_clean:
  *
  * @short Release finished PML requests and accumulate buffers.
  *
- * @long This function exists because it is not possible to free a PML request
- *       or buffer from a request completion callback. We instead put requests
- *       and buffers on the module's garbage collection lists and release then
- *       at a later time.
+ * @long This function exists because it is not possible to free a buffer from
+ *     a request completion callback. We instead put requests and buffers on the
+ *     module's garbage collection lists and release then at a later time.
  */
 static inline void osc_pt2pt_gc_clean (ompi_osc_pt2pt_module_t *module)
 {
-    ompi_request_t *request;
     opal_list_item_t *item;
 
     OPAL_THREAD_LOCK(&module->gc_lock);
-
-    while (NULL != (request = (ompi_request_t *) opal_list_remove_first (&module->request_gc))) {
-        OPAL_THREAD_UNLOCK(&module->gc_lock);
-        ompi_request_free (&request);
-        OPAL_THREAD_LOCK(&module->gc_lock);
-    }
-
     while (NULL != (item = opal_list_remove_first (&module->buffer_gc))) {
         OBJ_RELEASE(item);
     }
-
     OPAL_THREAD_UNLOCK(&module->gc_lock);
-}
-
-static inline void osc_pt2pt_gc_add_request (ompi_osc_pt2pt_module_t *module, ompi_request_t *request)
-{
-    OPAL_THREAD_SCOPED_LOCK(&module->gc_lock,
-                            opal_list_append (&module->request_gc, (opal_list_item_t *) request));
 }
 
 static inline void osc_pt2pt_gc_add_buffer (ompi_osc_pt2pt_module_t *module, opal_list_item_t *buffer)
@@ -823,6 +882,12 @@ static inline void ompi_osc_pt2pt_module_lock_remove (struct ompi_osc_pt2pt_modu
 static inline ompi_osc_pt2pt_sync_t *ompi_osc_pt2pt_module_sync_lookup (ompi_osc_pt2pt_module_t *module, int target,
                                                                         struct ompi_osc_pt2pt_peer_t **peer)
 {
+    ompi_osc_pt2pt_peer_t *tmp;
+
+    if (NULL == peer) {
+        peer = &tmp;
+    }
+
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc/pt2pt: looking for synchronization object for target %d", target));
 
@@ -840,8 +905,9 @@ static inline ompi_osc_pt2pt_sync_t *ompi_osc_pt2pt_module_sync_lookup (ompi_osc
 
         /* fence epoch is now active */
         module->all_sync.epoch_active = true;
-        if (peer) {
-            *peer = ompi_osc_pt2pt_peer_lookup (module, target);
+        *peer = ompi_osc_pt2pt_peer_lookup (module, target);
+        if (OMPI_OSC_PT2PT_SYNC_TYPE_LOCK == module->all_sync.type && !ompi_osc_pt2pt_peer_locked (*peer)) {
+            (void) ompi_osc_pt2pt_lock_remote (module, target, &module->all_sync);
         }
 
         return &module->all_sync;
@@ -874,13 +940,14 @@ static inline bool ompi_osc_pt2pt_access_epoch_active (ompi_osc_pt2pt_module_t *
 static inline bool ompi_osc_pt2pt_peer_sends_active (ompi_osc_pt2pt_module_t *module, int rank)
 {
     ompi_osc_pt2pt_sync_t *sync;
+    ompi_osc_pt2pt_peer_t *peer;
 
-    sync = ompi_osc_pt2pt_module_sync_lookup (module, rank, NULL);
+    sync = ompi_osc_pt2pt_module_sync_lookup (module, rank, &peer);
     if (!sync) {
         return false;
     }
 
-    return sync->eager_send_active;
+    return sync->eager_send_active || ompi_osc_pt2pt_peer_eager_active (peer);
 }
 
 END_C_DECLS

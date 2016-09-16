@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
+dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -31,15 +31,18 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
     # cache variable for the library check.  one should not copy this
     # code into other places unless you want much pain and suffering
     AS_VAR_PUSHDEF([opal_Header], [ac_cv_header_$2])
+    OPAL_VAR_SCOPE_PUSH([dir_prefix])
 
     # so this sucks, but there's no way to get through the progression
     # of header includes without killing off the cache variable and trying
     # again...
     unset opal_Header
 
+    # get rid of the trailing slash(es)
+    dir_prefix=$(echo $3 | sed -e 'sX/*$XXg')
     opal_check_package_header_happy="no"
-    AS_IF([test "$3" = "/usr" || \
-           test "$3" = "/usr/local"],
+    AS_IF([test "$dir_prefix" = "/usr" || \
+           test "$dir_prefix" = "/usr/local"],
            [ # try as is...
             AC_VERBOSE([looking for header without includes])
             AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [])
@@ -48,14 +51,15 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
                    unset opal_Header])])
 
     AS_IF([test "$opal_check_package_header_happy" = "no"],
-          [AS_IF([test "$3" != ""],
-                 [$1_CPPFLAGS="$$1_CPPFLAGS -I$3/include"
-                  CPPFLAGS="$CPPFLAGS -I$3/include"])
+          [AS_IF([test "$dir_prefix" != ""],
+                 [$1_CPPFLAGS="$$1_CPPFLAGS -I$dir_prefix/include"
+                  CPPFLAGS="$CPPFLAGS -I$dir_prefix/include"])
           AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])
 	  AS_IF([test "$opal_check_package_header_happy" = "yes"], [$4], [$5])],
           [$4])
     unset opal_check_package_header_happy
 
+    OPAL_VAR_SCOPE_POP([dir_prefix])
     AS_VAR_POPDEF([opal_Header])dnl
 ])
 

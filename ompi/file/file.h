@@ -14,6 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,6 +78,10 @@ struct ompi_file_t {
     /** Indicate what version of the IO component we're using (this
         indicates what member to look at in the union, below) */
     mca_io_base_version_t f_io_version;
+
+    /** Mutex to be used to protect access to the selected component
+        on a per file-handle basis */
+    opal_mutex_t f_mutex;
 
     /** The selected component (note that this is a union) -- we need
         this to add and remove the component from the list of

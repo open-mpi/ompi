@@ -238,10 +238,8 @@ static int ompi_osc_pt2pt_control_send_unbuffered_cb (ompi_request_t *request)
     /* free the temporary buffer */
     free (ctx);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 /**
@@ -437,10 +435,8 @@ static int osc_pt2pt_incoming_req_complete (ompi_request_t *request)
 
     mark_incoming_completion (module, rank);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 struct osc_pt2pt_get_post_send_cb_data_t {
@@ -460,10 +456,8 @@ static int osc_pt2pt_get_post_send_cb (ompi_request_t *request)
     /* mark this as a completed "incoming" request */
     mark_incoming_completion (module, rank);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 /**
@@ -699,9 +693,7 @@ static int accumulate_cb (ompi_request_t *request)
         osc_pt2pt_gc_add_buffer (module, &acc_data->super);
     }
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
+    ompi_request_free (&request);
     return ret;
 }
 
@@ -771,13 +763,11 @@ static int replace_cb (ompi_request_t *request)
 
     mark_incoming_completion (module, rank);
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
     /* unlock the accumulate lock */
     ompi_osc_pt2pt_accumulate_unlock (module);
 
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 /**
@@ -1435,13 +1425,11 @@ static int process_large_datatype_request_cb (ompi_request_t *request)
         return OMPI_ERROR;
     }
 
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
-
     /* free the datatype buffer */
     osc_pt2pt_gc_add_buffer (module, &ddt_buffer->super);
 
-    return OMPI_SUCCESS;
+    ompi_request_free (&request);
+    return 1;
 }
 
 /**
@@ -1558,12 +1546,6 @@ static inline int process_frag (ompi_osc_pt2pt_module_t *module,
                 ret = process_acc_long (module, frag->source, &header->acc);
                 break;
 
-            case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_REQ:
-                ret = ompi_osc_pt2pt_process_lock(module, frag->source, &header->lock);
-                if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
-                    ret = sizeof (header->lock);
-                }
-                break;
             case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_REQ:
                 ret = process_unlock(module, frag->source, &header->unlock);
                 break;
@@ -1616,11 +1598,38 @@ static inline int process_frag (ompi_osc_pt2pt_module_t *module,
 /* dispatch for callback on message completion */
 static int ompi_osc_pt2pt_callback (ompi_request_t *request)
 {
-    ompi_osc_pt2pt_module_t *module = (ompi_osc_pt2pt_module_t *) request->req_complete_cb_data;
-    ompi_osc_pt2pt_header_t *base_header =
-        (ompi_osc_pt2pt_header_t *) module->incoming_buffer;
-    size_t incoming_length = request->req_status._ucount;
-    int source = request->req_status.MPI_SOURCE;
+    ompi_osc_pt2pt_receive_t *recv = (ompi_osc_pt2pt_receive_t *) request->req_complete_cb_data;
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "received pt2pt fragment"));
+
+    /* to avoid deep recursion from complet -> start -> complete -> ... we simply put this
+     * request on a list and let it be processed by opal_progress(). */
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.pending_receives_lock);
+    opal_list_append (&mca_osc_pt2pt_component.pending_receives, &recv->super);
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.pending_receives_lock);
+
+    return OMPI_SUCCESS;
+}
+
+static int ompi_osc_pt2pt_receive_repost (ompi_osc_pt2pt_receive_t *recv)
+{
+    /* wait until the request has been marked as complete */
+    ompi_request_wait_completion (recv->pml_request);
+
+    /* ompi_request_complete clears the callback */
+    recv->pml_request->req_complete_cb = ompi_osc_pt2pt_callback;
+    recv->pml_request->req_complete_cb_data = (void *) recv;
+
+    return MCA_PML_CALL(start(1, &recv->pml_request));
+}
+
+int ompi_osc_pt2pt_process_receive (ompi_osc_pt2pt_receive_t *recv)
+{
+    ompi_osc_pt2pt_module_t *module = (ompi_osc_pt2pt_module_t *) recv->module;
+    ompi_osc_pt2pt_header_t *base_header = (ompi_osc_pt2pt_header_t *) recv->buffer;
+    size_t incoming_length = recv->pml_request->req_status._ucount;
+    int source = recv->pml_request->req_status.MPI_SOURCE;
+    int rc;
 
     assert(incoming_length >= sizeof(ompi_osc_pt2pt_header_base_t));
     (void)incoming_length;  // silence compiler warning
@@ -1640,6 +1649,9 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
         break;
     case OMPI_OSC_PT2PT_HDR_TYPE_POST:
         osc_pt2pt_incoming_post (module, source);
+        break;
+    case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_REQ:
+        ompi_osc_pt2pt_process_lock(module, source, (ompi_osc_pt2pt_header_lock_t *) base_header);
         break;
     case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_ACK:
         ompi_osc_pt2pt_process_lock_ack(module, (ompi_osc_pt2pt_header_lock_ack_t *) base_header);
@@ -1661,23 +1673,45 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
 
     osc_pt2pt_gc_clean (module);
 
-    ompi_osc_pt2pt_frag_start_receive (module);
-
-    /* put this request on the garbage colletion list */
-    osc_pt2pt_gc_add_request (module, request);
+    rc = ompi_osc_pt2pt_receive_repost (recv);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "finished posting receive request"));
+                         "finished posting receive request. rc: %d", rc));
 
     return OMPI_SUCCESS;
 }
 
 int ompi_osc_pt2pt_frag_start_receive (ompi_osc_pt2pt_module_t *module)
 {
-    module->frag_request = MPI_REQUEST_NULL;
-    return ompi_osc_pt2pt_irecv_w_cb (module->incoming_buffer, mca_osc_pt2pt_component.buffer_size + sizeof (ompi_osc_pt2pt_frag_header_t),
-                                     MPI_BYTE, OMPI_ANY_SOURCE, OSC_PT2PT_FRAG_TAG, module->comm, &module->frag_request,
-                                     ompi_osc_pt2pt_callback, module);
+    int rc;
+
+    module->recv_frag_count = mca_osc_pt2pt_component.receive_count;
+    if (0 == module->recv_frag_count) {
+        module->recv_frag_count = 1;
+    }
+
+    module->recv_frags = malloc (sizeof (module->recv_frags[0]) * module->recv_frag_count);
+    if (NULL == module->recv_frags) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (unsigned int i = 0 ; i < module->recv_frag_count ; ++i) {
+        OBJ_CONSTRUCT(module->recv_frags + i, ompi_osc_pt2pt_receive_t);
+        module->recv_frags[i].module = module;
+        module->recv_frags[i].buffer = malloc (mca_osc_pt2pt_component.buffer_size + sizeof (ompi_osc_pt2pt_frag_header_t));
+        if (NULL == module->recv_frags[i].buffer) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
+        rc = ompi_osc_pt2pt_irecv_w_cb (module->recv_frags[i].buffer, mca_osc_pt2pt_component.buffer_size + sizeof (ompi_osc_pt2pt_frag_header_t),
+                                        MPI_BYTE, OMPI_ANY_SOURCE, OSC_PT2PT_FRAG_TAG, module->comm, &module->recv_frags[i].pml_request,
+                                        ompi_osc_pt2pt_callback, module->recv_frags + i);
+        if (OMPI_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
+    return OMPI_SUCCESS;
 }
 
 int ompi_osc_pt2pt_component_irecv (ompi_osc_pt2pt_module_t *module, void *buf,
@@ -1718,30 +1752,31 @@ int ompi_osc_pt2pt_irecv_w_cb (void *ptr, int count, ompi_datatype_t *datatype, 
                               ompi_communicator_t *comm, ompi_request_t **request_out,
                               ompi_request_complete_fn_t cb, void *ctx)
 {
-    ompi_request_t *request;
+    ompi_request_t *dummy;
     int ret;
+
+    if (NULL == request_out) {
+        request_out = &dummy;
+    }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: ompi_osc_pt2pt_irecv_w_cb receiving %d bytes from %d with tag %d",
                          count, target, tag));
 
-    ret = MCA_PML_CALL(irecv_init(ptr, count, datatype, target, tag, comm, &request));
+    ret = MCA_PML_CALL(irecv_init(ptr, count, datatype, target, tag, comm, request_out));
     if (OMPI_SUCCESS != ret) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "error posting receive. ret = %d", ret));
         return ret;
     }
 
-    request->req_complete_cb = cb;
-    request->req_complete_cb_data = ctx;
+    (*request_out)->req_complete_cb = cb;
+    (*request_out)->req_complete_cb_data = ctx;
 
-    ret = MCA_PML_CALL(start(1, &request));
-    if (request_out && MPI_REQUEST_NULL != request) {
-        *request_out = request;
-    }
+    ret = MCA_PML_CALL(start(1, request_out));
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc pt2pt: pml start returned %d. state: %d", ret, request->req_state));
+                         "osc pt2pt: pml start returned %d", ret));
 
     return ret;
 }

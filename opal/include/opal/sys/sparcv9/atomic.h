@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,7 +87,7 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
 {
    /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
     *
-    * if (*(reg(rs1)) == reg(rs1) )
+    * if (*(reg(rs1)) == reg(rs2) )
     *    swap reg(rd), *(reg(rs1))
     * else
     *    reg(rd) = *(reg(rs1))

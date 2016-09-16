@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015-2016 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
@@ -59,6 +59,14 @@ most common causes when it does occur are:
   * The operating system ran out of file descriptors
   * The operating system ran out of memory
 
+Your Open MPI job will likely hang (or crash) until the failure
+resason is fixed (e.g., more file descriptors and/or memory becomes
+available), and may eventually timeout / abort.
+
+  Local host: %s
+  PID:        %d
+  Errno:      %d (%s)
+#
 [unsuported progress thread]
 WARNING: Support for the TCP progress thread has not been compiled in.
 Fall back to the normal progress.
@@ -66,14 +74,20 @@ Fall back to the normal progress.
   Local host: %s
   Value:      %s
   Message:    %s
-
 #
+[peer hung up]
+An MPI communication peer process has unexpectedly disconnected.  This
+usually indicates a failure in the peer process (e.g., a crash or
+otherwise exiting without calling MPI_FINALIZE first).
 
-Your Open MPI job will likely hang until the failure resason is fixed
-(e.g., more file descriptors and/or memory becomes available), and may
-eventually timeout / abort.
+Although this local MPI process will likely now behave unpredictably
+(it may even hang or crash), the root cause of this problem is the
+failure of the peer -- that is what you need to investigate.  For
+example, there may be a core file that you can examine.  More
+generally: such peer hangups are frequently caused by application bugs
+or other external events.
 
   Local host: %s
-  PID:        %d
-  Errno:      %d (%s)
+  Local PID:  %d
+  Peer host:  %s
 #

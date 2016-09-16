@@ -147,9 +147,31 @@ barrier_hypercube_top(struct ompi_communicator_t *comm,
     }
 
     if (is_sync) {
-        /* Send a put to self when we've received all our messages... */
-        ret = PtlCTWait(request->u.barrier.rtr_ct_h, num_msgs, &event);
+        /* Each process has a pending PtlTriggeredPut. To be sure this request will be triggered, we must
+           call PtlTriggeredCTInc twice. Otherwise, we could free the CT too early and the Put wouldn't be triggered */
 
+        ptl_ct_event_t ct_inc;
+
+        ct_inc.success = 1;
+        ct_inc.failure = 0;
+
+        if ((ret = PtlTriggeredCTInc(request->u.barrier.rtr_ct_h, ct_inc,
+                request->u.barrier.rtr_ct_h, num_msgs)) != 0) {
+            return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+        }
+
+        if ((ret = PtlTriggeredCTInc(request->u.barrier.rtr_ct_h, ct_inc,
+                request->u.barrier.rtr_ct_h, num_msgs + 1)) != 0) {
+            return opal_stderr("PtlTriggeredCTInc failed", __FILE__, __LINE__, ret);
+        }
+
+        ret = PtlCTWait(request->u.barrier.rtr_ct_h, num_msgs + 2, &event);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                    "%s:%d: PtlCTWait failed: %d\n",
+                    __FILE__, __LINE__, ret);
+            return OMPI_ERROR;
+        }
     }
     else {
         /* Send a put to self when we've received all our messages... */

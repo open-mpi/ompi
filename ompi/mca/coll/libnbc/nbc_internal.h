@@ -486,7 +486,6 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
 /* let's give a try to inline functions */
 static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
   int size, pos, res;
-  OPAL_PTRDIFF_TYPE ext, lb;
   void *packbuf;
 
 #if OPAL_CUDA_SUPPORT
@@ -496,13 +495,10 @@ static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, 
 #endif /* OPAL_CUDA_SUPPORT */
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
-    res = ompi_datatype_get_extent(srctype, &lb, &ext);
-    if (OMPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
-      return res;
-    }
+    ptrdiff_t gap, span;
+    span = opal_datatype_span(&srctype->super, srccount, &gap);
 
-    memcpy(tgt, src, srccount*ext);
+    memcpy(tgt, src, span);
   } else {
     /* we have to pack and unpack */
     res = PMPI_Pack_size(srccount, srctype, comm, &size);

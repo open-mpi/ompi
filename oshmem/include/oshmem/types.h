@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +18,7 @@
  * dependencies.
  */
 
-   struct oshmem_proc_t;
+   struct ompi_proc_t;
    struct oshmem_group_t;
    struct oshmem_op_t;
 

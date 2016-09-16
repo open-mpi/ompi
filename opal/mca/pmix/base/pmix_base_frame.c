@@ -136,3 +136,19 @@ static void apdes(opal_pmix_app_t *p)
 OBJ_CLASS_INSTANCE(opal_pmix_app_t,
 		   opal_list_item_t,
 		   apcon, apdes);
+
+static void qcon(opal_pmix_query_t *p)
+{
+    p->keys = NULL;
+    OBJ_CONSTRUCT(&p->qualifiers, opal_list_t);
+}
+static void qdes(opal_pmix_query_t *p)
+{
+    if (NULL != p->keys) {
+        opal_argv_free(p->keys);
+    }
+    OPAL_LIST_DESTRUCT(&p->qualifiers);
+}
+OBJ_CLASS_INSTANCE(opal_pmix_query_t,
+                   opal_list_item_t,
+                   qcon, qdes);

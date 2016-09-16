@@ -237,10 +237,7 @@ int orte_ess_base_orted_setup(char **hosts)
         /* take a pass thru the session directory code to fillin the
          * tmpdir names - don't create anything yet
          */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(false,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename,
-                                                    ORTE_PROC_MY_NAME))) {
+        if (ORTE_SUCCESS != (ret = orte_session_dir(false, ORTE_PROC_MY_NAME))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_session_dir define";
             goto error;
@@ -250,10 +247,7 @@ int orte_ess_base_orted_setup(char **hosts)
          */
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
         /* now actually create the directory tree */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename,
-                                                    ORTE_PROC_MY_NAME))) {
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true, ORTE_PROC_MY_NAME))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_session_dir";
             goto error;
@@ -277,11 +271,8 @@ int orte_ess_base_orted_setup(char **hosts)
             /* define a log file name in the session directory */
             snprintf(log_file, PATH_MAX, "output-orted-%s-%s.log",
                      jobidstring, orte_process_info.nodename);
-            log_path = opal_os_path(false,
-                                    orte_process_info.tmpdir_base,
-                                    orte_process_info.top_session_dir,
-                                    log_file,
-                                    NULL);
+            log_path = opal_os_path(false, orte_process_info.top_session_dir,
+                                    log_file, NULL);
 
             fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0640);
             if (fd < 0) {
@@ -455,33 +446,6 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rml.enable_comm";
         goto error;
     }
-#if ORTE_ENABLE_STATIC_PORTS
-    /* if we are using static ports, then we need to setup
-     * the daemon info so the RML can function properly
-     * without requiring a wireup stage. This must be done
-     * after we enable_comm as that function determines our
-     * own port, which we need in order to construct the nidmap
-     */
-    if (orte_static_ports) {
-        /* define the routing tree so we know the pattern
-         * if we are trying to setup common or static ports
-         */
-        orte_routed.update_routing_plan();
-        /* extract the node info from the environment and
-         * build a nidmap from it
-         */
-        if (ORTE_SUCCESS != (ret = orte_util_build_daemon_nidmap(hosts))) {
-            ORTE_ERROR_LOG(ret);
-            error = "construct daemon map from static ports";
-            goto error;
-        }
-    }
-#endif
-    /* be sure to update the routing tree so the initial "phone home"
-     * to mpirun goes through the tree if static ports were enabled - still
-     * need to do it anyway just to initialize things
-     */
-    orte_routed.update_routing_plan();
     /* Now provide a chance for the PLM
      * to perform any module-specific init functions. This
      * needs to occur AFTER the communications are setup
@@ -519,6 +483,33 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "pmix_server_init";
         goto error;
     }
+#if ORTE_ENABLE_STATIC_PORTS
+    /* if we are using static ports, then we need to setup
+     * the daemon info so the RML can function properly
+     * without requiring a wireup stage. This must be done
+     * after we enable_comm as that function determines our
+     * own port, which we need in order to construct the nidmap
+     */
+    if (orte_static_ports) {
+        /* define the routing tree so we know the pattern
+         * if we are trying to setup common or static ports
+         */
+        orte_routed.update_routing_plan();
+        /* extract the node info from the environment and
+         * build a nidmap from it
+         */
+        if (ORTE_SUCCESS != (ret = orte_util_build_daemon_nidmap(hosts))) {
+            ORTE_ERROR_LOG(ret);
+            error = "construct daemon map from static ports";
+            goto error;
+        }
+    }
+#endif
+    /* be sure to update the routing tree so the initial "phone home"
+     * to mpirun goes through the tree if static ports were enabled - still
+     * need to do it anyway just to initialize things
+     */
+    orte_routed.update_routing_plan();
 
     /* setup the routed info - the selected routed component
      * will know what to do.

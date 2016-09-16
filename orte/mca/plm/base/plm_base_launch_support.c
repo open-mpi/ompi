@@ -14,8 +14,9 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,6 +70,7 @@
 #include "orte/runtime/orte_quit.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/pre_condition_transports.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/regex.h"
 #include "orte/mca/state/state.h"
@@ -271,6 +273,9 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     int i;
     orte_app_context_t *app;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    char *key;
+    orte_job_t *parent;
+    orte_process_name_t name, *nptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:setup_job",
@@ -305,6 +310,50 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     if (!ORTE_FLAG_TEST(caddy->jdata, ORTE_JOB_FLAG_RECOVERABLE) &&
         orte_enable_recovery) {
         ORTE_FLAG_SET(caddy->jdata, ORTE_JOB_FLAG_RECOVERABLE);
+    }
+
+    /* setup transport keys in case the MPI layer needs them. If
+     * this is a dynamic spawn, then use the same keys as the
+     * parent process had so the new/old procs can communicate.
+     * Otherwise we can use the jobfam and stepid as unique keys
+     * because they are unique values assigned by the RM
+     */
+     nptr = &name;
+     if (orte_get_attribute(&caddy->jdata->attributes, ORTE_JOB_LAUNCH_PROXY, (void**)&nptr, OPAL_NAME)) {
+        /* get the parent jdata */
+        if (NULL == (parent = orte_get_job_data_object(name.jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+        key = NULL;
+        if (!orte_get_attribute(&parent->attributes, ORTE_JOB_TRANSPORT_KEY, (void**)&key, OPAL_STRING) ||
+            NULL == key) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+        /* record it */
+        orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_TRANSPORT_KEY, ORTE_ATTR_LOCAL, key, OPAL_STRING);
+        /* add the transport key envar to each app */
+        for (i=0; i < caddy->jdata->apps->size; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(caddy->jdata->apps, i))) {
+                continue;
+            }
+            opal_setenv(OPAL_MCA_PREFIX"orte_precondition_transports", key, true, &app->env);
+        }
+        free(key);
+    } else {
+        /* this will also record the transport key attribute in the job object, and
+         * adds the key envar to each app */
+        if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(caddy->jdata))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
     }
 
     /* if app recovery is not defined, set apps to defaults */
@@ -805,7 +854,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     char *rml_uri = NULL, *ptr;
     int rc, idx;
     orte_proc_t *daemon=NULL;
-    char *nodename;
     orte_node_t *node;
     orte_job_t *jdata;
     orte_process_name_t dname;
@@ -826,6 +874,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     /* multiple daemons could be in this buffer, so unpack until we exhaust the data */
     idx = 1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(buffer, &dname, &idx, ORTE_NAME))) {
+        char *nodename;
         /* unpack its contact info */
         idx = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
@@ -1096,6 +1145,11 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                              ORTE_NAME_PRINT(&dname),
                              (NULL == daemon) ? "UNKNOWN" : daemon->rml_uri));
 
+        if (NULL != nodename) {
+            free(nodename);
+            nodename = NULL;
+        }
+
         if (orted_failed_launch) {
             ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_FAILED_TO_START);
             return;
@@ -1130,10 +1184,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_DAEMONS_REPORTED);
                 }
             }
-        }
-        if (NULL != nodename) {
-            free(nodename);
-            nodename = NULL;
         }
         idx = 1;
     }
@@ -1528,7 +1578,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     bool one_filter = false;
     int num_nodes;
     bool default_hostfile_used;
-    char *hosts;
+    char *hosts = NULL;
     bool singleton=false;
     bool multi_sim = false;
 

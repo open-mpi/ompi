@@ -305,6 +305,15 @@ opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h
 opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h.in
 opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h.in
 opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h
+opal/mca/hwloc/base/static-components.h.new.extern
+opal/mca/hwloc/base/static-components.h.new.struct
+opal/mca/pmix/pmix3x/pmix/src/include/frameworks.h
+opal/mca/pmix/pmix3x/pmix/src/mca/pinstalldirs/config/pinstall_dirs.h
+opal/mca/pmix/pmix3x/pmix/config/autogen_found_items.m4
+opal/mca/pmix/pmix3x/pmix/src/include/pmix_config.h
+opal/mca/pmix/pmix3x/pmix/src/include/pmix_config.h.in
+opal/mca/pmix/pmix3x/pmix/include/pmix_rename.h
+opal/mca/pmix/pmix3x/pmix/include/pmix_version.h
 
 opal/tools/opal-checkpoint/opal-checkpoint
 opal/tools/opal-checkpoint/opal-checkpoint.1
@@ -395,6 +404,8 @@ orte/test/mpi/pconnect
 orte/test/mpi/thread_init
 orte/test/mpi/memcached-dummy
 orte/test/mpi/coll_test
+orte/test/mpi/badcoll
+orte/test/mpi/iof
 
 orte/test/system/radix
 orte/test/system/sigusr_trap
@@ -451,6 +462,7 @@ orte/test/system/opal_hwloc
 orte/test/system/opal_db
 orte/test/system/ulfm
 orte/test/system/pmixtool
+orte/test/system/orte_notify
 
 orte/tools/orte-checkpoint/orte-checkpoint
 orte/tools/orte-checkpoint/orte-checkpoint.1
@@ -573,6 +585,7 @@ test/class/opal_value_array
 
 test/datatype/ddt_test
 test/datatype/ddt_pack
+test/datatype/external32
 test/datatype/to_self
 test/datatype/checksum
 test/datatype/position

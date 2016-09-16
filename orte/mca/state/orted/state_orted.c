@@ -156,28 +156,71 @@ static void track_jobs(int fd, short argc, void *cbdata)
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     opal_buffer_t *alert;
     orte_plm_cmd_flag_t cmd;
-    int rc;
+    int rc, i;
+    orte_proc_state_t running = ORTE_PROC_STATE_RUNNING;
+    orte_proc_t *child;
+    orte_vpid_t null=ORTE_VPID_INVALID;
 
     if (ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE == caddy->job_state) {
         OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
-                             "%s state:orted:track_jobs sending local launch complete for job %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(caddy->jdata->jobid)));
+                            "%s state:orted:track_jobs sending local launch complete for job %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_JOBID_PRINT(caddy->jdata->jobid)));
         /* update the HNP with all proc states for this job */
-        alert = OBJ_NEW(opal_buffer_t);
-        /* pack update state command */
+       alert = OBJ_NEW(opal_buffer_t);
+         /* pack update state command */
         cmd = ORTE_PLM_UPDATE_PROC_STATE;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(alert);
             goto cleanup;
         }
-        /* pack the job info */
-        if (ORTE_SUCCESS != (rc = pack_state_update(alert, caddy->jdata))) {
+        /* pack the jobid */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &caddy->jdata->jobid, 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(alert);
             goto cleanup;
         }
+        for (i=0; i < orte_local_children->size; i++) {
+            if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                continue;
+            }
+            /* if this child is part of the job... */
+            if (child->name.jobid == caddy->jdata->jobid) {
+                /* pack the child's vpid */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &(child->name.vpid), 1, ORTE_VPID))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(alert);
+                    goto cleanup;
+                }
+                /* pack the pid */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->pid, 1, OPAL_PID))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(alert);
+                    goto cleanup;
+                }
+                /* pack the RUNNING state */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &running, 1, ORTE_PROC_STATE))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(alert);
+                    goto cleanup;
+                }
+                /* pack its exit code */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->exit_code, 1, ORTE_EXIT_CODE))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(alert);
+                    goto cleanup;
+                }
+            }
+        }
+
+        /* flag that this job is complete so the receiver can know */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &null, 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(alert);
+            goto cleanup;
+        }
+
         /* send it */
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
                                               ORTE_RML_TAG_PLM,
@@ -187,7 +230,7 @@ static void track_jobs(int fd, short argc, void *cbdata)
         }
     }
 
- cleanup:
+  cleanup:
     OBJ_RELEASE(caddy);
 }
 

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,7 +77,7 @@ int mca_sharedfp_sm_read ( mca_io_ompio_file_t *fh,
         }
 
         /* Read the file */
-        ret = ompio_io_ompio_file_read_at(sh->sharedfh,offset,buf,count,datatype,status);
+        ret = mca_common_ompio_file_read_at(sh->sharedfh,offset,buf,count,datatype,status);
     }
 
     return ret;
@@ -195,7 +195,7 @@ int mca_sharedfp_sm_read_ordered (mca_io_ompio_file_t *fh,
     }
 
     /* read to the file */
-    ret = ompio_io_ompio_file_read_at_all(sh->sharedfh,offset,buf,count,datatype,status);
+    ret = mca_common_ompio_file_read_at_all(sh->sharedfh,offset,buf,count,datatype,status);
 
 exit:
     if ( NULL != buff ) {

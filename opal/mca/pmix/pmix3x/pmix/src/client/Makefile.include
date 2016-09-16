@@ -1,0 +1,29 @@
+# -*- makefile -*-
+#
+# Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
+#                         All rights reserved.
+# Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+headers += \
+        client/pmix_client_ops.h
+
+sources += \
+        client/pmix_client.c \
+        client/pmix_client_fence.c \
+        client/pmix_client_get.c \
+        client/pmix_client_pub.c \
+        client/pmix_client_spawn.c \
+        client/pmix_client_connect.c
+
+if !PMIX_EMBEDDED_MODE
+sources += \
+        client/pmi1.c \
+        client/pmi2.c
+endif

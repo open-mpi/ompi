@@ -23,8 +23,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fcoll/fcoll.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
-#include "ompi/mca/io/io.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 #include "math.h"
 #include <unistd.h>
 
@@ -38,5 +37,5 @@ mca_fcoll_individual_file_read_all (mca_io_ompio_file_t *fh,
                                     struct ompi_datatype_t *datatype,
                                     ompi_status_public_t *status)
 {
-    return ompio_io_ompio_file_read( fh, buf, count, datatype, status);
+    return mca_common_ompio_file_read( fh, buf, count, datatype, status);
 }

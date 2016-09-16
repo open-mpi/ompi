@@ -15,6 +15,8 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -162,8 +164,7 @@ static int component_available(void)
 
     /* if session directories were forbidden, then we cannot be used */
     if (!orte_create_session_dirs ||
-        NULL == orte_process_info.tmpdir_base ||
-        NULL == orte_process_info.top_session_dir) {
+        NULL == orte_process_info.jobfam_session_dir ) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
 
@@ -205,6 +206,7 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
 static int component_startup(void)
 {
     int rc=ORTE_SUCCESS;
+    char *session;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s USOCK STARTUP",
@@ -213,11 +215,17 @@ static int component_startup(void)
     /* setup the path to the daemon rendezvous point */
     memset(&mca_oob_usock_component.address, 0, sizeof(struct sockaddr_un));
     mca_oob_usock_component.address.sun_family = AF_UNIX;
+    session = opal_os_path(false, orte_process_info.jobfam_session_dir,
+                           "usock", NULL);
+    if ((strlen(session) + 1) > sizeof(mca_oob_usock_component.address.sun_path)-1) {
+        opal_output(0, "SESSION DIR TOO LONG");
+        free(session);
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
     snprintf(mca_oob_usock_component.address.sun_path,
              sizeof(mca_oob_usock_component.address.sun_path)-1,
-             "%s/%s/%s/0/%s", orte_process_info.tmpdir_base,
-             orte_process_info.top_session_dir,
-             ORTE_JOB_FAMILY_PRINT(ORTE_PROC_MY_NAME->jobid), "usock");
+             "%s", session);
+    free(session);
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "SUNPATH: %s", mca_oob_usock_component.address.sun_path);
 
@@ -231,7 +239,7 @@ static int component_startup(void)
         /* if the rendezvous point isn't there, then that's an error */
         /* if the rendezvous file doesn't exist, that's an error */
         if (0 != access(mca_oob_usock_component.address.sun_path, R_OK)) {
-            opal_output_verbose(2, orte_oob_base_framework.framework_output,
+           opal_output_verbose(2, orte_oob_base_framework.framework_output,
                                 "SUNPATH: %s NOT READABLE", mca_oob_usock_component.address.sun_path);
             return OPAL_ERR_NOT_FOUND;
         }
@@ -307,8 +315,9 @@ static int component_set_addr(orte_process_name_t *peer,
 {
     orte_proc_t *proc;
     mca_oob_usock_peer_t *pr;
-    uint64_t *ui64;
+    uint64_t ui64;
 
+    memcpy(&ui64, peer, sizeof(uint64_t));
     /* if I am an application, then everything is addressable
      * by me via my daemon
      */
@@ -316,12 +325,11 @@ static int component_set_addr(orte_process_name_t *peer,
         /* if this is my daemon, then take it - otherwise, ignore */
         if (ORTE_PROC_MY_DAEMON->jobid == peer->jobid &&
             ORTE_PROC_MY_DAEMON->vpid == peer->vpid) {
-            ui64 = (uint64_t*)peer;
             if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_usock_module.peers,
-                                                                 (*ui64), (void**)&pr) || NULL == pr) {
+                                                                 ui64, (void**)&pr) || NULL == pr) {
                 pr = OBJ_NEW(mca_oob_usock_peer_t);
                 pr->name = *peer;
-                opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), pr);
+                opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, ui64, pr);
             }
             /* we have to initiate the connection because otherwise the
              * daemon has no way to communicate to us via this component
@@ -346,12 +354,11 @@ static int component_set_addr(orte_process_name_t *peer,
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
     /* indicate that this peer is addressable by this component */
-    ui64 = (uint64_t*)peer;
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_usock_module.peers,
-                                                         (*ui64), (void**)&pr) || NULL == pr) {
+                                                         ui64, (void**)&pr) || NULL == pr) {
         pr = OBJ_NEW(mca_oob_usock_peer_t);
         pr->name = *peer;
-        opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), pr);
+        opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, ui64, pr);
     }
     return ORTE_SUCCESS;
 }

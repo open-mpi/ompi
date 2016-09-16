@@ -2061,20 +2061,25 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
                 }else {
                     /* don't already know it - go get it */
                     /* firstly we check if we need to autodetect OpenFabrics  devices or we have the specified one */
+                    bool free_device_name = false;
                     if (!strcmp(device_name, "auto")) {
                         count = find_devices(topo, &device_name);
                         if (count > 1) {
                             free(device_name);
                             return count;
                         }
+                        free_device_name = true;
                     }
                     if (!device_name) {
                         return OPAL_ERR_NOT_FOUND;
-                    } else if (strlen(device_name) == 0) {
+                    } else if (free_device_name && (0 == strlen(device_name))) {
                         free(device_name);
                         return OPAL_ERR_NOT_FOUND;
                     }
                     sort_by_dist(topo, device_name, sorted_list);
+                    if (free_device_name) {
+                        free(device_name);
+                    }
                     /* store this info in summary object for later usage */
                     OPAL_LIST_FOREACH(numa, sorted_list, opal_rmaps_numa_node_t) {
                         copy_numa = OBJ_NEW(opal_rmaps_numa_node_t);

@@ -138,7 +138,7 @@ static int rte_init(void)
 {
     int ret;
     char *error = NULL;
-    char *contact_path, *jobfam_dir;
+    char *contact_path;
     orte_job_t *jdata;
     orte_node_t *node;
     orte_proc_t *proc;
@@ -294,10 +294,7 @@ static int rte_init(void)
         /* take a pass thru the session directory code to fillin the
          * tmpdir names - don't create anything yet
          */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(false,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename,
-                                                    ORTE_PROC_MY_NAME))) {
+        if (ORTE_SUCCESS != (ret = orte_session_dir(false, ORTE_PROC_MY_NAME))) {
             error = "orte_session_dir define";
             goto error;
         }
@@ -307,10 +304,7 @@ static int rte_init(void)
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
 
         /* now actually create the directory tree */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename,
-                                                    ORTE_PROC_MY_NAME))) {
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true, ORTE_PROC_MY_NAME))) {
             error = "orte_session_dir";
             goto error;
         }
@@ -586,9 +580,12 @@ static int rte_init(void)
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
         /* save my contact info in a file for others to find */
-        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
-        free(jobfam_dir);
+        if( NULL == orte_process_info.jobfam_session_dir ){
+            /* has to be set here! */
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            goto error;
+        }
+        contact_path = opal_os_path(false, orte_process_info.jobfam_session_dir, "contact.txt", NULL);
         OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s writing contact file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -758,10 +755,9 @@ static int rte_init(void)
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }
     /* remove my contact info file, if we have session directories */
-    if (NULL != orte_process_info.job_session_dir) {
-        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
-        free(jobfam_dir);
+    if (NULL != orte_process_info.jobfam_session_dir) {
+        contact_path = opal_os_path(false, orte_process_info.jobfam_session_dir,
+                                    "contact.txt", NULL);
         unlink(contact_path);
         free(contact_path);
     }
@@ -775,7 +771,6 @@ static int rte_init(void)
 static int rte_finalize(void)
 {
     char *contact_path;
-    char *jobfam_dir;
 
     if (signals_set) {
         /* Remove the epipe handler */
@@ -816,10 +811,9 @@ static int rte_finalize(void)
     (void) mca_base_framework_close(&opal_pstat_base_framework);
 
     /* remove my contact info file, if we have session directories */
-    if (NULL != orte_process_info.job_session_dir) {
-        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
-        free(jobfam_dir);
+    if (NULL != orte_process_info.jobfam_session_dir) {
+        contact_path = opal_os_path(false, orte_process_info.jobfam_session_dir,
+                                    "contact.txt", NULL);
         unlink(contact_path);
         free(contact_path);
     }

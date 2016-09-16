@@ -46,9 +46,15 @@ struct mca_mtl_portals4_module_t {
 
     /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
     int32_t use_logical;
+
+    /* Process_id */
+    ptl_process_t ptl_process_id;
+
     /* Use flow control: 1 (true) : 0 (false) */
     int32_t use_flowctl;
 
+    /** Short limit; Size limit for short messages */
+    uint64_t short_limit;
     /** Eager limit; messages greater than this use a rendezvous protocol */
     uint64_t eager_limit;
     /** Size of short message blocks */
@@ -67,6 +73,8 @@ struct mca_mtl_portals4_module_t {
 
     /** Network interface handle for matched interface */
     ptl_handle_ni_t ni_h;
+    /** Limit given by portals after NIInit */
+    uint64_t max_msg_size_mtl;
     /** Uid for current user */
     ptl_uid_t uid;
 

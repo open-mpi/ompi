@@ -53,7 +53,6 @@
 
 #define IOVEC_MEM_LIMIT 8192
 
-
 /* the contig versions does not use the stack. They can easily retrieve
  * the status with just the informations from pConvertor->bConverted.
  */
@@ -102,6 +101,7 @@ opal_pack_homogeneous_contig_function( opal_convertor_t* pConv,
     }
     return 0;
 }
+
 
 int32_t
 opal_pack_homogeneous_contig_with_gaps_function( opal_convertor_t* pConv,
@@ -331,22 +331,20 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                                        pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( 0 == pConvertor->stack_pos ) {
-                        /* we lie about the size of the next element in order to
-                         * make sure we exit the main loop.
-                         */
+                        /* we're done. Force the exit of the main for loop (around iovec) */
                         *out_size = iov_count;
-                        goto complete_loop;  /* completed */
+                        goto complete_loop;
                     }
-                    pConvertor->stack_pos--;
+                    pConvertor->stack_pos--;  /* go one position up on the stack */
                     pStack--;
-                    pos_desc++;
+                    pos_desc++;  /* and move to the next element */
                 } else {
-                    pos_desc = pStack->index + 1;
-                    if( pStack->index == -1 ) {
-                        pStack->disp += (pData->ub - pData->lb);
+                    pos_desc = pStack->index + 1;  /* jump back to the begining of the loop */
+                    if( pStack->index == -1 ) {  /* If it's the datatype count loop */
+                        pStack->disp += (pData->ub - pData->lb);  /* jump by the datatype extent */
                     } else {
                         assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
-                        pStack->disp += description[pStack->index].loop.extent;
+                        pStack->disp += description[pStack->index].loop.extent;  /* jump by the loop extent */
                     }
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
@@ -374,7 +372,6 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
-                continue;
             }
         }
     complete_loop:
@@ -417,15 +414,14 @@ pack_predefined_heterogeneous( opal_convertor_t* CONVERTOR,
                                unsigned char** DESTINATION,
                                size_t* SPACE )
 {
-    uint32_t _count = *(COUNT);
-    size_t _r_blength, _l_blength;
+    const opal_convertor_master_t* master = (CONVERTOR)->master;
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
     unsigned char* _source = (*SOURCE) + _elem->disp;
-    const opal_convertor_master_t* master = (CONVERTOR)->master;
     OPAL_PTRDIFF_TYPE advance;
+    uint32_t _count = *(COUNT);
+    size_t _r_blength;
 
     _r_blength = master->remote_sizes[_elem->common.type];
-    _l_blength = opal_datatype_basicDatatypes[_elem->common.type]->size;
     if( (_count * _r_blength) > *(SPACE) ) {
         _count = (uint32_t)(*(SPACE) / _r_blength);
         if( 0 == _count ) return;  /* nothing to do */
@@ -434,7 +430,7 @@ pack_predefined_heterogeneous( opal_convertor_t* CONVERTOR,
     OPAL_DATATYPE_SAFEGUARD_POINTER( _source, (_count * _elem->extent), (CONVERTOR)->pBaseBuf,
                                      (CONVERTOR)->pDesc, (CONVERTOR)->count );
     DO_DEBUG( opal_output( 0, "pack [l %s r %s] memcpy( %p, %p, %lu ) => space %lu\n",
-                           ((OPAL_PTRDIFF_TYPE)_l_blength == _elem->extent) ? "cont" : "----",
+                           ((OPAL_PTRDIFF_TYPE)(opal_datatype_basicDatatypes[_elem->common.type]->size) == _elem->extent) ? "cont" : "----",
                            ((OPAL_PTRDIFF_TYPE)_r_blength == _elem->extent) ? "cont" : "----",
                            (void*)*(DESTINATION), (void*)_source, (unsigned long)_r_blength,
                            (unsigned long)(*(SPACE)) ); );
@@ -464,7 +460,6 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
     unsigned char *conv_ptr, *iov_ptr;
     size_t iov_len_local;
     uint32_t iov_count;
-    int type;
 
     DO_DEBUG( opal_output( 0, "opal_convertor_general_pack( %p:%p, {%p, %lu}, %d )\n",
                            (void*)pConvertor, (void*)pConvertor->pBaseBuf,
@@ -494,13 +489,12 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
         iov_len_local = iov[iov_count].iov_len;
         while( 1 ) {
             while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
-                type = description[pos_desc].elem.common.type;
                 /* now here we have a basic datatype */
                 DO_DEBUG( opal_output( 0, "pack (%p:%ld, %d, %ld) -> (%p, %ld) type %s\n",
                                        (void*)pConvertor->pBaseBuf, conv_ptr + pElem->elem.disp - pConvertor->pBaseBuf,
                                        count_desc, description[pos_desc].elem.extent,
                                        (void*)iov_ptr, iov_len_local,
-                                       opal_datatype_basicDatatypes[type]->name ); );
+                                       opal_datatype_basicDatatypes[pElem->elem.common.type]->name ); );
 
                 pack_predefined_heterogeneous( pConvertor, pElem, &count_desc,
                                                &conv_ptr, &iov_ptr, &iov_len_local);

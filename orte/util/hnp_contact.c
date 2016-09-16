@@ -182,7 +182,7 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
     /*
      * Check to make sure we have access to the top-level directory
      */
-    headdir = opal_os_path(false, orte_process_info.tmpdir_base, orte_process_info.top_session_dir, NULL);
+    headdir = orte_process_info.top_session_dir;
 
     if( ORTE_SUCCESS != (ret = opal_os_dirpath_access(headdir, 0) )) {
         /* it is okay not to find this as there may not be any
@@ -231,7 +231,6 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
 cleanup:
     if( NULL != cur_dirp )
         closedir(cur_dirp);
-    free(headdir);
 
     return (opal_list_is_empty(hnps) ? ORTE_ERR_NOT_FOUND : ORTE_SUCCESS);
 }

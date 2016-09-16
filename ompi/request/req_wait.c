@@ -16,6 +16,8 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,15 +91,19 @@ int ompi_request_default_wait_any(size_t count,
     ompi_request_t *request=NULL;
     ompi_wait_sync_t sync;
 
+    if (OPAL_UNLIKELY(0 == count)) {
+        *index = MPI_UNDEFINED;
+        return OMPI_SUCCESS;
+    }
+
     WAIT_SYNC_INIT(&sync, 1);
-    
+
     num_requests_null_inactive = 0;
     for (i = 0; i < count; i++) {
         request = requests[i];
 
-        /*
-         * Check for null or completed persistent request.
-         * For MPI_REQUEST_NULL, the req_state is always OMPI_REQUEST_INACTIVE.
+        /* Check for null or completed persistent request. For
+         * MPI_REQUEST_NULL, the req_state is always OMPI_REQUEST_INACTIVE.
          */
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
             num_requests_null_inactive++;
@@ -125,32 +131,33 @@ int ompi_request_default_wait_any(size_t count,
     SYNC_WAIT(&sync);
 
   after_sync_wait:
-    /* recheck the complete status and clean up the sync primitives. Do it backward to
-     * return the earliest complete request to the user. */
+    /* recheck the complete status and clean up the sync primitives.
+     * Do it backward to return the earliest complete request to the
+     * user.
+     */
     for(i = completed-1; (i+1) > 0; i--) {
         request = requests[i];
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
             continue;
         }
-        /* Atomically mark the request as pending. If this succeed then the
-         * request was not completed, and it is now marked as pending. Otherwise,
-         * the request has been completed meanwhile, and it has been atomically
-         * marked as REQUEST_COMPLETE.
+        /* Atomically mark the request as pending. If this succeed then
+         * the request was not completed, and it is now marked as pending.
+         * Otherwise, the request has been completed meanwhile, and it
+         * has been atomically marked as REQUEST_COMPLETE.
          */
         if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             *index = i;
         }
     }
-    
-    if( *index == completed ){
-        /* Only one request has triggered. There was no
-         * in-flight completions.
-         * Drop the signalled flag so we won't block
+
+    if( *index == (int)completed ) {
+        /* Only one request has triggered. There was no in-flight
+         * completions. Drop the signalled flag so we won't block
          * in WAIT_SYNC_RELEASE 
          */
         WAIT_SYNC_SIGNALLED(&sync);
-    }        
+    }
 
     request = requests[*index];
     assert( REQUEST_COMPLETE(request) );
@@ -196,6 +203,10 @@ int ompi_request_default_wait_all( size_t count,
     ompi_request_t *request;
     int mpi_error = OMPI_SUCCESS;
     ompi_wait_sync_t sync;
+
+    if (OPAL_UNLIKELY(0 == count)) {
+        return OMPI_SUCCESS;
+    }
 
     WAIT_SYNC_INIT(&sync, count);
     rptr = requests;
@@ -374,6 +385,11 @@ int ompi_request_default_wait_some(size_t count,
     ompi_wait_sync_t sync;
     size_t sync_sets = 0, sync_unsets = 0;
     
+    if (OPAL_UNLIKELY(0 == count)) {
+        *outcount = MPI_UNDEFINED;
+        return OMPI_SUCCESS;
+    }
+
     WAIT_SYNC_INIT(&sync, 1);
 
     *outcount = 0;
@@ -391,8 +407,8 @@ int ompi_request_default_wait_some(size_t count,
             num_requests_null_inactive++;
             continue;
         }
-
-        if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync) ) {
+        indices[i] = OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync);
+        if( !indices[i] ) {
             /* If the request is completed go ahead and mark it as such */
             assert( REQUEST_COMPLETE(request) );
             num_requests_done++;
@@ -423,15 +439,23 @@ int ompi_request_default_wait_some(size_t count,
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
             continue;
         }
-        /* Atomically mark the request as pending. If this succeed
-         * then the request was not completed, and it is now marked as
-         * pending. Otherwise, the request is complete )either it was
-         * before or it has been meanwhile). The major drawback here
-         * is that we will do all the atomics operations in all cases.
+        /* Here we have 3 possibilities:
+         * a) request was found completed in the first loop
+         *    => ( indices[i] == 0 )
+         * b) request was completed between first loop and this check
+         *    => ( indices[i] == 1 ) and we can NOT atomically mark the 
+         *    request as pending.
+         * c) request wasn't finished yet
+         *    => ( indices[i] == 1 ) and we CAN  atomically mark the 
+         *    request as pending.
+         * NOTE that in any case (i >= num_requests_done) as latter grows
+         * either slowly (in case of partial completion)
+         * OR in parallel with `i` (in case of full set completion)  
          */
-        if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
-            indices[num_requests_done] = i;
-            num_requests_done++;
+        if( !indices[i] ){
+            indices[num_requests_done++] = i;
+        } else if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
+            indices[num_requests_done++] = i;
         }
     }
     sync_unsets = count - num_requests_null_inactive - num_requests_done;

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,7 +94,8 @@ JNIEXPORT void JNICALL Java_mpi_Datatype_getLbExtent(
 {
     MPI_Aint lb, extent;
     int rc = MPI_Type_get_extent((MPI_Datatype)type, &lb, &extent);
-    ompi_java_exceptionCheck(env, rc);
+    if(ompi_java_exceptionCheck(env, rc))
+        return;
 
     jint *lbExt = (*env)->GetIntArrayElements(env, jLbExt, NULL);
     lbExt[0] = (jint)lb;
@@ -105,7 +108,8 @@ JNIEXPORT void JNICALL Java_mpi_Datatype_getTrueLbExtent(
 {
     MPI_Aint lb, extent;
     int rc = MPI_Type_get_true_extent((MPI_Datatype)type, &lb, &extent);
-    ompi_java_exceptionCheck(env, rc);
+    if(ompi_java_exceptionCheck(env, rc))
+        return;
 
     jint *lbExt = (*env)->GetIntArrayElements(env, jLbExt, NULL);
     lbExt[0] = (jint)lb;

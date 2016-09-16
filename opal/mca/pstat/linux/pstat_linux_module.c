@@ -310,6 +310,31 @@ static int query(pid_t pid,
             }
         }
         fclose(fp);
+
+        /* now create the smaps filename for this proc */
+        memset(data, 0, sizeof(data));
+        numchars = snprintf(data, sizeof(data), "/proc/%d/smaps", pid);
+        if (numchars >= sizeof(data)) {
+            return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        }
+
+        if (NULL == (fp = fopen(data, "r"))) {
+            /* ignore this */
+            return OPAL_SUCCESS;
+        }
+
+        /* parse it to find lines that start with "Pss" */
+        while (NULL != (dptr = local_getline(fp))) {
+            if (NULL == (value = local_stripper(dptr))) {
+                /* cannot process */
+                continue;
+            }
+            /* look for Pss */
+            if (0 == strncmp(dptr, "Pss", strlen("Pss"))) {
+                stats->pss += convert_value(value);
+            }
+        }
+        fclose(fp);
     }
 
     if (NULL != nstats) {

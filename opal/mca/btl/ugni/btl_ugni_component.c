@@ -430,8 +430,8 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
     /* check for datagram completion */
     OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);  /* TODO: may not need lock for this function */
     grc = GNI_PostDataProbeById (ugni_module->device->dev_handle, &datagram_id);
-    OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
     if (OPAL_LIKELY(GNI_RC_SUCCESS != grc)) {
+        OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
         return 0;
     }
 
@@ -447,7 +447,6 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
     }
 
     /* wait for the incoming datagram to complete (in case it isn't) */
-    OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);  /* TODO: may not need lock for this function */
     grc = GNI_EpPostDataWaitById (handle, datagram_id, -1, &post_state,
                                   &remote_addr, &remote_id);
     OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
@@ -489,7 +488,14 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
                  data, (void *) ep, remote_id));
 
     /* NTH: TODO -- error handling */
+    opal_mutex_lock (&ep->lock);
+    if (handle != ugni_module->wildcard_ep) {
+        /* directed post complete */
+        ep->dg_posted = false;
+    }
+
     (void) mca_btl_ugni_ep_connect_progress (ep);
+    opal_mutex_unlock (&ep->lock);
 
     if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state) {
         /*  process messages waiting in the endpoint's smsg mailbox */

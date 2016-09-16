@@ -152,7 +152,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
     double comm_time = 0.0, start_comm_time = 0.0, end_comm_time = 0.0;
     double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
-    mca_io_ompio_print_entry nentry;
+    mca_common_ompio_print_entry nentry;
 #endif
     
     
@@ -455,7 +455,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
-            fh->f_sort_iovec (aggr_data[i]->global_iov_array, total_fview_count, aggr_data[i]->sorted);
+            fcoll_base_sort_iovec (aggr_data[i]->global_iov_array, total_fview_count, aggr_data[i]->sorted);
         }
         
         if (NULL != local_iov_array){
@@ -470,7 +470,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     
     
 #if DEBUG_ON
-        if (my_aggregator == fh->f_rank) {
+        if (aggregators[i] == fh->f_rank) {
             uint32_t tv=0;
             for (tv=0 ; tv<total_fview_count ; tv++) {
                 printf("%d: OFFSET: %lld   LENGTH: %ld\n",
@@ -591,10 +591,17 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
         
         /* Write data for iteration i-1 */
         for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+            start_write_time = MPI_Wtime();
+#endif
             ret = write_init (fh, aggregators[i], aggr_data[i], write_chunksize );
             if (OMPI_SUCCESS != ret){
                 goto exit;
             }            
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+            end_write_time = MPI_Wtime();
+            write_time += end_write_time - start_write_time;
+#endif
 
             if (!aggr_data[i]->prev_sendbuf_is_contiguous && aggr_data[i]->prev_bytes_sent) {
                 free (aggr_data[i]->prev_send_buf);
@@ -617,10 +624,17 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
         
         /* Write data for iteration i=cycles-1 */
         for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+            start_write_time = MPI_Wtime();
+#endif
             ret = write_init (fh, aggregators[i], aggr_data[i], write_chunksize );
             if (OMPI_SUCCESS != ret){
                 goto exit;
             }                    
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+            end_write_time = MPI_Wtime();
+            write_time += end_write_time - start_write_time;
+#endif
             
             if (!aggr_data[i]->prev_sendbuf_is_contiguous && aggr_data[i]->prev_bytes_sent) {
                 free (aggr_data[i]->prev_send_buf);
@@ -635,14 +649,15 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     nentry.time[0] = write_time;
     nentry.time[1] = comm_time;
     nentry.time[2] = exch_write;
-    if (my_aggregator == fh->f_rank)
+    nentry.aggregator = 0;
+    for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
+        if (aggregators[i] == fh->f_rank)
 	nentry.aggregator = 1;
-    else
-	nentry.aggregator = 0;
+    }
     nentry.nprocs_for_coll = dynamic_gen2_num_io_procs;
-    if (!fh->f_full_print_queue(WRITE_PRINT_QUEUE)){
-        fh->f_register_print_entry(WRITE_PRINT_QUEUE,
-                                   nentry);
+    if (!mca_common_ompio_full_print_queue(fh->f_coll_write_time)){
+        mca_common_ompio_register_print_entry(fh->f_coll_write_time,
+                                               nentry);
     }
 #endif
     
@@ -725,19 +740,12 @@ static int write_init (mca_io_ompio_file_t *fh, int aggregator, mca_io_ompio_agg
                                                                                       aggr_data->prev_num_io_entries, 
                                                                                       &last_array_pos, &last_pos,
                                                                                       write_chunksize );
-#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-            start_write_time = MPI_Wtime();
-#endif
             if ( 0 >  fh->f_fbtl->fbtl_pwritev (fh)) {
                 free ( aggr_data->prev_io_array);
                 opal_output (1, "dynamic_gen2_write_all: fbtl_pwritev failed\n");
                 ret = OMPI_ERROR;
                 goto exit;
             }
-#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-            end_write_time = MPI_Wtime();
-            write_time += end_write_time - start_write_time;
-#endif
         }
         free ( fh->f_io_array );
         free ( aggr_data->prev_io_array);
@@ -1087,9 +1095,9 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
             printf("%d : global_count : %ld, bytes_sent : %d\n",
                    rank,global_count, bytes_sent);
 #endif
-#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-            start_comm_time = MPI_Wtime();
-#endif
+//#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+//            start_comm_time = MPI_Wtime();
+//#endif
             /*************************************************************************
              *** 7e. Perform the actual communication
              *************************************************************************/
@@ -1198,10 +1206,10 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
     }
 #endif
     
-#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-    end_comm_time = MPI_Wtime();
-    comm_time += (end_comm_time - start_comm_time);
-#endif
+//#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+//    end_comm_time = MPI_Wtime();
+//    comm_time += (end_comm_time - start_comm_time);
+//#endif
     /**********************************************************
      *** 7f. Create the io array, and pass it to fbtl
      *********************************************************/

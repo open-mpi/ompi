@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -367,7 +369,7 @@ static void recv_handler(int sd, short flags, void *cbdata)
     mca_oob_usock_conn_op_t *op = (mca_oob_usock_conn_op_t*)cbdata;
     mca_oob_usock_hdr_t hdr;
     mca_oob_usock_peer_t *peer;
-    uint64_t *ui64;
+    uint64_t ui64;
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s:usock:recv:handler called",
@@ -407,8 +409,8 @@ static void recv_handler(int sd, short flags, void *cbdata)
                             peer->state);
             }
             CLOSE_THE_SOCKET(sd);
-            ui64 = (uint64_t*)(&peer->name);
-            opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), NULL);
+            memcpy(&ui64, &peer->name, sizeof(uint64_t));
+            opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, ui64, NULL);
             OBJ_RELEASE(peer);
         }
     }

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,12 +24,13 @@
 #include <stdlib.h>
 
 #include "mpi.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
 #include "opal/util/show_help.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
+
+#include "ompi/mca/common/ompio/common_ompio.h"
 
 int mca_fs_base_file_unselect(mca_io_ompio_file_t *file)
 {

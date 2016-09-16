@@ -6,12 +6,18 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
+
+#if !defined(OPAL_THREADS_WAIT_SYNC_H)
+#define OPAL_THREADS_WAIT_SYNC_H
+
 #include "opal/sys/atomic.h"
 #include "opal/threads/condition.h"
 #include <pthread.h>
@@ -36,8 +42,8 @@ typedef struct ompi_wait_sync_t {
 /* The loop in release handles a race condition between the signaling
  * thread and the destruction of the condition variable. The signaling
  * member will be set to false after the final signaling thread has
- * finished opertating on the sync object. This is done to avoid
- * extra atomics in the singalling function and keep it as fast
+ * finished operating on the sync object. This is done to avoid
+ * extra atomics in the signalling function and keep it as fast
  * as possible. Note that the race window is small so spinning here
  * is more optimal than sleeping since this macro is called in
  * the critical path. */
@@ -67,7 +73,7 @@ typedef struct ompi_wait_sync_t {
 
 #define WAIT_SYNC_SIGNALLED(sync){                    \
         (sync)->signaling = false;                    \
-}        
+}
 
 OPAL_DECLSPEC int sync_wait_mt(ompi_wait_sync_t *sync);
 static inline int sync_wait_st (ompi_wait_sync_t *sync)
@@ -82,11 +88,11 @@ static inline int sync_wait_st (ompi_wait_sync_t *sync)
 
 #define WAIT_SYNC_INIT(sync,c)                                  \
     do {                                                        \
-        (sync)->count = c;                                      \
+        (sync)->count = (c);                                    \
         (sync)->next = NULL;                                    \
         (sync)->prev = NULL;                                    \
         (sync)->status = 0;                                     \
-        (sync)->signaling = true;                               \
+        (sync)->signaling = (0 != (c));                         \
         if (opal_using_threads()) {                             \
             pthread_cond_init (&(sync)->condition, NULL);       \
             pthread_mutex_init (&(sync)->lock, NULL);           \
@@ -115,3 +121,5 @@ static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates, int sta
 }
 
 END_C_DECLS
+
+#endif /* defined(OPAL_THREADS_WAIT_SYNC_H) */

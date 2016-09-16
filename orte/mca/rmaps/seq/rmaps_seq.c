@@ -15,6 +15,7 @@
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,7 @@
 #include <ctype.h>
 
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/util/show_help.h"
@@ -70,9 +72,11 @@ static void sn_des(seq_node_t *p)
 {
     if (NULL != p->hostname) {
         free(p->hostname);
+        p->hostname = NULL;
     }
     if (NULL != p->cpuset) {
         free(p->cpuset);
+        p->cpuset = NULL;
     }
 }
 OBJ_CLASS_INSTANCE(seq_node_t,
@@ -101,7 +105,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t node_list, *seq_list, sq_list;
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
-    char *hosts, *sep, *eptr;
+    char *hosts = NULL, *sep, *eptr;
     FILE *fp;
     opal_hwloc_resource_type_t rtype;
 
@@ -156,7 +160,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     /* if there is a default hostfile, go and get its ordered list of nodes */
     OBJ_CONSTRUCT(&default_seq_list, opal_list_t);
     if (NULL != orte_default_hostfile) {
-        char *hstname;
+        char *hstname = NULL;
         /* open the file */
         fp = fopen(orte_default_hostfile, "r");
         if (NULL == fp) {
@@ -168,6 +172,11 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             if (0 == strlen(hstname)) {
                 free(hstname);
                 /* blank line - ignore */
+                continue;
+            }
+            if( '#' == hstname[0] ) {
+                free(hstname);
+                /* Comment line - ignore */
                 continue;
             }
             sq = OBJ_NEW(seq_node_t);
@@ -182,6 +191,15 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 *(eptr+1) = 0;
                 sq->cpuset = strdup(sep);
             }
+
+            // Strip off the FQDN if present, ignore IP addresses
+            if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(hstname) ) {
+                char *ptr;
+                if (NULL != (ptr = strchr(hstname, '.'))) {
+                    *ptr = '\0';
+                }
+            }
+
             sq->hostname = hstname;
             opal_list_append(&default_seq_list, &sq->super);
         }
@@ -243,6 +261,10 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             seq_list = &sq_list;
         } else if (orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
             char *hstname;
+            if (NULL == hosts) {
+                rc = ORTE_ERR_NOT_FOUND;
+                goto error;
+            }
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:seq: using hostfile %s nodes on app %s", hosts, app->app);
             OBJ_CONSTRUCT(&sq_list, opal_list_t);
@@ -255,6 +277,16 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 goto error;
             }
             while (NULL != (hstname = orte_getline(fp))) {
+                if (0 == strlen(hstname)) {
+                    free(hstname);
+                    /* blank line - ignore */
+                    continue;
+                }
+                if( '#' == hstname[0] ) {
+                    free(hstname);
+                    /* Comment line - ignore */
+                    continue;
+                }
                 sq = OBJ_NEW(seq_node_t);
                 if (NULL != (sep = strchr(hstname, ' '))) {
                     *sep = '\0';
@@ -267,6 +299,15 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                     *(eptr+1) = 0;
                     sq->cpuset = strdup(sep);
                 }
+
+                // Strip off the FQDN if present, ignore IP addresses
+                if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(hstname) ) {
+                    char *ptr;
+                    if (NULL != (ptr = strchr(hstname, '.'))) {
+                        (*ptr) = '\0';
+                    }
+                }
+
                 sq->hostname = hstname;
                 opal_list_append(&sq_list, &sq->super);
             }

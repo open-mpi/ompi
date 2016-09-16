@@ -44,7 +44,7 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
     int i, j, size, rank, err = MPI_SUCCESS, max_size;
     ompi_request_t **preq, **reqs = NULL;
     char *tmp_buffer, *save_buffer = NULL;
-    ptrdiff_t ext, gap;
+    ptrdiff_t ext, gap = 0;
 
     /* Initialize. */
 

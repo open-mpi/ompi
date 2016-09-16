@@ -15,6 +15,8 @@
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -163,6 +165,8 @@ static int rte_init(void)
         /* ensure we use the isolated pmix component */
         opal_setenv (OPAL_MCA_PREFIX"pmix", "isolated", true, &environ);
     } else {
+        /* we want to use PMIX_NAMESPACE that will be sent by the hnp as a jobid */
+        opal_setenv(OPAL_MCA_PREFIX"orte_launch", "1", true, &environ);
         /* spawn our very own HNP to support us */
         if (ORTE_SUCCESS != (rc = fork_hnp())) {
             ORTE_ERROR_LOG(rc);
@@ -564,6 +568,8 @@ static int fork_hnp(void)
         exit(1);
 
     } else {
+        int count;
+
         free(cmd);
         /* I am the parent - wait to hear something back and
          * report results
@@ -630,12 +636,9 @@ static int fork_hnp(void)
 
         /* split the pmix_uri into its parts */
         argv = opal_argv_split(cptr, ',');
-        if (4 != opal_argv_count(argv)) {
-            opal_argv_free(argv);
-            return ORTE_ERR_BAD_PARAM;
-        }
+        count = opal_argv_count(argv);
         /* push each piece into the environment */
-        for (i=0; i < 4; i++) {
+        for (i=0; i < count; i++) {
             pmixenvars[i] = strdup(argv[i]);
             putenv(pmixenvars[i]);
         }

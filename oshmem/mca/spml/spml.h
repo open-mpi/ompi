@@ -5,6 +5,8 @@
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -166,9 +168,9 @@ typedef int (*mca_spml_base_module_oob_get_mkeys_fn_t)(int pe,
  * @return OSHMEM_SUCCESS or failure status.
  *
  */
-typedef int (*mca_spml_base_module_add_procs_fn_t)(oshmem_proc_t** procs,
+typedef int (*mca_spml_base_module_add_procs_fn_t)(ompi_proc_t** procs,
                                                    size_t nprocs);
-typedef int (*mca_spml_base_module_del_procs_fn_t)(oshmem_proc_t** procs,
+typedef int (*mca_spml_base_module_del_procs_fn_t)(ompi_proc_t** procs,
                                                    size_t nprocs);
 
 /**

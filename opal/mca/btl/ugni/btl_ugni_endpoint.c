@@ -17,7 +17,7 @@ static void mca_btl_ugni_ep_construct (mca_btl_base_endpoint_t *ep)
 {
     memset ((char *) ep + sizeof(ep->super), 0, sizeof (*ep) - sizeof (ep->super));
     OBJ_CONSTRUCT(&ep->frag_wait_list, opal_list_t);
-    OBJ_CONSTRUCT(&ep->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ep->lock, opal_recursive_mutex_t);
 }
 
 static void mca_btl_ugni_ep_destruct (mca_btl_base_endpoint_t *ep)
@@ -202,11 +202,17 @@ int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
 
     if (GNI_SMSG_TYPE_INVALID == ep->remote_attr.smsg_attr.msg_type) {
         /* use datagram to exchange connection information with the remote peer */
-        rc = mca_btl_ugni_directed_ep_post (ep);
-        if (OPAL_SUCCESS == rc) {
-            rc = OPAL_ERR_RESOURCE_BUSY;
+        if (!ep->dg_posted) {
+            rc = mca_btl_ugni_directed_ep_post (ep);
+            if (OPAL_SUCCESS == rc) {
+                ep->dg_posted = true;
+                rc = OPAL_ERR_RESOURCE_BUSY;
+            }
+
+            return rc;
         }
-        return rc;
+
+        return OPAL_SUCCESS;
     }
 
     return mca_btl_ugni_ep_connect_finish (ep);

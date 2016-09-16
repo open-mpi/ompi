@@ -41,9 +41,9 @@ struct ompi_osc_pt2pt_frag_t {
 typedef struct ompi_osc_pt2pt_frag_t ompi_osc_pt2pt_frag_t;
 OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_frag_t);
 
-extern int ompi_osc_pt2pt_frag_start(ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_frag_t *buffer);
-extern int ompi_osc_pt2pt_frag_flush_target(ompi_osc_pt2pt_module_t *module, int target);
-extern int ompi_osc_pt2pt_frag_flush_all(ompi_osc_pt2pt_module_t *module);
+int ompi_osc_pt2pt_frag_start(ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_frag_t *buffer);
+int ompi_osc_pt2pt_frag_flush_target(ompi_osc_pt2pt_module_t *module, int target);
+int ompi_osc_pt2pt_frag_flush_all(ompi_osc_pt2pt_module_t *module);
 
 static inline int ompi_osc_pt2pt_frag_finish (ompi_osc_pt2pt_module_t *module,
                                               ompi_osc_pt2pt_frag_t* buffer)

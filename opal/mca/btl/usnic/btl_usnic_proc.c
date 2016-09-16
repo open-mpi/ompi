@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -643,7 +643,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
         opal_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        module->fabric_info->ep_attr->max_msg_size,
                        (NULL == proc->proc_opal->proc_hostname) ?
                        "unknown" : proc->proc_opal->proc_hostname,
@@ -700,7 +700,7 @@ static int start_av_insert(opal_btl_usnic_module_t *module,
         opal_show_help("help-mpi-btl-usnic.txt", "libfabric API failed",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "fi_av_insert()", __FILE__, __LINE__,
                        ret,
                        "Failed to initiate AV insert");

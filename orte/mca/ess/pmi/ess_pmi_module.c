@@ -93,7 +93,8 @@ static int rte_init(void)
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
     char **peers=NULL, *mycpuset, **cpusets=NULL;
-    opal_process_name_t name;
+    opal_process_name_t wildcard_rank, pname;
+    bool bool_val, *bool_ptr = &bool_val, tdir_mca_override = false;
     size_t i;
 
     /* run the prolog */
@@ -137,8 +138,12 @@ static int rte_init(void)
     ORTE_PROC_MY_NAME->vpid = OPAL_PROC_MY_NAME.vpid;
 
     /* setup a name for retrieving data associated with the job */
-    name.jobid = ORTE_PROC_MY_NAME->jobid;
-    name.vpid = ORTE_NAME_WILDCARD->vpid;
+    wildcard_rank.jobid = ORTE_PROC_MY_NAME->jobid;
+    wildcard_rank.vpid = ORTE_NAME_WILDCARD->vpid;
+
+    /* setup a name for retrieving proc-specific data */
+    pname.jobid = ORTE_PROC_MY_NAME->jobid;
+    pname.vpid = 0;
 
     /* get our local rank from PMI */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_RANK,
@@ -160,7 +165,7 @@ static int rte_init(void)
 
     /* get max procs for this application */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_MAX_PROCS,
-                          &name, &u32ptr, OPAL_UINT32);
+                          &wildcard_rank, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
         error = "getting max procs";
         goto error;
@@ -169,7 +174,7 @@ static int rte_init(void)
 
     /* get job size */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_JOB_SIZE,
-                          &name, &u32ptr, OPAL_UINT32);
+                          &wildcard_rank, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
         error = "getting job size";
         goto error;
@@ -203,11 +208,18 @@ static int rte_init(void)
     /* get the number of local peers - required for wireup of
      * shared memory BTL */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_SIZE,
-                          &name, &u32ptr, OPAL_UINT32);
+                          &wildcard_rank, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS == ret) {
         orte_process_info.num_local_peers = u32 - 1;  // want number besides ourselves
     } else {
         orte_process_info.num_local_peers = 0;
+    }
+
+    /* get number of nodes in the job */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NUM_NODES,
+                                   &wildcard_rank, &u32ptr, OPAL_UINT32);
+    if (OPAL_SUCCESS == ret) {
+        orte_process_info.num_nodes = u32;
     }
 
     /* setup transport keys in case the MPI layer needs them -
@@ -231,10 +243,67 @@ static int rte_init(void)
         free(string_key);
     }
 
+    /* retrieve temp directories info */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_TMPDIR, &wildcard_rank, &val, OPAL_STRING);
+    if (OPAL_SUCCESS == ret && NULL != val) {
+        /* We want to provide user with ability 
+         * to override RM settings at his own risk
+         */
+        if( NULL == orte_process_info.top_session_dir ){
+            orte_process_info.top_session_dir = val;
+        } else {
+            /* keep the MCA setting */
+            tdir_mca_override = true;
+            free(val);
+        }
+        val = NULL;
+    }
+
+    if( !tdir_mca_override ){
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NSDIR, &wildcard_rank, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != val) {
+            /* We want to provide user with ability 
+             * to override RM settings at his own risk
+             */
+            if( NULL == orte_process_info.job_session_dir ){
+                orte_process_info.job_session_dir = val;
+            } else {
+                /* keep the MCA setting */
+                free(val);
+                tdir_mca_override = true;
+            }
+            val = NULL;
+        }
+    }
+
+    if( !tdir_mca_override ){
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_PROCDIR, &wildcard_rank, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != val) {
+            /* We want to provide user with ability 
+             * to override RM settings at his own risk
+             */
+            if( NULL == orte_process_info.proc_session_dir ){
+                orte_process_info.proc_session_dir = val;
+            } else {
+                /* keep the MCA setting */
+                tdir_mca_override = true;
+                free(val);
+            }
+            val = NULL;
+        }
+    }
+
+    if( !tdir_mca_override ){
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_TDIR_RMCLEAN, &wildcard_rank, &bool_ptr, OPAL_BOOL);
+        if (OPAL_SUCCESS == ret ) {
+            orte_process_info.rm_session_dirs = bool_val;
+        }
+    }
+
     /* retrieve our topology */
     val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_TOPO,
-                                   &name, &val, OPAL_STRING);
+                                   &wildcard_rank, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
         /* load the topology */
         if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
@@ -293,7 +362,7 @@ static int rte_init(void)
             error = "topology export";
             goto error;
         }
-        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(&name, kv))) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(&wildcard_rank, kv))) {
             error = "topology store";
             goto error;
         }
@@ -310,12 +379,13 @@ static int rte_init(void)
         }
         /* retrieve the local peers */
         OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
-                              &name, &val, OPAL_STRING);
+                              &wildcard_rank, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
             peers = opal_argv_split(val, ',');
             free(val);
             /* and their cpusets, if available */
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS, &name, &val, OPAL_STRING);
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS,
+                                           &wildcard_rank, &val, OPAL_STRING);
             if (OPAL_SUCCESS == ret && NULL != val) {
                 cpusets = opal_argv_split(val, ':');
                 free(val);
@@ -339,13 +409,13 @@ static int rte_init(void)
         } else {
             mycpuset = NULL;
         }
-        name.jobid = ORTE_PROC_MY_NAME->jobid;
+        pname.jobid = ORTE_PROC_MY_NAME->jobid;
         for (i=0; NULL != peers[i]; i++) {
             kv = OBJ_NEW(opal_value_t);
             kv->key = strdup(OPAL_PMIX_LOCALITY);
             kv->type = OPAL_UINT16;
-            name.vpid = strtoul(peers[i], NULL, 10);
-            if (name.vpid == ORTE_PROC_MY_NAME->vpid) {
+            pname.vpid = strtoul(peers[i], NULL, 10);
+            if (pname.vpid == ORTE_PROC_MY_NAME->vpid) {
                 /* we are fully local to ourselves */
                 u16 = OPAL_PROC_ALL_LOCAL;
             } else if (NULL == mycpuset || NULL == cpusets[i] ||
@@ -359,9 +429,9 @@ static int rte_init(void)
             OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                                  "%s ess:pmi:locality: proc %s locality %x",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&name), u16));
+                                 ORTE_NAME_PRINT(&pname), u16));
             kv->data.uint16 = u16;
-            ret = opal_pmix.store_local(&name, kv);
+            ret = opal_pmix.store_local(&pname, kv);
             if (OPAL_SUCCESS != ret) {
                 error = "local store of locality";
                 opal_argv_free(peers);

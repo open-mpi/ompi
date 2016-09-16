@@ -15,6 +15,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -231,16 +233,18 @@ char *opal_path_access(char *fname, char *path, int mode)
 {
     char *fullpath = NULL;
     struct stat buf;
+    bool relative;
 
     /* Allocate space for the full pathname. */
     if (NULL == path) {
         fullpath = opal_os_path(false, fname, NULL);
     } else {
-        fullpath = opal_os_path(false, path, fname, NULL);
+        relative = !opal_path_is_absolute(path);
+        fullpath = opal_os_path(relative, path, fname, NULL);
     }
-    if (NULL == fullpath)
+    if (NULL == fullpath) {
         return NULL;
-
+    }
     /* first check to see - is this a file or a directory? We
      * only want files
      */
@@ -447,7 +451,7 @@ static char *opal_check_mtab(char *dev_path)
  *
  * @fname[in]          File name to check
  * @fstype[out]        File system type if retval is true
- * 
+ *
  * @retval true                If fname is on NFS, Lustre, Panasas or GPFS
  * @retval false               otherwise
  *
@@ -700,7 +704,7 @@ opal_path_df(const char *path,
 
     /* now set the amount of free space available on path */
                                /* sometimes buf.f_bavail is negative */
-    *out_avail = buf.f_bsize * ((int)buf.f_bavail < 0 ? 0 : buf.f_bavail);
+    *out_avail = (uint64_t)buf.f_bsize * (uint64_t)((long)buf.f_bavail < 0 ? 0 : buf.f_bavail);
 
     OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: stat(v)fs states "
                          "path: %s has %"PRIu64 " B of free space.",

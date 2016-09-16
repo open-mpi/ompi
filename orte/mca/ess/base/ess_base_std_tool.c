@@ -145,10 +145,9 @@ int orte_ess_base_tool_setup(void)
      * tmp base where any other session directories on
      * this node might be located
      */
-    if (ORTE_SUCCESS != (ret = orte_session_dir_get_name(NULL,
-                                                         &orte_process_info.tmpdir_base,
-                                                         &orte_process_info.top_session_dir,
-                                                         orte_process_info.nodename, NULL))) {
+
+    ret = orte_session_setup_base(ORTE_PROC_MY_NAME);
+    if (ORTE_SUCCESS != ret ) {
         ORTE_ERROR_LOG(ret);
         error = "define session dir names";
         goto error;

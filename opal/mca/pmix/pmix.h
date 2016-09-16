@@ -27,6 +27,7 @@
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
 #include "opal/util/proc.h"
+#include "opal/hash_string.h"
 
 #include "opal/mca/pmix/pmix_types.h"
 #include "opal/mca/pmix/pmix_server.h"
@@ -41,6 +42,14 @@ extern bool opal_pmix_base_async_modex;
 extern int opal_pmix_base_exchange(opal_value_t *info,
                                    opal_pmix_pdata_t *pdat,
                                    int timeout);
+
+/*
+ * Count the fash for the the external RM
+ */
+#define OPAL_HASH_JOBID( str, hash ){               \
+    OPAL_HASH_STR( str, hash );                     \
+    hash &= ~(0x8000);                              \
+}
 
 /**
  * Provide a simplified macro for sending data via modex

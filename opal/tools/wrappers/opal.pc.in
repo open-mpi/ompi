@@ -9,6 +9,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 includedir=@includedir@
 libdir=@libdir@
+pkgincludedir=@opalincludedir@
 #
 # Note that the EXTRA_LIBS are only necessary when static linking
 # (they're pulled in via libopen-pal.so's implicit dependencies), so

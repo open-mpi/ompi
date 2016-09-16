@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2013 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -28,7 +28,7 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
 /*
  * This structure is needed so that we can close the modules

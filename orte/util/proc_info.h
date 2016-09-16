@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -119,8 +119,10 @@ struct orte_proc_info_t {
      */
     char *tmpdir_base;                  /**< Base directory of the session dir tree */
     char *top_session_dir;              /**< Top-most directory of the session tree */
+    char *jobfam_session_dir;           /**< Session directory for this family of jobs (i.e., share same mpirun) */
     char *job_session_dir;              /**< Session directory for job */
     char *proc_session_dir;             /**< Session directory for the process */
+    bool rm_session_dirs;               /**< Session directories will be cleaned up by RM */
 
     char *sock_stdin;                   /**< Path name to temp file for stdin. */
     char *sock_stdout;                  /**< Path name to temp file for stdout. */

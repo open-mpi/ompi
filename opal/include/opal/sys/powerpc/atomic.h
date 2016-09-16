@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -55,6 +55,9 @@
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
 #define OPAL_HAVE_ATOMIC_SWAP_64 1
 #define OPAL_HAVE_ATOMIC_LLSC_64 1
+#define OPAL_HAVE_ATOMIC_MATH_64 1
+#define OPAL_HAVE_ATOMIC_ADD_64 1
+#define OPAL_HAVE_ATOMIC_SUB_64 1
 #endif
 
 
@@ -127,6 +130,16 @@ void opal_atomic_isync(void)
 #else
 #define OPAL_ASM_ADDR(a) (a)
 #endif
+
+#if defined(__PGI)
+/* work-around for bug in PGI 16.5-16.7 where the compiler fails to
+ * correctly emit load instructions for 64-bit operands. without this
+ * it will emit lwz instead of ld to load the 64-bit operand. */
+#define OPAL_ASM_VALUE64(x) (void *)(intptr_t) (x)
+#else
+#define OPAL_ASM_VALUE64(x) x
+#endif
+
 
 static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
                                         int32_t oldval, int32_t newval)
@@ -217,6 +230,38 @@ static inline int32_t opal_atomic_swap_32(volatile int32_t *addr, int32_t newval
 #if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
 
 #if  OPAL_GCC_INLINE_ASSEMBLY
+static inline int64_t opal_atomic_add_64 (volatile int64_t* v, int64_t inc)
+{
+   int64_t t;
+
+   __asm__ __volatile__("1:   ldarx   %0, 0, %3    \n\t"
+                        "     add     %0, %2, %0   \n\t"
+                        "     stdcx.  %0, 0, %3    \n\t"
+                        "     bne-    1b           \n\t"
+                        : "=&r" (t), "=m" (*v)
+                        : "r" (OPAL_ASM_VALUE64(inc)), "r" OPAL_ASM_ADDR(v)
+                        : "cc");
+
+   return t;
+}
+
+
+static inline int64_t opal_atomic_sub_64 (volatile int64_t* v, int64_t dec)
+{
+   int64_t t;
+
+   __asm__ __volatile__(
+                        "1:   ldarx   %0,0,%3      \n\t"
+                        "     subf    %0,%2,%0     \n\t"
+                        "     stdcx.  %0,0,%3      \n\t"
+                        "     bne-    1b           \n\t"
+                        : "=&r" (t), "=m" (*v)
+                        : "r" (OPAL_ASM_VALUE64(dec)), "r" OPAL_ASM_ADDR(v)
+                        : "cc");
+
+   return t;
+}
+
 static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval, int64_t newval)
 {
@@ -230,7 +275,7 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                          "   bne-    1b         \n\t"
                          "2:"
                          : "=&r" (ret), "=m" (*addr)
-                         : "r" (addr), "r" (oldval), "r" (newval), "m" (*addr)
+                         : "r" (addr), "r" (OPAL_ASM_VALUE64(oldval)), "r" (OPAL_ASM_VALUE64(newval))
                          : "cc", "memory");
 
    return (ret == oldval);
@@ -243,21 +288,21 @@ static inline int64_t opal_atomic_ll_64(volatile int64_t *addr)
    __asm__ __volatile__ ("ldarx   %0, 0, %1  \n\t"
                          : "=&r" (ret)
                          : "r" (addr)
-                         :);
+                         );
    return ret;
 }
 
 static inline int opal_atomic_sc_64(volatile int64_t *addr, int64_t newval)
 {
-    int32_t ret, foo;
+    int32_t ret;
 
-    __asm__ __volatile__ ("   stdcx.  %4, 0, %3  \n\t"
+    __asm__ __volatile__ ("   stdcx.  %2, 0, %1  \n\t"
                           "   li      %0,0       \n\t"
                           "   bne-    1f         \n\t"
                           "   ori     %0,%0,1    \n\t"
                           "1:"
-                          : "=r" (ret), "=m" (*addr), "=r" (foo)
-                          : "r" (addr), "r" (newval)
+                          : "=r" (ret)
+                          : "r" (addr), "r" (OPAL_ASM_VALUE64(newval))
                           : "cc", "memory");
     return ret;
 }
@@ -294,7 +339,7 @@ static inline int64_t opal_atomic_swap_64(volatile int64_t *addr, int64_t newval
                          "   stdcx.  %3, 0, %2  \n\t"
                          "   bne-    1b         \n\t"
                          : "=&r" (ret), "=m" (*addr)
-                         : "r" (addr), "r" (newval)
+                         : "r" (addr), "r" (OPAL_ASM_VALUE64(newval))
                          : "cc", "memory");
 
    return ret;

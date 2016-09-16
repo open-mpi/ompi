@@ -55,6 +55,9 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#ifdef HAVE_MNTENT_H
+#include <mntent.h>
+#endif
 
 #include <fcntl.h>
 
@@ -200,30 +203,30 @@ static int page_compare (opal_list_item_t **a, opal_list_item_t **b) {
 }
 
 static void mca_mpool_hugepage_find_hugepages (void) {
+#ifdef HAVE_MNTENT_H
     mca_mpool_hugepage_hugepage_t *hp;
     FILE *fh;
-    char *path;
-    char buffer[1024];
-    char *ctx, *tok;
+    struct mntent *mntent;
+    char *opts, *tok, *ctx;
 
-    fh = fopen ("/proc/mounts", "r");
+    fh = setmntent ("/proc/mounts", "r");
     if (NULL == fh) {
         return;
     }
 
-    while (fgets (buffer, 1024, fh)) {
+    while (NULL != (mntent = getmntent(fh))) {
         unsigned long page_size = 0;
 
-        (void) strtok_r (buffer, " ", &ctx);
-        path = strtok_r (NULL, " ", &ctx);
-        tok = strtok_r (NULL, " ", &ctx);
-
-        if (0 != strcmp (tok, "hugetlbfs")) {
+        if (0 != strcmp(mntent->mnt_type, "hugetlbfs")) {
             continue;
         }
 
-        tok = strtok_r (NULL, " ", &ctx);
-        tok = strtok_r (tok, ",", &ctx);
+        opts = strdup(mntent->mnt_opts);
+        if (NULL == opts) {
+            break;
+        }
+
+        tok = strtok_r (opts, ",", &ctx);
 
         do {
             if (0 == strncmp (tok, "pagesize", 8)) {
@@ -236,15 +239,16 @@ static void mca_mpool_hugepage_find_hugepages (void) {
 #if defined(USE_STATFS)
             struct statfs info;
 
-            statfs (path, &info);
+            statfs (mntent->mnt_dir, &info);
 #elif defined(HAVE_STATVFS)
             struct statvfs info;
-            statvfs (path, &info);
+            statvfs (mntent->mnt_dir, &info);
 #endif
             page_size = info.f_bsize;
         } else {
             (void) sscanf (tok, "pagesize=%lu", &page_size);
         }
+        free(opts);
 
         if (0 == page_size) {
             /* could not get page size */
@@ -256,7 +260,7 @@ static void mca_mpool_hugepage_find_hugepages (void) {
             break;
         }
 
-        hp->path = strdup (path);
+        hp->path = strdup (mntent->mnt_dir);
         hp->page_size = page_size;
 
         OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_INFO, opal_mpool_base_framework.framework_output,
@@ -268,7 +272,8 @@ static void mca_mpool_hugepage_find_hugepages (void) {
 
     opal_list_sort (&mca_mpool_hugepage_component.huge_pages, page_compare);
 
-    fclose (fh);
+    endmntent (fh);
+#endif
 }
 
 static int mca_mpool_hugepage_query (const char *hints, int *priority_out,

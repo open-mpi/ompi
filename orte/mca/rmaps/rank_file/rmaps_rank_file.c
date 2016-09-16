@@ -17,6 +17,7 @@
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -37,6 +38,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/hwloc/base/base.h"
 
@@ -488,6 +490,15 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                             goto unlock;
                         }
                         opal_argv_free (argv);
+
+                        // Strip off the FQDN if present, ignore IP addresses
+                        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(node_name) ) {
+                            char *ptr;
+                            if (NULL != (ptr = strchr(node_name, '.'))) {
+                                *ptr = '\0';
+                            }
+                        }
+
                         /* check the rank item */
                         if (NULL == rfmap) {
                             orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);

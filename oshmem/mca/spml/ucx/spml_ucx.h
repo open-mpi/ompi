@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -102,8 +104,8 @@ extern int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys);
 extern void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, int pe);
 extern void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey);
 
-extern int mca_spml_ucx_add_procs(oshmem_proc_t** procs, size_t nprocs);
-extern int mca_spml_ucx_del_procs(oshmem_proc_t** procs, size_t nprocs);
+extern int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs);
+extern int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ucx_fence(void);
 extern int mca_spml_ucx_quiet(void);
 extern int spml_ucx_progress(void);

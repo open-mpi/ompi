@@ -34,7 +34,7 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals4_pending_request_t);
 
 
 struct ompi_mtl_portals4_flowctl_t {
-    bool flowctl_active;
+    int32_t flowctl_active;
 
     int32_t send_slots;
     int32_t max_send_slots;

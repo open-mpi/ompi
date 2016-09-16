@@ -198,6 +198,12 @@ static int mca_pml_ob1_component_register(void)
 
     mca_pml_ob1_param_register_uint("unexpected_limit", 128, &mca_pml_ob1.unexpected_limit);
 
+    mca_pml_ob1.use_all_rdma = false;
+    (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "use_all_rdma",
+                                           "Use all available RDMA btls for the RDMA and RDMA pipeline protocols "
+                                           "(default: false)", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_GROUP, &mca_pml_ob1.use_all_rdma);
+
     mca_pml_ob1.allocator_name = "bucket";
     (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "allocator",
                                            "Name of allocator component for unexpected messages",

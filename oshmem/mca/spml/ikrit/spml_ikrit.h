@@ -4,6 +4,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,6 +106,8 @@ struct mca_spml_ikrit_t {
 #if MXM_API >= MXM_VERSION(2,0)
     int unsync_conn_max;
 #endif
+    size_t put_zcopy_threshold; /* enable zcopy in put if message size is
+                                   greater than the threshold */
 };
 
 typedef struct mca_spml_ikrit_t mca_spml_ikrit_t;
@@ -166,8 +170,8 @@ extern int mca_spml_ikrit_oob_get_mkeys(int pe,
                                         uint32_t seg,
                                         sshmem_mkey_t *mkeys);
 
-extern int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs);
-extern int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs);
+extern int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs);
+extern int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ikrit_fence(void);
 extern int spml_ikrit_progress(void);
 

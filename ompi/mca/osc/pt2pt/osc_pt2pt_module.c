@@ -79,7 +79,6 @@ int ompi_osc_pt2pt_free(ompi_win_t *win)
     OPAL_LIST_DESTRUCT(&module->pending_acc);
 
     osc_pt2pt_gc_clean (module);
-    OPAL_LIST_DESTRUCT(&module->request_gc);
     OPAL_LIST_DESTRUCT(&module->buffer_gc);
     OBJ_DESTRUCT(&module->gc_lock);
 
@@ -93,18 +92,20 @@ int ompi_osc_pt2pt_free(ompi_win_t *win)
     OBJ_DESTRUCT(&module->peer_hash);
     OBJ_DESTRUCT(&module->peer_lock);
 
-    if (NULL != module->epoch_outgoing_frag_count) free(module->epoch_outgoing_frag_count);
+    if (NULL != module->recv_frags) {
+        for (unsigned int i = 0 ; i < module->recv_frag_count ; ++i) {
+            OBJ_DESTRUCT(module->recv_frags + i);
+        }
 
-    if (NULL != module->frag_request && MPI_REQUEST_NULL != module->frag_request) {
-        module->frag_request->req_complete_cb = NULL;
-        ompi_request_cancel (module->frag_request);
-        ompi_request_free (&module->frag_request);
+        free (module->recv_frags);
     }
+
+    if (NULL != module->epoch_outgoing_frag_count) free(module->epoch_outgoing_frag_count);
 
     if (NULL != module->comm) {
         ompi_comm_free(&module->comm);
     }
-    if (NULL != module->incoming_buffer) free (module->incoming_buffer);
+
     if (NULL != module->free_after) free(module->free_after);
 
     free (module);

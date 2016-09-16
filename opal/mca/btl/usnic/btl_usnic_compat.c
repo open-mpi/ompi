@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -536,7 +536,7 @@ opal_btl_usnic_prepare_src(
 
 #if MSGDEBUG2
     opal_output(0, "prep_src: %s %s frag %p, size=%d+%u (was %u), conv=%p\n",
-                module->fabric_info->fabric_attr->name,
+                module->linux_device_name,
                 (reserve + *size) <= module->max_frag_payload?"small":"large",
                 (void *)frag, (int)reserve, (unsigned)*size, (unsigned)osize,
                 (void *)convertor);
@@ -723,7 +723,7 @@ opal_btl_usnic_prepare_src(struct mca_btl_base_module_t *base_module,
 
 #if MSGDEBUG2
     opal_output(0, "prep_src: %s %s frag %p, size=%d+%u (was %u), conv=%p\n",
-                module->fabric_info->fabric_attr->name,
+                module->linux_device_name,
                 (reserve + *size) <= module->max_frag_payload?"small":"large",
                 (void *)frag, (int)reserve, (unsigned)*size, (unsigned)osize,
                 (void *)convertor);

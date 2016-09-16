@@ -219,6 +219,7 @@ int opal_dss_copy_pstat(opal_pstats_t **dest, opal_pstats_t *src,
     p->time = src->time;
     p->priority = src->priority;
     p->num_threads = src->num_threads;
+    p->pss = src->pss;
     p->vsize = src->vsize;
     p->rss = src->rss;
     p->peak_vsize = src->peak_vsize;

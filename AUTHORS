@@ -8,6 +8,8 @@ Github.com pull request).  Note that these email addresses are not
 guaranteed to be current; they are simply a unique indicator of the
 individual who committed them.
 
+-----
+
 Abhishek Joshi, Broadcom
   abhishek.joshi@broadcom.com
 Abhishek Kulkarni, Indiana University
@@ -31,7 +33,6 @@ Anandhi S Jayakumar, Intel
 Andreas Knüpfer, Technische Universitaet Dresden
   andreas.knuepfer@tu-dresden.de
 Andrew Friedley, Indiana University, Sandia National Laboratory, Intel
-  afriedle-intel@users.noreply.github.com
   afriedle@osl.iu.edu
   andrew.friedley@intel.com
 Andrew Lumsdaine, Indiana University
@@ -42,7 +43,7 @@ Anya Tatashina, Sun
   anya.tatashina@sun.com
 Artem Polyakov, Individual, Mellanox
   artpol84@gmail.com
-Aurélien Bouteiller, University of Tennessee-Knoxville
+Aur�lien Bouteiller, University of Tennessee-Knoxville
   bouteill@icl.utk.edu
   darter4.nics.utk.edu
 Avneesh Pant, QLogic
@@ -51,6 +52,8 @@ Bert Wesarg, Technische Universitaet Dresden
   bert.wesarg@tu-dresden.de
 Bill D'Amico, Cisco
   bdamico@cisco.com
+Boris Karasev, Mellanox
+  karasev.b@gmail.com
 Brad Benton, IBM, AMD
   brad.benton@us.ibm.com
 Brad Penoff, University of British Columbia
@@ -58,7 +61,7 @@ Brad Penoff, University of British Columbia
 Brian Barrett, Indiana University, Los Alamos National Laboratory, Sandia National Laboratory
   brbarret@open-mpi.org
 Brice Goglin, INRIA
-  Brice.Goglin@inria.fr
+  brice.goglin@inria.fr
 Camille Coti, University of Tennessee-Knoxville, INRIA
   ccoti@icl.utk.edu
 Christian Bell, QLogic
@@ -79,7 +82,6 @@ David Daniel, Los Alamos National Laboratory
 Denis Dimick, Los Alamos National Laboratory
   dgdimick@lnal.gov
 Devendar Bureddy, Mellanox
-  bureddy@users.noreply.github.com
   devendar@mellanox.com
 Dimitar Pashov, Individual
   d.pashov@gmail.com
@@ -87,13 +89,11 @@ Donald Kerr, Sun, Oracle
   donald.kerr@oracle.com
 Doron Shoham, Mellanox
   dorons@mellanox.com
-Edagr Gabriel, High Performance Computing Center, Stuttgart, University of Tennessee-Knoxville, University of Houston
-  gabriel@Peggys-MacBook-Air.local
-  edgargabriel@users.noreply.github.com
+Edgar Gabriel, High Performance Computing Center, Stuttgart, University of Tennessee-Knoxville, University of Houston
   gabriel@cs.uh.edu
 Elena Elkina, Mellanox
-  elena.elkina@itseez.com
   elena.elkina89@gmail.com
+  elena.elkina@itseez.com
 Ethan Mallove, Sun, Oracle
   ethan.mallove@oracle.com
 Eugene Loh, Sun, Oracle
@@ -112,9 +112,7 @@ Geoffrey Paulsen, IBM
 George Bosilca, University of Tennessee-Knoxville
   bosilca@eecs.utk.edu
   bosilca@icl.utk.edu
-  bosilca@users.noreply.github.com
 Gilles Gouaillardet, Research Organization for Information Science and Technology
-  ggouaillardet@users.noreply.github.com
   gilles.gouaillardet@iferc.org
   gilles@rist.or.jp
 Ginger Young, Los Alamos National Laboratory
@@ -136,7 +134,6 @@ Hadi Montakhabi, University of Houston
 Howard Pritchard, Los Alamos National Laboratory
   howardp@lanl.gov
   hppritcha@gmail.com
-  hppritcha@users.noreply.github.com
 Iain Bason, Sun, Oracle
   iain.bason@oracle.com
 Igor Ivanov, Mellanox
@@ -147,7 +144,6 @@ Igor Usarov, Mellanox
 Jeff Squyres, University of Indiana, Cisco
   jeff@squyres.com
   jsquyres@cisco.com
-  jsquyres@users.noreply.github.com
 Jelena Pjesivac-Grbovic, University of Tennessee-Knoxville
   pjesa@icl.iu.edu
 Jithin Jose, Intel
@@ -174,9 +170,11 @@ Kenneth Matney, Oak Ridge National Laboratory
   matneykdsr@ornl.gov
 L. R. Rajeshnarayanan, Intel
   l.r.rajeshnarayanan@intel.com
+LANL OMPI Bot, Los Alamos National Laboratory
+  openmpihpp@gmail.com
 Laura Casswell, Los Alamos National Laboratory
   lcasswell@lanl.gov
-Lenny Verkhovsky, Volataine
+Lenny Verkhovsky, Voltaire
   lennyb@voltaire.com
 Leobardo Ruiz Rountree, Individual
   lruizrountree@gmail.com
@@ -197,7 +195,6 @@ Mark Taylor, Los Alamos National Laboratory
   mt@lanl.gov
 Matias A Cabral, Intel
   matias.a.cabral@intel.com
-  matcabral@users.noreply.github.com
 Matthias Jurenz, Technische Universitaet Dresden
   matthias.jurenz@tu-dresden.de
 Maximilien Levesque, Individual
@@ -209,10 +206,10 @@ Mitch Sukalski, Sandia National Laboratory
 Mohamad Chaarawi, University of Houston
   mschaara@cs.uh.edu
 Nadezhda Kogteva, Mellanox
-  nadezhda@mngx-orion-01.dmz.e2e.mlnx
   nadezhda.kogteva@itseez.com
+  nadezhda@mngx-orion-01.dmz.e2e.mlnx
 Nadia Derbey, Bull
-  Nadia.Derbey@bull.net
+  nadia.derbey@bull.net
 Nathan Hjelm, Los Alamos National Laboratory
   hjelmn@cs.unm.edu
   hjelmn@lanl.gov
@@ -222,6 +219,8 @@ Nathaniel Graham, Los Alamos National Laboratory
   nrgraham23@gmail.com
 Nick Papior Andersen, Individual
   nickpapior@gmail.com
+Nicolas Chevalier, Bull
+  nicolas.chevalier@bull.net
 Nysal Jan K A, IBM
   jnysal@gmail.com
   jnysal@in.ibm.com
@@ -231,11 +230,12 @@ Oscar Vega-Gisbert, Universitat Politecnica de Valencia
   ovega@dsic.upv.es
 Pak Lui, Sun
   pak.lui@sun.com
+Pascal Deveze, Bull
+  pascal.deveze@atos.net
 Patrick Geoffray, Myricom
   patrick@myri.com
 Pavel Shamis, Mellanox, Oak Ridge National Laboratory
   shamisp@ornl.gov
-  shamisp@users.noreply.github.com
 Pierre Lemarinier, University of Tennessee-Knoxville
   lemarini@icl.utk.edu
 Piotr Lesnicki, Bull
@@ -248,7 +248,6 @@ Rainer Keller, High Performance Computing Center, Stuttgart, Oak Ridge National 
   rainer.keller@hft-stuttgart.de
   rainer.keller@hlrs.de
 Ralph Castain, Los Alamos National Laboratory, Cisco, Greenplum, Intel
-  rhc@odin.cs.indiana.edu
   rhc@open-mpi.org
 Reese Faucette, Cisco
   rfaucett@cisco.com
@@ -258,7 +257,7 @@ Rob Awles, Los Alamos National Laboratory
   rta@lanl.gov
 Rob Latham, Argonne National Laboratory
   robl@mcs.anl.gov
-Rolf vandeVaart, NVIDIA
+Rolf vandeVaart, Sun, Oracle, NVIDIA
   rvandevaart@nvidia.com
 Ron Brightwell, Sandia National Laboratory
   rbbrigh@sandia.gov
@@ -271,7 +270,7 @@ Samuel Gutierrez, Los Alamos National Laboratory
   samuel@lanl.gov
 Sayantan Sur, The Ohio State University
   surs@osu.edu
-Sharon Melamed, Volataire
+Sharon Melamed, Voltaire
   sharonm@voltaire.com
 Shiqing Fan, High Performance Computing Center, Stuttgart
   shiqing@hlrs.de
@@ -307,7 +306,6 @@ Tim Woodall, Los Alamos National Laboratory
 Todd Kordenbrock, Sandia National Laboratory
   thkgcode@gmail.com
   thkorde@sandia.gov
-  tkordenbrock@users.noreply.github.com
 Tom Naughton, Oak Ridge National Laboratory
   naughtont@ornl.gov
 Tomislav Janjusic, Mellanox
@@ -333,7 +331,6 @@ Yael Dayan, Mellanox
 Yevgeny Kliteynik, Mellanox
   kliteyn@mellanox.co.il
 Yohann Burette, Intel
-  yburette@users.noreply.github.com
   yohann.burette@intel.com
 Yossi Itigin, Mellanox
   yosefe@mellanox.com

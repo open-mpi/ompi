@@ -681,6 +681,8 @@ EOF])
     AS_IF([test "$hwloc_mode" != "embedded"],
         [AC_CHECK_HEADERS([valgrind/valgrind.h])
          AC_CHECK_DECLS([RUNNING_ON_VALGRIND],,[:],[[#include <valgrind/valgrind.h>]])
+	],[
+	 AC_DEFINE([HAVE_DECL_RUNNING_ON_VALGRIND], [0], [Embedded mode; just assume we do not have Valgrind support])
 	])
 
     AC_CHECK_HEADERS([pthread_np.h])

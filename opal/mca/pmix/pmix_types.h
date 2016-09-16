@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,11 +26,11 @@ BEGIN_C_DECLS
  * info thru one of the legacy interfaces where the rank
  * is typically encoded into the key itself since there is
  * no rank parameter in the API itself */
-#define OPAL_PMIX_RANK_UNDEF     INT32_MAX
+#define OPAL_PMIX_RANK_UNDEF     UINT32_MAX
 /* define a value to indicate that the user wants the
  * data for the given key from every rank that posted
  * that key */
-#define OPAL_PMIX_RANK_WILDCARD  INT32_MAX-1
+#define OPAL_PMIX_RANK_WILDCARD  UINT32_MAX-1
 
 /* define a set of "standard" attributes that can
  * be queried. Implementations (and users) are free to extend as
@@ -43,7 +45,16 @@ BEGIN_C_DECLS
 
 #define OPAL_PMIX_SERVER_TOOL_SUPPORT           "pmix.srvr.tool"        // (bool) The host RM wants to declare itself as willing to
                                                                         //        accept tool connection requests
-#define OPAL_PMIX_SERVER_PIDINFO                "pmix.srvr.pidinfo"     // (uint32_t) pid of the target server
+#define OPAL_PMIX_SERVER_SYSTEM_SUPPORT         "pmix.srvr.sys"         // (bool) The host RM wants to declare itself as being the local
+                                                                        //        system server for PMIx connection requests
+#define OPAL_PMIX_SERVER_PIDINFO                "pmix.srvr.pidinfo"     // (pid_t) pid of the target server
+#define OPAL_PMIX_SERVER_TMPDIR                 "pmix.srvr.tmpdir"      // (char*) temp directory where PMIx server will place
+                                                                        //        client rendezvous points
+#define OPAL_PMIX_SYSTEM_TMPDIR                 "pmix.sys.tmpdir"       // (char*) temp directory where PMIx server will place
+                                                                        //        tool rendezvous points
+#define OPAL_PMIX_CONNECT_TO_SYSTEM             "pmix.cnct.sys"         // (bool) The requestor requires that a connection be made only to
+                                                                        //        a local system-level PMIx server
+#define OPAL_PMIX_CONNECT_SYSTEM_FIRST          "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
 
 
 /* identification attributes */
@@ -57,12 +68,14 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_CPUSET                        "pmix.cpuset"           // (char*) hwloc bitmap applied to proc upon launch
 #define OPAL_PMIX_CREDENTIAL                    "pmix.cred"             // (char*) security credential assigned to proc
 #define OPAL_PMIX_SPAWNED                       "pmix.spawned"          // (bool) true if this proc resulted from a call to PMIx_Spawn
-#define OPAL_PMIX_ARCH                          "pmix.arch"             // (uint32_t) datatype architecture flag
+#define OPAL_PMIX_ARCH                          "opal.pmix.arch"        // (uint32_t) datatype architecture flag
+                                                                        // not set at job startup, so cannot have the pmix prefix
 
 /* scratch directory locations for use by applications */
 #define OPAL_PMIX_TMPDIR                        "pmix.tmpdir"           // (char*) top-level tmp dir assigned to session
 #define OPAL_PMIX_NSDIR                         "pmix.nsdir"            // (char*) sub-tmpdir assigned to namespace
 #define OPAL_PMIX_PROCDIR                       "pmix.pdir"             // (char*) sub-nsdir assigned to proc
+#define OPAL_PMIX_TDIR_RMCLEAN                  "pmix.tdir.rmclean"     // (bool)  Resource Manager will clean session directories
 
 /* information about relative ranks as assigned by the RM */
 #define OPAL_PMIX_JOBID                         "pmix.jobid"            // (uint32_t) jobid assigned by scheduler
@@ -76,22 +89,15 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_NODE_RANK                     "pmix.nrank"            // (uint16_t) rank on this node spanning all jobs
 #define OPAL_PMIX_LOCALLDR                      "pmix.lldr"             // (uint64_t) opal_identifier of lowest rank on this node within this job
 #define OPAL_PMIX_APPLDR                        "pmix.aldr"             // (uint32_t) lowest rank in this app within this job
+#define OPAL_PMIX_PROC_PID                      "pmix.ppid"             // (pid_t) pid of specified proc
+
+/****  no PMIx equivalent ****/
 #define OPAL_PMIX_LOCALITY                      "pmix.loc"              // (uint16_t) relative locality of two procs
-/* proc location-related info */
-/* For PMIX_HOSTNAME, three use-cases exist for PMIx_Get:
- *
- * (a) Specifying a namespace with PMIX_RANK_WILDCARD will return
- *     a comma-delimited list of nodes that host procs in that namespace
- *
- * (b) Passing a NULL namespace will return a comma-delimited list of all
- *     nodes known to this session, regardless of whether or not they
- *     currently host procs. The rank argument in PMIx_Get is ignored
- *     for this use-case
- *
- * (c) Specifying a namespace and a rank will return the name of the
- *     host this proc is on
- */
-#define OPAL_PMIX_HOSTNAME                      "pmix.hname"            // (char*) see above comment
+
+#define OPAL_PMIX_NODE_LIST                     "pmix.nlist"            // (char*) comma-delimited list of nodes running procs for the specified nspace
+#define OPAL_PMIX_ALLOCATED_NODELIST            "pmix.alist"            // (char*) comma-delimited list of all nodes in this allocation regardless of
+                                                                        //           whether or not they currently host procs.
+#define OPAL_PMIX_HOSTNAME                      "pmix.hname"            // (char*) name of the host the specified proc is on
 #define OPAL_PMIX_NODEID                        "pmix.nodeid"           // (uint32_t) node identifier
 #define OPAL_PMIX_LOCAL_PEERS                   "pmix.lpeers"           // (char*) comma-delimited string of ranks on this node within the specified nspace
 #define OPAL_PMIX_LOCAL_CPUSETS                 "pmix.lcpus"            // (char*) colon-delimited cpusets of local peers within the specified nspace
@@ -106,6 +112,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_LOCAL_SIZE                    "pmix.local.size"       // (uint32_t) #procs in this job on this node
 #define OPAL_PMIX_NODE_SIZE                     "pmix.node.size"        // (uint32_t) #procs across all jobs on this node
 #define OPAL_PMIX_MAX_PROCS                     "pmix.max.size"         // (uint32_t) max #procs for this job
+#define OPAL_PMIX_NUM_NODES                     "pmix.num.nodes"        // (uint32_t) #nodes in this nspace
 
 /* topology info */
 #define OPAL_PMIX_NET_TOPO                      "pmix.ntopo"            // (char*) xml-representation of network topology
@@ -147,6 +154,10 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_EVENT_AFFECTED_PROC           "pmix.evproc"           // (pmix_proc_t) single proc that was affected
 #define OPAL_PMIX_EVENT_AFFECTED_PROCS          "pmix.evaffected"       // (pmix_proc_t*) array of pmix_proc_t defining affected procs
 #define OPAL_PMIX_EVENT_NON_DEFAULT             "pmix.evnondef"         // (bool) event is not to be delivered to default event handlers
+#define OPAL_PMIX_EVENT_RETURN_OBJECT           "pmix.evobject"         // (void*) object to be returned whenever the registered cbfunc is invoked
+                                                                        //     NOTE: the object will _only_ be returned to the process that
+                                                                        //           registered it
+
 /* fault tolerance-related events */
 #define OPAL_PMIX_EVENT_TERMINATE_SESSION       "pmix.evterm.sess"      // (bool) RM intends to terminate session
 #define OPAL_PMIX_EVENT_TERMINATE_JOB           "pmix.evterm.job"       // (bool) RM intends to terminate this job
@@ -176,9 +187,19 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_FWD_STDIN                     "pmix.fwd.stdin"        // (bool) forward my stdin to the designated proc
 #define OPAL_PMIX_FWD_STDOUT                    "pmix.fwd.stdout"       // (bool) forward stdout from spawned procs to me
 #define OPAL_PMIX_FWD_STDERR                    "pmix.fwd.stderr"       // (bool) forward stderr from spawned procs to me
+#define OPAL_PMIX_DEBUGGER_DAEMONS              "pmix.debugger"         // (bool) spawned app consists of debugger daemons
 
 /* query attributes */
 #define OPAL_PMIX_QUERY_NAMESPACES              "pmix.qry.ns"           // (char*) request a comma-delimited list of active nspaces
+#define OPAL_PMIX_QUERY_JOB_STATUS              "pmix.qry.jst"          // (pmix_status_t) status of a specified currently executing job
+#define OPAL_PMIX_QUERY_QUEUE_LIST              "pmix.qry.qlst"         // (char*) request a comma-delimited list of scheduler queues
+#define OPAL_PMIX_QUERY_QUEUE_STATUS            "pmix.qry.qst"          // (TBD) status of a specified scheduler queue
+#define OPAL_PMIX_QUERY_PROC_TABLE              "pmix.qry.ptable"       // (char*) input nspace of job whose info is being requested
+                                                                        //     returns (pmix_data_array_t) an array of pmix_proc_info_t
+#define OPAL_PMIX_QUERY_LOCAL_PROC_TABLE        "pmix.qry.lptable"      // (char*) input nspace of job whose info is being requested
+                                                                        //     returns (pmix_data_array_t) an array of pmix_proc_info_t for
+                                                                        //     procs in job on same node
+#define OPAL_PMIX_QUERY_AUTHORIZATIONS          "pmix.qry.auths"        // return operations tool is authorized to perform"
 
 
 /* define a scope for data "put" by PMI per the following:
@@ -260,6 +281,13 @@ typedef struct {
 } opal_pmix_modex_data_t;
 OBJ_CLASS_DECLARATION(opal_pmix_modex_data_t);
 
+/****    PMIX QUERY STRUCT    ****/
+typedef struct {
+    opal_list_item_t super;
+    char **keys;
+    opal_list_t qualifiers;
+} opal_pmix_query_t;
+OBJ_CLASS_DECLARATION(opal_pmix_query_t);
 
 /****    CALLBACK FUNCTIONS FOR NON-BLOCKING OPERATIONS    ****/
 

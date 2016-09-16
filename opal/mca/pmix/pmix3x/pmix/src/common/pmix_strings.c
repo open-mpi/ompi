@@ -1,0 +1,205 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include <src/include/pmix_config.h>
+
+
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+#include <errno.h>
+#include <stdio.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
+#include <pmix_common.h>
+#include "src/buffer_ops/internal.h"
+#include "src/include/pmix_globals.h"
+
+const char* PMIx_Proc_state_string(pmix_proc_state_t state)
+{
+    switch(state) {
+        case PMIX_PROC_STATE_UNDEF:
+            return "UNDEFINED";
+        case PMIX_PROC_STATE_PREPPED:
+            return "PREPPED FOR LAUNCH";
+        case PMIX_PROC_STATE_LAUNCH_UNDERWAY:
+            return "LAUNCH UNDERWAY";
+        case PMIX_PROC_STATE_RESTART:
+            return "PROC READY FOR RESTART";
+        case PMIX_PROC_STATE_TERMINATE:
+            return "PROC MARKED FOR TERMINATION";
+        case PMIX_PROC_STATE_RUNNING:
+            return "PROC EXECUTING";
+        case PMIX_PROC_STATE_CONNECTED:
+            return "PROC HAS CONNECTED TO LOCAL PMIX SERVER";
+        case PMIX_PROC_STATE_UNTERMINATED:
+            return "PROC HAS NOT TERMINATED";
+        case PMIX_PROC_STATE_TERMINATED:
+            return "PROC HAS TERMINATED";
+        case PMIX_PROC_STATE_ERROR:
+            return "PROC ERROR";
+        case PMIX_PROC_STATE_KILLED_BY_CMD:
+            return "PROC KILLED BY CMD";
+        case PMIX_PROC_STATE_ABORTED:
+            return "PROC ABNORMALLY ABORTED";
+        case PMIX_PROC_STATE_FAILED_TO_START:
+            return "PROC FAILED TO START";
+        case PMIX_PROC_STATE_ABORTED_BY_SIG:
+            return "PROC ABORTED BY SIGNAL";
+        case PMIX_PROC_STATE_TERM_WO_SYNC:
+            return "PROC TERMINATED WITHOUT CALLING PMIx_Finalize";
+        case PMIX_PROC_STATE_COMM_FAILED:
+            return "PROC LOST COMMUNICATION";
+        case PMIX_PROC_STATE_CALLED_ABORT:
+            return "PROC CALLED PMIx_Abort";
+        case PMIX_PROC_STATE_MIGRATING:
+            return "PROC WAITING TO MIGRATE";
+        case PMIX_PROC_STATE_CANNOT_RESTART:
+            return "PROC CANNOT BE RESTARTED";
+        case PMIX_PROC_STATE_TERM_NON_ZERO:
+            return "PROC TERMINATED WITH NON-ZERO STATUS";
+        case PMIX_PROC_STATE_FAILED_TO_LAUNCH:
+            return "PROC FAILED TO LAUNCH";
+        default:
+            return "UNKNOWN STATE";
+    }
+}
+
+const char* PMIx_Scope_string(pmix_scope_t scope)
+{
+    switch(scope) {
+        case PMIX_SCOPE_UNDEF:
+            return "UNDEFINED";
+        case PMIX_LOCAL:
+            return "SHARE ON LOCAL NODE ONLY";
+        case PMIX_REMOTE:
+            return "SHARE ON REMOTE NODES ONLY";
+        case PMIX_GLOBAL:
+            return "SHARE ACROSS ALL NODES";
+        default:
+            return "UNKNOWN SCOPE";
+    }
+}
+
+const char* PMIx_Persistence_string(pmix_persistence_t persist)
+{
+    switch(persist) {
+        case PMIX_PERSIST_INDEF:
+            return "INDEFINITE";
+        case PMIX_PERSIST_FIRST_READ:
+            return "DELETE ON FIRST ACCESS";
+        case PMIX_PERSIST_PROC:
+            return "RETAIN UNTIL PUBLISHING PROCESS TERMINATES";
+        case PMIX_PERSIST_APP:
+            return "RETAIN UNTIL APPLICATION OF PUBLISHING PROCESS TERMINATES";
+        case PMIX_PERSIST_SESSION:
+            return "RETAIN UNTIL ALLOCATION OF PUBLISHING PROCESS TERMINATES";
+        default:
+            return "UNKNOWN PERSISTENCE";
+    }
+}
+
+const char* PMIx_Data_range_string(pmix_data_range_t range)
+{
+    switch(range) {
+        case PMIX_RANGE_UNDEF:
+            return "UNDEFINED";
+        case PMIX_RANGE_RM:
+            return "INTENDED FOR HOST RESOURCE MANAGER ONLY";
+        case PMIX_RANGE_LOCAL:
+            return "AVAIL ON LOCAL NODE ONLY";
+        case PMIX_RANGE_NAMESPACE:
+            return "AVAIL TO PROCESSES IN SAME JOB ONLY";
+        case PMIX_RANGE_SESSION:
+            return "AVAIL TO PROCESSES IN SAME ALLOCATION ONLY";
+        case PMIX_RANGE_GLOBAL:
+            return "AVAIL TO ANYONE WITH AUTHORIZATION";
+        case PMIX_RANGE_CUSTOM:
+            return "AVAIL AS SPECIFIED IN DIRECTIVES";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+const char* PMIx_Info_directives_string(pmix_info_directives_t directives)
+{
+    switch(directives) {
+        case PMIX_INFO_REQD:
+            return "REQUIRED";
+        default:
+            return "UNSPECIFIED";
+    }
+}
+
+const char* pmix_command_string(pmix_cmd_t cmd)
+{
+    switch(cmd) {
+        case PMIX_REQ_CMD:
+            return "REQUEST INIT INFO";
+        case PMIX_ABORT_CMD:
+            return "ABORT";
+        case PMIX_COMMIT_CMD:
+            return "COMMIT";
+        case PMIX_FENCENB_CMD:
+            return "FENCE";
+        case PMIX_GETNB_CMD:
+            return "GET";
+        case PMIX_FINALIZE_CMD:
+            return "FINALIZE";
+        case PMIX_PUBLISHNB_CMD:
+            return "PUBLISH";
+        case PMIX_LOOKUPNB_CMD:
+            return "LOOKUP";
+        case PMIX_UNPUBLISHNB_CMD:
+            return "UNPUBLISH";
+        case PMIX_SPAWNNB_CMD:
+            return "SPAWN";
+        case PMIX_CONNECTNB_CMD:
+            return "CONNECT";
+        case PMIX_DISCONNECTNB_CMD:
+            return "DISCONNECT";
+        case PMIX_NOTIFY_CMD:
+            return "NOTIFY";
+        case PMIX_REGEVENTS_CMD:
+            return "REGISTER EVENT HANDLER";
+        case PMIX_DEREGEVENTS_CMD:
+            return "DEREGISTER EVENT HANDLER";
+        case PMIX_QUERY_CMD:
+            return "QUERY";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+const char* PMIx_Data_type_string(pmix_data_type_t type)
+{
+    pmix_bfrop_type_info_t *info;
+
+    if (NULL == (info = (pmix_bfrop_type_info_t*)pmix_pointer_array_get_item(&pmix_bfrop_types, type))) {
+        return "UNKNOWN";
+    }
+    if (NULL == info->odti_name) {
+        return "UNKNOWN";
+    }
+    return info->odti_name;
+}

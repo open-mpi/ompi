@@ -29,7 +29,7 @@
 
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
 #ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h> /* or <sys/vfs.h> */

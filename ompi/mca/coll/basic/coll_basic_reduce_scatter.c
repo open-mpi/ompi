@@ -365,11 +365,9 @@ mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rco
                                     struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t *module)
 {
-    int err, i, rank, root = 0, rsize, lsize;
-    int totalcounts;
+    int err, i, rank, root = 0, rsize, lsize, totalcounts;
+    char *tmpbuf = NULL, *tmpbuf2 = NULL, *lbuf = NULL, *buf;
     ptrdiff_t gap, span;
-    char *tmpbuf = NULL, *tmpbuf2 = NULL;
-    char *lbuf, *buf;
     ompi_request_t *req;
     int *disps = NULL;
 
@@ -472,9 +470,9 @@ mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rco
 
     /* Now do a scatterv on the local communicator */
     err = comm->c_local_comm->c_coll.coll_scatterv(lbuf, rcounts, disps, dtype,
-				   rbuf, rcounts[rank], dtype, 0,
-				   comm->c_local_comm,
-				   comm->c_local_comm->c_coll.coll_scatterv_module);
+                                                   rbuf, rcounts[rank], dtype, 0,
+                                                   comm->c_local_comm,
+                                                   comm->c_local_comm->c_coll.coll_scatterv_module);
 
   exit:
     if (NULL != tmpbuf) {

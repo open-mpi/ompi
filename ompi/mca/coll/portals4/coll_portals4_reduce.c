@@ -385,10 +385,10 @@ ompi_coll_portals4_reduce_intra(const void *sendbuf, void *recvbuf, int count,
     ret = reduce_kary_tree_top(sendbuf, recvbuf, count,
             dtype, op, root, comm,  request,  portals4_module);
     if (OMPI_SUCCESS != ret)
-	return ret;
+        return ret;
     ret = reduce_kary_tree_bottom(request);
     if (OMPI_SUCCESS != ret)
-	return ret;
+        return ret;
 
     OMPI_COLL_PORTALS4_REQUEST_RETURN(request);
     return (OMPI_SUCCESS);
@@ -422,13 +422,13 @@ ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
     ret = reduce_kary_tree_top(sendbuf, recvbuf, count,
             dtype, op, root, comm,  request,  portals4_module);
     if (OMPI_SUCCESS != ret)
-	return ret;
+        return ret;
 
     if (!request->u.reduce.is_optim) {
         OMPI_COLL_PORTALS4_REQUEST_RETURN(request);
     }
 
-    puts("ireduce");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "ireduce");
     return (OMPI_SUCCESS);
 }
 
@@ -439,7 +439,7 @@ ompi_coll_portals4_ireduce_intra_fini(ompi_coll_portals4_request_t *request)
 
     ret = reduce_kary_tree_bottom(request);
     if (OMPI_SUCCESS != ret)
-	return ret;
+        return ret;
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_complete(&request->super, true);

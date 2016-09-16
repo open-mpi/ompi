@@ -105,6 +105,17 @@ static void recv_ack(int status, orte_process_name_t* sender,
                      void* cbdata);
 static void write_handler(int fd, short event, void *cbdata);
 
+static char *filem_session_dir(void)
+{
+    char *session_dir = orte_process_info.jobfam_session_dir;
+    if( NULL == session_dir ){
+        /* if no job family session dir was provided -
+         * use the job session dir */
+        session_dir = orte_process_info.job_session_dir;
+    }
+    return session_dir;
+}
+
 static int raw_init(void)
 {
     OBJ_CONSTRUCT(&incoming_files, opal_list_t);
@@ -657,25 +668,26 @@ static int create_link(char *my_dir, char *path,
 static int raw_link_local_files(orte_job_t *jdata,
                                 orte_app_context_t *app)
 {
-    char *my_dir, *path=NULL;
+    char *session_dir, *path=NULL;
     orte_proc_t *proc;
-    char *prefix;
     int i, j, rc;
     orte_filem_raw_incoming_t *inbnd;
     opal_list_item_t *item;
     char **files=NULL, *bname, *filestring;
 
-    /* check my session directory for files I have received and
+    /* check my jobfam session directory for files I have received and
      * symlink them to the proc-level session directory of each
      * local process in the job
+     *
+     * TODO: @rhc - please check that I've correctly interpret your
+     *  intention here
      */
-    my_dir = opal_dirname(orte_process_info.job_session_dir);
-
-    /* setup */
-    if (NULL != orte_process_info.tmpdir_base) {
-        prefix = strdup(orte_process_info.tmpdir_base);
-    } else {
-        prefix = NULL;
+    session_dir = filem_session_dir();
+    if( NULL == session_dir){
+        /* we were unable to find any suitable directory */
+        rc = ORTE_ERR_BAD_PARAM;
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
     /* get the list of files this app wants */
@@ -692,10 +704,6 @@ static int raw_link_local_files(orte_job_t *jdata,
 
     /* if there are no files to link, then ignore this */
     if (NULL == files) {
-        free(my_dir);
-        if (NULL != prefix) {
-            free(prefix);
-        }
         return ORTE_SUCCESS;
     }
 
@@ -736,10 +744,8 @@ static int raw_link_local_files(orte_job_t *jdata,
                              ORTE_NAME_PRINT(&proc->name)));
 
         /* get the session dir name in absolute form */
-        path = NULL;
-        rc = orte_session_dir_get_name(&path, &prefix, NULL,
-                                       orte_process_info.nodename,
-                                       &proc->name);
+        path = orte_process_info.proc_session_dir;
+
         /* create it, if it doesn't already exist */
         if (OPAL_SUCCESS != (rc = opal_os_dirpath_create(path, S_IRWXU))) {
             ORTE_ERROR_LOG(rc);
@@ -747,11 +753,6 @@ static int raw_link_local_files(orte_job_t *jdata,
              * create it - either way, we are done
              */
             free(files);
-            if (NULL != prefix) {
-                free(prefix);
-            }
-            free(path);
-            free(my_dir);
             return rc;
         }
 
@@ -775,13 +776,8 @@ static int raw_link_local_files(orte_job_t *jdata,
                                              inbnd->file));
                         /* cycle thru the link points and create symlinks to them */
                         for (j=0; NULL != inbnd->link_pts[j]; j++) {
-                            if (ORTE_SUCCESS != (rc = create_link(my_dir, path, inbnd->link_pts[j]))) {
+                            if (ORTE_SUCCESS != (rc = create_link(session_dir, path, inbnd->link_pts[j]))) {
                                 ORTE_ERROR_LOG(rc);
-                                free(my_dir);
-                                free(path);
-                                if (NULL != prefix) {
-                                    free(prefix);
-                                }
                                 free(files);
                                 return rc;
                             }
@@ -796,13 +792,8 @@ static int raw_link_local_files(orte_job_t *jdata,
                 }
             }
         }
-        free(path);
     }
     opal_argv_free(files);
-    if (NULL != prefix) {
-        free(prefix);
-    }
-    free(my_dir);
     return ORTE_SUCCESS;
 }
 
@@ -999,7 +990,7 @@ static void recv_files(int status, orte_process_name_t* sender,
                        opal_buffer_t* buffer, orte_rml_tag_t tag,
                        void* cbdata)
 {
-    char *file, *jobfam_dir;
+    char *file, *session_dir;
     int32_t nchunk, n, nbytes;
     unsigned char data[ORTE_FILEM_RAW_CHUNK_MAX];
     int rc;
@@ -1086,9 +1077,9 @@ static void recv_files(int status, orte_process_name_t* sender,
         incoming->top = strdup(tmp);
         free(tmp);
         /* define the full path to where we will put it */
-        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-        incoming->fullpath = opal_os_path(false, jobfam_dir, file, NULL);
-        free(jobfam_dir);
+        session_dir = filem_session_dir();
+
+        incoming->fullpath = opal_os_path(false, session_dir, file, NULL);
 
         OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: opening target file %s",

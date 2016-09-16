@@ -28,7 +28,7 @@
 #include "ompi/mca/mca.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
 BEGIN_C_DECLS
 

@@ -324,7 +324,7 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
             *dmns = NULL;
             return ORTE_ERR_NOT_FOUND;
         }
-        if (0 == jdata->map->num_nodes) {
+        if (NULL == jdata->map || 0 == jdata->map->num_nodes) {
             /* we haven't generated a job map yet - if we are the HNP,
              * then we should only involve ourselves. Otherwise, we have
              * no choice but to abort to avoid hangs */

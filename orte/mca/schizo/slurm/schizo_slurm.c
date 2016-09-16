@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies Ltd.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,7 +94,7 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
             /* indicate we are externally bound so we won't try to do it ourselves */
             opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"orte_externally_bound");
             opal_argv_append_nosize(&pushed_vals, "1");
-        } else if (0 == strcmp(bind, "mask_cpu")) {
+        } else if (bind == strstr(bind, "mask_cpu")) {
             /* if the bind list is all F's, then the
              * user didn't specify anything */
             if (NULL != (list = getenv("SLURM_CPU_BIND_LIST")) &&

@@ -280,6 +280,8 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* set the nodeid */
+        node->index = vpid;
         /* do we already have this node? */
         nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, vpid);
         /* set the new node object into the array */

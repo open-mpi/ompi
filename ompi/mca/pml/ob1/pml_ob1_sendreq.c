@@ -15,7 +15,9 @@
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -310,7 +312,7 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
                                                                    des->des_segment_count,
                                                                    sizeof(mca_pml_ob1_frag_hdr_t));
 
-    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, -1);
+    OPAL_THREAD_SUB_SIZE_T(&sendreq->req_pipeline_depth, 1);
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
     if(send_request_pml_complete_check(sendreq) == false) {

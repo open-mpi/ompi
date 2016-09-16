@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/mca/installdirs/installdirs.h"
 
 #include "orte/util/show_help.h"
@@ -164,6 +166,14 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         }
         opal_argv_free (argv);
 
+        // Strip off the FQDN if present, ignore IP addresses
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(node_name) ) {
+            char *ptr;
+            if (NULL != (ptr = strchr(node_name, '.'))) {
+                *ptr = '\0';
+            }
+        }
+
         /* if the first letter of the name is '^', then this is a node
          * to be excluded. Remove the ^ character so the nodename is
          * usable, and put it on the exclude list
@@ -270,6 +280,15 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
         }
         opal_argv_free (argv);
+
+        // Strip off the FQDN if present, ignore IP addresses
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(node_name) ) {
+            char *ptr;
+            if (NULL != (ptr = strchr(node_name, '.'))) {
+                *ptr = '\0';
+            }
+        }
+
         /* Do we need to make a new node object? */
         if (NULL == (node = hostfile_lookup(updates, node_name))) {
             node = OBJ_NEW(orte_node_t);

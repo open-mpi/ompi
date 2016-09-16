@@ -108,7 +108,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
     double comm_time = 0.0, start_comm_time = 0.0, end_comm_time = 0.0;
     double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
-    mca_io_ompio_print_entry nentry;
+    mca_common_ompio_print_entry nentry;
 #endif
 
     opal_datatype_type_size ( &datatype->super, &ftype_size );
@@ -327,7 +327,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
             ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
         }
-	fh->f_sort_iovec (global_iov_array, total_fview_count, sorted);
+	fcoll_base_sort_iovec (global_iov_array, total_fview_count, sorted);
     }
 
     if (NULL != local_iov_array){
@@ -979,9 +979,9 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     else
 	nentry.aggregator = 0;
     nentry.nprocs_for_coll = dynamic_num_io_procs;
-    if (!fh->f_full_print_queue(WRITE_PRINT_QUEUE)){
-        fh->f_register_print_entry(WRITE_PRINT_QUEUE,
-                                   nentry);
+    if (!mca_common_ompio_full_print_queue(fh->f_coll_write_time)){
+        mca_common_ompio_register_print_entry(fh->f_coll_write_time,
+                                              nentry);
     }
 #endif
 

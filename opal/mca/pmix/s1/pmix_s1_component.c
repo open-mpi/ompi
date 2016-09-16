@@ -27,7 +27,7 @@
  * Public string showing the pmix s1 component version number
  */
 const char *opal_pmix_s1_component_version_string =
-    "OPAL s1 pmix MCA component version " OPAL_VERSION;
+        "OPAL s1 pmix MCA component version " OPAL_VERSION;
 
 /*
  * Local function
@@ -44,28 +44,28 @@ static int pmix_s1_component_register(void);
 opal_pmix_base_component_t mca_pmix_s1_component = {
 
     /* First, the mca_component_t struct containing meta information
-       about the component itself */
+           about the component itself */
 
     .base_version = {
-	/* Indicate that we are a pmix v1.1.0 component (which also
-	   implies a specific MCA version) */
+        /* Indicate that we are a pmix v1.1.0 component (which also
+               implies a specific MCA version) */
 
-	OPAL_PMIX_BASE_VERSION_2_0_0,
+        OPAL_PMIX_BASE_VERSION_2_0_0,
 
-	/* Component name and version */
+        /* Component name and version */
 
-	.mca_component_name = "s1",
-	MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-			      OPAL_RELEASE_VERSION),
+        .mca_component_name = "s1",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+        OPAL_RELEASE_VERSION),
 
-	/* Component open and close functions */
-	.mca_query_component = pmix_s1_component_query,
-	.mca_register_component_params = pmix_s1_component_register,
+        /* Component open and close functions */
+        .mca_query_component = pmix_s1_component_query,
+        .mca_register_component_params = pmix_s1_component_register,
     },
     /* Next the MCA v1.0.0 component meta data */
     .base_data = {
-	/* The component is checkpoint ready */
-	MCA_BASE_METADATA_PARAM_CHECKPOINT
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
     .priority = 10,
 };
@@ -77,12 +77,12 @@ static int pmix_s1_component_register(void)
 
     mca_pmix_s1_component.priority = 10;
     ret = mca_base_component_var_register(component, "priority",
-					  "Priority of the pmix s1 component (default: 10)",
-					  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-					  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-					  &mca_pmix_s1_component.priority);
+                                          "Priority of the pmix s1 component (default: 10)",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_pmix_s1_component.priority);
     if (0 > ret) {
-	return ret;
+        return ret;
     }
 
     return OPAL_SUCCESS;
@@ -92,9 +92,9 @@ static int pmix_s1_component_query(mca_base_module_t **module, int *priority)
 {
     /* disqualify ourselves if we are not under slurm */
     if (NULL == getenv("SLURM_STEP_NUM_TASKS")) {
-	*priority = 0;
-	*module = NULL;
-	return OPAL_ERROR;
+        *priority = 0;
+        *module = NULL;
+        return OPAL_ERROR;
     }
 
     /* we can be considered, but set our priority by default

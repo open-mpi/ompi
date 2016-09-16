@@ -166,6 +166,9 @@ BEGIN_C_DECLS
 /* stacktrace for debug */
 #define ORTE_RML_TAG_STACK_TRACE            60
 
+/* memory profile */
+#define ORTE_RML_TAG_MEMPROFILE             61
+
 #define ORTE_RML_TAG_MAX                   100
 
 #define ORTE_RML_TAG_NTOH(t) ntohl(t)

@@ -74,10 +74,10 @@ struct ompi_osc_pt2pt_sync_t {
     int num_peers;
 
     /** number of synchronization messages expected */
-    int32_t sync_expected;
+    volatile int32_t sync_expected;
 
     /** eager sends are active to all peers in this access epoch */
-    bool eager_send_active;
+    volatile bool eager_send_active;
 
     /** communication has started on this epoch */
     bool epoch_active;
@@ -164,7 +164,9 @@ static inline void ompi_osc_pt2pt_sync_expected (ompi_osc_pt2pt_sync_t *sync)
     int32_t new_value = OPAL_THREAD_ADD32 (&sync->sync_expected, -1);
     if (0 == new_value) {
         OPAL_THREAD_LOCK(&sync->lock);
-        sync->eager_send_active = true;
+        if (!(sync->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK && sync->num_peers > 1)) {
+            sync->eager_send_active = true;
+        }
         opal_condition_broadcast (&sync->cond);
         OPAL_THREAD_UNLOCK(&sync->lock);
     }
@@ -173,7 +175,7 @@ static inline void ompi_osc_pt2pt_sync_expected (ompi_osc_pt2pt_sync_t *sync)
 static inline void ompi_osc_pt2pt_sync_reset (ompi_osc_pt2pt_sync_t *sync)
 {
     sync->type = OMPI_OSC_PT2PT_SYNC_TYPE_NONE;
-    sync->eager_send_active = 0;
+    sync->eager_send_active = false;
     sync->epoch_active = 0;
     sync->peer_list.peers = NULL;
     sync->sync.pscw.group = NULL;

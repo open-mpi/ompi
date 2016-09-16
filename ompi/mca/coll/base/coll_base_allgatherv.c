@@ -34,17 +34,6 @@
 #include "coll_base_topo.h"
 #include "coll_base_util.h"
 
-/* valid values for coll_base_allgatherv_forced_algorithm */
-mca_base_var_enum_value_t coll_base_allgatherv_algorithms[] = {
-    {0, "ignore"},
-    {1, "default"},
-    {2, "bruck"},
-    {3, "ring"},
-    {4, "neighbor"},
-    {5, "two_proc"},
-    {0, NULL}
-};
-
 /*
  * ompi_coll_base_allgatherv_intra_bruck
  *

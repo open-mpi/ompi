@@ -77,7 +77,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 {
     int ret;
     char *error = NULL;
-    opal_value_t kv;
 
     /*
      * stdout/stderr buffering
@@ -136,10 +135,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
                              orte_process_info.nodename));
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename,
-                                                    ORTE_PROC_MY_NAME))) {
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true, ORTE_PROC_MY_NAME))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_session_dir";
             goto error;
@@ -149,29 +145,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
            proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
-        /* store the session directory location */
-        OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_PMIX_NSDIR);
-        kv.type = OPAL_STRING;
-        kv.data.string = strdup(orte_process_info.job_session_dir);
-        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_NAME, &kv))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_DESTRUCT(&kv);
-            error = "opal pmix put job sessiondir";
-            goto error;
-        }
-        OBJ_DESTRUCT(&kv);
-        OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_PMIX_PROCDIR);
-        kv.type = OPAL_STRING;
-        kv.data.string = strdup(orte_process_info.proc_session_dir);
-        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_NAME, &kv))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_DESTRUCT(&kv);
-            error = "opal pmix put proc sessiondir";
-            goto error;
-        }
-        OBJ_DESTRUCT(&kv);
     }
     /* Setup the communication infrastructure */
     /*

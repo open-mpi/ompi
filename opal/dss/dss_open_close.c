@@ -156,6 +156,7 @@ static void opal_pstat_construct(opal_pstats_t *obj)
     obj->time.tv_usec = 0;
     obj->priority = -1;
     obj->num_threads = -1;
+    obj->pss = 0.0;
     obj->vsize = 0.0;
     obj->rss = 0.0;
     obj->peak_vsize = 0.0;
