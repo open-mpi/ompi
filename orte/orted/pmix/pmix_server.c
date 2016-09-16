@@ -54,6 +54,7 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/os_path.h"
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
@@ -189,6 +190,7 @@ int pmix_server_init(void)
     int rc;
     opal_list_t info;
     opal_value_t *kv;
+    char *tmp;
 
     if (orte_pmix_server_globals.initialized) {
         return ORTE_SUCCESS;
@@ -242,12 +244,18 @@ int pmix_server_init(void)
         kv->type = OPAL_STRING;
         opal_list_append(&info, &kv->super);
     }
-    /* tell the server our temp directory */
+    /* tell the server our temp directory - use the
+     * job-family level so all our connection info
+     * is unique to us */
+     tmp = opal_os_path(false,
+                        orte_process_info.tmpdir_base,
+                        orte_process_info.top_session_dir, NULL);
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_SERVER_TMPDIR);
     kv->type = OPAL_STRING;
-    kv->data.string = strdup(orte_process_info.tmpdir_base);
+    kv->data.string = orte_build_job_session_dir(tmp, ORTE_PROC_MY_NAME, ORTE_JOBID_WILDCARD);
     opal_list_append(&info, &kv->super);
+    free(tmp);
 
     /* setup the local server */
     if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server, &info))) {

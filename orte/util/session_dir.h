@@ -162,6 +162,10 @@ ORTE_DECLSPEC int orte_session_dir_finalize(orte_process_name_t *proc);
  */
 ORTE_DECLSPEC int orte_session_dir_cleanup(orte_jobid_t jobid);
 
+ORTE_DECLSPEC char *orte_build_job_session_dir(char *top_dir,
+                                               orte_process_name_t *proc,
+                                               orte_jobid_t jobid);
+
 END_C_DECLS
 
 #endif  /* ORTE_SESSION_DIR_H_HAS_BEEN_INCLUDED */
