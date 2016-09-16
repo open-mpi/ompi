@@ -42,8 +42,8 @@ typedef struct ompi_wait_sync_t {
 /* The loop in release handles a race condition between the signaling
  * thread and the destruction of the condition variable. The signaling
  * member will be set to false after the final signaling thread has
- * finished opertating on the sync object. This is done to avoid
- * extra atomics in the singalling function and keep it as fast
+ * finished operating on the sync object. This is done to avoid
+ * extra atomics in the signalling function and keep it as fast
  * as possible. Note that the race window is small so spinning here
  * is more optimal than sleeping since this macro is called in
  * the critical path. */
@@ -73,7 +73,7 @@ typedef struct ompi_wait_sync_t {
 
 #define WAIT_SYNC_SIGNALLED(sync){                    \
         (sync)->signaling = false;                    \
-}        
+}
 
 OPAL_DECLSPEC int sync_wait_mt(ompi_wait_sync_t *sync);
 static inline int sync_wait_st (ompi_wait_sync_t *sync)

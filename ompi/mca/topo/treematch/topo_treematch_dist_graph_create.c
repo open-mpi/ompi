@@ -224,9 +224,8 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         num_nodes++; /* update the number of nodes */
 
         for(j = i+1; j < size; j++)
-            if( vpids[j] != -1 )
-                if( vpids[i] == vpids[j] )
-                    vpids[j] = -1;
+            if( vpids[i] == vpids[j] )
+                vpids[j] = -1;
     }
     if( 0 == num_nodes ) {
         /* No useful info has been retrieved from the runtime. Fallback

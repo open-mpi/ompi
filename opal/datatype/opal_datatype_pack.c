@@ -53,7 +53,6 @@
 
 #define IOVEC_MEM_LIMIT 8192
 
-
 /* the contig versions does not use the stack. They can easily retrieve
  * the status with just the informations from pConvertor->bConverted.
  */
@@ -102,6 +101,7 @@ opal_pack_homogeneous_contig_function( opal_convertor_t* pConv,
     }
     return 0;
 }
+
 
 int32_t
 opal_pack_homogeneous_contig_with_gaps_function( opal_convertor_t* pConv,
@@ -331,22 +331,20 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                                        pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( 0 == pConvertor->stack_pos ) {
-                        /* we lie about the size of the next element in order to
-                         * make sure we exit the main loop.
-                         */
+                        /* we're done. Force the exit of the main for loop (around iovec) */
                         *out_size = iov_count;
-                        goto complete_loop;  /* completed */
+                        goto complete_loop;
                     }
-                    pConvertor->stack_pos--;
+                    pConvertor->stack_pos--;  /* go one position up on the stack */
                     pStack--;
-                    pos_desc++;
+                    pos_desc++;  /* and move to the next element */
                 } else {
-                    pos_desc = pStack->index + 1;
-                    if( pStack->index == -1 ) {
-                        pStack->disp += (pData->ub - pData->lb);
+                    pos_desc = pStack->index + 1;  /* jump back to the begining of the loop */
+                    if( pStack->index == -1 ) {  /* If it's the datatype count loop */
+                        pStack->disp += (pData->ub - pData->lb);  /* jump by the datatype extent */
                     } else {
                         assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
-                        pStack->disp += description[pStack->index].loop.extent;
+                        pStack->disp += description[pStack->index].loop.extent;  /* jump by the loop extent */
                     }
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
@@ -374,7 +372,6 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
-                continue;
             }
         }
     complete_loop:
