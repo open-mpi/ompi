@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -54,7 +54,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
     int ret;
 
     if (NULL == path) { /* protect ourselves from errors */
-        return(OPAL_ERROR);
+        return(OPAL_ERR_BAD_PARAM);
     }
 
     if (0 == (ret = stat(path, &buf))) { /* already exists */
@@ -68,7 +68,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
                     "opal_os_dirpath_create: "
                     "Error: Unable to create directory (%s), unable to set the correct mode [%d]\n",
                     path, ret);
-        return(OPAL_ERROR); /* can't set correct mode */
+        return(OPAL_ERR_PERM); /* can't set correct mode */
     }
 
     /* quick -- try to make directory */
