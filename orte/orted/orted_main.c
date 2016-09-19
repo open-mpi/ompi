@@ -17,7 +17,7 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -74,6 +74,7 @@
 #include "orte/util/nidmap.h"
 #include "orte/util/parse_options.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#include "orte/util/pre_condition_transports.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -526,7 +527,7 @@ int orte_daemon(int argc, char *argv[])
         orte_node_t *node;
         orte_app_context_t *app;
         char *tmp, *nptr, *sysinfo;
-        char **singenv=NULL;
+        char **singenv=NULL, *string_key, *env_str;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
@@ -587,6 +588,9 @@ int orte_daemon(int argc, char *argv[])
         proc->app_idx = 0;
         ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_LOCAL);
 
+        /* set the ORTE_JOB_TRANSPORT_KEY from the environment */
+        orte_pre_condition_transports(jdata);
+
         /* register the singleton's nspace with our PMIx server */
         if (ORTE_SUCCESS != (ret = orte_pmix_server_register_nspace(jdata))) {
           ORTE_ERROR_LOG(ret);
@@ -597,6 +601,16 @@ int orte_daemon(int argc, char *argv[])
           ORTE_ERROR_LOG(ret);
           goto DONE;
         }
+
+        /* append the transport key to the envars needed by the singleton */
+        if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_TRANSPORT_KEY, (void**)&string_key, OPAL_STRING) || NULL == string_key) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            goto DONE;
+        }
+        asprintf(&env_str, OPAL_MCA_PREFIX"orte_precondition_transports=%s", string_key);
+        opal_argv_append_nosize(&singenv, env_str);
+        free(env_str);
+
         nptr = opal_argv_join(singenv, ',');
         opal_argv_free(singenv);
         /* create a string that contains our uri + sysinfo + PMIx server URI envars */

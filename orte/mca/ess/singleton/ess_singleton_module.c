@@ -85,9 +85,7 @@ static int rte_init(void)
 {
     int rc, ret;
     char *error = NULL;
-    char *envar, *ev1, *ev2;
-    uint64_t unique_key[2];
-    char *string_key;
+    char *ev1, *ev2;
     opal_value_t *kv;
     char *val;
     int u32, *u32ptr;
@@ -265,19 +263,7 @@ static int rte_init(void)
      * we can use the jobfam and stepid as unique keys
      * because they are unique values assigned by the RM
      */
-    if (NULL == getenv(OPAL_MCA_PREFIX"orte_precondition_transports")) {
-        unique_key[0] = ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid);
-        unique_key[1] = ORTE_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid);
-        if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        asprintf(&envar, OPAL_MCA_PREFIX"orte_precondition_transports=%s", string_key);
-        putenv(envar);
-        added_transport_keys = true;
-        /* cannot free the envar as that messes up our environ */
-        free(string_key);
-    }
+    assert (NULL != getenv(OPAL_MCA_PREFIX"orte_precondition_transports"));
 
     /* retrieve our topology */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_TOPO,
