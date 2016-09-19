@@ -48,7 +48,6 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
-#include <poll.h>
 
 
 #include "opal/mca/event/event.h"
@@ -238,9 +237,6 @@ int orte_daemon(int argc, char *argv[])
 #endif
     char *coprocessors;
     uint8_t tflag;
-    volatile int _dbg = 1;
-
-    while (_dbg) poll(NULL, 0, 1);
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
