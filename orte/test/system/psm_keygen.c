@@ -33,8 +33,8 @@ int main(int argc, char* argv[])
     }
 
     for (i=0; NULL != app->env[i]; i++) {
-        if (0 == strncmp("OMPI_MCA_orte_precondition_transports", app->env[i],
-                         strlen("OMPI_MCA_orte_precondition_transports"))) {
+        if (0 == strncmp(OPAL_MCA_PREFIX"orte_precondition_transports", app->env[i],
+                         strlen(OPAL_MCA_PREFIX"orte_precondition_transports"))) {
             fprintf(stderr, "%s\n", app->env[i]);
             break;
         }

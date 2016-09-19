@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -64,7 +64,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
 
     uu = (unsigned long long *) unique_job_key;
 
-    generated_key = getenv("OMPI_MCA_orte_precondition_transports");
+    generated_key = getenv(OPAL_MCA_PREFIX"orte_precondition_transports");
     memset(uu, 0, sizeof(unique_job_key));
 
     if (!generated_key || (strlen(generated_key) != 33) || sscanf(generated_key, "%016llx-%016llx", &uu[0], &uu[1]) != 2) {
@@ -75,7 +75,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
     }
 
     /*
-     * decode OMPI_MCA_orte_precondition_transports that looks as
+     * decode OPAL_MCA_PREFIX"orte_precondition_transports" that looks as
      * 000003ca00000000-0000000100000000
      * jobfam-stepid
      * to get jobid coded with ORTE_CONSTRUCT_LOCAL_JOBID()
