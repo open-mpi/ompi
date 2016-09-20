@@ -572,6 +572,12 @@ static int fork_hnp(void)
         memset(orted_uri, 0, buffer_length);
 
         while (chunk == (rc = read(p[0], &orted_uri[num_chars_read], chunk))) {
+            if (rc < 0 && (EAGAIN == errno || EINTR == errno)) {
+                continue;
+            } else {
+                num_chars_read = 0;
+                break;
+            }
             /* we read an entire buffer - better get more */
             num_chars_read += chunk;
             orted_uri = realloc((void*)orted_uri, buffer_length+ORTE_URI_MSG_LGTH);

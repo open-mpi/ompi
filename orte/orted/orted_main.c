@@ -60,6 +60,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
+#include "opal/util/fd.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/daemon_init.h"
@@ -598,8 +599,8 @@ int orte_daemon(int argc, char *argv[])
         }
         /* use setup fork to create the envars needed by the singleton */
         if (OPAL_SUCCESS != (ret = opal_pmix.server_setup_fork(&proc->name, &singenv))) {
-          ORTE_ERROR_LOG(ret);
-          goto DONE;
+            ORTE_ERROR_LOG(ret);
+            goto DONE;
         }
 
         /* append the transport key to the envars needed by the singleton */
@@ -620,7 +621,10 @@ int orte_daemon(int argc, char *argv[])
         free(nptr);
 
         /* pass that info to the singleton */
-        write(orted_globals.uri_pipe, tmp, strlen(tmp)+1); /* need to add 1 to get the NULL */
+        if (OPAL_SUCCESS != (ret = opal_fd_write(orted_globals.uri_pipe, strlen(tmp)+1, tmp))) { ; /* need to add 1 to get the NULL */
+            ORTE_ERROR_LOG(ret);
+            goto DONE;
+        }
 
         /* cleanup */
         free(tmp);
