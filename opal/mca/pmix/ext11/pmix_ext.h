@@ -171,7 +171,6 @@ OPAL_MODULE_DECLSPEC pmix_scope_t pmix1_convert_opalscope(opal_pmix_scope_t scop
 OPAL_MODULE_DECLSPEC void pmix1_value_load(pmix_value_t *v,
                                            opal_value_t *kv);
 OPAL_MODULE_DECLSPEC int pmix1_value_unload(opal_value_t *kv,
-                                            const char *key,
                                             const pmix_value_t *v);
 
 END_C_DECLS

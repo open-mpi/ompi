@@ -283,7 +283,7 @@ static pmix_status_t server_fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
         iptr = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &iptr->super);
         iptr->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, info[n].key, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix1_convert_opalrc(rc);
         }
@@ -332,7 +332,7 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
         iptr = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &iptr->super);
         iptr->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, info[n].key, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix1_convert_opalrc(rc);
         }
@@ -383,7 +383,7 @@ static pmix_status_t server_publish_fn(const pmix_proc_t *p,
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, info[n].key, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix1_convert_opalrc(rc);
         }
@@ -462,7 +462,7 @@ static pmix_status_t server_lookup_fn(const pmix_proc_t *p, char **keys,
         iptr = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &iptr->super);
         iptr->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, info[n].key, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix1_convert_opalrc(rc);
         }
@@ -512,7 +512,7 @@ static pmix_status_t server_unpublish_fn(const pmix_proc_t *p, char **keys,
         iptr = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &iptr->super);
         iptr->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, info[n].key, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix1_value_unload(iptr, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix1_convert_opalrc(rc);
         }
@@ -578,7 +578,7 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(job_info[k].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, job_info[k].key, &job_info[k].value))) {
+        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &job_info[k].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix1_convert_opalrc(rc);
         }
@@ -603,7 +603,7 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
             oinfo = OBJ_NEW(opal_value_t);
             opal_list_append(&app->info, &oinfo->super);
             oinfo->key = strdup(apps[n].info[k].key);
-            if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, apps[n].info[k].key, &apps[n].info[k].value))) {
+            if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo,  &apps[n].info[k].value))) {
                 OBJ_RELEASE(opalcaddy);
                 return pmix1_convert_opalrc(rc);
             }
@@ -660,7 +660,7 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, info[n].key, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix1_convert_opalrc(rc);
         }
@@ -715,7 +715,7 @@ static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t npro
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, info[n].key, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix1_convert_opalrc(rc);
         }
@@ -748,7 +748,7 @@ static pmix_status_t server_register_events(const pmix_info_t info[], size_t nin
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, info[n].key, &info[n].value))) {
+        if (OPAL_SUCCESS != (rc = pmix1_value_unload(oinfo, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix1_convert_opalrc(rc);
         }

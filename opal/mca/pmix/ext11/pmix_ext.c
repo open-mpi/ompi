@@ -408,7 +408,6 @@ void pmix1_value_load(pmix_value_t *v,
 }
 
 int pmix1_value_unload(opal_value_t *kv,
-                       const char *key,
                        const pmix_value_t *v)
 {
     int rc=OPAL_SUCCESS;
