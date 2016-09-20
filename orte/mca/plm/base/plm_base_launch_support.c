@@ -1364,6 +1364,11 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "orte_map_stddiag_to_stderr");
         opal_argv_append(argc, argv, "1");
     }
+    else if (orte_map_stddiag_to_stdout) {
+        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+        opal_argv_append(argc, argv, "orte_map_stddiag_to_stdout");
+        opal_argv_append(argc, argv, "1");
+    }
 
     /* the following is not an mca param */
     if (NULL != getenv("ORTE_TEST_ORTED_SUICIDE")) {

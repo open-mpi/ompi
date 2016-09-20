@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -183,7 +184,7 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         close(opts->p_stderr[1]);
     }
 
-    if (!orte_map_stddiag_to_stderr) {
+    if (!orte_map_stddiag_to_stderr && !orte_map_stddiag_to_stdout ) {
         /* Set an environment variable that the new child process can use
            to get the fd of the pipe connected to the INTERNAL IOF tag. */
         asprintf(&str, "%d", opts->p_internal[1]);
@@ -191,6 +192,9 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
             opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
             free(str);
         }
+    }
+    else if( orte_map_stddiag_to_stdout ) {
+        opal_setenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT", "1", true, env);
     }
 
     return ORTE_SUCCESS;

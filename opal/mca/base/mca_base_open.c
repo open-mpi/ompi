@@ -13,6 +13,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -121,7 +122,13 @@ int mca_base_open(void)
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     /* What verbosity level do we want for the default 0 stream? */
-    mca_base_verbose = "stderr";
+    char *str = getenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT");
+    if (NULL != str && str[0] == '1') {
+        mca_base_verbose = "stdout";
+    }
+    else {
+        mca_base_verbose = "stderr";
+    }
     var_id = mca_base_var_register("opal", "mca", "base", "verbose",
                                    "Specifies where the default error output stream goes (this is separate from distinct help messages).  Accepts a comma-delimited list of: stderr, stdout, syslog, syslogpri:<notice|info|debug>, syslogid:<str> (where str is the prefix string for all syslog notices), file[:filename] (if filename is not specified, a default filename is used), fileappend (if not specified, the file is opened for truncation), level[:N] (if specified, integer verbose level; otherwise, 0 is implied)",
                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
