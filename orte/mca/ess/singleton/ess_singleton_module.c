@@ -158,6 +158,8 @@ static int rte_init(void)
         /* for convenience, push the pubsub version of this param into the environ */
         opal_setenv (OPAL_MCA_PREFIX"pubsub_orte_server", orte_process_info.my_hnp_uri, 1, &environ);
     } else {
+        /* we want to use PMIX_NAMESPACE that will be sent by the hnp as a jobid */
+        opal_setenv(OPAL_MCA_PREFIX"orte_launch", "1", true, &environ);
         /* spawn our very own HNP to support us */
         if (ORTE_SUCCESS != (rc = fork_hnp())) {
             ORTE_ERROR_LOG(rc);
