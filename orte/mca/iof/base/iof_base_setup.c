@@ -68,6 +68,7 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
 
 int
@@ -153,11 +154,19 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         }
         ret = dup2(opts->p_stdout[1], fileno(stdout));
         if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        if( orte_iof_base.redirect_app_stderr_to_stdout ) {
+            ret = dup2(opts->p_stdout[1], fileno(stderr));
+            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        }
         close(opts->p_stdout[1]);
     } else {
         if(opts->p_stdout[1] != fileno(stdout)) {
             ret = dup2(opts->p_stdout[1], fileno(stdout));
             if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            if( orte_iof_base.redirect_app_stderr_to_stdout ) {
+                ret = dup2(opts->p_stdout[1], fileno(stderr));
+                if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            }
             close(opts->p_stdout[1]);
         }
     }
@@ -178,9 +187,12 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
             close(fd);
         }
     }
+
     if(opts->p_stderr[1] != fileno(stderr)) {
-        ret = dup2(opts->p_stderr[1], fileno(stderr));
-        if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+            ret = dup2(opts->p_stderr[1], fileno(stderr));
+            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        }
         close(opts->p_stderr[1]);
     }
 
