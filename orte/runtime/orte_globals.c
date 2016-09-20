@@ -16,6 +16,7 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -188,6 +189,7 @@ bool orte_staged_execution = false;
 
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 bool orte_map_stddiag_to_stderr = false;
+bool orte_map_stddiag_to_stdout = false;
 
 /* maximum size of virtual machine - used to subdivide allocation */
 int orte_max_vm_size = -1;

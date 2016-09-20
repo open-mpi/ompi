@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -174,7 +175,13 @@ bool opal_output_init(void)
         verbose.lds_want_stderr = false;
         verbose.lds_want_stdout = false;
     } else {
-        verbose.lds_want_stderr = true;
+        str = getenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT");
+        if (NULL != str && str[0] == '1') {
+            verbose.lds_want_stdout = true;
+        }
+        else {
+            verbose.lds_want_stderr = true;
+        }
     }
     gethostname(hostname, sizeof(hostname));
     asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
