@@ -188,12 +188,9 @@ int mca_pml_monitoring_get_messages_size(const struct mca_base_pvar_t *pvar,
     return OMPI_SUCCESS;
 }
 
-static void output_monitoring( FILE *pf )
+static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
 {
     if( 0 == filter_monitoring() ) return;  /* if disabled do nothing */
-
-    int nbprocs = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
-    int my_rank = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
 
     for (int i = 0 ; i < nbprocs ; i++) {
         if(sent_data[i] > 0) {
@@ -223,18 +220,22 @@ static void output_monitoring( FILE *pf )
    Flushes the monitoring into filename
    Useful for phases (see example in test/monitoring)
 */
-int ompi_mca_pml_monitoring_flush(char* filename)
+int ompi_mca_pml_monitoring_flush(char* filename, int rank, int size)
 {
     FILE *pf = NULL;
-    int my_rank = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
+    char* tmpfn = NULL;
 
-    if( NULL != filename )
-        pf = fopen(filename, "w");
+    if( NULL != filename ) {
+        asprintf(&tmpfn, "%s.%d.prof", filename, rank);
+        pf = fopen(tmpfn, "w");
+        free(tmpfn);
+    }
     if(NULL == pf)  /* No filename or error during open */
         return -1;
 
-    fprintf(stderr, "Proc %d flushing monitoring to: %s\n", my_rank, filename);
-    output_monitoring( pf );
+    fprintf(stderr, "Proc %d flushing monitoring to: %s.%d.prof\n",
+            rank, filename, rank);
+    output_monitoring( pf, rank, size );
 
     fclose(pf);
     return 0;
