@@ -819,34 +819,34 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     global_split_type = tmp[0];
 
     if (tmp[0] != -tmp[1] || inter) {
-	/* at least one rank supplied a different split type check if our split_type is ok */
-	ok = (MPI_UNDEFINED == split_type) || global_split_type == split_type;
+        /* at least one rank supplied a different split type check if our split_type is ok */
+        ok = (MPI_UNDEFINED == split_type) || global_split_type == split_type;
 
-	rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
-					  comm->c_coll.coll_allgather_module);
-	if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-	    return rc;
-	}
+        rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
+                                          comm->c_coll.coll_allgather_module);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            return rc;
+        }
 
-	if (inter) {
-	    /* need an extra allreduce to ensure that all ranks have the same result */
-	    rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
-					      comm->c_coll.coll_allgather_module);
-	    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-		return rc;
-	    }
-	}
+        if (inter) {
+            /* need an extra allreduce to ensure that all ranks have the same result */
+            rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
+                                              comm->c_coll.coll_allgather_module);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+                return rc;
+            }
+        }
 
-	if (OPAL_UNLIKELY(!ok)) {
-	    return OMPI_ERR_BAD_PARAM;
-	}
+        if (OPAL_UNLIKELY(!ok)) {
+            return OMPI_ERR_BAD_PARAM;
+        }
 
-	need_split = tmp[0] == -tmp[1];
+        need_split = tmp[0] == -tmp[1];
     } else {
-	/* intracommunicator and all ranks specified the same split type */
-	no_undefined = true;
-	/* check if all ranks specified the same key */
-	no_reorder = tmp[2] == -tmp[3];
+        /* intracommunicator and all ranks specified the same split type */
+        no_undefined = true;
+        /* check if all ranks specified the same key */
+        no_reorder = tmp[2] == -tmp[3];
     }
 
     if (MPI_UNDEFINED == global_split_type) {
@@ -863,18 +863,18 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     /* --------------------------------------------------------- */
 
     /* allowed splitting types:
-        CLUSTER
-        CU
-        HOST
-        BOARD
-        NODE
-        NUMA
-        SOCKET
-        L3CACHE
-        L2CACHE
-        L1CACHE
-        CORE
-        HWTHREAD
+       CLUSTER
+       CU
+       HOST
+       BOARD
+       NODE
+       NUMA
+       SOCKET
+       L3CACHE
+       L2CACHE
+       L1CACHE
+       CORE
+       HWTHREAD
        Even though HWTHREAD/CORE etc. is overkill they are here for consistency.
        They will most likely return a communicator which is equal to MPI_COMM_SELF
        Unless oversubscribing.
@@ -924,14 +924,14 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         }
 
         /* Step 5: Check if we need to remove or reorder ranks in the communicator */
-	if (!(no_reorder && no_undefined)) {
-	    rc = ompi_comm_split_verify (newcomp, split_type, key, &need_split);
+        if (!(no_reorder && no_undefined)) {
+            rc = ompi_comm_split_verify (newcomp, split_type, key, &need_split);
 
-	    if (inter) {
-		/* verify that no local ranks need to be removed or reordered */
-		rc = ompi_comm_split_verify (newcomp->c_local_comm, split_type, key, &need_split);
-	    }
-	}
+            if (inter) {
+                /* verify that no local ranks need to be removed or reordered */
+                rc = ompi_comm_split_verify (newcomp->c_local_comm, split_type, key, &need_split);
+            }
+        }
 
         if (!need_split) {
             /* common case. no reordering and no MPI_UNDEFINED */
