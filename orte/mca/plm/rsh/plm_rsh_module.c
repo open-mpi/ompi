@@ -606,17 +606,10 @@ static int setup_launch(int *argcptr, char ***argvptr,
      * Add the basic arguments to the orted command line, including
      * all debug options
      */
-    if (ORTE_PROC_IS_CM) {
-        orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                              NULL,
-                                              proc_vpid_index,
-                                              NULL);
-    } else {
-        orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                              "env",
-                                              proc_vpid_index,
-                                              NULL);
-    }
+    orte_plm_base_orted_append_basic_args(&argc, &argv,
+                                          "env",
+                                          proc_vpid_index,
+                                          NULL);
 
     /* ensure that only the ssh plm is selected on the remote daemon */
     opal_argv_append_nosize(&argv, "-"OPAL_MCA_CMD_LINE_ID);
