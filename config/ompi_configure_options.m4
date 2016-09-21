@@ -263,5 +263,9 @@ AC_ARG_ENABLE([mpi-io],
          the ompio component and a specially modified version of ROMIO
          that fits inside the romio314 component])])
 
+AC_ARG_ENABLE([io-ompio],
+    [AC_HELP_STRING([--disable-io-ompio],
+        [Disable the ompio ROM-IO component])])
+
 ])dnl
 
