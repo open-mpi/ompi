@@ -13,8 +13,6 @@ results_addr=testing@lists.open-mpi.org
 # svn repository uri
 master_code_uri=https://github.com/open-mpi/ompi.git
 master_raw_uri=https://raw.github.com/open-mpi/ompi
-release_code_uri=https://github.com/open-mpi/ompi-release.git
-release_raw_uri=https://raw.github.com/open-mpi/ompi-release
 
 # where to put built tarballs - needs to be
 # adjusted to match your site!
@@ -55,6 +53,7 @@ export LD_LIBRARY_PATH=$HOME_PREFIX/lib:$LD_LIBRARY_PATH
 module use $AUTOTOOL_MODULE
 
 # get our nightly build script
+echo "MKDIR"
 mkdir -p $build_root
 cd $build_root
 
@@ -70,13 +69,8 @@ for branch in $branches; do
     prev_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
     echo "=== Previous snapshot: $prev_snapshot"
 
-    if test "$branch" = "master"; then
-        code_uri=$master_code_uri
-        raw_uri=$master_raw_uri
-    else
-        code_uri=$release_code_uri
-        raw_uri=$release_raw_uri
-    fi
+    code_uri=$master_code_uri
+    raw_uri=$master_raw_uri
 
     # Form a URL-specific script name
     script=$branch-`basename $script_uri`
