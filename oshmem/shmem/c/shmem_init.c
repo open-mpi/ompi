@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +51,7 @@ void start_pes(int npes)
 static void shmem_onexit(int exitcode, void *arg)
 {
     oshmem_shmem_globalexit_status = exitcode;
+    shmem_finalize();
 }
 
 static inline void _shmem_init(void)
