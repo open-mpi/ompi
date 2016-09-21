@@ -670,6 +670,20 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 ])dnl
 
 AC_DEFUN([PMIX_DEFINE_ARGS],[
+    # do we want dlopen support ?
+    AC_MSG_CHECKING([if want dlopen support])
+    AC_ARG_ENABLE([dlopen],
+        [AC_HELP_STRING([--enable-dlopen],
+                        [Whether build should attempt to use dlopen (or
+                         similar) to dynamically load components.
+                         Disabling dlopen implies --disable-pdl-dlopen
+                         (default: enabled)])])
+    AS_IF([test "$enable_dlopen" = "no"],
+          [PMIX_ENABLE_DLOPEN_SUPPORT=0
+           AC_MSG_RESULT([no])],
+          [PMIX_ENABLE_DLOPEN_SUPPORT=1
+           AC_MSG_RESULT([yes])])
+
     # Embedded mode, or standalone?
     AC_MSG_CHECKING([if embedded mode is enabled])
     AC_ARG_ENABLE([embedded-mode],
