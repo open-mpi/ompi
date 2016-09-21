@@ -196,7 +196,7 @@ int ompi_request_default_wait_all( size_t count,
     rptr = requests;
     for (i = 0; i < count; i++) {
         request = *rptr++;
-        
+
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
             completed++;
             continue;
