@@ -192,7 +192,7 @@ static int create_listen(void)
      * port in the range.  Otherwise, tcp_port_min will be 0, which
      * means "pick any port"
      */
-    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_AGGREGATOR) {
+    if (ORTE_PROC_IS_DAEMON) {
         if (NULL != mca_oob_tcp_component.tcp_static_ports) {
             /* if static ports were provided, take the
              * first entry in the list
@@ -209,7 +209,7 @@ static int create_listen(void)
             opal_argv_append_nosize(&ports, "0");
             orte_static_ports = false;
         }
-    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_SCHEDULER) {
+    } else if (ORTE_PROC_IS_HNP) {
         if (NULL != mca_oob_tcp_component.tcp_static_ports) {
             /* if static ports were provided, take the
              * first entry in the list

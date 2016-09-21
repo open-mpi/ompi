@@ -268,8 +268,7 @@ static int orte_iof_base_open(mca_base_open_flag_t flags)
     }
 
     /* daemons do not need to do this as they do not write out stdout/err */
-    if (!ORTE_PROC_IS_DAEMON ||
-        (ORTE_PROC_IS_DAEMON && ORTE_PROC_IS_CM)) {
+    if (!ORTE_PROC_IS_DAEMON) {
         if (orte_xml_output) {
             if (NULL != orte_xml_fp) {
                 /* user wants all xml-formatted output sent to file */

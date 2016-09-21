@@ -59,7 +59,6 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     .my_hnp =                          ORTE_NAME_INVALID,
     .my_hnp_uri =                      NULL,
     .my_parent =                       ORTE_NAME_INVALID,
-    .my_scheduler =                    ORTE_NAME_INVALID,
     .hnp_pid =                         0,
     .app_num =                         0,
     .num_procs =                       1,
@@ -182,10 +181,10 @@ int orte_proc_info(void)
 
     orte_strip_prefix = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "strip_prefix",
-				  "Prefix(es) to match when deciding whether to strip leading characters and zeroes from "
-				  "node names returned by daemons", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-				  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-				  &orte_strip_prefix);
+                  "Prefix(es) to match when deciding whether to strip leading characters and zeroes from "
+                  "node names returned by daemons", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                  &orte_strip_prefix);
 
     /* we have to strip node names here, if user directs, to ensure that
      * the names exchanged in the modex match the names found locally

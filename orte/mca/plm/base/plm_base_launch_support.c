@@ -1321,11 +1321,10 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "orte_report_bindings");
         opal_argv_append(argc, argv, "1");
     }
-    if (!ORTE_PROC_IS_CM) {
-       /* pass our topology signature */
-        opal_argv_append(argc, argv, "--hnp-topo-sig");
-        opal_argv_append(argc, argv, orte_topo_signature);
-    }
+    /* pass our topology signature */
+    opal_argv_append(argc, argv, "--hnp-topo-sig");
+    opal_argv_append(argc, argv, orte_topo_signature);
+
     if (orte_hetero_nodes) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "orte_hetero_nodes");
