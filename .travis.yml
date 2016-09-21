@@ -16,7 +16,6 @@ compiler:
 
 # Iterate over 2 different OSs
 os:
-    - linux
     - osx
 
 addons:
@@ -40,7 +39,7 @@ env:
     global:
         - AM_MAKEFLAGS="-j4"
         - CPPFLAGS="-I$HOME/bogus/include"
-        - LDFLAGS="-I$HOME/bogus/lib"
+        - LDFLAGS="-L$HOME/bogus/lib"
         - LD_LIBRARY_PATH="$HOME/bogus/lib"
     matrix:
         - GCC_VERSION=default
@@ -53,6 +52,7 @@ before_install:
     - if [[ "GCC_VERSION" == "6" ]]; then COMPILERS="CC=gcc-6 CXX=g++-6 FC=gfortran-6"; fi
     - export CONFIGURE_ARGS="--prefix=$HOME/bogus $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - export DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
+    - echo TRAVIS_OS_NAME=$TRAVIS_OS_NAME GCC_VERSION=$GCC_VERSION
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "6" ]] ; then sudo apt-get --assume-yes install gcc-6 g++-6 gfortran-6; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
