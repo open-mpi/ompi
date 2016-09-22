@@ -52,9 +52,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1113_POST_CONFIG],[
            # Add some stuff to CPPFLAGS so that the rest of the source
            # tree can be built
            file=$opal_hwloc_hwloc1113_basedir/hwloc
-           CPPFLAGS="$CPPFLAGS -I$OPAL_TOP_SRCDIR/$file/include"
+           CPPFLAGS="-I$OPAL_TOP_SRCDIR/$file/include $CPPFLAGS"
            AS_IF([test "$OPAL_TOP_BUILDDIR" != "$OPAL_TOP_SRCDIR"],
-                 [CPPFLAGS="$CPPFLAGS -I$OPAL_TOP_BUILDDIR/$file/include"])
+                 [CPPFLAGS="-I$OPAL_TOP_BUILDDIR/$file/include $CPPFLAGS"])
            unset file
           ])
     OPAL_VAR_SCOPE_POP
