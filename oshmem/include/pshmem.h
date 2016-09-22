@@ -216,6 +216,13 @@ OSHMEM_DECLSPEC int pshmem_int_swap(int *target, int value, int pe);
 OSHMEM_DECLSPEC long pshmem_long_swap(long *target, long value, int pe);
 OSHMEM_DECLSPEC long long pshmem_longlong_swap(long long*target, long long value, int pe);
 
+/* Atomic set */
+OSHMEM_DECLSPEC void pshmem_int_set(int *target, int value, int pe);
+OSHMEM_DECLSPEC void pshmem_long_set(long *target, long value, int pe);
+OSHMEM_DECLSPEC void pshmem_longlong_set(long long*target, long long value, int pe);
+OSHMEM_DECLSPEC void pshmem_float_set(float *target, float value, int pe);
+OSHMEM_DECLSPEC void pshmem_double_set(double *target, double value, int pe);
+
 /* Atomic conditional swap */
 OSHMEM_DECLSPEC int pshmem_int_cswap(int *target, int cond, int value, int pe);
 OSHMEM_DECLSPEC long pshmem_long_cswap(long *target, long cond, long value, int pe);
@@ -225,6 +232,14 @@ OSHMEM_DECLSPEC long long pshmem_longlong_cswap(long long *target, long long con
 OSHMEM_DECLSPEC int pshmem_int_fadd(int *target, int value, int pe);
 OSHMEM_DECLSPEC long pshmem_long_fadd(long *target, long value, int pe);
 OSHMEM_DECLSPEC long long pshmem_longlong_fadd(long long *target, long long value, int pe);
+
+/* Atomic Fetch */
+OSHMEM_DECLSPEC int pshmem_int_fetch(const int *target, int pe);
+OSHMEM_DECLSPEC long pshmem_long_fetch(const long *target, int pe);
+OSHMEM_DECLSPEC long long pshmem_longlong_fetch(const long long *target, int pe);
+OSHMEM_DECLSPEC float pshmem_float_fetch(const float *target, int pe);
+OSHMEM_DECLSPEC double pshmem_double_fetch(const double *target, int pe);
+
 
 /* Atomic Fetch&Inc */
 OSHMEM_DECLSPEC int pshmem_int_finc(int *target, int pe);

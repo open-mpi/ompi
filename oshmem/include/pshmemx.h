@@ -81,6 +81,10 @@ OSHMEM_DECLSPEC void pshmemx_iget16(void* target, const void* source, ptrdiff_t 
 OSHMEM_DECLSPEC int32_t pshmemx_int32_swap(int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC int64_t pshmemx_int64_swap(int64_t *target, int64_t value, int pe);
 
+/*Atomic set */
+OSHMEM_DECLSPEC void pshmemx_int32_set(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_int64_set(int64_t *target, int64_t value, int pe);
+
 /* Atomic conditional swap */
 OSHMEM_DECLSPEC int32_t pshmemx_int32_cswap(int32_t *target, int32_t cond, int32_t value, int pe);
 OSHMEM_DECLSPEC int64_t pshmemx_int64_cswap(int64_t *target, int64_t cond, int64_t value, int pe);
@@ -88,6 +92,10 @@ OSHMEM_DECLSPEC int64_t pshmemx_int64_cswap(int64_t *target, int64_t cond, int64
 /* Atomic Fetch&Add */
 OSHMEM_DECLSPEC int32_t pshmemx_int32_fadd(int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC int64_t pshmemx_int64_fadd(int64_t *target, int64_t value, int pe);
+
+/* Atomic Fetch */
+OSHMEM_DECLSPEC int32_t pshmemx_int32_fetch(const int32_t *target, int pe);
+OSHMEM_DECLSPEC int64_t pshmemx_int64_fetch(const int64_t *target, int pe);
 
 /* Atomic Fetch&Inc */
 OSHMEM_DECLSPEC int32_t pshmemx_int32_finc(int32_t *target, int pe);
@@ -160,15 +168,25 @@ OSHMEM_DECLSPEC void pshmemx_int64_prod_to_all(int64_t *target, const int64_t *s
 
 #define pshmem_int32_swap            pshmemx_int32_swap
 #define pshmem_int64_swap            pshmemx_int64_swap
+
+#define pshmem_int32_set             pshmemx_int32_set
+#define pshmem_int64_set             pshmemx_int64_set
+
 #define pshmem_int32_cswap           pshmemx_int32_cswap
 #define pshmem_int64_cswap           pshmemx_int64_cswap
 
 #define pshmem_int32_fadd            pshmemx_int32_fadd
 #define pshmem_int64_fadd            pshmemx_int64_fadd
+
+#define pshmem_int32_fetch           pshmemx_int32_fetch
+#define pshmem_int64_fetch           pshmemx_int64_fetch
+
 #define pshmem_int32_finc            pshmemx_int32_finc
 #define pshmem_int64_finc            pshmemx_int64_finc
+
 #define pshmem_int32_add             pshmemx_int32_add
 #define pshmem_int64_add             pshmemx_int64_add
+
 #define pshmem_int32_inc             pshmemx_int32_inc
 #define pshmem_int64_inc             pshmemx_int64_inc
 

@@ -203,6 +203,14 @@
 #define shmemx_int32_swap            pshmemx_int32_swap
 #define shmemx_int64_swap            pshmemx_int64_swap
 
+/* Atomic set */
+#define shmem_double_set            pshmem_double_set
+#define shmem_float_set             pshmem_float_set
+#define shmem_int_set               pshmem_int_set
+#define shmem_long_set              pshmem_long_set
+#define shmem_longlong_set          pshmem_longlong_set
+#define shmemx_int32_set            pshmemx_int32_set
+#define shmemx_int64_set            pshmemx_int64_set
 
 /* Atomic conditional swap */
 #define shmem_int_cswap              pshmem_int_cswap
@@ -218,6 +226,15 @@
 #define shmem_longlong_fadd          pshmem_longlong_fadd
 #define shmemx_int32_fadd            pshmemx_int32_fadd
 #define shmemx_int64_fadd            pshmemx_int64_fadd
+
+/* Atomic Fetch */
+#define shmem_double_fetch            pshmem_double_fetch
+#define shmem_float_fetch             pshmem_float_fetch
+#define shmem_int_fetch               pshmem_int_fetch
+#define shmem_long_fetch              pshmem_long_fetch
+#define shmem_longlong_fetch          pshmem_longlong_fetch
+#define shmemx_int32_fetch            pshmemx_int32_fetch
+#define shmemx_int64_fetch            pshmemx_int64_fetch
 
 /* Atomic Fetch&Inc */
 #define shmem_int_finc               pshmem_int_finc
