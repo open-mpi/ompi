@@ -443,7 +443,7 @@ CLEANUP:
 int
 orte_session_dir_finalize(orte_process_name_t *proc)
 {
-    int rc;
+    int rc=ORTE_SUCCESS;
 
     if (!orte_create_session_dirs || orte_process_info.rm_session_dirs ) {
         /* we haven't created them or RM will clean them up for us*/

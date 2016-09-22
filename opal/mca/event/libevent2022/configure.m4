@@ -75,9 +75,9 @@ EOF
            # Add some stuff to CPPFLAGS so that the rest of the source
            # tree can be built
            libevent_file=$libevent_basedir/libevent
-           CPPFLAGS="$CPPFLAGS -I$OPAL_TOP_SRCDIR/$libevent_file -I$OPAL_TOP_SRCDIR/$libevent_file/include"
+           CPPFLAGS="-I$OPAL_TOP_SRCDIR/$libevent_file -I$OPAL_TOP_SRCDIR/$libevent_file/include $CPPFLAGS"
            AS_IF([test "$OPAL_TOP_BUILDDIR" != "$OPAL_TOP_SRCDIR"],
-                 [CPPFLAGS="$CPPFLAGS -I$OPAL_TOP_BUILDDIR/$libevent_file/include"])
+                 [CPPFLAGS="-I$OPAL_TOP_BUILDDIR/$libevent_file/include $CPPFLAGS"])
            unset libevent_file
           ])
 ])
