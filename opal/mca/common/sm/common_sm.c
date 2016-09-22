@@ -37,6 +37,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/mca/shmem/base/base.h"
+#include "common_sm.h"
 
 #include "opal/constants.h"
 
