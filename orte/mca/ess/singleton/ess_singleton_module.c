@@ -571,20 +571,20 @@ static int fork_hnp(void)
         orted_uri = (char*)malloc(buffer_length);
         memset(orted_uri, 0, buffer_length);
 
-        while (chunk == (rc = read(p[0], &orted_uri[num_chars_read], chunk))) {
+        while (0 != (rc = read(p[0], &orted_uri[num_chars_read], chunk))) {
             if (rc < 0 && (EAGAIN == errno || EINTR == errno)) {
                 continue;
-            } else {
-                num_chars_read = 0;
+            } else if (rc < 0) {
+                num_chars_read = -1;
                 break;
             }
-            /* we read an entire buffer - better get more */
-            num_chars_read += chunk;
-            orted_uri = realloc((void*)orted_uri, buffer_length+ORTE_URI_MSG_LGTH);
-            memset(&orted_uri[buffer_length], 0, ORTE_URI_MSG_LGTH);
-            buffer_length += ORTE_URI_MSG_LGTH;
+            /* we read something - better get more */
+            num_chars_read += rc;
+            orted_uri = realloc((void*)orted_uri, buffer_length+chunk);
+            memset(&orted_uri[buffer_length], 0, chunk);
+            buffer_length += chunk;
         }
-        num_chars_read += rc;
+        close(p[0]);
 
         if (num_chars_read <= 0) {
             /* we didn't get anything back - this is bad */

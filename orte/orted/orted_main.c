@@ -628,6 +628,7 @@ int orte_daemon(int argc, char *argv[])
 
         /* cleanup */
         free(tmp);
+        close(orted_globals.uri_pipe);
 
         /* since a singleton spawned us, we need to harvest
          * any MCA params from the local environment so
