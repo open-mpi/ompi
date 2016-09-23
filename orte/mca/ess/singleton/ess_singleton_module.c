@@ -580,9 +580,13 @@ static int fork_hnp(void)
             }
             /* we read something - better get more */
             num_chars_read += rc;
-            orted_uri = realloc((void*)orted_uri, buffer_length+chunk);
-            memset(&orted_uri[buffer_length], 0, chunk);
-            buffer_length += chunk;
+            chunk -= rc;
+            if (0 == chunk) {
+                chunk = ORTE_URI_MSG_LGTH;
+                orted_uri = realloc((void*)orted_uri, buffer_length+chunk);
+                memset(&orted_uri[buffer_length], 0, chunk);
+                buffer_length += chunk;
+            }
         }
         close(p[0]);
 
