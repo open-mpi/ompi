@@ -35,7 +35,7 @@
 static opal_timer_t opal_timer_base_get_cycles_sys_timer(void);
 static opal_timer_t opal_timer_base_get_usec_sys_timer(void);
 
-#if OPAL_HAVE_CLOCK_GETTIME
+#if OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_HAVE_SYS_TIMER_GET_CYCLES)
 static opal_timer_t opal_timer_base_get_cycles_clock_gettime(void);
 static opal_timer_t opal_timer_base_get_usec_clock_gettime(void);
 opal_timer_t (*opal_timer_base_get_cycles)(void) = opal_timer_base_get_cycles_clock_gettime;
@@ -43,7 +43,7 @@ opal_timer_t (*opal_timer_base_get_usec)(void) = opal_timer_base_get_usec_clock_
 #else
 opal_timer_t (*opal_timer_base_get_cycles)(void) = opal_timer_base_get_cycles_sys_timer;
 opal_timer_t (*opal_timer_base_get_usec)(void) = opal_timer_base_get_usec_sys_timer;
-#endif  /* OPAL_HAVE_CLOCK_GETTIME */
+#endif  /* OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_HAVE_SYS_TIMER_GET_CYCLES) */
 
 opal_timer_t opal_timer_linux_freq = {0};
 
@@ -159,7 +159,7 @@ int opal_timer_linux_open(void)
     int ret = OPAL_SUCCESS;
 
     if(mca_timer_base_monotonic) {
-#if OPAL_HAVE_CLOCK_GETTIME
+#if OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_HAVE_SYS_TIMER_GET_CYCLES)
         struct timespec res;
         if( 0 == clock_getres(CLOCK_MONOTONIC, &res)) {
             opal_timer_linux_freq = 1.e9;
@@ -172,7 +172,7 @@ int opal_timer_linux_open(void)
         /* Monotonic time requested but cannot be found. Complain! */
         opal_show_help("help-opal-timer-linux.txt", "monotonic not supported", 1);
 #endif  /* (0 == OPAL_TIMER_MONOTONIC) */
-#endif
+#endif  /* OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_HAVE_SYS_TIMER_GET_CYCLES) */
     }
     ret = opal_timer_linux_find_freq();
     opal_timer_base_get_cycles = opal_timer_base_get_cycles_sys_timer;
@@ -180,7 +180,7 @@ int opal_timer_linux_open(void)
     return ret;
 }
 
-#if OPAL_HAVE_CLOCK_GETTIME
+#if OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_HAVE_SYS_TIMER_GET_CYCLES)
 opal_timer_t opal_timer_base_get_usec_clock_gettime(void)
 {
     struct timespec tp;
@@ -200,7 +200,7 @@ opal_timer_t opal_timer_base_get_cycles_clock_gettime(void)
     }
     return 0;
 }
-#endif  /* OPAL_HAVE_CLOCK_GETTIME */
+#endif  /* OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_HAVE_SYS_TIMER_GET_CYCLES) */
 
 opal_timer_t opal_timer_base_get_cycles_sys_timer(void)
 {
