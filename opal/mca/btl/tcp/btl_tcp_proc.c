@@ -533,8 +533,9 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     }
 
 
-    for(i=0; i<num_local_interfaces; ++i) {
-        for(j=0; j<num_peer_interfaces; ++j) {
+    for( i = 0; i < proc_data->num_local_interfaces; ++i ) {
+        mca_btl_tcp_interface_t* local_interface = proc_data->local_interfaces[i];
+        for( j = 0; j < proc_data->num_peer_interfaces; ++j ) {
 
             /*  initially, assume no connection is possible */
             weights[i][j] = CQ_NO_CONNECTION;
@@ -543,20 +544,9 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
             if(NULL != local_interfaces[i]->ipv4_address &&
                NULL != peer_interfaces[j]->ipv4_address) {
 
-                /*  check for loopback */
-                if ((opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address) &&
-                     !opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv4_address)) ||
-                    (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv4_address) &&
-                     !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address)) ||
-                    (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address) &&
-                     !opal_ifislocal(proc_hostname))) {
-
-                    /* No connection is possible on these interfaces */
-
-                    /*  check for RFC1918 */
-                } else if(opal_net_addr_isipv4public((struct sockaddr*) local_interfaces[i]->ipv4_address) &&
-                          opal_net_addr_isipv4public((struct sockaddr*) peer_interfaces[j]->ipv4_address)) {
-                    if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv4_address,
+                if(opal_net_addr_isipv4public((struct sockaddr*) local_interface->ipv4_address) &&
+                   opal_net_addr_isipv4public((struct sockaddr*) peer_interfaces[j]->ipv4_address)) {
+                    if(opal_net_samenetwork((struct sockaddr*) local_interface->ipv4_address,
                                             (struct sockaddr*) peer_interfaces[j]->ipv4_address,
                                             local_interfaces[i]->ipv4_netmask)) {
                         weights[i][j] = CQ_PUBLIC_SAME_NETWORK;
@@ -565,17 +555,16 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                     }
                     best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
                     continue;
-                } else {
-                    if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv4_address,
-                                            (struct sockaddr*) peer_interfaces[j]->ipv4_address,
-                                            local_interfaces[i]->ipv4_netmask)) {
-                        weights[i][j] = CQ_PRIVATE_SAME_NETWORK;
-                    } else {
-                        weights[i][j] = CQ_PRIVATE_DIFFERENT_NETWORK;
-                    }
-                    best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
-                    continue;
                 }
+                if(opal_net_samenetwork((struct sockaddr*) local_interface->ipv4_address,
+                                        (struct sockaddr*) peer_interfaces[j]->ipv4_address,
+                                        local_interface->ipv4_netmask)) {
+                    proc_data->weights[i][j] = CQ_PRIVATE_SAME_NETWORK;
+                } else {
+                    proc_data->weights[i][j] = CQ_PRIVATE_DIFFERENT_NETWORK;
+                }
+                proc_data->best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
+                continue;
             }
 
             /* check state of ipv6 address pair - ipv6 is always public,
@@ -584,20 +573,10 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
             if(NULL != local_interfaces[i]->ipv6_address &&
                NULL != peer_interfaces[j]->ipv6_address) {
 
-                /*  check for loopback */
-                if ((opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address) &&
-                     !opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv6_address)) ||
-                    (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv6_address) &&
-                     !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address)) ||
-                    (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address) &&
-                     !opal_ifislocal(proc_hostname))) {
-
-                    /* No connection is possible on these interfaces */
-
-                } else if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv6_address,
-                                               (struct sockaddr*) peer_interfaces[j]->ipv6_address,
-                                               local_interfaces[i]->ipv6_netmask)) {
-                    weights[i][j] = CQ_PUBLIC_SAME_NETWORK;
+                if(opal_net_samenetwork((struct sockaddr*) local_interface->ipv6_address,
+                                         (struct sockaddr*) peer_interfaces[j]->ipv6_address,
+                                         local_interface->ipv6_netmask)) {
+                    proc_data->weights[i][j] = CQ_PUBLIC_SAME_NETWORK;
                 } else {
                     weights[i][j] = CQ_PUBLIC_DIFFERENT_NETWORK;
                 }
@@ -751,6 +730,7 @@ int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t* btl_proc, mca_btl_base_endpoint_
 mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
 {
     mca_btl_tcp_proc_t* proc = NULL;
+
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs,
                               *name, (void**)&proc);
@@ -789,9 +769,8 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
  */
 void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr, int sd)
 {
-    size_t i;
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
-    for( i = 0; i < btl_proc->proc_endpoint_count; i++ ) {
+    for( size_t i = 0; i < btl_proc->proc_endpoint_count; i++ ) {
         mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
         /* Check all conditions before going to try to accept the connection. */
         if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family ) {
