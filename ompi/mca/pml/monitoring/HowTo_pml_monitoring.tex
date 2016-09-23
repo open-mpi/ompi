@@ -1,0 +1,353 @@
+% Copyright (c) 2016 Inria.  All rights reserved.
+% $COPYRIGHT$
+%
+% Additional copyrights may follow
+%
+% $HEADER$
+
+\documentclass[notitlepage]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper]{geometry}
+\usepackage{verbatim}
+
+\title{How to use OpenMPI monitoring component}
+\author{C. FOYER - INRIA}
+
+\newcommand{\mpit}[1]{\textit{MPI\_Tool#1}}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+\mpit{} is a concept introduced in the MPI-3 standard. It allows MPI
+implementation developpers, or third party, to offer an interface to
+different tools. These tools may be used to monitor application,
+measure its performances, or profile it. \mpit{} is an interface that
+ease the adding of external functions to a MPI library. It also allows
+the user to control and monitor given internal variables of the
+runtime system.
+
+The present document is here to introduce the use the \mpit{}
+interface from a user point of view, to facilitate te usage of the
+OpenMPI PML monitoring component. This component goal is to record
+precisely the exchanges between nodes during a MPI application
+execution. The number of messages and the amount of data exchanged are
+recorded. So far, this component works for PML layer only.
+
+This component offers two types of monitoring, whether the use want a
+fine control over the monitoring, or just an overall view of
+messages. Moreover, the fine control allows the user to access the
+results through the application, and let him reset the variables when
+needed. The fine control is achieved via the \mpit{} interface, which
+needs the code to by adapted with the adding of the specific
+initialization function. However, the basic overall monitoring is
+achieved without any modification of the application code.
+
+Whether you are using one version or the other, the monitoring need to
+be enabled with parameters added when calling \texttt{mpiexec}. Two new
+parameters have been introduced :
+\begin{description}
+\item [\texttt{----mca pml\_monitoring\_enable value}] The value may be :
+  \begin{description}
+  \item [0] monitoring is disabled
+  \item [1] monitoring is enabled, with a distinction between control
+    and point-to-point messages.
+  \item [$\ge$ 2] monitoring enabled, with no distinction between
+    exchanged messages.
+  \end{description}
+\item [\texttt{----mca pml\_monitoring\_filename filename}] Set the file
+  where to flush the resulting output from monitoring. The output is a
+  communication matrix of both the number of messages and the total
+  size of exchanged data between each couple of nodes.
+\end{description}
+
+\section{Without \mpit{}}
+
+This mode is a should be used to monitor the whole application from
+its start until its end. It is defined such as you can record the
+amount of communications without any code modification.
+
+In order to do so, you have to get OpenMPI compiled with monitoring
+enabled. When you launch your application, you need to set the
+parameter \texttt{pml\_monitoring\_enable} to a value $> 0$, and set
+the \texttt{pml\_monitoring\_filename} parameter to a proper file name,
+which path must exists.
+
+\section{With \mpit{}}
+
+\subsection{Overview of the calls}
+
+Performance variable name :
+\begin{itemize}
+\item \textit{pml\_monitoring\_flush}
+\item \textit{pml\_monitoring\_messages\_count}
+\item \textit{pml\_monitoring\_messages\_size}
+\end{itemize}
+Add to your command line at least \texttt{----mca pml\_monitoring\_enable [1,2]} \\
+Sequence of \mpit{}:
+\begin{enumerate}
+\item {\texttt{MPI\_T\_init\_thread}} Initialize the MPI\_Tools
+  interface
+\item {\texttt{MPI\_T\_pvar\_get\_index}} To retrieve the variable id
+\item {\texttt{MPI\_T\_session\_create}} To create a new context
+  in wich you use your variable
+\item {\texttt{MPI\_T\_handle\_alloc}} To bind your variable to the
+  proper session and MPI object
+\item {\texttt{MPI\_T\_pvar\_start}} To start the monitoring
+\item Now you do all the communications you want to monitor
+\item {\texttt{MPI\_T\_pvar\_stop}} To stop and flush the monitoring
+\item {\texttt{MPI\_T\_pvar\_handle\_free}}
+\item {\texttt{MPI\_T\_pvar\_session\_free}}
+\item {\texttt{MPI\_T\_finalize}}
+\end{enumerate}
+
+\subsection{How it works}
+
+\mpit{} is a layer that is added to the standard MPI
+implementation. As such, it must be noted first that it may have an
+impact to the performances that can be explained in README of the
+component.
+
+As these functionnality are orthogonal to the core ones, \mpit{}
+initialization and finalization are independant from MPI's one. There
+is no restriction regarding the order or the differents calls. Also,
+the \mpit{} interface initialization function can be called more than
+once within the execution, as long as the finalize function is called
+as many times.
+
+\mpit{} introduces two types of variables, \textit{control variables}
+and \textit{performance variables}. These variables will be refered to
+respectively as \textit{cvar} and \textit{pvar}. The variables can be
+used to tune dynamically the application to fit best the needs of the
+application. They are defined by the library (or by the external
+component), and accesed with the given accessor functions, specified
+in the standard. The variables are named uniquely through the
+application. Every variable, once defined and registered within the
+MPI engine, is given an index that won't change during the entire
+execution.
+
+Same as for the monitoring without \mpit{}, you need to start your
+application with the control variable \textit{pml\_monitoring\_enable}
+properly set. Even though, it is not required, you can also add for
+your command line the desired filename to flush the monitoring
+output. By default the output target is \texttt{stderr}.
+
+\subsubsection{Initialization}
+
+The initialization is made by a call to
+\texttt{MPI\_T\_init\_thread}. This function takes two parameters. The
+first one is the desired level of thread support, the second one is
+the provided level of thread support. It has the same semantic as the
+\texttt{MPI\_Init\_thread} function. Please note that the first
+function to be called (between \texttt{MPI\_T\_init\_thread} and
+\texttt{MPI\_Init\_thread}) may influence the second one for the
+provided level of thread support. This function goal is to initialize
+control and performance variables.
+
+But, in order to use the performance variables within one context
+without influencing the one from an other context, a variable has to
+be bound to a session. To create a session, you have to call
+\texttt{MPI\_T\_pvar\_session\_create} in order to initialize a session.
+
+In addition to the binding of a session, a performance variable may
+also depend on a MPI object. For exemple, the
+\textit{pml\_monitoring\_flush} variable needs to be bound to a
+communicator. In order to do so, you need to use the
+\texttt{MPI\_T\_pvar\_handle\_alloc} function, which takes as
+parameters the used session, the id of the variable, the MPI object
+(i.e. \texttt{MPI\_COMM\_WORLD} in the case of
+\textit{pml\_monitoring\_flush}), the reference to the performance
+variable handle and a reference to an integer value. The last
+parameter allow the user to receive some additionnal informations
+about the variable, or the MPI object bound. In order to get more
+information about this parameter, please read the information document
+given with the component. Please note that the \textit{handle\_alloc}
+function takes the variable id as parameter. In order to retrieve this
+value, you have to call \texttt{MPI\_T\_pvar\_get\_index} wich take as
+a IN parameter a string that contains the name of the desired
+variable.
+
+\subsubsection{How to use the performance variables}
+
+Three performance variables are defined in the monitoring component :
+\begin{description}
+\item [\textit{pml\_monitoring\_flush}] Allow the user to define a file
+  where to flush the recorded data. By default, the data are flushed
+  in \textbf{stderr}.
+\item [\textit{pml\_monitoring\_messages\_count}] Allow the user to acces
+  within the application the number of messages exchanged with each
+  node from the bound communicator (\textit{MPI\_Comm}).
+\item [\textit{pml\_monitoring\_messages\_size}] Allow the user to acces
+  within the application the amount of data exchanged with each node
+  from the bound communicator (\textit{MPI\_Comm}).
+\end{description}
+
+Once bound to a session and to the proper MPI object, these variable
+may be accessed through a set of given functions. It must be noted
+here that each of the function applied to the different variables
+need, in fact, to be called with the handle of the variable.
+
+The first variable may be modified by using the
+\texttt{MPI\_T\_pvar\_write} function. The later variables may be read
+using \texttt{MPI\_T\_pvar\_read} but cannot be written. Stopping the
+\textit{flush} performance variable, with a call to
+\texttt{MPI\_T\_pvar\_stop}, force the counters to be flushed into the
+given file. Also, binding a new handle to the \textit{flush} variable
+will reset the counters.
+
+The monitoring will start on the call to the
+\texttt{MPI\_T\_pvar\_start} until the moment you call the
+\texttt{MPI\_T\_pvar\_stop} function.
+
+Once you are done with the different monitoring, you can clean
+everything by calling the function \texttt{MPI\_T\_pvar\_handle\_free}
+to free the allocated handles, \texttt{MPI\_T\_pvar\_session\_free} to
+free the session, and \texttt{MPI\_T\_Finalize} to state the end of
+your use of performance and control variables.
+
+\subsection{Example}
+
+Execute the following argument with :
+\begin{verbatim}
+mpiexec --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 1 test_monitoring
+\end{verbatim}
+
+\subsubsection{test\_monitoring.c}
+
+\begin{verbatim}
+  
+#include <stdio.h>
+#include "mpi.h"
+
+static MPI_T_pvar_handle flush_handle;
+static const char flush_pvar_name[] = "pml_monitoring_flush";
+static const char flush_cvar_name[] = "pml_monitoring_enable";
+static int flush_pvar_idx;
+static int with_mpit = 1;
+
+int main(int argc, char* argv[])
+{
+  int rank, size, n, to, from, tagno, MPIT_result, provided, count;
+  MPI_T_pvar_session session;
+  MPI_Status status;
+  MPI_Comm newcomm;
+  MPI_Request request;
+  char filename[1024];
+
+
+  /* first phase : make a token circulated in MPI_COMM_WORLD */
+  n = -1;
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  to = (rank + 1) % size;
+  from = (rank - 1) % size;
+  tagno = 201;
+
+  MPIT_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
+  if (MPIT_result != MPI_SUCCESS)
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+
+  MPIT_result = MPI_T_pvar_get_index(flush_pvar_name, MPI_T_PVAR_CLASS_GENERIC, 
+                                     &flush_pvar_idx);
+  if (MPIT_result != MPI_SUCCESS) {
+    printf("cannot find monitoring MPI_T \"%s\" pvar, "
+           "check that you have monitoring pml\n",
+           flush_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+  }
+
+  MPIT_result = MPI_T_pvar_session_create(&session);
+  if (MPIT_result != MPI_SUCCESS) {
+    printf("cannot create a session for \"%s\" pvar\n", flush_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+  }
+
+  /* Allocating a new PVAR in a session will reset the counters */
+  MPIT_result = MPI_T_pvar_handle_alloc(session, flush_pvar_idx,
+					MPI_COMM_WORLD, &flush_handle, &count);
+  if (MPIT_result != MPI_SUCCESS) {
+    printf("failed to allocate handle on \"%s\" pvar, "
+           "check that you have monitoring pml\n",
+           flush_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+  }
+
+  MPIT_result = MPI_T_pvar_start(session, flush_handle);
+  if (MPIT_result != MPI_SUCCESS) {
+    printf("failed to start handle on \"%s\" pvar, "
+           "check that you have monitoring pml\n",
+           flush_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+  }
+
+  if (rank == 0) {
+    n = 25;
+    MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD,&request);
+  }
+  while (1) {
+    MPI_Irecv(&n, 1, MPI_INT, from, tagno, MPI_COMM_WORLD, &request);
+    MPI_Wait(&request, &status);
+    if (rank == 0) {n--;tagno++;}
+    MPI_Isend(&n, 1, MPI_INT, to, tagno, MPI_COMM_WORLD, &request);
+    if (rank != 0) {n--;tagno++;}
+    if (n<0){
+      break;
+    }
+  }
+
+  /* 
+   * Build one file per processes
+   * Every thing that has been monitored by each
+   * process since the last flush will be output in filename
+   */
+  /*
+   * Requires directory prof to be created.
+   * Filename format should display the phase number
+   * and the process rank for ease of parsing with
+   * aggregate_profile.pl script
+   */
+
+  sprintf(filename,"prof/phase_1");
+  if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
+    fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n", rank, filename, rank);
+  }
+  /* Force the writing of the monitoring data */
+  MPIT_result = MPI_T_pvar_stop(session, flush_handle);
+  if (MPIT_result != MPI_SUCCESS) {
+    printf("failed to stop handle on \"%s\" pvar, "
+           "check that you have monitoring pml\n",
+           flush_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+  }
+
+  MPIT_result = MPI_T_pvar_start(session, flush_handle);
+  if (MPIT_result != MPI_SUCCESS) {
+    printf("failed to start handle on \"%s\" pvar, "
+           "check that you have monitoring pml\n",
+           flush_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+  }
+  /* 
+   * Don't set a filename. If we stop the session before setting it, then no output
+   * will be generated.
+   */
+  if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, NULL) ) {
+    fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+  }
+
+  (void)MPI_T_finalize();
+
+  MPI_Finalize();
+  
+  return 0;
+}
+
+\end{verbatim}
+
+\end{document}
