@@ -37,7 +37,6 @@ PN (FORTRAN_POINTER_T*, pshmem_ptr, PSHMEM_PTR, (FORTRAN_POINTER_T target, MPI_F
 PN (ompi_fortran_logical_t, pshmem_pe_accessible, PSHMEM_PE_ACCESSIBLE, (MPI_Fint *pe));
 PN (MPI_Fint, pshmem_addr_accessible, PSHMEM_ADDR_ACCESSIBLE, (FORTRAN_POINTER_T addr, MPI_Fint *pe));
 
-PN (void, pshmem_put, PSHMEM_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_character_put, PSHMEM_CHARACTER_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_complex_put, PSHMEM_COMPLEX_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_double_put, PSHMEM_DOUBLE_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));

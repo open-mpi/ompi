@@ -46,7 +46,6 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_ptr_f.c \
                     shmem_pe_accessible_f.c \
                     shmem_addr_accessible_f.c \
-                    shmem_put_f.c \
                     shmem_character_put_f.c \
                     shmem_double_put_f.c \
                     shmem_complex_put_f.c \
