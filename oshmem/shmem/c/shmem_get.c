@@ -54,7 +54,8 @@
 #pragma weak shmem_double_get = pshmem_double_get
 #pragma weak shmem_longdouble_get = pshmem_longdouble_get
 #pragma weak shmem_getmem = pshmem_getmem
-#pragma weak shmemx_get16 = pshmemx_get16
+#pragma weak shmem_get8 = pshmem_get8
+#pragma weak shmem_get16 = pshmem_get16
 #pragma weak shmem_get32 = pshmem_get32
 #pragma weak shmem_get64 = pshmem_get64
 #pragma weak shmem_get128 = pshmem_get128
@@ -92,9 +93,9 @@ SHMEM_TYPE_GET(_longdouble, long double)
     }
 
 SHMEM_TYPE_GETMEM(_getmem, 1, shmem)
-SHMEM_TYPE_GETMEM(_get16, 2, shmemx)
+SHMEM_TYPE_GETMEM(_get8, 1, shmem)
+SHMEM_TYPE_GETMEM(_get16, 2, shmem)
 SHMEM_TYPE_GETMEM(_get32, 4, shmem)
 SHMEM_TYPE_GETMEM(_get64, 8, shmem)
 SHMEM_TYPE_GETMEM(_get128, 16, shmem)
 
-SHMEM_TYPE_GETMEM(_get, sizeof(long), shmem)
