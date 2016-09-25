@@ -43,6 +43,8 @@
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 #define OSHMEM_HAVE_C11 1
+#else
+#define OSHMEM_HAVE_C11 0
 #endif
 
 #include <shmem-compat.h>

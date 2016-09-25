@@ -36,6 +36,8 @@
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 #define OSHMEMP_HAVE_C11 1
+#else
+#define OSHMEMP_HAVE_C11 0
 #endif
 
 #include <pshmemx.h>
