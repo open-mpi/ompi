@@ -190,8 +190,8 @@ int main(int argc, char* argv[])
 
     /*
       Second phase. Work with different communicators.
-      even ranls will circulate a token
-      while odd ranks wil perform a all_to_all
+      even ranks will circulate a token
+      while odd ranks will perform a all_to_all
     */
     MPI_Comm_split(MPI_COMM_WORLD, rank%2, rank, &newcomm);
 
@@ -202,8 +202,8 @@ int main(int argc, char* argv[])
         MPI_Comm_rank(newcomm, &rank);
         MPI_Comm_size(newcomm, &size);
         if( size > 1 ) {
-            to = (rank + 1) % size;;
-            from = (rank - 1) % size ;
+            to = (rank + 1) % size;
+            from = (rank - 1) % size;
             tagno = 201;
             if (rank == 0){
                 n = 50;
