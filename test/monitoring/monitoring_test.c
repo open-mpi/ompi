@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
       aggregate_profile.pl script
     */
     if( with_mpit ) {
-        sprintf(filename,"prof/phase_1_%d.prof",rank);
+        sprintf(filename, with_mpit ? "prof/phase_1" : "prof/phase_1_%d.prof", rank);
         if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
         }
@@ -196,7 +196,7 @@ int main(int argc, char* argv[])
     MPI_Comm_split(MPI_COMM_WORLD, rank%2, rank, &newcomm);
 
     /* the filename for flushing monitoring now uses 2 as phase number! */
-    sprintf(filename, "prof/phase_2_%d.prof", rank);
+    sprintf(filename, with_mpit ? "prof/phase_2" : "prof/phase_2_%d.prof", rank);
 
     if(rank%2){ /*even ranks (in COMM_WORD) circulate a token*/
         MPI_Comm_rank(newcomm, &rank);
