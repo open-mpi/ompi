@@ -23,6 +23,9 @@ uint64_t* messages_count = NULL;
 uint64_t* filtered_sent_data = NULL;
 uint64_t* filtered_messages_count = NULL;
 
+int rank_world = -1;
+int nprocs_world = 0;
+
 opal_hash_table_t *translation_ht = NULL;
 
 
@@ -61,10 +64,14 @@ int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
                                  size_t nprocs)
 {
     opal_process_name_t tmp, wp_name;
-    size_t i, peer_rank, nprocs_world;
+    size_t i, peer_rank;
     uint64_t key;
 
-    nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
+    if( 0 > rank_world )
+      rank_world = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
+    if( !nprocs_world )
+      nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
+    
     if( NULL == translation_ht ) {
         translation_ht = OBJ_NEW(opal_hash_table_t);
         opal_hash_table_init(translation_ht, 2048);
@@ -130,11 +137,10 @@ void finalize_monitoring( void )
 
 void mca_pml_monitoring_reset( void )
 {
-    int nbprocs = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
-    memset(sent_data, 0, nbprocs * sizeof(uint64_t));
-    memset(messages_count, 0, nbprocs * sizeof(uint64_t));
-    memset(filtered_sent_data, 0, nbprocs * sizeof(uint64_t));
-    memset(filtered_messages_count, 0, nbprocs * sizeof(uint64_t));
+    memset(sent_data, 0, nprocs_world * sizeof(uint64_t));
+    memset(messages_count, 0, nprocs_world * sizeof(uint64_t));
+    memset(filtered_sent_data, 0, nprocs_world * sizeof(uint64_t));
+    memset(filtered_messages_count, 0, nprocs_world * sizeof(uint64_t));
 }
 
 void monitor_send_data(int world_rank, size_t data_size, int tag)
@@ -220,13 +226,13 @@ static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
    Flushes the monitoring into filename
    Useful for phases (see example in test/monitoring)
 */
-int ompi_mca_pml_monitoring_flush(char* filename, int rank, int size)
+int ompi_mca_pml_monitoring_flush(char* filename)
 {
     FILE *pf = NULL;
     char* tmpfn = NULL;
 
     if( NULL != filename ) {
-        asprintf(&tmpfn, "%s.%d.prof", filename, rank);
+        asprintf(&tmpfn, "%s.%d.prof", filename, rank_world);
         pf = fopen(tmpfn, "w");
         free(tmpfn);
     }
@@ -234,8 +240,8 @@ int ompi_mca_pml_monitoring_flush(char* filename, int rank, int size)
         return -1;
 
     fprintf(stderr, "Proc %d flushing monitoring to: %s.%d.prof\n",
-            rank, filename, rank);
-    output_monitoring( pf, rank, size );
+            rank_world, filename, rank_world);
+    output_monitoring( pf, rank_world, nprocs_world );
 
     fclose(pf);
     return 0;

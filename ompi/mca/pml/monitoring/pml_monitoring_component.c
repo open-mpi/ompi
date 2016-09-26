@@ -80,9 +80,7 @@ mca_pml_monitoring_notify_flush(struct mca_base_pvar_t *pvar, mca_base_pvar_even
                                                  * accurate answer upon MPI_Finalize. */
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_STOP:
-        rank = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
-        size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
-        if( 0 == ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename, rank, size) )
+        if( 0 == ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename) )
             return OMPI_SUCCESS;
     }
     return OMPI_ERROR;
@@ -232,11 +230,8 @@ static int mca_pml_monitoring_component_finish(void)
 {
     if( mca_pml_monitoring_enabled && mca_pml_monitoring_active ) {
         /* If we are not drived by MPIT then dump the monitoring information */
-        if( mca_pml_monitoring_output_enabled ) {
-            int rank = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
-            int size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
-            ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename, rank, size);
-        }
+        if( mca_pml_monitoring_output_enabled )
+            ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename);
 
         /* Free internal data structure */
         finalize_monitoring();
