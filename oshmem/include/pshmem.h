@@ -163,7 +163,7 @@ OSHMEM_DECLSPEC void pshmem_longdouble_iput(long double* target, const long doub
             long long*:   pshmem_longlong_iput,      \
             float*:       pshmem_float_iput,         \
             double*:      pshmem_double_iput,        \
-            long double*: pshmem_longdouble_iput)(dst, src, len, pe)
+            long double*: pshmem_longdouble_iput)(dst, src, tst, sst, len, pe)
 #endif
 
 OSHMEM_DECLSPEC void pshmem_iput8(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
@@ -224,7 +224,7 @@ OSHMEM_DECLSPEC  long double pshmem_longdouble_g(const long double* addr, int pe
             long long*:   pshmem_longlong_g,                  \
             float*:       pshmem_float_g,                     \
             double*:      pshmem_double_g,                    \
-            long double*: pshmem_longdouble_g)(addr, val, pe)
+            long double*: pshmem_longdouble_g)(addr, pe)
 #endif
 
 /*
