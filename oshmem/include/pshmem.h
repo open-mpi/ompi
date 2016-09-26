@@ -108,7 +108,7 @@ OSHMEM_DECLSPEC  void pshmem_longdouble_p(long double* addr, long double value, 
             long long*:   pshmem_longlong_p,                  \
             float*:       pshmem_float_p,                     \
             double*:      pshmem_double_p,                    \
-            long double*: shmem_longdouble_p)(dst, val, pe)
+            long double*: pshmem_longdouble_p)(dst, val, pe)
 #endif
 
 /*
