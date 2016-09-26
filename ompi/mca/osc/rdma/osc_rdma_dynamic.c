@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -14,6 +14,7 @@
 
 #include "mpi.h"
 
+#include "opal/util/sys_limits.h"
 
 /**
  * ompi_osc_rdma_find_region_containing:
@@ -71,9 +72,11 @@ static ompi_osc_rdma_region_t *find_insertion_point (ompi_osc_rdma_region_t *reg
     int mid_index = (max_index + min_index) >> 1;
     ompi_osc_rdma_region_t *region = (ompi_osc_rdma_region_t *)((intptr_t) regions + mid_index * region_size);
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "find_insertion_point (%d, %d, %lx, %lu)\n", min_index, max_index, base, region_size);
+
     if (max_index < min_index) {
-        *region_index = mid_index;
-        return region;
+        *region_index = min_index;
+        return (ompi_osc_rdma_region_t *)((intptr_t) regions + min_index * region_size);
     }
 
     if (region->base > base) {
@@ -92,7 +95,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     osc_rdma_counter_t region_count;
     osc_rdma_counter_t region_id;
     void *bound;
-    intptr_t page_size = getpagesize ();
+    intptr_t page_size = opal_getpagesize ();
     int region_index;
     int ret;
 

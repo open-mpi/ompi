@@ -703,7 +703,7 @@ int ompi_osc_rdma_compare_and_swap (const void *origin_addr, const void *compare
         return OMPI_ERR_RMA_SYNC;
     }
 
-    ret = osc_rdma_get_remote_segment (module, peer, target_disp, 8, &target_address, &target_handle);
+    ret = osc_rdma_get_remote_segment (module, peer, target_disp, dt->super.size, &target_address, &target_handle);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         return ret;
     }
