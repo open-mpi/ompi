@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Inria.  All rights reserved.
+ * Copyright (c) 2013-2016 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -199,7 +199,7 @@ static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
     if( 0 == filter_monitoring() ) return;  /* if disabled do nothing */
 
     for (int i = 0 ; i < nbprocs ; i++) {
-        if(sent_data[i] > 0) {
+        if(messages_count[i] > 0) {
             fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, sent_data[i], messages_count[i]);
         }
@@ -208,10 +208,10 @@ static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
         messages_count[i] = 0;
     }
 
-    if( 1 == filter_monitoring() ) return;
+    if( 1 != filter_monitoring() ) return;
 
     for (int i = 0 ; i < nbprocs ; i++) {
-        if(filtered_sent_data[i] > 0) {
+        if(filtered_messages_count[i] > 0) {
             fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, filtered_sent_data[i], filtered_messages_count[i]);
         }
@@ -223,26 +223,35 @@ static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
 
 
 /*
-   Flushes the monitoring into filename
-   Useful for phases (see example in test/monitoring)
-*/
-int ompi_mca_pml_monitoring_flush(char* filename)
+ * Flushes the monitoring into filename
+ * Useful for phases (see example in test/monitoring)
+ */
+int ompi_mca_pml_monitoring_flush(int fd, char* filename)
 {
-    FILE *pf = NULL;
-    char* tmpfn = NULL;
+    if( 1 == fd ) {
+        fprintf(stderr, "Proc %d flushing monitoring to stdout\n", rank_world);
+        output_monitoring( stdout, rank_world, nprocs_world );
+    } else if( 2 == fd ) {
+        fprintf(stderr, "Proc %d flushing monitoring to stderr\n", rank_world);
+        output_monitoring( stderr, rank_world, nprocs_world );
+    } else {
+        FILE *pf = NULL;
+        char* tmpfn = NULL;
+    
+        if( NULL != filename ) {
+            asprintf(&tmpfn, "%s.%d.prof", filename, rank_world);
+            pf = fopen(tmpfn, "w");
+            free(tmpfn);
+        }
+        if(NULL == pf)  /* No filename or error during open */
+            return -1;
 
-    if( NULL != filename ) {
-        asprintf(&tmpfn, "%s.%d.prof", filename, rank_world);
-        pf = fopen(tmpfn, "w");
-        free(tmpfn);
-    }
-    if(NULL == pf)  /* No filename or error during open */
-        return -1;
+        fprintf(stderr, "Proc %d flushing monitoring to: %s.%d.prof\n",
+                rank_world, filename, rank_world);
 
-    fprintf(stderr, "Proc %d flushing monitoring to: %s.%d.prof\n",
-            rank_world, filename, rank_world);
-    output_monitoring( pf, rank_world, nprocs_world );
+        output_monitoring( pf, rank_world, nprocs_world );
 
-    fclose(pf);
+        fclose(pf);
+    }        
     return 0;
 }

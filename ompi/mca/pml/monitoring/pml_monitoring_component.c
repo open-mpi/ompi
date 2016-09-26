@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Inria.  All rights reserved.
+ * Copyright (c) 2013-2016 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -43,11 +43,9 @@ mca_pml_monitoring_set_flush(struct mca_base_pvar_t *pvar, const void *value, vo
 {
     if( NULL != mca_pml_monitoring_current_filename ) {
         free(mca_pml_monitoring_current_filename);
-        opal_output(0, "GONE 1");
     }
-    if( NULL == value ) {  /* No more output */
+    if( NULL == *(char**)value || 0 == strlen((char*)value) ) {  /* No more output */
         mca_pml_monitoring_current_filename = NULL;
-        opal_output(0, "GONE 1");
     } else {
         mca_pml_monitoring_current_filename = strdup((char*)value);
         if( NULL == mca_pml_monitoring_current_filename )
@@ -80,7 +78,7 @@ mca_pml_monitoring_notify_flush(struct mca_base_pvar_t *pvar, mca_base_pvar_even
                                                  * accurate answer upon MPI_Finalize. */
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_STOP:
-        if( 0 == ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename) )
+        if( 0 == ompi_mca_pml_monitoring_flush(mca_pml_monitoring_output_enabled, mca_pml_monitoring_current_filename) )
             return OMPI_SUCCESS;
     }
     return OMPI_ERROR;
@@ -209,7 +207,6 @@ static int mca_pml_monitoring_component_close(void)
     if( NULL != mca_pml_monitoring_current_filename ) {
         free(mca_pml_monitoring_current_filename);
         mca_pml_monitoring_current_filename = NULL;
-        opal_output(0, "GONE 2");
     }
     return OMPI_SUCCESS;
 }
@@ -231,8 +228,7 @@ static int mca_pml_monitoring_component_finish(void)
     if( mca_pml_monitoring_enabled && mca_pml_monitoring_active ) {
         /* If we are not drived by MPIT then dump the monitoring information */
         if( mca_pml_monitoring_output_enabled )
-            ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename);
-
+  	    ompi_mca_pml_monitoring_flush(mca_pml_monitoring_output_enabled, mca_pml_monitoring_current_filename);
         /* Free internal data structure */
         finalize_monitoring();
         /* Call the original PML and then close */
@@ -269,7 +265,8 @@ static int mca_pml_monitoring_component_register(void)
                                           "Enable the PML monitoring textual output at MPI_Finalize (it will be automatically turned off when MPIT is used to monitor communications). This value should be different than 0 in order for the output to be enabled (default disable)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_output_enabled);
-    mca_pml_monitoring_current_state = mca_pml_monitoring_output_enabled;
+    
+    mca_pml_monitoring_current_state = mca_pml_monitoring_enabled;
     (void)mca_base_var_register("ompi", "pml", "monitoring", "filename",
                                 /*&mca_pml_monitoring_component.pmlm_version, "filename",*/
                                 "The name of the file where the monitoring information should be saved (the filename will be extended with the process rank and the \".prof\" extension). If this field is NULL the monitoring will not be saved.", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -278,7 +275,8 @@ static int mca_pml_monitoring_component_register(void)
     /* Now that the MCA variables are automatically unregistered when their component
      * close, we need to keep a safe copy of the filename.
      */
-    mca_pml_monitoring_current_filename = strdup(mca_pml_monitoring_current_filename);
+    if( NULL != mca_pml_monitoring_current_filename )
+        mca_pml_monitoring_current_filename = strdup(mca_pml_monitoring_current_filename);
 
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count", "Number of messages "
                                  "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,

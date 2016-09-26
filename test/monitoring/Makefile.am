@@ -6,7 +6,7 @@
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
-# Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -17,12 +17,17 @@
 # This test requires multiple processes to run. Don't run it as part
 # of 'make check'
 if PROJECT_OMPI
-    noinst_PROGRAMS = monitoring_test
+    noinst_PROGRAMS = monitoring_test test_pvar_access
     monitoring_test_SOURCES = monitoring_test.c
     monitoring_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     monitoring_test_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+    test_pvar_access_SOURCES = test_pvar_access.c
+    test_pvar_access_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+    test_pvar_access_LDADD = \
+	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 if MCA_BUILD_ompi_pml_monitoring_DSO
     lib_LTLIBRARIES = ompi_monitoring_prof.la
