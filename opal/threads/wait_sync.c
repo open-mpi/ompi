@@ -25,11 +25,23 @@ static ompi_wait_sync_t* wait_sync_list = NULL;
 
 int sync_wait_mt(ompi_wait_sync_t *sync)
 {
+    /* Don't stop if the waiting synchronization is completed. We avoid the
+     * race condition around the release of the synchronization using the
+     * signaling field.
+     */
     if(sync->count <= 0)
         return (0 == sync->status) ? OPAL_SUCCESS : OPAL_ERROR;
 
     /* lock so nobody can signal us during the list updating */
     pthread_mutex_lock(&sync->lock);
+
+    /* Now that we hold the lock make sure another thread has not already
+     * call cond_signal.
+     */
+    if(sync->count <= 0) {
+        pthread_mutex_unlock(&sync->lock);
+        return (0 == sync->status) ? OPAL_SUCCESS : OPAL_ERROR;
+    }
 
     /* Insert sync on the list of pending synchronization constructs */
     OPAL_THREAD_LOCK(&wait_sync_lock);
