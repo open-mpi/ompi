@@ -704,7 +704,7 @@ sub mpicontrib_run_global {
             if (! -d "$dir/$d" || $d eq "base" || substr($d, 0, 1) eq ".");
 
         # If this directory has a configure.m4, then it's an
-        # extension.
+        # contrib.
         if (-f "$dir/$d/configure.m4") {
             verbose "=== Found $d MPI contrib";
 
@@ -718,7 +718,7 @@ sub mpicontrib_run_global {
         }
     }
     closedir(DIR);
-    debug_dump($mpiext_found);
+    debug_dump($mpicontrib_found);
 
     #-----------------------------------------------------------------------
 
@@ -743,7 +743,7 @@ $dnl_line\n\n";
 
     $m4_config_contrib_list =~ s/^, //;
 
-    # List the M4 and no configure exts
+    # List the M4 and no configure contribs
     $m4 .= "dnl List of all MPI contribs
 m4_define([ompi_mpicontrib_list], [$m4_config_contrib_list])\n";
     # List out all the m4_include
