@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 Mellanox Technologies, Inc.
+# Copyright (c) 2013-2016 Mellanox Technologies, Inc.
 #                         All rights reserved
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -41,6 +41,8 @@ OSHMEM_API_SOURCES = \
 	shmem_wait.c \
 	shmem_iget.c \
 	shmem_iput.c \
+	shmem_get_nb.c \
+	shmem_put_nb.c \
 	shmem_udcflush.c \
 	shmem_udcflush_line.c \
 	shmem_set_cache_inv.c \

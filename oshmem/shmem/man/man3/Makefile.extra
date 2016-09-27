@@ -191,7 +191,38 @@ shmem_api_man_pages = \
         shmem/man/man3/shmem_clear_cache_line_inv.3 \
         shmem/man/man3/shmem_info_get_name.3 \
         shmem/man/man3/shmem_info_get_version.3 \
-        shmem/man/man3/shmem_global_exit.3
+        shmem/man/man3/shmem_global_exit.3 \
+\
+        shmem/man/man3/shmem_getmem_nbi.3 \
+        shmem/man/man3/shmem_char_get_nbi.3 \
+        shmem/man/man3/shmem_short_get_nbi.3 \
+        shmem/man/man3/shmem_int_get_nbi.3 \
+        shmem/man/man3/shmem_long_get_nbi.3 \
+        shmem/man/man3/shmem_longlong_get_nbi.3 \
+        shmem/man/man3/shmem_float_get_nbi.3 \
+        shmem/man/man3/shmem_double_get_nbi.3 \
+        shmem/man/man3/shmem_longdouble_get_nbi.3 \
+        shmem/man/man3/shmem_get8_nbi.3 \
+        shmem/man/man3/shmem_get16_nbi.3 \
+        shmem/man/man3/shmem_get32_nbi.3 \
+        shmem/man/man3/shmem_get64_nbi.3 \
+        shmem/man/man3/shmem_get128_nbi.3 \
+\
+        shmem/man/man3/shmem_putmem_nbi.3 \
+        shmem/man/man3/shmem_char_put_nbi.3 \
+        shmem/man/man3/shmem_short_put_nbi.3 \
+        shmem/man/man3/shmem_int_put_nbi.3 \
+        shmem/man/man3/shmem_long_put_nbi.3 \
+        shmem/man/man3/shmem_longlong_put_nbi.3 \
+        shmem/man/man3/shmem_float_put_nbi.3 \
+        shmem/man/man3/shmem_double_put_nbi.3 \
+        shmem/man/man3/shmem_longdouble_put_nbi.3 \
+        shmem/man/man3/shmem_put8_nbi.3 \
+        shmem/man/man3/shmem_put16_nbi.3 \
+        shmem/man/man3/shmem_put32_nbi.3 \
+        shmem/man/man3/shmem_put64_nbi.3 \
+        shmem/man/man3/shmem_put128_nbi.3
+
 
 if PROJECT_OSHMEM
 nodist_man_MANS += $(shmem_api_man_pages)
