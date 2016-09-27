@@ -57,7 +57,8 @@
 #pragma weak shmem_double_put = pshmem_double_put
 #pragma weak shmem_longdouble_put = pshmem_longdouble_put
 #pragma weak shmem_putmem = pshmem_putmem
-#pragma weak shmemx_put16 = pshmemx_put16
+#pragma weak shmem_put8 = pshmem_put8
+#pragma weak shmem_put16 = pshmem_put16
 #pragma weak shmem_put32 = pshmem_put32
 #pragma weak shmem_put64 = pshmem_put64
 #pragma weak shmem_put128 = pshmem_put128
@@ -95,9 +96,9 @@ SHMEM_TYPE_PUT(_longdouble, long double)
     }
 
 SHMEM_TYPE_PUTMEM(_putmem, 1, shmem)
-SHMEM_TYPE_PUTMEM(_put16, 2, shmemx)
+SHMEM_TYPE_PUTMEM(_put8,  1, shmem)
+SHMEM_TYPE_PUTMEM(_put16, 2, shmem)
 SHMEM_TYPE_PUTMEM(_put32, 4, shmem)
 SHMEM_TYPE_PUTMEM(_put64, 8, shmem)
 SHMEM_TYPE_PUTMEM(_put128, 16, shmem)
 
-SHMEM_TYPE_PUTMEM(_put, sizeof(long), shmem)

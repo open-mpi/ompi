@@ -35,12 +35,10 @@ OSHMEM_DECLSPEC  void shmemx_int64_p(int64_t* addr, int64_t value, int pe);
 /*
  * Block data put routines
  */
-OSHMEM_DECLSPEC  void shmemx_put16(void *target, const void *source, size_t len, int pe);
 
 /*
  * Strided put routines
  */
-OSHMEM_DECLSPEC void shmemx_iput16(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 
 /*
  * Elemental get routines
@@ -52,12 +50,10 @@ OSHMEM_DECLSPEC  int64_t shmemx_int64_g(const int64_t* addr, int pe);
 /*
  * Block data get routines
  */
-OSHMEM_DECLSPEC  void shmemx_get16(void *target, const void *source, size_t len, int pe);
 
 /*
  * Strided get routines
  */
-OSHMEM_DECLSPEC void shmemx_iget16(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 
 /*
  * Atomic operations
@@ -141,15 +137,9 @@ OSHMEM_DECLSPEC void shmemx_int64_prod_to_all(int64_t *target, const int64_t *so
 #define shmem_int32_p               shmemx_int32_p
 #define shmem_int64_p               shmemx_int64_p
 
-#define shmem_put16                 shmemx_put16
-#define shmem_iput16                shmemx_iput16
-
 #define shmem_int16_g               shmemx_int16_g
 #define shmem_int32_g               shmemx_int32_g
 #define shmem_int64_g               shmemx_int64_g
-
-#define shmem_get16                 shmemx_get16
-#define shmem_iget16                shmemx_iget16
 
 #define shmem_int32_swap            shmemx_int32_swap
 #define shmem_int64_swap            shmemx_int64_swap

@@ -34,6 +34,12 @@
 #  endif
 #endif
 
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define OSHMEMP_HAVE_C11 1
+#else
+#define OSHMEMP_HAVE_C11 0
+#endif
+
 #include <pshmemx.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -92,10 +98,23 @@ OSHMEM_DECLSPEC  void pshmem_float_p(float* addr, float value, int pe);
 OSHMEM_DECLSPEC  void pshmem_double_p(double* addr, double value, int pe);
 OSHMEM_DECLSPEC  void pshmem_longlong_p(long long* addr, long long value, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_p(long double* addr, long double value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_p(dst, val, pe)                                \
+    _Generic(&*(dst),                                         \
+            char*:        pshmem_char_p,                      \
+            short*:       pshmem_short_p,                     \
+            int*:         pshmem_int_p,                       \
+            long*:        pshmem_long_p,                      \
+            long long*:   pshmem_longlong_p,                  \
+            float*:       pshmem_float_p,                     \
+            double*:      pshmem_double_p,                    \
+            long double*: pshmem_longdouble_p)(dst, val, pe)
+#endif
 
 /*
  * Block data put routines
  */
+OSHMEM_DECLSPEC  void pshmem_char_put(char *target, const char *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_put(short *target, const short *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_int_put(int* target, const int* source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_long_put(long *target, const long *source, size_t len, int pe);
@@ -103,6 +122,21 @@ OSHMEM_DECLSPEC  void pshmem_float_put(float *target, const float *source, size_
 OSHMEM_DECLSPEC  void pshmem_double_put(double *target, const double *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longlong_put(long long *target, const long long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_put(long double *target, const long double *source, size_t len, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_put(dst, src, len, pe)               \
+    _Generic(&*(dst),                               \
+            char*:        pshmem_char_put,          \
+            short*:       pshmem_short_put,         \
+            int*:         pshmem_int_put,           \
+            long*:        pshmem_long_put,          \
+            long long*:   pshmem_longlong_put,      \
+            float*:       pshmem_float_put,         \
+            double*:      pshmem_double_put,        \
+            long double*: pshmem_longdouble_put)(dst, src, len, pe)
+#endif
+
+OSHMEM_DECLSPEC  void pshmem_put8(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_put16(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_put32(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_put64(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_put128(void *target, const void *source, size_t len, int pe);
@@ -111,13 +145,29 @@ OSHMEM_DECLSPEC  void pshmem_putmem(void *target, const void *source, size_t len
 /*
  * Strided put routines
  */
+OSHMEM_DECLSPEC void pshmem_char_iput(char* target, const char* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_short_iput(short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_int_iput(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_long_iput(long* target, const long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_float_iput(float* target, const float* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_double_iput(double* target, const double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_longlong_iput(long long* target, const long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_longdouble_iput(long double* target, const long double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
-OSHMEM_DECLSPEC void pshmem_long_iput(long* target, const long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_iput(dst, src, tst, sst, len, pe)     \
+    _Generic(&*(dst),                                \
+            char*:        pshmem_char_iput,          \
+            short*:       pshmem_short_iput,         \
+            int*:         pshmem_int_iput,           \
+            long*:        pshmem_long_iput,          \
+            long long*:   pshmem_longlong_iput,      \
+            float*:       pshmem_float_iput,         \
+            double*:      pshmem_double_iput,        \
+            long double*: pshmem_longdouble_iput)(dst, src, tst, sst, len, pe)
+#endif
+
+OSHMEM_DECLSPEC void pshmem_iput8(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_iput16(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_iput32(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_iput64(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_iput128(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
@@ -134,6 +184,19 @@ OSHMEM_DECLSPEC  void pshmem_longlong_put_nbi(long long *target, const long long
 OSHMEM_DECLSPEC  void pshmem_float_put_nbi(float *target, const float *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_double_put_nbi(double *target, const double *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_put_nbi(long double *target, const long double *source, size_t len, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_put_nbi(dst, src, len, pe)               \
+    _Generic(&*(dst),                                   \
+            char*:        pshmem_char_put_nbi,          \
+            short*:       pshmem_short_put_nbi,         \
+            int*:         pshmem_int_put_nbi,           \
+            long*:        pshmem_long_put_nbi,          \
+            long long*:   pshmem_longlong_put_nbi,      \
+            float*:       pshmem_float_put_nbi,         \
+            double*:      pshmem_double_put_nbi,        \
+            long double*: pshmem_longdouble_put_nbi)(dst, src, len, pe)
+#endif
+
 OSHMEM_DECLSPEC  void pshmem_put8_nbi(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_put16_nbi(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_put32_nbi(void *target, const void *source, size_t len, int pe);
@@ -151,10 +214,23 @@ OSHMEM_DECLSPEC  float pshmem_float_g(const float* addr, int pe);
 OSHMEM_DECLSPEC  double pshmem_double_g(const double* addr, int pe);
 OSHMEM_DECLSPEC  long long pshmem_longlong_g(const long long* addr, int pe);
 OSHMEM_DECLSPEC  long double pshmem_longdouble_g(const long double* addr, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_g(addr, pe)                                    \
+    _Generic(&*(dst),                                         \
+            char*:        pshmem_char_g,                      \
+            short*:       pshmem_short_g,                     \
+            int*:         pshmem_int_g,                       \
+            long*:        pshmem_long_g,                      \
+            long long*:   pshmem_longlong_g,                  \
+            float*:       pshmem_float_g,                     \
+            double*:      pshmem_double_g,                    \
+            long double*: pshmem_longdouble_g)(addr, pe)
+#endif
 
 /*
  * Block data get routines
  */
+OSHMEM_DECLSPEC  void pshmem_char_get(char *target, const char *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_get(short *target, const short *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_int_get(int *target, const int *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_long_get(long *target, const long *source, size_t len, int pe);
@@ -162,6 +238,21 @@ OSHMEM_DECLSPEC  void pshmem_float_get(float *target, const float *source, size_
 OSHMEM_DECLSPEC  void pshmem_double_get(double *target, const double *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longlong_get(long long *target, const long long *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_get(long double *target, const long double *source, size_t len, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_get(dst, src, len, pe)               \
+    _Generic(&*(dst),                              \
+            char*:        pshmem_char_get,          \
+            short*:       pshmem_short_get,         \
+            int*:         pshmem_int_get,           \
+            long*:        pshmem_long_get,          \
+            long long*:   pshmem_longlong_get,      \
+            float*:       pshmem_float_get,         \
+            double*:      pshmem_double_get,        \
+            long double*: pshmem_longdouble_get)(dst, src, len, pe)
+#endif
+
+OSHMEM_DECLSPEC  void pshmem_get8(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_get16(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_get32(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_get64(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_get128(void *target, const void *source, size_t len, int pe);
@@ -170,13 +261,29 @@ OSHMEM_DECLSPEC  void pshmem_getmem(void *target, const void *source, size_t len
 /*
  * Strided get routines
  */
-OSHMEM_DECLSPEC void pshmem_int_iget(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_char_iget(char* target, const char* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_short_iget(short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int_iget(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_float_iget(float* target, const float* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_double_iget(double* target, const double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_longlong_iget(long long* target, const long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_longdouble_iget(long double* target, const long double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_long_iget(long* target, const long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_iget(dst, src, tst, sst, len, pe)     \
+    _Generic(&*(dst),                               \
+            char*:        pshmem_char_iget,          \
+            short*:       pshmem_short_iget,         \
+            int*:         pshmem_int_iget,           \
+            long*:        pshmem_long_iget,          \
+            long long*:   pshmem_longlong_iget,      \
+            float*:       pshmem_float_iget,         \
+            double*:      pshmem_double_iget,        \
+            long double*: pshmem_longdouble_iget)(dst, src, tst, sst, len, pe)
+#endif
+
+OSHMEM_DECLSPEC void pshmem_iget8(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_iget16(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_iget32(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_iget64(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_iget128(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
@@ -193,6 +300,19 @@ OSHMEM_DECLSPEC  void pshmem_longlong_get_nbi(long long *target, const long long
 OSHMEM_DECLSPEC  void pshmem_float_get_nbi(float *target, const float *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_double_get_nbi(double *target, const double *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_longdouble_get_nbi(long double *target, const long double *source, size_t len, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_get_nbi(dst, src, len, pe)               \
+    _Generic(&*(dst),                                  \
+            char*:        pshmem_char_get_nbi,          \
+            short*:       pshmem_short_get_nbi,         \
+            int*:         pshmem_int_get_nbi,           \
+            long*:        pshmem_long_get_nbi,          \
+            long long*:   pshmem_longlong_get_nbi,      \
+            float*:       pshmem_float_get_nbi,         \
+            double*:      pshmem_double_get_nbi,        \
+            long double*: pshmem_longdouble_get_nbi)(dst, src, len, pe)
+#endif
+
 OSHMEM_DECLSPEC  void pshmem_get8_nbi(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_get16_nbi(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_get32_nbi(void *target, const void *source, size_t len, int pe);
@@ -203,12 +323,20 @@ OSHMEM_DECLSPEC  void pshmem_get128_nbi(void *target, const void *source, size_t
  * Atomic operations
  */
 /* Atomic swap */
-OSHMEM_DECLSPEC long pshmem_swap(long *target, long value, int pe);
-OSHMEM_DECLSPEC double pshmem_double_swap(double *target, double value, int pe);
-OSHMEM_DECLSPEC float pshmem_float_swap(float *target, float value, int pe);
 OSHMEM_DECLSPEC int pshmem_int_swap(int *target, int value, int pe);
 OSHMEM_DECLSPEC long pshmem_long_swap(long *target, long value, int pe);
 OSHMEM_DECLSPEC long long pshmem_longlong_swap(long long*target, long long value, int pe);
+OSHMEM_DECLSPEC float pshmem_float_swap(float *target, float value, int pe);
+OSHMEM_DECLSPEC double pshmem_double_swap(double *target, double value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_swap(dst, val, pe)                             \
+    _Generic(&*(dst),                                        \
+            int*:         pshmem_int_swap,                    \
+            long*:        pshmem_long_swap,                   \
+            long long*:   pshmem_longlong_swap,               \
+            float*:       pshmem_float_swap,               \
+            double*:      pshmem_double_swap)(dst, val, pe)
+#endif
 
 /* Atomic set */
 OSHMEM_DECLSPEC void pshmem_int_set(int *target, int value, int pe);
@@ -216,16 +344,39 @@ OSHMEM_DECLSPEC void pshmem_long_set(long *target, long value, int pe);
 OSHMEM_DECLSPEC void pshmem_longlong_set(long long*target, long long value, int pe);
 OSHMEM_DECLSPEC void pshmem_float_set(float *target, float value, int pe);
 OSHMEM_DECLSPEC void pshmem_double_set(double *target, double value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_set(dst, val, pe)                             \
+    _Generic(&*(dst),                                        \
+            int*:         pshmem_int_set,                    \
+            long*:        pshmem_long_set,                   \
+            long long*:   pshmem_longlong_set,               \
+            float*:       pshmem_float_set,                  \
+            double*:      pshmem_double_set)(dst, val, pe)
+#endif
 
 /* Atomic conditional swap */
 OSHMEM_DECLSPEC int pshmem_int_cswap(int *target, int cond, int value, int pe);
 OSHMEM_DECLSPEC long pshmem_long_cswap(long *target, long cond, long value, int pe);
 OSHMEM_DECLSPEC long long pshmem_longlong_cswap(long long *target, long long cond, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_cswap(dst, cond, val, pe)                       \
+    _Generic(&*(dst),                                          \
+            int*:         pshmem_int_cswap,                    \
+            long*:        pshmem_long_cswap,                   \
+            long long*:   pshmem_longlong_cswap)(dst, cond, val, pe)
+#endif
 
 /* Atomic Fetch&Add */
 OSHMEM_DECLSPEC int pshmem_int_fadd(int *target, int value, int pe);
 OSHMEM_DECLSPEC long pshmem_long_fadd(long *target, long value, int pe);
 OSHMEM_DECLSPEC long long pshmem_longlong_fadd(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_fadd(dst, val, pe)                             \
+    _Generic(&*(dst),                                         \
+            int*:         pshmem_int_fadd,                    \
+            long*:        pshmem_long_fadd,                   \
+            long long*:   pshmem_longlong_fadd)(dst, val, pe)
+#endif
 
 /* Atomic Fetch */
 OSHMEM_DECLSPEC int pshmem_int_fetch(const int *target, int pe);
@@ -233,23 +384,51 @@ OSHMEM_DECLSPEC long pshmem_long_fetch(const long *target, int pe);
 OSHMEM_DECLSPEC long long pshmem_longlong_fetch(const long long *target, int pe);
 OSHMEM_DECLSPEC float pshmem_float_fetch(const float *target, int pe);
 OSHMEM_DECLSPEC double pshmem_double_fetch(const double *target, int pe);
-
+#if OSHMEM_HAVE_C11
+#define pshmem_fetch(dst, pe)                             \
+    _Generic(&*(dst),                                     \
+            int*:         pshmem_int_fetch,               \
+            long*:        pshmem_long_fetch,              \
+            long long*:   pshmem_longlong_fetch,          \
+            float*:       pshmem_float_fetch,             \
+            double*:      pshmem_double_fetch)(dst, pe)
+#endif
 
 /* Atomic Fetch&Inc */
 OSHMEM_DECLSPEC int pshmem_int_finc(int *target, int pe);
 OSHMEM_DECLSPEC long pshmem_long_finc(long *target, int pe);
 OSHMEM_DECLSPEC long long pshmem_longlong_finc(long long *target, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_finc(dst, val, pe)                             \
+    _Generic(&*(dst),                                         \
+            int*:         pshmem_int_finc,                    \
+            long*:        pshmem_long_finc,                   \
+            long long*:   pshmem_longlong_finc)(dst, val, pe)
+#endif
 
 /* Atomic Add*/
 OSHMEM_DECLSPEC void pshmem_int_add(int *target, int value, int pe);
 OSHMEM_DECLSPEC void pshmem_long_add(long *target, long value, int pe);
 OSHMEM_DECLSPEC void pshmem_longlong_add(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_add(dst, val, pe)                             \
+    _Generic(&*(dst),                                        \
+            int*:         pshmem_int_add,                    \
+            long*:        pshmem_long_add,                   \
+            long long*:   pshmem_longlong_add)(dst, val, pe)
+#endif
 
 /* Atomic Inc */
 OSHMEM_DECLSPEC void pshmem_int_inc(int *target, int pe);
 OSHMEM_DECLSPEC void pshmem_long_inc(long *target, int pe);
 OSHMEM_DECLSPEC void pshmem_longlong_inc(long long *target, int pe);
-
+#if OSHMEMP_HAVE_C11
+#define pshmem_inc(dst, pe)                            \
+    _Generic(&*(dst),                                  \
+            int*:         pshmem_int_inc,              \
+            long*:        pshmem_long_inc,             \
+            long long*:   pshmem_longlong_inc)(dst, pe)
+#endif
 /*
  * Lock functions
  */

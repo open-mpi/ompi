@@ -48,7 +48,6 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_swap = pshmem_swap
 #pragma weak shmem_int_swap = pshmem_int_swap
 #pragma weak shmem_long_swap = pshmem_long_swap
 #pragma weak shmem_longlong_swap = pshmem_longlong_swap
@@ -59,7 +58,6 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_SWAP(, long, shmem)
 SHMEM_TYPE_SWAP(_int, int, shmem)
 SHMEM_TYPE_SWAP(_long, long, shmem)
 SHMEM_TYPE_SWAP(_longlong, long long, shmem)
