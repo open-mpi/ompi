@@ -151,19 +151,19 @@ int main(int argc, char* argv[])
         }
     }
 
-    /* Build one file per processes
-       Every thing that has been monitored by each
-       process since the last flush will be output in filename */
-
-    /*
-      Requires directory prof to be created.
-      Filename format should display the phase number
-      and the process rank for ease of parsing with
-      aggregate_profile.pl script
-    */
-    if( with_mpit ) {
+    if( with_mpit ) {	
+	/* Build one file per processes
+	   Every thing that has been monitored by each
+	   process since the last flush will be output in filename */
+	/*
+	  Requires directory prof to be created.
+	  Filename format should display the phase number
+	  and the process rank for ease of parsing with
+	  aggregate_profile.pl script
+	*/
         sprintf(filename, with_mpit ? "prof/phase_1" : "prof/phase_1_%d.prof", rank);
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
+
+	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
         }
         /* Force the writing of the monitoring data */
@@ -194,9 +194,6 @@ int main(int argc, char* argv[])
       while odd ranks will perform a all_to_all
     */
     MPI_Comm_split(MPI_COMM_WORLD, rank%2, rank, &newcomm);
-
-    /* the filename for flushing monitoring now uses 2 as phase number! */
-    sprintf(filename, with_mpit ? "prof/phase_2" : "prof/phase_2_%d.prof", rank);
 
     if(rank%2){ /*even ranks (in COMM_WORD) circulate a token*/
         MPI_Comm_rank(newcomm, &rank);
@@ -230,7 +227,10 @@ int main(int argc, char* argv[])
     }
 
     if( with_mpit ) {
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
+	/* the filename for flushing monitoring now uses 2 as phase number! */
+	sprintf(filename, with_mpit ? "prof/phase_2" : "prof/phase_2_%d.prof", rank);
+
+	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
         }
 
