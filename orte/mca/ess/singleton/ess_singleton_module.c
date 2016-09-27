@@ -87,7 +87,7 @@ static int rte_init(void)
     char *error = NULL;
     char *ev1, *ev2;
     opal_value_t *kv;
-    char *val;
+    char *val = NULL;
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
     orte_process_name_t name;
