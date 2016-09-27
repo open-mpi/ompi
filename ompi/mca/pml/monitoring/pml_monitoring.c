@@ -145,6 +145,8 @@ void mca_pml_monitoring_reset( void )
 
 void monitor_send_data(int world_rank, size_t data_size, int tag)
 {
+    if( 0 == filter_monitoring() ) {opal_output(0, "monitoring disabled");return;}
+    opal_output(0, "rank=%2d, world_rank=%2d, data_size=%5lu, tag=%- 4d", rank_world, world_rank, data_size, tag);
     if( 0 == filter_monitoring() ) return;  /* right now the monitoring is not started */
 
     /* distinguishses positive and negative tags if requested */
@@ -223,26 +225,35 @@ static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
 
 
 /*
-   Flushes the monitoring into filename
-   Useful for phases (see example in test/monitoring)
-*/
-int ompi_mca_pml_monitoring_flush(char* filename)
+ * Flushes the monitoring into filename
+ * Useful for phases (see example in test/monitoring)
+ */
+int ompi_mca_pml_monitoring_flush(int fd, char* filename)
 {
-    FILE *pf = NULL;
-    char* tmpfn = NULL;
+    if( 1 == fd ) {
+        fprintf(stderr, "Proc %d flushing monitoring to stdout\n");
+        output_monitoring( stdout, rank_world, nprocs_world );
+    } else if( 2 == fd ) {
+        fprintf(stderr, "Proc %d flushing monitoring to stdout\n");
+        output_monitoring( stderr, rank_world, nprocs_world );
+    } else {
+        FILE *pf = NULL;
+        char* tmpfn = NULL;
+    
+        if( NULL != filename ) {
+            asprintf(&tmpfn, "%s.%d.prof", filename, rank_world);
+            pf = fopen(tmpfn, "w");
+            free(tmpfn);
+        }
+        if(NULL == pf)  /* No filename or error during open */
+            return -1;
 
-    if( NULL != filename ) {
-        asprintf(&tmpfn, "%s.%d.prof", filename, rank_world);
-        pf = fopen(tmpfn, "w");
-        free(tmpfn);
-    }
-    if(NULL == pf)  /* No filename or error during open */
-        return -1;
+        fprintf(stderr, "Proc %d flushing monitoring to: %s.%d.prof\n",
+                rank_world, filename, rank_world);
 
-    fprintf(stderr, "Proc %d flushing monitoring to: %s.%d.prof\n",
-            rank_world, filename, rank_world);
-    output_monitoring( pf, rank_world, nprocs_world );
+        output_monitoring( pf, rank_world, nprocs_world );
 
-    fclose(pf);
+        fclose(pf);
+    }        
     return 0;
 }

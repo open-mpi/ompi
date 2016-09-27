@@ -47,7 +47,7 @@ mca_pml_monitoring_set_flush(struct mca_base_pvar_t *pvar, const void *value, vo
     }
     if( NULL == value ) {  /* No more output */
         mca_pml_monitoring_current_filename = NULL;
-        opal_output(0, "GONE 1");
+        opal_output(0, "GONE 1.1");
     } else {
         mca_pml_monitoring_current_filename = strdup((char*)value);
         if( NULL == mca_pml_monitoring_current_filename )
@@ -80,7 +80,7 @@ mca_pml_monitoring_notify_flush(struct mca_base_pvar_t *pvar, mca_base_pvar_even
                                                  * accurate answer upon MPI_Finalize. */
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_STOP:
-        if( 0 == ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename) )
+        if( 0 == ompi_mca_pml_monitoring_flush(mca_pml_monitoring_output_enabled, mca_pml_monitoring_current_filename) )
             return OMPI_SUCCESS;
     }
     return OMPI_ERROR;
@@ -231,7 +231,7 @@ static int mca_pml_monitoring_component_finish(void)
     if( mca_pml_monitoring_enabled && mca_pml_monitoring_active ) {
         /* If we are not drived by MPIT then dump the monitoring information */
         if( mca_pml_monitoring_output_enabled )
-            ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename);
+  	    ompi_mca_pml_monitoring_flush(mca_pml_monitoring_output_enabled, mca_pml_monitoring_current_filename);
 
         /* Free internal data structure */
         finalize_monitoring();
