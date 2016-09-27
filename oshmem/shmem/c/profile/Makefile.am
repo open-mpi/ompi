@@ -63,8 +63,10 @@ OSHMEM_API_SOURCES = \
 	pshmem_clear_cache_line_inv.c \
 	pshmem_reduce.c \
 	pshmem_swap.c \
+	pshmem_set.c \
 	pshmem_cswap.c \
 	pshmem_fadd.c \
+	pshmem_fetch.c \
 	pshmem_finc.c \
 	pshmem_add.c \
 	pshmem_inc.c \

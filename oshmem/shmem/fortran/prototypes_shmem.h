@@ -121,10 +121,23 @@ PN (ompi_fortran_integer4_t, shmem_int4_swap, SHMEM_INT4_SWAP, (FORTRAN_POINTER_
 PN (ompi_fortran_integer8_t, shmem_int8_swap, SHMEM_INT8_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_real4_t, shmem_real4_swap, SHMEM_REAL4_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_real8_t, shmem_real8_swap, SHMEM_REAL8_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
+PN (void, shmem_int4_set, SHMEM_INT4_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+PN (void, shmem_int8_set, SHMEM_INT8_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+PN (void, shmem_real4_set, SHMEM_REAL4_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+PN (void, shmem_real8_set, SHMEM_REAL8_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
 PN (ompi_fortran_integer4_t, shmem_int4_cswap, SHMEM_INT4_CSWAP, (FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_integer8_t, shmem_int8_cswap, SHMEM_INT8_CSWAP, (FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
 PN (ompi_fortran_integer4_t, shmem_int4_fadd, SHMEM_INT4_FADD, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_integer8_t, shmem_int8_fadd, SHMEM_INT8_FADD, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
+PN (ompi_fortran_integer4_t, shmem_int4_fetch, SHMEM_INT4_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+PN (ompi_fortran_integer8_t, shmem_int8_fetch, SHMEM_INT8_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+PN (ompi_fortran_real4_t, shmem_real4_fetch, SHMEM_REAL4_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+PN (ompi_fortran_real8_t, shmem_real8_fetch, SHMEM_REAL8_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+
 PN (void, shmem_int4_inc, SHMEM_INT4_INC, (FORTRAN_POINTER_T target, MPI_Fint *pe));
 PN (void, shmem_int8_inc, SHMEM_INT8_INC, (FORTRAN_POINTER_T target, MPI_Fint *pe));
 PN (ompi_fortran_integer4_t, shmem_int4_finc, SHMEM_INT4_FINC, (FORTRAN_POINTER_T target, MPI_Fint *pe));

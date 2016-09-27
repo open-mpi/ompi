@@ -90,10 +90,18 @@ nodist_liboshmem_fortran_pshmem_la_SOURCES = \
 	pshmem_int8_swap_f.c \
 	pshmem_real4_swap_f.c \
 	pshmem_real8_swap_f.c \
+	pshmem_int4_set_f.c \
+	pshmem_int8_set_f.c \
+	pshmem_real4_set_f.c \
+	pshmem_real8_set_f.c \
 	pshmem_int4_cswap_f.c \
 	pshmem_int8_cswap_f.c \
 	pshmem_int4_fadd_f.c \
 	pshmem_int8_fadd_f.c \
+	pshmem_int4_fetch_f.c \
+	pshmem_int8_fetch_f.c \
+	pshmem_real4_fetch_f.c \
+	pshmem_real8_fetch_f.c \
 	pshmem_int4_finc_f.c \
 	pshmem_int8_finc_f.c \
 	pshmem_int4_add_f.c \

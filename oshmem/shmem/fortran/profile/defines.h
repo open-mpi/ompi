@@ -366,6 +366,10 @@
 #define shmem_int4_fadd_ pshmem_int4_fadd_
 #define shmem_int4_fadd__ pshmem_int4_fadd__
 
+#define SHMEM_INT4_FETCH PSHMEM_INT4_FETCH
+#define shmem_int4_fetch_ pshmem_int4_fetch_
+#define shmem_int4_fetch__ pshmem_int4_fetch__
+
 #define SHMEM_INT4_FINC PSHMEM_INT4_FINC
 #define shmem_int4_finc_ pshmem_int4_finc_
 #define shmem_int4_finc__ pshmem_int4_finc__
@@ -377,6 +381,10 @@
 #define SHMEM_INT4_SWAP PSHMEM_INT4_SWAP
 #define shmem_int4_swap_ pshmem_int4_swap_
 #define shmem_int4_swap__ pshmem_int4_swap__
+
+#define SHMEM_INT4_SET PSHMEM_INT4_SET
+#define shmem_int4_set_ pshmem_int4_set_
+#define shmem_int4_set__ pshmem_int4_set__
 
 #define SHMEM_INT4_WAIT PSHMEM_INT4_WAIT
 #define shmem_int4_wait_ pshmem_int4_wait_
@@ -398,6 +406,10 @@
 #define shmem_int8_fadd_ pshmem_int8_fadd_
 #define shmem_int8_fadd__ pshmem_int8_fadd__
 
+#define SHMEM_INT8_FETCH PSHMEM_INT8_FETCH
+#define shmem_int8_fetch_ pshmem_int8_fetch_
+#define shmem_int8_fetch__ pshmem_int8_fetch__
+
 #define SHMEM_INT8_FINC PSHMEM_INT8_FINC
 #define shmem_int8_finc_ pshmem_int8_finc_
 #define shmem_int8_finc__ pshmem_int8_finc__
@@ -409,6 +421,10 @@
 #define SHMEM_INT8_SWAP PSHMEM_INT8_SWAP
 #define shmem_int8_swap_ pshmem_int8_swap_
 #define shmem_int8_swap__ pshmem_int8_swap__
+
+#define SHMEM_INT8_SET PSHMEM_INT8_SET
+#define shmem_int8_set_ pshmem_int8_set_
+#define shmem_int8_set__ pshmem_int8_set__
 
 #define SHMEM_INT8_WAIT PSHMEM_INT8_WAIT
 #define shmem_int8_wait_ pshmem_int8_wait_
@@ -621,6 +637,22 @@
 #define SHMEM_REAL8_SWAP PSHMEM_REAL8_SWAP
 #define shmem_real8_swap_ pshmem_real8_swap_
 #define shmem_real8_swap__ pshmem_real8_swap__
+
+#define SHMEM_REAL4_SET PSHMEM_REAL4_SET
+#define shmem_real4_set_ pshmem_real4_set_
+#define shmem_real4_set__ pshmem_real4_set__
+
+#define SHMEM_REAL8_SET PSHMEM_REAL8_SET
+#define shmem_real8_set_ pshmem_real8_set_
+#define shmem_real8_set__ pshmem_real8_set__
+
+#define SHMEM_REAL4_FETCH PSHMEM_REAL4_FETCH
+#define shmem_real4_fetch_ pshmem_real4_fetch_
+#define shmem_real4_fetch__ pshmem_real4_fetch__
+
+#define SHMEM_REAL8_FETCH PSHMEM_REAL8_FETCH
+#define shmem_real8_fetch_ pshmem_real8_fetch_
+#define shmem_real8_fetch__ pshmem_real8_fetch__
 
 #define SHMEM_REAL_GET PSHMEM_REAL_GET
 #define shmem_real_get_ pshmem_real_get_
