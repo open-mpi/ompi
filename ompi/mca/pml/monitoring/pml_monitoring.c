@@ -210,7 +210,7 @@ static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
         messages_count[i] = 0;
     }
 
-    if( 1 == filter_monitoring() ) return;
+    if( 1 != filter_monitoring() ) return;
 
     for (int i = 0 ; i < nbprocs ; i++) {
         if(filtered_sent_data[i] > 0) {
@@ -234,7 +234,7 @@ int ompi_mca_pml_monitoring_flush(int fd, char* filename)
         fprintf(stderr, "Proc %d flushing monitoring to stdout\n");
         output_monitoring( stdout, rank_world, nprocs_world );
     } else if( 2 == fd ) {
-        fprintf(stderr, "Proc %d flushing monitoring to stdout\n");
+        fprintf(stderr, "Proc %d flushing monitoring to stderr\n");
         output_monitoring( stderr, rank_world, nprocs_world );
     } else {
         FILE *pf = NULL;
