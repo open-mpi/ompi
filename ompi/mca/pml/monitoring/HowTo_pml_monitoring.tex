@@ -52,7 +52,8 @@ Whether you are using one version or the other, the monitoring need to
 be enabled with parameters added when calling \texttt{mpiexec}. Two new
 parameters have been introduced :
 \begin{description}
-\item [\texttt{----mca pml\_monitoring\_enable value}] The value may be :
+\item [\texttt{----mca pml\_monitoring\_enable value}] This parameter
+  sets the monitoring mode. \texttt{value} may be :
   \begin{description}
   \item [0] monitoring is disabled
   \item [1] monitoring is enabled, with a distinction between control
@@ -60,10 +61,24 @@ parameters have been introduced :
   \item [$\ge$ 2] monitoring enabled, with no distinction between
     exchanged messages.
   \end{description}
-\item [\texttt{----mca pml\_monitoring\_filename filename}] Set the file
-  where to flush the resulting output from monitoring. The output is a
-  communication matrix of both the number of messages and the total
-  size of exchanged data between each couple of nodes.
+\item [\texttt{----mca pml\_monitoring\_enable\_output value}] This
+  parameter enables the automatic flushing of monitored values at
+  during the call to \texttt{MPI\_Finalize}. {\bf This option is to be
+    used only without \mpit{}, or with \texttt{value} =
+    0}. \texttt{value} may be :
+  \begin{description}
+  \item [0] final output flushing is disable
+  \item [1] final output flushing is done in the standard output stream (\texttt{stdout})
+  \item [2] final output flushing is done in the error output stream (\texttt{stderr})
+  \item [$\ge$ 3] final output flushing is done in the file which name
+    is given with the \texttt{pml\_monitoring\_filename} parameter.
+  \end{description}
+\item [\texttt{----mca pml\_monitoring\_filename filename}] Set the
+  file where to flush the resulting output from monitoring. The output
+  is a communication matrix of both the number of messages and the
+  total size of exchanged data between each couple of nodes. This
+  parameter is needed if \texttt{pml\_monitoring\_enable\_output}
+  $\ge$ 3.
 \end{description}
 
 \section{Without \mpit{}}
@@ -228,7 +243,6 @@ static MPI_T_pvar_handle flush_handle;
 static const char flush_pvar_name[] = "pml_monitoring_flush";
 static const char flush_cvar_name[] = "pml_monitoring_enable";
 static int flush_pvar_idx;
-static int with_mpit = 1;
 
 int main(int argc, char* argv[])
 {
@@ -238,7 +252,6 @@ int main(int argc, char* argv[])
   MPI_Comm newcomm;
   MPI_Request request;
   char filename[1024];
-
 
   /* first phase : make a token circulated in MPI_COMM_WORLD */
   n = -1;
@@ -333,6 +346,7 @@ int main(int argc, char* argv[])
            flush_pvar_name);
     MPI_Abort(MPI_COMM_WORLD, MPIT_result);
   }
+
   /* 
    * Don't set a filename. If we stop the session before setting it, then no output
    * will be generated.
