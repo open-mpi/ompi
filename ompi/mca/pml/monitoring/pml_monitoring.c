@@ -231,10 +231,10 @@ static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
 int ompi_mca_pml_monitoring_flush(int fd, char* filename)
 {
     if( 1 == fd ) {
-        fprintf(stderr, "Proc %d flushing monitoring to stdout\n");
+        fprintf(stderr, "Proc %d flushing monitoring to stdout\n", rank_world);
         output_monitoring( stdout, rank_world, nprocs_world );
     } else if( 2 == fd ) {
-        fprintf(stderr, "Proc %d flushing monitoring to stderr\n");
+        fprintf(stderr, "Proc %d flushing monitoring to stderr\n", rank_world);
         output_monitoring( stderr, rank_world, nprocs_world );
     } else {
         FILE *pf = NULL;
