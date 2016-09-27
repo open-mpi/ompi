@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,16 +95,17 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
 {
     mca_coll_sync_module_t *sync_module;
 
-    sync_module = OBJ_NEW(mca_coll_sync_module_t);
-    if (NULL == sync_module) {
-        return NULL;
-    }
-
     /* If both MCA params are 0, then disqualify us */
     if (0 == mca_coll_sync_component.barrier_before_nops &&
         0 == mca_coll_sync_component.barrier_after_nops) {
         return NULL;
     }
+
+    sync_module = OBJ_NEW(mca_coll_sync_module_t);
+    if (NULL == sync_module) {
+        return NULL;
+    }
+
     *priority = mca_coll_sync_component.priority;
 
     /* Choose whether to use [intra|inter] */
