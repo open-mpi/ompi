@@ -5,6 +5,8 @@
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -557,7 +559,7 @@ int opal_pmix_base_cache_keys_locally(const opal_process_name_t* id, const char*
     }
 
     /* search for each key in the decoded data */
-    for (offset = 0 ; offset < len && '\0' != tmp_val[offset] ; ) {
+    for (offset = 0 ; offset < len ; ) {
         /* type */
         tmp = tmp_val + offset + strlen (tmp_val + offset) + 1;
         /* size */
@@ -670,11 +672,11 @@ static inline unsigned char pmi_base64_encsym (unsigned char value) {
     assert (value < 64);
 
     if (value < 26) {
-	return 'A' + value;
+        return 'A' + value;
     } else if (value < 52) {
-	return 'a' + (value - 26);
+        return 'a' + (value - 26);
     } else if (value < 62) {
-	return '0' + (value - 52);
+        return '0' + (value - 52);
     }
 
     return (62 == value) ? '+' : '/';
@@ -682,19 +684,18 @@ static inline unsigned char pmi_base64_encsym (unsigned char value) {
 
 static inline unsigned char pmi_base64_decsym (unsigned char value) {
     if ('+' == value) {
-	return 62;
+        return 62;
     } else if ('/' == value) {
-	return 63;
+        return 63;
     } else if (' ' == value) {
-	return 64;
+        return 64;
     } else if (value <= '9') {
-	return (value - '0') + 52;
+        return (value - '0') + 52;
     } else if (value <= 'Z') {
-	return (value - 'A');
+        return (value - 'A');
     } else if (value <= 'z') {
-	return (value - 'a') + 26;
+        return (value - 'a') + 26;
     }
-
     return 64;
 }
 
@@ -716,12 +717,12 @@ static inline int pmi_base64_decode_block (const char in[4], unsigned char out[3
 
     out[0] = in_dec[0] << 2 | in_dec[1] >> 4;
     if (64 == in_dec[2]) {
-	return 1;
+        return 1;
     }
 
     out[1] = in_dec[1] << 4 | in_dec[2] >> 2;
     if (64 == in_dec[3]) {
-	return 2;
+        return 2;
     }
 
     out[2] = ((in_dec[2] << 6) & 0xc0) | in_dec[3];
@@ -737,7 +738,7 @@ static char *pmi_encode(const void *val, size_t vallen)
 
     outdata = calloc (((2 + vallen) * 4) / 3 + 2, 1);
     if (NULL == outdata) {
-	return NULL;
+        return NULL;
     }
 
     for (i = 0, tmp = outdata ; i < vallen ; i += 3, tmp += 4) {
@@ -751,7 +752,7 @@ static char *pmi_encode(const void *val, size_t vallen)
 
 static uint8_t *pmi_decode (const char *data, size_t *retlen)
 {
-    size_t input_len = (strlen (data) - 1) / 4;
+    size_t input_len = strlen (data) / 4;
     unsigned char *ret;
     int out_len;
     size_t i;
@@ -759,16 +760,13 @@ static uint8_t *pmi_decode (const char *data, size_t *retlen)
     /* default */
     *retlen = 0;
 
-    ret = calloc (1, 3 * input_len + 1);
+    ret = calloc (1, 3 * input_len);
     if (NULL == ret) {
         return ret;
     }
-
     for (i = 0, out_len = 0 ; i < input_len ; i++, data += 4) {
-	out_len += pmi_base64_decode_block(data, ret + 3 * i);
+        out_len += pmi_base64_decode_block(data, ret + 3 * i);
     }
-
-    ret[out_len] = '\0';
     *retlen = out_len;
     return ret;
 }
