@@ -18,60 +18,59 @@ pml monitoring tester.
 Designed by George Bosilca <bosilca@icl.utk.edu> and  Emmanuel Jeannot <emmanuel.jeannot@inria.fr>
 Contact the authors for questions.
 
-To be run as:
+To be run as (without using MPI_Tool):
 
-mpirun -np 4 --mca pml_monitoring_enable 2 ./monitoring_test
-pm
+mpirun -np 4 --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename prof/output ./monitoring_test
+
 Then, the output should be:
 
-flushing to ./prof/phase_1_2.prof
-flushing to ./prof/phase_1_0.prof
-flushing to ./prof/phase_1_3.prof
-flushing to ./prof/phase_2_1.prof
-flushing to ./prof/phase_2_3.prof
-flushing to ./prof/phase_2_0.prof
-flushing to ./prof/phase_2_2.prof
-I	0	1	108 bytes	27 msgs sent
-E	0	1	1012 bytes	30 msgs sent
-E	0	2	23052 bytes	61 msgs sent
-I	1	2	104 bytes	26 msgs sent
-I	1	3	208 bytes	52 msgs sent
-E	1	0	860 bytes	24 msgs sent
-E	1	3	2552 bytes	56 msgs sent
-I	2	3	104 bytes	26 msgs sent
-E	2	0	22804 bytes	49 msgs sent
-E	2	3	860 bytes	24 msgs sent
-I	3	0	104 bytes	26 msgs sent
-I	3	1	204 bytes	51 msgs sent
-E	3	1	2304 bytes	44 msgs sent
-E	3	2	860 bytes	24 msgs sent
+flushing to ./prof/output.2.prof
+flushing to ./prof/output.0.prof
+flushing to ./prof/output.1.prof
+flushing to ./prof/output.3.prof
+
+with the results being (per file):
+output.0.prof
+I       0       1       108 bytes       27 msgs sent
+E       0       1       20 bytes        4 msgs sent
+E       0       2       20528 bytes     9 msgs sent
+output.1.prof
+I       1       2       104 bytes       26 msgs sent
+I       1       3       208 bytes       52 msgs sent
+E       1       0       20 bytes        4 msgs sent
+E       1       3       28 bytes        4 msgs sent
+output.2.prof
+I       2       3       104 bytes       26 msgs sent
+E       2       0       20528 bytes     9 msgs sent
+E       2       3       8 bytes 1 msgs sent
+output.3.prof
+I       3       0       104 bytes       26 msgs sent
+I       3       1       204 bytes       51 msgs sent
+E       3       1       16 bytes        1 msgs sent
+E       3       2       20 bytes        4 msgs sent
 
 or as
 
-mpirun -np 4 --mca pml_monitoring_enable 1 ./monitoring_test
+mpirun -np 4 --mca pml_monitoring_enable 2 --mca pml_monitoring_enable_output 2 ./monitoring_test
 
 for an output as:
 
-flushing to ./prof/phase_1_1.prof
-flushing to ./prof/phase_1_0.prof
-flushing to ./prof/phase_1_2.prof
-flushing to ./prof/phase_1_3.prof
-flushing to ./prof/phase_2_1.prof
-flushing to ./prof/phase_2_3.prof
-flushing to ./prof/phase_2_2.prof
-flushing to ./prof/phase_2_0.prof
-I	0	1	1120 bytes	57 msgs sent
-I	0	2	23052 bytes	61 msgs sent
-I	1	0	860 bytes	24 msgs sent
-I	1	2	104 bytes	26 msgs sent
-I	1	3	2760 bytes	108 msgs sent
-I	2	0	22804 bytes	49 msgs sent
-I	2	3	964 bytes	50 msgs sent
-I	3	0	104 bytes	26 msgs sent
-I	3	1	2508 bytes	95 msgs sent
-I	3	2	860 bytes	24 msgs sent
-*/
+Proc 0 flushing monitoring to stderr
+I       0       1       128 bytes       31 msgs sent
+I       0       2       20528 bytes     9 msgs sent
+Proc 2 flushing monitoring to stderr
+I       2       0       20528 bytes     9 msgs sent
+I       2       3       112 bytes       27 msgs sent
+Proc 1 flushing monitoring to stderr
+I       1       0       20 bytes        4 msgs sent
+I       1       2       104 bytes       26 msgs sent
+I       1       3       236 bytes       56 msgs sent
+Proc 3 flushing monitoring to stderr
+I       3       0       104 bytes       26 msgs sent
+I       3       1       220 bytes       52 msgs sent
+I       3       2       20 bytes        4 msgs sent
 
+*/
 
 
 #include <stdio.h>

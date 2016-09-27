@@ -145,8 +145,6 @@ void mca_pml_monitoring_reset( void )
 
 void monitor_send_data(int world_rank, size_t data_size, int tag)
 {
-    if( 0 == filter_monitoring() ) {opal_output(0, "monitoring disabled");return;}
-    opal_output(0, "rank=%2d, world_rank=%2d, data_size=%5lu, tag=%- 4d", rank_world, world_rank, data_size, tag);
     if( 0 == filter_monitoring() ) return;  /* right now the monitoring is not started */
 
     /* distinguishses positive and negative tags if requested */
