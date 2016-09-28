@@ -1014,7 +1014,7 @@ int get_ofi_conduit_id( opal_list_t *attributes)
 
     int ofi_conduit_id = RML_OFI_CONDUIT_ID_INVALID, prov_num=0;    
     char *provider = NULL, *transport = NULL;
-    char *ethernet="sockets", *fabric="fabric"; //[TODO] - replace the string for fabric with right value for OPA
+    char *ethernet="sockets", *fabric="fabric"; /*[TODO] - replace the string for fabric with right value for OPA*/
     struct fi_info *cur_fi;
 
     /* check the list of attributes to see if we should respond                         

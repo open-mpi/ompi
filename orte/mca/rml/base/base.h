@@ -316,4 +316,4 @@ int orte_rml_API_open_conduit(opal_list_t *attributes);
 
 END_C_DECLS
 
-#endif /* MCA_RML_BASE_H */
+#endif /* MCA_RML_BASE_H  */

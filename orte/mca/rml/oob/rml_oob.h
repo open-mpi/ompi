@@ -70,7 +70,6 @@ int orte_rml_oob_ping(void *mod,
 
 char* orte_rml_oob_get_uri(void);
 void orte_rml_oob_set_uri( const char*);
-
 void orte_rml_oob_purge( orte_process_name_t *peer);
 
 END_C_DECLS

@@ -54,7 +54,7 @@ void orte_rml_oob_purge(orte_process_name_t *peer)
     orte_process_name_t step;
     orte_ns_cmp_bitmask_t mask;
 
-    /* clear our message queue */
+    /*  clear our message queue */
     item = opal_list_get_first(&orte_rml_oob_module.queued_routing_messages);
     while (item != opal_list_get_end(&orte_rml_oob_module.queued_routing_messages)) {
         next = opal_list_get_next(item);

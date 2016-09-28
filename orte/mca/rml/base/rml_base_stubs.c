@@ -41,7 +41,7 @@
 /*  a comma seperated list of components, try to open the conduit in this order.            */
 /*  if the ORTE_RML_INCLUDE_COMP is not provided or this list was not able to open conduit  */
 /*  call the open_conduit() of the component in priority order to see if they can use the   */
-/*  attribute to open a conduit                                                             */
+/*  attribute to open a conduit.                                                            */
 /*  Note:  The component takes care of checking for duplicate and returning the previously  */
 /*  opened module* in case of duplicates. Currently we are saving it in a new conduit_id    */
 /*  even if it is duplicate. [ToDo] compare the module* received from component to see if   */

@@ -94,7 +94,7 @@ static int orte_rml_base_close(void)
     orte_rml_base_active_t *active_module;
     orte_rml_base_module_t *mod;
 
-    /*close the active modules */ 
+    /* close the active modules */ 
 /*
     OPAL_LIST_FOREACH(active_module, &orte_rml_base.actives, orte_rml_base_active_t)
     {

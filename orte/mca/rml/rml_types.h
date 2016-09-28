@@ -205,7 +205,7 @@ BEGIN_C_DECLS
  * Message matching tag.  Unlike MPI, there is no wildcard receive,
  * all messages must match exactly. Tag values less than
  * ORTE_RML_TAG_DYNAMIC are reserved and may only be referenced using
- * a defined constant.
+ * a defined constant. 
  */
 typedef uint32_t orte_rml_tag_t;
 

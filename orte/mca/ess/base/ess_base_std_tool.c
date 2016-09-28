@@ -135,7 +135,6 @@ int orte_ess_base_tool_setup(void)
      * that link is my responsibility
      */
 
-
     /* we -may- need to know the name of the head
      * of our session directory tree, particularly the
      * tmp base where any other session directories on

@@ -136,7 +136,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
 { 
     orte_rml_base_module_t *mod;
 
-    /* since we have only 1 transport we return only one module-pointer */
+    /*  since we have only 1 transport we return only one module-pointer */
 
     opal_output_verbose(20,orte_rml_base_framework.framework_output,
                     "%s - Entering rml_oob_open_conduit()",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

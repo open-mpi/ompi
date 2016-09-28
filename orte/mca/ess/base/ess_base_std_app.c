@@ -358,7 +358,7 @@ void orte_ess_base_app_abort(int status, bool report)
      * Since singletons don't start an HNP unless necessary, and
      * direct-launched procs don't have daemons at all, only send
      * the message if routing is enabled as this indicates we
-     * have someone to send to
+     * have someone to send to.
      */
     if (report && orte_routing_is_enabled && orte_create_session_dirs) {
         myfile = opal_os_path(false, orte_process_info.proc_session_dir, "aborted", NULL);

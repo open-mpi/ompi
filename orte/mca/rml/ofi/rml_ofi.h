@@ -146,7 +146,7 @@ typedef struct {
     /** "Any source" address */
     fi_addr_t any_addr;
 
-    /** number of Conduits currently opened **/
+    /** number of conduits currently opened **/
     uint8_t conduit_open_num;
 
     /** Unique message id for every message that is fragmented to be sent over OFI **/

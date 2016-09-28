@@ -99,7 +99,7 @@ int orte_rml_ofi_send_callback(struct fi_cq_data_entry *wc,
         OBJ_RELEASE(ofi_req);
     }
     
-	// [TODO] need to check for error before returning success
+	// [TODO]  need to check for error before returning success
 	return ORTE_SUCCESS;
 }
 

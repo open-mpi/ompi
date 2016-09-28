@@ -562,7 +562,6 @@ static int rte_init(void)
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
     proc->rml_uri = strdup(orte_process_info.my_hnp_uri);
-
     /* we are also officially a daemon, so better update that field too */
     orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
     /* setup the orte_show_help system to recv remote output */
