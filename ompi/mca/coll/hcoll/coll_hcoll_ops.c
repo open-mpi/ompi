@@ -684,3 +684,41 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
 
 }
 
+
+#if HCOLL_API >= HCOLL_VERSION(3,7)
+int mca_coll_hcoll_ialltoallv(const void *sbuf, int *scounts, int *sdisps,
+                              struct ompi_datatype_t *sdtype,
+                              void *rbuf, int *rcounts, int *rdisps,
+                              struct ompi_datatype_t *rdtype,
+                              struct ompi_communicator_t *comm,
+                              ompi_request_t ** request,
+                              mca_coll_base_module_t *module)
+{
+    dte_data_representation_t stype;
+    dte_data_representation_t rtype;
+    int rc;
+    HCOL_VERBOSE(20,"RUNNING HCOL IALLTOALLV");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
+    rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: sdtype = %s, rdtype = %s; calling fallback ialltoallv;",
+                     sdtype->super.name,
+                     rdtype->super.name);
+        rc = hcoll_module->previous_ialltoallv(sbuf, scounts, sdisps, sdtype,
+                                               rbuf, rcounts, rdisps, rdtype,
+                                               comm, request, hcoll_module->previous_alltoallv_module);
+        return rc;
+    }
+    rc = hcoll_collectives.coll_ialltoallv((void *)sbuf, (int *)scounts, (int *)sdisps, stype,
+                                           rbuf, (int *)rcounts, (int *)rdisps, rtype,
+                                           hcoll_module->hcoll_context, (void**)request);
+    if (HCOLL_SUCCESS != rc){
+        HCOL_VERBOSE(20,"RUNNING FALLBACK IALLTOALLV");
+        rc = hcoll_module->previous_ialltoallv(sbuf, scounts, sdisps, sdtype,
+                                               rbuf, rcounts, rdisps, rdtype,
+                                               comm, request, hcoll_module->previous_alltoallv_module);
+    }
+    return rc;
+}
+#endif
