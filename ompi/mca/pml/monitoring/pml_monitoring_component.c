@@ -43,11 +43,9 @@ mca_pml_monitoring_set_flush(struct mca_base_pvar_t *pvar, const void *value, vo
 {
     if( NULL != mca_pml_monitoring_current_filename ) {
         free(mca_pml_monitoring_current_filename);
-        opal_output(0, "GONE 1");
     }
-    if( NULL == value ) {  /* No more output */
+    if( NULL == *(char**)value ) {  /* No more output */
         mca_pml_monitoring_current_filename = NULL;
-        opal_output(0, "GONE 1.1");
     } else {
         mca_pml_monitoring_current_filename = strdup((char*)value);
         if( NULL == mca_pml_monitoring_current_filename )
@@ -209,7 +207,6 @@ static int mca_pml_monitoring_component_close(void)
     if( NULL != mca_pml_monitoring_current_filename ) {
         free(mca_pml_monitoring_current_filename);
         mca_pml_monitoring_current_filename = NULL;
-        opal_output(0, "GONE 2");
     }
     return OMPI_SUCCESS;
 }
@@ -232,12 +229,16 @@ static int mca_pml_monitoring_component_finish(void)
         /* If we are not drived by MPIT then dump the monitoring information */
         if( mca_pml_monitoring_output_enabled )
   	    ompi_mca_pml_monitoring_flush(mca_pml_monitoring_output_enabled, mca_pml_monitoring_current_filename);
-
         /* Free internal data structure */
         finalize_monitoring();
         /* Call the original PML and then close */
         mca_pml_monitoring_active = 0;
         mca_pml_monitoring_enabled = 0;
+        /* Free the now useless output filename */
+        if( NULL != mca_pml_monitoring_current_filename ) {
+            free(mca_pml_monitoring_current_filename);
+            mca_pml_monitoring_current_filename = NULL;
+        }
         /* Restore the original PML */
         mca_pml_base_selected_component = pml_selected_component;
         mca_pml = pml_selected_module;
