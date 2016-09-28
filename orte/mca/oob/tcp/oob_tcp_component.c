@@ -64,8 +64,10 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/state/state.h"
+#include "orte/util/attr.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
@@ -94,6 +96,7 @@ static char* component_get_addr(void);
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris);
 static bool component_is_reachable(orte_process_name_t *peer);
+static orte_rml_pathway_t* component_query_transports(void);
 #if OPAL_ENABLE_FT_CR == 1
 static int component_ft_event(int state);
 #endif
@@ -124,6 +127,7 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
         .get_addr = component_get_addr,
         .set_addr = component_set_addr,
         .is_reachable = component_is_reachable,
+        .query_transports = component_query_transports,
 #if OPAL_ENABLE_FT_CR == 1
         .ft_event = component_ft_event,
 #endif
@@ -146,11 +150,8 @@ static int tcp_component_open(void)
     mca_oob_tcp_component.addr_count = 0;
     mca_oob_tcp_component.ipv4conns = NULL;
     mca_oob_tcp_component.ipv4ports = NULL;
-
-#if OPAL_ENABLE_IPV6
     mca_oob_tcp_component.ipv6conns = NULL;
     mca_oob_tcp_component.ipv6ports = NULL;
-#endif
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS !=
@@ -513,6 +514,11 @@ static int component_available(void)
         /* get the name for diagnostic purposes */
         opal_ifindextoname(i, name, sizeof(name));
 
+        /* ignore any virtual interfaces */
+        if (0 == strncmp(name, "vir", 3)) {
+            continue;
+        }
+
         /* handle include/exclude directives */
         if (NULL != interfaces) {
             /* check for match */
@@ -610,6 +616,37 @@ static int component_available(void)
     mca_oob_tcp_module.ev_base = orte_event_base;
 
     return ORTE_SUCCESS;
+}
+
+static orte_rml_pathway_t* component_query_transports(void)
+{
+    orte_rml_pathway_t *p;
+    char *qual;
+
+    /* if neither IPv4 or IPv6 connections are available, then
+     * we have nothing to support */
+    if (NULL == mca_oob_tcp_component.ipv4conns &&
+        NULL == mca_oob_tcp_component.ipv6conns) {
+        return NULL;
+    }
+
+    /* if we get here, then we support Ethernet and TCP */
+    p = OBJ_NEW(orte_rml_pathway_t);
+    p->component = strdup("oob");
+    orte_set_attribute(&p->attributes, ORTE_RML_TRANSPORT_TYPE, ORTE_ATTR_LOCAL, "Ethernet", OPAL_STRING);
+    orte_set_attribute(&p->attributes, ORTE_RML_PROTOCOL_TYPE, ORTE_ATTR_LOCAL, "TCP", OPAL_STRING);
+    /* setup our qualifiers - we route communications, may have IPv4 and/or IPv6, etc. */
+    if (NULL != mca_oob_tcp_component.ipv4conns &&
+        NULL != mca_oob_tcp_component.ipv6conns) {
+        qual = "routed=true:ipv4:ipv6";
+    } else if (NULL == mca_oob_tcp_component.ipv6conns) {
+        qual = "routed=true:ipv4";
+    } else {
+        qual = "routed=true:ipv6";
+    }
+    orte_set_attribute(&p->attributes, ORTE_RML_QUALIFIER_ATTRIB, ORTE_ATTR_LOCAL, qual, OPAL_STRING);
+
+    return p;
 }
 
 /* Start all modules */

@@ -57,24 +57,27 @@ typedef int (*mca_oob_base_component_set_addr_fn_t)(orte_process_name_t *peer,
                                                     char **uris);
 typedef bool (*mca_oob_base_component_is_reachable_fn_t)(orte_process_name_t *peer);
 typedef void (*mca_oob_ping_callback_fn_t)(int status, void *cbdata);
+typedef orte_rml_pathway_t* (*mca_oob_base_component_query_transports_fn_t)(void);
+
 #if OPAL_ENABLE_FT_CR == 1
 typedef int (*mca_oob_base_component_ft_event_fn_t)(int state);
 #endif
 
 typedef struct {
-    mca_base_component_t                      oob_base;
-    mca_base_component_data_t                 oob_data;
-    int                                       idx;
-    int                                       priority;
-    mca_oob_base_component_avail_fn_t         available;
-    mca_oob_base_component_startup_fn_t       startup;
-    mca_oob_base_component_shutdown_fn_t      shutdown;
-    mca_oob_base_component_send_fn_t          send_nb;
-    mca_oob_base_component_get_addr_fn_t      get_addr;
-    mca_oob_base_component_set_addr_fn_t      set_addr;
-    mca_oob_base_component_is_reachable_fn_t  is_reachable;
+    mca_base_component_t                            oob_base;
+    mca_base_component_data_t                       oob_data;
+    int                                             idx;
+    int                                             priority;
+    mca_oob_base_component_avail_fn_t               available;
+    mca_oob_base_component_startup_fn_t             startup;
+    mca_oob_base_component_shutdown_fn_t            shutdown;
+    mca_oob_base_component_send_fn_t                send_nb;
+    mca_oob_base_component_get_addr_fn_t            get_addr;
+    mca_oob_base_component_set_addr_fn_t            set_addr;
+    mca_oob_base_component_is_reachable_fn_t        is_reachable;
+    mca_oob_base_component_query_transports_fn_t    query_transports;
 #if OPAL_ENABLE_FT_CR == 1
-    mca_oob_base_component_ft_event_fn_t      ft_event;
+    mca_oob_base_component_ft_event_fn_t            ft_event;
 #endif
 } mca_oob_base_component_t;
 

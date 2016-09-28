@@ -263,7 +263,7 @@ EOF
     chmod +x $rpath_script
     wl_fc=`./$rpath_script`
     rm -f $rpath_script
-    
+
     LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
     AC_LANG_PUSH([Fortran])
     AC_LINK_IFELSE([AC_LANG_SOURCE([[program test

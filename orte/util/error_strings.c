@@ -234,6 +234,9 @@ int orte_err2str(int errnum, const char **errmsg)
     case ORTE_ERR_JOB_CANCELLED:
         retval = "Job cancelled";
         break;
+    case ORTE_ERR_CONDUIT_SEND_FAIL:
+        retval = " Transport Conduit returned send error";
+        break;
     case ORTE_ERR_DEBUGGER_RELEASE:
         retval = "Debugger release";
         break;

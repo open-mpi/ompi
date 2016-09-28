@@ -15,7 +15,7 @@
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -199,12 +199,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     if (ORTE_SUCCESS != (ret = orte_grpcomm_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_grpcomm_base_select";
-        goto error;
-    }
-    /* enable communication via the rml */
-    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml.enable_comm";
         goto error;
     }
     /* setup the routed info  */

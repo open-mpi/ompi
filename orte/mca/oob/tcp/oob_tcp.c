@@ -277,6 +277,13 @@ static void process_set_peer(int fd, short args, void *cbdata)
             OBJ_RELEASE(peer);
             return;
         }
+        if (ORTE_PROC_IS_APP) {
+            /* we have to initiate the connection because otherwise the
+             * daemon has no way to communicate to us via this component
+             * as the app doesn't have a listening port */
+            peer->state = MCA_OOB_TCP_CONNECTING;
+            ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
+        }
     }
 
     maddr = OBJ_NEW(mca_oob_tcp_addr_t);
@@ -294,7 +301,7 @@ static void process_set_peer(int fd, short args, void *cbdata)
                         (NULL == pop->port) ? "NULL" : pop->port);
     opal_list_append(&peer->addrs, &maddr->super);
 
- cleanup:
+  cleanup:
     OBJ_RELEASE(pop);
 }
 

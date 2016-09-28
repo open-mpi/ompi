@@ -134,12 +134,7 @@ int orte_ess_base_tool_setup(void)
      * to which I want to communicate and setting up a route for
      * that link is my responsibility
      */
-    /* enable communication via the rml */
-    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml.enable_comm";
-        goto error;
-    }
+
     /* we -may- need to know the name of the head
      * of our session directory tree, particularly the
      * tmp base where any other session directories on

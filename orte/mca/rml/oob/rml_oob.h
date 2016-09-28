@@ -37,46 +37,34 @@
 BEGIN_C_DECLS
 
 typedef struct {
-    struct orte_rml_base_module_t super;
-    opal_list_t              exceptions;
-    opal_list_t              queued_routing_messages;
+    orte_rml_base_module_t  api;
+    opal_list_t             queued_routing_messages;
     opal_event_t            *timer_event;
-    struct timeval           timeout;
+    struct timeval          timeout;
 } orte_rml_oob_module_t;
 
 ORTE_MODULE_DECLSPEC extern orte_rml_component_t mca_rml_oob_component;
-extern orte_rml_oob_module_t orte_rml_oob_module;
 
-int orte_rml_oob_init(void);
-void orte_rml_oob_fini(void);
-int orte_rml_oob_ft_event(int state);
+void orte_rml_oob_fini(struct orte_rml_base_module_t *mod);
 
-int orte_rml_oob_send_nb(orte_process_name_t* peer,
+int orte_rml_oob_send_nb(struct orte_rml_base_module_t *mod,
+                         orte_process_name_t* peer,
                          struct iovec* msg,
                          int count,
                          orte_rml_tag_t tag,
                          orte_rml_callback_fn_t cbfunc,
                          void* cbdata);
 
-int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
+int orte_rml_oob_send_buffer_nb(struct orte_rml_base_module_t *mod,
+                                orte_process_name_t* peer,
                                 opal_buffer_t* buffer,
                                 orte_rml_tag_t tag,
                                 orte_rml_buffer_callback_fn_t cbfunc,
                                 void* cbdata);
 
-int orte_rml_oob_ping(const char* uri,
+int orte_rml_oob_ping(struct orte_rml_base_module_t *mod,
+                      const char* uri,
                       const struct timeval* tv);
-
-char* orte_rml_oob_get_uri(void);
-void orte_rml_oob_set_uri(const char*);
-
-int orte_rml_oob_add_exception(orte_rml_exception_callback_t cbfunc);
-int orte_rml_oob_del_exception(orte_rml_exception_callback_t cbfunc);
-void orte_rml_oob_exception_callback(orte_process_name_t *peer,
-                                    orte_rml_exception_t exception);
-
-
-void orte_rml_oob_purge(orte_process_name_t *peer);
 
 END_C_DECLS
 

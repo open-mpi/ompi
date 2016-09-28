@@ -60,14 +60,12 @@ typedef struct {
     char**             ipv4conns;
     char**             ipv4ports;
 
-#if OPAL_ENABLE_IPV6
     /* IPv6 support */
     bool               disable_ipv6_family;  /**< disable this AF */
     char**             tcp6_static_ports;    /**< Static ports - IPV6 */
     char**             tcp6_dyn_ports;       /**< Dynamic ports - IPV6 */
     char**             ipv6conns;
     char**             ipv6ports;
-#endif
 
     /* connection support */
     char*              my_uri;                 /**< uri for connecting to the TCP module */

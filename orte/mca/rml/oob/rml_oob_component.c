@@ -51,10 +51,13 @@
 #include "orte/mca/oob/base/base.h"
 #include "rml_oob.h"
 
-static orte_rml_base_module_t* rml_oob_init(int* priority);
 static int rml_oob_open(void);
 static int rml_oob_close(void);
-
+static orte_rml_base_module_t* open_conduit(opal_list_t *attributes);
+static orte_rml_pathway_t* query_transports(void);
+static char* get_contact_info(void);
+static void set_contact_info(const char *uri);
+static void close_conduit(orte_rml_base_module_t *mod);
 /**
  * component definition
  */
@@ -62,156 +65,159 @@ orte_rml_component_t mca_rml_oob_component = {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
 
-    .rml_version = {
-        ORTE_RML_BASE_VERSION_2_0_0,
+    .base = {
+        ORTE_RML_BASE_VERSION_3_0_0,
 
         .mca_component_name = "oob",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                               ORTE_RELEASE_VERSION),
         .mca_open_component = rml_oob_open,
         .mca_close_component = rml_oob_close,
+
     },
-    .rml_data = {
+    .data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    .rml_init = rml_oob_init,
-};
-
-orte_rml_oob_module_t orte_rml_oob_module = {
-    {
-        .finalize = orte_rml_oob_fini,
-
-        .get_contact_info = orte_rml_oob_get_uri,
-        .set_contact_info = orte_rml_oob_set_uri,
-
-        .ping = orte_rml_oob_ping,
-
-        .send_nb = orte_rml_oob_send_nb,
-        .send_buffer_nb = orte_rml_oob_send_buffer_nb,
-
-        .add_exception_handler = orte_rml_oob_add_exception,
-        .del_exception_handler = orte_rml_oob_del_exception,
-        .ft_event = orte_rml_oob_ft_event,
-        .purge = orte_rml_oob_purge
-    }
+    .priority = 5,
+    .open_conduit = open_conduit,
+    .query_transports = query_transports,
+    .get_contact_info = get_contact_info,
+    .set_contact_info = set_contact_info,
+    .close_conduit = close_conduit
 };
 
 /* Local variables */
-static bool init_done = false;
+static orte_rml_pathway_t pathway;
+static orte_rml_base_module_t base_module = {
+    .component = (struct orte_rml_component_t*)&mca_rml_oob_component,
+    .ping = NULL,
+    .send_nb = orte_rml_oob_send_nb,
+    .send_buffer_nb = orte_rml_oob_send_buffer_nb,
+    .purge = NULL
+};
 
-static int
-rml_oob_open(void)
+static int rml_oob_open(void)
 {
-    return ORTE_SUCCESS;
-}
-
-
-static int
-rml_oob_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-
-static orte_rml_base_module_t*
-rml_oob_init(int* priority)
-{
-    if (init_done) {
-        *priority = 1;
-        return &orte_rml_oob_module.super;
-    }
-
-    *priority = 1;
-
-    OBJ_CONSTRUCT(&orte_rml_oob_module.exceptions, opal_list_t);
-
-    init_done = true;
-    return &orte_rml_oob_module.super;
-}
-
-int
-orte_rml_oob_init(void)
-{
-    /* enable the base receive to get updates on contact info */
-    orte_rml_base_comm_start();
+    /* ask our OOB transports for their info */
+    OBJ_CONSTRUCT(&pathway, orte_rml_pathway_t);
+    pathway.component = strdup("oob");
+    ORTE_OOB_GET_TRANSPORTS(&pathway.transports);
+    /* add any component attributes of our own */
 
     return ORTE_SUCCESS;
 }
 
 
-void
-orte_rml_oob_fini(void)
+static int rml_oob_close(void)
 {
-    opal_list_item_t *item;
+    /* cleanup */
+    OBJ_DESTRUCT(&pathway);
 
-    while (NULL !=
-           (item = opal_list_remove_first(&orte_rml_oob_module.exceptions))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_rml_oob_module.exceptions);
-
-    /* clear the base receive */
-    orte_rml_base_comm_stop();
+    return ORTE_SUCCESS;
 }
 
-#if OPAL_ENABLE_FT_CR == 1
-int
-orte_rml_oob_ft_event(int state) {
-    int exit_status = ORTE_SUCCESS;
-    int ret;
+static orte_rml_base_module_t* make_module(void)
+{
+    orte_rml_oob_module_t *mod;
 
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CHECKPOINT);
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CONTINUE);
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_RESTART);
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
+    /* create a new module */
+    mod = (orte_rml_oob_module_t*)malloc(sizeof(orte_rml_oob_module_t));
+    if (NULL == mod) {
+        return NULL;
     }
 
+    /* copy the APIs over to it */
+    memcpy(mod, &base_module, sizeof(base_module));
 
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        (void) mca_base_framework_close(&orte_oob_base_framework);
+    /* initialize its internal storage */
+    OBJ_CONSTRUCT(&mod->queued_routing_messages, opal_list_t);
+    mod->timer_event = NULL;
 
-        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+    /* return the result */
+    return (orte_rml_base_module_t*)mod;
+}
+
+static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
+{
+    char *comp_attrib = NULL;
+    char **comps;
+    int i;
+    orte_attribute_t *attr;
+
+    opal_output_verbose(20,orte_rml_base_framework.framework_output,
+                    "%s - Entering rml_oob_open_conduit()",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    /* someone may require this specific component, so look for "oob" */
+    if (orte_get_attribute(attributes, ORTE_RML_INCLUDE_COMP_ATTRIB, (void**)&comp_attrib, OPAL_STRING) &&
+        NULL != comp_attrib) {
+        /* they specified specific components - could be multiple */
+        comps = opal_argv_split(comp_attrib, ',');
+        for (i=0; NULL != comps[i]; i++) {
+            if (0 == strcmp(comps[i], "oob")) {
+                /* we are a candidate */
+                opal_argv_free(comps);
+                return make_module();
+            }
         }
-
-        if( ORTE_SUCCESS != (ret = orte_oob_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+        /* we are not a candidate */
+        opal_argv_free(comps);
+        return NULL;
+    } else if (orte_get_attribute(attributes, ORTE_RML_EXCLUDE_COMP_ATTRIB, (void**)&comp_attrib, OPAL_STRING) &&
+               NULL != comp_attrib) {
+        /* see if we are on the list */
+        comps = opal_argv_split(comp_attrib, ',');
+        for (i=0; NULL != comps[i]; i++) {
+            if (0 == strcmp(comps[i], "oob")) {
+                /* we cannot be a candidate */
+                opal_argv_free(comps);
+                return NULL;
+            }
         }
     }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
+
+    /* Alternatively, check the attributes to see if we qualify - we only handle
+     * "routed", "Ethernet", and "TCP" */
+    OPAL_LIST_FOREACH(attr, attributes, orte_attribute_t) {
+
     }
 
- cleanup:
-    return exit_status;
+    /* if we get here, we cannot handle it */
+    return NULL;
 }
-#else
-int
-orte_rml_oob_ft_event(int state) {
-    return ORTE_SUCCESS;
+
+static orte_rml_pathway_t* query_transports(void)
+{
+    /* if we have any available transports, make them available */
+    if (0 < opal_list_get_size(&pathway.transports)) {
+        return &pathway;
+    }
+    /* if not, then return NULL */
+    return NULL;
 }
-#endif
+
+static void close_conduit(orte_rml_base_module_t *md)
+{
+    orte_rml_oob_module_t *mod = (orte_rml_oob_module_t*)md;
+
+    /* cleanup the list of messages */
+    OBJ_DESTRUCT(&mod->queued_routing_messages);
+
+    /* the rml_base_stub takes care of clearing the base receive
+     * and free'ng the module */
+    return;
+}
+
+static char* get_contact_info(void)
+{
+    char *ret;
+
+    ORTE_OOB_GET_URI(&ret);
+    return ret;
+}
+
+static void set_contact_info(const char *uri)
+{
+    ORTE_OOB_SET_URI(uri);
+}

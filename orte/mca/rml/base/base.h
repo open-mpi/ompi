@@ -27,7 +27,7 @@
  *
  * RML Framework maintenence interface
  *
- * Interface for starting / stopping / controlling the RML framework,
+ * Interface for starting / stopping / controlling the RML framework,307
  * as well as support for modifying RML datatypes.
  *
  * @note The only RML datatype exposed to the user is the RML tag.
@@ -91,33 +91,23 @@ ORTE_DECLSPEC void orte_rml_base_comm_stop(void);
 typedef struct {
     opal_list_item_t super;
     int pri;
-    orte_rml_base_module_t *module;
-    mca_base_component_t *component;
+    orte_rml_component_t *component;
 } orte_rml_base_active_t;
 OBJ_CLASS_DECLARATION(orte_rml_base_active_t);
 
 /* a global struct containing framework-level values */
 typedef struct {
-    opal_list_t actives;  /* list to hold the active plugins */
+    opal_list_t actives;  /* list to hold the active components */
+    opal_pointer_array_t conduits;  /* array to hold the open conduits */
     opal_list_t posted_recvs;
     opal_list_t unmatched_msgs;
+    orte_rml_conduit_t def_conduit_id;
 #if OPAL_ENABLE_TIMING
     bool timing;
 #endif
 } orte_rml_base_t;
 ORTE_DECLSPEC extern orte_rml_base_t orte_rml_base;
 
-
-/**
- * List of components that are available to the RML
- *
- * List of components that are currently available to the RML
- * framework.  Useable between calls to orte_rml_base_open() and
- * orte_rml_base_close().
- *
- * @note This list should not be used by code outside the RML base.
- */
-ORTE_DECLSPEC extern opal_list_t orte_rml_base_components;
 
 /* structure to send RML messages - used internally */
 typedef struct {
@@ -153,6 +143,8 @@ typedef struct {
     opal_object_t super;
     opal_event_t ev;
     orte_rml_send_t send;
+    /* conduit_id */
+    orte_rml_conduit_t conduit_id;
 } orte_rml_send_request_t;
 OBJ_CLASS_DECLARATION(orte_rml_send_request_t);
 
@@ -222,21 +214,6 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
         opal_event_active(&(m)->ev, OPAL_EV_WRITE, 1);          \
     } while(0);
 
-/*
- reactivates rcv msg on the unposted rcvd list when a match occurs
- need a different path as the QoS recv processing was already done
- for this process
-*/
-#define ORTE_RML_REACTIVATE_MESSAGE(m)                         \
-    do {                                                      \
-    /* setup the event */                                   \
-    opal_event_set(orte_event_base, &(m)->ev, -1,           \
-                   OPAL_EV_WRITE,                           \
-                   orte_rml_base_reprocess_msg, (m));         \
-    opal_event_set_priority(&(m)->ev, ORTE_MSG_PRI);        \
-    opal_event_active(&(m)->ev, OPAL_EV_WRITE, 1);          \
-} while(0);
-
 #define ORTE_RML_SEND_COMPLETE(m)                                       \
     do {                                                                \
         opal_output_verbose(5, orte_rml_base_framework.framework_output, \
@@ -264,47 +241,60 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
 /* common implementations */
 ORTE_DECLSPEC void orte_rml_base_post_recv(int sd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_process_msg(int fd, short flags, void *cbdata);
-ORTE_DECLSPEC void orte_rml_base_process_error(int fd, short flags, void *cbdata);
-ORTE_DECLSPEC void orte_rml_base_reprocess_msg(int fd, short flags, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_complete_recv_msg (orte_rml_recv_t **recv_msg);
 
 
-/* Stub API interfaces to cycle through active plugins and call highest priority */
-ORTE_DECLSPEC int orte_rml_API_enable_comm(void);
-ORTE_DECLSPEC void orte_rml_API_finalize(void);
-ORTE_DECLSPEC char* orte_rml_API_get_contact_info(void);
-ORTE_DECLSPEC void orte_rml_API_set_contact_info(const char *contact_info);
-ORTE_DECLSPEC int orte_rml_API_ping(const char* contact_info, const struct timeval* tv);
-ORTE_DECLSPEC int orte_rml_API_send_nb(orte_process_name_t* peer, struct iovec* msg,
-                                       int count, orte_rml_tag_t tag,
-                                       orte_rml_callback_fn_t cbfunc, void* cbdata);
-ORTE_DECLSPEC int orte_rml_API_send_buffer_nb(orte_process_name_t* peer,
-                                              struct opal_buffer_t* buffer,
-                                              orte_rml_tag_t tag,
-                                              orte_rml_buffer_callback_fn_t cbfunc,
-                                              void* cbdata);
-ORTE_DECLSPEC void orte_rml_API_recv_nb(orte_process_name_t* peer,
+/* Stub API interfaces to cycle through active plugins */
+char* orte_rml_API_get_contact_info(void);
+void orte_rml_API_set_contact_info(const char *contact_info);
+
+int orte_rml_API_ping(const char* contact_info,
+                      const struct timeval* tv);
+int orte_rml_API_ping_conduit(orte_rml_conduit_t conduit_id,
+                              const char* contact_info,
+                              const struct timeval* tv);
+
+int orte_rml_API_send_nb(orte_process_name_t* peer, struct iovec* msg,
+                         int count, orte_rml_tag_t tag,
+                         orte_rml_callback_fn_t cbfunc, void* cbdata);
+int orte_rml_API_send_nb_conduit(orte_rml_conduit_t conduit_id,
+                                 orte_process_name_t* peer, struct iovec* msg,
+                                 int count, orte_rml_tag_t tag,
+                                 orte_rml_callback_fn_t cbfunc, void* cbdata);
+
+int orte_rml_API_send_buffer_nb(orte_process_name_t* peer,
+                                struct opal_buffer_t* buffer,
+                                orte_rml_tag_t tag,
+                                orte_rml_buffer_callback_fn_t cbfunc,
+                                void* cbdata);
+int orte_rml_API_send_buffer_nb_conduit(orte_rml_conduit_t conduit_id,
+                                        orte_process_name_t* peer,
+                                        struct opal_buffer_t* buffer,
                                         orte_rml_tag_t tag,
-                                        bool persistent,
-                                        orte_rml_callback_fn_t cbfunc,
+                                        orte_rml_buffer_callback_fn_t cbfunc,
                                         void* cbdata);
 
-ORTE_DECLSPEC void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
-                                               orte_rml_tag_t tag,
-                                               bool persistent,
-                                               orte_rml_buffer_callback_fn_t cbfunc,
-                                               void* cbdata);
+void orte_rml_API_recv_nb(orte_process_name_t* peer,
+                          orte_rml_tag_t tag,
+                          bool persistent,
+                          orte_rml_callback_fn_t cbfunc,
+                          void* cbdata);
+void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
+                                 orte_rml_tag_t tag,
+                                 bool persistent,
+                                 orte_rml_buffer_callback_fn_t cbfunc,
+                                 void* cbdata);
 
-ORTE_DECLSPEC void orte_rml_API_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag);
+void orte_rml_API_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag);
 
-ORTE_DECLSPEC int orte_rml_API_add_exception_handler(orte_rml_exception_callback_t cbfunc);
+void orte_rml_API_purge(orte_process_name_t *peer);
 
-ORTE_DECLSPEC int orte_rml_API_del_exception_handler(orte_rml_exception_callback_t cbfunc);
+int orte_rml_API_query_transports(opal_list_t *providers);
 
-ORTE_DECLSPEC int orte_rml_API_ft_event(int state);
+orte_rml_conduit_t orte_rml_API_open_conduit(opal_list_t *attributes);
 
-ORTE_DECLSPEC void orte_rml_API_purge(orte_process_name_t *peer);
+void orte_rml_API_close_conduit(orte_rml_conduit_t id);
 
 END_C_DECLS
 
-#endif /* MCA_RML_BASE_H */
+#endif /* MCA_RML_BASE_H  */

@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <signal.h>
 #include <math.h>
-#include <sys/time.h>
 
 #include "opal/runtime/opal_progress.h"
 
@@ -45,7 +44,8 @@ main(int argc, char *argv[]){
     double maxpower;
     opal_buffer_t *buf;
     orte_rml_recv_cb_t blob;
-    struct timeval start, end;
+    int sock_conduit_id = 1;  //use the first one
+
     /*
      * Init
      */
@@ -66,20 +66,21 @@ main(int argc, char *argv[]){
         peer.vpid = 0;
     }
 
-    gettimeofday(&start,NULL);
     for (j=1; j < count+1; j++) {
         /* rank0 starts ring */
         if (ORTE_PROC_MY_NAME->vpid == 0) {
             /* setup the initiating buffer - put random sized message in it */
             buf = OBJ_NEW(opal_buffer_t);
 
-            maxpower = (double)(j%7);
+            //maxpower = (double)(j%7);
+            maxpower = (double)(j%8);
             msgsize = (int)pow(10.0, maxpower);
+            //msgsize += 1401000;
             opal_output(0, "Ring %d message size %d bytes", j, msgsize);
             msg = (uint8_t*)malloc(msgsize);
             opal_dss.pack(buf, msg, msgsize, OPAL_BYTE);
             free(msg);
-            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
+            orte_rml.send_buffer_transport_nb(sock_conduit_id,&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
 
             /* wait for it to come around */
             OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
@@ -100,17 +101,17 @@ main(int argc, char *argv[]){
                                     orte_rml_recv_callback, &blob);
             ORTE_WAIT_FOR_COMPLETION(blob.active);
 
+            opal_output(0, "%s received message %d from %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j, ORTE_NAME_PRINT(&blob.name));
+
             /* send it along */
             buf = OBJ_NEW(opal_buffer_t);
             opal_dss.copy_payload(buf, &blob.data);
             OBJ_DESTRUCT(&blob);
             msg_active = true;
-            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, send_callback, NULL);
+            orte_rml.send_buffer_transport_nb(sock_conduit_id,&peer, buf, MY_TAG, send_callback, NULL);
             ORTE_WAIT_FOR_COMPLETION(msg_active);
         }
     }
-    gettimeofday(&end,NULL);
-    printf("Total minutes = %d, Total seconds = %d\n",(end.tv_sec - start.tv_sec)/60,(end.tv_sec - start.tv_sec));
 
     orte_finalize();
 

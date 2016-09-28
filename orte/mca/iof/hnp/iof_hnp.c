@@ -56,9 +56,6 @@
 /* LOCAL FUNCTIONS */
 static void stdin_write_handler(int fd, short event, void *cbdata);
 
-static void
-orte_iof_hnp_exception_handler(orte_process_name_t* peer, orte_rml_exception_t reason);
-
 /* API FUNCTIONS */
 static int init(void);
 
@@ -94,8 +91,6 @@ orte_iof_base_module_t orte_iof_hnp_module = {
 /* Initialize the module */
 static int init(void)
 {
-    int rc;
-
     /* post non-blocking recv to catch forwarded IO from
      * the orteds
      */
@@ -104,12 +99,6 @@ static int init(void)
                             ORTE_RML_PERSISTENT,
                             orte_iof_hnp_recv,
                             NULL);
-
-    if (ORTE_SUCCESS != (rc = orte_rml.add_exception_handler(orte_iof_hnp_exception_handler))) {
-        ORTE_ERROR_LOG(rc);
-        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
-        return rc;
-    }
 
     OBJ_CONSTRUCT(&mca_iof_hnp_component.procs, opal_list_t);
     mca_iof_hnp_component.stdinev = NULL;
@@ -609,38 +598,4 @@ CHECK:
             opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
         }
     }
-}
-
-/**
- * Callback when peer is disconnected
- */
-
-static void
-orte_iof_hnp_exception_handler(orte_process_name_t* peer, orte_rml_exception_t reason)
-{
-#if 0
-    orte_iof_base_endpoint_t *endpoint;
-    opal_output_verbose(1, orte_iof_base_framework.framework_output,
-                        "iof svc exception handler! %s\n",
-                        ORTE_NAME_PRINT((orte_process_name_t*)peer));
-
-    /* If we detect an exception on the RML connection to a peer,
-     delete all of its subscriptions and publications.  Note that
-     exceptions can be detected during a normal RML shutdown; they
-     are recoverable events (no need to abort). */
-    orte_iof_hnp_sub_delete_all(peer);
-    orte_iof_hnp_pub_delete_all(peer);
-    opal_output_verbose(1, orte_iof_base_framework.framework_output, "deleted all pubs and subs\n");
-
-    /* Find any streams on any endpoints for this peer and close them */
-    while (NULL !=
-           (endpoint = orte_iof_base_endpoint_match(peer, ORTE_NS_CMP_ALL,
-                                                    ORTE_IOF_ANY))) {
-        orte_iof_base_endpoint_closed(endpoint);
-
-        /* Delete the endpoint that we just matched */
-        orte_iof_base_endpoint_delete(peer, ORTE_NS_CMP_ALL, ORTE_IOF_ANY);
-    }
-#endif
-    opal_output_verbose(1, orte_iof_base_framework.framework_output, "done with exception handler\n");
 }

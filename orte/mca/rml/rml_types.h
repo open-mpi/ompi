@@ -171,8 +171,14 @@ BEGIN_C_DECLS
 
 #define ORTE_RML_TAG_MAX                   100
 
+
 #define ORTE_RML_TAG_NTOH(t) ntohl(t)
 #define ORTE_RML_TAG_HTON(t) htonl(t)
+
+/*** length of the tag. change this when type of orte_rml_tag_t is changed ***/
+/*** max valu in unit32_t is 0xFFFF_FFFF when converted to char this is 8  **
+#define ORTE_RML_TAG_T_CHAR_LEN   8
+#define ORTE_RML_TAG_T_SPRINT	 "%8x" */
 
 /**
  * Message matching tag
@@ -184,11 +190,17 @@ BEGIN_C_DECLS
  */
 typedef uint32_t orte_rml_tag_t;
 
-/**
- * Channel number
- * Reference to a rml channel
- */
-typedef uint32_t orte_rml_channel_num_t;
+/* Conduit ID */
+typedef uint16_t orte_rml_conduit_t;
+
+/* define an object for reporting transports */
+typedef struct {
+    opal_list_item_t super;
+    char *component;
+    opal_list_t attributes;
+    opal_list_t transports;
+} orte_rml_pathway_t;
+OBJ_CLASS_DECLARATION(orte_rml_pathway_t);
 
 /* ******************************************************************** */
 

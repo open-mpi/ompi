@@ -38,21 +38,22 @@
 
 
 /* Initialising stub fns in the global var used by other modules */
-orte_rml_base_module_t orte_rml = {
-    orte_rml_API_enable_comm,
-    orte_rml_API_finalize,
-    orte_rml_API_get_contact_info,
-    orte_rml_API_set_contact_info,
-    orte_rml_API_ping,
-    orte_rml_API_send_nb,
-    orte_rml_API_send_buffer_nb,
-    orte_rml_API_recv_nb,
-    orte_rml_API_recv_buffer_nb,
-    orte_rml_API_recv_cancel,
-    orte_rml_API_add_exception_handler,
-    orte_rml_API_del_exception_handler,
-    orte_rml_API_ft_event,
-    orte_rml_API_purge
+orte_rml_base_API_t orte_rml = {
+    .get_contact_info       = orte_rml_API_get_contact_info,
+    .set_contact_info       = orte_rml_API_set_contact_info,
+    .ping                   = orte_rml_API_ping,
+    .ping_conduit           = orte_rml_API_ping_conduit,
+    .send_nb                = orte_rml_API_send_nb,
+    .send_buffer_nb         = orte_rml_API_send_buffer_nb,
+    .send_nb_conduit        = orte_rml_API_send_nb_conduit,
+    .send_buffer_nb_conduit = orte_rml_API_send_buffer_nb_conduit,
+    .recv_nb                = orte_rml_API_recv_nb,
+    .recv_buffer_nb         = orte_rml_API_recv_buffer_nb,
+    .recv_cancel            = orte_rml_API_recv_cancel,
+    .purge                  = orte_rml_API_purge,
+    .query_transports       = orte_rml_API_query_transports,
+    .open_conduit           = orte_rml_API_open_conduit,
+    .close_conduit          = orte_rml_API_close_conduit
 };
 
 orte_rml_base_t orte_rml_base = {{{0}}};
@@ -89,16 +90,24 @@ static void cleanup(int sd, short args, void *cbdata)
 static int orte_rml_base_close(void)
 {
     volatile bool active;
+    int idx, total_conduits = opal_pointer_array_get_size(&orte_rml_base.conduits);
+    orte_rml_base_module_t *mod;
+    orte_rml_component_t *comp;
 
-     orte_rml_base_active_t *active_module;
-
-    /*close the active modules */
-    OPAL_LIST_FOREACH(active_module, &orte_rml_base.actives, orte_rml_base_active_t)
+     /* cycle thru the conduits opened and call each module's finalize */
+     /* The components finalise/close() will be responsible for freeing the module pointers   */
+    for (idx = 0; idx < total_conduits ; idx++)
     {
-        if (NULL != active_module->module->finalize) {
-            active_module->module->finalize();
+        if( NULL != (mod = (orte_rml_base_module_t*)opal_pointer_array_get_item(&orte_rml_base.conduits,idx))) {
+            /* close the conduit */
+            comp = (orte_rml_component_t*)mod->component;
+            if (NULL != comp && NULL != comp->close_conduit) {
+                comp->close_conduit(mod);
+            }
         }
+
     }
+
     OPAL_LIST_DESTRUCT(&orte_rml_base.actives)
 
     /* because the RML posted recvs list is in a separate
@@ -130,6 +139,8 @@ static int orte_rml_base_open(mca_base_open_flag_t flags)
     OBJ_CONSTRUCT(&orte_rml_base.actives, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.posted_recvs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.unmatched_msgs, opal_list_t);
+    OBJ_CONSTRUCT(&orte_rml_base.conduits, opal_pointer_array_t);
+    opal_pointer_array_init(&orte_rml_base.conduits,1,INT_MAX,1);
 
     OPAL_TIMING_INIT(&tm_rml);
     /* Open up all available components */
@@ -145,18 +156,15 @@ OBJ_CLASS_INSTANCE(orte_rml_base_active_t,
                    NULL, NULL);
 
 /**
- * Function for selecting one component(plugin) from all those that are
- * available.
+ * Function for ordering the component(plugin) by priority
  */
 int orte_rml_base_select(void)
 {
    mca_base_component_list_item_t *cli=NULL;
-   mca_base_component_t *component=NULL;
-   mca_base_module_t *module=NULL;
-   orte_rml_base_module_t *nmodule;
+   orte_rml_component_t *component=NULL;
    orte_rml_base_active_t *newmodule, *mod;
-   int priority;
    bool inserted;
+   opal_list_t conduit_attr;
 
    if (selected) {
       return ORTE_SUCCESS;
@@ -164,58 +172,64 @@ int orte_rml_base_select(void)
    selected = true;
 
    OPAL_LIST_FOREACH(cli, &orte_rml_base_framework.framework_components, mca_base_component_list_item_t ) {
-       component = (mca_base_component_t *) cli->cli_component;
+       component = (orte_rml_component_t*) cli->cli_component;
 
        opal_output_verbose(10, orte_rml_base_framework.framework_output,
                            "orte_rml_base_select: Initializing %s component %s",
-                            component->mca_type_name,
-                            component->mca_component_name);
+                            component->base.mca_type_name,
+                            component->base.mca_component_name);
 
-       if (NULL == ((orte_rml_component_t *)component)->rml_init) {
-           opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                               "orte_rml_base_select: no init function; ignoring component [%s]",component->mca_component_name);
-       } else {
-           module = (mca_base_module_t *) ((orte_rml_component_t *)component)->rml_init(&priority);
-           if (NULL == module) {
-               opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                                   "orte_rml_base_select: init returned failure [%s]",component->mca_component_name);
-               continue;
-           }
+       /* add to the list of available components */
+       newmodule = OBJ_NEW(orte_rml_base_active_t);
+       newmodule->pri = component->priority;
+       newmodule->component = component;
 
-           /* based on priority add it to the actives list */
-           nmodule = (orte_rml_base_module_t*) module;
-           /* add to the list of selected modules */
-           newmodule = OBJ_NEW(orte_rml_base_active_t);
-           newmodule->pri = priority;
-           newmodule->module = nmodule;
-           newmodule->component = component;
-
-           /* maintain priority order */
-           inserted = false;
-           OPAL_LIST_FOREACH(mod, &orte_rml_base.actives, orte_rml_base_active_t) {
-               if (priority > mod->pri) {
-                   opal_list_insert_pos(&orte_rml_base.actives,
-                                (opal_list_item_t*)mod, &newmodule->super);
-                   inserted = true;
-                   break;
-               }
-           }
-           if (!inserted) {
-               /* must be lowest priority - add to end */
-               opal_list_append(&orte_rml_base.actives, &newmodule->super);
+       /* maintain priority order */
+       inserted = false;
+       OPAL_LIST_FOREACH(mod, &orte_rml_base.actives, orte_rml_base_active_t) {
+           if (newmodule->pri > mod->pri) {
+               opal_list_insert_pos(&orte_rml_base.actives,
+                            (opal_list_item_t*)mod, &newmodule->super);
+               inserted = true;
+               break;
            }
        }
-   }
-   if (4 < opal_output_get_verbosity(orte_rml_base_framework.framework_output)) {
+       if (!inserted) {
+           /* must be lowest priority - add to end */
+           opal_list_append(&orte_rml_base.actives, &newmodule->super);
+       }
+    }
+
+    if (4 < opal_output_get_verbosity(orte_rml_base_framework.framework_output)) {
         opal_output(0, "%s: Final rml priorities", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* show the prioritized list */
         OPAL_LIST_FOREACH(mod, &orte_rml_base.actives, orte_rml_base_active_t) {
-            opal_output(0, "\tComponent: %s Priority: %d", mod->component->mca_component_name, mod->pri);
+            opal_output(0, "\tComponent: %s Priority: %d", mod->component->base.mca_component_name, mod->pri);
         }
-   }
+    }
+
+    /* Open the default oob conduit */
+    opal_output_verbose(10, orte_rml_base_framework.framework_output,
+                        "%s Opening the default conduit - oob component",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    OBJ_CONSTRUCT(&conduit_attr, opal_list_t);
+    orte_set_attribute(&conduit_attr, ORTE_RML_INCLUDE_COMP_ATTRIB, ORTE_ATTR_LOCAL,"oob",OPAL_STRING);
+    orte_rml_base.def_conduit_id = orte_rml_API_open_conduit(&conduit_attr);
+    OPAL_LIST_DESTRUCT(&conduit_attr);
+    if (0 <= orte_rml_base.def_conduit_id) {
+        opal_output_verbose(10, orte_rml_base_framework.framework_output,
+                            "%s Default conduit (oob) opened with conduit id = %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), orte_rml_base.def_conduit_id);
+    } else {
+        opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s Default conduit (oob) could not be opened",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    }
 
     return ORTE_SUCCESS;
 }
+
+
 
 void orte_rml_send_callback(int status, orte_process_name_t *peer,
                             opal_buffer_t* buffer, orte_rml_tag_t tag,
@@ -315,3 +329,21 @@ static void prq_des(orte_rml_recv_request_t *ptr)
 OBJ_CLASS_INSTANCE(orte_rml_recv_request_t,
                    opal_object_t,
                    prq_cons, prq_des);
+
+static void pthcons(orte_rml_pathway_t *p)
+{
+    p->component = NULL;
+    OBJ_CONSTRUCT(&p->attributes, opal_list_t);
+    OBJ_CONSTRUCT(&p->transports, opal_list_t);
+}
+static void pthdes(orte_rml_pathway_t *p)
+{
+    if (NULL != p->component) {
+        free(p->component);
+    }
+    OPAL_LIST_DESTRUCT(&p->attributes);
+    OPAL_LIST_DESTRUCT(&p->transports);
+}
+OBJ_CLASS_INSTANCE(orte_rml_pathway_t,
+                   opal_list_item_t,
+                   pthcons, pthdes);

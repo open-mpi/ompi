@@ -17,7 +17,7 @@ dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2016      Intel Corporation. All rights reserved.
-dnl 
+dnl
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
