@@ -6,7 +6,7 @@
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -127,9 +127,9 @@ typedef struct {
     opal_pmix_op_cbfunc_t opcbfunc;
     void *cbdata;
 } pmi_opcaddy_t;
-OBJ_CLASS_INSTANCE(pmi_opcaddy_t,
-		   opal_object_t,
-		   NULL, NULL);
+static OBJ_CLASS_INSTANCE(pmi_opcaddy_t,
+		          opal_object_t,
+		          NULL, NULL);
 
 // PMI constant values:
 static int pmix_kvslen_max = 0;
