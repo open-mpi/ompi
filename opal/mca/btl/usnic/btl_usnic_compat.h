@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -8,10 +11,12 @@
  */
 
 /* This header contains macros to help minimize usnic BTL differences
- * between v1.7/v1.8 and v1.9/v2.0. */
+ * between v1.7/v1.8, v1.9/v2.0, and v2.0/v2.1. */
 
 #ifndef BTL_USNIC_COMPAT_H
 #define BTL_USNIC_COMPAT_H
+
+#include "opal/mca/rcache/rcache.h"
 
 /************************************************************************/
 
@@ -357,5 +362,19 @@ opal_btl_usnic_put(struct mca_btl_base_module_t *base_module,
                    void *cbcontext, void *cbdata);
 
 #endif /* BTL_VERSION */
+
+#if defined(RCACHE_MAJOR_VERSION) && RCACHE_MAJOR_VERSION >= 3
+
+#define RCACHE_VERSION 30
+
+/* these structures got renamed with the mpool/rcache rewrite */
+#define mca_mpool_base_registration_t mca_rcache_base_registration_t
+#define mca_mpool_base_resources_t mca_rcache_base_resources_t
+
+#else
+
+#define RCACHE_VERSION 20
+
+#endif
 
 #endif /* BTL_USNIC_COMPAT_H */

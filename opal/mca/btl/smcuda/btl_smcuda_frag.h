@@ -54,7 +54,7 @@ typedef struct mca_btl_smcuda_hdr_t mca_btl_smcuda_hdr_t;
 
 #if OPAL_CUDA_SUPPORT
 struct mca_btl_base_registration_handle_t {
-    mca_mpool_common_cuda_reg_data_t reg_data;
+    mca_rcache_common_cuda_reg_data_t reg_data;
 };
 #endif
 
@@ -78,7 +78,7 @@ struct mca_btl_smcuda_frag_t {
     mca_btl_base_segment_t segment;
     struct mca_btl_base_endpoint_t *endpoint;
 #if OPAL_CUDA_SUPPORT
-    struct mca_mpool_base_registration_t *registration;
+    struct mca_rcache_base_registration_t *registration;
     struct mca_btl_base_registration_handle_t *local_handle;
 #endif /* OPAL_CUDA_SUPPORT */
     size_t size;

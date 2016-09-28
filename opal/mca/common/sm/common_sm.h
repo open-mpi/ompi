@@ -32,7 +32,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/util/proc.h"
 #include "opal/mca/btl/base/btl_base_error.h"
-#include "opal/mca/mpool/mpool.h"
+#include "common_sm_mpool.h"
 
 BEGIN_C_DECLS
 
@@ -66,6 +66,8 @@ typedef struct mca_common_sm_module_t {
     unsigned char *module_data_addr;
     /* shared memory backing facility object that encapsulates shmem info */
     opal_shmem_ds_t shmem_ds;
+    /* memory pool interface to shared-memory region */
+    mca_mpool_base_module_t *mpool;
 } mca_common_sm_module_t;
 
 OBJ_CLASS_DECLARATION(mca_common_sm_module_t);
@@ -126,10 +128,7 @@ mca_common_sm_module_unlink(mca_common_sm_module_t *modp);
 /**
  * callback from the sm mpool
  */
-OPAL_DECLSPEC extern void *
-mca_common_sm_seg_alloc(struct mca_mpool_base_module_t *mpool,
-                        size_t *size,
-                        mca_mpool_base_registration_t **registration);
+OPAL_DECLSPEC extern void *mca_common_sm_seg_alloc (void *ctx, size_t *size);
 
 /**
  * This function will release all local resources attached to the
@@ -149,6 +148,7 @@ mca_common_sm_fini(mca_common_sm_module_t *mca_common_sm_module);
  * instance that is shared between components that use shared memory.
  */
 OPAL_DECLSPEC extern mca_common_sm_module_t *mca_common_sm_module;
+
 
 END_C_DECLS
 

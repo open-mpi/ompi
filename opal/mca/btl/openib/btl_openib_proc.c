@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -184,6 +187,9 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
     /* First time, gotta create a new IB proc
      * out of the opal_proc ... */
     ib_proc = OBJ_NEW(mca_btl_openib_proc_t);
+    if (NULL == ib_proc) {
+      return NULL;
+    }
 
     /* Initialize number of peer */
     ib_proc->proc_endpoint_count = 0;
@@ -321,10 +327,9 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
 
 err_exit:
 
-    fprintf(stderr,"%d: error exit from mca_btl_openib_proc_create\n", OPAL_PROC_MY_NAME.vpid);
-    if( NULL != ib_proc ){
-        OBJ_RELEASE(ib_proc);
-    }
+    BTL_ERROR(("%d: error exit from mca_btl_openib_proc_create", OPAL_PROC_MY_NAME.vpid));
+
+    OBJ_RELEASE(ib_proc);
     return NULL;
 }
 

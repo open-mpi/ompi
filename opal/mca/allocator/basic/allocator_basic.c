@@ -78,7 +78,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
     mca_allocator_base_component_segment_free_fn_t segment_free,
-    struct mca_mpool_base_module_t* mpool)
+    void *context)
 {
     mca_allocator_basic_module_t *module = (mca_allocator_basic_module_t *)
                                             malloc(sizeof(mca_allocator_basic_module_t));
@@ -91,7 +91,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
     module->super.alc_free = mca_allocator_basic_free;
     module->super.alc_compact = mca_allocator_basic_compact;
     module->super.alc_finalize = mca_allocator_basic_finalize;
-    module->super.alc_mpool = mpool;
+    module->super.alc_context = context;
     module->seg_alloc = segment_alloc;
     module->seg_free = segment_free;
     OBJ_CONSTRUCT(&module->seg_list, opal_list_t);
@@ -163,8 +163,7 @@ static void mca_allocator_basic_combine_next(
 void *mca_allocator_basic_alloc(
     mca_allocator_base_module_t * base,
     size_t size,
-    size_t align,
-    mca_mpool_base_registration_t** registration)
+    size_t align)
 {
     mca_allocator_basic_module_t* module = (mca_allocator_basic_module_t*)base;
     mca_allocator_basic_segment_t* seg;
@@ -198,7 +197,7 @@ void *mca_allocator_basic_alloc(
 
     /* request additional block */
     allocated_size = size;
-    if(NULL == (addr = (unsigned char *)module->seg_alloc(module->super.alc_mpool, &allocated_size, registration))) {
+    if(NULL == (addr = (unsigned char *)module->seg_alloc(module->super.alc_context, &allocated_size))) {
         OPAL_THREAD_UNLOCK(&module->seg_lock);
         return NULL;
     }
@@ -239,14 +238,13 @@ void *mca_allocator_basic_alloc(
 void * mca_allocator_basic_realloc(
     mca_allocator_base_module_t * base,
     void * ptr,
-    size_t size,
-    mca_mpool_base_registration_t** registration)
+    size_t size)
 {
     unsigned char* addr = ((unsigned char*)ptr) - sizeof(size_t);
     size_t alloc_size = *(size_t*)addr;
     if(size <= alloc_size)
         return ptr;
-    addr = (unsigned char *)mca_allocator_basic_alloc(base,size,0,registration);
+    addr = (unsigned char *)mca_allocator_basic_alloc(base, size, 0);
     if(addr == NULL)
         return addr;
     memcpy(addr,ptr,alloc_size);

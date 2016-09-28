@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -28,7 +29,9 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/rcache/base/base.h"
+#include "opal/memoryhooks/memory.h"
 #include "opal/constants.h"
+#include "rcache_base_mem_cb.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -37,6 +40,24 @@
  */
 
 #include "opal/mca/rcache/base/static-components.h"
+
+int mca_rcache_base_used_mem_hooks = 0;
+
+/**
+ * Memory Pool Registration
+ */
+
+static void mca_rcache_base_registration_constructor( mca_rcache_base_registration_t * reg )
+{
+    reg->rcache = NULL;
+    reg->base = NULL;
+    reg->bound = NULL;
+    reg->ref_count = 0;
+    reg->flags = 0;
+}
+
+OBJ_CLASS_INSTANCE(mca_rcache_base_registration_t, opal_free_list_item_t,
+                   mca_rcache_base_registration_constructor, NULL);
 
 
 /*
@@ -49,28 +70,32 @@ OBJ_CLASS_INSTANCE(mca_rcache_base_selected_module_t, opal_list_item_t, NULL, NU
 
 static int mca_rcache_base_close(void)
 {
-  opal_list_item_t *item;
-  mca_rcache_base_selected_module_t *sm;
+    opal_list_item_t *item;
+    mca_rcache_base_selected_module_t *sm;
 
-  /* Finalize all the rcache components and free their list items */
+    /* Finalize all the rcache components and free their list items */
 
-  for (item = opal_list_remove_first(&mca_rcache_base_modules);
-       NULL != item;
-       item = opal_list_remove_first(&mca_rcache_base_modules)) {
-    sm = (mca_rcache_base_selected_module_t *) item;
+    while (NULL != (item = opal_list_remove_first(&mca_rcache_base_modules))) {
+        sm = (mca_rcache_base_selected_module_t *) item;
 
-    /* Blatently ignore the return code (what would we do to recover,
-       anyway?  This component is going away, so errors don't matter
-       anymore).  Note that it's legal for the module to have NULL for
-       the finalize function. */
+        /* Blatently ignore the return code (what would we do to recover,
+           anyway?  This component is going away, so errors don't matter
+           anymore).  Note that it's legal for the module to have NULL for
+           the finalize function. */
 
-    if (NULL != sm->rcache_module->rcache_finalize) {
-        sm->rcache_module->rcache_finalize(sm->rcache_module);
+        if (NULL != sm->rcache_module->rcache_finalize) {
+            sm->rcache_module->rcache_finalize(sm->rcache_module);
+        }
+        OBJ_RELEASE(sm);
     }
-    OBJ_RELEASE(sm);
-  }
 
-  /* Close all remaining available components */
+    /* deregister memory free callback */
+    if (mca_rcache_base_used_mem_hooks) {
+        opal_mem_hooks_unregister_release(mca_rcache_base_mem_cb);
+    }
+    /* All done */
+
+    /* Close all remaining available components */
     return mca_base_framework_components_close(&opal_rcache_base_framework, NULL);
 }
 
@@ -80,16 +105,16 @@ static int mca_rcache_base_close(void)
  */
 static int mca_rcache_base_open(mca_base_open_flag_t flags)
 {
-  /* Initialize the list so that in mca_rcache_base_close(), we can
-     iterate over it (even if it's empty, as in the case of the opal_info-tool) */
+    /* Initialize the list so that in mca_rcache_base_close(), we can
+       iterate over it (even if it's empty, as in the case of the opal_info-tool) */
 
-  OBJ_CONSTRUCT(&mca_rcache_base_modules, opal_list_t);
+    OBJ_CONSTRUCT(&mca_rcache_base_modules, opal_list_t);
 
      /* Open up all available components */
     return mca_base_framework_components_open(&opal_rcache_base_framework, flags);
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(opal, rcache, "OPAL Rcache", NULL,
+MCA_BASE_FRAMEWORK_DECLARE(opal, rcache, "OPAL Registration Cache", NULL,
                            mca_rcache_base_open, mca_rcache_base_close,
                            mca_rcache_base_static_components, 0);
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +46,8 @@ static const char FUNC_NAME[] = "MPI_Alloc_mem";
 
 int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 {
+    char info_value[MPI_MAX_INFO_VAL + 1];
+    char *mpool_hints = NULL;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -67,7 +72,16 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
         return MPI_SUCCESS;
     }
 
-    *((void **) baseptr) = mca_mpool_base_alloc((size_t) size, (struct opal_info_t*)info);
+    if (MPI_INFO_NULL != info) {
+        int flag;
+        (void) ompi_info_get (info, "mpool_hints", MPI_MAX_INFO_VAL, info_value, &flag);
+        if (flag) {
+            mpool_hints = info_value;
+        }
+    }
+
+    *((void **) baseptr) = mca_mpool_base_alloc ((size_t) size, (struct opal_info_t*)info,
+                                                 mpool_hints);
     if (NULL == *((void **) baseptr)) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                       FUNC_NAME);

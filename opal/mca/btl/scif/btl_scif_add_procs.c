@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -17,8 +17,7 @@
 #include "btl_scif.h"
 #include "btl_scif_frag.h"
 
-static int
-mca_btl_scif_setup_mpools (mca_btl_scif_module_t *scif_module);
+static int mca_btl_scif_setup_rcache (mca_btl_scif_module_t *scif_module);
 static void *mca_btl_scif_connect_accept (void *arg);
 
 int mca_btl_scif_add_procs(struct mca_btl_base_module_t* btl,
@@ -48,16 +47,16 @@ int mca_btl_scif_add_procs(struct mca_btl_base_module_t* btl,
         procs_on_board++;
     }
 
-    /* allocate space for the detected peers and setup the mpool */
+    /* allocate space for the detected peers and setup the rcache */
     if (NULL == scif_module->endpoints) {
         scif_module->endpoints = calloc (procs_on_board, sizeof (mca_btl_base_endpoint_t));
         if (OPAL_UNLIKELY(NULL == scif_module->endpoints)) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        rc = mca_btl_scif_setup_mpools (scif_module);
+        rc = mca_btl_scif_setup_rcache (scif_module);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-            BTL_ERROR(("btl/scif error setting up mpools/free lists"));
+            BTL_ERROR(("btl/scif error setting up rcache or free lists"));
             return rc;
         }
     }
@@ -157,7 +156,7 @@ int mca_btl_scif_del_procs (struct mca_btl_base_module_t *btl,
     return OPAL_SUCCESS;
 }
 
-static int scif_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
+static int scif_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg)
 {
     mca_btl_scif_reg_t *scif_reg = (mca_btl_scif_reg_t *)reg;
     size_t size = (size_t)((uintptr_t) reg->bound - (uintptr_t) reg->base);
@@ -178,7 +177,7 @@ static int scif_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
 }
 
 static int scif_reg_mem (void *reg_data, void *base, size_t size,
-                         mca_mpool_base_registration_t *reg)
+                         mca_rcache_base_registration_t *reg)
 {
     mca_btl_scif_reg_t *scif_reg = (mca_btl_scif_reg_t *)reg;
     int rc = OPAL_SUCCESS;
@@ -186,7 +185,7 @@ static int scif_reg_mem (void *reg_data, void *base, size_t size,
 
     scif_reg->handles = calloc (mca_btl_scif_module.endpoint_count, sizeof (scif_reg->handles[0]));
 
-    /* intialize all scif offsets to -1 and initialize the pointer back to the mpool registration */
+    /* intialize all scif offsets to -1 and initialize the pointer back to the rcache registration */
     for (i = 0 ; i < mca_btl_scif_module.endpoint_count ; ++i) {
         scif_reg->handles[i].btl_handle.scif_offset = -1;
         scif_reg->handles[i].btl_handle.scif_base = (intptr_t) base;
@@ -211,22 +210,20 @@ static int scif_reg_mem (void *reg_data, void *base, size_t size,
     return rc;
 }
 
-static int
-mca_btl_scif_setup_mpools (mca_btl_scif_module_t *scif_module)
+static int mca_btl_scif_setup_rcache (mca_btl_scif_module_t *scif_module)
 {
-    struct mca_mpool_base_resources_t mpool_resources;
+    mca_rcache_base_resources_t rcache_resources;
     int rc;
 
-    /* initialize the grdma mpool */
-    mpool_resources.pool_name      = "scif";
-    mpool_resources.reg_data       = (void *) scif_module;
-    mpool_resources.sizeof_reg     = sizeof (mca_btl_scif_reg_t);
-    mpool_resources.register_mem   = scif_reg_mem;
-    mpool_resources.deregister_mem = scif_dereg_mem;
-    scif_module->super.btl_mpool =
-        mca_mpool_base_module_create("grdma", scif_module, &mpool_resources);
-    if (NULL == scif_module->super.btl_mpool) {
-        BTL_ERROR(("error creating grdma mpool"));
+    /* initialize the grdma rcache */
+    rcache_resources.cache_name     = "scif";
+    rcache_resources.reg_data       = (void *) scif_module;
+    rcache_resources.sizeof_reg     = sizeof (mca_btl_scif_reg_t);
+    rcache_resources.register_mem   = scif_reg_mem;
+    rcache_resources.deregister_mem = scif_dereg_mem;
+    scif_module->rcache = mca_rcache_base_module_create ("grdma", scif_module, &rcache_resources);
+    if (NULL == scif_module->rcache) {
+        BTL_ERROR(("error creating grdma rcache"));
         return OPAL_ERROR;
     }
 

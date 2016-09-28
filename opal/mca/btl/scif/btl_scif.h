@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -16,9 +16,6 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mpool/mpool.h"
-#include "opal/mca/mpool/base/base.h"
-#include "opal/mca/mpool/grdma/mpool_grdma.h"
 #include "opal/util/output.h"
 #include "opal_stdint.h"
 #include "opal/util/proc.h"
@@ -26,6 +23,8 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/rcache/rcache.h"
+#include "opal/mca/rcache/base/base.h"
 
 #include <scif.h>
 #include <errno.h>
@@ -93,6 +92,8 @@ typedef struct mca_btl_scif_module_t {
 
     volatile bool exiting;
     bool listening;
+
+    mca_rcache_base_module_t *rcache;
 } mca_btl_scif_module_t;
 
 typedef struct mca_btl_scif_component_t {
@@ -235,7 +236,7 @@ struct mca_btl_scif_registration_handle_t {
 typedef struct mca_btl_scif_registration_handle_t mca_btl_scif_registration_handle_t;
 
 typedef struct mca_btl_scif_reg_t {
-    mca_mpool_base_registration_t base;
+    mca_rcache_base_registration_t base;
     /** per-endpoint btl handles for this registration */
     mca_btl_scif_registration_handle_t *handles;
 } mca_btl_scif_reg_t;

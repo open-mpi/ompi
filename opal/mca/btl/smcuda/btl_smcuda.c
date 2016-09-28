@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -53,11 +53,13 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/btl/btl.h"
 
+#include "opal/mca/common/sm/common_sm_mpool.h"
+
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 #include "opal/mca/mpool/base/base.h"
-#include "opal/mca/mpool/sm/mpool_sm.h"
+#include "opal/mca/rcache/base/base.h"
 
 #include "btl_smcuda.h"
 #include "btl_smcuda_endpoint.h"
@@ -115,7 +117,7 @@ static void *mpool_calloc(size_t nmemb, size_t size)
     size_t bsize = nmemb * size;
     mca_mpool_base_module_t *mpool = mca_btl_smcuda_component.sm_mpool;
 
-    buf = mpool->mpool_alloc(mpool, bsize, opal_cache_line_size, 0, NULL);
+    buf = mpool->mpool_alloc(mpool, bsize, opal_cache_line_size, 0);
 
     if (NULL == buf)
         return NULL;
@@ -126,7 +128,7 @@ static void *mpool_calloc(size_t nmemb, size_t size)
 
 static int
 setup_mpool_base_resources(mca_btl_smcuda_component_t *comp_ptr,
-                           mca_mpool_base_resources_t *out_res)
+                           mca_common_sm_mpool_resources_t *out_res)
 {
     int rc = OPAL_SUCCESS;
     int fd = -1;
@@ -221,7 +223,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     size_t length, length_payload;
     sm_fifo_t *my_fifos;
     int my_mem_node, num_mem_nodes, i, rc;
-    mca_mpool_base_resources_t *res = NULL;
+    mca_common_sm_mpool_resources_t *res = NULL;
     mca_btl_smcuda_component_t* m = &mca_btl_smcuda_component;
 
     /* Assume we don't have hwloc support and fill in dummy info */
@@ -290,15 +292,14 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     /* Disable memory binding, because each MPI process will claim pages in the
      * mpool for their local NUMA node */
     res->mem_node = -1;
+    res->allocator = mca_btl_smcuda_component.allocator;
 
     if (OPAL_SUCCESS != (rc = setup_mpool_base_resources(m, res))) {
         free(res);
         return rc;
     }
     /* now that res is fully populated, create the thing */
-    mca_btl_smcuda_component.sm_mpools[0] =
-        mca_mpool_base_module_create(mca_btl_smcuda_component.sm_mpool_name,
-                                     smcuda_btl, res);
+    mca_btl_smcuda_component.sm_mpools[0] = common_sm_mpool_create (res);
     /* Sanity check to ensure that we found it */
     if (NULL == mca_btl_smcuda_component.sm_mpools[0]) {
         free(res);
@@ -338,10 +339,9 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     /* Create a local memory pool that sends handles to the remote
      * side.  Note that the res argument is not really used, but
      * needed to satisfy function signature. */
-    smcuda_btl->super.btl_mpool = mca_mpool_base_module_create("gpusm",
-                                                               smcuda_btl,
-                                                               res);
-    if (NULL == smcuda_btl->super.btl_mpool) {
+    mca_rcache_base_resources_t rcache_res;
+    smcuda_btl->rcache = mca_rcache_base_module_create("gpusm", smcuda_btl, &rcache_res);
+    if (NULL == smcuda_btl->rcache) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 #endif /* OPAL_CUDA_SUPPORT */
@@ -472,16 +472,9 @@ create_sm_endpoint(int local_proc, struct opal_proc_t *proc)
     }
 #endif
 #if OPAL_CUDA_SUPPORT
-    {
-        mca_mpool_base_resources_t resources; /* unused, but needed */
-
-        /* Create a remote memory pool on the endpoint.  Note that the resources
-         * argument is just to satisfy the function signature.  The rcuda mpool
-         * actually takes care of filling in the resources. */
-        ep->mpool = mca_mpool_base_module_create("rgpusm",
-                                                 NULL,
-                                                 &resources);
-    }
+    /* Create a remote memory pool on the endpoint. The rgpusm component
+     * does not take any resources. They are filled in internally. */
+    ep->rcache = mca_rcache_base_module_create ("rgpusm", NULL, NULL);
 #endif /* OPAL_CUDA_SUPPORT */
     return ep;
 }
@@ -500,7 +493,7 @@ int mca_btl_smcuda_add_procs(
     bool have_connected_peer = false;
     char **bases;
     /* for easy access to the mpool_sm_module */
-    mca_mpool_sm_module_t *sm_mpool_modp = NULL;
+    mca_common_sm_mpool_module_t *sm_mpool_modp = NULL;
 
     /* initializion */
 
@@ -577,7 +570,7 @@ int mca_btl_smcuda_add_procs(
     }
 
     bases = mca_btl_smcuda_component.shm_bases;
-    sm_mpool_modp = (mca_mpool_sm_module_t *)mca_btl_smcuda_component.sm_mpool;
+    sm_mpool_modp = (mca_common_sm_mpool_module_t *)mca_btl_smcuda_component.sm_mpool;
 
     /* initialize own FIFOs */
     /*
@@ -686,6 +679,13 @@ int mca_btl_smcuda_del_procs(
     struct opal_proc_t **procs,
     struct mca_btl_base_endpoint_t **peers)
 {
+    for (size_t i = 0 ; i < nprocs ; ++i) {
+        if (peers[i]->rcache) {
+            mca_rcache_base_module_destroy (peers[i]->rcache);
+            peers[i]->rcache = NULL;
+        }
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -1002,16 +1002,17 @@ static struct mca_btl_base_registration_handle_t *mca_btl_smcuda_register_mem (
     struct mca_btl_base_module_t* btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
     size_t size, uint32_t flags)
 {
-    mca_mpool_common_cuda_reg_t *reg;
+    mca_btl_smcuda_t *smcuda_module = (mca_btl_smcuda_t *) btl;
+    mca_rcache_common_cuda_reg_t *reg;
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
-    int mpool_flags = 0;
+    int rcache_flags = 0;
 
     if (MCA_BTL_REG_FLAG_CUDA_GPU_MEM & flags) {
-        mpool_flags |= MCA_MPOOL_FLAGS_CUDA_GPU_MEM;
+        rcache_flags |= MCA_RCACHE_FLAGS_CUDA_GPU_MEM;
     }
 
-    btl->btl_mpool->mpool_register (btl->btl_mpool, base, size, mpool_flags,
-                                    access_flags, (mca_mpool_base_registration_t **) &reg);
+    smcuda_module->rcache->rcache_register (smcuda_module->rcache, base, size, rcache_flags,
+                                            access_flags, (mca_rcache_base_registration_t **) &reg);
     if (OPAL_UNLIKELY(NULL == reg)) {
         return NULL;
     }
@@ -1022,10 +1023,11 @@ static struct mca_btl_base_registration_handle_t *mca_btl_smcuda_register_mem (
 static int mca_btl_smcuda_deregister_mem (struct mca_btl_base_module_t* btl,
                                           struct mca_btl_base_registration_handle_t *handle)
 {
-    mca_mpool_common_cuda_reg_t *reg = (mca_mpool_common_cuda_reg_t *)
-        ((intptr_t) handle - offsetof (mca_mpool_common_cuda_reg_t, data));
+    mca_btl_smcuda_t *smcuda_module = (mca_btl_smcuda_t *) btl;
+    mca_rcache_common_cuda_reg_t *reg = (mca_rcache_common_cuda_reg_t *)
+        ((intptr_t) handle - offsetof (mca_rcache_common_cuda_reg_t, data));
 
-    btl->btl_mpool->mpool_deregister (btl->btl_mpool, &reg->base);
+    smcuda_module->rcache->rcache_deregister (smcuda_module->rcache, &reg->base);
 
     return OPAL_SUCCESS;
 }
@@ -1036,8 +1038,8 @@ int mca_btl_smcuda_get_cuda (struct mca_btl_base_module_t *btl,
     struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
     int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
-    mca_mpool_common_cuda_reg_t rget_reg;
-    mca_mpool_common_cuda_reg_t *reg_ptr = &rget_reg;
+    mca_rcache_common_cuda_reg_t rget_reg;
+    mca_rcache_common_cuda_reg_t *reg_ptr = &rget_reg;
     int rc, done;
     void *remote_memory_address;
     size_t offset;
@@ -1080,16 +1082,16 @@ int mca_btl_smcuda_get_cuda (struct mca_btl_base_module_t *btl,
      * remote memory which may lie somewhere in the middle. This is taken care of
      * a few lines down. Note that we hand in the peer rank just for debugging
      * support. */
-    rc = ep->mpool->mpool_register(ep->mpool, remote_handle->reg_data.memh_seg_addr.pval,
-                                   remote_handle->reg_data.memh_seg_len, ep->peer_smp_rank,
-                                   MCA_MPOOL_ACCESS_LOCAL_WRITE,
-                                   (mca_mpool_base_registration_t **)&reg_ptr);
+    rc = ep->rcache->rcache_register (ep->rcache, remote_handle->reg_data.memh_seg_addr.pval,
+                                      remote_handle->reg_data.memh_seg_len, ep->peer_smp_rank,
+                                      MCA_RCACHE_ACCESS_LOCAL_WRITE,
+                                      (mca_rcache_base_registration_t **)&reg_ptr);
 
     if (OPAL_SUCCESS != rc) {
         opal_output(0, "Failed to register remote memory, rc=%d", rc);
         return rc;
     }
-    frag->registration = (mca_mpool_base_registration_t *)reg_ptr;
+    frag->registration = (mca_rcache_base_registration_t *)reg_ptr;
     frag->endpoint = ep;
 
     /* The registration has given us back the memory block that this

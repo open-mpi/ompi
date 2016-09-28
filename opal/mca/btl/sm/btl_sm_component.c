@@ -217,6 +217,19 @@ static int sm_register(void)
                                            0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_sm_component.knem_max_simultaneous);
 
+    mca_btl_sm_component.allocator = "bucket";
+    (void) mca_base_component_var_register (&mca_btl_sm_component.super.btl_version, "allocator",
+                                            "Name of allocator component to use for btl/sm allocations",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_sm_component.allocator);
+
+    mca_btl_sm_component.mpool_min_size = 134217728;
+    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version, "min_size",
+                                           "Minimum size of the common/sm mpool shared memory file",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_sm_component.mpool_min_size);
+
     /* CMA parameters */
     mca_btl_sm_component.use_cma = 0;
     (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
@@ -230,9 +243,6 @@ static int sm_register(void)
     mca_btl_sm_param_register_int("free_list_max", -1, OPAL_INFO_LVL_5, &mca_btl_sm_component.sm_free_list_max);
     mca_btl_sm_param_register_int("free_list_inc", 64, OPAL_INFO_LVL_5, &mca_btl_sm_component.sm_free_list_inc);
     mca_btl_sm_param_register_int("max_procs", -1, OPAL_INFO_LVL_5, &mca_btl_sm_component.sm_max_procs);
-    /* there is no practical use for the mpool name parameter since mpool resources differ
-       between components */
-    mca_btl_sm_component.sm_mpool_name = "sm";
     mca_btl_sm_param_register_uint("fifo_size", 4096, OPAL_INFO_LVL_4, &mca_btl_sm_component.fifo_size);
     mca_btl_sm_param_register_int("num_fifos", 1, OPAL_INFO_LVL_4, &mca_btl_sm_component.nfifos);
 
@@ -442,41 +452,6 @@ create_and_attach(mca_btl_sm_component_t *comp_ptr,
     return OPAL_SUCCESS;
 }
 
-/*
- * SKG - I'm not happy with this, but I can't figure out a better way of
- * finding the sm mpool's minimum size 8-|. The way I see it. This BTL only
- * uses the sm mpool, so maybe this isn't so bad...
- *
- * The problem is the we need to size the mpool resources at sm BTL component
- * init. That means we need to know the mpool's minimum size at create.
- */
-static int
-get_min_mpool_size(mca_btl_sm_component_t *comp_ptr,
-                   size_t *out_size)
-{
-    const char *type_name = "mpool";
-    const char *param_name = "min_size";
-    const mca_base_var_storage_t *min_size;
-    int id = 0;
-
-    if (0 > (id = mca_base_var_find("ompi", type_name, comp_ptr->sm_mpool_name,
-                                      param_name))) {
-        opal_output(0, "mca_base_var_find: failure looking for %s_%s_%s\n",
-                    type_name, comp_ptr->sm_mpool_name, param_name);
-        return OPAL_ERR_NOT_FOUND;
-    }
-
-    if (OPAL_SUCCESS != mca_base_var_get_value(id, &min_size, NULL, NULL)) {
-        opal_output(0, "mca_base_var_get_value failure\n");
-        return OPAL_ERROR;
-    }
-
-    /* the min_size variable is an unsigned long long */
-    *out_size = (size_t) min_size->ullval;
-
-    return OPAL_SUCCESS;
-}
-
 static int
 get_mpool_res_size(int32_t max_procs,
                    size_t *out_res_size)
@@ -598,20 +573,16 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
     mca_common_sm_module_t *tmp_modp = NULL;
 
     if (MCA_BTL_SM_RNDV_MOD_MPOOL == type) {
-        size_t min_size = 0;
         /* get the segment size for the sm mpool. */
         if (OPAL_SUCCESS != (rc = get_mpool_res_size(comp_ptr->sm_max_procs,
                                                      &size))) {
             /* rc is already set */
             goto out;
         }
-        /* do we need to update the size based on the sm mpool's min size? */
-        if (OPAL_SUCCESS != (rc = get_min_mpool_size(comp_ptr, &min_size))) {
-            goto out;
-        }
+
         /* update size if less than required minimum */
-        if (size < min_size) {
-            size = min_size;
+        if (size < mca_btl_sm_component.mpool_min_size) {
+            size = mca_btl_sm_component.mpool_min_size;
         }
         /* we only need the shmem_ds info at this point. initilization will be
          * completed in the mpool module code. the idea is that we just need this

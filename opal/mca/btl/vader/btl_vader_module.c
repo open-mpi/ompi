@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -171,9 +171,9 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
         if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
             /* always use xpmem if it is available */
             ep->segment_data.xpmem.apid = xpmem_get (modex->xpmem.seg_id, XPMEM_RDWR, XPMEM_PERMIT_MODE, (void *) 0666);
-            ep->segment_data.xpmem.rcache = mca_rcache_base_module_create("vma");
+            ep->segment_data.xpmem.vma_module = mca_rcache_base_vma_module_alloc ();
             (void) vader_get_registation (ep, modex->xpmem.segment_base, mca_btl_vader_component.segment_size,
-                                          MCA_MPOOL_FLAGS_PERSIST, (void **) &ep->segment_base);
+                                          MCA_RCACHE_FLAGS_PERSIST, (void **) &ep->segment_base);
         } else {
 #endif
             /* store a copy of the segment information for detach */
@@ -434,6 +434,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
     int rc;
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
+    assert (NULL != data_ptr);
 
     /* in place send fragment */
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
@@ -529,12 +530,12 @@ static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
 }
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
-static int mca_btl_vader_endpoint_rcache_cleanup (mca_mpool_base_registration_t *reg, void *ctx)
+static int mca_btl_vader_endpoint_rcache_cleanup (mca_rcache_base_registration_t *reg, void *ctx)
 {
-    struct mca_rcache_base_module_t *rcache = (struct mca_rcache_base_module_t *) ctx;
+    mca_rcache_base_vma_module_t *vma_module = (mca_rcache_base_vma_module_t *) ctx;
     /* otherwise dereg will fail on assert */
     reg->ref_count = 0;
-    (void) rcache->rcache_delete (rcache, reg);
+    (void) mca_rcache_base_vma_delete (vma_module, reg);
     return OPAL_SUCCESS;
 }
 #endif
@@ -546,13 +547,13 @@ static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
-        if (ep->segment_data.xpmem.rcache) {
+        if (ep->segment_data.xpmem.vma_module) {
             /* clean out the registration cache */
-            (void) ep->segment_data.xpmem.rcache->rcache_iterate (ep->segment_data.xpmem.rcache,
-                                                                  NULL, (size_t) -1,
-                                                                  mca_btl_vader_endpoint_rcache_cleanup,
-                                                                  (void *) ep->segment_data.xpmem.rcache);
-            ep->segment_data.xpmem.rcache = NULL;
+            (void) mca_rcache_base_vma_iterate (ep->segment_data.xpmem.vma_module,
+                                                NULL, (size_t) -1,
+                                                mca_btl_vader_endpoint_rcache_cleanup,
+                                                (void *) ep->segment_data.xpmem.vma_module);
+            OBJ_RELEASE(ep->segment_data.xpmem.vma_module);
         }
 
         if (ep->segment_base) {

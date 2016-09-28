@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,15 +40,19 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/base/base.h"
+#include "opal/mca/rcache/rcache.h"
+
+#include "btl_usnic_compat.h"
+
+#if RCACHE_VERSION < 30
 #include "opal/mca/mpool/grdma/mpool_grdma.h"
+#endif
 #else
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #endif
-
-#include "btl_usnic_compat.h"
 
 BEGIN_C_DECLS
 
@@ -157,8 +164,16 @@ typedef struct opal_btl_usnic_component_t {
     /** list of usnic proc structures */
     opal_list_t usnic_procs;
 
+#if RCACHE_VERSION == 30
+    /** memory pool hints */
+    char* usnic_mpool_hints;
+
+    /** registration cache name */
+    char *usnic_rcache_name;
+#else
     /** name of memory pool */
     char* usnic_mpool_name;
+#endif
 
     char *if_include;
     char *if_exclude;

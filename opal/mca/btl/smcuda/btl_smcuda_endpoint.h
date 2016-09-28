@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +38,7 @@ struct mca_btl_base_endpoint_t {
     int peer_smp_rank;  /**< My peer's SMP process rank.  Used for accessing
                          *   SMP specfic data structures. */
 #if OPAL_CUDA_SUPPORT
-    mca_mpool_base_module_t *mpool; /**< mpool for remotely registered memory */
+    mca_rcache_base_module_t *rcache; /**< rcache for remotely registered memory */
 #endif /* OPAL_CUDA_SUPPORT */
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
     int fifo_fd;        /**< pipe/fifo used to signal endpoint that data is queued */

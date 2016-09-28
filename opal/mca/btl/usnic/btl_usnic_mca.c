@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,7 +13,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -203,9 +204,20 @@ int opal_btl_usnic_component_register(void)
                   0, &stats_relative, 0, OPAL_INFO_LVL_4));
     mca_btl_usnic_component.stats_relative = (bool) stats_relative;
 
+#if RCACHE_VERSION == 30
+    CHECK(reg_string("mpool_hints", "Hints to use when selecting mpool",
+                     NULL, &mca_btl_usnic_component.usnic_mpool_hints,
+                     REGSTR_EMPTY_OK,
+                     OPAL_INFO_LVL_5));
+
+    CHECK(reg_string("rcache", "Name of the registration cache to be used",
+                     "grdma", &mca_btl_usnic_component.usnic_rcache_name, 0,
+                     OPAL_INFO_LVL_5));
+#else
     CHECK(reg_string("mpool", "Name of the memory pool to be used",
                      "grdma", &mca_btl_usnic_component.usnic_mpool_name, 0,
                      OPAL_INFO_LVL_5));
+#endif
 
     want_numa_device_assignment = OPAL_HAVE_HWLOC ? 1 : -1;
     CHECK(reg_int("want_numa_device_assignment",

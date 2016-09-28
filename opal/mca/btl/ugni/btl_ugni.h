@@ -25,7 +25,8 @@
 
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/mpool/base/base.h"
-#include "opal/mca/mpool/udreg/mpool_udreg.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/rcache/udreg/rcache_udreg.h"
 #include "opal/util/output.h"
 #include "opal_stdint.h"
 #include "opal/mca/btl/btl.h"
@@ -56,8 +57,8 @@ typedef struct mca_btl_ugni_endpoint_attr_t {
 } mca_btl_ugni_endpoint_attr_t;
 
 enum {
-    MCA_BTL_UGNI_MPOOL_UDREG,
-    MCA_BTL_UGNI_MPOOL_GRDMA
+    MCA_BTL_UGNI_RCACHE_UDREG,
+    MCA_BTL_UGNI_RCACHE_GRDMA
 };
 
 typedef struct mca_btl_ugni_module_t {
@@ -86,7 +87,7 @@ typedef struct mca_btl_ugni_module_t {
 
     opal_free_list_t post_descriptors;
 
-    mca_mpool_base_module_t *smsg_mpool;
+    mca_mpool_base_module_t *mpool;
     opal_free_list_t         smsg_mboxes;
 
     gni_ep_handle_t wildcard_ep;
@@ -128,6 +129,8 @@ typedef struct mca_btl_ugni_module_t {
     int nlocal_procs;
 
     volatile int active_send_count;
+
+    mca_rcache_base_module_t *rcache;
 } mca_btl_ugni_module_t;
 
 typedef struct mca_btl_ugni_component_t {
@@ -177,8 +180,11 @@ typedef struct mca_btl_ugni_component_t {
     /* Page size to use for SMSG allocations (udreg mpool) */
     unsigned int smsg_page_size;
 
-    /* mpool type (grdma or udreg) */
-    int mpool_type;
+    /* rcache type (grdma or udreg) */
+    int rcache_type;
+
+    /* memory pool hints */
+    char *mpool_hints;
 
     /* Number of mailboxes to allocate in each block */
     unsigned int mbox_increment;
@@ -312,7 +318,7 @@ struct mca_btl_base_registration_handle_t {
 };
 
 typedef struct mca_btl_ugni_reg_t {
-    mca_mpool_base_registration_t base;
+    mca_rcache_base_registration_t base;
     mca_btl_base_registration_handle_t handle;
 } mca_btl_ugni_reg_t;
 

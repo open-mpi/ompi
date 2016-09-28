@@ -122,6 +122,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/mpool/mpool.h"
+#include "opal/mca/rcache/rcache.h"
 
 BEGIN_C_DECLS
 
@@ -132,7 +133,6 @@ BEGIN_C_DECLS
 struct mca_btl_base_module_t;
 struct mca_btl_base_endpoint_t;
 struct mca_btl_base_descriptor_t;
-struct mca_mpool_base_resources_t;
 struct opal_proc_t;
 
 /**
@@ -257,23 +257,23 @@ enum {
     /** Allow local write on the registered region. If a region is registered
      * with this flag the registration can be used as the local handle for a
      * btl_get operation. */
-    MCA_BTL_REG_FLAG_LOCAL_WRITE   = MCA_MPOOL_ACCESS_LOCAL_WRITE,
+    MCA_BTL_REG_FLAG_LOCAL_WRITE   = MCA_RCACHE_ACCESS_LOCAL_WRITE,
     /** Allow remote read on the registered region. If a region is registered
      * with this flag the registration can be used as the remote handle for a
      * btl_get operation. */
-    MCA_BTL_REG_FLAG_REMOTE_READ   = MCA_MPOOL_ACCESS_REMOTE_READ,
+    MCA_BTL_REG_FLAG_REMOTE_READ   = MCA_RCACHE_ACCESS_REMOTE_READ,
     /** Allow remote write on the registered region. If a region is registered
      * with this flag the registration can be used as the remote handle for a
      * btl_put operation. */
-    MCA_BTL_REG_FLAG_REMOTE_WRITE  = MCA_MPOOL_ACCESS_REMOTE_WRITE,
+    MCA_BTL_REG_FLAG_REMOTE_WRITE  = MCA_RCACHE_ACCESS_REMOTE_WRITE,
     /** Allow remote atomic operations on the registered region. If a region is
      * registered with this flag the registration can be used as the remote
      * handle for a btl_atomic_op or btl_atomic_fop operation. */
-    MCA_BTL_REG_FLAG_REMOTE_ATOMIC = MCA_MPOOL_ACCESS_REMOTE_ATOMIC,
+    MCA_BTL_REG_FLAG_REMOTE_ATOMIC = MCA_RCACHE_ACCESS_REMOTE_ATOMIC,
     /** Allow any btl operation on the registered region. If a region is registered
      * with this flag the registration can be used as the local or remote handle for
      * any btl operation. */
-    MCA_BTL_REG_FLAG_ACCESS_ANY    = MCA_MPOOL_ACCESS_ANY,
+    MCA_BTL_REG_FLAG_ACCESS_ANY    = MCA_RCACHE_ACCESS_ANY,
 #if OPAL_CUDA_GDR_SUPPORT
     /** Region is in GPU memory */
     MCA_BTL_REG_FLAG_CUDA_GPU_MEM  = 0x00010000,
