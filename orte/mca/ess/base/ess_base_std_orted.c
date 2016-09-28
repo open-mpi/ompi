@@ -406,6 +406,7 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rml_base_select";
         goto error;
     }
+
     /* add our contact info */
     proc->rml_uri = orte_rml.get_contact_info();
 
@@ -476,12 +477,8 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rtc_base_select";
         goto error;
     }
-    /* enable communication with the rml */
-    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml.enable_comm";
-        goto error;
-    }
+
+
 #if ORTE_ENABLE_STATIC_PORTS
     /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly

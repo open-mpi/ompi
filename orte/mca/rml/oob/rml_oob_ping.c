@@ -13,8 +13,10 @@
 #include "rml_oob.h"
 
 int
-orte_rml_oob_ping(const char* uri,
+orte_rml_oob_ping(void *mod,
+                  const char* uri,
                   const struct timeval* tv)
 {
+    orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
     return ORTE_ERR_NOT_SUPPORTED;
 }

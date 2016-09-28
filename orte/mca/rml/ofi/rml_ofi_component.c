@@ -32,8 +32,8 @@ static int my_priority=3;
 static orte_rml_base_module_t* rml_ofi_component_init(int* priority);  
 static int rml_ofi_component_open(void);
 static int rml_ofi_component_close(void);
-
-
+static orte_rml_base_module_t* open_conduit(opal_list_t *attributes);
+static void close_conduit(int conduit_id);
 /**
  * component definition
  */
@@ -42,7 +42,7 @@ orte_rml_component_t mca_rml_ofi_component = {
          information about the component itself */
 
     .rml_version = {
-        ORTE_RML_BASE_VERSION_2_0_0,
+        ORTE_RML_BASE_VERSION_3_0_0,
 
         .mca_component_name = "ofi",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
@@ -55,15 +55,16 @@ orte_rml_component_t mca_rml_ofi_component = {
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
     .rml_init = rml_ofi_component_init,
+    .query_transports = orte_rml_ofi_query_transports,
+    .open_conduit = open_conduit
 };
 
 orte_rml_ofi_module_t orte_rml_ofi = {
-    {
-         .enable_comm = orte_rml_ofi_enable_comm,  
+    .api= {
         .finalize = orte_rml_ofi_fini,
-        .query_transports = orte_rml_ofi_query_transports,
-        .send_transport_nb = orte_rml_ofi_send_transport_nb,
-        .send_buffer_transport_nb = orte_rml_ofi_send_buffer_transport_nb,
+        
+        .send_nb = orte_rml_ofi_send_nb,
+        .send_buffer_nb = orte_rml_ofi_send_buffer_nb,
 
     }
 };
@@ -79,6 +80,7 @@ rml_ofi_component_open(void)
     orte_rml_ofi.fi_info_list = NULL;
     orte_rml_ofi.min_ofi_recv_buf_sz = MIN_MULTI_BUF_SIZE;
     orte_rml_ofi.cur_msgid = 1;
+    orte_rml_ofi.cur_transport_id = RML_OFI_CONDUIT_ID_INVALID;
 
     for( uint8_t conduit_id=0; conduit_id < MAX_CONDUIT ; conduit_id++) {
         orte_rml_ofi.ofi_conduits[conduit_id].fabric =  NULL;
@@ -93,6 +95,7 @@ rml_ofi_component_open(void)
         orte_rml_ofi.ofi_conduits[conduit_id].rxbuf_size = 0;
         orte_rml_ofi.ofi_conduits[conduit_id].progress_ev_active = false;
         orte_rml_ofi.ofi_conduits[conduit_id].conduit_id = RML_OFI_CONDUIT_ID_INVALID;
+        orte_rml_ofi.ofi_conduits[conduit_id].ofi_module = NULL;
     }
 
     opal_output_verbose(1,orte_rml_base_framework.framework_output," from %s:%d rml_ofi_component_open()",__FILE__,__LINE__);
@@ -106,7 +109,7 @@ void free_conduit_resources( int conduit_id)
 
     int ret=0;
     opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                       " %s - free_conduit_resources() begin. conduit_id- %d",
+                       " %s - free_conduit_resources() begin. OFI conduit_id- %d",
                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),conduit_id);
     if (orte_rml_ofi.ofi_conduits[conduit_id].ep) {
     	opal_output_verbose(10,orte_rml_base_framework.framework_output,
@@ -146,6 +149,10 @@ void free_conduit_resources( int conduit_id)
          free(orte_rml_ofi.ofi_conduits[conduit_id].rxbuf);
     }
 
+    if (orte_rml_ofi.ofi_conduits[conduit_id].ofi_module) { 
+        free(orte_rml_ofi.ofi_conduits[conduit_id].ofi_module);
+        orte_rml_ofi.ofi_conduits[conduit_id].ofi_module = NULL;
+    }
     orte_rml_ofi.ofi_conduits[conduit_id].fabric =  NULL;
     orte_rml_ofi.ofi_conduits[conduit_id].domain =  NULL;
     orte_rml_ofi.ofi_conduits[conduit_id].av     =  NULL;
@@ -158,6 +165,7 @@ void free_conduit_resources( int conduit_id)
     orte_rml_ofi.ofi_conduits[conduit_id].fabric_info = NULL;
     orte_rml_ofi.ofi_conduits[conduit_id].mr_multi_recv = NULL;
     orte_rml_ofi.ofi_conduits[conduit_id].conduit_id = RML_OFI_CONDUIT_ID_INVALID;
+    orte_rml_ofi.ofi_conduits[conduit_id].ofi_module = NULL;
     OPAL_LIST_DESTRUCT(&orte_rml_ofi.recv_msg_queue_list);
     
 
@@ -176,7 +184,7 @@ static int
 rml_ofi_component_close(void)
 {
     opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                            " %s - rml_ofi_component_close() -begin, total open conduits = %d",
+                            " %s - rml_ofi_component_close() -begin, total open OFI conduits = %d",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),orte_rml_ofi.conduit_open_num);
 
     if(orte_rml_ofi.fi_info_list) {
@@ -250,7 +258,7 @@ void print_provider_list_info (struct fi_info *fi )
  * This returns all the supported transports in the system that support endpoint type RDM (reliable datagram)
  * The providers returned is a list of type opal_valut_t holding opal_list_t
  */
-int orte_rml_ofi_query_transports(opal_value_t **providers)
+static int orte_rml_ofi_query_transports(opal_value_t **providers)
 {
     opal_list_t *ofi_prov = NULL;
     opal_value_t *providers_list, *prev_provider=NULL, *next_provider=NULL;
@@ -356,7 +364,7 @@ void print_transports_query()
             if (ret == OPAL_SUCCESS) {
                 if( orte_get_attribute( prov, ORTE_CONDUIT_ID, (void **)&prov_num,OPAL_UINT8)) {
                     opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                                        "\n Provider conduit_id  : %d",*prov_num);
+                                        "\n OFI Provider conduit_id  : %d",*prov_num);
                 }
                 if( orte_get_attribute( prov, ORTE_PROTOCOL, (void **)&protocol_ptr,OPAL_UINT32)) {
                     opal_output_verbose(10,orte_rml_base_framework.framework_output,
@@ -388,7 +396,7 @@ void print_transports_query()
 
 
 /**
-    conduit [in]: the conduit_id that triggered the progress fn
+    conduit [in]: the ofi conduit_id that triggered the progress fn
  **/
 __opal_attribute_always_inline__ static inline int
 orte_rml_ofi_progress(ofi_transport_conduit_t* conduit)
@@ -400,7 +408,7 @@ orte_rml_ofi_progress(ofi_transport_conduit_t* conduit)
     orte_rml_ofi_request_t *ofi_req;
 
     opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s orte_rml_ofi_progress called for conduitid %d",
+                         "%s orte_rml_ofi_progress called for OFI conduitid %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          conduit->conduit_id);
     /**
@@ -413,7 +421,7 @@ orte_rml_ofi_progress(ofi_transport_conduit_t* conduit)
         ret = fi_cq_read(conduit->cq, (void *)&wc, 1);
         if (0 < ret) {
             opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s cq read for conduitid %d - wc.flags = %x",
+                         "%s cq read for OFI conduitid %d - wc.flags = %x",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          conduit->conduit_id, wc.flags);
             count++;
@@ -421,7 +429,7 @@ orte_rml_ofi_progress(ofi_transport_conduit_t* conduit)
             if ( wc.flags & FI_SEND )
             {
                 opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                       "%s Send completion received on conduitid %d",
+                       "%s Send completion received on OFI conduitid %d",
                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                        conduit->conduit_id);
                 if (NULL != wc.op_context) {
@@ -431,13 +439,13 @@ orte_rml_ofi_progress(ofi_transport_conduit_t* conduit)
                     ret = orte_rml_ofi_send_callback(&wc, ofi_req);
                     if (ORTE_SUCCESS != ret) {
                         opal_output(orte_rml_base_framework.framework_output,
-                        "Error returned by OFI send callback handler when a send completion was received on conduit: %zd",
+                        "Error returned by OFI send callback handler when a send completion was received on OFI conduit: %zd",
                          ret);
                     }         
                 }
             } else if ( (wc.flags & FI_RECV) && (wc.flags & FI_MULTI_RECV) ) {
                     opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s Received message on conduitid %d - but buffer is consumed, need to repost",
+                         "%s Received message on OFI conduitid %d - but buffer is consumed, need to repost",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          conduit->conduit_id);
                          // reposting buffer
@@ -455,19 +463,19 @@ orte_rml_ofi_progress(ofi_transport_conduit_t* conduit)
                         }
             } else if ( wc.flags & FI_RECV )  {
                     opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s Received message on conduitid %d",
+                         "%s Received message on OFI conduitid %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          conduit->conduit_id);
                         // call the receive message handler that will call the rml_base
                         ret = orte_rml_ofi_recv_handler(&wc, conduit->conduit_id);
                         if (ORTE_SUCCESS != ret) {
                             opal_output(orte_rml_base_framework.framework_output,
-                            "Error returned by OFI Recv handler when handling the received message on the conduit: %zd",
+                            "Error returned by OFI Recv handler when handling the received message on the OFI conduit: %zd",
                              ret);
                         }
             } else if ( wc.flags & FI_MULTI_RECV ) {
                     opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s Received buffer overrun message on conduitid %d - need to repost",
+                         "%s Received buffer overrun message on OFI conduitid %d - need to repost",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          conduit->conduit_id);
                         // reposting buffer
@@ -478,7 +486,7 @@ orte_rml_ofi_progress(ofi_transport_conduit_t* conduit)
                           0,&(conduit->rx_ctx1));  
                         if (ORTE_SUCCESS != ret) {
                             opal_output(orte_rml_base_framework.framework_output,
-                            "Error returned by OFI when reposting buffer on the conduit: %zd",
+                            "Error returned by OFI when reposting buffer on the OFI conduit: %zd",
                              ret);
                         }
             }else {
@@ -492,7 +500,7 @@ orte_rml_ofi_progress(ofi_transport_conduit_t* conduit)
             * Read the error and forward it to the upper layer.
             */
             opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s cq_read for conduitid %d  returned error 0x%x <%s>",
+                         "%s cq_read for OFI conduitid %d  returned error 0x%x <%s>",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          conduit->conduit_id, ret, 
                          fi_strerror((int) -ret) );
@@ -519,13 +527,13 @@ orte_rml_ofi_progress(ofi_transport_conduit_t* conduit)
              * The CQ is empty. Return.
              */
             opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s Empty cq for conduitid %d,exiting from ofi_progress()",
+                         "%s Empty cq for OFI conduitid %d,exiting from ofi_progress()",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          conduit->conduit_id );
             break;
         } else {
             opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s cq_read for conduitid %d  returned error 0x%x <%s>",
+                         "%s cq_read for OFI conduitid %d  returned error 0x%x <%s>",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          conduit->conduit_id, ret, 
                          fi_strerror((int) -ret) );
@@ -546,7 +554,7 @@ int cq_progress_handler(int sd, short flags, void *cbdata)
     int count;
 
     opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s cq_progress_handler called for conduitid %d",
+                         "%s cq_progress_handler called for OFI conduitid %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          conduit->conduit_id);
 
@@ -568,7 +576,7 @@ rml_ofi_component_init(int* priority)
     char   ep_name[FI_NAME_MAX]= {0};
     uint8_t fabric_id = 0, cur_conduit;
 
-    opal_output_verbose(1,orte_rml_base_framework.framework_output,
+    opal_output_verbose(20,orte_rml_base_framework.framework_output,
                         "%s - Entering rml_ofi_component_init()",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /*[TODO] Limiting current implementation to APP PROCs.  The PMIX component does not get initialised for
@@ -582,7 +590,7 @@ rml_ofi_component_init(int* priority)
 
     if (init_done) {
         *priority = 2;
-        return &orte_rml_ofi.super;
+        return &orte_rml_ofi.api;
     }
 
     *priority = 2;
@@ -657,7 +665,7 @@ rml_ofi_component_init(int* priority)
                  NULL != fabric_info && orte_rml_ofi.conduit_open_num < MAX_CONDUIT ; fabric_info = fabric_info->next)
         {
             opal_output_verbose(100,orte_rml_base_framework.framework_output,
-                 "%s:%d beginning to add endpoint for conduit_id=%d ",__FILE__,__LINE__,orte_rml_ofi.conduit_open_num);
+                 "%s:%d beginning to add endpoint for OFIconduit_id=%d ",__FILE__,__LINE__,orte_rml_ofi.conduit_open_num);
             cur_conduit = orte_rml_ofi.conduit_open_num;
             orte_rml_ofi.ofi_conduits[cur_conduit].conduit_id = orte_rml_ofi.conduit_open_num ;  
             orte_rml_ofi.ofi_conduits[cur_conduit].fabric_info = fabric_info;
@@ -957,10 +965,15 @@ rml_ofi_component_init(int* priority)
                        &orte_rml_ofi.ofi_conduits[cur_conduit]);
             opal_event_add(&orte_rml_ofi.ofi_conduits[cur_conduit].progress_event, 0);
             orte_rml_ofi.ofi_conduits[cur_conduit].progress_ev_active = true;
-           /** update the number of conduits in the ofi_conduits[] array **/
-           opal_output_verbose(1,orte_rml_base_framework.framework_output,
+
+            /** allocate space for module to be returned if this ofi_conduit transport is requested by rml */
+            orte_rml_ofi.ofi_conduits[cur_conduit].ofi_module =  (orte_rml_ofi_module_t*)calloc(1, sizeof(orte_rml_ofi_module_t));
+            /* copy the function pointers across */
+            memcpy(orte_rml_ofi.ofi_conduits[cur_conduit].ofi_module, &orte_rml_ofi, sizeof(orte_rml_ofi_module_t));
+            /** update the number of conduits in the ofi_conduits[] array **/
+            opal_output_verbose(1,orte_rml_base_framework.framework_output,
                  "%s:%d Conduit id - %d created ",__FILE__,__LINE__,orte_rml_ofi.conduit_open_num);
-           orte_rml_ofi.conduit_open_num++;
+            orte_rml_ofi.conduit_open_num++;
         } 
         if (fabric_info != NULL &&  orte_rml_ofi.conduit_open_num >= MAX_CONDUIT ) {
             opal_output_verbose(1,orte_rml_base_framework.framework_output,
@@ -977,129 +990,103 @@ rml_ofi_component_init(int* priority)
     /* only if atleast one conduit was successfully opened then return the module */
     if (0 < orte_rml_ofi.conduit_open_num ) {
         opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                    "%s:%d conduits openened=%d returning orte_rml_ofi.super",
+                    "%s:%d OFIconduits openened=%d returning orte_rml_ofi.api",
                     __FILE__,__LINE__,orte_rml_ofi.conduit_open_num);
 
-        OBJ_CONSTRUCT(&orte_rml_ofi.exceptions, opal_list_t);
         OBJ_CONSTRUCT(&orte_rml_ofi.recv_msg_queue_list,opal_list_t);
         init_done = true;
-        return &orte_rml_ofi.super;
+        orte_rml_ofi.api.tot_num_transports = orte_rml_ofi.conduit_open_num;
+        return &orte_rml_ofi.api;
     } else {
         opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                    "%s:%d Failed to open any conduits",__FILE__,__LINE__);
+                    "%s:%d Failed to open any OFIconduits",__FILE__,__LINE__);
         return NULL;
     }
 
 }
 
-
-int
-orte_rml_ofi_enable_comm(void)
+/* return : the ofi_conduit that corresponds to the transport requested by the attributes
+            if transport is not found RML_OFI_CONDUIT_ID_INVALID is returned.
+    @[in]attributes  : the attributes passed in to open_conduit reg the transport requested
+*/
+int get_ofi_conduit_id( opal_list_t *attributes)
 {
-    int ret;
 
-    opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                        " %s - orte_rml_enable_comm() begin", 
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    /* enable the base receive to get updates on contact info */
-    orte_rml_base_comm_start();
-    opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                        " %s - orte_rml_enable_comm() completed", 
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    int ofi_conduit_id = RML_OFI_CONDUIT_ID_INVALID, prov_num=0;    
+    char *provider = NULL, *transport = NULL;
+    char *ethernet="sockets", *fabric="fabric"; //[TODO] - replace the string for fabric with right value for OPA
+    struct fi_info *cur_fi;
 
-    return ORTE_SUCCESS;
+    /* check the list of attributes to see if we should respond                         
+     * Attribute should have ORTE_RML_TRANSPORT_ATTRIB key 
+     * with values "ethernet" or "fabric"    
+     * (or)  ORTE_RML_OFI_PROV_NAME key with values "socket" or "OPA"
+     * if both above attributes are missing return failure
+     */
+    if (orte_get_attribute(attributes, ORTE_RML_TRANSPORT_ATTRIB, (void**)&transport, OPAL_STRING) )    {
+        if( 0 == strcmp( transport, "ethernet") ) {
+            provider = ethernet;
+        } else if ( 0 == strcmp( transport, "fabric") ) {
+            provider = fabric;  
+        }   
+    } 
+    /* if from the transport we don't know which provider we want, then check for the ORTE_RML_OFI_PROV_NAME_ATTRIB */
+    if ( NULL == provider) {
+       orte_get_attribute(attributes, ORTE_RML_OFI_PROV_NAME_ATTRIB, (void**)&provider, OPAL_STRING);
+    }
+    if (provider != NULL)
+    {
+        // loop the orte_rml_ofi.conduits[] and find the provider name that matches
+        for ( prov_num = 0; prov_num < orte_rml_ofi.conduit_open_num && ofi_conduit_id == RML_OFI_CONDUIT_ID_INVALID ; prov_num++ ) {
+            cur_fi = orte_rml_ofi.ofi_conduits[prov_num].fabric_info;
+            if ( strcmp(provider,cur_fi->fabric_attr->prov_name) == 0) {
+                ofi_conduit_id = prov_num;
+            }
+        }
+
+    }
+    
+    return ofi_conduit_id;
+}
+
+static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
+{
+    orte_rml_ofi_module_t *mod = NULL;
+    int ofi_conduit_id = RML_OFI_CONDUIT_ID_INVALID;
+ 
+    ofi_conduit_id = get_ofi_conduit_id(attributes);
+    if ( ofi_conduit_id == RML_OFI_CONDUIT_ID_INVALID) {
+        return mod;
+    }
+    /* we will provide this module - to make sure we don't open multiple modules we return *
+     * the one allocated at init associated with this ofi_conduit(transport)    */
+    mod = orte_rml_ofi.ofi_conduits[ofi_conduit_id].ofi_module;
+
+    /*  setup the remaining data locations in mod to reflect the current conduit*/
+    mod->cur_transport_id = ofi_conduit_id;
+
+    return mod;
 }
 
 
-void
-orte_rml_ofi_fini(void)
+static void orte_rml_ofi_fini(void *mod)
 {
     opal_list_item_t *item;
     uint8_t conduit_id;
+    orte_rml_ofi_module_t* ofi_mod = (orte_rml_ofi_module_t *)mod;
 
 
     opal_output_verbose(1,orte_rml_base_framework.framework_output,
                         " %s -  orte_rml_ofi_fini() begin ", 
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    while (NULL !=
-           (item = opal_list_remove_first(&orte_rml_ofi.exceptions))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_rml_ofi.exceptions);
+    //freeing module* created by open_conduit() is done in rml_ofi_component_close()
+
     opal_output_verbose(1,orte_rml_base_framework.framework_output,
                         " %s -  orte_rml_ofi_fini() completed ", 
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 }
 
-#if OPAL_ENABLE_FT_CR == 1
-int
-orte_rml_ofi_ft_event(int state) {
-    int exit_status = ORTE_SUCCESS;
-    int ret;
-
-
-    opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                        " %s -orte_rml_ofi_ft_event() start ", 
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CHECKPOINT);
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CONTINUE);
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_RESTART);
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        (void) mca_base_framework_close(&orte_ofi_base_framework);
-
-        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_ofi_base_framework, 0))) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        if( ORTE_SUCCESS != (ret = orte_ofi_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
- cleanup:
-     opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                         " %s -orte_rml_ofi_ft_event() end ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    return exit_status;
-}
-#else
-int
-orte_rml_ofi_ft_event(int state) {
-    opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                        " %s From orte_rml_ofi_ft_event() ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-   return ORTE_SUCCESS;
-}
-#endif
 
 
 

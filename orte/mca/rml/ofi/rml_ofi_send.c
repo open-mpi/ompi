@@ -556,7 +556,7 @@ static void send_msg(int fd, short args, void *cbdata)
     OBJ_RELEASE(req);
 }
 
-int orte_rml_ofi_send_transport_nb(int conduit_id,
+int orte_rml_ofi_send_nb(void* mod,
                                    orte_process_name_t* peer,
                                    struct iovec* iov,
                                    int count, 
@@ -565,6 +565,9 @@ int orte_rml_ofi_send_transport_nb(int conduit_id,
                                    void* cbdata)
 {
     orte_rml_send_request_t *req;
+    orte_rml_ofi_module_t *ofi_mod = (orte_rml_ofi_module_t*)mod;
+    int conduit_id = ofi_mod->cur_transport_id;
+    
 
     opal_output_verbose(1, orte_rml_base_framework.framework_output,
                          "%s rml_ofi_send_transport to peer %s at tag %d",
@@ -609,14 +612,16 @@ int orte_rml_ofi_send_transport_nb(int conduit_id,
 }
 
 
-int orte_rml_ofi_send_buffer_transport_nb(int conduit_id,
+int orte_rml_ofi_send_buffer_nb(void* mod,
                                               orte_process_name_t* peer,
                                               struct opal_buffer_t* buffer,
                                               orte_rml_tag_t tag,
-                                              orte_rml_buffer_transport_callback_fn_t cbfunc,
+                                              orte_rml_buffer_callback_fn_t cbfunc,
                                               void* cbdata)
 {
 	orte_rml_send_request_t *req;
+    orte_rml_ofi_module_t *ofi_mod = (orte_rml_ofi_module_t*)mod;
+    int conduit_id = ofi_mod->cur_transport_id;
 
     opal_output_verbose(1, orte_rml_base_framework.framework_output,
                          "%s rml_ofi_send_buffer_transport to peer %s at tag %d",

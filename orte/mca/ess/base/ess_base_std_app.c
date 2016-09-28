@@ -228,12 +228,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_grpcomm_base_select";
         goto error;
     }
-    /* enable communication via the rml */
-    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml.enable_comm";
-        goto error;
-    }
+
     /* setup the routed info  */
     if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);

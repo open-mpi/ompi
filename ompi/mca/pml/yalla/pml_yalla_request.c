@@ -32,10 +32,10 @@ static inline void mca_pml_yalla_request_release(mca_pml_yalla_base_request_t *r
 }
 
 static inline int
-mca_pml_yalla_check_request_state(mca_pml_yalla_base_request_t *req)
+mca_pml_yalla_check_request_state(mca_pml_yalla_base_request_t *req, mxm_req_base_t *mxm_base)
 {
-    if (req->mxm_base->state != MXM_REQ_COMPLETED) {
-         PML_YALLA_VERBOSE(8, "request %p free called before completed", (void *)req);
+    if (mxm_base->state != MXM_REQ_COMPLETED) {
+         PML_YALLA_VERBOSE(8, "request %p free called before completed", (void*)req);
          req->flags |= MCA_PML_YALLA_REQUEST_FLAG_FREE_CALLED;
          return 0;
     }
@@ -45,12 +45,12 @@ mca_pml_yalla_check_request_state(mca_pml_yalla_base_request_t *req)
 
 static int mca_pml_yalla_send_request_free(ompi_request_t **request)
 {
-    mca_pml_yalla_base_request_t *req = (mca_pml_yalla_base_request_t*)(*request);
+    mca_pml_yalla_send_request_t *sreq = (mca_pml_yalla_send_request_t*)(*request);
 
     PML_YALLA_VERBOSE(9, "free send request *%p=%p", (void *)request, (void *)*request);
 
-    if (mca_pml_yalla_check_request_state(req)) {
-        mca_pml_yalla_request_release(req, &ompi_pml_yalla.send_reqs);
+    if (mca_pml_yalla_check_request_state(&sreq->super, PML_YALLA_MXM_REQBASE(sreq))) {
+        mca_pml_yalla_request_release(&sreq->super, &ompi_pml_yalla.send_reqs);
     }
 
     *request = MPI_REQUEST_NULL;
@@ -84,12 +84,12 @@ static int mca_pml_yalla_send_request_cancel(ompi_request_t *request, int flag)
 
 static int mca_pml_yalla_recv_request_free(ompi_request_t **request)
 {
-    mca_pml_yalla_base_request_t *req = (mca_pml_yalla_base_request_t*)(*request);
+    mca_pml_yalla_recv_request_t *rreq = (mca_pml_yalla_recv_request_t*)(*request);
 
     PML_YALLA_VERBOSE(9, "free receive request *%p=%p", (void *)request, (void *)*request);
 
-    if (mca_pml_yalla_check_request_state(req)) {
-        mca_pml_yalla_request_release(req, &ompi_pml_yalla.recv_reqs);
+    if (mca_pml_yalla_check_request_state(&rreq->super, PML_YALLA_MXM_REQBASE(rreq))) {
+        mca_pml_yalla_request_release(&rreq->super, &ompi_pml_yalla.recv_reqs);
     }
 
     *request = MPI_REQUEST_NULL;

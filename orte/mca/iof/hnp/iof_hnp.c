@@ -105,12 +105,6 @@ static int init(void)
                             orte_iof_hnp_recv,
                             NULL);
 
-    if (ORTE_SUCCESS != (rc = orte_rml.add_exception_handler(orte_iof_hnp_exception_handler))) {
-        ORTE_ERROR_LOG(rc);
-        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
-        return rc;
-    }
-
     OBJ_CONSTRUCT(&mca_iof_hnp_component.procs, opal_list_t);
     mca_iof_hnp_component.stdinev = NULL;
 

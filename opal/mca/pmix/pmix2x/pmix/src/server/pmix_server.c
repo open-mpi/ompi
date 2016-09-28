@@ -314,6 +314,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                 }
                 snprintf(tl->address.sun_path, sizeof(tl->address.sun_path) - 1, "%s", pmix_pid);
                 free(pmix_pid);
+                /* we don't provide a URI for this listener as we don't pass
+                 * the TOOL connection URI to a child process */
                 pmix_server_globals.tool_connections_allowed = true;
                 pmix_list_append(&pmix_server_globals.listeners, &tl->super);
                 /* push this onto our protected list of keys not
@@ -981,6 +983,9 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char *
     pmix_setenv("PMIX_RANK", rankstr, true, env);
     /* pass our rendezvous info */
     PMIX_LIST_FOREACH(lt, &pmix_server_globals.listeners, pmix_listener_t) {
+        if (NULL == lt->uri) {
+            continue;
+        }
         pmix_setenv(lt->varname, lt->uri, true, env);
     }
     /* pass our active security mode */

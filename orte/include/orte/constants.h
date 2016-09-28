@@ -88,6 +88,11 @@ enum {
     ORTE_ERR_COMM_FAILURE                   = OPAL_ERR_COMM_FAILURE,
     ORTE_ERR_DEBUGGER_RELEASE               = OPAL_ERR_DEBUGGER_RELEASE,
     ORTE_ERR_PARTIAL_SUCCESS                = OPAL_ERR_PARTIAL_SUCCESS,
+    ORTE_ERR_PROC_ABORTED                   = OPAL_ERR_PROC_ABORTED,
+    ORTE_ERR_PROC_REQUESTED_ABORT           = OPAL_ERR_PROC_REQUESTED_ABORT,
+    ORTE_ERR_PROC_ABORTING                  = OPAL_ERR_PROC_ABORTING,
+    ORTE_ERR_NODE_DOWN                      = OPAL_ERR_NODE_DOWN,
+    ORTE_ERR_NODE_OFFLINE                   = OPAL_ERR_NODE_OFFLINE,
 
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!
