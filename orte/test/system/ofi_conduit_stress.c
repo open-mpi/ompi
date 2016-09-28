@@ -15,6 +15,7 @@
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/util/attr.h"
 
 #define MY_TAG 12345
 #define MAX_COUNT 3
@@ -100,6 +101,7 @@ main(int argc, char *argv[]){
     orte_rml_recv_cb_t blob;
     int conduit_id = 0;  //use the first available conduit
     struct timeval start, end;
+    opal_list_t *conduit_attr;
     
 
     /*
@@ -108,6 +110,21 @@ main(int argc, char *argv[]){
     orte_init(&argc, &argv, ORTE_PROC_NON_MPI);
 
     print_transports_query();
+    conduit_attr = OBJ_NEW(opal_list_t);
+   if( ORTE_SUCCESS == 
+            ( orte_set_attribute( conduit_attr, ORTE_RML_OFI_PROV_NAME_ATTRIB, ORTE_ATTR_GLOBAL,"sockets",OPAL_STRING)))   {
+    if( ORTE_SUCCESS == 
+            ( orte_set_attribute( conduit_attr, ORTE_RML_INCLUDE_COMP_ATTRIB, ORTE_ATTR_GLOBAL,"ofi",OPAL_STRING)))   {
+        opal_output(0, "%s calling open_conduit with ORTE_RML_INCLUDE_COMP_ATTRIB and ORTE_RML_OFI_PROV_NAME_ATTRIB",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        conduit_id = orte_rml_API_open_conduit(conduit_attr);
+        if (0 > conduit_id ) {
+            opal_output(0, "Conduit could not be opened for OFI, exiting");
+            return;
+        }
+     }
+   }
+
     opal_output(0, "Using conduit-id %d ", conduit_id);
 
     if (argc > 1) {
@@ -138,7 +155,7 @@ main(int argc, char *argv[]){
             msg = (uint8_t*)malloc(msgsize);
             opal_dss.pack(buf, msg, msgsize, OPAL_BYTE);
             free(msg);
-            orte_rml.send_buffer_transport_nb(conduit_id,&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
+            orte_rml.send_buffer_nb_conduit(conduit_id,&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
 
             /* wait for it to come around */
             OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
@@ -166,7 +183,7 @@ main(int argc, char *argv[]){
             opal_dss.copy_payload(buf, &blob.data);
             OBJ_DESTRUCT(&blob);
             msg_active = true;
-            orte_rml.send_buffer_transport_nb(conduit_id,&peer, buf, MY_TAG, send_callback, NULL);
+            orte_rml.send_buffer_nb_conduit(conduit_id,&peer, buf, MY_TAG, send_callback, NULL);
             ORTE_WAIT_FOR_COMPLETION(msg_active);
         }
     }

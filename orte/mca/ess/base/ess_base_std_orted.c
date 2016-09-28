@@ -368,7 +368,7 @@ int orte_ess_base_orted_setup(char **hosts)
 
 
     /* setup the PMIx framework - ensure it skips all non-PMIx components,
-     * but do not override anything we were given */
+     * but do not override anything we were given. */
     opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -406,6 +406,7 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rml_base_select";
         goto error;
     }
+
     /* add our contact info */
     proc->rml_uri = orte_rml.get_contact_info();
 
@@ -476,12 +477,8 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rtc_base_select";
         goto error;
     }
-    /* enable communication with the rml */
-    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml.enable_comm";
-        goto error;
-    }
+
+
 #if ORTE_ENABLE_STATIC_PORTS
     /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly

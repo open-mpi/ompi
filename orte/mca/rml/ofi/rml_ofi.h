@@ -27,7 +27,7 @@
 #include "rml_ofi_request.h"
 
 
-/** the maximum open conduit - assuming system will have no more than 20 transports*/
+/** the maximum open OFI conduit - assuming system will have no more than 20 transports*/
 #define MAX_CONDUIT  40
 #define RML_OFI_CONDUIT_ID_INVALID 0xFF
 
@@ -70,13 +70,14 @@
 
 BEGIN_C_DECLS
 
+struct orte_rml_ofi_module_t;
 
 /** This structure will hold the ep and all ofi objects for each transport
 and also the corresponding fi_info
 **/
 typedef struct {
 
-    /** conduit ID **/
+    /** OFI conduit ID **/
     uint8_t conduit_id;
 
     /** fi_info for this transport */
@@ -120,11 +121,19 @@ typedef struct {
 
     struct fi_context rx_ctx1;
 
+   /* module associated with this conduit_id returned to rml 
+      from open_conduit call */
+   struct orte_rml_ofi_module_t *ofi_module;
+
 } ofi_transport_conduit_t;
 
 
-typedef struct {
-    struct orte_rml_base_module_t super;
+ struct orte_rml_ofi_module_t {
+    orte_rml_base_module_t api;
+
+    /** current ofi transport id the component is using, this will be initialised
+     ** in the open_conduit() call **/
+    int  cur_transport_id;
 
     /** Fabric info structure of all supported transports in system **/
     struct fi_info *fi_info_list;
@@ -137,40 +146,41 @@ typedef struct {
     /** "Any source" address */
     fi_addr_t any_addr;
 
-    /** number of Conduits currently opened **/
+    /** number of conduits currently opened **/
     uint8_t conduit_open_num;
 
     /** Unique message id for every message that is fragmented to be sent over OFI **/
     uint32_t    cur_msgid;
 
     opal_list_t     recv_msg_queue_list;     
-    opal_list_t     exceptions;
     opal_list_t     queued_routing_messages;
     opal_event_t    *timer_event;
     struct timeval  timeout;
-} orte_rml_ofi_module_t;
+} ;
+typedef struct orte_rml_ofi_module_t orte_rml_ofi_module_t;
 
 
 ORTE_MODULE_DECLSPEC extern orte_rml_component_t mca_rml_ofi_component;
 extern orte_rml_ofi_module_t orte_rml_ofi;
 
-int orte_rml_ofi_enable_comm(void);
-void orte_rml_ofi_fini(void);
-int orte_rml_ofi_ft_event(int state);
-int orte_rml_ofi_query_transports(opal_value_t **providers);
-int orte_rml_ofi_send_buffer_transport_nb(int conduit_id,
-                                              orte_process_name_t* peer,
-                                              struct opal_buffer_t* buffer,
-                                              orte_rml_tag_t tag,
-                                              orte_rml_buffer_callback_fn_t cbfunc,
-                                              void* cbdata);
-int orte_rml_ofi_send_transport_nb(int conduit_id,
-                                              orte_process_name_t* peer,
-                                              struct iovec* iov,
-                                              int count, 
-                                              orte_rml_tag_t tag,
-                                              orte_rml_callback_fn_t cbfunc,
-                                              void* cbdata);
+
+static void orte_rml_ofi_fini(void *mod);
+static int orte_rml_ofi_query_transports(opal_value_t **providers);
+int orte_rml_ofi_send_buffer_nb(void *mod,
+                                orte_process_name_t* peer,
+                                struct opal_buffer_t* buffer,
+                                orte_rml_tag_t tag,
+                                orte_rml_buffer_callback_fn_t cbfunc,
+                                void* cbdata);
+int orte_rml_ofi_send_nb(void *mod,
+                         orte_process_name_t* peer,
+                         struct iovec* iov,
+                         int count, 
+                         orte_rml_tag_t tag,
+                         orte_rml_callback_fn_t cbfunc,
+                         void* cbdata);
+
+/****************** INTERNAL OFI Functions*************/
 void free_conduit_resources( int conduit_id);
 void print_provider_list_info (struct fi_info *fi );
 

@@ -1351,7 +1351,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_argv_append(argc, argv, rml_uri);
     free(rml_uri);
 
-    /* if we have static ports, pass the node list */
+    /* if we have static ports, pass the node list. */
     if (orte_static_ports && NULL != nodes) {
         /* convert the nodes to a regex */
         if (ORTE_SUCCESS != (rc = orte_regex_create(nodes, &param))) {

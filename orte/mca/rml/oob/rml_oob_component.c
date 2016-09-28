@@ -55,8 +55,8 @@ static orte_rml_base_module_t* rml_oob_init(int* priority);
 static int rml_oob_open(void);
 static int rml_oob_close(void);
 static orte_rml_base_module_t *open_conduit(opal_list_t *attributes);
-static int query_transports(opal_list_t *providers);
-
+static int query_transports(opal_value_t **providers);
+static void close_conduit(int conduit_id);
 /**
  * component definition
  */
@@ -72,11 +72,13 @@ orte_rml_component_t mca_rml_oob_component = {
                               ORTE_RELEASE_VERSION),
         .mca_open_component = rml_oob_open,
         .mca_close_component = rml_oob_close,
+
     },
     .rml_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
+    .rml_init = rml_oob_init,
     .open_conduit = open_conduit,
     .query_transports = query_transports
 };
@@ -94,6 +96,7 @@ orte_rml_oob_module_t orte_rml_oob_module = {
         .send_buffer_nb = orte_rml_oob_send_buffer_nb,
 
         .purge = orte_rml_oob_purge
+
     }
 };
 
@@ -111,24 +114,38 @@ static int rml_oob_close(void)
     return ORTE_SUCCESS;
 }
 
-static orte_rml_base_module_t *open_conduit(opal_list_t *attributes)
+static orte_rml_base_module_t* rml_oob_init(int* priority)
 {
-    orte_rml_oob_module_t *mod;
 
-    /* check the list of attributes to see if we should respond */
+    if (init_done) {
+        *priority = 1;
+        return &orte_rml_oob_module.api;
+    }
 
-    /* we will provide this module, so allocate the space for it */
-    mod = (orte_rml_oob_module_t*)calloc(1, sizeof(orte_rml_oob_module_t));
-    /* copy the function pointers across */
-    memcpy(&mod->api, orte_rml_oob_module, sizeof(&orte_rml_oob_module.api));
-    /* setup the remaining data locations */
-    OBJ_CONSTRUCT(&mod->queued_routing_messages, opal_list_t);
-    mod->timer_event = NULL;
-    /* the timeout struct was already zero'd */
+    *priority = 1;
+
+    init_done = true;
+    
+    orte_rml_oob_module.api.tot_num_transports = 1;
+    OBJ_CONSTRUCT(&orte_rml_oob_module.queued_routing_messages, opal_list_t);
+    orte_rml_oob_module.timer_event = NULL;
+    return &orte_rml_oob_module.api;
+}
+
+static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
+{ 
+    orte_rml_base_module_t *mod;
+
+    /*  since we have only 1 transport we return only one module-pointer */
+
+    opal_output_verbose(20,orte_rml_base_framework.framework_output,
+                    "%s - Entering rml_oob_open_conduit()",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    orte_rml_oob_module.api.tot_num_transports = 1;
+    mod = &orte_rml_oob_module.api;
     return mod;
 }
 
-static int query_transports(opal_list_t *providers)
+static int query_transports(opal_value_t **providers)
 {
     opal_value_t *val;
 
@@ -137,7 +154,15 @@ static int query_transports(opal_list_t *providers)
     val->key = strdup(ORTE_TRANSPORT);
     val->type = OPAL_STRING;
     val->data.string = strdup("Ethernet");
-    opal_list_append(providers, &val->super);
+    //[TODO] fix this -> opal_list_append(providers, &val->super);
 
     return ORTE_SUCCESS;
 }
+
+void orte_rml_oob_fini(void *mod)
+{
+    /* the rml_base_stub takes care of clearing the base receive */
+    return;
+}
+
+

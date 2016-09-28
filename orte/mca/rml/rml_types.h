@@ -168,10 +168,28 @@ BEGIN_C_DECLS
 
 #define ORTE_RML_TAG_MAX                   100
 
-/*** RML ATTRIBUTE keys ***/
-#define ORTE_TRANSPORT      "orte.rml.transport"    // char* - type of transport
-#define ORTE_PROV_NAME      "orte.rml.prov.name"    // char * - null terminated string containing provider name
-#define ORTE_PROTOCOL       "orte.rml.protocol"     // uint32 - protocol type as returned by fi_info
+
+/*** RML OFI keys ***/
+#define ORTE_OFI_START_KEY  ORTE_QOS_MAX_KEY
+#define ORTE_PROV_NAME      (ORTE_OFI_START_KEY + 1)    //char * - null terminated string containing provider name
+#define ORTE_PROTOCOL       (ORTE_OFI_START_KEY + 2)    //uint32 - protocol type as returned by fi_info
+#define ORTE_CONDUIT_ID     (ORTE_OFI_START_KEY + 3)    //uint8 - conduit_id for this transport         
+#define ORTE_TRANSPORT      "orte.rml.transport"
+
+/*** RML ATTRIBUTE keys to select a conduit ***/
+/***                                        ***/
+// comma delimited list of RML component names to be considered (ex.)oob,ofi
+#define ORTE_RML_INCLUDE_COMP_ATTRIB    (ORTE_OFI_START_KEY + 4) //"orte.rml.include_components"   
+// comma delimited list of RML component names to be excluded (ex.)oob,ofi
+#define ORTE_RML_EXCLUDE_COMP_ATTRIB    (ORTE_OFI_START_KEY + 5) //"orte.rml.exclude_components"
+// comma delimited list of transport to be considered (ex.)fabric, ethernet
+#define ORTE_RML_TRANSPORT_ATTRIB       (ORTE_OFI_START_KEY + 6) //"orte.rml.transport"    
+// comma delimited list of qualifier (ex) routed=direct,bandwidth=xxx
+#define ORTE_RML_QUALIFIER_ATTRIB       (ORTE_OFI_START_KEY + 7) //"orte.rml.qualifier"
+// comma delimited list of OFI provider name to be considered
+#define ORTE_RML_OFI_PROV_NAME_ATTRIB   (ORTE_OFI_START_KEY + 8) //"orte.rml.prov.name"   
+// comma delimited list of OFI protocol to be considered
+#define ORTE_RML_OFI_PROTOCOL_ATTRIB    (ORTE_OFI_START_KEY + 9) //"orte.rml.protocol"     
 
 #define ORTE_RML_TAG_NTOH(t) ntohl(t)
 #define ORTE_RML_TAG_HTON(t) htonl(t)
@@ -187,7 +205,7 @@ BEGIN_C_DECLS
  * Message matching tag.  Unlike MPI, there is no wildcard receive,
  * all messages must match exactly. Tag values less than
  * ORTE_RML_TAG_DYNAMIC are reserved and may only be referenced using
- * a defined constant.
+ * a defined constant. 
  */
 typedef uint32_t orte_rml_tag_t;
 

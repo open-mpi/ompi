@@ -29,9 +29,8 @@
 
 #include "rml_oob.h"
 
-char* orte_rml_oob_get_uri(void *mod)
+char* orte_rml_oob_get_uri()
 {
-    orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
     char *ret;
 
     ORTE_OOB_GET_URI(&ret);
@@ -39,18 +38,14 @@ char* orte_rml_oob_get_uri(void *mod)
 }
 
 
-void orte_rml_oob_set_uri(void *mod,
-                          const char* uri)
+void orte_rml_oob_set_uri( const char* uri)
 {
-    orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
     ORTE_OOB_SET_URI(uri);
 }
 
 
-void orte_rml_oob_purge(void *mod,
-                        orte_process_name_t *peer)
+void orte_rml_oob_purge(orte_process_name_t *peer)
 {
-orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
 
 #if 0
     opal_list_item_t *item, *next;
@@ -59,7 +54,7 @@ orte_rml_oob_module_t *module = (orte_rml_oob_module_t*)mod;
     orte_process_name_t step;
     orte_ns_cmp_bitmask_t mask;
 
-    /* clear our message queue */
+    /*  clear our message queue */
     item = opal_list_get_first(&orte_rml_oob_module.queued_routing_messages);
     while (item != opal_list_get_end(&orte_rml_oob_module.queued_routing_messages)) {
         next = opal_list_get_next(item);
