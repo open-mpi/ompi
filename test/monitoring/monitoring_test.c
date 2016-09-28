@@ -78,8 +78,10 @@ I       3       2       20 bytes        4 msgs sent
 
 static MPI_T_pvar_handle flush_handle;
 static const char flush_pvar_name[] = "pml_monitoring_flush";
+static const char flush_cvar_name[] = "pml_monitoring_enable";
+static const void*nullbuf = NULL;
 static int flush_pvar_idx;
-static int with_mpit = 0;
+static int with_mpit = 1;
 
 int main(int argc, char* argv[])
 {
@@ -89,7 +91,6 @@ int main(int argc, char* argv[])
     MPI_Comm newcomm;
     MPI_Request request;
     char filename[1024];
-
 
     /* first phase : make a token circulated in MPI_COMM_WORLD */
     n = -1;
@@ -179,10 +180,10 @@ int main(int argc, char* argv[])
                    flush_pvar_name);
             MPI_Abort(MPI_COMM_WORLD, MPIT_result);
         }
-        /* Don't set a filename. If we stop the session before setting it, then no output ile
+        /* Don't set a filename. If we stop the session before setting it, then no output
          * will be generated.
          */
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, NULL) ) {
+        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf ) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
         }
     }
