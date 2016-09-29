@@ -17,6 +17,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -483,6 +485,13 @@ int ompi_mpi_finalize(void)
 
     if (OPAL_SUCCESS != (ret = opal_finalize_util())) {
         goto done;
+    }
+
+    if (0 == opal_initialized) {
+        /* if there is no MPI_T_init_thread that has been MPI_T_finalize'd,
+         * then be gentle to the app and release all the memory now (instead
+         * of the opal library destructor */
+        opal_class_finalize();
     }
 
     /* All done */
