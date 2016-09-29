@@ -44,7 +44,7 @@ mca_pml_monitoring_set_flush(struct mca_base_pvar_t *pvar, const void *value, vo
     if( NULL != mca_pml_monitoring_current_filename ) {
         free(mca_pml_monitoring_current_filename);
     }
-    if( NULL == *(char**)value ) {  /* No more output */
+    if( NULL == *(char**)value || 0 == strlen((char*)value) ) {  /* No more output */
         mca_pml_monitoring_current_filename = NULL;
     } else {
         mca_pml_monitoring_current_filename = strdup((char*)value);
@@ -234,11 +234,6 @@ static int mca_pml_monitoring_component_finish(void)
         /* Call the original PML and then close */
         mca_pml_monitoring_active = 0;
         mca_pml_monitoring_enabled = 0;
-        /* Free the now useless output filename */
-        if( NULL != mca_pml_monitoring_current_filename ) {
-            free(mca_pml_monitoring_current_filename);
-            mca_pml_monitoring_current_filename = NULL;
-        }
         /* Restore the original PML */
         mca_pml_base_selected_component = pml_selected_component;
         mca_pml = pml_selected_module;
@@ -281,7 +276,7 @@ static int mca_pml_monitoring_component_register(void)
      * close, we need to keep a safe copy of the filename.
      */
     if( NULL != mca_pml_monitoring_current_filename )
-      mca_pml_monitoring_current_filename = strdup(mca_pml_monitoring_current_filename);
+        mca_pml_monitoring_current_filename = strdup(mca_pml_monitoring_current_filename);
 
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count", "Number of messages "
                                  "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
