@@ -199,7 +199,7 @@ static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
     if( 0 == filter_monitoring() ) return;  /* if disabled do nothing */
 
     for (int i = 0 ; i < nbprocs ; i++) {
-        if(sent_data[i] > 0) {
+        if(messages_count[i] > 0) {
             fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, sent_data[i], messages_count[i]);
         }
@@ -211,7 +211,7 @@ static void output_monitoring( FILE *pf, int my_rank, int nbprocs )
     if( 1 != filter_monitoring() ) return;
 
     for (int i = 0 ; i < nbprocs ; i++) {
-        if(filtered_sent_data[i] > 0) {
+        if(filtered_messages_count[i] > 0) {
             fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, filtered_sent_data[i], filtered_messages_count[i]);
         }
