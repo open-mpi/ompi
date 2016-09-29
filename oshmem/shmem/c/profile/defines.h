@@ -108,6 +108,24 @@
 #define shmem_iput128                pshmem_iput128
 
 /*
+ * Non-block data put routines
+ */
+#define shmem_char_put_nbi           pshmem_char_put_nbi
+#define shmem_short_put_nbi          pshmem_short_put_nbi
+#define shmem_int_put_nbi            pshmem_int_put_nbi
+#define shmem_long_put_nbi           pshmem_long_put_nbi
+#define shmem_float_put_nbi          pshmem_float_put_nbi
+#define shmem_double_put_nbi         pshmem_double_put_nbi
+#define shmem_longlong_put_nbi       pshmem_longlong_put_nbi
+#define shmem_longdouble_put_nbi     pshmem_longdouble_put_nbi
+#define shmem_put8_nbi               pshmem_put8_nbi
+#define shmem_put16_nbi              pshmem_put16_nbi
+#define shmem_put32_nbi              pshmem_put32_nbi
+#define shmem_put64_nbi              pshmem_put64_nbi
+#define shmem_put128_nbi             pshmem_put128_nbi
+#define shmem_putmem_nbi             pshmem_putmem_nbi
+
+/*
  * Elemental get routines
  */
 #define shmem_char_g                 pshmem_char_g
@@ -153,6 +171,24 @@
 #define shmem_iget32                 pshmem_iget32
 #define shmem_iget64                 pshmem_iget64
 #define shmem_iget128                pshmem_iget128
+
+/*
+ * Non-block data get routines
+ */
+#define shmem_char_get_nbi           pshmem_char_get_nbi
+#define shmem_short_get_nbi          pshmem_short_get_nbi
+#define shmem_int_get_nbi            pshmem_int_get_nbi
+#define shmem_long_get_nbi           pshmem_long_get_nbi
+#define shmem_float_get_nbi          pshmem_float_get_nbi
+#define shmem_double_get_nbi         pshmem_double_get_nbi
+#define shmem_longlong_get_nbi       pshmem_longlong_get_nbi
+#define shmem_longdouble_get_nbi     pshmem_longdouble_get_nbi
+#define shmem_get8_nbi               pshmem_get8_nbi
+#define shmem_get16_nbi              pshmem_get16_nbi
+#define shmem_get32_nbi              pshmem_get32_nbi
+#define shmem_get64_nbi              pshmem_get64_nbi
+#define shmem_get128_nbi             pshmem_get128_nbi
+#define shmem_getmem_nbi             pshmem_getmem_nbi
 
 /*
  * Atomic operations

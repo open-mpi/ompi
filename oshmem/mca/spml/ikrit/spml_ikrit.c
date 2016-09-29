@@ -221,6 +221,7 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_ikrit_put,
         mca_spml_ikrit_put_nb,
         mca_spml_ikrit_get,
+        mca_spml_ikrit_get_nb,
         mca_spml_ikrit_recv,
         mca_spml_ikrit_send,
         mca_spml_base_wait,
@@ -869,6 +870,15 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
     memcpy(dst_addr, (void *) (unsigned long) rva, size);
     opal_progress();
     return OSHMEM_SUCCESS;
+}
+
+int mca_spml_ikrit_get_nb(void* src_addr,
+                          size_t size,
+                          void* dst_addr,
+                          int src,
+                          void **handle)
+{
+    return mca_spml_ikrit_get_async(src_addr, size, dst_addr, src);
 }
 
 int mca_spml_ikrit_get(void *src_addr, size_t size, void *dst_addr, int src)
