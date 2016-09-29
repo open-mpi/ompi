@@ -13,6 +13,8 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,11 +62,6 @@ extern bool opal_init_called;
 
 static void __opal_attribute_destructor__ opal_cleanup (void)
 {
-    if (!opal_initialized) {
-        /* nothing to do */
-        return;
-    }
-
     /* finalize the class/object system */
     opal_class_finalize();
 }
