@@ -25,8 +25,8 @@ ompidir = $(ompiincludedir)/ompi/mpi/java
 ompi_HEADERS = \
         $(headers)
 
-lib_LTLIBRARIES = libmpi_java.la
-libmpi_java_la_SOURCES = \
+lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_java.la
+lib@OMPI_LIBMPI_NAME@_java_la_SOURCES = \
 	mpi_CartComm.c \
 	mpi_Comm.c \
 	mpi_Constant.c \
@@ -47,7 +47,7 @@ libmpi_java_la_SOURCES = \
 	mpi_Status.c \
 	mpi_Win.c
 
-libmpi_java_la_LIBADD = -ldl $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
-libmpi_java_la_LDFLAGS = -version-info $(libmpi_java_so_version)
+lib@OMPI_LIBMPI_NAME@_java_la_LIBADD = -ldl $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+lib@OMPI_LIBMPI_NAME@_java_la_LDFLAGS = -version-info $(libmpi_java_so_version)
 
 endif

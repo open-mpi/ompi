@@ -125,7 +125,7 @@ elsif (basename($0) eq "mpifort" ||
     # no extra includes for Fortran.
     $comp_flags = $extra_fcflags;
     $comp_flags_prefix = $extra_fcflags_prefix;
-    $libs = $fortran_libs . " -lmpi_mpifh " . $libs;
+    $libs = $fortran_libs . " -l".$ompi_libmpi_name."_mpifh " . $libs;
 }
 
 if ($lang eq "none") {
