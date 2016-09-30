@@ -14,6 +14,7 @@ dnl Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -500,7 +501,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
       # support.  However, we do want it to fail if there is no C++
       # compiler.
        if test "$WANT_MPI_CXX_SUPPORT" = "1" ; then
-          OMPI_WRAPPER_CXX_LIB="-lmpi_cxx"
+          OMPI_WRAPPER_CXX_LIB="-l${with_libmpi_name}_cxx"
           OMPI_WRAPPER_CXX_REQUIRED_FILE=""
        elif test "$CXX" = "none"; then
           OMPI_WRAPPER_CXX_LIB=""
