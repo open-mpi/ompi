@@ -877,9 +877,8 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
        all IP options are enabled, which is 60 bytes), and then also
        subtract off the UDP header (which is 8 bytes).  So we need to
        subtract off 68 bytes from the MTU, and that's the largest ping
-       payload we can send.
-       max_msg_size allows for minimal UDP header, be more conservative */
-    ap->sizes[1] = cmd.max_msg_size - (68 - 42);
+       payload we can send. */
+    ap->sizes[1] = cmd.max_msg_size - 68;
 
     /* Allocate a buffer for each size.  Make sure the smallest size
        is at least sizeof(agent_udp_message_t). */
