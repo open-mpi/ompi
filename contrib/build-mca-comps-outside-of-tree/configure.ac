@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -154,7 +155,7 @@ EOF
              # Open MPI v1.7 libraries
              LDFLAGS="$LDFLAGS -L$withval/ompi/.libs"
              # For OMPI v1.7 and later
-             LIBS="$LIBS -lmpi"
+             LIBS="$LIBS -l@OMPI_LIBMPI_NAME@"
 
              CPPFLAGS="$CPPFLAGS $source_CPPFLAGS"
              CFLAGS="$CFLAGS $source_CFLAGS"

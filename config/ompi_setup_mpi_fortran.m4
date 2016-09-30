@@ -17,6 +17,7 @@ dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2014-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -340,9 +341,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
           [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
            AS_IF([test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
                  [OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-ignore-tkr
-                  OMPI_FORTRAN_USEMPI_LIB=-lmpi_usempi_ignore_tkr],
+                  OMPI_FORTRAN_USEMPI_LIB=-l${with_libmpi_name}_usempi_ignore_tkr],
                  [OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-tkr
-                  OMPI_FORTRAN_USEMPI_LIB=-lmpi_usempi])
+                  OMPI_FORTRAN_USEMPI_LIB=-l${with_libmpi_name}_usempi])
           ])
 
     OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
@@ -574,7 +575,7 @@ end type test_mpi_handle],
 
     AC_MSG_CHECKING([if building Fortran 'use mpi_f08' bindings])
     AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
-          [OMPI_FORTRAN_USEMPIF08_LIB=-lmpi_usempif08
+          [OMPI_FORTRAN_USEMPIF08_LIB=-l${with_libmpi_name}_usempif08
            AC_MSG_RESULT([yes])],
           [OMPI_TRY_FORTRAN_BINDIGS=$OMPI_FORTRAN_USEMPI_BINDINGS
            AC_MSG_RESULT([no])])
