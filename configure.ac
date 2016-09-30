@@ -276,6 +276,8 @@ fi
 OPAL_SET_LIB_PREFIX([])
 m4_ifdef([project_orte],
           [ORTE_SET_LIB_PREFIX([])])
+m4_ifdef([project_ompi],
+          [OMPI_SET_LIB_NAME([])])
 
 ############################################################################
 # Libtool: part one

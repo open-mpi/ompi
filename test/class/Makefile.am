@@ -13,6 +13,7 @@
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -83,7 +84,7 @@ opal_value_array_DEPENDENCIES = $(opal_value_array_LDADD)
 
 ompi_rb_tree_SOURCES = ompi_rb_tree.c
 ompi_rb_tree_LDADD = \
-        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
 	$(top_builddir)/test/support/libsupport.a
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)

@@ -17,6 +17,7 @@
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -127,9 +128,9 @@ DIST_SUBDIRS = \
 
 # Build the main MPI library
 
-lib_LTLIBRARIES = libmpi.la
-libmpi_la_SOURCES =
-libmpi_la_LIBADD = \
+lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@.la
+lib@OMPI_LIBMPI_NAME@_la_SOURCES =
+lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
         datatype/libdatatype.la \
         debuggers/libdebuggers.la \
         mpi/c/libmpi_c.la \
@@ -143,13 +144,13 @@ libmpi_la_LIBADD = \
 
 
 if OMPI_RTE_ORTE
-libmpi_la_LIBADD += \
+lib@OMPI_LIBMPI_NAME@_la_LIBADD += \
         $(OMPI_TOP_BUILDDIR)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
 endif
-libmpi_la_LIBADD += \
+lib@OMPI_LIBMPI_NAME@_la_LIBADD += \
         $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
-libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
-libmpi_la_LDFLAGS = \
+lib@OMPI_LIBMPI_NAME@_la_DEPENDENCIES = $(lib@OMPI_LIBMPI_NAME@_la_LIBADD)
+lib@OMPI_LIBMPI_NAME@_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \
         $(OMPI_LIBMPI_EXTRA_LDFLAGS)
 
@@ -158,7 +159,7 @@ headers =
 noinst_LTLIBRARIES =
 include_HEADERS =
 dist_ompidata_DATA =
-libmpi_la_SOURCES += $(headers)
+lib@OMPI_LIBMPI_NAME@_la_SOURCES += $(headers)
 nodist_man_MANS =
 
 # Conditionally install the header files

@@ -15,6 +15,7 @@
 #                         reserved.
 # Copyright (c) 2014-2015 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -49,7 +50,7 @@ lib_LTLIBRARIES =
 
 # Add the f90 library to the list of libraries to build
 
-lib_LTLIBRARIES += libmpi_usempi.la
+lib_LTLIBRARIES += lib@OMPI_LIBMPI_NAME@_usempi.la
 
 # Automake doesn't know how to do F90 dependency analysis, so manually
 # list this here (i.e., "mpi-f90-interfaces.h" is included in
@@ -65,7 +66,7 @@ mpi.lo: mpi-f90-cptr-interfaces.F90
 # buffer dummy argument.  We therefore really only need to build a
 # handful of subroutines.
 
-libmpi_usempi_la_SOURCES = \
+lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES = \
      mpi.F90 \
      mpi_aint_add_f90.f90 \
      mpi_aint_diff_f90.f90 \
@@ -79,9 +80,9 @@ libmpi_usempi_la_SOURCES = \
 
 # Don't distribute mpi-tkr-sizeof-*; they're generated.
 
-nodist_libmpi_usempi_la_SOURCES =
+nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES =
 if BUILD_FORTRAN_SIZEOF
-nodist_libmpi_usempi_la_SOURCES += \
+nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES += \
      mpi-tkr-sizeof.h \
      mpi-tkr-sizeof.f90
 endif
@@ -90,12 +91,12 @@ endif
 # libmpi_usempi.la, so we need to link in the OPAL library directly
 # (pulling it in indirectly via libmpi.la does not work on all
 # platforms).
-libmpi_usempi_la_LIBADD = \
-        $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
+lib@OMPI_LIBMPI_NAME@_usempi_la_LIBADD = \
+        $(top_builddir)/ompi/mpi/fortran/mpif-h/lib@OMPI_LIBMPI_NAME@_mpifh.la \
         $(OMPI_MPIEXT_USEMPI_LIBS) \
         $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 # Set the library version
-libmpi_usempi_la_LDFLAGS = \
+lib@OMPI_LIBMPI_NAME@_usempi_la_LDFLAGS = \
         -version-info $(libmpi_usempi_tkr_so_version) \
         $(OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS)
 
@@ -132,7 +133,7 @@ mpi-tkr-sizeof.f90:
 
 CLEANFILES += mpi-tkr-sizeof.h mpi-tkr-sizeof.f90
 MOSTLYCLEANFILES = *.mod
-DISTCLEANFILES = $(nodist_libmpi_usempi_la_SOURCES)
+DISTCLEANFILES = $(nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES)
 
 #
 # Install the generated .mod files.  Unfortunately, each F90 compiler
