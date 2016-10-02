@@ -40,6 +40,7 @@
 #include "opal/mca/pmix/pmix_types.h"
 
 #include <pmix_common.h>
+#include <pmix.h>
 
 /****    C.O.M.M.O.N   I.N.T.E.R.F.A.C.E.S     ****/
 
@@ -61,6 +62,10 @@ static int notify_event(int status,
                         opal_pmix_data_range_t range,
                         opal_list_t *info,
                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+static void pmix3x_query(opal_list_t *queries,
+                         opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+static void pmix3x_log(opal_list_t *info,
+                       opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
     /* client APIs */
@@ -88,6 +93,8 @@ const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
     .disconnect_nb = pmix3x_disconnectnb,
     .resolve_peers = pmix3x_resolve_peers,
     .resolve_nodes = pmix3x_resolve_nodes,
+    .query = pmix3x_query,
+    .log = pmix3x_log,
     /* server APIs */
     .server_init = pmix3x_server_init,
     .server_finalize = pmix3x_server_finalize,
@@ -1291,6 +1298,65 @@ static int notify_event(int status,
      * and we are going to access framework-global lists/objects */
     OPAL_PMIX_NOTIFY_THREADSHIFT(status, source, range, info, _notify_event, cbfunc, cbdata);
     return OPAL_SUCCESS;
+}
+
+static void pmix3x_query(opal_list_t *queries,
+                         opal_pmix_info_cbfunc_t cbfunc, void *cbdata)
+{
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_ERR_NOT_SUPPORTED, NULL, cbdata, NULL, NULL);
+    }
+    return;
+}
+
+static void opcbfunc(pmix_status_t status, void *cbdata)
+{
+    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
+
+    if (NULL != op->opcbfunc) {
+        op->opcbfunc(pmix3x_convert_rc(status), op->cbdata);
+    }
+    OBJ_RELEASE(op);
+}
+
+static void pmix3x_log(opal_list_t *info,
+                       opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    int rc;
+    opal_value_t *ival;
+    size_t n, ninfo;
+    pmix3x_opcaddy_t *cd;
+
+    /* bozo check */
+    if (NULL == info || 0 == (ninfo = opal_list_get_size(info))) {
+        rc = OPAL_ERR_BAD_PARAM;
+        goto CLEANUP;
+    }
+
+    /* setup the operation */
+    cd = OBJ_NEW(pmix3x_opcaddy_t);
+    cd->opcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    cd->ninfo = ninfo;
+
+    /* convert the list to an array of info objects */
+    PMIX_INFO_CREATE(cd->info, cd->ninfo);
+    n=0;
+    OPAL_LIST_FOREACH(ival, info, opal_value_t) {
+        (void)strncpy(cd->info[n].key, ival->key, PMIX_MAX_KEYLEN);
+        pmix3x_value_load(&cd->info[n].value, ival);
+        ++n;
+    }
+
+    /* pass it down */
+    PMIx_Log_nb(cd->info, cd->ninfo, NULL, 0,
+                opcbfunc, cd);
+    return;
+
+  CLEANUP:
+    if (NULL != cbfunc) {
+        cbfunc(rc, cbdata);
+    }
 }
 
 /****  INSTANTIATE INTERNAL CLASSES  ****/

@@ -201,6 +201,10 @@ BEGIN_C_DECLS
                                                                         //     procs in job on same node
 #define OPAL_PMIX_QUERY_AUTHORIZATIONS          "pmix.qry.auths"        // return operations tool is authorized to perform"
 
+/* log attributes */
+#define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"        // (bool) log data to stderr
+#define OPAL_PMIX_LOG_STDOUT                    "pmix.log.stdout"        // (bool) log data to stdout
+#define OPAL_PMIX_LOG_SYSLOG                    "pmix.log.syslog"        // (bool) log data to syslog - defaults to ERROR priority unless
 
 /* define a scope for data "put" by PMI per the following:
  *

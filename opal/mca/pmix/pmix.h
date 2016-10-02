@@ -786,6 +786,14 @@ typedef const char* (*opal_pmix_base_module_get_nspace_fn_t)(opal_jobid_t jobid)
 /* register a jobid-to-nspace pair */
 typedef void (*opal_pmix_base_module_register_jobid_fn_t)(opal_jobid_t jobid, const char *nspace);
 
+/* query information from the system */
+typedef void (*opal_pmix_base_module_query_fn_t)(opal_list_t *queries,
+                                                 opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* log data to the system */
+typedef void (*opal_pmix_base_log_fn_t)(opal_list_t *info,
+                                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+
 /*
  * the standard public API data structure
  */
@@ -815,6 +823,8 @@ typedef struct {
     opal_pmix_base_module_disconnect_nb_fn_t                disconnect_nb;
     opal_pmix_base_module_resolve_peers_fn_t                resolve_peers;
     opal_pmix_base_module_resolve_nodes_fn_t                resolve_nodes;
+    opal_pmix_base_module_query_fn_t                        query;
+    opal_pmix_base_log_fn_t                                 log;
     /* server APIs */
     opal_pmix_base_module_server_init_fn_t                  server_init;
     opal_pmix_base_module_server_finalize_fn_t              server_finalize;
