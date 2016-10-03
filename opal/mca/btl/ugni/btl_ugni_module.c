@@ -3,7 +3,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -144,13 +144,10 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
 
     /* close all open connections and release endpoints */
     if (ugni_module->initialized) {
-        rc = opal_hash_table_get_first_key_uint64 (&ugni_module->id_to_endpoint, &key, (void **) &ep, &node);
-        while (OPAL_SUCCESS == rc) {
+        OPAL_HASH_TABLE_FOREACH(key, uint64, ep, &ugni_module->id_to_endpoint) {
             if (NULL != ep) {
                 mca_btl_ugni_release_ep (ep);
             }
-
-            rc = opal_hash_table_get_next_key_uint64 (&ugni_module->id_to_endpoint, &key, (void **) &ep, node, &node);
         }
 
         if (mca_btl_ugni_component.progress_thread_enabled) {

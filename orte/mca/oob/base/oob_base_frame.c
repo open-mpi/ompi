@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -79,8 +79,6 @@ static int orte_oob_base_close(void)
     mca_base_component_list_item_t *cli;
     opal_object_t *value;
     uint64_t key;
-    void *node;
-    int rc;
 
     /* shutdown all active transports */
     while (NULL != (cli = (mca_base_component_list_item_t *) opal_list_remove_first (&orte_oob_base.actives))) {
@@ -95,14 +93,10 @@ static int orte_oob_base_close(void)
     OBJ_DESTRUCT(&orte_oob_base.actives);
 
     /* release all peers from the hash table */
-    rc = opal_hash_table_get_first_key_uint64 (&orte_oob_base.peers, &key,
-                                               (void **) &value, &node);
-    while (OPAL_SUCCESS == rc) {
+    OPAL_HASH_TABLE_FOREACH(key, uint64, value, &orte_oob_base.peers) {
         if (NULL != value) {
             OBJ_RELEASE(value);
         }
-        rc = opal_hash_table_get_next_key_uint64 (&orte_oob_base.peers, &key,
-                                                  (void **) &value, node, &node);
     }
 
     OBJ_DESTRUCT(&orte_oob_base.peers);

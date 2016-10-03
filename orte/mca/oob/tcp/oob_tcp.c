@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -147,28 +149,16 @@ static void tcp_init(void)
 static void tcp_fini(void)
 {
     uint64_t ui64;
-    char *nptr;
     mca_oob_tcp_peer_t *peer;
 
     /* cleanup all peers */
-    if (OPAL_SUCCESS == opal_hash_table_get_first_key_uint64(&mca_oob_tcp_module.peers, &ui64,
-                                                             (void**)&peer, (void**)&nptr)) {
+    OPAL_HASH_TABLE_FOREACH(ui64, uint64, peer, &mca_oob_tcp_module.peers) {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
                             "%s RELEASING PEER OBJ %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
         if (NULL != peer) {
             OBJ_RELEASE(peer);
-        }
-        while (OPAL_SUCCESS == opal_hash_table_get_next_key_uint64(&mca_oob_tcp_module.peers, &ui64,
-                                                                   (void**)&peer, nptr, (void**)&nptr)) {
-            opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                                "%s RELEASING PEER OBJ %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
-            if (NULL != peer) {
-                OBJ_RELEASE(peer);
-            }
         }
     }
     OBJ_DESTRUCT(&mca_oob_tcp_module.peers);
