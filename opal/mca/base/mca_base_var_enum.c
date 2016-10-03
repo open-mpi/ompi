@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -615,6 +617,7 @@ static void mca_base_var_enum_flag_constructor (mca_base_var_enum_flag_t *enumer
     enumerator->super.string_from_value = enum_string_from_value_flag;
     enumerator->super.dump = enum_dump_flag;
     enumerator->super.enum_is_static = false;
+    enumerator->super.enum_name = NULL;
 }
 
 static void mca_base_var_enum_flag_destructor (mca_base_var_enum_flag_t *enumerator)
@@ -625,5 +628,8 @@ static void mca_base_var_enum_flag_destructor (mca_base_var_enum_flag_t *enumera
             free ((void *) enumerator->enum_flags[i].string);
         }
         free (enumerator->enum_flags);
+    }
+    if (NULL != enumerator->super.enum_name) {
+        free (enumerator->super.enum_name);
     }
 }
