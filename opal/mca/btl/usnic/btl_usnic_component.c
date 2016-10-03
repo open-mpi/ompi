@@ -590,25 +590,6 @@ static void free_filter(usnic_if_filter_t *filter)
     free(filter);
 }
 
-static int do_fi_getinfo(uint32_t version, struct fi_info **info_list)
-{
-    struct fi_info hints = {0};
-    struct fi_ep_attr ep_attr = {0};
-    struct fi_fabric_attr fabric_attr = {0};
-
-    /* We only want providers named "usnic" that are of type EP_DGRAM */
-    fabric_attr.prov_name = "usnic";
-    ep_attr.type = FI_EP_DGRAM;
-
-    hints.caps = FI_MSG;
-    hints.mode = FI_LOCAL_MR | FI_MSG_PREFIX;
-    hints.addr_format = FI_SOCKADDR;
-    hints.ep_attr = &ep_attr;
-    hints.fabric_attr = &fabric_attr;
-
-    return fi_getinfo(version, NULL, 0, 0, &hints, info_list);
-}
-
 /*
  *  UD component initialization:
  *  (1) read interface list from kernel and compare against component
@@ -652,62 +633,93 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     OBJ_CONSTRUCT(&btl_usnic_lock, opal_recursive_mutex_t);
 
-    /* This code understands libfabric API versions v1.0, v1.1, and
-       v1.4.  Even if we were compiled with libfabric API v1.0, we
-       still want to request v1.1 -- here's why:
+    /* There are multiple dimensions to consider when requesting an
+       API version number from libfabric:
 
-       - In libfabric v1.0.0 (i.e., API v1.0), the usnic provider did
-         not check the value of the "version" parameter passed into
-         fi_getinfo()
+       1. This code understands libfabric API versions v1.3 through
+          v1.4.
 
-       - If you pass FI_VERSION(1,0) to libfabric v1.1.0 (i.e., API
-         v1.1), the usnic provider will disable FI_MSG_PREFIX support
-         (on the assumption that the application will not handle
-         FI_MSG_PREFIX properly).  This can happen if you compile OMPI
-         against libfabric v1.0.0 (i.e., API v1.0) and run OMPI
-         against libfabric v1.1.0 (i.e., API v1.1).
+       2. Open MPI may be *compiled* against one version of libfabric,
+          but may be *running* with another.
 
-       So never request API v1.0 -- always request a minimum of
-       v1.1.
+       3. There were usnic-specific bugs in Libfabric prior to
+          libfabric v1.3.0 (where "v1.3.0" is the tarball/package
+          version, not the API version; but happily, the API version
+          was also 1.3 in Libfabric v1.3.0):
 
-       The usnic provider changed the strings in the fabric and domain
-       names in API v1.4.  With API <= v1.3:
+          - In libfabric v1.0.0 (i.e., API v1.0), the usnic provider
+            did not check the value of the "version" parameter passed
+            into fi_getinfo()
+          - If you pass FI_VERSION(1,0) to libfabric v1.1.0 (i.e., API
+            v1.1), the usnic provider will disable FI_MSG_PREFIX
+            support (on the assumption that the application will not
+            handle FI_MSG_PREFIX properly).  This can happen if you
+            compile OMPI against libfabric v1.0.0 (i.e., API v1.0) and
+            run OMPI against libfabric v1.1.0 (i.e., API v1.1).
+          - Some critical AV bug fixes were included in libfabric
+            v1.3.0; prior versions can fail in fi_av_* operations in
+            unexpected ways (libnl: you win again!).
+
+       So always request a minimum API version of v1.3.
+
+       Note that the FI_MAJOR_VERSION and FI_MINOR_VERSION in
+       <rdma/fabric.h> represent the API version, not the Libfabric
+       package (i.e., tarball) version.  As of Libfabric v1.3, there
+       is currently no way to know a) what package version of
+       Libfabric you were compiled against, and b) what package
+       version of Libfabric you are running with.
+
+       Also note that the usnic provider changed the strings in the
+       fabric and domain names in API v1.4.  With API <= v1.3:
 
        - fabric name is "usnic_X" (device name)
        - domain name is NULL
 
-       With libfabric API >= v1.4:
+       With libfabric API >= v1.4, all Libfabric IP-based providers
+       (including usnic) follow the same convention:
 
        - fabric name is "a.b.c.d/e" (CIDR notation of network)
        - domain name is "usnic_X" (device name)
 
        NOTE: The configure.m4 in this component will require libfabric
-       >= v1.1.0 (i.e., it won't accept v1.0.0) because of a critical
-       bug in the usnic provider in libfabric v1.0.0.  However, the
-       compatibility code with libfabric v1.0.0 in the usNIC BTL has
-       been retained, for two reasons:
+       >= v1.1.0 (i.e., it won't accept v1.0.0) because it needs
+       access to the usNIC extension header structures that only
+       became available in v1.1.0.*/
 
-       1. It's not harmful, nor overly complicated.  So the
-          compatibility code was not ripped out.
-       2. At least some versions of Cisco Open MPI are shipping with
-          an embedded (libfabric v1.0.0+critical bug fix).
-
-       Someday, #2 may no longer be true, and we may therefore rip out
-       the libfabric v1.0.0 compatibility code. */
-
-    /* First try API version 1.4.  If that doesn't work, try API
-       version 1.1. */
+    /* First, check to see if the libfabric we are running with is <=
+       libfabric v1.3.  If so, don't bother going further. */
     uint32_t libfabric_api;
-    libfabric_api = FI_VERSION(1, 4);
-    ret = do_fi_getinfo(libfabric_api, &info_list);
-    // Libfabric core will return -FI_ENOSYS if it is too old
-    if (-FI_ENOSYS == ret) {
-        libfabric_api = FI_VERSION(1, 1);
-        ret = do_fi_getinfo(libfabric_api, &info_list);
+    libfabric_api = fi_version();
+    if (libfabric_api < FI_VERSION(1, 3)) {
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic: disqualifiying myself because Libfabric does not support v1.3 of the API (v1.3 is *required* for correct usNIC functionality).");
+        return NULL;
     }
+
+    /* Libfabric API 1.3 is fine.  Above that, we know that Open MPI
+       works with libfabric API v1.4, so just use that. */
+    if (libfabric_api > FI_VERSION(1, 3)) {
+        libfabric_api = FI_VERSION(1, 4);
+    }
+
+    struct fi_info hints = {0};
+    struct fi_ep_attr ep_attr = {0};
+    struct fi_fabric_attr fabric_attr = {0};
+
+    /* We only want providers named "usnic" that are of type EP_DGRAM */
+    fabric_attr.prov_name = "usnic";
+    ep_attr.type = FI_EP_DGRAM;
+
+    hints.caps = FI_MSG;
+    hints.mode = FI_LOCAL_MR | FI_MSG_PREFIX;
+    hints.addr_format = FI_SOCKADDR;
+    hints.ep_attr = &ep_attr;
+    hints.fabric_attr = &fabric_attr;
+
+    ret = fi_getinfo(libfabric_api, NULL, 0, 0, &hints, &info_list);
     if (0 != ret) {
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: disqualifiying myself due to fi_getinfo failure: %s (%d)", strerror(-ret), ret);
+                            "btl:usnic: disqualifiying myself due to fi_getinfo(3) failure: %s (%d)", strerror(-ret), ret);
         return NULL;
     }
 
@@ -737,29 +749,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: usNIC fabrics found");
-
-    /* Due to ambiguities in documentation, in libfabric v1.0.0 (i.e.,
-       API v1.0) the usnic provider returned sizeof(struct
-       fi_cq_err_entry) from fi_cq_readerr() upon success.
-
-       The ambiguities were clarified in libfabric v1.1.0 (i.e., API
-       v1.1); the usnic provider returned 1 from fi_cq_readerr() upon
-       success.
-
-       So query to see what version of the libfabric API we are
-       running with, and adapt accordingly. */
-    libfabric_api = fi_version();
-    if (1 == FI_MAJOR(libfabric_api) &&
-        0 == FI_MINOR(libfabric_api)) {
-        // Old fi_cq_readerr() behavior: success=sizeof(...), try again=0
-        mca_btl_usnic_component.cq_readerr_success_value =
-            sizeof(struct fi_cq_err_entry);
-        mca_btl_usnic_component.cq_readerr_try_again_value = 0;
-    } else {
-        // New fi_cq_readerr() behavior: success=1, try again=-FI_EAGAIN
-        mca_btl_usnic_component.cq_readerr_success_value = 1;
-        mca_btl_usnic_component.cq_readerr_try_again_value = -FI_EAGAIN;
-    }
 
     opal_proc_t *me = opal_proc_local_get();
     opal_process_name_t *name = &(me->proc_name);
@@ -1256,12 +1245,11 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
     }
 
     rc = fi_cq_readerr(channel->cq, &err_entry, 0);
-    if (rc == mca_btl_usnic_component.cq_readerr_try_again_value) {
+    if (rc == -FI_EAGAIN) {
         return;
-    } else if (rc != mca_btl_usnic_component.cq_readerr_success_value) {
-        BTL_ERROR(("%s: cq_readerr ret = %d (expected %d)",
-                   module->linux_device_name, rc,
-                   (int) mca_btl_usnic_component.cq_readerr_success_value));
+    } else if (rc != 1) {
+        BTL_ERROR(("%s: cq_readerr ret = %d (expected 1)",
+                   module->linux_device_name, rc));
         channel->chan_error = true;
     }
 
