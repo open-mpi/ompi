@@ -481,18 +481,27 @@ void pmix_server_log_fn(opal_process_name_t *requestor,
                         void *cbdata)
 {
     opal_value_t *val;
+    opal_buffer_t *buf;
+    int rc;
 
     /* for now, we only support logging show_help messages */
     OPAL_LIST_FOREACH(val, info, opal_value_t) {
         /* we ignore the key as irrelevant - we only want to
-         * pull out the string value */
-        if (OPAL_STRING != val->type) {
+         * pull out the blob */
+        if (OPAL_BYTE_OBJECT != val->type) {
             continue;
         }
-        opal_output(0, "SHOWHELP: %s", val->data.string);
+        buf = OBJ_NEW(opal_buffer_t);
+        opal_dss.load(buf, val->data.bo.bytes, val->data.bo.size);
+        val->data.bo.bytes = NULL;
+        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+                                                          ORTE_RML_TAG_SHOW_HELP,
+                                                          orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+        }
     }
     if (NULL != cbfunc) {
         cbfunc(OPAL_SUCCESS, cbdata);
     }
 }
-
