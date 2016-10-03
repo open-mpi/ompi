@@ -14,7 +14,7 @@
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -463,6 +463,28 @@ OPAL_DECLSPEC int opal_proc_table_get_next_key(opal_proc_table_t *pt, opal_proce
                                                void **value, void *in_node1, void **out_node1,
                                                void *in_node2, void **out_node2);
 
+/**
+ * Loop over a hash table.
+ *
+ * @param[in] key Key for each item
+ * @param[in] type Type of key (ui32|ui64|ptr)
+ * @param[in] value Storage for each item
+ * @param[in] ht Hash table to iterate over
+ *
+ * This macro provides a simple way to loop over the items in an opal_hash_table_t. It
+ * is not safe to call opal_hash_table_remove* from within the loop.
+ *
+ * Example Usage:
+ *
+ * uint64_t key;
+ * void * value;
+ * OPAL_HASH_TABLE_FOREACH(key, uint64, value, ht) {
+ *    do_something(key, value);
+ * }
+ */
+#define OPAL_HASH_TABLE_FOREACH(key, type, value, ht) \
+  for (void *_nptr=NULL;                                   \
+       OPAL_SUCCESS == opal_hash_table_get_next_key_##type(ht, &key, (void **)&value, _nptr, &_nptr);)
 
 END_C_DECLS
 
