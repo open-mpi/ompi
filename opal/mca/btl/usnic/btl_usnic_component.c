@@ -636,7 +636,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     /* There are multiple dimensions to consider when requesting an
        API version number from libfabric:
 
-       1. This code understands libfabric API versions v1.0 through
+       1. This code understands libfabric API versions v1.3 through
           v1.4.
 
        2. Open MPI may be *compiled* against one version of libfabric,
@@ -684,18 +684,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
        NOTE: The configure.m4 in this component will require libfabric
        >= v1.1.0 (i.e., it won't accept v1.0.0) because it needs
        access to the usNIC extension header structures that only
-       became available in v1.1.0.
-
-       All that being said, the compatibility code with libfabric
-       v1.0.0 in the usNIC BTL has been retained, for two reasons:
-
-       1. It's not harmful, nor overly complicated.  So the
-          compatibility code was not ripped out.
-       2. At least some versions of Cisco Open MPI are shipping with
-          an embedded (libfabric v1.0.0+critical bug fix).
-
-       Someday, #2 may no longer be true, and we may therefore rip out
-       the libfabric v1.0.0 compatibility code. */
+       became available in v1.1.0.*/
 
     /* First, check to see if the libfabric we are running with is <=
        libfabric v1.3.  If so, don't bother going further. */
@@ -760,29 +749,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: usNIC fabrics found");
-
-    /* Due to ambiguities in documentation, in libfabric v1.0.0 (i.e.,
-       API v1.0) the usnic provider returned sizeof(struct
-       fi_cq_err_entry) from fi_cq_readerr() upon success.
-
-       The ambiguities were clarified in libfabric v1.1.0 (i.e., API
-       v1.1); the usnic provider returned 1 from fi_cq_readerr() upon
-       success.
-
-       So query to see what version of the libfabric API we are
-       running with, and adapt accordingly. */
-    libfabric_api = fi_version();
-    if (1 == FI_MAJOR(libfabric_api) &&
-        0 == FI_MINOR(libfabric_api)) {
-        // Old fi_cq_readerr() behavior: success=sizeof(...), try again=0
-        mca_btl_usnic_component.cq_readerr_success_value =
-            sizeof(struct fi_cq_err_entry);
-        mca_btl_usnic_component.cq_readerr_try_again_value = 0;
-    } else {
-        // New fi_cq_readerr() behavior: success=1, try again=-FI_EAGAIN
-        mca_btl_usnic_component.cq_readerr_success_value = 1;
-        mca_btl_usnic_component.cq_readerr_try_again_value = -FI_EAGAIN;
-    }
 
     opal_proc_t *me = opal_proc_local_get();
     opal_process_name_t *name = &(me->proc_name);
@@ -1279,12 +1245,11 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
     }
 
     rc = fi_cq_readerr(channel->cq, &err_entry, 0);
-    if (rc == mca_btl_usnic_component.cq_readerr_try_again_value) {
+    if (rc == -FI_EAGAIN) {
         return;
-    } else if (rc != mca_btl_usnic_component.cq_readerr_success_value) {
-        BTL_ERROR(("%s: cq_readerr ret = %d (expected %d)",
-                   module->linux_device_name, rc,
-                   (int) mca_btl_usnic_component.cq_readerr_success_value));
+    } else if (rc != 1) {
+        BTL_ERROR(("%s: cq_readerr ret = %d (expected 1)",
+                   module->linux_device_name, rc));
         channel->chan_error = true;
     }
 
