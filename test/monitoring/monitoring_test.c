@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Inria.  All rights reserved.
+ * Copyright (c) 2013-2016 Inria.  All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
