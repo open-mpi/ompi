@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * NOTE: THE MUNGE CLIENT LIBRARY (libmunge) IS LICENSED AS LGPL
  *
@@ -17,6 +19,7 @@
 #include "src/include/pmix_globals.h"
 #include "src/util/argv.h"
 #include "src/util/output.h"
+#include "src/util/error.h"
 #include "src/usock/usock.h"
 
 #include <unistd.h>
