@@ -4,7 +4,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
- *
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,6 +86,8 @@ OPAL_DECLSPEC opal_event_base_t* opal_event_base_create(void);
 #define opal_event_base_free(x) event_base_free(x)
 
 OPAL_DECLSPEC int opal_event_init(void);
+
+OPAL_DECLSPEC int opal_event_finalize(void);
 
 #define opal_event_reinit(b) event_reinit((b))
 

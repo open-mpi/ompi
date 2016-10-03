@@ -5,6 +5,11 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  */
 #include "opal_config.h"
 #include "opal/constants.h"
@@ -115,6 +120,12 @@ int opal_event_init(void)
     }
     opal_argv_free(includes);
 
+    return OPAL_SUCCESS;
+}
+
+int opal_event_finalize(void)
+{
+    event_config_free(config);
     return OPAL_SUCCESS;
 }
 
