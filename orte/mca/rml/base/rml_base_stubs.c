@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -134,6 +134,7 @@ char* orte_rml_API_get_contact_info(void)
     }
     if (NULL != rc) {
         tmp = opal_argv_join(rc, ';');
+        opal_argv_free(rc);
     } else {
         tmp = NULL;
     }

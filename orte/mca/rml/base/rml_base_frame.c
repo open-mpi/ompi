@@ -102,9 +102,11 @@ static int orte_rml_base_close(void)
             if (NULL != comp && NULL != comp->close_conduit) {
                 comp->close_conduit(mod);
             }
+            free(mod);
         }
 
     }
+    OBJ_DESTRUCT(&orte_rml_base.conduits);
 
     OPAL_LIST_DESTRUCT(&orte_rml_base.actives)
 
