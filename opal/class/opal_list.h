@@ -12,6 +12,8 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -204,8 +206,8 @@ typedef struct opal_list_t opal_list_t;
  * Example Usage:
  *
  * class_foo_t *foo;
- * opal_list_foreach(foo, list, class_foo_t) {
- *    do something;
+ * OPAL_LIST_FOREACH(foo, list, class_foo_t) {
+ *    do something(foo);
  * }
  */
 #define OPAL_LIST_FOREACH(item, list, type)                             \
