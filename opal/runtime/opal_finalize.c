@@ -86,6 +86,8 @@ opal_finalize_util(void)
 
     (void) mca_base_framework_close(&opal_installdirs_base_framework);
 
+    mca_base_close();
+
     /* finalize the memory allocator */
     opal_malloc_finalize();
 
