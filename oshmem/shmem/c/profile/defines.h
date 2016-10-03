@@ -86,7 +86,9 @@
 #define shmem_double_put             pshmem_double_put
 #define shmem_longlong_put           pshmem_longlong_put
 #define shmem_longdouble_put         pshmem_longdouble_put
-#define shmemx_put16                 pshmemx_put16
+
+#define shmem_put8                   pshmem_put8
+#define shmem_put16                  pshmem_put16
 #define shmem_put32                  pshmem_put32
 #define shmem_put64                  pshmem_put64
 #define shmem_put128                 pshmem_put128
@@ -95,14 +97,17 @@
 /*
  * Strided put routines
  */
-#define shmem_int_iput               pshmem_int_iput
+#define shmem_char_iput              pshmem_char_iput
 #define shmem_short_iput             pshmem_short_iput
+#define shmem_int_iput               pshmem_int_iput
 #define shmem_float_iput             pshmem_float_iput
 #define shmem_double_iput            pshmem_double_iput
 #define shmem_longlong_iput          pshmem_longlong_iput
 #define shmem_longdouble_iput        pshmem_longdouble_iput
 #define shmem_long_iput              pshmem_long_iput
-#define shmemx_iput16                pshmemx_iput16
+
+#define shmem_iput8                  pshmem_iput8
+#define shmem_iput16                 pshmem_iput16
 #define shmem_iput32                 pshmem_iput32
 #define shmem_iput64                 pshmem_iput64
 #define shmem_iput128                pshmem_iput128
@@ -151,7 +156,9 @@
 #define shmem_double_get             pshmem_double_get
 #define shmem_longlong_get           pshmem_longlong_get
 #define shmem_longdouble_get         pshmem_longdouble_get
-#define shmemx_get16                 pshmemx_get16
+
+#define shmem_get8                   pshmem_get8
+#define shmem_get16                  pshmem_get16
 #define shmem_get32                  pshmem_get32
 #define shmem_get64                  pshmem_get64
 #define shmem_get128                 pshmem_get128
@@ -160,14 +167,17 @@
 /*
  * Strided get routines
  */
-#define shmem_int_iget               pshmem_int_iget
+#define shmem_char_iget              pshmem_char_iget
 #define shmem_short_iget             pshmem_short_iget
+#define shmem_int_iget               pshmem_int_iget
 #define shmem_float_iget             pshmem_float_iget
 #define shmem_double_iget            pshmem_double_iget
 #define shmem_longlong_iget          pshmem_longlong_iget
 #define shmem_longdouble_iget        pshmem_longdouble_iget
 #define shmem_long_iget              pshmem_long_iget
-#define shmemx_iget16                pshmemx_iget16
+
+#define shmem_iget8                  pshmem_iget8
+#define shmem_iget16                 pshmem_iget16
 #define shmem_iget32                 pshmem_iget32
 #define shmem_iget64                 pshmem_iget64
 #define shmem_iget128                pshmem_iget128
@@ -194,7 +204,6 @@
  * Atomic operations
  */
 /* Atomic swap */
-#define shmem_swap                   pshmem_swap
 #define shmem_double_swap            pshmem_double_swap
 #define shmem_float_swap             pshmem_float_swap
 #define shmem_int_swap               pshmem_int_swap
@@ -203,6 +212,14 @@
 #define shmemx_int32_swap            pshmemx_int32_swap
 #define shmemx_int64_swap            pshmemx_int64_swap
 
+/* Atomic set */
+#define shmem_double_set            pshmem_double_set
+#define shmem_float_set             pshmem_float_set
+#define shmem_int_set               pshmem_int_set
+#define shmem_long_set              pshmem_long_set
+#define shmem_longlong_set          pshmem_longlong_set
+#define shmemx_int32_set            pshmemx_int32_set
+#define shmemx_int64_set            pshmemx_int64_set
 
 /* Atomic conditional swap */
 #define shmem_int_cswap              pshmem_int_cswap
@@ -218,6 +235,15 @@
 #define shmem_longlong_fadd          pshmem_longlong_fadd
 #define shmemx_int32_fadd            pshmemx_int32_fadd
 #define shmemx_int64_fadd            pshmemx_int64_fadd
+
+/* Atomic Fetch */
+#define shmem_double_fetch            pshmem_double_fetch
+#define shmem_float_fetch             pshmem_float_fetch
+#define shmem_int_fetch               pshmem_int_fetch
+#define shmem_long_fetch              pshmem_long_fetch
+#define shmem_longlong_fetch          pshmem_longlong_fetch
+#define shmemx_int32_fetch            pshmemx_int32_fetch
+#define shmemx_int64_fetch            pshmemx_int64_fetch
 
 /* Atomic Fetch&Inc */
 #define shmem_int_finc               pshmem_int_finc

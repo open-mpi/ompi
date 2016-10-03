@@ -98,12 +98,26 @@ shmem_api_man_pages = \
         shmem/man/man3/shmem_longlong_swap.3 \
         shmem/man/man3/shmem_float_swap.3 \
         shmem/man/man3/shmem_double_swap.3 \
+\
+        shmem/man/man3/shmem_double_set.3 \
+        shmem/man/man3/shmem_float_set.3 \
+        shmem/man/man3/shmem_int_set.3 \
+        shmem/man/man3/shmem_longlong_set.3 \
+        shmem/man/man3/shmem_long_set.3 \
+\
         shmem/man/man3/shmem_int_cswap.3 \
         shmem/man/man3/shmem_long_cswap.3 \
         shmem/man/man3/shmem_longlong_cswap.3 \
         shmem/man/man3/shmem_int_fadd.3 \
         shmem/man/man3/shmem_long_fadd.3 \
         shmem/man/man3/shmem_longlong_fadd.3 \
+\
+        shmem/man/man3/shmem_double_fetch.3 \
+        shmem/man/man3/shmem_float_fetch.3 \
+        shmem/man/man3/shmem_int_fetch.3 \
+        shmem/man/man3/shmem_long_fetch.3 \
+        shmem/man/man3/shmem_longlong_fetch.3 \
+\
         shmem/man/man3/shmem_int_finc.3 \
         shmem/man/man3/shmem_long_finc.3 \
         shmem/man/man3/shmem_longlong_finc.3 \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -17,13 +17,13 @@
 #include "oshmem/mca/atomic/atomic.h"
 
 /*
- * shmem_swap performs an atomic swap operation.
- * The atomic swap routines write value to address target on PE pe, and return the previous
- * contents of target. The operation must be completed without the possibility of another
- * process updating target between the time of the fetch and the update.
+ * shmem_set performs an atomic set operation.
+ * The atomic set routines write value to address target on PE pe.
+ * The operation must be completed without the possibility of another
+ * process updating the target during the set.
  */
-#define SHMEM_TYPE_SWAP(type_name, type, prefix)    \
-    type prefix##type_name##_swap(type *target, type value, int pe) \
+#define SHMEM_TYPE_SET(type_name, type, prefix)    \
+    void prefix##type_name##_set(type *target, type value, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -42,26 +42,25 @@
             size,                                                   \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \
-                                                                    \
-        return out_value;                                           \
     }
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_int_swap = pshmem_int_swap
-#pragma weak shmem_long_swap = pshmem_long_swap
-#pragma weak shmem_longlong_swap = pshmem_longlong_swap
-#pragma weak shmem_float_swap = pshmem_float_swap
-#pragma weak shmem_double_swap = pshmem_double_swap
-#pragma weak shmemx_int32_swap = pshmemx_int32_swap
-#pragma weak shmemx_int64_swap = pshmemx_int64_swap
+#pragma weak shmem_int_set = pshmem_int_set
+#pragma weak shmem_long_set = pshmem_long_set
+#pragma weak shmem_longlong_set = pshmem_longlong_set
+#pragma weak shmem_float_set = pshmem_float_set
+#pragma weak shmem_double_set = pshmem_double_set
+#pragma weak shmemx_int32_set = pshmemx_int32_set
+#pragma weak shmemx_int64_set = pshmemx_int64_set
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_SWAP(_int, int, shmem)
-SHMEM_TYPE_SWAP(_long, long, shmem)
-SHMEM_TYPE_SWAP(_longlong, long long, shmem)
-SHMEM_TYPE_SWAP(_float, float, shmem)
-SHMEM_TYPE_SWAP(_double, double, shmem)
-SHMEM_TYPE_SWAP(_int32, int32_t, shmemx)
-SHMEM_TYPE_SWAP(_int64, int64_t, shmemx)
+SHMEM_TYPE_SET(_int, int, shmem)
+SHMEM_TYPE_SET(_long, long, shmem)
+SHMEM_TYPE_SET(_longlong, long long, shmem)
+SHMEM_TYPE_SET(_float, float, shmem)
+SHMEM_TYPE_SET(_double, double, shmem)
+SHMEM_TYPE_SET(_int32, int32_t, shmemx)
+SHMEM_TYPE_SET(_int64, int64_t, shmemx)
+

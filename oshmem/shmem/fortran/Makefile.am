@@ -46,7 +46,6 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_ptr_f.c \
                     shmem_pe_accessible_f.c \
                     shmem_addr_accessible_f.c \
-                    shmem_put_f.c \
                     shmem_character_put_f.c \
                     shmem_double_put_f.c \
                     shmem_complex_put_f.c \
@@ -98,10 +97,18 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_int8_swap_f.c \
                     shmem_real4_swap_f.c \
                     shmem_real8_swap_f.c \
+                    shmem_int4_set_f.c \
+                    shmem_int8_set_f.c \
+                    shmem_real4_set_f.c \
+                    shmem_real8_set_f.c \
                     shmem_int4_cswap_f.c \
                     shmem_int8_cswap_f.c \
                     shmem_int4_fadd_f.c \
                     shmem_int8_fadd_f.c \
+                    shmem_int4_fetch_f.c \
+                    shmem_int8_fetch_f.c \
+                    shmem_real4_fetch_f.c \
+                    shmem_real8_fetch_f.c \
                     shmem_int4_finc_f.c \
                     shmem_int8_finc_f.c \
                     shmem_int4_add_f.c \

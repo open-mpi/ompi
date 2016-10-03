@@ -50,6 +50,7 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_char_iget = pshmem_char_iget
 #pragma weak shmem_short_iget = pshmem_short_iget
 #pragma weak shmem_int_iget = pshmem_int_iget
 #pragma weak shmem_long_iget = pshmem_long_iget
@@ -57,13 +58,15 @@
 #pragma weak shmem_float_iget = pshmem_float_iget
 #pragma weak shmem_double_iget = pshmem_double_iget
 #pragma weak shmem_longdouble_iget = pshmem_longdouble_iget
-#pragma weak shmemx_iget16 = pshmemx_iget16
+#pragma weak shmem_iget8 = pshmem_iget8
+#pragma weak shmem_iget16 = pshmem_iget16
 #pragma weak shmem_iget32 = pshmem_iget32
 #pragma weak shmem_iget64 = pshmem_iget64
 #pragma weak shmem_iget128 = pshmem_iget128
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+SHMEM_TYPE_IGET(_char, char)
 SHMEM_TYPE_IGET(_short, short)
 SHMEM_TYPE_IGET(_int, int)
 SHMEM_TYPE_IGET(_long, long)
@@ -95,7 +98,9 @@ SHMEM_TYPE_IGET(_longdouble, long double)
         return ;                                                    \
     }
 
-SHMEM_TYPE_IGETMEM(_iget16, 2, shmemx)
+SHMEM_TYPE_IGETMEM(_iget8, 1, shmem)
+SHMEM_TYPE_IGETMEM(_iget16, 2, shmem)
 SHMEM_TYPE_IGETMEM(_iget32, 4, shmem)
 SHMEM_TYPE_IGETMEM(_iget64, 8, shmem)
 SHMEM_TYPE_IGETMEM(_iget128, 16, shmem)
+

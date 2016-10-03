@@ -37,7 +37,6 @@ PN (FORTRAN_POINTER_T*, pshmem_ptr, PSHMEM_PTR, (FORTRAN_POINTER_T target, MPI_F
 PN (ompi_fortran_logical_t, pshmem_pe_accessible, PSHMEM_PE_ACCESSIBLE, (MPI_Fint *pe));
 PN (MPI_Fint, pshmem_addr_accessible, PSHMEM_ADDR_ACCESSIBLE, (FORTRAN_POINTER_T addr, MPI_Fint *pe));
 
-PN (void, pshmem_put, PSHMEM_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_character_put, PSHMEM_CHARACTER_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_complex_put, PSHMEM_COMPLEX_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_double_put, PSHMEM_DOUBLE_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
@@ -117,10 +116,24 @@ PN (ompi_fortran_integer4_t, pshmem_int4_swap, PSHMEM_INT4_SWAP, (FORTRAN_POINTE
 PN (ompi_fortran_integer8_t, pshmem_int8_swap, PSHMEM_INT8_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_real4_t, pshmem_real4_swap, PSHMEM_REAL4_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_real8_t, pshmem_real8_swap, PSHMEM_REAL8_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
+PN (void, pshmem_int4_set, PSHMEM_INT4_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+PN (void, pshmem_int8_set, PSHMEM_INT8_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+PN (void, pshmem_real4_set, PSHMEM_REAL4_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+PN (void, pshmem_real8_set, PSHMEM_REAL8_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
+
 PN (ompi_fortran_integer4_t, pshmem_int4_cswap, PSHMEM_INT4_CSWAP, (FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_integer8_t, pshmem_int8_cswap, PSHMEM_INT8_CSWAP, (FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
 PN (ompi_fortran_integer4_t, pshmem_int4_fadd, PSHMEM_INT4_FADD, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_integer8_t, pshmem_int8_fadd, PSHMEM_INT8_FADD, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
+PN (ompi_fortran_integer4_t, pshmem_int4_fetch, PSHMEM_INT4_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+PN (ompi_fortran_integer8_t, pshmem_int8_fetch, PSHMEM_INT8_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+PN (ompi_fortran_real4_t, pshmem_real4_fetch, PSHMEM_REAL4_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+PN (ompi_fortran_real8_t, pshmem_real8_fetch, PSHMEM_REAL8_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+
 PN (void, pshmem_int4_inc, PSHMEM_INT4_INC, (FORTRAN_POINTER_T target, MPI_Fint *pe));
 PN (void, pshmem_int8_inc, PSHMEM_INT8_INC, (FORTRAN_POINTER_T target, MPI_Fint *pe));
 PN (ompi_fortran_integer4_t, pshmem_int4_finc, PSHMEM_INT4_FINC, (FORTRAN_POINTER_T target, MPI_Fint *pe));
