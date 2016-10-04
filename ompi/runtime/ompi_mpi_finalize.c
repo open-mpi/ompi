@@ -494,6 +494,10 @@ int ompi_mpi_finalize(void)
         opal_class_finalize();
     }
 
+    /* cleanup environment */
+    opal_unsetenv("OMPI_COMMAND", &environ);
+    opal_unsetenv("OMPI_ARGV", &environ);
+
     /* All done */
 
  done:
