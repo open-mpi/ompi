@@ -514,7 +514,7 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                 OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
                                       "%s,%d Atomic", __FUNCTION__, __LINE__));
                 ret = PtlAtomic(module->req_md_h,
-                                offset + sent + origin_lb,
+                                md_offset + sent + origin_lb,
                                 msg_length,
                                 PTL_ACK_REQ,
                                 peer,
