@@ -61,6 +61,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/timings.h"
+#include "opal/util/opal_environ.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
@@ -378,7 +379,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
-    char *cmd=NULL, *av=NULL;
     ompi_errhandler_errtrk_t errtrk;
     volatile bool active;
     opal_list_t info;
@@ -484,15 +484,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * the requested thread level
      */
     if (NULL == getenv("OMPI_COMMAND") && NULL != argv && NULL != argv[0]) {
-        asprintf(&cmd, "OMPI_COMMAND=%s", argv[0]);
-        putenv(cmd);
+        opal_setenv("OMPI_COMMAND", argv[0], true, &environ);
     }
     if (NULL == getenv("OMPI_ARGV") && 1 < argc) {
         char *tmp;
         tmp = opal_argv_join(&argv[1], ' ');
-        asprintf(&av, "OMPI_ARGV=%s", tmp);
+        opal_setenv("OMPI_ARGV", tmp, true, &environ);
         free(tmp);
-        putenv(av);
     }
 
     /* open the rte framework */
