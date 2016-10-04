@@ -81,10 +81,6 @@ int main(int argc, char* argv[])
     to = (rank + 1) % size;
     from = (rank - 1) % size;
     tagno = 201;
-    msg_count_p1 = calloc(size * 4, sizeof(unsigned long int));
-    msg_size_p1 = &msg_count_p1[size];
-    msg_count_p2 = &msg_count_p1[2*size];
-    msg_size_p2 = &msg_count_p1[3*size];
 
     MPIT_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
     if (MPIT_result != MPI_SUCCESS)
@@ -127,6 +123,12 @@ int main(int argc, char* argv[])
                msize_pvar_name);
         MPI_Abort(MPI_COMM_WORLD, MPIT_result);
     }
+
+    /* Allocate arrays to retrieve results */
+    msg_count_p1 = calloc(count * 4, sizeof(unsigned long int));
+    msg_size_p1 = &msg_count_p1[count];
+    msg_count_p2 = &msg_count_p1[2*count];
+    msg_size_p2 = &msg_count_p1[3*count];
 
     /* Start pvar */
     MPIT_result = MPI_T_pvar_start(session, count_handle);
