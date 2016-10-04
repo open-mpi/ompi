@@ -76,7 +76,6 @@ static bool added_transport_keys=false;
 static bool added_num_procs = false;
 static bool added_app_ctx = false;
 static bool added_pmix_envs = false;
-static char *pmixenvars[4];
 static bool progress_thread_running = false;
 
 static int fork_hnp(void);
@@ -85,7 +84,6 @@ static int rte_init(void)
 {
     int rc, ret;
     char *error = NULL;
-    char *ev1, *ev2;
     opal_value_t *kv;
     char *val = NULL;
     int u32, *u32ptr;
@@ -237,13 +235,17 @@ static int rte_init(void)
      * MPI-3 required info key
      */
     if (NULL == getenv(OPAL_MCA_PREFIX"orte_ess_num_procs")) {
-        asprintf(&ev1, OPAL_MCA_PREFIX"orte_ess_num_procs=%d", orte_process_info.num_procs);
-        putenv(ev1);
+        char * num_procs;
+        asprintf(&num_procs, "%d", orte_process_info.num_procs);
+        opal_setenv(OPAL_MCA_PREFIX"orte_ess_num_procs", num_procs, true, &environ);
+        free(num_procs);
         added_num_procs = true;
     }
     if (NULL == getenv("OMPI_APP_CTX_NUM_PROCS")) {
-        asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", orte_process_info.num_procs);
-        putenv(ev2);
+        char * num_procs;
+        asprintf(&num_procs, "%d", orte_process_info.num_procs);
+        opal_setenv("OMPI_APP_CTX_NUM_PROCS", num_procs, true, &environ);
+        free(num_procs);
         added_app_ctx = true;
     }
 
@@ -635,8 +637,10 @@ static int fork_hnp(void)
         count = opal_argv_count(argv);
         /* push each piece into the environment */
         for (i=0; i < count; i++) {
-            pmixenvars[i] = strdup(argv[i]);
-            putenv(pmixenvars[i]);
+            char *c = strchr(argv[i], '=');
+            assert(NULL != c);
+            *c++ = '\0';
+            opal_setenv(argv[i], c, true, &environ);
         }
         opal_argv_free(argv);
         added_pmix_envs = true;
