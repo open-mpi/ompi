@@ -5,6 +5,7 @@
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -66,7 +67,7 @@ liboshmem_la_LIBADD = \
 	$(fortran_oshmem_lib) \
 	$(fortran_pshmem_lib) \
 	$(MCA_oshmem_FRAMEWORK_LIBS) \
-	$(OSHMEM_TOP_BUILDDIR)/ompi/libmpi.la
+	$(OSHMEM_TOP_BUILDDIR)/ompi/lib@OMPI_LIBMPI_NAME@.la
 liboshmem_la_DEPENDENCIES = $(liboshmem_la_LIBADD)
 liboshmem_la_LDFLAGS = \
         -version-info $(liboshmem_so_version) \

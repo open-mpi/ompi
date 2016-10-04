@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +39,7 @@ int main(int argc, char **argv)
     char *to;
     int path_len;
 
-    mpi_handle = dlopen("libmpi.so", RTLD_NOW|RTLD_GLOBAL);
+    mpi_handle = dlopen("lib" OMPI_LIBMPI_NAME ".so", RTLD_NOW|RTLD_GLOBAL);
     if (mpi_handle == NULL) {
         fprintf(stderr, "mpi_handle=NULL dlerror()=%s\n", dlerror());
         abort();

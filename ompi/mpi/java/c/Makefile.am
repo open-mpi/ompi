@@ -6,6 +6,7 @@
 #                         reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -16,7 +17,7 @@
 if OMPI_WANT_JAVA_BINDINGS
 
 # Get the include files that were generated from the .java source files
-AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(OPAL_JDK_CPPFLAGS) -DOPAL_DYN_LIB_SUFFIX=\"$(OPAL_DYN_LIB_SUFFIX)\"
+AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(OPAL_JDK_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\" -DOPAL_DYN_LIB_SUFFIX=\"$(OPAL_DYN_LIB_SUFFIX)\"
 
 headers = \
         mpiJava.h
@@ -24,8 +25,8 @@ ompidir = $(ompiincludedir)/ompi/mpi/java
 ompi_HEADERS = \
         $(headers)
 
-lib_LTLIBRARIES = libmpi_java.la
-libmpi_java_la_SOURCES = \
+lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_java.la
+lib@OMPI_LIBMPI_NAME@_java_la_SOURCES = \
 	mpi_CartComm.c \
 	mpi_Comm.c \
 	mpi_Constant.c \
@@ -46,7 +47,7 @@ libmpi_java_la_SOURCES = \
 	mpi_Status.c \
 	mpi_Win.c
 
-libmpi_java_la_LIBADD = -ldl $(top_builddir)/ompi/libmpi.la
-libmpi_java_la_LDFLAGS = -version-info $(libmpi_java_so_version)
+lib@OMPI_LIBMPI_NAME@_java_la_LIBADD = -ldl $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+lib@OMPI_LIBMPI_NAME@_java_la_LDFLAGS = -version-info $(libmpi_java_so_version)
 
 endif

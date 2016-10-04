@@ -7,6 +7,7 @@
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -46,6 +47,7 @@ my $cxx_lib = "@OMPI_WRAPPER_CXX_LIB@";
 my $fc_module_flag = "@OMPI_FC_MODULE_FLAG@";
 my $dynamic_lib_suffix = "@OPAL_DYN_LIB_SUFFIX@";
 my $fortran_libs = "@OMPI_FORTRAN_USEMPIF08_LIB@ @OMPI_FORTRAN_USEMPI_LIB@";
+my $ompi_libmpi_name = "@OMPI_LIBMPI_NAME@";
 
 # Someone might want to fix for windows
 my $include_flag = "-I";
@@ -61,15 +63,15 @@ my $linker_flags = $libdir_flag . $libdir . " " . $extra_ldflags;
 # intentionally only link in the MPI libraries (ORTE, OPAL, etc. are
 # pulled in implicitly) because we intend MPI applications to only use
 # the MPI API.
-my $libs = "-lmpi " . $extra_libs;
-my $libs_static = "-lmpi -lopen-rte -lopen-pal " . $extra_libs;
+my $libs = "-l".$ompi_libmpi_name." " . $extra_libs;
+my $libs_static = "-l".$ompi_libmpi_name." -lopen-rte -lopen-pal " . $extra_libs;
 
 my $have_dynamic = 0;
-if (-e $libdir . "/libmpi." . $dynamic_lib_suffix) {
+if (-e $libdir . "/lib".$ompi_libmpi_name."." . $dynamic_lib_suffix) {
     $have_dynamic = 1;
 }
 my $have_static = 0;
-if (-e $libdir . "/libmpi.a") {
+if (-e $libdir . "/lib".$ompi_libmpi_name.".a") {
     $have_static = 1;
 }
 
@@ -123,7 +125,7 @@ elsif (basename($0) eq "mpifort" ||
     # no extra includes for Fortran.
     $comp_flags = $extra_fcflags;
     $comp_flags_prefix = $extra_fcflags_prefix;
-    $libs = $fortran_libs . " -lmpi_mpifh " . $libs;
+    $libs = $fortran_libs . " -l".$ompi_libmpi_name."_mpifh " . $libs;
 }
 
 if ($lang eq "none") {
