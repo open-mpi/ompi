@@ -2,6 +2,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +30,8 @@ BEGIN_C_DECLS
  * Event framework
  */
 OPAL_DECLSPEC extern mca_base_framework_t opal_event_base_framework;
+
+OPAL_DECLSPEC extern bool mca_event_base_global_shutdown;
 
 END_C_DECLS
 

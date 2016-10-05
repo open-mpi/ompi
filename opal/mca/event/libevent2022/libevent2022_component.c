@@ -3,6 +3,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2018 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.

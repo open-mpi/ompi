@@ -4,7 +4,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -69,6 +69,8 @@ typedef struct event_base opal_event_base_t;
 typedef struct event opal_event_t;
 
 OPAL_DECLSPEC extern opal_event_base_t *opal_sync_event_base;
+
+OPAL_DECLSPEC extern bool mca_event_libevent2022_global_shutdown;
 
 #define OPAL_EV_TIMEOUT EV_TIMEOUT
 #define OPAL_EV_READ    EV_READ

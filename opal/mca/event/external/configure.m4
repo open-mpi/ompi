@@ -154,6 +154,14 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
                               AC_MSG_WARN([using internal libevent])
                               opal_event_external_support=no])])])
 
+           AC_CHECK_LIB([event], [libevent_global_shutdown],
+                        [AC_DEFINE([HAVE_LIBEVENT_GLOBAL_SHUTDOWN],
+                                   [1],
+                                   [Define if libevent_global_shutdown exists])],
+                        [AC_DEFINE([HAVE_LIBEVENT_GLOBAL_SHUTDOWN],
+                                   [0],
+                                   [Define if libevent_global_shutdown exists])])
+
            CPPFLAGS=$opal_event_external_CPPFLAGS_save
            CFLAGS=$opal_event_external_CFLAGS_save
            LDFLAGS=$opal_event_external_LDFLAGS_save

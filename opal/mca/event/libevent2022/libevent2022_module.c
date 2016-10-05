@@ -5,7 +5,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -127,6 +127,9 @@ int opal_event_init(void)
 int opal_event_finalize(void)
 {
     event_config_free(config);
+    if (mca_event_base_global_shutdown) {
+        libevent_global_shutdown();
+    }
     return OPAL_SUCCESS;
 }
 

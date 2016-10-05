@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -51,8 +51,20 @@
 static int opal_event_base_open(mca_base_open_flag_t flags);
 static int opal_event_base_close(void);
 
+static int mca_event_base_register(mca_base_register_flag_t flags)
+{
+    (void) mca_base_var_register("opal", "event", "base", "global_shutdown",
+                                 "Invoke libevent_global_shutdown on finalize to plug some more memory leaks (default: false)",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_INTERNAL,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_event_base_global_shutdown);
+    return OPAL_SUCCESS;
+}
+
 /* Use default register and close function */
-MCA_BASE_FRAMEWORK_DECLARE(opal, event, NULL, NULL, opal_event_base_open,
+MCA_BASE_FRAMEWORK_DECLARE(opal, event, NULL, mca_event_base_register, opal_event_base_open,
 			   opal_event_base_close, mca_event_base_static_components,
 			   0);
 
@@ -60,6 +72,8 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, event, NULL, NULL, opal_event_base_open,
  * Globals
  */
 opal_event_base_t *opal_sync_event_base=NULL;
+
+bool mca_event_base_global_shutdown = false;
 
 static int opal_event_base_open(mca_base_open_flag_t flags)
 {
