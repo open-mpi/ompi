@@ -60,5 +60,6 @@ int evsig_init(struct event_base *);
 void evsig_dealloc(struct event_base *);
 
 void evsig_set_base(struct event_base *base);
+void evsig_free_globals_(void);
 
 #endif /* _EVSIGNAL_H_ */

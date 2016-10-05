@@ -62,6 +62,11 @@ evutil_secure_rng_global_setup_locks_(const int enable_locks)
 }
 
 static void
+evutil_free_secure_rng_globals_locks(void)
+{
+}
+
+static void
 ev_arc4random_buf(void *buf, size_t n)
 {
 #if defined(_EVENT_HAVE_ARC4RANDOM_BUF) && !defined(__APPLE__)
@@ -144,6 +149,17 @@ evutil_secure_rng_set_urandom_device_file(char *fname)
 	return 0;
 }
 
+static void
+evutil_free_secure_rng_globals_locks(void)
+{
+#ifndef EVENT__DISABLE_THREAD_SUPPORT
+	if (arc4rand_lock != NULL) {
+		EVTHREAD_FREE_LOCK(arc4rand_lock, 0);
+	}
+#endif
+	return;
+}
+
 int
 evutil_secure_rng_init(void)
 {
@@ -169,6 +185,12 @@ void
 evutil_secure_rng_get_bytes(void *buf, size_t n)
 {
 	ev_arc4random_buf(buf, n);
+}
+
+void
+evutil_free_secure_rng_globals_(void)
+{
+    evutil_free_secure_rng_globals_locks();
 }
 
 /******     OMPI CHANGE     *****/

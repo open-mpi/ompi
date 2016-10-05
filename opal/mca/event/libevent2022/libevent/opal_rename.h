@@ -5,7 +5,7 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -281,6 +281,7 @@ extern "C" {
 #define event_get_version                                     opal_libevent2022_event_get_version
 #define event_get_version_number                              opal_libevent2022_event_get_version_number
 #define event_global_setup_locks_                             opal_libevent2022_event_global_setup_locks_
+#define libevent_global_shutdown                              opal_libevent2022_event_libevent_global_shutdown
 #define event_init                                            opal_libevent2022_event_init
 #define event_initialized                                     opal_libevent2022_event_initialized
 #define event_loop                                            opal_libevent2022_event_loop
@@ -448,6 +449,7 @@ extern "C" {
 #define _evsig_restore_handler                                opal_libevent2022__evsig_restore_handler
 #define evsig_set_base                                        opal_libevent2022_evsig_set_base
 #define _evsig_set_handler                                    opal_libevent2022__evsig_set_handler
+#define evsig_free_globals_                                   opal_libevent2022_evsig_free_globals_
 #define evtag_consume                                         opal_libevent2022_evtag_consume
 #define evtag_decode_int                                      opal_libevent2022_evtag_decode_int
 #define evtag_decode_int64                                    opal_libevent2022_evtag_decode_int64
@@ -501,6 +503,7 @@ extern "C" {
 #define evutil_hex_char_to_int                                opal_libevent2022_evutil_hex_char_to_int
 #define evutil_inet_ntop                                      opal_libevent2022_evutil_inet_ntop
 #define evutil_inet_pton                                      opal_libevent2022_evutil_inet_pton
+#define evutil_free_globals_                                  opal_libevent2022_evutil_free_globals_
 #define EVUTIL_ISALNUM                                        opal_libevent2022_EVUTIL_ISALNUM
 #define EVUTIL_ISALPHA                                        opal_libevent2022_EVUTIL_ISALPHA
 #define EVUTIL_ISDIGIT                                        opal_libevent2022_EVUTIL_ISDIGIT
@@ -522,6 +525,7 @@ extern "C" {
 #define evutil_secure_rng_global_setup_locks_                 opal_libevent2022_evutil_secure_rng_global_setup_locks_
 #define evutil_secure_rng_init                                opal_libevent2022_evutil_secure_rng_init
 #define evutil_secure_rng_set_urandom_device_file             opal_libevent2022_evutil_secure_rng_set_urandom_device_file
+#define evutil_free_secure_rng_globals_                       opal_libevent2022_evutil_free_secure_rng_globals_
 #define evutil_set_evdns_getaddrinfo_fn                       opal_libevent2022_evutil_set_evdns_getaddrinfo_fn
 #define evutil_snprintf                                       opal_libevent2022_evutil_snprintf
 #define evutil_sockaddr_cmp                                   opal_libevent2022_evutil_sockaddr_cmp

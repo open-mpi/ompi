@@ -2188,3 +2188,8 @@ evutil_load_windows_system_library(const TCHAR *library_name)
 }
 #endif
 
+void
+evutil_free_globals_(void)
+{
+	evutil_free_secure_rng_globals_();
+}
