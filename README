@@ -1248,12 +1248,24 @@ MPI FUNCTIONALITY
 
   See "Open MPI API Extensions", below, for more details.
 
+--disable-mpi-io
+  Disable built-in support for MPI-2 I/O, likely because an externally-provided
+  MPI I/O package will be used. Default is to use the internal framework
+  system that uses the ompio component and a specially modified version of ROMIO
+  that fits inside the romio component
+
+--disable-io-romio
+  Disable the ROMIO MPI-IO component
+
 --with-io-romio-flags=flags
   Pass flags to the ROMIO distribution configuration script.  This
   option is usually only necessary to pass
   parallel-filesystem-specific preprocessor/compiler/linker flags back
   to the ROMIO system.
 
+--disable-io-ompio
+  Disable the ompio MPI-IO component
+ 
 --enable-sparse-groups
   Enable the usage of sparse groups. This would save memory
   significantly especially if you are creating large
