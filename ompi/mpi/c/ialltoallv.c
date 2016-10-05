@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -100,11 +100,6 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
             (MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
             MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-        } else if (MPI_IN_PLACE == sendbuf) {
-            /* MPI_IN_PLACE is not fully implemented yet,
-               return MPI_ERR_INTERN for now */
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                          FUNC_NAME);
         }
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
