@@ -2,6 +2,8 @@
  * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,14 +34,6 @@
 #  endif
 #endif
 
-#ifndef OSHMEM_DESTRUCTOR
-#    if defined(OPAL_C_HAVE_VISIBILITY) && (OPAL_C_HAVE_VISIBILITY == 1)
-#       define OSHMEM_DESTRUCTOR  __attribute__((__destructor__))
-#    else
-#       define OSHMEM_DESTRUCTOR
-#    endif
-#endif
-
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 #define OSHMEMP_HAVE_C11 1
 #else
@@ -65,7 +59,7 @@ OSHMEM_DECLSPEC  void pshmem_global_exit(int status);
 /*
  * Finalization routines
  */
-OSHMEM_DECLSPEC  void pshmem_finalize(void) OSHMEM_DESTRUCTOR;
+OSHMEM_DECLSPEC  void pshmem_finalize(void);
 
 /*
  * Query routines
