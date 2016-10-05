@@ -1684,7 +1684,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
     }
     opal_output_verbose(15, USNIC_OUT,
                         "btl:usnic:create_ep:%s: new usnic local endpoint channel %s: %s:%d",
-                        module->fabric_info->fabric_attr->name,
+                        module->linux_device_name,
                         str,
                         inet_ntoa(sin->sin_addr),
                         ntohs(sin->sin_port));
