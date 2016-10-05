@@ -257,7 +257,7 @@ AC_DEFINE_UNQUOTED([OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
 
 AC_ARG_ENABLE([io-ompio],
     [AC_HELP_STRING([--disable-io-ompio],
-        [Disable the ompio ROM-IO component])])
+        [Disable the ompio MPI-IO component])])
 
 ])dnl
 
