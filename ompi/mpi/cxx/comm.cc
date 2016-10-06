@@ -13,6 +13,8 @@
 // Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 //                         reserved.
+// Copyright (c) 2016      Research Organization for Information Science
+//                         and Technology (RIST). All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -51,7 +53,7 @@ MPI::Comm::Comm(const Comm_Null& data) : Comm_Null(data)
 MPI::Errhandler
 MPI::Comm::Create_errhandler(MPI::Comm::_MPI2CPP_ERRHANDLERFN_* function)
 {
-    return ompi_cxx_errhandler_create_comm ((void *) function);
+    return ompi_cxx_errhandler_create_comm ((ompi_errhandler_generic_handler_fn_t *)function);
 }
 
 

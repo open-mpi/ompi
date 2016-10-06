@@ -44,12 +44,6 @@ typedef enum ompi_cxx_communicator_type_t ompi_cxx_communicator_type_t;
 struct ompi_predefined_errhandler_t;
 extern struct ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
 
-/**
- * C++ invocation function signature
- */
-typedef void (ompi_errhandler_cxx_dispatch_fn_t)(void *handle, int *err_code,
-                                                 const char *message, ompi_errhandler_generic_handler_fn_t *fn);
-
 ompi_cxx_communicator_type_t ompi_cxx_comm_get_type (MPI_Comm comm);
 
 int ompi_cxx_errhandler_invoke_comm (MPI_Comm comm, int ret, const char *message);
@@ -74,9 +68,9 @@ void ompi_mpi_cxx_file_errhandler_invoke (MPI_File *mpi_comm, int *err,
                                           const char *message, void *file_fn);
 #endif
 
-MPI_Errhandler ompi_cxx_errhandler_create_comm (void *fn);
-MPI_Errhandler ompi_cxx_errhandler_create_win (void *fn);
-MPI_Errhandler ompi_cxx_errhandler_create_file (void *fn);
+MPI_Errhandler ompi_cxx_errhandler_create_comm (ompi_errhandler_generic_handler_fn_t *fn);
+MPI_Errhandler ompi_cxx_errhandler_create_win (ompi_errhandler_generic_handler_fn_t *fn);
+MPI_Errhandler ompi_cxx_errhandler_create_file (ompi_errhandler_generic_handler_fn_t *fn);
 
 ompi_cxx_intercept_file_extra_state_t
 *ompi_cxx_new_intercept_state (void *read_fn_cxx, void *write_fn_cxx, void *extent_fn_cxx,
