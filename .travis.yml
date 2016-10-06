@@ -18,9 +18,7 @@ compiler:
 os:
     - osx
 
-osximage:
-    - xcode8
-    - xcode7.3
+osximage: xcode8
 
 addons:
     # For Linux, make sure we have some extra packages that we like to
