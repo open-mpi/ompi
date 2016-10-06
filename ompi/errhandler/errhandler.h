@@ -15,6 +15,8 @@
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -94,7 +96,7 @@ struct ompi_errhandler_t;
  * C++ invocation function signature
  */
 typedef void (ompi_errhandler_cxx_dispatch_fn_t)(void *handle, int *err_code,
-                                                 const char *message, void *fn);
+                                                 const char *message, ompi_errhandler_generic_handler_fn_t *fn);
 
 /**
  * Back-end type for MPI_Errorhandler.
