@@ -607,7 +607,7 @@ static int ompi_comm_allreduce_inter_nb (int *inbuf, int *outbuf,
     ompi_comm_allreduce_context_t *context;
     ompi_comm_request_t *request;
     ompi_request_t *subreq;
-    int local_rank, rsize, rc;
+    int local_rank, rc;
 
     if (!OMPI_COMM_IS_INTER (cid_context->comm)) {
         return MPI_ERR_COMM;
@@ -627,7 +627,6 @@ static int ompi_comm_allreduce_inter_nb (int *inbuf, int *outbuf,
     request->context = &context->super;
 
     /* Allocate temporary arrays */
-    rsize      = ompi_comm_remote_size (intercomm);
     local_rank = ompi_comm_rank (intercomm);
 
     if (0 == local_rank) {
@@ -700,12 +699,12 @@ static int ompi_comm_allreduce_inter_bcast (ompi_comm_request_t *request)
     ompi_comm_allreduce_context_t *context = (ompi_comm_allreduce_context_t *) request->context;
     ompi_communicator_t *comm = context->cid_context->comm->c_local_comm;
     ompi_request_t *subreq;
-    int scount = 0, rc;
+    int rc;
 
     /* both roots have the same result. broadcast to the local group */
     rc = comm->c_coll.coll_ibcast (context->outbuf, context->count, MPI_INT, 0, comm,
                                    &subreq, comm->c_coll.coll_ibcast_module);
-    if (OMPI_SUCCESS != rc) {
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
     }
 
