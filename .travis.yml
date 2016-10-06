@@ -16,8 +16,11 @@ compiler:
 
 # Iterate over 2 different OSs
 os:
-    - linux
     - osx
+
+osximage:
+    - xcode8
+    - xcode7.3
 
 addons:
     # For Linux, make sure we have some extra packages that we like to
@@ -76,6 +79,9 @@ install:
 # a minor optimization to make the overall set of builds faster).
 script:
     - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then make distcheck; else make check; fi
+    - make install
+    - mpicc -o hello_c examples/hello_c.c
+    - mpirun ./hello_c
 
 matrix:
   exclude:
