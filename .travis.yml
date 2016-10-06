@@ -8,6 +8,7 @@
 sudo: required
 dist: trusty
 language: c
+osx_image: xcode8
 
 # Iterate over 2 different compilers
 compiler:
@@ -16,7 +17,6 @@ compiler:
 
 # Iterate over 2 different OSs
 os:
-    - linux
     - osx
 
 addons:
@@ -50,14 +50,27 @@ env:
 # not currently using the verbs provider in Libfabric, so we might as
 # well not build it.
 before_install:
+    - env || true
+    - xcodebuild -version || true
+    - sw_vers || true
+    - ls -l /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs || true
+    - xcode-select -p || true
+    - xcodebuild -sdk -version || true
+    - xcodebuild -version -sdk macosx10.12 Path || true
+    - xcode-select -p || true
+    - xcodebuild -sdk -version || true
     - if [[ "GCC_VERSION" == "6" ]]; then COMPILERS="CC=gcc-6 CXX=g++-6 FC=gfortran-6"; fi
-    - export CONFIGURE_ARGS="--prefix=$HOME/bogus $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
+    - export CONFIGURE_ARGS="--prefix=$HOME/bogus --enable-mpi-cxx $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - export DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "6" ]] ; then sudo apt-get --assume-yes install gcc-6 g++-6 gfortran-6; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; brew upgrade automake || true; brew upgrade libtool || true; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "6" ]] ; then brew install gcc || true; brew upgrade gcc || true ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then if brew list automake; then brew outdated automake || brew upgrade automake; else brew install automake; fi; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then if brew list autoconf; then brew outdated autoconf || brew upgrade autoconf; else brew install autoconf; fi; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then if brew list libtool;  then brew outdated libtool  || brew upgrade libtool ; else brew install libtool ; fi; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "6" ]] ; then if brew list gcc; then brew outdated gcc || brew upgrade gcc; else brew install gcc; fi; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list; fi
     - mkdir -p $HOME/bogus/include $HOME/bogus/lib
 
 # Note that we use "make -k" to do the entire build, even if there was a
@@ -69,15 +82,20 @@ install:
     - automake --version
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then libtool --version; else glibtool --version; fi
     - ./autogen.pl
+    - echo CONFIGURE_ARGS=$CONFIGURE_ARGS
     - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then ./configure $CONFIGURE_ARGS --with-libfabric=$HOME/bogus --with-usnic --with-verbs; else ./configure $CONFIGURE_ARGS; fi
-    - make -k
+    - cat config.log || true
+    - man clock_gettime < /dev/null || true
 
 # We only need to distcheck on one OS / compiler combination (this is just
 # a minor optimization to make the overall set of builds faster).
 script:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then make distcheck; else make check; fi
+    - true
 
 matrix:
   exclude:
     - env: GCC_VERSION=6
       compiler: clang
+  include:
+    - osx_image: xcode7.3
+    - osx_image: xcode8 
