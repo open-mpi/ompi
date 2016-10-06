@@ -15,6 +15,7 @@
 #define OMPI_CXX_COMM_GLUE_H
 
 #include "ompi_config.h"
+#include "ompi/errhandler/errhandler.h"
 #include <stdlib.h>
 
 #include "mpi.h"
@@ -47,7 +48,7 @@ extern struct ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
  * C++ invocation function signature
  */
 typedef void (ompi_errhandler_cxx_dispatch_fn_t)(void *handle, int *err_code,
-                                                 const char *message, void *fn);
+                                                 const char *message, ompi_errhandler_generic_handler_fn_t *fn);
 
 ompi_cxx_communicator_type_t ompi_cxx_comm_get_type (MPI_Comm comm);
 
