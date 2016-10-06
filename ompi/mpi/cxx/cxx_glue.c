@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2016      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,10 +49,12 @@ int ompi_cxx_errhandler_invoke_comm (MPI_Comm comm, int ret, const char *message
     return OMPI_ERRHANDLER_INVOKE (comm, ret, message);
 }
 
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 int ompi_cxx_errhandler_invoke_file (MPI_File file, int ret, const char *message)
 {
     return OMPI_ERRHANDLER_INVOKE (file, ret, message);
 }
+#endif
 
 int ompi_cxx_attr_create_keyval_comm (MPI_Comm_copy_attr_function *copy_fn,
                                       MPI_Comm_delete_attr_function* delete_fn, int *keyval, void *extra_state,
@@ -110,6 +114,7 @@ MPI_Errhandler ompi_cxx_errhandler_create_win (void *fn)
     return errhandler;
 }
 
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 MPI_Errhandler ompi_cxx_errhandler_create_file (void *fn)
 {
     ompi_errhandler_t *errhandler;
@@ -120,6 +125,7 @@ MPI_Errhandler ompi_cxx_errhandler_create_file (void *fn)
         (ompi_errhandler_cxx_dispatch_fn_t *) ompi_mpi_cxx_file_errhandler_invoke;
     return errhandler;
 }
+#endif
 
 ompi_cxx_intercept_file_extra_state_t
 *ompi_cxx_new_intercept_state (void *read_fn_cxx, void *write_fn_cxx, void *extent_fn_cxx,
