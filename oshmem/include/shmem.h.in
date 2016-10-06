@@ -79,7 +79,7 @@ extern "C" {
  * Constants and definitions
  */
 #define SHMEM_MAJOR_VERSION             1
-#define SHMEM_MINOR_VERSION             2
+#define SHMEM_MINOR_VERSION             3 
 #define SHMEM_VENDOR_STRING             "http://www.open-mpi.org/"
 #define SHMEM_MAX_NAME_LEN              256
 
