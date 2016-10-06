@@ -72,7 +72,7 @@ install:
     - automake --version
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then libtool --version; else glibtool --version; fi
     - ./autogen.pl
-    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then ./configure $CONFIGURE_ARGS --with-libfabric=$HOME/bogus --with-usnic --with-verbs; else ./configure $CONFIGURE_ARGS; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then ./configure $CONFIGURE_ARGS --with-libfabric=$HOME/bogus --with-usnic --with-verbs; else ./configure --enable-mpirun-prefix-by-default $CONFIGURE_ARGS; fi
     - make -k
 
 # We only need to distcheck on one OS / compiler combination (this is just
@@ -80,8 +80,8 @@ install:
 script:
     - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then make distcheck; else make check; fi
     - make install
-    - mpicc -o hello_c examples/hello_c.c
-    - mpirun ./hello_c
+    - $HOME/bogus/bin/mpicc -o hello_c examples/hello_c.c
+    - $HOME/bogus/bin/mpirun ./hello_c
 
 matrix:
   exclude:
