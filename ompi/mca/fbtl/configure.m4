@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -13,10 +15,14 @@
 # -------------------------------------------
 AC_DEFUN([MCA_ompi_fbtl_CONFIG],
 [
-    # An AC-ARG-ENABLE for mpi-io was set in ompi/mca/io/configure.m4.
-    # If it's no, we shouldn't bother building anything in fcoll.
-    AS_IF([test "$enable_mpi_io" != "no"],
-          [want_mpi_io=1],
-          [want_mpi_io=0])
-    MCA_CONFIGURE_FRAMEWORK([$1], [$2], [$want_mpi_io])
+    OPAL_VAR_SCOPE_PUSH([want_io_ompio])
+
+    AS_IF([test "$enable_mpi_io" != "no" &&
+           test "$enable_io_ompio" != "no"],
+          [want_io_ompio=1],
+          [want_io_ompio=0])
+
+    MCA_CONFIGURE_FRAMEWORK([$1], [$2], [$want_io_ompio])
+
+    OPAL_VAR_SCOPE_POP
 ])
