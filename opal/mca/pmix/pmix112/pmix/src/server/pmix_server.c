@@ -227,6 +227,16 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     // plus the '/' separator are too long, just fail, so the caller
     // may provide the user with a proper help... *Cough*, *Cough* OSX...
     if ((strlen(tdir) + strlen(pmix_pid) + 1) > sizeof(myaddress.sun_path)-1) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmix:server truncated uri, path too long");
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmix:server tdir = %s (%ld)",
+                            tdir, strlen(tdir));
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmix:server <tdir>/%s (%ld > %ld)",
+                            pmix_pid,
+                            strlen(tdir) + strlen(pmix_pid) + 1,
+                            sizeof(myaddress.sun_path)-1);
         free(pmix_pid);
         return PMIX_ERR_INVALID_LENGTH;
     }
