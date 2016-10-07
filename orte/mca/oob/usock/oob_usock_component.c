@@ -205,6 +205,7 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
 static int component_startup(void)
 {
     int rc=ORTE_SUCCESS;
+    char *usock_path;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s USOCK STARTUP",
@@ -213,11 +214,29 @@ static int component_startup(void)
     /* setup the path to the daemon rendezvous point */
     memset(&mca_oob_usock_component.address, 0, sizeof(struct sockaddr_un));
     mca_oob_usock_component.address.sun_family = AF_UNIX;
-    snprintf(mca_oob_usock_component.address.sun_path,
-             sizeof(mca_oob_usock_component.address.sun_path)-1,
+    asprintf(&usock_path,
              "%s/%s/%s/0/%s", orte_process_info.tmpdir_base,
              orte_process_info.top_session_dir,
              ORTE_JOB_FAMILY_PRINT(ORTE_PROC_MY_NAME->jobid), "usock");
+    if (NULL == usock_path) {
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        ORTE_ERROR_LOG(rc);
+    }
+
+    /* If usock_path is too long, just fail, so the caller
+     * may provide the user with a proper help... *Cough*, *Cough* OSX... */
+    if ((strlen(usock_path) + 1) > sizeof(mca_oob_usock_component.address.sun_path)) {
+        opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                            "usock path too long: strlen(%s) > %d\nyou might want to check you $TMPDIR or $TMP environment variable",
+                            usock_path, (int)sizeof(mca_oob_usock_component.address.sun_path)-1);
+        free(usock_path);
+        return ORTE_ERR_NOT_SUPPORTED;
+
+    }
+
+    strncpy(mca_oob_usock_component.address.sun_path, usock_path, sizeof(mca_oob_usock_component.address.sun_path)-1);
+    free(usock_path);
+
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "SUNPATH: %s", mca_oob_usock_component.address.sun_path);
 
