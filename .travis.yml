@@ -79,7 +79,7 @@ script:
     - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then make distcheck; else make check; fi
     - make install
     - $HOME/bogus/bin/mpicc -o hello_c examples/hello_c.c
-    - $HOME/bogus/bin/mpirun --mca pmix_base_verbose 2 -np 1 ./hello_c
+    - $HOME/bogus/bin/mpirun --mca pmix_base_verbose 100 -np 1 ./hello_c
 
 matrix:
   exclude:
