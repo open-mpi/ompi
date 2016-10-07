@@ -34,6 +34,8 @@ void opal_btl_usnic_exit(opal_btl_usnic_module_t *module)
         }
         /* If we didn't find a PML error callback, just exit. */
         if (NULL == module) {
+            fprintf(stderr, "*** The Open MPI usnic BTL is aborting the MPI job (via exit(3)).\n");
+            fflush(stderr);
             exit(1);
         }
     }
@@ -47,7 +49,7 @@ void opal_btl_usnic_exit(opal_btl_usnic_module_t *module)
         module->pml_error_callback(&module->super,
                                    MCA_BTL_ERROR_FLAGS_FATAL,
                                    (opal_proc_t*) opal_proc_local_get(),
-                                   "usnic");
+                                   "The usnic BTL is aborting the MPI job (via PML error callback).");
     }
 
     /* If the PML error callback returns (or if there wasn't one),
