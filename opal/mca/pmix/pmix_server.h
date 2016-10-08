@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -180,7 +180,8 @@ typedef int (*opal_pmix_server_disconnect_fn_t)(opal_list_t *procs, opal_list_t 
   * the PMIx server itself, or by one of its local clients. The RTE
   * is requested to pass the notification to each PMIx server that
   * hosts one or more of the specified processes */
-typedef int (*opal_pmix_server_notify_fn_t)(int code, opal_list_t *procs, opal_list_t *info,
+typedef int (*opal_pmix_server_notify_fn_t)(int code, opal_process_name_t *source,
+                                            opal_list_t *info,
                                             opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Query the RTE for information - the list is composed of opal_pmix_query_t items */
