@@ -15,6 +15,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +48,7 @@ int main(int argc, char **argv)
     uint32_t nprocs;
     char nsp2[PMIX_MAX_NSLEN+1];
     pmix_app_t *app;
-    char hostname[MAXHOSTNAMELEN], dir[1024];
+    char hostname[1024], dir[1024];
     pmix_proc_t *peers;
     size_t npeers, ntmp=0;
     char *nodelist;
