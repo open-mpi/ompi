@@ -85,8 +85,21 @@ static void nscon(pmix_nspace_t *p)
 }
 static void nsdes(pmix_nspace_t *p)
 {
+    uint64_t key;
+    pmix_object_t *obj;
+
     PMIX_LIST_DESTRUCT(&p->nodes);
+    PMIX_HASH_TABLE_FOREACH(key, uint64, obj, &p->internal) {
+        if (NULL != obj) {
+            PMIX_RELEASE(obj);
+        }
+    }
     PMIX_DESTRUCT(&p->internal);
+    PMIX_HASH_TABLE_FOREACH(key, uint64, obj, &p->modex) {
+        if (NULL != obj) {
+            PMIX_RELEASE(obj);
+        }
+    }
     PMIX_DESTRUCT(&p->modex);
     if (NULL != p->server) {
         PMIX_RELEASE(p->server);
