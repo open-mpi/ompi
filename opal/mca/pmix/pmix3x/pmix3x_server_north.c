@@ -765,7 +765,51 @@ static pmix_status_t server_notify_event(pmix_status_t code,
                                          pmix_info_t info[], size_t ninfo,
                                          pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    return PMIX_ERR_NOT_SUPPORTED;
+    pmix3x_opalcaddy_t *opalcaddy;
+    opal_process_name_t src;
+    size_t n;
+    opal_value_t *oinfo;
+    int rc, status;
+
+    if (NULL == host_module || NULL == host_module->notify_event) {
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
+
+    /* setup the caddy */
+    opalcaddy = OBJ_NEW(pmix3x_opalcaddy_t);
+    opalcaddy->opcbfunc = cbfunc;
+    opalcaddy->cbdata = cbdata;
+
+    /* convert the code */
+    status = pmix3x_convert_rc(code);
+
+    /* convert the source */
+    if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&src.jobid, source->nspace))) {
+        opal_output(0, "FILE: %s LINE %d", __FILE__, __LINE__);
+        OBJ_RELEASE(opalcaddy);
+        return pmix3x_convert_opalrc(rc);
+    }
+    src.vpid = pmix3x_convert_rank(source->rank);
+
+    /* ignore the range for now */
+
+    /* convert the info */
+    for (n=0; n < ninfo; n++) {
+        oinfo = OBJ_NEW(opal_value_t);
+        opal_list_append(&opalcaddy->info, &oinfo->super);
+        oinfo->key = strdup(info[n].key);
+        if (OPAL_SUCCESS != (rc = pmix3x_value_unload(oinfo, &info[n].value))) {
+            OBJ_RELEASE(opalcaddy);
+            return pmix3x_convert_opalrc(rc);
+        }
+    }
+
+    /* send it upstairs */
+    if (OPAL_SUCCESS != (rc = host_module->notify_event(status, &src, &opalcaddy->info,
+                                                        opal_opcbfunc, opalcaddy))) {
+        OBJ_RELEASE(opalcaddy);
+    }
+    return pmix3x_convert_opalrc(rc);
 }
 
 static void _info_rel(void *cbdata)

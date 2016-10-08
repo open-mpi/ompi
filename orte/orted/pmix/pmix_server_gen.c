@@ -342,6 +342,88 @@ void pmix_server_notify(int status, orte_process_name_t* sender,
     }
 }
 
+int pmix_server_notify_event(int code, opal_process_name_t *source,
+                             opal_list_t *info,
+                             opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    opal_buffer_t *buf;
+    int rc, ninfo;
+    opal_value_t *val;
+    orte_grpcomm_signature_t *sig;
+
+    /* a local process has generated an event - we need to xcast it
+     * to all the daemons so it can be passed down to their local
+     * procs */
+    buf = OBJ_NEW(opal_buffer_t);
+    if (NULL == buf) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    /* pack the status code */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &code, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return rc;
+    }
+    /* pack the source */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, source, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return rc;
+    }
+
+    /* pack the number of infos */
+    if (NULL == info) {
+        ninfo = 0;
+    } else {
+        ninfo = opal_list_get_size(info);
+    }
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &ninfo, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return rc;
+    }
+    if (0 < ninfo) {
+        OPAL_LIST_FOREACH(val, info, opal_value_t) {
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, val, 1, OPAL_VALUE))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buf);
+                return rc;
+            }
+        }
+    }
+
+    /* goes to all daemons */
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    if (NULL == sig) {
+        OBJ_RELEASE(buf);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    if (NULL == sig->signature) {
+        OBJ_RELEASE(buf);
+        OBJ_RELEASE(sig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    sig->sz = 1;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_NOTIFICATION, buf))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        OBJ_RELEASE(sig);
+        return rc;
+    }
+    OBJ_RELEASE(buf);
+    /* maintain accounting */
+    OBJ_RELEASE(sig);
+
+    /* execute the callback */
+    if (NULL != cbfunc) {
+        cbfunc(ORTE_SUCCESS, cbdata);
+    }
+    return ORTE_SUCCESS;
+}
+
 static void qrel(void *cbdata)
 {
     opal_list_t *l = (opal_list_t*)cbdata;
