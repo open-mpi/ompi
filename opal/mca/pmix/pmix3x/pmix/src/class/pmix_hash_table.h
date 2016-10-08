@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -370,6 +370,29 @@ static inline int pmix_next_poweroftwo(int value)
     return power2;
 }
 
+
+/**
+ * Loop over a hash table.
+ *
+ * @param[in] key Key for each item
+ * @param[in] type Type of key (ui32|ui64|ptr)
+ * @param[in] value Storage for each item
+ * @param[in] ht Hash table to iterate over
+ *
+ * This macro provides a simple way to loop over the items in a pmix_hash_table_t. It
+ * is not safe to call pmix_hash_table_remove* from within the loop.
+ *
+ * Example Usage:
+ *
+ * uint64_t key;
+ * void * value;
+ * PMIX_HASH_TABLE_FOREACH(key, uint64, value, ht) {
+ *    do_something(key, value);
+ * }
+ */
+#define PMIX_HASH_TABLE_FOREACH(key, type, value, ht) \
+  for (void *_nptr=NULL;                                   \
+       PMIX_SUCCESS == pmix_hash_table_get_next_key_##type(ht, &key, (void **)&value, _nptr, &_nptr);)
 
 END_C_DECLS
 
