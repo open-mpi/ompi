@@ -2,6 +2,8 @@
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -234,9 +236,7 @@ int launch_clients(int num_procs, char *binary, char *** client_env, char ***bas
         if (cli_info[counter].pid == 0) {
             if( !TEST_VERBOSE_GET() ){
                 // Hide clients stdout
-                // TODO: on some systems stdout is a constant, address this
-                fclose(stdout);
-                stdout = fopen("/dev/null","w");
+                freopen("/dev/null","w", stdout);
             }
             execve(binary, client_argv, *client_env);
             /* Does not return */
