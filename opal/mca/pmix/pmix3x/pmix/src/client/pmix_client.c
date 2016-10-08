@@ -188,6 +188,8 @@ static void job_data(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
         cb->active = false;
         return;
     }
+    assert(NULL != nspace);
+    free(nspace);
     /* decode it */
     pmix_client_process_nspace_blob(pmix_globals.myid.nspace, buf);
     cb->status = PMIX_SUCCESS;
@@ -1120,7 +1122,6 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
             bo = &(kptr->value->data.bo);
             PMIX_CONSTRUCT(&buf2, pmix_buffer_t);
             PMIX_LOAD_BUFFER(&buf2, bo->bytes, bo->size);
-            PMIX_RELEASE(kptr);
             /* start by unpacking the rank */
             cnt = 1;
             if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(&buf2, &rank, &cnt, PMIX_PROC_RANK))) {
@@ -1156,7 +1157,6 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
             bo = &(kptr->value->data.bo);
             PMIX_CONSTRUCT(&buf2, pmix_buffer_t);
             PMIX_LOAD_BUFFER(&buf2, bo->bytes, bo->size);
-            PMIX_RELEASE(kptr);
             /* start by unpacking the number of nodes */
             cnt = 1;
             if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(&buf2, &nnodes, &cnt, PMIX_SIZE))) {
@@ -1225,11 +1225,8 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
             if (PMIX_SUCCESS != (rc = pmix_hash_store(&nsptr->internal, PMIX_RANK_WILDCARD, kptr))) {
                 PMIX_ERROR_LOG(rc);
             }
-            /* maintain accounting - but note that the kptr remains
-             * alive and stored in the hash table! So we cannot reuse
-             * it for some other purpose */
-             PMIX_RELEASE(kptr);
          }
+         PMIX_RELEASE(kptr);
          kptr = PMIX_NEW(pmix_kval_t);
          cnt = 1;
      }
