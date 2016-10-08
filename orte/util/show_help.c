@@ -43,6 +43,7 @@
 #include "orte/util/show_help.h"
 
 bool orte_help_want_aggregate = false;
+static int orte_help_output;
 
 /*
  * Local variable to know whether aggregated show_help is available or
@@ -447,7 +448,7 @@ static int show_help(const char *filename, const char *topic,
             fflush(orte_xml_fp);
             free(tmp);
         } else {
-            opal_output(orte_clean_output, "%s", output);
+            opal_output(orte_help_output, "%s", output);
         }
         if (!show_help_timer_set) {
             show_help_time_last_displayed = now;
@@ -537,6 +538,8 @@ cleanup:
 
 int orte_show_help_init(void)
 {
+    opal_output_stream_t lds;
+
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output, "orte_show_help init"));
 
     /* Show help duplicate detection */
@@ -545,6 +548,12 @@ int orte_show_help_init(void)
     }
 
     OBJ_CONSTRUCT(&abd_tuples, opal_list_t);
+
+    /* create an output stream for us */
+    OBJ_CONSTRUCT(&lds, opal_output_stream_t);
+    lds.lds_want_stderr = true;
+    orte_help_output = opal_output_open(&lds);
+    OBJ_DESTRUCT(&lds);
 
     save_help = opal_show_help;
     opal_show_help = orte_show_help;
@@ -559,6 +568,8 @@ void orte_show_help_finalize(void)
         return;
     }
     ready = false;
+
+    opal_output_close(orte_help_output);
 
     opal_show_help = save_help;
     save_help = NULL;
