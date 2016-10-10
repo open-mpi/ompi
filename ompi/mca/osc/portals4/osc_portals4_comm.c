@@ -763,8 +763,8 @@ ompi_osc_portals4_put(const void *origin_addr,
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
     ptl_process_t peer = ompi_osc_portals4_get_peer(module, target);
-    size_t offset;
-    OPAL_PTRDIFF_TYPE length, origin_lb, target_lb;
+    size_t offset, size;
+    OPAL_PTRDIFF_TYPE length, origin_lb, target_lb, extent;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "put: 0x%lx, %d, %s, %d, %lu, %d, %s, 0x%lx",
@@ -781,18 +781,22 @@ ompi_osc_portals4_put(const void *origin_addr,
                     "MPI_Put: transfer of non-contiguous memory is not currently supported.\n");
         return OMPI_ERR_NOT_SUPPORTED;
     } else {
-        ret = ompi_datatype_get_extent(origin_dt, &origin_lb, &length);
+        ret = ompi_datatype_get_true_extent(origin_dt, &origin_lb, &extent);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
-        ret = ompi_datatype_type_lb(target_dt, &target_lb);
+        ret = ompi_datatype_get_true_extent(target_dt, &target_lb, &extent);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
-        length *= origin_count;
+        ompi_datatype_type_size(origin_dt, &size);
+        length = size * origin_count;
+
         opal_atomic_add_64(&module->opcount, number_of_fragment(length, mca_osc_portals4_component.ptl_max_msg_size));
+
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                             "%s,%d Put", __FUNCTION__, __LINE__));
+                     "%s,%d Put(origin_count=%d, origin_lb=%lu, target_count=%d, target_lb=%lu, length=%lu, op_count=%ld)",
+                     __FUNCTION__, __LINE__, origin_count, origin_lb, target_count, target_lb, length, module->opcount));
         ret = splittedPtlPut(module->md_h,
                      (ptl_size_t) origin_addr + origin_lb,
                      length,
