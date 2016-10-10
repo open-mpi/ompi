@@ -89,6 +89,53 @@ int32_t ompi_datatype_destroy( ompi_datatype_t** type)
     return OMPI_SUCCESS;
 }
 
+ompi_datatype_t * ompi_datatype_create_temp( int32_t expectedSize )
+{
+    int ret;
+    ompi_datatype_t * datatype = (ompi_datatype_t *)malloc(sizeof(ompi_datatype_t));
+    datatype->args               = NULL;
+    datatype->d_f_to_c_index     = -1;
+    datatype->id                 = datatype->d_f_to_c_index;
+    datatype->d_keyhash          = NULL;
+    datatype->name[0]            = '\0';
+    datatype->packed_description = NULL;
+    datatype->pml_data           = 0;
+     
+    OBJ_CONSTRUCT(&datatype->super,opal_datatype_t);
+    ret = opal_datatype_create_desc( &(datatype->super), expectedSize);
+ 
+    if (OPAL_SUCCESS != ret)
+        return NULL;
+    return datatype;
+}
+ 
+ 
+void ompi_datatype_release_temp(ompi_datatype_t * datatype)
+{
+    if( NULL != datatype->args ) {
+        ompi_datatype_release_args( datatype );
+        datatype->args = NULL;
+    }
+    if( NULL != datatype->packed_description ) {
+        free( datatype->packed_description );
+        datatype->packed_description = NULL;
+    }
+    if(datatype->d_f_to_c_index != -1) { 
+        if( NULL != opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, datatype->d_f_to_c_index) ){
+            opal_pointer_array_set_item( &ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
+        }
+    }
+    /* any pending attributes ? */
+    if (NULL != datatype->d_keyhash) {
+        ompi_attr_delete_all( TYPE_ATTR, datatype, datatype->d_keyhash );
+        OBJ_RELEASE( datatype->d_keyhash );
+    }
+    /* make sure the name is set to empty */
+    datatype->name[0] = '\0';
+    OBJ_DESTRUCT(&datatype->super);
+	free(datatype);
+}
+
 int32_t
 ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
