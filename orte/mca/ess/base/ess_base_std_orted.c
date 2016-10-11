@@ -356,6 +356,29 @@ int orte_ess_base_orted_setup(char **hosts)
     /* obviously, we have "reported" */
     jdata->num_reported = 1;
 
+    /* setup the PMIx framework - ensure it skips all non-PMIx components,
+     * but do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pmix_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
+        goto error;
+    }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        /* the server code already barked, so let's be quiet */
+        ret = ORTE_ERR_SILENT;
+        error = "pmix_server_init";
+        goto error;
+    }
+
     /* Setup the communication infrastructure */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -379,6 +402,13 @@ int orte_ess_base_orted_setup(char **hosts)
     }
     /* add our contact info */
     proc->rml_uri = orte_rml.get_contact_info();
+
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "pmix server init";
+        goto error;
+    }
 
     /* select the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
@@ -440,49 +470,7 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rtc_base_select";
         goto error;
     }
-    /* enable communication with the rml */
-    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml.enable_comm";
-        goto error;
-    }
-    /* Now provide a chance for the PLM
-     * to perform any module-specific init functions. This
-     * needs to occur AFTER the communications are setup
-     * as it may involve starting a non-blocking recv
-     * Do this only if a specific PLM was given to us - the
-     * orted has no need of the proxy PLM at all
-     */
-    if (plm_in_use) {
-        if (ORTE_SUCCESS != (ret = orte_plm.init())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_plm_init";
-            goto error;
-        }
-    }
 
-    /* setup the PMIx framework - ensure it skips all non-PMIx components,
-     * but do not override anything we were given */
-    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_pmix_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_pmix_base_select";
-        goto error;
-    }
-    /* set the event base */
-    opal_pmix_base_set_evbase(orte_event_base);
-    /* setup the PMIx server */
-    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
-        /* the server code already barked, so let's be quiet */
-        ret = ORTE_ERR_SILENT;
-        error = "pmix_server_init";
-        goto error;
-    }
 #if ORTE_ENABLE_STATIC_PORTS
     /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly
@@ -510,6 +498,21 @@ int orte_ess_base_orted_setup(char **hosts)
      * need to do it anyway just to initialize things
      */
     orte_routed.update_routing_plan();
+
+    /* Now provide a chance for the PLM
+     * to perform any module-specific init functions. This
+     * needs to occur AFTER the communications are setup
+     * as it may involve starting a non-blocking recv
+     * Do this only if a specific PLM was given to us - the
+     * orted has no need of the proxy PLM at all
+     */
+    if (plm_in_use) {
+        if (ORTE_SUCCESS != (ret = orte_plm.init())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_init";
+            goto error;
+        }
+    }
 
     /* setup the routed info - the selected routed component
      * will know what to do.

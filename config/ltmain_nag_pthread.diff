@@ -2,7 +2,7 @@
 +++ config/ltmain.sh
 @@ -6417,8 +6417,14 @@
  	func_source "$lib"
- 
+
  	# Convert "-framework foo" to "foo.ltframework"
 +        # and "-pthread" to "-Wl,-pthread" if NAG compiler
  	if test -n "$inherited_linker_flags"; then

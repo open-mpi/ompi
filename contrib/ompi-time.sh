@@ -287,10 +287,10 @@ function do_analysis() {
 
   if [ ! -e $tesdir ]; then
     do_err "can not find testdir: $testdir"
-  fi 
+  fi
   if [ -z $basefile -o ! -f $basefile ]; then
     do_err "can not find basefile: $basefile"
-  fi 
+  fi
   if [ -z $outfile -o ! -f $outfile ]; then
     do_err "can not find outfile: $outfile"
   fi
@@ -323,7 +323,7 @@ function do_analysis() {
   max_line=`sort -n $outfile1 | tail -n1`
   if [ -z "$min_line" -o -z "$max_line" ]; then
     do_err "can not find max/min lines in : $outfile1"
-  fi 
+  fi
   min_t=$( echo "$min_line" | cut -f1 -d$'\t')
   max_t=$( echo "$max_line" | cut -f1 -d$'\t')
   echo -e "`bc -l <<< "scale=3; (($min_t - $start_t) / 1000000)"`\t`echo "$min_line" | cut -f4 -d$'\t'`\t`echo "$min_line" | cut -f5 -d$'\t'`" >> $resultfile 2>&1
@@ -341,7 +341,7 @@ function do_report() {
 
   if [ -z $resultfile -o ! -f $resultfile ]; then
     do_err "can not find resultfile: $resultfile"
-  fi 
+  fi
   min_t=`awk -F $'\t' '{ if (NR == 1) print $1 }' $resultfile`
   max_t=`awk -F $'\t' '{ if (NR == 2) print $1 }' $resultfile`
   echo -e "${nodes}\t${ppn}\t${min_t}\t${max_t}" >> $reportfile 2>&1
@@ -374,7 +374,7 @@ static inline void timestamp(FILE *file)
     int procid = -1;
     char *str = NULL;
 
-    gettimeofday(&tv, NULL); 
+    gettimeofday(&tv, NULL);
 
     if (gethostname(name, sizeof(name)) != 0)
         strcpy(name, "localhost");
@@ -485,7 +485,7 @@ function do_parse() {
       test_list="${test_list} ${test}"
     done
   done
-    
+
   result_list=`echo $result_list | tr " " "\n" | sort | uniq | tr "\n" " "`
   test_list=`echo $test_list | tr " " "\n" | sort | uniq | tr "\n" " "`
 
@@ -994,7 +994,7 @@ int orte_rml_base_update_contact_info(void * data)
             FILE *fd = NULL;
             char filename[1024];
             char *str = getenv("SLURM_PROCID");
- 
+
             if (str) {
                 sprintf(filename, "%s.%s", "$outfile", str);
                 fd = fopen(filename, "a");
@@ -1070,7 +1070,7 @@ int orte_rml_base_update_contact_info(void * data)
             FILE *fd = NULL;
             char filename[1024];
             char *str = getenv("SLURM_PROCID");
- 
+
             if (str) {
                 sprintf(filename, "%s.%s", "$outfile", str);
                 fd = fopen(filename, "a");

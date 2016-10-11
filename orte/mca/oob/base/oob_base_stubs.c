@@ -400,6 +400,30 @@ static void process_uri(char *uri)
     opal_argv_free(uris);
 }
 
+void orte_oob_base_get_transports(opal_list_t *transports)
+{
+    mca_base_component_list_item_t *cli;
+    mca_oob_base_component_t *component;
+    orte_rml_pathway_t *p;
+
+    opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                        "%s: get transports",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
+        component = (mca_oob_base_component_t*)cli->cli_component;
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "%s:get transports for component %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            component->oob_base.mca_component_name);
+        if (NULL != component->query_transports) {
+            if (NULL != (p = component->query_transports())) {
+                opal_list_append(transports, &p->super);
+            }
+        }
+    }
+}
+
 #if OPAL_ENABLE_FT_CR == 1
 void orte_oob_base_ft_event(int sd, short argc, void *cbdata)
 {

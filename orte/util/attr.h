@@ -181,15 +181,18 @@ typedef uint16_t orte_proc_flags_t;
 
 #define ORTE_PROC_MAX_KEY   400
 
-/*** MESSAGING QOS ATTRIBUTE KEYS ***/
-#define ORTE_QOS_START_KEY              ORTE_PROC_MAX_KEY
-#define ORTE_QOS_TYPE                   (ORTE_QOS_START_KEY + 1)         //uint8- defining what type of qos - refer to orte_qos_type enum for values
-#define ORTE_QOS_WINDOW_SIZE            (ORTE_QOS_START_KEY + 2)         // uint32 - number of messages in the window (stream)
-#define ORTE_QOS_ACK_NACK_TIMEOUT       (ORTE_QOS_START_KEY + 3)         //uint32 - timeout value in secs for msg/window ack nack
-#define ORTE_QOS_MSG_RETRY              (ORTE_QOS_START_KEY + 4)         // bool- resend message upon ACK fail or NACK or timeout.
-#define ORTE_QOS_NUM_RETRIES            (ORTE_QOS_START_KEY + 5)        // uint32 - number of retries.
+/*** RML ATTRIBUTE keys ***/
+#define ORTE_RML_START_KEY  ORTE_PROC_MAX_KEY
+#define ORTE_RML_TRANSPORT_TYPE         (ORTE_RML_START_KEY + 1)    // string - null terminated string containing transport type
+#define ORTE_RML_PROTOCOL_TYPE          (ORTE_RML_START_KEY + 2)    // string - protocol type (e.g., as returned by fi_info)
+#define ORTE_RML_CONDUIT_ID             (ORTE_RML_START_KEY + 3)    // orte_rml_conduit_t - conduit_id for this transport
+#define ORTE_RML_INCLUDE_COMP_ATTRIB    (ORTE_RML_START_KEY + 4)    // string - comma delimited list of RML component names to be considered
+#define ORTE_RML_EXCLUDE_COMP_ATTRIB    (ORTE_RML_START_KEY + 5)    // string - comma delimited list of RML component names to be excluded
+#define ORTE_RML_TRANSPORT_ATTRIB       (ORTE_RML_START_KEY + 6)    // string - comma delimited list of transport types to be considered (e.g., "fabric,ethernet")
+#define ORTE_RML_QUALIFIER_ATTRIB       (ORTE_RML_START_KEY + 7)    // string - comma delimited list of qualifiers (e.g., routed=direct,bandwidth=xxx)
+#define ORTE_RML_PROVIDER_ATTRIB        (ORTE_RML_START_KEY + 8)    // string - comma delimited list of provider names to be considered
+#define ORTE_RML_PROTOCOL_ATTRIB        (ORTE_RML_START_KEY + 9)    // string - comma delimited list of protocols to be considered (e.g., tcp,udp)
 
-#define ORTE_QOS_MAX_KEY     500
 
 #define ORTE_ATTR_KEY_MAX  1000
 

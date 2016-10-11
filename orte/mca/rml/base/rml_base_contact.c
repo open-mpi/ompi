@@ -139,7 +139,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
         }
 
         /* if we changed it, then we better update the routing
-         * plan so daemon collectives work correctly
+         * plan so daemon collectives work correctly.
          */
         orte_routed.update_routing_plan();
     }

@@ -210,7 +210,7 @@ static void msg_match_recv(orte_rml_posted_recv_t *rcv, bool get_all)
          */
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &msg->sender, &rcv->peer) &&
             msg->tag == rcv->tag) {
-            ORTE_RML_REACTIVATE_MESSAGE(msg);
+            ORTE_RML_ACTIVATE_MESSAGE(msg);
             opal_list_remove_item(&orte_rml_base.unmatched_msgs, item);
             if (!get_all) {
                 break;
@@ -232,20 +232,4 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
     OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
                        ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
     orte_rml_base_complete_recv_msg(&msg);
-}
-
-void orte_rml_base_reprocess_msg(int fd, short flags, void *cbdata)
-{
-    orte_rml_recv_t *msg = (orte_rml_recv_t*)cbdata;
-    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                         "%s reprocessing msg received from %s for tag %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&msg->sender),
-                         msg->tag));
-
-    OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
-                       ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
-    orte_rml_base_complete_recv_msg ( &msg);
-    /* the msg should be matched and released in this path
-     add an assert (msg!= NULL) ?? */
 }

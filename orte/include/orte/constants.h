@@ -154,7 +154,8 @@ enum {
     ORTE_ERR_OUT_OF_ORDER_MSG               = (ORTE_ERR_BASE - 55),
     ORTE_ERR_OPEN_CHANNEL_DUPLICATE         = (ORTE_ERR_BASE - 56),
     ORTE_ERR_FORCE_SELECT                   = (ORTE_ERR_BASE - 57),
-    ORTE_ERR_JOB_CANCELLED                  = (ORTE_ERR_BASE - 58)
+    ORTE_ERR_JOB_CANCELLED                  = (ORTE_ERR_BASE - 58),
+    ORTE_ERR_CONDUIT_SEND_FAIL              = (ORTE_ERR_BASE - 59)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

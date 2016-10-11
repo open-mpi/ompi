@@ -340,7 +340,7 @@ static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
         if (flag) {
             opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
         }
- 
+
         ompi_comm_cid_lowest_id = INT64_MAX;
         OPAL_THREAD_UNLOCK(&ompi_cid_lock);
         return OMPI_ERR_OUT_OF_RESOURCE;

@@ -30,7 +30,7 @@
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_CRAY_XPMEM],[
     if test -z "$opal_check_cray_xpmem_happy" ; then
-        AC_ARG_WITH([cray_xpmem],		    
+        AC_ARG_WITH([cray_xpmem],
                     [AC_HELP_STRING([--with-cray-xpmem(=yes/no)],
                     [Build Cray XPMEM support(default: auto)])],
                     [], with_cray_xpmem=auto)
