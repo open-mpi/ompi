@@ -40,8 +40,10 @@ struct mca_pml_ucx_module {
     /* Requests */
     mca_pml_ucx_freelist_t    persistent_reqs;
     ompi_request_t            completed_send_req;
+    size_t                    request_size;
+    int                       num_disconnect;
 
-    /* Convertors pool */
+    /* Converters pool */
     mca_pml_ucx_freelist_t    convs;
 
     int                       priority;

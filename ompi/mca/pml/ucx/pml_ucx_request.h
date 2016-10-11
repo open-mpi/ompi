@@ -34,6 +34,9 @@ enum {
 #define PML_UCX_TAG_BITS                       24
 #define PML_UCX_RANK_BITS                      24
 #define PML_UCX_CONTEXT_BITS                   16
+#define PML_UCX_ANY_SOURCE_MASK                0x800000000000fffful
+#define PML_UCX_SPECIFIC_SOURCE_MASK           0x800000fffffffffful
+#define PML_UCX_TAG_MASK                       0x7fffff0000000000ul
 
 
 #define PML_UCX_MAKE_SEND_TAG(_tag, _comm) \
@@ -45,16 +48,16 @@ enum {
 #define PML_UCX_MAKE_RECV_TAG(_ucp_tag, _ucp_tag_mask, _tag, _src, _comm) \
     { \
         if ((_src) == MPI_ANY_SOURCE) { \
-            _ucp_tag_mask = 0x800000000000fffful; \
+            _ucp_tag_mask = PML_UCX_ANY_SOURCE_MASK; \
         } else { \
-            _ucp_tag_mask = 0x800000fffffffffful; \
+            _ucp_tag_mask = PML_UCX_SPECIFIC_SOURCE_MASK; \
         } \
         \
         _ucp_tag = (((uint64_t)(_src) & UCS_MASK(PML_UCX_RANK_BITS)) << PML_UCX_CONTEXT_BITS) | \
                    (_comm)->c_contextid; \
         \
         if ((_tag) != MPI_ANY_TAG) { \
-            _ucp_tag_mask |= 0x7fffff0000000000ul; \
+            _ucp_tag_mask |= PML_UCX_TAG_MASK; \
             _ucp_tag      |= ((uint64_t)(_tag)) << (PML_UCX_RANK_BITS + PML_UCX_CONTEXT_BITS); \
         } \
     }

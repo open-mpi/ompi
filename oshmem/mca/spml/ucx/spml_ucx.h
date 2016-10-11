@@ -50,6 +50,7 @@ struct mca_spml_ucx {
     ucp_context_h            ucp_context;
     ucp_worker_h             ucp_worker;
     ucp_peer_t              *ucp_peers;
+    int                      num_disconnect;
 
     int                      priority; /* component priority */
     bool                     enabled;
