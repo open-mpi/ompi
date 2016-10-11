@@ -29,18 +29,19 @@
 
 #include <src/include/pmix_config.h>
 
-#if 0
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include PMIX_EVENT_HEADER
+#include "event2/thread.h"
+
+#include <pmix_rename.h>
 
 #include "src/util/output.h"
 #include "src/util/show_help.h"
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/pinstalldirs/base/base.h"
-#include "src/mca/bfrops/base/base.h"
 #include "src/mca/psec/base/base.h"
 
 #include "src/event/pmix_event.h"
@@ -61,14 +62,17 @@ const char pmix_version_string[] = PMIX_IDENT_STRING;
 
 int pmix_initialized = 0;
 bool pmix_init_called = false;
-pmix_globals_t pmix_globals = {
+/* we have to export the pmix_globals object so
+ * all plugins can access it. However, it is included
+ * in the pmix_rename.h file for external protection */
+PMIX_EXPORT pmix_globals_t pmix_globals = {
     .init_cntr = 0,
     .mypeer = NULL,
+    .proc_type = PMIX_PROC_UNDEF,
     .pindex = 0,
     .evbase = NULL,
     .external_evbase = false,
     .debug_output = -1,
-    .proc_type = PMIX_PROC_UNDEF,
     .connected = false,
     .cache_local = NULL,
     .cache_remote = NULL
@@ -76,7 +80,8 @@ pmix_globals_t pmix_globals = {
 
 
 int pmix_rte_init(pmix_proc_type_t type,
-                  pmix_info_t info[], size_t ninfo)
+                  pmix_info_t info[], size_t ninfo,
+                  pmix_usock_cbfunc_t notifycbfunc)
 {
     int ret, debug_level;
     char *error = NULL, *evar;
@@ -163,6 +168,10 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
     /* create our peer object */
     pmix_globals.mypeer = PMIX_NEW(pmix_peer_t);
+    if (NULL == pmix_globals.mypeer) {
+        ret = PMIX_ERR_NOMEM;
+        goto return_error;
+    }
 
     /* scan incoming info for directives */
     if (NULL != info) {
@@ -173,7 +182,9 @@ int pmix_rte_init(pmix_proc_type_t type,
             }
         }
     }
+    pmix_bfrop_open();
 
+#if 0
     /* open the bfrops - we will select the active plugin later */
     if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_bfrops_base_framework, 0)) ) {
         error = "pmix_bfrops_base_open";
@@ -183,6 +194,7 @@ int pmix_rte_init(pmix_proc_type_t type,
         error = "pmix_bfrops_base_select";
         goto return_error;
     }
+#endif
 
     /* open the psec and select the default module for this environment */
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_psec_base_framework, 0))) {
@@ -194,7 +206,12 @@ int pmix_rte_init(pmix_proc_type_t type,
         goto return_error;
     }
     param = getenv("PMIX_SEC_MODULE");  // if directive was given, use it
-    pmix_globals.mypeer->comm.sec = pmix_psec_base_assign_module(param);
+    pmix_globals.mypeer->compat.psec = pmix_psec_base_assign_module(param);
+    if (NULL == pmix_globals.mypeer->compat.psec) {
+        ret = PMIX_ERR_NOT_SUPPORTED;
+        error = "no psec module";
+        goto return_error;
+    }
 
     /* tell libevent that we need thread support */
     pmix_event_use_threads();
@@ -207,6 +224,7 @@ int pmix_rte_init(pmix_proc_type_t type,
         }
     }
 
+#if 0
     /* open the PMIx Transport Layer (ptl) - we will select the
      * active plugin later */
     if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_ptl_base_framework, 0)) ) {
@@ -228,13 +246,10 @@ int pmix_rte_init(pmix_proc_type_t type,
         error = "pmix_pdstor_base_select";
         goto return_error;
     }
+#endif
 
     /* setup the usock service */
-    if (PMIX_PROC_SERVER == type) {
-        pmix_usock_init(NULL);
-    } else {
-        pmix_usock_init(pmix_client_notify_recv);
-    }
+    pmix_usock_init(notifycbfunc);
 
     return PMIX_SUCCESS;
 
@@ -244,5 +259,3 @@ int pmix_rte_init(pmix_proc_type_t type,
                     error, ret );
     return ret;
 }
-
-#endif

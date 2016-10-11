@@ -22,7 +22,6 @@
 #define PMIX_EVENT_H
 
 #include <src/include/pmix_config.h>
-#include <src/include/rename.h>
 
 #include <pmix_common.h>
 #include "src/class/pmix_list.h"
@@ -116,7 +115,7 @@ PMIX_CLASS_DECLARATION(pmix_event_chain_t);
 /* invoke the error handler that is registered against the given
  * status, passing it the provided info on the procs that were
  * affected, plus any additional info provided by the server */
- void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain);
+void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain);
 
 #define PMIX_REPORT_EVENT(e)                        \
     do {                                            \

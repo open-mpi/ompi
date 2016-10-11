@@ -56,7 +56,8 @@ extern const char pmix_version_string[];
  *
  */
 pmix_status_t pmix_rte_init(pmix_proc_type_t type,
-                            pmix_info_t info[], size_t ninfo);
+                            pmix_info_t info[], size_t ninfo,
+                            pmix_usock_cbfunc_t cbfunc);
 
 /**
  * Finalize the PMIX layer, including the MCA system.
@@ -69,9 +70,6 @@ void pmix_rte_finalize(void);
  */
 pmix_status_t pmix_register_params(void);
 pmix_status_t pmix_deregister_params(void);
-
-void pmix_client_notify_recv(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
-                             pmix_buffer_t *buf, void *cbdata);
 
 END_C_DECLS
 

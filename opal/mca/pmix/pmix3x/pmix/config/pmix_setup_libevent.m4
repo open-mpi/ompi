@@ -124,7 +124,7 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
     # Set output variables
     PMIX_EVENT_HEADER="<event.h>"
     PMIX_EVENT2_THREAD_HEADER="<event2/thread.h>"
-    PMIX_EVENT_LIB=-levent
+    PMIX_EVENT_LIB="-levent -levent_pthreads"
     AS_IF([test "$pmix_event_dir" != ""],
         [PMIX_EVENT_CPPFLAGS="-I$pmix_event_dir/include"])
     AS_IF([test "$pmix_event_libdir" != ""],

@@ -291,7 +291,8 @@ PMIX_EXPORT int PMI2_Job_Connect(const char jobid[], PMI2_Connect_comm_t *conn)
         return PMI2_ERR_INVALID_ARGS;
     }
 
-    (void)strncpy(proc.nspace, (jobid ? jobid : myproc.nspace), sizeof(myproc.nspace));
+    memset(proc.nspace, 0, sizeof(proc.nspace));
+    (void)strncpy(proc.nspace, (jobid ? jobid : proc.nspace), sizeof(proc.nspace)-1);
     proc.rank = PMIX_RANK_WILDCARD;
     rc = PMIx_Connect(&proc, 1, NULL, 0);
     return convert_err(rc);
@@ -304,7 +305,8 @@ PMIX_EXPORT int PMI2_Job_Disconnect(const char jobid[])
 
     PMI2_CHECK();
 
-    (void)strncpy(proc.nspace, (jobid ? jobid : myproc.nspace), sizeof(myproc.nspace));
+    memset(proc.nspace, 0, sizeof(proc.nspace));
+    (void)strncpy(proc.nspace, (jobid ? jobid : proc.nspace), sizeof(proc.nspace)-1);
     proc.rank = PMIX_RANK_WILDCARD;
     rc = PMIx_Disconnect(&proc, 1, NULL, 0);
     return convert_err(rc);

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -22,6 +22,7 @@
 #include <src/include/pmix_socket_errno.h>
 
 #include <pmix_server.h>
+#include <pmix_rename.h>
 #include "src/include/pmix_globals.h"
 
 #ifdef HAVE_STRING_H
@@ -52,7 +53,6 @@
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
 #include "src/usock/usock.h"
-#include "src/sec/pmix_sec.h"
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
 #include "src/dstore/pmix_dstore.h"
 #endif /* PMIX_ENABLE_DSTORE */

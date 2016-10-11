@@ -90,7 +90,7 @@ PMIX_CLASS_DECLARATION(pmix_dmdx_local_t);
 typedef uint16_t pmix_listener_protocol_t;
 #define PMIX_PROTOCOL_V1        0
 #define PMIX_PROTOCOL_TOOL      1
-#define PMIX_PROTOCOL V2        2
+#define PMIX_PROTOCOL_V2        2
 
 /* connection support */
 typedef struct {
@@ -103,6 +103,12 @@ typedef struct {
     size_t ninfo;
     pmix_status_t status;
     struct sockaddr_storage addr;
+    char *bfrop;
+    char *psec;
+    pmix_bfrop_buffer_type_t buffer_type;
+    char *cred;
+    uid_t uid;
+    gid_t gid;
 } pmix_pending_connection_t;
 PMIX_CLASS_DECLARATION(pmix_pending_connection_t);
 

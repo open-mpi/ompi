@@ -19,6 +19,7 @@
 
 #include <src/include/types.h>
 #include <src/include/pmix_stdint.h>
+#include <pmix_rename.h>
 
 #include "src/include/pmix_globals.h"
 

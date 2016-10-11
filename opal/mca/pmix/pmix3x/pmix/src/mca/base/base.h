@@ -23,8 +23,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_BASE_H
-#define MCA_BASE_H
+#ifndef PMIX_MCA_BASE_H
+#define PMIX_MCA_BASE_H
 
 #include <src/include/pmix_config.h>
 

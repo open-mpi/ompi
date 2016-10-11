@@ -317,7 +317,7 @@ void pmix_output_close(int output_id)
 /*
  * Main function to send output to a stream
  */
-void pmix_output(int output_id, const char *format, ...)
+PMIX_EXPORT void pmix_output(int output_id, const char *format, ...)
 {
     if (output_id >= 0 && output_id < PMIX_OUTPUT_MAX_STREAMS) {
         va_list arglist;
@@ -331,7 +331,7 @@ void pmix_output(int output_id, const char *format, ...)
 /*
  * Send a message to a stream if the verbose level is high enough
  */
-void pmix_output_verbose(int level, int output_id, const char *format, ...)
+ PMIX_EXPORT void pmix_output_verbose(int level, int output_id, const char *format, ...)
 {
     if (output_id >= 0 && output_id < PMIX_OUTPUT_MAX_STREAMS &&
         info[output_id].ldi_verbose_level >= level) {
@@ -456,7 +456,7 @@ void pmix_output_hexdump(int verbose_level, int output_id,
             out_pos += ret;
             for (j = 0; j < 16; j++) {
                 if (i + j < buflen)
-                ret = sprintf(out_buf + out_pos, "%03x ",
+                ret = sprintf(out_buf + out_pos, "%02x ",
                         buf[i + j]);
                 else
                 ret = sprintf(out_buf + out_pos, "   ");

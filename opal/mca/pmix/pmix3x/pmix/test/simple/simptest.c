@@ -269,6 +269,7 @@ int main(int argc, char **argv)
         free(tmp);
     }
     tmp = pmix_argv_join(atmp, ',');
+    pmix_argv_free(atmp);
     x = PMIX_NEW(myxfer_t);
     set_namespace(nprocs, tmp, "foobar", opcbfunc, x);
 
@@ -322,6 +323,9 @@ int main(int argc, char **argv)
             exit(0);
         }
     }
+    free(executable);
+    pmix_argv_free(client_argv);
+    pmix_argv_free(client_env);
 
     /* hang around until the client(s) finalize */
     while (0 < wakeup) {
@@ -330,8 +334,6 @@ int main(int argc, char **argv)
         ts.tv_nsec = 100000;
         nanosleep(&ts, NULL);
     }
-    pmix_argv_free(client_argv);
-    pmix_argv_free(client_env);
 
     /* deregister the errhandler */
     PMIx_Deregister_event_handler(0, NULL, NULL);

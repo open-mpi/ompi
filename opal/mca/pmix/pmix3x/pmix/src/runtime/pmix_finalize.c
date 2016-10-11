@@ -24,8 +24,6 @@
 
 #include <src/include/pmix_config.h>
 
-#if 0
-
 #include "src/class/pmix_object.h"
 #include "src/client/pmix_client_ops.h"
 #include "src/usock/usock.h"
@@ -35,8 +33,8 @@
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/pinstalldirs/base/base.h"
-#include "src/mca/bfrops/base/base.h"
 #include "src/mca/psec/base/base.h"
+#include "src/dstore/pmix_dstore.h"
 #include PMIX_EVENT_HEADER
 
 #include "src/runtime/pmix_rte.h"
@@ -68,7 +66,7 @@ void pmix_rte_finalize(void)
 
     /* shutdown communications */
     pmix_usock_finalize();
-    if (PMIX_PROC_CLIENT == pmix_globals.proc_type &&
+    if (PMIX_PROC_SERVER != pmix_globals.proc_type &&
         0 <= pmix_client_globals.myserver.sd) {
         CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
     }
@@ -97,8 +95,10 @@ void pmix_rte_finalize(void)
        much */
     pmix_output_finalize();
 
+#if 0
     /* close the bfrops */
     (void)pmix_mca_base_framework_close(&pmix_bfrops_base_framework);
+#endif
 
     if (!pmix_globals.external_evbase) {
         /* stop the progress thread */
@@ -123,4 +123,3 @@ void pmix_rte_finalize(void)
         pmix_cleanup();
     #endif
 }
-#endif

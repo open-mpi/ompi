@@ -37,6 +37,8 @@
 #include "src/class/pmix_list.h"
 #include "src/event/pmix_event.h"
 
+#include "src/mca/psec/psec.h"
+
 BEGIN_C_DECLS
 
 /* some limits */
@@ -179,6 +181,12 @@ typedef struct pmix_rank_info_t {
 } pmix_rank_info_t;
 PMIX_CLASS_DECLARATION(pmix_rank_info_t);
 
+/* define a structure for holding personality pointers
+ * to plugins for cross-version support */
+typedef struct pmix_personality_t {
+    pmix_psec_module_t *psec;
+} pmix_personality_t;
+
 /* object for tracking peers - each peer can have multiple
  * connections. This can occur if the initial app executes
  * a fork/exec, and the child initiates its own connection
@@ -198,6 +206,7 @@ typedef struct pmix_peer_t {
     pmix_list_t send_queue;      /**< list of messages to send */
     pmix_usock_send_t *send_msg; /**< current send in progress */
     pmix_usock_recv_t *recv_msg; /**< current recv in progress */
+    pmix_personality_t compat;
 } pmix_peer_t;
 PMIX_CLASS_DECLARATION(pmix_peer_t);
 
@@ -329,6 +338,8 @@ PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
 typedef struct {
     int init_cntr;                       // #times someone called Init - #times called Finalize
     pmix_proc_t myid;
+    pmix_peer_t *mypeer;                 // my own peer object
+    pmix_proc_type_t proc_type;
     uid_t uid;                           // my effective uid
     gid_t gid;                           // my effective gid
     int pindex;
@@ -336,7 +347,6 @@ typedef struct {
     bool external_evbase;
     int debug_output;
     pmix_events_t events;                // my event handler registrations.
-    bool server;
     bool connected;
     pmix_list_t nspaces;                 // list of pmix_nspace_t for the nspaces we know about
     pmix_buffer_t *cache_local;          // data PUT by me to local scope

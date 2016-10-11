@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -21,6 +21,7 @@
 #include <src/include/pmix_stdint.h>
 
 #include <pmix.h>
+#include <pmix_rename.h>
 
 #include "src/include/pmix_globals.h"
 
@@ -51,7 +52,6 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/usock/usock.h"
-#include "src/sec/pmix_sec.h"
 
 #include "pmix_client_ops.h"
 

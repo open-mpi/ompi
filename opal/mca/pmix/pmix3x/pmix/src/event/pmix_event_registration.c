@@ -8,11 +8,11 @@
  * $HEADER$
  */
 #include <src/include/pmix_config.h>
-#include <src/include/rename.h>
 
 #include <pmix.h>
 #include <pmix_common.h>
 #include <pmix_server.h>
+#include <pmix_rename.h>
 
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -234,7 +234,7 @@ static pmix_status_t _add_hdlr(pmix_list_t *list, pmix_list_item_t *item,
     /* if we are a client, and we haven't already registered a handler of this
      * type with our server, or if we have directives, then we need to notify
      * the server */
-    if (!pmix_globals.server &&
+    if (PMIX_PROC_SERVER != pmix_globals.proc_type &&
        (need_register || 0 < pmix_list_get_size(xfer))) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: _add_hdlr sending to server");
@@ -254,7 +254,7 @@ static pmix_status_t _add_hdlr(pmix_list_t *list, pmix_list_item_t *item,
     /* if we are a server and are registering for events, then we only contact
      * our host if we want environmental events */
 
-    if (pmix_globals.server && cd->enviro &&
+    if (PMIX_PROC_SERVER == pmix_globals.proc_type && cd->enviro &&
         NULL != pmix_host_server.register_events) {
             pmix_output_verbose(2, pmix_globals.debug_output,
                                 "pmix: _add_hdlr registering with server");
@@ -450,7 +450,7 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
 
     /* if I am not the server, then I need to notify the server
      * to remove my registration */
-    if (!pmix_globals.server) {
+    if (PMIX_PROC_SERVER != pmix_globals.proc_type) {
         msg = PMIX_NEW(pmix_buffer_t);
         if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
             PMIX_RELEASE(msg);

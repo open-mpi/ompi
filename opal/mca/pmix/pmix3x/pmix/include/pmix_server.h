@@ -385,7 +385,7 @@ pmix_status_t PMIx_generate_regex(const char *input, char **regex);
  * of ranges. Thus, an input of:
  *     "1-4;2-5;8,10,11,12;6,7,9"
  * would generate a regex of
- *     "[pmix:3x(3);8,10-12;6-7,9]"
+ *     "[pmix:2x(3);8,10-12;6-7,9]"
  *
  * Note that the "pmix" at the beginning of each regex indicates
  * that the PMIx native parser is to be used by the client for
