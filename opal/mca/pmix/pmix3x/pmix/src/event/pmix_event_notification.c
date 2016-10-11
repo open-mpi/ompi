@@ -8,11 +8,11 @@
  * $HEADER$
  */
 #include <src/include/pmix_config.h>
-#include <src/include/rename.h>
 
-#include "include/pmix.h"
-#include "include/pmix_common.h"
-#include "include/pmix_server.h"
+#include <pmix.h>
+#include <pmix_common.h>
+#include <pmix_server.h>
+#include <pmix_rename.h>
 
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -44,7 +44,7 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
 {
     int rc;
 
-    if (pmix_globals.server) {
+    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
         rc = notify_client_of_event(status, source, range,
                                     info, ninfo,
                                     cbfunc, cbdata);

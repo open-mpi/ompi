@@ -23,6 +23,8 @@
 
 #include <pmix_server.h>
 #include <pmix_common.h>
+#include <pmix_rename.h>
+
 #include "src/include/pmix_globals.h"
 
 #ifdef HAVE_STRING_H
@@ -58,8 +60,8 @@
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/pinstalldirs/base/base.h"
 #include "src/runtime/pmix_progress_threads.h"
+#include "src/runtime/pmix_rte.h"
 #include "src/usock/usock.h"
-#include "src/sec/pmix_sec.h"
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
 #include "src/dstore/pmix_dstore.h"
 #endif /* PMIX_ENABLE_DSTORE */
@@ -122,35 +124,9 @@ void pmix_server_queue_message(int fd, short args, void *cbdata)
 
 static pmix_status_t initialize_server_base(pmix_server_module_t *module)
 {
-    int debug_level;
     char *tdir, *evar;
     char * pmix_pid;
     pmix_listener_t *listener;
-    pmix_status_t ret;
-
-    /* initialize the output system */
-    if (!pmix_output_init()) {
-        fprintf(stderr, "PMIx server was unable to initialize its output system\n");
-        return PMIX_ERR_INIT;
-    }
-    /* initialize install dirs code */
-    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_pinstalldirs_base_framework, 0))) {
-        fprintf(stderr, "pmix_pinstalldirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of PMIX_SUCCESS)\n",
-                __FILE__, __LINE__, ret);
-        return ret;
-    }
-
-    if (PMIX_SUCCESS != pmix_show_help_init()) {
-        fprintf(stderr, "PMIx server was unable to initialize its show_help system\n");
-        return PMIX_ERR_INIT;
-    }
-
-    /* setup the globals */
-    pmix_globals_init();
-    memset(&pmix_server_globals, 0, sizeof(pmix_server_globals));
-
-    /* mark that I am a server */
-    pmix_globals.server = true;
 
     /* look for our namespace, if one was given */
     if (NULL == (evar = getenv("PMIX_SERVER_NAMESPACE"))) {
@@ -168,9 +144,6 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
         pmix_globals.myid.rank = strtol(evar, NULL, 10);
     }
 
-    /* initialize the datatype support */
-    pmix_bfrop_open();
-
     /* setup the server-specific globals */
     PMIX_CONSTRUCT(&pmix_server_globals.clients, pmix_pointer_array_t);
     pmix_pointer_array_init(&pmix_server_globals.clients, 1, INT_MAX, 1);
@@ -183,23 +156,12 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     PMIX_CONSTRUCT(&pmix_server_globals.listeners, pmix_list_t);
     pmix_ring_buffer_init(&pmix_server_globals.notifications, 256);
 
-    /* see if debug is requested */
-    if (NULL != (evar = getenv("PMIX_DEBUG"))) {
-        debug_level = strtol(evar, NULL, 10);
-        pmix_globals.debug_output = pmix_output_open(NULL);
-        pmix_output_set_verbosity(pmix_globals.debug_output, debug_level);
-    }
-
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server init called");
 
     /* setup the function pointers */
     memset(&pmix_host_server, 0, sizeof(pmix_server_module_t));
     pmix_host_server = *module;
-
-    /* init security */
-    pmix_sec_init();
-    security_mode = strdup(pmix_sec.name);
 
     /* find the temp dir */
     if (NULL != mytmpdir) {
@@ -268,6 +230,13 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server init called");
 
+    /* setup the runtime - this init's the globals,
+     * opens and initializes the required frameworks */
+    if (PMIX_SUCCESS != (rc = pmix_rte_init(PMIX_PROC_SERVER, info, ninfo, NULL))) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* Check for the info keys that are not independent from
      * initialize_server_base() and even may be needed there */
     if (NULL != info) {
@@ -297,17 +266,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         return rc;
     }
 #endif /* PMIX_ENABLE_DSTORE */
-
-    /* and the usock system */
-    pmix_usock_init(NULL);
-
-    /* tell the event library we need thread support */
-    pmix_event_use_threads();
-
-    /* create an event base and progress thread for us */
-    if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
-        return PMIX_ERR_INIT;
-    }
 
     /* check the info keys for a directive about the uid/gid
      * to be set for the rendezvous file */
@@ -441,13 +399,14 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     need_listener = false;
     PMIX_LIST_FOREACH(lt, &pmix_server_globals.listeners, pmix_listener_t) {
         if (PMIX_SUCCESS != pmix_prepare_listening(lt, &need_listener)) {
+            pmix_show_help("help-pmix-server.txt", "listener-failed-start", true, lt->address.sun_path);
             PMIx_server_finalize();
             return PMIX_ERR_INIT;
         }
     }
     if (need_listener) {
         if (PMIX_SUCCESS != pmix_start_listening()) {
-            pmix_show_help("help-pmix-server.txt", "listener-failed-start", true, tl->address.sun_path);
+            pmix_show_help("help-pmix-server.txt", "listener-thread-start", true);
             PMIx_server_finalize();
             return PMIX_ERR_INIT;
         }
@@ -513,10 +472,6 @@ static void cleanup_server_state(void)
     PMIX_DESTRUCT(&pmix_server_globals.gdata);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.listeners);
 
-    if (NULL != security_mode) {
-        free(security_mode);
-    }
-
     if (NULL != mytmpdir) {
         free(mytmpdir);
     }
@@ -526,14 +481,7 @@ static void cleanup_server_state(void)
     }
 
     pmix_bfrop_close();
-    pmix_sec_finalize();
-    pmix_globals_finalize();
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix:server finalize complete");
-
-    pmix_output_close(pmix_globals.debug_output);
-    pmix_output_finalize();
-    pmix_class_finalize();
+    pmix_rte_finalize();
 }
 
 PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
@@ -550,17 +498,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     if (pmix_server_globals.listen_thread_active) {
         pmix_stop_listening();
     }
-
-    pmix_progress_thread_finalize(NULL);
-#ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
-    libevent_global_shutdown();
-#endif
-
-    pmix_usock_finalize();
-
-#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    pmix_dstore_finalize();
-#endif /* PMIX_ENABLE_DSTORE */
 
     cleanup_server_state();
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -721,7 +658,7 @@ static void _register_nspace(int sd, short args, void *cbdata)
     /* do not destruct the kv object - no memory leak will result */
 
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    if (0 > pmix_dstore_nspace_add(cd->proc.nspace)) {
+    if (PMIX_SUCCESS != (rc = pmix_dstore_nspace_add(cd->proc.nspace, cd->info, cd->ninfo))) {
         PMIX_ERROR_LOG(rc);
         goto release;
     }
@@ -768,6 +705,7 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_nspace_t *tmp;
+    pmix_status_t rc = PMIX_SUCCESS;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _deregister_nspace %s",
@@ -782,8 +720,14 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
         }
     }
 
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    if (0 > (rc = pmix_dstore_nspace_del(cd->proc.nspace))) {
+        PMIX_ERROR_LOG(rc);
+    }
+#endif
+
     if (NULL != cd->opcbfunc) {
-        cd->opcbfunc(PMIX_SUCCESS, cd->cbdata);
+        cd->opcbfunc(rc, cd->cbdata);
     }
     PMIX_RELEASE(cd);
 }
@@ -1094,6 +1038,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char *
 {
     char rankstr[128];
     pmix_listener_t *lt;
+    pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server setup_fork for nspace %s rank %d",
@@ -1115,7 +1060,10 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char *
 
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
     /* pass dstore path to files */
-    pmix_dstore_patch_env(env);
+    if (PMIX_SUCCESS != (rc = pmix_dstore_patch_env(proc->nspace, env))) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
 #endif
 
     return PMIX_SUCCESS;
@@ -1290,7 +1238,7 @@ PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
         return rc;
     }
 
-    if (pmix_globals.server) {
+    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
         PMIX_THREADSHIFT(cd, _store_internal);
         PMIX_WAIT_FOR_COMPLETION(cd->active);
     } else {

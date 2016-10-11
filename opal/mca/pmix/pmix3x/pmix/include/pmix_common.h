@@ -59,6 +59,7 @@
 #include <sys/time.h> /* for struct timeval */
 #include <unistd.h> /* for uid_t and gid_t */
 #include <sys/types.h> /* for uid_t and gid_t */
+#include <pmix_version.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -136,6 +137,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_TMPDIR                         "pmix.tmpdir"           // (char*) top-level tmp dir assigned to session
 #define PMIX_NSDIR                          "pmix.nsdir"            // (char*) sub-tmpdir assigned to namespace
 #define PMIX_PROCDIR                        "pmix.pdir"             // (char*) sub-nsdir assigned to proc
+#define PMIX_TDIR_RMCLEAN                   "pmix.tdir.rmclean"     // (bool)  Resource Manager will clean session directories
 
 /* information about relative ranks as assigned by the RM */
 #define PMIX_JOBID                          "pmix.jobid"            // (char*) jobid assigned by scheduler
@@ -168,6 +170,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_LOCAL_SIZE                     "pmix.local.size"       // (uint32_t) #procs in this job on this node
 #define PMIX_NODE_SIZE                      "pmix.node.size"        // (uint32_t) #procs across all jobs on this node
 #define PMIX_MAX_PROCS                      "pmix.max.size"         // (uint32_t) max #procs for this job
+#define PMIX_NUM_NODES                      "pmix.num.nodes"        // (uint32_t) #nodes in this nspace
 
 /* topology info */
 #define PMIX_NET_TOPO                       "pmix.ntopo"            // (char*) xml-representation of network topology
@@ -256,8 +259,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_QUERY_LOCAL_PROC_TABLE         "pmix.qry.lptable"       // (char*) input nspace of job whose info is being requested
                                                                      //     returns (pmix_data_array_t) an array of pmix_proc_info_t for
                                                                      //     procs in job on same node
-#define PMIX_QUERY_AUTHORIZATIONS           "pmix.qry.auths"         // return operations tool is authorized to perform
-#define PMIX_QUERY_MEMPROFILE               "pmix.qry.mempfle"       // (pmix_usage_t) return an array of memory usage stats
+#define PMIX_QUERY_AUTHORIZATIONS           "pmix.qry.auths"         // return operations tool is authorized to perform"
 
 /* log attributes */
 #define PMIX_LOG_STDERR                     "pmix.log.stderr"        // (bool) log data to stderr
@@ -557,29 +559,6 @@ typedef struct pmix_proc_info {
             free((m));                              \
         }                                           \
     } while (0)
-
-
-/****    PMIX USAGE STRUCT    ****/
-typedef struct pmix_usage {
-    pmix_proc_t proc;
-    char key[PMIX_MAX_KEYLEN+1];
-    float usage;
-} pmix_usage_t;
-#define PMIX_USAGE_CREATE(m, n)                                     \
-    do {                                                            \
-        (m) = (pmix_usage_t*)calloc((n) , sizeof(pmix_usage_t));    \
-    } while (0)
-
-#define PMIX_USAGE_RELEASE(m)  PMIX_USAGE_FREE((m))
-
-#define PMIX_USAGE_CONSTRUCT(m)                 \
-    do {                                        \
-        memset((m), 0, sizeof(pmix_usage_t));   \
-    } while (0)
-
-#define PMIX_USAGE_DESTRUCT(m)
-
-#define PMIX_USAGE_FREE(m, n)  free((m))
 
 
 /****    PMIX VALUE STRUCT    ****/

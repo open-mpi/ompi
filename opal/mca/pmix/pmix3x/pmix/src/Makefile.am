@@ -73,7 +73,6 @@ include tool/Makefile.include
 include common/Makefile.include
 include buffer_ops/Makefile.am
 include usock/Makefile.am
-include sec/Makefile.am
 if WANT_DSTORE
 include sm/Makefile.include
 include dstore/Makefile.include

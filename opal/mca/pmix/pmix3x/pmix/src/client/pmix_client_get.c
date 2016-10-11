@@ -21,6 +21,7 @@
 #include <src/include/pmix_stdint.h>
 
 #include <pmix.h>
+#include <pmix_rename.h>
 
 #include "src/include/pmix_globals.h"
 
@@ -52,7 +53,6 @@
 #include "src/util/hash.h"
 #include "src/util/output.h"
 #include "src/usock/usock.h"
-#include "src/sec/pmix_sec.h"
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
 #include "src/dstore/pmix_dstore.h"
 #endif /* PMIX_ENABLE_DSTORE */
@@ -613,7 +613,8 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     /* if we got here, then we don't have the data for this proc. If we
      * are a server, or we are a client and not connected, then there is
      * nothing more we can do */
-    if (pmix_globals.server || (!pmix_globals.server && !pmix_globals.connected)) {
+    if (PMIX_PROC_SERVER == pmix_globals.proc_type ||
+        (PMIX_PROC_SERVER != pmix_globals.proc_type && !pmix_globals.connected)) {
         cb->value_cbfunc(PMIX_ERR_NOT_FOUND, NULL, cb->cbdata);
         PMIX_RELEASE(cb);
         return;

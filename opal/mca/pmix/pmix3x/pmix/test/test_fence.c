@@ -313,7 +313,7 @@ int test_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
                     PMIX_LIST_DESTRUCT(&test_fences);
                     return rc;
                 }
-                GET(uint32_t, fence_num+p->proc.rank, p->proc.nspace, p->proc.rank, fence_num, put_ind++, params.use_same_keys, 0, 0);
+                GET(int, (int)(fence_num+p->proc.rank), p->proc.nspace, p->proc.rank, fence_num, put_ind++, params.use_same_keys, 0, 0);
                 if (PMIX_SUCCESS != rc) {
                     TEST_ERROR(("%s:%d: PMIx_Get failed (%d) from %s:%d", my_nspace, my_rank, rc, p->proc.nspace, p->proc.rank));
                     PMIX_PROC_FREE(pcs, npcs);
@@ -364,7 +364,7 @@ static int get_local_peers(char *my_nspace, int my_rank, pmix_rank_t **_peers, p
     pmix_proc_t proc;
 
     (void)strncpy(proc.nspace, my_nspace, PMIX_MAX_NSLEN);
-    proc.rank = my_rank;
+    proc.rank = PMIX_RANK_WILDCARD;
     /* get number of neighbours on this node */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_LOCAL_SIZE, NULL, 0, &val))) {
         TEST_ERROR(("%s:%d: PMIx_Get local peer # failed: %d", my_nspace, my_rank, rc));

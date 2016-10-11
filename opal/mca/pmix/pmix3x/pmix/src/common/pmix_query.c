@@ -19,6 +19,7 @@
 #include <pmix.h>
 #include <pmix_common.h>
 #include <pmix_server.h>
+#include <pmix_rename.h>
 
 #include "src/util/argv.h"
 #include "src/util/error.h"
@@ -113,7 +114,7 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
 
     /* if we are the server, then we just issue the query and
      * return the response */
-    if (pmix_globals.server) {
+    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
             if (NULL == pmix_host_server.query) {
                 /* nothing we can do */
                 return PMIX_ERR_NOT_SUPPORTED;

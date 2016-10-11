@@ -877,28 +877,31 @@ pmix_status_t pmix_bfrop_print_status(char **output, char *prefix,
                       prefx, (long)src->data.bo.size);
         break;
         case PMIX_PERSIST:
-        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PERSIST\tValue: %d",
-                      prefx, (int)src->data.persist);
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PERSIST\tValue: %s",
+                      prefx, PMIx_Persistence_string(src->data.persist));
         break;
         case PMIX_SCOPE:
-        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_SCOPE\tValue: %d",
-                      prefx, (int)src->data.scope);
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_SCOPE\tValue: %s",
+                      prefx, PMIx_Scope_string(src->data.scope));
         break;
         case PMIX_DATA_RANGE:
-        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_DATA_RANGE\tValue: %d",
-                      prefx, (int)src->data.range);
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_DATA_RANGE\tValue: %s",
+                      prefx, PMIx_Data_range_string(src->data.range));
         break;
         case PMIX_PROC_STATE:
-        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_STATE\tValue: %d",
-                      prefx, (int)src->data.state);
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_STATE\tValue: %s",
+                      prefx, PMIx_Proc_state_string(src->data.state));
         break;
         case PMIX_PROC_INFO:
-        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PROC_INFO\tValue: %s:%lu",
-                      prefx, src->data.proc->nspace, (unsigned long)src->data.proc->rank);
+        rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_PROC_INFO\tProc: %s:%lu\n%s\tHost: %s\tExecutable: %s\tPid: %lu",
+                      prefx, src->data.pinfo->proc.nspace, (unsigned long)src->data.pinfo->proc.rank,
+                      prefx, src->data.pinfo->hostname, src->data.pinfo->executable_name,
+                      (unsigned long)src->data.pinfo->pid);
         break;
         case PMIX_DATA_ARRAY:
         rc = asprintf(output, "%sPMIX_VALUE: Data type: DATA_ARRAY\tARRAY SIZE: %ld",
                       prefx, (long)src->data.darray->size);
+        break;
         /**** DEPRECATED ****/
         case PMIX_INFO_ARRAY:
         rc = asprintf(output, "%sPMIX_VALUE: Data type: INFO_ARRAY\tARRAY SIZE: %ld",

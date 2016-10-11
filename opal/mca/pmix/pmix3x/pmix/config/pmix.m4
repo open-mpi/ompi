@@ -17,7 +17,7 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
-dnl Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+dnl Copyright (c) 2013-2016 Intel, Inc. All rights reserved
 dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -104,6 +104,12 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_DEFINE_UNQUOTED([PMIX_MINOR_VERSION], [$PMIX_MINOR_VERSION],
                        [The library minor version is always available, contrary to VERSION])
 
+    pmixmajor=${PMIX_MAJOR_VERSION}L
+    pmixminor=${PMIX_MINOR_VERSION}L
+    AC_SUBST(pmixmajor)
+    AC_SUBST(pmixminor)
+    AC_CONFIG_FILES(pmix_config_prefix[include/pmix_version.h])
+
     PMIX_RELEASE_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --release`"
     if test "$?" != "0"; then
         AC_MSG_ERROR([Cannot continue])
@@ -135,6 +141,23 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # after that (pmix/config.h) will only have selective #defines
     # replaced, not the entire file.
     AC_CONFIG_HEADERS(pmix_config_prefix[src/include/pmix_config.h])
+
+    # Rename symbols?
+    AC_ARG_WITH([pmix-symbol-rename],
+                AC_HELP_STRING([--with-pmix-symbol-rename=PREFIX],
+                               [Provide a prefix to rename PMIx symbols]))
+    AC_MSG_CHECKING([for symbol rename])
+    AS_IF([test ! -z "$with_pmix_symbol_rename" && test "$with_pmix_symbol_rename" != "yes"],
+          [AC_MSG_RESULT([$with_pmix_symbol_rename])
+           pmix_symbol_rename="$with_pmix_symbol_rename"
+           PMIX_RENAME=$with_pmix_symbol_rename],
+          [AC_MSG_RESULT([no])
+           pmix_symbol_rename=""
+           PMIX_RENAME=])
+    AC_DEFINE_UNQUOTED(PMIX_SYMBOL_RENAME, [$pmix_symbol_rename],
+                       [The pmix symbol rename include directive])
+    AC_SUBST(PMIX_RENAME)
+    AC_CONFIG_FILES(pmix_config_prefix[include/pmix_rename.h])
 
     # GCC specifics.
     if test "x$GCC" = "xyes"; then
@@ -593,20 +616,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     PMIX_HWLOC_CONFIG
 
     ##################################
-    # SASL
-    ##################################
-    pmix_show_title "SASL"
-
-    PMIX_SASL_CONFIG
-
-    ##################################
-    # Munge
-    ##################################
-    pmix_show_title "Munge"
-
-    PMIX_MUNGE_CONFIG
-
-    ##################################
     # MCA
     ##################################
 
@@ -697,16 +706,6 @@ AC_DEFUN([PMIX_DEFINE_ARGS],[
            AC_MSG_RESULT([yes])],
           [pmix_mode=standalone
            AC_MSG_RESULT([no])])
-
-    # Rename symbols?
-    AC_ARG_WITH([pmix-symbol-rename],
-                AC_HELP_STRING([--with-pmix-symbol-rename=FILE],
-                               [Provide an include file that contains directives to rename PMIx symbols]))
-    AS_IF([test ! -z "$with_pmix_symbol_rename" && test "$with_pmix_symbol_rename" != "yes"],
-          [pmix_symbol_rename="$with_pmix_symbol_rename"],
-          [pmix_symbol_rename=\"src/include/rename.h\"])
-    AC_DEFINE_UNQUOTED(PMIX_SYMBOL_RENAME, [$pmix_symbol_rename],
-                       [The pmix symbol rename include directive])
 
     # Install tests and examples?
     AC_MSG_CHECKING([if tests and examples are to be installed])
@@ -840,16 +839,17 @@ AC_MSG_CHECKING([if want shared memory datastore])
 AC_ARG_ENABLE([dstore],
               [AC_HELP_STRING([--disable-dstore],
                               [Using shared memory datastore (default: enabled)])])
-if test "$enable_dstore" != "no" ; then
-    AC_MSG_RESULT([yes])
-    WANT_DSTORE=1
-else
+if test "$enable_dstore" == "no" ; then
     AC_MSG_RESULT([no])
     WANT_DSTORE=0
+else
+    AC_MSG_RESULT([yes])
+    WANT_DSTORE=1
 fi
 AC_DEFINE_UNQUOTED([PMIX_ENABLE_DSTORE],
-                   [$WANT_DSTORE],
-                   [if want shared memory dstore feature])
+                 [$WANT_DSTORE],
+                 [if want shared memory dstore feature])
+
 #
 
 # Ident string

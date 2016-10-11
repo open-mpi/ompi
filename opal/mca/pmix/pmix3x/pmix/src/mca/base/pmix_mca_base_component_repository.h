@@ -34,8 +34,8 @@
  * (i.e., have a separate header file just for retain()).
  */
 
-#ifndef MCA_BASE_COMPONENT_REPOSITORY_H
-#define MCA_BASE_COMPONENT_REPOSITORY_H
+#ifndef PMIX_MCA_BASE_COMPONENT_REPOSITORY_H
+#define PMIX_MCA_BASE_COMPONENT_REPOSITORY_H
 
 #include <src/include/pmix_config.h>
 

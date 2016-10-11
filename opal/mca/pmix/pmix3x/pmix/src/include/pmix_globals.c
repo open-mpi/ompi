@@ -41,18 +41,6 @@
 #include "src/class/pmix_list.h"
 
 
-pmix_globals_t pmix_globals = {
-    .init_cntr = 0,
-    .pindex = 0,
-    .evbase = NULL,
-    .debug_output = -1,
-    .server = false,
-    .connected = false,
-    .cache_local = NULL,
-    .cache_remote = NULL
-};
-
-
 void pmix_globals_init(void)
 {
     memset(&pmix_globals.myid, 0, sizeof(pmix_proc_t));

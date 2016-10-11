@@ -37,8 +37,7 @@ headers += \
         include/prefetch.h \
         include/types.h \
         include/pmix_config_top.h \
-        include/pmix_config_bottom.h \
-        include/rename.h
+        include/pmix_config_bottom.h
 
 endif ! PMIX_EMBEDDED_MODE
 

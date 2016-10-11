@@ -23,6 +23,16 @@ current release as well as the "stable" bug fix release branch.
 Master (not on release branches yet)
 ------------------------------------
 
+1.1.5
+-----
+- Add pmix_version.h to support direct detection of PMIx library version
+- Fix support for Solaris 10 by using abstract version of strnlen
+- Fix native security module for Solaris by using getpeerucred in
+  that environment
+- Ensure man pages don't get installed in embedded builds
+- Pass temporary directory locations in info keys instead of
+  the environment
+
 1.1.4
 -----
 - Properly increment the reference count for PMIx_Init
