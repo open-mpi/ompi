@@ -619,8 +619,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     /* MPI_THREAD_MULTIPLE is only supported in 2.0+ */
     if (want_mpi_threads && !mca_btl_base_thread_multiple_override) {
-
-	if (OMPI_MAJOR_VERSION >= 2) {
+	if (OPAL_MAJOR_VERSION >= 2) {
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: MPI_THREAD_MULTIPLE support is in testing phase.");
 	}
