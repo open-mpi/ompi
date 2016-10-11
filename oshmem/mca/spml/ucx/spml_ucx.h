@@ -48,6 +48,8 @@ struct mca_spml_ucx {
     ucp_context_h            ucp_context;
     ucp_worker_h             ucp_worker;
     ucp_peer_t              *ucp_peers;
+    int                      using_mem_hooks;
+    int                      num_disconnect;
 
     int                      priority; /* component priority */
     bool                     enabled;
@@ -120,7 +122,7 @@ mca_spml_ucx_get_mkey(int pe, void *va, void **rva)
     return (spml_ucx_mkey_t *)(r_mkey->spml_context);
 }
 
-static inline ucx_status_to_oshmem(ucs_status_t status)
+static inline int ucx_status_to_oshmem(ucs_status_t status)
 {
     return OPAL_LIKELY(UCS_OK == status) ? OSHMEM_SUCCESS : OSHMEM_ERROR;
 }
