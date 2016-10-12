@@ -22,18 +22,17 @@ my $rawoutput = 0;
 my $myresults;
 my @csvrow;
 
-my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op);
-my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1");
-my @starters = qw(mpirun orte-submit srun aprun orterun);
+my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
+my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
+my @starters = qw(mpirun orterun srun aprun);
 my @starteroptions = ("-npernode 1 --novm",
                       "--hnp file:dvm_uri -pernode",
                       "--distribution=cyclic",
-                      "-N 1",
-                      "-npernode 1 --novm");
+                      "-N 1");
 
 # Set to true if the script should merely print the cmds
 # it would run, but don't run them
-my $SHOWME = 0;
+my $SHOWME = 1;
 # Set to true to suppress most informational messages.
 my $QUIET = 0;
 # Set to true if we just want to see the help message
@@ -106,7 +105,7 @@ while ($idx <= $#starters) {
         splice @starteroptions, $idx, 1;
         # adjust the index
         $idx = $idx - 1;
-    } elsif ($usedvm && $starter ne "orte-submit") {
+    } elsif ($usedvm && $starter ne "orterun") {
         # remove this one from the list
         splice @starters, $idx, 1;
         splice @starteroptions, $idx, 1;
@@ -124,7 +123,7 @@ while ($idx <= $#starters) {
         splice @starteroptions, $idx, 1;
         # adjust the index
         $idx = $idx - 1;
-    } elsif ($usempirun && (($starter ne "mpirun") && ($starter ne "orterun"))) {
+    } elsif ($usempirun && $starter ne "mpirun") {
         # remove this one from the list
         splice @starters, $idx, 1;
         splice @starteroptions, $idx, 1;
@@ -132,27 +131,6 @@ while ($idx <= $#starters) {
         $idx = $idx - 1;
     }
     $idx = $idx + 1;
-}
-
-# if both mpirun and orterun are present, then
-# we don't need to run both as they are just
-# symlinks to each other
-$exists = 0;
-foreach my $path (@path) {
-    if ( -x "$path/mpirun") {
-        $idx=0;
-        foreach $starter (@starters) {
-            if ($starter eq "orterun") {
-                splice @starters, $idx, 1;
-                splice @starteroptions, $idx, 1;
-                last;
-            }
-            $idx = $idx + 1;
-        }
-        if ($exists) {
-            last;
-        }
-    }
 }
 
 # bozo check
@@ -292,7 +270,7 @@ sub runcmd()
 
 foreach $starter (@starters) {
     # if we are going to use the dvm, then we
-    if ($starter eq "orte-submit") {
+    if ($starter eq "orterun") {
         # need to start it
         if (-e "dvm_uri") {
             system("rm -f dvm_uri");
@@ -350,7 +328,7 @@ foreach $starter (@starters) {
     }
     if ($havedvm) {
         if (!$SHOWME) {
-            $cmd = "orte-submit --hnp file:dvm_uri --terminate";
+            $cmd = "orterun --hnp file:dvm_uri --terminate";
             system($cmd);
         }
         if (-e "dvm_uri") {
