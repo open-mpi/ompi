@@ -219,16 +219,100 @@ int main(int argc, char* argv[])
     } else { /*odd ranks (in COMM_WORD) will perform a all_to_all and a barrier*/
         int send_buff[10240];
         int recv_buff[10240];
+        MPI_Comm newcomm2;
         MPI_Comm_rank(newcomm, &rank);
         MPI_Comm_size(newcomm, &size);
         MPI_Alltoall(send_buff, 10240/size, MPI_INT, recv_buff, 10240/size, MPI_INT, newcomm);
-        MPI_Comm_split(newcomm, rank%2, rank, &newcomm);
-        MPI_Barrier(newcomm);
+        MPI_Comm_split(newcomm, rank%2, rank, &newcomm2);
+        MPI_Barrier(newcomm2);
+        MPI_Comm_free(&newcomm2);
+    }
+    
+    if( with_mpit ) {	
+	/* Build one file per processes
+	   Every thing that has been monitored by each
+	   process since the last flush will be output in filename */
+	/*
+	  Requires directory prof to be created.
+	  Filename format should display the phase number
+	  and the process rank for ease of parsing with
+	  aggregate_profile.pl script
+	*/
+        sprintf(filename, with_mpit ? "prof/phase_2" : "prof/phase_2_%d.prof", rank);
+
+	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
+            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+        }
+        /* Force the writing of the monitoring data */
+        MPIT_result = MPI_T_pvar_stop(session, flush_handle);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("failed to stop handle on \"%s\" pvar, check that you have monitoring pml\n",
+                   flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
+
+        MPIT_result = MPI_T_pvar_start(session, flush_handle);
+        if (MPIT_result != MPI_SUCCESS) {
+            printf("failed to start handle on \"%s\" pvar, check that you have monitoring pml\n",
+                   flush_pvar_name);
+            MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+        }
+        /* Don't set a filename. If we stop the session before setting it, then no output
+         * will be generated.
+         */
+        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf ) ) {
+            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+        }
     }
 
+    MPI_Win win;
+    int rs_buff[10240];
+    int win_buff[10240];
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    to = (rank + 1) % size;
+    from = (rank - 1) % size;
+    for( int v = 0; v < 10240; ++v )
+        rs_buff[v] = win_buff[v] = rank;
+    
+    MPI_Win_create(win_buff, 10240 * sizeof(int), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    MPI_Win_fence(MPI_MODE_NOPRECEDE, win);
+    if( rank%2 ) {
+        MPI_Win_fence(MPI_MODE_NOSTORE | MPI_MODE_NOPUT, win);
+        MPI_Get(rs_buff, 10240, MPI_INT, from, 0, 10240, MPI_INT, win);
+    } else {
+        MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
+        MPI_Win_fence(MPI_MODE_NOSTORE | MPI_MODE_NOPUT, win);
+    }
+    MPI_Win_fence(MPI_MODE_NOSUCCEED, win);
+
+    for( int v = 0; v < 10240; ++v )
+        if( rs_buff[v] != win_buff[v] && ((rank%2 && rs_buff[v] != from) || (!(rank%2) && rs_buff[v] != rank)) ) {
+            printf("Error on checking exchanged values\n");
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
+   
+    MPI_Group world_group, newcomm_group, distant_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    MPI_Comm_group(newcomm, &newcomm_group);
+    MPI_Group_difference(world_group, newcomm_group, &distant_group);
+    if( rank%2 ) {
+        MPI_Win_post(distant_group, 0, win);
+        MPI_Win_wait(win);
+    } else {
+        MPI_Win_start(distant_group, 0, win);
+        MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
+        MPI_Win_complete(win);
+    }
+    MPI_Group_free(&world_group);
+    MPI_Group_free(&newcomm_group);
+    MPI_Group_free(&distant_group);
+    
+    MPI_Win_free(&win);
+    
     if( with_mpit ) {
-	/* the filename for flushing monitoring now uses 2 as phase number! */
-	sprintf(filename, with_mpit ? "prof/phase_2" : "prof/phase_2_%d.prof", rank);
+	/* the filename for flushing monitoring now uses 3 as phase number! */
+	sprintf(filename, with_mpit ? "prof/phase_3" : "prof/phase_3_%d.prof", rank);
 
 	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
@@ -257,6 +341,7 @@ int main(int argc, char* argv[])
         (void)MPI_T_finalize();
     }
 
+    MPI_Comm_free(&newcomm);
     /* Now, in MPI_Finalize(), the pml_monitoring library outputs, in
        STDERR, the aggregated recorded monitoring of all the phases*/
     MPI_Finalize();
