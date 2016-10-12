@@ -3,6 +3,8 @@
 // Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
 //                         reserved.
 // Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2016      Research Organization for Information Science
+//                         and Technology (RIST). All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -28,7 +30,7 @@ MPI::File::Close()
 MPI::Errhandler
 MPI::File::Create_errhandler(MPI::File::Errhandler_function* function)
 {
-    return ompi_cxx_errhandler_create_file ((void *) function);
+    return ompi_cxx_errhandler_create_file ((ompi_errhandler_generic_handler_fn_t *) function);
 }
 
 

@@ -4,6 +4,8 @@
 //                         reserved.
 // Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2016      Research Organization for Information Science
+//                         and Technology (RIST). All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -14,8 +16,8 @@
 // do not include ompi_config.h because it kills the free/malloc defines
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mpi/cxx/mpicxx.h"
 #include "cxx_glue.h"
+#include "ompi/mpi/cxx/mpicxx.h"
 
 void
 MPI::Win::Free()
@@ -28,7 +30,7 @@ MPI::Win::Free()
 MPI::Errhandler
 MPI::Win::Create_errhandler(MPI::Win::Errhandler_function* function)
 {
-    return ompi_cxx_errhandler_create_win ((void *) function);
+    return ompi_cxx_errhandler_create_win ((ompi_errhandler_generic_handler_fn_t *) function);
 }
 
 

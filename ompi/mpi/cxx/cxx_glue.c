@@ -15,7 +15,6 @@
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
 #include "opal/class/opal_list.h"
 #include "cxx_glue.h"
@@ -92,22 +91,22 @@ int ompi_cxx_attr_create_keyval_type (MPI_Type_copy_attr_function *copy_fn,
     return ompi_attr_create_keyval (TYPE_ATTR, copy_fn_u, delete_fn_u, keyval, extra_state, 0, NULL);
 }
 
-MPI_Errhandler ompi_cxx_errhandler_create_comm (void *fn)
+MPI_Errhandler ompi_cxx_errhandler_create_comm (ompi_errhandler_generic_handler_fn_t *fn)
 {
     ompi_errhandler_t *errhandler;
     errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_COMM,
-                                        (ompi_errhandler_generic_handler_fn_t *) fn,
+                                        fn,
                                         OMPI_ERRHANDLER_LANG_CXX);
     errhandler->eh_cxx_dispatch_fn =
         (ompi_errhandler_cxx_dispatch_fn_t *) ompi_mpi_cxx_comm_errhandler_invoke;
     return errhandler;
 }
 
-MPI_Errhandler ompi_cxx_errhandler_create_win (void *fn)
+MPI_Errhandler ompi_cxx_errhandler_create_win (ompi_errhandler_generic_handler_fn_t *fn)
 {
     ompi_errhandler_t *errhandler;
     errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
-                                        (ompi_errhandler_generic_handler_fn_t *) fn,
+                                        fn,
                                         OMPI_ERRHANDLER_LANG_CXX);
     errhandler->eh_cxx_dispatch_fn =
         (ompi_errhandler_cxx_dispatch_fn_t *) ompi_mpi_cxx_win_errhandler_invoke;
@@ -115,11 +114,11 @@ MPI_Errhandler ompi_cxx_errhandler_create_win (void *fn)
 }
 
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
-MPI_Errhandler ompi_cxx_errhandler_create_file (void *fn)
+MPI_Errhandler ompi_cxx_errhandler_create_file (ompi_errhandler_generic_handler_fn_t *fn)
 {
     ompi_errhandler_t *errhandler;
     errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_FILE,
-                                        (ompi_errhandler_generic_handler_fn_t *) fn,
+                                        fn,
                                         OMPI_ERRHANDLER_LANG_CXX);
     errhandler->eh_cxx_dispatch_fn =
         (ompi_errhandler_cxx_dispatch_fn_t *) ompi_mpi_cxx_file_errhandler_invoke;
@@ -145,12 +144,6 @@ ompi_cxx_intercept_file_extra_state_t
     intercept->state.extra_state_cxx = extra_state_cxx;
 
     return &intercept->state;
-}
-
-void ompi_cxx_errhandler_set_dispatch_fn (ompi_errhandler_t *errhandler,
-                                          ompi_errhandler_cxx_dispatch_fn_t *dispatch_fn)
-{
-    errhandler->eh_cxx_dispatch_fn = dispatch_fn;
 }
 
 void ompi_cxx_errhandler_set_callbacks (struct ompi_errhandler_t *errhandler, MPI_Comm_errhandler_function *eh_comm_fn,
