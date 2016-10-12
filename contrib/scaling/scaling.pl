@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2012      Los Alamos National Security, Inc.
 #                         All rights reserved.
-# Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
 
 use strict;
 use Getopt::Long;
@@ -32,7 +32,7 @@ my @starteroptions = ("-npernode 1 --novm",
 
 # Set to true if the script should merely print the cmds
 # it would run, but don't run them
-my $SHOWME = 1;
+my $SHOWME = 0;
 # Set to true to suppress most informational messages.
 my $QUIET = 0;
 # Set to true if we just want to see the help message
