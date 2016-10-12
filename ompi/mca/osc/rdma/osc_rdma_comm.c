@@ -732,7 +732,7 @@ static int ompi_osc_rdma_get_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_p
             }
         } else {
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using internal buffer %p in fragment %p for get of size %lu bytes, source address 0x%lx",
-                             ptr, (void *) frag, aligned_len, (unsigned long) aligned_source_base);
+                             ptr, (void *) frag, (unsigned long) aligned_len, (unsigned long) aligned_source_base);
             local_handle = frag->handle;
         }
     }
