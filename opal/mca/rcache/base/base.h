@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -27,7 +27,7 @@
 #include "opal_config.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 
 BEGIN_C_DECLS
