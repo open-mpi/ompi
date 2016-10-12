@@ -51,7 +51,7 @@ MPI::Comm::Comm(const Comm_Null& data) : Comm_Null(data)
 MPI::Errhandler
 MPI::Comm::Create_errhandler(MPI::Comm::_MPI2CPP_ERRHANDLERFN_* function)
 {
-    return ompi_cxx_errhandler_create_comm ((void *) function);
+    return ompi_cxx_errhandler_create_comm ((ompi_cxx_dummy_fn_t *) function);
 }
 
 
