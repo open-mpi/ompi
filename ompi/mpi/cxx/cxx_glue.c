@@ -92,7 +92,7 @@ int ompi_cxx_attr_create_keyval_type (MPI_Type_copy_attr_function *copy_fn,
     return ompi_attr_create_keyval (TYPE_ATTR, copy_fn_u, delete_fn_u, keyval, extra_state, 0, NULL);
 }
 
-MPI_Errhandler ompi_cxx_errhandler_create_comm (void *fn)
+MPI_Errhandler ompi_cxx_errhandler_create_comm (ompi_cxx_dummy_fn_t *fn)
 {
     ompi_errhandler_t *errhandler;
     errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_COMM,
@@ -103,7 +103,7 @@ MPI_Errhandler ompi_cxx_errhandler_create_comm (void *fn)
     return errhandler;
 }
 
-MPI_Errhandler ompi_cxx_errhandler_create_win (void *fn)
+MPI_Errhandler ompi_cxx_errhandler_create_win (ompi_cxx_dummy_fn_t *fn)
 {
     ompi_errhandler_t *errhandler;
     errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
@@ -115,7 +115,7 @@ MPI_Errhandler ompi_cxx_errhandler_create_win (void *fn)
 }
 
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
-MPI_Errhandler ompi_cxx_errhandler_create_file (void *fn)
+MPI_Errhandler ompi_cxx_errhandler_create_file (ompi_cxx_dummy_fn_t *fn)
 {
     ompi_errhandler_t *errhandler;
     errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_FILE,
@@ -145,12 +145,6 @@ ompi_cxx_intercept_file_extra_state_t
     intercept->state.extra_state_cxx = extra_state_cxx;
 
     return &intercept->state;
-}
-
-void ompi_cxx_errhandler_set_dispatch_fn (ompi_errhandler_t *errhandler,
-                                          ompi_errhandler_cxx_dispatch_fn_t *dispatch_fn)
-{
-    errhandler->eh_cxx_dispatch_fn = dispatch_fn;
 }
 
 void ompi_cxx_errhandler_set_callbacks (struct ompi_errhandler_t *errhandler, MPI_Comm_errhandler_function *eh_comm_fn,

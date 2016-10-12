@@ -28,7 +28,7 @@ MPI::Win::Free()
 MPI::Errhandler
 MPI::Win::Create_errhandler(MPI::Win::Errhandler_function* function)
 {
-    return ompi_cxx_errhandler_create_win ((void *) function);
+    return ompi_cxx_errhandler_create_win ((ompi_cxx_dummy_fn_t *) function);
 }
 
 

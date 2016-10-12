@@ -28,7 +28,7 @@ MPI::File::Close()
 MPI::Errhandler
 MPI::File::Create_errhandler(MPI::File::Errhandler_function* function)
 {
-    return ompi_cxx_errhandler_create_file ((void *) function);
+    return ompi_cxx_errhandler_create_file ((ompi_cxx_dummy_fn_t *) function);
 }
 
 
