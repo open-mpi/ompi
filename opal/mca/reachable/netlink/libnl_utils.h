@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2014-2015, Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Portions of this software copied from libfabric
  * (https://github.com/ofiwg/libfabric)
@@ -42,9 +44,9 @@
 #ifndef LIBNL_UTILS_H
 #define LIBNL_UTILS_H
 
-#if !defined (HAVE_LIBNL3)
-#error You must define HAVE_LIBNL3 to 0 or 1 before including libnl_utils.h
-#elif HAVE_LIBNL3
+#if !defined (OPAL_HAVE_LIBNL3)
+#error You must define OPAL_HAVE_LIBNL3 to 0 or 1 before including libnl_utils.h
+#elif OPAL_HAVE_LIBNL3
 #include "libnl3_utils.h"
 #else
 #include "libnl1_utils.h"

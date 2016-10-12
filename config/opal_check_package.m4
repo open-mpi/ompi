@@ -138,6 +138,10 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                   test "$ac_cv_search_$3" != "none required"],
                  [$1_LIBS="$ac_cv_search_$3 $4"],
                  [$1_LIBS="$4"])
+            # libnl v1 and libnl3 are known *not* to coexist
+            # for each library, figure out whether it depends on libnl or libnl3 or none
+            # so conflicts can be reported and/or prevented
+            OPAL_LIBNL_SANITY_CHECK([$2], [$3], [$$1_LIBS])
            $7],
           [$8])
 

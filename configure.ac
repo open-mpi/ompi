@@ -1449,6 +1449,8 @@ m4_ifdef([project_orte], [ORTE_CONFIG_FILES])
 m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIG_FILES])
 
+OPAL_CHECK_LIBNL_SUMMARY
+
 AC_OUTPUT
 
 OPAL_SUMMARY_PRINT
