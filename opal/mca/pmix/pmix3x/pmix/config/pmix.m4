@@ -691,7 +691,9 @@ AC_DEFUN([PMIX_DEFINE_ARGS],[
                          Disabling dlopen implies --disable-pdl-dlopen
                          (default: enabled)])])
     AS_IF([test "$enable_dlopen" = "no"],
-          [PMIX_ENABLE_DLOPEN_SUPPORT=0
+          [enable_mca_dso="no"
+           enable_mca_static="yes"
+           PMIX_ENABLE_DLOPEN_SUPPORT=0
            AC_MSG_RESULT([no])],
           [PMIX_ENABLE_DLOPEN_SUPPORT=1
            AC_MSG_RESULT([yes])])
