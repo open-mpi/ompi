@@ -36,7 +36,6 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
 
-#include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode-internal.h"
