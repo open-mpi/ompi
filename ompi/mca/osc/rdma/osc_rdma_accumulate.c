@@ -521,7 +521,7 @@ static inline int ompi_osc_rdma_cas_atomic (ompi_osc_rdma_sync_t *sync, const vo
     flags = (4 == size) ? MCA_BTL_ATOMIC_FLAG_32BIT : 0;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating compare-and-swap using %d-bit btl atomics. compare: 0x%"
-                     PRIx64 ", origin: 0x%" PRIx64, size * 8, *((int64_t *) compare_addr), *((int64_t *) source_addr));
+                     PRIx64 ", origin: 0x%" PRIx64, (int) size * 8, *((int64_t *) compare_addr), *((int64_t *) source_addr));
 
     ret = ompi_osc_rdma_frag_alloc (module, 24, &frag, &ptr);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -666,11 +666,10 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
                                            mca_btl_base_registration_handle_t *target_handle, ompi_op_t *op, ompi_osc_rdma_request_t *req)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    int32_t atomic_flags = module->selected_btl->btl_atomic_flags;
     ompi_osc_rdma_frag_t *frag = NULL;
     uint64_t address, offset;
     char *ptr = NULL;
-    int ret, btl_op;
+    int ret;
 
     if (extent > 8) {
         return OMPI_ERR_NOT_SUPPORTED;
@@ -1193,7 +1192,6 @@ int ompi_osc_rdma_fetch_and_op (const void *origin_addr, void *result_addr, ompi
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_peer_t *peer;
     ompi_osc_rdma_sync_t *sync;
-    int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "fop: %p, %s, %d, %lu, %s, %s", result_addr, dt->name,
                      target_rank, (unsigned long) target_disp, op->o_name, win->w_name);
