@@ -250,7 +250,7 @@ typedef void (*orte_rml_module_purge_fn_t)(orte_process_name_t *peer);
 /**
  * RML internal module interface - these will be implemented by all RML components
  */
-typedef struct {
+typedef struct orte_rml_base_module_t {
     /* pointer to the parent component for this module */
     struct orte_rml_component_t                 *component;
     /** Ping process for connectivity check */
@@ -640,7 +640,7 @@ typedef void (*orte_rml_module_close_conduit_fn_t)(orte_rml_base_module_t *mod);
  * this structure, called mca_rml_[component name]_component, must
  * exist in any RML component.
  */
-struct orte_rml_component_3_0_0_t {
+typedef struct orte_rml_component_t {
     /* Base component description */
     mca_base_component_t                        base;
     /* Base component data block */
@@ -653,9 +653,7 @@ struct orte_rml_component_3_0_0_t {
     orte_rml_component_get_contact_info_fn_t    get_contact_info;
     orte_rml_component_set_contact_info_fn_t    set_contact_info;
     orte_rml_module_close_conduit_fn_t          close_conduit;
-};
-/** Convienence typedef */
-typedef struct orte_rml_component_3_0_0_t orte_rml_component_t;
+} orte_rml_component_t;
 
 
 
