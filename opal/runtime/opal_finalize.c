@@ -60,12 +60,6 @@ extern int opal_initialized;
 extern int opal_util_initialized;
 extern bool opal_init_called;
 
-static void __opal_attribute_destructor__ opal_cleanup (void)
-{
-    /* finalize the class/object system */
-    opal_class_finalize();
-}
-
 int
 opal_finalize_util(void)
 {
@@ -109,9 +103,8 @@ opal_finalize_util(void)
 
     opal_datatype_finalize();
 
-#if OPAL_NO_LIB_DESTRUCTOR
-    opal_cleanup ();
-#endif
+    /* finalize the class/object system */
+    opal_class_finalize();
 
     free (opal_process_info.nodename);
     opal_process_info.nodename = NULL;

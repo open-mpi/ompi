@@ -823,20 +823,6 @@ AC_TRY_LINK([void finalize (void) {}], [], [AC_MSG_RESULT([yes])
 LDFLAGS=$LDFLAGS_save
 OPAL_VAR_SCOPE_POP
 
-opal_destructor_use_fini=0
-opal_no_destructor=0
-if test x$opal_cv___attribute__destructor = x0 ; then
-    if test x$opal_ld_have_fini = x1 ; then
-        opal_destructor_use_fini=1
-    else
-        opal_no_destructor=1;
-    fi
-fi
-
-AC_DEFINE_UNQUOTED(OPAL_NO_LIB_DESTRUCTOR, [$opal_no_destructor],
-    [Whether libraries can be configured with destructor functions])
-AM_CONDITIONAL(OPAL_DESTRUCTOR_USE_FINI, [test x$opal_destructor_use_fini = x1])
-
 ##################################
 # Libraries
 ##################################

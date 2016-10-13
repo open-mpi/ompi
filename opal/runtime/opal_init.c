@@ -16,7 +16,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -342,16 +342,6 @@ opal_init_util(int* pargc, char*** pargv)
         }
         return OPAL_SUCCESS;
     }
-
-#if OPAL_NO_LIB_DESTRUCTOR
-    if (opal_init_called) {
-        /* can't use show_help here */
-        fprintf (stderr, "opal_init_util: attempted to initialize after finalize without compiler "
-                 "support for either __attribute__(destructor) or linker support for -fini -- process "
-                 "will likely abort\n");
-        return OPAL_ERR_NOT_SUPPORTED;
-    }
-#endif
 
     opal_init_called = true;
 
