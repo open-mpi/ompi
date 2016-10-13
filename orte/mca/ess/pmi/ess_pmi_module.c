@@ -13,6 +13,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -538,12 +540,6 @@ static int rte_finalize(void)
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
         ORTE_ERROR_LOG(ret);
         return ret;
-    }
-
-    /* mark us as finalized */
-    if (NULL != opal_pmix.finalize) {
-        opal_pmix.finalize();
-        (void) mca_base_framework_close(&opal_pmix_base_framework);
     }
 
     /* release the event base */
