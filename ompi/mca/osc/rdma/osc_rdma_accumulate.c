@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -689,7 +691,7 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
 
     /* store the destination in the temporary buffer */
     do {
-        bool complete = false;
+        volatile bool complete = false;
 
         ret = ompi_osc_get_data_blocking (module, peer->data_endpoint, address, target_handle, ptr, 8);
         if (OMPI_SUCCESS != ret) {
