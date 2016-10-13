@@ -63,8 +63,6 @@
 #include "btl_openib_ip.h"
 #include "btl_openib_ini.h"
 
-#include "ompi/runtime/mpiruntime.h"
-
 #if BTL_OPENIB_RDMACM_IB_ADDR
 #include <stdio.h>
 #include <netinet/in.h>
