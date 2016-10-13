@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -48,7 +50,6 @@
 
 /* Structure and constant definitions */
 #include <pmix_common.h>
-#include <pmix_rename.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

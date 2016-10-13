@@ -12,7 +12,7 @@ OTHERUSER=dummy
 # - give yourself passwordless sudo capability to that user
 #
 # The test should fail with message similar to
-#   PMIX ERROR: INVALID-CREDENTIAL in file 
+#   PMIX ERROR: INVALID-CREDENTIAL in file
 #       ../src/server/pmix_server_listener.c at line 524
 #
 

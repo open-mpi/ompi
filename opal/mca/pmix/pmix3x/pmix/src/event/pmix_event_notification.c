@@ -93,6 +93,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
     pmix_cb_t *cb;
     pmix_event_chain_t *chain;
+    size_t n;
 
     if (!pmix_globals.connected) {
         return PMIX_ERR_UNREACH;
@@ -135,9 +136,18 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     chain->status = status;
     (void)strncpy(chain->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     chain->source.rank = pmix_globals.myid.rank;
-    if (0 < ninfo) {
+    /* we always leave space for a callback object */
+    chain->ninfo = ninfo + 1;
+    PMIX_INFO_CREATE(chain->info, chain->ninfo);
 
+    if (0 < ninfo) {
+        /* need to copy the info */
+        for (n=0; n < ninfo; n++) {
+            PMIX_INFO_XFER(&chain->info[n], &info[n]);
+        }
     }
+    /* now put the callback object tag in the last element */
+    PMIX_INFO_LOAD(&chain->info[ninfo], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
 
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
@@ -295,6 +305,7 @@ static void progress_local_event_hdlr(pmix_status_t status,
     /* we still have to call their final callback */
     if (NULL != chain->final_cbfunc) {
         chain->final_cbfunc(PMIX_SUCCESS, chain->final_cbdata);
+        return;
     }
     /* maintain acctng */
     PMIX_RELEASE(chain);
@@ -395,8 +406,7 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
         /* add any cbobject - the info struct for it is at the end */
         chain->info[chain->ninfo-1].value.data.ptr = def->cbobject;
         pmix_output_verbose(2, pmix_globals.debug_output,
-                            "[%s:%d] CALLING DEFAULT EVHDLR",
-                            pmix_globals.myid.nspace, pmix_globals.myid.rank);
+                            "[%s:%d] CALLING DEFAULT EVHDLR", __FILE__, __LINE__);
         def->evhdlr(def->index,
                     chain->status, &chain->source,
                     chain->info, chain->ninfo,

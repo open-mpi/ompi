@@ -59,6 +59,7 @@
 #include <sys/time.h> /* for struct timeval */
 #include <unistd.h> /* for uid_t and gid_t */
 #include <sys/types.h> /* for uid_t and gid_t */
+#include <pmix_rename.h>
 #include <pmix_version.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)

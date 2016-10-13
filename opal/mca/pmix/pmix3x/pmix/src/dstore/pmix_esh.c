@@ -617,7 +617,10 @@ int _esh_init(pmix_info_t info[], size_t ninfo)
                      *
                      * PMIX_DSTPATH has higher priority than PMIX_SERVER_TMPDIR
                      */
-                    dstor_tmpdir = (char*)info[n].value.data.ptr;
+                    if (NULL != dstor_tmpdir) {
+                        free(dstor_tmpdir);
+                    }
+                    dstor_tmpdir = strdup((char*)info[n].value.data.string);
                     continue;
                 }
                 if (0 == strcmp(PMIX_SERVER_TMPDIR, info[n].key)) {
@@ -1002,7 +1005,7 @@ int _esh_fetch(const char *nspace, pmix_rank_t rank, const char *key, pmix_value
                 goto done;
             } else {
                 char ckey[PMIX_MAX_KEYLEN+1] = {0};
-                strncpy(ckey, (const char *)addr, PMIX_MAX_KEYLEN+1);
+                strncpy(ckey, (const char *)addr, PMIX_MAX_KEYLEN);
                 size_t size;
                 memcpy(&size, addr + PMIX_MAX_KEYLEN + 1, sizeof(size_t));
                 PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
