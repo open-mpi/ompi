@@ -255,5 +255,9 @@ AC_DEFINE_UNQUOTED([OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
                    [$OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
                    [Whether we built the 'use mpi_f08' prototype subarray-based implementation or not (i.e., whether to build the use-mpi-f08-desc prototype or the regular use-mpi-f08 implementation)])
 
+AC_ARG_ENABLE([io-ompio],
+    [AC_HELP_STRING([--disable-io-ompio],
+        [Disable the ompio MPI-IO component])])
+
 ])dnl
 
