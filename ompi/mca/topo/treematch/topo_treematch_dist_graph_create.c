@@ -6,7 +6,7 @@
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
  * Copyright (c) 2012-2015 Bordeaux Poytechnic Institute
  * Copyright (c) 2015      Intel, Inc. All rights reserved
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -487,7 +487,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     displs = (int *)calloc(num_objs_total,sizeof(int));
                     displs[0] = 0;
                     for(i = 1; i < num_nodes ; i++)
-                        displs[i] = displs[i-1] + objs_per_node[i];
+                        displs[i] = displs[i-1] + objs_per_node[i-1];
 
                     memset(reqs,0,(num_nodes-1)*sizeof(MPI_Request));
                     memcpy(obj_mapping,obj_to_rank_in_comm,objs_per_node[0]*sizeof(int));
