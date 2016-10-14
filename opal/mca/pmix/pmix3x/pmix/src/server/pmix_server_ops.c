@@ -1188,8 +1188,8 @@ void pmix_server_deregister_events(pmix_peer_t *peer,
     /* unpack the number of codes */
     cnt=1;
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ncodes, &cnt, PMIX_SIZE))) {
-        PMIX_ERROR_LOG(rc);
-        return;
+        /* it is okay if there aren't any - equivalent to a wildcard */
+        ncodes = 0;
     }
     /* unpack the array of codes */
     if (0 < ncodes) {

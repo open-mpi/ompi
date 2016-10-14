@@ -391,6 +391,7 @@ void pmix3x_event_hdlr(size_t evhdlr_registration_id,
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s CONVERTED STATUS %d TO STATUS %d",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), status, cd->status);
+
     /* convert the nspace/rank to an opal_process_name_t */
     if (NULL == source) {
         cd->pname.jobid = OPAL_NAME_INVALID->jobid;
@@ -427,9 +428,10 @@ void pmix3x_event_hdlr(size_t evhdlr_registration_id,
     event_active(&cd->ev, EV_WRITE, 1);
 
     /* we don't need any of the data they provided,
-     * so let them go */
+     * so let them go - also tell them that we will handle
+     * everything from this point forward */
     if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
+        cbfunc(PMIX_EVENT_ACTION_COMPLETE, NULL, 0, NULL, NULL, cbdata);
     }
 }
 
@@ -1045,7 +1047,7 @@ static void _reg_hdlr(int sd, short args, void *cbdata)
         def->handler = cd->evhandler;
         def->index = mca_pmix_pmix3x_component.evindex;
         if (prepend) {
-            opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s PREPENDING TO DEFAULT EVENTS",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
             opal_list_prepend(&mca_pmix_pmix3x_component.default_events, &def->super);

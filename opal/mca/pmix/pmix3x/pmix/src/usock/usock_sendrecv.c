@@ -48,11 +48,19 @@
 
 static uint32_t current_tag = 1;  // 0 is reserved for system purposes
 
+static void _notify_complete(pmix_status_t status, void *cbdata)
+{
+    pmix_event_chain_t *chain = (pmix_event_chain_t*)cbdata;
+    PMIX_RELEASE(chain);
+}
+
 static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
 {
     pmix_server_trkr_t *trk;
     pmix_rank_info_t *rinfo, *rnext;
     pmix_trkr_caddy_t *tcd;
+    pmix_regevents_info_t *reginfoptr, *regnext;
+    pmix_peer_events_info_t *pr, *pnext;
 
     /* stop all events */
     if (peer->recv_ev_active) {
@@ -100,15 +108,29 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
                 }
             }
         }
-         /* remove this proc from the list of ranks for this nspace */
-         pmix_list_remove_item(&(peer->info->nptr->server->ranks), &(peer->info->super));
-         /* reduce the number of local procs */
-         --peer->info->nptr->server->nlocalprocs;
-         /* now decrease the refcount - might actually free the object */
-         PMIX_RELEASE(peer->info);
-         /* do some cleanup as the client has left us */
-         pmix_pointer_array_set_item(&pmix_server_globals.clients,
-                                     peer->index, NULL);
+        /* remove this proc from the list of ranks for this nspace */
+        pmix_list_remove_item(&(peer->info->nptr->server->ranks), &(peer->info->super));
+        /* reduce the number of local procs */
+        --peer->info->nptr->server->nlocalprocs;
+        /* now decrease the refcount - might actually free the object */
+        PMIX_RELEASE(peer->info);
+        /* remove this client from our array */
+        pmix_pointer_array_set_item(&pmix_server_globals.clients,
+                                    peer->index, NULL);
+        /* cleanup any remaining events they have registered for */
+        PMIX_LIST_FOREACH_SAFE(reginfoptr, regnext, &pmix_server_globals.events, pmix_regevents_info_t) {
+            PMIX_LIST_FOREACH_SAFE(pr, pnext, &reginfoptr->peers, pmix_peer_events_info_t) {
+                if (peer == pr->peer) {
+                    pmix_list_remove_item(&reginfoptr->peers, &pr->super);
+                    PMIX_RELEASE(pr);
+                    if (0 == pmix_list_get_size(&reginfoptr->peers)) {
+                        pmix_list_remove_item(&pmix_server_globals.events, &reginfoptr->super);
+                        PMIX_RELEASE(reginfoptr);
+                        break;
+                    }
+                }
+             }
+         }
          PMIX_RELEASE(peer);
      } else {
         /* if I am a client, there is only
@@ -117,7 +139,7 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
          /* set the public error status */
         err = PMIX_ERR_LOST_CONNECTION_TO_SERVER;
     }
-    PMIX_REPORT_EVENT(err);
+    PMIX_REPORT_EVENT(err, _notify_complete);
 }
 
 static pmix_status_t send_bytes(int sd, char **buf, size_t *remain)
@@ -535,5 +557,5 @@ void pmix_usock_process_msg(int fd, short flags, void *cbdata)
     /* we get here if no matching recv was found - this is an error */
     pmix_output(0, "UNEXPECTED MESSAGE tag =%d", msg->hdr.tag);
     PMIX_RELEASE(msg);
-    PMIX_REPORT_EVENT(PMIX_ERROR);
+    PMIX_REPORT_EVENT(PMIX_ERROR, _notify_complete);
 }

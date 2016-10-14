@@ -117,13 +117,19 @@ PMIX_CLASS_DECLARATION(pmix_event_chain_t);
  * affected, plus any additional info provided by the server */
 void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain);
 
-#define PMIX_REPORT_EVENT(e)                        \
+#define PMIX_REPORT_EVENT(e, f)                     \
     do {                                            \
         pmix_event_chain_t *_ch;                    \
         _ch = PMIX_NEW(pmix_event_chain_t);         \
         _ch->status = (e);                          \
+        _ch->ninfo = 1;                             \
+        _ch->final_cbfunc = (f);                    \
+        _ch->final_cbdata = _ch;                    \
+        PMIX_INFO_CREATE(_ch->info, _ch->ninfo);    \
+        PMIX_INFO_LOAD(&_ch->info[0],               \
+                       PMIX_EVENT_RETURN_OBJECT,    \
+                       NULL, PMIX_POINTER);         \
         pmix_invoke_local_event_hdlr(_ch);          \
-        PMIX_RELEASE(_ch);                          \
     } while(0)
 
 
