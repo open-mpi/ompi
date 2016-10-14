@@ -93,7 +93,7 @@ verbose "*** Working in $dir\n";
 
 # Get the coverity tool, put it in our path.
 
-my $cdir = "/home/common/mpiteam/coverity";
+my $cdir = "$ENV{HOME}/coverity";
 safe_system(0, "mkdir $cdir")
     if (! -d $cdir);
 
