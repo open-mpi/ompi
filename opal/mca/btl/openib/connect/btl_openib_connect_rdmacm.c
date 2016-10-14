@@ -2003,6 +2003,15 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, opal_btl_
     struct sockaddr_in sin;
 #endif
 
+    /* RDMACM is not supported for MPI_THREAD_MULTIPLE */
+    if (opal_using_threads()) {
+	BTL_VERBOSE(("rdmacm CPC is not supported with MPI_THREAD_MULTIPLE; skipped on %s:%d",
+		     ibv_get_device_name(openib_btl->device->ib_dev),
+		     openib_btl->port_num));
+	rc = OPAL_ERR_NOT_SUPPORTED;
+	goto out;
+    }
+
     /* RDMACM is not supported if we have any XRC QPs */
     if (mca_btl_openib_component.num_xrc_qps > 0) {
         BTL_VERBOSE(("rdmacm CPC not supported with XRC receive queues, please try xoob CPC; skipped on %s:%d",
