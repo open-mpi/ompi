@@ -1,6 +1,6 @@
 // -*- c++ -*-
 //
-// Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+// Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
 //                         reserved.
 // Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
@@ -14,12 +14,8 @@
 // do not include ompi_config.h because it kills the free/malloc defines
 #include "mpi.h"
 #include "ompi/mpi/cxx/mpicxx.h"
-
-
-#include "ompi/communicator/communicator.h"
-#include "ompi/attribute/attribute.h"
-#include "ompi/errhandler/errhandler.h"
-
+#include "ompi/constants.h"
+#include "cxx_glue.h"
 
 void
 MPI::Datatype::Free()
@@ -35,21 +31,16 @@ MPI::Datatype::do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
                                 void* extra_state, int &keyval)
 {
     int ret, count = 0;
-    ompi_attribute_fn_ptr_union_t copy_fn;
-    ompi_attribute_fn_ptr_union_t delete_fn;
     keyval_intercept_data_t *cxx_extra_state;
 
     // If both the callbacks are C, then do the simple thing -- no
     // need for all the C++ machinery.
     if (NULL != c_copy_fn && NULL != c_delete_fn) {
-        copy_fn.attr_datatype_copy_fn =
-            (MPI_Type_internal_copy_attr_function*) c_copy_fn;
-        delete_fn.attr_datatype_delete_fn = c_delete_fn;
-        ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, delete_fn,
-                                      &keyval, extra_state, 0, NULL);
+        ret = ompi_cxx_attr_create_keyval_type (c_copy_fn, c_delete_fn, &keyval,
+                                                extra_state, 0, NULL);
         if (MPI_SUCCESS != ret) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret,
-                                          "MPI::Datatype::Create_keyval");
+            return ompi_cxx_errhandler_invoke_comm (MPI_COMM_WORLD, ret,
+                                                    "MPI::Datatype::Create_keyval");
         }
     }
 
@@ -60,12 +51,12 @@ MPI::Datatype::do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
     // extra_state for the delete callback), we have to use the C++
     // callbacks for both (and therefore translate the C++-special
     // extra_state into the user's original extra_state).
-    cxx_extra_state = (keyval_intercept_data_t*)
-        malloc(sizeof(keyval_intercept_data_t));
+    cxx_extra_state = (keyval_intercept_data_t *) malloc(sizeof(*cxx_extra_state));
     if (NULL == cxx_extra_state) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
-                                      "MPI::Datatype::Create_keyval");
+        return ompi_cxx_errhandler_invoke_comm (MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+                                                "MPI::Datatype::Create_keyval");
     }
+
     cxx_extra_state->c_copy_fn = c_copy_fn;
     cxx_extra_state->cxx_copy_fn = cxx_copy_fn;
     cxx_extra_state->c_delete_fn = c_delete_fn;
@@ -87,8 +78,8 @@ MPI::Datatype::do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
     }
     if (2 != count) {
         free(cxx_extra_state);
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                      "MPI::Datatype::Create_keyval");
+        return ompi_cxx_errhandler_invoke_comm (MPI_COMM_WORLD, MPI_ERR_ARG,
+                                                "MPI::Datatype::Create_keyval");
     }
 
     // We do not call MPI_Datatype_create_keyval() here because we need to
@@ -100,18 +91,12 @@ MPI::Datatype::do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
     // MPI_Comm_create_keyval().  Hence, we do all the work here (and
     // ensure to set the destructor atomicly when the keyval is
     // created).
-
-    copy_fn.attr_datatype_copy_fn =
-        (MPI_Type_internal_copy_attr_function*)
-        ompi_mpi_cxx_type_copy_attr_intercept;
-    delete_fn.attr_datatype_delete_fn =
-        ompi_mpi_cxx_type_delete_attr_intercept;
-    ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, delete_fn,
-                                  &keyval, cxx_extra_state, 0,
-                                  cxx_extra_state);
+    ret = ompi_cxx_attr_create_keyval_type ((MPI_Type_copy_attr_function *) ompi_mpi_cxx_type_copy_attr_intercept,
+                                            ompi_mpi_cxx_type_delete_attr_intercept, &keyval,
+                                            cxx_extra_state, 0, NULL);
     if (OMPI_SUCCESS != ret) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret,
-                                      "MPI::Datatype::Create_keyval");
+        return ompi_cxx_errhandler_invoke_comm (MPI_COMM_WORLD, ret,
+                                                "MPI::Datatype::Create_keyval");
     }
 
     return MPI_SUCCESS;
