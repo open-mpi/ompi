@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -17,6 +19,7 @@
 
 BEGIN_C_DECLS
 
+#include <opal/include/opal_config.h>
 #include MCA_hwloc_external_header
 
 /* If the including file requested it, also include the hwloc verbs
