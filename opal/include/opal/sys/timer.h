@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Broadcom Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,6 +85,8 @@ BEGIN_C_DECLS
 #include "opal/sys/amd64/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM
 #include "opal/sys/arm/timer.h"
+#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+#include "opal/sys/arm64/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
 #include "opal/sys/ia32/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
