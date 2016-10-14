@@ -51,7 +51,7 @@ env:
 # well not build it.
 before_install:
     - if [[ "GCC_VERSION" == "6" ]]; then COMPILERS="CC=gcc-6 CXX=g++-6 FC=gfortran-6"; fi
-    - export CONFIGURE_ARGS="--prefix=$HOME/bogus $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
+    - export CONFIGURE_ARGS="--prefix=$HOME/bogus --enable-mpi-cxx $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - export DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "6" ]] ; then sudo apt-get --assume-yes install gcc-6 g++-6 gfortran-6; fi
