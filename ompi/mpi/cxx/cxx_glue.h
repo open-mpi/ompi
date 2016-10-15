@@ -47,8 +47,6 @@ extern struct ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
 /**
  * C++ invocation function signature
  */
-typedef void (ompi_errhandler_cxx_dispatch_fn_t)(void *handle, int *err_code,
-                                                 const char *message, ompi_errhandler_generic_handler_fn_t *fn);
 typedef void (ompi_cxx_dummy_fn_t) (void);
 
 ompi_cxx_communicator_type_t ompi_cxx_comm_get_type (MPI_Comm comm);
