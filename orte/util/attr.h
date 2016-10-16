@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +70,7 @@ typedef uint8_t orte_node_flags_t;
                                                              // we need to know the id of our "host" to help any procs on us to determine locality
 #define ORTE_NODE_ALIAS          (ORTE_NODE_START_KEY + 4)   // comma-separate list of alternate names for the node
 #define ORTE_NODE_SERIAL_NUMBER  (ORTE_NODE_START_KEY + 5)   // string - serial number: used if node is a coprocessor
+#define ORTE_NODE_PORT           (ORTE_NODE_START_KEY + 6)   // int32 - Alternate port to be passed to plm
 
 #define ORTE_NODE_MAX_KEY        200
 

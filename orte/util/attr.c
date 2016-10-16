@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -173,6 +173,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
 
         case ORTE_NODE_USERNAME:
             return "NODE-USERNAME";
+        case ORTE_NODE_PORT:
+            return "NODE-PORT";
         case ORTE_NODE_LAUNCH_ID:
             return "NODE-LAUNCHID";
         case ORTE_NODE_HOSTID:
