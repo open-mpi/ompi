@@ -990,6 +990,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_plm_rsh_caddy_t *caddy;
     opal_list_t coll;
     char *username;
+    int port, *portptr;
     orte_namelist_t *child;
 
     /* if we are launching debugger daemons, then just go
@@ -1242,6 +1243,15 @@ static void launch_daemons(int fd, short args, void *cbdata)
         caddy = OBJ_NEW(orte_plm_rsh_caddy_t);
         caddy->argc = argc;
         caddy->argv = opal_argv_copy(argv);
+        /* insert the alternate port if any */
+        portptr = &port;
+        if (orte_get_attribute(&node->attributes, ORTE_NODE_PORT, (void**)&portptr, OPAL_INT)) {
+            char portname[16];
+            /* for the sake of simplicity, insert "-p" <port> in the duplicated argv */
+            opal_argv_insert_element(&caddy->argv, node_name_index1+1, "-p");
+            snprintf (portname, 15, "%d", port);
+            opal_argv_insert_element(&caddy->argv, node_name_index1+2, portname);
+        }
         caddy->daemon = node->daemon;
         OBJ_RETAIN(caddy->daemon);
         opal_list_append(&launch_list, &caddy->super);
