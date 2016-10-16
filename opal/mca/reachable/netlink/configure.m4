@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -73,16 +75,22 @@ AC_DEFUN([OPAL_REACHABLE_NETLINK_CHECK_LIBNL3],[
 
        save_CPPFLAGS=$CPPFLAGS
        save_LIBS=$LIBS
+       AC_ARG_ENABLE(libnl3,
+                     AC_HELP_STRING([--disable-libnl3],
+                                    [Do not try to use libnl3]))
 
-       $1="-I/usr/include/libnl3"
-       CPPFLAGS="$$1 $CPPFLAGS"
-       AC_MSG_CHECKING([for /usr/include/libnl3])
-       AS_IF([test -d "/usr/include/libnl3"],
-             [AC_MSG_RESULT([present])
-              AC_CHECK_HEADER(
-                [netlink/version.h],
-                [AC_COMPILE_IFELSE(
-                    [AC_LANG_PROGRAM([[
+
+       AS_IF([test "x$enable_libnl3" = "xno"],
+             [HAVE_LIBNL3=0],
+             [$1="-I/usr/include/libnl3"
+              CPPFLAGS="$$1 $CPPFLAGS"
+              AC_MSG_CHECKING([for /usr/include/libnl3])
+              AS_IF([test -d "/usr/include/libnl3"],
+                    [AC_MSG_RESULT([present])
+                     AC_CHECK_HEADER(
+                       [netlink/version.h],
+                       [AC_COMPILE_IFELSE(
+                           [AC_LANG_PROGRAM([[
 #include <netlink/netlink.h>
 #include <netlink/version.h>
 #ifndef LIBNL_VER_MAJ
@@ -92,14 +100,14 @@ AC_DEFUN([OPAL_REACHABLE_NETLINK_CHECK_LIBNL3],[
 #if LIBNL_VER_MAJ < 3
 #error "LIBNL_VER_MAJ < 3, this is very unusual"
 #endif
-                        ]],[[/* empty body */]])],
-                    [HAVE_LIBNL3=1],    dnl our program compiled
-                    [HAVE_LIBNL3=0])],  dnl our program failed to compile
-                [HAVE_LIBNL3=0],  dnl AC_CHECK_HEADER failed
-                [#include <netlink/netlink.h>
-                ])],
-             [AC_MSG_RESULT([missing])
-              HAVE_LIBNL3=0])  dnl "/usr/include/libnl3" does not exist
+                               ]],[[/* empty body */]])],
+                           [HAVE_LIBNL3=1],    dnl our program compiled
+                           [HAVE_LIBNL3=0])],  dnl our program failed to compile
+                       [HAVE_LIBNL3=0],  dnl AC_CHECK_HEADER failed
+                       [#include <netlink/netlink.h>
+                       ])],
+                    [AC_MSG_RESULT([missing])
+                     HAVE_LIBNL3=0])])  dnl "/usr/include/libnl3" does not exist
 
        # nl_recvmsgs_report is a symbol that is only present in v3
        AS_IF([test "$HAVE_LIBNL3" -eq 1],
