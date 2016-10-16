@@ -414,12 +414,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     local_pattern[topo->in[i]] += topo->inw[i];
                 for(i = 0; i < topo->outdegree ; i++)
                     local_pattern[topo->out[i]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_gather(MPI_IN_PLACE, size, MPI_DOUBLE,
-                                                                        local_pattern, size, MPI_DOUBLE,
-                                                                        0, comm_old,
-                                                                        comm_old->c_coll.coll_gather_module)))
-                    return err;
             }
+            if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_gather(MPI_IN_PLACE, size, MPI_DOUBLE,
+                                                                    local_pattern, size, MPI_DOUBLE,
+                                                                    0, comm_old,
+                                                                    comm_old->c_coll.coll_gather_module)))
+                return err;
         } else {
             local_pattern = (double *)calloc(size,sizeof(double));
             if( true == topo->weighted ) {
@@ -427,12 +427,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     local_pattern[topo->in[i]] += topo->inw[i];
                 for(i = 0; i < topo->outdegree ; i++)
                     local_pattern[topo->out[i]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_gather(local_pattern, size, MPI_DOUBLE,
-                                                                        NULL,0,0,
-                                                                        0, comm_old,
-                                                                        comm_old->c_coll.coll_gather_module)))
-                    return err;
             }
+            if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_gather(local_pattern, size, MPI_DOUBLE,
+                                                                    NULL,0,0,
+                                                                    0, comm_old,
+                                                                    comm_old->c_coll.coll_gather_module)))
+                return err;
         }
 
         if( rank == local_procs[0]) {
