@@ -98,7 +98,7 @@ static int mca_spml_ucx_component_register(void)
                                       &mca_spml_ucx.priority);
 
     mca_spml_ucx_param_register_int("num_disconnect", 1,
-                                    "How may disconnects go in parallel",
+                                    "How many disconnects to do in parallel",
                                     &mca_spml_ucx.num_disconnect);
 
     return OSHMEM_SUCCESS;
