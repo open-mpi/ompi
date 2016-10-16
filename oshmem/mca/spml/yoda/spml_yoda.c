@@ -1172,7 +1172,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
             }
 
             frag->rdma_segs[0].base_seg.seg_addr.lval = (uintptr_t) p_src;
-            getreq->p_dst = (uint64_t*) p_dst;
+            getreq->p_dst = NULL;
             frag->size = ncopied;
 
             OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_gets, 1);
