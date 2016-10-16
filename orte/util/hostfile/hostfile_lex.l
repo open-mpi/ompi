@@ -14,7 +14,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -126,6 +126,9 @@ username           { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_USERNAME; }
 "user_name"        { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_USERNAME; }
+
+port               { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_PORT; }
 
 boards             { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_BOARDS; }

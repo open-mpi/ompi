@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC
 #                         All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,6 +26,11 @@
 Open RTE was unable to open the hostfile:
     %s
 Check to make sure the path and filename are correct.
+[port]
+Open RTE detected a bad parameter in the hostfile:
+    %s
+The port parameter is less than 0:
+    port=%d
 [slots]
 Open RTE detected a bad parameter in the hostfile:
     %s

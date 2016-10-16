@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -339,6 +339,17 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                 orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
                 free(username);
             }
+            break;
+
+        case ORTE_HOSTFILE_PORT:
+            rc = hostfile_parse_int();
+            if (rc < 0) {
+                orte_show_help("help-hostfile.txt", "port",
+                               true,
+                               cur_hostfile_name, rc);
+                return ORTE_ERROR;
+            }
+            orte_set_attribute(&node->attributes, ORTE_NODE_PORT, ORTE_ATTR_LOCAL, &rc, OPAL_INT);
             break;
 
         case ORTE_HOSTFILE_COUNT:
