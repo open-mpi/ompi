@@ -16,6 +16,8 @@ dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009-2013 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -68,4 +70,10 @@ AC_DEFINE_UNQUOTED([ORTE_ENABLE_STATIC_PORTS],
                    [$orte_enable_static_ports],
 		   [Whether we want static ports enabled])
 
+AC_ARG_ENABLE(static-runtime,
+AC_HELP_STRING([--enable-static-runtime],
+               [Link orted with the static compiler runtime]))
+AS_IF([test "x$enable_static_runtime" = "xyes"],
+      [enable_static=yes])
+AM_CONDITIONAL([ORTE_STATIC_RUNTIME], [test "x$enable_static_runtime" = "xyes"])
 ])dnl
