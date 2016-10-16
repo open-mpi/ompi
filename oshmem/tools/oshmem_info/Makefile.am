@@ -2,6 +2,7 @@
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -66,7 +67,7 @@ oshmem_info_SOURCES = \
         oshmem_info.c \
         param.c
 
-oshmem_info_LDADD = $(top_builddir)/ompi/libmpi.la
+oshmem_info_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 oshmem_info_LDADD += $(top_builddir)/oshmem/liboshmem.la
 if OMPI_RTE_ORTE
 oshmem_info_LDADD +=  $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la

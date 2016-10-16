@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -44,13 +45,13 @@ headers = \
 
 dlopen_test_SOURCES = dlopen_test.c
 dlopen_test_LDADD = \
-        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 dlopen_test_DEPENDENCIES = $(ompi_predefined_LDADD)
 
 predefined_gap_test_SOURCES = predefined_gap_test.c
 predefined_gap_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-predefined_gap_test_LDADD = $(top_builddir)/ompi/libmpi.la
+predefined_gap_test_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 predefined_gap_test_DEPENDENCIES = $(ompi_predefined_LDADD)
 
 libdebuggers_la_SOURCES = \
@@ -78,7 +79,7 @@ libompi_dbg_msgq_la_LDFLAGS = -module -avoid-version
 # and "make check" will *build* a test in runtime/, but it won't *run*
 # it.  :-(
 predefined_pad_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-predefined_pad_test_LDADD = $(top_builddir)/ompi/libmpi.la
+predefined_pad_test_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 predefined_pad_test_DEPENDENCIES = $(ompi_predefined_LDADD)
 
 # Conditionally install the header files

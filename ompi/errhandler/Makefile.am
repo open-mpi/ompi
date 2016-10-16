@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,7 +29,7 @@ headers += \
         errhandler/errhandler.h \
         errhandler/errhandler_predefined.h
 
-libmpi_la_SOURCES += \
+lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         errhandler/errhandler.c \
         errhandler/errhandler_invoke.c \
         errhandler/errhandler_predefined.c \

@@ -5,6 +5,7 @@
 #                         reserved.
 # Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,7 +21,7 @@ if WANT_PERUSE
 # do NOT want this nobase - we want the peruse stripped off...
 include_HEADERS += peruse/peruse.h
 
-libmpi_la_SOURCES += \
+lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         peruse/peruse.c \
 	peruse/peruse_module.c
 endif

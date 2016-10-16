@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -135,7 +136,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
     // the library (see comment in the function for more detail).
     opal_init_psm();
 
-    libmpi = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
+    libmpi = dlopen("lib" OMPI_LIBMPI_NAME "." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
 
 #if defined(HAVE_DL_INFO) && defined(HAVE_LIBGEN_H)
     /*
@@ -149,7 +150,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
             char libmpipath[OPAL_PATH_MAX];
             char *libmpijavapath = strdup(info.dli_fname);
             if (NULL != libmpijavapath) {
-                snprintf(libmpipath, OPAL_PATH_MAX-1, "%s/libmpi." OPAL_DYN_LIB_SUFFIX, dirname(libmpijavapath));
+                snprintf(libmpipath, OPAL_PATH_MAX-1, "%s/lib" OMPI_LIBMPI_NAME "." OPAL_DYN_LIB_SUFFIX, dirname(libmpijavapath));
                 free(libmpijavapath);
                 libmpi = dlopen(libmpipath, RTLD_NOW | RTLD_GLOBAL);
             }
@@ -159,7 +160,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
 
     if(NULL == libmpi)
     {
-        fprintf(stderr, "Java bindings failed to load libmpi: %s\n",dlerror());
+        fprintf(stderr, "Java bindings failed to load lib" OMPI_LIBMPI_NAME ": %s\n",dlerror());
         exit(1);
     }
 

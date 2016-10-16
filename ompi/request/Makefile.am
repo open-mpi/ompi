@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,7 +28,7 @@ headers += \
         request/request.h \
 	request/request_dbg.h
 
-libmpi_la_SOURCES += \
+lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         request/grequest.c \
         request/request.c \
         request/req_test.c \
