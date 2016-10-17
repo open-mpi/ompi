@@ -51,6 +51,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
 
 #include <ctype.h>
 
@@ -90,6 +93,7 @@ int orte_register_listener(struct sockaddr* address, opal_socklen_t addrlen,
                            orte_listener_callback_fn_t handler)
 {
     orte_listener_t *conn;
+    struct sockaddr_un * sa_un;
     int flags;
     int sd = -1;
 
@@ -135,12 +139,36 @@ int orte_register_listener(struct sockaddr* address, opal_socklen_t addrlen,
 
 
     if (bind(sd, (struct sockaddr*)address, addrlen) < 0) {
-        opal_output(0, "%s bind() failed on error %s (%d)",
+        opal_output(0, "%s bind() %s (%d)"
+                    "checking for existing socket connection\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     strerror(opal_socket_errno),
                     opal_socket_errno );
-        CLOSE_THE_SOCKET(sd);
-        return ORTE_ERROR;
+        if(address->sa_family == AF_UNIX) {
+            sa_un = (struct sockaddr_un *)address;
+            if (connect(sd, (struct sockaddr *)address, addrlen) < 0) {
+                opal_output(0, "socket: %s is inactive, "
+                            "unlinking the socket file and rebinding\n",sa_un->sun_path);
+                unlink(sa_un->sun_path);
+                if (bind(sd, (struct sockaddr *)address, addrlen) < 0) {
+                    opal_output(0, "bind() failed on file: %s even after unlink\n", 
+                                    sa_un->sun_path);
+                    CLOSE_THE_SOCKET(sd);
+                    return ORTE_ERROR;
+                }
+            } else {
+                opal_output(0, "%s bind() failed : socket is active %s (%d)\n", 
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            strerror(opal_socket_errno), opal_socket_errno );
+                CLOSE_THE_SOCKET(sd);
+                return ORTE_ERROR;
+            }
+        } else {
+            opal_output(0, "%s bind() failed : not an unix domain socket", 
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            CLOSE_THE_SOCKET(sd);
+            return ORTE_ERROR;
+        }
     }
 
     /* setup listen backlog to maximum allowed by kernel */
@@ -379,3 +407,4 @@ OBJ_CLASS_INSTANCE(orte_pending_connection_t,
                    opal_object_t,
                    NULL,
                    NULL);
+
