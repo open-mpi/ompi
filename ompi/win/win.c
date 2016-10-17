@@ -46,11 +46,22 @@ opal_pointer_array_t ompi_mpi_windows = {{0}};
 ompi_predefined_win_t ompi_mpi_win_null = {{{0}}};
 ompi_predefined_win_t *ompi_mpi_win_null_addr = &ompi_mpi_win_null;
 mca_base_var_enum_t *ompi_win_accumulate_ops = NULL;
+mca_base_var_enum_t *ompi_win_accumulate_order = NULL;
 
 static mca_base_var_enum_value_t accumulate_ops_values[] = {
     {.value = OMPI_WIN_ACCUMULATE_OPS_SAME_OP_NO_OP, .string = "same_op_no_op",},
     {.value = OMPI_WIN_ACCUMULATE_OPS_SAME_OP, .string = "same_op",},
     {.value = -1, .string = NULL},
+};
+
+static mca_base_var_enum_value_flag_t accumulate_order_flags[] = {
+    {.flag = OMPI_WIN_ACC_ORDER_NONE, .string = "none", .conflicting_flag = OMPI_WIN_ACC_ORDER_RAR |
+     OMPI_WIN_ACC_ORDER_WAR | OMPI_WIN_ACC_ORDER_RAW | OMPI_WIN_ACC_ORDER_WAW},
+    {.flag = OMPI_WIN_ACC_ORDER_RAR, .string = "rar", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
+    {.flag = OMPI_WIN_ACC_ORDER_WAR, .string = "war", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
+    {.flag = OMPI_WIN_ACC_ORDER_RAW, .string = "raw", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
+    {.flag = OMPI_WIN_ACC_ORDER_WAW, .string = "waw", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
+    {},
 };
 
 static void ompi_win_construct(ompi_win_t *win);
@@ -86,6 +97,11 @@ ompi_win_init(void)
         return ret;
     }
 
+    ret = mca_base_var_enum_create_flag ("accumulate_order", accumulate_order_flags, &ompi_win_accumulate_order);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -115,6 +131,7 @@ int ompi_win_finalize(void)
     OBJ_DESTRUCT(&ompi_mpi_win_null.win);
     OBJ_DESTRUCT(&ompi_mpi_windows);
     OBJ_RELEASE(ompi_win_accumulate_ops);
+    OBJ_RELEASE(ompi_win_accumulate_order);
 
     return OMPI_SUCCESS;
 }
@@ -123,7 +140,7 @@ static int alloc_window(struct ompi_communicator_t *comm, ompi_info_t *info, int
 {
     ompi_win_t *win;
     ompi_group_t *group;
-    int acc_ops, flag, ret;
+    int acc_ops, acc_order, flag, ret;
 
     /* create the object */
     win = OBJ_NEW(ompi_win_t);
@@ -139,7 +156,19 @@ static int alloc_window(struct ompi_communicator_t *comm, ompi_info_t *info, int
         return ret;
     }
 
-    win->w_acc_ops = acc_ops;
+    win->w_acc_ops = (ompi_win_accumulate_ops_t)acc_ops;
+
+    ret = ompi_info_get_value_enum (info, "accumulate_order", &acc_order,
+                                    OMPI_WIN_ACC_ORDER_RAR | OMPI_WIN_ACC_ORDER_WAR |
+                                    OMPI_WIN_ACC_ORDER_RAW | OMPI_WIN_ACC_ORDER_WAW,
+                                    ompi_win_accumulate_order, &flag);
+    if (OMPI_SUCCESS != ret) {
+        OBJ_RELEASE(win);
+        return ret;
+    }
+
+    win->w_acc_order = acc_order;
+
     win->w_flavor = flavor;
 
     /* setup data that is independent of osc component */

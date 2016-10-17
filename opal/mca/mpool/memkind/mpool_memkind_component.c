@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -148,13 +148,14 @@ static int mca_mpool_memkind_open (void)
     }
 
     if (memkind_check_available (default_kind)) {
-        const char *kind_string;
+        char *kind_string;
 
         mca_mpool_memkind_enum->string_from_value (mca_mpool_memkind_enum,
                                                    mca_mpool_memkind_component.default_partition,
                                                    &kind_string);
         opal_output_verbose (MCA_BASE_VERBOSE_WARN, mca_mpool_memkind_component.output,
                              "default kind %s not available", kind_string);
+        free (kind_string);
         return OPAL_ERR_NOT_AVAILABLE;
     }
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -30,6 +31,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/btl/btl.h"
+#include "opal/mca/base/mca_base_var_enum.h"
 
 BEGIN_C_DECLS
 
@@ -77,6 +79,9 @@ OPAL_DECLSPEC extern opal_list_t mca_btl_base_modules_initialized;
 OPAL_DECLSPEC extern bool mca_btl_base_thread_multiple_override;
 
 OPAL_DECLSPEC extern mca_base_framework_t opal_btl_base_framework;
+
+extern mca_base_var_enum_flag_t *mca_btl_base_flag_enum;
+extern mca_base_var_enum_flag_t *mca_btl_base_atomic_enum;
 
 END_C_DECLS
 
