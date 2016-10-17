@@ -275,13 +275,13 @@ static opal_cmd_line_init_t cmd_line_init[] = {
      * available - included for backwards compatibility
      */
     { "rmaps_ppr_pernode", '\0', "pernode", "pernode", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orte_cmd_options.pernode, OPAL_CMD_LINE_TYPE_BOOL,
       "Launch one process per available node" },
     { "rmaps_ppr_n_pernode", '\0', "npernode", "npernode", 1,
-        NULL, OPAL_CMD_LINE_TYPE_INT,
+        &orte_cmd_options.npernode, OPAL_CMD_LINE_TYPE_INT,
         "Launch n processes per node on all allocated nodes" },
     { "rmaps_ppr_n_pernode", '\0', "N", NULL, 1,
-        NULL, OPAL_CMD_LINE_TYPE_INT,
+        &orte_cmd_options.npernode, OPAL_CMD_LINE_TYPE_INT,
         "Launch n processes per node on all allocated nodes (synonym for npernode)" },
 
     /* declare hardware threads as independent cpus */
@@ -291,7 +291,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     /* include npersocket for backwards compatibility */
     { "rmaps_ppr_n_persocket", '\0', "npersocket", "npersocket", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
+      &orte_cmd_options.npersocket, OPAL_CMD_LINE_TYPE_INT,
       "Launch n processes per socket on all allocated nodes" },
 
     /* Mapping options */
