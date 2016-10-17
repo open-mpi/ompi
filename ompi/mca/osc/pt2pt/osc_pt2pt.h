@@ -669,7 +669,6 @@ static inline void osc_pt2pt_copy_for_send (void *target, size_t target_len, con
  */
 static inline void osc_pt2pt_gc_clean (ompi_osc_pt2pt_module_t *module)
 {
-    ompi_request_t *request;
     opal_list_item_t *item;
 
     OPAL_THREAD_LOCK(&module->gc_lock);
