@@ -1,6 +1,6 @@
 // -*- c++ -*-
 //
-// Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+// Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
 //                         reserved.
 // Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
@@ -16,10 +16,7 @@
 
 #include "ompi/constants.h"
 #include "ompi/mpi/cxx/mpicxx.h"
-#include "opal/class/opal_list.h"
-#include "ompi/file/file.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/runtime/mpiruntime.h"
+#include "cxx_glue.h"
 
 void
 MPI::File::Close()
@@ -31,14 +28,7 @@ MPI::File::Close()
 MPI::Errhandler
 MPI::File::Create_errhandler(MPI::File::Errhandler_function* function)
 {
-    MPI_Errhandler c_errhandler =
-        ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_FILE,
-                               (ompi_errhandler_generic_handler_fn_t*) function,
-                               OMPI_ERRHANDLER_LANG_CXX);
-    c_errhandler->eh_cxx_dispatch_fn =
-        (ompi_errhandler_cxx_dispatch_fn_t*)
-        ompi_mpi_cxx_file_errhandler_invoke;
-    return c_errhandler;
+    return ompi_cxx_errhandler_create_file ((ompi_cxx_dummy_fn_t *) function);
 }
 
 
@@ -54,26 +44,6 @@ MPI::File::Create_errhandler(MPI::File::Errhandler_function* function)
 // Data structure passed to the intercepts (see below).  It is an OPAL
 // list_item_t so that we can clean this memory up during
 // MPI_FINALIZE.
-typedef struct intercept_extra_state {
-    opal_list_item_t base;
-    MPI::Datarep_conversion_function *read_fn_cxx;
-    MPI::Datarep_conversion_function *write_fn_cxx;
-    MPI::Datarep_extent_function *extent_fn_cxx;
-    void *extra_state_cxx;
-} intercept_extra_state_t;
-
-static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
-{
-    obj->read_fn_cxx = NULL;
-    obj->write_fn_cxx = NULL;
-    obj->extent_fn_cxx = NULL;
-    obj->extra_state_cxx = NULL;
-}
-
-OBJ_CLASS_DECLARATION(intercept_extra_state_t);
-OBJ_CLASS_INSTANCE(intercept_extra_state_t,
-                   opal_list_item_t,
-                   intercept_extra_state_constructor, NULL);
 
 // Intercept function for read conversions
 static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
@@ -82,11 +52,13 @@ static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
 {
     MPI::Datatype type_cxx(type_c);
     MPI::Offset position_cxx(position_c);
-    intercept_extra_state_t *intercept_data =
-        (intercept_extra_state_t*) extra_state;
+    ompi_cxx_intercept_file_extra_state_t *intercept_data =
+        (ompi_cxx_intercept_file_extra_state_t*) extra_state;
+    MPI::Datarep_conversion_function *read_fn_cxx =
+        (MPI::Datarep_conversion_function *) intercept_data->read_fn_cxx;
 
-    intercept_data->read_fn_cxx(userbuf, type_cxx, count_c, filebuf,
-                                position_cxx, intercept_data->extra_state_cxx);
+    read_fn_cxx (userbuf, type_cxx, count_c, filebuf, position_cxx,
+                 intercept_data->extra_state_cxx);
     return MPI_SUCCESS;
 }
 
@@ -97,11 +69,13 @@ static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
 {
     MPI::Datatype type_cxx(type_c);
     MPI::Offset position_cxx(position_c);
-    intercept_extra_state_t *intercept_data =
-        (intercept_extra_state_t*) extra_state;
+    ompi_cxx_intercept_file_extra_state_t *intercept_data =
+        (ompi_cxx_intercept_file_extra_state_t*) extra_state;
+    MPI::Datarep_conversion_function *write_fn_cxx =
+        (MPI::Datarep_conversion_function *) intercept_data->write_fn_cxx;
 
-    intercept_data->write_fn_cxx(userbuf, type_cxx, count_c, filebuf,
-                                 position_cxx, intercept_data->extra_state_cxx);
+    write_fn_cxx (userbuf, type_cxx, count_c, filebuf, position_cxx,
+                  intercept_data->extra_state_cxx);
     return MPI_SUCCESS;
 }
 
@@ -111,11 +85,12 @@ static int extent_intercept_fn(MPI_Datatype type_c, MPI_Aint *file_extent_c,
 {
     MPI::Datatype type_cxx(type_c);
     MPI::Aint file_extent_cxx(*file_extent_c);
-    intercept_extra_state_t *intercept_data =
-        (intercept_extra_state_t*) extra_state;
+    ompi_cxx_intercept_file_extra_state_t *intercept_data =
+        (ompi_cxx_intercept_file_extra_state_t*) extra_state;
+    MPI::Datarep_extent_function *extent_fn_cxx =
+        (MPI::Datarep_extent_function *) intercept_data->extent_fn_cxx;
 
-    intercept_data->extent_fn_cxx(type_cxx, file_extent_cxx,
-                                  intercept_data->extra_state_cxx);
+    extent_fn_cxx (type_cxx, file_extent_cxx, intercept_data->extra_state_cxx);
     *file_extent_c = file_extent_cxx;
     return MPI_SUCCESS;
 }
@@ -128,23 +103,18 @@ MPI::Register_datarep(const char* datarep,
                       Datarep_extent_function* extent_fn_cxx,
                       void* extra_state_cxx)
 {
-    intercept_extra_state_t *intercept;
+    ompi_cxx_intercept_file_extra_state_t *intercept;
 
-    intercept = OBJ_NEW(intercept_extra_state_t);
+    intercept = ompi_cxx_new_intercept_state ((void *) read_fn_cxx, (void *) write_fn_cxx,
+                                              (void *) extent_fn_cxx, extra_state_cxx);
     if (NULL == intercept) {
-        OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, OMPI_ERR_OUT_OF_RESOURCE,
-                               "MPI::Register_datarep");
+        ompi_cxx_errhandler_invoke_file (MPI_FILE_NULL, OMPI_ERR_OUT_OF_RESOURCE,
+                                         "MPI::Register_datarep");
         return;
     }
-    opal_list_append(&ompi_registered_datareps, &(intercept->base));
-    intercept->read_fn_cxx = read_fn_cxx;
-    intercept->write_fn_cxx = write_fn_cxx;
-    intercept->extent_fn_cxx = extent_fn_cxx;
-    intercept->extra_state_cxx = extra_state_cxx;
 
-    (void)MPI_Register_datarep(const_cast<char*>(datarep), read_intercept_fn,
-                               write_intercept_fn,
-                               extent_intercept_fn, intercept);
+    (void)MPI_Register_datarep (const_cast<char*>(datarep), read_intercept_fn,
+                                write_intercept_fn, extent_intercept_fn, intercept);
 }
 
 
@@ -155,22 +125,18 @@ MPI::Register_datarep(const char* datarep,
                       Datarep_extent_function* extent_fn_cxx,
                       void* extra_state_cxx)
 {
-    intercept_extra_state_t *intercept;
+    ompi_cxx_intercept_file_extra_state_t *intercept;
 
-    intercept = OBJ_NEW(intercept_extra_state_t);
+    intercept = ompi_cxx_new_intercept_state (NULL, (void *) write_fn_cxx, (void *) extent_fn_cxx,
+                                              extra_state_cxx);
     if (NULL == intercept) {
-        OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, OMPI_ERR_OUT_OF_RESOURCE,
-                               "MPI::Register_datarep");
+        ompi_cxx_errhandler_invoke_file (MPI_FILE_NULL, OMPI_ERR_OUT_OF_RESOURCE,
+                                         "MPI::Register_datarep");
         return;
     }
-    opal_list_append(&ompi_registered_datareps, &(intercept->base));
-    intercept->write_fn_cxx = write_fn_cxx;
-    intercept->extent_fn_cxx = extent_fn_cxx;
-    intercept->extra_state_cxx = extra_state_cxx;
 
-    (void)MPI_Register_datarep(const_cast<char*>(datarep), read_fn_c,
-                               write_intercept_fn,
-                               extent_intercept_fn, intercept);
+    (void)MPI_Register_datarep (const_cast<char*>(datarep), read_fn_c, write_intercept_fn,
+                                extent_intercept_fn, intercept);
 }
 
 
@@ -181,22 +147,18 @@ MPI::Register_datarep(const char* datarep,
                       Datarep_extent_function* extent_fn_cxx,
                       void* extra_state_cxx)
 {
-    intercept_extra_state_t *intercept;
+    ompi_cxx_intercept_file_extra_state_t *intercept;
 
-    intercept = OBJ_NEW(intercept_extra_state_t);
+    intercept = ompi_cxx_new_intercept_state ((void *) read_fn_cxx, NULL, (void *) extent_fn_cxx,
+                                              extra_state_cxx);
     if (NULL == intercept) {
-        OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, OMPI_ERR_OUT_OF_RESOURCE,
-                               "MPI::Register_datarep");
+        ompi_cxx_errhandler_invoke_file (MPI_FILE_NULL, OMPI_ERR_OUT_OF_RESOURCE,
+                                         "MPI::Register_datarep");
         return;
     }
-    opal_list_append(&ompi_registered_datareps, &(intercept->base));
-    intercept->read_fn_cxx = read_fn_cxx;
-    intercept->extent_fn_cxx = extent_fn_cxx;
-    intercept->extra_state_cxx = extra_state_cxx;
 
-    (void)MPI_Register_datarep(const_cast<char*>(datarep), read_intercept_fn,
-                               write_fn_c,
-                               extent_intercept_fn, intercept);
+    (void)MPI_Register_datarep (const_cast<char*>(datarep), read_intercept_fn, write_fn_c,
+                                extent_intercept_fn, intercept);
 }
 
 
@@ -207,21 +169,17 @@ MPI::Register_datarep(const char* datarep,
                       Datarep_extent_function* extent_fn_cxx,
                       void* extra_state_cxx)
 {
-    intercept_extra_state_t *intercept;
+    ompi_cxx_intercept_file_extra_state_t *intercept;
 
-    intercept = OBJ_NEW(intercept_extra_state_t);
+    intercept = ompi_cxx_new_intercept_state (NULL, NULL, (void *) extent_fn_cxx, extra_state_cxx);
     if (NULL == intercept) {
-        OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, OMPI_ERR_OUT_OF_RESOURCE,
-                               "MPI::Register_datarep");
+        ompi_cxx_errhandler_invoke_file (MPI_FILE_NULL, OMPI_ERR_OUT_OF_RESOURCE,
+                                         "MPI::Register_datarep");
         return;
     }
-    opal_list_append(&ompi_registered_datareps, &(intercept->base));
-    intercept->extent_fn_cxx = extent_fn_cxx;
-    intercept->extra_state_cxx = extra_state_cxx;
 
-    (void)MPI_Register_datarep(const_cast<char*>(datarep), read_fn_c,
-                               write_fn_c,
-                               extent_intercept_fn, intercept);
+    (void)MPI_Register_datarep (const_cast<char*>(datarep), read_fn_c, write_fn_c,
+                                extent_intercept_fn, intercept);
 }
 
 

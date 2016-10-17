@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,10 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,8 +59,8 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             break;
 
         case OMPI_ERRHANDLER_LANG_CXX:
-            errhandler->eh_cxx_dispatch_fn(errhandler, &comm,
-                                           &err_code, message);
+            errhandler->eh_cxx_dispatch_fn(&comm, &err_code, message,
+                                           (ompi_errhandler_generic_handler_fn_t *)errhandler->eh_comm_fn);
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
@@ -74,8 +79,8 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             break;
 
         case OMPI_ERRHANDLER_LANG_CXX:
-            errhandler->eh_cxx_dispatch_fn(errhandler, &win,
-                                           &err_code, message);
+            errhandler->eh_cxx_dispatch_fn(&win, &err_code, message,
+                                           (ompi_errhandler_generic_handler_fn_t *)errhandler->eh_win_fn);
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
@@ -94,8 +99,8 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             break;
 
         case OMPI_ERRHANDLER_LANG_CXX:
-            errhandler->eh_cxx_dispatch_fn(errhandler, &file,
-                                           &err_code, message);
+            errhandler->eh_cxx_dispatch_fn(&file, &err_code, message,
+                                           (ompi_errhandler_generic_handler_fn_t *)errhandler->eh_file_fn);
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
