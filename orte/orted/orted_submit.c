@@ -803,7 +803,13 @@ int orte_submit_job(char *argv[], int *index,
         ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
         /* define the ppr */
         (void)asprintf(&jdata->map->ppr, "%d:node", orte_cmd_options.npernode);
+    } else if (0 < orte_cmd_options.npersocket) {
+        ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_PPR);
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
+        /* define the ppr */
+        (void)asprintf(&jdata->map->ppr, "%d:socket", orte_cmd_options.npersocket);
     }
+
 
     /* if the user specified cpus/rank, set it */
     if (0 < orte_cmd_options.cpus_per_proc) {
