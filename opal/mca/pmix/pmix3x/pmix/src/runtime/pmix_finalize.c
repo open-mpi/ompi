@@ -64,7 +64,15 @@ void pmix_rte_finalize(void)
         return;
     }
 
-    /* shutdown communications */
+    if (!pmix_globals.external_evbase) {
+        /* stop the progress thread */
+        (void)pmix_progress_thread_finalize(NULL);
+        #ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
+            pmix_libevent_global_shutdown();
+        #endif
+    }
+
+    /* cleanup communications */
     pmix_usock_finalize();
     if (PMIX_PROC_SERVER != pmix_globals.proc_type &&
         0 <= pmix_client_globals.myserver.sd) {
@@ -99,14 +107,6 @@ void pmix_rte_finalize(void)
     /* close the bfrops */
     (void)pmix_mca_base_framework_close(&pmix_bfrops_base_framework);
 #endif
-
-    if (!pmix_globals.external_evbase) {
-        /* stop the progress thread */
-        (void)pmix_progress_thread_finalize(NULL);
-        #ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
-            pmix_libevent_global_shutdown();
-        #endif
-    }
 
     /* clean out the globals */
     PMIX_RELEASE(pmix_globals.mypeer);
