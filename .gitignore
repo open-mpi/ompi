@@ -314,6 +314,8 @@ opal/mca/pmix/pmix3x/pmix/src/include/pmix_config.h
 opal/mca/pmix/pmix3x/pmix/src/include/pmix_config.h.in
 opal/mca/pmix/pmix3x/pmix/include/pmix_rename.h
 opal/mca/pmix/pmix3x/pmix/include/pmix_version.h
+opal/mca/pmix/pmix3x/pmix/src/util/keyval/keyval_lex.c
+opal/mca/pmix/pmix3x/pmix/src/util/show_help_lex.c
 
 opal/tools/opal-checkpoint/opal-checkpoint
 opal/tools/opal-checkpoint/opal-checkpoint.1

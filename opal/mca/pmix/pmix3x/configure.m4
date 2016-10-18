@@ -77,18 +77,8 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
     # distclean" infrastructure to work properly).
     AC_MSG_CHECKING([if v3.x component is to be used])
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
-          [AS_IF([test "$opal_external_pmix_version" = "3X"],
-                 [AC_MSG_RESULT([yes - using an external v3.x library])
-                  # Build flags for our Makefile.am
-                  opal_pmix_pmix3x_CPPFLAGS=$opal_external_pmix_CPPFLAGS
-                  opal_pmix_pmix3x_LDFLAGS=$opal_external_pmix_LDFLAGS
-                  opal_pmix_pmix3x_LIBS=$opal_external_pmix_LIBS
-                  opal_pmix_pmix3x_DEPENDENCIES=
-                  # setup wrapper flags
-                  pmix_pmix3x_WRAPPER_EXTRA_LDFLAGS=$opal_external_pmix_LDFLAGS
-                  pmix_pmix3x_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS],
-                 [AC_MSG_RESULT([no - disqualifying this component])
-                  opal_pmix_pmix3x_happy=0])],
+          [AC_MSG_RESULT([no - disqualifying this component])
+           opal_pmix_pmix3x_happy=0],
           [AC_MSG_RESULT([yes - using the internal v3.x library])
            # Build flags for our Makefile.am
            opal_pmix_pmix3x_LDFLAGS=
