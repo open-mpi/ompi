@@ -541,9 +541,7 @@ static inline int allred_sched_linear(int rank, int rsize, void *sendbuf, void *
   } else {
     res = NBC_Sched_recv ((void *)(-gap), true, count, datatype, 0, schedule);
   }
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    return res;
-  }
+  if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
 
   if (0 == rank) {
     char *rbuf, *lbuf, *buf;
@@ -574,9 +572,7 @@ static inline int allred_sched_linear(int rank, int rsize, void *sendbuf, void *
       if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 
       res = NBC_Sched_op (lbuf, tmplbuf, rbuf, tmprbuf, count, datatype, op, schedule);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
+      if (NBC_OK != res) { printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
 
       res = NBC_Sched_barrier(schedule);
       if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }

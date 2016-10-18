@@ -515,7 +515,7 @@ static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *
     }
 
     if (0 == size) {
-        return OMPI_SUCCESS;
+        return NBC_OK;
     }
     packbuf = malloc(size);
     if (NULL == packbuf) { printf("Error in malloc()\n"); return res; }
