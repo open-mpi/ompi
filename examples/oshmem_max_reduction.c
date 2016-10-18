@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -14,8 +14,6 @@
 #include <string.h>
 
 #include <shmem.h>
-
-#warning This application uses deprecated API see http://www.open-mpi.org/
 
 long pSync[_SHMEM_BCAST_SYNC_SIZE];
 
@@ -34,10 +32,10 @@ int  main(void)
         pSync[i] = _SHMEM_SYNC_VALUE;
     }
 
-    start_pes(0);
+    shmem_init();
 
-    my_pe = _my_pe();
-    num_pes = _num_pes();
+    my_pe = shmem_my_pe();
+    num_pes = shmem_n_pes();
 
     for (i = 0; i < N; i += 1) {
         src[i] = my_pe + i;
@@ -54,6 +52,7 @@ int  main(void)
     }
 
     printf("\n");
+    shmem_finalize();
 
     return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -11,17 +11,15 @@
 #include <stdio.h>
 #include <shmem.h>
 
-#warning This application uses deprecated API see http://www.open-mpi.org/
-
 int main (void)
 {
     static int aaa, bbb;
     int num_pes, my_pe, peer;
 
-    start_pes(0);
+    shmem_init();
 
-    num_pes = _num_pes();
-    my_pe = _my_pe();
+    num_pes = shmem_n_pes();
+    my_pe = shmem_my_pe();
 
     peer = (my_pe + 1) % num_pes;
 
@@ -30,6 +28,7 @@ int main (void)
 
     shmem_barrier_all();
     printf("Process %d exiting\n", my_pe);
+    shmem_finalize();
 
     return 0;
 }
