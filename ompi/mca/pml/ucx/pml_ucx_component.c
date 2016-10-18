@@ -63,6 +63,13 @@ static int mca_pml_ucx_component_register(void)
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &ompi_pml_ucx.priority);
 
+    ompi_pml_ucx.num_disconnect = 1;
+    (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "num_disconnect",
+                                           "How many disconnects to do in parallel",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &ompi_pml_ucx.num_disconnect);
     return 0;
 }
 
