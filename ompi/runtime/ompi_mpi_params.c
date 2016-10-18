@@ -113,7 +113,7 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_yield_when_idle);
 
-    ompi_mpi_lazy_wait_in_init = false;
+    ompi_mpi_lazy_wait_in_init = true;
     (void) mca_base_var_register("ompi", "mpi", NULL, "lazy_wait_in_init",
                                  "Avoid aggressive progress in MPI_Init, make sure that PMIx server has timeslots to progress",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
