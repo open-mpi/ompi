@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -129,7 +129,7 @@ static int init(void)
         }
     }
     if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
-	orte_state_base_print_proc_state_machine();
+        orte_state_base_print_proc_state_machine();
     }
     return ORTE_SUCCESS;
 }
@@ -199,11 +199,20 @@ static void track_jobs(int fd, short argc, void *cbdata)
                     OBJ_RELEASE(alert);
                     goto cleanup;
                 }
-                /* pack the RUNNING state */
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &running, 1, ORTE_PROC_STATE))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_RELEASE(alert);
-                    goto cleanup;
+                /* if this proc failed to start, then send that info */
+                if (ORTE_PROC_STATE_UNTERMINATED < child->state) {
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->state, 1, ORTE_PROC_STATE))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(alert);
+                        goto cleanup;
+                    }
+                } else {
+                    /* pack the RUNNING state to avoid any race conditions */
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &running, 1, ORTE_PROC_STATE))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(alert);
+                        goto cleanup;
+                    }
                 }
                 /* pack its exit code */
                 if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->exit_code, 1, ORTE_EXIT_CODE))) {
