@@ -53,6 +53,8 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
     pmix_server_trkr_t *trk;
     pmix_rank_info_t *rinfo, *rnext;
     pmix_trkr_caddy_t *tcd;
+    pmix_error_reg_info_t *errreg;
+    pmix_regevents_info_t *reginfoptr, *regnext;
 
     /* stop all events */
     if (peer->recv_ev_active) {
@@ -99,15 +101,22 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
                 }
             }
         }
-         /* remove this proc from the list of ranks for this nspace */
-         pmix_list_remove_item(&(peer->info->nptr->server->ranks), &(peer->info->super));
-         PMIX_RELEASE(peer->info);
-         /* reduce the number of local procs */
-         --peer->info->nptr->server->nlocalprocs;
-         /* do some cleanup as the client has left us */
-         pmix_pointer_array_set_item(&pmix_server_globals.clients,
+        /* remove this proc from the list of ranks for this nspace */
+        pmix_list_remove_item(&(peer->info->nptr->server->ranks), &(peer->info->super));
+        PMIX_RELEASE(peer->info);
+        /* reduce the number of local procs */
+        --peer->info->nptr->server->nlocalprocs;
+        /* do some cleanup as the client has left us */
+        pmix_pointer_array_set_item(&pmix_server_globals.clients,
                                      peer->index, NULL);
-         PMIX_RELEASE(peer);
+        /* remove all registered event handlers so libevent doesn't complain */
+        PMIX_LIST_FOREACH_SAFE(reginfoptr, regnext, &pmix_server_globals.client_eventregs, pmix_regevents_info_t) {
+            if (reginfoptr->peer == peer) {
+                PMIX_RELEASE(reginfoptr);
+                break;
+            }
+        }
+        PMIX_RELEASE(peer);
      } else {
         /* if I am a client, there is only
          * one connection we can have */
