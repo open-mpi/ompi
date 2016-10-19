@@ -16,7 +16,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -387,8 +387,7 @@ static int mca_btl_tcp_component_open(void)
 
 static int mca_btl_tcp_component_close(void)
 {
-    opal_list_item_t* item;
-    opal_list_item_t* next;
+    mca_btl_tcp_event_t *event, *next;
 
     if (NULL != mca_btl_tcp_component.tcp_btls) {
         free(mca_btl_tcp_component.tcp_btls);
@@ -407,17 +406,12 @@ static int mca_btl_tcp_component_close(void)
     }
 #endif
 
-    /* cleanup any pending events */
-    MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_component.tcp_lock);
-    for(item =  opal_list_get_first(&mca_btl_tcp_component.tcp_events);
-        item != opal_list_get_end(&mca_btl_tcp_component.tcp_events);
-        item = next) {
-        mca_btl_tcp_event_t* event = (mca_btl_tcp_event_t*)item;
-        next = opal_list_get_next(item);
-        opal_event_del(&event->event);
-        OBJ_RELEASE(event);
-    }
-    MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(&mca_btl_tcp_component.tcp_lock);
+    /* remove all pending events. Do not lock the tcp_events list as
+     * the event themselves will unregister during the destructor. */
+     OPAL_LIST_FOREACH_SAFE(event, next, &mca_btl_tcp_component.tcp_events, mca_btl_tcp_event_t) {
+         opal_event_del(&event->event);
+         OBJ_RELEASE(event);
+     }
 
     /* release resources */
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_procs);
