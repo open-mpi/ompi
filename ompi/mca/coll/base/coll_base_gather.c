@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -65,13 +65,13 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
     bmtree = data->cached_in_order_bmtree;
 
     ompi_datatype_type_extent(sdtype, &sextent);
-    ompi_datatype_type_extent(rdtype, &rextent);
     ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
-    rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
 
     vrank = (rank - root + size) % size;
 
     if (rank == root) {
+        ompi_datatype_type_extent(rdtype, &rextent);
+        rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
         if (0 == root){
             /* root on 0, just use the recv buffer */
             ptmp = (char *) rbuf;
