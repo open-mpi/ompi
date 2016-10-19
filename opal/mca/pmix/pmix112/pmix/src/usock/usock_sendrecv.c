@@ -112,6 +112,7 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
         /* remove all registered event handlers so libevent doesn't complain */
         PMIX_LIST_FOREACH_SAFE(reginfoptr, regnext, &pmix_server_globals.client_eventregs, pmix_regevents_info_t) {
             if (reginfoptr->peer == peer) {
+                pmix_list_remove_item(&pmix_server_globals.client_eventregs, &reginfoptr->super);
                 PMIX_RELEASE(reginfoptr);
                 break;
             }
