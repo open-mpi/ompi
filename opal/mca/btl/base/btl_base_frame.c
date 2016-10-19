@@ -61,6 +61,12 @@ mca_base_var_enum_value_flag_t mca_btl_base_atomic_enum_flags[] = {
   {MCA_BTL_ATOMIC_SUPPORTS_AND, "and", 0},
   {MCA_BTL_ATOMIC_SUPPORTS_OR, "or", 0},
   {MCA_BTL_ATOMIC_SUPPORTS_XOR, "xor", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_LAND, "land", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_LOR, "lor", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_LXOR, "lxor", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_SWAP, "swap", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_MIN, "min", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_MAX, "max", 0},
   {MCA_BTL_ATOMIC_SUPPORTS_CSWAP, "compare-and-swap", 0},
   {MCA_BTL_ATOMIC_SUPPORTS_GLOB, "global"},
   {0, NULL, 0}

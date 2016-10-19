@@ -43,12 +43,6 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush: %d, %s", target, win->w_name);
 
-    if (ompi_comm_rank (module->comm) == target) {
-        /* nothing to flush. call one round of progress */
-        ompi_osc_rdma_progress (module);
-        return OMPI_SUCCESS;
-    }
-
     OPAL_THREAD_LOCK(&module->lock);
 
     lock = ompi_osc_rdma_module_sync_lookup (module, target, &peer);

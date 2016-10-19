@@ -112,7 +112,7 @@ int mca_btl_openib_atomic_fop (struct mca_btl_base_module_t *btl, struct mca_btl
                                void *cbcontext, void *cbdata)
 {
 
-    if (OPAL_UNLIKELY(MCA_BTL_ATOMIC_ADD != op)) {
+    if (OPAL_UNLIKELY(MCA_BTL_ATOMIC_ADD != op || (MCA_BTL_ATOMIC_FLAG_32BIT & flags))) {
 	return OPAL_ERR_NOT_SUPPORTED;
     }
 
@@ -128,6 +128,10 @@ int mca_btl_openib_atomic_cswap (struct mca_btl_base_module_t *btl, struct mca_b
                                  uint64_t value, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                                  void *cbcontext, void *cbdata)
 {
+    if (OPAL_UNLIKELY(MCA_BTL_ATOMIC_FLAG_32BIT & flags)) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+
     return mca_btl_openib_atomic_internal (btl, endpoint, local_address, remote_address, local_handle,
 					   remote_handle, IBV_WR_ATOMIC_CMP_AND_SWP, compare, value,
 					   flags, order, cbfunc, cbcontext, cbdata);
