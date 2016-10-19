@@ -8,6 +8,8 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -41,7 +43,7 @@ my $extra_cxxflags = "@OMPI_WRAPPER_EXTRA_CXXFLAGS@";
 my $extra_cxxflags_prefix = "@OMPI_WRAPPER_EXTRA_CXXFLAGS_PREFIX@";
 my $extra_fcflags = "@OMPI_WRAPPER_EXTRA_FCFLAGS@";
 my $extra_fcflags_prefix = "@OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX@";
-my $extra_ldflags = "@OMPI_WRAPPER_EXTRA_LDFLAGS@";
+my $extra_ldflags = "@OMPI_PKG_CONFIG_LDFLAGS@";
 my $extra_libs = "@OMPI_WRAPPER_EXTRA_LIBS@";
 my $cxx_lib = "@OMPI_WRAPPER_CXX_LIB@";
 my $fc_module_flag = "@OMPI_FC_MODULE_FLAG@";
