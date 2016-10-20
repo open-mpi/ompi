@@ -44,7 +44,7 @@ static int external_register(void);
  * and pointers to our public functions in it
  */
 
-mca_pmix_pmix3x_component_t mca_pmix_pmix3x_component = {
+mca_pmix_ext3x_component_t mca_pmix_ext3x_component = {
     {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -57,7 +57,7 @@ mca_pmix_pmix3x_component_t mca_pmix_pmix3x_component = {
 
         /* Component name and version */
 
-            .mca_component_name = "pmix3x",
+            .mca_component_name = "ext3x",
             MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                                   OPAL_RELEASE_VERSION),
 
@@ -79,12 +79,12 @@ mca_pmix_pmix3x_component_t mca_pmix_pmix3x_component = {
 
 static int external_register(void)
 {
-    mca_pmix_pmix3x_component.cache_size = 256;
-    mca_base_component_var_register(&mca_pmix_pmix3x_component.super.base_version,
+    mca_pmix_ext3x_component.cache_size = 256;
+    mca_base_component_var_register(&mca_pmix_ext3x_component.super.base_version,
                                     "cache_size", "Size of the ring buffer cache for events",
                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_CONSTANT,
-                                    &mca_pmix_pmix3x_component.cache_size);
+                                    &mca_pmix_ext3x_component.cache_size);
 
     return OPAL_SUCCESS;
 }
@@ -92,23 +92,23 @@ static int external_register(void)
 
 static int external_open(void)
 {
-    mca_pmix_pmix3x_component.evindex = 0;
-    OBJ_CONSTRUCT(&mca_pmix_pmix3x_component.jobids, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pmix_pmix3x_component.single_events, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pmix_pmix3x_component.multi_events, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pmix_pmix3x_component.default_events, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pmix_pmix3x_component.cache, opal_list_t);
+    mca_pmix_ext3x_component.evindex = 0;
+    OBJ_CONSTRUCT(&mca_pmix_ext3x_component.jobids, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext3x_component.single_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext3x_component.multi_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext3x_component.default_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext3x_component.cache, opal_list_t);
 
     return OPAL_SUCCESS;
 }
 
 static int external_close(void)
 {
-    OPAL_LIST_DESTRUCT(&mca_pmix_pmix3x_component.jobids);
-    OPAL_LIST_DESTRUCT(&mca_pmix_pmix3x_component.single_events);
-    OPAL_LIST_DESTRUCT(&mca_pmix_pmix3x_component.multi_events);
-    OPAL_LIST_DESTRUCT(&mca_pmix_pmix3x_component.default_events);
-    OPAL_LIST_DESTRUCT(&mca_pmix_pmix3x_component.cache);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext3x_component.jobids);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext3x_component.single_events);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext3x_component.multi_events);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext3x_component.default_events);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext3x_component.cache);
     return OPAL_SUCCESS;
 }
 
@@ -126,6 +126,6 @@ static int external_component_query(mca_base_module_t **module, int *priority)
         /* we could be a server, so we still need to be considered */
         *priority = 5;
     }
-    *module = (mca_base_module_t *)&opal_pmix_pmix3x_module;
+    *module = (mca_base_module_t *)&opal_pmix_ext3x_module;
     return OPAL_SUCCESS;
 }

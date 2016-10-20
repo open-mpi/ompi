@@ -44,11 +44,11 @@ typedef struct {
   opal_list_t default_events;
   int cache_size;
   opal_list_t cache;
-} mca_pmix_pmix3x_component_t;
+} mca_pmix_ext3x_component_t;
 
-OPAL_DECLSPEC extern mca_pmix_pmix3x_component_t mca_pmix_pmix3x_component;
+OPAL_DECLSPEC extern mca_pmix_ext3x_component_t mca_pmix_ext3x_component;
 
-OPAL_DECLSPEC extern const opal_pmix_base_module_t opal_pmix_pmix3x_module;
+OPAL_DECLSPEC extern const opal_pmix_base_module_t opal_pmix_ext3x_module;
 
 /****  INTERNAL OBJECTS  ****/
 typedef struct {

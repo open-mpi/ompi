@@ -67,7 +67,7 @@ static void pmix3x_query(opal_list_t *queries,
 static void pmix3x_log(opal_list_t *info,
                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
+const opal_pmix_base_module_t opal_pmix_ext3x_module = {
     /* client APIs */
     .init = pmix3x_client_init,
     .finalize = pmix3x_client_finalize,
@@ -121,7 +121,7 @@ static const char *pmix3x_get_nspace(opal_jobid_t jobid)
 {
     opal_pmix3x_jobid_trkr_t *jptr;
 
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             return jptr->nspace;
         }
@@ -134,7 +134,7 @@ static void pmix3x_register_jobid(opal_jobid_t jobid, const char *nspace)
     opal_pmix3x_jobid_trkr_t *jptr;
 
     /* if we don't already have it, add this to our jobid tracker */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             return;
         }
@@ -142,7 +142,7 @@ static void pmix3x_register_jobid(opal_jobid_t jobid, const char *nspace)
     jptr = OBJ_NEW(opal_pmix3x_jobid_trkr_t);
     (void)strncpy(jptr->nspace, nspace, PMIX_MAX_NSLEN);
     jptr->jobid = jobid;
-    opal_list_append(&mca_pmix_pmix3x_component.jobids, &jptr->super);
+    opal_list_append(&mca_pmix_ext3x_component.jobids, &jptr->super);
 }
 
 static void completion_handler(int status, void *cbdata)
@@ -181,7 +181,7 @@ static void progress_local_event_hdlr(int status,
     if (NULL != chain->sing) {
         /* the last handler was for a single code - see if there are
          * any others that match this event */
-        while (opal_list_get_end(&mca_pmix_pmix3x_component.single_events) != (nxt = opal_list_get_next(&chain->sing->super))) {
+        while (opal_list_get_end(&mca_pmix_ext3x_component.single_events) != (nxt = opal_list_get_next(&chain->sing->super))) {
             sing = (opal_pmix3x_single_event_t*)nxt;
             if (sing->code == chain->status) {
                 OBJ_RETAIN(chain);
@@ -199,14 +199,14 @@ static void progress_local_event_hdlr(int status,
          * events that match */
         chain->sing = NULL;
         /* pickup the beginning of the multi-code event list */
-        if (0 < opal_list_get_size(&mca_pmix_pmix3x_component.multi_events)) {
-            chain->multi = (opal_pmix3x_multi_event_t*)opal_list_get_begin(&mca_pmix_pmix3x_component.multi_events);
+        if (0 < opal_list_get_size(&mca_pmix_ext3x_component.multi_events)) {
+            chain->multi = (opal_pmix3x_multi_event_t*)opal_list_get_begin(&mca_pmix_ext3x_component.multi_events);
         }
     }
 
     /* see if we need to continue with the multi code events */
     if (NULL != chain->multi) {
-        while (opal_list_get_end(&mca_pmix_pmix3x_component.multi_events) != (nxt = opal_list_get_next(&chain->multi->super))) {
+        while (opal_list_get_end(&mca_pmix_ext3x_component.multi_events) != (nxt = opal_list_get_next(&chain->multi->super))) {
             multi = (opal_pmix3x_multi_event_t*)nxt;
             for (n=0; n < multi->ncodes; n++) {
                 if (multi->codes[n] == chain->status) {
@@ -228,8 +228,8 @@ static void progress_local_event_hdlr(int status,
          * events that match */
         chain->multi = NULL;
         /* pickup the beginning of the default event list */
-        if (0 < opal_list_get_size(&mca_pmix_pmix3x_component.default_events)) {
-            chain->def = (opal_pmix3x_default_event_t*)opal_list_get_begin(&mca_pmix_pmix3x_component.default_events);
+        if (0 < opal_list_get_size(&mca_pmix_ext3x_component.default_events)) {
+            chain->def = (opal_pmix3x_default_event_t*)opal_list_get_begin(&mca_pmix_ext3x_component.default_events);
         }
     }
 
@@ -239,7 +239,7 @@ static void progress_local_event_hdlr(int status,
     }
 
     if (NULL != chain->def) {
-        if (opal_list_get_end(&mca_pmix_pmix3x_component.default_events) != (nxt = opal_list_get_next(&chain->def->super))) {
+        if (opal_list_get_end(&mca_pmix_ext3x_component.default_events) != (nxt = opal_list_get_next(&chain->def->super))) {
             def = (opal_pmix3x_default_event_t*)nxt;
             OBJ_RETAIN(chain);
             chain->def = def;
@@ -290,7 +290,7 @@ static void _event_hdlr(int sd, short args, void *cbdata)
     chain->nondefault = cd->nondefault;
 
     /* cycle thru the single-event registrations first */
-    OPAL_LIST_FOREACH(sing, &mca_pmix_pmix3x_component.single_events, opal_pmix3x_single_event_t) {
+    OPAL_LIST_FOREACH(sing, &mca_pmix_ext3x_component.single_events, opal_pmix3x_single_event_t) {
         if (sing->code == chain->status) {
             /* found it - invoke the handler, pointing its
              * callback function to our progression function */
@@ -308,7 +308,7 @@ static void _event_hdlr(int sd, short args, void *cbdata)
 
     /* if we didn't find any match in the single-event registrations,
      * then cycle thru the multi-event registrations next */
-    OPAL_LIST_FOREACH(multi, &mca_pmix_pmix3x_component.multi_events, opal_pmix3x_multi_event_t) {
+    OPAL_LIST_FOREACH(multi, &mca_pmix_ext3x_component.multi_events, opal_pmix3x_multi_event_t) {
         for (n=0; n < multi->ncodes; n++) {
             if (multi->codes[n] == chain->status) {
                 /* found it - invoke the handler, pointing its
@@ -330,7 +330,7 @@ static void _event_hdlr(int sd, short args, void *cbdata)
     if (chain->nondefault) {
         /* if we get here, then we need to cache this event in case they
          * register for it later - we cannot lose individual events */
-        opal_list_append(&mca_pmix_pmix3x_component.cache, &chain->super);
+        opal_list_append(&mca_pmix_ext3x_component.cache, &chain->super);
         return;
     }
 
@@ -338,8 +338,8 @@ static void _event_hdlr(int sd, short args, void *cbdata)
     OBJ_RELEASE(cd);
 
     /* finally, pass it to any default handlers */
-    if (0 < opal_list_get_size(&mca_pmix_pmix3x_component.default_events)) {
-        def = (opal_pmix3x_default_event_t*)opal_list_get_first(&mca_pmix_pmix3x_component.default_events);
+    if (0 < opal_list_get_size(&mca_pmix_ext3x_component.default_events)) {
+        def = (opal_pmix3x_default_event_t*)opal_list_get_first(&mca_pmix_ext3x_component.default_events);
         OBJ_RETAIN(chain);
         chain->def = def;
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
@@ -1045,35 +1045,35 @@ static void _reg_hdlr(int sd, short args, void *cbdata)
         /* this is a default handler */
         def = OBJ_NEW(opal_pmix3x_default_event_t);
         def->handler = cd->evhandler;
-        def->index = mca_pmix_pmix3x_component.evindex;
+        def->index = mca_pmix_ext3x_component.evindex;
         if (prepend) {
              opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s PREPENDING TO DEFAULT EVENTS",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-            opal_list_prepend(&mca_pmix_pmix3x_component.default_events, &def->super);
+            opal_list_prepend(&mca_pmix_ext3x_component.default_events, &def->super);
         } else {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s APPENDING TO DEFAULT EVENTS",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-            opal_list_append(&mca_pmix_pmix3x_component.default_events, &def->super);
+            opal_list_append(&mca_pmix_ext3x_component.default_events, &def->super);
         }
     } else if (1 == opal_list_get_size(cd->event_codes)) {
         /* single handler */
         sing = OBJ_NEW(opal_pmix3x_single_event_t);
         kv = (opal_value_t*)opal_list_get_first(cd->event_codes);
         sing->code = kv->data.integer;
-        sing->index = mca_pmix_pmix3x_component.evindex;
+        sing->index = mca_pmix_ext3x_component.evindex;
         sing->handler = cd->evhandler;
         if (prepend) {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s PREPENDING TO SINGLE EVENTS WITH CODE %d",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), sing->code);
-            opal_list_prepend(&mca_pmix_pmix3x_component.single_events, &sing->super);
+            opal_list_prepend(&mca_pmix_ext3x_component.single_events, &sing->super);
         } else {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s APPENDING TO SINGLE EVENTS WITH CODE %d",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), sing->code);
-            opal_list_append(&mca_pmix_pmix3x_component.single_events, &sing->super);
+            opal_list_append(&mca_pmix_ext3x_component.single_events, &sing->super);
         }
     } else {
         multi = OBJ_NEW(opal_pmix3x_multi_event_t);
@@ -1084,35 +1084,35 @@ static void _reg_hdlr(int sd, short args, void *cbdata)
             multi->codes[i] = kv->data.integer;
             ++i;
         }
-        multi->index = mca_pmix_pmix3x_component.evindex;
+        multi->index = mca_pmix_ext3x_component.evindex;
         multi->handler = cd->evhandler;
         if (prepend) {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s PREPENDING TO MULTI EVENTS",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-            opal_list_prepend(&mca_pmix_pmix3x_component.multi_events, &multi->super);
+            opal_list_prepend(&mca_pmix_ext3x_component.multi_events, &multi->super);
         } else {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s APPENDING TO MULTI EVENTS",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-            opal_list_append(&mca_pmix_pmix3x_component.multi_events, &multi->super);
+            opal_list_append(&mca_pmix_ext3x_component.multi_events, &multi->super);
         }
     }
 
     /* release the caller */
     if (NULL != cd->cbfunc) {
-        cd->cbfunc(OPAL_SUCCESS, mca_pmix_pmix3x_component.evindex, cd->cbdata);
+        cd->cbfunc(OPAL_SUCCESS, mca_pmix_ext3x_component.evindex, cd->cbdata);
     }
-    mca_pmix_pmix3x_component.evindex++;
+    mca_pmix_ext3x_component.evindex++;
 
     /* check if any matching notifications have been cached - only nondefault
      * events will have been cached*/
     if (NULL == def) {
         /* check single code registrations */
         if (NULL != sing) {
-            OPAL_LIST_FOREACH(chain, &mca_pmix_pmix3x_component.cache, opal_pmix3x_event_chain_t) {
+            OPAL_LIST_FOREACH(chain, &mca_pmix_ext3x_component.cache, opal_pmix3x_event_chain_t) {
                 if (sing->code == chain->status) {
-                    opal_list_remove_item(&mca_pmix_pmix3x_component.cache, &chain->super);
+                    opal_list_remove_item(&mca_pmix_ext3x_component.cache, &chain->super);
                     chain->sing = sing;
                     sing->handler(chain->status, &chain->source,
                                   chain->info, &chain->results,
@@ -1123,10 +1123,10 @@ static void _reg_hdlr(int sd, short args, void *cbdata)
             }
         } else if (NULL != multi) {
             /* check for multi code registrations */
-            OPAL_LIST_FOREACH(chain, &mca_pmix_pmix3x_component.cache, opal_pmix3x_event_chain_t) {
+            OPAL_LIST_FOREACH(chain, &mca_pmix_ext3x_component.cache, opal_pmix3x_event_chain_t) {
                 for (n=0; n < multi->ncodes; n++) {
                     if (multi->codes[n] == chain->status) {
-                        opal_list_remove_item(&mca_pmix_pmix3x_component.cache, &chain->super);
+                        opal_list_remove_item(&mca_pmix_ext3x_component.cache, &chain->super);
                         chain->multi = multi;
                         multi->handler(chain->status, &chain->source,
                                       chain->info, &chain->results,
@@ -1163,25 +1163,25 @@ static void _dereg_hdlr(int sd, short args, void *cbdata)
     opal_pmix3x_default_event_t *def;
 
     /* check the single events first */
-    OPAL_LIST_FOREACH(sing, &mca_pmix_pmix3x_component.single_events, opal_pmix3x_single_event_t) {
+    OPAL_LIST_FOREACH(sing, &mca_pmix_ext3x_component.single_events, opal_pmix3x_single_event_t) {
         if (cd->handler == sing->index) {
-            opal_list_remove_item(&mca_pmix_pmix3x_component.single_events, &sing->super);
+            opal_list_remove_item(&mca_pmix_ext3x_component.single_events, &sing->super);
             OBJ_RELEASE(sing);
             goto release;
         }
     }
     /* check multi events */
-    OPAL_LIST_FOREACH(multi, &mca_pmix_pmix3x_component.multi_events, opal_pmix3x_multi_event_t) {
+    OPAL_LIST_FOREACH(multi, &mca_pmix_ext3x_component.multi_events, opal_pmix3x_multi_event_t) {
         if (cd->handler == multi->index) {
-            opal_list_remove_item(&mca_pmix_pmix3x_component.multi_events, &multi->super);
+            opal_list_remove_item(&mca_pmix_ext3x_component.multi_events, &multi->super);
             OBJ_RELEASE(multi);
             goto release;
         }
     }
     /* check default events */
-    OPAL_LIST_FOREACH(def, &mca_pmix_pmix3x_component.default_events, opal_pmix3x_default_event_t) {
+    OPAL_LIST_FOREACH(def, &mca_pmix_ext3x_component.default_events, opal_pmix3x_default_event_t) {
         if (cd->handler == def->index) {
-            opal_list_remove_item(&mca_pmix_pmix3x_component.default_events, &def->super);
+            opal_list_remove_item(&mca_pmix_ext3x_component.default_events, &def->super);
             OBJ_RELEASE(def);
             break;
         }
@@ -1214,7 +1214,7 @@ static void _notify_event(int sd, short args, void *cbdata)
     opal_pmix3x_event_chain_t *chain;
 
     /* check the single events first */
-    OPAL_LIST_FOREACH(sing, &mca_pmix_pmix3x_component.single_events, opal_pmix3x_single_event_t) {
+    OPAL_LIST_FOREACH(sing, &mca_pmix_ext3x_component.single_events, opal_pmix3x_single_event_t) {
         if (cd->status == sing->code) {
             /* found it - invoke the handler, pointing its
              * callback function to our progression function */
@@ -1237,7 +1237,7 @@ static void _notify_event(int sd, short args, void *cbdata)
         }
     }
     /* check multi events */
-    OPAL_LIST_FOREACH(multi, &mca_pmix_pmix3x_component.multi_events, opal_pmix3x_multi_event_t) {
+    OPAL_LIST_FOREACH(multi, &mca_pmix_ext3x_component.multi_events, opal_pmix3x_multi_event_t) {
         for (i=0; i < multi->ncodes; i++) {
             if (cd->status == multi->codes[i]) {
                 /* found it - invoke the handler, pointing its
@@ -1262,8 +1262,8 @@ static void _notify_event(int sd, short args, void *cbdata)
         }
     }
     /* check default events */
-    if (0 < opal_list_get_size(&mca_pmix_pmix3x_component.default_events)) {
-        def = (opal_pmix3x_default_event_t*)opal_list_get_first(&mca_pmix_pmix3x_component.default_events);
+    if (0 < opal_list_get_size(&mca_pmix_ext3x_component.default_events)) {
+        def = (opal_pmix3x_default_event_t*)opal_list_get_first(&mca_pmix_ext3x_component.default_events);
         chain = OBJ_NEW(opal_pmix3x_event_chain_t);
         chain->status = cd->status;
         chain->range = pmix3x_convert_opalrange(cd->range);
