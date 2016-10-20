@@ -107,7 +107,7 @@ int pmix3x_server_init(opal_pmix_server_module_t *module,
     job = OBJ_NEW(opal_pmix3x_jobid_trkr_t);
     (void)opal_snprintf_jobid(job->nspace, PMIX_MAX_NSLEN, OPAL_PROC_MY_NAME.jobid);
     job->jobid = OPAL_PROC_MY_NAME.jobid;
-    opal_list_append(&mca_pmix_pmix3x_component.jobids, &job->super);
+    opal_list_append(&mca_pmix_ext3x_component.jobids, &job->super);
 
     if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, pinfo, sz))) {
         PMIX_INFO_FREE(pinfo, sz);
@@ -200,7 +200,7 @@ static void _reg_nspace(int sd, short args, void *cbdata)
     job = OBJ_NEW(opal_pmix3x_jobid_trkr_t);
     (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
     job->jobid = cd->jobid;
-    opal_list_append(&mca_pmix_pmix3x_component.jobids, &job->super);
+    opal_list_append(&mca_pmix_ext3x_component.jobids, &job->super);
 
     /* convert the list to an array of pmix_info_t */
     if (NULL != cd->info) {
@@ -305,7 +305,7 @@ static void _dereg_nspace(int sd, short args, void *cbdata)
     opal_pmix3x_jobid_trkr_t *jptr;
 
     /* if we don't already have it, we can ignore this */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
         if (jptr->jobid == cd->jobid) {
             /* found it - tell the server to deregister */
             cd->active = true;
@@ -313,7 +313,7 @@ static void _dereg_nspace(int sd, short args, void *cbdata)
             PMIX_WAIT_FOR_COMPLETION(cd->active);
             OBJ_RELEASE(cd);
             /* now get rid of it from our list */
-            opal_list_remove_item(&mca_pmix_pmix3x_component.jobids, &jptr->super);
+            opal_list_remove_item(&mca_pmix_ext3x_component.jobids, &jptr->super);
             OBJ_RELEASE(jptr);
             return;
         }
@@ -376,7 +376,7 @@ static void _dereg_client(int sd, short args, void *cbdata)
     pmix_proc_t p;
 
     /* if we don't already have it, we can ignore this */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
         if (jptr->jobid == cd->source->jobid) {
             /* found it - tell the server to deregister */
             (void)strncpy(p.nspace, jptr->nspace, PMIX_MAX_NSLEN);
