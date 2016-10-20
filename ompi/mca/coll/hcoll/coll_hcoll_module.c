@@ -399,8 +399,11 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     hcoll_module->super.coll_gather = /*hcoll_collectives.coll_gather ? mca_coll_hcoll_gather :*/ NULL;
     hcoll_module->super.coll_igatherv = hcoll_collectives.coll_igatherv ? mca_coll_hcoll_igatherv : NULL;
     hcoll_module->super.coll_ialltoall = /*hcoll_collectives.coll_ialltoall ? mca_coll_hcoll_ialltoall : */ NULL;
-    hcoll_module->super.coll_ialltoallv = /*hcoll_collectives.coll_ialltoallv ? mca_coll_hcoll_ialltoallv : */ NULL;
-
+#if HCOLL_API >= HCOLL_VERSION(3,7)
+    hcoll_module->super.coll_ialltoallv = hcoll_collectives.coll_ialltoallv ? mca_coll_hcoll_ialltoallv : NULL;
+#else
+    hcoll_module->super.coll_ialltoallv = NULL;
+#endif
     *priority = cm->hcoll_priority;
     module = &hcoll_module->super;
 
