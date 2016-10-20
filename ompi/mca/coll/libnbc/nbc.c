@@ -325,7 +325,7 @@ int NBC_Progress(NBC_Handle *handle) {
 #endif
     res = ompi_request_test_all(handle->req_count, handle->req_array, &flag, MPI_STATUSES_IGNORE);
     if(res != OMPI_SUCCESS) {
-      NBC_Error ("MPI Error in MPI_Testall() (%i)", res);
+      NBC_Error ("MPI Error in MPI_Testall() (%i): %s", res, opal_strerror(res));
       return res;
     }
 #ifdef NBC_TIMING
@@ -370,7 +370,7 @@ int NBC_Progress(NBC_Handle *handle) {
     /* kick it off */
     res = NBC_Start_round(handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      NBC_Error ("Error in NBC_Start_round() (%i)", res);
+      NBC_Error ("Error in NBC_Start_round() (%i): %s", res, opal_strerror(res));
       return res;
     }
   }
@@ -429,8 +429,10 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
                                  MCA_PML_BASE_SEND_STANDARD, sendargs.local?handle->comm->c_local_comm:handle->comm,
                                  handle->req_array+handle->req_count - 1));
         if (OMPI_SUCCESS != res) {
-          NBC_Error ("Error in MPI_Isend(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, sendargs.count,
-                     sendargs.datatype, sendargs.dest, handle->tag, (unsigned long)handle->comm, res);
+          NBC_Error ("Error in MPI_Isend(%lu, %i, %p, %i, %i, %lu) (%i): %s",
+                     (unsigned long)buf1, sendargs.count,
+                     sendargs.datatype, sendargs.dest, handle->tag,
+                     (unsigned long)handle->comm, res, opal_strerror(res));
           return res;
         }
 #ifdef NBC_TIMING
@@ -463,8 +465,10 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         res = MCA_PML_CALL(irecv(buf1, recvargs.count, recvargs.datatype, recvargs.source, handle->tag, recvargs.local?handle->comm->c_local_comm:handle->comm,
                                  handle->req_array+handle->req_count-1));
         if (OMPI_SUCCESS != res) {
-          NBC_Error("Error in MPI_Irecv(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, recvargs.count,
-                    recvargs.datatype, recvargs.source, handle->tag, (unsigned long)handle->comm, res);
+          NBC_Error("Error in MPI_Irecv(%lu, %i, %p, %i, %i, %lu) (%i): %s",
+                    (unsigned long)buf1, recvargs.count,
+                    recvargs.datatype, recvargs.source, handle->tag,
+                    (unsigned long)handle->comm, res, opal_strerror(res));
           return res;
         }
 #ifdef NBC_TIMING
@@ -530,7 +534,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         }
         res = NBC_Unpack (buf1, unpackargs.count, unpackargs.datatype, buf2, handle->comm);
         if (OMPI_SUCCESS != res) {
-          NBC_Error ("NBC_Unpack() failed (code: %i)", res);
+          NBC_Error ("NBC_Unpack() failed (code: %i): %s", res, opal_strerror(res));
           return res;
         }
 

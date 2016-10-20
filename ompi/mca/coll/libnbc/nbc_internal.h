@@ -549,7 +549,7 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
     res = ompi_datatype_get_extent (srctype, &lb, &ext);
-    if (OMPI_SUCCESS != res) {
+    if (MPI_SUCCESS != res) {
       NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
       return res;
     }
