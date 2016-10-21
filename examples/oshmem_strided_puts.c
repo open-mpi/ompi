@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -27,16 +27,14 @@
 #include <stdio.h>
 #include <shmem.h>
 
-#warning This application uses deprecated API see http://www.open-mpi.org/
-
 int main(void)
 {
     short source[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     static short target[10];
     int me;
 
-    start_pes(0);
-    me = _my_pe();
+    shmem_init();
+    me = shmem_my_pe();
 
     if (me == 0) {
         /* put 10 words into target on PE 1 */
@@ -51,6 +49,7 @@ int main(void)
         target[3], target[4] );
     }
     shmem_barrier_all(); /* sync before exiting */
+    shmem_finalize();
 
     return 0;
 }
