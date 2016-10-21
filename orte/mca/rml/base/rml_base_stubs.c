@@ -74,11 +74,8 @@ orte_rml_conduit_t orte_rml_API_open_conduit(opal_list_t *attributes)
                                     "%s rml:base:open_conduit Component %s provided a conduit",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     active->component->base.mca_component_name);
-                /* retain this answer */
-                if (NULL != ourmod) {
-                    free(ourmod);
-                }
                 ourmod = mod;
+                break;
             }
         }
     }
@@ -140,6 +137,9 @@ char* orte_rml_API_get_contact_info(void)
     } else {
         tmp = NULL;
     }
+    opal_output_verbose(10,orte_rml_base_framework.framework_output,
+                         "%s rml:base:get_contact_info() returning -> %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),tmp);
     return tmp;
 }
 
