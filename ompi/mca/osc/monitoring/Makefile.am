@@ -9,13 +9,14 @@
 
 monitoring_sources  = \
 	osc_monitoring.h \
-	osc_monitoring_comm.c \
+	osc_monitoring_comm.h \
 	osc_monitoring_component.c \
-	osc_monitoring_accumulate.c \
-	osc_monitoring_passive_target.c \
-	osc_monitoring_active_target.c \
-	osc_monitoring_dynamic.c \
-	osc_monitoring_module.c
+	osc_monitoring_accumulate.h \
+	osc_monitoring_passive_target.h \
+	osc_monitoring_active_target.h \
+	osc_monitoring_dynamic.h \
+	osc_monitoring_module.h \
+	osc_monitoring_template.h
 
 if MCA_BUILD_ompi_osc_monitoring_DSO
 component_noinst =

@@ -10,48 +10,36 @@
 #include <ompi_config.h>
 #include <osc_monitoring.h>
 #include <ompi/constants.h>
+#include <ompi/communicator/communicator.h>
+#include <ompi/datatype/ompi_datatype.h>
+#include <ompi/info/info.h>
+#include <ompi/win/win.h>
+#include <ompi/op/op.h>
+#include <ompi/mca/osc/osc.h>
 #include <ompi/mca/osc/base/base.h>
 #include <opal/mca/base/mca_base_component_repository.h>
 
+/* Include template generating macro's */
+#include <osc_monitoring_template.h>
+
+#include <ompi/mca/osc/rdma/osc_rdma.h>
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(rdma);
+#undef GET_MODULE
+
+#include <ompi/mca/osc/sm/osc_sm.h>
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(sm);
+#undef GET_MODULE
+
+/* #include <ompi/mca/osc/portals4/osc_portals4.h> */
+/* OSC_MONITORING_MODULE_TEMPLATE_GENERATE(portals4); */
+/* #undef GET_MODULE */
+
+#include <ompi/mca/osc/pt2pt/osc_pt2pt.h>
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(pt2pt);
+#undef GET_MODULE
+
 int mca_osc_monitoring_enabled = 0;
 int mca_osc_monitoring_active = 0;
-
-ompi_osc_base_module_t mca_osc_monitoring_template = {
-    .osc_win_attach = ompi_osc_monitoring_attach,
-    .osc_win_detach  = ompi_osc_monitoring_detach,
-    .osc_free = ompi_osc_monitoring_free,
-
-    .osc_put = ompi_osc_monitoring_put,
-    .osc_get = ompi_osc_monitoring_get,
-    .osc_accumulate = ompi_osc_monitoring_accumulate,
-    .osc_compare_and_swap = ompi_osc_monitoring_compare_and_swap,
-    .osc_fetch_and_op = ompi_osc_monitoring_fetch_and_op,
-    .osc_get_accumulate = ompi_osc_monitoring_get_accumulate,
-
-    .osc_rput = ompi_osc_monitoring_rput,
-    .osc_rget = ompi_osc_monitoring_rget,
-    .osc_raccumulate = ompi_osc_monitoring_raccumulate,
-    .osc_rget_accumulate = ompi_osc_monitoring_rget_accumulate,
-
-    .osc_fence = ompi_osc_monitoring_fence,
-
-    .osc_start = ompi_osc_monitoring_start,
-    .osc_complete = ompi_osc_monitoring_complete,
-    .osc_post = ompi_osc_monitoring_post,
-    .osc_wait = ompi_osc_monitoring_wait,
-    .osc_test = ompi_osc_monitoring_test,
-
-    .osc_lock = ompi_osc_monitoring_lock,
-    .osc_unlock = ompi_osc_monitoring_unlock,
-    .osc_lock_all = ompi_osc_monitoring_lock_all,
-    .osc_unlock_all = ompi_osc_monitoring_unlock_all,
-
-    .osc_sync = ompi_osc_monitoring_sync,
-    .osc_flush = ompi_osc_monitoring_flush,
-    .osc_flush_all = ompi_osc_monitoring_flush_all,
-    .osc_flush_local = ompi_osc_monitoring_flush_local,
-    .osc_flush_local_all = ompi_osc_monitoring_flush_local_all,
-};
 
 static int mca_osc_monitoring_component_open(void)
 {
@@ -173,29 +161,23 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
     opal_output(0, "Chosen one: %s", best_component->osc_version.mca_component_name);
     ret = best_component->osc_select(win, base, size, disp_unit, comm, info, flavor, model);
     if( OMPI_SUCCESS == ret ) {
-        /* Initialize the proper union field, based on selected component */
-        size_t size_of_module;
-        if( 0 == strcmp("rdma", best_component->osc_version.mca_component_name) )
-            size_of_module = sizeof(ompi_osc_rdma_module_t);
-        else if( 0 == strcmp("sm", best_component->osc_version.mca_component_name) )
-            size_of_module = sizeof(ompi_osc_sm_module_t);
-        /* else if( 0 == strcmp("portals4", best_component->osc_version.mca_component_name) ) */
-        /*     size_of_module = sizeof(ompi_osc_portals4_module_t); */
-        else if( 0 == strcmp("pt2pt", best_component->osc_version.mca_component_name) )
-            size_of_module = sizeof(ompi_osc_pt2pt_module_t);
-        else {
-            opal_output(0, "Monitoring impossible: no field for this component (%s)", best_component->osc_version.mca_component_name);
+        /* Intercept module functions with ours, based on selected component */
+        if( 0 == strcmp("rdma", best_component->osc_version.mca_component_name) ) {
+            memcpy(&ompi_osc_monitoring_module_rdma_template, win->w_osc_module, sizeof(ompi_osc_base_module_t));
+            memcpy(win->w_osc_module, &mca_osc_monitoring_rdma_template, sizeof(ompi_osc_base_module_t));
+        } else if( 0 == strcmp("sm", best_component->osc_version.mca_component_name) ) {
+            memcpy(&ompi_osc_monitoring_module_sm_template, win->w_osc_module, sizeof(ompi_osc_base_module_t));
+            memcpy(win->w_osc_module, &mca_osc_monitoring_sm_template, sizeof(ompi_osc_base_module_t));
+        /* } else if( 0 == strcmp("portals4", best_component->osc_version.mca_component_name) ) { */
+        /*     memcpy(&ompi_osc_monitoring_module_portals4_template, win->w_osc_module, sizeof(ompi_osc_base_module_t)); */
+        /*     memcpy(win->w_osc_module, &mca_osc_monitoring__portals4_template, sizeof(ompi_osc_base_module_t)); */
+        } else if( 0 == strcmp("pt2pt", best_component->osc_version.mca_component_name) ) {
+            memcpy(&ompi_osc_monitoring_module_pt2pt_template, win->w_osc_module, sizeof(ompi_osc_base_module_t));
+            memcpy(win->w_osc_module, &mca_osc_monitoring_pt2pt_template, sizeof(ompi_osc_base_module_t));
+        } else {
+            OSC_MONITORING_VERBOSE(MCA_BASE_VERBOSE_INFO, "Monitoring disabled: no module for this component (%s)", best_component->osc_version.mca_component_name);
             return ret;
         }
-        /* Intercept module to add our own between */
-        ompi_osc_monitoring_module_t*module = (ompi_osc_monitoring_module_t*) calloc(1, sizeof(ompi_osc_monitoring_module_t));
-        memcpy(&module->osc_selected_module_real, win->w_osc_module, size_of_module);
-        /* Save selected module function pointers */
-        memcpy(&module->osc_selected_module, &module->osc_selected_module_real, sizeof(ompi_osc_base_module_t));
-        /* Replace base structure function pointers with ours */
-        memcpy(&module->osc_selected_module_real, &mca_osc_monitoring_template, sizeof(ompi_osc_base_module_t));
-        /* Replace module with ours, modify to correspond to the original one */
-        win->w_osc_module = (ompi_osc_base_module_t*)module;
     }
     return ret;
 }
@@ -225,3 +207,4 @@ ompi_osc_monitoring_component_t mca_osc_monitoring_component = {
     },
     .priority = INT_MAX
 };
+
