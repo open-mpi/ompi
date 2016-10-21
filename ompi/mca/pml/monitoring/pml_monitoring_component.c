@@ -272,8 +272,10 @@ static int mca_pml_monitoring_component_register(void)
                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_output_enabled);
     
     mca_pml_monitoring_current_state = mca_pml_monitoring_enabled;
+
     if( NULL == mca_pml_monitoring_current_filename )
 	mca_pml_monitoring_current_filename = malloc(sizeof(char*));
+
     (void)mca_base_var_register("ompi", "pml", "monitoring", "filename",
                                 /*&mca_pml_monitoring_component.pmlm_version, "filename",*/
                                 "The name of the file where the monitoring information should be saved (the filename will be extended with the process rank and the \".prof\" extension). If this field is NULL the monitoring will not be saved.", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
