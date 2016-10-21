@@ -187,11 +187,15 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
         else if( 0 == strcmp("pt2pt", best_component->osc_version.mca_component_name) )
             size_of_module = sizeof(ompi_osc_pt2pt_module_t);
         else {
-            opal_output(0, "Monitoring impossible: no field for this component (%s)", best_component->osc_version.mca_component_name);
+            OSC_MONITORING_VERBOSE(MCA_BASE_VERBOSE_INFO, "Monitoring disabled: no module for this component (%s)", best_component->osc_version.mca_component_name);
             return ret;
         }
         /* Intercept module to add our own between */
         ompi_osc_monitoring_module_t*module = (ompi_osc_monitoring_module_t*) calloc(1, sizeof(ompi_osc_monitoring_module_t));
+        if( NULL == module ) {
+            OSC_MONITORING_VERBOSE(MCA_BASE_VERBOSE_INFO, "Monitoring disabled: out of ressources.", best_component->osc_version.mca_component_name);
+            return ret;
+        }
         memcpy(&module->osc_selected_module_real, win->w_osc_module, size_of_module);
         /* Save selected module function pointers */
         memcpy(&module->osc_selected_module, &module->osc_selected_module_real, sizeof(ompi_osc_base_module_t));

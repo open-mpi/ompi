@@ -51,6 +51,7 @@ struct ompi_osc_monitoring_module_t {
 typedef struct ompi_osc_monitoring_module_t ompi_osc_monitoring_module_t;
 
 #define GET_MODULE(win) &((ompi_osc_monitoring_module_t*) win->w_osc_module)
+#define OSC_MONITORING_VERBOSE(x, ...) OPAL_OUTPUT_VERBOSE((x, ompi_osc_base_framework.framework_output, __VA_ARGS__))
 
 /*
  * OSC interface functions.
