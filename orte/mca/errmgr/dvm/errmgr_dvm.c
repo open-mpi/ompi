@@ -331,6 +331,10 @@ static void proc_errors(int fd, short args, void *cbdata)
         }
         /* mark the daemon as gone */
         ORTE_FLAG_UNSET(pptr, ORTE_PROC_FLAG_ALIVE);
+        /* update the state */
+        pptr->state = state;
+        /* adjust our num_procs */
+        --orte_process_info.num_procs;
         /* if we have ordered orteds to terminate or abort
          * is in progress, record it */
         if (orte_orteds_term_ordered || orte_abnormal_term_ordered) {
