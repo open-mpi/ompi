@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All 
+ *                         rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -98,7 +100,7 @@ int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendt
         res = NBC_Sched_recv(rbuf, false, recvcount, recvtype, r, schedule);
         if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
         /* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
-        res = NBC_Sched_send(sbuf, false, sendcount, sendtype, r, schedule);
+        res = NBC_Sched_send(sbuf, false, recvcount, recvtype, r, schedule);
         if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
       }
     }

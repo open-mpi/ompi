@@ -10,6 +10,8 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  */
 #include "nbc_internal.h"
@@ -77,7 +79,8 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
     
     res = NBC_Sched_recv(rbuf, false, recvcounts[rpeer], recvtype, rpeer, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-    res = NBC_Sched_send(sbuf, false, sendcount, sendtype, speer, schedule);
+    /* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
+    res = NBC_Sched_send(sbuf, false, recvcounts[rank], recvtype, speer, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
   }
 
