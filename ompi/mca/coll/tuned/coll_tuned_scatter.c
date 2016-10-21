@@ -13,6 +13,8 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,16 +77,16 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, tuned_module, root );
     bmtree = data->cached_in_order_bmtree;
 
-    ompi_datatype_type_extent(sdtype, &sextent);
     ompi_datatype_type_extent(rdtype, &rextent);
 
-    ssize = opal_datatype_span(&sdtype->super, scount * size, &sgap);
-    rsize = opal_datatype_span(&rdtype->super, rcount * size, &rgap);
+    rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
 
     vrank = (rank - root + size) % size;
     ptmp = (char *) rbuf;  /* by default suppose leaf nodes, just use rbuf */
 
     if (rank == root) {
+        ompi_datatype_type_extent(sdtype, &sextent);
+        ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
         if (0 == root) {
             /* root on 0, just use the send buffer */
             ptmp = (char *) sbuf;
