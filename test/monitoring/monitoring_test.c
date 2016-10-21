@@ -291,7 +291,7 @@ int main(int argc, char* argv[])
             printf("Error on checking exchanged values\n");
             MPI_Abort(MPI_COMM_WORLD, -1);
         }
-   
+
     MPI_Group world_group, newcomm_group, distant_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
     MPI_Comm_group(newcomm, &newcomm_group);

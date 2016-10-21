@@ -86,7 +86,7 @@ do
 -- set file output
 .output $tmpdir/${op}.dat
 -- do query
-select mon.nbprocs as nbprocs, mon.datasize as datasize, mon.lat/nomon.lat-1
+select mon.nbprocs as nbprocs, mon.datasize as datasize, mon.media/nomon.media-1
 from ${op}_mon mon inner join ${op}_nomon nomon  on (mon.nbprocs==nomon.nbprocs and mon.datasize==nomon.datasize)
 order by nbprocs, datasize;
 EOF
