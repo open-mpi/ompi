@@ -116,10 +116,6 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
                   AC_MSG_WARN([PMIx requires libevent to be compiled with])
                   AC_MSG_WARN([thread support enabled])
                   AC_MSG_ERROR([Cannot continue])])
-    # Chck if this libevent has the symbol
-    # "libevent_global_shutdown", which will only exist in
-    # libevent version 2.1.1+
-    AC_CHECK_FUNCS([libevent_global_shutdown],[], [])
 
     # Set output variables
     PMIX_EVENT_HEADER="<event.h>"

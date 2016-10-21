@@ -571,10 +571,12 @@ static void _getnbfn(int fd, short flags, void *cbdata)
 
     /* otherwise, the data must be something they "put" */
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    if (PMIX_SUCCESS == (rc = pmix_dstore_fetch(nptr->nspace, cb->rank, cb->key, &val))) {
+    rc = pmix_dstore_fetch(nptr->nspace, cb->rank, cb->key, &val);
 #else
-    if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->modex, cb->rank, cb->key, &val))) {
+    rc = pmix_hash_fetch(&nptr->modex, cb->rank, cb->key, &val);
 #endif /* PMIX_ENABLE_DSTORE */
+
+    if ( PMIX_SUCCESS == rc ) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix_get[%d]: value retrieved from dstore", __LINE__);
         /* found it - we are in an event, so we can
@@ -607,6 +609,15 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                             "Unable to locally satisfy request for key=%s for rank = %d, namespace = %s",
                             cb->key, cb->rank, cb->nspace);
         cb->checked = true; // flag that we are going to check this again
+    } else if (PMIX_ERR_PROC_ENTRY_NOT_FOUND != rc) {
+        /* errors are fatal */
+        cb->value_cbfunc(rc, NULL, cb->cbdata);
+        /* protect the data */
+        cb->procs = NULL;
+        cb->key = NULL;
+        cb->info = NULL;
+        PMIX_RELEASE(cb);
+        return;
     }
 
   request:

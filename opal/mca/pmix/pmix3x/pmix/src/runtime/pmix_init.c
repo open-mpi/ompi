@@ -134,12 +134,6 @@ int pmix_rte_init(pmix_proc_type_t type,
         goto return_error;
     }
 
-    /* read any param files that were provided */
-    if (PMIX_SUCCESS != (ret = pmix_mca_base_var_cache_files(false))) {
-        error = "failed to cache files";
-        goto return_error;
-    }
-
     /* register params for pmix */
     if (PMIX_SUCCESS != (ret = pmix_register_params())) {
         error = "pmix_register_params";

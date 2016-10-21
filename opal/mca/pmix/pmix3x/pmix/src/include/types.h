@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -253,9 +253,5 @@ typedef struct event pmix_event_t;
 #define pmix_event_new(b, fd, fg, cb, arg) event_new((b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
 #define pmix_event_loop(b, fg) event_base_loop((b), (fg))
-
-#ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
-#define pmix_libevent_global_shutdown() libevent_global_shutdown()
-#endif
 
 #endif /* PMIX_TYPES_H */
