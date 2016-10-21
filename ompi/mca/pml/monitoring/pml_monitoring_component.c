@@ -309,9 +309,7 @@ mca_pml_base_component_2_0_0_t mca_pml_monitoring_component = {
         MCA_PML_BASE_VERSION_2_0_0,
 
         .mca_component_name = "monitoring", /* MCA component name */
-        .mca_component_major_version = OMPI_MAJOR_VERSION,  /* MCA component major version */
-        .mca_component_minor_version = OMPI_MINOR_VERSION,  /* MCA component minor version */
-        .mca_component_release_version = OMPI_RELEASE_VERSION,  /* MCA component release version */
+        MCA_MONITORING_MAKE_VERSION,
         .mca_open_component = mca_pml_monitoring_component_open,  /* component open */
         .mca_close_component = mca_pml_monitoring_component_close, /* component close */
         .mca_register_component_params = mca_pml_monitoring_component_register
