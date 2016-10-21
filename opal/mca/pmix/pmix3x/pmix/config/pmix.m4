@@ -17,7 +17,7 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
-dnl Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -312,14 +312,14 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     pmix_show_title "Header file tests"
 
     AC_CHECK_HEADERS([arpa/inet.h \
-                      fcntl.h inttypes.h libgen.h \
-                      netinet/in.h \
+                      fcntl.h ifaddrs.h inttypes.h libgen.h \
+                      net/if.h net/uio.h netinet/in.h \
                       stdint.h stddef.h \
                       stdlib.h string.h strings.h \
-                      sys/param.h \
-                      sys/select.h sys/socket.h \
+                      sys/ioctl.h sys/param.h \
+                      sys/select.h sys/socket.h sys/sockio.h \
                       stdarg.h sys/stat.h sys/time.h \
-                      sys/types.h sys/un.h sys/uio.h net/uio.h \
+                      sys/types.h sys/un.h sys/uio.h \
                       sys/wait.h syslog.h \
                       time.h unistd.h dirent.h \
                       crt_externs.h signal.h \

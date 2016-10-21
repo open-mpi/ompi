@@ -49,15 +49,15 @@ static void notification_fn(size_t evhdlr_registration_id,
 static void op_callbk(pmix_status_t status,
                       void *cbdata)
 {
-    fprintf(stderr, "client: OP CALLBACK CALLED WITH STATUS %d", status);
+    fprintf(stderr, "Client %s:%d OP CALLBACK CALLED WITH STATUS %d\n", myproc.nspace, myproc.rank, status);
 }
 
 static void errhandler_reg_callbk(pmix_status_t status,
                                   size_t errhandler_ref,
                                   void *cbdata)
 {
-    fprintf(stderr, "client: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%lu",
-                status, (unsigned long)errhandler_ref);
+    fprintf(stderr, "Client %s:%d ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%lu\n",
+               myproc.nspace, myproc.rank, status, (unsigned long)errhandler_ref);
 }
 
 int main(int argc, char **argv)
@@ -76,7 +76,9 @@ int main(int argc, char **argv)
     fprintf(stderr, "Client ns %s rank %d: Running\n", myproc.nspace, myproc.rank);
 
     /* get our universe size */
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
+    memcpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
+    proc.rank = PMIX_RANK_WILDCARD;
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Get universe size failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }
@@ -100,9 +102,9 @@ int main(int argc, char **argv)
 
     /* rank=0 calls abort */
     if (0 == myproc.rank) {
-        PMIx_Abort(PMIX_ERR_OUT_OF_RESOURCE, "Eat rocks",
-                   &proc, 1);
-        fprintf(stderr, "Client ns %s rank %d: Abort called\n", myproc.nspace, myproc.rank);
+        sleep(2);
+        fprintf(stderr, "Client ns %s rank %d: exiting with error\n", myproc.nspace, myproc.rank);
+        exit(1);
     }
     /* everyone simply waits */
     while (!completed) {

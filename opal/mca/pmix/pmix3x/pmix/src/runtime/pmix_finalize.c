@@ -67,9 +67,6 @@ void pmix_rte_finalize(void)
     if (!pmix_globals.external_evbase) {
         /* stop the progress thread */
         (void)pmix_progress_thread_finalize(NULL);
-        #ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
-            pmix_libevent_global_shutdown();
-        #endif
     }
 
     /* cleanup communications */

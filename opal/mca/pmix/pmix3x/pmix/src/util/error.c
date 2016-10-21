@@ -143,6 +143,8 @@ const char* PMIx_Error_string(pmix_status_t errnum)
         return "PMIX_ERR_FATAL";
     case PMIX_ERR_VALUE_OUT_OF_BOUNDS:
         return "PMIX_ERR_VALUE_OUT_OF_BOUNDS";
+    case PMIX_ERR_NETWORK_NOT_PARSEABLE:
+        return "PMIX_ERR_NETWORK_NOT_PARSEABLE";
     case PMIX_ERR_PERM:
         return "PMIX_ERR_PERM";
     case PMIX_SUCCESS:

@@ -43,9 +43,12 @@ bool pmix_timing_overhead = true;
 #endif
 
 static bool pmix_register_done = false;
+char *pmix_net_private_ipv4 = NULL;
 
 pmix_status_t pmix_register_params(void)
 {
+    int ret;
+
     if (pmix_register_done) {
         return PMIX_SUCCESS;
     }
@@ -79,6 +82,24 @@ pmix_status_t pmix_register_params(void)
                                   PMIX_INFO_LVL_9, PMIX_MCA_BASE_VAR_SCOPE_ALL,
                                   &pmix_timing_overhead);
 #endif
+
+    /* RFC1918 defines
+       - 10.0.0./8
+       - 172.16.0.0/12
+       - 192.168.0.0/16
+
+       RFC3330 also mentions
+       - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
+    */
+    pmix_net_private_ipv4 = "10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16";
+    ret = pmix_mca_base_var_register ("pmix", "pmix", "net", "private_ipv4",
+                                      "Semicolon-delimited list of CIDR notation entries specifying what networks are considered \"private\" (default value based on RFC1918 and RFC3330)",
+                                      PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, PMIX_MCA_BASE_VAR_FLAG_SETTABLE,
+                                      PMIX_INFO_LVL_3, PMIX_MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                      &pmix_net_private_ipv4);
+    if (0 > ret) {
+        return ret;
+    }
 
     return PMIX_SUCCESS;
 }

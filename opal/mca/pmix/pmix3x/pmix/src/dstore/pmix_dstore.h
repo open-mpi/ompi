@@ -25,6 +25,16 @@ BEGIN_C_DECLS
 int pmix_dstore_init(pmix_info_t info[], size_t ninfo);
 void pmix_dstore_finalize(void);
 int pmix_dstore_store(const char *nspace, pmix_rank_t rank, pmix_kval_t *kv);
+
+/*
+ * Return codes:
+ * - PMIX_ERR_BAD_PARAM - bad parameters - can't proceed.
+ * - PMIX_ERR_FATAL - fatal error
+ * - PMIX_ERR_NOT_FOUND - we have the BLOB for the process but the
+ *   requested key wasn't found there
+ * - PMIX_ERR_PROC_ENTRY_NOT_FOUND - the BLOB for the process wasn't
+ *   found - need to request it from the server.
+ */
 int pmix_dstore_fetch(const char *nspace, pmix_rank_t rank,
                       const char *key, pmix_value_t **kvs);
 int pmix_dstore_patch_env(const char *nspace, char ***env);
