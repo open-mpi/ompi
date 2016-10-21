@@ -206,7 +206,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &xfer);
             /* wait for response */
-            OMPI_WAIT_FOR_COMPLETION(xfer.active);
+            OMPI_LAZY_WAIT_FOR_COMPLETION(xfer.active);
             i=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
                 ORTE_ERROR_LOG(rc);
@@ -231,7 +231,9 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &xfer);
             /* wait for response */
-            OMPI_WAIT_FOR_COMPLETION(xfer.active);
+            OMPI_LAZY_WAIT_FOR_COMPLETION(xfer.active);
+            carport.jobid = xfer.name.jobid;
+            carport.vpid = xfer.name.vpid;
             i=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
                 ORTE_ERROR_LOG(rc);
@@ -321,7 +323,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* setup to recv */
             xfer.active = true;
-            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
+            orte_rml.recv_buffer_nb(&carport, tag,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &xfer);
             /* wait for response */
