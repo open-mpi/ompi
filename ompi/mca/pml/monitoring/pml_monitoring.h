@@ -20,6 +20,7 @@ BEGIN_C_DECLS
 #include <ompi/communicator/communicator.h>
 #include <ompi/datatype/ompi_datatype.h>
 #include <ompi/mca/pml/pml.h>
+#include <ompi/mca/common/monitoring/common_monitoring.h>
 #include <opal/mca/base/mca_base_pvar.h>
 
 typedef mca_pml_base_module_t mca_pml_monitoring_module_t;
