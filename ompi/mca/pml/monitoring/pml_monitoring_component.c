@@ -210,7 +210,7 @@ static int mca_pml_monitoring_component_close(void)
             free(*mca_pml_monitoring_current_filename);
             *mca_pml_monitoring_current_filename = NULL;
         }
-        free(mca_pml_monitoring_current_filename);
+        /* The variable will be freed when desallocating the pvar's */
         mca_pml_monitoring_current_filename = NULL;
     }
     return OMPI_SUCCESS;
