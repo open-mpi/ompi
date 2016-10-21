@@ -73,8 +73,9 @@ I       3       2       20 bytes        4 msgs sent
 */
 
 
-#include <stdio.h>
 #include "mpi.h"
+#include <stdio.h>
+#include <string.h>
 
 static MPI_T_pvar_handle flush_handle;
 static const char flush_pvar_name[] = "pml_monitoring_flush";
@@ -91,9 +92,16 @@ int main(int argc, char* argv[])
     MPI_Request request;
     char filename[1024];
 
+    if( argc > 1 ) {
+        if( 0 == strcmp(argv[1], "--with-mpit") ) {
+            with_mpit= 1;
+            printf("enable MPIT support\n");
+        }
+    }
+    
     /* first phase : make a token circulated in MPI_COMM_WORLD */
     n = -1;
-    MPI_Init(&argc, &argv);
+    MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     to = (rank + 1) % size;
@@ -179,10 +187,11 @@ int main(int argc, char* argv[])
                    flush_pvar_name);
             MPI_Abort(MPI_COMM_WORLD, MPIT_result);
         }
-        /* Don't set a filename. If we stop the session before setting it, then no output
+        /* Don't set a filename. If we stop the session before setting it, then no output file
          * will be generated.
          */
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf ) ) {
+
+        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
         }
     }
