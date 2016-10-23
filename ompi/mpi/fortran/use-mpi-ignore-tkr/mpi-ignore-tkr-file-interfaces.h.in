@@ -1002,27 +1002,27 @@ end interface
 
 interface MPI_File_read_ordered_begin
 
-subroutine MPI_File_read_ord_begin(fh, buf, count, datatype, ierror)
+subroutine MPI_File_read_ordered_begin(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: ierror
-end subroutine MPI_File_read_ord_begin
+end subroutine MPI_File_read_ordered_begin
 
 end interface
 
 interface PMPI_File_read_ordered_begin
 
-subroutine PMPI_File_read_ord_begin(fh, buf, count, datatype, ierror)
+subroutine PMPI_File_read_ordered_begin(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: ierror
-end subroutine PMPI_File_read_ord_begin
+end subroutine PMPI_File_read_ordered_begin
 
 end interface
 
