@@ -1343,7 +1343,7 @@ end interface
 
 interface MPI_File_write_at_all_begin
 
-subroutine MPI_File_wr_at_all_begin(fh, offset, buf, count, datatype&
+subroutine MPI_File_write_at_all_begin(fh, offset, buf, count, datatype&
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
@@ -1353,13 +1353,13 @@ subroutine MPI_File_wr_at_all_begin(fh, offset, buf, count, datatype&
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: ierror
-end subroutine MPI_File_wr_at_all_begin
+end subroutine MPI_File_write_at_all_begin
 
 end interface
 
 interface PMPI_File_write_at_all_begin
 
-subroutine PMPI_File_wr_at_all_begin(fh, offset, buf, count, datatype&
+subroutine PMPI_File_write_at_all_begin(fh, offset, buf, count, datatype&
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
@@ -1369,7 +1369,7 @@ subroutine PMPI_File_wr_at_all_begin(fh, offset, buf, count, datatype&
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: ierror
-end subroutine PMPI_File_wr_at_all_begin
+end subroutine PMPI_File_write_at_all_begin
 
 end interface
 
