@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,6 +69,7 @@ typedef struct {
     uint16_t af_family;
     char *net;
     char *port;
+    char *rtmod;
 } mca_oob_tcp_peer_op_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
 
@@ -91,12 +92,17 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
         opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);                  \
     } while(0);
 
-#define ORTE_ACTIVATE_TCP_CMP_OP(p, cbfunc)                             \
+#define ORTE_ACTIVATE_TCP_CMP_OP(p, r, cbfunc)                          \
     do {                                                                \
         mca_oob_tcp_peer_op_t *pop;                                     \
+        char *proxy;                                                    \
         pop = OBJ_NEW(mca_oob_tcp_peer_op_t);                           \
         pop->peer.jobid = (p)->jobid;                                   \
         pop->peer.vpid = (p)->vpid;                                     \
+        proxy = (r);                                                    \
+        if (NULL != proxy) {                                            \
+            pop->rtmod = strdup(proxy);                                 \
+        }                                                               \
         opal_event_set(mca_oob_tcp_module.ev_base, &pop->ev, -1,        \
                        OPAL_EV_WRITE, (cbfunc), pop);                   \
         opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);                \

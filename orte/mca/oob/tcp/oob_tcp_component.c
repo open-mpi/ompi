@@ -95,7 +95,7 @@ static int component_send(orte_rml_send_t *msg);
 static char* component_get_addr(void);
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris);
-static bool component_is_reachable(orte_process_name_t *peer);
+static bool component_is_reachable(char *rtmod, orte_process_name_t *peer);
 static orte_rml_pathway_t* component_query_transports(void);
 #if OPAL_ENABLE_FT_CR == 1
 static int component_ft_event(int state);
@@ -936,12 +936,12 @@ static int component_set_addr(orte_process_name_t *peer,
     return ORTE_ERR_TAKE_NEXT_OPTION;
 }
 
-static bool component_is_reachable(orte_process_name_t *peer)
+static bool component_is_reachable(char *rtmod, orte_process_name_t *peer)
 {
     orte_process_name_t hop;
 
     /* if we have a route to this peer, then we can reach it */
-    hop = orte_routed.get_route(peer);
+    hop = orte_routed.get_route(rtmod, peer);
     if (ORTE_JOBID_INVALID == hop.jobid ||
         ORTE_VPID_INVALID == hop.vpid) {
         opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -1026,7 +1026,7 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
 
     if (!orte_finalizing) {
         /* activate the proc state */
-        if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer)) {
+        if (ORTE_SUCCESS != orte_routed.route_lost(pop->rtmod, &pop->peer)) {
             ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
         } else {
             ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_COMM_FAILED);
@@ -1064,7 +1064,7 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
      */
     if (!orte_finalizing && !orte_abnormal_term_ordered) {
         /* if this was a lifeline, then alert */
-        if (ORTE_SUCCESS != orte_routed.route_lost(&mop->hop)) {
+        if (ORTE_SUCCESS != orte_routed.route_lost(mop->snd->hdr.routed, &mop->hop)) {
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_LIFELINE_LOST);
         } else {
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
@@ -1140,6 +1140,7 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     snd->count = mop->snd->hdr.nbytes;
     snd->cbfunc.iov = NULL;
     snd->cbdata = NULL;
+    snd->routed = strdup(mop->snd->hdr.routed);
     /* activate the OOB send state */
     ORTE_OOB_SEND(snd);
     /* protect the data */
@@ -1170,7 +1171,7 @@ void mca_oob_tcp_component_failed_to_connect(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(&pop->peer));
 
     /* if this was a lifeline, then alert */
-    if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer)) {
+    if (ORTE_SUCCESS != orte_routed.route_lost(pop->rtmod, &pop->peer)) {
         ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
     } else {
         ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_COMM_FAILED);
@@ -1341,11 +1342,15 @@ OBJ_CLASS_INSTANCE(mca_oob_tcp_addr_t,
 
 static void pop_cons(mca_oob_tcp_peer_op_t *pop)
 {
+    pop->rtmod = NULL;
     pop->net = NULL;
     pop->port = NULL;
 }
 static void pop_des(mca_oob_tcp_peer_op_t *pop)
 {
+    if (NULL != pop->rtmod) {
+        free(pop->rtmod);
+    }
     if (NULL != pop->net) {
         free(pop->net);
     }

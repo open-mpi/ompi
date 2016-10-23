@@ -520,7 +520,10 @@ static void notify_requestor(int sd, short args, void *cbdata)
         opal_dss.pack(reply, &pptr->node, 1, ORTE_NODE);
     }
 
-    orte_rml.send_buffer_nb(&jdata->originator, reply, ORTE_RML_TAG_NOTIFY_COMPLETE, send_callback, jdata);
+    orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                            &jdata->originator, reply,
+                            ORTE_RML_TAG_NOTIFY_COMPLETE,
+                            send_callback, jdata);
 
     /* we cannot cleanup the job object as we might
      * hit an error during transmission, so clean it

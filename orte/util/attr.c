@@ -332,7 +332,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "RML-DESIRED-PROVIDERS";
         case ORTE_RML_PROTOCOL_ATTRIB:
             return "RML-DESIRED-PROTOCOLS";
-
+        case ORTE_RML_ROUTED_ATTRIB:
+            return "RML-DESIRED-ROUTED-MODULES";
         default:
             return "UNKNOWN-KEY";
         }

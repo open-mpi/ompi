@@ -765,5 +765,18 @@ int orte_register_params(void)
     /* register a synonym for old name */
     mca_base_var_register_synonym (id, "ompi", "ompi", "hostname", "cutoff", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
+    /* get the conduit params */
+    orte_coll_transport = "fabric,ethernet";
+    (void) mca_base_var_register("orte", "orte", "coll", "transports",
+                                 "Comma-separated list of transports to use for ORTE collectives",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_coll_transport);
+
+    orte_mgmt_transport = "oob,ethernet";
+    (void) mca_base_var_register("orte", "orte", "mgmt", "transports",
+                                 "Comma-separated list of transports to use for ORTE management messages",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_mgmt_transport);
+
     return ORTE_SUCCESS;
 }

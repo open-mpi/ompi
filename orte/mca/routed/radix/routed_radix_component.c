@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +33,7 @@ orte_routed_radix_component_t mca_routed_radix_component = {
         information about the component itself */
 
         .base_version = {
-            ORTE_ROUTED_BASE_VERSION_2_0_0,
+            ORTE_ROUTED_BASE_VERSION_3_0_0,
 
             .mca_component_name = "radix",
             MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,

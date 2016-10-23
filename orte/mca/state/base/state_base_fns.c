@@ -21,9 +21,10 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/plm/plm.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
 
@@ -526,12 +527,16 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata;
     int i;
+    char *rtmod;
 
     opal_output_verbose(5, orte_state_base_framework.framework_output,
                         "%s state:base:track_procs called for proc %s state %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(proc),
                         orte_proc_state_to_str(state));
+
+    /* get our "lifeline" routed module */
+    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
 
     /* get the job object for this proc */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
@@ -608,7 +613,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
          * remain (might be some from another job)
          */
         if (orte_orteds_term_ordered &&
-            0 == orte_routed.num_routes()) {
+            0 == orte_routed.num_routes(rtmod)) {
             for (i=0; i < orte_local_children->size; i++) {
                 if (NULL != (pdata = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
                     ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_ALIVE)) {
@@ -663,11 +668,16 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     int32_t i32, *i32ptr;
     uint32_t u32;
     void *nptr;
+    char *rtmod;
 
     opal_output_verbose(2, orte_state_base_framework.framework_output,
                         "%s state:base:check_job_complete on job %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid));
+
+    /* get our "lifeline" routed module */
+    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
+
 
     if (NULL == jdata || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         /* just check to see if the daemons are complete */
@@ -739,7 +749,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
      */
  CHECK_DAEMONS:
     if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-        if (0 == orte_routed.num_routes()) {
+        if (0 == orte_routed.num_routes(rtmod)) {
             /* orteds are done! */
             OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                  "%s orteds complete - exiting",

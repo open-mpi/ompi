@@ -144,8 +144,9 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
                          "%s iof:orted:read handler sending %d bytes to HNP",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
 
-    orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
-                            send_cb, NULL);
+    orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                    ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
+                                    send_cb, NULL);
 
     /* re-add the event */
     opal_event_add(rev->ev, 0);

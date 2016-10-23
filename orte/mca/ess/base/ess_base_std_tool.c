@@ -66,6 +66,7 @@ int orte_ess_base_tool_setup(void)
 {
     int ret;
     char *error = NULL;
+    opal_list_t transports;
 
     /* my name is set, xfer it to the OPAL layer */
     orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
@@ -97,6 +98,17 @@ int orte_ess_base_tool_setup(void)
         goto error;
     }
     /* Setup the communication infrastructure */
+    /* Routed system */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rml_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_select";
+        goto error;
+    }
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_oob_base_open";
@@ -118,17 +130,14 @@ int orte_ess_base_tool_setup(void)
         error = "orte_rml_base_select";
         goto error;
     }
-    /* Routed system */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_select";
-        goto error;
-    }
+
+        /* get a conduit for our use - we never route IO over fabric */
+    OBJ_CONSTRUCT(&transports, opal_list_t);
+    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
+                       ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
+    orte_mgmt_conduit = orte_rml.open_conduit(&transports);
+    OPAL_LIST_DESTRUCT(&transports);
+
     /* since I am a tool, then all I really want to do is communicate.
      * So setup communications and be done - finding the HNP
      * to which I want to communicate and setting up a route for
@@ -148,10 +157,8 @@ int orte_ess_base_tool_setup(void)
         goto error;
     }
 
-    /* setup the routed info - the selected routed component
-     * will know what to do.
-     */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+    /* setup the routed info for all components */
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed.init_routes";
         goto error;
@@ -229,6 +236,8 @@ int orte_ess_base_tool_finalize(void)
     mca_base_framework_close(&orte_snapc_base_framework);
     mca_base_framework_close(&orte_sstore_base_framework);
 #endif
+
+    orte_rml.close_conduit(orte_mgmt_conduit);
 
     /* if I am a tool, then all I will have done is
      * a very small subset of orte_init - ensure that

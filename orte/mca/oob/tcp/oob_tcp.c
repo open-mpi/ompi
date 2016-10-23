@@ -401,7 +401,7 @@ static void process_send(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->seq_num);
 
     /* do we have a route to this peer (could be direct)? */
-    hop = orte_routed.get_route(&op->msg->dst);
+    hop = orte_routed.get_route(op->msg->routed, &op->msg->dst);
     /* do we know this hop? */
     if (NULL == (peer = mca_oob_tcp_peer_lookup(&hop))) {
         /* push this back to the component so it can try

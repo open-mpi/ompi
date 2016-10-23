@@ -41,6 +41,7 @@ typedef struct {
     opal_list_t             queued_routing_messages;
     opal_event_t            *timer_event;
     struct timeval          timeout;
+    char                    *routed; // name of routed module to be used
 } orte_rml_oob_module_t;
 
 ORTE_MODULE_DECLSPEC extern orte_rml_component_t mca_rml_oob_component;

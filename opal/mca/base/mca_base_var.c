@@ -1890,13 +1890,13 @@ static char *source_name(mca_base_var_t *var)
 
 static int var_value_string (mca_base_var_t *var, char **value_string)
 {
-    const mca_base_var_storage_t *value;
+    const mca_base_var_storage_t *value=NULL;
     int ret;
 
     assert (MCA_BASE_VAR_TYPE_MAX > var->mbv_type);
 
     ret = mca_base_var_get_value(var->mbv_index, &value, NULL, NULL);
-    if (OPAL_SUCCESS !=ret) {
+    if (OPAL_SUCCESS != ret || NULL == value) {
         return ret;
     }
 

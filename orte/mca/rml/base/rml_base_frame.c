@@ -42,18 +42,16 @@ orte_rml_base_API_t orte_rml = {
     .get_contact_info       = orte_rml_API_get_contact_info,
     .set_contact_info       = orte_rml_API_set_contact_info,
     .ping                   = orte_rml_API_ping,
-    .ping_conduit           = orte_rml_API_ping_conduit,
     .send_nb                = orte_rml_API_send_nb,
     .send_buffer_nb         = orte_rml_API_send_buffer_nb,
-    .send_nb_conduit        = orte_rml_API_send_nb_conduit,
-    .send_buffer_nb_conduit = orte_rml_API_send_buffer_nb_conduit,
     .recv_nb                = orte_rml_API_recv_nb,
     .recv_buffer_nb         = orte_rml_API_recv_buffer_nb,
     .recv_cancel            = orte_rml_API_recv_cancel,
     .purge                  = orte_rml_API_purge,
     .query_transports       = orte_rml_API_query_transports,
     .open_conduit           = orte_rml_API_open_conduit,
-    .close_conduit          = orte_rml_API_close_conduit
+    .close_conduit          = orte_rml_API_close_conduit,
+    .get_routed             = orte_rml_API_get_routed
 };
 
 orte_rml_base_t orte_rml_base = {{{0}}};
@@ -164,7 +162,6 @@ int orte_rml_base_select(void)
    orte_rml_component_t *component=NULL;
    orte_rml_base_active_t *newmodule, *mod;
    bool inserted;
-   opal_list_t conduit_attr;
 
    if (selected) {
       return ORTE_SUCCESS;
@@ -208,28 +205,8 @@ int orte_rml_base_select(void)
         }
     }
 
-    /* Open the default oob conduit */
-    opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                        "%s Opening the default conduit - oob component",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    OBJ_CONSTRUCT(&conduit_attr, opal_list_t);
-    orte_set_attribute(&conduit_attr, ORTE_RML_INCLUDE_COMP_ATTRIB, ORTE_ATTR_LOCAL,"oob",OPAL_STRING);
-    orte_rml_base.def_conduit_id = orte_rml_API_open_conduit(&conduit_attr);
-    OPAL_LIST_DESTRUCT(&conduit_attr);
-    if (0 <= orte_rml_base.def_conduit_id) {
-        opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                            "%s Default conduit (oob) opened with conduit id = %d",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), orte_rml_base.def_conduit_id);
-    } else {
-        opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                            "%s Default conduit (oob) could not be opened",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    }
-
     return ORTE_SUCCESS;
 }
-
-
 
 void orte_rml_send_callback(int status, orte_process_name_t *peer,
                             opal_buffer_t* buffer, orte_rml_tag_t tag,
@@ -266,10 +243,17 @@ static void send_cons(orte_rml_send_t *ptr)
     ptr->buffer = NULL;
     ptr->data = NULL;
     ptr->seq_num = 0xFFFFFFFF;
+    ptr->routed = NULL;
+}
+static void send_des(orte_rml_send_t *ptr)
+{
+    if (NULL != ptr->routed) {
+        free(ptr->routed);
+    }
 }
 OBJ_CLASS_INSTANCE(orte_rml_send_t,
                    opal_list_item_t,
-                   send_cons, NULL);
+                   send_cons, send_des);
 
 
 static void send_req_cons(orte_rml_send_request_t *ptr)

@@ -353,9 +353,9 @@ int pmix_server_init(void)
             struct timeval timeout;
             timeout.tv_sec = orte_pmix_server_globals.timeout;
             timeout.tv_usec = 0;
-            if (ORTE_SUCCESS != (rc = orte_rml.ping(server, &timeout))) {
+            if (ORTE_SUCCESS != (rc = orte_rml.ping(orte_mgmt_conduit, server, &timeout))) {
                 /* try it one more time */
-                if (ORTE_SUCCESS != (rc = orte_rml.ping(server, &timeout))) {
+                if (ORTE_SUCCESS != (rc = orte_rml.ping(orte_mgmt_conduit, server, &timeout))) {
                     /* okay give up */
                     orte_show_help("help-orterun.txt", "orterun:server-not-found", true,
                                    orte_basename, server,
@@ -416,7 +416,8 @@ static void send_error(int status, opal_process_name_t *idreq,
         return;
     }
     /* send the response */
-    orte_rml.send_buffer_nb(remote, reply,
+    orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                            remote, reply,
                             ORTE_RML_TAG_DIRECT_MODEX_RESP,
                             orte_rml_send_callback, NULL);
     return;
@@ -454,7 +455,8 @@ static void _mdxresp(int sd, short args, void *cbdata)
     opal_dss.copy_payload(reply, &req->msg);
 
     /* send the response */
-    orte_rml.send_buffer_nb(&req->proxy, reply,
+    orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                            &req->proxy, reply,
                             ORTE_RML_TAG_DIRECT_MODEX_RESP,
                             orte_rml_send_callback, NULL);
 

@@ -21,11 +21,13 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/session_dir.h"
@@ -279,7 +281,7 @@ static void vm_ready(int fd, short args, void *cbdata)
         opal_dss.pack(buf, &flag, 1, OPAL_INT8);
         /* get wireup info for daemons per the selected routing module */
         wireup = OBJ_NEW(opal_buffer_t);
-        if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(wireup))) {
+        if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(wireup);
             OBJ_RELEASE(buf);
@@ -343,6 +345,7 @@ static void check_complete(int fd, short args, void *cbdata)
     orte_node_t *node;
     orte_job_map_t *map;
     orte_std_cntr_t index;
+    char *rtmod;
 
     opal_output_verbose(2, orte_state_base_framework.framework_output,
                         "%s state:dvm:check_job_complete on job %s",
@@ -354,7 +357,8 @@ static void check_complete(int fd, short args, void *cbdata)
         OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                              "%s state:dvm:check_job_complete - received NULL job, checking daemons",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        if (0 == orte_routed.num_routes()) {
+        rtmod = orte_rml.get_routed(orte_mgmt_conduit);
+        if (0 == orte_routed.num_routes(rtmod)) {
             /* orteds are done! */
             OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                  "%s orteds complete - exiting",

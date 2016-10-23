@@ -4,7 +4,7 @@
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -129,7 +129,7 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
     }
 
     /* if we have a route to this peer, then we can reach it */
-    hop = orte_routed.get_route(&op->msg->dst);
+    hop = orte_routed.get_route(NULL, &op->msg->dst);
     if (ORTE_JOBID_INVALID == hop.jobid ||
         ORTE_VPID_INVALID == hop.vpid) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);

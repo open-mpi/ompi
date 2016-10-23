@@ -687,7 +687,7 @@ opal_pmix_data_range_t pmix3x_convert_range(pmix_data_range_t range) {
     case PMIX_RANGE_CUSTOM:
         return OPAL_PMIX_RANGE_CUSTOM;
     default:
-        return OPAL_PMIX_SCOPE_UNDEF;
+        return OPAL_PMIX_RANGE_UNDEF;
     }
 }
 

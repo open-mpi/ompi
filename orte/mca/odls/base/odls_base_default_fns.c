@@ -64,7 +64,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/plm/base/base.h"
-#include "orte/mca/routed/base/base.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/schizo/schizo.h"
 #include "orte/mca/state/state.h"
@@ -159,7 +159,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         opal_dss.pack(data, &flag, 1, OPAL_INT8);
         /* get wireup info for daemons per the selected routing module */
         wireup = OBJ_NEW(opal_buffer_t);
-        if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(wireup))) {
+        if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(wireup);
             return rc;

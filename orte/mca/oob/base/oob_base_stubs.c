@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -94,7 +94,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
             OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
                 component = (mca_oob_base_component_t*)cli->cli_component;
                 if (NULL != component->is_reachable) {
-                    if (component->is_reachable(&msg->dst)) {
+                    if (component->is_reachable(msg->routed, &msg->dst)) {
                         /* there is a way to reach this peer - record it
                          * so we don't waste this time again
                          */
@@ -154,7 +154,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
         component = (mca_oob_base_component_t*)cli->cli_component;
         /* is this peer reachable via this component? */
-        if (!component->is_reachable(&msg->dst)) {
+        if (!component->is_reachable(msg->routed, &msg->dst)) {
             continue;
         }
         /* it is addressable, so attempt to send via that transport */

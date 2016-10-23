@@ -162,9 +162,9 @@ void orte_rml_API_set_contact_info(const char *contact_info)
 }
 
 /** Ping process for connectivity check */
-int orte_rml_API_ping_conduit(orte_rml_conduit_t conduit_id,
-                              const char* contact_info,
-                              const struct timeval* tv)
+int orte_rml_API_ping(orte_rml_conduit_t conduit_id,
+                      const char* contact_info,
+                      const struct timeval* tv)
 {
     int rc = ORTE_ERR_UNREACH;
     orte_rml_base_module_t *mod;
@@ -185,27 +185,20 @@ int orte_rml_API_ping_conduit(orte_rml_conduit_t conduit_id,
 }
 
 
-/** Ping process for connectivity check */
-int orte_rml_API_ping(const char* contact_info,
-                      const struct timeval* tv)
-{
-    return orte_rml_API_ping_conduit(orte_rml_base.def_conduit_id, contact_info, tv);
-}
-
 /** Send non-blocking iovec message through a specific conduit*/
-int orte_rml_API_send_nb_conduit(orte_rml_conduit_t conduit_id,
-                                 orte_process_name_t* peer,
-                                 struct iovec* msg,
-                                 int count,
-                                 orte_rml_tag_t tag,
-                                 orte_rml_callback_fn_t cbfunc,
-                                 void* cbdata)
+int orte_rml_API_send_nb(orte_rml_conduit_t conduit_id,
+                         orte_process_name_t* peer,
+                         struct iovec* msg,
+                         int count,
+                         orte_rml_tag_t tag,
+                         orte_rml_callback_fn_t cbfunc,
+                         void* cbdata)
 {
     int rc = ORTE_ERR_UNREACH;
     orte_rml_base_module_t *mod;
 
     opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                         "%s rml:base:send_nb_conduit() to peer %s through conduit %d",
+                         "%s rml:base:send_nb() to peer %s through conduit %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer),conduit_id);
     /* get the module */
@@ -220,20 +213,21 @@ int orte_rml_API_send_nb_conduit(orte_rml_conduit_t conduit_id,
 }
 
 /** Send non-blocking buffer message */
-int orte_rml_API_send_buffer_nb_conduit(orte_rml_conduit_t conduit_id,
-                                        orte_process_name_t* peer,
-                                        struct opal_buffer_t* buffer,
-                                        orte_rml_tag_t tag,
-                                        orte_rml_buffer_callback_fn_t cbfunc,
-                                        void* cbdata)
+int orte_rml_API_send_buffer_nb(orte_rml_conduit_t conduit_id,
+                                orte_process_name_t* peer,
+                                struct opal_buffer_t* buffer,
+                                orte_rml_tag_t tag,
+                                orte_rml_buffer_callback_fn_t cbfunc,
+                                void* cbdata)
 {
     int rc = ORTE_ERR_UNREACH;
     orte_rml_base_module_t *mod;
 
     opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                         "%s rml:base:send_buffer_nb_conduit() to peer %s through conduit %d",
+                         "%s rml:base:send_buffer_nb() to peer %s through conduit %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer),conduit_id);
+
     /* get the module */
     if (NULL == (mod = (orte_rml_base_module_t*)opal_pointer_array_get_item(&orte_rml_base.conduits, conduit_id))) {
         return rc;
@@ -244,28 +238,6 @@ int orte_rml_API_send_buffer_nb_conduit(orte_rml_conduit_t conduit_id,
     rc = mod->send_buffer_nb((struct orte_rml_base_module_t*)mod, peer, buffer, tag, cbfunc, cbdata);
     return rc;
 }
-
-/** Send non-blocking iovec message through a specific conduit*/
-int orte_rml_API_send_nb(orte_process_name_t* peer,
-                         struct iovec* msg,
-                         int count,
-                         orte_rml_tag_t tag,
-                         orte_rml_callback_fn_t cbfunc,
-                         void* cbdata)
-{
-    return orte_rml_API_send_nb_conduit(orte_rml_base.def_conduit_id, peer, msg, count, tag, cbfunc, cbdata);
-}
-
-/** Send non-blocking buffer message */
-int orte_rml_API_send_buffer_nb(orte_process_name_t* peer,
-                                struct opal_buffer_t* buffer,
-                                orte_rml_tag_t tag,
-                                orte_rml_buffer_callback_fn_t cbfunc,
-                                void* cbdata)
-{
-    return orte_rml_API_send_buffer_nb_conduit(orte_rml_base.def_conduit_id, peer, buffer, tag, cbfunc, cbdata);
-}
-
 
 /** post a receive for an IOV message - this is done
  * strictly in the base, and so it does not go to a module */
@@ -396,4 +368,16 @@ int orte_rml_API_query_transports(opal_list_t *providers)
     }
     return ORTE_SUCCESS;
 
+}
+
+char* orte_rml_API_get_routed(orte_rml_conduit_t id)
+{
+    orte_rml_base_module_t *mod;
+
+    /* get the module */
+    if (NULL != (mod = (orte_rml_base_module_t*)opal_pointer_array_get_item(&orte_rml_base.conduits, id))) {
+        return mod->routed;
+    }
+
+    return NULL;
 }

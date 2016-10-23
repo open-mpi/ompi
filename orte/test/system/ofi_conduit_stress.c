@@ -152,7 +152,7 @@ main(int argc, char *argv[]){
             msg = (uint8_t*)malloc(msgsize);
             opal_dss.pack(buf, msg, msgsize, OPAL_BYTE);
             free(msg);
-            orte_rml.send_buffer_nb_conduit(conduit_id,&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
+            orte_rml.send_buffer_nb(conduit_id,&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
 
             /* wait for it to come around */
             OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
@@ -180,7 +180,7 @@ main(int argc, char *argv[]){
             opal_dss.copy_payload(buf, &blob.data);
             OBJ_DESTRUCT(&blob);
             msg_active = true;
-            orte_rml.send_buffer_nb_conduit(conduit_id,&peer, buf, MY_TAG, send_callback, NULL);
+            orte_rml.send_buffer_nb(conduit_id,&peer, buf, MY_TAG, send_callback, NULL);
             ORTE_WAIT_FOR_COMPLETION(msg_active);
         }
     }
