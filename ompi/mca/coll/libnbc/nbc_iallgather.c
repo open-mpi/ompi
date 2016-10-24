@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -104,7 +104,7 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
         }
 
         /* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
-        res = NBC_Sched_send (sbuf, false, sendcount, sendtype, r, schedule, false);
+        res = NBC_Sched_send (sbuf, false, recvcount, recvtype, r, schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           OBJ_RELEASE(schedule);
           return res;
