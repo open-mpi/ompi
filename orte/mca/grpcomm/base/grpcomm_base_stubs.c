@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -211,6 +212,7 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
     orte_namelist_t *nm;
     opal_list_t children;
     size_t n;
+    char *routed;
 
     /* search the existing tracker list to see if this already exists */
     OPAL_LIST_FOREACH(coll, &orte_grpcomm_base.ongoing, orte_grpcomm_coll_t) {
@@ -257,30 +259,41 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
         ORTE_ERROR_LOG(rc);
         return NULL;
     }
-    /* cycle thru the array of daemons and compare them to our
-     * children in the routing tree, counting the ones that match
-     * so we know how many daemons we should receive contributions from */
-    OBJ_CONSTRUCT(&children, opal_list_t);
-    orte_routed.get_routing_list(&children);
-    while (NULL != (nm = (orte_namelist_t*)opal_list_remove_first(&children))) {
+
+    /* get the routed module for our conduit */
+    routed = orte_rml.get_routed(orte_coll_conduit);
+    if (NULL == routed) {
+        /* this conduit is not routed, so we expect all daemons
+         * to directly participate */
+        coll->nexpected = coll->ndmns;
+    } else {
+        /* cycle thru the array of daemons and compare them to our
+         * children in the routing tree, counting the ones that match
+         * so we know how many daemons we should receive contributions from */
+        OBJ_CONSTRUCT(&children, opal_list_t);
+        orte_routed.get_routing_list(routed, &children);
+        while (NULL != (nm = (orte_namelist_t*)opal_list_remove_first(&children))) {
+            for (n=0; n < coll->ndmns; n++) {
+                if (nm->name.vpid == coll->dmns[n]) {
+                    coll->nexpected++;
+                    break;
+                }
+            }
+            OBJ_RELEASE(nm);
+        }
+        OPAL_LIST_DESTRUCT(&children);
+
+        /* see if I am in the array of participants - note that I may
+         * be in the rollup tree even though I'm not participating
+         * in the collective itself */
         for (n=0; n < coll->ndmns; n++) {
-            if (nm->name.vpid == coll->dmns[n]) {
+            if (coll->dmns[n] == ORTE_PROC_MY_NAME->vpid) {
                 coll->nexpected++;
                 break;
             }
         }
-        OBJ_RELEASE(nm);
     }
-    OPAL_LIST_DESTRUCT(&children);
-    /* see if I am in the array of participants - note that I may
-     * be in the rollup tree even though I'm not participating
-     * in the collective itself */
-    for (n=0; n < coll->ndmns; n++) {
-        if (coll->dmns[n] == ORTE_PROC_MY_NAME->vpid) {
-            coll->nexpected++;
-            break;
-        }
-    }
+
     return coll;
 }
 

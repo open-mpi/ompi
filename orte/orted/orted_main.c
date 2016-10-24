@@ -696,14 +696,14 @@ int orte_daemon(int argc, char *argv[])
         /* tell the routed module that we have a path
          * back to the HNP
          */
-        if (ORTE_SUCCESS != (ret = orte_routed.update_route(ORTE_PROC_MY_HNP, &parent))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.update_route(NULL, ORTE_PROC_MY_HNP, &parent))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
         /* set the lifeline to point to our parent so that we
          * can handle the situation if that lifeline goes away
          */
-        if (ORTE_SUCCESS != (ret = orte_routed.set_lifeline(&parent))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.set_lifeline(NULL, &parent))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
@@ -808,7 +808,8 @@ int orte_daemon(int argc, char *argv[])
         }
 
         /* send to the HNP's callback - will be routed if routes are available */
-        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
+        if (0 > (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
+                                               ORTE_PROC_MY_HNP, buffer,
                                                ORTE_RML_TAG_ORTED_CALLBACK,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);

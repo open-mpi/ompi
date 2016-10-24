@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -67,7 +67,8 @@ static void execute(int sd, short args, void *cbdata)
     opal_dss.copy_payload(xfer, &req->msg);
 
     /* send the request to the target */
-    rc = orte_rml.send_buffer_nb(&req->target, xfer,
+    rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                 &req->target, xfer,
                                  ORTE_RML_TAG_DATA_SERVER,
                                  orte_rml_send_callback, NULL);
     if (ORTE_SUCCESS == rc) {

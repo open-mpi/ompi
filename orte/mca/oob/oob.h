@@ -55,7 +55,7 @@ typedef int (*mca_oob_base_component_send_fn_t)(orte_rml_send_t *msg);
 typedef char* (*mca_oob_base_component_get_addr_fn_t)(void);
 typedef int (*mca_oob_base_component_set_addr_fn_t)(orte_process_name_t *peer,
                                                     char **uris);
-typedef bool (*mca_oob_base_component_is_reachable_fn_t)(orte_process_name_t *peer);
+typedef bool (*mca_oob_base_component_is_reachable_fn_t)(char *routed, orte_process_name_t *peer);
 typedef void (*mca_oob_ping_callback_fn_t)(int status, void *cbdata);
 typedef orte_rml_pathway_t* (*mca_oob_base_component_query_transports_fn_t)(void);
 

@@ -197,6 +197,8 @@ static void send_msg(int fd, short args, void *cbdata)
         snd->cbfunc.buffer = req->send.cbfunc.buffer;
     }
     snd->cbdata = req->send.cbdata;
+    snd->routed = strdup(req->send.routed);
+
     /* activate the OOB send state */
     ORTE_OOB_SEND(snd);
 
@@ -239,6 +241,7 @@ int orte_rml_oob_send_nb(struct orte_rml_base_module_t *mod,
     req->send.tag = tag;
     req->send.cbfunc.iov = cbfunc;
     req->send.cbdata = cbdata;
+    req->send.routed = strdup(mod->routed);
     /* setup the event for the send callback */
     opal_event_set(orte_event_base, &req->ev, -1, OPAL_EV_WRITE, send_msg, req);
     opal_event_set_priority(&req->ev, ORTE_MSG_PRI);
@@ -281,6 +284,7 @@ int orte_rml_oob_send_buffer_nb(struct orte_rml_base_module_t *mod,
     req->send.tag = tag;
     req->send.cbfunc.buffer = cbfunc;
     req->send.cbdata = cbdata;
+    req->send.routed = strdup(mod->routed);
     /* setup the event for the send callback */
     opal_event_set(orte_event_base, &req->ev, -1, OPAL_EV_WRITE, send_msg, req);
     opal_event_set_priority(&req->ev, ORTE_MSG_PRI);

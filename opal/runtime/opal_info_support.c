@@ -14,6 +14,7 @@
  * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -626,12 +627,12 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         /* read the selection parameter */
         var_id = mca_base_var_find (group->group_project, group->group_framework, NULL, NULL);
         if (0 <= var_id) {
-            const mca_base_var_storage_t *value;
+            const mca_base_var_storage_t *value=NULL;
             char **requested_components;
             bool include_mode;
 
             mca_base_var_get_value (var_id, &value, NULL, NULL);
-            if (NULL != value->stringval && '\0' != value->stringval[0]) {
+            if (NULL != value && NULL != value->stringval && '\0' != value->stringval[0]) {
                 mca_base_component_parse_requested (value->stringval, &include_mode, &requested_components);
 
                 for (i = 0, requested = !include_mode ; requested_components[i] ; ++i) {

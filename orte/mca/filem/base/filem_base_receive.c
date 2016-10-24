@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -206,7 +207,8 @@ static void filem_base_process_get_proc_node_name_cmd(orte_process_name_t* sende
         return;
     }
 
-    if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          sender, answer,
                                           ORTE_RML_TAG_FILEM_BASE_RESP,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -296,7 +298,8 @@ static void filem_base_process_get_remote_path_cmd(orte_process_name_t* sender,
         goto CLEANUP;
     }
 
-    if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          sender, answer,
                                           ORTE_RML_TAG_FILEM_BASE_RESP,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);

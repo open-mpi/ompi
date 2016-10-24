@@ -553,14 +553,14 @@ int orte_submit_init(int argc, char *argv[],
             exit(1);
         }
         /* set the route to be direct */
-        if (ORTE_SUCCESS != orte_routed.update_route(ORTE_PROC_MY_HNP, ORTE_PROC_MY_HNP)) {
+        if (ORTE_SUCCESS != orte_routed.update_route(NULL, ORTE_PROC_MY_HNP, ORTE_PROC_MY_HNP)) {
             orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, orte_process_info.my_hnp_uri);
             orte_finalize();
             exit(1);
         }
 
         /* set the target hnp as our lifeline so we will terminate if it exits */
-        orte_routed.set_lifeline(ORTE_PROC_MY_HNP);
+        orte_routed.set_lifeline(NULL, ORTE_PROC_MY_HNP);
 
         /* setup to listen for HNP response to my commands */
         orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFY_COMPLETE,
@@ -634,7 +634,8 @@ int orte_submit_cancel(int index) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, req, ORTE_RML_TAG_DAEMON,
+    rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                 ORTE_PROC_MY_HNP, req, ORTE_RML_TAG_DAEMON,
                                  orte_rml_send_callback, NULL);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -657,7 +658,8 @@ int orte_submit_halt(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, req,
+    rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                 ORTE_PROC_MY_HNP, req,
                                  ORTE_RML_TAG_DAEMON,
                                  orte_rml_send_callback, NULL);
     if (ORTE_SUCCESS != rc) {
@@ -1041,7 +1043,9 @@ int orte_submit_job(char *argv[], int *index,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, req, ORTE_RML_TAG_DAEMON, orte_rml_send_callback, NULL);
+        orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                ORTE_PROC_MY_HNP, req, ORTE_RML_TAG_DAEMON,
+                                orte_rml_send_callback, NULL);
 
         /* Inform the caller of the tracker index if they passed a index pointer */
         if (NULL != index) {
@@ -2844,7 +2848,7 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
 {
     int i, id, ret;
     char **new_argv = NULL;
-    const char **tmp;
+    const char **tmp = NULL;
     char *value, **lines, *env_name;
 
     /* Get the orte_base_debug MCA parameter and search for a debugger
@@ -3174,7 +3178,8 @@ void orte_profile_wakeup(int sd, short args, void *cbdata)
     for (i=0; i < nreports; i++) {
         OBJ_RETAIN(buffer);
         name.vpid = i;
-        if (0 > (rc = orte_rml.send_buffer_nb(&name, buffer,
+        if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                              &name, buffer,
                                               ORTE_RML_TAG_DAEMON,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);

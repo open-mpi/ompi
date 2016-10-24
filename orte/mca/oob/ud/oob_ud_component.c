@@ -7,7 +7,7 @@
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +41,7 @@ static int   mca_oob_ud_component_send_nb(orte_rml_send_t *msg);
 static void  mca_oob_ud_component_shutdown(void);
 static char* mca_oob_ud_component_get_addr(void);
 static int   mca_oob_ud_component_set_addr(orte_process_name_t *peer, char **uris);
-static bool  mca_oob_ud_component_is_reachable(orte_process_name_t *peer);
+static bool  mca_oob_ud_component_is_reachable(char *routed, orte_process_name_t *peer);
 #if OPAL_ENABLE_FT_CR == 1
 static int   mca_oob_ud_component_ft_event(int state);
 #endif // OPAL_ENABLE_FT_CR
@@ -591,12 +591,12 @@ static int mca_oob_ud_port_alloc_buffers (mca_oob_ud_port_t *port) {
     return rc;
 }
 
-static bool mca_oob_ud_component_is_reachable(orte_process_name_t *peer_name)
+static bool mca_oob_ud_component_is_reachable(char *routed, orte_process_name_t *peer_name)
 {
     orte_process_name_t hop;
 
     /* if we have a route to this peer, then we can reach it */
-    hop = orte_routed.get_route(peer_name);
+    hop = orte_routed.get_route(routed, peer_name);
     if (ORTE_JOBID_INVALID == hop.jobid ||
         ORTE_VPID_INVALID == hop.vpid) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);

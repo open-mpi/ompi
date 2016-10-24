@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +30,7 @@ orte_routed_component_t mca_routed_binomial_component = {
        information about the component itself */
 
     .base_version = {
-        ORTE_ROUTED_BASE_VERSION_2_0_0,
+        ORTE_ROUTED_BASE_VERSION_3_0_0,
 
         .mca_component_name = "binomial",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,

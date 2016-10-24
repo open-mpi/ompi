@@ -574,6 +574,7 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                     snd->data = peer->recv_msg->data;
                     snd->seq_num = peer->recv_msg->hdr.seq_num;
                     snd->count = peer->recv_msg->hdr.nbytes;
+                    snd->routed = strdup(peer->recv_msg->hdr.routed);
                     snd->cbfunc.iov = NULL;
                     snd->cbdata = NULL;
                     /* activate the OOB send state */
@@ -613,6 +614,7 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
 
 static void snd_cons(mca_oob_tcp_send_t *ptr)
 {
+    memset(&ptr->hdr, 0, sizeof(mca_oob_tcp_hdr_t));
     ptr->msg = NULL;
     ptr->data = NULL;
     ptr->hdr_sent = false;
@@ -638,6 +640,7 @@ OBJ_CLASS_INSTANCE(mca_oob_tcp_send_t,
 
 static void rcv_cons(mca_oob_tcp_recv_t *ptr)
 {
+    memset(&ptr->hdr, 0, sizeof(mca_oob_tcp_hdr_t));
     ptr->hdr_recvd = false;
     ptr->rdptr = NULL;
     ptr->rdbytes = 0;

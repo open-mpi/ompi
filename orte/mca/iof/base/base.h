@@ -50,6 +50,7 @@
 
 #include "orte/mca/iof/iof.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/mca/rml/rml_types.h"
 
 BEGIN_C_DECLS
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -914,7 +914,8 @@ static void send_complete(char *file, int status)
         OBJ_RELEASE(buf);
         return;
     }
-    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          ORTE_PROC_MY_HNP, buf,
                                           ORTE_RML_TAG_FILEM_BASE_RESP,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);

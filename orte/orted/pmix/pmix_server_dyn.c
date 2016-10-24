@@ -133,7 +133,8 @@ static void spawn(int sd, short args, void *cbdata)
     }
 
     /* send it to the HNP for processing - might be myself! */
-    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                                      ORTE_PROC_MY_HNP, buf,
                                                       ORTE_RML_TAG_PLM,
                                                       orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);

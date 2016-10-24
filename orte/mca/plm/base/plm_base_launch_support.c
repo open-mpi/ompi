@@ -47,7 +47,7 @@
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -447,8 +447,8 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
 
-    /* ensure our routing plan is up-to-date */
-    orte_routed.update_routing_plan();
+    /* ensure all routing plans are up-to-date */
+    orte_routed.update_routing_plan(NULL);
 
     /* If this job is being started by me, then there is nothing
      * further we need to do as any user directives (e.g., to tie
@@ -741,7 +741,8 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
                          ORTE_NAME_PRINT(&jdata->originator)));
-    if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
+    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                           &jdata->originator, answer,
                                            ORTE_RML_TAG_LAUNCH_RESP,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -826,7 +827,8 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
                          ORTE_NAME_PRINT(&jdata->originator)));
-    if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
+    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                           &jdata->originator, answer,
                                            ORTE_RML_TAG_LAUNCH_RESP,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -874,7 +876,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     /* multiple daemons could be in this buffer, so unpack until we exhaust the data */
     idx = 1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(buffer, &dname, &idx, ORTE_NAME))) {
-        char *nodename;
+        char *nodename = NULL;
         /* unpack its contact info */
         idx = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
@@ -1194,7 +1196,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         /* if a tree-launch is underway, send the cmd back */
         relay = OBJ_NEW(opal_buffer_t);
         opal_dss.copy_payload(relay, orte_tree_launch_cmd);
-        orte_rml.send_buffer_nb(sender, relay,
+        orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                sender, relay,
                                 ORTE_RML_TAG_DAEMON,
                                 orte_rml_send_callback, NULL);
     }
@@ -2114,8 +2117,8 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             orte_process_info.max_procs = orte_process_info.num_procs;
         }
 
-        /* ensure our routing plan is up-to-date */
-        orte_routed.update_routing_plan();
+        /* ensure all routing plans are up-to-date */
+        orte_routed.update_routing_plan(NULL);
     }
 
     /* mark that the daemon job changed */

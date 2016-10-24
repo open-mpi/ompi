@@ -118,6 +118,10 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->tag;                                        \
         msg->hdr.seq_num = (m)->seq_num;                                \
+        if (NULL != (m)->routed) {                                      \
+            (void)strncpy(msg->hdr.routed, (m)->routed,                 \
+                          ORTE_MAX_RTD_SIZE);                           \
+        }                                                               \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \
         /* set the total number of bytes to be sent */                  \
@@ -162,6 +166,10 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->tag;                                        \
         msg->hdr.seq_num = (m)->seq_num;                                \
+        if (NULL != (m)->routed) {                                      \
+            (void)strncpy(msg->hdr.routed, (m)->routed,                 \
+                          ORTE_MAX_RTD_SIZE);                           \
+        }                                                               \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \
         /* set the total number of bytes to be sent */                  \
@@ -204,6 +212,8 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         msg->hdr.dst = (m)->hdr.dst;                                    \
         msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->hdr.tag;                                    \
+        (void)strncpy(msg->hdr.routed, (m)->hdr.routed,                 \
+                      ORTE_MAX_RTD_SIZE);                               \
         /* point to the actual message */                               \
         msg->data = (m)->data;                                          \
         /* set the total number of bytes to be sent */                  \

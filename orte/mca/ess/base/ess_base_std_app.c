@@ -202,7 +202,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
     /* setup the routed info  */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed.init_routes";
         goto error;

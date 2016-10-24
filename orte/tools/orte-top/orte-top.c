@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +49,7 @@
 #include "opal/mca/event/event.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/routed/routed.h"
@@ -184,9 +185,10 @@ static void send_cmd(int fd, short dummy, void *arg)
     num_recvd = 0;
     buf = OBJ_NEW(opal_buffer_t);
     opal_dss.copy_payload(buf, &cmdbuf);
-    if (0 > (ret = orte_rml.send_buffer_nb(&(target_hnp->name), buf,
-                                           ORTE_RML_TAG_DAEMON,
-                                           orte_rml_send_callback, NULL))) {
+    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                                   &(target_hnp->name), buf,
+                                                   ORTE_RML_TAG_DAEMON,
+                                                   orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(buf);
         orte_quit(0,0,NULL);
@@ -207,6 +209,7 @@ main(int argc, char *argv[])
     int i;
     orte_vpid_t vstart, vend;
     int vint;
+    char *rtmod;
 
     /***************
      * Initialize
@@ -272,6 +275,9 @@ main(int argc, char *argv[])
         orte_finalize();
         return 1;
     }
+
+    /* get our routed module */
+    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
 
    /* setup the list for recvd stats */
     OBJ_CONSTRUCT(&recvd_stats, opal_list_t);
@@ -423,7 +429,7 @@ main(int argc, char *argv[])
             exit(1);
         }
         /* set the route to be direct */
-        if (ORTE_SUCCESS != orte_routed.update_route(&target_hnp->name, &target_hnp->name)) {
+        if (ORTE_SUCCESS != orte_routed.update_route(rtmod, &target_hnp->name, &target_hnp->name)) {
             orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, target_hnp->rml_uri);
             orte_finalize();
             exit(1);
@@ -435,7 +441,7 @@ main(int argc, char *argv[])
     }
 
     /* set the target hnp as our lifeline so we will terminate if it exits */
-    orte_routed.set_lifeline(&target_hnp->name);
+    orte_routed.set_lifeline(rtmod, &target_hnp->name);
 
     /* if an output file was specified, open it */
     if (NULL != logfile) {

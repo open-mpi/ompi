@@ -115,6 +115,7 @@ int orte_ess_base_orted_setup(char **hosts)
     char *param;
     hwloc_obj_t obj;
     unsigned i, j;
+    opal_list_t transports;
 
     /* my name is set, xfer it to the OPAL layer */
     orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
@@ -427,14 +428,26 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_routed_base_select";
         goto error;
     }
-    /* setup the routed info - the selected routed component
-     * will know what to do.
-     */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+    /* setup the routed info */
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed.init_routes";
         goto error;
     }
+
+    /* get a conduit for our use - we never route IO over fabric */
+    OBJ_CONSTRUCT(&transports, opal_list_t);
+    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
+                       ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
+    orte_mgmt_conduit = orte_rml.open_conduit(&transports);
+    OPAL_LIST_DESTRUCT(&transports);
+
+    OBJ_CONSTRUCT(&transports, opal_list_t);
+    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
+                       ORTE_ATTR_LOCAL, orte_coll_transport, OPAL_STRING);
+    orte_coll_conduit = orte_rml.open_conduit(&transports);
+    OPAL_LIST_DESTRUCT(&transports);
+
     /*
      * Group communications
      */
@@ -482,7 +495,7 @@ int orte_ess_base_orted_setup(char **hosts)
         /* define the routing tree so we know the pattern
          * if we are trying to setup common or static ports
          */
-        orte_routed.update_routing_plan();
+        orte_routed.update_routing_plan(NULL);
         /* extract the node info from the environment and
          * build a nidmap from it
          */
@@ -497,7 +510,7 @@ int orte_ess_base_orted_setup(char **hosts)
      * to mpirun goes through the tree if static ports were enabled - still
      * need to do it anyway just to initialize things
      */
-    orte_routed.update_routing_plan();
+    orte_routed.update_routing_plan(NULL);
 
     /* Now provide a chance for the PLM
      * to perform any module-specific init functions. This
@@ -514,10 +527,8 @@ int orte_ess_base_orted_setup(char **hosts)
         }
     }
 
-    /* setup the routed info - the selected routed component
-     * will know what to do.
-     */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+    /* setup the routed info */
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed.init_routes";
         goto error;
@@ -626,6 +637,10 @@ int orte_ess_base_orted_finalize(void)
     /* shutdown the pmix server */
     pmix_server_finalize();
     (void) mca_base_framework_close(&opal_pmix_base_framework);
+
+        /* release the conduits */
+    orte_rml.close_conduit(orte_mgmt_conduit);
+    orte_rml.close_conduit(orte_coll_conduit);
 
     /* close frameworks */
     (void) mca_base_framework_close(&orte_filem_base_framework);

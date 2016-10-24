@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -159,7 +159,8 @@ static int rcd_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_process_name_
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer)));
 
-    if (0 > (rc = orte_rml.send_buffer_nb(peer, send_buf,
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_coll_conduit,
+                                          peer, send_buf,
                                           ORTE_RML_TAG_ALLGATHER_RCD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);

@@ -92,7 +92,9 @@ static int orte_grpcomm_base_open(mca_base_open_flag_t flags)
     return mca_base_framework_components_open(&orte_grpcomm_base_framework, flags);
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(orte, grpcomm, NULL, NULL, orte_grpcomm_base_open, orte_grpcomm_base_close,
+MCA_BASE_FRAMEWORK_DECLARE(orte, grpcomm, "GRPCOMM", NULL,
+                           orte_grpcomm_base_open,
+                           orte_grpcomm_base_close,
                            mca_grpcomm_base_static_components, 0);
 
 OBJ_CLASS_INSTANCE(orte_grpcomm_base_active_t,

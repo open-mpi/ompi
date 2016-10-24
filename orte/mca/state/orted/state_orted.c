@@ -21,7 +21,7 @@
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
@@ -231,7 +231,8 @@ static void track_jobs(int fd, short argc, void *cbdata)
         }
 
         /* send it */
-        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
+        if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                              ORTE_PROC_MY_HNP, alert,
                                               ORTE_RML_TAG_PLM,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
@@ -253,6 +254,7 @@ static void track_procs(int fd, short argc, void *cbdata)
     opal_buffer_t *alert;
     int rc, i;
     orte_plm_cmd_flag_t cmd;
+    char *rtmod;
 
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s state:orted:track_procs called for proc %s state %s",
@@ -308,7 +310,8 @@ static void track_procs(int fd, short argc, void *cbdata)
                 }
             }
             /* send it */
-            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
+            if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                                  ORTE_PROC_MY_HNP, alert,
                                                   ORTE_RML_TAG_PLM,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
@@ -365,8 +368,9 @@ static void track_procs(int fd, short argc, void *cbdata)
          * gone, then terminate ourselves IF no local procs
          * remain (might be some from another job)
          */
+        rtmod = orte_rml.get_routed(orte_mgmt_conduit);
         if (orte_orteds_term_ordered &&
-            0 == orte_routed.num_routes()) {
+            0 == orte_routed.num_routes(rtmod)) {
             for (i=0; i < orte_local_children->size; i++) {
                 if (NULL != (pdata = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
                     ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_ALIVE)) {
@@ -404,7 +408,8 @@ static void track_procs(int fd, short argc, void *cbdata)
                                  "%s state:orted: SENDING JOB LOCAL TERMINATION UPDATE FOR JOB %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(jdata->jobid)));
-            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
+            if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                                  ORTE_PROC_MY_HNP, alert,
                                                   ORTE_RML_TAG_PLM,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);

@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,7 +118,8 @@ orte_rml_base_recv(int status, orte_process_name_t* sender,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
     buf = OBJ_NEW(opal_buffer_t);
-    if (0 > (rc = orte_rml.send_buffer_nb(sender, buf, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          sender, buf, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
