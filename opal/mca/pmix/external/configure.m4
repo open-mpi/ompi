@@ -18,6 +18,7 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2014-2015 Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,16 +31,41 @@
 AC_DEFUN([MCA_opal_pmix_external_CONFIG],[
     AC_CONFIG_FILES([opal/mca/pmix/external/Makefile])
 
-    AC_REQUIRE([OPAL_CHECK_PMIX])
-
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
-          [AS_IF([test "$opal_event_external_want" != "yes" || test "$opal_hwloc_external_support" != "yes"],
+          [AS_IF([test "$opal_event_external_support" != "yes"],
                  [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL LIBEVENT])
-                  AC_MSG_WARN([AND EXTERNAL HWLOC LIBRARIES. THESE LIBRARIES MUST POINT])
-                  AC_MSG_WARN([TO THE SAME ONES USED TO BUILD PMIX OR ELSE UNPREDICTABLE])
-                  AC_MSG_WARN([BEHAVIOR MAY RESULT])
+                  AC_MSG_WARN([LIBRARY. THIS LIBRARY MUST POINT TO THE SAME ONE USED])
+                  AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
                   AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
-           external_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/$opal_pmix_external_basedir/pmix -I${includedir}/openmpi/$opal_pmix_external_basedir/pmix/include'
-           $1],
+           AS_IF([test "$opal_hwloc_external_support" != "yes"],
+                 [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL HWLOC])
+                  AC_MSG_WARN([LIBRARY THIS LIBRARY MUST POINT TO THE SAME ONE USED ])
+                  AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
+                  AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
+
+           # check for the 1.1.4 version
+           AC_MSG_CHECKING([if external component is version 1.1.4 or compatible])
+           AS_IF([test "$opal_external_pmix_version" = "11" ||
+                  test "$opal_external_pmix_version" = "114" ||
+                  test "$opal_external_pmix_version" = "1X"],
+                 [AC_MSG_RESULT([yes])
+                  opal_pmix_external_11_happy=yes],
+                 [AC_MSG_RESULT([no])
+                  opal_pmix_external_11_happy=no])
+
+           AS_IF([test "$opal_pmix_external_11_happy" = "yes"],
+                 [$1
+                  # need to set the wrapper flags for static builds
+                  pmix_external_WRAPPER_EXTRA_LDFLAGS=$opal_external_pmix_LDFLAGS
+                  pmix_external_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS],
+                 [$2])],
           [$2])
+
+    opal_pmix_external_CPPFLAGS=$opal_external_pmix_CPPFLAGS
+    opal_pmix_external_LDFLAGS=$opal_external_pmix_LDFLAGS
+    opal_pmix_external_LIBS=$opal_external_pmix_LIBS
+
+    AC_SUBST([opal_pmix_external_CPPFLAGS])
+    AC_SUBST([opal_pmix_external_LDFLAGS])
+    AC_SUBST([opal_pmix_external_LIBS])
 ])dnl

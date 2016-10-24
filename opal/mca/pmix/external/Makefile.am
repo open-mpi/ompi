@@ -34,15 +34,15 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pmix_external_la_SOURCES = $(sources)
 mca_pmix_external_la_CFLAGS =
-mca_pmix_external_la_CPPFLAGS = $(opal_pmix_ext_CPPFLAGS)
-mca_pmix_external_la_LDFLAGS = -module -avoid-version $(opal_pmix_ext_LDFLAGS)
-mca_pmix_external_la_LIBADD = $(opal_pmix_ext_LIBS) \
+mca_pmix_external_la_CPPFLAGS = $(opal_pmix_external_CPPFLAGS)
+mca_pmix_external_la_LDFLAGS = -module -avoid-version $(opal_pmix_external_LDFLAGS)
+mca_pmix_external_la_LIBADD = $(opal_pmix_external_LIBS) \
         $(OPAL_TOP_BUILDDIR)/opal/mca/event/lib@OPAL_LIB_PREFIX@mca_event.la \
         $(OPAL_TOP_BUILDDIR)/opal/mca/hwloc/lib@OPAL_LIB_PREFIX@mca_hwloc.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pmix_external_la_SOURCES =$(sources)
 libmca_pmix_external_la_CFLAGS =
-libmca_pmix_external_la_CPPFLAGS = $(opal_pmix_ext_CPPFLAGS)
-libmca_pmix_external_la_LDFLAGS = -module -avoid-version $(opal_pmix_ext_LDFLAGS)
-libmca_pmix_external_la_LIBADD = $(opal_pmix_ext_LIBS)
+libmca_pmix_external_la_CPPFLAGS = $(opal_pmix_external_CPPFLAGS)
+libmca_pmix_external_la_LDFLAGS = -module -avoid-version $(opal_pmix_external_LDFLAGS)
+libmca_pmix_external_la_LIBADD = $(opal_pmix_external_LIBS)

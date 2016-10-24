@@ -16,6 +16,7 @@
 # Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
 # Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,7 +39,19 @@ AC_DEFUN([MCA_opal_pmix_pmix112_CONFIG],[
     opal_pmix_pmix112_save_LDFLAGS=$LDFLAGS
     opal_pmix_pmix112_save_LIBS=$LIBS
 
-    opal_pmix_pmix112_args="--enable-embedded-mode --with-pmix-symbol-prefix=opal_pmix_pmix112_ --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
+    AC_ARG_ENABLE([pmix-dstore],
+                  [AC_HELP_STRING([--enable-pmix-dstore],
+                                  [Enable PMIx shared memory data store (default: disabled)])])
+    AC_MSG_CHECKING([if PMIx shared memory data store is enabled])
+    if test "$enable_pmix3_dstore" == "yes"; then
+        AC_MSG_RESULT([yes])
+        opal_pmix_pmix_sm_flag=--enable-dstore
+    else
+        AC_MSG_RESULT([no (disabled)])
+        opal_pmix_pmix_sm_flag=--disable-dstore
+    fi
+
+    opal_pmix_pmix112_args="--enable-embedded-mode --with-pmix-symbol-prefix=opal_pmix_pmix112_ $opal_pmix_pmix_sm_flag --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix112_args="--enable-debug $opal_pmix_pmix112_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
