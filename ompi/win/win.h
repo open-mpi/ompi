@@ -68,7 +68,7 @@ enum ompi_win_accumulate_order_flags_t {
 };
 
 OMPI_DECLSPEC extern mca_base_var_enum_t *ompi_win_accumulate_ops;
-OMPI_DECLSPEC extern mca_base_var_enum_t *ompi_win_accumulate_order;
+OMPI_DECLSPEC extern mca_base_var_enum_flag_t *ompi_win_accumulate_order;
 
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_windows;
 

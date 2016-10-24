@@ -46,7 +46,7 @@ opal_pointer_array_t ompi_mpi_windows = {{0}};
 ompi_predefined_win_t ompi_mpi_win_null = {{{0}}};
 ompi_predefined_win_t *ompi_mpi_win_null_addr = &ompi_mpi_win_null;
 mca_base_var_enum_t *ompi_win_accumulate_ops = NULL;
-mca_base_var_enum_t *ompi_win_accumulate_order = NULL;
+mca_base_var_enum_flag_t *ompi_win_accumulate_order = NULL;
 
 static mca_base_var_enum_value_t accumulate_ops_values[] = {
     {.value = OMPI_WIN_ACCUMULATE_OPS_SAME_OP_NO_OP, .string = "same_op_no_op",},
@@ -61,7 +61,7 @@ static mca_base_var_enum_value_flag_t accumulate_order_flags[] = {
     {.flag = OMPI_WIN_ACC_ORDER_WAR, .string = "war", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
     {.flag = OMPI_WIN_ACC_ORDER_RAW, .string = "raw", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
     {.flag = OMPI_WIN_ACC_ORDER_WAW, .string = "waw", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
-    {},
+    {0},
 };
 
 static void ompi_win_construct(ompi_win_t *win);
@@ -161,7 +161,7 @@ static int alloc_window(struct ompi_communicator_t *comm, ompi_info_t *info, int
     ret = ompi_info_get_value_enum (info, "accumulate_order", &acc_order,
                                     OMPI_WIN_ACC_ORDER_RAR | OMPI_WIN_ACC_ORDER_WAR |
                                     OMPI_WIN_ACC_ORDER_RAW | OMPI_WIN_ACC_ORDER_WAW,
-                                    ompi_win_accumulate_order, &flag);
+                                    &(ompi_win_accumulate_order->super), &flag);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(win);
         return ret;
