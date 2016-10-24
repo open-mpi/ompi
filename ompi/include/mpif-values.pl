@@ -86,6 +86,7 @@ if (-r "ompi/include/mpi.h.in") {
 #----------------------------------------------------------------------------
 
 my $handles;
+my $lhandles;
 
 $handles->{MPI_COMM_WORLD} = 0;
 $handles->{MPI_COMM_SELF} = 1;
@@ -398,7 +399,9 @@ $io_constants->{MPI_MODE_UNIQUE_OPEN} = 32;
 $io_constants->{MPI_MODE_EXCL} = 64;
 $io_constants->{MPI_MODE_APPEND} = 128;
 $io_constants->{MPI_MODE_SEQUENTIAL} = 256;
-$io_constants->{MPI_DISPLACEMENT_CURRENT} = -54278278;
+
+my $lio_constants;
+$lio_constants->{MPI_DISPLACEMENT_CURRENT} = -54278278;
 
 #----------------------------------------------------------------------------
 
@@ -421,6 +424,8 @@ my $header = '! -*- fortran -*-
 !                         All rights reserved.
 ! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+! Copyright (c) 2016      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -431,26 +436,32 @@ my $header = '! -*- fortran -*-
 ';
 
 sub write_fortran_file {
-    my ($header, $vals, $file) = @_;
+    my ($header, $vals, $lvals, $file) = @_;
 
     foreach my $key (sort(keys(%{$vals}))) {
         $header .= "        integer $key\n";
+    }
+    foreach my $key (sort(keys(%{$lvals}))) {
+        $header .= "        integer(KIND=MPI_OFFSET_KIND) $key\n";
     }
     $header .= "\n";
     foreach my $key (sort(keys(%{$vals}))) {
         $header .= "        parameter ($key=$vals->{$key})\n";
     }
+    foreach my $key (sort(keys(%{$lvals}))) {
+        $header .= "        parameter ($key=$lvals->{$key})\n";
+    }
 
     write_file($file, $header);
 }
 
-write_fortran_file($header, $handles,
+write_fortran_file($header, $handles, {},
                    "$topdir/ompi/include/mpif-handles.h");
-write_fortran_file($header, $constants,
+write_fortran_file($header, $constants, {},
                    "$topdir/ompi/include/mpif-constants.h");
-write_fortran_file($header, $io_handles,
+write_fortran_file($header, $io_handles, {},
                    "$topdir/ompi/include/mpif-io-handles.h");
-write_fortran_file($header, $io_constants,
+write_fortran_file($header, $io_constants, $lio_constants,
                    "$topdir/ompi/include/mpif-io-constants.h");
 
 #----------------------------------------------------------------------------
@@ -478,6 +489,8 @@ my $output = '/* WARNING! THIS IS A GENERATED FILE!!
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2009-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -501,6 +514,9 @@ foreach my $key (sort(keys(%{$handles}))) {
 $output .= "\n#if OMPI_PROVIDE_MPI_FILE_INTERFACE\n";
 foreach my $key (sort(keys(%{$io_constants}))) {
     $output .= "#define OMPI_$key $io_constants->{$key}\n";
+}
+foreach my $key (sort(keys(%{$lio_constants}))) {
+    $output .= "#define OMPI_$key $lio_constants->{$key}\n";
 }
 $output .= "\n";
 foreach my $key (sort(keys(%{$io_handles}))) {
