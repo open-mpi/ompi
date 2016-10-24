@@ -14,7 +14,9 @@
  *                         reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +53,7 @@ int mca_pml_ob1_irecv_init(void *addr,
     if (NULL == recvreq)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
+    recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, true);
@@ -82,6 +85,7 @@ int mca_pml_ob1_irecv(void *addr,
     if (NULL == recvreq)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
+    recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, false);
@@ -118,6 +122,7 @@ int mca_pml_ob1_recv(void *addr,
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
+    recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,
                                   src, tag, comm, false);
 
