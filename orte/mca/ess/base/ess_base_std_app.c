@@ -77,6 +77,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 {
     int ret;
     char *error = NULL;
+    opal_list_t transports;
 
     /*
      * stdout/stderr buffering
@@ -188,6 +189,26 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_routed_base_select";
         goto error;
     }
+    /* setup the routed info */
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed.init_routes";
+        goto error;
+    }
+
+    /* get a conduit for our use - we never route IO over fabric */
+    OBJ_CONSTRUCT(&transports, opal_list_t);
+    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
+                       ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
+    orte_mgmt_conduit = orte_rml.open_conduit(&transports);
+    OPAL_LIST_DESTRUCT(&transports);
+
+    OBJ_CONSTRUCT(&transports, opal_list_t);
+    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
+                       ORTE_ATTR_LOCAL, orte_coll_transport, OPAL_STRING);
+    orte_coll_conduit = orte_rml.open_conduit(&transports);
+    OPAL_LIST_DESTRUCT(&transports);
+
     /*
      * Group communications
      */
@@ -201,12 +222,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_grpcomm_base_select";
         goto error;
     }
-    /* setup the routed info  */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed.init_routes";
-        goto error;
-    }
+
 #if OPAL_ENABLE_FT_CR == 1
     /*
      * Setup the SnapC
@@ -272,6 +288,10 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&orte_snapc_base_framework);
     (void) mca_base_framework_close(&orte_sstore_base_framework);
 #endif
+
+    /* release the conduits */
+    orte_rml.close_conduit(orte_mgmt_conduit);
+    orte_rml.close_conduit(orte_coll_conduit);
 
     /* close frameworks */
     (void) mca_base_framework_close(&orte_filem_base_framework);
