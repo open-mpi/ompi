@@ -191,7 +191,8 @@ int main(int argc, char* argv[])
         /* Don't set a filename. If we stop the session before setting it, then no output file
          * will be generated.
          */
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf ) ) {
+
+        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
         }
     }
