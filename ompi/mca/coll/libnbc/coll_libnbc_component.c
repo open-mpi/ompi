@@ -13,6 +13,9 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -234,17 +237,24 @@ int
 ompi_coll_libnbc_progress(void)
 {
     ompi_coll_libnbc_request_t* request, *next;
+    int res;
 
     if (opal_atomic_trylock(&mca_coll_libnbc_component.progress_lock)) return 0;
 
     OPAL_LIST_FOREACH_SAFE(request, next, &mca_coll_libnbc_component.active_requests,
                            ompi_coll_libnbc_request_t) {
-        if (OMPI_SUCCESS == NBC_Progress(request)) {
+        res = NBC_Progress(request);
+        if( NBC_CONTINUE != res ) {
             /* done, remove and complete */
             opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
                                   &request->super.super.super);
 
-            request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+            if( OMPI_SUCCESS == res || NBC_OK == res || NBC_SUCCESS == res ) {
+                request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+            }
+            else {
+                request->super.req_status.MPI_ERROR = res;
+            }
             OPAL_THREAD_LOCK(&ompi_request_lock);
             ompi_request_complete(&request->super, true);
             OPAL_THREAD_UNLOCK(&ompi_request_lock);
