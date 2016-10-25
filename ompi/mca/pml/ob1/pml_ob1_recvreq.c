@@ -1050,10 +1050,6 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
 static inline void append_recv_req_to_queue(opal_list_t *queue,
         mca_pml_ob1_recv_request_t *req)
 {
-    if(OPAL_UNLIKELY(req->req_recv.req_base.req_type == MCA_PML_REQUEST_IPROBE ||
-                     req->req_recv.req_base.req_type == MCA_PML_REQUEST_IMPROBE))
-        return;
-
     opal_list_append(queue, (opal_list_item_t*)req);
 
     /**
@@ -1204,7 +1200,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         req->req_recv.req_base.req_proc = proc->ompi_proc;
         frag = recv_req_match_specific_proc(req, proc);
         queue = &proc->specific_receives;
-        /* wild cardrecv will be prepared on match */
+        /* wildcard recv will be prepared on match */
         prepare_recv_req_converter(req);
     }
 
@@ -1213,7 +1209,9 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                                 &(req->req_recv.req_base), PERUSE_RECV);
         /* We didn't find any matches.  Record this irecv so we can match
            it when the message comes in. */
-        append_recv_req_to_queue(queue, req);
+        if(OPAL_LIKELY(req->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE &&
+                       req->req_recv.req_base.req_type != MCA_PML_REQUEST_IMPROBE))
+            append_recv_req_to_queue(queue, req);
         req->req_match_received = false;
         OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
     } else {
