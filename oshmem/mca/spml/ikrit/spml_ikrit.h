@@ -40,11 +40,6 @@
 #define MXM_VERSION(major, minor) (((major)<<MXM_MAJOR_BIT)|((minor)<<MXM_MINOR_BIT))
 #endif
 
-#if MXM_API < MXM_VERSION(2,0)
-#include <mxm/api/mxm_addr.h>
-#include <mxm/api/mxm_stats.h>
-#endif
-
 #define MXM_SHMEM_MQ_ID 0x7119
 
 /* start request explicit ack once our buffer pool is less than watermark */
@@ -103,9 +98,7 @@ struct mca_spml_ikrit_t {
     int hw_rdma_channel;  /* true if we provide separate channel that
                        has true one sided capability */
     int np;
-#if MXM_API >= MXM_VERSION(2,0)
     int unsync_conn_max;
-#endif
     size_t put_zcopy_threshold; /* enable zcopy in put if message size is
                                    greater than the threshold */
 };
@@ -114,11 +107,9 @@ typedef struct mca_spml_ikrit_t mca_spml_ikrit_t;
 
 #define MXM_MAX_ADDR_LEN 512
 
-#if MXM_API >= MXM_VERSION(2,0)
 #define MXM_PTL_SHM  0
 #define MXM_PTL_RDMA 1
 #define MXM_PTL_LAST 2
-#endif
 
 typedef struct spml_ikrit_mxm_ep_conn_info_t {
     union {

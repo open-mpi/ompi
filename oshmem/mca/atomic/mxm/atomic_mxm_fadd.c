@@ -84,13 +84,8 @@ int mca_atomic_mxm_fadd(void *target,
     sreq.base.data_type = MXM_REQ_DATA_BUFFER;
 
     sreq.op.atomic.remote_vaddr = (uintptr_t) remote_addr;
-#if MXM_API < MXM_VERSION(2,0)
-    sreq.op.atomic.remote_memh  = MXM_INVALID_MEM_HANDLE;
-    memcpy(&sreq.op.atomic.value8, value, nlong);
-#else
     sreq.op.atomic.remote_mkey = to_mxm_mkey(r_mkey);
     memcpy(&sreq.op.atomic.value, value, nlong);
-#endif
     sreq.op.atomic.order = nlong_order;
 
     /* Do we need atomic 'add' or atomic 'fetch and add'? */
@@ -98,22 +93,13 @@ int mca_atomic_mxm_fadd(void *target,
         sreq.base.data.buffer.ptr = dummy_buf;
         sreq.base.data.buffer.length = nlong;
         sreq.base.data.buffer.memh = MXM_INVALID_MEM_HANDLE;
-#if MXM_API < MXM_VERSION(2,0)
-        sreq.base.flags = MXM_REQ_FLAG_SEND_SYNC;
-        sreq.opcode = MXM_REQ_OP_ATOMIC_ADD;
-#else
         sreq.flags = 0;
         sreq.opcode = MXM_REQ_OP_ATOMIC_FADD;
-#endif
     } else {
         sreq.base.data.buffer.ptr = prev;
         sreq.base.data.buffer.length = nlong;
         sreq.base.data.buffer.memh = MXM_INVALID_MEM_HANDLE;
-#if MXM_API < MXM_VERSION(2,0)
-        sreq.base.flags = 0;
-#else
         sreq.flags = 0;
-#endif
 
         sreq.opcode = MXM_REQ_OP_ATOMIC_FADD;
     }
