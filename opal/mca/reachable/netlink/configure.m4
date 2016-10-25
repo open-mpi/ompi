@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015-2016 Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -40,7 +42,6 @@ dnl LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 dnl ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 dnl POSSIBILITY OF SUCH DAMAGE.
 
-
 dnl Check for libnl; prefer version 3 instead of version 1.  Abort (i.e.,
 dnl AC_MSG_ERROR) if neither libnl v1 or v3 can be found.
 dnl
@@ -50,95 +51,42 @@ dnl - Set $1 to the CPPFLAGS necessary to compile with libnl
 dnl - Set $2 to the LIBS necessary to link with libnl
 dnl - If $3 is 1, AC_MSG_ERROR (i.e., abort) if neither libnl or
 dnl   libnl3 can be found
-dnl - Set HAVE_LIBNL3 to 1 if libnl3 will be used; 0 if libnl1 will be used
-dnl - AC_SUBST $HAVE_LIBNL3
-dnl - AC_DEFINE HAVE_LIBNL3
+dnl - Set OPAL_HAVE_LIBNL3 to 1 if libnl v3 will be used; 0 if libnl v1 will be used
+dnl - AC_SUBST $OPAL_HAVE_LIBNL3
+dnl - AC_DEFINE OPAL_HAVE_LIBNL3
 dnl
 dnl --------------------------------------------------------
-AC_DEFUN([OPAL_REACHABLE_NETLINK_CHECK_LIBNL3],[
-       # More libnl v1/v3 sadness: the two versions are not compatible
-       # and will not work correctly if simultaneously linked into the
-       # same applications.  Unfortunately, they *will* link into the
-       # same image!  On platforms like SLES 12, libibverbs depends on
-       # libnl-3.so.200 and friends, while a naive implementation of
-       # our configure logic would link libnl.so.1 to libdaplusnic,
-       # resulting in both versions in the dependency map at the same
-       # time.  As a coarse fix, just check for libnl-3 first and use
-       # it if present on the system.
+AC_DEFUN([OPAL_REACHABLE_NETLINK_CHECK_LIBNL_Vx],[
 
-       # GROSS: libnl wants us to either use pkg-config (which we
-       # can't assume is always present) or we need to look in a
-       # particular directory for the right libnl3 include files.  For
-       # now, just hard code the special path into this logic.
+	# Default to a numeric value (this value gets AC_DEFINEd)
+	OPAL_HAVE_LIBNL3=0
 
-       save_CPPFLAGS=$CPPFLAGS
-       save_LIBS=$LIBS
+	###################################################
+	# NOTE: We *must* check for libnl3 before libnl.
+	###################################################
 
-       $1="-I/usr/include/libnl3"
-       CPPFLAGS="$$1 $CPPFLAGS"
-       AC_MSG_CHECKING([for /usr/include/libnl3])
-       AS_IF([test -d "/usr/include/libnl3"],
-             [AC_MSG_RESULT([present])
-              AC_CHECK_HEADER(
-                [netlink/version.h],
-                [AC_COMPILE_IFELSE(
-                    [AC_LANG_PROGRAM([[
-#include <netlink/netlink.h>
-#include <netlink/version.h>
-#ifndef LIBNL_VER_MAJ
-#error "LIBNL_VER_MAJ not defined!"
-#endif
-/* to the best of our knowledge, version.h only exists in libnl3 */
-#if LIBNL_VER_MAJ < 3
-#error "LIBNL_VER_MAJ < 3, this is very unusual"
-#endif
-                        ]],[[/* empty body */]])],
-                    [HAVE_LIBNL3=1],    dnl our program compiled
-                    [HAVE_LIBNL3=0])],  dnl our program failed to compile
-                [HAVE_LIBNL3=0],  dnl AC_CHECK_HEADER failed
-                [#include <netlink/netlink.h>
-                ])],
-             [AC_MSG_RESULT([missing])
-              HAVE_LIBNL3=0])  dnl "/usr/include/libnl3" does not exist
+	AS_IF([test $opal_libnl_version -ne 1],
+	      [OPAL_CHECK_LIBNL_V3([$opal_libnl_location], [opal_reachable_netlink])])
+	AS_IF([test $opal_libnl_version -ne 3 &&
+	       test -z "$opal_reachable_netlink_LIBS"],
+	      [OPAL_CHECK_LIBNL_V1([$opal_libnl_location], [opal_reachable_netlink])])
 
-       # nl_recvmsgs_report is a symbol that is only present in v3
-       AS_IF([test "$HAVE_LIBNL3" -eq 1],
-             [AC_SEARCH_LIBS([nl_recvmsgs_report], [nl-3],
-                             [# We also need libnl-route-3
-                              AC_SEARCH_LIBS([nl_rtgen_request], [nl-route-3],
-                                             [$2="-lnl-3 -lnl-route-3"
-                                              HAVE_LIBNL3=1],
-                                             [HAVE_LIBNL3=0])],
-                             [HAVE_LIBNL3=0])])
+	AS_IF([test "$opal_want_libnl" = "yes" &&
+	       test "$opal_reachable_netlink_LIBS" = ""],
+	      [AC_MSG_WARN([--with-libnl specified, but not found])
+	       AC_MSG_ERROR([Cannot continue])])
 
-       AS_IF([test "$HAVE_LIBNL3" -eq 1],
-             [AC_MSG_NOTICE([using libnl-3])],
-             [# restore $1 since we are falling back to libnl (v1)
-              $1=""
-              AC_SEARCH_LIBS([nl_connect], [nl],
-                             [$2="-lnl"],
-                             [AC_MSG_WARN([Cannot find libnl-3 nor libnl])
-                              AS_IF([test "$3" = "1"],
-                                    [AC_MSG_ERROR([Cannot continue])])
-                             ])
-              AC_MSG_NOTICE([using libnl (v1)])])
+	# Final result
+	AC_SUBST([OPAL_HAVE_LIBNL3])
+	AC_DEFINE_UNQUOTED([OPAL_HAVE_LIBNL3], [$OPAL_HAVE_LIBNL3],
+	      [Whether we have libl v1 or libnl v3])
 
-       # libnl_utils.h does not include configure-generated config.h,
-       # so it may not see the HAVE_LIBNL3 #define.  Hence, we set
-       # HAVE_LIBNL3 as both a C preprocessor macro (in case some
-       # other file includes config.h before libnl_utils.h) and a
-       # Makefile macro (so that the app can set HAVE_LIBNL3 via
-       # CPPFLAGS).  Also, this macro may be used in multiple
-       # different libraries; setting HAVE_LIBNL3 both ways lets the
-       # application choose which way to set it.
-       AC_SUBST([HAVE_LIBNL3])
-       AC_DEFINE_UNQUOTED([HAVE_LIBNL3],[$HAVE_LIBNL3],
-                          [set to 1 if should use libnl v3, set to 0 for libnl v11])
+	AC_SUBST([opal_reachable_netlink_CPPFLAGS])
+	AC_SUBST([opal_reachable_netlink_LDFLAGS])
+	AC_SUBST([opal_reachable_netlink_LIBS])
 
-       LIBS=$save_LIBS
-       AS_UNSET([save_LIBS])
-       CPPFLAGS=$save_CPPFLAGS
-       AS_UNSET([save_CPPFLAGS])
+	AS_IF([test "$opal_reachable_netlink_LIBS" = ""],
+	      [opal_reachable_netlink_happy=0])
 ])
 
 dnl ==============================================================
@@ -159,16 +107,7 @@ AC_DEFUN([MCA_opal_reachable_netlink_CONFIG],[
 ])
 
     AS_IF([test $opal_reachable_netlink_happy -eq 1],
-          [OPAL_REACHABLE_NETLINK_CHECK_LIBNL3(
-                  [opal_reachable_netlink_LIBNL_CPPFLAGS],
-                  [opal_reachable_netlink_LIBNL_LIBS],
-                  [0])
-          ])
-    AS_IF([test "$opal_reachable_netlink_LIBNL_LIBS" == ""],
-          [opal_reachable_netlink_happy=0])
-
-    AC_SUBST(opal_reachable_netlink_LIBNL_CPPFLAGS)
-    AC_SUBST(opal_reachable_netlink_LIBNL_LIBS)
+          [OPAL_REACHABLE_NETLINK_CHECK_LIBNL_Vx])
 
     AS_IF([test $opal_reachable_netlink_happy -eq 1],
           [$1],
