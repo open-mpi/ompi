@@ -6,19 +6,19 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
-#                         reserved. 
-# Copyright (c) 2014-2015 Research Organization for Information Science
+#                         reserved.
+# Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -58,7 +58,7 @@ lib_LTLIBRARIES += libmpi_usempi.la
 mpi.lo: mpi.F90
 mpi.lo: mpi-f90-interfaces.h
 mpi.lo: $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h
-mpi.lo: mpi-f90-cptr-interfaces.F90
+mpi.lo: mpi-f90-cptr-interfaces.h
 
 # Per MPI-3 p610:34-41, if we're building a TKR mpi module, we should
 # not build any interfaces for MPI subroutines that take a choice
@@ -162,5 +162,5 @@ endif
 
 EXTRA_DIST = \
      mpi-f90-interfaces.h \
-     mpi-f90-cptr-interfaces.F90
+     mpi-f90-cptr-interfaces.h
 
