@@ -11,6 +11,8 @@
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2016      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 ! 
 ! Additional copyrights may follow
@@ -44,13 +46,16 @@ module mpi
 ! macro in this file, so we need to use the preprocessor include
 ! directive, not the Fortran include.
 #include "mpi-f90-cptr-interfaces.h"
+#include "pmpi-f90-cptr-interfaces.h"
 
 ! This file is generated, and is *huge*.  Its size is directly related
 ! to the --with-f90-max-array-dim configure parameter.
 
   include "mpi-f90-interfaces.h"
+  include "pmpi-f90-interfaces.h"
 #if OMPI_PROVIDE_MPI_FILE_INTEFACE
   include "mpi-f90-file-interfaces.h"
+  include "pmpi-f90-file-interfaces.h"
 #endif
 
 end module mpi
