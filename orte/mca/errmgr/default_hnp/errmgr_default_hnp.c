@@ -428,6 +428,13 @@ static void proc_errors(int fd, short args, void *cbdata)
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, NULL, OPAL_BOOL)) {
         /* always mark the waitpid as having fired */
         ORTE_ACTIVATE_PROC_STATE(&pptr->name, ORTE_PROC_STATE_WAITPID_FIRED);
+        /* if this is a remote proc, we won't hear anything more about it
+         * as the default behavior would be to terminate the job. So be sure to
+         * mark the IOF as having completed too so we correctly mark this proc
+         * as dead and notify everyone as required */
+        if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
+            ORTE_ACTIVATE_PROC_STATE(&pptr->name, ORTE_PROC_STATE_IOF_COMPLETE);
+        }
         goto cleanup;
     }
 
