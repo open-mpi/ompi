@@ -87,23 +87,14 @@ int mca_atomic_mxm_cswap(void *target,
     sreq.base.data.buffer.memh = MXM_INVALID_MEM_HANDLE;
 
     sreq.op.atomic.remote_vaddr = (uintptr_t) remote_addr;
-#if MXM_API < MXM_VERSION(2,0)
-    sreq.base.flags = 0;
-    sreq.op.atomic.remote_memh  = MXM_INVALID_MEM_HANDLE;
-#else
     sreq.flags = 0;
     sreq.op.atomic.remote_mkey = to_mxm_mkey(r_mkey);
-#endif
     sreq.op.atomic.order = nlong_order;
 
     if (NULL == cond) {
         sreq.opcode = MXM_REQ_OP_ATOMIC_SWAP;
     } else {
-#if MXM_API < MXM_VERSION(2,0)
-        memcpy(&sreq.op.atomic.value8, cond, nlong);
-#else
         memcpy(&sreq.op.atomic.value, cond, nlong);
-#endif
         sreq.opcode = MXM_REQ_OP_ATOMIC_CSWAP;
     }
 
