@@ -160,7 +160,6 @@ static int tuned_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_alltoall_intermediate_msg);
 
-    ompi_coll_tuned_use_dynamic_rules = false;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "use_dynamic_rules",
                                            "Switch used to decide if we use static (compiled/if statements) or dynamic (built at runtime) decision function rules",
