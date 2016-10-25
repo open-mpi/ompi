@@ -49,5 +49,8 @@ module mpi
 ! to the --with-f90-max-array-dim configure parameter.
 
   include "mpi-f90-interfaces.h"
+#if OMPI_PROVIDE_MPI_FILE_INTEFACE
+  include "mpi-f90-file-interfaces.h"
+#endif
 
 end module mpi

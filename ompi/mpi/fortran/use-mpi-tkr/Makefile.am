@@ -57,6 +57,7 @@ lib_LTLIBRARIES += libmpi_usempi.la
 
 mpi.lo: mpi.F90
 mpi.lo: mpi-f90-interfaces.h
+mpi.lo: mpi-f90-file-interfaces.h
 mpi.lo: $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h
 mpi.lo: mpi-f90-cptr-interfaces.h
 
@@ -162,5 +163,6 @@ endif
 
 EXTRA_DIST = \
      mpi-f90-interfaces.h \
+     mpi-f90-file-interfaces.h \
      mpi-f90-cptr-interfaces.h
 
