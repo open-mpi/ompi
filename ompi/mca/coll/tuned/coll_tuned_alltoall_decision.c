@@ -139,41 +139,6 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
     return (MPI_SUCCESS);
 }
 
-
-
-int ompi_coll_tuned_alltoall_intra_do_forced(const void *sbuf, int scount,
-                                             struct ompi_datatype_t *sdtype,
-                                             void* rbuf, int rcount,
-                                             struct ompi_datatype_t *rdtype,
-                                             struct ompi_communicator_t *comm,
-                                             mca_coll_base_module_t *module)
-{
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced selected algorithm %d",
-                 tuned_module->user_forced[ALLTOALL].algorithm));
-
-    switch (tuned_module->user_forced[ALLTOALL].algorithm) {
-    case (0):
-        return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
-    case (1):
-        return ompi_coll_base_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
-    case (2):
-        return ompi_coll_base_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
-    case (3):
-        return ompi_coll_base_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
-    case (4):
-        return ompi_coll_base_alltoall_intra_linear_sync (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module,
-                                                          tuned_module->user_forced[ALLTOALL].max_requests);
-    case (5):
-        return ompi_coll_base_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
-    } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                 tuned_module->user_forced[ALLTOALL].algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
-    return (MPI_ERR_ARG);
-}
-
-
 int ompi_coll_tuned_alltoall_intra_do_this(const void *sbuf, int scount,
                                            struct ompi_datatype_t *sdtype,
                                            void* rbuf, int rcount,

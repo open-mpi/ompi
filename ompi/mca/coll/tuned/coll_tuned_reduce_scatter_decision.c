@@ -119,35 +119,6 @@ int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_alg
     return (MPI_SUCCESS);
 }
 
-
-int ompi_coll_tuned_reduce_scatter_intra_do_forced(const void *sbuf, void* rbuf,
-                                                   const int *rcounts,
-                                                   struct ompi_datatype_t *dtype,
-                                                   struct ompi_op_t *op,
-                                                   struct ompi_communicator_t *comm,
-                                                   mca_coll_base_module_t *module)
-{
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_forced selected algorithm %d",
-                 tuned_module->user_forced[REDUCESCATTER].algorithm));
-
-    switch (tuned_module->user_forced[REDUCESCATTER].algorithm) {
-    case (0): return ompi_coll_tuned_reduce_scatter_intra_dec_fixed(sbuf, rbuf, rcounts,
-                                                                    dtype, op, comm, module);
-    case (1): return ompi_coll_base_reduce_scatter_intra_nonoverlapping(sbuf, rbuf, rcounts,
-                                                                        dtype, op, comm, module);
-    case (2): return ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(sbuf, rbuf, rcounts,
-                                                                                dtype, op, comm, module);
-    case (3): return ompi_coll_base_reduce_scatter_intra_ring(sbuf, rbuf, rcounts,
-                                                              dtype, op, comm, module);
-    } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                 tuned_module->user_forced[REDUCESCATTER].algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCESCATTER]));
-    return (MPI_ERR_ARG);
-}
-
-
 int ompi_coll_tuned_reduce_scatter_intra_do_this(const void *sbuf, void* rbuf,
                                                  const int *rcounts,
                                                  struct ompi_datatype_t *dtype,

@@ -120,47 +120,6 @@ ompi_coll_tuned_gather_intra_check_forced_init(coll_tuned_force_algorithm_mca_pa
 }
 
 int
-ompi_coll_tuned_gather_intra_do_forced(const void *sbuf, int scount,
-                                       struct ompi_datatype_t *sdtype,
-                                       void* rbuf, int rcount,
-                                       struct ompi_datatype_t *rdtype,
-                                       int root,
-                                       struct ompi_communicator_t *comm,
-                                       mca_coll_base_module_t *module)
-{
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:gather_intra_do_forced selected algorithm %d",
-                 tuned_module->user_forced[GATHER].algorithm));
-
-    switch (tuned_module->user_forced[GATHER].algorithm) {
-    case (0):
-        return ompi_coll_tuned_gather_intra_dec_fixed(sbuf, scount, sdtype,
-                                                      rbuf, rcount, rdtype,
-                                                      root, comm, module);
-    case (1):
-        return ompi_coll_base_gather_intra_basic_linear(sbuf, scount, sdtype,
-                                                        rbuf, rcount, rdtype,
-                                                        root, comm, module);
-    case (2):
-        return ompi_coll_base_gather_intra_binomial(sbuf, scount, sdtype,
-                                                     rbuf, rcount, rdtype,
-                                                     root, comm, module);
-    case (3):
-        return ompi_coll_base_gather_intra_linear_sync(sbuf, scount, sdtype,
-                                                       rbuf, rcount, rdtype,
-                                                       root, comm, module,
-                                                       tuned_module->user_forced[GATHER].segsize);
-    } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:gather_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                 tuned_module->user_forced[GATHER].algorithm,
-                 ompi_coll_tuned_forced_max_algorithms[GATHER]));
-    return (MPI_ERR_ARG);
-}
-
-int
 ompi_coll_tuned_gather_intra_do_this(const void *sbuf, int scount,
                                      struct ompi_datatype_t *sdtype,
                                      void* rbuf, int rcount,
