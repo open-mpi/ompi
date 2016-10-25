@@ -1177,6 +1177,9 @@ int mca_spml_ikrit_fence(void)
         oshmem_request_wait_any_completion();
     }
 
+    while (0 < mca_spml_ikrit.n_active_gets) {
+        oshmem_request_wait_any_completion();
+    }
 
     SPML_VERBOSE(20, "fence completed");
     return OSHMEM_SUCCESS;
