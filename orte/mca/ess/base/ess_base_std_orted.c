@@ -401,8 +401,6 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rml_base_select";
         goto error;
     }
-    /* add our contact info */
-    proc->rml_uri = orte_rml.get_contact_info();
 
     /* setup the PMIx server */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
@@ -448,7 +446,10 @@ int orte_ess_base_orted_setup(char **hosts)
     orte_coll_conduit = orte_rml.open_conduit(&transports);
     OPAL_LIST_DESTRUCT(&transports);
 
-    /*
+     /* add our contact info to our proc object */
+     proc->rml_uri = orte_rml.get_contact_info();
+
+   /*
      * Group communications
      */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_grpcomm_base_framework, 0))) {
@@ -638,7 +639,7 @@ int orte_ess_base_orted_finalize(void)
     pmix_server_finalize();
     (void) mca_base_framework_close(&opal_pmix_base_framework);
 
-        /* release the conduits */
+    /* release the conduits */
     orte_rml.close_conduit(orte_mgmt_conduit);
     orte_rml.close_conduit(orte_coll_conduit);
 
