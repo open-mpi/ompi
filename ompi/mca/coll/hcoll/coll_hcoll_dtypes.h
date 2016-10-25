@@ -125,6 +125,32 @@ ompi_predefined_derived_2_hcoll(int ompi_id) {
         return DTE_LONG_DOUBLE_INT;
     case OMPI_DATATYPE_MPI_2INT:
         return DTE_2INT;
+#if HCOLL_API >= HCOLL_VERSION(3,7)
+    case OMPI_DATATYPE_MPI_2INTEGER:
+#if OMPI_SIZEOF_FORTRAN_INTEGER == 4
+        return DTE_2INT;
+#elif OMPI_SIZEOF_FORTRAN_INTEGER == 8
+        return DTE_2INT64;
+#else
+        return DTE_ZERO;
+#endif
+    case OMPI_DATATYPE_MPI_2REAL:
+#if OMPI_SIZEOF_FORTRAN_REAL == 4
+        return DTE_2FLOAT32;
+#elif OMPI_SIZEOF_FORTRAN_REAL == 8
+        return DTE_2FLOAT64;
+#else
+        return DTE_ZERO;
+#endif
+    case OMPI_DATATYPE_MPI_2DBLPREC:
+#if OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION == 4
+        return DTE_2FLOAT32;
+#elif OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION == 8
+        return DTE_2FLOAT64;
+#else
+        return DTE_ZERO;
+#endif
+#endif
     default:
         break;
     }
