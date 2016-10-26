@@ -445,16 +445,18 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
                              "pmix:client finalize sync received");
     }
 
+    PMIX_DESTRUCT(&pmix_client_globals.myserver);
     pmix_rte_finalize();
 
-     PMIX_DESTRUCT(&pmix_client_globals.myserver);
-     PMIX_LIST_DESTRUCT(&pmix_client_globals.pending_requests);
+    PMIX_LIST_DESTRUCT(&pmix_client_globals.pending_requests);
 
-     if (0 <= pmix_client_globals.myserver.sd) {
+    if (0 <= pmix_client_globals.myserver.sd) {
         CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
     }
 
     pmix_bfrop_close();
+
+    pmix_class_finalize();
 
     return PMIX_SUCCESS;
 }
@@ -529,8 +531,8 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
      return PMIX_SUCCESS;
  }
 
- static void _putfn(int sd, short args, void *cbdata)
- {
+static void _putfn(int sd, short args, void *cbdata)
+{
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_status_t rc;
     pmix_kval_t *kv;
@@ -552,21 +554,10 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
         /* shouldn't be possible */
         goto done;
     }
-#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    /* TODO: It is not safe to store data on a client side
-     * There is a possibility to get server/client conflict.
-     * Do nothing here misses PMIx_Get/PMIx_Put flow (w/o PMIx_Commit)
-     */
-    /*
-    if (PMIX_SUCCESS != (rc = pmix_dstore_store(ns->nspace, pmix_globals.myid.rank, kv))) {
-        PMIX_ERROR_LOG(rc);
-    }
-    */
-#else
+
     if (PMIX_SUCCESS != (rc = pmix_hash_store(&ns->modex, pmix_globals.myid.rank, kv))) {
         PMIX_ERROR_LOG(rc);
     }
-#endif /* PMIX_ENABLE_DSTORE */
 
     /* pack the cache that matches the scope - global scope needs
      * to go into both local and remote caches */

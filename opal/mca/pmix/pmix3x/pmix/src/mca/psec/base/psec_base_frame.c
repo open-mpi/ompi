@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,6 +32,7 @@
 #endif
 
 #include "src/class/pmix_list.h"
+#include "src/mca/base/base.h"
 #include "src/mca/psec/base/base.h"
 
 /*
@@ -43,33 +44,37 @@
 #include "src/mca/psec/base/static-components.h"
 
 /* Instantiate the global vars */
-pmix_psec_globals_t pmix_psec_globals = {0};
+pmix_psec_globals_t pmix_psec_globals = {{{0}}};
 
 static pmix_status_t pmix_psec_close(void)
 {
-  pmix_psec_base_active_module_t *active;
+  pmix_psec_base_active_module_t *active, *prev;
 
     if (!pmix_psec_globals.initialized) {
         return PMIX_SUCCESS;
     }
     pmix_psec_globals.initialized = false;
 
-    PMIX_LIST_FOREACH(active, &pmix_psec_globals.actives, pmix_psec_base_active_module_t) {
+    PMIX_LIST_FOREACH_SAFE(active, prev, &pmix_psec_globals.actives, pmix_psec_base_active_module_t) {
+      pmix_list_remove_item(&pmix_psec_globals.actives, &active->super);
       if (NULL != active->component->finalize) {
         active->component->finalize();
       }
+      PMIX_RELEASE(active);
     }
     PMIX_DESTRUCT(&pmix_psec_globals.actives);
 
-    return PMIX_SUCCESS;
+    return pmix_mca_base_framework_components_close(&pmix_psec_base_framework, NULL);
 }
 
 static pmix_status_t pmix_psec_open(pmix_mca_base_open_flag_t flags)
 {
-  /* initialize globals */
-  pmix_psec_globals.initialized = true;
-  PMIX_CONSTRUCT(&pmix_psec_globals.actives, pmix_list_t);
-  return PMIX_SUCCESS;
+    /* initialize globals */
+    pmix_psec_globals.initialized = true;
+    PMIX_CONSTRUCT(&pmix_psec_globals.actives, pmix_list_t);
+
+    /* Open up all available components */
+    return pmix_mca_base_framework_components_open(&pmix_psec_base_framework, flags);
 }
 
 PMIX_MCA_BASE_FRAMEWORK_DECLARE(pmix, psec, "PMIx Security Operations",
