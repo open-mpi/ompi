@@ -31,7 +31,9 @@ char** mca_common_monitoring_current_filename = NULL;
 
 /* array for stroring monitoring data*/
 uint64_t* sent_data = NULL;
+uint64_t* recv_data = NULL;
 uint64_t* messages_count = NULL;
+uint64_t* rmessages_count = NULL;
 uint64_t* filtered_sent_data = NULL;
 uint64_t* filtered_messages_count = NULL;
 
@@ -45,9 +47,14 @@ opal_hash_table_t *translation_ht = NULL;
  * positive value if the segregation between point-to-point and collective is
  * disabled.
  */
-int common_monitoring_filter( void )
+inline int common_monitoring_filter( void )
 {
     return mca_common_monitoring_current_state;
+}
+
+inline opal_hash_table_t*common_monitoring_get_translation_ht()
+{
+    return translation_ht;
 }
 
 int common_monitoring_set_flush(struct mca_base_pvar_t *pvar, const void *value, void *obj)
@@ -161,7 +168,7 @@ void common_monitoring_enable(bool enable, void*pml_monitoring_component)
                                  MPI_T_PVAR_CLASS_SIZE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
-                                 common_monitoring_get_messages_size, NULL,
+                                 common_monitoring_get_rmessages_size, NULL,
                                  common_monitoring_messages_notify, NULL);
 }
 
@@ -199,9 +206,11 @@ int common_monitoring_add_procs(struct ompi_proc_t **procs,
         translation_ht = OBJ_NEW(opal_hash_table_t);
         opal_hash_table_init(translation_ht, 2048);
 
-        sent_data               = (uint64_t*)calloc(4 * nprocs_world, sizeof(uint64_t));
-        messages_count          = sent_data + nprocs_world;
-        filtered_sent_data      = messages_count + nprocs_world;
+        sent_data               = (uint64_t*)calloc(6 * nprocs_world, sizeof(uint64_t));
+        recv_data               = sent_data + nprocs_world;
+        messages_count          = recv_data + nprocs_world;
+        rmessages_count         = messages_count + nprocs_world;
+        filtered_sent_data      = rmessages_count + nprocs_world;
         filtered_messages_count = filtered_sent_data + nprocs_world;
     }
 
@@ -245,7 +254,9 @@ void common_monitoring_finalize( void )
 void common_monitoring_reset( void )
 {
     memset(sent_data, 0, nprocs_world * sizeof(uint64_t));
+    memset(recv_data, 0, nprocs_world * sizeof(uint64_t));
     memset(messages_count, 0, nprocs_world * sizeof(uint64_t));
+    memset(rmessages_count, 0, nprocs_world * sizeof(uint64_t));
     memset(filtered_sent_data, 0, nprocs_world * sizeof(uint64_t));
     memset(filtered_messages_count, 0, nprocs_world * sizeof(uint64_t));
 }
@@ -296,6 +307,43 @@ int common_monitoring_get_messages_size(const struct mca_base_pvar_t *pvar,
 
     for (i = 0 ; i < comm_size ; ++i) {
         values[i] = sent_data[i];
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int common_monitoring_get_rmessages_count(const struct mca_base_pvar_t *pvar,
+                                          void *value,
+                                          void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    int i, comm_size = ompi_comm_size (comm);
+    uint64_t *values = (uint64_t*) value;
+
+    if(comm != &ompi_mpi_comm_world.comm || NULL == messages_count)
+        return OMPI_ERROR;
+
+    for (i = 0 ; i < comm_size ; ++i) {
+        values[i] = rmessages_count[i];
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int common_monitoring_get_rmessages_size(const struct mca_base_pvar_t *pvar,
+                                         void *value,
+                                         void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    int comm_size = ompi_comm_size (comm);
+    uint64_t *values = (uint64_t*) value;
+    int i;
+
+    if(comm != &ompi_mpi_comm_world.comm || NULL == sent_data)
+        return OMPI_ERROR;
+
+    for (i = 0 ; i < comm_size ; ++i) {
+        values[i] = recv_data[i];
     }
 
     return OMPI_SUCCESS;

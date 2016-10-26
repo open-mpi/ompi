@@ -10,6 +10,8 @@
 #ifndef MCA_OSC_MONITORING_PASSIVE_TARGET_H
 #define MCA_OSC_MONITORING_PASSIVE_TARGET_H
 
+#include <ompi/win/win.h>
+
 #define OSC_MONITORING_GENERATE_TEMPLATE_PASSIVE_TARGET(template)       \
                                                                         \
     static int ompi_osc_monitoring_## template ##_sync (struct ompi_win_t *win) \

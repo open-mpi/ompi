@@ -10,6 +10,9 @@
 #ifndef MCA_OSC_MONITORING_ACTIVE_TARGET_H
 #define MCA_OSC_MONITORING_ACTIVE_TARGET_H
 
+#include <ompi/group/group.h>
+#include <ompi/win/win.h>
+
 #define OSC_MONITORING_GENERATE_TEMPLATE_ACTIVE_TARGET(template)        \
                                                                         \
     static int ompi_osc_monitoring_## template ##_post (ompi_group_t *group, int assert, ompi_win_t *win) \
