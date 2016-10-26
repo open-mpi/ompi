@@ -82,7 +82,7 @@ static const char flush_pvar_name[] = "pml_monitoring_flush";
 static const char flush_cvar_name[] = "pml_monitoring_enable";
 static const void*nullbuf = NULL;
 static int flush_pvar_idx;
-static int with_mpit = 1;
+static int with_mpit = 0;
 
 int main(int argc, char* argv[])
 {

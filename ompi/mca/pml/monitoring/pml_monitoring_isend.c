@@ -52,7 +52,7 @@ int mca_pml_monitoring_isend(const void *buf,
         size_t type_size, data_size;
         ompi_datatype_type_size(datatype, &type_size);
         data_size = count*type_size;
-        monitor_send_data(world_rank, data_size, tag);
+        common_monitoring_send_data(world_rank, data_size, tag);
     }
 
     return pml_selected_module.pml_isend(buf, count, datatype,
@@ -76,7 +76,7 @@ int mca_pml_monitoring_send(const void *buf,
         size_t type_size, data_size;
         ompi_datatype_type_size(datatype, &type_size);
         data_size = count*type_size;
-        monitor_send_data(world_rank, data_size, tag);
+        common_monitoring_send_data(world_rank, data_size, tag);
     }
 
     return pml_selected_module.pml_send(buf, count, datatype,

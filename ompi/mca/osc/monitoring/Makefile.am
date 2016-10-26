@@ -30,6 +30,8 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_osc_monitoring_la_SOURCES = $(monitoring_sources)
 mca_osc_monitoring_la_LDFLAGS = -module -avoid-version
+mca_osc_monitoring_la_LIBADD = \
+	$(OMPI_TOP_BUILDDIR)/ompi/mca/common/monitoring/libmca_common_monitoring.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_osc_monitoring_la_SOURCES = $(monitoring_sources)
