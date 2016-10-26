@@ -100,13 +100,13 @@ static int
 mca_osc_monitoring_component_init(bool enable_progress_threads,
                                   bool enable_mpi_threads)
 {
-    opal_output(0, "component_init");
+    OPAL_MONITORING_VERBOSE(0, "component_init");
     return OMPI_SUCCESS;
 }
 
 static int mca_osc_monitoring_component_finish(void)
 {
-    opal_output(0, "component_finish");
+    OPAL_MONITORING_VERBOSE(0, "component_finish");
     return OMPI_SUCCESS;
 }
 
@@ -119,7 +119,7 @@ static int mca_osc_monitoring_component_query(struct ompi_win_t *win, void **bas
                                               struct ompi_communicator_t *comm, struct opal_info_t *info,
                                               int flavor)
 {
-    opal_output(0, "component_query");
+    OPAL_MONITORING_VERBOSE(0, "component_query");
     return mca_osc_monitoring_component.priority;
 }
 
@@ -127,7 +127,7 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
                                                struct ompi_communicator_t *comm, struct opal_info_t *info,
                                                int flavor, int *model)
 {
-    opal_output(0, "component_select");
+    OPAL_MONITORING_VERBOSE(0, "component_select");
     opal_list_item_t *item;
     ompi_osc_base_component_t *best_component = NULL;
     int best_priority = -1, priority, ret = OMPI_SUCCESS;
@@ -158,7 +158,7 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
     }
 
     if (NULL == best_component) return OMPI_ERR_NOT_SUPPORTED;
-    opal_output(0, "Chosen one: %s", best_component->osc_version.mca_component_name);
+    OPAL_MONITORING_VERBOSE(0, "Chosen one: %s", best_component->osc_version.mca_component_name);
     ret = best_component->osc_select(win, base, size, disp_unit, comm, info, flavor, model);
     if( OMPI_SUCCESS == ret ) {
         /* Intercept module functions with ours, based on selected component */
@@ -175,7 +175,7 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
             memcpy(&ompi_osc_monitoring_module_pt2pt_template, win->w_osc_module, sizeof(ompi_osc_base_module_t));
             memcpy(win->w_osc_module, &mca_osc_monitoring_pt2pt_template, sizeof(ompi_osc_base_module_t));
         } else {
-            OSC_MONITORING_VERBOSE(MCA_BASE_VERBOSE_INFO, "Monitoring disabled: no module for this component (%s)", best_component->osc_version.mca_component_name);
+            OPAL_MONITORING_VERBOSE(MCA_BASE_VERBOSE_INFO, "Monitoring disabled: no module for this component (%s)", best_component->osc_version.mca_component_name);
             return ret;
         }
     }

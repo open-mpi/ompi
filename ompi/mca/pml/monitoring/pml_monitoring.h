@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Inria.  All rights reserved.
+ * Copyright (c) 2013-2016 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -20,8 +20,11 @@ BEGIN_C_DECLS
 #include <ompi/communicator/communicator.h>
 #include <ompi/datatype/ompi_datatype.h>
 #include <ompi/mca/pml/pml.h>
+#include <ompi/mca/pml/base/base.h>
 #include <ompi/mca/common/monitoring/common_monitoring.h>
 #include <opal/mca/base/mca_base_pvar.h>
+
+#define OPAL_MONITORING_VERBOSE(x, ...) OPAL_OUTPUT_VERBOSE((x, ompi_pml_base_framework.framework_output, __VA_ARGS__))
 
 typedef mca_pml_base_module_t mca_pml_monitoring_module_t;
 
@@ -137,20 +140,6 @@ extern int mca_pml_monitoring_dump(struct ompi_communicator_t* comm,
 
 extern int mca_pml_monitoring_start(size_t count,
                                     ompi_request_t** requests);
-
-int mca_pml_monitoring_get_messages_count (const struct mca_base_pvar_t *pvar,
-                                           void *value,
-                                           void *obj_handle);
-
-int mca_pml_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar,
-                                          void *value,
-                                          void *obj_handle);
-
-void finalize_monitoring( void );
-int filter_monitoring( void );
-void mca_pml_monitoring_reset( void );
-int ompi_mca_pml_monitoring_flush(int fd, char* filename);
-void monitor_send_data(int world_rank, size_t data_size, int tag);
 
 END_C_DECLS
 
