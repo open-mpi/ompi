@@ -2,7 +2,7 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -43,36 +43,6 @@ typedef void (*opal_tsd_destructor_t)(void *value);
  * Typedef for thread-specific data key
  */
 typedef void* opal_tsd_key_t;
-
-
-/**
- * Create thread-specific data key
- *
- * Create a thread-specific data key visible to all threads in the
- * current process.  The returned key is valid in all threads,
- * although the values bound to the key by opal_tsd_setspecific() are
- * allocated on a per-thread basis and persist for the life of the
- * calling thread.
- *
- * Upon key creation, the value NULL is associated with the new key in
- * all active threads.  When a new thread is created, the value NULL
- * is associated with all defined keys in the new thread.
- *
- * The destructor parameter may be NULL.  At thread exit, if
- * destructor is non-NULL AND the thread has a non-NULL value
- * associated with the key, the function is called with the current
- * value as its argument.
- *
- * @param key[out]       The key for accessing thread-specific data
- * @param destructor[in] Cleanup function to call when a thread exits
- *
- * @retval OPAL_SUCCESS  Success
- * @retval EAGAIN        The system lacked the necessary resource to
- *                       create another thread specific data key
- * @retval ENOMEM        Insufficient memory exists to create the key
- */
-OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key,
-                                      opal_tsd_destructor_t destructor);
 
 
 /**
@@ -139,13 +109,6 @@ OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
 typedef pthread_key_t opal_tsd_key_t;
 
 static inline int
-opal_tsd_key_create(opal_tsd_key_t *key,
-                    opal_tsd_destructor_t destructor)
-{
-    return pthread_key_create(key, destructor);
-}
-
-static inline int
 opal_tsd_key_delete(opal_tsd_key_t key)
 {
     return pthread_key_delete(key);
@@ -165,6 +128,50 @@ opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
 }
 
 #endif
+
+/**
+ * Create thread-specific data key
+ *
+ * Create a thread-specific data key visible to all threads in the
+ * current process.  The returned key is valid in all threads,
+ * although the values bound to the key by opal_tsd_setspecific() are
+ * allocated on a per-thread basis and persist for the life of the
+ * calling thread.
+ *
+ * Upon key creation, the value NULL is associated with the new key in
+ * all active threads.  When a new thread is created, the value NULL
+ * is associated with all defined keys in the new thread.
+ *
+ * The destructor parameter may be NULL.  At thread exit, if
+ * destructor is non-NULL AND the thread has a non-NULL value
+ * associated with the key, the function is called with the current
+ * value as its argument.
+ *
+ * @param key[out]       The key for accessing thread-specific data
+ * @param destructor[in] Cleanup function to call when a thread exits
+ *
+ * @retval OPAL_SUCCESS  Success
+ * @retval EAGAIN        The system lacked the necessary resource to
+ *                       create another thread specific data key
+ * @retval ENOMEM        Insufficient memory exists to create the key
+ */
+OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key,
+                                      opal_tsd_destructor_t destructor);
+
+
+/**
+ * Destruct all thread-specific data keys
+ *
+ * Destruct all thread-specific data keys and invoke the destructor
+ *
+ * This should only be invoked in the main thread.
+ * This is made necessary since destructors are not invoked on the
+ * keys of the main thread, since there is no such thing as
+ * pthread_join(main_thread)
+ *
+ * @retval OPAL_SUCCESS  Success
+ */
+OPAL_DECLSPEC int opal_tsd_keys_destruct(void);
 
 END_C_DECLS
 

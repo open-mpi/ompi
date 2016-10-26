@@ -16,7 +16,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -343,6 +343,8 @@ opal_init_util(int* pargc, char*** pargv)
         }
         return OPAL_SUCCESS;
     }
+
+    opal_thread_set_main();
 
     opal_init_called = true;
 

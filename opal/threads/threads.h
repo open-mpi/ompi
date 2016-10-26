@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -120,6 +120,7 @@ OPAL_DECLSPEC int  opal_thread_join(opal_thread_t *, void **thread_return);
 OPAL_DECLSPEC bool opal_thread_self_compare(opal_thread_t*);
 OPAL_DECLSPEC opal_thread_t *opal_thread_get_self(void);
 OPAL_DECLSPEC void opal_thread_kill(opal_thread_t *, int sig);
+OPAL_DECLSPEC void opal_thread_set_main(void);
 
 END_C_DECLS
 
