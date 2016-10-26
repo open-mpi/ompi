@@ -53,6 +53,7 @@ struct oob_comm {
     int mkeys_rcvd;
     oob_comm_request_t req_pool[MEMHEAP_RECV_REQS_MAX];
     opal_list_t req_list;
+    int is_inited;
 };
 
 mca_memheap_map_t* memheap_map = NULL;
@@ -435,6 +436,7 @@ int memheap_oob_init(mca_memheap_map_t *map)
     }
 
     opal_progress_register(oshmem_mkey_recv_cb);
+    memheap_oob.is_inited = 1;
 
     return rc;
 }
@@ -443,6 +445,10 @@ void memheap_oob_destruct(void)
 {
     int i;
     oob_comm_request_t *r;
+
+    if (!memheap_oob.is_inited) {
+        return;
+    }
 
     opal_progress_unregister(oshmem_mkey_recv_cb);
 
@@ -455,6 +461,7 @@ void memheap_oob_destruct(void)
     OBJ_DESTRUCT(&memheap_oob.req_list);
     OBJ_DESTRUCT(&memheap_oob.lck);
     OBJ_DESTRUCT(&memheap_oob.cond);
+    memheap_oob.is_inited = 0;
 }
 
 static int send_buffer(int pe, opal_buffer_t *msg)
@@ -698,6 +705,10 @@ sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(map_segment_t *s,
 {
     int rc;
     sshmem_mkey_t *mkey;
+
+    if (!memheap_oob.is_inited) {
+        return NULL;
+    }
 
     s->mkeys_cache[pe] = (sshmem_mkey_t *) calloc(memheap_map->num_transports,
                                                     sizeof(sshmem_mkey_t));
