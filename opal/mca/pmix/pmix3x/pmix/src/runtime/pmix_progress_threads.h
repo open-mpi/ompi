@@ -30,12 +30,24 @@
 pmix_event_base_t *pmix_progress_thread_init(const char *name);
 
 /**
- * Finalize a progress thread name (reference counted).
+ * Stop a progress thread name (reference counted).
  *
  * Once this function is invoked as many times as
  * pmix_progress_thread_init() was invoked on this name (or NULL), the
- * progress function is shut down and the event base associated with
+ * progress function is shut down.
  * it is destroyed.
+ *
+ * Will return PMIX_ERR_NOT_FOUND if the progress thread name does not
+ * exist; PMIX_SUCCESS otherwise.
+ */
+int pmix_progress_thread_stop(const char *name);
+
+/**
+ * Finalize a progress thread name (reference counted).
+ *
+ * Once this function is invoked after pmix_progress_thread_stop() has been called
+ * as many times as pmix_progress_thread_init() was invoked on this name (or NULL),
+ * the event base associated with it is destroyed.
  *
  * Will return PMIX_ERR_NOT_FOUND if the progress thread name does not
  * exist; PMIX_SUCCESS otherwise.

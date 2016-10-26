@@ -66,11 +66,17 @@ void pmix_rte_finalize(void)
 
     if (!pmix_globals.external_evbase) {
         /* stop the progress thread */
-        (void)pmix_progress_thread_finalize(NULL);
+        (void)pmix_progress_thread_stop(NULL);
     }
 
     /* cleanup communications */
     pmix_usock_finalize();
+
+    if (!pmix_globals.external_evbase) {
+        /* finalize the progress thread */
+        (void)pmix_progress_thread_finalize(NULL);
+    }
+
     if (PMIX_PROC_SERVER != pmix_globals.proc_type &&
         0 <= pmix_client_globals.myserver.sd) {
         CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
@@ -82,6 +88,8 @@ void pmix_rte_finalize(void)
     /* close the security framework */
     (void)pmix_mca_base_framework_close(&pmix_psec_base_framework);
 
+    /* finalize the mca */
+    (void)pmix_mca_base_close();
     /* Clear out all the registered MCA params */
     pmix_deregister_params();
     pmix_mca_base_var_finalize();

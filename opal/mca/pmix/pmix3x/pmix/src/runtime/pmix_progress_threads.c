@@ -243,7 +243,7 @@ pmix_event_base_t *pmix_progress_thread_init(const char *name)
     return trk->ev_base;
 }
 
-int pmix_progress_thread_finalize(const char *name)
+int pmix_progress_thread_stop(const char *name)
 {
     pmix_progress_tracker_t *trk;
 
@@ -270,6 +270,32 @@ int pmix_progress_thread_finalize(const char *name)
             /* If the progress thread is active, stop it */
             if (trk->ev_active) {
                 stop_progress_engine(trk);
+            }
+        }
+    }
+
+    return PMIX_ERR_NOT_FOUND;
+}
+
+int pmix_progress_thread_finalize(const char *name)
+{
+    pmix_progress_tracker_t *trk;
+
+    if (!inited) {
+        /* nothing we can do */
+        return PMIX_ERR_NOT_FOUND;
+    }
+
+    if (NULL == name) {
+        name = shared_thread_name;
+    }
+
+    /* find the specified engine */
+    PMIX_LIST_FOREACH(trk, &tracking, pmix_progress_tracker_t) {
+        if (0 == strcmp(name, trk->name)) {
+            /* If the refcount is still above 0, we're done here */
+            if (trk->refcount > 0) {
+                return PMIX_SUCCESS;
             }
 
             pmix_list_remove_item(&tracking, &trk->super);

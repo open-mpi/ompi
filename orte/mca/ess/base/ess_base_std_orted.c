@@ -188,6 +188,11 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "opal_pstat_base_select";
         goto error;
     }
+
+    /* define the HNP name */
+    ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
+    ORTE_PROC_MY_HNP->vpid = 0;
+
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
