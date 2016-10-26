@@ -58,4 +58,8 @@ module mpi
   include "pmpi-f90-file-interfaces.h"
 #endif
 
+#if OMPI_FORTRAN_BUILD_SIZEOF
+  include "mpi-tkr-sizeof.h"
+#endif
+
 end module mpi
