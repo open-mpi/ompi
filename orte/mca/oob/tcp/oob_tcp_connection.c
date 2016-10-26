@@ -386,6 +386,8 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
     hdr.dst = peer->name;
     hdr.type = MCA_OOB_TCP_IDENT;
     hdr.tag = 0;
+    hdr.seq_num = 0;
+    memset(hdr.routed, 0, ORTE_MAX_RTD_SIZE+1);
 
     /* get our security credential*/
     if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(peer->auth_method,
