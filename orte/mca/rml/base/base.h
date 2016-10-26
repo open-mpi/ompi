@@ -145,8 +145,6 @@ typedef struct {
     opal_object_t super;
     opal_event_t ev;
     orte_rml_send_t send;
-    /* conduit_id */
-    orte_rml_conduit_t conduit_id;
 } orte_rml_send_request_t;
 OBJ_CLASS_DECLARATION(orte_rml_send_request_t);
 

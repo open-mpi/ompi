@@ -26,12 +26,15 @@
 
 #include "rml_ofi_request.h"
 
+/** the maximum open OFI ofi_prov - assuming system will have no more than 20 transports*/
+#define MAX_OFI_PROVIDERS  40
+#define RML_OFI_PROV_ID_INVALID 0xFF
 
 /** RML/OFI key values  **/
 /* (char*)  ofi socket address (type IN) of the node process is running on */
-#define OPAL_RML_OFI_FI_SOCKADDR_IN                "rml.ofi.fisockaddrin"
+#define OPAL_RML_OFI_FI_SOCKADDR_IN     "rml.ofi.fisockaddrin"
 /* (char*)  ofi socket address (type PSM) of the node process is running on */
-#define OPAL_RML_OFI_FI_ADDR_PSMX                  "rml.ofi.fiaddrpsmx"
+#define OPAL_RML_OFI_FI_ADDR_PSMX       "rml.ofi.fiaddrpsmx"
 
 // MULTI_BUF_SIZE_FACTOR defines how large the multi recv buffer will be.
 // In order to use FI_MULTI_RECV feature efficiently, we need to have a
@@ -39,6 +42,8 @@
 // get the remaining data when the buffer is full
 #define MULTI_BUF_SIZE_FACTOR 128
 #define MIN_MULTI_BUF_SIZE (1024 * 1024)
+
+#define OFIADDR    "ofiaddr"
 
 #define CLOSE_FID(fd)                                                               \
     do {                                                                            \
@@ -72,8 +77,8 @@ and also the corresponding fi_info
 **/
 typedef struct {
 
-    /** OFI conduit ID **/
-    uint8_t conduit_id;
+    /** ofi provider ID **/
+    uint8_t ofi_prov_id;
 
     /** fi_info for this transport */
     struct fi_info *fabric_info;
@@ -116,36 +121,35 @@ typedef struct {
 
     struct fi_context rx_ctx1;
 
-   /* module associated with this conduit_id returned to rml
-      from open_conduit call */
-   struct orte_rml_ofi_module_t *ofi_module;
-
-} ofi_transport_conduit_t;
+} ofi_transport_ofi_prov_t;
 
 
  struct orte_rml_ofi_module_t {
     orte_rml_base_module_t api;
 
     /** current ofi transport id the component is using, this will be initialised
-     ** in the open_conduit() call **/
+     ** in the open_ofi_prov() call **/
     int  cur_transport_id;
 
     /** Fabric info structure of all supported transports in system **/
     struct fi_info *fi_info_list;
 
-   /** OFI ep and corr fi_info for all the transports (conduit) **/
-    ofi_transport_conduit_t ofi_conduits[MAX_CONDUIT];
+   /** OFI ep and corr fi_info for all the transports (ofi_providers) **/
+    ofi_transport_ofi_prov_t ofi_prov[MAX_OFI_PROVIDERS];
 
     size_t min_ofi_recv_buf_sz;
 
     /** "Any source" address */
     fi_addr_t any_addr;
 
-    /** number of conduits currently opened **/
-    uint8_t conduit_open_num;
+    /** number of ofi providers currently opened **/
+    uint8_t ofi_prov_open_num;
 
     /** Unique message id for every message that is fragmented to be sent over OFI **/
     uint32_t    cur_msgid;
+
+    /* hashtable stores the peer addresses */
+    opal_hash_table_t   peers;
 
     opal_list_t     recv_msg_queue_list;
     opal_list_t     queued_routing_messages;
@@ -154,8 +158,15 @@ typedef struct {
 } ;
 typedef struct orte_rml_ofi_module_t orte_rml_ofi_module_t;
 
+typedef struct {
+    opal_object_t super;
+    void*   ofi_ep;
+    size_t  ofi_ep_len;
+} orte_rml_ofi_peer_t;
+OBJ_CLASS_DECLARATION(orte_rml_ofi_peer_t);
 
 ORTE_MODULE_DECLSPEC extern orte_rml_component_t mca_rml_ofi_component;
+extern orte_rml_ofi_module_t orte_rml_ofi;
 
 int orte_rml_ofi_send_buffer_nb(struct orte_rml_base_module_t *mod,
                                 orte_process_name_t* peer,
@@ -172,8 +183,11 @@ int orte_rml_ofi_send_nb(struct orte_rml_base_module_t *mod,
                          void* cbdata);
 
 /****************** INTERNAL OFI Functions*************/
-void free_conduit_resources( int conduit_id);
+void free_ofi_prov_resources( int ofi_prov_id);
 void print_provider_list_info (struct fi_info *fi );
+void print_provider_info (struct fi_info *cur_fi );
+int cq_progress_handler(int sd, short flags, void *cbdata);
+int get_ofi_prov_id( opal_list_t *attributes);
 
 /** Send callback */
 int orte_rml_ofi_send_callback(struct fi_cq_data_entry *wc,
@@ -184,7 +198,7 @@ int orte_rml_ofi_error_callback(struct fi_cq_err_entry *error,
                            orte_rml_ofi_request_t*);
 
 /* OFI Recv handler */
-int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t conduit_id);
+int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t ofi_prov_id);
 
 END_C_DECLS
 

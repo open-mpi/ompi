@@ -79,9 +79,9 @@ typedef struct {
 
     orte_rml_send_t *send;
 
-    /** OFI conduit_id the request will use - this is
-    *	the reference to element into the orte_rml_ofi.ofi_conduits[] **/
-    uint8_t conduit_id;
+    /** OFI provider_id the request will use - this is
+    *	the reference to element into the orte_rml_ofi.ofi_prov[] **/
+    uint8_t ofi_prov_id;
 
     /** OFI Request type */
     orte_rml_ofi_request_type_t type;
@@ -123,5 +123,15 @@ typedef struct {
     opal_list_t         pkt_list;  // list holding Packets in this msg of type orte_rml_ofi_recv_pkt_t
 } ofi_recv_msg_queue_t;
 OBJ_CLASS_DECLARATION( ofi_recv_msg_queue_t);
+
+/* define an object for transferring send requests to the event lib */
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    orte_rml_send_t send;
+    /* ofi provider id */
+    int ofi_prov_id;
+} ofi_send_request_t;
+OBJ_CLASS_DECLARATION(ofi_send_request_t);
 
 #endif
