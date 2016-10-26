@@ -336,13 +336,13 @@ int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs)
 
     for (n = 0; n < nprocs; n++) {
         i = (my_rank + n) % nprocs;
-        mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i]->mxm_conn);
+        mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i].mxm_conn);
         if (mca_spml_ikrit.hw_rdma_channel) {
-            assert(mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn != mca_spml_ikrit.mxm_peers[i]->mxm_conn);
-            mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn);
+            assert(mca_spml_ikrit.mxm_peers[i].mxm_hw_rdma_conn != mca_spml_ikrit.mxm_peers[i].mxm_conn);
+            mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i].mxm_hw_rdma_conn);
         }
         destroy_ptl_idx(i);
-        OBJ_RELEASE(mca_spml_ikrit.mxm_peers[i]);
+        OBJ_DESTRUCT(&mca_spml_ikrit.mxm_peers[i]);
     }
     free(mca_spml_ikrit.mxm_peers);
 
@@ -377,8 +377,7 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
         }
     }
 
-    mca_spml_ikrit.mxm_peers = (mxm_peer_t **) malloc(nprocs
-            * sizeof(*(mca_spml_ikrit.mxm_peers)));
+    mca_spml_ikrit.mxm_peers = (mxm_peer_t *) malloc(nprocs * sizeof(mxm_peer_t));
     if (NULL == mca_spml_ikrit.mxm_peers) {
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
         goto bail;
@@ -414,29 +413,26 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
         /* mxm 2.0 keeps its connections on a list. Make sure
          * that list have different order on every rank */
         i = (my_rank + n) % nprocs;
-        mca_spml_ikrit.mxm_peers[i] = OBJ_NEW(mxm_peer_t);
-        if (NULL == mca_spml_ikrit.mxm_peers[i]) {
-            rc = OSHMEM_ERR_OUT_OF_RESOURCE;
-            goto bail;
-        }
-        mca_spml_ikrit.mxm_peers[i]->pe = i;
+        OBJ_CONSTRUCT(&mca_spml_ikrit.mxm_peers[i], mxm_peer_t);
 
-        err = mxm_ep_connect(mca_spml_ikrit.mxm_ep, ep_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i]->mxm_conn);
+        mca_spml_ikrit.mxm_peers[i].pe = i;
+
+        err = mxm_ep_connect(mca_spml_ikrit.mxm_ep, ep_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i].mxm_conn);
         if (MXM_OK != err) {
             SPML_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
             goto bail;
         }
         if (OSHMEM_SUCCESS != create_ptl_idx(i))
                 goto bail;
-        mxm_conn_ctx_set(mca_spml_ikrit.mxm_peers[i]->mxm_conn, mca_spml_ikrit.mxm_peers[i]);
+        mxm_conn_ctx_set(mca_spml_ikrit.mxm_peers[i].mxm_conn, &mca_spml_ikrit.mxm_peers[i]);
         if (mca_spml_ikrit.hw_rdma_channel) {
-            err = mxm_ep_connect(mca_spml_ikrit.mxm_hw_rdma_ep, ep_hw_rdma_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn);
+            err = mxm_ep_connect(mca_spml_ikrit.mxm_hw_rdma_ep, ep_hw_rdma_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i].mxm_hw_rdma_conn);
             if (MXM_OK != err) {
                 SPML_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
                 goto bail;
             }
         } else {
-            mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn = mca_spml_ikrit.mxm_peers[i]->mxm_conn;
+            mca_spml_ikrit.mxm_peers[i].mxm_hw_rdma_conn = mca_spml_ikrit.mxm_peers[i].mxm_conn;
         }
     }
 
@@ -663,7 +659,7 @@ static int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
 
     /* mxm does not really cares for get lkey */
     sreq->base.mq = mca_spml_ikrit.mxm_mq;
-    sreq->base.conn = mca_spml_ikrit.mxm_peers[src]->mxm_conn;
+    sreq->base.conn = mca_spml_ikrit.mxm_peers[src].mxm_conn;
     sreq->base.data_type = MXM_REQ_DATA_BUFFER;
     sreq->base.data.buffer.ptr = dst_addr;
     sreq->base.data.buffer.length = size;
@@ -830,7 +826,7 @@ static int mca_spml_ikrit_mxm_fence(int dst)
     }
 
     fence_req->mxm_req.base.mq = mca_spml_ikrit.mxm_mq;
-    fence_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst]->mxm_conn;
+    fence_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst].mxm_conn;
     fence_req->mxm_req.opcode = MXM_REQ_OP_PUT_SYNC;
     fence_req->mxm_req.flags  = MXM_REQ_SEND_FLAG_FENCE;
     fence_req->mxm_req.op.mem.remote_vaddr = 0;
@@ -853,7 +849,7 @@ static inline void put_completion_cb(void *ctx)
     mxm_peer_t *peer;
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, -1);
-    peer = mca_spml_ikrit.mxm_peers[put_req->pe];
+    peer = &mca_spml_ikrit.mxm_peers[put_req->pe];
 
     /* this was last put in progress. Remove peer from the list so that we do not need explicit fence */
 #if SPML_IKRIT_PUT_DEBUG == 1
@@ -971,7 +967,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     put_req->mxm_req.flags = 0;
     if (mca_spml_ikrit.free_list_max - mca_spml_ikrit.n_active_puts <= SPML_IKRIT_PUT_LOW_WATER ||
             (int)opal_list_get_size(&mca_spml_ikrit.active_peers) > mca_spml_ikrit.unsync_conn_max ||
-            (mca_spml_ikrit.mxm_peers[dst]->n_active_puts + 1) % SPML_IKRIT_PACKETS_PER_SYNC == 0) {
+            (mca_spml_ikrit.mxm_peers[dst].n_active_puts + 1) % SPML_IKRIT_PACKETS_PER_SYNC == 0) {
         need_progress = 1;
         put_req->mxm_req.opcode = MXM_REQ_OP_PUT_SYNC;
     } else  {
@@ -985,7 +981,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
         }
     }
 
-    put_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst]->mxm_conn;
+    put_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst].mxm_conn;
     put_req->mxm_req.base.data_type = MXM_REQ_DATA_BUFFER;
     put_req->mxm_req.base.data.buffer.ptr = src_addr;
     put_req->mxm_req.base.data.buffer.length = size;
@@ -998,13 +994,13 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     put_req->mxm_req.op.mem.remote_mkey = to_mxm_mkey(r_mkey);
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, 1);
-    if (mca_spml_ikrit.mxm_peers[dst]->need_fence == 0) {
+    if (mca_spml_ikrit.mxm_peers[dst].need_fence == 0) {
         opal_list_append(&mca_spml_ikrit.active_peers,
-                         &mca_spml_ikrit.mxm_peers[dst]->super);
-        mca_spml_ikrit.mxm_peers[dst]->need_fence = 1;
+                         &mca_spml_ikrit.mxm_peers[dst].super);
+        mca_spml_ikrit.mxm_peers[dst].need_fence = 1;
     }
 
-    mca_spml_ikrit.mxm_peers[dst]->n_active_puts++;
+    mca_spml_ikrit.mxm_peers[dst].n_active_puts++;
 
     SPML_IKRIT_MXM_POST_SEND(put_req->mxm_req);
 
@@ -1078,7 +1074,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     /* fill out request */
     mxm_req.base.mq = mca_spml_ikrit.mxm_mq;
     mxm_req.flags = MXM_REQ_SEND_FLAG_BLOCKING;
-    mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst]->mxm_conn;
+    mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst].mxm_conn;
     mxm_req.base.data_type = MXM_REQ_DATA_BUFFER;
     mxm_req.base.data.buffer.ptr = src_addr;
     mxm_req.base.data.buffer.length = size;
@@ -1091,10 +1087,10 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
 
     mxm_req.op.mem.remote_mkey = to_mxm_mkey(r_mkey);
 
-    if (mca_spml_ikrit.mxm_peers[dst]->need_fence == 0) {
+    if (mca_spml_ikrit.mxm_peers[dst].need_fence == 0) {
         opal_list_append(&mca_spml_ikrit.active_peers,
-                         &mca_spml_ikrit.mxm_peers[dst]->super);
-        mca_spml_ikrit.mxm_peers[dst]->need_fence = 1;
+                         &mca_spml_ikrit.mxm_peers[dst].super);
+        mca_spml_ikrit.mxm_peers[dst].need_fence = 1;
     }
 
     SPML_IKRIT_MXM_POST_SEND(mxm_req);
@@ -1242,7 +1238,7 @@ int mca_spml_ikrit_send(void* buf,
 
     req.base.state = MXM_REQ_NEW;
     req.base.mq = mca_spml_ikrit.mxm_mq;
-    req.base.conn = mca_spml_ikrit.mxm_peers[dst]->mxm_conn;
+    req.base.conn = mca_spml_ikrit.mxm_peers[dst].mxm_conn;
     req.flags             = MXM_REQ_SEND_FLAG_BLOCKING;
     req.base.completed_cb = NULL;
 

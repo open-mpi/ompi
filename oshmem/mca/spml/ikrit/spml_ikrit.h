@@ -74,7 +74,7 @@ struct mca_spml_ikrit_t {
     mxm_ep_h mxm_ep;
     mxm_ep_h mxm_hw_rdma_ep;
     mxm_mq_h mxm_mq;
-    mxm_peer_t **mxm_peers;
+    mxm_peer_t *mxm_peers;
 
     int32_t n_active_puts;
     int32_t n_active_gets;
@@ -107,8 +107,8 @@ typedef struct mca_spml_ikrit_t mca_spml_ikrit_t;
 
 #define MXM_MAX_ADDR_LEN 512
 
-#define MXM_PTL_SHM  0
-#define MXM_PTL_RDMA 1
+#define MXM_PTL_RDMA 0
+#define MXM_PTL_SHM  1
 #define MXM_PTL_LAST 2
 
 typedef struct spml_ikrit_mxm_ep_conn_info_t {
