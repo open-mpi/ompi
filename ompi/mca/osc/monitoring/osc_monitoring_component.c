@@ -11,35 +11,34 @@
 #include <osc_monitoring.h>
 #include <ompi/constants.h>
 #include <ompi/communicator/communicator.h>
-#include <ompi/datatype/ompi_datatype.h>
 #include <ompi/info/info.h>
 #include <ompi/win/win.h>
-#include <ompi/op/op.h>
+#include <ompi/info/info.h>
 #include <ompi/mca/osc/osc.h>
 #include <ompi/mca/osc/base/base.h>
 #include <opal/mca/base/mca_base_component_repository.h>
 
+/***************************************/
 /* Include template generating macro's */
 #include <osc_monitoring_template.h>
 
 #include <ompi/mca/osc/rdma/osc_rdma.h>
-OSC_MONITORING_MODULE_TEMPLATE_GENERATE(rdma);
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(rdma, ompi_osc_rdma_module_t, comm);
 #undef GET_MODULE
 
 #include <ompi/mca/osc/sm/osc_sm.h>
-OSC_MONITORING_MODULE_TEMPLATE_GENERATE(sm);
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(sm, ompi_osc_sm_module_t, comm);
 #undef GET_MODULE
 
 /* #include <ompi/mca/osc/portals4/osc_portals4.h> */
-/* OSC_MONITORING_MODULE_TEMPLATE_GENERATE(portals4); */
+/* OSC_MONITORING_MODULE_TEMPLATE_GENERATE(portals4, ompi_osc_portals4_module_t, comm); */
 /* #undef GET_MODULE */
 
 #include <ompi/mca/osc/pt2pt/osc_pt2pt.h>
-OSC_MONITORING_MODULE_TEMPLATE_GENERATE(pt2pt);
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(pt2pt, ompi_osc_pt2pt_module_t, comm);
 #undef GET_MODULE
 
-int mca_osc_monitoring_enabled = 0;
-int mca_osc_monitoring_active = 0;
+/***************************************/
 
 static int mca_osc_monitoring_component_open(void)
 {
@@ -48,7 +47,7 @@ static int mca_osc_monitoring_component_open(void)
 
 static int mca_osc_monitoring_component_close(void)
 {
-    if( !mca_osc_monitoring_enabled )
+    if( !mca_common_monitoring_enabled )
         goto release_and_return;
 
     /**
@@ -56,9 +55,9 @@ static int mca_osc_monitoring_component_close(void)
      * the execution and this call to close if the one from MPI_Finalize.
      * Clean up and release the extra reference on ourselves.
      */
-    if( mca_osc_monitoring_active ) {  /* Already active, turn off */
+    if( mca_common_monitoring_active ) {  /* Already active, turn off */
         mca_base_component_repository_release(&mca_osc_monitoring_component.super.osc_version);
-        mca_osc_monitoring_active = 0;
+        mca_common_monitoring_active = 0;
         goto release_and_return;
     }
 
@@ -84,7 +83,7 @@ static int mca_osc_monitoring_component_close(void)
     /* mca_osc.osc_max_tag = osc_selected_module.osc_max_tag; */
     /* mca_osc.osc_flags = osc_selected_module.osc_flags; */
 
-    mca_osc_monitoring_active = 1;
+    mca_common_monitoring_active = 1;
 
     return OMPI_SUCCESS;
 
