@@ -28,7 +28,6 @@
 
 #include "opal_config.h"
 #include "btl_vader_xpmem.h"
-#include "opal/mca/rcache/base/rcache_base_vma.h"
 
 #define MCA_BTL_VADER_FBOX_ALIGNMENT      32
 #define MCA_BTL_VADER_FBOX_ALIGNMENT_MASK (MCA_BTL_VADER_FBOX_ALIGNMENT - 1)
@@ -75,7 +74,6 @@ typedef struct mca_btl_base_endpoint_t {
     union {
 #if OPAL_BTL_VADER_HAVE_XPMEM
         struct {
-            mca_rcache_base_vma_module_t *vma_module;
             xpmem_apid_t    apid;       /**< xpmem apid for remote peer */
         } xpmem;
 #endif

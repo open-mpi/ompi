@@ -145,6 +145,12 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     /* set flag indicating btl has been inited */
     vader_btl->btl_inited = true;
 
+#if OPAL_BTL_VADER_HAVE_XPMEM
+    if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
+        mca_btl_vader_component.vma_module = mca_rcache_base_vma_module_alloc ();
+    }
+#endif
+
     return OPAL_SUCCESS;
 }
 
@@ -171,7 +177,6 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
         if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
             /* always use xpmem if it is available */
             ep->segment_data.xpmem.apid = xpmem_get (modex->xpmem.seg_id, XPMEM_RDWR, XPMEM_PERMIT_MODE, (void *) 0666);
-            ep->segment_data.xpmem.vma_module = mca_rcache_base_vma_module_alloc ();
             (void) vader_get_registation (ep, modex->xpmem.segment_base, mca_btl_vader_component.segment_size,
                                           MCA_RCACHE_FLAGS_PERSIST, (void **) &ep->segment_base);
         } else {
@@ -353,6 +358,12 @@ static int vader_finalize(struct mca_btl_base_module_t *btl)
         opal_shmem_unlink (&mca_btl_vader_component.seg_ds);
         opal_shmem_segment_detach (&mca_btl_vader_component.seg_ds);
     }
+
+#if OPAL_BTL_VADER_HAVE_XPMEM
+    if (NULL != mca_btl_vader_component.vma_module) {
+        OBJ_RELEASE(mca_btl_vader_component.vma_module);
+    }
+#endif
 
     return OPAL_SUCCESS;
 }
@@ -540,14 +551,6 @@ static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
 }
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
-static int mca_btl_vader_endpoint_rcache_cleanup (mca_rcache_base_registration_t *reg, void *ctx)
-{
-    mca_rcache_base_vma_module_t *vma_module = (mca_rcache_base_vma_module_t *) ctx;
-    /* otherwise dereg will fail on assert */
-    reg->ref_count = 0;
-    (void) mca_rcache_base_vma_delete (vma_module, reg);
-    return OPAL_SUCCESS;
-}
 #endif
 
 static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
@@ -557,19 +560,7 @@ static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
-        if (ep->segment_data.xpmem.vma_module) {
-            /* clean out the registration cache */
-            (void) mca_rcache_base_vma_iterate (ep->segment_data.xpmem.vma_module,
-                                                NULL, (size_t) -1,
-                                                mca_btl_vader_endpoint_rcache_cleanup,
-                                                (void *) ep->segment_data.xpmem.vma_module);
-            OBJ_RELEASE(ep->segment_data.xpmem.vma_module);
-        }
-
-        if (ep->segment_base) {
-            xpmem_release (ep->segment_data.xpmem.apid);
-            ep->segment_data.xpmem.apid = 0;
-        }
+        mca_btl_vader_xpmem_cleanup_endpoint (ep);
     } else
 #endif
     if (ep->segment_data.other.seg_ds) {
