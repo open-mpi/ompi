@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -65,14 +65,14 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (NULL == dims) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
-                                           MPI_ERR_ARG, FUNC_NAME);
-        }
-
-        if (1 > ndims) {
+        if (0 > ndims) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
                                            MPI_ERR_DIMS, FUNC_NAME);
+        }
+
+        if ((0 != ndims) && (NULL == dims)) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
+                                           MPI_ERR_ARG, FUNC_NAME);
         }
 
         if (1 > nnodes) {
