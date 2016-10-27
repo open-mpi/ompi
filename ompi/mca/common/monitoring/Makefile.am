@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-if OMPI_PROVIDE_MPI_FILE_INTERFACE
-
 sources = common_monitoring.c
 header = common_monitoring.h
 
@@ -17,7 +15,7 @@ noinst_LTLIBRARIES =
 component_install = libmca_common_monitoring.la
 component_noinst = libmca_common_monitoring_noinst.la
 
-if MCA_BUILD_ompi_common_ompio_DSO
+if MCA_BUILD_ompi_common_monitoring_DSO
 lib_LTLIBRARIES += $(component_install)
 else
 noinst_LTLIBRARIES += $(component_noinst)
@@ -29,15 +27,6 @@ libmca_common_monitoring_la_LDFLAGS =  \
         $(common_monitoring_LDFLAGS)
 libmca_common_monitoring_la_LIBADD = $(common_monitoring_LIBS)
 libmca_common_monitoring_noinst_la_SOURCES = $(headers) $(sources)
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(ompiincludedir)/ompi/mca/common/monitoring
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
 
 # These two rules will sym link the "noinst" libtool library filename
 # to the installable libtool library filename in the case where we are
@@ -57,19 +46,3 @@ clean-local:
 	if test -z "$(lib_LTLIBRARIES)"; then \
 	  rm -f "$(component_install)"; \
 	fi
-
-#mcacomponentdir = $(ompilibdir)
-#mcacomponent_LTLIBRARIES = $(component_install)
-#libmca_common_monitoring_la_SOURCES = $(common_monitoring_sources)
-#libmca_common_monitoring_la_LDFLAGS = -module -avoid-version
-
-#noinst_LTLIBRARIES = $(component_noinst)
-#libmca_common_monitoring_noinst_la_SOURCES = $(common_monitoring_sources)
-#libmca_common_monitoring_noinst_la_LDFLAGS = -module -avoid-version
-
-else
-
-all-local:
-clean-local:
-
-endif
