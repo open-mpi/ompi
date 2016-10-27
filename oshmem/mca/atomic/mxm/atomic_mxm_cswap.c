@@ -34,13 +34,11 @@ int mca_atomic_mxm_cswap(void *target,
     unsigned my_pe;
     uint8_t nlong_order;
     void *remote_addr;
-    int ptl_id;
     mxm_send_req_t sreq;
     mxm_error_t mxm_err;
     sshmem_mkey_t *r_mkey;
 
     my_pe = oshmem_my_proc_id();
-    ptl_id = -1;
     mxm_err = MXM_OK;
 
     switch (nlong) {
@@ -62,11 +60,7 @@ int mca_atomic_mxm_cswap(void *target,
         return OSHMEM_ERR_BAD_PARAM;
     }
 
-    ptl_id = OSHMEM_PROC_DATA(oshmem_proc_group_all(pe))->transport_ids[0];
-    if (MXM_PTL_SHM == ptl_id) {
-        ptl_id = MXM_PTL_RDMA;
-    }
-    r_mkey = mca_memheap_base_get_cached_mkey(pe, target, ptl_id, &remote_addr);
+    r_mkey = mca_memheap_base_get_cached_mkey(pe, target, MXM_PTL_RDMA, &remote_addr);
     if (!r_mkey) {
         ATOMIC_ERROR("[#%d] %p is not address of symmetric variable",
                      my_pe, target);

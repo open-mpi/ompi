@@ -104,6 +104,8 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_spml_base_framework;
 #define SPML_VERBOSE(level, ...)
 #endif
 
+#define SPML_VERBOSE_FASTPATH(level, ...)
+
 #define SPML_ERROR(...) \
     oshmem_output(oshmem_spml_base_framework.framework_output, \
         "Error %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
