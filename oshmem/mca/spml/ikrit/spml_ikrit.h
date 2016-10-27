@@ -59,7 +59,7 @@
 BEGIN_C_DECLS
 
 /**
- * UD MXM SPML module
+ * MXM SPML module
  */
 struct mxm_peer {
     mxm_conn_h          mxm_conn;
@@ -67,7 +67,6 @@ struct mxm_peer {
     uint8_t             ptl_id;
     opal_list_item_t    link;
     int32_t             n_active_puts;
-    uint32_t            pe;
     uint8_t             need_fence;
 };
 

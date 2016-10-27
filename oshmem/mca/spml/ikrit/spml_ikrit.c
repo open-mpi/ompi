@@ -60,20 +60,13 @@ static int mca_spml_ikrit_get_async(void *src_addr,
                                     void *dst_addr,
                                     int src);
 
-typedef struct spml_ikrit_am_hdr {
-    uint64_t va;
-} spml_ikrit_am_hdr_t;
-
 struct mca_spml_ikrit_put_request {
-    mca_spml_base_put_request_t req_put;
-    mxm_send_req_t mxm_req;
-    int pe;
-    mxm_req_buffer_t iov[2];
-    spml_ikrit_am_hdr_t am_pkt;
+    opal_free_list_item_t   link;   /* must be a first member */
+    mxm_send_req_t          mxm_req;
+    int                     pe;
 };
 
 typedef struct mca_spml_ikrit_put_request mca_spml_ikrit_put_request_t;
-OBJ_CLASS_DECLARATION(mca_spml_ikrit_put_request_t);
 
 static inline mxm_mem_key_t *to_mxm_mkey(sshmem_mkey_t *mkey) {
 
@@ -94,95 +87,55 @@ static inline void mca_spml_irkit_req_wait(mxm_req_base_t *req)
     } while (!mxm_req_test(req));
 }
 
-static int mca_spml_ikrit_put_request_free(struct oshmem_request_t** request)
+static inline void free_put_req(mca_spml_ikrit_put_request_t *put_req)
 {
-    mca_spml_ikrit_put_request_t *put_req =
-            *(mca_spml_ikrit_put_request_t **) request;
-
-    OPAL_THREAD_LOCK(&oshmem_request_lock);
-    assert(false == put_req->req_put.req_base.req_free_called);
-    put_req->req_put.req_base.req_free_called = true;
     opal_free_list_return (&mca_spml_base_put_requests,
                            (opal_free_list_item_t*)put_req);
     opal_memchecker_base_mem_noaccess(put_req, sizeof(*put_req));
-    OPAL_THREAD_UNLOCK(&oshmem_request_lock);
-
-    *request = SHMEM_REQUEST_NULL; /*MPI_REQUEST_NULL;*/
-
-    return OSHMEM_SUCCESS;
 }
 
-static int mca_spml_ikrit_put_request_cancel(struct oshmem_request_t * request,
-                                             int complete)
+static inline mca_spml_ikrit_put_request_t *alloc_put_req(void)
 {
-    return OSHMEM_SUCCESS;
+    mca_spml_ikrit_put_request_t *req;
+    opal_free_list_item_t* item;
+
+    item = opal_free_list_wait (&mca_spml_base_put_requests);
+    assert(item != NULL);
+
+    req = (mca_spml_ikrit_put_request_t *) item;
+    opal_memchecker_base_mem_undefined(req, sizeof(*req));
+
+    return req;
 }
 
-static void mca_spml_ikrit_put_request_construct(mca_spml_ikrit_put_request_t* req)
-{
-    req->req_put.req_base.req_type = MCA_SPML_REQUEST_PUT;
-    req->req_put.req_base.req_oshmem.req_free = mca_spml_ikrit_put_request_free;
-    req->req_put.req_base.req_oshmem.req_cancel =
-            mca_spml_ikrit_put_request_cancel;
-}
-
-static void mca_spml_ikrit_put_request_destruct(mca_spml_ikrit_put_request_t* req)
-{
-}
-
-OBJ_CLASS_INSTANCE( mca_spml_ikrit_put_request_t,
-                   mca_spml_base_put_request_t,
-                   mca_spml_ikrit_put_request_construct,
-                   mca_spml_ikrit_put_request_destruct);
 
 struct mca_spml_ikrit_get_request {
-    mca_spml_base_get_request_t req_get;
-    mxm_send_req_t mxm_req;
+    opal_free_list_item_t   link;   /* must be a first member */
+    mxm_send_req_t          mxm_req;
 };
 
 typedef struct mca_spml_ikrit_get_request mca_spml_ikrit_get_request_t;
-OBJ_CLASS_DECLARATION(mca_spml_ikrit_get_request_t);
 
-static int mca_spml_ikrit_get_request_free(struct oshmem_request_t** request)
+static inline void free_get_req(mca_spml_ikrit_get_request_t *get_req)
 {
-    mca_spml_ikrit_get_request_t *get_req =
-            *(mca_spml_ikrit_get_request_t **) request;
-
-    OPAL_THREAD_LOCK(&oshmem_request_lock);
-    assert(false == get_req->req_get.req_base.req_free_called);
-    get_req->req_get.req_base.req_free_called = true;
     opal_free_list_return (&mca_spml_base_get_requests,
                            (opal_free_list_item_t*)get_req);
     opal_memchecker_base_mem_noaccess(get_req, sizeof(*get_req));
-    OPAL_THREAD_UNLOCK(&oshmem_request_lock);
-
-    *request = SHMEM_REQUEST_NULL; /*MPI_REQUEST_NULL;*/
-
-    return OSHMEM_SUCCESS;
 }
 
-static int mca_spml_ikrit_get_request_cancel(struct oshmem_request_t * request,
-                                             int complete)
+static inline mca_spml_ikrit_get_request_t *alloc_get_req(void)
 {
-    return OSHMEM_SUCCESS;
+    mca_spml_ikrit_get_request_t *req;
+    opal_free_list_item_t* item;
+
+    item = opal_free_list_wait (&mca_spml_base_get_requests);
+    assert(item != NULL);
+
+    req = (mca_spml_ikrit_get_request_t *) item;
+    opal_memchecker_base_mem_undefined(req, sizeof(*req));
+    return req;
 }
 
-static void mca_spml_ikrit_get_request_construct(mca_spml_ikrit_get_request_t* req)
-{
-    req->req_get.req_base.req_type = MCA_SPML_REQUEST_GET;
-    req->req_get.req_base.req_oshmem.req_free = mca_spml_ikrit_get_request_free;
-    req->req_get.req_base.req_oshmem.req_cancel =
-            mca_spml_ikrit_get_request_cancel;
-}
-
-static void mca_spml_ikrit_get_request_destruct(mca_spml_ikrit_get_request_t* req)
-{
-}
-
-OBJ_CLASS_INSTANCE( mca_spml_ikrit_get_request_t,
-                   mca_spml_base_get_request_t,
-                   mca_spml_ikrit_get_request_construct,
-                   mca_spml_ikrit_get_request_destruct);
 
 int mca_spml_ikrit_put_simple(void* dst_addr,
                               size_t size,
@@ -214,42 +167,6 @@ mca_spml_ikrit_t mca_spml_ikrit = {
     }
 };
 
-static inline mca_spml_ikrit_put_request_t *alloc_put_req(void)
-{
-    mca_spml_ikrit_put_request_t *req;
-    opal_free_list_item_t* item;
-
-    item = opal_free_list_wait (&mca_spml_base_put_requests);
-
-    req = (mca_spml_ikrit_put_request_t *) item;
-    opal_memchecker_base_mem_undefined(req, sizeof(*req));
-    opal_memchecker_base_mem_defined(&req->req_put.req_base,
-                                     sizeof(req->req_put.req_base));
-
-    req->req_put.req_base.req_free_called = false;
-    req->req_put.req_base.req_oshmem.req_complete = false;
-
-    return req;
-}
-
-static inline mca_spml_ikrit_get_request_t *alloc_get_req(void)
-{
-    mca_spml_ikrit_get_request_t *req;
-    opal_free_list_item_t* item;
-
-    item = opal_free_list_wait (&mca_spml_base_get_requests);
-
-    req = (mca_spml_ikrit_get_request_t *) item;
-    opal_memchecker_base_mem_undefined(req, sizeof(*req));
-    opal_memchecker_base_mem_defined(&req->req_get.req_base,
-                                     sizeof(req->req_get.req_base));
-
-    req->req_get.req_base.req_free_called = false;
-    req->req_get.req_base.req_oshmem.req_complete = false;
-
-    return req;
-}
-
 int mca_spml_ikrit_enable(bool enable)
 {
     SPML_VERBOSE(50, "*** ikrit ENABLED ****");
@@ -260,7 +177,7 @@ int mca_spml_ikrit_enable(bool enable)
     opal_free_list_init (&mca_spml_base_put_requests,
                          sizeof(mca_spml_ikrit_put_request_t),
                          opal_cache_line_size,
-                         OBJ_CLASS(mca_spml_ikrit_put_request_t),
+                         OBJ_CLASS(opal_free_list_item_t),
                          0,
                          opal_cache_line_size,
                          mca_spml_ikrit.free_list_num,
@@ -271,7 +188,7 @@ int mca_spml_ikrit_enable(bool enable)
     opal_free_list_init (&mca_spml_base_get_requests,
                          sizeof(mca_spml_ikrit_get_request_t),
                          opal_cache_line_size,
-                         OBJ_CLASS(mca_spml_ikrit_get_request_t),
+                         OBJ_CLASS(opal_free_list_item_t),
                          0,
                          opal_cache_line_size,
                          mca_spml_ikrit.free_list_num,
@@ -286,7 +203,6 @@ int mca_spml_ikrit_enable(bool enable)
 
 static void mxm_peer_construct(mxm_peer_t *p)
 {
-    p->pe            = -1;
     p->n_active_puts = 0;
     p->need_fence    = 0;
     p->ptl_id        = MXM_PTL_RDMA;
@@ -391,7 +307,6 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
          * that list have different order on every rank */
         i = (my_rank + n) % nprocs;
         mxm_peer_construct(&mca_spml_ikrit.mxm_peers[i]);
-        mca_spml_ikrit.mxm_peers[i].pe = i;
 
         err = mxm_ep_connect(mca_spml_ikrit.mxm_ep, ep_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i].mxm_conn);
         if (MXM_OK != err) {
@@ -716,11 +631,7 @@ static inline void get_completion_cb(void *ctx)
     mca_spml_ikrit_get_request_t *get_req = (mca_spml_ikrit_get_request_t *) ctx;
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_gets, -1);
-    get_req->req_get.req_base.req_spml_complete = true;
-    get_req->req_get.req_base.req_oshmem.req_status.SHMEM_ERROR =
-            OSHMEM_SUCCESS;
-    oshmem_request_complete(&get_req->req_get.req_base.req_oshmem, 1);
-    oshmem_request_free((oshmem_request_t**) &get_req);
+    free_get_req(get_req);
 }
 
 static inline int mca_spml_ikrit_get_async(void *src_addr,
@@ -734,11 +645,6 @@ static inline int mca_spml_ikrit_get_async(void *src_addr,
         return OSHMEM_SUCCESS;
 
     get_req = alloc_get_req();
-    if (NULL == get_req) {
-        SPML_ERROR("out of get requests - aborting");
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
 
     if (OSHMEM_SUCCESS
             != mca_spml_ikrit_get_helper(&get_req->mxm_req,
@@ -766,11 +672,7 @@ static inline void fence_completion_cb(void *ctx)
             (mca_spml_ikrit_get_request_t *) ctx;
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_mxm_fences, -1);
-    fence_req->req_get.req_base.req_spml_complete = true;
-    fence_req->req_get.req_base.req_oshmem.req_status.SHMEM_ERROR =
-            OSHMEM_SUCCESS;
-    oshmem_request_complete(&fence_req->req_get.req_base.req_oshmem, 1);
-    oshmem_request_free((oshmem_request_t**) &fence_req);
+    free_get_req(fence_req);
 }
 
 static int mca_spml_ikrit_mxm_fence(int dst)
@@ -778,11 +680,6 @@ static int mca_spml_ikrit_mxm_fence(int dst)
     mca_spml_ikrit_get_request_t *fence_req;
 
     fence_req = alloc_get_req();
-    if (NULL == fence_req) {
-        SPML_ERROR("out of get requests - aborting");
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
 
     fence_req->mxm_req.base.mq = mca_spml_ikrit.mxm_mq;
     fence_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst].mxm_conn;
@@ -808,6 +705,7 @@ static inline void put_completion_cb(void *ctx)
     mxm_peer_t *peer;
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, -1);
+    /* TODO: keep pointer to peer in the request */
     peer = &mca_spml_ikrit.mxm_peers[put_req->pe];
 
     /* this was last put in progress. Remove peer from the list so that we do not need explicit fence */
@@ -832,11 +730,7 @@ static inline void put_completion_cb(void *ctx)
         }
     }
 
-    put_req->req_put.req_base.req_spml_complete = true;
-    put_req->req_put.req_base.req_oshmem.req_status.SHMEM_ERROR =
-            OSHMEM_SUCCESS;
-    oshmem_request_complete(&put_req->req_put.req_base.req_oshmem, 1);
-    oshmem_request_free((oshmem_request_t**) &put_req);
+    free_put_req(put_req);
 }
 
 /**
@@ -882,7 +776,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
                 mxm_progress(mca_spml_ikrit.mxm_context);
             return OSHMEM_SUCCESS;
         }
-        /* segment not mapped - fallback to rmda */
+        /* segment not mapped - fallback to rdma */
         r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, MXM_PTL_RDMA, &rva);
         if (!r_mkey) {
             SPML_ERROR("pe=%d: %p is not address of shared variable",
@@ -897,11 +791,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
                           mca_spml_base_mkey2str(r_mkey));
 
     put_req = alloc_put_req();
-    if (NULL == put_req) {
-        SPML_ERROR("out of put requests - aborting");
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
+
     if (handle)
         *handle = put_req;
 
@@ -1118,15 +1008,15 @@ int mca_spml_ikrit_fence(void)
         peer = spml_ikrit_container_of(item, mxm_peer_t, link);
         peer->n_active_puts = 0;
         peer->need_fence = 0;
-        mca_spml_ikrit_mxm_fence(peer->pe);
+        mca_spml_ikrit_mxm_fence(peer - mca_spml_ikrit.mxm_peers);
     }
 
     while (0 < mca_spml_ikrit.n_mxm_fences) {
-        oshmem_request_wait_any_completion();
+        opal_progress();
     }
 
     while (0 < mca_spml_ikrit.n_active_gets) {
-        oshmem_request_wait_any_completion();
+        opal_progress();
     }
 
     SPML_VERBOSE(20, "fence completed");
