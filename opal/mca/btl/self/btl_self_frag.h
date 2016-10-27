@@ -33,9 +33,11 @@
  */
 struct mca_btl_self_frag_t {
     mca_btl_base_descriptor_t base;
-    mca_btl_base_segment_t segment;
+    mca_btl_base_segment_t segments[2];
     struct mca_btl_base_endpoint_t *endpoint;
+    opal_free_list_t *list;
     size_t size;
+    unsigned char data[];
 };
 typedef struct mca_btl_self_frag_t mca_btl_self_frag_t;
 typedef struct mca_btl_self_frag_t mca_btl_self_frag_eager_t;
@@ -47,43 +49,27 @@ OBJ_CLASS_DECLARATION(mca_btl_self_frag_send_t);
 OBJ_CLASS_DECLARATION(mca_btl_self_frag_rdma_t);
 
 #define MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag)                             \
-{                                                                       \
-    frag = (mca_btl_self_frag_t *)                                      \
-        opal_free_list_get (&mca_btl_self_component.self_frags_eager);  \
-}
+    {                                                                   \
+        frag = (mca_btl_self_frag_t *)                                  \
+            opal_free_list_get (&mca_btl_self_component.self_frags_eager); \
+    }
 
-#define MCA_BTL_SELF_FRAG_RETURN_EAGER(frag)                            \
-{                                                                       \
-    opal_free_list_return (&mca_btl_self_component.self_frags_eager,    \
-                           (opal_free_list_item_t*)(frag));             \
-    frag->segment.seg_addr.pval = frag+1;                               \
-}
-
-#define MCA_BTL_SELF_FRAG_ALLOC_SEND(frag)                              \
-{                                                                       \
-    frag = (mca_btl_self_frag_t *)                                      \
-        opal_free_list_get (&mca_btl_self_component.self_frags_send);   \
-}
-
-#define MCA_BTL_SELF_FRAG_RETURN_SEND(frag)                             \
-{                                                                       \
-    opal_free_list_return (&mca_btl_self_component.self_frags_send,     \
-                           (opal_free_list_item_t*)(frag));             \
-    frag->segment.seg_addr.pval = frag+1;                               \
-}
 
 #define MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag)                              \
-{                                                                       \
-    frag = (mca_btl_self_frag_t *)                                      \
-        opal_free_list_get (&mca_btl_self_component.self_frags_rdma);   \
-}
+    {                                                                   \
+        frag = (mca_btl_self_frag_t *)                                  \
+            opal_free_list_get (&mca_btl_self_component.self_frags_rdma); \
+    }
 
-#define MCA_BTL_SELF_FRAG_RETURN_RDMA(frag)                             \
-{                                                                       \
-    opal_free_list_return (&mca_btl_self_component.self_frags_rdma,     \
-                           (opal_free_list_item_t*)(frag));             \
-    frag->segment.seg_addr.pval = frag+1;                               \
-}
+#define MCA_BTL_SELF_FRAG_ALLOC_SEND(frag)                              \
+    {                                                                   \
+        frag = (mca_btl_self_frag_t *)                                  \
+            opal_free_list_get (&mca_btl_self_component.self_frags_send); \
+    }
 
-#endif
+#define MCA_BTL_SELF_FRAG_RETURN(frag)                                  \
+    {                                                                   \
+        opal_free_list_return ((frag)->list, (opal_free_list_item_t*)(frag)); \
+    }
 
+#endif /* MCA_BTL_SELF_SEND_FRAG_H */
