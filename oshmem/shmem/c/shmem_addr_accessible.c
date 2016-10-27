@@ -26,10 +26,16 @@ int shmem_addr_accessible(const void *addr, int pe)
 {
     void* rva;
     sshmem_mkey_t *mkey;
+    int i;
 
     RUNTIME_CHECK_INIT();
 
-    mkey = mca_memheap_base_get_cached_mkey(pe, (void *)addr, oshmem_get_transport_id(pe), &rva);
+    for (i = 0; i < mca_memheap_base_num_transports(); i++) {
+        mkey = mca_memheap_base_get_cached_mkey(pe, (void *)addr, i, &rva);
+        if (mkey) {
+            return 1;
+        }
+    }
 
-    return mkey ? 1 : 0;
+    return 0;
 }

@@ -226,6 +226,11 @@ static inline  sshmem_mkey_t *mca_memheap_base_get_cached_mkey(int pe,
     return mca_memheap_base_get_cached_mkey_slow(s, pe, va, btl_id, rva);
 }
 
+static inline int mca_memheap_base_num_transports(void) 
+{
+    return memheap_map->num_transports;
+}
+
 END_C_DECLS
 
 #endif /* MCA_MEMHEAP_BASE_H */
