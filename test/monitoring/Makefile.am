@@ -26,8 +26,20 @@ if PROJECT_OMPI
     test_overhead_SOURCES = test_overhead.c
     test_overhead_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
     test_overhead_LDADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/opal/libopen-pal.la
+
     test_overhead_SCRIPTS = test_overhead.sh
-    test_overheaddir = $(top_builddir)/test/monitoring
+    test_overheaddir = $(bindir)/test/monitoring
+
+    CLEANFILES += $(test_overhead_SCRIPTS)
+
+install-exec-hook:
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
+	(cd $(top_builddir)/test/monitoring; rm -f $(test_overhead_SCRIPTS); $(LN_S)  $(top_srcdir)/test/monitoring/test_overhead.sh test_overhead.sh)
+	(rm -f $(DESTDIR)$(bindir)/$(test_overhead_SCRIPTS); cp -u $(top_srcdir)/test/monitoring/test_overhead.sh $(DESTDIR)$(bindir)/test_overhead.sh)
+
+uninstall-local:
+	rm -f $(DESTDIR)$(bindir)/test_overhead.sh
+
 
 if MCA_BUILD_ompi_pml_monitoring_DSO
     lib_LTLIBRARIES = monitoring_prof.la
@@ -39,4 +51,4 @@ endif
 endif
 
 distclean:
-	rm -rf *.dSYM .deps .libs *.la *.lo monitoring_test *.log *.o *.trs Makefile
+	rm -rf *.dSYM .deps .libs *.la *.lo monitoring_test test_overhead{,.sh} prof *.log *.o *.trs Makefile
