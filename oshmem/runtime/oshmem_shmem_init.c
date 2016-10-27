@@ -176,7 +176,7 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
         int perr;
         perr = pthread_create(&thread_id, NULL, &shmem_opal_thread, NULL);
         if (0 != perr) {
-            SHMEM_API_ERROR("cannot creat opal thread for SHMEM");
+            SHMEM_API_ERROR("cannot create opal thread for SHMEM");
             return OSHMEM_ERROR;
         }
 #endif
