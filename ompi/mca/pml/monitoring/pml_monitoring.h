@@ -41,11 +41,9 @@ extern int mca_pml_monitoring_add_comm(struct ompi_communicator_t* comm);
 
 extern int mca_pml_monitoring_del_comm(struct ompi_communicator_t* comm);
 
-extern int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
-                                        size_t nprocs);
+extern int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs);
 
-extern int mca_pml_monitoring_del_procs(struct ompi_proc_t **procs,
-                                        size_t nprocs);
+extern int mca_pml_monitoring_del_procs(struct ompi_proc_t **procs, size_t nprocs);
 
 extern int mca_pml_monitoring_enable(bool enable);
 

@@ -383,10 +383,10 @@ static void common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
 int common_monitoring_flush(int fd, char* filename)
 {
     if( 1 == fd ) {
-        OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to stdout\n", rank_world);
+        OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to stdout", rank_world);
         common_monitoring_output( stdout, rank_world, nprocs_world );
     } else if( 2 == fd ) {
-        OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to stderr\n", rank_world);
+        OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to stderr", rank_world);
         common_monitoring_output( stderr, rank_world, nprocs_world );
     } else {
         FILE *pf = NULL;
@@ -400,7 +400,7 @@ int common_monitoring_flush(int fd, char* filename)
         if(NULL == pf)  /* No filename or error during open */
             return -1;
 
-        OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to: %s.%d.prof\n",
+        OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to: %s.%d.prof",
                 rank_world, filename, rank_world);
 
         common_monitoring_output( pf, rank_world, nprocs_world );
