@@ -308,6 +308,12 @@ int main(int argc, char* argv[])
     if( rank%2 ) {
         MPI_Win_post(distant_group, 0, win);
         MPI_Win_wait(win);
+        /* Check recieved values */
+        for( int v = 0; v < 10240; ++v )
+            if( from != win_buff[v] ) {
+                printf("Error on checking exchanged values\n");
+                MPI_Abort(MPI_COMM_WORLD, -1);
+            }
     } else {
         MPI_Win_start(distant_group, 0, win);
         MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
@@ -316,6 +322,18 @@ int main(int argc, char* argv[])
     MPI_Group_free(&world_group);
     MPI_Group_free(&newcomm_group);
     MPI_Group_free(&distant_group);
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, to, 0, win);
+    MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);    
+    MPI_Win_unlock(to, win);
+    /* Check recieved values */
+    for( int v = 0; v < 10240; ++v )
+            if( from != win_buff[v] ) {
+                printf("Error on checking exchanged values\n");
+                MPI_Abort(MPI_COMM_WORLD, -1);
+        }
+    MPI_Barrier(MPI_COMM_WORLD);
     
     MPI_Win_free(&win);
     
