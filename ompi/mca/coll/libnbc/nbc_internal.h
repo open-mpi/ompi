@@ -81,7 +81,8 @@ typedef enum {
   RECV,
   OP,
   COPY,
-  UNPACK
+  UNPACK,
+  DATATYPE
 } NBC_Fn_type;
 
 /* the send argument struct */
@@ -142,6 +143,12 @@ typedef struct {
   char tmpoutbuf;
 } NBC_Args_unpack;
 
+/* release datatype */
+typedef struct {
+  NBC_Fn_type type;
+  MPI_Datatype datatype;
+} NBC_Args_datatype;
+
 /* internal function prototypes */
 int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_local_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest,NBC_Schedule *schedule, bool barrier);
@@ -153,6 +160,7 @@ int NBC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype, 
                     MPI_Datatype tgttype, NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf,
                       NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_datatype (MPI_Datatype datatype, NBC_Schedule *schedule);
 
 int NBC_Sched_barrier (NBC_Schedule *schedule);
 int NBC_Sched_commit (NBC_Schedule *schedule);
@@ -329,6 +337,10 @@ static inline void nbc_get_round_size (char *p, unsigned long *size) {
     case UNPACK:
       /*printf("found a UNPACK at offset %li\n", (long)p-(long)schedule); */
       offset += sizeof(NBC_Args_unpack);
+      break;
+    case DATATYPE:
+      /*printf("found a DATATYPE at offset%li\n", (long)p-(long)schedule); */
+      offset += sizeof(NBC_Args_datatype);
       break;
     default:
       NBC_Error("NBC_GET_ROUND_SIZE: bad type %i at offset %li", type, offset);
