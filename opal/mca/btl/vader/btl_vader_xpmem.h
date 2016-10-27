@@ -39,6 +39,7 @@
 #define VADER_MAX_ADDRESS XPMEM_MAXADDR_SIZE
 #endif
 
+struct mca_btl_base_endpoint_t;
 
 int mca_btl_vader_xpmem_init (void);
 
@@ -46,6 +47,7 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
                                                        size_t size, int flags, void **local_ptr);
 
 void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
+void mca_btl_vader_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep);
 
 #else
 
