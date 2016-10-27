@@ -279,7 +279,7 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     to = (rank + 1) % size;
-    from = (rank - 1) % size;
+    from = (rank + size - 1) % size;
     for( int v = 0; v < 10240; ++v )
         rs_buff[v] = win_buff[v] = rank;
     
@@ -296,7 +296,8 @@ int main(int argc, char* argv[])
 
     for( int v = 0; v < 10240; ++v )
         if( rs_buff[v] != win_buff[v] && ((rank%2 && rs_buff[v] != from) || (!(rank%2) && rs_buff[v] != rank)) ) {
-            printf("Error on checking exchanged values\n");
+            printf("Error on checking exchanged values: %s_buff[%d] == %d instead of %d\n",
+                   rank%2 ? "rs" : "win", v, rs_buff[v], rank%2 ? from : rank);
             MPI_Abort(MPI_COMM_WORLD, -1);
         }
 
@@ -310,7 +311,8 @@ int main(int argc, char* argv[])
         /* Check recieved values */
         for( int v = 0; v < 10240; ++v )
             if( from != win_buff[v] ) {
-                printf("Error on checking exchanged values\n");
+                printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
+                       v, win_buff[v], from);
                 MPI_Abort(MPI_COMM_WORLD, -1);
             }
     } else {
@@ -322,17 +324,22 @@ int main(int argc, char* argv[])
     MPI_Group_free(&newcomm_group);
     MPI_Group_free(&distant_group);
     MPI_Barrier(MPI_COMM_WORLD);
+
+    for( int v = 0; v < 10240; ++v ) rs_buff[v] = rank;    
     
     MPI_Win_lock(MPI_LOCK_EXCLUSIVE, to, 0, win);
     MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);    
     MPI_Win_unlock(to, win);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    
     /* Check recieved values */
     for( int v = 0; v < 10240; ++v )
-            if( from != win_buff[v] ) {
-                printf("Error on checking exchanged values\n");
-                MPI_Abort(MPI_COMM_WORLD, -1);
+        if( from != win_buff[v] ) {
+            printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
+                   v, win_buff[v], from);
+            MPI_Abort(MPI_COMM_WORLD, -1);
         }
-    MPI_Barrier(MPI_COMM_WORLD);
     
     MPI_Win_free(&win);
     
