@@ -13,6 +13,8 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,7 +91,6 @@ void pmix_rte_finalize(void)
     (void)pmix_mca_base_framework_close(&pmix_psec_base_framework);
 
     /* finalize the mca */
-    (void)pmix_mca_base_close();
     /* Clear out all the registered MCA params */
     pmix_deregister_params();
     pmix_mca_base_var_finalize();
@@ -98,6 +99,7 @@ void pmix_rte_finalize(void)
     pmix_util_keyval_parse_finalize();
 
     (void)pmix_mca_base_framework_close(&pmix_pinstalldirs_base_framework);
+    (void)pmix_mca_base_close();
 
     /* finalize the show_help system */
     pmix_show_help_finalize();

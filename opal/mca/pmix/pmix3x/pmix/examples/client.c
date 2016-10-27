@@ -51,8 +51,12 @@ int main(int argc, char **argv)
     }
     fprintf(stderr, "Client ns %s rank %d: Running\n", myproc.nspace, myproc.rank);
 
+    PMIX_PROC_CONSTRUCT(&proc);
+    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
+    proc.rank = PMIX_RANK_WILDCARD;
+
     /* get our universe size */
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Get universe size failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }
@@ -100,9 +104,6 @@ int main(int argc, char **argv)
     }
 
     /* call fence to ensure the data is received */
-    PMIX_PROC_CONSTRUCT(&proc);
-    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
-    proc.rank = PMIX_RANK_WILDCARD;
     PMIX_INFO_CREATE(info, 1);
     flag = true;
     PMIX_INFO_LOAD(info, PMIX_COLLECT_DATA, &flag, PMIX_BOOL);

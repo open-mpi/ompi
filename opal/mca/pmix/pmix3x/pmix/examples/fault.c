@@ -75,9 +75,11 @@ int main(int argc, char **argv)
     }
     fprintf(stderr, "Client ns %s rank %d: Running\n", myproc.nspace, myproc.rank);
 
-    /* get our universe size */
-    memcpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
+    PMIX_PROC_CONSTRUCT(&proc);
+    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
+
+    /* get our universe size */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Get universe size failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
