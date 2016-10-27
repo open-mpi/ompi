@@ -47,22 +47,31 @@
 /* request explicit ack (SYNC) per every X put requests per connection */
 #define SPML_IKRIT_PACKETS_PER_SYNC  64
 
+#define spml_ikrit_container_of(ptr, type, member) ( \
+                (type *)( ((char *)(ptr)) - offsetof(type,member) ))
+
+#define MXM_MAX_ADDR_LEN 512
+
+#define MXM_PTL_RDMA 0
+#define MXM_PTL_SHM  1
+#define MXM_PTL_LAST 2
+
 BEGIN_C_DECLS
 
 /**
  * UD MXM SPML module
  */
 struct mxm_peer {
-    opal_list_item_t    super;
     mxm_conn_h          mxm_conn;
     mxm_conn_h          mxm_hw_rdma_conn;
-    int                 pe;
+    uint8_t             ptl_id;
+    opal_list_item_t    link;
     int32_t             n_active_puts;
-    int                 need_fence;
+    uint32_t            pe;
+    uint8_t             need_fence;
 };
 
 typedef struct mxm_peer mxm_peer_t;
-OBJ_CLASS_DECLARATION(mxm_peer_t);
 
 struct mca_spml_ikrit_t {
     mca_spml_base_module_t super;
@@ -105,11 +114,6 @@ struct mca_spml_ikrit_t {
 
 typedef struct mca_spml_ikrit_t mca_spml_ikrit_t;
 
-#define MXM_MAX_ADDR_LEN 512
-
-#define MXM_PTL_RDMA 0
-#define MXM_PTL_SHM  1
-#define MXM_PTL_LAST 2
 
 typedef struct spml_ikrit_mxm_ep_conn_info_t {
     union {
@@ -130,11 +134,6 @@ extern int mca_spml_ikrit_get_nb(void* src_addr,
                                  void* dst_addr,
                                  int src,
                                  void **handle);
-/* extension. used 4 fence implementation b4 fence was added to mxm */
-extern int mca_spml_ikrit_get_async(void *src_addr,
-                                    size_t size,
-                                    void *dst_addr,
-                                    int src);
 
 extern int mca_spml_ikrit_put(void* dst_addr,
                               size_t size,
