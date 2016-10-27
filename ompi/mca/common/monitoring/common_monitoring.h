@@ -19,7 +19,7 @@ BEGIN_C_DECLS
 #include <opal/class/opal_hash_table.h>
 #include <opal/mca/base/mca_base_pvar.h>
 
-#define MCA_MONITORING_MAKE_VERSION MCA_BASE_MAKE_VERSION(component, \
+#define MCA_MONITORING_MAKE_VERSION MCA_BASE_MAKE_VERSION(component,    \
                                                           OMPI_MAJOR_VERSION, \
                                                           OMPI_MINOR_VERSION, \
                                                           OMPI_RELEASE_VERSION)
@@ -84,7 +84,7 @@ static inline int common_monitoring_get_world_rank(int dst, struct ompi_communic
      * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
      */
     return opal_hash_table_get_value_uint64(common_monitoring_get_translation_ht(),
-                                            key, (void *)&world_rank);
+                                            key, (void *)world_rank);
 }
 
 END_C_DECLS

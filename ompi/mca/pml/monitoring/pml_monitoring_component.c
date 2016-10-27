@@ -17,6 +17,7 @@
 #include <pml_monitoring.h>
 #include <ompi/constants.h>
 #include <ompi/mca/pml/base/base.h>
+#include <ompi/mca/common/monitoring/common_monitoring.h>
 #include <opal/mca/base/mca_base_component_repository.h>
 
 mca_pml_base_component_t pml_selected_component = {{0}};
