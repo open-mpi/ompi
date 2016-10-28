@@ -30,11 +30,11 @@
          * If this fails the destination is not part of my MPI_COM_WORLD \
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
          */                                                             \
-        if(OPAL_SUCCESS == common_monitoring_get_world_rank(target_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
+        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(target_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
             size_t type_size, data_size;                                \
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
-            common_monitoring_send_data(world_rank, data_size, 1);      \
+            mca_common_monitoring_send_data(world_rank, data_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Put to %d intercepted", world_rank); \
         }                                                               \
         return ompi_osc_monitoring_module_## template ##_template.osc_put(origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win); \
@@ -55,11 +55,11 @@
          * If this fails the destination is not part of my MPI_COM_WORLD \
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
          */                                                             \
-        if(OPAL_SUCCESS == common_monitoring_get_world_rank(target_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
+        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(target_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
             size_t type_size, data_size;                                \
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
-            common_monitoring_send_data(world_rank, data_size, 1);      \
+            mca_common_monitoring_send_data(world_rank, data_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Rput to %d intercepted", world_rank); \
         }                                                               \
         return ompi_osc_monitoring_module_## template ##_template.osc_rput(origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win, request); \
@@ -78,11 +78,11 @@
          * If this fails the destination is not part of my MPI_COM_WORLD \
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
          */                                                             \
-        if(OPAL_SUCCESS == common_monitoring_get_world_rank(source_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
+        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(source_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
             size_t type_size, data_size;                                \
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
-            common_monitoring_send_data(world_rank, data_size, 1);      \
+            mca_common_monitoring_send_data(world_rank, data_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Get to %d intercepted", world_rank); \
         }                                                               \
         return ompi_osc_monitoring_module_## template ##_template.osc_get(origin_addr, origin_count, origin_datatype, source_rank, source_disp, source_count, source_datatype, win); \
@@ -102,11 +102,11 @@
          * If this fails the destination is not part of my MPI_COM_WORLD \
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
          */                                                             \
-        if(OPAL_SUCCESS == common_monitoring_get_world_rank(source_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
+        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(source_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
             size_t type_size, data_size;                                \
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
-            common_monitoring_send_data(world_rank, data_size, 1);      \
+            mca_common_monitoring_send_data(world_rank, data_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Rget to %d intercepted", world_rank); \
         }                                                               \
         return ompi_osc_monitoring_module_## template ##_template.osc_rget(origin_addr, origin_count, origin_datatype, source_rank, source_disp, source_count, source_datatype, win, request); \

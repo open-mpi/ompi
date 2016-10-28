@@ -40,11 +40,11 @@ int mca_pml_monitoring_isend(const void *buf,
      * If this fails the destination is not part of my MPI_COM_WORLD
      * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
      */
-    if(OPAL_SUCCESS == common_monitoring_get_world_rank(dst, comm, &world_rank)) {
+    if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(dst, comm, &world_rank)) {
         size_t type_size, data_size;
         ompi_datatype_type_size(datatype, &type_size);
         data_size = count*type_size;
-        common_monitoring_send_data(world_rank, data_size, tag);
+        mca_common_monitoring_send_data(world_rank, data_size, tag);
     }
 
     return pml_selected_module.pml_isend(buf, count, datatype,
@@ -61,14 +61,13 @@ int mca_pml_monitoring_send(const void *buf,
 {
     int world_rank;
     /* Are we sending to a peer from my own MPI_COMM_WORLD? */
-    if(OPAL_SUCCESS == common_monitoring_get_world_rank(dst, comm, &world_rank)) {
+    if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(dst, comm, &world_rank)) {
         size_t type_size, data_size;
         ompi_datatype_type_size(datatype, &type_size);
         data_size = count*type_size;
-        common_monitoring_send_data(world_rank, data_size, tag);
+        mca_common_monitoring_send_data(world_rank, data_size, tag);
     }
 
     return pml_selected_module.pml_send(buf, count, datatype,
                                         dst, tag, mode, comm);
 }
-

@@ -94,17 +94,18 @@ static int mca_osc_monitoring_component_close(void)
     return OMPI_SUCCESS;
 }
 
-static int
-mca_osc_monitoring_component_init(bool enable_progress_threads,
-                                  bool enable_mpi_threads)
+static int mca_osc_monitoring_component_init(bool enable_progress_threads,
+                                             bool enable_mpi_threads)
 {
     OPAL_MONITORING_VERBOSE(0, "component_init");
+    mca_common_monitoring_init();
     return OMPI_SUCCESS;
 }
 
 static int mca_osc_monitoring_component_finish(void)
 {
     OPAL_MONITORING_VERBOSE(0, "component_finish");
+    mca_common_monitoring_finalize();
     return OMPI_SUCCESS;
 }
 
@@ -166,9 +167,9 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
         } else if( 0 == strcmp("sm", best_component->osc_version.mca_component_name) ) {
             memcpy(&ompi_osc_monitoring_module_sm_template, win->w_osc_module, sizeof(ompi_osc_base_module_t));
             memcpy(win->w_osc_module, &mca_osc_monitoring_sm_template, sizeof(ompi_osc_base_module_t));
-        /* } else if( 0 == strcmp("portals4", best_component->osc_version.mca_component_name) ) { */
-        /*     memcpy(&ompi_osc_monitoring_module_portals4_template, win->w_osc_module, sizeof(ompi_osc_base_module_t)); */
-        /*     memcpy(win->w_osc_module, &mca_osc_monitoring__portals4_template, sizeof(ompi_osc_base_module_t)); */
+            /* } else if( 0 == strcmp("portals4", best_component->osc_version.mca_component_name) ) { */
+            /*     memcpy(&ompi_osc_monitoring_module_portals4_template, win->w_osc_module, sizeof(ompi_osc_base_module_t)); */
+            /*     memcpy(win->w_osc_module, &mca_osc_monitoring__portals4_template, sizeof(ompi_osc_base_module_t)); */
         } else if( 0 == strcmp("pt2pt", best_component->osc_version.mca_component_name) ) {
             memcpy(&ompi_osc_monitoring_module_pt2pt_template, win->w_osc_module, sizeof(ompi_osc_base_module_t));
             memcpy(win->w_osc_module, &mca_osc_monitoring_pt2pt_template, sizeof(ompi_osc_base_module_t));

@@ -57,7 +57,7 @@ mca_pml_monitoring_module_t mca_pml_monitoring = {
 int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
                                  size_t nprocs)
 {
-    int ret = common_monitoring_add_procs(procs, nprocs);
+    int ret = mca_common_monitoring_add_procs(procs, nprocs);
     if( OMPI_SUCCESS == ret )
         ret = pml_selected_module.pml_add_procs(procs, nprocs);
     return ret;
@@ -80,7 +80,7 @@ int mca_pml_monitoring_dump(struct ompi_communicator_t* comm,
 
 int mca_pml_monitoring_enable(bool enable)
 {
-    common_monitoring_enable(enable, &mca_pml_monitoring_component);
+    mca_common_monitoring_enable(enable, &mca_pml_monitoring_component);
     return pml_selected_module.pml_enable(enable);
 }
 
@@ -155,6 +155,7 @@ mca_pml_monitoring_component_init(int* priority,
                                   bool enable_progress_threads,
                                   bool enable_mpi_threads)
 {
+    mca_common_monitoring_init();
     if( mca_common_monitoring_enabled ) {
         *priority = 0;  /* I'm up but don't select me */
         return &mca_pml_monitoring;
@@ -165,14 +166,8 @@ mca_pml_monitoring_component_init(int* priority,
 static int mca_pml_monitoring_component_finish(void)
 {
     if( mca_common_monitoring_enabled && mca_common_monitoring_active ) {
-        /* If we are not drived by MPIT then dump the monitoring information */
-        if( mca_common_monitoring_output_enabled )
-  	    common_monitoring_flush(mca_common_monitoring_output_enabled, *mca_common_monitoring_current_filename);
         /* Free internal data structure */
-        common_monitoring_finalize();
-        /* Call the original PML and then close */
-        mca_common_monitoring_active = 0;
-        mca_common_monitoring_enabled = 0;
+        mca_common_monitoring_finalize();
         /* Restore the original PML */
         mca_pml_base_selected_component = pml_selected_component;
         mca_pml = pml_selected_module;
@@ -240,16 +235,16 @@ static int mca_pml_monitoring_component_register(void)
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                 common_monitoring_get_messages_count, NULL,
-                                 common_monitoring_comm_size_notify, NULL);
+                                 mca_common_monitoring_get_messages_count, NULL,
+                                 mca_common_monitoring_comm_size_notify, NULL);
 
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_size", "Size of messages "
                                  "sent to each peer in a communicator", OPAL_INFO_LVL_4,
                                  MPI_T_PVAR_CLASS_SIZE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                 common_monitoring_get_messages_size, NULL,
-                                 common_monitoring_comm_size_notify, NULL);
+                                 mca_common_monitoring_get_messages_size, NULL,
+                                 mca_common_monitoring_comm_size_notify, NULL);
 
     return OMPI_SUCCESS;
 }
