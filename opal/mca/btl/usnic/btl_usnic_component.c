@@ -87,7 +87,7 @@
 #define OPAL_BTL_USNIC_NUM_COMPLETIONS 500
 
 /* RNG buffer definition */
-opal_rng_buff_t opal_btl_usnic_rand_buff = {0};
+opal_rng_buff_t opal_btl_usnic_rand_buff = {{0}};
 
 /* simulated clock */
 uint64_t opal_btl_usnic_ticks = 0;
