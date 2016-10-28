@@ -215,6 +215,8 @@ ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-sizeof.h
 ompi/mpi/fortran/use-mpi-tkr/fortran_kinds.sh
 ompi/mpi/fortran/use-mpi-tkr/fortran_sizes.h
 ompi/mpi/fortran/use-mpi-tkr/mpi_kinds.ompi_module
+ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.f90
+ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.h
 
 ompi/mpi/java/java/mpi
 ompi/mpi/java/java/*.jar
