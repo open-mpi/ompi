@@ -160,7 +160,7 @@ void common_monitoring_enable(bool enable, void*pml_monitoring_component)
                                  MPI_T_PVAR_CLASS_SIZE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
-                                 common_monitoring_get_messages_count, NULL,
+                                 common_monitoring_get_rmessages_count, NULL,
                                  common_monitoring_messages_notify, NULL);
     
     (void)mca_base_pvar_register("ompi", "osc", "monitoring", "messages_size", "Size of messages "
