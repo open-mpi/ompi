@@ -34,7 +34,6 @@
 #include "opal/class/opal_object.h"
 #include "ompi/errhandler/errhandler.h"
 #include "opal/threads/mutex.h"
-#include "ompi/communicator/comm_request.h"
 
 #include "mpi.h"
 #include "ompi/group/group.h"

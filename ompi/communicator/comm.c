@@ -48,8 +48,8 @@
 
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/communicator/comm_request.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/request/request.h"
 
 /*
 ** sort-function for MPI_Comm_split

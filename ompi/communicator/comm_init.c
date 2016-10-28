@@ -39,6 +39,7 @@
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/communicator/comm_request.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
