@@ -160,6 +160,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         NULL != comp_attrib) {
         /* they specified specific components - could be multiple */
         comps = opal_argv_split(comp_attrib, ',');
+        free(comp_attrib);
         for (i=0; NULL != comps[i]; i++) {
             if (0 == strcasecmp(comps[i], "oob")) {
                 /* we are a candidate */
@@ -188,6 +189,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         NULL != comp_attrib) {
         /* see if we are on the list */
         comps = opal_argv_split(comp_attrib, ',');
+        free(comp_attrib);
         for (i=0; NULL != comps[i]; i++) {
             if (0 == strcasecmp(comps[i], "oob")) {
                 /* we cannot be a candidate */
