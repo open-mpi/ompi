@@ -633,13 +633,6 @@ static int rte_init(void)
     /* set the event base */
     opal_pmix_base_set_evbase(orte_event_base);
 
-    /* setup the routed info */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed.init_routes";
-        goto error;
-    }
-
     /* setup the PMIx server */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
         /* the server code already barked, so let's be quiet */

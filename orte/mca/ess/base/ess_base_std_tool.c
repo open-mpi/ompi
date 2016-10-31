@@ -157,13 +157,6 @@ int orte_ess_base_tool_setup(void)
         goto error;
     }
 
-    /* setup the routed info for all components */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed.init_routes";
-        goto error;
-    }
-
     /* setup I/O forwarding system - must come after we init routes */
     if (NULL != orte_process_info.my_hnp_uri) {
         /* only do this if we were given an HNP */

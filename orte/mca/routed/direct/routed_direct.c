@@ -37,7 +37,6 @@ static int delete_route(orte_process_name_t *proc);
 static int update_route(orte_process_name_t *target,
                         orte_process_name_t *route);
 static orte_process_name_t get_route(orte_process_name_t *target);
-static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
 static void update_routing_plan(void);
@@ -55,7 +54,6 @@ orte_routed_module_t orte_routed_direct_module = {
     .delete_route = delete_route,
     .update_route = update_route,
     .get_route = get_route,
-    .init_routes = init_routes,
     .route_lost = route_lost,
     .route_is_defined = route_is_defined,
     .set_lifeline = set_lifeline,
@@ -75,7 +73,31 @@ static opal_list_t my_children;
 
 static int init(void)
 {
+    lifeline = NULL;
+
+    if (ORTE_PROC_IS_DAEMON) {
+        /* if we are using static ports, set my lifeline to point at my parent */
+        if (orte_static_ports) {
+            lifeline = ORTE_PROC_MY_PARENT;
+        } else {
+            /* set our lifeline to the HNP - we will abort if that connection is lost */
+            lifeline = ORTE_PROC_MY_HNP;
+        }
+        ORTE_PROC_MY_PARENT->jobid = ORTE_PROC_MY_NAME->jobid;
+    } else if (ORTE_PROC_IS_APP) {
+        /* if we don't have a designated daemon, just
+         * disqualify ourselves */
+        if (NULL == orte_process_info.my_daemon_uri) {
+            return ORTE_ERR_TAKE_NEXT_OPTION;
+        }
+        /* set our lifeline to the local daemon - we will abort if this connection is lost */
+        lifeline = ORTE_PROC_MY_DAEMON;
+        orte_routing_is_enabled = true;
+    }
+
+    /* setup the list of children */
     OBJ_CONSTRUCT(&my_children, opal_list_t);
+
     return ORTE_SUCCESS;
 }
 
@@ -187,122 +209,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
                          ORTE_NAME_PRINT(ret)));
 
     return *ret;
-}
-
-
-static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
-{
-    int rc;
-
-    /* if I am a tool, then I stand alone - there is nothing to do */
-    if (ORTE_PROC_IS_TOOL) {
-        return ORTE_SUCCESS;
-    }
-
-    /* if I am a daemon or HNP, then I have to extract the routing info for this job
-     * from the data sent to me for launch and update the routing tables to
-     * point at the daemon for each proc
-     */
-    if (ORTE_PROC_IS_DAEMON) {
-
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
-                             "%s direct: init routes for daemon job %s\n\thnp_uri %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(job),
-                             (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri));
-
-        if (NULL == ndat) {
-            /* indicates this is being called during orte_init.
-             * Get the HNP's name for possible later use
-             */
-            if (NULL == orte_process_info.my_hnp_uri) {
-                /* fatal error */
-                ORTE_ERROR_LOG(ORTE_ERR_FATAL);
-                return ORTE_ERR_FATAL;
-            }
-
-            /* extract the hnp name and store it */
-            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
-                                                               ORTE_PROC_MY_HNP, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* set the contact info into the hash table */
-            orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
-            /* the HNP is my lifeline */
-            lifeline = ORTE_PROC_MY_HNP;
-
-            /* daemons will send their contact info back to the HNP as
-             * part of the message confirming they are read to go. HNP's
-             * load their contact info during orte_init
-             */
-        } else {
-            /* ndat != NULL means we are getting an update of RML info
-             * for the daemons - so update our contact info and routes
-             */
-            if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            return rc;
-        }
-
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
-                             "%s routed_direct: completed init routes",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-        return ORTE_SUCCESS;
-    }
-
-
-    if (ORTE_PROC_IS_HNP) {
-
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
-                             "%s routed_direct: init routes for HNP job %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(job)));
-
-        if (NULL != ndat) {
-            /* if this is for my own jobid, then I am getting an update of RML info
-             * for the daemons - so update our contact info and routes
-             */
-            if (ORTE_PROC_MY_NAME->jobid == job) {
-                if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-        }
-
-        return ORTE_SUCCESS;
-    }
-
-    /***   MUST BE A PROC   ***/
-    /* if we were direct launched, there is nothing we need to do. If we
-     * were launched by mpirun, then we need to set the HNP and daemon info */
-    if (NULL != orte_process_info.my_hnp_uri) {
-        /* extract the hnp name and store it */
-        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
-                                                           ORTE_PROC_MY_HNP, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* we don't set the HNP's contact info as we don't need it - we
-         * only contact our local daemon, which might be the HNP (in which
-         * case it will have also been passed as our daemon uri) */
-    }
-
-    if (NULL != orte_process_info.my_daemon_uri) {
-        /* extract the daemon's name so we can update the routing table */
-        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
-                                                           ORTE_PROC_MY_DAEMON, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
-        /* my daemon is my lifeline */
-        lifeline = ORTE_PROC_MY_DAEMON;
-    }
-    return ORTE_SUCCESS;
 }
 
 static int route_lost(const orte_process_name_t *route)
@@ -441,16 +347,6 @@ static int direct_ft_event(int state)
     }
     /******** Continue Recovery ********/
     else if (OPAL_CRS_CONTINUE == state ) {
-    }
-    /******** Restart Recovery ********/
-    else if (OPAL_CRS_RESTART == state ) {
-        /*
-         * Re-exchange the routes
-         */
-        if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
-            exit_status = ret;
-            goto cleanup;
-        }
     }
     else if (OPAL_CRS_TERM == state ) {
         /* Nothing */
