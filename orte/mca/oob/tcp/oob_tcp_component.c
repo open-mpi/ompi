@@ -514,10 +514,12 @@ static int component_available(void)
         /* get the name for diagnostic purposes */
         opal_ifindextoname(i, name, sizeof(name));
 
+#if 0
         /* ignore any virtual interfaces */
         if (0 == strncmp(name, "vir", 3)) {
             continue;
         }
+#endif
 
         /* handle include/exclude directives */
         if (NULL != interfaces) {
@@ -1064,7 +1066,7 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
      */
     if (!orte_finalizing && !orte_abnormal_term_ordered) {
         /* if this was a lifeline, then alert */
-        if (ORTE_SUCCESS != orte_routed.route_lost(mop->snd->hdr.routed, &mop->hop)) {
+        if (ORTE_SUCCESS != orte_routed.route_lost(mop->rmsg->routed, &mop->hop)) {
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_LIFELINE_LOST);
         } else {
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
