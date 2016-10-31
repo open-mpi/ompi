@@ -12,6 +12,7 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#include <ucm/api/ucm.h>
 
 #include "oshmem_config.h"
 #include "orte/util/show_help.h"
@@ -21,6 +22,7 @@
 #include "oshmem/mca/spml/base/base.h"
 #include "spml_ucx_component.h"
 #include "oshmem/mca/spml/ucx/spml_ucx.h"
+#include "opal/memoryhooks/memory.h"
 
 #include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
@@ -97,6 +99,10 @@ static int mca_spml_ucx_component_register(void)
                                       "[integer] ucx priority",
                                       &mca_spml_ucx.priority);
 
+    mca_spml_ucx_param_register_int("num_disconnect", 1,
+                                    "How may disconnects go in parallel",
+                                    &mca_spml_ucx.num_disconnect);
+
     return OSHMEM_SUCCESS;
 }
 
@@ -112,13 +118,26 @@ static int mca_spml_ucx_component_open(void)
     ucp_config_t *ucp_config;
     ucp_params_t params;
 
+    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
+        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
+         opal_mem_hooks_support_level()))
+    {
+        SPML_VERBOSE(10, "using opal memory hooks");
+        ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
+        mca_spml_ucx.using_mem_hooks = 1;
+    } else {
+        SPML_VERBOSE(10, "not using opal memory hooks");
+        mca_spml_ucx.using_mem_hooks = 0;
+    }
+
     err = ucp_config_read("OSHMEM", NULL, &ucp_config);
     if (UCS_OK != err) {
         return OSHMEM_ERROR;
     }
 
     memset(&params, 0, sizeof(params));
-    params.features = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64;
+    params.field_mask = UCP_PARAM_FIELD_FEATURES;
+    params.features   = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64;
 
     err = ucp_init(&params, ucp_config, &mca_spml_ucx.ucp_context);
     ucp_config_release(ucp_config);
@@ -131,7 +150,10 @@ static int mca_spml_ucx_component_open(void)
 
 static int mca_spml_ucx_component_close(void)
 {
-    ucp_cleanup(mca_spml_ucx.ucp_context);
+    if (mca_spml_ucx.ucp_context) {
+        ucp_cleanup(mca_spml_ucx.ucp_context);
+        mca_spml_ucx.ucp_context = NULL;
+    }
     return OSHMEM_SUCCESS;
 }
 
@@ -146,6 +168,12 @@ static int spml_ucx_init(void)
     }
 
     return OSHMEM_SUCCESS;
+}
+
+static void mca_spml_ucx_mem_release_cb(void *buf, size_t length, void *cbdata,
+                                        bool from_alloc)
+{
+    ucm_vm_munmap(buf, length);
 }
 
 static mca_spml_base_module_t*
@@ -164,6 +192,10 @@ mca_spml_ucx_component_init(int* priority,
     if (OSHMEM_SUCCESS != spml_ucx_init())
         return NULL ;
 
+    if (mca_spml_ucx.using_mem_hooks) {
+         opal_mem_hooks_register_release(mca_spml_ucx_mem_release_cb, NULL);
+    }
+
     SPML_VERBOSE(50, "*** ucx initialized ****");
     return &mca_spml_ucx.super;
 }
@@ -172,6 +204,10 @@ static int mca_spml_ucx_component_fini(void)
 {
     opal_progress_unregister(spml_ucx_progress);
         
+    if (mca_spml_ucx.using_mem_hooks) {
+        opal_mem_hooks_unregister_release(mca_spml_ucx_mem_release_cb);
+    }
+
     if (mca_spml_ucx.ucp_worker) {
         ucp_worker_destroy(mca_spml_ucx.ucp_worker);
     }
