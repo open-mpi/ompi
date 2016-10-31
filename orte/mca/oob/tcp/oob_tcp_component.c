@@ -514,12 +514,10 @@ static int component_available(void)
         /* get the name for diagnostic purposes */
         opal_ifindextoname(i, name, sizeof(name));
 
-#if 0
         /* ignore any virtual interfaces */
         if (0 == strncmp(name, "vir", 3)) {
             continue;
         }
-#endif
 
         /* handle include/exclude directives */
         if (NULL != interfaces) {
