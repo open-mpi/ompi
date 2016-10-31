@@ -56,8 +56,6 @@ int ompi_coll_libnbc_ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res= MPI_Comm_size(comm, &p);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-  res = MPI_Type_extent(sendtype, &sndext);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
   res = MPI_Type_extent(recvtype, &rcvext);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
 
@@ -82,11 +80,15 @@ int ompi_coll_libnbc_ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
     if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) { printf("Error in malloc()\n"); return NBC_OOR; }
     sendcounts = recvcounts;
     sdispls = rdispls;
-  } else if (sendcounts[rank] != 0) {
-    rbuf = (char *) recvbuf + rdispls[rank] * rcvext;
-    sbuf = (char *) sendbuf + sdispls[rank] * sndext;
-    res = NBC_Copy (sbuf, sendcounts[rank], sendtype, rbuf, recvcounts[rank], recvtype, comm);
-    if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+  } else {
+    res = MPI_Type_extent(sendtype, &sndext);
+    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    if (sendcounts[rank] != 0) {
+      rbuf = (char *) recvbuf + rdispls[rank] * rcvext;
+      sbuf = (char *) sendbuf + sdispls[rank] * sndext;
+      res = NBC_Copy (sbuf, sendcounts[rank], sendtype, rbuf, recvcounts[rank], recvtype, comm);
+      if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+    }
   }
 
   if (inplace) {
