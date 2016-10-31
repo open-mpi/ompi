@@ -125,25 +125,6 @@ orte_process_name_t orte_routed_base_get_route(char *module, orte_process_name_t
     return *ORTE_NAME_INVALID;
 }
 
-int orte_routed_base_init_routes(char *module,
-                                 orte_jobid_t job, opal_buffer_t *ndat)
-{
-    orte_routed_base_active_t *active;
-    int rc;
-
-    OPAL_LIST_FOREACH(active, &orte_routed_base.actives, orte_routed_base_active_t) {
-        if (NULL == module ||
-            0 == strcmp(module, active->component->base_version.mca_component_name)) {
-            if (NULL != active->module->init_routes) {
-                if (ORTE_SUCCESS != (rc = active->module->init_routes(job, ndat))) {
-                    return rc;
-                }
-            }
-        }
-    }
-    return ORTE_SUCCESS;
-}
-
 int orte_routed_base_route_lost(char *module, const orte_process_name_t *route)
 {
     orte_routed_base_active_t *active;

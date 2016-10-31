@@ -47,6 +47,7 @@
 
 #include "orte/mca/rtc/base/base.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/oob/base/base.h"
@@ -386,6 +387,17 @@ int orte_ess_base_orted_setup(char **hosts)
     }
 
     /* Setup the communication infrastructure */
+    /* Routed system */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_select";
+        goto error;
+    }
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_oob_base_open";
@@ -407,6 +419,21 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
 
+    if (NULL != orte_process_info.my_hnp_uri) {
+        /* extract the HNP's name so we can update the routing table */
+        if (ORTE_SUCCESS != (ret = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                            ORTE_PROC_MY_HNP, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_rml_parse_HNP";
+            goto error;
+        }
+        /* Set the contact info in the RML - this won't actually establish
+         * the connection, but just tells the RML how to reach the HNP
+         * if/when we attempt to send to it
+         */
+        orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
+    }
+
     /* setup the PMIx server */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
         ORTE_ERROR_LOG(ret);
@@ -418,23 +445,6 @@ int orte_ess_base_orted_setup(char **hosts)
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_select";
-        goto error;
-    }
-    /* Routed system */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_select";
-        goto error;
-    }
-    /* setup the routed info */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed.init_routes";
         goto error;
     }
 
@@ -533,12 +543,6 @@ int orte_ess_base_orted_setup(char **hosts)
         }
     }
 
-    /* setup the routed info */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed.init_routes";
-        goto error;
-    }
     /* setup I/O forwarding system - must come after we init routes */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_iof_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);

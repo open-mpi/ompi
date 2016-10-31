@@ -123,19 +123,6 @@ typedef int (*orte_routed_module_update_route_fn_t)(orte_process_name_t *target,
 typedef orte_process_name_t (*orte_routed_module_get_route_fn_t)(orte_process_name_t *target);
 
 /**
- * Initialize the routing table
- *
- * Initialize the routing table for the specified job. This can be rather complex
- * and depends entirely upon both the selected module AND whether the function
- * is being called by the HNP, an orted, a tool, or an application proc. To
- * understand what is happening, you really need to look at the specific module.
- *
- * Regardless, at the end of the function, the routes to any other process in the
- * specified job -must- be defined (even if it is direct)
- */
-typedef int (*orte_routed_module_init_routes_fn_t)(orte_jobid_t job, opal_buffer_t *ndat);
-
-/**
  * Report a route as "lost"
  *
  * Report that an existing connection has been lost, therefore potentially
@@ -223,7 +210,6 @@ typedef struct {
     orte_routed_module_delete_route_fn_t            delete_route;
     orte_routed_module_update_route_fn_t            update_route;
     orte_routed_module_get_route_fn_t               get_route;
-    orte_routed_module_init_routes_fn_t             init_routes;
     orte_routed_module_route_lost_fn_t              route_lost;
     orte_routed_module_route_is_defined_fn_t        route_is_defined;
     orte_routed_module_set_lifeline_fn_t            set_lifeline;
@@ -246,8 +232,6 @@ typedef int (*orte_routed_API_update_route_fn_t)(char *module,
                                                  orte_process_name_t *route);
 typedef orte_process_name_t (*orte_routed_API_get_route_fn_t)(char *module,
                                                               orte_process_name_t *target);
-typedef int (*orte_routed_API_init_routes_fn_t)(char *module,
-                                                orte_jobid_t job, opal_buffer_t *ndat);
 typedef int (*orte_routed_API_route_lost_fn_t)(char *module,
                                                const orte_process_name_t *route);
 typedef bool (*orte_routed_API_route_is_defined_fn_t)(char *module,
@@ -265,7 +249,6 @@ typedef struct {
     orte_routed_API_delete_route_fn_t           delete_route;
     orte_routed_API_update_route_fn_t           update_route;
     orte_routed_API_get_route_fn_t              get_route;
-    orte_routed_API_init_routes_fn_t            init_routes;
     orte_routed_API_route_lost_fn_t             route_lost;
     orte_routed_API_route_is_defined_fn_t       route_is_defined;
     orte_routed_API_set_lifeline_fn_t           set_lifeline;

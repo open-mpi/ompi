@@ -54,6 +54,7 @@
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -148,6 +149,17 @@ int orte_ess_base_app_setup(bool db_restrict_local)
                                          "output-", NULL, NULL);
     }
     /* Setup the communication infrastructure */
+    /* Routed system */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_select";
+        goto error;
+    }
     /*
      * OOB Layer
      */
@@ -172,27 +184,38 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_rml_base_select";
         goto error;
     }
+    /* if we have info on the HNP and local daemon, process it */
+    if (NULL != orte_process_info.my_hnp_uri) {
+        /* we have to set the HNP's name, even though we won't route messages directly
+         * to it. This is required to ensure that we -do- send messages to the correct
+         * HNP name
+         */
+        if (ORTE_SUCCESS != (ret = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                            ORTE_PROC_MY_HNP, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_rml_parse_HNP";
+            goto error;
+        }
+    }
+    if (NULL != orte_process_info.my_daemon_uri) {
+        /* extract the daemon's name so we can update the routing table */
+        if (ORTE_SUCCESS != (ret = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
+                                                            ORTE_PROC_MY_DAEMON, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_rml_parse_daemon";
+            goto error;
+        }
+        /* Set the contact info in the RML - this won't actually establish
+         * the connection, but just tells the RML how to reach the daemon
+         * if/when we attempt to send to it
+         */
+        orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
+    }
+
     /* setup the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_select";
-        goto error;
-    }
-    /* Routed system */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_select";
-        goto error;
-    }
-    /* setup the routed info */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(NULL, ORTE_PROC_MY_NAME->jobid, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed.init_routes";
         goto error;
     }
 

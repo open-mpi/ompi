@@ -45,7 +45,6 @@ orte_routed_API_t orte_routed = {
     .delete_route = orte_routed_base_delete_route,
     .update_route = orte_routed_base_update_route,
     .get_route = orte_routed_base_get_route,
-    .init_routes = orte_routed_base_init_routes,
     .route_lost = orte_routed_base_route_lost,
     .route_is_defined = orte_routed_base_route_is_defined,
     .set_lifeline = orte_routed_base_set_lifeline,

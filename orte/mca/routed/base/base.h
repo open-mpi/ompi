@@ -53,8 +53,6 @@ ORTE_DECLSPEC int orte_routed_base_update_route(char *module, orte_process_name_
                                                 orte_process_name_t *route);
 ORTE_DECLSPEC orte_process_name_t orte_routed_base_get_route(char *module,
                                                              orte_process_name_t *target);
-ORTE_DECLSPEC int orte_routed_base_init_routes(char *module,
-                                               orte_jobid_t job, opal_buffer_t *ndat);
 ORTE_DECLSPEC int orte_routed_base_route_lost(char *module,
                                               const orte_process_name_t *route);
 ORTE_DECLSPEC bool orte_routed_base_route_is_defined(char *module,
