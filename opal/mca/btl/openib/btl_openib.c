@@ -1864,7 +1864,9 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
 #if BTL_OPENIB_FAILOVER_ENABLED
         else {
             /* Return up in case needed for failover */
-            *descriptor = (struct mca_btl_base_descriptor_t *) frag;
+            if (NULL != descriptor) {
+		*descriptor = (struct mca_btl_base_descriptor_t *) frag;
+	    }
         }
 #endif
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
