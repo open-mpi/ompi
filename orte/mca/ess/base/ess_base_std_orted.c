@@ -434,13 +434,6 @@ int orte_ess_base_orted_setup(char **hosts)
         orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
     }
 
-    /* setup the PMIx server */
-    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "pmix server init";
-        goto error;
-    }
-
     /* select the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
         ORTE_ERROR_LOG(ret);

@@ -258,7 +258,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         return PMIX_ERR_BAD_PARAM;
     }
 
-    if (0 < pmix_globals.init_cntr) {
+    if (0 < pmix_globals.init_cntr || PMIX_PROC_SERVER == pmix_globals.proc_type) {
         /* since we have been called before, the nspace and
          * rank should be known. So return them here if
          * requested */

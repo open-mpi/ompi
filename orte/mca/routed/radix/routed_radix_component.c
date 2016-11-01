@@ -60,14 +60,6 @@ static int orte_routed_radix_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_routed_radix_component.radix);
 
-    mca_routed_radix_component.max_connections = -1;
-    (void) mca_base_component_var_register(c, "max_connections",
-                                           "Send direct between daemons if the number of nodes is less than this number",
-                                           MCA_BASE_VAR_TYPE_INT, NULL,0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_routed_radix_component.max_connections);
-
     return ORTE_SUCCESS;
 }
 
