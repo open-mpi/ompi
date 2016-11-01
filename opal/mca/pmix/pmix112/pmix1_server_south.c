@@ -38,6 +38,7 @@
 
 #include "pmix.h"
 #include "pmix_server.h"
+#include "src/include/pmix_globals.h"
 
 /****    S.O.U.T.H.B.O.U.N.D   I.N.T.E.R.F.A.C.E.S     ****/
 
@@ -100,6 +101,13 @@ static void errreg_cbfunc(pmix_status_t status,
                         status, errhandler_ref);
 }
 
+static void op2cbfunc(pmix_status_t status, void *cbdata)
+{
+    volatile bool *active = (volatile bool*)cbdata;
+
+    *active = false;
+}
+
 int pmix1_server_init(opal_pmix_server_module_t *module,
                       opal_list_t *info)
 {
@@ -108,6 +116,8 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
     opal_value_t *kv;
     pmix_info_t *pinfo;
     size_t sz, n;
+    volatile bool active;
+    opal_pmix1_jobid_trkr_t *job;
 
     if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
         asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
@@ -129,6 +139,13 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
         pinfo = NULL;
     }
 
+    /* insert ourselves into our list of jobids - it will be the
+     * first, and so we'll check it first */
+    job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
+    (void)opal_snprintf_jobid(job->nspace, PMIX_MAX_NSLEN, OPAL_PROC_MY_NAME.jobid);
+    job->jobid = OPAL_PROC_MY_NAME.jobid;
+    opal_list_append(&mca_pmix_pmix112_component.jobids, &job->super);
+
     if (PMIX_SUCCESS != (rc = PMIx_server_init(&pmix112_module, pinfo, sz))) {
         PMIX_INFO_FREE(pinfo, sz);
         return pmix1_convert_rc(rc);
@@ -140,6 +157,13 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
 
     /* register the errhandler */
     PMIx_Register_errhandler(NULL, 0, myerr, errreg_cbfunc, NULL);
+
+    /* as we might want to use some client-side functions, be sure
+     * to register our own nspace */
+    active = true;
+    PMIx_server_register_nspace(job->nspace, 1, NULL, 0, op2cbfunc, (void*)&active);
+    PMIX_WAIT_FOR_COMPLETION(active);
+
     return OPAL_SUCCESS;
 }
 
