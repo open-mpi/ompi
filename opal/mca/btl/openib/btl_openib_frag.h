@@ -190,10 +190,6 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 #define MCA_BTL_OPENIB_CONTROL_RDMA         1
 #define MCA_BTL_OPENIB_CONTROL_COALESCED    2
 #define MCA_BTL_OPENIB_CONTROL_CTS          3
-#if BTL_OPENIB_FAILOVER_ENABLED
-#define MCA_BTL_OPENIB_CONTROL_EP_BROKEN    4
-#define MCA_BTL_OPENIB_CONTROL_EP_EAGER_RDMA_ERROR 5
-#endif
 
 struct mca_btl_openib_control_header_t {
     uint8_t  type;
@@ -243,32 +239,6 @@ do {                                               \
     (h).rdma_credits = ntohs((h).rdma_credits);    \
 } while (0)
 
-#if BTL_OPENIB_FAILOVER_ENABLED
-struct mca_btl_openib_broken_connection_header_t {
-    mca_btl_openib_control_header_t control;
-    uint32_t lid;
-    uint64_t subnet_id;
-    uint32_t vpid;
-    uint32_t index; /* for eager RDMA only */
-};
-typedef struct mca_btl_openib_broken_connection_header_t mca_btl_openib_broken_connection_header_t;
-
-#define BTL_OPENIB_BROKEN_CONNECTION_HEADER_HTON(h)    \
-    do {                                               \
-        (h).lid = htonl((h).lid);                      \
-        (h).subnet_id = hton64((h).subnet_id);         \
-        (h).vpid = htonl((h).vpid);                    \
-        (h).index = htonl((h).index);                  \
-    } while (0)
-
-#define BTL_OPENIB_BROKEN_CONNECTION_HEADER_NTOH(h)    \
-    do {                                               \
-        (h).lid = ntohl((h).lid);                      \
-        (h).subnet_id = ntoh64((h).subnet_id);         \
-        (h).vpid = ntohl((h).vpid);                    \
-        (h).index = ntohl((h).index);                  \
-    } while (0)
-#endif
 enum mca_btl_openib_frag_type_t {
     MCA_BTL_OPENIB_FRAG_RECV,
     MCA_BTL_OPENIB_FRAG_RECV_USER,
