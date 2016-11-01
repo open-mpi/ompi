@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,7 +71,6 @@ static void ofi_recv_msg_queue_des(ofi_recv_msg_queue_t *ptr)
 OBJ_CLASS_INSTANCE(ofi_recv_msg_queue_t,
                    opal_list_item_t,
                    ofi_recv_msg_queue_cons, ofi_recv_msg_queue_des);
-
 
 static void send_self_exe(int fd, short args, void* data)
 {
@@ -523,7 +522,7 @@ static void send_msg(int fd, short args, void *cbdata)
       }
    }
     if ( OPAL_SUCCESS == ret) {
-           //Anandhi added for debug purpose
+           //[Debug] printing additional info of IP
             switch ( orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->addr_format)
             {
                 case  FI_SOCKADDR_IN :
@@ -531,14 +530,14 @@ static void send_msg(int fd, short args, void *cbdata)
                     /*[debug] - print the sockaddr - port and s_addr */
                     ep_sockaddr = (struct sockaddr_in*)dest_ep_name;
                     opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                            "%s peer %s epnamelen is %lu, port = %d (or) 0x%x, InternetAddr = 0x%s  ",
+                            "%s peer %s epnamelen is %d, port = %d (or) 0x%x, InternetAddr = 0x%s  ",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_NAME_PRINT(peer),
                             orte_rml_ofi.ofi_prov[ofi_prov_id].epnamelen,ntohs(ep_sockaddr->sin_port),
                             ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
                     /*[end debug]*/
                     break;
             }
-            //Anandhi end debug
+            //[Debug] end debug
         opal_output_verbose(10, orte_rml_base_framework.framework_output,
                          "%s OPAL_MODEX_RECV succeded, %s peer ep name obtained. length=%lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -552,6 +551,7 @@ static void send_msg(int fd, short args, void *cbdata)
             snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
 
                 ORTE_RML_SEND_COMPLETE(snd);
+
                 return;
         }
     } else {
