@@ -71,6 +71,28 @@ static void errreg_cbfunc (pmix_status_t status,
     *active = false;
 }
 
+static void opcbfunc(pmix_status_t status, void *cbdata)
+{
+    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
+
+    if (NULL != op->opcbfunc) {
+        op->opcbfunc(pmix3x_convert_rc(status), op->cbdata);
+    }
+    if (op->active) {
+        op->status = status;
+        op->active = false;
+    } else {
+        OBJ_RELEASE(op);
+    }
+}
+
+static void op2cbfunc(pmix_status_t status, void *cbdata)
+{
+    volatile bool *active = (volatile bool*)cbdata;
+
+    *active = false;
+}
+
 int pmix3x_server_init(opal_pmix_server_module_t *module,
                       opal_list_t *info)
 {
@@ -123,6 +145,12 @@ int pmix3x_server_init(opal_pmix_server_module_t *module,
     PMIx_Register_event_handler(NULL, 0, NULL, 0, pmix3x_event_hdlr, errreg_cbfunc, (void*)&active);
     PMIX_WAIT_FOR_COMPLETION(active);
 
+    /* as we might want to use some client-side functions, be sure
+     * to register our own nspace */
+    active = true;
+    PMIx_server_register_nspace(job->nspace, 1, NULL, 0, op2cbfunc, (void*)&active);
+    PMIX_WAIT_FOR_COMPLETION(active);
+
     return OPAL_SUCCESS;
 }
 
@@ -161,21 +189,6 @@ int pmix3x_server_gen_ppn(const char *input, char **ppn)
 
     rc = PMIx_generate_ppn(input, ppn);
     return pmix3x_convert_rc(rc);
-}
-
-static void opcbfunc(pmix_status_t status, void *cbdata)
-{
-    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
-
-    if (NULL != op->opcbfunc) {
-        op->opcbfunc(pmix3x_convert_rc(status), op->cbdata);
-    }
-    if (op->active) {
-        op->status = status;
-        op->active = false;
-    } else {
-        OBJ_RELEASE(op);
-    }
 }
 
 static void _reg_nspace(int sd, short args, void *cbdata)

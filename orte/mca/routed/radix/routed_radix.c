@@ -276,10 +276,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
         ret = target;
         goto found;
-    } else if (orte_process_info.num_procs < mca_routed_radix_component.max_connections) {
-        /* if the job is small enough, send direct to the target's daemon */
-        ret = &daemon;
-        goto found;
     } else {
         /* search routing tree for next step to that daemon */
         for (item = opal_list_get_first(&my_children);
