@@ -429,7 +429,38 @@ static void send_msg(int fd, short args, void *cbdata)
                       ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer),pmix_key );
             OPAL_MODEX_RECV_STRING(ret, pmix_key, peer , (uint8_t **) &dest_ep_name, &dest_ep_namelen);
             opal_output_verbose(10, orte_rml_base_framework.framework_output, "Returned from MODEX_RECV");
-            opal_output_verbose(50, orte_rml_base_framework.framework_output,
+            //Anandhi added for debug purpose
+            switch ( orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->addr_format)
+            {
+                case  FI_SOCKADDR_IN :
+                    /*  Address is of type sockaddr_in (IPv4) */
+                    /*[debug] - print the sockaddr - port and s_addr */
+                    ep_sockaddr = (struct sockaddr_in*)dest_ep_name;
+                    opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                            "%s peer %s epnamelen is %d, port = 0x%x, InternetAddr = 0x%x  ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_NAME_PRINT(peer),
+                            orte_rml_ofi.ofi_prov[ofi_prov_id].epnamelen,
+                            ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
+                    /*[end debug]*/
+                    break;
+            }
+            //Anandhi end debug
+            free(pmix_key);
+        } else {
+            memcpy(&ui64, (char*)peer, sizeof(uint64_t));
+            if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
+                                                     ui64, (void**)&pr) || NULL == pr) {
+                  opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s rml:ofi: Send failed to get peer OFI contact info ",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));                      
+                              return;
+            }
+            dest_ep_name = pr->ofi_ep;
+            dest_ep_namelen = pr->ofi_ep_len;
+            ret = OPAL_SUCCESS;
+        }
+    }
+    opal_output_verbose(50, orte_rml_base_framework.framework_output,
                          "%s  Return value from OPAL_MODEX_RECV_STRING - %d, length returned - %lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ret, dest_ep_namelen);
             free(pmix_key);
