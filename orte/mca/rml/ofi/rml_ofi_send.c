@@ -170,8 +170,8 @@ int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t ofi_prov_id)
         /* Since OFI is point-to-point, no need to check if the intended destination is me
          send to RML */
         opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                         "%s Posting Recv for msgid %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg_hdr.msgid );
+                         "%s Posting Recv for msgid %d, from peer - %s , Tag = %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg_hdr.msgid, ORTE_NAME_PRINT(&msg_hdr.origin),msg_hdr.tag );
         ORTE_RML_POST_MESSAGE(&msg_hdr.origin, msg_hdr.tag, msg_hdr.seq_num,data,msglen);
     } else {
         msg_in_queue = false;
@@ -350,6 +350,7 @@ static void send_msg(int fd, short args, void *cbdata)
     size_t datalen_per_pkt, hdrsize, data_in_pkt;  // the length of data in per packet excluding the header size
     orte_rml_ofi_peer_t* pr;
     uint64_t ui64;
+    struct sockaddr_in* ep_sockaddr;
 
     snd = OBJ_NEW(orte_rml_send_t);
     snd->dst = *peer;
@@ -379,24 +380,40 @@ static void send_msg(int fd, short args, void *cbdata)
         dest_ep_namelen = orte_rml_ofi.ofi_prov[ofi_prov_id].epnamelen;
         dest_ep_name = (char *)calloc(dest_ep_namelen,sizeof(char));
         memcpy( dest_ep_name, orte_rml_ofi.ofi_prov[ofi_prov_id].ep_name,dest_ep_namelen);
-        opal_output_verbose(10, orte_rml_base_framework.framework_output,
+        opal_output_verbose(1, orte_rml_base_framework.framework_output,
                             "%s rml:ofi: send and dest are same so proceeding with cur provider ep_name ",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         ret = OPAL_SUCCESS;
     } else {
         if (ORTE_PROC_IS_APP ) {
             asprintf(&pmix_key,"%s%d",orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->fabric_attr->prov_name,ofi_prov_id);
-            opal_output_verbose(10, orte_rml_base_framework.framework_output,
+            opal_output(0,
                      "%s calling OPAL_MODEX_RECV_STRING peer - %s, key - %s ", 
                       ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer),pmix_key );
             OPAL_MODEX_RECV_STRING(ret, pmix_key, peer , (char **) &dest_ep_name, &dest_ep_namelen);
             opal_output_verbose(10, orte_rml_base_framework.framework_output, "Returned from MODEX_RECV");
+            //Anandhi added for debug purpose
+            switch ( orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->addr_format)
+            {
+                case  FI_SOCKADDR_IN :
+                    /*  Address is of type sockaddr_in (IPv4) */
+                    /*[debug] - print the sockaddr - port and s_addr */
+                    ep_sockaddr = (struct sockaddr_in*)dest_ep_name;
+                    opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                            "%s peer %s epnamelen is %d, port = 0x%x, InternetAddr = 0x%x  ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_NAME_PRINT(peer),
+                            orte_rml_ofi.ofi_prov[ofi_prov_id].epnamelen,
+                            ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
+                    /*[end debug]*/
+                    break;
+            }
+            //Anandhi end debug
             free(pmix_key);
         } else {
             memcpy(&ui64, (char*)peer, sizeof(uint64_t));
             if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
                                                      ui64, (void**)&pr) || NULL == pr) {
-                  opal_output_verbose(2, orte_rml_base_framework.framework_output,
+                  opal_output_verbose(1, orte_rml_base_framework.framework_output,
                             "%s rml:ofi: Send failed to get peer OFI contact info ",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));                      
                               return;

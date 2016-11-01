@@ -32,6 +32,7 @@ static void send_callback(int status, orte_process_name_t *peer,
     if (ORTE_SUCCESS != status) {
         exit(1);
     }
+    opal_output(0, "%s send_callback() invoked. peer- %s, tag -%d ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer), tag);
     msg_active = false;
 }
 
@@ -98,11 +99,12 @@ main(int argc, char *argv[]){
 
             maxpower = (double)(j%7);
             msgsize = (int)pow(10.0, maxpower);
-            opal_output(0, "Ring %d message size %d bytes", j, msgsize);
+            opal_output(0, "%s Ring %d message size %d bytes",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j, msgsize);
             msg = (uint8_t*)malloc(msgsize);
             opal_dss.pack(buf, msg, msgsize, OPAL_BYTE);
             free(msg);
             orte_rml.send_buffer_nb(conduit_id,&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
+            opal_output(0, "%s Rank-0 sent message %d ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),j);
 
             /* wait for it to come around */
             OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
@@ -110,7 +112,9 @@ main(int argc, char *argv[]){
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, MY_TAG,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &blob);
+            opal_output(0, "%s Rank-0 Enter waiting to receive back message %d ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),j);
             ORTE_WAIT_FOR_COMPLETION(blob.active);
+            opal_output(0, "%s Rank-0 Exit wait. Received message %d ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),j);
             OBJ_DESTRUCT(&blob);
 
             opal_output(0, "%s Ring %d completed", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
@@ -118,11 +122,13 @@ main(int argc, char *argv[]){
             /* wait for msg */
             OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
             blob.active = true;
+            opal_output(0, "%s Rank-%d Posting receive for message %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_PROC_MY_NAME->vpid,j);
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, MY_TAG,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &blob);
+            opal_output(0, "%s Rank-%d Enter waiting to receive back message %d ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_PROC_MY_NAME->vpid,j);
             ORTE_WAIT_FOR_COMPLETION(blob.active);
-
+            opal_output(0, "%s Rank-%d Exit wait. Received message %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_PROC_MY_NAME->vpid, j);
             opal_output(0, "%s received message %d from %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j, ORTE_NAME_PRINT(&blob.name));
 
             /* send it along */
@@ -130,8 +136,11 @@ main(int argc, char *argv[]){
             opal_dss.copy_payload(buf, &blob.data);
             OBJ_DESTRUCT(&blob);
             msg_active = true;
+            opal_output(0, "%s Rank-%d Sending message to %s with callback as send_callback",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_PROC_MY_NAME->vpid,ORTE_NAME_PRINT(&peer));
             orte_rml.send_buffer_nb(conduit_id,&peer, buf, MY_TAG, send_callback, NULL);
+            opal_output(0, "%s Rank-%d waiting for send to complete for message %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_PROC_MY_NAME->vpid,j);
             ORTE_WAIT_FOR_COMPLETION(msg_active);
+            opal_output(0, "%s Rank-%d Send completed for message %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_PROC_MY_NAME->vpid,j);
         }
     }
     gettimeofday(&end, NULL);

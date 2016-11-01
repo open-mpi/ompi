@@ -185,8 +185,7 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
 #define ORTE_RML_POST_MESSAGE(p, t, s, b, l)                            \
     do {                                                                \
         orte_rml_recv_t *msg;                                           \
-        opal_output_verbose(5, orte_rml_base_framework.framework_output, \
-                            "%s Message posted at %s:%d",               \
+        opal_output(0, "%s Message posted at %s:%d",               \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__);                        \
         msg = OBJ_NEW(orte_rml_recv_t);                                 \
