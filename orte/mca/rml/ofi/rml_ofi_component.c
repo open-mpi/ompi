@@ -742,6 +742,8 @@ static int rml_ofi_component_init(void)
                         }
             }
 
+            
+
             /**
             * Set the ANY_SRC address.
             */
@@ -969,6 +971,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         return NULL;
     }
+
 
 
     /* someone may require this specific component, so look for "ofi" */
