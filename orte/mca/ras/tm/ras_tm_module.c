@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 
 #include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
+#include "opal/util/net.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
@@ -127,6 +129,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
     FILE *fp;
     char *hostname, *cppn;
     int ppn;
+    char *ptr;
 
     /* Ignore anything that the user already specified -- we're
        getting nodes only from TM. */
@@ -168,6 +171,11 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
 
     nodeid=0;
     while (NULL != (hostname = tm_getline(fp))) {
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(hostname) ) {
+            if (NULL != (ptr = strchr(hostname, '.'))) {
+                *ptr = '\0';
+            }
+        }
 
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                              "%s ras:tm:allocate:discover: got hostname %s",
