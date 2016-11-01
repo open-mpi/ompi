@@ -194,6 +194,9 @@ OMPI_DECLSPEC int
 mca_topo_base_dist_graph_neighbors_count(ompi_communicator_t *comm,
                                          int *inneighbors, int *outneighbors, int *weighted);
 
+
+int mca_topo_base_neighbor_count (ompi_communicator_t *comm, int *indegree, int *outdegree);
+
 END_C_DECLS
 
 #endif /* MCA_BASE_TOPO_H */
