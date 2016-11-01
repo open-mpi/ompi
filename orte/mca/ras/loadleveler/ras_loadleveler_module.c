@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2016 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +26,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/net.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
@@ -106,6 +107,7 @@ static int orte_ras_loadleveler_discover(opal_list_t* nodelist)
     char *hostname;
     char *filename;
     char input[LL_FILE_MAX_LINE_LENGTH];
+    char *ptr;
 
     /* Ignore anything that the user already specified -- we're
        getting nodes only from LoadLeveler. */
@@ -125,6 +127,12 @@ static int orte_ras_loadleveler_discover(opal_list_t* nodelist)
     /* Iterate through all the nodes and make an entry for each */
     while (0 != ll_getline(fp, input)) {
         hostname = strdup(input);
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(hostname) ) {
+            if (NULL != (ptr = strchr(hostname, '.'))) {
+                *ptr = '\0';
+            }
+        }
+
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                              "%s ras:loadleveler:allocate:discover: got hostname %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostname));
