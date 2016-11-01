@@ -144,14 +144,14 @@ static inline ucp_ep_h mca_pml_ucx_get_ep(ompi_communicator_t *comm, int dst)
 static inline void mca_pml_ucx_request_reset(ompi_request_t *req)
 {
     req->req_complete          = REQUEST_PENDING;
-    req->req_status._cancelled = false;
 }
 
 static void mca_pml_ucx_set_send_status(ompi_status_public_t* mpi_status,
                                         ucs_status_t status)
 {
-    if (status == UCS_OK) {
+    if (OPAL_LIKELY(status == UCS_OK)) {
         mpi_status->MPI_ERROR  = MPI_SUCCESS;
+        mpi_status->_cancelled = false;
     } else if (status == UCS_ERR_CANCELED) {
         mpi_status->_cancelled = true;
     } else {
@@ -165,11 +165,12 @@ static inline void mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
 {
     int64_t tag;
 
-    if (ucp_status == UCS_OK) {
+    if (OPAL_LIKELY(ucp_status == UCS_OK)) {
         tag = info->sender_tag;
         mpi_status->MPI_ERROR  = MPI_SUCCESS;
         mpi_status->MPI_SOURCE = PML_UCX_TAG_GET_SOURCE(tag);
         mpi_status->MPI_TAG    = PML_UCX_TAG_GET_MPI_TAG(tag);
+        mpi_status->_cancelled = false;
         mpi_status->_ucount    = info->length;
     } else if (ucp_status == UCS_ERR_MESSAGE_TRUNCATED) {
         mpi_status->MPI_ERROR = MPI_ERR_TRUNCATE;
