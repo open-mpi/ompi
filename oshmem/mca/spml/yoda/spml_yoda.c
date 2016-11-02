@@ -119,7 +119,7 @@ static inline void calc_nfrags_put (mca_bml_base_btl_t* bml_btl,
         *frag_size = bml_btl->btl->btl_max_send_size - SPML_YODA_SEND_CONTEXT_SIZE;
     }
     else {
-        *frag_size = bml_btl->btl->btl_put_limit;
+        *frag_size = bml_btl->btl->btl_max_send_size;
     }
     *nfrags = 1 + (size - 1) / (*frag_size);
 }
@@ -134,7 +134,7 @@ static inline void calc_nfrags_get (mca_bml_base_btl_t* bml_btl,
         *frag_size = bml_btl->btl->btl_max_send_size - SPML_YODA_SEND_CONTEXT_SIZE;
     }
     else {
-        *frag_size = bml_btl->btl->btl_get_limit;
+        *frag_size = bml_btl->btl->btl_max_send_size;
     }
     *nfrags = 1 + (size - 1) / (*frag_size);
 }
