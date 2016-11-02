@@ -32,9 +32,9 @@ int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
         MEMHEAP_VERBOSE(5,
                         "register seg#%02d: 0x%p - 0x%p %llu bytes type=0x%X id=0x%X",
                         i,
-                        s->seg_base_addr,
-                        s->end,
-                        (long long)((uintptr_t)s->end - (uintptr_t)s->seg_base_addr),
+                        s->super.va_base,
+                        s->super.va_end,
+                        (long long)((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base),
                         s->type,
                         s->seg_id);
         ret = _reg_segment(s, &memheap_map->num_transports);
@@ -60,9 +60,9 @@ int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
         MEMHEAP_VERBOSE(5,
                         "deregistering segment#%d: %p - %p %llu bytes",
                         i,
-                        s->seg_base_addr,
-                        s->end,
-                        (long long)((uintptr_t)s->end - (uintptr_t)s->seg_base_addr));
+                        s->super.va_base,
+                        s->super.va_end,
+                        (long long)((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base));
         (void)_dereg_segment(s);
     }
 
@@ -120,8 +120,8 @@ static int _reg_segment(map_segment_t *s, int *num_btl)
     }
 
     if (!rc) {
-        s->mkeys = MCA_SPML_CALL(register((void *)(unsigned long)s->seg_base_addr,
-                        (uintptr_t)s->end - (uintptr_t)s->seg_base_addr,
+        s->mkeys = MCA_SPML_CALL(register((void *)(unsigned long)s->super.va_base,
+                        (uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base,
                         s->seg_id,
                         num_btl));
         if (NULL == s->mkeys) {

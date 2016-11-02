@@ -49,6 +49,7 @@ typedef struct oob_comm_request {
 struct oob_comm {
     opal_mutex_t lck;
     opal_condition_t cond;
+    uint32_t segno;
     sshmem_mkey_t *mkeys;
     int mkeys_rcvd;
     oob_comm_request_t req_pool[MEMHEAP_RECV_REQS_MAX];
@@ -69,54 +70,30 @@ static int memheap_oob_get_mkeys(int pe,
                                  uint32_t va_seg_num,
                                  sshmem_mkey_t *mkey);
 
-static inline void* mca_memheap_seg2base_va(int seg)
-{
-    return memheap_map->mem_segs[seg].seg_base_addr;
-}
-
 int mca_memheap_seg_cmp(const void *k, const void *v)
 {
     uintptr_t va = (uintptr_t) k;
     map_segment_t *s = (map_segment_t *) v;
 
-    if (va < (uintptr_t)s->seg_base_addr)
+    if (va < (uintptr_t)s->super.va_base)
         return -1;
-    if (va >= (uintptr_t)s->end)
+    if (va >= (uintptr_t)s->super.va_end)
         return 1;
 
     return 0;
 }
 
-/**
- * @param all_trs
- * 0 - pack mkeys for transports to given pe
- * 1 - pack mkeys for ALL possible transports. value of pe is ignored
- */
-static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
+static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg)
 {
-    ompi_proc_t *proc;
     int i, n, tr_id;
     sshmem_mkey_t *mkey;
 
-    /* go over all transports to remote pe and pack mkeys */
-    if (!all_trs) {
-        n = oshmem_get_transport_count(pe);
-        proc = oshmem_proc_group_find(oshmem_group_all, pe);
-    }
-    else {
-        proc = NULL;
-        n = memheap_map->num_transports;
-    }
-
+    /* go over all transports and pack mkeys */
+    n = memheap_map->num_transports;
     opal_dss.pack(msg, &n, 1, OPAL_UINT32);
     MEMHEAP_VERBOSE(5, "found %d transports to %d", n, pe);
     for (i = 0; i < n; i++) {
-        if (!all_trs) {
-            tr_id = OSHMEM_PROC_DATA(proc)->transport_ids[i];
-        }
-        else {
-            tr_id = i;
-        }
+        tr_id = i;
         mkey = mca_memheap_base_get_mkey(mca_memheap_seg2base_va(seg), tr_id);
         if (!mkey) {
             MEMHEAP_ERROR("seg#%d tr_id: %d failed to find local mkey",
@@ -203,10 +180,10 @@ static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
                 }
                 cnt = memheap_oob.mkeys[tr_id].len;
                 opal_dss.unpack(msg, memheap_oob.mkeys[tr_id].u.data, &cnt, OPAL_BYTE);
-                MCA_SPML_CALL(rmkey_unpack(&memheap_oob.mkeys[tr_id], remote_pe));
             } else {
                 memheap_oob.mkeys[tr_id].u.key = MAP_SEGMENT_SHM_INVALID;
             }
+            MCA_SPML_CALL(rmkey_unpack(&memheap_oob.mkeys[tr_id], memheap_oob.segno, remote_pe, tr_id));
         }
 
         MEMHEAP_VERBOSE(5,
@@ -250,7 +227,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
         msg_type = MEMHEAP_RKEY_RESP;
         opal_dss.pack(msg, &msg_type, 1, OPAL_UINT8);
 
-        if (OSHMEM_SUCCESS != pack_local_mkeys(msg, source_pe, seg, 0)) {
+        if (OSHMEM_SUCCESS != pack_local_mkeys(msg, source_pe, seg)) {
             OBJ_RELEASE(msg);
             goto send_fail;
         }
@@ -488,9 +465,15 @@ static int memheap_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
 
     if (OSHMEM_SUCCESS == MCA_SPML_CALL(oob_get_mkeys(pe, seg, mkeys))) {
         for (i = 0; i < memheap_map->num_transports; i++) {
-            mkeys[i].va_base = mca_memheap_seg2base_va(seg);
             MEMHEAP_VERBOSE(5,
                             "MKEY CALCULATED BY LOCAL SPML: pe: %d tr_id: %d %s",
+                            pe,
+                            i,
+                            mca_spml_base_mkey2str(&mkeys[i]));
+            int my_pe = oshmem_my_proc_id();
+            if (my_pe == 0) 
+            printf(
+                            "MKEY CALCULATED BY LOCAL SPML: pe: %d tr_id: %d %s\n",
                             pe,
                             i,
                             mca_spml_base_mkey2str(&mkeys[i]));
@@ -501,6 +484,7 @@ static int memheap_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
     OPAL_THREAD_LOCK(&memheap_oob.lck);
 
     memheap_oob.mkeys = mkeys;
+    memheap_oob.segno = seg;
     memheap_oob.mkeys_rcvd = 0;
 
     msg = OBJ_NEW(opal_buffer_t);
@@ -592,7 +576,7 @@ void mca_memheap_modex_recv_all(void)
     }
 
     for (j = 0; j < memheap_map->n_segments; j++) {
-        pack_local_mkeys(msg, 0, j, 1);
+        pack_local_mkeys(msg, 0, j);
     }
 
     /* we assume here that int32_t returned by opal_dss.unload
@@ -668,6 +652,7 @@ void mca_memheap_modex_recv_all(void)
                 }
             }
             memheap_oob.mkeys = s->mkeys_cache[i];
+            memheap_oob.segno = j;
             unpack_remote_mkeys(msg, i);
         }
     }
@@ -722,7 +707,7 @@ sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(map_segment_t *s,
         return NULL ;
 
     mkey = &s->mkeys_cache[pe][btl_id];
-    *rva = memheap_va2rva(va, s->seg_base_addr, mkey->va_base);
+    *rva = memheap_va2rva(va, s->super.va_base, mkey->va_base);
 
     MEMHEAP_VERBOSE_FASTPATH(5, "rkey: pe=%d va=%p -> (remote lookup) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
     return mkey;
@@ -748,7 +733,7 @@ uint64_t mca_memheap_base_find_offset(int pe,
     s = memheap_find_va(va);
 
     if (my_pe == pe) {
-        return (uintptr_t)va - (uintptr_t)s->seg_base_addr;
+        return (uintptr_t)va - (uintptr_t)s->super.va_base;
     }
     else {
         return ((s && MAP_SEGMENT_IS_VALID(s)) ? ((uintptr_t)rva - (uintptr_t)(s->mkeys_cache[pe][tr_id].va_base)) : 0);
@@ -770,14 +755,31 @@ int mca_memheap_base_detect_addr_type(void* va)
     if (s) {
         if (s->type == MAP_SEGMENT_STATIC) {
             addr_type = ADDR_STATIC;
-        } else if ((uintptr_t)va >= (uintptr_t) s->seg_base_addr
-                   && (uintptr_t)va < (uintptr_t) ((uintptr_t)s->seg_base_addr + mca_memheap.memheap_size)) {
+        } else if ((uintptr_t)va >= (uintptr_t) s->super.va_base
+                   && (uintptr_t)va < (uintptr_t) ((uintptr_t)s->super.va_base + mca_memheap.memheap_size)) {
             addr_type = ADDR_USER;
         } else {
-            assert( (uintptr_t)va >= (uintptr_t) ((uintptr_t)s->seg_base_addr + mca_memheap.memheap_size) && (uintptr_t)va < (uintptr_t)s->end);
+            assert( (uintptr_t)va >= (uintptr_t) ((uintptr_t)s->super.va_base + mca_memheap.memheap_size) && (uintptr_t)va < (uintptr_t)s->super.va_end);
             addr_type = ADDR_PRIVATE;
         }
     }
 
     return addr_type;
 }
+
+void mkey_segment_init(mkey_segment_t *seg, sshmem_mkey_t *mkey, uint32_t segno)
+{
+    map_segment_t *s;
+
+    if (segno >= MCA_MEMHEAP_SEG_COUNT) {
+        return;
+    }
+
+    s = memheap_find_seg(segno);
+    assert(NULL != s);
+
+    seg->super.va_base = s->super.va_base;
+    seg->super.va_end  = s->super.va_end;
+    seg->rva_base      = mkey->va_base;
+}
+

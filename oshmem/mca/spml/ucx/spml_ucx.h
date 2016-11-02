@@ -40,10 +40,22 @@ BEGIN_C_DECLS
 /**
  * UCX SPML module
  */
-struct ucp_peer {
-    ucp_ep_h        ucp_conn;
-};
+struct spml_ucx_mkey {
+    ucp_rkey_h rkey;
+    ucp_mem_h  mem_h;
+}; 
+typedef struct spml_ucx_mkey spml_ucx_mkey_t;
 
+struct spml_ucx_cached_mkey {
+    mkey_segment_t   super;
+    spml_ucx_mkey_t  key;
+};
+typedef struct spml_ucx_cached_mkey spml_ucx_cached_mkey_t;
+
+struct ucp_peer {
+    ucp_ep_h                 ucp_conn;
+    spml_ucx_cached_mkey_t   mkeys[MCA_MEMHEAP_SEG_COUNT];
+};
 typedef struct ucp_peer ucp_peer_t;
 
 struct mca_spml_ucx {
@@ -56,15 +68,7 @@ struct mca_spml_ucx {
     int                      priority; /* component priority */
     bool                     enabled;
 };
-
 typedef struct mca_spml_ucx mca_spml_ucx_t;
-
-struct spml_ucx_mkey {
-    ucp_rkey_h rkey;
-    ucp_mem_h  mem_h;
-}; 
-
-typedef struct spml_ucx_mkey spml_ucx_mkey_t;
 
 
 extern mca_spml_ucx_t mca_spml_ucx;
@@ -103,7 +107,7 @@ extern sshmem_mkey_t *mca_spml_ucx_register(void* addr,
                                                 int *count);
 extern int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys);
 
-extern void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, int pe);
+extern void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id);
 extern void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey);
 
 extern int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs);
@@ -113,20 +117,20 @@ extern int mca_spml_ucx_quiet(void);
 extern int spml_ucx_progress(void);
 
 
+spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva);
 
 static inline spml_ucx_mkey_t * 
 mca_spml_ucx_get_mkey(int pe, void *va, void **rva)
 {
-    sshmem_mkey_t *r_mkey;
+    spml_ucx_cached_mkey_t *mkey;
 
-    r_mkey = mca_memheap_base_get_cached_mkey(pe, va, 0, rva);
-    if (OPAL_UNLIKELY(!r_mkey)) {
-        SPML_ERROR("pe=%d: %p is not address of symmetric variable",
-                   pe, va);
-        oshmem_shmem_abort(-1);
-        return NULL;
+    mkey = mca_spml_ucx.ucp_peers[pe].mkeys;
+    mkey = (spml_ucx_cached_mkey_t *)map_segment_find_va(&mkey->super.super, sizeof(*mkey), va);
+    if (OPAL_UNLIKELY(NULL == mkey)) {
+        return mca_spml_ucx_get_mkey_slow(pe, va, rva);
     }
-    return (spml_ucx_mkey_t *)(r_mkey->spml_context);
+    *rva = map_segment_va2rva(&mkey->super, va);
+    return &mkey->key;
 }
 
 static inline int ucx_status_to_oshmem(ucs_status_t status)

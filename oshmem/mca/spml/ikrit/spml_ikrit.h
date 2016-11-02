@@ -33,6 +33,7 @@
 #include "opal/class/opal_list.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "oshmem/mca/memheap/base/base.h"
 
 #include <mxm/api/mxm_api.h>
 
@@ -61,13 +62,21 @@ BEGIN_C_DECLS
 /**
  * MXM SPML module
  */
+/* TODO: move va_xx to base struct */
+struct spml_ikrit_mkey {
+    mkey_segment_t  super;
+    mxm_mem_key_t   key;
+};
+typedef struct spml_ikrit_mkey spml_ikrit_mkey_t;
+
 struct mxm_peer {
     mxm_conn_h          mxm_conn;
     mxm_conn_h          mxm_hw_rdma_conn;
     uint8_t             ptl_id;
-    opal_list_item_t    link;
-    int32_t             n_active_puts;
     uint8_t             need_fence;
+    int32_t             n_active_puts;
+    opal_list_item_t    link;
+    spml_ikrit_mkey_t   mkeys[MCA_MEMHEAP_SEG_COUNT];
 };
 
 typedef struct mxm_peer mxm_peer_t;
@@ -156,13 +165,37 @@ extern sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
                                                 int *count);
 extern int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys);
 extern int mca_spml_ikrit_oob_get_mkeys(int pe,
-                                        uint32_t seg,
+                                        uint32_t segno,
                                         sshmem_mkey_t *mkeys);
 
 extern int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ikrit_fence(void);
 extern int spml_ikrit_progress(void);
+
+mxm_mem_key_t *mca_spml_ikrit_get_mkey_slow(int pe, void *va, int ptl_id, void **rva);
+
+/* the functionreturns NULL if data can be directly copied via shared memory 
+ * else it returns mxm mem key
+ *
+ * the function will abort() if va is not symmetric var address.
+ */
+static inline mxm_mem_key_t *mca_spml_ikrit_get_mkey(int pe, void *va, int ptl_id, void **rva) 
+{
+    spml_ikrit_mkey_t *mkey;
+
+    if (OPAL_UNLIKELY(MXM_PTL_RDMA != ptl_id)) {
+        return mca_spml_ikrit_get_mkey_slow(pe, va, ptl_id, rva);
+    }
+
+    mkey = mca_spml_ikrit.mxm_peers[pe].mkeys;
+    mkey = (spml_ikrit_mkey_t *)map_segment_find_va(&mkey->super.super, sizeof(*mkey), va);
+    if (OPAL_UNLIKELY(NULL == mkey)) {
+        return mca_spml_ikrit_get_mkey_slow(pe, va, ptl_id, rva);
+    }
+    *rva = map_segment_va2rva(&mkey->super, va);
+    return &mkey->key;
+}
 
 END_C_DECLS
 

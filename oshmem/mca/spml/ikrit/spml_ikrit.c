@@ -34,6 +34,7 @@
 #include "oshmem/mca/spml/base/spml_base_putreq.h"
 #include "oshmem/runtime/runtime.h"
 #include "orte/util/show_help.h"
+#include "oshmem/mca/sshmem/sshmem.h"
 
 #include "oshmem/mca/spml/ikrit/spml_ikrit_component.h"
 
@@ -67,6 +68,12 @@ struct mca_spml_ikrit_put_request {
 };
 
 typedef struct mca_spml_ikrit_put_request mca_spml_ikrit_put_request_t;
+
+
+static inline int get_ptl_id(int dst)
+{
+    return mca_spml_ikrit.mxm_peers[dst].ptl_id;
+}
 
 static inline mxm_mem_key_t *to_mxm_mkey(sshmem_mkey_t *mkey) {
 
@@ -142,6 +149,8 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
                               void* src_addr,
                               int dst);
 
+static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *, uint32_t seg, int remote_pe, int tr_id);
+
 mca_spml_ikrit_t mca_spml_ikrit = {
     {
         /* Init mca_spml_base_module_t */
@@ -160,12 +169,61 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_base_wait,
         mca_spml_base_wait_nb,
         mca_spml_ikrit_fence,
-        mca_spml_base_rmkey_unpack,
+        mca_spml_ikrit_cache_mkeys,
         mca_spml_base_rmkey_free,
 
         (void*)&mca_spml_ikrit
     }
 };
+
+static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *mkey, uint32_t seg, int dst_pe, int tr_id)
+{
+    mxm_peer_t *peer;
+
+    if (MXM_PTL_RDMA != tr_id) {
+        return;
+    }
+
+    peer = &mca_spml_ikrit.mxm_peers[dst_pe];
+    mkey_segment_init(&peer->mkeys[seg].super, mkey, seg);
+
+    if (0 != mkey->len) {
+        memcpy(&peer->mkeys[seg].key, mkey->u.data, mkey->len);
+    } else {
+        memcpy(&peer->mkeys[seg].key, &mxm_empty_mem_key, sizeof(mxm_empty_mem_key));
+    }
+}
+
+mxm_mem_key_t *mca_spml_ikrit_get_mkey_slow(int pe, void *va, int ptl_id, void **rva)
+{
+    sshmem_mkey_t *mkey;
+
+retry:
+    mkey = mca_memheap_base_get_cached_mkey(pe, va, ptl_id, rva);
+    if (NULL == mkey) {
+        SPML_ERROR("pe=%d: %p is not address of shared variable", pe, va);
+        oshmem_shmem_abort(-1);
+        return NULL;
+    }
+
+    if (MXM_PTL_SHM == ptl_id) {
+        if (mca_memheap_base_can_local_copy(mkey, va)) {
+            return NULL;
+        }
+
+        /* if dst addr is on memheap and local copy is not allowed 
+         * disable direct shm transport
+         */ 
+        if (memheap_is_va_in_segment(va, HEAP_SEG_INDEX)) {
+            mca_spml_ikrit.mxm_peers[pe].ptl_id = MXM_PTL_RDMA;
+        }
+        /* going via mxm must always work */
+        ptl_id = MXM_PTL_RDMA;
+        goto retry;
+    }
+
+    return to_mxm_mkey(mkey);
+}
 
 int mca_spml_ikrit_enable(bool enable)
 {
@@ -246,7 +304,7 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     spml_ikrit_mxm_ep_conn_info_t *ep_info = NULL;
     spml_ikrit_mxm_ep_conn_info_t *ep_hw_rdma_info = NULL;
-    spml_ikrit_mxm_ep_conn_info_t my_ep_info = {{0}};
+    spml_ikrit_mxm_ep_conn_info_t my_ep_info;
     size_t mxm_addr_len = MXM_MAX_ADDR_LEN;
     mxm_error_t err;
     size_t i, n;
@@ -275,6 +333,8 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
         goto bail;
     }
+
+    memset(&my_ep_info, 0, sizeof(my_ep_info));
 
     if (mca_spml_ikrit.hw_rdma_channel) {
         err = mxm_ep_get_address(mca_spml_ikrit.mxm_hw_rdma_ep, &my_ep_info.addr.ep_addr, &mxm_addr_len);
@@ -373,6 +433,7 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
     sshmem_mkey_t *mkeys;
     mxm_error_t err;
     mxm_mem_key_t *m_key;
+    int my_rank = oshmem_my_proc_id();
 
     *count = 0;
     mkeys = (sshmem_mkey_t *) calloc(1, MXM_PTL_LAST * sizeof(*mkeys));
@@ -430,9 +491,10 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
         }
         SPML_VERBOSE(5,
                      "rank %d ptl %d addr %p size %llu %s",
-		     oshmem_proc_pe(oshmem_proc_local()), i, addr, (unsigned long long)size,
+		     my_rank, i, addr, (unsigned long long)size,
                      mca_spml_base_mkey2str(&mkeys[i]));
 
+        mca_spml_ikrit_cache_mkeys(&mkeys[i], memheap_find_segnum(addr), my_rank, i);
     }
     *count = MXM_PTL_LAST;
 
@@ -476,14 +538,10 @@ int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys)
 
 }
 
-static inline int get_ptl_id(int dst)
-{
-    return mca_spml_ikrit.mxm_peers[dst].ptl_id;
-}
-
 int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
 {
     int ptl;
+
     ptl = get_ptl_id(pe);
     if (ptl < 0)
         return OSHMEM_ERROR;
@@ -495,8 +553,11 @@ int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
      * So can only skip mkey exchange when ud is the only transport
      */
     if (mca_spml_ikrit.ud_only) {
-        mkeys[ptl].len = 0;
-        mkeys[ptl].u.key = MAP_SEGMENT_SHM_INVALID;
+        /* assumes that remote has the same va_base as we do */
+        mkeys[ptl].len     = 0;
+        mkeys[ptl].va_base = mca_memheap_seg2base_va(seg);
+        mkeys[ptl].u.key   = MAP_SEGMENT_SHM_INVALID;
+        mca_spml_ikrit_cache_mkeys(&mkeys[ptl], seg, pe, ptl);
         return OSHMEM_SUCCESS;
     }
 
@@ -512,24 +573,13 @@ static inline int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
     /* shmem spec states that get() operations are blocking. So it is enough
      to have single mxm request. Also we count on mxm doing copy */
     void *rva;
-    sshmem_mkey_t *r_mkey;
+    mxm_mem_key_t *mkey;
 
-    /* already tried to send via shm and failed. go via rdma */
-    /**
-     * Get the address to the remote rkey.
-     **/
-    r_mkey = mca_memheap_base_get_cached_mkey(src, src_addr, MXM_PTL_RDMA, &rva);
-    if (!r_mkey) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                   src, src_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
+    mkey = mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_RDMA, &rva);
 
     SPML_VERBOSE_FASTPATH(100,
-                          "get: pe:%d ptl=%d src=%p -> dst: %p sz=%d. src_rva=%p, %s",
-                          src, MXM_PTL_RDMA, src_addr, dst_addr, (int)size, (void *)rva,
-                          mca_spml_base_mkey2str(r_mkey));
+                          "get: pe:%d ptl=%d src=%p -> dst: %p sz=%d. src_rva=%p",
+                          src, MXM_PTL_RDMA, src_addr, dst_addr, (int)size, (void *)rva);
 
     /* mxm does not really cares for get lkey */
     sreq->base.mq = mca_spml_ikrit.mxm_mq;
@@ -537,7 +587,7 @@ static inline int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
     sreq->base.data_type = MXM_REQ_DATA_BUFFER;
     sreq->base.data.buffer.ptr = dst_addr;
     sreq->base.data.buffer.length = size;
-    sreq->op.mem.remote_mkey = to_mxm_mkey(r_mkey);
+    sreq->op.mem.remote_mkey = mkey; 
     sreq->opcode = MXM_REQ_OP_GET;
     sreq->op.mem.remote_vaddr = (intptr_t) rva;
     sreq->base.state = MXM_REQ_NEW;
@@ -552,7 +602,6 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
 {
     int ptl_id;
     void *rva;
-    sshmem_mkey_t *r_mkey;
 
     ptl_id = get_ptl_id(src);
     /**
@@ -561,20 +610,12 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
     if (ptl_id != MXM_PTL_SHM)
         return OSHMEM_ERROR;
 
-    r_mkey = mca_memheap_base_get_cached_mkey(src, src_addr, ptl_id, &rva);
-    if (!r_mkey) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                   src, src_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
-
-    if (!mca_memheap_base_can_local_copy(r_mkey, src_addr))
+    if (NULL != mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_SHM, &rva))
         return OSHMEM_ERROR;
 
     SPML_VERBOSE_FASTPATH(100,
-                          "shm get: pe:%d src=%p -> dst: %p sz=%d. src_rva=%p, %s",
-                          src, src_addr, dst_addr, (int)size, (void *)rva, mca_spml_base_mkey2str(r_mkey));
+                          "shm get: pe:%d src=%p -> dst: %p sz=%d. src_rva=%p",
+                          src, src_addr, dst_addr, (int)size, (void *)rva);
 
     memcpy(dst_addr, (void *) (unsigned long) rva, size);
     opal_progress();
@@ -746,49 +787,27 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     void *rva;
     mca_spml_ikrit_put_request_t *put_req;
     int ptl_id;
-    sshmem_mkey_t *r_mkey;
     static int count;
     int need_progress = 0;
+    mxm_mem_key_t *mkey;
 
-    if (0 >= size) {
+    if (OPAL_UNLIKELY(0 >= size)) {
         return OSHMEM_SUCCESS;
     }
 
     ptl_id = get_ptl_id(dst);
-    /* Get rkey of remote PE (dst proc) which must be on memheap  */
-    r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, ptl_id, &rva);
-    if (!r_mkey) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                   dst, dst_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
+    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva);
+
+    if (OPAL_UNLIKELY(NULL == mkey)) {
+        memcpy((void *) (unsigned long) rva, src_addr, size);
+        /* call progress as often as we would have with regular put */
+        if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
+            mxm_progress(mca_spml_ikrit.mxm_context);
+        return OSHMEM_SUCCESS;
     }
 
     SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
-                          dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva,
-                          mca_spml_base_mkey2str(r_mkey));
-
-    if (OPAL_UNLIKELY(MXM_PTL_SHM == ptl_id)) {
-        if (mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
-            memcpy((void *) (unsigned long) rva, src_addr, size);
-            /* call progress as often as we would have with regular put */
-            if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
-                mxm_progress(mca_spml_ikrit.mxm_context);
-            return OSHMEM_SUCCESS;
-        }
-        /* segment not mapped - fallback to rdma */
-        r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, MXM_PTL_RDMA, &rva);
-        if (!r_mkey) {
-            SPML_ERROR("pe=%d: %p is not address of shared variable",
-                       dst, dst_addr);
-            oshmem_shmem_abort(-1);
-            return OSHMEM_ERROR;
-        }
-    }
-
-    SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
-                          dst, MXM_PTL_RDMA, dst_addr, src_addr, (int)size, (void *)rva,
-                          mca_spml_base_mkey2str(r_mkey));
+                          dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva);
 
     put_req = alloc_put_req();
 
@@ -836,7 +855,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     put_req->mxm_req.base.state = MXM_REQ_NEW;
     put_req->pe = dst;
 
-    put_req->mxm_req.op.mem.remote_mkey = to_mxm_mkey(r_mkey);
+    put_req->mxm_req.op.mem.remote_mkey = mkey; 
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, 1);
     if (mca_spml_ikrit.mxm_peers[dst].need_fence == 0) {
@@ -870,48 +889,25 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     mxm_send_req_t mxm_req;
     mxm_wait_t wait;
     int ptl_id;
-    sshmem_mkey_t *r_mkey;
+    mxm_mem_key_t *mkey;
     static int count;
 
     ptl_id = get_ptl_id(dst);
-    /* Get rkey of remote PE (dst proc) which must be on memheap  */
-    r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, ptl_id, &rva);
-    if (!r_mkey) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                   dst, dst_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
+    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva);
+
+    SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
+                          dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva);
+
+    if (NULL == mkey) {
+        memcpy((void *) (unsigned long) rva, src_addr, size);
+        /* call progress as often as we would have with regular put */
+        if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
+            mxm_progress(mca_spml_ikrit.mxm_context);
+        return OSHMEM_SUCCESS;
     }
 
     SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
-                          dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva,
-                          mca_spml_base_mkey2str(r_mkey));
-
-    if (MXM_PTL_SHM == ptl_id) {
-        if (mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
-            memcpy((void *) (unsigned long) rva, src_addr, size);
-            /* call progress as often as we would have with regular put */
-            if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
-                mxm_progress(mca_spml_ikrit.mxm_context);
-            return OSHMEM_SUCCESS;
-        }
-        /* segment not mapped - fallback to rmda */
-        r_mkey = mca_memheap_base_get_cached_mkey(dst,
-                                                     //(unsigned long) dst_addr,
-                                                     dst_addr,
-                                                     MXM_PTL_RDMA,
-                                                     &rva);
-        if (!r_mkey) {
-            SPML_ERROR("pe=%d: %p is not address of shared variable",
-                       dst, dst_addr);
-            oshmem_shmem_abort(-1);
-            return OSHMEM_ERROR;
-        }
-    }
-
-    SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
-                          dst, MXM_PTL_RDMA, dst_addr, src_addr, (int)size, (void *)rva,
-                          mca_spml_base_mkey2str(r_mkey));
+                          dst, MXM_PTL_RDMA, dst_addr, src_addr, (int)size, (void *)rva);
 
     /* fill out request */
     mxm_req.base.mq = mca_spml_ikrit.mxm_mq;
@@ -927,7 +923,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     mxm_req.base.state = MXM_REQ_NEW;
     mxm_req.base.error = MXM_OK;
 
-    mxm_req.op.mem.remote_mkey = to_mxm_mkey(r_mkey);
+    mxm_req.op.mem.remote_mkey = mkey;
 
     if (mca_spml_ikrit.mxm_peers[dst].need_fence == 0) {
         opal_list_append(&mca_spml_ikrit.active_peers,

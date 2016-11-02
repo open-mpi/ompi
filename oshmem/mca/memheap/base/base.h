@@ -44,9 +44,13 @@ extern char* mca_memheap_base_exclude;
 extern int mca_memheap_base_already_opened;
 extern int mca_memheap_base_key_exchange;
 
-#define MCA_MEMHEAP_MAX_SEGMENTS    256
+#define MCA_MEMHEAP_MAX_SEGMENTS    4 
 #define HEAP_SEG_INDEX  0
 #define SYMB_SEG_INDEX  1
+#define MCA_MEMHEAP_SEG_COUNT  (SYMB_SEG_INDEX+1)
+
+#define MEMHEAP_SEG_INVALID  0xFFFF
+
 
 typedef struct mca_memheap_map {
     map_segment_t   mem_segs[MCA_MEMHEAP_MAX_SEGMENTS]; /* TODO: change into pointer array */
@@ -158,39 +162,95 @@ extern int mca_memheap_seg_cmp(const void *k, const void *v);
 
 extern mca_memheap_map_t* memheap_map;
 
+static inline int map_segment_is_va_in(map_base_segment_t *s, const void *va)
+{
+    return ((uintptr_t)va >= (uintptr_t)s->va_base &&
+            (uintptr_t)va <  (uintptr_t)s->va_end);
+}
+
+static inline map_segment_t *memheap_find_seg(const int segno)
+{
+    return &mca_memheap_base_map.mem_segs[segno];
+}
+
+static inline int memheap_is_va_in_segment(const void *va, const int segno) 
+{
+
+    return map_segment_is_va_in(&memheap_find_seg(segno)->super, va);
+}
+
+static inline int memheap_find_segnum(const void *va)
+{
+    if (OPAL_LIKELY(memheap_is_va_in_segment(va, SYMB_SEG_INDEX))) {
+        return SYMB_SEG_INDEX;
+    } else if (memheap_is_va_in_segment(va, HEAP_SEG_INDEX)) {
+        return HEAP_SEG_INDEX;
+    }
+    return MEMHEAP_SEG_INVALID;
+}
+
+static inline void* memheap_va2rva(const void* va, const void* local_base, const void* remote_base)
+{
+    return (void*) (remote_base > local_base ?
+            (uintptr_t)va + ((uintptr_t)remote_base - (uintptr_t)local_base) :
+            (uintptr_t)va - ((uintptr_t)local_base - (uintptr_t)remote_base));
+}
+
+static inline void *map_segment_va2rva(mkey_segment_t *seg, const void *va)
+{
+    return memheap_va2rva(va, seg->super.va_base, seg->rva_base);
+}
+
+static inline map_base_segment_t *map_segment_find_va(map_base_segment_t *segs, size_t elem_size, const void *va) 
+{
+    map_base_segment_t *rseg;
+
+    rseg = (map_base_segment_t *)((char *)segs + elem_size * HEAP_SEG_INDEX);
+    if (OPAL_LIKELY(map_segment_is_va_in(rseg, va))) {
+        return rseg;
+    } 
+
+    rseg = (map_base_segment_t *)((char *)segs + elem_size * SYMB_SEG_INDEX);
+    if (OPAL_LIKELY(map_segment_is_va_in(rseg, va))) {
+        return rseg;
+    }
+
+    return NULL;
+}
+
+void mkey_segment_init(mkey_segment_t *seg, sshmem_mkey_t *mkey, uint32_t segno);
+
+
 static inline map_segment_t *memheap_find_va(const void* va)
 {
     map_segment_t *s;
 
-    if (OPAL_LIKELY((uintptr_t)va >= (uintptr_t)memheap_map->mem_segs[HEAP_SEG_INDEX].seg_base_addr &&
-                    (uintptr_t)va < (uintptr_t)memheap_map->mem_segs[HEAP_SEG_INDEX].end)) {
+    /* most probably there will be only two segments: heap and global data */
+    if (OPAL_LIKELY(memheap_is_va_in_segment(va, SYMB_SEG_INDEX))) {
+        s = &memheap_map->mem_segs[SYMB_SEG_INDEX];
+    } else if (memheap_is_va_in_segment(va, HEAP_SEG_INDEX)) {
         s = &memheap_map->mem_segs[HEAP_SEG_INDEX];
-    } else {
+    } else if (memheap_map->n_segments - 2 > 0) {
         s = bsearch(va,
-                    &memheap_map->mem_segs[SYMB_SEG_INDEX],
-                    memheap_map->n_segments - 1,
+                    &memheap_map->mem_segs[SYMB_SEG_INDEX+1],
+                    memheap_map->n_segments - 2,
                     sizeof(*s),
                     mca_memheap_seg_cmp);
+    } else {
+        s = NULL;
     }
 
 #if MEMHEAP_BASE_DEBUG == 1
     if (s) {
         MEMHEAP_VERBOSE(5, "match seg#%02ld: 0x%llX - 0x%llX %llu bytes va=%p",
                 s - memheap_map->mem_segs,
-                (long long)s->seg_base_addr,
-                (long long)s->end,
-                (long long)(s->end - s->seg_base_addr),
+                (long long)s->super.va_base,
+                (long long)s->super.va_end,
+                (long long)(s->super.va_end - s->super.va_base),
                 (void *)va);
     }
 #endif
     return s;
-}
-
-static inline void* memheap_va2rva(void* va, void* local_base, void* remote_base)
-{
-    return (void*) (remote_base > local_base ?
-            (uintptr_t)va + ((uintptr_t)remote_base - (uintptr_t)local_base) :
-            (uintptr_t)va - ((uintptr_t)local_base - (uintptr_t)remote_base));
 }
 
 static inline  sshmem_mkey_t *mca_memheap_base_get_cached_mkey(int pe,
@@ -218,7 +278,7 @@ static inline  sshmem_mkey_t *mca_memheap_base_get_cached_mkey(int pe,
 
     if (OPAL_LIKELY(s->mkeys_cache[pe])) {
         mkey = &s->mkeys_cache[pe][btl_id];
-        *rva = memheap_va2rva(va, s->seg_base_addr, mkey->va_base);
+        *rva = memheap_va2rva(va, s->super.va_base, mkey->va_base);
         MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (cached) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
         return mkey;
     }
@@ -230,6 +290,12 @@ static inline int mca_memheap_base_num_transports(void)
 {
     return memheap_map->num_transports;
 }
+
+static inline void* mca_memheap_seg2base_va(int seg)
+{
+    return memheap_map->mem_segs[seg].super.va_base;
+}
+
 
 END_C_DECLS
 

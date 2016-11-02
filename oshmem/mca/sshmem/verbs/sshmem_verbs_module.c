@@ -110,8 +110,8 @@ shmem_ds_reset(map_segment_t *ds_buf)
 
     MAP_SEGMENT_RESET_FLAGS(ds_buf);
     ds_buf->seg_id = MAP_SEGMENT_SHM_INVALID;
-    ds_buf->seg_base_addr = 0;
-    ds_buf->end = 0;
+    ds_buf->super.va_base = 0;
+    ds_buf->super.va_end = 0;
     ds_buf->seg_size = 0;
     ds_buf->type = MAP_SEGMENT_UNKNOWN;
     memset(ds_buf->seg_name, '\0', sizeof(ds_buf->seg_name));
@@ -320,9 +320,9 @@ segment_create(map_segment_t *ds_buf,
                 ds_buf->type = MAP_SEGMENT_ALLOC_IBV_NOSHMR;
                 ds_buf->seg_id = MAP_SEGMENT_SHM_INVALID;
             }
-            ds_buf->seg_base_addr = ib_mr->addr;
+            ds_buf->super.va_base = ib_mr->addr;
             ds_buf->seg_size = size;
-            ds_buf->end = (void*)((uintptr_t)ds_buf->seg_base_addr + ds_buf->seg_size);
+            ds_buf->super.va_end = (void*)((uintptr_t)ds_buf->super.va_base + ds_buf->seg_size);
         }
     }
 

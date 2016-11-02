@@ -115,7 +115,6 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
     int my_rank = oshmem_my_proc_id();
     size_t num_reqs, max_reqs;
     void *dreq, **dreqs;
-    ompi_proc_t *proc;
     ucp_ep_h ep;
     size_t i, n;
 
@@ -157,7 +156,7 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
 
         mca_spml_ucx.ucp_peers[n].ucp_conn = NULL;
 
-        if (num_reqs >= mca_spml_ucx.num_disconnect) {
+        if ((int)num_reqs >= mca_spml_ucx.num_disconnect) {
             mca_spml_ucx_waitall(dreqs, &num_reqs);
         }
     }
@@ -322,6 +321,21 @@ error:
 
 }
 
+
+spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva)
+{
+    sshmem_mkey_t *r_mkey;
+
+    r_mkey = mca_memheap_base_get_cached_mkey(pe, va, 0, rva);
+    if (OPAL_UNLIKELY(!r_mkey)) {
+        SPML_ERROR("pe=%d: %p is not address of symmetric variable",
+                   pe, va);
+        oshmem_shmem_abort(-1);
+        return NULL;
+    }
+    return (spml_ucx_mkey_t *)(r_mkey->spml_context);
+}
+
 void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey)
 {
     spml_ucx_mkey_t   *ucx_mkey;
@@ -331,20 +345,23 @@ void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey)
     }
     ucx_mkey = (spml_ucx_mkey_t *)(mkey->spml_context);
     ucp_rkey_destroy(ucx_mkey->rkey);
-    free(ucx_mkey);
 }
 
-void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, int pe)
+static void mca_spml_ucx_cache_mkey(sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
+{
+    ucp_peer_t *peer;
+
+    peer = &mca_spml_ucx.ucp_peers[dst_pe];
+    mkey_segment_init(&peer->mkeys[segno].super, mkey, segno);
+}
+
+void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id)
 {
     spml_ucx_mkey_t   *ucx_mkey;
     ucs_status_t err;
-
-    ucx_mkey = (spml_ucx_mkey_t *)malloc(sizeof(*ucx_mkey));
-    if (!ucx_mkey) {
-        SPML_ERROR("not enough memory to allocate mkey");
-        goto error_fatal;
-    }
     
+    ucx_mkey = &mca_spml_ucx.ucp_peers[pe].mkeys[segno].key;
+
     err = ucp_ep_rkey_unpack(mca_spml_ucx.ucp_peers[pe].ucp_conn,
             mkey->u.data, 
             &ucx_mkey->rkey); 
@@ -354,6 +371,7 @@ void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, int pe)
     }
 
     mkey->spml_context = ucx_mkey;
+    mca_spml_ucx_cache_mkey(mkey, segno, pe);
     return;
 
 error_fatal:
@@ -370,23 +388,23 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     ucs_status_t err;
     spml_ucx_mkey_t   *ucx_mkey;
     size_t len;
+    int my_pe = oshmem_my_proc_id();
+    int seg;
 
     *count = 0;
     mkeys = (sshmem_mkey_t *) calloc(1, sizeof(*mkeys));
     if (!mkeys) {
-        return NULL ;
+        return NULL;
     }
 
-    ucx_mkey = (spml_ucx_mkey_t *)malloc(sizeof(*ucx_mkey));
-    if (!ucx_mkey) {
-        goto error_out;
-    }
+    seg = memheap_find_segnum(addr);
 
+    ucx_mkey = &mca_spml_ucx.ucp_peers[my_pe].mkeys[seg].key;
     mkeys[0].spml_context = ucx_mkey;
-    err = ucp_mem_map(mca_spml_ucx.ucp_context, 
-            &addr, size, 0, &ucx_mkey->mem_h);
+
+    err = ucp_mem_map(mca_spml_ucx.ucp_context, &addr, size, 0, &ucx_mkey->mem_h);
     if (UCS_OK != err) {
-        goto error_out1;
+        goto error_out;
     }
 
     err = ucp_rkey_pack(mca_spml_ucx.ucp_context, ucx_mkey->mem_h, 
@@ -412,12 +430,11 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     mkeys[0].len     = len;
     mkeys[0].va_base = addr;
     *count = 1;
+    mca_spml_ucx_cache_mkey(&mkeys[0], seg, my_pe);
     return mkeys;
 
 error_unmap:
     ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);
-error_out1:
-    free(ucx_mkey);
 error_out:
     free(mkeys);
 
@@ -442,7 +459,6 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
         ucp_rkey_buffer_release(mkeys[0].u.data);
     }
 
-    free(ucx_mkey);
     return OSHMEM_SUCCESS;
 }
 
