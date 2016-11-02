@@ -19,12 +19,27 @@
 #include <ompi/communicator/communicator.h>
 #include <opal/mca/base/mca_base_component_repository.h>
 #include <opal/class/opal_hash_table.h>
+#include <opal/util/output.h>
 
-#define OPAL_MONITORING_VERBOSE(x, ...) opal_output(x, __VA_ARGS__)
-
-/*** MCA param to mark the monitoring as enabled. ***/
+/*** Monitoring specific variables ***/
 /* Keep tracks of how many components are currently using the common part */
 int mca_common_monitoring_hold = 0;
+/* Output parameters */
+int mca_common_monitoring_output_stream_id = -1;
+static opal_output_stream_t mca_common_monitoring_output_stream_obj = {
+    .lds_verbose_level = 0,
+    .lds_want_syslog = false,
+    .lds_prefix = NULL,
+    .lds_suffix = NULL,
+    .lds_is_debugging = true,
+    .lds_want_stdout = false,
+    .lds_want_stderr = true,
+    .lds_want_file = false,
+    .lds_want_file_append = false,
+    .lds_file_suffix = NULL
+};
+
+/*** MCA params to mark the monitoring as enabled. ***/
 /* This signals that the monitoring will highjack the PML or OSC */
 int mca_common_monitoring_enabled = 0;
 /* Signals there will be an output of the monitored data at component close */
@@ -104,8 +119,11 @@ int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
                                                     * accurate answer upon MPI_Finalize. */
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_STOP:
-        if( 0 == mca_common_monitoring_flush(mca_common_monitoring_output_enabled, *mca_common_monitoring_current_filename) )
+        OPAL_MONITORING_VERBOSE(0, "notify_flush(HANDLE_STOP)");
+        if( OMPI_SUCCESS == mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
+                                                        *mca_common_monitoring_current_filename) ) {
             return OMPI_SUCCESS;
+        }
     }
     return OMPI_ERROR;
 }
@@ -130,6 +148,42 @@ int mca_common_monitoring_messages_notify(mca_base_pvar_t *pvar,
     }
 
     return OMPI_ERROR;
+}
+
+void mca_common_monitoring_init( void )
+{
+    char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
+    /* If first to enable the common parts */
+    if( 0 == __sync_fetch_and_add(&mca_common_monitoring_hold, 1) ) {
+        /* Open the opal_output stream */
+        gethostname(hostname, sizeof(hostname));
+        asprintf(&mca_common_monitoring_output_stream_obj.lds_prefix,
+                 "[%s:%05d] monitoring: ", hostname, getpid());
+        mca_common_monitoring_output_stream_id =
+            opal_output_open(&mca_common_monitoring_output_stream_obj);
+    }
+}
+
+void mca_common_monitoring_finalize( void )
+{
+    if( 0 == __sync_sub_and_fetch(&mca_common_monitoring_hold, 1) /* Release if last component */
+        && mca_common_monitoring_enabled && mca_common_monitoring_active ) {
+        /* If we are not drived by MPIT then dump the monitoring information */
+        if( mca_common_monitoring_output_enabled ) {
+  	    mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
+                                        *mca_common_monitoring_current_filename);
+        }
+        /* Disable all monitoring */
+        mca_common_monitoring_active = 0;
+        mca_common_monitoring_enabled = 0;
+        /* Close the opal_output stream */
+        opal_output_close(mca_common_monitoring_output_stream_id);
+        free(mca_common_monitoring_output_stream_obj.lds_prefix);
+        /* Free internal data structure */
+        free(sent_data);  /* a single allocation */
+        opal_hash_table_remove_all( translation_ht );
+        free(translation_ht);
+    }
 }
 
 void mca_common_monitoring_enable(bool enable, void*pml_monitoring_component)
@@ -250,30 +304,6 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
         }
     }
     return OMPI_SUCCESS;
-}
-
-void mca_common_monitoring_init( void )
-{
-    __sync_add_and_fetch(&mca_common_monitoring_hold, 1);
-}
-
-void mca_common_monitoring_finalize( void )
-{
-    if( 0 == __sync_sub_and_fetch(&mca_common_monitoring_hold, 1) /* Release if last component */
-        && mca_common_monitoring_enabled && mca_common_monitoring_active ) {
-        /* If we are not drived by MPIT then dump the monitoring information */
-        if( mca_common_monitoring_output_enabled ) {
-  	    mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
-                                        *mca_common_monitoring_current_filename);
-        }
-        /* Free internal data structure */
-        free(sent_data);  /* a single allocation */
-        opal_hash_table_remove_all( translation_ht );
-        free(translation_ht);
-        /* Call the original PML and then close */
-        mca_common_monitoring_active = 0;
-        mca_common_monitoring_enabled = 0;
-    }
 }
 
 void mca_common_monitoring_reset( void )
@@ -431,6 +461,6 @@ int mca_common_monitoring_flush(int fd, char* filename)
         mca_common_monitoring_output( pf, rank_world, nprocs_world );
 
         fclose(pf);
-    }        
-    return 0;
+    }
+    return OMPI_SUCCESS;
 }
