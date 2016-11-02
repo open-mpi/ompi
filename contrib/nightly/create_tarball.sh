@@ -177,7 +177,7 @@ do_command "git checkout $gitbranch"
 # Nightly tarballs are named in this format:
 # openmpi-${BRANCHNAME}-${YYYYMMDDHHMM}-${SHORTHASH}.tar.${COMPRESSION}
 timestamp=`date '+%Y%m%d%H%M'`
-githash=`git show '--pretty=format:%h'`
+githash=`git log -n 1 '--pretty=format:%h'`
 version="$gitbranch-$timestamp-$githash"
 if test -n "$debug"; then
     echo "*** This snapshot version: $version"
