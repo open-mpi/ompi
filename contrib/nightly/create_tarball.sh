@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -174,26 +174,31 @@ do_command "git clone $giturl ompi"
 cd ompi
 do_command "git checkout $gitbranch"
 
-# Find the "git describe" string for this branch (remove a leading "ompi-"
-# prefix, if there is one).
-describe=`git describe --tags --always | sed -e s/^ompi-//`
+# Nightly tarballs are named in this format:
+# openmpi-${BRANCHNAME}-${YYYYMMDDHHMM}-${SHORTHASH}.tar.${COMPRESSION}
+timestamp=`date '+%Y%m%d%H%M'`
+githash=`git show '--pretty=format:%h'`
+version="$gitbranch-$timestamp-$githash"
 if test -n "$debug"; then
-    echo "** found $gitbranch describe: $describe"
+    echo "*** This snapshot version: $version"
 fi
-version=$describe
 
 # if there's a $destdir/latest_snapshot.txt, see if anything has
-# happened since the describe listed in that file
+# happened since the version listed in that file
 if test -f "$destdir/latest_snapshot.txt"; then
-    snapshot_describe=`cat $destdir/latest_snapshot.txt`
+    snapshot_version=`cat $destdir/latest_snapshot.txt`
     if test -n "$debug"; then
-	echo "** last snapshot describe: $snapshot_describe"
+	echo "*** Last snapshot version: $snapshot_version"
     fi
 
     # Do we need a new snapshot?
-    if test "$describe" = "$snapshot_describe"; then
+    # Snip the timestamp out of the versions and compare just
+    # ${BRANCHNAME}-${SHORTHASH}.
+    compare_version="$gitbranch-$githash"
+    compare_snapshot_version=`echo $snapshot_version | perl -pi -e 's/^([a-z]+)-(\d+)-(.*+)$/$1-$3/'`
+    if test "$compare_version" = "$compare_snapshot_version"; then
 	if test -n "$debug"; then
-	    echo "** git $gitbranch describe is same as latest_snapshot -- not doing anything"
+	    echo "*** Our branch/git hash is the same as the last snapshot -- not doing anything"
 	fi
 	# Since we didn't do anything, there's no point in leaving the clone we
 	# just created
@@ -206,14 +211,14 @@ if test -f "$destdir/latest_snapshot.txt"; then
 fi
 
 if test -n "$debug"; then
-    echo "** making snapshot for describe: $describe"
+    echo "*** Houston: we're a go to make snapshot $version"
 fi
 
 # Ensure that VERSION is set to indicate that it wants a snapshot, and
 # insert the actual value that we want (so that ompi_get_version.sh
 # will report exactly that version).
-sed -e 's/^repo_rev=.*/repo_rev='$describe/ \
-    -e 's/^tarball_version=.*/tarball_version='$describe/ \
+sed -e 's/^repo_rev=.*/repo_rev='$githash/ \
+    -e 's/^tarball_version=.*/tarball_version='$version/ \
     VERSION > VERSION.new
 cp -f VERSION.new VERSION
 rm -f VERSION.new
