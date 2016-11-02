@@ -24,6 +24,10 @@ BEGIN_C_DECLS
                                                           OMPI_MINOR_VERSION, \
                                                           OMPI_RELEASE_VERSION)
 
+#define OPAL_MONITORING_VERBOSE(x, ...) \
+    OPAL_OUTPUT_VERBOSE((x, mca_common_monitoring_output_stream_id, __VA_ARGS__))
+
+extern int mca_common_monitoring_output_stream_id;
 extern int mca_common_monitoring_enabled;
 extern int mca_common_monitoring_output_enabled;
 extern int mca_common_monitoring_active;

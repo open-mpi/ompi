@@ -17,32 +17,32 @@
                                                                         \
     static int ompi_osc_monitoring_## template ##_post (ompi_group_t *group, int assert, ompi_win_t *win) \
     {                                                                   \
-        return ompi_osc_monitoring_module_## template ##_template.osc_post(group, assert, win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_post(group, assert, win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_start (ompi_group_t *group, int assert, ompi_win_t *win) \
     {                                                                   \
-        return ompi_osc_monitoring_module_## template ##_template.osc_start(group, assert, win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_start(group, assert, win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_complete (ompi_win_t *win) \
     {                                                                   \
-        return ompi_osc_monitoring_module_## template ##_template.osc_complete(win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_complete(win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_wait (ompi_win_t *win) \
     {                                                                   \
-        return ompi_osc_monitoring_module_## template ##_template.osc_wait(win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_wait(win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_test (ompi_win_t *win, int *flag) \
     {                                                                   \
-        return ompi_osc_monitoring_module_## template ##_template.osc_test(win, flag); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_test(win, flag); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_fence (int assert, ompi_win_t *win) \
     {                                                                   \
-        return ompi_osc_monitoring_module_## template ##_template.osc_fence(assert, win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_fence(assert, win); \
     }
 
 #endif /* MCA_OSC_MONITORING_ACTIVE_TARGET_H */

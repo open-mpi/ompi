@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Inria.  All rights reserved.
+ * Copyright (c) 2013-2016 Inria.  All rights reserved.
  * Copyright (c) 2013-2015 Bull SAS.  All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -59,8 +59,12 @@ struct monitoring_result
 };
 typedef struct monitoring_result monitoring_result;
 
+/* Sent */
 static monitoring_result counts;
 static monitoring_result sizes;
+/* Recv */
+static monitoring_result rcounts;
+static monitoring_result rsizes;
 
 static int  write_mat(char *, uint64_t *, unsigned int);
 static void init_monitoring_result(const char *, monitoring_result *);
@@ -93,9 +97,13 @@ int MPI_Init(int* argc, char*** argv)
 
     init_monitoring_result("pml_monitoring_messages_count", &counts);
     init_monitoring_result("pml_monitoring_messages_size", &sizes);
-
+    init_monitoring_result("osc_monitoring_messages_count", &rcounts);
+    init_monitoring_result("osc_monitoring_messages_size", &rsizes);
+    
     start_monitoring_result(&counts);
     start_monitoring_result(&sizes);
+    start_monitoring_result(&rcounts);
+    start_monitoring_result(&rsizes);
 
     return result;
 }
@@ -105,22 +113,32 @@ int MPI_Finalize(void)
     int result, MPIT_result;
     uint64_t * exchange_count_matrix = NULL;
     uint64_t * exchange_size_matrix = NULL;
+    uint64_t * exchange_rcount_matrix = NULL;
+    uint64_t * exchange_rsize_matrix = NULL;
     uint64_t * exchange_avg_size_matrix = NULL;
 
     if (0 == comm_world_rank) {
-        exchange_count_matrix = (uint64_t *) malloc(comm_world_size * comm_world_size * sizeof(uint64_t));
-        exchange_size_matrix = (uint64_t *) malloc(comm_world_size * comm_world_size * sizeof(uint64_t));
-        exchange_avg_size_matrix = (uint64_t *) malloc(comm_world_size * comm_world_size * sizeof(uint64_t));
+        exchange_count_matrix = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
+        exchange_size_matrix = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
+        exchange_rcount_matrix = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
+        exchange_rsize_matrix = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
+        exchange_avg_size_matrix = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
     }
 
     stop_monitoring_result(&counts);
     stop_monitoring_result(&sizes);
+    stop_monitoring_result(&rcounts);
+    stop_monitoring_result(&rsizes);
 
     get_monitoring_result(&counts);
     get_monitoring_result(&sizes);
+    get_monitoring_result(&rcounts);
+    get_monitoring_result(&rsizes);
 
     PMPI_Gather(counts.vector, comm_world_size, MPI_UNSIGNED_LONG, exchange_count_matrix, comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
     PMPI_Gather(sizes.vector,  comm_world_size, MPI_UNSIGNED_LONG, exchange_size_matrix,  comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    PMPI_Gather(rcounts.vector, comm_world_size, MPI_UNSIGNED_LONG, exchange_rcount_matrix, comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    PMPI_Gather(rsizes.vector,  comm_world_size, MPI_UNSIGNED_LONG, exchange_rsize_matrix,  comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
     if (0 == comm_world_rank) {
         int i, j;
@@ -128,7 +146,16 @@ int MPI_Finalize(void)
         //Get the same matrix than profile2mat.pl
         for (i = 0; i < comm_world_size; ++i) {
             for (j = i + 1; j < comm_world_size; ++j) {
+                /* fprintf(stderr, "osc: %d->%d: %lu - %lu\tpml: %d->%d: %lu - %lu\nosc: %d->%d: %lu - %lu\tpml: %d->%d: %lu - %lu\n", */
+                /*         i, j, exchange_rsize_matrix[j * comm_world_size + i], exchange_rcount_matrix[j * comm_world_size + i], */
+                /*         i, j, exchange_size_matrix[i * comm_world_size + j], exchange_count_matrix[i * comm_world_size + j], */
+                /*         j, i, exchange_rsize_matrix[i * comm_world_size + j], exchange_rcount_matrix[i * comm_world_size + j], */
+                /*         j, i, exchange_size_matrix[j * comm_world_size + i], exchange_count_matrix[j * comm_world_size + i]); */
+                exchange_count_matrix[i * comm_world_size + j] += exchange_rcount_matrix[j * comm_world_size + i];
+                exchange_count_matrix[j * comm_world_size + i] += exchange_rcount_matrix[i * comm_world_size + j];
                 exchange_count_matrix[i * comm_world_size + j] = exchange_count_matrix[j * comm_world_size + i] = (exchange_count_matrix[i * comm_world_size + j] + exchange_count_matrix[j * comm_world_size + i]) / 2;
+                exchange_size_matrix[i * comm_world_size + j] += exchange_rsize_matrix[j * comm_world_size + i];
+                exchange_size_matrix[j * comm_world_size + i] += exchange_rsize_matrix[i * comm_world_size + j];
                 exchange_size_matrix[i * comm_world_size + j] = exchange_size_matrix[j * comm_world_size + i] = (exchange_size_matrix[i * comm_world_size + j] + exchange_size_matrix[j * comm_world_size + i]) / 2;
                 if (exchange_count_matrix[i * comm_world_size + j] != 0)
                     exchange_avg_size_matrix[i * comm_world_size + j] = exchange_avg_size_matrix[j * comm_world_size + i] = exchange_size_matrix[i * comm_world_size + j] / exchange_count_matrix[i * comm_world_size + j];
@@ -142,9 +169,14 @@ int MPI_Finalize(void)
 
     free(exchange_count_matrix);
     free(exchange_size_matrix);
+    free(exchange_rcount_matrix);
+    free(exchange_rsize_matrix);
     free(exchange_avg_size_matrix);
+    
     destroy_monitoring_result(&counts);
     destroy_monitoring_result(&sizes);
+    destroy_monitoring_result(&rcounts);
+    destroy_monitoring_result(&rsizes);
 
     MPIT_result = MPI_T_pvar_session_free(&session);
     if (MPIT_result != MPI_SUCCESS) {

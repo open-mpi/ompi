@@ -24,8 +24,6 @@ typedef struct ompi_osc_monitoring_component_t ompi_osc_monitoring_component_t;
 
 OMPI_DECLSPEC extern ompi_osc_monitoring_component_t mca_osc_monitoring_component;
 
-#define OPAL_MONITORING_VERBOSE(x, ...) OPAL_OUTPUT_VERBOSE((x, ompi_osc_base_framework.framework_output, __VA_ARGS__))
-
 END_C_DECLS
 
 #endif  /* MCA_OSC_MONITORING_H */

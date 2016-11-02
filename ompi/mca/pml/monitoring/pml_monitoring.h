@@ -24,8 +24,6 @@ BEGIN_C_DECLS
 #include <ompi/mca/common/monitoring/common_monitoring.h>
 #include <opal/mca/base/mca_base_pvar.h>
 
-#define OPAL_MONITORING_VERBOSE(x, ...) OPAL_OUTPUT_VERBOSE((x, ompi_pml_base_framework.framework_output, __VA_ARGS__))
-
 typedef mca_pml_base_module_t mca_pml_monitoring_module_t;
 
 extern mca_pml_base_component_t pml_selected_component;
