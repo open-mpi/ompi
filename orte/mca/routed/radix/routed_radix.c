@@ -264,6 +264,13 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         }
     }
 
+    /* if the jobid is different than our own, then this the target
+     * is a tool and we should go direct */
+    if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        ret = target;
+        goto found;
+    }
+
     daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     /* find out what daemon hosts this proc */
     if (ORTE_VPID_INVALID == (daemon.vpid = orte_get_proc_daemon_vpid(target))) {
