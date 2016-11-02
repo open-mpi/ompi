@@ -584,13 +584,6 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
             BTL_OPENIB_FOOTER_HTON(*ftr);
 
         sr_desc->wr.rdma.rkey = ep->eager_rdma_remote.rkey;
-#if BTL_OPENIB_FAILOVER_ENABLED
-        /* frag->ftr is unused on the sending fragment, so use it
-         * to indicate it is an eager fragment.  A non-zero value
-         * indicates it is eager, and the value indicates the
-         * location in the eager RDMA array that it lives. */
-        frag->ftr = (mca_btl_openib_footer_t*)(long)(1 + head);
-#endif
         sr_desc->wr.rdma.remote_addr =
             ep->eager_rdma_remote.base.lval +
             head * openib_btl->eager_rdma_frag_size +

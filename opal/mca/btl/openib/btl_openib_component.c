@@ -84,9 +84,6 @@
 #include "btl_openib_ini.h"
 #include "btl_openib_mca.h"
 #include "btl_openib_xrc.h"
-#if BTL_OPENIB_FAILOVER_ENABLED
-#include "btl_openib_failover.h"
-#endif
 #include "btl_openib_async.h"
 #include "connect/base.h"
 #include "btl_openib_ip.h"
@@ -504,12 +501,6 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
             mca_btl_openib_endpoint_connected(ep);
         }
         break;
-#if BTL_OPENIB_FAILOVER_ENABLED
-    case MCA_BTL_OPENIB_CONTROL_EP_BROKEN:
-    case MCA_BTL_OPENIB_CONTROL_EP_EAGER_RDMA_ERROR:
-        btl_openib_handle_failover_control_messages(ctl_hdr, ep);
-        break;
-#endif
     default:
         BTL_ERROR(("Unknown message type received by BTL"));
        break;
@@ -3452,20 +3443,8 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
                 opal_list_item_t *i;
                 while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
                     btl_ownership = (to_base_frag(i)->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-#if BTL_OPENIB_FAILOVER_ENABLED
-                    /* The check for the callback flag is only needed when running
-                     * with the failover case because there is a chance that a fragment
-                     * generated from a sendi call (which does not set the flag) gets
-                     * coalesced.  In normal operation, this cannot happen as the sendi
-                     * call will never queue up a fragment which could potentially become
-                     * a coalesced fragment.  It will revert to a regular send. */
-                    if (to_base_frag(i)->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
-#endif
                         to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
                                 &to_base_frag(i)->base, OPAL_SUCCESS);
-#if BTL_OPENIB_FAILOVER_ENABLED
-                    }
-#endif
                     if( btl_ownership ) {
                         mca_btl_openib_free(&openib_btl->super, &to_base_frag(i)->base);
                     }
@@ -3590,14 +3569,9 @@ error:
         }
     }
 
-#if BTL_OPENIB_FAILOVER_ENABLED
-    mca_btl_openib_handle_endpoint_error(openib_btl, des, qp,
-                                         remote_proc, endpoint);
-#else
     if(openib_btl)
         openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
                              (struct opal_proc_t*)remote_proc, NULL);
-#endif
 }
 
 static int poll_device(mca_btl_openib_device_t* device, int count)
@@ -3808,9 +3782,6 @@ error:
         if(openib_btl->device->got_port_event) {
             /* These are non-fatal so just ignore it. */
             openib_btl->device->got_port_event = false;
-#if BTL_OPENIB_FAILOVER_ENABLED
-            mca_btl_openib_handle_btl_error(openib_btl);
-#endif
         }
     }
     return count;

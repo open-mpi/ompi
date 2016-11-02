@@ -68,13 +68,6 @@ sources = \
     connect/btl_openib_connect_empty.h \
     connect/connect.h
 
-# If we have failover support, build that file
-if MCA_btl_openib_enable_failover
-sources += \
-    btl_openib_failover.c \
-    btl_openib_failover.h
-endif
-
 # If we have rdmacm support, build that CPC
 if MCA_btl_openib_have_rdmacm
 sources += \

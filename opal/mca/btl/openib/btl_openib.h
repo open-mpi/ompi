@@ -241,9 +241,6 @@ struct mca_btl_openib_component_t {
     opal_event_base_t *async_evbase; /**< Async event base */
     bool use_async_event_thread;     /**< Use the async event handler */
     mca_btl_openib_srq_manager_t srq_manager;     /**< Hash table for all BTL SRQs */
-#if BTL_OPENIB_FAILOVER_ENABLED
-    bool port_error_failover;        /**< Report port errors to speed up failover */
-#endif
     /* declare as an int instead of btl_openib_device_type_t since there is no
        guarantee about the size of an enum. this value will be registered as an
        integer with the MCA variable system */
@@ -310,9 +307,6 @@ struct mca_btl_openib_component_t {
     int memory_registration_verbose_level;
     int memory_registration_verbose;
     int ignore_locality;
-#if BTL_OPENIB_FAILOVER_ENABLED
-    int verbose_failover;
-#endif
 #if OPAL_CUDA_SUPPORT
     bool cuda_async_send;
     bool cuda_async_recv;
