@@ -21,7 +21,13 @@
 
 BEGIN_C_DECLS
 
-ORTE_MODULE_DECLSPEC extern orte_ess_base_component_t mca_ess_slurm_component;
+struct orte_ess_slurm_component_t {
+    orte_ess_base_component_t super;
+    bool resv_ports;
+};
+typedef struct orte_ess_slurm_component_t orte_ess_slurm_component_t;
+
+ORTE_MODULE_DECLSPEC extern orte_ess_slurm_component_t mca_ess_slurm_component;
 
 /*
  * Module open / close

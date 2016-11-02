@@ -472,6 +472,29 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
 
+#if 1
+    /* setup the PMIx framework - ensure it skips all non-PMIx components */
+    putenv("OMPI_MCA_pmix=^s1,s2,cray");
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pmix_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
+        goto error;
+    }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "pmix server init";
+        goto error;
+    }
+#endif
+
 #if ORTE_ENABLE_STATIC_PORTS
     /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly
@@ -516,6 +539,7 @@ int orte_ess_base_orted_setup(char **hosts)
         }
     }
 
+#if 0
     /* setup the PMIx framework - ensure it skips all non-PMIx components */
     putenv("OMPI_MCA_pmix=^s1,s2,cray");
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
@@ -536,6 +560,7 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "pmix server init";
         goto error;
     }
+#endif
 
     /* setup the routed info - the selected routed component
      * will know what to do.
