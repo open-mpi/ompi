@@ -585,7 +585,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
             orte_set_attribute(&node->attributes, ORTE_NODE_LAUNCH_ID, ORTE_ATTR_LOCAL, &apNodes[ix].nid, OPAL_INT32);
             node->slots_inuse = 0;
             node->slots_max = 0;
-            node->slots = apNodes[ix].numPEs;
+            node->slots = opal_hwloc_use_hwthreads_as_cpus ? apNodes[ix].cpuCnt : apNodes[ix].numPEs;
             node->state = ORTE_NODE_STATE_UP;
             /* need to order these node ids so the regex generator
              * can properly function
