@@ -32,86 +32,20 @@ int mca_atomic_mxm_fadd(void *target,
                         int pe,
                         struct oshmem_op_t *op)
 {
-    unsigned my_pe;
-    uint8_t nlong_order;
-    void *remote_addr;
     mxm_send_req_t sreq;
-    mxm_error_t mxm_err;
-    sshmem_mkey_t *r_mkey;
     static char dummy_buf[8];
 
-    my_pe = oshmem_my_proc_id();
-    mxm_err = MXM_OK;
+    mca_atomic_mxm_req_init(&sreq, pe, target, nlong);
 
-    switch (nlong) {
-    case 1:
-        nlong_order = 0;
-        break;
-    case 2:
-        nlong_order = 1;
-        break;
-    case 4:
-        nlong_order = 2;
-        break;
-    case 8:
-        nlong_order = 3;
-        break;
-    default:
-        ATOMIC_ERROR("[#%d] Type size must be 1/2/4 or 8 bytes.", my_pe);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERR_BAD_PARAM;
-    }
-
-    r_mkey = mca_memheap_base_get_cached_mkey(pe, target, MXM_PTL_RDMA, &remote_addr);
-    if (!r_mkey) {
-        ATOMIC_ERROR("[#%d] %p is not address of symmetric variable",
-                     my_pe, target);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERR_BAD_PARAM;
-    }
-
-    /* mxm request init */
-    sreq.base.state = MXM_REQ_NEW;
-    sreq.base.mq = mca_atomic_mxm_spml_self->mxm_mq;
-    sreq.base.conn = mca_atomic_mxm_spml_self->mxm_peers[pe].mxm_hw_rdma_conn;
-    sreq.base.completed_cb = NULL;
-    sreq.base.data_type = MXM_REQ_DATA_BUFFER;
-
-    sreq.op.atomic.remote_vaddr = (uintptr_t) remote_addr;
-    sreq.op.atomic.remote_mkey = to_mxm_mkey(r_mkey);
     memcpy(&sreq.op.atomic.value, value, nlong);
-    sreq.op.atomic.order = nlong_order;
-
-    /* Do we need atomic 'add' or atomic 'fetch and add'? */
+    sreq.opcode = MXM_REQ_OP_ATOMIC_FADD;
     if (NULL == prev) {
         sreq.base.data.buffer.ptr = dummy_buf;
-        sreq.base.data.buffer.length = nlong;
-        sreq.base.data.buffer.memh = MXM_INVALID_MEM_HANDLE;
-        sreq.flags = 0;
-        sreq.opcode = MXM_REQ_OP_ATOMIC_FADD;
     } else {
         sreq.base.data.buffer.ptr = prev;
-        sreq.base.data.buffer.length = nlong;
-        sreq.base.data.buffer.memh = MXM_INVALID_MEM_HANDLE;
-        sreq.flags = 0;
-
-        sreq.opcode = MXM_REQ_OP_ATOMIC_FADD;
     }
 
-    if (MXM_OK != (mxm_err = mxm_req_send(&sreq))) {
-        ATOMIC_ERROR("[#%d] mxm_req_send failed, mxm_error = %d",
-                     my_pe, mxm_err);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
-
-    mxm_req_wait(&sreq.base);
-    if (MXM_OK != sreq.base.error) {
-        ATOMIC_ERROR("[#%d] mxm_req_wait got non MXM_OK error: %d",
-                     my_pe, sreq.base.error);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
+    mca_atomic_mxm_post(&sreq);
 
     return OSHMEM_SUCCESS;
 }

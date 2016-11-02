@@ -38,7 +38,7 @@ char* mca_memheap_base_exclude = NULL;
 opal_list_t mca_memheap_base_components_opened = {{0}};
 struct mca_memheap_base_module_t* mca_memheap_base_module_initialized = NULL;
 int mca_memheap_base_already_opened = 0;
-mca_memheap_map_t mca_memheap_base_map = {{{0}}};
+mca_memheap_map_t mca_memheap_base_map;
 
 static int mca_memheap_base_register(mca_base_register_flag_t flags)
 {

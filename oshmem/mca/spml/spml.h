@@ -118,7 +118,7 @@ typedef int (*mca_spml_base_module_wait_fn_t)(void* addr,
  *
  * @param mkey remote mkey
  */
-typedef void (*mca_spml_base_module_mkey_unpack_fn_t)(sshmem_mkey_t *, int remote_pe);
+typedef void (*mca_spml_base_module_mkey_unpack_fn_t)(sshmem_mkey_t *, uint32_t segno, int remote_pe, int tr_id);
 
 /**
  * free resources used by deserialized remote mkey
@@ -149,9 +149,9 @@ typedef int (*mca_spml_base_module_deregister_fn_t)(sshmem_mkey_t *mkeys);
 
 /**
  * try to fill up mkeys that can be used to reach remote pe.
- * @param pe  remote pe
+ * @param pe         remote pe
  * @param seg 0 - symmetric heap, 1 - static data, everything else are static data in .so
- * @param mkeys  mkeys array
+ * @param mkeys      mkeys array
  *
  * @return OSHMEM_SUCCSESS if keys are found
  */
