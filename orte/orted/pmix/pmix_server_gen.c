@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -58,7 +58,7 @@ int pmix_server_client_finalized_fn(opal_process_name_t *proc, void *server_obje
 
     if (NULL != cbdata) {
         /* we were passed back the orte_proc_t */
-        p = (orte_proc_t*)cbdata;
+        p = (orte_proc_t*)server_object;
     } else {
         /* find the named process */
         p = NULL;
@@ -80,6 +80,7 @@ int pmix_server_client_finalized_fn(opal_process_name_t *proc, void *server_obje
     }
     if (NULL != p) {
         p->state = ORTE_PROC_STATE_TERMINATED;
+        ORTE_FLAG_SET(p, ORTE_PROC_FLAG_HAS_DEREG);
             /* release the caller */
         if (NULL != cbfunc) {
             cbfunc(ORTE_SUCCESS, cbdata);
