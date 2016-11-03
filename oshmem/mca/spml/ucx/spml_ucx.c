@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -468,7 +469,7 @@ int mca_spml_ucx_get_nb(void *src_addr, size_t size, void *dst_addr, int src, vo
     status = ucp_get_nbi(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
-    return ucx_status_to_oshmem(status);
+    return ucx_status_to_oshmem_nb(status);
 }
 
 int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
@@ -494,7 +495,7 @@ int mca_spml_ucx_put_nb(void* dst_addr, size_t size, void* src_addr, int dst, vo
     status = ucp_put_nbi(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
-    return ucx_status_to_oshmem(status);
+    return ucx_status_to_oshmem_nb(status);
 }
 
 int mca_spml_ucx_fence(void)

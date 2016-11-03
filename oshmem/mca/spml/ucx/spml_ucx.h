@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -133,6 +134,10 @@ static inline int ucx_status_to_oshmem(ucs_status_t status)
     return OPAL_LIKELY(UCS_OK == status) ? OSHMEM_SUCCESS : OSHMEM_ERROR;
 }
 
+static inline int ucx_status_to_oshmem_nb(ucs_status_t status)
+{
+    return OPAL_LIKELY(status >= 0) ? OSHMEM_SUCCESS : OSHMEM_ERROR;
+}
 
 END_C_DECLS
 
