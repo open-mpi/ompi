@@ -89,11 +89,6 @@ static mca_base_var_enum_value_t device_type_values[] = {
 static int btl_openib_cq_size;
 static bool btl_openib_have_fork_support = OPAL_HAVE_IBV_FORK_INIT;
 
-#if BTL_OPENIB_FAILOVER_ENABLED
-static int btl_openib_verbose_failover;
-static bool btl_openib_failover_enabled = true;
-#endif
-
 /*
  * utility routine for string parameter registration
  */
@@ -473,30 +468,6 @@ int btl_openib_register_mca_params(void)
                    "If nonzero, use the thread that will handle InfiniBand asynchronous events",
                    true, &mca_btl_openib_component.use_async_event_thread));
 
-#if BTL_OPENIB_FAILOVER_ENABLED
-    /* failover specific output */
-    CHECK(reg_int("verbose_failover", NULL,
-                  "Output some verbose OpenIB BTL failover information "
-                  "(0 = no output, nonzero = output)", 0, &btl_openib_verbose_failover, 0));
-    mca_btl_openib_component.verbose_failover = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_btl_openib_component.verbose_failover, btl_openib_verbose_failover);
-
-    CHECK(reg_bool("port_error_failover", NULL,
-                   "If nonzero, asynchronous port errors will trigger failover",
-                   0, &mca_btl_openib_component.port_error_failover));
-
-    /* Make non writeable parameter that indicates failover is configured in. */
-    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
-                                          "failover_enabled",
-                                          "openib failover is configured: run with bfo PML to support failover between openib BTLs",
-                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                          MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                          OPAL_INFO_LVL_9,
-                                          MCA_BASE_VAR_SCOPE_CONSTANT,
-                                          &btl_openib_failover_enabled);
-    if (0 > tmp) ret = tmp;
-#endif
-
     CHECK(reg_bool("enable_srq_resize", NULL,
                    "Enable/Disable on demand SRQ resize. "
                    "(0 = without resizing, nonzero = with resizing)", 1,
@@ -570,10 +541,6 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_RDMA |
 	MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA |
         MCA_BTL_FLAGS_SEND;
-#if BTL_OPENIB_FAILOVER_ENABLED
-    mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_FAILOVER_SUPPORT;
-#endif
-
 #if HAVE_DECL_IBV_ATOMIC_HCA
     mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_ATOMIC_FOPS;
     mca_btl_openib_module.super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_CSWAP;
