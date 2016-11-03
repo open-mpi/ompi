@@ -838,6 +838,11 @@ INSTALLATION OPTIONS
   libraries for their own purposes. This option is *not* intended for
   typical users of Open MPI.
 
+--enable-mca-no-build=LIST
+  Comma-separated list of <type>-<component> pairs that will not be
+  built. For example, "--enable-mca-no-build=btl-portals,oob-ud" will
+  disable building the portals BTL and the ud OOB component.
+
 NETWORKING SUPPORT / OPTIONS
 
 --with-fca=<directory>
