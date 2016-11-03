@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -56,14 +56,35 @@ typedef int (*orte_schizo_base_module_setup_child_fn_t)(orte_job_t *jdata,
                                                         orte_proc_t *child,
                                                         orte_app_context_t *app);
 
+typedef enum {
+    ORTE_SCHIZO_UNDETERMINED,
+    ORTE_SCHIZO_NATIVE_LAUNCHED,
+    ORTE_SCHIZO_UNMANAGED_SINGLETON,
+    ORTE_SCHIZO_DIRECT_LAUNCHED,
+    ORTE_SCHIZO_MANAGED_SINGLETON
+} orte_schizo_launch_environ_t;
+
+
+/* check if this process was directly launched by a managed environment, and
+ * do whatever the module wants to do under those conditions. The module
+ * can push any required envars into the local environment, but must remember
+ * to "unset" them during finalize. The module then returns a flag indicating
+ * the launch environment of the process */
+typedef orte_schizo_launch_environ_t (*orte_schizo_base_module_ck_launch_environ_fn_t)(void);
+
+/* give the component a chance to cleanup */
+typedef void (*orte_schizo_base_module_finalize_fn_t)(void);
+
 /*
  * schizo module version 1.3.0
  */
 typedef struct {
-    orte_schizo_base_module_parse_cli_fn_t     parse_cli;
-    orte_schizo_base_module_parse_env_fn_t     parse_env;
-    orte_schizo_base_module_setup_fork_fn_t    setup_fork;
-    orte_schizo_base_module_setup_child_fn_t   setup_child;
+    orte_schizo_base_module_parse_cli_fn_t          parse_cli;
+    orte_schizo_base_module_parse_env_fn_t          parse_env;
+    orte_schizo_base_module_setup_fork_fn_t         setup_fork;
+    orte_schizo_base_module_setup_child_fn_t        setup_child;
+    orte_schizo_base_module_ck_launch_environ_fn_t  check_launch_environment;
+    orte_schizo_base_module_finalize_fn_t           finalize;
 } orte_schizo_base_module_t;
 
 ORTE_DECLSPEC extern orte_schizo_base_module_t orte_schizo;

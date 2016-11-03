@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -591,11 +591,12 @@ int orte_daemon(int argc, char *argv[])
         /* create a string that contains our uri + sysinfo + PMIx server URI envars */
         orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);
         asprintf(&tmp, "%s[%s]%s", orte_process_info.my_daemon_uri, sysinfo, nptr);
-	      free(sysinfo);
+        free(sysinfo);
         free(nptr);
 
         /* pass that info to the singleton */
         write(orted_globals.uri_pipe, tmp, strlen(tmp)+1); /* need to add 1 to get the NULL */
+        close(orted_globals.uri_pipe);
 
         /* cleanup */
         free(tmp);

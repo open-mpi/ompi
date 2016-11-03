@@ -14,7 +14,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,7 +56,6 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/schizo/base/base.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -582,18 +581,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
 
-    /* setup the SCHIZO framework */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_schizo_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_schizo_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_schizo_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_schizo_select";
-        goto error;
-    }
-
     return ORTE_SUCCESS;
 
  error:
@@ -625,7 +612,6 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&opal_pmix_base_framework);
 
     /* close frameworks */
-    (void) mca_base_framework_close(&orte_schizo_base_framework);
     (void) mca_base_framework_close(&orte_filem_base_framework);
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
     (void) mca_base_framework_close(&orte_iof_base_framework);

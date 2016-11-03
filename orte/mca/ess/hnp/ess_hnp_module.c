@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +68,6 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/filem/base/base.h"
-#include "orte/mca/schizo/base/base.h"
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/state.h"
 
@@ -694,18 +693,6 @@ static int rte_init(void)
         goto error;
     }
 
-    /* setup the schizo framework */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_schizo_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_schizo_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_schizo_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_schizo_select";
-        goto error;
-    }
-
     /* if a tool has launched us and is requesting event reports,
      * then set its contact info into the comm system
      */
@@ -774,7 +761,6 @@ static int rte_finalize(void)
     /* cleanup our data server */
     orte_data_server_finalize();
 
-    (void) mca_base_framework_close(&orte_schizo_base_framework);
     (void) mca_base_framework_close(&orte_dfs_base_framework);
     (void) mca_base_framework_close(&orte_filem_base_framework);
     /* output any lingering stdout/err data */
