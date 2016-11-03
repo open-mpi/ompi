@@ -56,7 +56,10 @@ AC_DEFUN([OPAL_MCA],[
     AC_ARG_ENABLE([mca-no-build],
         [AC_HELP_STRING([--enable-mca-no-build=LIST],
                         [Comma-separated list of <type>-<component> pairs
-                         that will not be built.  Example: "--enable-mca-no-build=maffinity,btl-portals" will disable building all maffinity components and the "portals" btl components.])])
+                         that will not be built.  Example:
+                         "--enable-mca-no-build=btl-portals,oob-ud" will
+                         disable building the "portals" btl and the "ud"
+                         oob components.])])
     AC_ARG_ENABLE(mca-dso,
         AC_HELP_STRING([--enable-mca-dso=LIST],
                        [Comma-separated list of types and/or
