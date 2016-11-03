@@ -37,7 +37,7 @@ build_root=$HOME/openmpi/nightly-tarball-build-root
 
 # Coverity stuff
 coverity_token=`cat $HOME/coverity/openmpi-token.txt`
-coverity_configure_args="--enable-debug --enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --with-psm --with-usnic --with-libfabric"
+coverity_configure_args="--enable-debug --enable-mpi-fortran --enable-mpi-cxx --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --with-usnic --with-libfabric=/mnt/data/local-installs"
 
 export PATH=$HOME_PREFIX/bin:$PATH
 export LD_LIBRARY_PATH=$HOME_PREFIX/lib:$LD_LIBRARY_PATH
@@ -143,7 +143,7 @@ for tarball in `cat $pending_coverity`; do
         --coverity-token=$coverity_token \
         --verbose \
         --logfile-dir=$HOME/coverity \
-        --make-args=-j8 \
+        --make-args=-j4 \
         --configure-args="$coverity_configure_args"
 done
 rm -f $pending_coverity
