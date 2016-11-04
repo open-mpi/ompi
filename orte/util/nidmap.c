@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -72,7 +72,6 @@
 
 #include "orte/util/nidmap.h"
 
-#if ORTE_ENABLE_STATIC_PORTS
 int orte_util_build_daemon_nidmap(char **nodes)
 {
     int i, num_nodes;
@@ -184,7 +183,6 @@ int orte_util_build_daemon_nidmap(char **nodes)
 
     return rc;
 }
-#endif
 
 int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
 {
@@ -290,6 +288,7 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
             dptr = OBJ_NEW(orte_proc_t);
             dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
             dptr->name.vpid = vpid;
+            ORTE_FLAG_SET(dptr, ORTE_PROC_FLAG_ALIVE);  // assume the daemon is alive until discovered otherwise
             opal_pointer_array_set_item(daemons->procs, vpid, dptr);
         }
         if (NULL != node->daemon) {
