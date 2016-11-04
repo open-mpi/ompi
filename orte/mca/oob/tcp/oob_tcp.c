@@ -394,11 +394,6 @@ static void process_send(int fd, short args, void *cbdata)
     mca_oob_tcp_peer_t *peer;
     orte_process_name_t hop;
 
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] processing send to peer %s:%d seq_num = %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->seq_num);
 
     /* do we have a route to this peer (could be direct)? */
     hop = orte_routed.get_route(op->msg->routed, &op->msg->dst);
@@ -410,14 +405,21 @@ static void process_send(int fd, short args, void *cbdata)
          * to the framework so another component can try
          */
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s:[%s:%d] hop %s unknown",
+                            "%s:[%s:%d] processing send to peer %s:%d seq_num = %d hop %s unknown",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             __FILE__, __LINE__,
+                            ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->seq_num,
                             ORTE_NAME_PRINT(&hop));
         ORTE_ACTIVATE_TCP_NO_ROUTE(op->msg, &hop, mca_oob_tcp_component_no_route);
         goto cleanup;
     }
 
+    opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                        "%s:[%s:%d] processing send to peer %s:%d seq_num = %d via %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        __FILE__, __LINE__,
+                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->seq_num,
+                        ORTE_NAME_PRINT(&peer->name));
     /* add the msg to the hop's send queue */
     if (MCA_OOB_TCP_CONNECTED == peer->state) {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
