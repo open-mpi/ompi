@@ -18,24 +18,26 @@
 #include <opal/mca/base/mca_base_component_repository.h>
 
 /***************************************/
-/* Include template generating macro's */
+/* Include template generating macros */
 #include <osc_monitoring_template.h>
 
 #include <ompi/mca/osc/rdma/osc_rdma.h>
-OSC_MONITORING_MODULE_TEMPLATE_GENERATE(rdma, ompi_osc_rdma_module_t, comm);
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(rdma, ompi_osc_rdma_module_t, comm)
 #undef GET_MODULE
 
 #include <ompi/mca/osc/sm/osc_sm.h>
-OSC_MONITORING_MODULE_TEMPLATE_GENERATE(sm, ompi_osc_sm_module_t, comm);
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(sm, ompi_osc_sm_module_t, comm)
 #undef GET_MODULE
-
-/* #include <ompi/mca/osc/portals4/osc_portals4.h> */
-/* OSC_MONITORING_MODULE_TEMPLATE_GENERATE(portals4, ompi_osc_portals4_module_t, comm); */
-/* #undef GET_MODULE */
 
 #include <ompi/mca/osc/pt2pt/osc_pt2pt.h>
-OSC_MONITORING_MODULE_TEMPLATE_GENERATE(pt2pt, ompi_osc_pt2pt_module_t, comm);
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(pt2pt, ompi_osc_pt2pt_module_t, comm)
 #undef GET_MODULE
+
+#ifdef OMPI_WITH_OSC_PORTALS4
+#include <ompi/mca/osc/portals4/osc_portals4.h>
+OSC_MONITORING_MODULE_TEMPLATE_GENERATE(portals4, ompi_osc_portals4_module_t, comm)
+#undef GET_MODULE
+#endif /* OMPI_WITH_OSC_PORTALS4 */
 
 /***************************************/
 
@@ -162,17 +164,15 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
     if( OMPI_SUCCESS == ret ) {
         /* Intercept module functions with ours, based on selected component */
         if( 0 == strcmp("rdma", best_component->osc_version.mca_component_name) ) {
-            memcpy(&ompi_osc_monitoring_module_rdma_template, win->w_osc_module, sizeof(ompi_osc_base_module_t));
-            memcpy(win->w_osc_module, &mca_osc_monitoring_rdma_template, sizeof(ompi_osc_base_module_t));
+            OSC_MONITORING_SET_TEMPLATE(rdma, win->w_osc_module);
         } else if( 0 == strcmp("sm", best_component->osc_version.mca_component_name) ) {
-            memcpy(&ompi_osc_monitoring_module_sm_template, win->w_osc_module, sizeof(ompi_osc_base_module_t));
-            memcpy(win->w_osc_module, &mca_osc_monitoring_sm_template, sizeof(ompi_osc_base_module_t));
-            /* } else if( 0 == strcmp("portals4", best_component->osc_version.mca_component_name) ) { */
-            /*     memcpy(&ompi_osc_monitoring_module_portals4_template, win->w_osc_module, sizeof(ompi_osc_base_module_t)); */
-            /*     memcpy(win->w_osc_module, &mca_osc_monitoring__portals4_template, sizeof(ompi_osc_base_module_t)); */
+            OSC_MONITORING_SET_TEMPLATE(sm, win->w_osc_module);
         } else if( 0 == strcmp("pt2pt", best_component->osc_version.mca_component_name) ) {
-            memcpy(&ompi_osc_monitoring_module_pt2pt_template, win->w_osc_module, sizeof(ompi_osc_base_module_t));
-            memcpy(win->w_osc_module, &mca_osc_monitoring_pt2pt_template, sizeof(ompi_osc_base_module_t));
+            OSC_MONITORING_SET_TEMPLATE(pt2pt, win->w_osc_module);
+#ifdef OMPI_WITH_OSC_PORTALS4
+        } else if( 0 == strcmp("portals4", best_component->osc_version.mca_component_name) ) {
+            OSC_MONITORING_SET_TEMPLATE(portals4, win->w_osc_module);
+#endif /* OMPI_WITH_OSC_PORTALS4 */
         } else {
             OPAL_MONITORING_VERBOSE(MCA_BASE_VERBOSE_INFO, "Monitoring disabled: no module for this component (%s)", best_component->osc_version.mca_component_name);
             return ret;

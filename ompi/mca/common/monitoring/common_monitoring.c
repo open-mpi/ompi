@@ -330,6 +330,13 @@ void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
     }
 }
 
+void mca_common_monitoring_recv_data(int world_rank, size_t data_size, int tag)
+{
+    if( 0 == mca_common_monitoring_filter() ) return;  /* right now the monitoring is not started */
+    recv_data[world_rank] += data_size;
+    rmessages_count[world_rank]++;
+}
+
 int mca_common_monitoring_get_messages_count(const struct mca_base_pvar_t *pvar,
                                              void *value,
                                              void *obj_handle)
@@ -408,6 +415,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
 {
     if( 0 == mca_common_monitoring_filter() ) return;  /* if disabled do nothing */
 
+    /* Dump outgoing messages */
     for (int i = 0 ; i < nbprocs ; i++) {
         if(messages_count[i] > 0) {
             fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
@@ -418,8 +426,20 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
         messages_count[i] = 0;
     }
 
+    /* Dump incoming messages */
+    for (int i = 0 ; i < nbprocs ; i++) {
+        if(messages_count[i] > 0) {
+            fprintf(pf, "R\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
+                    my_rank, i, recv_data[i], rmessages_count[i]);
+        }
+        /* reset phase array */
+        recv_data[i] = 0;
+        rmessages_count[i] = 0;
+    }
+    
     if( 1 != mca_common_monitoring_filter() ) return;
 
+    /* Dump outgoing synchronization/collective messages */
     for (int i = 0 ; i < nbprocs ; i++) {
         if(filtered_messages_count[i] > 0) {
             fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",

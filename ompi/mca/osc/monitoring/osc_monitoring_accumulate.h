@@ -36,7 +36,7 @@
             mca_common_monitoring_recv_data(world_rank, type_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Compare_and_swap to %d intercepted", world_rank); \
         }                                                               \
-        return ompi_osc_monitoring_module_## template ##_template.osc_compare_and_swap(origin_addr, compare_addr, result_addr, dt, target_rank, target_disp, win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_compare_and_swap(origin_addr, compare_addr, result_addr, dt, target_rank, target_disp, win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_get_accumulate (const void *origin_addr, \
@@ -66,7 +66,7 @@
             mca_common_monitoring_recv_data(world_rank, data_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Get_accumulate to %d intercepted", world_rank); \
         }                                                               \
-        return ompi_osc_monitoring_module_## template ##_template.osc_get_accumulate(origin_addr, origin_count, origin_datatype, result_addr, result_count, result_datatype, target_rank, target_disp, target_count, target_datatype, op, win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_get_accumulate(origin_addr, origin_count, origin_datatype, result_addr, result_count, result_datatype, target_rank, target_disp, target_count, target_datatype, op, win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_rget_accumulate (const void *origin_addr, \
@@ -98,7 +98,7 @@
             mca_common_monitoring_recv_data(world_rank, data_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Rget_accumulate to %d intercepted", world_rank); \
         }                                                               \
-        return ompi_osc_monitoring_module_## template ##_template.osc_rget_accumulate(origin_addr, origin_count, origin_datatype, result_addr, result_count, result_datatype, target_rank, target_disp, target_count, target_datatype, op, win, request); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_rget_accumulate(origin_addr, origin_count, origin_datatype, result_addr, result_count, result_datatype, target_rank, target_disp, target_count, target_datatype, op, win, request); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_raccumulate (const void *origin_addr, \
@@ -123,7 +123,7 @@
             mca_common_monitoring_send_data(world_rank, data_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Raccumulate to %d intercepted", world_rank); \
         }                                                               \
-        return ompi_osc_monitoring_module_## template ##_template.osc_raccumulate(origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, op, win, request); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_raccumulate(origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, op, win, request); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_accumulate (const void *origin_addr, \
@@ -147,7 +147,7 @@
             mca_common_monitoring_send_data(world_rank, data_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Accumulate to %d intercepted", world_rank); \
         }                                                               \
-        return ompi_osc_monitoring_module_## template ##_template.osc_accumulate(origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, op, win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_accumulate(origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, op, win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_fetch_and_op (const void *origin_addr, \
@@ -169,7 +169,7 @@
             mca_common_monitoring_recv_data(world_rank, type_size, 1);  \
             OPAL_MONITORING_VERBOSE(10, "MPI_Fetch_and_op to %d intercepted", world_rank); \
         }                                                               \
-        return ompi_osc_monitoring_module_## template ##_template.osc_fetch_and_op(origin_addr, result_addr, dt, target_rank, target_disp, op, win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_fetch_and_op(origin_addr, result_addr, dt, target_rank, target_disp, op, win); \
     }
 
 #endif /* MCA_OSC_MONITORING_ACCUMULATE_H */

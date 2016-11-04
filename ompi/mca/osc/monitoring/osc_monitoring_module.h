@@ -10,11 +10,28 @@
 #ifndef MCA_OSC_MONITORING_MODULE_H
 #define MCA_OSC_MONITORING_MODULE_H
 
-#define OMPI_OSC_MONITORING_MODULE_GENERATE(template)                   \
-    static ompi_osc_base_module_t ompi_osc_monitoring_module_## template ##_template
+#include <ompi/info/info.h>
+#include <ompi/win/win.h>
+#include <ompi/mca/osc/osc.h>
 
+/* Define once and for all the module_template variable name */
+#define OMPI_OSC_MONITORING_MODULE_VARIABLE(template)  \
+    ompi_osc_monitoring_module_## template ##_template
+
+/* Define once and for all the template variable name */
+#define OMPI_OSC_MONITORING_TEMPLATE_VARIABLE(template) \
+    ompi_osc_monitoring_## template ##_template
+
+/* Define the ompi_osc_monitoring_module_## template ##_template variable */
+#define OMPI_OSC_MONITORING_MODULE_GENERATE(template)                   \
+    static ompi_osc_base_module_t OMPI_OSC_MONITORING_MODULE_VARIABLE(template)
+
+/* Define and set the ompi_osc_monitoring_## template ##_template
+ * variable. The functions recorded here are linked to the original
+ * functions of the original {template} module that were replaced.
+ */
 #define MCA_OSC_MONITORING_MODULE_TEMPLATE_GENERATE(template)           \
-    static ompi_osc_base_module_t mca_osc_monitoring_## template ##_template = { \
+    static ompi_osc_base_module_t OMPI_OSC_MONITORING_TEMPLATE_VARIABLE(template) = { \
         .osc_win_attach = ompi_osc_monitoring_## template ##_attach,    \
         .osc_win_detach = ompi_osc_monitoring_## template ##_detach,    \
         .osc_free = ompi_osc_monitoring_## template ##_free,            \
@@ -58,17 +75,17 @@
                                                                         \
     static int ompi_osc_monitoring_## template ##_free(ompi_win_t *win) \
     {                                                                   \
-        return ompi_osc_monitoring_module_## template ##_template.osc_free(win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_free(win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_set_info (struct ompi_win_t *win, struct ompi_info_t *info) \
     {                                                                   \
-        return ompi_osc_monitoring_module_## template ##_template.osc_set_info(win, info); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_set_info(win, info); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_get_info (struct ompi_win_t *win, struct ompi_info_t **info_used) \
     {                                                                   \
-        return ompi_osc_monitoring_module_## template ##_template.osc_get_info(win, info_used); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_get_info(win, info_used); \
     }
 
 #endif /* MCA_OSC_MONITORING_MODULE_H */
