@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2011-2017 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -22,6 +22,8 @@
 #include "ompi/mca/mtl/portals4/mtl_portals4.h"
 
 #define REQ_OSC_TABLE_ID     4
+
+#define OSC_PORTALS4_IOVEC_MAX 64
 
 #define OSC_PORTALS4_MB_DATA    0x0000000000000000ULL
 #define OSC_PORTALS4_MB_CONTROL 0x1000000000000000ULL
@@ -94,6 +96,11 @@ struct ompi_osc_portals4_module_t {
     ptl_handle_me_t control_me_h; /* match list entry for control data (node_state_t).  Match bits are (CID | OSC_PORTALS4_MB_CONTROL). */
     int64_t opcount;
     ptl_match_bits_t match_bits; /* match bits for module.  Same as cid for comm in most cases. */
+
+    ptl_iovec_t     *origin_iovec_list; /* list of memory segments that compose the noncontiguous region */
+    ptl_handle_md_t  origin_iovec_md_h; /* memory descriptor describing a noncontiguous region in this window */
+    ptl_iovec_t     *result_iovec_list; /* list of memory segments that compose the noncontiguous region */
+    ptl_handle_md_t  result_iovec_md_h; /* memory descriptor describing a noncontiguous region in this window */
 
     ptl_size_t atomic_max; /* max size of atomic messages.  Will guarantee ordering IF ordering requested */
     ptl_size_t fetch_atomic_max; /* max size of fetchatomic messages.  Will guarantee ordering IF ordering requested */
