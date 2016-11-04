@@ -119,11 +119,8 @@ int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
                                                     * accurate answer upon MPI_Finalize. */
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_STOP:
-        OPAL_MONITORING_VERBOSE(0, "notify_flush(HANDLE_STOP)");
-        if( OMPI_SUCCESS == mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
-                                                        *mca_common_monitoring_current_filename) ) {
-            return OMPI_SUCCESS;
-        }
+        return mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
+                                           *mca_common_monitoring_current_filename);
     }
     return OMPI_ERROR;
 }
@@ -413,8 +410,6 @@ int mca_common_monitoring_get_rmessages_size(const struct mca_base_pvar_t *pvar,
 
 static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
 {
-    if( 0 == mca_common_monitoring_filter() ) return;  /* if disabled do nothing */
-
     /* Dump outgoing messages */
     for (int i = 0 ; i < nbprocs ; i++) {
         if(messages_count[i] > 0) {
@@ -457,6 +452,9 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
  */
 int mca_common_monitoring_flush(int fd, char* filename)
 {
+    if( 0 == mca_common_monitoring_filter() || 0 == fd ) /* if disabled do nothing */
+        return OMPI_SUCCESS;
+
     if( 1 == fd ) {
         OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to stdout", rank_world);
         mca_common_monitoring_output( stdout, rank_world, nprocs_world );
@@ -472,8 +470,11 @@ int mca_common_monitoring_flush(int fd, char* filename)
             pf = fopen(tmpfn, "w");
             free(tmpfn);
         }
-        if(NULL == pf)  /* No filename or error during open */
+        if(NULL == pf) {  /* No filename or error during open */
+            OPAL_MONITORING_VERBOSE(0, "Error while flushing to: %s.%d.prof",
+                                    filename, rank_world);
             return -1;
+        }
 
         OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to: %s.%d.prof",
                                 rank_world, filename, rank_world);
