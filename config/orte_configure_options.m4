@@ -17,6 +17,7 @@ dnl Copyright (c) 2009-2013 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl
+dnl Copyright (c) 2016      Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -52,20 +53,5 @@ AC_DEFINE_UNQUOTED([ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT],
                    [$orte_want_orterun_prefix_by_default],
                    [Whether we want orterun to effect "--prefix $prefix" by default])
 
-
-AC_MSG_CHECKING([if want orte static ports])
-AC_ARG_ENABLE([orte-static-ports],
-              [AC_HELP_STRING([--enable-orte-static-ports],
-	        [Enable orte static ports for tcp oob. (default: enabled)])])
-if test "$enable_orte_static_ports" = "no"; then
-    AC_MSG_RESULT([no])
-    orte_enable_static_ports=0
-else
-    AC_MSG_RESULT([yes])
-    orte_enable_static_ports=1
-fi
-AC_DEFINE_UNQUOTED([ORTE_ENABLE_STATIC_PORTS],
-                   [$orte_enable_static_ports],
-		   [Whether we want static ports enabled])
 
 ])dnl

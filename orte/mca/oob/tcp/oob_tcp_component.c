@@ -195,12 +195,10 @@ static int tcp_component_close(void)
 
     return ORTE_SUCCESS;
 }
-#if ORTE_ENABLE_STATIC_PORTS
 static char *static_port_string;
 #if OPAL_ENABLE_IPV6
 static char *static_port_string6;
 #endif // OPAL_ENABLE_IPV6
-#endif // OPAL_ENABLE_STATIC_PORTS
 
 static char *dyn_port_string;
 #if OPAL_ENABLE_IPV6
@@ -276,7 +274,6 @@ static int tcp_component_register(void)
         return ORTE_ERR_NOT_AVAILABLE;
     }
 
-#if ORTE_ENABLE_STATIC_PORTS
     static_port_string = NULL;
     (void)mca_base_component_var_register(component, "static_ipv4_ports",
                                           "Static ports for daemons and procs (IPv4)",
@@ -322,7 +319,7 @@ static int tcp_component_register(void)
         orte_static_ports = true;
     }
 #endif // OPAL_ENABLE_IPV6
-#endif // OPAL_ENABLE_STATIC_PORTS
+
     dyn_port_string = NULL;
     (void)mca_base_component_var_register(component, "dynamic_ipv4_ports",
                                           "Range of ports to be dynamically used by daemons and procs (IPv4)",
