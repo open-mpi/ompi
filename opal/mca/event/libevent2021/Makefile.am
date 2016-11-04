@@ -3,6 +3,8 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -85,4 +87,7 @@ noinst_LTLIBRARIES = $(component_noinst)
 libmca_event_libevent2021_la_SOURCES =$(sources)
 libmca_event_libevent2021_la_LDFLAGS = -module -avoid-version
 libmca_event_libevent2021_la_LIBADD = $(builddir)/libevent/libevent.la
+libmca_event_libevent2021_la_DEPENDENCIES = $(builddir)/libevent/libevent.la
+mca_event_libevent2021_la_DEPENDENCIES = $(builddir)/libevent/libevent.la
+
 
