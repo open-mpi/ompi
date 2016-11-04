@@ -88,7 +88,7 @@ static int default_hnp_close(void)
 
 static int default_hnp_component_query(mca_base_module_t **module, int *priority)
 {
-    if( ORTE_PROC_IS_HNP ) {
+    if (ORTE_PROC_IS_HNP && !ORTE_PROC_IS_MASTER) {
         /* we are the default HNP component */
         *priority = my_priority;
         *module = (mca_base_module_t *)&orte_errmgr_default_hnp_module;

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -133,9 +133,9 @@ int mca_sharedfp_individual_write_metadata_file(struct mca_sharedfp_base_data_t 
 
         /*Write to the metadata file*/
 
-        ret = ompio_io_ompio_file_write_at ( (headnode)->metadatafilehandle,
-					     (headnode)->metadatafile_offset,
-					     &buff,32, MPI_BYTE, &status);
+        ret = mca_common_ompio_file_write_at ( (headnode)->metadatafilehandle,
+                                               (headnode)->metadatafile_offset,
+                                               &buff,32, MPI_BYTE, &status);
 	if ( OMPI_SUCCESS != ret ) {
 	    goto exit;
 	}

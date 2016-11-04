@@ -16,14 +16,14 @@
 .nf
 #include <mpi.h>
 int MPI_Neighbor_alltoallw(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
-	const int \fIsdispls\fP[], const MPI_Datatype \fIsendtypes\fP[],
-	void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[], const int \fIrdispls\fP[],
-        const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP)
+	const MPI_Aint \fIsdispls\fP[], const MPI_Datatype \fIsendtypes\fP[],
+	void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[], const MPI_Aint \fIrdispls\fP[],
+	const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP)
 
 int MPI_Ineighbor_alltoallw(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
-	const int \fIsdispls\fP[], const MPI_Datatype \fIsendtypes\fP[],
-	void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[], const int \fIrdispls\fP[],
-        const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP, MPI_Request \fI*request\fP)
+	const MPI_Aint \fIsdispls\fP[], const MPI_Datatype \fIsendtypes\fP[],
+	void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[], const MPI_Aint \fIrdispls\fP[],
+	const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -34,16 +34,18 @@ MPI_NEIGHBOR_ALLTOALLW(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
 	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPES, COMM, IERROR\fP)
 
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
-	INTEGER	\fISENDCOUNTS(*), SDISPLS(*), SENDTYPES(*)\fP
-	INTEGER	\fIRECVCOUNTS(*), RDISPLS(*), RECVTYPES(*)\fP
+	INTEGER	\fISENDCOUNTS(*), SENDTYPES(*)\fP
+	INTEGER	\fIRECVCOUNTS(*), RECVTYPES(*)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fISDISPLS(*), RDISPLS(*)\fP
 	INTEGER	\fICOMM, IERROR\fP
 
 MPI_INEIGHBOR_ALLTOALLW(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
 	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPES, COMM, REQUEST, IERROR\fP)
 
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
-	INTEGER	\fISENDCOUNTS(*), SDISPLS(*), SENDTYPES(*)\fP
-	INTEGER	\fIRECVCOUNTS(*), RDISPLS(*), RECVTYPES(*)\fP
+	INTEGER	\fISENDCOUNTS(*), SENDTYPES(*)\fP
+	INTEGER	\fIRECVCOUNTS(*), RECVTYPES(*)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fISDISPLS(*), RDISPLS(*)\fP
 	INTEGER	\fICOMM, REQUEST, IERROR\fP
 
 .fi

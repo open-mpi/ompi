@@ -11,7 +11,9 @@
 #                         All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -81,3 +83,6 @@ lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
 # Remove the generated man pages
 distclean-local:
 	rm -f $(nodist_man_MANS)
+
+maintainer-clean-local:
+	rm -f util/hostfile/hostfile_lex.c

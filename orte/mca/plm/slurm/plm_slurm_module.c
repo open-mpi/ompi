@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -27,6 +27,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/runtime/orte_globals.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -274,6 +275,18 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * bound to only one processor
      */
     opal_argv_append(&argc, &argv, "--cpu_bind=none");
+
+#if SLURM_CRAY_ENV
+    /*
+     * If in a SLURM/Cray env. make sure that Cray PMI is not pulled in,
+     * neither as a constructor run when orteds start, nor selected
+     * when pmix components are registered
+     */
+
+    opal_setenv("PMI_NO_PREINITIALIZE", "1", false, &orte_launch_environ);
+    opal_setenv("PMI_NO_FORK", "1", false, &orte_launch_environ);
+    opal_setenv("OMPI_NO_USE_CRAY_PMI", "1", false, &orte_launch_environ);
+#endif
 
     /* Append user defined arguments to srun */
     if ( NULL != mca_plm_slurm_component.custom_args ) {

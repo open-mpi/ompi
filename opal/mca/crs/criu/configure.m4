@@ -11,6 +11,8 @@
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -47,10 +49,10 @@ AC_DEFUN([MCA_opal_crs_criu_CONFIG],[
 
     # Determine the search paths for the headers and libraries
     AS_IF([test $check_crs_criu_good = yes],
-          [AS_IF([test ! -z "$with_criu" -a "$with_criu" != "yes"],
+          [AS_IF([test ! -z "$with_criu" && test "$with_criu" != "yes"],
                  [check_crs_criu_dir="$with_criu"
                   check_crs_criu_dir_msg="$with_criu (from --with-criu)"])
-           AS_IF([test ! -z "$with_criu_libdir" -a "$with_criu_libdir" != "yes"],
+           AS_IF([test ! -z "$with_criu_libdir" && test "$with_criu_libdir" != "yes"],
                  [check_crs_criu_libdir="$with_criu_libdir"
                   check_crs_criu_libdir_msg="$with_criu_libdir (from --with-criu-libdir)"])
           ])

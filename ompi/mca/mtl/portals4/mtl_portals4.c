@@ -86,9 +86,11 @@ portals4_init_interface(void)
 
     /* Create send and long message (read) portal table entries */
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+                     PTL_PT_FLOWCTRL |
+#endif
                      PTL_PT_ONLY_USE_ONCE |
-                     PTL_PT_ONLY_TRUNCATE |
-                     PTL_PT_FLOWCTRL,
+                     PTL_PT_ONLY_TRUNCATE,
                      ompi_mtl_portals4.recv_eq_h,
                      REQ_RECV_TABLE_ID,
                      &ompi_mtl_portals4.recv_idx);
@@ -279,7 +281,7 @@ create_maptable(size_t        nprocs,
         maptable[i].phys.pid = modex_id->phys.pid;
         maptable[i].phys.nid = modex_id->phys.nid;
         opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
-            "logical: global rank=%d pid=%d nid=%d\n",
+            "logical: global rank=%d pid=%x nid=%x\n",
             (int)i, maptable[i].phys.pid, maptable[i].phys.nid);
     }
 
@@ -311,6 +313,8 @@ create_endpoint(ompi_proc_t *proc)
         return OMPI_ERR_OUT_OF_RESOURCE;
     } else {
         if (ompi_mtl_portals4.use_logical) {
+            endpoint->phys.nid = 0;
+            endpoint->phys.pid = 0;
             endpoint->rank = proc->super.proc_name.vpid;
         } else {
             int ret;
@@ -552,15 +556,31 @@ ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
 #endif
     ompi_mtl_portals4_recv_short_fini();
 
-    PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
-    PtlMDRelease(ompi_mtl_portals4.zero_md_h);
-    PtlMDRelease(ompi_mtl_portals4.send_md_h);
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.long_overflow_me_h, PTL_INVALID_HANDLE)) {
+        PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.zero_md_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.send_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.send_md_h);
+    }
+    if (ompi_mtl_portals4.read_idx != (ptl_pt_index_t) ~0UL) {
+        PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
+    }
+    if (ompi_mtl_portals4.recv_idx != (ptl_pt_index_t) ~0UL) {
+        PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.send_eq_h, PTL_INVALID_HANDLE)) {
+        PtlEQFree(ompi_mtl_portals4.send_eq_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.recv_eq_h, PTL_INVALID_HANDLE)) {
+        PtlEQFree(ompi_mtl_portals4.recv_eq_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.ni_h, PTL_INVALID_HANDLE)) {
+        PtlNIFini(ompi_mtl_portals4.ni_h);
+    }
 
-    PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
-    PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
-    PtlEQFree(ompi_mtl_portals4.send_eq_h);
-    PtlEQFree(ompi_mtl_portals4.recv_eq_h);
-    PtlNIFini(ompi_mtl_portals4.ni_h);
     PtlFini();
 
     return OMPI_SUCCESS;

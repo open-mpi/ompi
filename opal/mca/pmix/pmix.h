@@ -27,6 +27,7 @@
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
 #include "opal/util/proc.h"
+#include "opal/hash_string.h"
 
 #include "opal/mca/pmix/pmix_types.h"
 #include "opal/mca/pmix/pmix_server.h"
@@ -41,6 +42,14 @@ extern bool opal_pmix_base_async_modex;
 extern int opal_pmix_base_exchange(opal_value_t *info,
                                    opal_pmix_pdata_t *pdat,
                                    int timeout);
+
+/*
+ * Count the fash for the the external RM
+ */
+#define OPAL_HASH_JOBID( str, hash ){               \
+    OPAL_HASH_STR( str, hash );                     \
+    hash &= ~(0x8000);                              \
+}
 
 /**
  * Provide a simplified macro for sending data via modex
@@ -250,21 +259,6 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
         }                                                               \
     } while(0);
 
-
-/**
- * Provide a simplified macro for calling the fence function
- * that takes into account directives and availability of
- * non-blocking operations
- */
-#define OPAL_MODEX()                                    \
-    do {                                                \
-        opal_pmix.commit();                             \
-        if (!opal_pmix_base_async_modex) {              \
-            opal_pmix.fence(NULL,                       \
-                opal_pmix_collect_all_data);            \
-        }                                               \
-    } while(0);
-
 /**
  * Provide a macro for accessing a base function that exchanges
  * data values between two procs using the PMIx Publish/Lookup
@@ -278,10 +272,6 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                             (i)->key, (p)->value.key));          \
         (r) = opal_pmix_base_exchange((i), (p), (t));            \
     } while(0);
-
-
-/* callback handler for errors */
-typedef void (*opal_pmix_errhandler_fn_t)(int error);
 
 
 /************************************************************
@@ -536,6 +526,9 @@ typedef int (*opal_pmix_base_module_resolve_nodes_fn_t)(opal_jobid_t jobid, char
 
 /************************************************************
  *                       SERVER APIs                        *
+ *                                                          *
+ * These are calls that go down (or "south") from the ORTE  *
+ * daemon into the PMIx server library                      *
  ************************************************************/
 
 /* Initialize the server support library - must pass the callback
@@ -614,7 +607,9 @@ typedef int (*opal_pmix_base_module_server_register_nspace_fn_t)(opal_jobid_t jo
  * can be freed. Note that the server will automatically
  * purge all info relating to any clients it has from
  * this nspace */
-typedef void (*opal_pmix_base_module_server_deregister_nspace_fn_t)(opal_jobid_t jobid);
+typedef void (*opal_pmix_base_module_server_deregister_nspace_fn_t)(opal_jobid_t jobid,
+                                                                    opal_pmix_op_cbfunc_t cbfunc,
+                                                                    void *cbdata);
 
 /* Register a client process with the PMIx server library. The
  * expected user ID and group ID of the child process helps the
@@ -642,7 +637,9 @@ typedef int (*opal_pmix_base_module_server_register_client_fn_t)(const opal_proc
  * so there is no need to call this function during normal
  * finalize operations. Instead, this is provided for use
  * during exception operations */
-typedef void (*opal_pmix_base_module_server_deregister_client_fn_t)(const opal_process_name_t *proc);
+typedef void (*opal_pmix_base_module_server_deregister_client_fn_t)(const opal_process_name_t *proc,
+                                                                    opal_pmix_op_cbfunc_t cbfunc,
+                                                                    void *cbdata);
 
 /* Setup the environment of a child process to be forked
  * by the host so it can correctly interact with the PMIx
@@ -664,51 +661,34 @@ typedef int (*opal_pmix_base_module_server_dmodex_request_fn_t)(const opal_proce
                                                                 opal_pmix_modex_cbfunc_t cbfunc,
                                                                 void *cbdata);
 
-/* Report an error to a process for notification via any
- * registered errhandler. The errhandler registration can be
+/* Report an event to a process for notification via any
+ * registered event handler. The handler registration can be
  * called by both the server and the client application. On the
- * server side, the errhandler is used to report errors detected
+ * server side, the handler is used to report events detected
  * by PMIx to the host server for handling. On the client side,
- * the errhandler is used to notify the process of errors
+ * the handler is used to notify the process of events
  * reported by the server - e.g., the failure of another process.
  *
  * This function allows the host server to direct the server
- * convenience library to notify all indicated local procs of
- * an error. The error can be local, or anywhere in the cluster.
- * The status indicates the error being reported.
+ * convenience library to notify all registered local procs of
+ * an event. The event can be local, or anywhere in the cluster.
+ * The status indicates the event being reported.
  *
- * The first array  of procs informs the server library as to which
- * processes should be alerted - e.g., the processes that are in
- * a directly-affected job or are connected to one that is affected.
- * Passing a NULL for this array will indicate that all local procs
- * are to be notified.
- *
- * The second array identifies the processes that will be impacted
- * by the error. This could consist of a single process, or a number
- * of processes.
+ * The source parameter informs the handler of the source that
+ * generated the event. This will be NULL if the event came
+ * from the external resource manager.
  *
  * The info array contains any further info the RM can and/or chooses
  * to provide.
  *
- * If the payload and size parameters are non-NULL, then the function
- * will assume that the caller intends to send the message itself. In
- * this situation, the convenience library will simply pack the message
- * for transmission, and return the payload and size in the provided
- * variables (external comm should have been indicated during server_init).
- * The caller will be responsible for thread protection.
- *
- * Otherwise, the convenience library will transmit the message to
- * the identified target processes, and the function call will be
- * internally thread protected.
- *
  * The callback function will be called upon completion of the
- * notify_error function's actions. Note that any messages will
+ * notify_event function's actions. Note that any messages will
  * have been queued, but may not have been transmitted by this
  * time. Note that the caller is required to maintain the input
- * data until the callback function has been executed! */
-typedef int (*opal_pmix_base_module_server_notify_error_fn_t)(int status,
-                                                              opal_list_t *procs,
-                                                              opal_list_t *error_procs,
+ * data until the callback function has been executed if this
+ * function returns OPAL_SUCCESS! */
+typedef int (*opal_pmix_base_module_server_notify_event_fn_t)(int status,
+                                                              const opal_process_name_t *source,
                                                               opal_list_t *info,
                                                               opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
@@ -720,11 +700,78 @@ typedef int (*opal_pmix_base_module_server_notify_error_fn_t)(int status,
 /* get the version of the embedded library */
 typedef const char* (*opal_pmix_base_module_get_version_fn_t)(void);
 
-/* register an errhandler to report loss of connection to the server */
-typedef void (*opal_pmix_base_module_register_fn_t)(opal_pmix_errhandler_fn_t errhandler);
+/* Register an event handler to report event. Three types of events
+ * can be reported:
+ *
+ * (a) those that occur within the client library, but are not
+ *     reportable via the API itself (e.g., loss of connection to
+ *     the server). These events typically occur during behind-the-scenes
+ *     non-blocking operations.
+ *
+ * (b) job-related events such as the failure of another process in
+ *     the job or in any connected job, impending failure of hardware
+ *     within the job's usage footprint, etc.
+ *
+ * (c) system notifications that are made available by the local
+ *     administrators
+ *
+ * By default, only events that directly affect the process and/or
+ * any process to which it is connected (via the PMIx_Connect call)
+ * will be reported. Options to modify that behavior can be provided
+ * in the info array
+ *
+ * Both the client application and the resource manager can register
+ * event handlers for specific events. PMIx client/server calls the registered
+ * event handler upon receiving event notify notification (via PMIx_Notify_event)
+ * from the other end (Resource Manager/Client application).
+ *
+ * Multiple event handlers can be registered for different events. PMIX returns
+ * a size_t reference to each register handler in the callback fn. The caller
+ * must retain the reference in order to deregister the evhandler.
+ * Modification of the notification behavior can be accomplished by
+ * deregistering the current evhandler, and then registering it
+ * using a new set of info values.
+ *
+ * A NULL for event_codes indicates registration as a default event handler
+ *
+ * See pmix_types.h for a description of the notification function */
+typedef void (*opal_pmix_base_module_register_fn_t)(opal_list_t *event_codes,
+                                                    opal_list_t *info,
+                                                    opal_pmix_notification_fn_t evhandler,
+                                                    opal_pmix_evhandler_reg_cbfunc_t cbfunc,
+                                                    void *cbdata);
 
-/* deregister the errhandler */
-typedef void (*opal_pmix_base_module_deregister_fn_t)(void);
+/* deregister the evhandler
+ * evhandler_ref is the reference returned by PMIx for the evhandler
+ * to pmix_evhandler_reg_cbfunc_t */
+typedef void (*opal_pmix_base_module_deregister_fn_t)(size_t evhandler,
+                                                      opal_pmix_op_cbfunc_t cbfunc,
+                                                      void *cbdata);
+
+/* Report an event for notification via any
+ * registered evhandler. On the PMIx
+ * server side, this is used to report events detected
+ * by PMIx to the host server for handling and/or distribution.
+ *
+ * The client application can also call this function to notify the
+ * resource manager of an event it detected. It can specify the
+ * range over which that notification should occur.
+ *
+ * The info array contains any further info the caller can and/or chooses
+ * to provide.
+ *
+ * The callback function will be called upon completion of the
+ * notify_event function's actions. Note that any messages will
+ * have been queued, but may not have been transmitted by this
+ * time. Note that the caller is required to maintain the input
+ * data until the callback function has been executed if it
+ * returns OPAL_SUCCESS!
+*/
+typedef int (*opal_pmix_base_module_notify_event_fn_t)(int status,
+                                                       const opal_process_name_t *source,
+                                                       opal_pmix_data_range_t range,
+                                                       opal_list_t *info,
+                                                       opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* store data internally, but don't push it out to be shared - this is
  * intended solely for storage of info on other procs that comes thru
@@ -738,6 +785,14 @@ typedef const char* (*opal_pmix_base_module_get_nspace_fn_t)(opal_jobid_t jobid)
 
 /* register a jobid-to-nspace pair */
 typedef void (*opal_pmix_base_module_register_jobid_fn_t)(opal_jobid_t jobid, const char *nspace);
+
+/* query information from the system */
+typedef void (*opal_pmix_base_module_query_fn_t)(opal_list_t *queries,
+                                                 opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* log data to the system */
+typedef void (*opal_pmix_base_log_fn_t)(opal_list_t *info,
+                                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /*
  * the standard public API data structure
@@ -768,6 +823,8 @@ typedef struct {
     opal_pmix_base_module_disconnect_nb_fn_t                disconnect_nb;
     opal_pmix_base_module_resolve_peers_fn_t                resolve_peers;
     opal_pmix_base_module_resolve_nodes_fn_t                resolve_nodes;
+    opal_pmix_base_module_query_fn_t                        query;
+    opal_pmix_base_log_fn_t                                 log;
     /* server APIs */
     opal_pmix_base_module_server_init_fn_t                  server_init;
     opal_pmix_base_module_server_finalize_fn_t              server_finalize;
@@ -779,11 +836,12 @@ typedef struct {
     opal_pmix_base_module_server_deregister_client_fn_t     server_deregister_client;
     opal_pmix_base_module_server_setup_fork_fn_t            server_setup_fork;
     opal_pmix_base_module_server_dmodex_request_fn_t        server_dmodex_request;
-    opal_pmix_base_module_server_notify_error_fn_t          server_notify_error;
+    opal_pmix_base_module_server_notify_event_fn_t          server_notify_event;
     /* Utility APIs */
     opal_pmix_base_module_get_version_fn_t                  get_version;
-    opal_pmix_base_module_register_fn_t                     register_errhandler;
-    opal_pmix_base_module_deregister_fn_t                   deregister_errhandler;
+    opal_pmix_base_module_register_fn_t                     register_evhandler;
+    opal_pmix_base_module_deregister_fn_t                   deregister_evhandler;
+    opal_pmix_base_module_notify_event_fn_t                 notify_event;
     opal_pmix_base_module_store_fn_t                        store_local;
     opal_pmix_base_module_get_nspace_fn_t                   get_nspace;
     opal_pmix_base_module_register_jobid_fn_t               register_jobid;

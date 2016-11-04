@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <math.h>
+#include <sys/time.h>
 
 #include "opal/runtime/opal_progress.h"
 
@@ -44,7 +45,7 @@ main(int argc, char *argv[]){
     double maxpower;
     opal_buffer_t *buf;
     orte_rml_recv_cb_t blob;
-
+    struct timeval start, end;
     /*
      * Init
      */
@@ -65,6 +66,7 @@ main(int argc, char *argv[]){
         peer.vpid = 0;
     }
 
+    gettimeofday(&start,NULL);
     for (j=1; j < count+1; j++) {
         /* rank0 starts ring */
         if (ORTE_PROC_MY_NAME->vpid == 0) {
@@ -98,8 +100,6 @@ main(int argc, char *argv[]){
                                     orte_rml_recv_callback, &blob);
             ORTE_WAIT_FOR_COMPLETION(blob.active);
 
-            opal_output(0, "%s received message %d from %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j, ORTE_NAME_PRINT(&blob.name));
-
             /* send it along */
             buf = OBJ_NEW(opal_buffer_t);
             opal_dss.copy_payload(buf, &blob.data);
@@ -109,6 +109,8 @@ main(int argc, char *argv[]){
             ORTE_WAIT_FOR_COMPLETION(msg_active);
         }
     }
+    gettimeofday(&end,NULL);
+    printf("Total minutes = %d, Total seconds = %d\n",(end.tv_sec - start.tv_sec)/60,(end.tv_sec - start.tv_sec));
 
     orte_finalize();
 

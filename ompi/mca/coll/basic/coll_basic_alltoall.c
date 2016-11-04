@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -78,6 +78,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
     /* Initiate all send/recv to/from others. */
     nreqs = size * 2;
     req = rreq = coll_base_comm_get_reqs( module->base_data, nreqs);
+    if( NULL == req ) { return OMPI_ERR_OUT_OF_RESOURCE; }
     sreq = rreq + size;
 
     prcv = (char *) rbuf;
@@ -88,7 +89,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
         err = MCA_PML_CALL(irecv(prcv + (i * rcvinc), rcount, rdtype, i,
                                  MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
         if (OMPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(req, nreqs);
+            ompi_coll_base_free_reqs(req, i + 1);
             return err;
         }
     }
@@ -99,7 +100,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
                                  MCA_COLL_BASE_TAG_ALLTOALL,
                                  MCA_PML_BASE_SEND_STANDARD, comm, sreq));
         if (OMPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(req, nreqs);
+            ompi_coll_base_free_reqs(req, i + size + 1);
             return err;
         }
     }

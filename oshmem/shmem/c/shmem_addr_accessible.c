@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -22,14 +22,14 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-int shmem_addr_accessible(void *addr, int pe)
+int shmem_addr_accessible(const void *addr, int pe)
 {
     void* rva;
     sshmem_mkey_t *mkey;
 
     RUNTIME_CHECK_INIT();
 
-    mkey = mca_memheap_base_get_cached_mkey(pe, addr, oshmem_get_transport_id(pe), &rva);
+    mkey = mca_memheap_base_get_cached_mkey(pe, (void *)addr, oshmem_get_transport_id(pe), &rva);
 
     return mkey ? 1 : 0;
 }

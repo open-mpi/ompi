@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
@@ -183,12 +183,42 @@ endpoint_init_qp_xrc(mca_btl_base_endpoint_t *ep, const int qp)
         (mca_btl_openib_component.use_eager_rdma ?
          mca_btl_openib_component.max_eager_rdma : 0);
     mca_btl_openib_endpoint_qp_t *ep_qp = &ep->qps[qp];
+    int32_t wqe, incr = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+    int rc;
+
+    opal_mutex_lock (&ep->ib_addr->addr_lock);
+
     ep_qp->qp = ep->ib_addr->qp;
-    ep_qp->qp->sd_wqe += mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
-    /* make sure that we don't overrun maximum supported by device */
-    if (ep_qp->qp->sd_wqe > max)
-        ep_qp->qp->sd_wqe =  max;
+    if (ep->ib_addr->max_wqe + incr > max) {
+        /* make sure that we don't overrun maximum supported by device */
+        incr = max - ep->ib_addr->max_wqe;
+    }
+
+    wqe = ep->ib_addr->max_wqe + incr +
+        (mca_btl_openib_component.use_eager_rdma ?
+         mca_btl_openib_component.max_eager_rdma : 0);
+
+    ep->ib_addr->max_wqe += incr;
+
+    if (NULL != ep_qp->qp->lcl_qp) {
+        struct ibv_qp_attr qp_attr;
+
+        /* if this is modified the code in udcm_xrc_send_qp_create may
+         * need to be updated as well */
+        qp_attr.cap.max_recv_wr = 0;
+        qp_attr.cap.max_send_wr = wqe;
+        qp_attr.cap.max_inline_data = ep->endpoint_btl->device->max_inline_data;
+        qp_attr.cap.max_send_sge = 1;
+        qp_attr.cap.max_recv_sge = 1; /* we do not use SG list */
+        rc = ibv_modify_qp (ep_qp->qp->lcl_qp, &qp_attr, IBV_QP_CAP);
+        if (0 == rc) {
+            opal_atomic_add_32 (&ep_qp->qp->sd_wqe, incr);
+        }
+    } else {
+        ep_qp->qp->sd_wqe = ep->ib_addr->max_wqe;
+    }
     ep_qp->qp->users++;
+    opal_mutex_unlock (&ep->ib_addr->addr_lock);
 }
 
 static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
@@ -347,14 +377,17 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
          * was not in "connect" or "bad" flow (failed to allocate memory)
          * and changed the pointer back to NULL
          */
-        if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
-                    (void*)1)) {
-            if ((void*)1 != endpoint->eager_rdma_local.base.pval &&
-                    NULL != endpoint->eager_rdma_local.base.pval) {
-                endpoint->endpoint_btl->super.btl_mpool->mpool_free(endpoint->endpoint_btl->super.btl_mpool,
-                        endpoint->eager_rdma_local.base.pval,
-                        (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
-                pval_clean=true;
+        if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL, (void*)1)) {
+            if (NULL != endpoint->eager_rdma_local.reg) {
+                endpoint->endpoint_btl->device->rcache->rcache_deregister (endpoint->endpoint_btl->device->rcache,
+                                                                           &endpoint->eager_rdma_local.reg->base);
+                endpoint->eager_rdma_local.reg = NULL;
+            }
+
+            void *alloc_base = opal_atomic_swap_ptr (&endpoint->eager_rdma_local.alloc_base, NULL);
+            if (alloc_base) {
+                endpoint->endpoint_btl->super.btl_mpool->mpool_free (endpoint->endpoint_btl->super.btl_mpool, alloc_base);
+                pval_clean = true;
             }
         } else {
             pval_clean=true;
@@ -504,13 +537,11 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     ctl_hdr->type = MCA_BTL_OPENIB_CONTROL_CTS;
 
     /* Send the fragment */
-    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
     if (OPAL_SUCCESS != mca_btl_openib_endpoint_post_send(endpoint, sc_frag)) {
         BTL_ERROR(("Failed to post CTS send"));
         mca_btl_openib_endpoint_invoke_error(endpoint);
     }
     endpoint->endpoint_cts_sent = true;
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 }
 
 /*
@@ -555,6 +586,9 @@ void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t *endpoint)
                 OPAL_OUTPUT((-1, "cpc_complete to %s -- already got CTS, so marking endpoint as complete",
                              opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
                 mca_btl_openib_endpoint_connected(endpoint);
+            } else {
+                /* the caller hold the lock and expects us to drop it */
+                OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             }
         }
 
@@ -579,7 +613,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
 
     opal_output(-1, "Now we are CONNECTED");
     if (MCA_BTL_XRC_ENABLED) {
-        OPAL_THREAD_LOCK(&endpoint->ib_addr->addr_lock);
+        opal_mutex_lock (&endpoint->ib_addr->addr_lock);
         if (MCA_BTL_IB_ADDR_CONNECTED == endpoint->ib_addr->status) {
             /* We are not xrc master */
             /* set our qp pointer to master qp */
@@ -622,15 +656,14 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
                 }
             }
         }
-        OPAL_THREAD_UNLOCK(&endpoint->ib_addr->addr_lock);
+        opal_mutex_unlock (&endpoint->ib_addr->addr_lock);
     }
 
 
     /* Process pending packet on the endpoint */
 
     /* While there are frags in the list, process them */
-    while (!opal_list_is_empty(&(endpoint->pending_lazy_frags))) {
-        frag_item = opal_list_remove_first(&(endpoint->pending_lazy_frags));
+    while (NULL != (frag_item = opal_list_remove_first(&(endpoint->pending_lazy_frags)))) {
         frag = to_send_frag(frag_item);
         /* We need to post this one */
 
@@ -861,10 +894,10 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         mca_btl_openib_endpoint_t* endpoint)
 {
     mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
-    char *buf;
+    char *buf, *alloc_base;
     mca_btl_openib_recv_frag_t *headers_buf;
-    int i;
-    uint32_t flag = MCA_MPOOL_FLAGS_CACHE_BYPASS;
+    int i, rc;
+    uint32_t flag = MCA_RCACHE_FLAGS_CACHE_BYPASS;
 
     /* Set local rdma pointer to 1 temporarily so other threads will not try
      * to enter the function */
@@ -890,18 +923,25 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
        The following flag will be interpreted and the appropriate
        steps will be taken when the memory is registered in
        openib_reg_mr(). */
-    flag |= MCA_MPOOL_FLAGS_SO_MEM;
+    flag |= MCA_RCACHE_FLAGS_SO_MEM;
 #endif
 
-    buf = (char *) openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
-            openib_btl->eager_rdma_frag_size *
-            mca_btl_openib_component.eager_rdma_num,
-            mca_btl_openib_component.buffer_alignment,
-            flag,
-            (mca_mpool_base_registration_t**)&endpoint->eager_rdma_local.reg);
+    alloc_base = buf = (char *) openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
+                                                            openib_btl->eager_rdma_frag_size *
+                                                            mca_btl_openib_component.eager_rdma_num,
+                                                            mca_btl_openib_component.buffer_alignment,
+                                                            0);
 
     if(!buf)
        goto free_headers_buf;
+
+    rc = openib_btl->device->rcache->rcache_register (openib_btl->device->rcache, buf, openib_btl->eager_rdma_frag_size *
+                                                      mca_btl_openib_component.eager_rdma_num, flag, MCA_RCACHE_ACCESS_ANY,
+                                                      (mca_rcache_base_registration_t**)&endpoint->eager_rdma_local.reg);
+    if (OPAL_SUCCESS != rc) {
+        openib_btl->super.btl_mpool->mpool_free (openib_btl->super.btl_mpool, alloc_base);
+        goto free_headers_buf;
+    }
 
     buf = buf + openib_btl->eager_rdma_frag_size -
         sizeof(mca_btl_openib_footer_t) - openib_btl->super.btl_eager_limit -
@@ -913,7 +953,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         mca_btl_openib_frag_init_data_t init_data;
 
         item = (opal_free_list_item_t*)&headers_buf[i];
-        item->registration = (mca_mpool_base_registration_t *)endpoint->eager_rdma_local.reg;
+        item->registration = (mca_rcache_base_registration_t *)endpoint->eager_rdma_local.reg;
         item->ptr = buf + i * openib_btl->eager_rdma_frag_size;
         OBJ_CONSTRUCT(item, mca_btl_openib_recv_frag_t);
 
@@ -941,6 +981,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     /* set local rdma pointer to real value */
     (void)opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval,
                                  (void*)1, buf);
+    endpoint->eager_rdma_local.alloc_base = alloc_base;
 
     if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == OPAL_SUCCESS) {
         mca_btl_openib_device_t *device = endpoint->endpoint_btl->device;
@@ -957,8 +998,9 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         return;
     }
 
-    openib_btl->super.btl_mpool->mpool_free(openib_btl->super.btl_mpool,
-           buf, (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
+    openib_btl->device->rcache->rcache_deregister (openib_btl->device->rcache,
+                                                   (mca_rcache_base_registration_t*)endpoint->eager_rdma_local.reg);
+    openib_btl->super.btl_mpool->mpool_free(openib_btl->super.btl_mpool, buf);
 free_headers_buf:
     free(headers_buf);
 unlock_rdma_local:

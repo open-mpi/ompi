@@ -3,6 +3,7 @@
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +27,7 @@
  * Public string showing the pmix s2 component version number
  */
 const char *opal_pmix_s2_component_version_string =
-    "OPAL s2 pmix MCA component version " OPAL_VERSION;
+        "OPAL s2 pmix MCA component version " OPAL_VERSION;
 
 /*
  * Local function
@@ -43,11 +44,11 @@ static int pmix_s2_component_register(void);
 opal_pmix_base_component_t mca_pmix_s2_component = {
 
     /* First, the mca_component_t struct containing meta information
-       about the component itself */
+           about the component itself */
 
     .base_version = {
         /* Indicate that we are a pmix v1.1.0 component (which also
-           implies a specific MCA version) */
+               implies a specific MCA version) */
 
         OPAL_PMIX_BASE_VERSION_2_0_0,
 
@@ -55,7 +56,7 @@ opal_pmix_base_component_t mca_pmix_s2_component = {
 
         .mca_component_name = "s2",
         MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-                              OPAL_RELEASE_VERSION),
+        OPAL_RELEASE_VERSION),
 
         .mca_query_component = pmix_s2_component_query,
         .mca_register_component_params = pmix_s2_component_register,
@@ -91,7 +92,7 @@ static int pmix_s2_component_query(mca_base_module_t **module, int *priority)
     /* disqualify ourselves if we are not under slurm, and
      * if they didn't set mpi=pmix2 */
     if (NULL == getenv("SLURM_STEP_NUM_TASKS") ||
-        NULL == getenv("PMI_FD")) {
+            NULL == getenv("PMI_FD")) {
         *priority = 0;
         *module = NULL;
         return OPAL_ERROR;

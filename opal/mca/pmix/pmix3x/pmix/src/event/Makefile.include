@@ -1,0 +1,16 @@
+# -*- makefile -*-
+#
+# Copyright (c) 2016      Intel, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+
+
+headers += \
+        event/pmix_event.h
+
+sources += \
+        event/pmix_event_notification.c \
+        event/pmix_event_registration.c

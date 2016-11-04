@@ -28,8 +28,6 @@
  * available.
  */
 
-static bool selected = false;
-
 int orte_schizo_base_select(void)
 {
     mca_base_component_list_item_t *cli = NULL;
@@ -40,11 +38,10 @@ int orte_schizo_base_select(void)
     int rc, priority;
     bool inserted;
 
-    if (selected) {
+    if (0 < opal_list_get_size(&orte_schizo_base.active_modules)) {
         /* ensure we don't do this twice */
         return ORTE_SUCCESS;
     }
-    selected = true;
 
     /* Query all available components and ask if they have a module */
     OPAL_LIST_FOREACH(cli, &orte_schizo_base_framework.framework_components, mca_base_component_list_item_t) {
@@ -100,10 +97,10 @@ int orte_schizo_base_select(void)
     }
 
     if (4 < opal_output_get_verbosity(orte_schizo_base_framework.framework_output)) {
-        opal_output(0, "%s: Final mapper priorities", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output(0, "Final schizo priorities");
         /* show the prioritized list */
         OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
-            opal_output(0, "\tMapper: %s Priority: %d", mod->component->mca_component_name, mod->pri);
+            opal_output(0, "\tSchizo: %s Priority: %d", mod->component->mca_component_name, mod->pri);
         }
     }
 

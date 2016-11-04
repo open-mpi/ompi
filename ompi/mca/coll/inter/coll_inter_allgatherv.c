@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -49,10 +49,7 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
 {
     int i, rank, size, size_local, total=0, err;
     int *count=NULL,*displace=NULL;
-    char *ptmp=NULL;
-    MPI_Aint incr;
-    MPI_Aint extent;
-    MPI_Aint lb;
+    char *ptmp_free=NULL, *ptmp=NULL;
     ompi_datatype_t *ndtype = NULL;
     ompi_request_t *req[2];
 
@@ -81,22 +78,19 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
 	for (i = 1; i < size_local; i++) {
 	    displace[i] = displace[i-1] + count[i-1];
 	}
-	/* Perform the gatherv locally with the first process as root */
-	err = ompi_datatype_get_extent(sdtype, &lb, &extent);
-	if (OMPI_SUCCESS != err) {
-            err = OMPI_ERROR;
-            goto exit;
-	}
-	incr = 0;
+	total = 0;
 	for (i = 0; i < size_local; i++) {
-	    incr = incr + extent*count[i];
+	    total = total + count[i];
 	}
-	if ( incr > 0 ) {
-	    ptmp = (char*)malloc(incr);
-	    if (NULL == ptmp) {
+	if ( total > 0 ) {
+            ptrdiff_t gap, span;
+            span = opal_datatype_span(&sdtype->super, total, &gap);
+	    ptmp_free = (char*)malloc(span);
+	    if (NULL == ptmp_free) {
                 err = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit;
 	    }
+            ptmp = ptmp_free - gap;
 	}
     }
     err = comm->c_local_comm->c_coll.coll_gatherv(sbuf, scount, sdtype,
@@ -111,9 +105,6 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
     ompi_datatype_commit(&ndtype);
 
     if (0 == rank) {
-	for (i = 0; i < size_local; i++) {
-	    total = total + count[i];
-	}
 	/* Exchange data between roots */
 	err = MCA_PML_CALL(irecv(rbuf, 1, ndtype, 0,
                                  MCA_COLL_BASE_TAG_ALLGATHERV, comm,
@@ -144,8 +135,8 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
     if( NULL != ndtype ) {
         ompi_datatype_destroy(&ndtype);
     }
-    if (NULL != ptmp) {
-        free(ptmp);
+    if (NULL != ptmp_free) {
+        free(ptmp_free);
     }
     if (NULL != displace) {
         free(displace);

@@ -164,7 +164,6 @@ segment_create(map_segment_t *ds_buf,
                size_t size)
 {
     int rc = OSHMEM_SUCCESS;
-    void *addr = NULL;
     openib_device_t *device = &memheap_device;
     int num_devs = 0;
     int i = 0;
@@ -280,6 +279,7 @@ segment_create(map_segment_t *ds_buf,
 
 #if (MPAGE_ENABLE > 0)
         if (!rc && mca_sshmem_verbs_component.has_shared_mr) {
+            void *addr = NULL;
             access_flag = IBV_ACCESS_LOCAL_WRITE |
                           IBV_ACCESS_REMOTE_WRITE |
                           IBV_ACCESS_REMOTE_READ|

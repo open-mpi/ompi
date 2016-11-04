@@ -4,7 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -72,7 +72,7 @@ struct mca_spml_base_request_t {
     void *req_addr; /**< pointer to application buffer */
     size_t req_count; /**< count of user datatype elements *//* TODO: Need to remove since we are going to remove datatype*/
     int32_t req_peer; /**< peer process - rank of process executing the parallel program */
-    oshmem_proc_t* req_proc; /**< peer process */
+    ompi_proc_t* req_proc; /**< peer process */
     uint64_t req_sequence; /**< sequence number for shmem one sided ordering */
 };
 typedef struct mca_spml_base_request_t mca_spml_base_request_t;

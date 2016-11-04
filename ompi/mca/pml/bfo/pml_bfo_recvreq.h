@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -140,8 +141,8 @@ do {                                                                \
 #define MCA_PML_BFO_RECV_REQUEST_RETURN(recvreq)                        \
     {                                                                   \
         MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);           \
-        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_recv_requests,             \
-                               (ompi_free_list_item_t*)(recvreq));      \
+        OPAL_FREE_LIST_RETURN( &mca_pml_base_recv_requests,             \
+                               (opal_free_list_item_t*)(recvreq));      \
     }
 
 /**
@@ -155,44 +156,43 @@ recv_request_pml_complete(mca_pml_bfo_recv_request_t *recvreq)
 {
     size_t i;
 
-    assert(false == recvreq->req_recv.req_base.req_pml_complete);
+    if(false == recvreq->req_recv.req_base.req_pml_complete) {
 
-    if(recvreq->req_recv.req_bytes_packed > 0) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                &recvreq->req_recv.req_base, PERUSE_RECV );
-    }
-
-    for(i = 0; i < recvreq->req_rdma_cnt; i++) {
-        mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[i].btl_reg;
-        if( NULL != btl_reg  && btl_reg->mpool != NULL) {
-            btl_reg->mpool->mpool_deregister( btl_reg->mpool, btl_reg );
+        if(recvreq->req_recv.req_bytes_packed > 0) {
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
+                    &recvreq->req_recv.req_base, PERUSE_RECV );
         }
-    }
-    recvreq->req_rdma_cnt = 0;
+
+        for(i = 0; i < recvreq->req_rdma_cnt; i++) {
+            mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[i].btl_reg;
+            if( NULL != btl_reg  && btl_reg->mpool != NULL) {
+                btl_reg->mpool->mpool_deregister( btl_reg->mpool, btl_reg );
+            }
+        }
+        recvreq->req_rdma_cnt = 0;
 #if PML_BFO
-    recvreq->req_msgseq -= 100;
+        recvreq->req_msgseq -= 100;
 #endif /* PML_BFO */
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    if(true == recvreq->req_recv.req_base.req_free_called) {
-        if( MPI_SUCCESS != recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR ) {
-            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
-        }
-        MCA_PML_BFO_RECV_REQUEST_RETURN(recvreq);
-    } else {
-        /* initialize request status */
-        recvreq->req_recv.req_base.req_pml_complete = true;
-        recvreq->req_recv.req_base.req_ompi.req_status._ucount =
-            recvreq->req_bytes_received;
-        if (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_expected) {
+        if(true == recvreq->req_recv.req_base.req_free_called) {
+            if( MPI_SUCCESS != recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR ) {
+                ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+            }
+            MCA_PML_BFO_RECV_REQUEST_RETURN(recvreq);
+        } else {
+            /* initialize request status */
+            recvreq->req_recv.req_base.req_pml_complete = true;
             recvreq->req_recv.req_base.req_ompi.req_status._ucount =
-                recvreq->req_recv.req_bytes_packed;
-            recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
-                MPI_ERR_TRUNCATE;
+                recvreq->req_bytes_received;
+            if (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_expected) {
+                recvreq->req_recv.req_base.req_ompi.req_status._ucount =
+                    recvreq->req_recv.req_bytes_packed;
+                recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
+                    MPI_ERR_TRUNCATE;
+            }
+            MCA_PML_BFO_RECV_REQUEST_MPI_COMPLETE(recvreq);
         }
-        MCA_PML_BFO_RECV_REQUEST_MPI_COMPLETE(recvreq);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 static inline bool

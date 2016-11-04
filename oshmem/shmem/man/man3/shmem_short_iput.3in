@@ -197,15 +197,15 @@ main()
   6, 7, 8, 9, 10 };
   static short target[10];
 
-  start_pes(2);
-  if (_my_pe() == 0) {
+  shmem_init();
+  if (shmem_my_pe() == 0) {
     /* put 10 words into target on PE 1 */
     shmem_short_iput(target, source, 1, 2, 5, 1);
   }
   shmem_barrier_all(); /* sync sender and receiver */
-  if (_my_pe() == 1) {
+  if (shmem_my_pe() == 1) {
     shmem_udcflush(); /* not required on IRIX systems */
-    printf("target on PE %d is %d %d %d %d %d0, _my_pe(),
+    printf("target on PE %d is %d %d %d %d %d0, shmem_my_pe(),
     (int)target[0], (int)target[1], (int)target[2],
     (int)target[3], (int)target[4] );
   }

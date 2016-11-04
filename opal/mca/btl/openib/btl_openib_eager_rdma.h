@@ -20,6 +20,7 @@ BEGIN_C_DECLS
 
 struct mca_btl_openib_eager_rdma_local_t {
     opal_ptr_t base; /**< buffer for RDMAing eager messages */
+    void *alloc_base; /**< allocated base */
     mca_btl_openib_recv_frag_t *frags;
     mca_btl_openib_reg_t *reg;
     uint16_t head; /**< RDMA buffer to poll */

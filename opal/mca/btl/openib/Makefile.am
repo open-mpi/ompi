@@ -15,6 +15,8 @@
 # Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
 # Copyright (c) 2013      Intel, Inc. All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -65,13 +67,6 @@ sources = \
     connect/btl_openib_connect_empty.c \
     connect/btl_openib_connect_empty.h \
     connect/connect.h
-
-# If we have failover support, build that file
-if MCA_btl_openib_enable_failover
-sources += \
-    btl_openib_failover.c \
-    btl_openib_failover.h
-endif
 
 # If we have rdmacm support, build that CPC
 if MCA_btl_openib_have_rdmacm
@@ -129,3 +124,6 @@ noinst_LTLIBRARIES = $(lib)
 libmca_btl_openib_la_SOURCES = $(lib_sources)
 libmca_btl_openib_la_LDFLAGS= -module -avoid-version $(btl_openib_LDFLAGS)
 libmca_btl_openib_la_LIBADD = $(btl_openib_LIBS)
+
+maintainer-clean-local:
+	rm -f btl_openib_lex.c

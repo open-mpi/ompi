@@ -21,8 +21,12 @@ BEGIN_C_DECLS
   OSHMEM_DECLSPEC ret lower_name##__ args;    \
   OSHMEM_DECLSPEC ret upper_name args
 
+PN (void, pshmem_init, PSHMEM_INIT, (void));
 PN (void, pstart_pes, PSTART_PES, (MPI_Fint npes));
+PN (void, pshmem_global_exit, PSHMEM_GLOBAL_EXIT, (MPI_Fint npes));
+PN (MPI_Fint, pshmem_n_pes, PSHMEM_N_PES, (void));
 PN (MPI_Fint, pnum_pes, PNUM_PES, (void));
+PN (MPI_Fint, pshmem_my_pe, PSHMEM_MY_PE, (void));
 PN (MPI_Fint, pmy_pe, PMY_PE, (void));
 OSHMEM_DECLSPEC MPI_Fint p_my_pe_(void);
 PN (void, pshmem_barrier_all, PSHMEM_BARRIER_ALL, (void));
@@ -32,6 +36,7 @@ PN (void, pshpclmove, PSHPCLMOVE, (FORTRAN_POINTER_T *addr, MPI_Fint *length, MP
 PN (FORTRAN_POINTER_T*, pshmem_ptr, PSHMEM_PTR, (FORTRAN_POINTER_T target, MPI_Fint *pe));
 PN (ompi_fortran_logical_t, pshmem_pe_accessible, PSHMEM_PE_ACCESSIBLE, (MPI_Fint *pe));
 PN (MPI_Fint, pshmem_addr_accessible, PSHMEM_ADDR_ACCESSIBLE, (FORTRAN_POINTER_T addr, MPI_Fint *pe));
+
 PN (void, pshmem_put, PSHMEM_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_character_put, PSHMEM_CHARACTER_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_complex_put, PSHMEM_COMPLEX_PUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
@@ -45,6 +50,7 @@ PN (void, pshmem_put32, PSHMEM_PUT32, (FORTRAN_POINTER_T target, FORTRAN_POINTER
 PN (void, pshmem_put64, PSHMEM_PUT64, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_put128, PSHMEM_PUT128, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
 PN (void, pshmem_putmem, PSHMEM_PUTMEM, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+
 PN (void, pshmem_iput4, PSHMEM_IPUT4, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_iput8, PSHMEM_IPUT8, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_iput32, PSHMEM_IPUT32, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
@@ -55,6 +61,20 @@ PN (void, pshmem_double_iput, PSHMEM_DOUBLE_IPUT, (FORTRAN_POINTER_T target, FOR
 PN (void, pshmem_integer_iput, PSHMEM_INTEGER_IPUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_logical_iput, PSHMEM_LOGICAL_IPUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_real_iput, PSHMEM_REAL_IPUT, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
+
+PN (void, pshmem_putmem_nbi, PSHMEM_PUTMEM_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_character_put_nbi, PSHMEM_CHARACTER_PUT_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_complex_put_nbi, PSHMEM_COMPLEX_PUT_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_double_put_nbi, PSHMEM_DOUBLE_PUT_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_integer_put_nbi, PSHMEM_INTEGER_PUT_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_logical_put_nbi, PSHMEM_LOGICAL_PUT_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_real_put_nbi, PSHMEM_REAL_PUT_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_put4_nbi, PSHMEM_PUT4_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_put8_nbi, PSHMEM_PUT8_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_put32_nbi, PSHMEM_PUT32_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_put64_nbi, PSHMEM_PUT64_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+PN (void, pshmem_put128_nbi, PSHMEM_PUT128_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe));
+
 PN (void, pshmem_character_get, PSHMEM_CHARACTER_GET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_complex_get, PSHMEM_COMPLEX_GET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_double_get, PSHMEM_DOUBLE_GET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
@@ -67,6 +87,7 @@ PN (void, pshmem_get128, PSHMEM_GET128, (FORTRAN_POINTER_T target, FORTRAN_POINT
 PN (void, pshmem_getmem, PSHMEM_GETMEM, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_logical_get, PSHMEM_LOGICAL_GET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_real_get, PSHMEM_REAL_GET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+
 PN (void, pshmem_iget4, PSHMEM_IGET4, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_iget8, PSHMEM_IGET8, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_iget32, PSHMEM_IGET32, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
@@ -77,15 +98,43 @@ PN (void, pshmem_double_iget, PSHMEM_DOUBLE_IGET, (FORTRAN_POINTER_T target, FOR
 PN (void, pshmem_integer_iget, PSHMEM_INTEGER_IGET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_logical_iget, PSHMEM_LOGICAL_IGET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
 PN (void, pshmem_real_iget, PSHMEM_REAL_IGET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe));
+
+PN (void, pshmem_getmem_nbi, PSHMEM_GETMEM_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_character_get_nbi, PSHMEM_CHARACTER_GET_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_complex_get_nbi, PSHMEM_COMPLEX_GET_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_double_get_nbi, PSHMEM_DOUBLE_GET_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_integer_get_nbi, PSHMEM_INTEGER_GET_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_logical_get_nbi, PSHMEM_LOGICAL_GET_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_real_get_nbi, PSHMEM_REAL_GET_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_get4_nbi, PSHMEM_GET4_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_get8_nbi, PSHMEM_GET8_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_get32_nbi, PSHMEM_GET32_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_get64_nbi, PSHMEM_GET64_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+PN (void, pshmem_get128_nbi, PSHMEM_GET128_NBI, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe));
+
 PN (MPI_Fint, pshmem_swap, PSHMEM_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_integer4_t, pshmem_int4_swap, PSHMEM_INT4_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_integer8_t, pshmem_int8_swap, PSHMEM_INT8_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_real4_t, pshmem_real4_swap, PSHMEM_REAL4_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_real8_t, pshmem_real8_swap, PSHMEM_REAL8_SWAP, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
+PN (void, pshmem_int4_set, PSHMEM_INT4_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+PN (void, pshmem_int8_set, PSHMEM_INT8_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+PN (void, pshmem_real4_set, PSHMEM_REAL4_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+PN (void, pshmem_real8_set, PSHMEM_REAL8_SET, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
+
 PN (ompi_fortran_integer4_t, pshmem_int4_cswap, PSHMEM_INT4_CSWAP, (FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_integer8_t, pshmem_int8_cswap, PSHMEM_INT8_CSWAP, (FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
 PN (ompi_fortran_integer4_t, pshmem_int4_fadd, PSHMEM_INT4_FADD, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
 PN (ompi_fortran_integer8_t, pshmem_int8_fadd, PSHMEM_INT8_FADD, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe));
+
+PN (ompi_fortran_integer4_t, pshmem_int4_fetch, PSHMEM_INT4_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+PN (ompi_fortran_integer8_t, pshmem_int8_fetch, PSHMEM_INT8_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+PN (ompi_fortran_real4_t, pshmem_real4_fetch, PSHMEM_REAL4_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+PN (ompi_fortran_real8_t, pshmem_real8_fetch, PSHMEM_REAL8_FETCH, (FORTRAN_POINTER_T target, MPI_Fint *pe));
+
 PN (void, pshmem_int4_inc, PSHMEM_INT4_INC, (FORTRAN_POINTER_T target, MPI_Fint *pe));
 PN (void, pshmem_int8_inc, PSHMEM_INT8_INC, (FORTRAN_POINTER_T target, MPI_Fint *pe));
 PN (ompi_fortran_integer4_t, pshmem_int4_finc, PSHMEM_INT4_FINC, (FORTRAN_POINTER_T target, MPI_Fint *pe));
@@ -150,6 +199,10 @@ PN (void, pshmem_broadcast4, PSHMEM_BROADCAST4, (FORTRAN_POINTER_T target, FORTR
 PN (void, pshmem_broadcast8, PSHMEM_BROADCAST8, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_broadcast32, PSHMEM_BROADCAST32, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_broadcast64, PSHMEM_BROADCAST64, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_alltoall32, PSHMEM_ALLTOALL32, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_alltoall64, PSHMEM_ALLTOALL64, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_alltoalls32, PSHMEM_ALLTOALLS32, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *dst, MPI_Fint *sst, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_alltoalls64, PSHMEM_ALLTOALLS64, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *dst, MPI_Fint *sst, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_set_lock, PSHMEM_SET_LOCK, (FORTRAN_POINTER_T lock));
 PN (void, pshmem_clear_lock, PSHMEM_CLEAR_LOCK, (FORTRAN_POINTER_T lock));
 PN (MPI_Fint, pshmem_test_lock, PSHMEM_TEST_LOCK, (FORTRAN_POINTER_T lock));

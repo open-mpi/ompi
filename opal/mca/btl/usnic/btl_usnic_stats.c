@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +86,7 @@ void opal_btl_usnic_print_stats(
              prefix,
              opal_proc_local_get()->proc_name.vpid,
 
-             module->fabric_info->fabric_attr->name,
+             module->linux_device_name,
 
              module->stats.num_total_sends,
              module->mod_channels[USNIC_PRIORITY_CHANNEL].num_channel_sends,
@@ -145,8 +145,9 @@ void opal_btl_usnic_print_stats(
             /* Number of un-acked sends (i.e., sends for which we're
                still waiting for ACK) */
             send_unacked =
-                endpoint->endpoint_next_seq_to_send -
-                endpoint->endpoint_ack_seq_rcvd - 1;
+                SEQ_DIFF(endpoint->endpoint_next_seq_to_send,
+                         SEQ_DIFF(endpoint->endpoint_ack_seq_rcvd, 1));
+
             if (send_unacked > su_max) su_max = send_unacked;
             if (send_unacked < su_min) su_min = send_unacked;
 
@@ -393,7 +394,7 @@ static void setup_mpit_pvars_enum(void)
 
         devices[i].value = i;
         rc = asprintf(&str, "%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
-                      m->fabric_info->fabric_attr->name,
+                      m->linux_device_name,
                       c[0], c[1], c[2], c[3],
                       usnic_netmask_to_cidrlen(sin->sin_addr.s_addr));
         assert(rc > 0);

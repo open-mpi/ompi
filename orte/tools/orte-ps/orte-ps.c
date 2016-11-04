@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,10 +12,10 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -327,7 +328,7 @@ static int parse_args(int argc, char *argv[]) {
 
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
-    ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
+    ret = opal_cmd_line_parse(&cmd_line, false, false, argc, argv);
 
     if (OPAL_SUCCESS != ret) {
         if (OPAL_ERR_SILENT != ret) {
@@ -651,7 +652,11 @@ static int pretty_print_vpids(orte_job_t *job) {
     char *snap_ref = NULL;
     char *snap_loc = NULL;
 #endif
-    char *nodename;
+    char **nodename = NULL;
+
+    if (0 == job->num_procs) {
+        return ORTE_SUCCESS;
+    }
 
     /*
      * Caculate segment lengths
@@ -672,6 +677,7 @@ static int pretty_print_vpids(orte_job_t *job) {
     len_ckpt_l      = -3;
 #endif
 
+    nodename = (char **) malloc(job->num_procs * sizeof(char *));
     for(v=0; v < job->num_procs; v++) {
         char *rankstr;
         vpid = (orte_proc_t*)job->procs->addr[v];
@@ -707,10 +713,10 @@ static int pretty_print_vpids(orte_job_t *job) {
             len_rank = strlen(rankstr);
         free(rankstr);
 
-        nodename = NULL;
-        if( orte_get_attribute(&vpid->attributes, ORTE_PROC_NODENAME, (void**)&nodename, OPAL_STRING) &&
-            (int)strlen(nodename) > len_node) {
-            len_node = strlen(nodename);
+        nodename[v] = NULL;
+        if( orte_get_attribute(&vpid->attributes, ORTE_PROC_NODENAME, (void**)&nodename[v], OPAL_STRING) &&
+            (int)strlen(nodename[v]) > len_node) {
+            len_node = strlen(nodename[v]);
         } else if ((int)strlen("Unknown") > len_node) {
             len_node = strlen("Unknown");
         }
@@ -793,12 +799,12 @@ static int pretty_print_vpids(orte_job_t *job) {
         printf("%*s | ",  len_o_proc_name, o_proc_name);
         printf("%*u | ",  len_rank       , (uint)vpid->local_rank);
         printf("%*d | ",  len_pid        , vpid->pid);
-        printf("%*s | ",  len_node       , (NULL == nodename) ? "Unknown" : nodename);
-        if (NULL != nodename) {
-            free(nodename);
-        }
+        printf("%*s | ",  len_node       , (NULL == nodename[v]) ? "Unknown" : nodename[v]);
         printf("%*s | ",  len_state      , orte_proc_state_to_str(vpid->state));
 
+        if (NULL != nodename[v]) {
+            free(nodename[v]);
+        }
 #if OPAL_ENABLE_FT_CR == 1
         printf("%*s | ",  len_ckpt_s, state_str);
         printf("%*s | ",  len_ckpt_r, (NULL == snap_ref ?  "" : snap_ref));
@@ -807,7 +813,9 @@ static int pretty_print_vpids(orte_job_t *job) {
         printf("\n");
 
     }
-
+    if (NULL != nodename) {
+        free(nodename);
+    }
     return ORTE_SUCCESS;
 }
 

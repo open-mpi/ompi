@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -29,7 +29,7 @@ static int mca_io_ompio_request_free ( struct ompi_request_t **req)
 {
     mca_ompio_request_t *ompio_req = ( mca_ompio_request_t *)*req;
     if ( NULL != ompio_req->req_free_fn ) {
-	ompio_req->req_free_fn (ompio_req );
+        ompio_req->req_free_fn (ompio_req );
     }
     opal_list_remove_item (&mca_io_ompio_pending_requests, &ompio_req->req_item);
 
@@ -65,7 +65,7 @@ void mca_io_ompio_request_destruct(mca_ompio_request_t* req)
     OMPI_REQUEST_FINI ( &(req->req_ompi));
     OBJ_DESTRUCT (&req->req_item);
     if ( NULL != req->req_data ) {
-	free (req->req_data);
+        free (req->req_data);
     }
 
     return;
@@ -79,16 +79,16 @@ int mca_io_ompio_component_progress ( void )
 
     OPAL_LIST_FOREACH(litem, &mca_io_ompio_pending_requests, opal_list_item_t) {
         req = GET_OMPIO_REQ_FROM_ITEM(litem);
-	if ( true == req->req_ompi.req_complete ) {
-	    continue;
-	}
+        if( REQUEST_COMPLETE(&req->req_ompi) ) {
+            continue;
+        }
         if ( NULL != req->req_progress_fn ) {
             if ( req->req_progress_fn(req) ) {
                 completed++;
-                ompi_request_complete (&req->req_ompi, 1);
+                ompi_request_complete (&req->req_ompi, true);
                 /* The fbtl progress function is expected to set the
-		** status elements
-		*/
+                 * status elements
+                 */
             }
         }
 

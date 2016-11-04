@@ -180,8 +180,8 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
     int my_rank = ompi_comm_rank (module->comm);
     ompi_osc_rdma_state_t *state = module->state;
     volatile bool atomic_complete;
-    ompi_osc_rdma_frag_t *frag;
-    osc_rdma_counter_t *temp;
+    ompi_osc_rdma_frag_t *frag = NULL;
+    osc_rdma_counter_t *temp = NULL;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "post: %p, %d, %s", (void*) group, assert, win->w_name);
@@ -193,7 +193,6 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
 
     /* save the group */
     OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
 
     OPAL_THREAD_LOCK(&module->lock);
 
@@ -371,7 +370,6 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
 
     /* save the group */
     OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
 
     if (!(assert & MPI_MODE_NOCHECK)) {
         /* look through list of pending posts */
@@ -421,9 +419,11 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_sync_t *sync = &module->all_sync;
+    ompi_osc_rdma_frag_t *frag = NULL;
     ompi_osc_rdma_peer_t **peers;
+    void *scratch_lock = NULL;
     ompi_group_t *group;
-    int group_size;
+    int group_size, ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "complete: %s", win->w_name);
 
@@ -440,7 +440,6 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
     sync->epoch_active = false;
 
     /* phase 2 cleanup group */
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     peers = sync->peer_list.peers;
@@ -457,11 +456,18 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
 
     ompi_osc_rdma_sync_rdma_complete (sync);
 
+    if (!(MCA_BTL_FLAGS_ATOMIC_OPS & module->selected_btl->btl_flags)) {
+        /* need a temporary buffer for performing fetching atomics */
+        ret = ompi_osc_rdma_frag_alloc (module, 8, &frag, (char **) &scratch_lock);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+            return ret;
+        }
+    }
+
     /* for each process in the group increment their number of complete messages */
     for (int i = 0 ; i < group_size ; ++i) {
         ompi_osc_rdma_peer_t *peer = peers[i];
         intptr_t target = (intptr_t) peer->state + offsetof (ompi_osc_rdma_state_t, num_complete_msgs);
-        int ret;
 
         if (!ompi_osc_rdma_peer_local_state (peer)) {
             do {
@@ -471,8 +477,8 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
                                                                ompi_osc_rdma_atomic_complete, NULL, NULL);
                 } else {
                     /* don't care about the read value so use the scratch lock */
-                    ret = module->selected_btl->btl_atomic_fop (module->selected_btl, peer->state_endpoint, &module->state->scratch_lock,
-                                                                target, module->state_handle, peer->state_handle, MCA_BTL_ATOMIC_ADD, 1,
+                    ret = module->selected_btl->btl_atomic_fop (module->selected_btl, peer->state_endpoint, scratch_lock,
+                                                                target, frag->handle, peer->state_handle, MCA_BTL_ATOMIC_ADD, 1,
                                                                 0, MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete, NULL, NULL);
                 }
 
@@ -483,6 +489,10 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
         } else {
             (void) ompi_osc_rdma_counter_add ((osc_rdma_counter_t *) target, 1);
         }
+    }
+
+    if (frag) {
+        ompi_osc_rdma_frag_complete (frag);
     }
 
     /* release our reference to peers in this group */
@@ -526,7 +536,6 @@ int ompi_osc_rdma_wait_atomic (ompi_win_t *win)
     module->pw_group = NULL;
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "wait complete");
@@ -571,7 +580,6 @@ int ompi_osc_rdma_test_atomic (ompi_win_t *win, int *flag)
     module->pw_group = NULL;
     OPAL_THREAD_UNLOCK(&(module->lock));
 
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     return OMPI_SUCCESS;

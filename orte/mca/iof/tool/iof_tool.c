@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -166,8 +166,9 @@ static int tool_pull(const orte_process_name_t* src_name,
 
     /* send the buffer to the correct HNP */
     ORTE_HNP_NAME_FROM_JOB(&hnp, src_name->jobid);
-    orte_rml.send_buffer_nb(&hnp, buf, ORTE_RML_TAG_IOF_HNP,
-                            send_cb, NULL);
+    orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                    &hnp, buf, ORTE_RML_TAG_IOF_HNP,
+                                    send_cb, NULL);
 
     return ORTE_SUCCESS;
 }
@@ -215,8 +216,9 @@ static int tool_close(const orte_process_name_t* src_name,
 
     /* send the buffer to the correct HNP */
     ORTE_HNP_NAME_FROM_JOB(&hnp, src_name->jobid);
-    orte_rml.send_buffer_nb(&hnp, buf, ORTE_RML_TAG_IOF_HNP,
-                            send_cb, NULL);
+    orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                    &hnp, buf, ORTE_RML_TAG_IOF_HNP,
+                                    send_cb, NULL);
 
     return ORTE_SUCCESS;
 }

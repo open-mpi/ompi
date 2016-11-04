@@ -8,6 +8,8 @@
  * $HEADER$
  */
 
+#include "opal_config.h"
+
 #include <stdio.h>
 #include <mpi.h>
 #include <unistd.h>
@@ -74,7 +76,7 @@ int main(int argc, char **argv)
     MPI_Comm comm = MPI_COMM_WORLD;
     int rank, commsize;
     double offs = 0, rtt = 0;
-    char hname[1024];
+    char hname[OPAL_MAXHOSTNAMELEN];
 
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &commsize);
@@ -98,7 +100,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    if( gethostname(hname, 1024) ){
+    if( gethostname(hname, sizeof(hname)) ){
         perror("Cannot get hostname. Abort");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
@@ -129,13 +131,13 @@ int main(int argc, char **argv)
              fprintf(stderr, "Fail to allocate memory. Abort\n");
              MPI_Abort(MPI_COMM_WORLD, 1);
         }
-        char *hnames = malloc(1024*commsize);
+        char *hnames = malloc(OPAL_MAXHOSTNAMELEN * commsize);
         if( hnames == NULL ){
              fprintf(stderr, "Fail to allocate memory. Abort\n");
              MPI_Abort(MPI_COMM_WORLD, 1);
         }
 
-        MPI_Gather(hname,1024,MPI_CHAR,hnames,1024,MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Gather(hname,sizeof(hname),MPI_CHAR,hnames,sizeof(hname),MPI_CHAR, 0, MPI_COMM_WORLD);
         MPI_Gather(send,2,MPI_DOUBLE,measure,2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         char tmpname[128];
         FILE *fp = fopen(filename,"w");
@@ -144,7 +146,7 @@ int main(int argc, char **argv)
              MPI_Abort(MPI_COMM_WORLD, 1);
         }
         double (*m)[2] = (void*)measure;
-        char (*h)[1024] = (void*)hnames;
+        char (*h)[OPAL_MAXHOSTNAMELEN] = (void*)hnames;
         int i;
         fprintf(fp, "# Used algorithm: %s\n", (alg ? "binary tree" : "linear"));
         for(i=0; i<commsize;i++){
@@ -152,7 +154,7 @@ int main(int argc, char **argv)
         }
         fclose(fp);
     } else {
-        MPI_Gather(hname,1024, MPI_CHAR, NULL, 1024, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Gather(hname, sizeof(hname), MPI_CHAR, NULL, sizeof(hname), MPI_CHAR, 0, MPI_COMM_WORLD);
         MPI_Gather(send,2, MPI_DOUBLE, NULL, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
 

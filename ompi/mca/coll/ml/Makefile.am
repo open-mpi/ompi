@@ -3,7 +3,9 @@
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -82,3 +84,6 @@ mca_coll_ml_la_LIBADD =
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_ml_la_SOURCES =$(sources)
 libmca_coll_ml_la_LDFLAGS = -module -avoid-version
+
+maintainer-clean-local:
+	rm -f coll_ml_lex.c

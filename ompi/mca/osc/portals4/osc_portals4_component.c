@@ -198,7 +198,7 @@ progress_callback(void)
                                 "%s:%d: PtlEQGet reported dropped event",
                                 __FILE__, __LINE__);
             goto process;
-        } else if (PTL_EQ_EMPTY) {
+        } else if (PTL_EQ_EMPTY == ret) {
             return 0;
         } else {
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -218,8 +218,13 @@ process:
         count++;
 
         if (NULL != ev.user_ptr) {
-            /* can't disable send events, but they don't count in ops */
-            if (ev.type == PTL_EVENT_SEND) continue;
+            /* be sure that we receive the PTL_EVENT_LINK */
+            if (ev.type == PTL_EVENT_LINK) {
+              *(int *)ev.user_ptr = *(int *)ev.user_ptr + 1;
+              opal_condition_broadcast(&mca_osc_portals4_component.cond);
+              continue;
+            }
+
             req = (ompi_osc_portals4_request_t*) ev.user_ptr;
             opal_atomic_add_size_t(&req->super.req_status._ucount, ev.mlength);
             ops = opal_atomic_add_32(&req->ops_committed, 1);
@@ -245,7 +250,7 @@ component_open(void)
 static int
 component_register(void)
 {
-    bool ompi_osc_portals4_no_locks = false;
+    mca_osc_portals4_component.no_locks = false;
     (void) mca_base_component_var_register(&mca_osc_portals4_component.super.osc_version,
                                            "no_locks",
                                            "Enable optimizations available only if MPI_LOCK is "
@@ -254,7 +259,19 @@ component_register(void)
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_osc_portals4_no_locks);
+                                           &mca_osc_portals4_component.no_locks);
+
+    mca_osc_portals4_component.ptl_max_msg_size = PTL_SIZE_MAX;
+    (void) mca_base_component_var_register(&mca_osc_portals4_component.super.osc_version,
+                                           "max_msg_size",
+                                           "Max size supported by portals4 (above that, a message is cut into messages less than that size)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_osc_portals4_component.ptl_max_msg_size);
 
     return OMPI_SUCCESS;
 }
@@ -289,6 +306,11 @@ component_init(bool enable_progress_threads, bool enable_mpi_threads)
 
     /* BWB: FIX ME: Need to make sure our ID matches with the MTL... */
 
+    if (mca_osc_portals4_component.ptl_max_msg_size > actual.max_msg_size)
+        mca_osc_portals4_component.ptl_max_msg_size = actual.max_msg_size;
+    OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
+                         "max_size = %lu", mca_osc_portals4_component.ptl_max_msg_size));
+
     mca_osc_portals4_component.matching_atomic_max = actual.max_atomic_size;
     mca_osc_portals4_component.matching_fetch_atomic_max = actual.max_fetch_atomic_size;
     mca_osc_portals4_component.matching_atomic_ordered_size =
@@ -307,12 +329,19 @@ component_init(bool enable_progress_threads, bool enable_mpi_threads)
     ret = PtlPTAlloc(mca_osc_portals4_component.matching_ni_h,
                      0,
                      mca_osc_portals4_component.matching_eq_h,
-                     4,
+                     REQ_OSC_TABLE_ID,
                      &mca_osc_portals4_component.matching_pt_idx);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: PtlPTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
+        return ret;
+    }
+
+    if (mca_osc_portals4_component.matching_pt_idx != REQ_OSC_TABLE_ID) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc did not allocate the requested PT: %d\n",
+                            __FILE__, __LINE__, mca_osc_portals4_component.matching_pt_idx);
         return ret;
     }
 
@@ -355,7 +384,17 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                 struct ompi_communicator_t *comm, struct ompi_info_t *info,
                 int flavor)
 {
+    int ret;
+
     if (MPI_WIN_FLAVOR_SHARED == flavor) return -1;
+
+    ret = PtlGetUid(mca_osc_portals4_component.matching_ni_h, &mca_osc_portals4_component.uid);
+    if (PTL_OK != ret) {
+      opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                          "%s:%d: PtlGetUid failed: %d\n",
+                          __FILE__, __LINE__, ret);
+      return OMPI_ERROR;
+    }
 
     return 20;
 }
@@ -458,7 +497,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     md.start = 0;
     md.length = PTL_SIZE_MAX;
-    md.options = PTL_MD_EVENT_CT_REPLY | PTL_MD_EVENT_CT_ACK;
+    md.options = PTL_MD_EVENT_SEND_DISABLE | PTL_MD_EVENT_CT_REPLY | PTL_MD_EVENT_CT_ACK;
     md.eq_handle = mca_osc_portals4_component.matching_eq_h;
     md.ct_handle = module->ct_h;
     ret = PtlMDBind(module->ni_h, &md, &module->req_md_h);
@@ -477,7 +516,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         me.length = size;
     }
     me.ct_handle = PTL_CT_NONE;
-    me.uid = PTL_UID_ANY;
+    me.uid = mca_osc_portals4_component.uid;
     me.options = PTL_ME_OP_PUT | PTL_ME_OP_GET | PTL_ME_NO_TRUNCATE | PTL_ME_EVENT_SUCCESS_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
@@ -488,7 +527,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                       module->pt_idx,
                       &me,
                       PTL_PRIORITY_LIST,
-                      NULL,
+                      &module->ct_link,
                       &module->data_me_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -500,7 +539,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     me.start = &module->state;
     me.length = sizeof(module->state);
     me.ct_handle = PTL_CT_NONE;
-    me.uid = PTL_UID_ANY;
+    me.uid = mca_osc_portals4_component.uid;
     me.options = PTL_ME_OP_PUT | PTL_ME_OP_GET | PTL_ME_NO_TRUNCATE | PTL_ME_EVENT_SUCCESS_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
@@ -511,7 +550,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                       module->pt_idx,
                       &me,
                       PTL_PRIORITY_LIST,
-                      NULL,
+                      &module->ct_link,
                       &module->control_me_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -559,6 +598,13 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     PtlAtomicSync();
 
     /* Make sure that everyone's ready to receive. */
+    OPAL_THREAD_LOCK(&mca_osc_portals4_component.lock);
+    while (module->ct_link != 2) {
+        opal_condition_wait(&mca_osc_portals4_component.cond,
+                            &mca_osc_portals4_component.lock);
+    }
+    OPAL_THREAD_UNLOCK(&mca_osc_portals4_component.lock);
+
     module->comm->c_coll.coll_barrier(module->comm,
                                       module->comm->c_coll.coll_barrier_module);
 
@@ -603,6 +649,7 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
                                       module->comm->c_coll.coll_barrier_module);
 
     /* cleanup */
+    PtlMEUnlink(module->control_me_h);
     PtlMEUnlink(module->data_me_h);
     PtlMDRelease(module->md_h);
     PtlMDRelease(module->req_md_h);

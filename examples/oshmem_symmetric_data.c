@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -20,10 +20,10 @@ int main(int argc, char* argv[])
     int i;
     int num_pe, my_pe;
 
-    start_pes(0);
+    shmem_init();
 
-    num_pe = _num_pes();
-    my_pe = _my_pe();
+    num_pe = shmem_n_pes();
+    my_pe = shmem_my_pe();
 
     if (my_pe == 0) {
         /* initialize array */
@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
     }
 
     shmem_barrier_all(); /* sync before exiting */
+    shmem_finalize();
 
     return 0;
 }

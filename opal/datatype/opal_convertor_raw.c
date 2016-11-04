@@ -101,7 +101,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                     OPAL_DATATYPE_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
                                                 pConvertor->pDesc, pConvertor->count );
                     DO_DEBUG( opal_output( 0, "raw 1. iov[%d] = {base %p, length %lu}\n",
-                                           index, source_base, (unsigned long)blength ); );
+                                           index, (void*)source_base, (unsigned long)blength ); );
                     iov[index].iov_base = (IOVBASE_TYPE *) source_base;
                     iov[index].iov_len  = blength;
                     source_base += blength;
@@ -114,7 +114,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                     OPAL_DATATYPE_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
                                                 pConvertor->pDesc, pConvertor->count );
                     DO_DEBUG( opal_output( 0, "raw 2. iov[%d] = {base %p, length %lu}\n",
-                                           index, source_base, (unsigned long)blength ); );
+                                           index, (void*)source_base, (unsigned long)blength ); );
                     iov[index].iov_base = (IOVBASE_TYPE *) source_base;
                     iov[index].iov_len  = blength;
                     source_base += pElem->elem.extent;

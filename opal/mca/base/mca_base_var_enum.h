@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -85,10 +85,11 @@ typedef int (*mca_base_var_enum_dump_fn_t)(mca_base_var_enum_t *self, char **out
  *
  * @long This function returns the string value for a given interger value in the
  * {string_value} parameter. The {string_value} parameter may be NULL in which case
- * no string is returned.
+ * no string is returned. If a string is returned in {string_value} the caller
+ * must free the string with free().
  */
 typedef int (*mca_base_var_enum_sfv_fn_t)(mca_base_var_enum_t *self, const int value,
-                                          const char **string_value);
+                                          char **string_value);
 
 /**
  * The default enumerator class takes in a list of integer-string pairs. If a
@@ -102,7 +103,9 @@ struct mca_base_var_enum_value_t {
 
 typedef struct mca_base_var_enum_value_t mca_base_var_enum_value_t;
 
-/* enumerator base class */
+/**
+ * enumerator base class
+ */
 struct mca_base_var_enum_t {
     opal_object_t super;
 
@@ -135,6 +138,36 @@ struct mca_base_var_enum_t {
     mca_base_var_enum_value_t *enum_values;
 };
 
+
+/**
+ * The default flag enumerator class takes in a list of integer-string pairs. If a
+ * string is read from an environment variable or a file value the matching
+ * flag value is used for the MCA variable. The conflicting_flag is used to
+ * indicate any flags that should conflict.
+ */
+struct mca_base_var_enum_value_flag_t {
+    /** flag value (must be power-of-two) */
+    int flag;
+    /** corresponding string name */
+    const char *string;
+    /** conflicting flag(s) if any */
+    int conflicting_flag;
+};
+
+typedef struct mca_base_var_enum_value_flag_t mca_base_var_enum_value_flag_t;
+
+/**
+ * flag enumerator base class
+ */
+struct mca_base_var_enum_flag_t {
+    /** use the existing enumerator interface */
+    mca_base_var_enum_t super;
+    /** flag value(s) */
+    mca_base_var_enum_value_flag_t *enum_flags;
+};
+
+typedef struct mca_base_var_enum_flag_t mca_base_var_enum_flag_t;
+
 /**
  * Object declaration for mca_base_var_enum_t
  */
@@ -152,14 +185,12 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_enum_t);
  * @retval opal error code On error
  *
  * This function creates a value enumerator for integer variables. The
- * value array is stored by reference in the enumerator so it should
- * not be allocated on the stack. The OUT enumerator value will be a
- * newly OBJ_NEW'ed object that should be released by the caller via
- * OBJ_RELEASE.
+ * OUT enumerator value will be a newly OBJ_NEW'ed object that should
+ * be released by the caller via OBJ_RELEASE.
  *
  * Note that the output enumerator can be OBJ_RELEASE'd after it has
- * been used in a pvar registration, because variables that use the
- * enumerator will OBJ_RETAIN it.
+ * been used in a cvar or pvar registration, because the variable
+ * registration functions will OBJ_RETAIN the enumberator.
  *
  * Note that all the strings in the values[] array are strdup'ed into
  * internal storage, meaning that the caller can free all of the
@@ -168,6 +199,33 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_enum_t);
  */
 OPAL_DECLSPEC int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t values[],
                                             mca_base_var_enum_t **enumerator);
+
+/**
+ * Create a new default flag enumerator
+ *
+ * @param[in] name Name for this enumerator
+ * @param[in] flags List of flags terminated with a NULL .string
+ * member.
+ * @param[out] enumerator Newly created enumerator.
+ *
+ * @retval OPAL_SUCCESS On success
+ * @retval opal error code On error
+ *
+ * This function creates a flag enumerator for integer variables. The
+ * OUT enumerator value will be a newly OBJ_NEW'ed object that should
+ * be released by the caller via OBJ_RELEASE.
+ *
+ * Note that the output enumerator can be OBJ_RELEASE'd after it has
+ * been used in a cvar or pvar registration, because the variable
+ * registration functions will OBJ_RETAIN the enumberator.
+ *
+ * Note that all the strings in the values[] array are strdup'ed into
+ * internal storage, meaning that the caller can free all of the
+ * strings passed in values[] after mca_base_var_enum_create()
+ * returns.
+ */
+OPAL_DECLSPEC int mca_base_var_enum_create_flag (const char *name, const mca_base_var_enum_value_flag_t flags[],
+                                                 mca_base_var_enum_flag_t **enumerator);
 
 /* standard enumerators. it is invalid to call OBJ_RELEASE on any of these enumerators */
 /**

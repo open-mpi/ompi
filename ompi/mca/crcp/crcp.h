@@ -235,7 +235,7 @@ typedef ompi_crcp_base_btl_state_t* (*mca_crcp_base_btl_module_free_fn_t)
 typedef ompi_crcp_base_btl_state_t* (*mca_crcp_base_btl_module_prepare_fn_t)
      ( struct mca_btl_base_module_t* btl,
        struct mca_btl_base_endpoint_t* endpoint,
-       mca_mpool_base_registration_t* registration,
+       mca_rcache_base_registration_t* registration,
        struct opal_convertor_t* convertor,
        size_t reserve,
        size_t* size,

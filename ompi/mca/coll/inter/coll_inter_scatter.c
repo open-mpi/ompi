@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2008 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -44,9 +44,7 @@ mca_coll_inter_scatter_inter(const void *sbuf, int scount,
                              int root, struct ompi_communicator_t *comm,
                              mca_coll_base_module_t *module)
 {
-    int rank, size, size_local, err;
-    char *ptmp = NULL;
-    ptrdiff_t lb, incr;
+    int rank, size, err;
 
     /* Initialize */
 
@@ -58,18 +56,18 @@ mca_coll_inter_scatter_inter(const void *sbuf, int scount,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
         /* First process receives the data from root */
+        char *ptmp_free = NULL, *ptmp = NULL;
 	if(0 == rank) {
-	    err = ompi_datatype_get_extent(rdtype, &lb, &incr);
-	    if (OMPI_SUCCESS != err) {
-		return OMPI_ERROR;
-	    }
+            int size_local;
+            ptrdiff_t gap, span;
 
-	    incr *= rcount;
 	    size_local = ompi_comm_size(comm->c_local_comm);
-	    ptmp = (char*)malloc(size_local * incr);
-	    if (NULL == ptmp) {
+            span = opal_datatype_span(&rdtype->super, (int64_t)rcount*(int64_t)size_local, &gap);
+            ptmp_free = malloc(span);
+	    if (NULL == ptmp_free) {
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
+            ptmp = ptmp_free - gap;
 
 	    err = MCA_PML_CALL(recv(ptmp, rcount*size_local, rdtype,
 				    root, MCA_COLL_BASE_TAG_SCATTER,
@@ -83,8 +81,8 @@ mca_coll_inter_scatter_inter(const void *sbuf, int scount,
 						      rbuf, rcount, rdtype,
 						      0, comm->c_local_comm,
                                                       comm->c_local_comm->c_coll.coll_scatter_module);
-	if (NULL != ptmp) {
-	    free(ptmp);
+	if (NULL != ptmp_free) {
+	    free(ptmp_free);
 	}
     } else {
 	/* Root sends data to the first process in the remote group */

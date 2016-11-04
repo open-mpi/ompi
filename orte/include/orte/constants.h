@@ -86,6 +86,13 @@ enum {
     ORTE_ERR_CONNECTION_FAILED              = OPAL_ERR_CONNECTION_FAILED,
     ORTE_ERR_AUTHENTICATION_FAILED          = OPAL_ERR_AUTHENTICATION_FAILED,
     ORTE_ERR_COMM_FAILURE                   = OPAL_ERR_COMM_FAILURE,
+    ORTE_ERR_DEBUGGER_RELEASE               = OPAL_ERR_DEBUGGER_RELEASE,
+    ORTE_ERR_PARTIAL_SUCCESS                = OPAL_ERR_PARTIAL_SUCCESS,
+    ORTE_ERR_PROC_ABORTED                   = OPAL_ERR_PROC_ABORTED,
+    ORTE_ERR_PROC_REQUESTED_ABORT           = OPAL_ERR_PROC_REQUESTED_ABORT,
+    ORTE_ERR_PROC_ABORTING                  = OPAL_ERR_PROC_ABORTING,
+    ORTE_ERR_NODE_DOWN                      = OPAL_ERR_NODE_DOWN,
+    ORTE_ERR_NODE_OFFLINE                   = OPAL_ERR_NODE_OFFLINE,
 
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!
@@ -146,7 +153,9 @@ enum {
     ORTE_ERR_DUPLICATE_MSG                  = (ORTE_ERR_BASE - 54),
     ORTE_ERR_OUT_OF_ORDER_MSG               = (ORTE_ERR_BASE - 55),
     ORTE_ERR_OPEN_CHANNEL_DUPLICATE         = (ORTE_ERR_BASE - 56),
-    ORTE_ERR_FORCE_SELECT                   = (ORTE_ERR_BASE - 57)
+    ORTE_ERR_FORCE_SELECT                   = (ORTE_ERR_BASE - 57),
+    ORTE_ERR_JOB_CANCELLED                  = (ORTE_ERR_BASE - 58),
+    ORTE_ERR_CONDUIT_SEND_FAIL              = (ORTE_ERR_BASE - 59)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

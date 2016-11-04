@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -145,7 +148,7 @@ BEGIN_C_DECLS
     ompi_crcp_base_btl_state_t*
     ompi_crcp_base_none_btl_prepare_src( struct mca_btl_base_module_t* btl,
                                          struct mca_btl_base_endpoint_t* endpoint,
-                                         mca_mpool_base_registration_t* registration,
+                                         mca_rcache_base_registration_t* registration,
                                          struct opal_convertor_t* convertor,
                                          size_t reserve,
                                          size_t* size,
@@ -154,7 +157,7 @@ BEGIN_C_DECLS
     ompi_crcp_base_btl_state_t*
     ompi_crcp_base_none_btl_prepare_dst( struct mca_btl_base_module_t* btl,
                                          struct mca_btl_base_endpoint_t* endpoint,
-                                         mca_mpool_base_registration_t* registration,
+                                         mca_rcache_base_registration_t* registration,
                                          struct opal_convertor_t* convertor,
                                          size_t reserve,
                                          size_t* size,

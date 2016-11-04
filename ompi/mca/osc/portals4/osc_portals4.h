@@ -21,6 +21,8 @@
 
 #include "ompi/mca/mtl/portals4/mtl_portals4.h"
 
+#define REQ_OSC_TABLE_ID     4
+
 #define OSC_PORTALS4_MB_DATA    0x0000000000000000ULL
 #define OSC_PORTALS4_MB_CONTROL 0x1000000000000000ULL
 
@@ -51,6 +53,11 @@ struct ompi_osc_portals4_component_t {
     ptl_size_t matching_atomic_max;
     ptl_size_t matching_fetch_atomic_max;
     ptl_size_t matching_atomic_ordered_size;
+    ptl_size_t ptl_max_msg_size; /* max size given by portals (cf PtlNIInit) */
+    bool no_locks;
+    ptl_uid_t uid;
+    opal_mutex_t lock;
+    opal_condition_t cond;
 
     opal_free_list_t requests; /* request free list for the r* communication variants */
 };
@@ -80,6 +87,7 @@ struct ompi_osc_portals4_module_t {
     ptl_handle_ni_t ni_h; /* network interface used by this window */
     ptl_pt_index_t pt_idx; /* portal table index used by this window (this will be same across window) */
     ptl_handle_ct_t ct_h; /* Counting event handle used for completion in this window */
+    int ct_link; /* PTL_EVENT_LINK flag */
     ptl_handle_md_t md_h; /* memory descriptor describing all of memory used by this window */
     ptl_handle_md_t req_md_h; /* memory descriptor with event completion used by this window */
     ptl_handle_me_t data_me_h; /* data match list entry (MB are CID | OSC_PORTALS4_MB_DATA) */
@@ -175,7 +183,7 @@ int ompi_osc_portals4_get_accumulate(const void *origin_addr,
                                      int result_count,
                                      struct ompi_datatype_t *result_datatype,
                                      int target_rank,
-                                     MPI_Aint target_disp,
+                                     OPAL_PTRDIFF_TYPE target_disp,
                                      int target_count,
                                      struct ompi_datatype_t *target_datatype,
                                      struct ompi_op_t *op,
@@ -219,7 +227,7 @@ int ompi_osc_portals4_rget_accumulate(const void *origin_addr,
                                       int result_count,
                                       struct ompi_datatype_t *result_datatype,
                                       int target_rank,
-                                      MPI_Aint target_disp,
+                                      OPAL_PTRDIFF_TYPE target_disp,
                                       int target_count,
                                       struct ompi_datatype_t *target_datatype,
                                       struct ompi_op_t *op,

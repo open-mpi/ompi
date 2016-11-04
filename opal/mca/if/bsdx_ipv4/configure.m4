@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,7 +32,10 @@ AC_DEFUN([MCA_opal_if_bsdx_ipv4_CONFIG], [
     AS_IF([test "$opal_found_sockaddr" = "yes"],
           [AC_MSG_RESULT([yes (cached)])
            AC_MSG_CHECKING([NetBSD, FreeBSD, OpenBSD, or DragonFly])
-           AS_IF([test "$opal_found_netbsd" = "yes" -o "$opal_found_freebsd" = "yes" -o "$opal_found_openbsd" = "yes" -o "$opal_found_dragonfly" = "yes"],
+           AS_IF([test "$opal_found_netbsd" = "yes" || \
+                  test "$opal_found_freebsd" = "yes" || \
+                  test "$opal_found_openbsd" = "yes" || \
+                  test "$opal_found_dragonfly" = "yes"],
                  [AC_MSG_RESULT([yes])
                   $1],
                  [AC_MSG_RESULT([no])

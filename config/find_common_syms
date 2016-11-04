@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -69,13 +69,14 @@ if (0 != system("command -v nm >/dev/null 2>&1")) {
 # subdirectories.  That way a whitelisted symbol in one component doesn't
 # "shadow" a symbol that should not be whitelisted in another component.  If we
 # find this is actually a problem in practice then we can write a v2 update.
-my @wl_files = `find '${top_srcdir}' -name 'common_sym_whitelist'`;
+my @wl_files = `find '${top_srcdir}' -name 'common_sym_whitelist.txt'`;
 foreach my $wl_file (@wl_files) {
     chomp $wl_file;
     my @lines = `cat $wl_file`;
     foreach my $line (@lines) {
         chomp $line;
-        next if ($line =~ m/^\s*#/); # skip comments
+        next if ($line =~ /^\s*#/); # skip comments
+        next if ($line =~ /^\s*$/); # skip blank lines
         push @sym_whitelist, $line;
     }
 }
@@ -127,7 +128,7 @@ sub is_whitelisted {
     my $line = shift;
 
     foreach my $wl_sym (@sym_whitelist) {
-        if ($line =~ m/\b\Q$wl_sym\E\b/) {
+        if ($line =~ m/\b_?\Q$wl_sym\E\b/) {
             return 1;
         }
     }
@@ -135,7 +136,7 @@ sub is_whitelisted {
     # Look for symbol names ending in one or more underscores and assume they
     # are "Fortran-shaped".  This won't match the hex output from most nm's and
     # shouldn't match the single characters that indicate symbol type.
-    if ($line =~ m/\b[A-Za-z_]+[A-Za-z0-9_]*_+\b/) {
+    if ($line =~ m/\b_?[A-Za-z_]+[A-Za-z0-9_]*_+\b/) {
         return 1;
     }
 

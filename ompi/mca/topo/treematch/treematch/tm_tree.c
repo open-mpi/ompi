@@ -1061,168 +1061,167 @@ affinity_mat_t *build_cost_matrix(affinity_mat_t *aff_mat, double* obj_weight, d
 void group_nodes(affinity_mat_t *aff_mat,tree_t *tab_node, tree_t *new_tab_node, int arity, int M, double* obj_weigth, double comm_speed)
 {
 
- /*
-    N: size of tab and tab_node. i.e. number of nodes at the considered level
-    Hence we have: M*arity=N
- */
-  int N = aff_mat -> order;
-  tree_t **cur_group = NULL;
-  int j,l;
-  unsigned int n;
-  unsigned long int k;
-  group_list_t list,**best_selection = NULL,**tab_group = NULL;
-  double best_val,last_best;
-  int timeout;
-  affinity_mat_t *cost_mat = NULL; /*cost matrix taking into account the communiocation cost but also the weight of the object*/
-  double duration;
-
-  TIC;
-
-  /* might return aff_mat (if obj_weight==NULL): do not FREE this tab in this case*/
-  cost_mat = build_cost_matrix(aff_mat,obj_weigth,comm_speed);
-
-  k = choose(N,arity);
-  if(verbose_level>=INFO)
-    printf("Number of groups:%ld\n",k);
-
-  /* Todo: check if the depth is a criteria for speeding up the computation*/
-  /*  if(k>30000||depth>5){*/
-  if( k > 30000 ){
-
+    /*
+      N: size of tab and tab_node. i.e. number of nodes at the considered level
+      Hence we have: M*arity=N
+    */
+    int N = aff_mat -> order;
+    tree_t **cur_group = NULL;
+    int j,l;
+    unsigned int n;
+    unsigned long int k;
+    group_list_t list,**best_selection = NULL,**tab_group = NULL;
+    double best_val,last_best;
+    int timeout;
+    affinity_mat_t *cost_mat = NULL; /*cost matrix taking into account the communiocation cost but also the weight of the object*/
     double duration;
 
     TIC;
-    if( arity <= 2 ){
-      /*super_fast_grouping(tab,tab_node,new_tab_node,arity,N,M,k);*/
-      if(verbose_level >= INFO )
-	printf("Bucket Grouping...\n");
-      bucket_grouping(cost_mat,tab_node,new_tab_node,arity,M);
-    }else{
-      if(verbose_level >= INFO)
-	printf("Fast Grouping...\n");
-      fast_grouping(cost_mat,tab_node,new_tab_node,arity,M,k);
+
+    /* might return aff_mat (if obj_weight==NULL): do not FREE this tab in this case*/
+    cost_mat = build_cost_matrix(aff_mat,obj_weigth,comm_speed);
+
+    k = choose(N,arity);
+    if(verbose_level>=INFO)
+        printf("Number of groups:%ld\n",k);
+
+    /* Todo: check if the depth is a criteria for speeding up the computation*/
+    /*  if(k>30000||depth>5){*/
+    if( k > 30000 ) {
+
+        double duration;
+
+        TIC;
+        if( arity <= 2 ) {
+            /*super_fast_grouping(tab,tab_node,new_tab_node,arity,N,M,k);*/
+            if(verbose_level >= INFO )
+                printf("Bucket Grouping...\n");
+            bucket_grouping(cost_mat,tab_node,new_tab_node,arity,M);
+        } else {
+            if(verbose_level >= INFO)
+                printf("Fast Grouping...\n");
+            fast_grouping(cost_mat,tab_node,new_tab_node,arity,M,k);
+        }
+
+        duration = TOC;
+        if(verbose_level>=INFO)
+            printf("Fast grouping duration=%f\n",duration);
+
+        if(verbose_level>=DEBUG)
+            display_grouping(new_tab_node,M,arity,-1);
+
+    } else {
+        if(verbose_level>=INFO)
+            printf("Grouping nodes...\n");
+        list.next = NULL;
+        list.val = 0; /*number of elements in the list*/
+        cur_group = (tree_t**)MALLOC(sizeof(tree_t*)*arity);
+        best_selection = (group_list_t **)MALLOC(sizeof(group_list_t*)*M);
+
+        list_all_possible_groups(cost_mat,tab_node,0,arity,0,cur_group,&list);
+        n = (int)list.val;
+        assert( n == k );
+        tab_group = (group_list_t**)MALLOC(sizeof(group_list_t*)*n);
+        list_to_tab(list.next,tab_group,n);
+        if(verbose_level>=INFO)
+            printf("List to tab done\n");
+
+        best_val = DBL_MAX;
+
+        /* perform the pack mapping fist*/
+        /* timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,1,0.1); */
+        timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,1,100);
+        if((verbose_level>=INFO) && timeout)
+            printf("Packed mapping timeout!\n");
+        /* give this mapping an exra credit (in general MPI application are made such that
+           neighbour process communicates more than distant ones) */
+        best_val /= 1.001;
+        /* best_val *= 1.001; */
+        if(verbose_level>=INFO)
+            printf("Packing computed\n");
+
+        /* perform a mapping trying to use group that cost less first*/
+        qsort(tab_group,n,sizeof(group_list_t*),group_list_asc);
+        last_best = best_val;
+        timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,10,0.1);
+        /* timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,n,0); */
+        if(verbose_level>=INFO){
+            if(timeout) {
+                printf("Cost less first timeout!\n");
+            } else if(last_best>best_val) {
+                printf("Cost less first Impoved solution\n");
+            }
+            printf("----\n");
+        }
+        /* perform a mapping trying to minimize the use of groups that cost a lot */
+        qsort(tab_group,n,sizeof(group_list_t*),group_list_dsc);
+        last_best=best_val;
+        timeout=select_independent_groups_by_largest_index(tab_group,n,arity,M,&best_val,best_selection,10,0.1);
+        if(verbose_level>=DEBUG) {
+            if(timeout)
+                printf("Cost most last timeout!\n");
+            else if(last_best>best_val)
+                printf("Cost most last impoved solution\n");
+        }
+        if( n < 10000 ){
+            /* perform a mapping in the weighted degree order */
+
+
+            if(verbose_level>=INFO)
+                printf("----WG----\n");
+
+            compute_weighted_degree(tab_group,n,arity);
+
+            if(verbose_level>=INFO)
+                printf("Weigted degree computed\n");
+
+            qsort(tab_group,n,sizeof(group_list_t*),weighted_degree_dsc);
+            /* display_tab_group(tab_group,n,arity);*/
+            last_best = best_val;
+            timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,10,0.1);
+            /* timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,n,0); */
+
+            if(verbose_level>=DEBUG){
+                if(timeout)
+                    printf("WG timeout!\n");
+                else if(last_best>best_val)
+                    printf("WG impoved solution\n");
+            }
+        }
+
+        qsort(best_selection,M,sizeof(group_list_t*),group_list_id);
+
+        for( l = 0 ; l < M ; l++ ){
+            for( j = 0 ; j < arity ; j++ ){
+                new_tab_node[l].child[j]         = best_selection[l]->tab[j];
+                new_tab_node[l].child[j]->parent = &new_tab_node[l];
+            }
+            new_tab_node[l].arity = arity;
+
+            /* printf("arity=%d\n",new_tab_node[l].arity); */
+            update_val(cost_mat,&new_tab_node[l]);
+        }
+
+        delete_group_list((&list)->next);
+        FREE(best_selection);
+        FREE(tab_group);
+        FREE(cur_group);
+    }
+
+    if(cost_mat != aff_mat){
+        FREE_tab_double(cost_mat->mat,N);
+        FREE(cost_mat->sum_row);
+        FREE(cost_mat);
     }
 
     duration = TOC;
+
     if(verbose_level>=INFO)
-      printf("Fast grouping duration=%f\n",duration);
-
-    if(verbose_level>=DEBUG)
-      display_grouping(new_tab_node,M,arity,-1);
-
-  }else{
-    if(verbose_level>=INFO)
-      printf("Grouping nodes...\n");
-    list.next = NULL;
-    list.val = 0; /*number of elements in the list*/
-    cur_group = (tree_t**)MALLOC(sizeof(tree_t*)*arity);
-    best_selection = (group_list_t **)MALLOC(sizeof(group_list_t*)*M);
-
-    list_all_possible_groups(cost_mat,tab_node,0,arity,0,cur_group,&list);
-    n = (int)list.val;
-    assert( n == k );
-    tab_group = (group_list_t**)MALLOC(sizeof(group_list_t*)*n);
-    list_to_tab(list.next,tab_group,n);
-    if(verbose_level>=INFO)
-      printf("List to tab done\n");
-
-    best_val = DBL_MAX;
-
-    /* perform the pack mapping fist*/
-    /* timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,1,0.1); */
-    timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,1,100);
-    if(verbose_level>=INFO)
-      if(timeout)
-	printf("Packed mapping timeout!\n");
-    /* give this mapping an exra credit (in general MPI application are made such that
-       neighbour process communicates more than distant ones) */
-    best_val /= 1.001;
-    /* best_val *= 1.001; */
-    if(verbose_level>=INFO)
-      printf("Packing computed\n");
-
-    /* perform a mapping trying to use group that cost less first*/
-    qsort(tab_group,n,sizeof(group_list_t*),group_list_asc);
-    last_best = best_val;
-    timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,10,0.1);
-    /* timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,n,0); */
-    if(verbose_level>=INFO){
-      if(timeout){
-	printf("Cost less first timeout!\n");
-      }else if(last_best>best_val){
-	printf("Cost less first Impoved solution\n");
-      }
-      printf("----\n");
-    }
-    /* perform a mapping trying to minimize the use of groups that cost a lot */
-    qsort(tab_group,n,sizeof(group_list_t*),group_list_dsc);
-    last_best=best_val;
-    timeout=select_independent_groups_by_largest_index(tab_group,n,arity,M,&best_val,best_selection,10,0.1);
-    if(verbose_level>=DEBUG){
-      if(timeout)
-	printf("Cost most last timeout!\n");
-      else if(last_best>best_val)
-	printf("Cost most last impoved solution\n");
-    }
-      if( n < 10000 ){
-      /* perform a mapping in the weighted degree order */
+        display_grouping(new_tab_node,M,arity,-1);
 
 
     if(verbose_level>=INFO)
-      printf("----WG----\n");
-
-      compute_weighted_degree(tab_group,n,arity);
-
-      if(verbose_level>=INFO)
-	printf("Weigted degree computed\n");
-
-      qsort(tab_group,n,sizeof(group_list_t*),weighted_degree_dsc);
-      /* display_tab_group(tab_group,n,arity);*/
-      last_best = best_val;
-      timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,10,0.1);
-      /* timeout = select_independent_groups(tab_group,n,arity,M,&best_val,best_selection,n,0); */
-
-      if(verbose_level>=DEBUG){
-	if(timeout)
-	  printf("WG timeout!\n");
-	else if(last_best>best_val)
-	  printf("WG impoved solution\n");
-      }
-    }
-
-    qsort(best_selection,M,sizeof(group_list_t*),group_list_id);
-
-    for( l = 0 ; l < M ; l++ ){
-      for( j = 0 ; j < arity ; j++ ){
-	new_tab_node[l].child[j]         = best_selection[l]->tab[j];
-	new_tab_node[l].child[j]->parent = &new_tab_node[l];
-      }
-      new_tab_node[l].arity = arity;
-
-      /* printf("arity=%d\n",new_tab_node[l].arity); */
-      update_val(cost_mat,&new_tab_node[l]);
-    }
-
-    delete_group_list((&list)->next);
-    FREE(best_selection);
-    FREE(tab_group);
-    FREE(cur_group);
-  }
-
-  if(cost_mat != aff_mat){
-    FREE_tab_double(cost_mat->mat,N);
-    FREE(cost_mat->sum_row);
-    FREE(cost_mat);
-  }
-
-  duration = TOC;
-
-  if(verbose_level>=INFO)
-    display_grouping(new_tab_node,M,arity,-1);
-
-
-  if(verbose_level>=INFO)
-    printf("Grouping done in %.4fs!\n",duration);
+        printf("Grouping done in %.4fs!\n",duration);
 }
 
 void complete_aff_mat(affinity_mat_t **aff_mat ,int N, int K)

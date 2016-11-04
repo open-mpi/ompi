@@ -41,7 +41,9 @@ struct mca_oob_tcp_listener_t {
     opal_list_item_t item;
     bool ev_active;
     opal_event_t event;
+    bool tcp6;
     int sd;
+    uint16_t port;
 };
 typedef struct mca_oob_tcp_listener_t mca_oob_tcp_listener_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_listener_t);

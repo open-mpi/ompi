@@ -95,7 +95,7 @@ opal_pointer_array_t ompi_info_f_to_c_table = {{0}};
  */
 int ompi_info_init(void)
 {
-    char val[MPI_MAX_INFO_VAL];
+    char val[OPAL_MAXHOSTNAMELEN];
     char *cptr;
 
     /* initialize table */
@@ -134,7 +134,7 @@ int ompi_info_init(void)
     }
 
     /* local host name */
-    gethostname(val, MPI_MAX_INFO_VAL);
+    gethostname(val, sizeof(val));
     ompi_info_set(&ompi_mpi_info_env.info, "host", val);
 
     /* architecture name */
@@ -275,7 +275,7 @@ int ompi_info_set (ompi_info_t *info, const char *key, const char *value)
 int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
                               mca_base_var_enum_t *var_enum)
 {
-    const char *string_value;
+    char *string_value;
     int ret;
 
     ret = var_enum->string_from_value (var_enum, value, &string_value);
@@ -283,7 +283,9 @@ int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
         return ret;
     }
 
-    return ompi_info_set (info, key, string_value);
+    ret = ompi_info_set (info, key, string_value);
+    free (string_value);
+    return ret;
 }
 
 

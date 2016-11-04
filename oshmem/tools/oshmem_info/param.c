@@ -3,7 +3,7 @@
  *                         All rights reserved.
  *
  * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -29,6 +29,7 @@
 #endif
 
 #include MCA_timer_IMPLEMENTATION_HEADER
+#include "opal/include/opal/version.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/printf.h"
@@ -266,17 +267,11 @@ void oshmem_info_do_config(bool want_all)
     }
 
 #if OMPI_RTE_ORTE
-    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
-                   "posix",
-                   OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                   OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                   OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
+                   "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #else
-    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, Event lib: yes)",
-                   "posix",
-                   OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                   OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                   OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
+                   "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #endif
 
     (void)asprintf(&ft_support, "%s (checkpoint thread: %s)",
@@ -289,6 +284,7 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
     opal_info_out("Configured on", "config:timestamp", OPAL_CONFIGURE_DATE);
     opal_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
+    opal_info_out("Configure command line", "config:cli", OPAL_CONFIGURE_CLI);
 
     opal_info_out("Built by", "build:user", OMPI_BUILD_USER);
     opal_info_out("Built on", "build:timestamp", OMPI_BUILD_DATE);

@@ -17,6 +17,7 @@
 #include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+#include "oshmem/info/info.h"
 #include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
@@ -177,66 +178,7 @@ int mca_memheap_base_select()
 
 static size_t _memheap_size(void)
 {
-    char *p;
-    long long factor = 1;
-    int idx;
-    long long size = 0;
-
-    p = getenv(OSHMEM_ENV_SYMMETRIC_SIZE);
-    if (!p) {
-        p = getenv(SHMEM_HEAP_SIZE);
-    } else {
-        char *p1 = getenv(SHMEM_HEAP_SIZE);
-        if (p1 && strcmp(p, p1)) {
-            MEMHEAP_ERROR("Found conflict between env '%s' and '%s'.\n",
-                          OSHMEM_ENV_SYMMETRIC_SIZE, SHMEM_HEAP_SIZE);
-            return 0;
-        }
-    }
-
-    if (!p) {
-        size = SIZE_IN_MEGA_BYTES(DEFAULT_SYMMETRIC_HEAP_SIZE);
-    } else if (1 == sscanf(p, "%lld%n", &size, &idx)) {
-        if (p[idx] != '\0') {
-            if (p[idx + 1] == '\0') {
-                if (p[idx] == 'k' || p[idx] == 'K') {
-                    factor = 1024;
-                } else if (p[idx] == 'm' || p[idx] == 'M') {
-                    factor = 1024 * 1024;
-                } else if (p[idx] == 'g' || p[idx] == 'G') {
-                    factor = 1024 * 1024 * 1024;
-                } else if (p[idx] == 't' || p[idx] == 'T') {
-                    factor = 1024UL * 1024UL * 1024UL * 1024UL;
-                } else {
-                    size = 0;
-                }
-            } else {
-                size = 0;
-            }
-        }
-    }
-
-    if (size <= 0) {
-        MEMHEAP_ERROR("Set incorrect symmetric heap size\n");
-        return 0;
-    } else {
-        char *tmp = p;
-
-        if(!p) {
-            asprintf(&tmp, "%lld", size);
-        }
-
-        if (tmp) {
-            setenv(OSHMEM_ENV_SYMMETRIC_SIZE, tmp, 1);
-            setenv(SHMEM_HEAP_SIZE, tmp, 1);
-        }
-
-        if (!p && tmp) {
-            free(tmp);
-        }
-    }
-
-    return (size_t) memheap_align(size * factor);
+    return (size_t) memheap_align(oshmem_shmem_info_env.symmetric_heap_size);
 }
 
 static memheap_context_t* _memheap_create(void)

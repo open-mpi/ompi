@@ -14,8 +14,8 @@
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -86,6 +86,7 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -164,6 +165,7 @@ static const char *orte_plm_rsh_shell_name[7] = {
  */
 static void set_handler_default(int sig);
 static orte_plm_rsh_shell_t find_shell(char *shell);
+static int launch_agent_setup(const char *agent, char *path);
 static void ssh_child(int argc, char **argv) __opal_attribute_noreturn__;
 static int rsh_probe(char *nodename,
                      orte_plm_rsh_shell_t *shell);
@@ -177,13 +179,58 @@ static void process_launch_list(int fd, short args, void *cbdata);
 static int num_in_progress=0;
 static opal_list_t launch_list;
 static opal_event_t launch_event;
+static char *rsh_agent_path=NULL;
+static char **rsh_agent_argv=NULL;
 
 /**
  * Init the module
  */
 static int rsh_init(void)
 {
+    char *tmp;
     int rc;
+
+    /* we were selected, so setup the launch agent */
+    if (mca_plm_rsh_component.using_qrsh) {
+        /* perform base setup for qrsh */
+        asprintf(&tmp, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
+        if (ORTE_SUCCESS != (rc = launch_agent_setup("qrsh", tmp))) {
+            ORTE_ERROR_LOG(rc);
+            free(tmp);
+            return rc;
+        }
+        free(tmp);
+        /* automatically add -inherit and grid engine PE related flags */
+        opal_argv_append_nosize(&rsh_agent_argv, "-inherit");
+        /* Don't use the "-noshell" flag as qrsh would have a problem
+         * swallowing a long command */
+        opal_argv_append_nosize(&rsh_agent_argv, "-nostdin");
+        opal_argv_append_nosize(&rsh_agent_argv, "-V");
+        if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
+            opal_argv_append_nosize(&rsh_agent_argv, "-verbose");
+            tmp = opal_argv_join(rsh_agent_argv, ' ');
+            opal_output_verbose(1, orte_plm_base_framework.framework_output,
+                                "%s plm:rsh: using \"%s\" for launching\n",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
+            free(tmp);
+        }
+    } else if(mca_plm_rsh_component.using_llspawn) {
+        /* perform base setup for llspawn */
+        if (ORTE_SUCCESS != (rc = launch_agent_setup("llspawn", NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        opal_output_verbose(1, orte_plm_base_framework.framework_output,
+                            "%s plm:rsh: using \"%s\" for launching\n",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            rsh_agent_path);
+    } else {
+        /* not using qrsh or llspawn - use MCA-specified agent */
+        if (ORTE_SUCCESS != (rc = launch_agent_setup(mca_plm_rsh_component.agent, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
 
     /* point to our launch command */
     if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_LAUNCH_DAEMONS,
@@ -215,6 +262,7 @@ static void rsh_wait_daemon(orte_proc_t *daemon, void* cbdata)
 {
     orte_job_t *jdata;
     orte_plm_rsh_caddy_t *caddy=(orte_plm_rsh_caddy_t*)cbdata;
+    char *rtmod;
 
     if (orte_orteds_term_ordered || orte_abnormal_term_ordered) {
         /* ignore any such report - it will occur if we left the
@@ -224,8 +272,8 @@ static void rsh_wait_daemon(orte_proc_t *daemon, void* cbdata)
         return;
     }
 
-    if (! WIFEXITED(daemon->exit_code) ||
-        ! WEXITSTATUS(daemon->exit_code) == 0) { /* if abnormal exit */
+    if (!WIFEXITED(daemon->exit_code) ||
+        WEXITSTATUS(daemon->exit_code) != 0) { /* if abnormal exit */
         /* if we are not the HNP, send a message to the HNP alerting it
          * to the failure
          */
@@ -238,7 +286,8 @@ static void rsh_wait_daemon(orte_proc_t *daemon, void* cbdata)
             buf = OBJ_NEW(opal_buffer_t);
             opal_dss.pack(buf, &(daemon->name.vpid), 1, ORTE_VPID);
             opal_dss.pack(buf, &daemon->exit_code, 1, OPAL_INT);
-            orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+            orte_rml.send_buffer_nb(orte_coll_conduit,
+                                    ORTE_PROC_MY_HNP, buf,
                                     ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
                                     orte_rml_send_callback, NULL);
             /* note that this daemon failed */
@@ -259,7 +308,8 @@ static void rsh_wait_daemon(orte_proc_t *daemon, void* cbdata)
             /* remove it from the routing table to ensure num_routes
              * returns the correct value
              */
-            orte_routed.route_lost(&daemon->name);
+            rtmod = orte_rml.get_routed(orte_coll_conduit);
+            orte_routed.route_lost(rtmod, &daemon->name);
             /* report that the daemon has failed so we can exit */
             ORTE_ACTIVATE_PROC_STATE(&daemon->name, ORTE_PROC_STATE_FAILED_TO_START);
         }
@@ -325,8 +375,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
     /*
      * Build argv array
      */
-    argv = opal_argv_copy(mca_plm_rsh_component.agent_argv);
-    argc = opal_argv_count(mca_plm_rsh_component.agent_argv);
+    argv = opal_argv_copy(rsh_agent_argv);
+    argc = opal_argv_count(argv);
     /* if any ssh args were provided, now is the time to add them */
     if (NULL != mca_plm_rsh_component.ssh_args) {
         char **ssh_argv;
@@ -560,17 +610,10 @@ static int setup_launch(int *argcptr, char ***argvptr,
      * Add the basic arguments to the orted command line, including
      * all debug options
      */
-    if (ORTE_PROC_IS_CM) {
-        orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                              NULL,
-                                              proc_vpid_index,
-                                              NULL);
-    } else {
-        orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                              "env",
-                                              proc_vpid_index,
-                                              NULL);
-    }
+    orte_plm_base_orted_append_basic_args(&argc, &argv,
+                                          "env",
+                                          proc_vpid_index,
+                                          NULL);
 
     /* ensure that only the ssh plm is selected on the remote daemon */
     opal_argv_append_nosize(&argv, "-"OPAL_MCA_CMD_LINE_ID);
@@ -676,7 +719,7 @@ static void ssh_child(int argc, char **argv)
      * about remote launches here
      */
     exec_argv = argv;
-    exec_path = mca_plm_rsh_component.agent_path;
+    exec_path = strdup(rsh_agent_path);
 
     /* Don't let ssh slurp all of our stdin! */
     fdin = open("/dev/null", O_RDWR);
@@ -743,6 +786,7 @@ static int remote_spawn(opal_buffer_t *launch)
     orte_job_t *daemons;
     opal_list_t coll;
     orte_namelist_t *child;
+    char *rtmod;
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:rsh: remote spawn called",
@@ -771,11 +815,12 @@ static int remote_spawn(opal_buffer_t *launch)
     }
 
     /* ensure the routing plan is updated */
-    orte_routed.update_routing_plan();
+    rtmod = orte_rml.get_routed(orte_coll_conduit);
+    orte_routed.update_routing_plan(rtmod);
 
     /* get the updated routing list */
     OBJ_CONSTRUCT(&coll, opal_list_t);
-    orte_routed.get_routing_list(&coll);
+    orte_routed.get_routing_list(rtmod, &coll);
 
     /* if I have no children, just return */
     if (0 == opal_list_get_size(&coll)) {
@@ -865,7 +910,8 @@ cleanup:
         buf = OBJ_NEW(opal_buffer_t);
         opal_dss.pack(buf, &target.vpid, 1, ORTE_VPID);
         opal_dss.pack(buf, &rc, 1, OPAL_INT);
-        orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+        orte_rml.send_buffer_nb(orte_coll_conduit,
+                                ORTE_PROC_MY_HNP, buf,
                                 ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
                                 orte_rml_send_callback, NULL);
     }
@@ -951,7 +997,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_plm_rsh_caddy_t *caddy;
     opal_list_t coll;
     char *username;
+    int port, *portptr;
     orte_namelist_t *child;
+    char *rtmod;
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
@@ -1118,7 +1166,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
         /* get the updated routing list */
         OBJ_CONSTRUCT(&coll, opal_list_t);
-        orte_routed.get_routing_list(&coll);
+        rtmod = orte_rml.get_routed(orte_coll_conduit);
+        orte_routed.get_routing_list(rtmod, &coll);
     }
 
     /* setup the launch */
@@ -1203,6 +1252,15 @@ static void launch_daemons(int fd, short args, void *cbdata)
         caddy = OBJ_NEW(orte_plm_rsh_caddy_t);
         caddy->argc = argc;
         caddy->argv = opal_argv_copy(argv);
+        /* insert the alternate port if any */
+        portptr = &port;
+        if (orte_get_attribute(&node->attributes, ORTE_NODE_PORT, (void**)&portptr, OPAL_INT)) {
+            char portname[16];
+            /* for the sake of simplicity, insert "-p" <port> in the duplicated argv */
+            opal_argv_insert_element(&caddy->argv, node_name_index1+1, "-p");
+            snprintf (portname, 15, "%d", port);
+            opal_argv_insert_element(&caddy->argv, node_name_index1+2, portname);
+        }
         caddy->daemon = node->daemon;
         OBJ_RETAIN(caddy->daemon);
         opal_list_append(&launch_list, &caddy->super);
@@ -1331,6 +1389,66 @@ static orte_plm_rsh_shell_t find_shell(char *shell)
     return ORTE_PLM_RSH_SHELL_UNKNOWN;
 }
 
+static int launch_agent_setup(const char *agent, char *path)
+{
+    char *bname;
+    int i;
+
+    /* if no agent was provided, then report not found */
+    if (NULL == mca_plm_rsh_component.agent && NULL == agent) {
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    /* search for the argv */
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                         "%s plm:rsh_setup on agent %s path %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == agent) ? mca_plm_rsh_component.agent : agent,
+                         (NULL == path) ? "NULL" : path));
+    rsh_agent_argv = orte_plm_rsh_search(agent, path);
+
+    if (0 == opal_argv_count(rsh_agent_argv)) {
+        /* nothing was found */
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    /* see if we can find the agent in the path */
+    rsh_agent_path = opal_path_findv(rsh_agent_argv[0], X_OK, environ, path);
+
+    if (NULL == rsh_agent_path) {
+        /* not an error - just report not found */
+        opal_argv_free(rsh_agent_argv);
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    bname = opal_basename(rsh_agent_argv[0]);
+    if (NULL != bname && 0 == strcmp(bname, "ssh")) {
+        /* if xterm option was given, add '-X', ensuring we don't do it twice */
+        if (NULL != orte_xterm) {
+            opal_argv_append_unique_nosize(&rsh_agent_argv, "-X", false);
+        } else if (0 >= opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
+            /* if debug was not specified, and the user didn't explicitly
+             * specify X11 forwarding/non-forwarding, add "-x" if it
+             * isn't already there (check either case)
+             */
+            for (i = 1; NULL != rsh_agent_argv[i]; ++i) {
+                if (0 == strcasecmp("-x", rsh_agent_argv[i])) {
+                    break;
+                }
+            }
+            if (NULL == rsh_agent_argv[i]) {
+                opal_argv_append_nosize(&rsh_agent_argv, "-x");
+            }
+        }
+    }
+    if (NULL != bname) {
+        free(bname);
+    }
+
+    /* the caller can append any additional argv's they desire */
+    return ORTE_SUCCESS;
+}
+
 /**
  * Check the Shell variable and system type on the specified node
  */
@@ -1454,15 +1572,10 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
         struct passwd *p;
 
         p = getpwuid(getuid());
-        if( NULL == p ) {
-            /* This user is unknown to the system. Therefore, there is no reason we
-             * spawn whatsoever in his name. Give up with a HUGE error message.
-             */
-            orte_show_help( "help-plm-rsh.txt", "unknown-user", true, (int)getuid() );
-            return ORTE_ERR_FATAL;
+        if( NULL != p ) {
+            param = p->pw_shell;
+            local_shell = find_shell(p->pw_shell);
         }
-        param = p->pw_shell;
-        local_shell = find_shell(p->pw_shell);
     }
 #endif
 

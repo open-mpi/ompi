@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,13 +50,11 @@
 #include "orte/mca/odls/odls_types.h"
 
 #include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_setup.h"
 #include "iof_hnp.h"
 
 /* LOCAL FUNCTIONS */
 static void stdin_write_handler(int fd, short event, void *cbdata);
-
-static void
-orte_iof_hnp_exception_handler(orte_process_name_t* peer, orte_rml_exception_t reason);
 
 /* API FUNCTIONS */
 static int init(void);
@@ -92,8 +91,6 @@ orte_iof_base_module_t orte_iof_hnp_module = {
 /* Initialize the module */
 static int init(void)
 {
-    int rc;
-
     /* post non-blocking recv to catch forwarded IO from
      * the orteds
      */
@@ -103,13 +100,6 @@ static int init(void)
                             orte_iof_hnp_recv,
                             NULL);
 
-    if (ORTE_SUCCESS != (rc = orte_rml.add_exception_handler(orte_iof_hnp_exception_handler))) {
-        ORTE_ERROR_LOG(rc);
-        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
-        return rc;
-    }
-
-    OBJ_CONSTRUCT(&mca_iof_hnp_component.sinks, opal_list_t);
     OBJ_CONSTRUCT(&mca_iof_hnp_component.procs, opal_list_t);
     mca_iof_hnp_component.stdinev = NULL;
 
@@ -136,14 +126,10 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
 {
     orte_job_t *jdata;
     orte_proc_t *proc;
-    orte_iof_sink_t *sink;
-    orte_iof_proc_t *proct;
-    opal_list_item_t *item;
-    int flags;
-    char *outfile;
-    int fdout;
-    int np, numdigs;
-    orte_ns_cmp_bitmask_t mask;
+    orte_iof_proc_t *proct, *pptr;
+    int flags, rc;
+    orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
+    orte_iof_sink_t *stdoutsink=NULL, *stderrsink=NULL, *stddiagsink=NULL;
 
     /* don't do this if the dst vpid is invalid or the fd is negative! */
     if (ORTE_VPID_INVALID == dst_name->vpid || fd < 0) {
@@ -155,6 +141,20 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
 
+    /* do we already have this process in our list? */
+    OPAL_LIST_FOREACH(proct, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, dst_name)) {
+            /* found it */
+            goto SETUP;
+        }
+    }
+    /* if we get here, then we don't yet have this proc in our list */
+    proct = OBJ_NEW(orte_iof_proc_t);
+    proct->name.jobid = dst_name->jobid;
+    proct->name.vpid = dst_name->vpid;
+    opal_list_append(&mca_iof_hnp_component.procs, &proct->super);
+
+  SETUP:
     if (!(src_tag & ORTE_IOF_STDIN)) {
         /* set the file descriptor to non-blocking - do this before we setup
          * and activate the read event in case it fires right away
@@ -166,65 +166,30 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             flags |= O_NONBLOCK;
             fcntl(fd, F_SETFL, flags);
         }
-        /* do we already have this process in our list? */
-        for (item = opal_list_get_first(&mca_iof_hnp_component.procs);
-             item != opal_list_get_end(&mca_iof_hnp_component.procs);
-             item = opal_list_get_next(item)) {
-            proct = (orte_iof_proc_t*)item;
-            mask = ORTE_NS_CMP_ALL;
-            if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, dst_name)) {
-                /* found it */
-                goto SETUP;
-            }
+        /* get the local jobdata for this proc */
+        if (NULL == (jdata = orte_get_job_data_object(proct->name.jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
         }
-        /* if we get here, then we don't yet have this proc in our list */
-        proct = OBJ_NEW(orte_iof_proc_t);
-        proct->name.jobid = dst_name->jobid;
-        proct->name.vpid = dst_name->vpid;
-        opal_list_append(&mca_iof_hnp_component.procs, &proct->super);
-        /* see if we are to output to a file */
-        if (NULL != orte_output_filename) {
-            /* get the jobdata for this proc */
-            if (NULL == (jdata = orte_get_job_data_object(dst_name->jobid))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                return ORTE_ERR_NOT_FOUND;
-            }
-            np = jdata->num_procs / 10;
-            /* determine the number of digits required for max vpid */
-            numdigs = 1;
-            while (np > 0) {
-                numdigs++;
-                np = np / 10;
-            }
-            /* construct the filename */
-            asprintf(&outfile, "%s.%d.%0*lu", orte_output_filename,
-                     (int)ORTE_LOCAL_JOBID(proct->name.jobid),
-                     numdigs, (unsigned long)proct->name.vpid);
-            /* create the file */
-            fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
-            free(outfile);
-            if (fdout < 0) {
-                /* couldn't be opened */
-                ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
-                return ORTE_ERR_FILE_OPEN_FAILURE;
-            }
-            /* define a sink to that file descriptor */
-            ORTE_IOF_SINK_DEFINE(&sink, dst_name, fdout, ORTE_IOF_STDOUTALL,
-                                 orte_iof_base_write_handler,
-                                 &mca_iof_hnp_component.sinks);
+        /* setup any requested output files */
+        if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jdata, proct, &stdoutsink, &stderrsink, &stddiagsink))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
 
-    SETUP:
         /* define a read event and activate it */
         if (src_tag & ORTE_IOF_STDOUT) {
-            ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, ORTE_IOF_STDOUT,
+            ORTE_IOF_READ_EVENT(&proct->revstdout, proct, fd, ORTE_IOF_STDOUT,
                                 orte_iof_hnp_read_local_handler, false);
+            proct->revstdout->sink = stdoutsink;
         } else if (src_tag & ORTE_IOF_STDERR) {
-            ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, ORTE_IOF_STDERR,
+            ORTE_IOF_READ_EVENT(&proct->revstderr, proct, fd, ORTE_IOF_STDERR,
                                 orte_iof_hnp_read_local_handler, false);
+            proct->revstderr->sink = stderrsink;
         } else if (src_tag & ORTE_IOF_STDDIAG) {
-            ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, ORTE_IOF_STDDIAG,
+            ORTE_IOF_READ_EVENT(&proct->revstddiag, proct, fd, ORTE_IOF_STDDIAG,
                                 orte_iof_hnp_read_local_handler, false);
+            proct->revstddiag->sink = stddiagsink;
         }
         /* if -all- of the readevents for this proc have been defined, then
          * activate them. Otherwise, we can think that the proc is complete
@@ -232,6 +197,19 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          * been defined!
          */
         if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
+            if (proct->copy) {
+                /* see if there are any wildcard subscribers out there that
+                 * apply to us */
+                OPAL_LIST_FOREACH(pptr, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
+                    if (dst_name->jobid == pptr->name.jobid &&
+                        ORTE_VPID_WILDCARD == pptr->name.vpid &&
+                        NULL != pptr->subscribers) {
+                        OBJ_RETAIN(pptr->subscribers);
+                        proct->subscribers = pptr->subscribers;
+                        break;
+                    }
+                }
+            }
             proct->revstdout->active = true;
             opal_event_add(proct->revstdout->ev, 0);
             proct->revstderr->active = true;
@@ -247,11 +225,10 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
      */
     if (ORTE_VPID_WILDCARD == dst_name->vpid) {
         /* if wildcard, define a sink with that info so it gets sent out */
-        ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, ORTE_IOF_STDIN,
-                             stdin_write_handler,
-                             &mca_iof_hnp_component.sinks);
-        sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-        sink->daemon.vpid = ORTE_VPID_WILDCARD;
+        ORTE_IOF_SINK_DEFINE(&proct->stdinev, dst_name, -1, ORTE_IOF_STDIN,
+                             stdin_write_handler);
+        proct->stdinev->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+        proct->stdinev->daemon.vpid = ORTE_VPID_WILDCARD;
      } else {
         /* no - lookup the proc's daemon and set that into sink */
         if (NULL == (jdata = orte_get_job_data_object(dst_name->jobid))) {
@@ -264,11 +241,10 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         }
         /* if it is me, then don't set this up - we'll get it on the pull */
         if (ORTE_PROC_MY_NAME->vpid != proc->node->daemon->name.vpid) {
-            ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, ORTE_IOF_STDIN,
-                                 stdin_write_handler,
-                                 &mca_iof_hnp_component.sinks);
-            sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-            sink->daemon.vpid = proc->node->daemon->name.vpid;
+            ORTE_IOF_SINK_DEFINE(&proct->stdinev, dst_name, -1, ORTE_IOF_STDIN,
+                                 stdin_write_handler);
+            proct->stdinev->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+            proct->stdinev->daemon.vpid = proc->node->daemon->name.vpid;
         }
     }
 
@@ -311,7 +287,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * be dropped upon receipt at the local daemon
              */
             ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
-                                dst_name, fd, ORTE_IOF_STDIN,
+                                proct, fd, ORTE_IOF_STDIN,
                                 orte_iof_hnp_read_local_handler, false);
 
             /* check to see if we want the stdin read event to be
@@ -327,7 +303,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * and activate it
              */
             ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
-                                dst_name, fd, ORTE_IOF_STDIN,
+                                proct, fd, ORTE_IOF_STDIN,
                                 orte_iof_hnp_read_local_handler, true);
         }
     }
@@ -344,7 +320,8 @@ static int hnp_pull(const orte_process_name_t* dst_name,
                     orte_iof_tag_t src_tag,
                     int fd)
 {
-    orte_iof_sink_t *sink;
+    orte_iof_proc_t *proct;
+    orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
     int flags;
 
     /* this is a local call - only stdin is supported */
@@ -368,11 +345,24 @@ static int hnp_pull(const orte_process_name_t* dst_name,
         fcntl(fd, F_SETFL, flags);
     }
 
-    ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, ORTE_IOF_STDIN,
-                         stdin_write_handler,
-                         &mca_iof_hnp_component.sinks);
-    sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-    sink->daemon.vpid = ORTE_PROC_MY_NAME->vpid;
+    /* do we already have this process in our list? */
+    OPAL_LIST_FOREACH(proct, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, dst_name)) {
+            /* found it */
+            goto SETUP;
+        }
+    }
+    /* if we get here, then we don't yet have this proc in our list */
+    proct = OBJ_NEW(orte_iof_proc_t);
+    proct->name.jobid = dst_name->jobid;
+    proct->name.vpid = dst_name->vpid;
+    opal_list_append(&mca_iof_hnp_component.procs, &proct->super);
+
+  SETUP:
+    ORTE_IOF_SINK_DEFINE(&proct->stdinev, dst_name, fd, ORTE_IOF_STDIN,
+                         stdin_write_handler);
+    proct->stdinev->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+    proct->stdinev->daemon.vpid = ORTE_PROC_MY_NAME->vpid;
 
     return ORTE_SUCCESS;
 }
@@ -384,27 +374,44 @@ static int hnp_pull(const orte_process_name_t* dst_name,
 static int hnp_close(const orte_process_name_t* peer,
                      orte_iof_tag_t source_tag)
 {
-    opal_list_item_t *item, *next_item;
-    orte_iof_sink_t* sink;
-    orte_ns_cmp_bitmask_t mask;
+    orte_iof_proc_t* proct;
+    orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
+    int cnt = 0;
 
-    for(item = opal_list_get_first(&mca_iof_hnp_component.sinks);
-        item != opal_list_get_end(&mca_iof_hnp_component.sinks);
-        item = next_item ) {
-        sink = (orte_iof_sink_t*)item;
-        next_item = opal_list_get_next(item);
-
-        mask = ORTE_NS_CMP_ALL;
-
-        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &sink->name, peer) &&
-           (source_tag & sink->tag)) {
-
-            /* No need to delete the event or close the file
-             * descriptor - the destructor will automatically
-             * do it for us.
-             */
-            opal_list_remove_item(&mca_iof_hnp_component.sinks, item);
-            OBJ_RELEASE(item);
+    OPAL_LIST_FOREACH(proct, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, peer)) {
+            if (ORTE_IOF_STDIN & source_tag) {
+                if (NULL != proct->stdinev) {
+                    OBJ_RELEASE(proct->stdinev);
+                }
+                ++cnt;
+            }
+            if (ORTE_IOF_STDOUT & source_tag) {
+                if (NULL != proct->revstdout) {
+                    orte_iof_base_static_dump_output(proct->revstdout);
+                    OBJ_RELEASE(proct->revstdout);
+                }
+                ++cnt;
+            }
+            if (ORTE_IOF_STDERR & source_tag) {
+                if (NULL != proct->revstderr) {
+                    orte_iof_base_static_dump_output(proct->revstderr);
+                    OBJ_RELEASE(proct->revstderr);
+                }
+                ++cnt;
+            }
+            if (ORTE_IOF_STDDIAG & source_tag) {
+                if (NULL != proct->revstddiag) {
+                    orte_iof_base_static_dump_output(proct->revstddiag);
+                    OBJ_RELEASE(proct->revstddiag);
+                }
+                ++cnt;
+            }
+            /* if we closed them all, then remove this proc */
+            if (4 == cnt) {
+                opal_list_remove_item(&mca_iof_hnp_component.procs, &proct->super);
+                OBJ_RELEASE(proct);
+            }
             break;
         }
     }
@@ -413,19 +420,18 @@ static int hnp_close(const orte_process_name_t* peer,
 
 static int finalize(void)
 {
-    opal_list_item_t* item;
-    orte_iof_write_output_t *output;
     orte_iof_write_event_t *wev;
-    int num_written;
+    orte_iof_proc_t *proct;
     bool dump;
+    orte_iof_write_output_t *output;
+    int num_written;
 
     /* check if anything is still trying to be written out */
     wev = orte_iof_base.iof_write_stdout->wev;
     if (!opal_list_is_empty(&wev->outputs)) {
         dump = false;
         /* make one last attempt to write this out */
-        while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
-            output = (orte_iof_write_output_t*)item;
+        while (NULL != (output = (orte_iof_write_output_t*)opal_list_remove_first(&wev->outputs))) {
             if (!dump) {
                 num_written = write(wev->fd, output->data, output->numbytes);
                 if (num_written < output->numbytes) {
@@ -442,8 +448,7 @@ static int finalize(void)
         if (!opal_list_is_empty(&wev->outputs)) {
             dump = false;
             /* make one last attempt to write this out */
-            while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
-                output = (orte_iof_write_output_t*)item;
+            while (NULL != (output = (orte_iof_write_output_t*)opal_list_remove_first(&wev->outputs))) {
                 if (!dump) {
                     num_written = write(wev->fd, output->data, output->numbytes);
                     if (num_written < output->numbytes) {
@@ -456,6 +461,21 @@ static int finalize(void)
         }
     }
 
+    /* cycle thru the procs and ensure all their output was delivered
+     * if they were writing to files */
+    while (NULL != (proct = (orte_iof_proc_t*)opal_list_remove_first(&mca_iof_hnp_component.procs))) {
+        if (NULL != proct->revstdout) {
+            orte_iof_base_static_dump_output(proct->revstdout);
+        }
+        if (NULL != proct->revstderr) {
+            orte_iof_base_static_dump_output(proct->revstderr);
+        }
+        if (NULL != proct->revstddiag) {
+            orte_iof_base_static_dump_output(proct->revstddiag);
+        }
+        OBJ_RELEASE(proct);
+    }
+    OBJ_DESTRUCT(&mca_iof_hnp_component.procs);
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
 
     return ORTE_SUCCESS;
@@ -578,38 +598,4 @@ CHECK:
             opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
         }
     }
-}
-
-/**
- * Callback when peer is disconnected
- */
-
-static void
-orte_iof_hnp_exception_handler(orte_process_name_t* peer, orte_rml_exception_t reason)
-{
-#if 0
-    orte_iof_base_endpoint_t *endpoint;
-    opal_output_verbose(1, orte_iof_base_framework.framework_output,
-                        "iof svc exception handler! %s\n",
-                        ORTE_NAME_PRINT((orte_process_name_t*)peer));
-
-    /* If we detect an exception on the RML connection to a peer,
-     delete all of its subscriptions and publications.  Note that
-     exceptions can be detected during a normal RML shutdown; they
-     are recoverable events (no need to abort). */
-    orte_iof_hnp_sub_delete_all(peer);
-    orte_iof_hnp_pub_delete_all(peer);
-    opal_output_verbose(1, orte_iof_base_framework.framework_output, "deleted all pubs and subs\n");
-
-    /* Find any streams on any endpoints for this peer and close them */
-    while (NULL !=
-           (endpoint = orte_iof_base_endpoint_match(peer, ORTE_NS_CMP_ALL,
-                                                    ORTE_IOF_ANY))) {
-        orte_iof_base_endpoint_closed(endpoint);
-
-        /* Delete the endpoint that we just matched */
-        orte_iof_base_endpoint_delete(peer, ORTE_NS_CMP_ALL, ORTE_IOF_ANY);
-    }
-#endif
-    opal_output_verbose(1, orte_iof_base_framework.framework_output, "done with exception handler\n");
 }

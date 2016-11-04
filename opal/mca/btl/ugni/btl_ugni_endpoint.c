@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -17,7 +17,7 @@ static void mca_btl_ugni_ep_construct (mca_btl_base_endpoint_t *ep)
 {
     memset ((char *) ep + sizeof(ep->super), 0, sizeof (*ep) - sizeof (ep->super));
     OBJ_CONSTRUCT(&ep->frag_wait_list, opal_list_t);
-    OBJ_CONSTRUCT(&ep->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ep->lock, opal_recursive_mutex_t);
 }
 
 static void mca_btl_ugni_ep_destruct (mca_btl_base_endpoint_t *ep)
@@ -81,6 +81,7 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
     }
 
     ep->state = MCA_BTL_UGNI_EP_STATE_INIT;
+    (void) opal_atomic_add_64 (&ep->btl->connected_peer_count, -11);
 
     return OPAL_SUCCESS;
 }
@@ -152,15 +153,18 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 
     ep->rmt_irq_mem_hndl = ep->remote_attr.rmt_irq_mem_hndl;
     ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTED;
+    (void) opal_atomic_add_64 (&ep->btl->connected_peer_count, 1);
 
     /* send all pending messages */
     BTL_VERBOSE(("endpoint connected. posting %u sends", (unsigned int) opal_list_get_size (&ep->frag_wait_list)));
 
     rc = mca_btl_ugni_progress_send_wait_list (ep);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        ep->wait_listed = true;
         OPAL_THREAD_LOCK(&ep->btl->ep_wait_list_lock);
-        opal_list_append (&ep->btl->ep_wait_list, &ep->super);
+        if (false == ep->wait_listed) {
+            opal_list_append (&ep->btl->ep_wait_list, &ep->super);
+            ep->wait_listed = true;
+        }
         OPAL_THREAD_UNLOCK(&ep->btl->ep_wait_list_lock);
     }
 
@@ -198,11 +202,17 @@ int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
 
     if (GNI_SMSG_TYPE_INVALID == ep->remote_attr.smsg_attr.msg_type) {
         /* use datagram to exchange connection information with the remote peer */
-        rc = mca_btl_ugni_directed_ep_post (ep);
-        if (OPAL_SUCCESS == rc) {
-            rc = OPAL_ERR_RESOURCE_BUSY;
+        if (!ep->dg_posted) {
+            rc = mca_btl_ugni_directed_ep_post (ep);
+            if (OPAL_SUCCESS == rc) {
+                ep->dg_posted = true;
+                rc = OPAL_ERR_RESOURCE_BUSY;
+            }
+
+            return rc;
         }
-        return rc;
+
+        return OPAL_SUCCESS;
     }
 
     return mca_btl_ugni_ep_connect_finish (ep);

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -44,7 +44,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     opal_list_item_t* item;
     orte_std_cntr_t num_nodes;
     int rc, i;
-    orte_node_t *node, *hnp_node;
+    orte_node_t *node, *hnp_node, *nptr;
     char *ptr;
     bool hnp_alone = true;
     orte_attribute_t *kv;
@@ -61,10 +61,16 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)num_nodes));
 
+    /* mark the job as being a large-cluster sim if that was requested */
+    if (1 < orte_ras_base.multiplier) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_MULTI_DAEMON_SIM,
+                           ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+    }
+
     /* set the size of the global array - this helps minimize time
      * spent doing realloc's
      */
-    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(orte_node_pool, num_nodes))) {
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(orte_node_pool, num_nodes * orte_ras_base.multiplier))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -139,6 +145,12 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             }
             /* don't keep duplicate copy */
             OBJ_RELEASE(node);
+            /* create copies, if required */
+            for (i=1; i < orte_ras_base.multiplier; i++) {
+                opal_dss.copy((void**)&node, hnp_node, ORTE_NODE);
+                ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
+                node->index = opal_pointer_array_add(orte_node_pool, node);
+            }
         } else {
             /* insert the object onto the orte_nodes global array */
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
@@ -166,7 +178,11 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             }
             /* indicate the HNP is not alone */
             hnp_alone = false;
-        }
+            for (i=1; i < orte_ras_base.multiplier; i++) {
+                opal_dss.copy((void**)&nptr, node, ORTE_NODE);
+                nptr->index = opal_pointer_array_add(orte_node_pool, nptr);
+            }
+       }
     }
 
     /* if we didn't find any fqdn names in the allocation, then

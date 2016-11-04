@@ -49,15 +49,15 @@ int ompi_coll_libnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, c
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
   NBC_Schedule *schedule;
 
-  res = MPI_Type_extent (stype, &sndext);
+  res = ompi_datatype_type_extent (stype, &sndext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
-  res = MPI_Type_extent (rtype, &rcvext);
+  res = ompi_datatype_type_extent (rtype, &rcvext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 

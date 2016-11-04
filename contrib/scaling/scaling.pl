@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2012      Los Alamos National Security, Inc.
 #                         All rights reserved.
-# Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
 
 use strict;
 use Getopt::Long;
@@ -23,16 +23,13 @@ my $myresults;
 my @csvrow;
 my $timecmd = "time";
 
-my @tests = qw(/bin/true /usr/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op);
-my @options = ("", "", , "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1");
-my @availablestarters = qw(mpirun orte-submit srun aprun orterun);
-my @options = ("-npernode 1 --novm",
-               "--hnp file:dvm_uri -pernode",
-               "--distribution=cyclic",
-               "-N 1",
-               "-npernode 1 --novm");
-my @starters = ();
-my @starteroptions = ();
+my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
+my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
+my @starters = qw(mpirun orterun srun aprun);
+my @starteroptions = ("-npernode 1 --novm",
+                      "--hnp file:dvm_uri -pernode",
+                      "--distribution=cyclic",
+                      "-N 1");
 
 # Set to true if the script should merely print the cmds
 # it would run, but don't run them
@@ -118,6 +115,7 @@ while ($idx <= $#availablestarters) {
             last;
         }
     }
+<<<<<<< HEAD
     if ($exists) {
         if ($usedvm && $starter eq "orte-submit") {
             # push this one to the list
@@ -136,29 +134,71 @@ while ($idx <= $#availablestarters) {
             push @starters, $starter;
             push @starteroptions, $options[$idx];
         }
+||||||| merged common ancestors
+    unless ($exists) {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usedvm && $starter ne "orte-submit") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usesrun && $starter ne "srun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($useaprun && $starter ne "aprun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usempirun && (($starter ne "mpirun") && ($starter ne "orterun"))) {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+=======
+    unless ($exists) {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usedvm && $starter ne "orterun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usesrun && $starter ne "srun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($useaprun && $starter ne "aprun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usempirun && $starter ne "mpirun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+>>>>>>> da0c873e1432e684ffd42a23bbb81d9d47fee2b8
     }
     $idx = $idx + 1;
-}
-
-# if both mpirun and orterun are present, then
-# we don't need to run both as they are just
-# symlinks to each other
-$exists = 0;
-foreach my $path (@path) {
-    if ( -x "$path/mpirun") {
-        $idx=0;
-        foreach $starter (@starters) {
-            if ($starter eq "orterun") {
-                splice @starters, $idx, 1;
-                splice @starteroptions, $idx, 1;
-                last;
-            }
-            $idx = $idx + 1;
-        }
-        if ($exists) {
-            last;
-        }
-    }
 }
 
 # bozo check
@@ -294,7 +334,7 @@ sub runcmd()
 
 foreach $starter (@starters) {
     # if we are going to use the dvm, then we
-    if ($starter eq "orte-submit") {
+    if ($starter eq "orterun") {
         # need to start it
         if (-e "dvm_uri") {
             system("rm -f dvm_uri");
@@ -358,7 +398,7 @@ foreach $starter (@starters) {
     }
     if ($havedvm) {
         if (!$SHOWME) {
-            $cmd = "orte-submit --hnp file:dvm_uri --terminate";
+            $cmd = "orterun --hnp file:dvm_uri --terminate";
             system($cmd);
         }
         if (-e "dvm_uri") {

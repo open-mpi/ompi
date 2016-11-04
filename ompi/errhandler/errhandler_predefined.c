@@ -148,7 +148,7 @@ void ompi_mpi_errors_return_win_handler(struct ompi_win_t **win,
 
 static void out(char *str, char *arg)
 {
-    if (ompi_mpi_initialized && !ompi_mpi_finalized) {
+    if (ompi_rte_initialized && !ompi_mpi_finalized) {
         if (NULL != arg) {
             opal_output(0, str, arg);
         } else {
@@ -179,8 +179,6 @@ static void backend_fatal_aggregate(char *type,
 {
     char *arg, *prefix, *err_msg = "Unknown error";
     bool err_msg_need_free = false;
-
-    assert(ompi_mpi_initialized && !ompi_mpi_finalized);
 
     arg = va_arg(arglist, char*);
     va_end(arglist);
@@ -328,9 +326,8 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
                           char *name, int *error_code,
                           va_list arglist)
 {
-    /* We only want aggregation after MPI_INIT and before
-       MPI_FINALIZE. */
-    if (ompi_mpi_initialized && !ompi_mpi_finalized) {
+    /* We only want aggregation while the rte is initialized */
+    if (ompi_rte_initialized) {
         backend_fatal_aggregate(type, comm, name, error_code, arglist);
     } else {
         backend_fatal_no_aggregate(type, comm, name, error_code, arglist);

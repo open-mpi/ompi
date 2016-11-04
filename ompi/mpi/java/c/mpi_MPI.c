@@ -10,10 +10,13 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +65,13 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
+#endif
 #include <poll.h>
+#ifdef HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
 
 #include "opal/util/output.h"
 #include "opal/datatype/opal_convertor.h"
@@ -124,11 +132,35 @@ OBJ_CLASS_INSTANCE(ompi_java_buffer_t,
  */
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
-    libmpi = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
+    // Ensure that PSM signal hijacking is disabled *before* loading
+    // the library (see comment in the function for more detail).
+    opal_init_psm();
 
-    if(libmpi == NULL)
+    libmpi = dlopen("lib" OMPI_LIBMPI_NAME "." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
+
+#if defined(HAVE_DL_INFO) && defined(HAVE_LIBGEN_H)
+    /*
+     * OS X El Capitan does not propagate DYLD_LIBRARY_PATH to children any more
+     * so if previous dlopen failed, try to open libmpi in the same directory
+     * than the current libmpi_java
+     */
+    if(NULL == libmpi) {
+        Dl_info info;
+        if(0 != dladdr((void *)JNI_OnLoad, &info)) {
+            char libmpipath[OPAL_PATH_MAX];
+            char *libmpijavapath = strdup(info.dli_fname);
+            if (NULL != libmpijavapath) {
+                snprintf(libmpipath, OPAL_PATH_MAX-1, "%s/lib" OMPI_LIBMPI_NAME "." OPAL_DYN_LIB_SUFFIX, dirname(libmpijavapath));
+                free(libmpijavapath);
+                libmpi = dlopen(libmpipath, RTLD_NOW | RTLD_GLOBAL);
+            }
+        }
+    }
+#endif
+
+    if(NULL == libmpi)
     {
-        fprintf(stderr, "Java bindings failed to load libmpi: %s\n",dlerror());
+        fprintf(stderr, "Java bindings failed to load lib" OMPI_LIBMPI_NAME ": %s\n",dlerror());
         exit(1);
     }
 
@@ -285,7 +317,14 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
     }
 
     int rc = MPI_Init(&len, &sargs);
-    ompi_java_exceptionCheck(env, rc);
+    
+    if(ompi_java_exceptionCheck(env, rc)) {
+        for(i = 0; i < len; i++)
+            free (sargs[i]);
+        free(sargs);
+        return NULL;
+    }
+
     mca_base_var_register("ompi", "mpi", "java", "eager",
                           "Java buffers eager size",
                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -329,7 +368,13 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
 
     int provided;
     int rc = MPI_Init_thread(&len, &sargs, required, &provided);
-    ompi_java_exceptionCheck(env, rc);
+    
+    if(ompi_java_exceptionCheck(env, rc)) {
+        for(i = 0; i < len; i++)
+            free (sargs[i]);
+        free(sargs);
+        return -1;
+    }
 
     findClasses(env);
     initFreeList();
@@ -1095,8 +1140,22 @@ void ompi_java_releasePtrArray(JNIEnv *env, jlongArray array,
     (*env)->ReleaseLongArrayElements(env, array, jptr, 0);
 }
 
+/* This method checks whether an MPI or JNI exception has occurred.
+ * If an exception occurs, the C code will continue running.  Once
+ * code execution returns to Java code, an exception is immediately
+ * thrown.  Since an exception has occurred somewhere in the C code,
+ * the object that is returned from C may not be valid.  This is not
+ * an issue, however, as the assignment opperation will not be
+ * executed.  The results of this method need not be checked if the
+ * only following code cleans up memory and then returns to Java.
+ * If existing objects are changed after a call to this method, the
+ * results need to be checked and, if an error has occurred, the
+ * code should instead cleanup any memory and return.
+ */
 jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
 {
+    jboolean jni_exception;
+
     if (rc < 0) {
         /* handle ompi error code */
         rc = ompi_errcode_get_mpi_code (rc);
@@ -1104,16 +1163,13 @@ jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
          * all Open MPI MPI error codes should be > 0. */
         assert (rc >= 0);
     }
+    jni_exception = (*env)->ExceptionCheck(env);
 
-    if(MPI_SUCCESS == rc)
+    if(MPI_SUCCESS == rc && JNI_FALSE == jni_exception)
     {
         return JNI_FALSE;
     }
-    else if((*env)->ExceptionCheck(env))
-    {
-        return JNI_TRUE;
-    }
-    else
+    else if(MPI_SUCCESS != rc)
     {
         int     errClass = ompi_mpi_errcode_get_class(rc);
         char    *message = ompi_mpi_errnum_get_string(rc);
@@ -1127,6 +1183,8 @@ jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
         (*env)->DeleteLocalRef(env, jmessage);
         return JNI_TRUE;
     }
+    /* If we get here, a JNI error has occurred. */
+    return JNI_TRUE;
 }
 
 void* ompi_java_attrSet(JNIEnv *env, jbyteArray jval)

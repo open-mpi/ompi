@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -36,7 +36,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/mca.h"
 #include "ompi/mca/fs/fs.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
 extern int mca_fs_pvfs2_priority;
 extern int mca_fs_pvfs2_stripe_size;
@@ -48,7 +48,7 @@ BEGIN_C_DECLS
 struct mca_fs_pvfs2_s {
     PVFS_credentials credentials;
     PVFS_object_ref object_ref;
-} mca_fs_pvfs2_s;
+};
 typedef struct mca_fs_pvfs2_s mca_fs_pvfs2;
 
 int mca_fs_pvfs2_component_init_query(bool enable_progress_threads,

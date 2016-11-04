@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -130,16 +130,16 @@ int orte_util_check_context_app(orte_app_context_t *context, char **env)
         bproc, for example, does not use the fork pls for launching, so
         it does this same work over there. */
 
-    tmp = opal_basename(context->argv[0]);
-    if (strlen(tmp) == strlen(context->argv[0])) {
+    tmp = opal_basename(context->app);
+    if (strlen(tmp) == strlen(context->app)) {
         /* If this is a naked executable -- no relative or absolute
         pathname -- then search the PATH for it */
         free(tmp);
-        tmp = opal_path_findv(context->argv[0], X_OK, env, context->cwd);
+        tmp = opal_path_findv(context->app, X_OK, env, context->cwd);
         if (NULL == tmp) {
             return ORTE_ERR_EXE_NOT_FOUND;
         }
-        if (NULL != context->app) free(context->app);
+        free(context->app);
         context->app = tmp;
     } else {
         free(tmp);

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,15 +40,19 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/base/base.h"
+#include "opal/mca/rcache/rcache.h"
+
+#include "btl_usnic_compat.h"
+
+#if RCACHE_VERSION < 30
 #include "opal/mca/mpool/grdma/mpool_grdma.h"
+#endif
 #else
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #endif
-
-#include "btl_usnic_compat.h"
 
 BEGIN_C_DECLS
 
@@ -56,6 +63,10 @@ BEGIN_C_DECLS
  * at other times as needed or as tuning dictates.
  */
 extern uint64_t opal_btl_usnic_ticks;
+
+/* Lock for MPU_THREAD_MULTIPLE support */
+extern opal_recursive_mutex_t btl_usnic_lock;
+
 static inline uint64_t
 get_nsec(void)
 {
@@ -153,8 +164,16 @@ typedef struct opal_btl_usnic_component_t {
     /** list of usnic proc structures */
     opal_list_t usnic_procs;
 
+#if RCACHE_VERSION == 30
+    /** memory pool hints */
+    char* usnic_mpool_hints;
+
+    /** registration cache name */
+    char *usnic_rcache_name;
+#else
     /** name of memory pool */
     char* usnic_mpool_name;
+#endif
 
     char *if_include;
     char *if_exclude;
@@ -180,6 +199,9 @@ typedef struct opal_btl_usnic_component_t {
 
     /** max completion queue entries per module */
     int32_t cq_num;
+
+    /** max number of entries in AV EQ */
+    int32_t av_eq_num;
 
     /** retrans characteristics */
     int retrans_timeout;
@@ -213,13 +235,6 @@ typedef struct opal_btl_usnic_component_t {
     /* Prefix for the connectivity map filename (map will be output if
        the prefix is non-NULL) */
     char *connectivity_map_prefix;
-
-    /** Expected return value from fi_cq_readerr() upon success.  In
-        libfabric v1.0.0 / API v1.0, the usnic provider returned
-        sizeof(fi_cq_err_entry) upon success.  In libfabric >=v1.1 /
-        API >=v1.1, the usnic provider returned 1 upon success. */
-    ssize_t cq_readerr_success_value;
-    ssize_t cq_readerr_try_again_value;
 
     /** Offset into the send buffer where the payload will go.  For
         libfabric v1.0.0 / API v1.0, this is 0.  For libfabric >=v1.1

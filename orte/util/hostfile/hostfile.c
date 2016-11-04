@@ -13,8 +13,9 @@
  *                         reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/mca/installdirs/installdirs.h"
 
 #include "orte/util/show_help.h"
@@ -164,6 +166,14 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         }
         opal_argv_free (argv);
 
+        // Strip off the FQDN if present, ignore IP addresses
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(node_name) ) {
+            char *ptr;
+            if (NULL != (ptr = strchr(node_name, '.'))) {
+                *ptr = '\0';
+            }
+        }
+
         /* if the first letter of the name is '^', then this is a node
          * to be excluded. Remove the ^ character so the nodename is
          * usable, and put it on the exclude list
@@ -270,6 +280,15 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
         }
         opal_argv_free (argv);
+
+        // Strip off the FQDN if present, ignore IP addresses
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(node_name) ) {
+            char *ptr;
+            if (NULL != (ptr = strchr(node_name, '.'))) {
+                *ptr = '\0';
+            }
+        }
+
         /* Do we need to make a new node object? */
         if (NULL == (node = hostfile_lookup(updates, node_name))) {
             node = OBJ_NEW(orte_node_t);
@@ -285,8 +304,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             free(node_name);
         }
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
-                             "%s hostfile: node %s slots %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, node->slots));
+                             "%s hostfile: node %s slots %d nodes-given %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, node->slots,
+                             ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN) ? "TRUE" : "FALSE"));
         /* mark the slots as "given" since we take them as being the
          * number specified via the rankfile
          */
@@ -319,6 +339,17 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                 orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
                 free(username);
             }
+            break;
+
+        case ORTE_HOSTFILE_PORT:
+            rc = hostfile_parse_int();
+            if (rc < 0) {
+                orte_show_help("help-hostfile.txt", "port",
+                               true,
+                               cur_hostfile_name, rc);
+                return ORTE_ERROR;
+            }
+            orte_set_attribute(&node->attributes, ORTE_NODE_PORT, ORTE_ATTR_LOCAL, &rc, OPAL_INT);
             break;
 
         case ORTE_HOSTFILE_COUNT:

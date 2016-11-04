@@ -10,9 +10,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/plm/plm_types.h"
@@ -54,7 +56,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
     orte_node_t *node, *nd;
     opal_list_t adds;
     bool found;
-    int slots;
+    int slots=0;
     bool slots_given;
     char *cptr;
 
@@ -207,6 +209,14 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             ndname = mini_map[i];
         }
 
+        // Strip off the FQDN if present, ignore IP addresses
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(ndname) ) {
+            char *ptr;
+            if (NULL != (ptr = strchr(ndname, '.'))) {
+                *ptr = '\0';
+            }
+        }
+
         /* see if the node is already on the list */
         found = false;
         OPAL_LIST_FOREACH(node, &adds, orte_node_t) {
@@ -237,8 +247,8 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             }
             node->name = strdup(ndname);
             OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
-                                 "%s dashhost: added node %s to list",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
+                                 "%s dashhost: added node %s to list - slots %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, slots));
             node->state = ORTE_NODE_STATE_UP;
             node->slots_inuse = 0;
             node->slots_max = 0;
@@ -249,7 +259,6 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                 }
             } else {
                 node->slots = 1;
-                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
             }
             opal_list_append(&adds, &node->super);
         }
@@ -267,14 +276,12 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             if (0 == strcmp(nd->name, node->name)) {
                 found = true;
                 OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
-                                     "%s dashhost: found existing node %s on input list - ignoring",
+                                     "%s dashhost: found existing node %s on input list - adding slots",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
                 if (ORTE_FLAG_TEST(nd, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                    /* transfer across the number of slots */
+                    node->slots = nd->slots;
                     ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
-                }
-                /* don't ignore a slots directive */
-                if (slots_given) {
-                    node->slots = slots;
                 }
                 break;
             }

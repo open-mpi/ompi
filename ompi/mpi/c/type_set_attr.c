@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -48,16 +48,14 @@ int MPI_Type_set_attr (MPI_Datatype type,
         memchecker_datatype(type);
     );
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == type || MPI_DATATYPE_NULL == type) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
-    } else if (NULL == attribute_val) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == type || MPI_DATATYPE_NULL == type) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+        }
     }
-  }
 
-  OPAL_CR_ENTER_LIBRARY();
+    OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_attr_set_c(TYPE_ATTR, type, &type->d_keyhash,
                           type_keyval, attribute_val, false);

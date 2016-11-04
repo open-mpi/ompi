@@ -31,3 +31,6 @@ check_LIBRARIES = libsupport.a
 libsupport_a_SOURCES = \
         support.c \
         support.h
+
+distclean:
+	rm -rf *.dSYM .deps *.log *.o *.trs $(check_LIBRARIES) Makefile

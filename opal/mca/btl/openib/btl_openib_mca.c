@@ -17,7 +17,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -88,11 +88,6 @@ static mca_base_var_enum_value_t device_type_values[] = {
 
 static int btl_openib_cq_size;
 static bool btl_openib_have_fork_support = OPAL_HAVE_IBV_FORK_INIT;
-
-#if BTL_OPENIB_FAILOVER_ENABLED
-static int btl_openib_verbose_failover;
-static bool btl_openib_failover_enabled = true;
-#endif
 
 /*
  * utility routine for string parameter registration
@@ -316,9 +311,12 @@ int btl_openib_register_mca_params(void)
                   "(must be >= 1)",
                   32, &mca_btl_openib_component.ib_free_list_inc,
                   REGINT_GE_ONE));
-    CHECK(reg_string("mpool", NULL,
-                     "Name of the memory pool to be used (it is unlikely that you will ever want to change this)",
-                     "grdma", &mca_btl_openib_component.ib_mpool_name,
+    CHECK(reg_string("mpool_hints", NULL, "hints for selecting a memory pool (default: none)",
+                     NULL, &mca_btl_openib_component.ib_mpool_hints,
+                     0));
+    CHECK(reg_string("rcache", NULL,
+                     "Name of the registration cache to be used (it is unlikely that you will ever want to change this)",
+                     "grdma", &mca_btl_openib_component.ib_rcache_name,
                      0));
     CHECK(reg_int("reg_mru_len", NULL,
                   "Length of the registration cache most recently used list "
@@ -470,30 +468,6 @@ int btl_openib_register_mca_params(void)
                    "If nonzero, use the thread that will handle InfiniBand asynchronous events",
                    true, &mca_btl_openib_component.use_async_event_thread));
 
-#if BTL_OPENIB_FAILOVER_ENABLED
-    /* failover specific output */
-    CHECK(reg_int("verbose_failover", NULL,
-                  "Output some verbose OpenIB BTL failover information "
-                  "(0 = no output, nonzero = output)", 0, &btl_openib_verbose_failover, 0));
-    mca_btl_openib_component.verbose_failover = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_btl_openib_component.verbose_failover, btl_openib_verbose_failover);
-
-    CHECK(reg_bool("port_error_failover", NULL,
-                   "If nonzero, asynchronous port errors will trigger failover",
-                   0, &mca_btl_openib_component.port_error_failover));
-
-    /* Make non writeable parameter that indicates failover is configured in. */
-    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
-                                          "failover_enabled",
-                                          "openib failover is configured: run with bfo PML to support failover between openib BTLs",
-                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                          MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                          OPAL_INFO_LVL_9,
-                                          MCA_BASE_VAR_SCOPE_CONSTANT,
-                                          &btl_openib_failover_enabled);
-    if (0 > tmp) ret = tmp;
-#endif
-
     CHECK(reg_bool("enable_srq_resize", NULL,
                    "Enable/Disable on demand SRQ resize. "
                    "(0 = without resizing, nonzero = with resizing)", 1,
@@ -567,10 +541,6 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_RDMA |
 	MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA |
         MCA_BTL_FLAGS_SEND;
-#if BTL_OPENIB_FAILOVER_ENABLED
-    mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_FAILOVER_SUPPORT;
-#endif
-
 #if HAVE_DECL_IBV_ATOMIC_HCA
     mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_ATOMIC_FOPS;
     mca_btl_openib_module.super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_CSWAP;
@@ -663,7 +633,7 @@ int btl_openib_register_mca_params(void)
     }
 
     asprintf(&default_qps,
-            "P,128,256,192,128:S,%u,1024,1008,64:S,%u,1024,1008,64:S,%u,1024,1008,64",
+            "S,128,256,192,128:S,%u,1024,1008,64:S,%u,1024,1008,64:S,%u,1024,1008,64",
             mid_qp_size,
             (uint32_t)mca_btl_openib_module.super.btl_eager_limit,
             (uint32_t)mca_btl_openib_module.super.btl_max_send_size);
@@ -703,26 +673,10 @@ int btl_openib_register_mca_params(void)
                   0, &mca_btl_openib_component.gid_index,
                   REGINT_GE_ZERO));
 
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    CHECK(reg_int("memalign", NULL,
-                  "[64 | 32 | 0] - Enable (64bit or 32bit)/Disable(0) memory"
-                  "alignment for all malloc calls if btl openib is used.",
-                  32, &mca_btl_openib_component.use_memalign,
-                  REGINT_GE_ZERO));
-
-    mca_btl_openib_component.memalign_threshold =
-        mca_btl_openib_module.super.btl_eager_limit;
-    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
-                                          "memalign_threshold",
-                                          "Allocating memory more than btl_openib_memalign_threshhold"
-                                          "bytes will automatically be algined to the value of btl_openib_memalign bytes."
-                                          "memalign_threshhold defaults to the same value as mca_btl_openib_eager_limit.",
-                                          MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                          OPAL_INFO_LVL_9,
-                                          MCA_BASE_VAR_SCOPE_READONLY,
-                                          &mca_btl_openib_component.memalign_threshold);
-    if (0 > tmp) ret = tmp;
-#endif
+    CHECK(reg_bool("allow_different_subnets", NULL,
+                   "Allow connecting processes from different IB subnets."
+                   "(0 = do not allow; 1 = allow)",
+                   false, &mca_btl_openib_component.allow_different_subnets));
 
     /* Register any MCA params for the connect pseudo-components */
     if (OPAL_SUCCESS == ret) {
@@ -820,17 +774,6 @@ int btl_openib_verify_mca_params (void)
         opal_show_help("help-mpi-btl-openib.txt", "do_not_set_openib_value",
                        true, opal_process_info.nodename);
         mca_btl_openib_module.super.btl_cuda_max_send_size = 0;
-    }
-#endif
-
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    if (mca_btl_openib_component.use_memalign != 32
-        && mca_btl_openib_component.use_memalign != 64
-        && mca_btl_openib_component.use_memalign != 0){
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "Wrong btl_openib_memalign parameter value. Allowed values: 64, 32, 0.",
-                       "btl_openib_memalign is reset to 32");
-        mca_btl_openib_component.use_memalign = 32;
     }
 #endif
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
@@ -434,7 +435,7 @@ static int parse_args(int argc, char *argv[])
 
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
-    ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
+    ret = opal_cmd_line_parse(&cmd_line, true, false, argc, argv);
 
     if (OPAL_SUCCESS != ret) {
         if (OPAL_ERR_SILENT != ret) {
@@ -461,7 +462,7 @@ static int parse_args(int argc, char *argv[])
     /**
      * Put all of the MCA arguments in the environment
      */
-    mca_base_cmd_line_process_args(&cmd_line, &app_env, &global_env);
+    mca_base_cmd_line_process_args(argv, &app_env, &global_env);
 
     len = opal_argv_count(app_env);
     for(i = 0; i < len; ++i) {

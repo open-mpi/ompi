@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,7 +61,6 @@ BEGIN_C_DECLS
  */
 struct orte_iof_hnp_component_t {
     orte_iof_base_component_t super;
-    opal_list_t sinks;
     opal_list_t procs;
     orte_iof_read_event_t *stdinev;
     opal_event_t stdinsig;

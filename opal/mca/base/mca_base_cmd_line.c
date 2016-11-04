@@ -148,6 +148,7 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
 }
 
 
+
 /*
  * Process a single MCA argument.
  */
@@ -190,7 +191,6 @@ static int process_arg(const char *param, const char *value,
 
     /* If we didn't already have an value for the same param, save
        this one away */
-
     opal_argv_append_nosize(params, param);
     opal_argv_append_nosize(values, p1);
     free(p1);

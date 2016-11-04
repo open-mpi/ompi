@@ -3,8 +3,10 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c)      2012 UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2012      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -302,6 +304,7 @@ extern "C" {
 #define event_set_mem_functions                               opal_libevent2022_event_set_mem_functions
 #define event_sock_err                                        opal_libevent2022_event_sock_err
 #define event_sock_warn                                       opal_libevent2022_event_sock_warn
+#define _event_strlcpy                                        opal_libevent2022__event_strlcpy
 #define event_warn                                            opal_libevent2022_event_warn
 #define event_warnx                                           opal_libevent2022_event_warnx
 #define evhttp_accept_socket                                  opal_libevent2022_evhttp_accept_socket

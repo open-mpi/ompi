@@ -14,9 +14,9 @@
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -64,8 +64,10 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/state/state.h"
+#include "orte/util/attr.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
@@ -93,7 +95,8 @@ static int component_send(orte_rml_send_t *msg);
 static char* component_get_addr(void);
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris);
-static bool component_is_reachable(orte_process_name_t *peer);
+static bool component_is_reachable(char *rtmod, orte_process_name_t *peer);
+static orte_rml_pathway_t* component_query_transports(void);
 #if OPAL_ENABLE_FT_CR == 1
 static int component_ft_event(int state);
 #endif
@@ -124,6 +127,7 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
         .get_addr = component_get_addr,
         .set_addr = component_set_addr,
         .is_reachable = component_is_reachable,
+        .query_transports = component_query_transports,
 #if OPAL_ENABLE_FT_CR == 1
         .ft_event = component_ft_event,
 #endif
@@ -146,11 +150,8 @@ static int tcp_component_open(void)
     mca_oob_tcp_component.addr_count = 0;
     mca_oob_tcp_component.ipv4conns = NULL;
     mca_oob_tcp_component.ipv4ports = NULL;
-
-#if OPAL_ENABLE_IPV6
     mca_oob_tcp_component.ipv6conns = NULL;
     mca_oob_tcp_component.ipv6ports = NULL;
-#endif
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS !=
@@ -513,6 +514,11 @@ static int component_available(void)
         /* get the name for diagnostic purposes */
         opal_ifindextoname(i, name, sizeof(name));
 
+        /* ignore any virtual interfaces */
+        if (0 == strncmp(name, "vir", 3)) {
+            continue;
+        }
+
         /* handle include/exclude directives */
         if (NULL != interfaces) {
             /* check for match */
@@ -612,6 +618,37 @@ static int component_available(void)
     return ORTE_SUCCESS;
 }
 
+static orte_rml_pathway_t* component_query_transports(void)
+{
+    orte_rml_pathway_t *p;
+    char *qual;
+
+    /* if neither IPv4 or IPv6 connections are available, then
+     * we have nothing to support */
+    if (NULL == mca_oob_tcp_component.ipv4conns &&
+        NULL == mca_oob_tcp_component.ipv6conns) {
+        return NULL;
+    }
+
+    /* if we get here, then we support Ethernet and TCP */
+    p = OBJ_NEW(orte_rml_pathway_t);
+    p->component = strdup("oob");
+    orte_set_attribute(&p->attributes, ORTE_RML_TRANSPORT_TYPE, ORTE_ATTR_LOCAL, "Ethernet", OPAL_STRING);
+    orte_set_attribute(&p->attributes, ORTE_RML_PROTOCOL_TYPE, ORTE_ATTR_LOCAL, "TCP", OPAL_STRING);
+    /* setup our qualifiers - we route communications, may have IPv4 and/or IPv6, etc. */
+    if (NULL != mca_oob_tcp_component.ipv4conns &&
+        NULL != mca_oob_tcp_component.ipv6conns) {
+        qual = "routed=true:ipv4:ipv6";
+    } else if (NULL == mca_oob_tcp_component.ipv6conns) {
+        qual = "routed=true:ipv4";
+    } else {
+        qual = "routed=true:ipv6";
+    }
+    orte_set_attribute(&p->attributes, ORTE_RML_QUALIFIER_ATTRIB, ORTE_ATTR_LOCAL, qual, OPAL_STRING);
+
+    return p;
+}
+
 /* Start all modules */
 static int component_startup(void)
 {
@@ -704,9 +741,9 @@ static void component_shutdown(void)
 static int component_send(orte_rml_send_t *msg)
 {
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:tcp:send_nb to peer %s:%d to channel=%d seq = %d",
+                        "%s oob:tcp:send_nb to peer %s:%d seq = %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst), msg->tag,msg->dst_channel, msg->seq_num );
+                        ORTE_NAME_PRINT(&msg->dst), msg->tag, msg->seq_num );
 
     /* the module is potentially running on its own event
      * base, so all it can do is push our send request
@@ -822,6 +859,11 @@ static int component_set_addr(orte_process_name_t *peer,
                             ORTE_NAME_PRINT(peer), uris[i]);
         /* separate the ports from the network addrs */
         ports = strrchr(tcpuri, ':');
+        if (NULL == ports) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            free(tcpuri);
+            continue;
+        }
         *ports = '\0';
         ports++;
 
@@ -894,12 +936,12 @@ static int component_set_addr(orte_process_name_t *peer,
     return ORTE_ERR_TAKE_NEXT_OPTION;
 }
 
-static bool component_is_reachable(orte_process_name_t *peer)
+static bool component_is_reachable(char *rtmod, orte_process_name_t *peer)
 {
     orte_process_name_t hop;
 
     /* if we have a route to this peer, then we can reach it */
-    hop = orte_routed.get_route(peer);
+    hop = orte_routed.get_route(rtmod, peer);
     if (ORTE_JOBID_INVALID == hop.jobid ||
         ORTE_VPID_INVALID == hop.vpid) {
         opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -970,11 +1012,6 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer));
 
-    /* if we are terminating, or recovery isn't enabled, then don't attempt to reconnect */
-    if (!orte_enable_recovery || orte_orteds_term_ordered || orte_finalizing || orte_abnormal_term_ordered) {
-        goto cleanup;
-    }
-
     /* Mark that we no longer support this peer */
     memcpy(&ui64, (char*)&pop->peer, sizeof(uint64_t));
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
@@ -982,19 +1019,19 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
         bpr = OBJ_NEW(orte_oob_base_peer_t);
     }
     opal_bitmap_clear_bit(&bpr->addressable, mca_oob_tcp_component.super.idx);
-   if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
+    if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
                                                                ui64, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
 
- cleanup:
-    /* activate the proc state */
-    if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer)) {
-        ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
-    } else {
-        ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_COMM_FAILED);
+    if (!orte_finalizing) {
+        /* activate the proc state */
+        if (ORTE_SUCCESS != orte_routed.route_lost(pop->rtmod, &pop->peer)) {
+            ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
+        } else {
+            ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_COMM_FAILED);
+        }
     }
-
     OBJ_RELEASE(pop);
 }
 
@@ -1027,7 +1064,7 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
      */
     if (!orte_finalizing && !orte_abnormal_term_ordered) {
         /* if this was a lifeline, then alert */
-        if (ORTE_SUCCESS != orte_routed.route_lost(&mop->hop)) {
+        if (ORTE_SUCCESS != orte_routed.route_lost(mop->rmsg->routed, &mop->hop)) {
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_LIFELINE_LOST);
         } else {
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
@@ -1098,12 +1135,12 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     snd->dst = mop->snd->hdr.dst;
     snd->origin = mop->snd->hdr.origin;
     snd->tag = mop->snd->hdr.tag;
-    snd->dst_channel = mop->snd->hdr.channel;
     snd->seq_num = mop->snd->hdr.seq_num;
     snd->data = mop->snd->data;
     snd->count = mop->snd->hdr.nbytes;
     snd->cbfunc.iov = NULL;
     snd->cbdata = NULL;
+    snd->routed = strdup(mop->snd->hdr.routed);
     /* activate the OOB send state */
     ORTE_OOB_SEND(snd);
     /* protect the data */
@@ -1134,7 +1171,7 @@ void mca_oob_tcp_component_failed_to_connect(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(&pop->peer));
 
     /* if this was a lifeline, then alert */
-    if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer)) {
+    if (ORTE_SUCCESS != orte_routed.route_lost(pop->rtmod, &pop->peer)) {
         ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
     } else {
         ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_COMM_FAILED);
@@ -1305,11 +1342,15 @@ OBJ_CLASS_INSTANCE(mca_oob_tcp_addr_t,
 
 static void pop_cons(mca_oob_tcp_peer_op_t *pop)
 {
+    pop->rtmod = NULL;
     pop->net = NULL;
     pop->port = NULL;
 }
 static void pop_des(mca_oob_tcp_peer_op_t *pop)
 {
+    if (NULL != pop->rtmod) {
+        free(pop->rtmod);
+    }
     if (NULL != pop->net) {
         free(pop->net);
     }

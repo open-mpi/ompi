@@ -12,7 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +30,7 @@
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
+#include "orte/mca/schizo/base/base.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
@@ -75,6 +76,10 @@ int orte_finalize(void)
 
     /* close the ess itself */
     (void) mca_base_framework_close(&orte_ess_base_framework);
+
+    /* finalize and close schizo */
+    orte_schizo.finalize();
+    (void) mca_base_framework_close(&orte_schizo_base_framework);
 
     /* cleanup the process info */
     orte_proc_info_finalize();

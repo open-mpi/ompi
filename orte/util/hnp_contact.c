@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -143,7 +144,7 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
         }
 
         /* set the route to be direct */
-        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&hnp->name, &hnp->name))) {
+        if (ORTE_SUCCESS != (rc = orte_routed.update_route(NULL, &hnp->name, &hnp->name))) {
             ORTE_ERROR_LOG(rc);
             free(hnp_uri);
             return rc;
@@ -161,9 +162,9 @@ static char *orte_getline(FILE *fp)
 
     ret = fgets(input, ORTE_HNP_CONTACT_FILE_MAX_LINE_LENGTH, fp);
     if (NULL != ret) {
-	   input[strlen(input)-1] = '\0';  /* remove newline */
-	   buff = strdup(input);
-	   return buff;
+       input[strlen(input)-1] = '\0';  /* remove newline */
+       buff = strdup(input);
+       return buff;
     }
 
     return NULL;
@@ -182,7 +183,7 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
     /*
      * Check to make sure we have access to the top-level directory
      */
-    headdir = opal_os_path(false, orte_process_info.tmpdir_base, orte_process_info.top_session_dir, NULL);
+    headdir = orte_process_info.top_session_dir;
 
     if( ORTE_SUCCESS != (ret = opal_os_dirpath_access(headdir, 0) )) {
         /* it is okay not to find this as there may not be any
@@ -231,7 +232,6 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
 cleanup:
     if( NULL != cur_dirp )
         closedir(cur_dirp);
-    free(headdir);
 
     return (opal_list_is_empty(hnps) ? ORTE_ERR_NOT_FOUND : ORTE_SUCCESS);
 }

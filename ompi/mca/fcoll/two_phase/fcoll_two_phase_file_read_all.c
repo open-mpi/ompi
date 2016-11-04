@@ -140,7 +140,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     Flatlist_node *flat_buf=NULL;
     mca_io_ompio_access_array_t *my_req=NULL, *others_req=NULL;
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-    mca_io_ompio_print_entry nentry;
+    mca_common_ompio_print_entry nentry;
 #endif
 //    if (opal_datatype_is_predefined(&datatype->super)) {
 //	fh->f_flags = fh->f_flags |  OMPIO_CONTIGUOUS_MEMORY;
@@ -277,15 +277,9 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 	    }
 	}
 	flat_buf->count = local_size;
-	i=0;j=0;
-	while(j < local_size){
-	    flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[i].iov_base;
-	    flat_buf->blocklens[j] = decoded_iov[i].iov_len;
-
-	    if(i < (int)iov_count)
-		i+=1;
-
-	    j+=1;
+        for (j = 0 ; j < local_size ; ++j) {
+	    flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[j].iov_base;
+	    flat_buf->blocklens[j] = decoded_iov[j].iov_len;
 	}
 
 #if DEBUG
@@ -485,9 +479,9 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     nentry.nprocs_for_coll = two_phase_num_io_procs;
 
 
-    if (!fh->f_full_print_queue(READ_PRINT_QUEUE)){
-	fh->f_register_print_entry(READ_PRINT_QUEUE,
-				   nentry);
+    if (!mca_common_ompio_full_print_queue(fh->f_coll_read_time)){
+	mca_common_ompio_register_print_entry(fh->f_coll_read_time,
+                                              nentry);
     }
 #endif
 
@@ -677,8 +671,8 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 		    }
 		    if (req_off < real_off + real_size) {
 			count[i]++;
-			MPI_Address(read_buf+req_off-real_off,
-				    &(others_req[i].mem_ptrs[j]));
+			PMPI_Address(read_buf+req_off-real_off,
+				     &(others_req[i].mem_ptrs[j]));
 
 			send_size[i] += (int)(OMPIO_MIN(real_off + real_size - req_off,
 							(OMPI_MPI_OFFSET_TYPE)req_len));

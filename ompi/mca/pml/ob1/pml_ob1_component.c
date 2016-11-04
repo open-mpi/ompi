@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -54,6 +54,7 @@ mca_pml_ob1_component_init( int* priority, bool enable_progress_threads,
 static int mca_pml_ob1_component_fini(void);
 int mca_pml_ob1_output = 0;
 static int mca_pml_ob1_verbose = 0;
+bool mca_pml_ob1_matching_protection = false;
 
 mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
     /* First, the mca_base_component_t struct containing meta
@@ -79,12 +80,9 @@ mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
     .pmlm_finalize = mca_pml_ob1_component_fini,
 };
 
-void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,
-                             size_t* size,
-                             mca_mpool_base_registration_t** registration);
+void *mca_pml_ob1_seg_alloc (void *ctx, size_t* size);
 
-void mca_pml_ob1_seg_free( struct mca_mpool_base_module_t* mpool,
-                           void* segment );
+void mca_pml_ob1_seg_free (void *ctx, void *segment);
 
 static inline int mca_pml_ob1_param_register_int(
     const char* param_name,
@@ -200,6 +198,12 @@ static int mca_pml_ob1_component_register(void)
 
     mca_pml_ob1_param_register_uint("unexpected_limit", 128, &mca_pml_ob1.unexpected_limit);
 
+    mca_pml_ob1.use_all_rdma = false;
+    (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "use_all_rdma",
+                                           "Use all available RDMA btls for the RDMA and RDMA pipeline protocols "
+                                           "(default: false)", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_GROUP, &mca_pml_ob1.use_all_rdma);
+
     mca_pml_ob1.allocator_name = "bucket";
     (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "allocator",
                                            "Name of allocator component for unexpected messages",
@@ -280,10 +284,15 @@ mca_pml_ob1_component_init( int* priority,
     OPAL_LIST_FOREACH(selected_btl, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
         mca_btl_base_module_t *btl = selected_btl->btl_module;
 
+        if (btl->btl_flags & MCA_BTL_FLAGS_BTL_PROGRESS_THREAD_ENABLED) {
+            mca_pml_ob1_matching_protection = true;
+        }
+
         if (btl->btl_flags & MCA_BTL_FLAGS_SINGLE_ADD_PROCS) {
             mca_pml_ob1.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
             break;
         }
+
     }
 
     /* Set this here (vs in component_open()) because
@@ -354,13 +363,12 @@ int mca_pml_ob1_component_fini(void)
     return OMPI_SUCCESS;
 }
 
-void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,
-                             size_t* size,
-                             mca_mpool_base_registration_t** registration) {
+void *mca_pml_ob1_seg_alloc (void *ctx, size_t *size)
+{
     return malloc(*size);
 }
 
-void mca_pml_ob1_seg_free( struct mca_mpool_base_module_t* mpool,
-                           void* segment ) {
+void mca_pml_ob1_seg_free (void *ctx, void *segment)
+{
     free(segment);
 }

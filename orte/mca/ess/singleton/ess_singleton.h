@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,14 +22,13 @@
 
 BEGIN_C_DECLS
 
-/*
- * Module open / close
- */
-int orte_ess_singleton_component_open(void);
-int orte_ess_singleton_component_close(void);
-int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority);
 
-ORTE_MODULE_DECLSPEC extern orte_ess_base_component_t mca_ess_singleton_component;
+typedef struct {
+    orte_ess_base_component_t super;
+    char *server_uri;
+    bool isolated;
+} orte_ess_singleton_component_t;
+ORTE_MODULE_DECLSPEC extern orte_ess_singleton_component_t mca_ess_singleton_component;
 
 END_C_DECLS
 

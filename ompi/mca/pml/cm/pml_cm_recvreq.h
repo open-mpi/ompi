@@ -308,15 +308,12 @@ do {                                                                    \
 do {                                                                    \
     assert( false == recvreq->req_base.req_pml_complete );              \
                                                                         \
-    OPAL_THREAD_LOCK(&ompi_request_lock);                               \
-                                                                        \
     if( true == recvreq->req_base.req_free_called ) {                   \
         MCA_PML_CM_THIN_RECV_REQUEST_RETURN( recvreq );                 \
     } else {                                                            \
         recvreq->req_base.req_pml_complete = true;                      \
         ompi_request_complete( &(recvreq->req_base.req_ompi), true );   \
     }                                                                   \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                             \
  } while(0)
 
 
@@ -331,8 +328,6 @@ do {                                                                    \
 do {                                                                    \
     assert( false == recvreq->req_base.req_pml_complete );              \
                                                                         \
-    OPAL_THREAD_LOCK(&ompi_request_lock);                               \
-                                                                        \
     if( true == recvreq->req_base.req_free_called ) {                   \
         MCA_PML_CM_HVY_RECV_REQUEST_RETURN( recvreq );                  \
     } else {                                                            \
@@ -345,7 +340,6 @@ do {                                                                    \
         recvreq->req_base.req_pml_complete = true;                      \
         ompi_request_complete(  &(recvreq->req_base.req_ompi), true );  \
     }                                                                   \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                             \
  } while(0)
 
 

@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,7 +54,7 @@ typedef uint128_t opal_uint128_t;
 /* Clang won't quietly accept "-pedantic", but GCC versions older than ~4.8
  * won't quietly accept "-Wpedanic".  The whole "#pragma GCC diagnostic ..."
  * facility only was added to GCC as of version 4.6. */
-#if defined(__clang__)
+#if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 6)
 #pragma GCC diagnostic ignored "-Wpedantic"
 #else
 #pragma GCC diagnostic ignored "-pedantic"

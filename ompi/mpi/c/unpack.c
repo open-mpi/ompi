@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -43,7 +43,7 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
                void *outbuf, int outcount, MPI_Datatype datatype,
                MPI_Comm comm)
 {
-    int rc = 1;
+    int rc = MPI_SUCCESS;
     opal_convertor_t local_convertor;
     struct iovec outvec;
     unsigned int iov_count;
@@ -70,9 +70,10 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
         }
 
-        if (MPI_DATATYPE_NULL == datatype || NULL == datatype) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
-        }
+        OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, outcount);
+        OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
+        OMPI_CHECK_USER_BUFFER(rc, outbuf, datatype, outcount);
+        OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
@@ -100,13 +101,14 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
         rc = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
         *position += size;
         OBJ_DESTRUCT( &local_convertor );
-
-        /* All done.  Note that the convertor returns 1 upon success, not
-           OMPI_SUCCESS. */
-
+    } else {
+        rc = 1;
     }
 
+    OPAL_CR_EXIT_LIBRARY();
+
+    /* All done.  Note that the convertor returns 1 upon success, not
+       OMPI_SUCCESS. */
     OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
                            comm, MPI_ERR_UNKNOWN, FUNC_NAME);
-
 }

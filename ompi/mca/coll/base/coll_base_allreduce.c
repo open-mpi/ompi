@@ -13,7 +13,7 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -134,9 +134,9 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
 {
     int ret, line, rank, size, adjsize, remote, distance;
     int newrank, newremote, extra_ranks;
-    char *tmpsend = NULL, *tmprecv = NULL, *tmpswap = NULL, *inplacebuf = NULL;
-    ptrdiff_t true_lb, true_extent, lb, extent;
+    char *tmpsend = NULL, *tmprecv = NULL, *tmpswap = NULL, *inplacebuf_free = NULL, *inplacebuf;
     ompi_request_t *reqs[2] = {NULL, NULL};
+    OPAL_PTRDIFF_TYPE span, gap;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -154,13 +154,10 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     }
 
     /* Allocate and initialize temporary send buffer */
-    ret = ompi_datatype_get_extent(dtype, &lb, &extent);
-    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-    ret = ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-
-    inplacebuf = (char*) malloc(true_extent + (ptrdiff_t)(count - 1) * extent);
-    if (NULL == inplacebuf) { ret = -1; line = __LINE__; goto error_hndl; }
+    span = opal_datatype_span(&dtype->super, count, &gap);
+    inplacebuf_free = (char*) malloc(span);
+    if (NULL == inplacebuf_free) { ret = -1; line = __LINE__; goto error_hndl; }
+    inplacebuf = inplacebuf_free - gap;
 
     if (MPI_IN_PLACE == sbuf) {
         ret = ompi_datatype_copy_content_same_ddt(dtype, count, inplacebuf, (char*)rbuf);
@@ -267,13 +264,14 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
         if (ret < 0) { line = __LINE__; goto error_hndl; }
     }
 
-    if (NULL != inplacebuf) free(inplacebuf);
+    if (NULL != inplacebuf_free) free(inplacebuf_free);
     return MPI_SUCCESS;
 
  error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
-    if (NULL != inplacebuf) free(inplacebuf);
+    (void)line;  // silence compiler warning
+    if (NULL != inplacebuf_free) free(inplacebuf_free);
     return ret;
 }
 
@@ -532,6 +530,7 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
  error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
+    (void)line;  // silence compiler warning
     if (NULL != inbuf[0]) free(inbuf[0]);
     if (NULL != inbuf[1]) free(inbuf[1]);
     return ret;
@@ -629,9 +628,9 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
     int segcount, max_segcount, num_phases, phase, block_count, inbi;
     size_t typelng;
     char *tmpsend = NULL, *tmprecv = NULL, *inbuf[2] = {NULL, NULL};
-    ptrdiff_t true_lb, true_extent, lb, extent;
     ptrdiff_t block_offset, max_real_segsize;
     ompi_request_t *reqs[2] = {NULL, NULL};
+    OPAL_PTRDIFF_TYPE lb, extent, gap;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -649,10 +648,6 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
     }
 
     /* Determine segment count based on the suggested segment size */
-    ret = ompi_datatype_get_extent(dtype, &lb, &extent);
-    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-    ret = ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
     ret = ompi_datatype_type_size( dtype, &typelng);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
     segcount = count;
@@ -685,7 +680,10 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
                                    early_blockcount, late_blockcount );
     COLL_BASE_COMPUTE_BLOCKCOUNT( early_blockcount, num_phases, inbi,
                                    max_segcount, k);
-    max_real_segsize = true_extent + (ptrdiff_t)(max_segcount - 1) * extent;
+
+    ret = ompi_datatype_get_extent(dtype, &lb, &extent);
+    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
+     max_real_segsize = opal_datatype_span(&dtype->super, max_segcount, &gap);
 
     /* Allocate and initialize temporary buffers */
     inbuf[0] = (char*)malloc(max_real_segsize);
@@ -740,8 +738,8 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
         block_count = ((rank < split_rank)? early_blockcount : late_blockcount);
         COLL_BASE_COMPUTE_BLOCKCOUNT(block_count, num_phases, split_phase,
                                       early_phase_segcount, late_phase_segcount)
-            phase_count = ((phase < split_phase)?
-                           (early_phase_segcount) : (late_phase_segcount));
+        phase_count = ((phase < split_phase)?
+                       (early_phase_segcount) : (late_phase_segcount));
         phase_offset = ((phase < split_phase)?
                         ((ptrdiff_t)phase * (ptrdiff_t)early_phase_segcount) :
                         ((ptrdiff_t)phase * (ptrdiff_t)late_phase_segcount + split_phase));
@@ -851,6 +849,7 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
  error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
+    (void)line;  // silence compiler warning
     if (NULL != inbuf[0]) free(inbuf[0]);
     if (NULL != inbuf[1]) free(inbuf[1]);
     return ret;

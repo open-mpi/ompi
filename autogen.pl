@@ -1,11 +1,11 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.
 #
@@ -54,6 +54,7 @@ my $help_arg = 0;
 my $platform_arg = 0;
 my $include_arg = 0;
 my $exclude_arg = 0;
+my $force_arg = 0;
 
 # Include/exclude lists
 my $include_list;
@@ -703,7 +704,7 @@ sub mpicontrib_run_global {
             if (! -d "$dir/$d" || $d eq "base" || substr($d, 0, 1) eq ".");
 
         # If this directory has a configure.m4, then it's an
-        # extension.
+        # contrib.
         if (-f "$dir/$d/configure.m4") {
             verbose "=== Found $d MPI contrib";
 
@@ -717,7 +718,7 @@ sub mpicontrib_run_global {
         }
     }
     closedir(DIR);
-    debug_dump($mpiext_found);
+    debug_dump($mpicontrib_found);
 
     #-----------------------------------------------------------------------
 
@@ -742,7 +743,7 @@ $dnl_line\n\n";
 
     $m4_config_contrib_list =~ s/^, //;
 
-    # List the M4 and no configure exts
+    # List the M4 and no configure contribs
     $m4 .= "dnl List of all MPI contribs
 m4_define([ompi_mpicontrib_list], [$m4_config_contrib_list])\n";
     # List out all the m4_include
@@ -900,9 +901,14 @@ sub patch_autotools_output {
     # enough Libtool that dosn't need this patch.  But don't alarm the
     # user and make them think that autogen failed if this patch fails --
     # make the errors be silent.
+    # Also patch ltmain.sh for NAG compiler
     if (-f "config/ltmain.sh") {
         verbose "$indent_str"."Patching PGI compiler version numbers in ltmain.sh\n";
         system("$patch_prog -N -p0 < $topdir/config/ltmain_pgi_tp.diff >/dev/null 2>&1");
+        unlink("config/ltmain.sh.rej");
+
+        verbose "$indent_str"."Patching \"-pthread\" option for NAG compiler in ltmain.sh\n";
+        system("$patch_prog -N -p0 < $topdir/config/ltmain_nag_pthread.diff >/dev/null 2>&1");
         unlink("config/ltmain.sh.rej");
     }
 
@@ -976,6 +982,31 @@ sub patch_autotools_output {
         $c =~ s/$search_string/$replace_string/;
     }
 
+    foreach my $tag (("", "_FC")) {
+
+        # We have to change the search pattern and substitution on each
+        # iteration to take into account the tag changing
+        my $search_string = 'lf95\052.*# Lahey Fortran 8.1\n\s+' .
+            "whole_archive_flag_spec${tag}=" . '\n\s+' .
+            "tmp_sharedflag='--shared' ;;" . '\n\s+' .
+            'xl';
+        my $replace_string = "lf95*)				# Lahey Fortran 8.1
+	  whole_archive_flag_spec${tag}=
+	  tmp_sharedflag='--shared' ;;
+	nagfor*)			# NAGFOR 5.3
+	  tmp_sharedflag='-Wl,-shared';;
+	xl";
+
+        push(@verbose_out, $indent_str . "Patching configure for NAG compiler ($tag)\n");
+        $c =~ s/$search_string/$replace_string/;
+    }
+
+    # Oracle has apparently begun (as of 12.5-beta) removing the "Sun" branding.
+    # So this patch (cumulative over the previous one) is required.
+    push(@verbose_out, $indent_str . "Patching configure for Oracle Studio Fortran version strings\n");
+    $c =~ s/\*Sun\*Fortran\*\)/*Sun*Fortran* | *Studio*Fortran*)/g;
+    $c =~ s/\*Sun\\ F\*\)(.*\n\s+tmp_sharedflag=)/*Sun\\ F* | *Studio*Fortran*)$1/g;
+
     # See http://git.savannah.gnu.org/cgit/libtool.git/commit/?id=v2.2.6-201-g519bf91 for details
     # Note that this issue was fixed in LT 2.2.8, however most distros are still using 2.2.6b
 
@@ -1000,9 +1031,9 @@ sub patch_autotools_output {
     # https://github.com/open-mpi/ompi/issues/751
     push(@verbose_out, $indent_str . "Patching configure for libtool.m4 bug\n");
     # patch for libtool < 2.4.3
-    $c =~ s/# Some compilers place space between "-{L,R}" and the path.\n       # Remove the space.\n       if test \$p = \"-L\" \|\|/# Some compilers place space between "-{L,-l,R}" and the path.\n       # Remove the spaces.\n       if test \$p = \"-L\" \|\|\n          test \$p = \"-l\" \|\|/g;
+    $c =~ s/# Some compilers place space between "-\{L,R\}" and the path.\n       # Remove the space.\n       if test \$p = \"-L\" \|\|/# Some compilers place space between "-\{L,-l,R\}" and the path.\n       # Remove the spaces.\n       if test \$p = \"-L\" \|\|\n          test \$p = \"-l\" \|\|/g;
     # patch for libtool >= 2.4.3
-    $c =~ s/# Some compilers place space between "-{L,R}" and the path.\n       # Remove the space.\n       if test x-L = \"\$p\" \|\|\n          test x-R = \"\$p\"\; then/# Some compilers place space between "-{L,-l,R}" and the path.\n       # Remove the spaces.\n       if test x-L = \"x\$p\" \|\|\n          test x-l = \"x\$p\" \|\|\n          test x-R = \"x\$p\"\; then/g;
+    $c =~ s/# Some compilers place space between "-\{L,R\}" and the path.\n       # Remove the space.\n       if test x-L = \"\$p\" \|\|\n          test x-R = \"\$p\"\; then/# Some compilers place space between "-\{L,-l,R\}" and the path.\n       # Remove the spaces.\n       if test x-L = \"x\$p\" \|\|\n          test x-l = \"x\$p\" \|\|\n          test x-R = \"x\$p\"\; then/g;
 
     # Only write out verbose statements and a new configure if the
     # configure content actually changed
@@ -1018,6 +1049,24 @@ sub patch_autotools_output {
     # Use cp so that we preserve permissions on configure
     safe_system("cp configure.patched configure");
     unlink("configure.patched");
+}
+
+sub in_tarball {
+    my $tarball = 0;
+    open(IN, "VERSION") || my_die "Can't open VERSION";
+    # If repo_rev is not an empty string, we are in a tarball
+    while (<IN>) {
+          my $line = $_;
+          my @fields = split(/=/,$line);
+          if ($fields[0] eq "repo_rev") {
+              if ($fields[1] ne "\n") {
+                  $tarball = 1;
+                  last;
+              }
+          }
+    }
+    close(IN);
+    return $tarball;
 }
 
 ##############################################################################
@@ -1037,6 +1086,7 @@ my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "platform=s" => \$platform_arg,
                                   "include=s" => \$include_arg,
                                   "exclude=s" => \$exclude_arg,
+                                  "force|f" => \$force_arg,
     );
 
 if (!$ok || $help_arg) {
@@ -1056,7 +1106,9 @@ if (!$ok || $help_arg) {
                                 will be ignored and only those specified will be marked
                                 to build
   --exclude | -e                Comma-separated list of framework or framework-component
-                                to be excluded from the build\n";
+                                to be excluded from the build
+  --force | -f                  Run even if invoked from the source tree of an expanded
+                                distribution tarball\n";
     my_exit($ok ? 0 : 1);
 }
 
@@ -1119,6 +1171,11 @@ $dnl_line\n\n";
 
 my_die "Not at the root directory of an OMPI source tree"
     if (! -f "config/opal_try_assemble.m4");
+
+my_die "autogen.pl has been invoked in the source tree of an Open MPI distribution tarball; aborting...
+You likely do not need to invoke \"autogen.pl\" -- you can probably run \"configure\" directly.
+If you really know what you are doing, and really need to run autogen.pl, use the \"--force\" flag."
+    if (!$force_arg && in_tarball());
 
 # Now that we've verified that we're in the top-level OMPI directory,
 # set the sentinel file to remove if we abort.

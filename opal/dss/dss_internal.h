@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
@@ -332,6 +332,9 @@ int opal_dss_pack_jobid(opal_buffer_t *buffer, const void *src,
 int opal_dss_pack_vpid(opal_buffer_t *buffer, const void *src,
                       int32_t num_vals, opal_data_type_t type);
 
+int opal_dss_pack_status(opal_buffer_t *buffer, const void *src,
+                         int32_t num_vals, opal_data_type_t type);
+
 /*
  * Internal unpack functions
  */
@@ -401,6 +404,8 @@ int opal_dss_unpack_jobid(opal_buffer_t *buffer, void *dest,
 int opal_dss_unpack_vpid(opal_buffer_t *buffer, void *dest,
                         int32_t *num_vals, opal_data_type_t type);
 
+int opal_dss_unpack_status(opal_buffer_t *buffer, void *dest,
+                           int32_t *num_vals, opal_data_type_t type);
 
 /*
  * Internal copy functions
@@ -497,6 +502,8 @@ int opal_dss_compare_jobid(opal_jobid_t *value1,
                            opal_jobid_t *value2,
                            opal_data_type_t type);
 
+int opal_dss_compare_status(int *value1, int *value2, opal_data_type_t type);
+
 /*
  * Internal print functions
  */
@@ -536,6 +543,7 @@ int opal_dss_print_time(char **output, char *prefix, time_t *src, opal_data_type
 int opal_dss_print_name(char **output, char *prefix, opal_process_name_t *name, opal_data_type_t type);
 int opal_dss_print_jobid(char **output, char *prefix, opal_process_name_t *src, opal_data_type_t type);
 int opal_dss_print_vpid(char **output, char *prefix, opal_process_name_t *src, opal_data_type_t type);
+int opal_dss_print_status(char **output, char *prefix, int *src, opal_data_type_t type);
 
 
 /*

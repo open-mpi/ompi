@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -69,6 +69,7 @@ mca_coll_basic_scatter_inter(const void *sbuf, int scount,
         }
 
         reqs = coll_base_comm_get_reqs(module->base_data, size);
+        if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
         incr *= scount;
         for (i = 0, ptmp = (char *) sbuf; i < size; ++i, ptmp += incr) {
@@ -77,7 +78,7 @@ mca_coll_basic_scatter_inter(const void *sbuf, int scount,
                                      MCA_PML_BASE_SEND_STANDARD, comm,
                                      reqs++));
             if (OMPI_SUCCESS != err) {
-                ompi_coll_base_free_reqs(reqs, i);
+                ompi_coll_base_free_reqs(reqs, i + 1);
                 return err;
             }
         }

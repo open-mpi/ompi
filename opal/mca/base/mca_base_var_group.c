@@ -218,6 +218,12 @@ static int group_register (const char *project_name, const char *framework_name,
         return -1;
     }
 
+    /* avoid groups of the form opal_opal, ompi_ompi, etc */
+    if (NULL != project_name && NULL != framework_name &&
+        (0 == strcmp (project_name, framework_name))) {
+        project_name = NULL;
+    }
+
     group_id = group_find (project_name, framework_name, component_name, true);
     if (0 <= group_id) {
         ret = mca_base_var_group_get_internal (group_id, &group, true);
@@ -272,12 +278,6 @@ static int group_register (const char *project_name, const char *framework_name,
         } else if (framework_name && project_name) {
             parent_id = group_register (project_name, NULL, NULL, NULL);
         }
-    }
-
-    /* avoid groups of the form opal_opal, ompi_ompi, etc */
-    if (NULL != project_name && NULL != framework_name &&
-        (0 == strcmp (project_name, framework_name))) {
-        project_name = NULL;
     }
 
     /* build the group name */

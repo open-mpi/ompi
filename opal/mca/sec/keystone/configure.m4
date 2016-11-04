@@ -1,6 +1,8 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -22,7 +24,7 @@ AC_DEFUN([MCA_opal_sec_keystone_CONFIG], [
     AC_MSG_CHECKING([want keystone security])
     AS_IF([test "$with_keystone" != "no"],
           [AC_MSG_RESULT([yes])
-           AS_IF([test ! -z "$with_keystone" -a "$with_keystone" != "yes"],
+           AS_IF([test ! -z "$with_keystone" && test "$with_keystone" != "yes"],
                  [opal_check_keystone_dir="$with_keystone"])
            OPAL_CHECK_PACKAGE([sec_keystone],
                               [curl/curl.h],

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -73,6 +73,7 @@ void ompi_type_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* type_copy_a
                                MPI_Fint *type_keyval, MPI_Aint *extra_state, MPI_Fint *ierr)
 {
     int ret, c_ierr;
+    OMPI_SINGLE_NAME_DECL(type_keyval);
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
@@ -85,15 +86,16 @@ void ompi_type_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* type_copy_a
        to the old MPI-1 INTEGER-parameter functions). */
 
     ret = ompi_attr_create_keyval_aint(TYPE_ATTR, copy_fn, del_fn,
-                                       type_keyval, *extra_state, OMPI_KEYVAL_F77,
+                                       OMPI_SINGLE_NAME_CONVERT(type_keyval), *extra_state, OMPI_KEYVAL_F77,
                                        NULL);
 
     if (MPI_SUCCESS != ret) {
         c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
                                         MPI_ERR_OTHER,
                                         FUNC_NAME);
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     } else {
-        c_ierr = MPI_SUCCESS;
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+        OMPI_SINGLE_INT_2_FINT(type_keyval);
     }
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

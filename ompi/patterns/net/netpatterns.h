@@ -145,7 +145,7 @@ OMPI_DECLSPEC int netpatterns_setup_narray_tree_contigous_ranks(int tree_order,
  * than size, with the specified radix.  The resulting tree is of
  * depth n_lvls.
  */
-OMPI_DECLSPEC int roundup_to_power_radix( int radix, int size, int *n_lvls );
+OMPI_DECLSPEC int ompi_roundup_to_power_radix( int radix, int size, int *n_lvls );
 
 END_C_DECLS
 

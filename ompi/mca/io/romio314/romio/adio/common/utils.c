@@ -93,7 +93,7 @@ int ADIOI_Type_create_hindexed_x(int count,
 	ret = MPI_Type_create_struct(count, blocklens, array_of_displacements,
 		types, newtype);
     } else {
-	ret = MPI_Type_hindexed(count, blocklens,
+	ret = MPI_Type_create_hindexed(count, blocklens,
 		array_of_displacements, oldtype, newtype);
     }
     for (i=0; i< count; i++)

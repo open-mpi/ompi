@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,6 +71,10 @@ ORTE_DECLSPEC extern bool orte_event_base_active; /* instantiated in orte/runtim
 ORTE_DECLSPEC extern bool orte_proc_is_bound;  /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern int orte_progress_thread_debug;  /* instantiated in orte/runtime/orte_init.c */
 
+ORTE_DECLSPEC extern char *orte_mgmt_transport;
+ORTE_DECLSPEC extern char *orte_coll_transport;
+ORTE_DECLSPEC extern int orte_mgmt_conduit;
+ORTE_DECLSPEC extern int orte_coll_conduit;
 
 /**
  * Global indicating where this process was bound to at launch (will
@@ -95,9 +99,6 @@ ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in
 
 /* define the name of my daemon */
 #define ORTE_PROC_MY_DAEMON     (&orte_process_info.my_daemon)
-
-/* define the name of my scheduler */
-#define ORTE_PROC_MY_SCHEDULER  (&orte_process_info.my_scheduler)
 
 ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
 
@@ -303,7 +304,7 @@ typedef struct {
     /** Base object so this can be put on a list */
     opal_list_item_t super;
     /* personality for this job */
-    char *personality;
+    char **personality;
     /* jobid for this job */
     orte_jobid_t jobid;
     /* offset to the total number of procs so shared memory
@@ -515,14 +516,11 @@ ORTE_DECLSPEC extern orte_timer_t *orte_mpiexec_timeout;
 ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 
 /* global arrays for data storage */
-ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
+ORTE_DECLSPEC extern opal_hash_table_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_topologies;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_local_children;
 ORTE_DECLSPEC extern orte_vpid_t orte_total_procs;
-
-/* whether or not to forward SIGTSTP and SIGCONT signals */
-ORTE_DECLSPEC extern bool orte_forward_job_control;
 
 /* IOF controls */
 ORTE_DECLSPEC extern bool orte_tag_output;

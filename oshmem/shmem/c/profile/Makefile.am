@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2013-2016 Mellanox Technologies, Inc.
 #                         All rights reserved
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -41,6 +41,7 @@ OSHMEM_API_SOURCES = \
 	pshmem_put.c \
 	pshmem_g.c \
 	pshmem_get.c \
+	pshmem_alltoall.c \
 	pshmem_broadcast.c \
 	pshmem_collect.c \
 	pshmem_ptr.c \
@@ -52,6 +53,8 @@ OSHMEM_API_SOURCES = \
 	pshmem_wait.c \
 	pshmem_iget.c \
 	pshmem_iput.c \
+	pshmem_get_nb.c \
+	pshmem_put_nb.c \
 	pshmem_udcflush.c \
 	pshmem_udcflush_line.c \
 	pshmem_set_cache_inv.c \
@@ -60,14 +63,18 @@ OSHMEM_API_SOURCES = \
 	pshmem_clear_cache_line_inv.c \
 	pshmem_reduce.c \
 	pshmem_swap.c \
+	pshmem_set.c \
 	pshmem_cswap.c \
 	pshmem_fadd.c \
+	pshmem_fetch.c \
 	pshmem_finc.c \
 	pshmem_add.c \
 	pshmem_inc.c \
 	pshmem_clear_lock.c \
 	pshmem_set_lock.c \
-	pshmem_test_lock.c
+	pshmem_test_lock.c \
+	pshmem_global_exit.c \
+	pshmem_info.c
 
 nodist_liboshmem_c_pshmem_la_SOURCES = \
 	$(OSHMEM_API_SOURCES)

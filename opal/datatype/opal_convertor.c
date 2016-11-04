@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013      Research Organization for Information Science
+ * Copyright (c) 2013-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -449,16 +449,17 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
 
 
 /**
- * Compute the remote size.
+ * Compute the remote size. If necessary remove the homogeneous flag
+ * and redirect the convertor description toward the non-optimized
+ * datatype representation.
  */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
 {                                                                         \
     if( OPAL_UNLIKELY(0 != (bdt_mask)) ) {                                \
         opal_convertor_master_t* master;                                  \
         int i;                                                            \
         uint32_t mask = datatype->bdt_used;                               \
-        convertor->flags ^= CONVERTOR_HOMOGENEOUS;                        \
+        convertor->flags &= (~CONVERTOR_HOMOGENEOUS);                   \
         master = convertor->master;                                       \
         convertor->remote_size = 0;                                       \
         for( i = OPAL_DATATYPE_FIRST_TYPE; mask && (i < OPAL_DATATYPE_MAX_PREDEFINED); i++ ) { \
@@ -472,10 +473,6 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
         convertor->use_desc = &(datatype->desc);                          \
     }                                                                     \
 }
-#else
-#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
-    assert(0 == (bdt_mask))
-#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
 
 /**
  * This macro will initialize a convertor based on a previously created
@@ -508,16 +505,13 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
         convertor->flags     |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
         convertor->pDesc      = (opal_datatype_t*)datatype;             \
         convertor->bConverted = 0;                                      \
-        /* By default consider the optimized description */             \
         convertor->use_desc = &(datatype->opt_desc);                    \
                                                                         \
         convertor->remote_size = convertor->local_size;                 \
         if( OPAL_LIKELY(convertor->remoteArch == opal_local_arch) ) {   \
-            if( (convertor->flags & (CONVERTOR_WITH_CHECKSUM | OPAL_DATATYPE_FLAG_NO_GAPS)) == OPAL_DATATYPE_FLAG_NO_GAPS ) { \
-                return OPAL_SUCCESS;                                    \
-            }                                                           \
-            if( ((convertor->flags & (CONVERTOR_WITH_CHECKSUM | OPAL_DATATYPE_FLAG_CONTIGUOUS)) \
-                 == OPAL_DATATYPE_FLAG_CONTIGUOUS) && (1 == count) ) {             \
+            if( !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&        \
+                ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS) || \
+                 ((convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && (1 == count))) ) { \
                 return OPAL_SUCCESS;                                    \
             }                                                           \
         }                                                               \
@@ -529,8 +523,9 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
         /* For predefined datatypes (contiguous) do nothing more */     \
         /* if checksum is enabled then always continue */               \
         if( ((convertor->flags & (CONVERTOR_WITH_CHECKSUM | OPAL_DATATYPE_FLAG_NO_GAPS)) \
-             == OPAL_DATATYPE_FLAG_NO_GAPS) &&                                     \
-            (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS)) ) { \
+             == OPAL_DATATYPE_FLAG_NO_GAPS) &&                          \
+            ((convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS)) == \
+             (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS)) ) {              \
             return OPAL_SUCCESS;                                        \
         }                                                               \
         convertor->flags &= ~CONVERTOR_NO_OP;                           \
@@ -563,26 +558,24 @@ int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
     OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
             convertor->fAdvance = opal_unpack_general_checksum;
-        } else
-#endif
-        if( convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-            convertor->fAdvance = opal_unpack_homogeneous_contig_checksum;
         } else {
-            convertor->fAdvance = opal_generic_simple_unpack_checksum;
+            if( convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
+                convertor->fAdvance = opal_unpack_homogeneous_contig_checksum;
+            } else {
+                convertor->fAdvance = opal_generic_simple_unpack_checksum;
+            }
         }
     } else {
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
             convertor->fAdvance = opal_unpack_general;
-        } else
-#endif
-        if( convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-            convertor->fAdvance = opal_unpack_homogeneous_contig;
         } else {
-            convertor->fAdvance = opal_generic_simple_unpack;
+            if( convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
+                convertor->fAdvance = opal_unpack_homogeneous_contig;
+            } else {
+                convertor->fAdvance = opal_generic_simple_unpack;
+            }
         }
     }
     return OPAL_SUCCESS;
@@ -602,24 +595,32 @@ int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
     OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
-        if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-            if( ((datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size)
-                || (1 >= convertor->count) )
-                convertor->fAdvance = opal_pack_homogeneous_contig_checksum;
-            else
-                convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps_checksum;
+        if( CONVERTOR_SEND_CONVERSION == (convertor->flags & (CONVERTOR_SEND_CONVERSION|CONVERTOR_HOMOGENEOUS)) ) {
+            convertor->fAdvance = opal_pack_general_checksum;
         } else {
-            convertor->fAdvance = opal_generic_simple_pack_checksum;
+            if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
+                if( ((datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size)
+                    || (1 >= convertor->count) )
+                    convertor->fAdvance = opal_pack_homogeneous_contig_checksum;
+                else
+                    convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps_checksum;
+            } else {
+                convertor->fAdvance = opal_generic_simple_pack_checksum;
+            }
         }
     } else {
-        if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-            if( ((datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size)
-                || (1 >= convertor->count) )
-                convertor->fAdvance = opal_pack_homogeneous_contig;
-            else
-                convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps;
+        if( CONVERTOR_SEND_CONVERSION == (convertor->flags & (CONVERTOR_SEND_CONVERSION|CONVERTOR_HOMOGENEOUS)) ) {
+            convertor->fAdvance = opal_pack_general;
         } else {
-            convertor->fAdvance = opal_generic_simple_pack;
+            if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
+                if( ((datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size)
+                    || (1 >= convertor->count) )
+                    convertor->fAdvance = opal_pack_homogeneous_contig;
+                else
+                    convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps;
+            } else {
+                convertor->fAdvance = opal_generic_simple_pack;
+            }
         }
     }
     return OPAL_SUCCESS;
@@ -675,15 +676,33 @@ int opal_convertor_clone( const opal_convertor_t* source,
 
 void opal_convertor_dump( opal_convertor_t* convertor )
 {
-    printf( "Convertor %p count %d stack position %d bConverted %ld\n", (void*)convertor,
-            convertor->count, convertor->stack_pos, (unsigned long)convertor->bConverted );
-    printf( "\tlocal_size %ld remote_size %ld flags %X stack_size %d pending_length %d\n",
-            (unsigned long)convertor->local_size, (unsigned long)convertor->remote_size,
-            convertor->flags, convertor->stack_size, convertor->partial_length );
+    opal_output( 0, "Convertor %p count %d stack position %d bConverted %ld\n"
+                 "\tlocal_size %ld remote_size %ld flags %X stack_size %d pending_length %d\n"
+                 "\tremote_arch %u local_arch %u\n",
+                 (void*)convertor,
+                 convertor->count, convertor->stack_pos, (unsigned long)convertor->bConverted,
+                 (unsigned long)convertor->local_size, (unsigned long)convertor->remote_size,
+                 convertor->flags, convertor->stack_size, convertor->partial_length,
+                 convertor->remoteArch, opal_local_arch );
+    if( convertor->flags & CONVERTOR_RECV ) opal_output( 0, "unpack ");
+    if( convertor->flags & CONVERTOR_SEND ) opal_output( 0, "pack ");
+    if( convertor->flags & CONVERTOR_SEND_CONVERSION ) opal_output( 0, "conversion ");
+    if( convertor->flags & CONVERTOR_HOMOGENEOUS ) opal_output( 0, "homogeneous " );
+    else opal_output( 0, "heterogeneous ");
+    if( convertor->flags & CONVERTOR_NO_OP ) opal_output( 0, "no_op ");
+    if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) opal_output( 0, "checksum ");
+    if( convertor->flags & CONVERTOR_CUDA ) opal_output( 0, "CUDA ");
+    if( convertor->flags & CONVERTOR_CUDA_ASYNC ) opal_output( 0, "CUDA Async ");
+    if( convertor->flags & CONVERTOR_COMPLETED ) opal_output( 0, "COMPLETED ");
+
     opal_datatype_dump( convertor->pDesc );
-    printf( "Actual stack representation\n" );
-    opal_datatype_dump_stack( convertor->pStack, convertor->stack_pos,
-                              convertor->pDesc->desc.desc, convertor->pDesc->name );
+    if( !((0 == convertor->stack_pos) &&
+          ((size_t)convertor->pStack[convertor->stack_pos].index > convertor->pDesc->desc.length)) ) {
+        /* only if the convertor is completely initialized */
+        opal_output( 0, "Actual stack representation\n" );
+        opal_datatype_dump_stack( convertor->pStack, convertor->stack_pos,
+                                  convertor->pDesc->desc.desc, convertor->pDesc->name );
+    }
 }
 
 

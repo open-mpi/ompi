@@ -1,6 +1,9 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -83,6 +86,7 @@ if (-r "ompi/include/mpi.h.in") {
 #----------------------------------------------------------------------------
 
 my $handles;
+my $lhandles;
 
 $handles->{MPI_COMM_WORLD} = 0;
 $handles->{MPI_COMM_SELF} = 1;
@@ -103,6 +107,7 @@ $handles->{MPI_BXOR} = 10;
 $handles->{MPI_MAXLOC} = 11;
 $handles->{MPI_MINLOC} = 12;
 $handles->{MPI_REPLACE} = 13;
+$handles->{MPI_NO_OP} = 14;
 
 $handles->{MPI_COMM_NULL} = 2;
 $handles->{MPI_DATATYPE_NULL} = 0;
@@ -158,20 +163,22 @@ $handles->{MPI_UNSIGNED} = 40;
 $handles->{MPI_LONG} = 41;
 $handles->{MPI_UNSIGNED_LONG} = 42;
 $handles->{MPI_LONG_LONG_INT} = 43;
+$handles->{MPI_LONG_LONG} = $handles->{MPI_LONG_LONG_INT};
 $handles->{MPI_UNSIGNED_LONG_LONG} = 44;
 $handles->{MPI_FLOAT} = 45;
 $handles->{MPI_DOUBLE} = 46;
 $handles->{MPI_LONG_DOUBLE} = 47;
 $handles->{MPI_FLOAT_INT} = 48;
 $handles->{MPI_DOUBLE_INT} = 49;
-$handles->{MPI_LONGDBL_INT} = 50;
+$handles->{MPI_LONG_DOUBLE_INT} = 50;
 $handles->{MPI_LONG_INT} = 51;
 $handles->{MPI_2INT} = 52;
 $handles->{MPI_SHORT_INT} = 53;
 $handles->{MPI_CXX_BOOL} = 54;
-$handles->{MPI_CXX_CPLEX} = 55;
-$handles->{MPI_CXX_DBLCPLEX} = 56;
-$handles->{MPI_CXX_LDBLCPLEX} = 57;
+$handles->{MPI_CXX_FLOAT_COMPLEX} = 55;
+$handles->{MPI_CXX_COMPLEX} = $handles->{MPI_CXX_FLOAT_COMPLEX};
+$handles->{MPI_CXX_DOUBLE_COMPLEX} = 56;
+$handles->{MPI_CXX_LONG_DOUBLE_COMPLEX} = 57;
 $handles->{MPI_INT8_T} = 58;
 $handles->{MPI_UINT8_T} = 59;
 $handles->{MPI_INT16_T} = 60;
@@ -182,8 +189,9 @@ $handles->{MPI_INT64_T} = 64;
 $handles->{MPI_UINT64_T} = 65;
 $handles->{MPI_AINT} = 66;
 $handles->{MPI_OFFSET} = 67;
-$handles->{MPI_C_COMPLEX} = 68;
-$handles->{MPI_C_FLOAT_COMPLEX} = 69;
+$handles->{MPI_C_BOOL} = 68;
+$handles->{MPI_C_COMPLEX} = 69;
+$handles->{MPI_C_FLOAT_COMPLEX} = $handles->{MPI_C_COMPLEX};
 $handles->{MPI_C_DOUBLE_COMPLEX} = 70;
 $handles->{MPI_C_LONG_DOUBLE_COMPLEX} = 71;
 $handles->{MPI_COUNT} = 72;
@@ -227,6 +235,14 @@ $constants->{MPI_UNIVERSE_SIZE} = 6;
 $constants->{MPI_WIN_BASE} = 7;
 $constants->{MPI_WIN_SIZE} = 8;
 $constants->{MPI_WIN_DISP_UNIT} = 9;
+$constants->{MPI_WIN_CREATE_FLAVOR} = 10;
+$constants->{MPI_WIN_MODEL} = 11;
+$constants->{MPI_WIN_FLAVOR_CREATE} = 1;
+$constants->{MPI_WIN_FLAVOR_ALLOCATE} = 2;
+$constants->{MPI_WIN_FLAVOR_DYNAMIC} = 3;
+$constants->{MPI_WIN_FLAVOR_SHARED} = 4;
+$constants->{MPI_WIN_UNIFIED} = 0;
+$constants->{MPI_WIN_SEPARATE} = 1;
 
 $constants->{MPI_BSEND_OVERHEAD} = 128;
 $constants->{MPI_ORDER_C} = 0;
@@ -383,7 +399,9 @@ $io_constants->{MPI_MODE_UNIQUE_OPEN} = 32;
 $io_constants->{MPI_MODE_EXCL} = 64;
 $io_constants->{MPI_MODE_APPEND} = 128;
 $io_constants->{MPI_MODE_SEQUENTIAL} = 256;
-$io_constants->{MPI_DISPLACEMENT_CURRENT} = -54278278;
+
+my $lio_constants;
+$lio_constants->{MPI_DISPLACEMENT_CURRENT} = -54278278;
 
 #----------------------------------------------------------------------------
 
@@ -406,6 +424,8 @@ my $header = '! -*- fortran -*-
 !                         All rights reserved.
 ! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+! Copyright (c) 2016      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -416,26 +436,32 @@ my $header = '! -*- fortran -*-
 ';
 
 sub write_fortran_file {
-    my ($header, $vals, $file) = @_;
+    my ($header, $vals, $lvals, $file) = @_;
 
     foreach my $key (sort(keys(%{$vals}))) {
         $header .= "        integer $key\n";
+    }
+    foreach my $key (sort(keys(%{$lvals}))) {
+        $header .= "        integer(KIND=MPI_OFFSET_KIND) $key\n";
     }
     $header .= "\n";
     foreach my $key (sort(keys(%{$vals}))) {
         $header .= "        parameter ($key=$vals->{$key})\n";
     }
+    foreach my $key (sort(keys(%{$lvals}))) {
+        $header .= "        parameter ($key=$lvals->{$key})\n";
+    }
 
     write_file($file, $header);
 }
 
-write_fortran_file($header, $handles,
+write_fortran_file($header, $handles, {},
                    "$topdir/ompi/include/mpif-handles.h");
-write_fortran_file($header, $constants,
+write_fortran_file($header, $constants, {},
                    "$topdir/ompi/include/mpif-constants.h");
-write_fortran_file($header, $io_handles,
+write_fortran_file($header, $io_handles, {},
                    "$topdir/ompi/include/mpif-io-handles.h");
-write_fortran_file($header, $io_constants,
+write_fortran_file($header, $io_constants, $lio_constants,
                    "$topdir/ompi/include/mpif-io-constants.h");
 
 #----------------------------------------------------------------------------
@@ -463,6 +489,8 @@ my $output = '/* WARNING! THIS IS A GENERATED FILE!!
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2009-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -486,6 +514,9 @@ foreach my $key (sort(keys(%{$handles}))) {
 $output .= "\n#if OMPI_PROVIDE_MPI_FILE_INTERFACE\n";
 foreach my $key (sort(keys(%{$io_constants}))) {
     $output .= "#define OMPI_$key $io_constants->{$key}\n";
+}
+foreach my $key (sort(keys(%{$lio_constants}))) {
+    $output .= "#define OMPI_$key $lio_constants->{$key}\n";
 }
 $output .= "\n";
 foreach my $key (sort(keys(%{$io_handles}))) {

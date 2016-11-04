@@ -10,13 +10,15 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -90,12 +92,19 @@
 extern bool ompi_enable_timing;
 extern bool ompi_enable_timing_ext;
 
+static void fence_cbfunc(int status, void *cbdata)
+{
+  volatile bool *active = (volatile bool*)cbdata;
+  *active = false;
+}
+
 int ompi_mpi_finalize(void)
 {
     int ret = MPI_SUCCESS;
     opal_list_item_t *item;
     ompi_proc_t** procs;
     size_t nprocs;
+    volatile bool active;
     OPAL_TIMING_DECLARE(tm);
     OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
@@ -113,7 +122,7 @@ int ompi_mpi_finalize(void)
         /* Note that if we're not initialized or already finalized, we
            cannot raise an MPI exception.  The best that we can do is
            write something to stderr. */
-        char hostname[MAXHOSTNAMELEN];
+        char hostname[OPAL_MAXHOSTNAMELEN];
         pid_t pid = getpid();
         gethostname(hostname, sizeof(hostname));
 
@@ -219,7 +228,7 @@ int ompi_mpi_finalize(void)
       have many other, much higher priority issues to handle that deal
       with non-erroneous cases. */
 
-    /* Wait for everyone to reach this point.  This is a grpcomm
+    /* Wait for everyone to reach this point.  This is a PMIx
        barrier instead of an MPI barrier for (at least) two reasons:
 
        1. An MPI barrier doesn't ensure that all messages have been
@@ -239,7 +248,29 @@ int ompi_mpi_finalize(void)
        del_procs behavior around May of 2014 (see
        https://svn.open-mpi.org/trac/ompi/ticket/4669#comment:4 for
        more details). */
-    opal_pmix.fence(NULL, 0);
+    if (!ompi_async_mpi_finalize) {
+        if (NULL != opal_pmix.fence_nb) {
+            active = true;
+            /* Note that use of the non-blocking PMIx fence will
+             * allow us to lazily cycle calling
+             * opal_progress(), which will allow any other pending
+             * communications/actions to complete.  See
+             * https://github.com/open-mpi/ompi/issues/1576 for the
+             * original bug report. */
+            opal_pmix.fence_nb(NULL, 0, fence_cbfunc, (void*)&active);
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
+        } else {
+            /* However, we cannot guarantee that the provided PMIx has
+             * fence_nb.  If it doesn't, then do the best we can: an MPI
+             * barrier on COMM_WORLD (which isn't the best because of the
+             * reasons cited above), followed by a blocking PMIx fence
+             * (which does not call opal_progress()). */
+            ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
+            comm->c_coll.coll_barrier(comm, comm->c_coll.coll_barrier_module);
+
+            opal_pmix.fence(NULL, 0);
+        }
+    }
 
     /* check for timing request - get stop time and report elapsed
      time if so */
@@ -455,6 +486,17 @@ int ompi_mpi_finalize(void)
     if (OPAL_SUCCESS != (ret = opal_finalize_util())) {
         goto done;
     }
+
+    if (0 == opal_initialized) {
+        /* if there is no MPI_T_init_thread that has been MPI_T_finalize'd,
+         * then be gentle to the app and release all the memory now (instead
+         * of the opal library destructor */
+        opal_class_finalize();
+    }
+
+    /* cleanup environment */
+    opal_unsetenv("OMPI_COMMAND", &environ);
+    opal_unsetenv("OMPI_ARGV", &environ);
 
     /* All done */
 

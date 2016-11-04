@@ -13,6 +13,8 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +42,6 @@
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
-#include "opal/mca/memory/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/sec/base/base.h"
 #include "opal/mca/timer/base/base.h"
@@ -58,17 +59,6 @@
 extern int opal_initialized;
 extern int opal_util_initialized;
 extern bool opal_init_called;
-
-static void __opal_attribute_destructor__ opal_cleanup (void)
-{
-    if (!opal_initialized) {
-        /* nothing to do */
-        return;
-    }
-
-    /* finalize the class/object system */
-    opal_class_finalize();
-}
 
 int
 opal_finalize_util(void)
@@ -113,9 +103,8 @@ opal_finalize_util(void)
 
     opal_datatype_finalize();
 
-#if OPAL_NO_LIB_DESTRUCTOR
-    opal_cleanup ();
-#endif
+    /* finalize the class/object system */
+    opal_class_finalize();
 
     free (opal_process_info.nodename);
     opal_process_info.nodename = NULL;
@@ -153,13 +142,6 @@ opal_finalize(void)
 
     (void) mca_base_framework_close(&opal_backtrace_base_framework);
     (void) mca_base_framework_close(&opal_memchecker_base_framework);
-
-    /* close the memory manager components.  Registered hooks can
-       still be fired any time between now and the call to
-       opal_mem_free_finalize(), and callbacks from the memory manager
-       hooks to the bowels of the mem_free code can still occur any
-       time between now and end of application (even post main()!) */
-    (void) mca_base_framework_close(&opal_memory_base_framework);
 
     /* close the memcpy framework */
     (void) mca_base_framework_close(&opal_memcpy_base_framework);

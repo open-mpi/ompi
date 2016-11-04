@@ -24,6 +24,7 @@
 #define MCA_PML_BFO_RDMAFRAG_H
 
 #include "pml_bfo_hdr.h"
+#include "opal/mca/mpool/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -33,7 +34,7 @@ typedef enum {
 } mca_pml_bfo_rdma_state_t;
 
 struct mca_pml_bfo_rdma_frag_t {
-    ompi_free_list_item_t super;
+    opal_free_list_item_t super;
     mca_bml_base_btl_t* rdma_bml;
 #if PML_BFO
     mca_btl_base_module_t* rdma_btl;
@@ -45,7 +46,7 @@ struct mca_pml_bfo_rdma_frag_t {
     void *rdma_req;
     struct mca_bml_base_endpoint_t* rdma_ep;
     opal_convertor_t convertor;
-    mca_mpool_base_registration_t* reg;
+    struct mca_mpool_base_registration_t* reg;
     uint32_t retries;
 };
 typedef struct mca_pml_bfo_rdma_frag_t mca_pml_bfo_rdma_frag_t;
@@ -55,16 +56,16 @@ OBJ_CLASS_DECLARATION(mca_pml_bfo_rdma_frag_t);
 
 #define MCA_PML_BFO_RDMA_FRAG_ALLOC(frag)                       \
 do {                                                            \
-    ompi_free_list_item_t* item;                                \
-    OMPI_FREE_LIST_WAIT_MT(&mca_pml_bfo.rdma_frags, item);         \
+    opal_free_list_item_t* item;                                \
+    OPAL_FREE_LIST_WAIT_MT(&mca_pml_bfo.rdma_frags, item);      \
     frag = (mca_pml_bfo_rdma_frag_t*)item;                      \
 } while(0)
 
 #define MCA_PML_BFO_RDMA_FRAG_RETURN(frag)                      \
 do {                                                            \
     /* return fragment */                                       \
-    OMPI_FREE_LIST_RETURN_MT(&mca_pml_bfo.rdma_frags,              \
-        (ompi_free_list_item_t*)frag);                          \
+    OPAL_FREE_LIST_RETURN_MT(&mca_pml_bfo.rdma_frags,           \
+        (opal_free_list_item_t*)frag);                          \
 } while(0)
 
 

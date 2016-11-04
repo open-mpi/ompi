@@ -1,9 +1,10 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
 #
 
 use strict;
+
 use Data::Dumper;
 
 # Ensure that we're in the root of a writeable Git clone
@@ -14,149 +15,213 @@ $in_git_clone = 0
 
 ######################################################################
 
+my $header_sep = "-----";
+my $unknown_org = "********* NO ORGANIZATION SET ********";
+
+my $people;
+
+######################################################################
+
 # Run git log to get a list of committers
 
-my $committers;
-open (GIT, "git log --pretty=format:%ae|") || die "Can't run 'git log'.";
+open (GIT, "git log --format=tformat:'%aN <%aE>'|") || die "Can't run 'git log'.";
 while (<GIT>) {
     chomp;
-    m/^\s*([\S]+)\s*$/;
+    m/^\s*(.+)\s+<(.+)>\s*$/;
 
-    if (!exists($committers->{$1})) {
-        $committers->{$1} = { };
-        print "Found Git commit email: $1\n";
+    if (!exists($people->{$1})) {
+        # The person doesn't exist, so save a new entry
+        $people->{$1} = {
+            name => $1,
+            org => $unknown_org,
+            emails => {
+                lc($2) => 1,
+            }
+        };
+
+
+        print "Found Git committer: $1 <$2>\n";
+    } else {
+        # The person already exists, so just add (or overwrite) this
+        # email address
+        $people->{$1}->{emails}->{$2} = 1;
     }
 }
 close(GIT);
 
-# Read the existing AUTHORS file to get the header, footer, and Git
-# email ID -> (gecos, affiliation) mappings.
+######################################################################
+
+# Read the existing AUTHORS file
 
 my $header;
-my $footer;
 
 print "Matching Git emails to existing names/affiliations...\n";
 
+sub save {
+    my $current = shift;
+
+    print "Saving person from AUTHORS: $current->{name}\n";
+
+    # We may overwrite an entry written from the git log, but that's
+    # ok
+    $people->{$current->{name}} = $current;
+}
+
 open (AUTHORS, "AUTHORS") || die "Can't open AUTHORS file";
 my $in_header = 1;
-my $in_footer = 0;
+my $current = undef;
 while (<AUTHORS>) {
     chomp;
     my $line = $_;
 
-    # Slurp down header lines until we hit a line that begins with an
-    # Git email
+    # Slurp down header lines until we hit a line that begins with
+    # $header_sep
     if ($in_header) {
-        foreach my $git_email (keys(%{$committers})) {
-            if ($line =~ /$git_email\s+/) {
-                $in_header = 0;
-            }
+        $header .= "$line\n";
+
+        if ($_ =~ /^$header_sep/) {
+            $in_header = 0;
+
+            # There should be a blank line after this, too
+            $header .= "\n";
         }
-        if ($in_header) {
-            $header .= "$_\n";
-        }
+        next;
     }
 
-    # If we're in the body, parse to get the existing Git emails, gecos,
-    # and affiliations
-    if (!$in_header && !$in_footer) {
+    # Skip blank lines
+    next
+        if ($line =~ /^\s*$/);
 
-        # Make sure we have a line that begins with an Git email;
-        # otherwise, fall through to the footer.
-        my $found = undef;
-        my $git_email;
-        foreach $git_email (keys(%{$committers})) {
-            if ($line =~ /$git_email\s+/) {
-                $found = $git_email;
-                last;
-            }
-        }
-        if (!$found) {
-            $in_footer = 1;
+    # Format of body:
+    #
+    # NAME, Affiliation 1[, Affiliation 2[...]]
+    #   Email address 1
+    #   [Email address 2]
+    #   [...]
+    # NAME, Affiliation 1[, Affiliation 2[...]]
+    #   Email address 1
+    #   [Email address 2]
+    #   [...]
+
+    # Found a new email address for an existing person
+    if ($line =~ /^  /) {
+        m/^  (.+)$/;
+        $current->{emails}->{lc($1)} = 1;
+
+        next;
+    } else {
+        # Found a new person; save the old entry
+        save($current)
+            if (defined($current));
+
+        $current = undef;
+        $current->{org} = $unknown_org;
+        if ($line =~ m/^(.+?),\s+(.+)$/) {
+            $current->{name} = $1;
+            $current->{org} = $2;
         } else {
-            $line =~ m/^$found\s+(.+?)\s{2,}(.+)$/;
-            my $gecos = $1;
-            my $aff = $2;
-
-            if ($gecos =~ /^\s+$/) {
-                $gecos = "<UNKNOWN>";
-            } else {
-                $committers->{$found}->{gecos} = $gecos;
-            }
-            if ($aff =~ /^\s+$/) {
-                $aff = "<UNKNOWN>";
-            } else {
-                $committers->{$found}->{affiliation} = $aff;
-            }
-            print "Git email $found matches: $gecos / $aff\n";
+            $current->{name} = $line;
         }
-    }
 
-    # If we're in the footer, just save all the lines
-    if ($in_footer) {
-        $footer .= "$_\n";
+        next;
     }
 }
+
+save($current)
+    if (defined($current));
+
 close(AUTHORS);
 
-# Figure out the 3 column widths.  The last line of the header
-# contains -'s for each of the columns.
+######################################################################
 
-$header =~ m/\n([\-\s]+?)$/m;
-my $div_line = $1;
-my @divs = split(/ /, $div_line);
-my $id_col = length($divs[0]);
-my $gecos_col = length($divs[1]);
-my $aff_col = length($divs[2]);
+# Output a new AUTHORS file
 
-# Print out a new AUTHORS file
 open (AUTHORS, ">AUTHORS.new") || die "Can't write to AUTHORS file";
+
 print AUTHORS $header;
-my $i;
-my $have_unknowns = 0;
-foreach my $git_email (sort(keys(%${committers}))) {
-    # Skip the automated accounts
-    next
-        if ($git_email eq "no-author\@open-mpi.org" ||
-            $git_email eq "mpiteam\@open-mpi.org");
 
-    print AUTHORS $git_email;
-    $i = length($git_email);
-    while ($i <= $id_col) {
-        print AUTHORS ' ';
-        ++$i;
-    }
+my @people_with_unknown_orgs;
+my $email_dups;
 
-    # if we have gecos/affiliation, print them.  Otherwise, just end
-    # the line here
-    if ((exists($committers->{$git_email}->{gecos}) &&
-         $committers->{$git_email}->{gecos} !~ /^\s+$/) ||
-        (exists($committers->{$git_email}->{affiliation}) &&
-         $committers->{$git_email}->{affiliation} !~ /^\s+$/)) {
-        print AUTHORS $committers->{$git_email}->{gecos};
-        $i = length($committers->{$git_email}->{gecos});
-        while ($i <= $gecos_col) {
-            print AUTHORS ' ';
-            ++$i;
-        }
+my @sorted_people = sort(keys(%{$people}));
+foreach my $p (@sorted_people) {
+    print AUTHORS $p;
+    if (exists($people->{$p}->{org})) {
+        print AUTHORS ", $people->{$p}->{org}";
 
-        print AUTHORS $committers->{$git_email}->{affiliation}
-            if (exists($committers->{$git_email}->{affiliation}));
-    } else {
-        $have_unknowns = 1;
+        # Record this so that we can warn about it
+        push(@people_with_unknown_orgs, $p)
+            if ($people->{$p}->{org} eq $unknown_org);
     }
     print AUTHORS "\n";
+
+    foreach my $e (sort(keys(%{$people->{$p}->{emails}}))) {
+        # Sanity check: make sure this email address does not show up
+        # with any other person/name
+        my $dup;
+        foreach my $p2 (@sorted_people) {
+            next
+                if ($p eq $p2);
+
+            foreach my $e2 (keys(%{$people->{$p2}->{emails}})) {
+                if ($e eq $e2) {
+                    $dup = $p2;
+
+                    # Record this so that we can warn about it
+                    if ($p le $p2) {
+                        $email_dups->{$p} = $p2;
+                    } else {
+                        $email_dups->{$p2} = $p;
+                    }
+                    last;
+                }
+            }
+
+            last
+                if (defined($dup));
+        }
+
+        print AUTHORS "  $e";
+        print AUTHORS " (**** DUPLICATE EMAIL ADDRESS WITH $dup ***)"
+            if (defined($dup));
+        print AUTHORS "\n";
+    }
 }
-print AUTHORS $footer;
 close(AUTHORS);
 
+# We have a new AUTHORS file!  Replace the old one.
 unlink("AUTHORS");
 rename("AUTHORS.new", "AUTHORS");
 
 print "New AUTHORS file written.\n";
-if ($have_unknowns) {
-    print "*** WARNING: There were Git committers with unknown real names and/or\n*** affiliations.  You *MUST* edit the AUTHORS file to fill them in!\n";
-} else {
-    print "All Git emails were matched! No need to hand-edit the AUTHORS file.\n";
+
+######################################################################
+
+# Output any relevant warnings
+
+my $warned = 0;
+if ($#people_with_unknown_orgs >= 0) {
+    $warned = 1;
+    print "\n*** WARNING: The following people have unspecified organiations:\n";
+    foreach my $p (@people_with_unknown_orgs) {
+        print "***   $p\n";
+    }
 }
 
+my @k = sort(keys(%{$email_dups}));
+if ($#k >= 0) {
+    $warned = 1;
+    print "\n*** WARNING: The following people had the same email address:\n";
+    foreach my $p (@k) {
+        print "***   $p, $email_dups->{$p}\n";
+    }
+}
+
+if ($warned) {
+    print "
+*******************************************************************************
+*** YOU SHOULD EDIT THE .mailmap AND/OR AUTHORS FILE TO RESOLVE THESE WARNINGS!
+*******************************************************************************\n";
+}
+
+exit($warned);

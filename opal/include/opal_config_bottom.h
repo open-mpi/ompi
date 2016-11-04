@@ -285,6 +285,14 @@ typedef OPAL_PTRDIFF_TYPE ptrdiff_t;
 #define OPAL_PATH_SEP "/"
 #define OPAL_ENV_SEP  ':'
 
+#if defined(MAXHOSTNAMELEN)
+#define OPAL_MAXHOSTNAMELEN (MAXHOSTNAMELEN + 1)
+#elif defined(HOST_NAME_MAX)
+#define OPAL_MAXHOSTNAMELEN (HOST_NAME_MAX + 1)
+#else
+/* SUSv2 guarantees that "Host names are limited to 255 bytes". */
+#define OPAL_MAXHOSTNAMELEN (255 + 1)
+#endif
 
 /*
  * Do we want memory debugging?
@@ -489,12 +497,7 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #ifdef HAVE_HOSTLIB_H
 /* gethostname() */
 #include <hostLib.h>
-
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN 64
 #endif
-#endif
-
 #endif
 
 /* If we're in C++, then just undefine restrict and then define it to

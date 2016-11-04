@@ -32,10 +32,10 @@ static inline void mca_pml_yalla_request_release(mca_pml_yalla_base_request_t *r
 }
 
 static inline int
-mca_pml_yalla_check_request_state(mca_pml_yalla_base_request_t *req)
+mca_pml_yalla_check_request_state(mca_pml_yalla_base_request_t *req, mxm_req_base_t *mxm_base)
 {
-    if (req->mxm_base->state != MXM_REQ_COMPLETED) {
-         PML_YALLA_VERBOSE(8, "request %p free called before completed", (void *)req);
+    if (mxm_base->state != MXM_REQ_COMPLETED) {
+         PML_YALLA_VERBOSE(8, "request %p free called before completed", (void*)req);
          req->flags |= MCA_PML_YALLA_REQUEST_FLAG_FREE_CALLED;
          return 0;
     }
@@ -45,15 +45,13 @@ mca_pml_yalla_check_request_state(mca_pml_yalla_base_request_t *req)
 
 static int mca_pml_yalla_send_request_free(ompi_request_t **request)
 {
-    mca_pml_yalla_base_request_t *req = (mca_pml_yalla_base_request_t*)(*request);
+    mca_pml_yalla_send_request_t *sreq = (mca_pml_yalla_send_request_t*)(*request);
 
     PML_YALLA_VERBOSE(9, "free send request *%p=%p", (void *)request, (void *)*request);
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    if (mca_pml_yalla_check_request_state(req)) {
-        mca_pml_yalla_request_release(req, &ompi_pml_yalla.send_reqs);
+    if (mca_pml_yalla_check_request_state(&sreq->super, PML_YALLA_MXM_REQBASE(sreq))) {
+        mca_pml_yalla_request_release(&sreq->super, &ompi_pml_yalla.send_reqs);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
@@ -64,7 +62,7 @@ static int mca_pml_yalla_send_request_cancel(ompi_request_t *request, int flag)
     mca_pml_yalla_send_request_t *sreq = (mca_pml_yalla_send_request_t*)request;
     mxm_error_t error;
 
-    if (request->req_complete) {
+    if (REQUEST_COMPLETE(request)) {
         /*
          * This might be a buffered send request which has completed anyway, so
          * we cannot cancel it anymore. Just hope for the best.
@@ -86,15 +84,13 @@ static int mca_pml_yalla_send_request_cancel(ompi_request_t *request, int flag)
 
 static int mca_pml_yalla_recv_request_free(ompi_request_t **request)
 {
-    mca_pml_yalla_base_request_t *req = (mca_pml_yalla_base_request_t*)(*request);
+    mca_pml_yalla_recv_request_t *rreq = (mca_pml_yalla_recv_request_t*)(*request);
 
     PML_YALLA_VERBOSE(9, "free receive request *%p=%p", (void *)request, (void *)*request);
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    if (mca_pml_yalla_check_request_state(req)) {
-        mca_pml_yalla_request_release(req, &ompi_pml_yalla.recv_reqs);
+    if (mca_pml_yalla_check_request_state(&rreq->super, PML_YALLA_MXM_REQBASE(rreq))) {
+        mca_pml_yalla_request_release(&rreq->super, &ompi_pml_yalla.recv_reqs);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
@@ -178,13 +174,11 @@ static void mca_pml_yalla_send_completion_cb(void *context)
     PML_YALLA_VERBOSE(8, "send request %p completed with status %s", (void *)sreq,
                    mxm_error_string(sreq->mxm.base.error));
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_complete(&sreq->super.ompi, true);
     if (sreq->super.flags & MCA_PML_YALLA_REQUEST_FLAG_FREE_CALLED) {
         PML_YALLA_VERBOSE(7, "release request %p because free was already called", (void *)sreq);
         mca_pml_yalla_request_release(&sreq->super, &ompi_pml_yalla.send_reqs);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 static void mca_pml_yalla_bsend_completion_cb(void *context)
@@ -211,13 +205,11 @@ static void mca_pml_yalla_recv_completion_cb(void *context)
                       rreq->mxm.tag, rreq->mxm.tag_mask,
                       rreq->mxm.completion.actual_len);
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_complete(&rreq->super.ompi, true);
     if (rreq->super.flags & MCA_PML_YALLA_REQUEST_FLAG_FREE_CALLED) {
         PML_YALLA_VERBOSE(7, "release request %p because free was already called", (void *)rreq);
         mca_pml_yalla_request_release(&rreq->super, &ompi_pml_yalla.recv_reqs);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 static void mca_pml_yalla_send_request_construct(mca_pml_yalla_send_request_t* sreq)

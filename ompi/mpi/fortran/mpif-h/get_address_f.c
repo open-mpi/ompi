@@ -22,6 +22,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
+#include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -71,7 +72,7 @@ void ompi_get_address_f(char *location, MPI_Aint *address, MPI_Fint *ierr)
     int c_ierr;
     MPI_Aint c_address;
 
-    c_ierr = PMPI_Get_address(location, &c_address);
+    c_ierr = PMPI_Get_address(OMPI_F2C_BOTTOM(location), &c_address);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

@@ -1,9 +1,10 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +42,10 @@ int oshmem_proc_init(void)
 {
     OBJ_CONSTRUCT(&oshmem_proc_lock, opal_mutex_t);
 
-    assert(sizeof(ompi_proc_t) >= sizeof(oshmem_proc_t));
+    /* check oshmem_proc_data_t can fit within ompi_proc_t padding */
+    assert(sizeof(oshmem_proc_data_t) <= OMPI_PROC_PADDING_SIZE);
+    /* check ompi_proc_t padding is aligned on a pointer */
+    assert(0 == (offsetof(ompi_proc_t, padding) & (sizeof(char *)-1)));
 
     return OSHMEM_SUCCESS;
 }
@@ -63,14 +67,6 @@ OBJ_CLASS_INSTANCE(oshmem_group_t, opal_object_t, NULL, NULL);
 
 int oshmem_proc_group_init(void)
 {
-    if (orte_process_info.num_procs != opal_list_get_size(&ompi_proc_list)) {
-        opal_output(0,
-                "Error: oshmem_group_all is not created: orte_process_info.num_procs = %d ompi_proc_list = %" PRIsize_t,
-		orte_process_info.num_procs,
-		opal_list_get_size(&ompi_proc_list));
-        return OSHMEM_ERROR;
-    }
-
     /* Setup communicator array */
     OBJ_CONSTRUCT(&oshmem_group_array, opal_pointer_array_t);
     if (OPAL_SUCCESS
@@ -86,8 +82,7 @@ int oshmem_proc_group_init(void)
             == (oshmem_group_all =
                     oshmem_proc_group_create(0,
                                              1,
-					     oshmem_num_procs()))) {
-        oshmem_proc_group_destroy(oshmem_group_all);
+					     ompi_comm_size(oshmem_comm_world)))) {
         return OSHMEM_ERROR;
     }
 
@@ -135,8 +130,8 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
     int cur_pe, count_pe;
     int i;
     oshmem_group_t* group = NULL;
-    oshmem_proc_t** proc_array = NULL;
-    oshmem_proc_t* proc = NULL;
+    ompi_proc_t** proc_array = NULL;
+    ompi_proc_t* proc = NULL;
 
     assert(oshmem_proc_local());
 
@@ -149,19 +144,23 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
         OPAL_THREAD_LOCK(&oshmem_proc_lock);
 
         /* allocate an array */
-        proc_array = (oshmem_proc_t**) malloc(pe_size * sizeof(oshmem_proc_t*));
+        proc_array = (ompi_proc_t**) malloc(pe_size * sizeof(ompi_proc_t*));
         if (NULL == proc_array) {
+            OBJ_RELEASE(group);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
             return NULL ;
         }
 
         group->my_pe = oshmem_proc_pe(oshmem_proc_local());
         group->is_member = 0;
-        for (i = 0 ; i < oshmem_num_procs() ; i++) {
+        for (i = 0 ; i < ompi_comm_size(oshmem_comm_world) ; i++) {
             proc = oshmem_proc_find(i);
             if (NULL == proc) {
                 opal_output(0,
                              "Error: Can not find proc object for pe = %d", i);
+                free(proc_array);
+                OBJ_RELEASE(group);
+                OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
                 return NULL;
             }
             if (count_pe >= (int) pe_size) {
@@ -200,8 +199,9 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
                         "Error: No collective modules are available: group is not created, returning NULL");
             oshmem_proc_group_destroy(group);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
-            return NULL ;
-        } OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
+            return NULL;
+        }
+        OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
     }
 
     return group;

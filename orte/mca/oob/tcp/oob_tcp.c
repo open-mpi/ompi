@@ -13,7 +13,9 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -147,28 +149,16 @@ static void tcp_init(void)
 static void tcp_fini(void)
 {
     uint64_t ui64;
-    char *nptr;
     mca_oob_tcp_peer_t *peer;
 
     /* cleanup all peers */
-    if (OPAL_SUCCESS == opal_hash_table_get_first_key_uint64(&mca_oob_tcp_module.peers, &ui64,
-                                                             (void**)&peer, (void**)&nptr)) {
+    OPAL_HASH_TABLE_FOREACH(ui64, uint64, peer, &mca_oob_tcp_module.peers) {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
                             "%s RELEASING PEER OBJ %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
         if (NULL != peer) {
             OBJ_RELEASE(peer);
-        }
-        while (OPAL_SUCCESS == opal_hash_table_get_next_key_uint64(&mca_oob_tcp_module.peers, &ui64,
-                                                                   (void**)&peer, nptr, (void**)&nptr)) {
-            opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                                "%s RELEASING PEER OBJ %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
-            if (NULL != peer) {
-                OBJ_RELEASE(peer);
-            }
         }
     }
     OBJ_DESTRUCT(&mca_oob_tcp_module.peers);
@@ -287,6 +277,13 @@ static void process_set_peer(int fd, short args, void *cbdata)
             OBJ_RELEASE(peer);
             return;
         }
+        if (ORTE_PROC_IS_APP) {
+            /* we have to initiate the connection because otherwise the
+             * daemon has no way to communicate to us via this component
+             * as the app doesn't have a listening port */
+            peer->state = MCA_OOB_TCP_CONNECTING;
+            ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
+        }
     }
 
     maddr = OBJ_NEW(mca_oob_tcp_addr_t);
@@ -304,7 +301,7 @@ static void process_set_peer(int fd, short args, void *cbdata)
                         (NULL == pop->port) ? "NULL" : pop->port);
     opal_list_append(&peer->addrs, &maddr->super);
 
- cleanup:
+  cleanup:
     OBJ_RELEASE(pop);
 }
 
@@ -397,14 +394,9 @@ static void process_send(int fd, short args, void *cbdata)
     mca_oob_tcp_peer_t *peer;
     orte_process_name_t hop;
 
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] processing send to peer %s:%d to channel =%d seq_num = %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->dst_channel, op->msg->seq_num);
 
     /* do we have a route to this peer (could be direct)? */
-    hop = orte_routed.get_route(&op->msg->dst);
+    hop = orte_routed.get_route(op->msg->routed, &op->msg->dst);
     /* do we know this hop? */
     if (NULL == (peer = mca_oob_tcp_peer_lookup(&hop))) {
         /* push this back to the component so it can try
@@ -413,14 +405,21 @@ static void process_send(int fd, short args, void *cbdata)
          * to the framework so another component can try
          */
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s:[%s:%d] hop %s unknown",
+                            "%s:[%s:%d] processing send to peer %s:%d seq_num = %d hop %s unknown",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             __FILE__, __LINE__,
+                            ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->seq_num,
                             ORTE_NAME_PRINT(&hop));
         ORTE_ACTIVATE_TCP_NO_ROUTE(op->msg, &hop, mca_oob_tcp_component_no_route);
         goto cleanup;
     }
 
+    opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                        "%s:[%s:%d] processing send to peer %s:%d seq_num = %d via %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        __FILE__, __LINE__,
+                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->seq_num,
+                        ORTE_NAME_PRINT(&peer->name));
     /* add the msg to the hop's send queue */
     if (MCA_OOB_TCP_CONNECTED == peer->state) {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,

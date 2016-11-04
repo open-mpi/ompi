@@ -1,5 +1,8 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2015.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2016      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +34,9 @@ enum {
 #define PML_UCX_TAG_BITS                       24
 #define PML_UCX_RANK_BITS                      24
 #define PML_UCX_CONTEXT_BITS                   16
+#define PML_UCX_ANY_SOURCE_MASK                0x800000000000fffful
+#define PML_UCX_SPECIFIC_SOURCE_MASK           0x800000fffffffffful
+#define PML_UCX_TAG_MASK                       0x7fffff0000000000ul
 
 
 #define PML_UCX_MAKE_SEND_TAG(_tag, _comm) \
@@ -42,16 +48,16 @@ enum {
 #define PML_UCX_MAKE_RECV_TAG(_ucp_tag, _ucp_tag_mask, _tag, _src, _comm) \
     { \
         if ((_src) == MPI_ANY_SOURCE) { \
-            _ucp_tag_mask = 0x800000000000fffful; \
+            _ucp_tag_mask = PML_UCX_ANY_SOURCE_MASK; \
         } else { \
-            _ucp_tag_mask = 0x800000fffffffffful; \
+            _ucp_tag_mask = PML_UCX_SPECIFIC_SOURCE_MASK; \
         } \
         \
         _ucp_tag = (((uint64_t)(_src) & UCS_MASK(PML_UCX_RANK_BITS)) << PML_UCX_CONTEXT_BITS) | \
                    (_comm)->c_contextid; \
         \
         if ((_tag) != MPI_ANY_TAG) { \
-            _ucp_tag_mask |= 0x7fffff0000000000ul; \
+            _ucp_tag_mask |= PML_UCX_TAG_MASK; \
             _ucp_tag      |= ((uint64_t)(_tag)) << (PML_UCX_RANK_BITS + PML_UCX_CONTEXT_BITS); \
         } \
     }
@@ -115,7 +121,7 @@ void mca_pml_ucx_psend_completion(void *request, ucs_status_t status);
 void mca_pml_ucx_precv_completion(void *request, ucs_status_t status,
                                   ucp_tag_recv_info_t *info);
 
-void mca_pml_ucx_persistent_requset_complete(mca_pml_ucx_persistent_request_t *preq,
+void mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *preq,
                                              ompi_request_t *tmp_req);
 
 void mca_pml_ucx_completed_request_init(ompi_request_t *ompi_req);
@@ -127,20 +133,25 @@ void mca_pml_ucx_request_cleanup(void *request);
 
 static inline ucp_ep_h mca_pml_ucx_get_ep(ompi_communicator_t *comm, int dst)
 {
-    return ompi_comm_peer_lookup(comm, dst)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
+    ucp_ep_h ep = ompi_comm_peer_lookup(comm,dst)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
+    if (OPAL_UNLIKELY(NULL == ep)) {
+        ep = mca_pml_ucx_add_proc(comm, dst);
+    }
+
+    return ep;
 }
 
 static inline void mca_pml_ucx_request_reset(ompi_request_t *req)
 {
-    req->req_complete          = false;
-    req->req_status._cancelled = false;
+    req->req_complete          = REQUEST_PENDING;
 }
 
 static void mca_pml_ucx_set_send_status(ompi_status_public_t* mpi_status,
                                         ucs_status_t status)
 {
-    if (status == UCS_OK) {
+    if (OPAL_LIKELY(status == UCS_OK)) {
         mpi_status->MPI_ERROR  = MPI_SUCCESS;
+        mpi_status->_cancelled = false;
     } else if (status == UCS_ERR_CANCELED) {
         mpi_status->_cancelled = true;
     } else {
@@ -154,11 +165,12 @@ static inline void mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
 {
     int64_t tag;
 
-    if (ucp_status == UCS_OK) {
+    if (OPAL_LIKELY(ucp_status == UCS_OK)) {
         tag = info->sender_tag;
         mpi_status->MPI_ERROR  = MPI_SUCCESS;
         mpi_status->MPI_SOURCE = PML_UCX_TAG_GET_SOURCE(tag);
         mpi_status->MPI_TAG    = PML_UCX_TAG_GET_MPI_TAG(tag);
+        mpi_status->_cancelled = false;
         mpi_status->_ucount    = info->length;
     } else if (ucp_status == UCS_ERR_MESSAGE_TRUNCATED) {
         mpi_status->MPI_ERROR = MPI_ERR_TRUNCATE;

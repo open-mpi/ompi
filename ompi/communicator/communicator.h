@@ -355,7 +355,6 @@ static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id
  * Initialise MPI_COMM_WORLD and MPI_COMM_SELF
  */
 int ompi_comm_init(void);
-OMPI_DECLSPEC int ompi_comm_link_function(void);
 
 /**
  * extract the local group from a communicator
@@ -497,24 +496,27 @@ ompi_communicator_t* ompi_comm_allocate (int local_group_size,
  * @param mode: combination of input
  *              OMPI_COMM_CID_INTRA:        intra-comm
  *              OMPI_COMM_CID_INTER:        inter-comm
+ *              OMPI_COMM_CID_GROUP:        only decide CID within the ompi_group_t
+ *                                          associated with the communicator. arg0
+ *                                          must point to an int which will be used
+ *                                          as the pml tag for communication.
  *              OMPI_COMM_CID_INTRA_BRIDGE: 2 intracomms connected by
- *                                          a bridge comm. local_leader
- *                                          and remote leader are in this
- *                                          case an int (rank in bridge-comm).
+ *                                          a bridge comm. arg0 and arg1 must point
+ *                                          to integers representing the local and
+ *                                          remote leader ranks. the remote leader rank
+ *                                          is a rank in the bridgecomm.
  *              OMPI_COMM_CID_INTRA_PMIX:   2 intracomms, leaders talk
- *                                          through PMIx. lleader and rleader
- *                                          are the required contact information.
+ *                                          through PMIx. arg0 must point to an integer
+ *                                          representing the local leader rank. arg1
+ *                                          must point to a string representing the
+ *                                          port of the remote leader.
  * @param send_first: to avoid a potential deadlock for
  *                    the OOB version.
  * This routine has to be thread safe in the final version.
  */
-OMPI_DECLSPEC int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
-                                      ompi_communicator_t* oldcomm,
-                                      ompi_communicator_t* bridgecomm,
-                                      void* local_leader,
-                                      void* remote_leader,
-                                      int mode,
-                                      int send_first);
+OMPI_DECLSPEC int ompi_comm_nextcid (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
+                                     ompi_communicator_t *bridgecomm, const void *arg0, const void *arg1,
+                                     bool send_first, int mode);
 
 /**
  * allocate new communicator ID (non-blocking)
@@ -526,10 +528,9 @@ OMPI_DECLSPEC int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
  *              OMPI_COMM_CID_INTER:        inter-comm
  * This routine has to be thread safe in the final version.
  */
-OMPI_DECLSPEC int ompi_comm_nextcid_nb (ompi_communicator_t* newcomm,
-                                        ompi_communicator_t* comm,
-                                        ompi_communicator_t* bridgecomm,
-                                        int mode, ompi_request_t **req);
+OMPI_DECLSPEC int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
+                                        ompi_communicator_t *bridgecomm, const void *arg0, const void *arg1,
+                                        bool send_first, int mode, ompi_request_t **req);
 
 /**
  * shut down the communicator infrastructure.
@@ -622,18 +623,25 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
                                 int high );
 
 
-OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm,
-                                       ompi_communicator_t* comm,
-                                       ompi_communicator_t* bridgecomm,
-                                       void* local_leader,
-                                       void* remote_leader,
-                                       int mode,
-                                       int send_first );
+OMPI_DECLSPEC int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
+                                      ompi_communicator_t *bridgecomm, const void *arg0,
+                                      const void *arg1, bool send_first, int mode);
 
-OMPI_DECLSPEC int ompi_comm_activate_nb (ompi_communicator_t **newcomm,
-                                         ompi_communicator_t *comm,
-                                         ompi_communicator_t *bridgecomm,
-                                         int mode, ompi_request_t **req);
+/**
+ * Non-blocking variant of comm_activate.
+ *
+ * @param[inout] newcomm    New communicator
+ * @param[in]    comm       Parent communicator
+ * @param[in]    bridgecomm Bridge communicator (used for PMIX and bridge modes)
+ * @param[in]    arg0       Mode argument 0
+ * @param[in]    arg1       Mode argument 1
+ * @param[in]    send_first Send first from this process (PMIX mode only)
+ * @param[in]    mode       Collective mode
+ * @param[out]   req        New request object to track this operation
+ */
+OMPI_DECLSPEC int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
+                                         ompi_communicator_t *bridgecomm, const void *arg0,
+                                         const void *arg1, bool send_first, int mode, ompi_request_t **req);
 
 /**
  * a simple function to dump the structure
@@ -642,14 +650,6 @@ int ompi_comm_dump ( ompi_communicator_t *comm );
 
 /* setting name */
 int ompi_comm_set_name (ompi_communicator_t *comm, const char *name );
-
-/*
- * these are the init and finalize functions for the comm_reg
- * stuff. These routines are necessary for handling multi-threading
- * scenarious in the communicator_cid allocation
- */
-void ompi_comm_reg_init(void);
-void ompi_comm_reg_finalize(void);
 
 /* global variable to save the number od dynamic communicators */
 extern int ompi_comm_num_dyncomm;

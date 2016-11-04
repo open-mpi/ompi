@@ -5,7 +5,7 @@
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      The University of Tennessee and The University
@@ -185,6 +185,7 @@ typedef struct {
 #endif
     uint32_t rem_index;
     uint8_t qpnum;
+    opal_process_name_t rem_name;
 } __opal_attribute_packed__ private_data_t;
 
 #if !BTL_OPENIB_RDMACM_IB_ADDR
@@ -376,68 +377,23 @@ static char *stringify(uint32_t addr)
  * the rdma_cm event id
  */
 static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(rdmacm_contents_t *contents,
-                                                       struct rdma_cm_id *id,
-#if BTL_OPENIB_RDMACM_IB_ADDR
-                                                       uint64_t rem_port)
-#else
-                                                       uint16_t rem_port)
-#endif
+                                                       opal_process_name_t rem_name)
 {
-    int i;
+    mca_btl_openib_module_t *btl = contents->openib_btl;
     mca_btl_openib_endpoint_t *ep = NULL;
-    opal_pointer_array_t *endpoints = contents->openib_btl->device->endpoints;
+    opal_proc_t *opal_proc;
 
-    struct sockaddr *peeraddr = rdma_get_peer_addr(id);
-#if BTL_OPENIB_RDMACM_IB_ADDR
-    union ibv_gid *ep_gid, peer_gid;
-    memcpy(peer_gid.raw, ((struct sockaddr_ib *) peeraddr)->sib_addr.sib_raw, sizeof peer_gid);
-#else
-    uint32_t peeripaddr = ((struct sockaddr_in *) peeraddr)->sin_addr.s_addr;
-
-#if OPAL_ENABLE_DEBUG
-    char *a;
-#endif
-
-    OPAL_OUTPUT((-1, "remote peer requesting connection: %s port %d",
-                 a = stringify(peeripaddr), rem_port));
-#if OPAL_ENABLE_DEBUG
-    free(a);
-#endif
-#endif
-
-    for (i = 0; i < opal_pointer_array_get_size(endpoints); i++) {
-        mca_btl_openib_endpoint_t *endpoint;
-        modex_message_t *message;
-
-        endpoint = (mca_btl_openib_endpoint_t *) opal_pointer_array_get_item(endpoints, i);
-        if (NULL == endpoint) {
-            continue;
-        }
-
-        message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
-#if !BTL_OPENIB_RDMACM_IB_ADDR
-        OPAL_OUTPUT((-1, "message ipaddr = %s port %d",
-                     a = stringify(message->ipaddr), message->tcp_port));
-#if OPAL_ENABLE_DEBUG
-        free(a);
-#endif
-#endif
-
-#if BTL_OPENIB_RDMACM_IB_ADDR
-        ep_gid = (union ibv_gid *) message->gid;
-        if (ep_gid->global.interface_id == peer_gid.global.interface_id &&
-             ep_gid->global.subnet_prefix == peer_gid.global.subnet_prefix &&
-                     message->service_id == rem_port) {
-#else
-        if (message->ipaddr == peeripaddr && message->tcp_port == rem_port) {
-#endif
-            ep = endpoint;
-            break;
-        }
+    opal_proc = opal_proc_for_name (rem_name);
+    if (NULL == opal_proc) {
+        BTL_ERROR(("could not get proc associated with remote peer %s",
+                   opal_process_name_print (rem_name)));
+        return NULL;
     }
 
+    ep = mca_btl_openib_get_ep (&btl->super, opal_proc);
     if (NULL == ep) {
-        BTL_ERROR(("can't find suitable endpoint for this peer"));
+        BTL_ERROR(("could not find endpoint for peer %s",
+                   opal_process_name_print (rem_name)));
     }
 
     return ep;
@@ -930,13 +886,11 @@ static int rdmacm_module_start_connect(opal_btl_openib_connect_base_module_t *cp
     return OPAL_SUCCESS;
 
 out:
-    for (item = opal_list_remove_first(&(contents->ids));
-         NULL != item;
-         item = opal_list_remove_first(&(contents->ids))) {
+    while (NULL != (item = opal_list_remove_first (&contents->ids))) {
         OBJ_RELEASE(item);
-   }
+    }
 
-   return rc;
+    return rc;
 }
 
 #if !BTL_OPENIB_RDMACM_IB_ADDR
@@ -986,6 +940,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
     rdmacm_contents_t *contents = listener_context->contents;
     mca_btl_openib_endpoint_t *endpoint;
     struct rdma_conn_param conn_param;
+    opal_process_name_t rem_name;
     modex_message_t *message;
     private_data_t msg;
     int rc = -1, qpnum;
@@ -999,10 +954,11 @@ static int handle_connect_request(struct rdma_cm_event *event)
     qpnum = ((private_data_t *)event->param.conn.private_data)->qpnum;
     rem_port = ((private_data_t *)event->param.conn.private_data)->rem_port;
     rem_index = ((private_data_t *)event->param.conn.private_data)->rem_index;
+    rem_name = ((private_data_t *)event->param.conn.private_data)->rem_name;
 
     /* Determine which endpoint the remote side is trying to connect
        to; use the listener's context->contents to figure it out */
-    endpoint = rdmacm_find_endpoint(contents, event->id, rem_port);
+    endpoint = rdmacm_find_endpoint(contents, rem_name);
     if (NULL == endpoint) {
 #if !BTL_OPENIB_RDMACM_IB_ADDR
         struct sockaddr *peeraddr = rdma_get_peer_addr(event->id);
@@ -1145,6 +1101,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
     /* Fill the private data being sent to the other side */
     msg.qpnum = qpnum;
     msg.rem_index = endpoint->index;
+    msg.rem_name = OPAL_PROC_MY_NAME;
 
     /* Accepting the connection will result in a
        RDMA_CM_EVENT_ESTABLISHED event on both the client and server
@@ -1177,7 +1134,7 @@ static void *call_disconnect_callback(int fd, int flags, void *v)
 {
     rdmacm_contents_t *contents = (rdmacm_contents_t *) v;
     void *tmp = NULL;
-    id_context_t *context = (id_context_t*) v;
+    id_context_t *context;
     opal_list_item_t *item;
 
     pthread_mutex_lock (&rdmacm_disconnect_lock);
@@ -1216,7 +1173,7 @@ static void *call_disconnect_callback(int fd, int flags, void *v)
  */
 static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
 {
-    rdmacm_contents_t *contents;
+    rdmacm_contents_t *contents = NULL, *item;
     opal_event_t event;
 
     BTL_VERBOSE(("Start disconnecting..."));
@@ -1236,8 +1193,9 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
      * main thread and service thread.
      */
     opal_mutex_lock(&client_list_lock);
-    OPAL_LIST_FOREACH(contents, &client_list, rdmacm_contents_t) {
-        if (endpoint == contents->endpoint) {
+    OPAL_LIST_FOREACH(item, &client_list, rdmacm_contents_t) {
+        if (endpoint == item->endpoint) {
+            contents = item;
             opal_list_remove_item(&client_list, (opal_list_item_t *) contents);
             contents->on_client_list = false;
 
@@ -1266,12 +1224,14 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
     opal_atomic_wmb();
     opal_mutex_unlock(&client_list_lock);
 
-    /* Now wait for all the disconnect callbacks to occur */
-    pthread_mutex_lock(&rdmacm_disconnect_lock);
-    while (opal_list_get_size (&contents->ids)) {
-        pthread_cond_wait (&rdmacm_disconnect_cond, &rdmacm_disconnect_lock);
+    if (NULL != contents) {
+        /* Now wait for all the disconnect callbacks to occur */
+        pthread_mutex_lock(&rdmacm_disconnect_lock);
+        while (opal_list_get_size (&contents->ids)) {
+            pthread_cond_wait (&rdmacm_disconnect_cond, &rdmacm_disconnect_lock);
+        }
+        pthread_mutex_unlock(&rdmacm_disconnect_lock);
     }
-    pthread_mutex_unlock(&rdmacm_disconnect_lock);
 
     OPAL_OUTPUT((-1, "MAIN Endpoint finished finalizing"));
     return OPAL_SUCCESS;
@@ -1286,6 +1246,7 @@ static void *local_endpoint_cpc_complete(void *context)
 
     OPAL_OUTPUT((-1, "MAIN local_endpoint_cpc_complete to %s",
                  opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal)));
+    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
     mca_btl_openib_endpoint_cpc_complete(endpoint);
 
     return NULL;
@@ -1366,12 +1327,10 @@ static int rdmacm_disconnected(id_context_t *context)
     /* If this was a client thread, then it *may* still be listed in a
        contents->ids list. */
 
-    context->already_disconnected = true;
-    if (NULL != context) {
-        OPAL_OUTPUT((-1, "SERVICE Releasing context because of DISCONNECT: context %p, id %p",
-                     (void*) context, (void*) context->id));
-        OBJ_RELEASE(context);
-    }
+    OPAL_OUTPUT((-1, "SERVICE Releasing context because of DISCONNECT: context %p, id %p",
+                 (void*) context, (void*) context->id));
+    OBJ_RELEASE(context);
+
     return OPAL_SUCCESS;
 }
 
@@ -1617,6 +1576,7 @@ static int finish_connect(id_context_t *context)
 
     msg.qpnum = context->qpnum;
     msg.rem_index = contents->endpoint->index;
+    msg.rem_name = OPAL_PROC_MY_NAME;
 #if BTL_OPENIB_RDMACM_IB_ADDR
     memset(msg.librdmacm_header, 0, sizeof(msg.librdmacm_header));
     msg.rem_port = contents->service_id;
@@ -2040,6 +2000,15 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, opal_btl_
     struct sockaddr_in sin;
 #endif
 
+    /* RDMACM is not supported for MPI_THREAD_MULTIPLE */
+    if (opal_using_threads()) {
+	BTL_VERBOSE(("rdmacm CPC is not supported with MPI_THREAD_MULTIPLE; skipped on %s:%d",
+		     ibv_get_device_name(openib_btl->device->ib_dev),
+		     openib_btl->port_num));
+	rc = OPAL_ERR_NOT_SUPPORTED;
+	goto out;
+    }
+
     /* RDMACM is not supported if we have any XRC QPs */
     if (mca_btl_openib_component.num_xrc_qps > 0) {
         BTL_VERBOSE(("rdmacm CPC not supported with XRC receive queues, please try xoob CPC; skipped on %s:%d",
@@ -2049,7 +2018,8 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, opal_btl_
         goto out;
     }
     if (!BTL_OPENIB_QP_TYPE_PP(0)) {
-        BTL_VERBOSE(("rdmacm CPC only supported when the first QP is a PP QP; skipped"));
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "rdmacm CPC only supported when the first QP is a PP QP; skipped");
         rc = OPAL_ERR_NOT_SUPPORTED;
         goto out;
     }
@@ -2109,7 +2079,8 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, opal_btl_
     sin.sin_addr.s_addr = rdmacm_addr;
     sin.sin_port = (uint16_t) rdmacm_port;
 #else
-    rc = ibv_query_gid(openib_btl->device->ib_pd->context, openib_btl->port_num, 0, &server->gid);
+    rc = ibv_query_gid(openib_btl->device->ib_pd->context, openib_btl->port_num,
+                       mca_btl_openib_component.gid_index, &server->gid);
     if (0 != rc) {
         BTL_ERROR(("local gid query failed"));
         goto out4;

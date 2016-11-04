@@ -49,7 +49,7 @@ unpack_predefined_data( opal_convertor_t* CONVERTOR,  /* the convertor */
         OPAL_DATATYPE_SAFEGUARD_POINTER( _destination, _copy_blength, (CONVERTOR)->pBaseBuf,
                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
         DO_DEBUG( opal_output( 0, "unpack 1. memcpy( %p, %p, %lu ) => space %lu\n",
-                               _destination, *(SOURCE), (unsigned long)_copy_blength, (unsigned long)(*(SPACE)) ); );
+                               (void*)_destination, (void*)*(SOURCE), (unsigned long)_copy_blength, (unsigned long)(*(SPACE)) ); );
         MEMCPY_CSUM( _destination, *(SOURCE), _copy_blength, (CONVERTOR) );
         *(SOURCE)    += _copy_blength;
         _destination += _copy_blength;
@@ -59,7 +59,7 @@ unpack_predefined_data( opal_convertor_t* CONVERTOR,  /* the convertor */
             OPAL_DATATYPE_SAFEGUARD_POINTER( _destination, _copy_blength, (CONVERTOR)->pBaseBuf,
                                         (CONVERTOR)->pDesc, (CONVERTOR)->count );
             DO_DEBUG( opal_output( 0, "unpack 2. memcpy( %p, %p, %lu ) => space %lu\n",
-                                   _destination, *(SOURCE), (unsigned long)_copy_blength, (unsigned long)(*(SPACE) - (_i * _copy_blength)) ); );
+                                   (void*)_destination, (void*)*(SOURCE), (unsigned long)_copy_blength, (unsigned long)(*(SPACE) - (_i * _copy_blength)) ); );
             MEMCPY_CSUM( _destination, *(SOURCE), _copy_blength, (CONVERTOR) );
             *(SOURCE)    += _copy_blength;
             _destination += _elem->extent;
@@ -90,7 +90,7 @@ static inline void unpack_contiguous_loop( opal_convertor_t* CONVERTOR,
         OPAL_DATATYPE_SAFEGUARD_POINTER( _destination, _end_loop->size, (CONVERTOR)->pBaseBuf,
                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
         DO_DEBUG( opal_output( 0, "unpack 3. memcpy( %p, %p, %lu ) => space %lu\n",
-                               _destination, *(SOURCE), (unsigned long)_end_loop->size, (unsigned long)(*(SPACE) - _i * _end_loop->size) ); );
+                               (void*)_destination, (void*)*(SOURCE), (unsigned long)_end_loop->size, (unsigned long)(*(SPACE) - _i * _end_loop->size) ); );
         MEMCPY_CSUM( _destination, *(SOURCE), _end_loop->size, (CONVERTOR) );
         *(SOURCE)    += _end_loop->size;
         _destination += _loop->extent;

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -44,12 +44,12 @@ __ompi_datatype_create_from_args( int32_t* i, OPAL_PTRDIFF_TYPE * a,
                                   ompi_datatype_t** d, int32_t type );
 
 typedef struct __dt_args {
-    int                ref_count;
-    int                create_type;
+    int32_t            ref_count;
+    int32_t            create_type;
     size_t             total_pack_size;
-    int                ci;
-    int                ca;
-    int                cd;
+    int32_t            ci;
+    int32_t            ca;
+    int32_t            cd;
     int*               i;
     OPAL_PTRDIFF_TYPE* a;
     ompi_datatype_t**  d;
@@ -71,11 +71,11 @@ typedef struct __dt_args {
 #endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
 
 /**
- * Some architecture require that 64 bits pointers (to pointers) has to
- * be 64 bits aligned. As in the ompi_datatype_args_t structure we have 2 such
- * pointers and one to an array of ints, if we start by setting the 64
- * bits aligned one we will not have any trouble. Problem arise on
- * SPARC 64.
+ * Some architectures require 64 bits pointers (to pointers) to
+ * be 64 bits aligned. As in the ompi_datatype_args_t structure we have
+ * 2 such array of pointers and one to an array of ints, if we start by
+ * setting the 64 bits aligned one we will not have any trouble. Problem
+ * originally reported on SPARC 64.
  */
 #define ALLOC_ARGS(PDATA, IC, AC, DC)                                   \
     do {                                                                \
@@ -100,7 +100,7 @@ typedef struct __dt_args {
         if( pArgs->ci == 0 ) pArgs->i = NULL;                           \
         else pArgs->i = (int*)buf;                                      \
         pArgs->ref_count = 1;                                           \
-        pArgs->total_pack_size = (4 + (IC)) * sizeof(int) +             \
+        pArgs->total_pack_size = (4 + (IC) + (DC)) * sizeof(int) +      \
             (AC) * sizeof(OPAL_PTRDIFF_TYPE);                           \
         (PDATA)->args = (void*)pArgs;                                   \
         (PDATA)->packed_description = NULL;                             \
@@ -236,9 +236,8 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
              */
             OBJ_RETAIN( d[pos] );
             pArgs->total_pack_size += ((ompi_datatype_args_t*)d[pos]->args)->total_pack_size;
-        } else {
-            pArgs->total_pack_size += 2 * sizeof(int);  /* _NAMED + predefined id */
         }
+        pArgs->total_pack_size += sizeof(int);  /* each data has an ID */
     }
 
     return OMPI_SUCCESS;
@@ -373,12 +372,14 @@ int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_data,
 {
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)source_data->args;
 
-    /* If required then increase the reference count of the arguments. This avoid us
-     * to make one more copy for a read only piece of memory.
+    /* Increase the reference count of the datatype enveloppe. This
+     * prevent us from making extra copies for the enveloppe (which is mostly
+     * a read only memory).
      */
-    assert( NULL != source_data->args );
-    pArgs->ref_count++;
-    dest_data->args = pArgs;
+    if( NULL != pArgs ) {
+        OPAL_THREAD_ADD32(&pArgs->ref_count, 1);
+        dest_data->args = pArgs;
+    }
     return OMPI_SUCCESS;
 }
 
@@ -394,7 +395,7 @@ int32_t ompi_datatype_release_args( ompi_datatype_t* pData )
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)pData->args;
 
     assert( 0 < pArgs->ref_count );
-    pArgs->ref_count--;
+    OPAL_THREAD_ADD32(&pArgs->ref_count, -1);
     if( 0 == pArgs->ref_count ) {
         /* There are some duplicated datatypes around that have a pointer to this
          * args. We will release them only when the last datatype will dissapear.
@@ -481,39 +482,69 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
 {
     ompi_datatype_args_t* args = (ompi_datatype_args_t*)datatype->args;
     int next_index = OMPI_DATATYPE_MAX_PREDEFINED;
+    void *packed_description = datatype->packed_description;
     void* recursive_buffer;
 
-    if( NULL == datatype->packed_description ) {
-        if( ompi_datatype_is_predefined(datatype) ) {
-            datatype->packed_description = malloc(2 * sizeof(int));
-        } else if( NULL == args ) {
-            return OMPI_ERROR;
+    if (NULL == packed_description) {
+        if (opal_atomic_cmpset (&datatype->packed_description, NULL, (void *) 1)) {
+            if( ompi_datatype_is_predefined(datatype) ) {
+                packed_description = malloc(2 * sizeof(int));
+            } else if( NULL == args ) {
+                return OMPI_ERROR;
+            } else {
+                packed_description = malloc(args->total_pack_size);
+            }
+            recursive_buffer = packed_description;
+            __ompi_datatype_pack_description( datatype, &recursive_buffer, &next_index );
+
+            if (!ompi_datatype_is_predefined(datatype)) {
+                /* If the precomputed size is not large enough we're already in troubles, we
+                 * have overwritten outside of the allocated buffer. Raise the alarm !
+                 * If not reassess the size of the packed buffer necessary for holding the
+                 * datatype description.
+                 */
+                assert(args->total_pack_size >= (uintptr_t)((char*)recursive_buffer - (char *) packed_description));
+                args->total_pack_size = (uintptr_t)((char*)recursive_buffer - (char *) packed_description);
+            }
+
+            opal_atomic_wmb ();
+            datatype->packed_description = packed_description;
         } else {
-            datatype->packed_description = malloc(args->total_pack_size);
-        }
-        recursive_buffer = datatype->packed_description;
-        __ompi_datatype_pack_description( datatype, &recursive_buffer, &next_index );
-        if( !ompi_datatype_is_predefined(datatype) ) {
-            args->total_pack_size = (uintptr_t)((char*)recursive_buffer - (char*)datatype->packed_description);
+            /* another thread beat us to it */
+            packed_description = datatype->packed_description;
         }
     }
 
-    *packed_buffer = (const void*)datatype->packed_description;
+    if ((void *) 1 == packed_description) {
+        struct timespec interval = {.tv_sec = 0, .tv_nsec = 1000};
+
+        /* wait until the packed description is updated */
+        while ((void *) 1 == datatype->packed_description) {
+            nanosleep (&interval, NULL);
+        }
+
+        packed_description = datatype->packed_description;
+    }
+
+    *packed_buffer = (const void *) packed_description;
     return OMPI_SUCCESS;
 }
 
 size_t ompi_datatype_pack_description_length( ompi_datatype_t* datatype )
 {
+    void *packed_description = datatype->packed_description;
+
     if( ompi_datatype_is_predefined(datatype) ) {
         return 2 * sizeof(int);
     }
-    if( NULL == datatype->packed_description ) {
+    if( NULL == packed_description || (void *) 1 == packed_description) {
         const void* buf;
         int rc;
 
         rc = ompi_datatype_get_pack_description(datatype, &buf);
-        if( OMPI_SUCCESS != rc )
+        if( OMPI_SUCCESS != rc ) {
             return 0;
+        }
     }
     assert( NULL != (ompi_datatype_args_t*)datatype->args );
     assert( NULL != (ompi_datatype_args_t*)datatype->packed_description );
@@ -733,7 +764,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         {
             const int* a_i[8] = {&i[0], &i[1], &i[2], &i[3 + 0 * i[0]], &i[3 + 1 * i[0]], &i[3 + 2 * i[0]],
                                  &i[3 + 3 * i[0]], &i[3 + 4 * i[0]]};
-            ompi_datatype_set_args( datatype, 4 * i[0] + 4,a_i, 0, NULL, 1, d, MPI_COMBINER_DARRAY);
+            ompi_datatype_set_args( datatype, 4 * i[2] + 4, a_i, 0, NULL, 1, d, MPI_COMBINER_DARRAY);
         }
         break;
         /******************************************************************/
@@ -749,14 +780,15 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         break;
         /******************************************************************/
     case MPI_COMBINER_RESIZED:
-        /*ompi_datatype_set_args( datatype, 0, NULL, 2, a, 1, d, MPI_COMBINER_RESIZED );*/
+        ompi_datatype_create_resized(d[0], a[0], a[1], &datatype);
+        ompi_datatype_set_args( datatype, 0, NULL, 2, a, 1, d, MPI_COMBINER_RESIZED );
         break;
         /******************************************************************/
     case MPI_COMBINER_HINDEXED_BLOCK:
         ompi_datatype_create_hindexed_block( i[0], i[1], a, d[0], &datatype );
         {
             const int* a_i[2] = {&i[0], &i[1]};
-            ompi_datatype_set_args( datatype, 2 + i[0], a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
+            ompi_datatype_set_args( datatype, 2, a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
         }
         break;
         /******************************************************************/

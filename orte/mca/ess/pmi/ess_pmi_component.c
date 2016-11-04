@@ -3,7 +3,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +25,7 @@
 #include "opal/mca/pmix/base/base.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/schizo/schizo.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/pmi/ess_pmi.h"
@@ -67,41 +67,27 @@ static int pmi_component_open(void)
 
 static int pmi_component_query(mca_base_module_t **module, int *priority)
 {
-    int ret;
+    orte_schizo_launch_environ_t ret;
 
-    /* all APPS must use pmix */
-    if (ORTE_PROC_IS_APP) {
-        if (NULL == opal_pmix.initialized) {
-            /* open and setup pmix */
-            if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-                ORTE_ERROR_LOG(ret);
-                *priority = -1;
-                *module = NULL;
-                return ret;
-            }
-            if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-                /* don't error log this as it might not be an error at all */
-                *priority = -1;
-                *module = NULL;
-                (void) mca_base_framework_close(&opal_pmix_base_framework);
-                return ret;
-            }
-        }
-        if (!opal_pmix.initialized() && (OPAL_SUCCESS != (ret = opal_pmix.init()))) {
-            /* we cannot be in a PMI environment */
-            *priority = -1;
-            *module = NULL;
-            return ORTE_ERROR;
-        }
-        *priority = 35;
-        *module = (mca_base_module_t *)&orte_ess_pmi_module;
-        return ORTE_SUCCESS;
+    if (!ORTE_PROC_IS_APP) {
+        *module = NULL;
+        *priority = 0;
+        return ORTE_ERROR;
     }
 
-    /* we can't run */
-    *priority = -1;
-    *module = NULL;
-    return ORTE_ERROR;
+    /* find out what our environment looks like */
+    ret = orte_schizo.check_launch_environment();
+    if (ORTE_SCHIZO_UNMANAGED_SINGLETON == ret ||
+        ORTE_SCHIZO_MANAGED_SINGLETON == ret) {
+        /* not us */
+        *module = NULL;
+        *priority = 0;
+        return ORTE_ERROR;
+    }
+
+    *priority = 35;
+    *module = (mca_base_module_t *)&orte_ess_pmi_module;
+    return ORTE_SUCCESS;
 }
 
 

@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -66,10 +66,9 @@ static char *mca_base_var_override_file = NULL;
 static char *mca_base_var_file_prefix = NULL;
 static char *mca_base_envar_file_prefix = NULL;
 static char *mca_base_param_file_path = NULL;
-static char *mca_base_env_list = NULL;
-#define MCA_BASE_ENV_LIST_SEP_DEFAULT ";"
-static char *mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
-static char *mca_base_env_list_internal = NULL;
+char *mca_base_env_list = NULL;
+char *mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
+char *mca_base_env_list_internal = NULL;
 static bool mca_base_var_suppress_override_warning = false;
 static opal_list_t mca_base_var_file_values;
 static opal_list_t mca_base_envar_file_values;
@@ -130,7 +129,6 @@ static const char *info_lvl_strings[] = {
  */
 static int fixup_files(char **file_list, char * path, bool rel_path_search, char sep);
 static int read_files (char *file_list, opal_list_t *file_values, char sep);
-static int mca_base_var_cache_files (bool rel_path_search);
 static int var_set_initial (mca_base_var_t *var, mca_base_var_t *original);
 static int var_get (int vari, mca_base_var_t **var_out, bool original);
 static int var_value_string (mca_base_var_t *var, char **value_string);
@@ -242,7 +240,6 @@ static char *append_filename_to_list(const char *filename)
 int mca_base_var_init(void)
 {
     int ret;
-    char *name = NULL;
 
     if (!mca_base_var_initialized) {
         /* Init the value array for the param storage */
@@ -282,41 +279,6 @@ int mca_base_var_init(void)
 
         mca_base_var_initialized = true;
 
-        mca_base_var_cache_files(false);
-
-        /* register the envar-forwarding params */
-        (void)mca_base_var_register ("opal", "mca", "base", "env_list",
-                                     "Set SHELL env variables",
-                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                     MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
-
-        mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
-        (void)mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
-                                     "Set SHELL env variables delimiter. Default: semicolon ';'",
-                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                     MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
-
-        /* Set OMPI_MCA_mca_base_env_list variable, it might not be set before
-         * if mca variable was taken from amca conf file. Need to set it
-         * here because mca_base_var_process_env_list is called from schizo_ompi.c
-         * only when this env variable was set.
-         */
-        if (NULL != mca_base_env_list) {
-            (void) mca_base_var_env_name ("mca_base_env_list", &name);
-            if (NULL != name) {
-                opal_setenv(name, mca_base_env_list, false, &environ);
-                free(name);
-            }
-        }
-
-        /* Register internal MCA variable mca_base_env_list_internal. It can be set only during
-         * parsing of amca conf file and contains SHELL env variables specified via -x there.
-         * Its format is the same as for mca_base_env_list.
-         */
-        (void)mca_base_var_register ("opal", "mca", "base", "env_list_internal",
-                "Store SHELL env variables from amca conf file",
-                MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_3,
-                MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_internal);
     }
 
     return OPAL_SUCCESS;
@@ -366,7 +328,7 @@ static void process_env_list(char *env_list, char ***argv, char sep)
     opal_argv_free(tokens);
 }
 
-int mca_base_var_process_env_list(char ***argv)
+int mca_base_var_process_env_list(char *list, char ***argv)
 {
     char sep;
     sep = ';';
@@ -379,7 +341,9 @@ int mca_base_var_process_env_list(char ***argv)
             return OPAL_SUCCESS;
         }
     }
-    if (NULL != mca_base_env_list) {
+    if (NULL != list) {
+        process_env_list(list, argv, sep);
+    } else if (NULL != mca_base_env_list) {
         process_env_list(mca_base_env_list, argv, sep);
     }
 
@@ -417,7 +381,7 @@ static void resolve_relative_paths(char **file_prefix, char *file_path, bool rel
     }
 }
 
-static int mca_base_var_cache_files(bool rel_path_search)
+int mca_base_var_cache_files(bool rel_path_search)
 {
     char *tmp;
     int ret;
@@ -425,7 +389,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
     /* We may need this later */
     home = (char*)opal_home_directory();
 
-    if(NULL == cwd) {
+    if (NULL == cwd) {
         cwd = (char *) malloc(sizeof(char) * MAXPATHLEN);
         if( NULL == (cwd = getcwd(cwd, MAXPATHLEN) )) {
             opal_output(0, "Error: Unable to get the current working directory\n");
@@ -450,7 +414,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_2,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_var_files);
     free (tmp);
-    if (OPAL_SUCCESS != ret) {
+    if (0 > ret) {
         return ret;
     }
 
@@ -724,7 +688,7 @@ static int var_set_from_string (mca_base_var_t *var, char *src)
     case MCA_BASE_VAR_TYPE_BOOL:
     case MCA_BASE_VAR_TYPE_SIZE_T:
         ret = int_from_string(src, var->mbv_enumerator, &int_value);
-        if (OPAL_ERR_VALUE_OUT_OF_BOUNDS == ret ||
+        if (OPAL_SUCCESS != ret ||
             (MCA_BASE_VAR_TYPE_INT == var->mbv_type && ((int) int_value != (int64_t) int_value)) ||
             (MCA_BASE_VAR_TYPE_UNSIGNED_INT == var->mbv_type && ((unsigned int) int_value != int_value))) {
             if (var->mbv_enumerator) {
@@ -1526,7 +1490,7 @@ int mca_base_var_register (const char *project_name, const char *framework_name,
                            mca_base_var_scope_t scope, void *storage)
 {
     /* Only integer variables can have enumerator */
-    assert (NULL == enumerator || MCA_BASE_VAR_TYPE_INT == type);
+    assert (NULL == enumerator || (MCA_BASE_VAR_TYPE_INT == type || MCA_BASE_VAR_TYPE_UNSIGNED_INT == type));
 
     return register_variable (project_name, framework_name, component_name,
                               variable_name, description, type, enumerator,
@@ -1926,14 +1890,13 @@ static char *source_name(mca_base_var_t *var)
 
 static int var_value_string (mca_base_var_t *var, char **value_string)
 {
-    const mca_base_var_storage_t *value;
-    const char *tmp;
+    const mca_base_var_storage_t *value=NULL;
     int ret;
 
     assert (MCA_BASE_VAR_TYPE_MAX > var->mbv_type);
 
     ret = mca_base_var_get_value(var->mbv_index, &value, NULL, NULL);
-    if (OPAL_SUCCESS !=ret) {
+    if (OPAL_SUCCESS != ret || NULL == value) {
         return ret;
     }
 
@@ -1974,18 +1937,13 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
     } else {
         /* we use an enumerator to handle string->bool and bool->string conversion */
         if (MCA_BASE_VAR_TYPE_BOOL == var->mbv_type) {
-            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->boolval, &tmp);
+            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->boolval, value_string);
         } else {
-            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->intval, &tmp);
+            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->intval, value_string);
         }
 
         if (OPAL_SUCCESS != ret) {
             return ret;
-        }
-
-        *value_string = strdup (tmp);
-        if (NULL == *value_string) {
-            ret = OPAL_ERR_OUT_OF_RESOURCE;
         }
     }
 

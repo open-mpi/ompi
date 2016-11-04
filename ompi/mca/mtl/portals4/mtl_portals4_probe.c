@@ -32,7 +32,7 @@ completion_fn(ptl_event_t *ev, ompi_mtl_portals4_base_request_t *ptl_base_reques
     ompi_mtl_portals4_probe_request_t *ptl_request =
         (ompi_mtl_portals4_probe_request_t*) ptl_base_request;
 
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+    opal_output_verbose(10, ompi_mtl_base_framework.framework_output,
                         "%s:%d: completion_fn: %d %d",
                         __FILE__, __LINE__, ev->type, ev->ni_fail_type);
 

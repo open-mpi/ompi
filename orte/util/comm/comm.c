@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,8 +54,8 @@ static void quicktime_cb(int fd, short event, void *cbdata)
 {
     /* release the timer */
     if (NULL != quicktime) {
-	opal_event_free(quicktime);
-	quicktime = NULL;
+        opal_event_free(quicktime);
+        quicktime = NULL;
     }
 
     /* cancel the recv */
@@ -73,7 +73,7 @@ static void send_cbfunc(int status, orte_process_name_t* sender,
     /* cancel the timer */
     if (NULL != quicktime) {
         opal_event_free(quicktime);
-	quicktime = NULL;
+        quicktime = NULL;
     }
     /* declare the work done */
     timer_fired = true;
@@ -90,7 +90,7 @@ static void recv_info(int status, orte_process_name_t* sender,
     /* cancel the timer */
     if (NULL != quicktime) {
         opal_event_free (quicktime);
-	quicktime = NULL;
+        quicktime = NULL;
     }
     /* xfer the answer */
     if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&answer, buffer))) {
@@ -120,7 +120,7 @@ int orte_util_comm_connect_tool(char *uri)
     }
 
     /* set the route to be direct */
-    if (ORTE_SUCCESS != (rc = orte_routed.update_route(&tool, &tool))) {
+    if (ORTE_SUCCESS != (rc = orte_routed.update_route(NULL, &tool, &tool))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -185,7 +185,8 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
     opal_event_evtimer_add(quicktime, &tv);
 
     /* do the send */
-    if (0 > (rc = orte_rml.send_buffer_nb(&tool, buf, ORTE_RML_TAG_TOOL, send_cbfunc, NULL))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          &tool, buf, ORTE_RML_TAG_TOOL, send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return rc;
@@ -275,7 +276,9 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     opal_event_evtimer_add(quicktime, &tv);
 
     /* do the send */
-    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, send_cbfunc, NULL))) {
+    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                           (orte_process_name_t*)hnp, cmd,
+                                           ORTE_RML_TAG_DAEMON, send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
         return ret;
@@ -382,7 +385,9 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     opal_event_evtimer_add(quicktime, &tv);
 
     /* do the send */
-    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, send_cbfunc, NULL))) {
+    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                           (orte_process_name_t*)hnp, cmd,
+                                           ORTE_RML_TAG_DAEMON, send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
         return ret;
@@ -498,7 +503,8 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
     opal_event_evtimer_add(quicktime, &tv);
 
     /* do the send */
-    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON,
+    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                           (orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON,
                                            send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
@@ -647,7 +653,8 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
                          ORTE_NAME_PRINT(hnp)));
 
     /* tell the target HNP to launch the job */
-    if (0 > (rc = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, buf,
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          (orte_process_name_t*)hnp, buf,
                                           ORTE_RML_TAG_DAEMON,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -728,7 +735,8 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
                          ORTE_NAME_PRINT(hnp)));
 
     /* tell the target HNP to terminate the job */
-    if (0 > (rc = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, buf,
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          (orte_process_name_t*)hnp, buf,
                                           ORTE_RML_TAG_DAEMON,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -785,7 +793,8 @@ int orte_util_comm_halt_vm(const orte_process_name_t *hnp)
     }
 
     /* send the order */
-    if (0 > (rc = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, buf,
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          (orte_process_name_t*)hnp, buf,
                                           ORTE_RML_TAG_DAEMON,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);

@@ -6,6 +6,8 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -17,7 +19,7 @@ dnl
 # ----------------------------------------------------
 AC_DEFUN([OPAL_CHECK_WITHDIR],[
     AC_MSG_CHECKING([--with-$1 value])
-    AS_IF([test "$2" = "yes" -o "$2" = "no" -o "x$2" = "x"],
+    AS_IF([test "$2" = "yes" || test "$2" = "no" || test "x$2" = "x"],
           [AC_MSG_RESULT([simple ok (unspecified)])],
           [AS_IF([test ! -d "$2"],
                  [AC_MSG_RESULT([not found])

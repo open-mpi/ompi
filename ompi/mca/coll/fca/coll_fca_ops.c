@@ -1,11 +1,17 @@
-/**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-  $COPYRIGHT$
-
-  Additional copyrights may follow
-
-  $HEADER$
+/*
+ * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
  */
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
@@ -253,7 +259,7 @@ orig_bcast:
  *  Accepts:    - same as MPI_Reduce()
  *  Returns:    - MPI_SUCCESS or error code
  */
-int mca_coll_fca_reduce(void *sbuf, void *rbuf, int count,
+int mca_coll_fca_reduce(const void *sbuf, void *rbuf, int count,
                         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                         int root, struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module)
@@ -263,7 +269,7 @@ int mca_coll_fca_reduce(void *sbuf, void *rbuf, int count,
     int ret;
 
     mca_coll_fca_get_reduce_root(root, fca_module->rank, &spec);
-    spec.sbuf = sbuf;
+    spec.sbuf = (void *)sbuf;
     spec.rbuf = rbuf;
     if (mca_coll_fca_fill_reduce_spec(count, dtype, op, &spec,
                                       fca_module->fca_comm_caps.max_payload)
@@ -295,7 +301,7 @@ orig_reduce:
  *  Accepts:    - same as MPI_Allreduce()
  *  Returns:    - MPI_SUCCESS or error code
  */
-int mca_coll_fca_allreduce(void *sbuf, void *rbuf, int count,
+int mca_coll_fca_allreduce(const void *sbuf, void *rbuf, int count,
                            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)
@@ -304,7 +310,7 @@ int mca_coll_fca_allreduce(void *sbuf, void *rbuf, int count,
     fca_reduce_spec_t spec;
     int ret;
 
-    spec.sbuf = sbuf;
+    spec.sbuf = (void *)sbuf;
     spec.rbuf = rbuf;
     if (mca_coll_fca_fill_reduce_spec(count, dtype, op, &spec,
                                       fca_module->fca_comm_caps.max_payload)
@@ -377,7 +383,7 @@ static size_t __setup_gather_sendbuf_inplace(void *inplace_sbuf, int rcount,
  *  Accepts:    - same as MPI_Allgather()
  *  Returns:    - MPI_SUCCESS or error code
  */
-int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+int mca_coll_fca_allgather(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
                            void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)
@@ -399,7 +405,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
                         (char *)rbuf + rcount * fca_module->rank * rdtype_extent,
                         rcount, rdtype, &sconv, &spec.sbuf);
     } else {
-        spec.size = __setup_gather_sendbuf(sbuf, scount, sdtype, &sconv, &spec.sbuf);
+        spec.size = __setup_gather_sendbuf((void *)sbuf, scount, sdtype, &sconv, &spec.sbuf);
     }
 
     /* Setup recv buffer */
@@ -442,9 +448,9 @@ orig_allgather:
                                           comm, fca_module->previous_allgather_module);
 }
 
-int mca_coll_fca_allgatherv(void *sbuf, int scount,
+int mca_coll_fca_allgatherv(const void *sbuf, int scount,
                            struct ompi_datatype_t *sdtype,
-                           void *rbuf, int *rcounts, int *disps,
+                           void *rbuf, const int *rcounts, const int *disps,
                            struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)
@@ -471,7 +477,7 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
                                 (char *)rbuf + disps[fca_module->rank] * rdtype_extent,
                                 rcounts[fca_module->rank], rdtype, &sconv, &spec.sbuf);
     } else {
-        spec.sendsize = __setup_gather_sendbuf(sbuf, scount, sdtype, &sconv, &spec.sbuf);
+        spec.sendsize = __setup_gather_sendbuf((void *)sbuf, scount, sdtype, &sconv, &spec.sbuf);
     }
 
     /* Allocate alternative recvsizes/displs on the stack, which will be in bytes */
@@ -548,7 +554,7 @@ orig_allgatherv:
                                            fca_module->previous_allgatherv_module);
 }
 
-int mca_coll_fca_alltoall(void *sbuf, int scount,
+int mca_coll_fca_alltoall(const void *sbuf, int scount,
                             struct ompi_datatype_t *sdtype,
                             void *rbuf, int rcount,
                             struct ompi_datatype_t *rdtype,
@@ -561,9 +567,9 @@ int mca_coll_fca_alltoall(void *sbuf, int scount,
                                          comm, fca_module->previous_alltoall_module);
 }
 
-int mca_coll_fca_alltoallv(void *sbuf, int *scounts, int *sdisps,
+int mca_coll_fca_alltoallv(const void *sbuf, const int *scounts, const int *sdisps,
                            struct ompi_datatype_t *sdtype,
-                           void *rbuf, int *rcounts, int *rdisps,
+                           void *rbuf, const int *rcounts, const int *rdisps,
                            struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)
@@ -574,10 +580,10 @@ int mca_coll_fca_alltoallv(void *sbuf, int *scounts, int *sdisps,
                                           comm, fca_module->previous_alltoallv_module);
 }
 
-int mca_coll_fca_alltoallw(void *sbuf, int *scounts, int *sdisps,
-                           struct ompi_datatype_t **sdtypes,
-                           void *rbuf, int *rcounts, int *rdisps,
-                           struct ompi_datatype_t **rdtypes,
+int mca_coll_fca_alltoallw(const void *sbuf, const int *scounts, const int *sdisps,
+                           struct ompi_datatype_t * const *sdtypes,
+                           void *rbuf, const int *rcounts, const int *rdisps,
+                           struct ompi_datatype_t * const *rdtypes,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)
 {
@@ -587,7 +593,7 @@ int mca_coll_fca_alltoallw(void *sbuf, int *scounts, int *sdisps,
                                           comm, fca_module->previous_alltoallw_module);
 }
 
-int mca_coll_fca_gather(void *sbuf, int scount,
+int mca_coll_fca_gather(const void *sbuf, int scount,
                         struct ompi_datatype_t *sdtype,
                         void *rbuf, int rcount,
                         struct ompi_datatype_t *rdtype,
@@ -600,9 +606,9 @@ int mca_coll_fca_gather(void *sbuf, int scount,
                                           comm, fca_module->previous_gather_module);
 }
 
-int mca_coll_fca_gatherv(void *sbuf, int scount,
+int mca_coll_fca_gatherv(const void *sbuf, int scount,
                          struct ompi_datatype_t *sdtype,
-                         void *rbuf, int *rcounts, int *disps,
+                         void *rbuf, const int *rcounts, const int *disps,
                          struct ompi_datatype_t *rdtype, int root,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module)
@@ -613,7 +619,7 @@ int mca_coll_fca_gatherv(void *sbuf, int scount,
                                           comm, fca_module->previous_gatherv_module);
 }
 
-int mca_coll_fca_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
+int mca_coll_fca_reduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,

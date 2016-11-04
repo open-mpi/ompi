@@ -3,6 +3,9 @@
  * Copyright (c) 2011-2012 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +35,7 @@ request_free(struct ompi_request_t **ompi_req)
     ompi_osc_pt2pt_request_t *request =
         (ompi_osc_pt2pt_request_t*) *ompi_req;
 
-    if (true != request->super.req_complete) {
+    if (REQUEST_COMPLETED != request->super.req_complete) {
         return MPI_ERR_REQUEST;
     }
 
@@ -51,6 +54,7 @@ request_construct(ompi_osc_pt2pt_request_t *request)
     request->super.req_status._cancelled = 0;
     request->super.req_free = request_free;
     request->super.req_cancel = request_cancel;
+    request->outstanding_requests = 0;
 }
 
 OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_request_t,

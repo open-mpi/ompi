@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,9 +33,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/memoryhooks/memory.h"
 #include "opal/mca/mpool/base/base.h"
-#include "mpool_base_mem_cb.h"
 #include "opal/constants.h"
 #include "opal/util/sys_limits.h"
 
@@ -48,13 +49,33 @@
  * Global variables
  */
 
-/* whether we actually used the mem hooks or not */
-int mca_mpool_base_used_mem_hooks = 0;
-
-uint32_t mca_mpool_base_page_size = 0;
-uint32_t mca_mpool_base_page_size_log = 0;
-
 opal_list_t mca_mpool_base_modules = {{0}};
+static char *mca_mpool_base_default_hints;
+
+int mca_mpool_base_default_priority = 50;
+
+OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, opal_list_item_t, NULL, NULL);
+
+static int mca_mpool_base_register (mca_base_register_flag_t flags)
+{
+    mca_mpool_base_default_hints = NULL;
+    (void) mca_base_var_register ("opal", "mpool", "base", "default_hints",
+                                  "Hints to use when selecting the default memory pool",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                  &mca_mpool_base_default_hints);
+
+    mca_mpool_base_default_priority = 50;
+    (void) mca_base_var_register ("opal", "mpool", "base", "default_priority",
+                                  "Priority of the default mpool module",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                  &mca_mpool_base_default_priority);
+
+    return OPAL_SUCCESS;
+}
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -69,14 +90,13 @@ static int mca_mpool_base_open(mca_base_open_flag_t flags)
         return OPAL_ERROR;
     }
 
+    if (mca_mpool_base_default_hints) {
+        mca_mpool_base_default_module = mca_mpool_base_module_lookup (mca_mpool_base_default_hints);
+    }
+
      /* Initialize the list so that in mca_mpool_base_close(), we can
         iterate over it (even if it's empty, as in the case of opal_info) */
-
     OBJ_CONSTRUCT(&mca_mpool_base_modules, opal_list_t);
-
-    /* get the page size for this architecture*/
-    mca_mpool_base_page_size = opal_getpagesize();
-    mca_mpool_base_page_size_log = my_log2(mca_mpool_base_page_size);
 
     /* setup tree for tracking MPI_Alloc_mem */
     mca_mpool_base_tree_init();
@@ -88,12 +108,6 @@ static int mca_mpool_base_close(void)
 {
   opal_list_item_t *item;
   mca_mpool_base_selected_module_t *sm;
-  int32_t modules_length;
-
-  /* Need the initial length in order to know if some of the initializations
-   * are done in the open function.
-   */
-  modules_length = opal_list_get_size(&mca_mpool_base_modules);
 
   /* Finalize all the mpool components and free their list items */
 
@@ -115,15 +129,8 @@ static int mca_mpool_base_close(void)
      OMPI RTE program, or [possibly] multiple if this is opal_info) */
   (void) mca_base_framework_components_close(&opal_mpool_base_framework, NULL);
 
-  /* deregister memory free callback */
-  if( (modules_length > 0) && mca_mpool_base_used_mem_hooks &&
-     0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
-      opal_mem_hooks_unregister_release(mca_mpool_base_mem_cb);
-  }
-  /* All done */
-
   return OPAL_SUCCESS;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(opal, mpool, NULL, NULL, mca_mpool_base_open,
+MCA_BASE_FRAMEWORK_DECLARE(opal, mpool, "Memory pools", mca_mpool_base_register, mca_mpool_base_open,
                            mca_mpool_base_close, mca_mpool_base_static_components, 0);

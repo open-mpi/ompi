@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
 #                         reserved.
+# Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -69,26 +70,26 @@ TESTS = \
 
 opal_bit_ops_SOURCES = opal_bit_ops.c
 opal_bit_ops_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_bit_ops_DEPENDENCIES = $(opal_path_nfs_LDADD)
 
 
 opal_path_nfs_SOURCES = opal_path_nfs.c
 opal_path_nfs_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 
 #opal_os_path_SOURCES = opal_os_path.c
 #opal_os_path_LDADD = \
-#        $(top_builddir)/opal/libopen-pal.la \
+#        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
 #        $(top_builddir)/test/support/libsupport.a
 #opal_os_path_DEPENDENCIES = $(opal_os_path_LDADD)
 
 #opal_timer_SOURCES = opal_timer.c
 #opal_timer_LDADD = \
-#        $(top_builddir)/opal/libopen-pal.la \
+#        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
 #        $(top_builddir)/test/support/libsupport.a
 #opal_timer_DEPENDENCIES = $(opal_timer_LDADD)
 
@@ -101,7 +102,7 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 
 #opal_os_create_dirpath_SOURCES = opal_os_create_dirpath.c
 #opal_os_create_dirpath_LDADD = \
-#        $(top_builddir)/opal/libopen-pal.la \
+#        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
 #        $(top_builddir)/test/support/libsupport.a
 #opal_os_create_dirpath_DEPENDENCIES = $(opal_os_create_dirpath_LDADD)
 
@@ -119,3 +120,7 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 
 clean-local:
 	rm -f test_session_dir_out test-file opal_path_nfs.out
+
+distclean:
+	rm -rf *.dSYM .deps .libs *.out *.log *.o *.trs $(check_PROGRAMS) Makefile
+

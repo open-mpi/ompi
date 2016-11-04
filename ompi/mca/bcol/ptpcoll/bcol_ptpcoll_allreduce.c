@@ -255,6 +255,9 @@ int bcol_ptpcoll_allreduce_narraying_init(bcol_function_args_t *input_args,
     buffer_size  = ptpcoll_module->ml_mem.size_buffer - BCOL_HEADER_MAX;
     assert(buffer_size >= count * dtype->super.size *
            ptpcoll_module->k_nomial_radix);
+    (void)buffer_size;  // silence compiler warning
+    (void)dtype;
+    (void)count;
 
     return bcol_ptpcoll_allreduce_narraying_progress (input_args, const_args);
 }

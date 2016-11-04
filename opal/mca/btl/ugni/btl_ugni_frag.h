@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2013      The University of Tennessee and The University
@@ -66,6 +66,7 @@ struct mca_btl_ugni_base_frag_t;
 
 typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_base_descriptor_t    base;
+    volatile int32_t             ref_cnt;
     uint32_t                     msg_id;
     uint16_t                     hdr_size;
     uint16_t                     flags;
@@ -111,12 +112,14 @@ static inline void mca_btl_ugni_alloc_post_descriptor (mca_btl_base_endpoint_t *
         (*desc)->cbdata        = cbdata;
         (*desc)->local_handle  = local_handle;
         (*desc)->endpoint      = endpoint;
+        (void) OPAL_THREAD_ADD64(&endpoint->btl->active_rdma_count, 1);
     }
 }
 
 static inline void mca_btl_ugni_return_post_descriptor (mca_btl_ugni_module_t *module,
                                                         mca_btl_ugni_post_descriptor_t *desc)
 {
+    (void) OPAL_THREAD_ADD64(&module->active_rdma_count, -1);
     opal_free_list_return (&module->post_descriptors, &desc->super);
 }
 
@@ -148,6 +151,7 @@ static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
     if (OPAL_LIKELY(NULL != *frag)) {
         (*frag)->my_list  = list;
         (*frag)->endpoint = ep;
+        (*frag)->ref_cnt = 1;
         return OPAL_SUCCESS;
     }
 
@@ -157,8 +161,8 @@ static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
 static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 {
     if (frag->registration) {
-        frag->endpoint->btl->super.btl_mpool->mpool_deregister(frag->endpoint->btl->super.btl_mpool,
-                                                               (mca_mpool_base_registration_t *) frag->registration);
+        frag->endpoint->btl->rcache->rcache_deregister (frag->endpoint->btl->rcache,
+                                                        (mca_rcache_base_registration_t *) frag->registration);
         frag->registration = NULL;
     }
 
@@ -169,10 +173,16 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
     return OPAL_SUCCESS;
 }
 
-static inline void mca_btl_ugni_frag_complete (mca_btl_ugni_base_frag_t *frag, int rc) {
-    frag->flags |= MCA_BTL_UGNI_FRAG_COMPLETE;
+static inline bool mca_btl_ugni_frag_del_ref (mca_btl_ugni_base_frag_t *frag, int rc) {
+    int32_t ref_cnt;
 
-    BTL_VERBOSE(("frag complete. flags = %d", frag->base.des_flags));
+    opal_atomic_mb ();
+
+    ref_cnt = OPAL_THREAD_ADD32(&frag->ref_cnt, -1);
+    if (ref_cnt) {
+        assert (ref_cnt > 0);
+        return false;
+    }
 
     /* call callback if specified */
     if (frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
@@ -182,6 +192,20 @@ static inline void mca_btl_ugni_frag_complete (mca_btl_ugni_base_frag_t *frag, i
     if (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
         mca_btl_ugni_frag_return (frag);
     }
+
+    return true;
+}
+
+static inline void mca_btl_ugni_frag_complete (mca_btl_ugni_base_frag_t *frag, int rc) {
+    BTL_VERBOSE(("frag complete. flags = %d", frag->base.des_flags));
+
+    frag->flags |= MCA_BTL_UGNI_FRAG_COMPLETE;
+
+    mca_btl_ugni_frag_del_ref (frag, rc);
+}
+
+static inline bool mca_btl_ugni_frag_check_complete (mca_btl_ugni_base_frag_t *frag) {
+    return !!(MCA_BTL_UGNI_FRAG_COMPLETE & frag->flags);
 }
 
 #define MCA_BTL_UGNI_FRAG_ALLOC_SMSG(ep, frag) \

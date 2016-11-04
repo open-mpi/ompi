@@ -37,6 +37,7 @@
 *.exe
 *.log
 *.trs
+*.sapp
 *~
 *\\#
 
@@ -214,6 +215,8 @@ ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-sizeof.h
 ompi/mpi/fortran/use-mpi-tkr/fortran_kinds.sh
 ompi/mpi/fortran/use-mpi-tkr/fortran_sizes.h
 ompi/mpi/fortran/use-mpi-tkr/mpi_kinds.ompi_module
+ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.f90
+ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.h
 
 ompi/mpi/java/java/mpi
 ompi/mpi/java/java/*.jar
@@ -300,9 +303,21 @@ opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h
 
 opal/mca/installdirs/config/install_dirs.h
 
-opal/mca/pmix/pmix1xx/pmix/include/pmix/autogen/config.h
-opal/mca/pmix/pmix1xx/pmix/include/private/autogen/config.h
-opal/mca/pmix/pmix1xx/pmix/include/private/autogen/config.h.in
+opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h
+opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h.in
+opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h.in
+opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h
+opal/mca/hwloc/base/static-components.h.new.extern
+opal/mca/hwloc/base/static-components.h.new.struct
+opal/mca/pmix/pmix3x/pmix/src/include/frameworks.h
+opal/mca/pmix/pmix3x/pmix/src/mca/pinstalldirs/config/pinstall_dirs.h
+opal/mca/pmix/pmix3x/pmix/config/autogen_found_items.m4
+opal/mca/pmix/pmix3x/pmix/src/include/pmix_config.h
+opal/mca/pmix/pmix3x/pmix/src/include/pmix_config.h.in
+opal/mca/pmix/pmix3x/pmix/include/pmix_rename.h
+opal/mca/pmix/pmix3x/pmix/include/pmix_version.h
+opal/mca/pmix/pmix3x/pmix/src/util/keyval/keyval_lex.c
+opal/mca/pmix/pmix3x/pmix/src/util/show_help_lex.c
 
 opal/tools/opal-checkpoint/opal-checkpoint
 opal/tools/opal-checkpoint/opal-checkpoint.1
@@ -360,9 +375,11 @@ orte/test/mpi/parallel_r8
 orte/test/mpi/parallel_r64
 orte/test/mpi/parallel_w8
 orte/test/mpi/parallel_w64
+orte/test/mpi/pmix
 orte/test/mpi/pubsub
 orte/test/mpi/read_write
 orte/test/mpi/reduce-hang
+orte/test/mpi/ring
 orte/test/mpi/segv
 orte/test/mpi/simple_spawn
 orte/test/mpi/slave
@@ -392,6 +409,8 @@ orte/test/mpi/pconnect
 orte/test/mpi/thread_init
 orte/test/mpi/memcached-dummy
 orte/test/mpi/coll_test
+orte/test/mpi/badcoll
+orte/test/mpi/iof
 
 orte/test/system/radix
 orte/test/system/sigusr_trap
@@ -446,6 +465,9 @@ orte/test/system/getenv_pmi
 orte/test/system/pmi_abort
 orte/test/system/opal_hwloc
 orte/test/system/opal_db
+orte/test/system/ulfm
+orte/test/system/pmixtool
+orte/test/system/orte_notify
 
 orte/tools/orte-checkpoint/orte-checkpoint
 orte/tools/orte-checkpoint/orte-checkpoint.1
@@ -568,6 +590,7 @@ test/class/opal_value_array
 
 test/datatype/ddt_test
 test/datatype/ddt_pack
+test/datatype/external32
 test/datatype/to_self
 test/datatype/checksum
 test/datatype/position

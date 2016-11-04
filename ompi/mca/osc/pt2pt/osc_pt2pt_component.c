@@ -14,7 +14,7 @@
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -142,44 +142,62 @@ static int component_register (void)
 					    NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
 					    &mca_osc_pt2pt_component.buffer_size);
 
+    mca_osc_pt2pt_component.receive_count = 4;
+    (void) mca_base_component_var_register (&mca_osc_pt2pt_component.super.osc_version, "receive_count",
+                                            "Number of receives to post for each window for incoming fragments "
+                                            "(default: 4)", MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_4,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_pt2pt_component.receive_count);
+
     return OMPI_SUCCESS;
 }
 
 static int component_progress (void)
 {
-    int count = opal_list_get_size (&mca_osc_pt2pt_component.pending_operations);
+    int pending_count = opal_list_get_size (&mca_osc_pt2pt_component.pending_operations);
+    int recv_count = opal_list_get_size (&mca_osc_pt2pt_component.pending_receives);
     ompi_osc_pt2pt_pending_t *pending, *next;
 
-    if (0 == count) {
-	return 0;
+    if (recv_count) {
+        for (int i = 0 ; i < recv_count ; ++i) {
+            OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.pending_receives_lock);
+            ompi_osc_pt2pt_receive_t *recv = (ompi_osc_pt2pt_receive_t *) opal_list_remove_first (&mca_osc_pt2pt_component.pending_receives);
+            OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.pending_receives_lock);
+            if (NULL == recv) {
+                break;
+            }
+
+            (void) ompi_osc_pt2pt_process_receive (recv);
+        }
     }
 
     /* process one incoming request */
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.pending_operations_lock);
-    OPAL_LIST_FOREACH_SAFE(pending, next, &mca_osc_pt2pt_component.pending_operations, ompi_osc_pt2pt_pending_t) {
-	int ret;
+    if (pending_count) {
+        OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.pending_operations_lock);
+        OPAL_LIST_FOREACH_SAFE(pending, next, &mca_osc_pt2pt_component.pending_operations, ompi_osc_pt2pt_pending_t) {
+            int ret;
 
-	switch (pending->header.base.type) {
-	case OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_REQ:
-	    ret = ompi_osc_pt2pt_process_flush (pending->module, pending->source,
-					       &pending->header.flush);
-	    break;
-	case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_REQ:
-	    ret = ompi_osc_pt2pt_process_unlock (pending->module, pending->source,
-						&pending->header.unlock);
-	    break;
-	default:
-	    /* shouldn't happen */
-	    assert (0);
-	    abort ();
-	}
+            switch (pending->header.base.type) {
+            case OMPI_OSC_PT2PT_HDR_TYPE_FLUSH_REQ:
+                ret = ompi_osc_pt2pt_process_flush (pending->module, pending->source,
+                                                    &pending->header.flush);
+                break;
+            case OMPI_OSC_PT2PT_HDR_TYPE_UNLOCK_REQ:
+                ret = ompi_osc_pt2pt_process_unlock (pending->module, pending->source,
+                                                     &pending->header.unlock);
+                break;
+            default:
+                /* shouldn't happen */
+                assert (0);
+                abort ();
+            }
 
-	if (OMPI_SUCCESS == ret) {
-	    opal_list_remove_item (&mca_osc_pt2pt_component.pending_operations, &pending->super);
-	    OBJ_RELEASE(pending);
-	}
+            if (OMPI_SUCCESS == ret) {
+                opal_list_remove_item (&mca_osc_pt2pt_component.pending_operations, &pending->super);
+                OBJ_RELEASE(pending);
+            }
+        }
+        OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.pending_operations_lock);
     }
-    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.pending_operations_lock);
 
     return 1;
 }
@@ -193,6 +211,8 @@ component_init(bool enable_progress_threads,
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations, opal_list_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_receives, opal_list_t);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_receives_lock, opal_mutex_t);
 
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.modules,
                   opal_hash_table_t);
@@ -253,6 +273,8 @@ component_finalize(void)
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.requests);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_operations);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_operations_lock);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_receives);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_receives_lock);
 
     return OMPI_SUCCESS;
 }
@@ -298,7 +320,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     OBJ_CONSTRUCT(&module->locks_pending_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
     OBJ_CONSTRUCT(&module->pending_acc, opal_list_t);
-    OBJ_CONSTRUCT(&module->request_gc, opal_list_t);
     OBJ_CONSTRUCT(&module->buffer_gc, opal_list_t);
     OBJ_CONSTRUCT(&module->gc_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->all_sync, ompi_osc_pt2pt_sync_t);
@@ -385,11 +406,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* sync memory - make sure all initialization completed */
     opal_atomic_mb();
 
-    module->incoming_buffer = malloc (mca_osc_pt2pt_component.buffer_size + sizeof (ompi_osc_pt2pt_frag_header_t));
-    if (OPAL_UNLIKELY(NULL == module->incoming_buffer)) {
-	goto cleanup;
-    }
-
     ret = ompi_osc_pt2pt_frag_start_receive (module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
 	goto cleanup;
@@ -449,13 +465,33 @@ ompi_osc_pt2pt_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
 
 OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_pending_t, opal_list_item_t, NULL, NULL);
 
+static void ompi_osc_pt2pt_receive_construct (ompi_osc_pt2pt_receive_t *recv)
+{
+    recv->buffer = NULL;
+    recv->pml_request = NULL;
+}
+
+static void ompi_osc_pt2pt_receive_destruct (ompi_osc_pt2pt_receive_t *recv)
+{
+    free (recv->buffer);
+    if (recv->pml_request && MPI_REQUEST_NULL != recv->pml_request) {
+        recv->pml_request->req_complete_cb = NULL;
+        ompi_request_cancel (recv->pml_request);
+        ompi_request_free (&recv->pml_request);
+    }
+}
+
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_receive_t, opal_list_item_t,
+                   ompi_osc_pt2pt_receive_construct,
+                   ompi_osc_pt2pt_receive_destruct);
+
 static void ompi_osc_pt2pt_peer_construct (ompi_osc_pt2pt_peer_t *peer)
 {
     OBJ_CONSTRUCT(&peer->queued_frags, opal_list_t);
     OBJ_CONSTRUCT(&peer->lock, opal_mutex_t);
     peer->active_frag = NULL;
     peer->passive_incoming_frag_count = 0;
-    peer->unexpected_post = false;
+    peer->flags = 0;
 }
 
 static void ompi_osc_pt2pt_peer_destruct (ompi_osc_pt2pt_peer_t *peer)

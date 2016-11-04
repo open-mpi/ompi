@@ -1,9 +1,10 @@
 /*
- * Copyright (c) 2013-2015 The University of Tennessee and The University
+ * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Inria.  All rights reserved.
  * Copyright (c) 2013-2015 Bull SAS.  All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,7 @@ writing 4x4 matrix to monitoring_avg.mat
 #include <mpi.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 static MPI_T_pvar_session session;
 static int comm_world_size;
@@ -241,10 +243,10 @@ int write_mat(char * filename, uint64_t * mat, unsigned int dim)
     printf("writing %ux%u matrix to %s\n", dim, dim, filename);
 
     for (i = 0; i < comm_world_size; ++i) {
-        for (j = 0; j < comm_world_size - 1; ++j) {
-            fprintf(matrix_file, "%lu ", mat[i * comm_world_size + j]);
+        for (j = 0; j < comm_world_size; ++j) {
+            fprintf(matrix_file, "%" PRIu64 " ", mat[i * comm_world_size + j]);
         }
-        fprintf(matrix_file, "%lu\n", mat[i * comm_world_size + j]);
+        fprintf(matrix_file, "\n");
     }
     fflush(matrix_file);
     fclose(matrix_file);

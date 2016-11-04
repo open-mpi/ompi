@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -156,12 +156,7 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
     }
 
 #define MCA_PML_OB1_SEND_REQUEST_RESET(sendreq)                         \
-    if ((sendreq)->req_send.req_bytes_packed > 0) {                     \
-        size_t _position = 0;                                           \
-        opal_convertor_set_position(&(sendreq)->req_send.req_base.req_convertor, \
-                                    &_position);                        \
-        assert( 0 == _position );                                       \
-    }
+    MCA_PML_BASE_SEND_REQUEST_RESET(&(sendreq)->req_send)
 
 static inline void mca_pml_ob1_free_rdma_resources (mca_pml_ob1_send_request_t* sendreq)
 {
@@ -209,10 +204,10 @@ do {                                                                            
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;        \
    (sendreq)->req_send.req_base.req_ompi.req_status._ucount =                        \
         (sendreq)->req_send.req_bytes_packed;                                        \
-   ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), (with_signal) ); \
-                                                                                     \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                                \
                             &(sendreq->req_send.req_base), PERUSE_SEND);             \
+                                                                                     \
+   ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), (with_signal) ); \
 } while(0)
 
 static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *sendreq)
@@ -226,7 +221,7 @@ static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *se
 }
 
 /*
- * Release resources associated with a request
+ * Release resources associated with a request and return the request.
  */
 
 #define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                        \
@@ -234,6 +229,7 @@ static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *se
         mca_pml_ob1_send_request_fini (sendreq);                        \
         opal_free_list_return ( &mca_pml_base_send_requests,            \
                                 (opal_free_list_item_t*)sendreq);       \
+        sendreq = NULL;  /* for safety */                               \
     } while(0)
 
 
@@ -248,36 +244,35 @@ static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *se
 static inline void
 send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 {
-    assert(false == sendreq->req_send.req_base.req_pml_complete);
+    if(false == sendreq->req_send.req_base.req_pml_complete) {
+        if(sendreq->req_send.req_bytes_packed > 0) {
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
+                                     &(sendreq->req_send.req_base), PERUSE_SEND);
+        }
 
-    if(sendreq->req_send.req_bytes_packed > 0) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND);
-    }
+        /* return mpool resources */
+        mca_pml_ob1_free_rdma_resources(sendreq);
 
-    /* return mpool resources */
-    mca_pml_ob1_free_rdma_resources(sendreq);
+        if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
+            sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
+            mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
+        }
 
-    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
-        sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
-        mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
-    }
+        if (!sendreq->req_send.req_base.req_free_called) {
+            sendreq->req_send.req_base.req_pml_complete = true;
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    if(false == sendreq->req_send.req_base.req_ompi.req_complete) {
-        /* Should only be called for long messages (maybe synchronous) */
-        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
-    } else {
-        if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
-            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+            if( !REQUEST_COMPLETE( &((sendreq->req_send).req_base.req_ompi)) ) {
+                /* Should only be called for long messages (maybe synchronous) */
+                MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+            } else {
+                if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
+                    ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+                }
+            }
+        } else {
+            MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
         }
     }
-    sendreq->req_send.req_base.req_pml_complete = true;
-
-    if(sendreq->req_send.req_base.req_free_called) {
-        MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
-    }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 /* returns true if request was completed on PML level */
@@ -460,7 +455,7 @@ mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml
     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
     sendreq->req_send.req_base.req_sequence = seqn;
 
-    MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );
+    MCA_PML_BASE_SEND_START( &sendreq->req_send );
 
     for(size_t i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
         mca_bml_base_btl_t* bml_btl;

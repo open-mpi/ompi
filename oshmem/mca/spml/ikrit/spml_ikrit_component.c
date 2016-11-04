@@ -88,7 +88,7 @@ static inline int check_mxm_tls(char *var)
     return OSHMEM_SUCCESS;
 }
 
-static inline int set_mxm_tls()
+static inline int set_mxm_tls(void)
 {
     char *tls;
 
@@ -127,7 +127,6 @@ static inline int check_mxm_hw_tls(char *v, char *tls)
         if (strstr(tls, "ud") &&
             (NULL == strstr(tls, "rc") && NULL == strstr(tls, "dc") &&
              NULL == strstr(tls, "shm"))) {
-            mca_spml_ikrit.ud_only = 1;
             return OSHMEM_SUCCESS;
         }
 	}
@@ -137,7 +136,7 @@ static inline int check_mxm_hw_tls(char *v, char *tls)
     return OSHMEM_ERROR;
 }
 
-static inline int set_mxm_hw_rdma_tls()
+static inline int set_mxm_hw_rdma_tls(void)
 {
     if (!mca_spml_ikrit.hw_rdma_channel) {
         return check_mxm_hw_tls("MXM_OSHMEM_TLS", getenv("MXM_OSHMEM_TLS"));
@@ -163,6 +162,21 @@ static inline void mca_spml_ikrit_param_register_int(const char* param_name,
                                            param_name,
                                            help_msg,
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           storage);
+}
+
+static inline void mca_spml_ikrit_param_register_size_t(const char* param_name,
+                                                        size_t default_value,
+                                                        const char *help_msg,
+                                                        size_t *storage)
+{
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_spml_ikrit_component.spmlm_version,
+                                           param_name,
+                                           help_msg,
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            storage);
@@ -231,6 +245,9 @@ static int mca_spml_ikrit_component_register(void)
                                       &mca_spml_ikrit.unsync_conn_max);
 #endif
 
+    mca_spml_ikrit_param_register_size_t("put_zcopy_threshold", 16384ULL,
+                                         "[size_t] Use zero copy put if message size is greater than the threshold",
+                                      &mca_spml_ikrit.put_zcopy_threshold);
     if (oshmem_num_procs() < mca_spml_ikrit.np) {
         SPML_VERBOSE(1,
                      "Not enough ranks (%d<%d), disqualifying spml/ikrit",

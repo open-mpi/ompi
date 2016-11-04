@@ -40,7 +40,7 @@ int mca_btl_vader_put_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t
                              mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                              int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
-    mca_mpool_base_registration_t *reg;
+    mca_rcache_base_registration_t *reg;
     void *rem_ptr;
 
     reg = vader_get_registation (endpoint, (void *)(intptr_t) remote_address, size, 0, &rem_ptr);

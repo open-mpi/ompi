@@ -89,7 +89,6 @@ typedef struct mca_scoll_base_component_1_0_0_t mca_scoll_base_component_t;
 typedef int
 (*mca_scoll_base_module_enable_1_0_0_fn_t)(struct mca_scoll_base_module_1_0_0_t* module,
                                            struct oshmem_group_t *comm);
-typedef int (*mca_scoll_base_module_ft_event_fn_t)(int state);
 
 #define SCOLL_DEFAULT_ALG   (-1)
 
@@ -139,6 +138,14 @@ typedef int (*mca_scoll_base_module_reduce_fn_t)(struct oshmem_group_t *group,
                                                  long *pSync,
                                                  void *pWrk,
                                                  int alg);
+typedef int (*mca_scoll_base_module_alltoall_fn_t)(struct oshmem_group_t *group,
+                                                  void *target,
+                                                  const void *source,
+                                                  ptrdiff_t dst, ptrdiff_t sst,
+                                                  size_t nelems,
+                                                  size_t element_size,
+                                                  long *pSync,
+                                                  int alg);
 
 struct mca_scoll_base_module_1_0_0_t {
     /** Collective modules all inherit from opal_object */
@@ -149,13 +156,14 @@ struct mca_scoll_base_module_1_0_0_t {
     mca_scoll_base_module_broadcast_fn_t scoll_broadcast;
     mca_scoll_base_module_collect_fn_t scoll_collect;
     mca_scoll_base_module_reduce_fn_t scoll_reduce;
+    mca_scoll_base_module_alltoall_fn_t scoll_alltoall;
     mca_scoll_base_module_enable_1_0_0_fn_t scoll_module_enable;
 };
 typedef struct mca_scoll_base_module_1_0_0_t mca_scoll_base_module_1_0_0_t;
 
-/** Per guidence in mca.h, use the unversioned struct name if you just
+/** Per guidance in mca.h, use the unversioned struct name if you just
  want to always keep up with the most recent version of the
- interace. */
+ interface. */
 typedef struct mca_scoll_base_module_1_0_0_t mca_scoll_base_module_t;
 OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_scoll_base_module_t);
 
@@ -171,7 +179,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_scoll_base_module_t);
 /*
  * Collectives group cache structure
  *
- * Collectives gorup cache structure, used to find functions to
+ * Collectives group cache structure, used to find functions to
  * implement collective algorithms and their associated modules.
  */
 struct mca_scoll_base_group_scoll_t {
@@ -183,6 +191,8 @@ struct mca_scoll_base_group_scoll_t {
     mca_scoll_base_module_1_0_0_t *scoll_collect_module;
     mca_scoll_base_module_reduce_fn_t scoll_reduce;
     mca_scoll_base_module_1_0_0_t *scoll_reduce_module;
+    mca_scoll_base_module_alltoall_fn_t scoll_alltoall;
+    mca_scoll_base_module_1_0_0_t *scoll_alltoall_module;
 };
 typedef struct mca_scoll_base_group_scoll_t mca_scoll_base_group_scoll_t;
 

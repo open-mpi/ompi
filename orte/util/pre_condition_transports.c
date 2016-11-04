@@ -12,6 +12,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +44,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/attr.h"
 
 #include "orte/util/pre_condition_transports.h"
 
@@ -64,7 +66,7 @@ static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) 
 char* orte_pre_condition_transports_print(uint64_t *unique_key)
 {
     unsigned int *int_ptr;
-    size_t i, string_key_len, written_len;
+    size_t i, j, string_key_len, written_len;
     char *string_key = NULL, *format = NULL;
 
     /* string is two 64 bit numbers printed in hex with a dash between
@@ -92,6 +94,12 @@ char* orte_pre_condition_transports_print(uint64_t *unique_key)
     /* print the first number */
     int_ptr = (unsigned int*) &unique_key[0];
     for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
+        if (0 == int_ptr[i]) {
+            /* inject some energy */
+            for (j=0; j < sizeof(unsigned int); j++) {
+                int_ptr[i] |= j << j;
+            }
+        }
         snprintf(string_key + written_len,
                  string_key_len - written_len,
                  format, int_ptr[i]);
@@ -105,6 +113,12 @@ char* orte_pre_condition_transports_print(uint64_t *unique_key)
     /* print the second number */
     int_ptr = (unsigned int*) &unique_key[1];
     for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
+        if (0 == int_ptr[i]) {
+            /* inject some energy */
+            for (j=0; j < sizeof(unsigned int); j++) {
+                int_ptr[i] |= j << j;
+            }
+        }
         snprintf(string_key + written_len,
                  string_key_len - written_len,
                  format, int_ptr[i]);
@@ -148,6 +162,9 @@ int orte_pre_condition_transports(orte_job_t *jdata)
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+
+    /* record it in case this job executes a dynamic spawn */
+    orte_set_attribute(&jdata->attributes, ORTE_JOB_TRANSPORT_KEY, ORTE_ATTR_LOCAL, string_key, OPAL_STRING);
 
     if (OPAL_SUCCESS != mca_base_var_env_name ("orte_precondition_transports", &cs_env)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);

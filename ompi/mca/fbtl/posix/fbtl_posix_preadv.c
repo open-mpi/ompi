@@ -80,6 +80,12 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	    }
 	}
 
+#if defined(HAVE_PREADV)
+	ret_code = preadv (fh->fd, iov, iov_count, iov_offset);
+	if ( 0 < ret_code ) {
+	    bytes_read+=ret_code;
+	}
+#else
 	if (-1 == lseek (fh->fd, iov_offset, SEEK_SET)) {
             opal_output(1, "lseek:%s", strerror(errno));
             free(iov);
@@ -89,6 +95,7 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	if ( 0 < ret_code ) {
 	    bytes_read+=ret_code;
 	}
+#endif
 	else if ( ret_code == -1 ) {
             opal_output(1, "readv:%s", strerror(errno));
             free(iov);

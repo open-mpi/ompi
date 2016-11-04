@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+# Copyright (c) 2015-2016 Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -19,5 +21,8 @@
 #
 
 # support needs to be first for dependencies
-SUBDIRS = support asm class threads datatype util monitoring
+SUBDIRS = support asm class threads datatype util dss
+if PROJECT_OMPI
+SUBDIRS += monitoring
+endif
 DIST_SUBDIRS = event $(SUBDIRS)

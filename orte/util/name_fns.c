@@ -10,8 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014-2014 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -284,19 +285,38 @@ char* orte_util_print_vpids(const orte_vpid_t vpid)
 
 
 /***   STRING FUNCTIONS   ***/
-int orte_util_convert_jobid_to_string(char **jobid_string, const orte_jobid_t jobid)
+
+int orte_util_snprintf_jobid(char *jobid_string, size_t size, const orte_jobid_t jobid)
 {
+    int rc;
+
     /* check for wildcard value - handle appropriately */
     if (ORTE_JOBID_WILDCARD == jobid) {
-        *jobid_string = strdup(ORTE_SCHEMA_WILDCARD_STRING);
-        return ORTE_SUCCESS;
+        (void)strncpy(jobid_string, ORTE_SCHEMA_WILDCARD_STRING, size);
+    } else {
+        rc = snprintf(jobid_string, size, "%ld", (long) jobid);
+        if (0 > rc) {
+            return ORTE_ERROR;
+        }
     }
 
-    if (0 > asprintf(jobid_string, "%ld", (long) jobid)) {
+    return ORTE_SUCCESS;
+}
+
+int orte_util_convert_jobid_to_string(char **jobid_string, const orte_jobid_t jobid)
+{
+    int rc;
+    char str[256];
+    rc = orte_util_snprintf_jobid(str, 255, jobid);
+    if (0 > rc) {
+        *jobid_string = NULL;
+        return rc;
+    }
+    *jobid_string = strdup(str);
+    if (NULL == *jobid_string) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-
     return ORTE_SUCCESS;
 }
 

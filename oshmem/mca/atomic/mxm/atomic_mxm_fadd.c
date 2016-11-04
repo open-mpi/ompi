@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,18 +45,6 @@ int mca_atomic_mxm_fadd(void *target,
     ptl_id = -1;
     mxm_err = MXM_OK;
 
-    if (!target || !value) {
-        ATOMIC_ERROR("[#%d] target or value are not defined", my_pe);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERR_BAD_PARAM;
-    }
-
-    if ((pe < 0) || (pe >= oshmem_num_procs())) {
-        ATOMIC_ERROR("[#%d] PE=%d not valid", my_pe, pe);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERR_BAD_PARAM;
-    }
-
     switch (nlong) {
     case 1:
         nlong_order = 0;
@@ -74,7 +64,7 @@ int mca_atomic_mxm_fadd(void *target,
         return OSHMEM_ERR_BAD_PARAM;
     }
 
-    ptl_id = oshmem_proc_group_all(pe)->transport_ids[0];
+    ptl_id = OSHMEM_PROC_DATA(oshmem_proc_group_all(pe))->transport_ids[0];
     if (MXM_PTL_SHM == ptl_id) {
         ptl_id = MXM_PTL_RDMA;
     }
@@ -88,8 +78,8 @@ int mca_atomic_mxm_fadd(void *target,
 
     /* mxm request init */
     sreq.base.state = MXM_REQ_NEW;
-    sreq.base.mq = mca_spml_self->mxm_mq;
-    sreq.base.conn = mca_spml_self->mxm_peers[pe]->mxm_hw_rdma_conn;
+    sreq.base.mq = mca_atomic_mxm_spml_self->mxm_mq;
+    sreq.base.conn = mca_atomic_mxm_spml_self->mxm_peers[pe]->mxm_hw_rdma_conn;
     sreq.base.completed_cb = NULL;
     sreq.base.data_type = MXM_REQ_DATA_BUFFER;
 

@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -18,16 +18,10 @@
 int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
                                   struct ompi_communicator_t *comm, ompi_request_t ** request,
                                   struct mca_coll_base_module_2_1_0_t *module) {
-  int res, size;
+  int res;
   NBC_Schedule *schedule;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
-
-  res = MPI_Type_size(datatype, &size);
-  if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_size() (%i)", res);
-    return res;
-  }
 
   schedule = OBJ_NEW(NBC_Schedule);
   if (OPAL_UNLIKELY(NULL == schedule)) {

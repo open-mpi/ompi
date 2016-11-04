@@ -173,7 +173,7 @@ int mca_fcoll_two_phase_calc_aggregator(mca_io_ompio_file_t *fh,
        fprintf(stderr,
 	       "rank_index(%d) >= num_aggregators(%d)fd_size=%lld off=%lld\n",
 	       rank_index,num_aggregators,fd_size,off);
-       MPI_Abort(MPI_COMM_WORLD, 1);
+       ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
     }
 
 

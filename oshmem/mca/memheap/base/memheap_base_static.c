@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -157,7 +158,7 @@ static int _check_pathname(struct map_segment_desc *seg)
         if (0 == strncmp(p+1, "libshmem.so", 11))
         return OSHMEM_ERROR;
 
-        if (0 == strncmp(p+1, "libmpi.so", 9))
+        if (0 == strncmp(p+1, "lib" OMPI_LIBMPI_NAME ".so", 9))
         return OSHMEM_ERROR;
 
         if (0 == strncmp(p+1, "libmca_common_sm.so", 19))
@@ -183,7 +184,7 @@ static int _load_segments(void)
 
     while (NULL != fgets(line, sizeof(line), fp)) {
         memset(&seg, 0, sizeof(seg));
-        sscanf(line,
+        if (3 > sscanf(line,
                "%llx-%llx %s %llx %s %llx %s",
                (unsigned long long *) &seg.start,
                (unsigned long long *) &seg.end,
@@ -191,7 +192,11 @@ static int _load_segments(void)
                (unsigned long long *) &seg.offset,
                seg.dev,
                (unsigned long long *) &seg.inode,
-               seg.pathname);
+               seg.pathname)) {
+            MEMHEAP_ERROR("Failed to sscanf /proc/self/maps output %s", line);
+            fclose(fp);
+            return OSHMEM_ERROR;
+        }
 
         if (OSHMEM_ERROR == _check_address(&seg))
             continue;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -17,10 +17,30 @@
  * pshmem_* symbols
  */
 
+#define SHMEM_INIT PSHMEM_INIT
+#define shmem_init_ pshmem_init_
+#define shmem_init__ pshmem_init__
+
+#define START_PES PSTART_PES
+#define start_pes_ pstart_pes_
+#define start_pes__ pstart_pes__
+
+#define SHMEM_GLOBAL_EXIT PSHMEM_GLOBAL_EXIT
+#define shmem_global_exit_ pshmem_global_exit_
+#define shmem_global_exit__ pshmem_global_exit__
+
+#define SHMEM_MY_PE PSHMEM_MY_PE
+#define shmem_my_pe_ pshmem_my_pe_
+#define shmem_my_pe__ pshmem_my_pe__
+
 #define MY_PE PMY_PE
 #define my_pe_ pmy_pe_
 #define my_pe__ pmy_pe__
 #define _my_pe_ p_my_pe_
+
+#define SHMEM_N_PES PSHMEM_N_PES
+#define shmem_n_pes_ pshmem_n_pes_
+#define shmem_n_pes__ pshmem_n_pes__
 
 #define NUM_PES PNUM_PES
 #define num_pes_ pnum_pes_
@@ -66,6 +86,22 @@
 #define shmem_broadcast64_ pshmem_broadcast64_
 #define shmem_broadcast64__ pshmem_broadcast64__
 
+#define SHMEM_ALLTOALL32 PSHMEM_ALLTOALL32
+#define shmem_alltoall32_ pshmem_alltoall32_
+#define shmem_alltoall32__ pshmem_alltoall32__
+
+#define SHMEM_ALLTOALL64 PSHMEM_ALLTOALL64
+#define shmem_alltoall64_ pshmem_alltoall64_
+#define shmem_alltoall64__ pshmem_alltoall64__
+
+#define SHMEM_ALLTOALLS32 PSHMEM_ALLTOALLS32
+#define shmem_alltoalls32_ pshmem_alltoalls32_
+#define shmem_alltoalls32__ pshmem_alltoalls32__
+
+#define SHMEM_ALLTOALLS64 PSHMEM_ALLTOALLS64
+#define shmem_alltoalls64_ pshmem_alltoalls64_
+#define shmem_alltoalls64__ pshmem_alltoalls64__
+
 #define SHMEM_SET_CACHE_INV PSHMEM_SET_CACHE_INV
 #define shmem_set_cache_inv_ pshmem_set_cache_inv_
 #define shmem_set_cache_inv__ pshmem_set_cache_inv__
@@ -97,6 +133,10 @@
 #define SHMEM_CHARACTER_PUT PSHMEM_CHARACTER_PUT
 #define shmem_character_put_ pshmem_character_put_
 #define shmem_character_put__ pshmem_character_put__
+
+#define SHMEM_CHARACTER_PUT_NBI PSHMEM_CHARACTER_PUT_NBI
+#define shmem_character_put_nbi_ pshmem_character_put_nbi_
+#define shmem_character_put_nbi__ pshmem_character_put_nbi__
 
 #define SHMEM_COLLECT4 PSHMEM_COLLECT4
 #define shmem_collect4_ pshmem_collect4_
@@ -146,6 +186,10 @@
 #define shmem_complex_put_ pshmem_complex_put_
 #define shmem_complex_put__ pshmem_complex_put__
 
+#define SHMEM_COMPLEX_PUT_NBI PSHMEM_COMPLEX_PUT_NBI
+#define shmem_complex_put_nbi_ pshmem_complex_put_nbi_
+#define shmem_complex_put_nbi__ pshmem_complex_put_nbi__
+
 #define SHMEM_DOUBLE_GET PSHMEM_DOUBLE_GET
 #define shmem_double_get_ pshmem_double_get_
 #define shmem_double_get__ pshmem_double_get__
@@ -161,6 +205,10 @@
 #define SHMEM_DOUBLE_PUT PSHMEM_DOUBLE_PUT
 #define shmem_double_put_ pshmem_double_put_
 #define shmem_double_put__ pshmem_double_put__
+
+#define SHMEM_DOUBLE_PUT_NBI PSHMEM_DOUBLE_PUT_NBI
+#define shmem_double_put_nbi_ pshmem_double_put_nbi_
+#define shmem_double_put_nbi__ pshmem_double_put_nbi__
 
 #define SHMEM_FENCE PSHMEM_FENCE
 #define shmem_fence_ pshmem_fence_
@@ -210,6 +258,102 @@
 #define shmem_iget8_ pshmem_iget8_
 #define shmem_iget8__ pshmem_iget8__
 
+#define SHMEM_GETMEM_NBI PSHMEM_GETMEM_NBI
+#define shmem_getmem_nbi_ pshmem_getmem_nbi_
+#define shmem_getmem_nbi__ pshmem_getmem_nbi__
+
+#define SHMEM_CHARACTER_GET_NBI PSHMEM_CHARACTER_GET_NBI
+#define shmem_character_get_nbi_ pshmem_character_get_nbi_
+#define shmem_character_get_nbi__ pshmem_character_get_nbi__
+
+#define SHMEM_COMPLEX_GET_NBI PSHMEM_COMPLEX_GET_NBI
+#define shmem_complex_get_nbi_ pshmem_complex_get_nbi_
+#define shmem_complex_get_nbi__ pshmem_complex_get_nbi__
+
+#define SHMEM_DOUBLE_GET_NBI PSHMEM_DOUBLE_GET_NBI
+#define shmem_double_get_nbi_ pshmem_double_get_nbi_
+#define shmem_double_get_nbi__ pshmem_double_get_nbi__
+
+#define SHMEM_INTEGER_GET_NBI PSHMEM_INTEGER_GET_NBI
+#define shmem_integer_get_nbi_ pshmem_integer_get_nbi_
+#define shmem_integer_get_nbi__ pshmem_integer_get_nbi__
+
+#define SHMEM_LOGICAL_GET_NBI PSHMEM_LOGICAL_GET_NBI
+#define shmem_logical_get_nbi_ pshmem_logical_get_nbi_
+#define shmem_logical_get_nbi__ pshmem_logical_get_nbi__
+
+#define SHMEM_REAL_GET_NBI PSHMEM_REAL_GET_NBI
+#define shmem_real_get_nbi_ pshmem_real_get_nbi_
+#define shmem_real_get_nbi__ pshmem_real_get_nbi__
+
+#define SHMEM_GET4_NBI PSHMEM_GET4_NBI
+#define shmem_get4_nbi_ pshmem_get4_nbi_
+#define shmem_get4_nbi__ pshmem_get4_nbi__
+
+#define SHMEM_GET8_NBI PSHMEM_GET8_NBI
+#define shmem_get8_nbi_ pshmem_get8_nbi_
+#define shmem_get8_nbi__ pshmem_get8_nbi__
+
+#define SHMEM_GET32_NBI PSHMEM_GET32_NBI
+#define shmem_get32_nbi_ pshmem_get32_nbi_
+#define shmem_get32_nbi__ pshmem_get32_nbi__
+
+#define SHMEM_GET64_NBI PSHMEM_GET64_NBI
+#define shmem_get64_nbi_ pshmem_get64_nbi_
+#define shmem_get64_nbi__ pshmem_get64_nbi__
+
+#define SHMEM_GET128_NBI PSHMEM_GET128_NBI
+#define shmem_get128_nbi_ pshmem_get128_nbi_
+#define shmem_get128_nbi__ pshmem_get128_nbi__
+
+#define SHMEM_PUTMEM_NBI PSHMEM_PUTMEM_NBI
+#define shmem_putmem_nbi_ pshmem_putmem_nbi_
+#define shmem_putmem_nbi__ pshmem_putmem_nbi__
+
+#define SHMEM_CHARACTER_PUT_NBI PSHMEM_CHARACTER_PUT_NBI
+#define shmem_character_put_nbi_ pshmem_character_put_nbi_
+#define shmem_character_put_nbi__ pshmem_character_put_nbi__
+
+#define SHMEM_COMPLEX_PUT_NBI PSHMEM_COMPLEX_PUT_NBI
+#define shmem_complex_put_nbi_ pshmem_complex_put_nbi_
+#define shmem_complex_put_nbi__ pshmem_complex_put_nbi__
+
+#define SHMEM_DOUBLE_PUT_NBI PSHMEM_DOUBLE_PUT_NBI
+#define shmem_double_put_nbi_ pshmem_double_put_nbi_
+#define shmem_double_put_nbi__ pshmem_double_put_nbi__
+
+#define SHMEM_INTEGER_PUT_NBI PSHMEM_INTEGER_PUT_NBI
+#define shmem_integer_put_nbi_ pshmem_integer_put_nbi_
+#define shmem_integer_put_nbi__ pshmem_integer_put_nbi__
+
+#define SHMEM_LOGICAL_PUT_NBI PSHMEM_LOGICAL_PUT_NBI
+#define shmem_logical_put_nbi_ pshmem_logical_put_nbi_
+#define shmem_logical_put_nbi__ pshmem_logical_put_nbi__
+
+#define SHMEM_REAL_PUT_NBI PSHMEM_REAL_PUT_NBI
+#define shmem_real_put_nbi_ pshmem_real_put_nbi_
+#define shmem_real_put_nbi__ pshmem_real_put_nbi__
+
+#define SHMEM_PUT4_NBI PSHMEM_PUT4_NBI
+#define shmem_put4_nbi_ pshmem_put4_nbi_
+#define shmem_put4_nbi__ pshmem_put4_nbi__
+
+#define SHMEM_PUT8_NBI PSHMEM_PUT8_NBI
+#define shmem_put8_nbi_ pshmem_put8_nbi_
+#define shmem_put8_nbi__ pshmem_put8_nbi__
+
+#define SHMEM_PUT32_NBI PSHMEM_PUT32_NBI
+#define shmem_put32_nbi_ pshmem_put32_nbi_
+#define shmem_put32_nbi__ pshmem_put32_nbi__
+
+#define SHMEM_PUT64_NBI PSHMEM_PUT64_NBI
+#define shmem_put64_nbi_ pshmem_put64_nbi_
+#define shmem_put64_nbi__ pshmem_put64_nbi__
+
+#define SHMEM_PUT128_NBI PSHMEM_PUT128_NBI
+#define shmem_put128_nbi_ pshmem_put128_nbi_
+#define shmem_put128_nbi__ pshmem_put128_nbi__
+
 #define SHMEM_INT4_ADD PSHMEM_INT4_ADD
 #define shmem_int4_add_ pshmem_int4_add_
 #define shmem_int4_add__ pshmem_int4_add__
@@ -222,6 +366,10 @@
 #define shmem_int4_fadd_ pshmem_int4_fadd_
 #define shmem_int4_fadd__ pshmem_int4_fadd__
 
+#define SHMEM_INT4_FETCH PSHMEM_INT4_FETCH
+#define shmem_int4_fetch_ pshmem_int4_fetch_
+#define shmem_int4_fetch__ pshmem_int4_fetch__
+
 #define SHMEM_INT4_FINC PSHMEM_INT4_FINC
 #define shmem_int4_finc_ pshmem_int4_finc_
 #define shmem_int4_finc__ pshmem_int4_finc__
@@ -233,6 +381,10 @@
 #define SHMEM_INT4_SWAP PSHMEM_INT4_SWAP
 #define shmem_int4_swap_ pshmem_int4_swap_
 #define shmem_int4_swap__ pshmem_int4_swap__
+
+#define SHMEM_INT4_SET PSHMEM_INT4_SET
+#define shmem_int4_set_ pshmem_int4_set_
+#define shmem_int4_set__ pshmem_int4_set__
 
 #define SHMEM_INT4_WAIT PSHMEM_INT4_WAIT
 #define shmem_int4_wait_ pshmem_int4_wait_
@@ -254,6 +406,10 @@
 #define shmem_int8_fadd_ pshmem_int8_fadd_
 #define shmem_int8_fadd__ pshmem_int8_fadd__
 
+#define SHMEM_INT8_FETCH PSHMEM_INT8_FETCH
+#define shmem_int8_fetch_ pshmem_int8_fetch_
+#define shmem_int8_fetch__ pshmem_int8_fetch__
+
 #define SHMEM_INT8_FINC PSHMEM_INT8_FINC
 #define shmem_int8_finc_ pshmem_int8_finc_
 #define shmem_int8_finc__ pshmem_int8_finc__
@@ -265,6 +421,10 @@
 #define SHMEM_INT8_SWAP PSHMEM_INT8_SWAP
 #define shmem_int8_swap_ pshmem_int8_swap_
 #define shmem_int8_swap__ pshmem_int8_swap__
+
+#define SHMEM_INT8_SET PSHMEM_INT8_SET
+#define shmem_int8_set_ pshmem_int8_set_
+#define shmem_int8_set__ pshmem_int8_set__
 
 #define SHMEM_INT8_WAIT PSHMEM_INT8_WAIT
 #define shmem_int8_wait_ pshmem_int8_wait_
@@ -478,6 +638,22 @@
 #define shmem_real8_swap_ pshmem_real8_swap_
 #define shmem_real8_swap__ pshmem_real8_swap__
 
+#define SHMEM_REAL4_SET PSHMEM_REAL4_SET
+#define shmem_real4_set_ pshmem_real4_set_
+#define shmem_real4_set__ pshmem_real4_set__
+
+#define SHMEM_REAL8_SET PSHMEM_REAL8_SET
+#define shmem_real8_set_ pshmem_real8_set_
+#define shmem_real8_set__ pshmem_real8_set__
+
+#define SHMEM_REAL4_FETCH PSHMEM_REAL4_FETCH
+#define shmem_real4_fetch_ pshmem_real4_fetch_
+#define shmem_real4_fetch__ pshmem_real4_fetch__
+
+#define SHMEM_REAL8_FETCH PSHMEM_REAL8_FETCH
+#define shmem_real8_fetch_ pshmem_real8_fetch_
+#define shmem_real8_fetch__ pshmem_real8_fetch__
+
 #define SHMEM_REAL_GET PSHMEM_REAL_GET
 #define shmem_real_get_ pshmem_real_get_
 #define shmem_real_get__ pshmem_real_get__
@@ -569,9 +745,5 @@
 #define SHPDEALLC PSHPDEALLC
 #define shpdeallc_ pshpdeallc_
 #define shpdeallc__ pshpdeallc__
-
-#define START_PES PSTART_PES
-#define start_pes_ pstart_pes_
-#define start_pes__ pstart_pes__
 
 #endif /* OSHMEM_FORTRAN_PROFILE_DEFINES_H */

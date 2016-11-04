@@ -20,8 +20,7 @@ if ! MAN_PAGE_BUILD_USEMPIF08_BINDINGS
 endif
 
 .1in.1:
-	@ echo "  BUILDING $@"
-	@ $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
+	$(OMPI_V_GEN) $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
 	  --package-name='@PACKAGE_NAME@' \
 	  --package-version='@PACKAGE_VERSION@' \
 	  --ompi-date='@OMPI_RELEASE_DATE@' \
@@ -31,8 +30,7 @@ endif
 	  --output=$@
 
 .3in.3:
-	@ echo "  BUILDING $@"
-	@ $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
+	$(OMPI_V_GEN) $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
 	  --package-name='@PACKAGE_NAME@' \
 	  --package-version='@PACKAGE_VERSION@' \
 	  --ompi-date='@OMPI_RELEASE_DATE@' \
@@ -43,8 +41,7 @@ endif
 	  --output=$@
 
 .7in.7:
-	@ echo "  BUILDING $@"
-	@ $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
+	$(OMPI_V_GEN) $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
 	  --package-name='@PACKAGE_NAME@' \
 	  --package-version='@PACKAGE_VERSION@' \
 	  --ompi-date='@OMPI_RELEASE_DATE@' \

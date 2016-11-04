@@ -181,6 +181,12 @@ OBJ_CLASS_DECLARATION(mca_oob_uri_req_t);
     }while(0);
 ORTE_DECLSPEC void orte_oob_base_set_addr(int fd, short args, void *cbdata);
 
+
+/* Get the available transports and their attributes */
+#define ORTE_OOB_GET_TRANSPORTS(u) orte_oob_base_get_transports(u)
+ORTE_DECLSPEC void orte_oob_base_get_transports(opal_list_t *transports);
+
+
 #if OPAL_ENABLE_FT_CR == 1
 ORTE_DECLSPEC void orte_oob_base_ft_event(int fd, short args, void *cbdata);
 #endif

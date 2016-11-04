@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
 .\" $COPYRIGHT$
 .\"
@@ -529,9 +529,38 @@ MCA parameter.
 .
 .
 .TP
+.B --get-stack-traces
+When paired with the
+.B --timeout
+option,
+.I mpirun
+will obtain and print out stack traces from all launched processes
+that are still alive when the timeout expires.  Note that obtaining
+stack traces can take a little time and produce a lot of output,
+especially for large process-count jobs.
+.
+.
+.TP
 .B -debugger\fR,\fP --debugger
 Sequence of debuggers to search for when \fI--debug\fP is used (i.e.
 a synonym for \fIorte_base_user_debugger\fP MCA parameter).
+.
+.
+.TP
+.B --timeout \fR<seconds>
+The maximum number of seconds that
+.I mpirun
+(also known as
+.I mpiexec\fR,\fI oshrun\fR,\fI orterun\fR,\fI
+etc.)
+will run.  After this many seconds,
+.I mpirun
+will abort the launched job and exit with a non-zero exit status.
+Using
+.B --timeout
+can be also useful when combined with the
+.B --get-stack-traces
+option.
 .
 .
 .TP
@@ -661,6 +690,14 @@ without clutter from mpirun itself.
 Disable the automatic --prefix behavior
 .
 .
+.TP
+.B --report-state-on-timeout
+When paired with the
+.B --timeout
+command line option, report the run-time subsystem state of each
+process when the timeout expires.
+.
+.
 .P
 There may be other options listed with \fImpirun --help\fP.
 .
@@ -669,12 +706,9 @@ There may be other options listed with \fImpirun --help\fP.
 .
 .TP
 .B MPIEXEC_TIMEOUT
-The maximum number of seconds that
-.I mpirun
-.RI ( mpiexec )
-will run.  After this many seconds,
-.I mpirun
-will abort the launched job and exit.
+Synonym for the
+.B --timeout
+command line option.
 .
 .
 .\" **************************
@@ -1240,9 +1274,7 @@ SIGUSR1 and SIGUSR2 signals received by orterun are propagated to
 all processes in the job.
 .
 .PP
-One can turn on forwarding of SIGSTOP and SIGCONT to the program executed
-by mpirun by setting the MCA parameter orte_forward_job_control to 1.
-A SIGTSTOP signal to mpirun will then cause a SIGSTOP signal to be sent
+A SIGTSTOP signal to mpirun will cause a SIGSTOP signal to be sent
 to all of the programs started by mpirun and likewise a SIGCONT signal
 to mpirun will cause a SIGCONT sent.
 .
@@ -1543,6 +1575,19 @@ In the event that one or more processes exit before calling MPI_FINALIZE, the
 return value of the MPI_COMM_WORLD rank of the process that \fImpirun\fP first notices died
 before calling MPI_FINALIZE will be returned.  Note that, in general, this will
 be the first process that died but is not guaranteed to be so.
+.
+.PP
+If the
+.B --timeout
+command line option is used and the timeout expires before the job
+completes (thereby forcing
+.I mpirun
+to kill the job)
+.I mpirun
+will return an exit status equivalent to the value of
+.B ETIMEDOUT
+(which is typically 110 on Linux and OS X systems).
+
 .
 .\" **************************
 .\"    See Also Section

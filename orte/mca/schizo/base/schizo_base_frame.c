@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -37,16 +37,38 @@
  */
 orte_schizo_base_t orte_schizo_base = {{{0}}};
 orte_schizo_base_module_t orte_schizo = {
-    orte_schizo_base_parse_cli,
-    orte_schizo_base_parse_env,
-    orte_schizo_base_setup_fork,
-    orte_schizo_base_setup_child
+    .define_cli = orte_schizo_base_define_cli,
+    .parse_cli = orte_schizo_base_parse_cli,
+    .parse_env = orte_schizo_base_parse_env,
+    .setup_app = orte_schizo_base_setup_app,
+    .setup_fork = orte_schizo_base_setup_fork,
+    .setup_child = orte_schizo_base_setup_child,
+    .check_launch_environment = orte_schizo_base_check_launch_environment,
+    .finalize = orte_schizo_base_finalize
 };
+
+static char *personalities = NULL;
+
+static int orte_schizo_base_register(mca_base_register_flag_t flags)
+{
+    /* pickup any defined personalities */
+    personalities = NULL;
+    mca_base_var_register("orte", "schizo", "base", "personalities",
+                          "Comma-separated list of personalities",
+                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                          OPAL_INFO_LVL_9,
+                          MCA_BASE_VAR_SCOPE_READONLY,
+                          &personalities);
+    return ORTE_SUCCESS;
+}
 
 static int orte_schizo_base_close(void)
 {
     /* cleanup globals */
     OPAL_LIST_DESTRUCT(&orte_schizo_base.active_modules);
+    if (NULL != orte_schizo_base.personalities) {
+        opal_argv_free(orte_schizo_base.personalities);
+    }
 
     return mca_base_framework_components_close(&orte_schizo_base_framework, NULL);
 }
@@ -61,6 +83,10 @@ static int orte_schizo_base_open(mca_base_open_flag_t flags)
 
     /* init the globals */
     OBJ_CONSTRUCT(&orte_schizo_base.active_modules, opal_list_t);
+    orte_schizo_base.personalities = NULL;
+    if (NULL != personalities) {
+        orte_schizo_base.personalities = opal_argv_split(personalities, ',');
+    }
 
     /* Open up all available components */
     rc = mca_base_framework_components_open(&orte_schizo_base_framework, flags);
@@ -70,7 +96,8 @@ static int orte_schizo_base_open(mca_base_open_flag_t flags)
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(orte, schizo, "ORTE Schizo Subsystem",
-                           NULL, orte_schizo_base_open, orte_schizo_base_close,
+                           orte_schizo_base_register,
+                           orte_schizo_base_open, orte_schizo_base_close,
                            mca_schizo_base_static_components, 0);
 
 OBJ_CLASS_INSTANCE(orte_schizo_base_active_module_t,

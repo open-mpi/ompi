@@ -40,8 +40,10 @@ struct mca_pml_ucx_module {
     /* Requests */
     mca_pml_ucx_freelist_t    persistent_reqs;
     ompi_request_t            completed_send_req;
+    size_t                    request_size;
+    int                       num_disconnect;
 
-    /* Convertors pool */
+    /* Converters pool */
     mca_pml_ucx_freelist_t    convs;
 
     int                       priority;
@@ -85,6 +87,7 @@ int mca_pml_ucx_close(void);
 int mca_pml_ucx_init(void);
 int mca_pml_ucx_cleanup(void);
 
+ucp_ep_h mca_pml_ucx_add_proc(ompi_communicator_t *comm, int dst);
 int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs);
 int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs);
 
@@ -145,5 +148,6 @@ int mca_pml_ucx_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
 int mca_pml_ucx_start(size_t count, ompi_request_t** requests);
 
 int mca_pml_ucx_dump(struct ompi_communicator_t* comm, int verbose);
+
 
 #endif /* PML_UCX_H_ */

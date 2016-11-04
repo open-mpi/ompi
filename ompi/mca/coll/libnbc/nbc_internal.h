@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -92,6 +92,7 @@ typedef struct {
   MPI_Datatype datatype;
   int dest;
   char tmpbuf;
+  bool local;
 } NBC_Args_send;
 
 /* the receive argument struct */
@@ -102,6 +103,7 @@ typedef struct {
   MPI_Datatype datatype;
   char tmpbuf;
   int source;
+  bool local;
 } NBC_Args_recv;
 
 /* the operation argument struct */
@@ -109,10 +111,8 @@ typedef struct {
   NBC_Fn_type type;
   char tmpbuf1;
   char tmpbuf2;
-  char tmpbuf3;
   const void *buf1;
   void *buf2;
-  void *buf3;
   MPI_Op op;
   MPI_Datatype datatype;
   int count;
@@ -144,8 +144,10 @@ typedef struct {
 
 /* internal function prototypes */
 int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_local_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest,NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier);
-int NBC_Sched_op (void* buf3, char tmpbuf3, const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+int NBC_Sched_local_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
                   MPI_Op op, NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount,
                     MPI_Datatype tgttype, NBC_Schedule *schedule, bool barrier);
@@ -484,7 +486,6 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
 /* let's give a try to inline functions */
 static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
   int size, pos, res;
-  OPAL_PTRDIFF_TYPE ext, lb;
   void *packbuf;
 
 #if OPAL_CUDA_SUPPORT
@@ -494,18 +495,15 @@ static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, 
 #endif /* OPAL_CUDA_SUPPORT */
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
-    res = ompi_datatype_get_extent(srctype, &lb, &ext);
-    if (OMPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
-      return res;
-    }
+    ptrdiff_t gap, span;
+    span = opal_datatype_span(&srctype->super, srccount, &gap);
 
-    memcpy(tgt, src, srccount*ext);
+    memcpy(tgt, src, span);
   } else {
     /* we have to pack and unpack */
-    res = MPI_Pack_size(srccount, srctype, comm, &size);
+    res = PMPI_Pack_size(srccount, srctype, comm, &size);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Pack_size() (%i:%i)", res, size);
+      NBC_Error ("MPI Error in PMPI_Pack_size() (%i:%i)", res, size);
       return res;
     }
 
@@ -519,19 +517,19 @@ static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, 
     }
 
     pos=0;
-    res = MPI_Pack(src, srccount, srctype, packbuf, size, &pos, comm);
+    res = PMPI_Pack(src, srccount, srctype, packbuf, size, &pos, comm);
 
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Pack() (%i)", res);
+      NBC_Error ("MPI Error in PMPI_Pack() (%i)", res);
       free (packbuf);
       return res;
     }
 
     pos=0;
-    res = MPI_Unpack(packbuf, size, &pos, tgt, tgtcount, tgttype, comm);
+    res = PMPI_Unpack(packbuf, size, &pos, tgt, tgtcount, tgttype, comm);
     free(packbuf);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Unpack() (%i)", res);
+      NBC_Error ("MPI Error in PMPI_Unpack() (%i)", res);
       return res;
     }
   }
@@ -560,15 +558,15 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 
   } else {
     /* we have to unpack */
-    res = MPI_Pack_size(srccount, srctype, comm, &size);
+    res = PMPI_Pack_size(srccount, srctype, comm, &size);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Pack_size() (%i)", res);
+      NBC_Error ("MPI Error in PMPI_Pack_size() (%i)", res);
       return res;
     }
     pos = 0;
-    res = MPI_Unpack(src, size, &pos, tgt, srccount, srctype, comm);
+    res = PMPI_Unpack(src, size, &pos, tgt, srccount, srctype, comm);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Unpack() (%i)", res);
+      NBC_Error ("MPI Error in PMPI_Unpack() (%i)", res);
       return res;
     }
   }

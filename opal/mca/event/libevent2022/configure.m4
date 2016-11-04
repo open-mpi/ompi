@@ -3,6 +3,8 @@
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2016 Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -73,9 +75,9 @@ EOF
            # Add some stuff to CPPFLAGS so that the rest of the source
            # tree can be built
            libevent_file=$libevent_basedir/libevent
-           CPPFLAGS="$CPPFLAGS -I$OPAL_TOP_SRCDIR/$libevent_file -I$OPAL_TOP_SRCDIR/$libevent_file/include"
+           CPPFLAGS="-I$OPAL_TOP_SRCDIR/$libevent_file -I$OPAL_TOP_SRCDIR/$libevent_file/include $CPPFLAGS"
            AS_IF([test "$OPAL_TOP_BUILDDIR" != "$OPAL_TOP_SRCDIR"],
-                 [CPPFLAGS="$CPPFLAGS -I$OPAL_TOP_BUILDDIR/$libevent_file/include"])
+                 [CPPFLAGS="-I$OPAL_TOP_BUILDDIR/$libevent_file/include $CPPFLAGS"])
            unset libevent_file
           ])
 ])
@@ -89,15 +91,6 @@ AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
     AC_CONFIG_FILES([opal/mca/event/libevent2022/Makefile])
     libevent_basedir="opal/mca/event/libevent2022"
 
-    # If we're not building externally, configure this component
-    AS_IF([test "$with_libevent" = "internal" -o "$with_libevent" = "" -o "$with_libevent" = "yes"],
-          [MCA_opal_event_libevent2022_DO_THE_CONFIG],
-          [AC_MSG_WARN([using an external libevent; disqualifiying this component])
-           $2])
-    OPAL_VAR_SCOPE_POP
-])
-
-AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     CFLAGS_save="$CFLAGS"
     CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
     CPPFLAGS_save="$CPPFLAGS"
@@ -161,12 +154,18 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
                   AC_HELP_STRING([--enable-event-debug], [enable event library debug output]))
     if test "$enable_event_debug" = "yes"; then
         event_args="$event_args --enable-debug-mode"
+        CFLAGS="-DUSE_DEBUG $CFLAGS"
     fi
 
     AC_MSG_RESULT([$event_args])
 
+    # We define "random" to be "opal_random" so that Libevent will not
+    # use random(3) internally (and potentially unexpectedly perturb
+    # values returned by rand(3) to the application).
+
+    CPPFLAGS="$CPPFLAGS -Drandom=opal_random"
     OPAL_CONFIG_SUBDIR([$libevent_basedir/libevent],
-        [$event_args $opal_subdir_args],
+        [$event_args $opal_subdir_args 'CPPFLAGS=$CPPFLAGS'],
         [libevent_happy="yes"], [libevent_happy="no"])
     if test "$libevent_happy" = "no"; then
         AC_MSG_WARN([Event library failed to configure])
@@ -186,9 +185,25 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     # libevent/include/event2/event-config.h!).  Otherwise, set it to
     # 0.
     libevent_file=$libevent_basedir/libevent/config.h
-    AS_IF([test "$libevent_happy" = "yes" -a -r $libevent_file],
-          [OPAL_HAVE_WORKING_EVENTOPS=`grep HAVE_WORKING_EVENTOPS $libevent_file | awk '{print [$]3 }'`
-           $1],
-          [$2
-           OPAL_HAVE_WORKING_EVENTOPS=0])
+
+    # If we are not building the internal libevent, then indicate that
+    # this component should not be built.  NOTE: we still did all the
+    # above configury so that all the proper GNU Autotools
+    # infrastructure is setup properly (e.g., w.r.t. SUBDIRS=libevent in
+    # this directory's Makefile.am, we still need the Autotools "make
+    # distclean" infrastructure to work properly).
+
+    AS_IF([test "$with_libevent" != "internal" && test -n "$with_libevent" && test "$with_libevent" != "yes"],
+          [AC_MSG_WARN([using an external libevent; disqualifying this component])
+           libevent_happy=no],
+
+          [AS_IF([test "$libevent_happy" = "yes" && test -r $libevent_file],
+            [OPAL_HAVE_WORKING_EVENTOPS=`grep HAVE_WORKING_EVENTOPS $libevent_file | awk '{print [$]3 }'`
+              $1],
+            [$2
+              OPAL_HAVE_WORKING_EVENTOPS=0])
+          ]
+    )
+
+    OPAL_VAR_SCOPE_POP
 ])

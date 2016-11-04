@@ -1,0 +1,4 @@
+# Ignore symbols in this component that are auto-generated and we
+# can't do anything about them (e.g., flex/bison symbols).
+orte_rmaps_rank_file_leng
+orte_rmaps_rank_file_text

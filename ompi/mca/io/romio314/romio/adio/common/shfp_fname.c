@@ -17,6 +17,13 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
+
+/*
+ * Open MPI: we have to use internal opal_random() instead of rand(3)
+ * to prevent pertubing user's randon seed
+ */
+#include <opal/util/alfg.h>
+
 /* The following function selects the name of the file to be used to
    store the shared file pointer. The shared-file-pointer file is a
    hidden file in the same directory as the real file being accessed.
@@ -35,12 +42,18 @@ void ADIOI_Shfp_fname(ADIO_File fd, int rank, int *error_code)
     int len;
     char *slash, *ptr, tmp[128];
     int pid = 0;
+    opal_rng_buff_t adio_rand_buff;
 
     fd->shared_fp_fname = (char *) ADIOI_Malloc(PATH_MAX);
 
     if (!rank) {
-        srand(time(NULL));
-        i = rand();
+        /*
+         * Open MPI: we have to use internal opal_random() instead of rand(3)
+         * to prevent pertubing user's randon seed
+         */
+	opal_srand(&adio_rand_buff,time(NULL));
+        i = opal_random();
+
 	pid = (int)getpid();
 
 	if (ADIOI_Strncpy(fd->shared_fp_fname, fd->filename, PATH_MAX)) {

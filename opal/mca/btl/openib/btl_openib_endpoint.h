@@ -141,7 +141,7 @@ typedef struct mca_btl_openib_endpoint_srq_qp_t {
 typedef struct mca_btl_openib_qp_t {
     struct ibv_qp *lcl_qp;
     uint32_t lcl_psn;
-    int32_t  sd_wqe;      /**< number of available send wqe entries */
+    volatile int32_t  sd_wqe;      /**< number of available send wqe entries */
     int32_t  sd_wqe_inflight;
     int wqe_count;
     int users;
@@ -342,8 +342,11 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t*,
 void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
 int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t*);
+
+/* the endpoint lock must be held with OPAL_THREAD_LOCK for both CTS and cpc complete */
 void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint);
 void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t*);
+
 void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t*);
 void mca_btl_openib_endpoint_init(mca_btl_openib_module_t*,
                                   mca_btl_base_endpoint_t*,
@@ -581,13 +584,6 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
             BTL_OPENIB_FOOTER_HTON(*ftr);
 
         sr_desc->wr.rdma.rkey = ep->eager_rdma_remote.rkey;
-#if BTL_OPENIB_FAILOVER_ENABLED
-        /* frag->ftr is unused on the sending fragment, so use it
-         * to indicate it is an eager fragment.  A non-zero value
-         * indicates it is eager, and the value indicates the
-         * location in the eager RDMA array that it lives. */
-        frag->ftr = (mca_btl_openib_footer_t*)(long)(1 + head);
-#endif
         sr_desc->wr.rdma.remote_addr =
             ep->eager_rdma_remote.base.lval +
             head * openib_btl->eager_rdma_frag_size +

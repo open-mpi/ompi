@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -56,7 +56,10 @@ AC_DEFUN([OPAL_MCA],[
     AC_ARG_ENABLE([mca-no-build],
         [AC_HELP_STRING([--enable-mca-no-build=LIST],
                         [Comma-separated list of <type>-<component> pairs
-                         that will not be built.  Example: "--enable-mca-no-build=maffinity,btl-portals" will disable building all maffinity components and the "portals" btl components.])])
+                         that will not be built.  Example:
+                         "--enable-mca-no-build=btl-portals,oob-ud" will
+                         disable building the "portals" btl and the "ud"
+                         oob components.])])
     AC_ARG_ENABLE(mca-dso,
         AC_HELP_STRING([--enable-mca-dso=LIST],
                        [Comma-separated list of types and/or
@@ -86,7 +89,7 @@ AC_DEFUN([OPAL_MCA],[
     if test "$enable_mca_no_build" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-mca-no-build flag requires an explicit list
-*** of type-component pairs.  For example, --enable-mca-direct=pml-ob1])
+*** of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
     else
         ifs_save="$IFS"
         IFS="${IFS}$PATH_SEPARATOR,"

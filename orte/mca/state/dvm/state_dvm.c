@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,13 +20,19 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/filem/filem.h"
-#include "orte/mca/iof/iof.h"
+#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/util/nidmap.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_quit.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/state/state.h"
 #include "orte/mca/state/base/base.h"
@@ -40,8 +46,10 @@ static int init(void);
 static int finalize(void);
 
 /* local functions */
+static void init_complete(int fd, short args, void *cbdata);
 static void vm_ready(int fd, short args, void *cbata);
-void check_complete(int fd, short args, void *cbdata);
+static void check_complete(int fd, short args, void *cbdata);
+static void cleanup_job(int fd, short args, void *cbdata);
 
 /******************
  * DVM module - used when mpirun is persistent
@@ -86,7 +94,7 @@ static orte_job_state_t launch_states[] = {
 };
 static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_setup_job,
-    orte_plm_base_setup_job_complete,
+    init_complete,
     orte_ras_base_allocate,
     orte_plm_base_allocation_complete,
     orte_plm_base_daemons_launched,
@@ -100,7 +108,7 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_post_launch,
     orte_plm_base_registered,
     check_complete,
-    orte_state_base_cleanup_job,
+    cleanup_job,
     orte_quit
 };
 
@@ -210,12 +218,105 @@ static void files_ready(int status, void *cbdata)
     }
 }
 
-static void vm_ready(int fd, short args, void *cbdata)
+static void init_complete(int sd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
 
+    /* nothing to do here but move along - if it is the
+     * daemon job, then next step is allocate */
+    if (caddy->jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
+        ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_ALLOCATE);
+    } else {
+        /* next step - position any required files */
+        if (ORTE_SUCCESS != orte_filem.preposition_files(caddy->jdata, files_ready, caddy->jdata)) {
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        }
+    }
+    OBJ_RELEASE(caddy);
+}
+
+static void vm_ready(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    int rc;
+    opal_buffer_t *buf;
+    orte_daemon_cmd_flag_t command = ORTE_DAEMON_DVM_NIDMAP_CMD;
+    orte_grpcomm_signature_t *sig;
+    opal_buffer_t *wireup;
+    opal_byte_object_t bo, *boptr;
+    int8_t flag;
+    int32_t numbytes;
+
     /* if this is my job, then we are done */
     if (ORTE_PROC_MY_NAME->jobid == caddy->jdata->jobid) {
+        /* send the daemon map to every daemon in this DVM - we
+         * do this here so we don't have to do it for every
+         * job we are going to launch */
+        buf = OBJ_NEW(opal_buffer_t);
+        /* pack the "load nidmap" cmd */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        /* construct a nodemap with everything in it */
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo, false))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            return;
+        }
+
+        /* store it */
+        boptr = &bo;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        /* release the data since it has now been copied into our buffer */
+        free(bo.bytes);
+
+        /* pack a flag indicating wiring info is provided */
+        flag = 1;
+        opal_dss.pack(buf, &flag, 1, OPAL_INT8);
+        /* get wireup info for daemons per the selected routing module */
+        wireup = OBJ_NEW(opal_buffer_t);
+        if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(wireup);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        /* put it in a byte object for xmission */
+        opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
+        /* pack the byte object - zero-byte objects are fine */
+        bo.size = numbytes;
+        boptr = &bo;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(wireup);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        /* release the data since it has now been copied into our buffer */
+        if (NULL != bo.bytes) {
+            free(bo.bytes);
+        }
+        OBJ_RELEASE(wireup);
+
+        /* goes to all daemons */
+        sig = OBJ_NEW(orte_grpcomm_signature_t);
+        sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+        sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+        sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, buf))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            OBJ_RELEASE(sig);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            return;
+        }
+        OBJ_RELEASE(buf);
         /* notify that the vm is ready */
         fprintf(stdout, "DVM ready\n");
         OBJ_RELEASE(caddy);
@@ -234,93 +335,30 @@ static void vm_ready(int fd, short args, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
-void check_complete(int fd, short args, void *cbdata)
+static void check_complete(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_job_t *jdata = caddy->jdata;
 
     orte_proc_t *proc;
     int i;
-    orte_std_cntr_t j;
-    orte_job_t *job;
     orte_node_t *node;
     orte_job_map_t *map;
     orte_std_cntr_t index;
-    bool one_still_alive;
-    orte_vpid_t lowest=0;
-    int32_t i32, *i32ptr;
+    char *rtmod;
 
     opal_output_verbose(2, orte_state_base_framework.framework_output,
-                        "%s state:base:check_job_complete on job %s",
+                        "%s state:dvm:check_job_complete on job %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid));
 
     if (NULL == jdata || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         /* just check to see if the daemons are complete */
         OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                             "%s state:base:check_job_complete - received NULL job, checking daemons",
+                             "%s state:dvm:check_job_complete - received NULL job, checking daemons",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        goto CHECK_DAEMONS;
-    } else {
-        /* mark the job as terminated, but don't override any
-         * abnormal termination flags
-         */
-        if (jdata->state < ORTE_JOB_STATE_UNTERMINATED) {
-            jdata->state = ORTE_JOB_STATE_TERMINATED;
-        }
-    }
-
-    /* tell the IOF that the job is complete */
-    if (NULL != orte_iof.complete) {
-        orte_iof.complete(jdata);
-    }
-
-    i32ptr = &i32;
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NUM_NONZERO_EXIT, (void**)&i32ptr, OPAL_INT32) && !orte_abort_non_zero_exit) {
-        if (!orte_report_child_jobs_separately || 1 == ORTE_LOCAL_JOBID(jdata->jobid)) {
-            /* update the exit code */
-            ORTE_UPDATE_EXIT_STATUS(lowest);
-        }
-
-        /* warn user */
-        opal_output(orte_clean_output,
-                    "-------------------------------------------------------\n"
-                    "While %s job %s terminated normally, %d %s. Further examination may be required.\n"
-                    "-------------------------------------------------------",
-                    (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "the primary" : "child",
-                    (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "" : ORTE_LOCAL_JOBID_PRINT(jdata->jobid),
-                    i32, (1 == i32) ? "process returned\na non-zero exit code." :
-                    "processes returned\nnon-zero exit codes.");
-    }
-
-    OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                         "%s state:base:check_job_completed declared job %s terminated with state %s - checking all jobs",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid),
-                         orte_job_state_to_str(jdata->state)));
-
-    /* if this job is a continuously operating one, then don't do
-     * anything further - just return here
-     */
-    if (NULL != jdata &&
-        (orte_get_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, NULL, OPAL_BOOL) ||
-         ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RECOVERABLE))) {
-        goto CHECK_ALIVE;
-    }
-
-    /* if the job that is being checked is the HNP, then we are
-     * trying to terminate the orteds. In that situation, we
-     * do -not- check all jobs - we simply notify the HNP
-     * that the orteds are complete. Also check special case
-     * if jdata is NULL - we want
-     * to definitely declare the job done if the orteds
-     * have completed, no matter what else may be happening.
-     * This can happen if a ctrl-c hits in the "wrong" place
-     * while launching
-     */
- CHECK_DAEMONS:
-    if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-        if (0 == orte_routed.num_routes()) {
+        rtmod = orte_rml.get_routed(orte_mgmt_conduit);
+        if (0 == orte_routed.num_routes(rtmod)) {
             /* orteds are done! */
             OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                  "%s orteds complete - exiting",
@@ -334,6 +372,23 @@ void check_complete(int fd, short args, void *cbdata)
         }
         OBJ_RELEASE(caddy);
         return;
+    }
+
+    /* mark the job as terminated, but don't override any
+     * abnormal termination flags
+     */
+    if (jdata->state < ORTE_JOB_STATE_UNTERMINATED) {
+        jdata->state = ORTE_JOB_STATE_TERMINATED;
+    }
+
+    /* tell the IOF that the job is complete */
+    if (NULL != orte_iof.complete) {
+        orte_iof.complete(jdata);
+    }
+
+    /* tell the PMIx subsystem the job is complete */
+    if (NULL != opal_pmix.server_deregister_nspace) {
+        opal_pmix.server_deregister_nspace(jdata->jobid, NULL, NULL);
     }
 
     /* Release the resources used by this job. Since some errmgrs may want
@@ -382,120 +437,25 @@ void check_complete(int fd, short args, void *cbdata)
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;
-        /* tell the PMIx server to release its data */
-        if (NULL != opal_pmix.server_deregister_nspace) {
-            opal_pmix.server_deregister_nspace(jdata->jobid);
-        }
     }
 
- CHECK_ALIVE:
-    /* now check to see if all jobs are done - trigger notification of this jdata
-     * object when we find it
-     */
-    one_still_alive = false;
-    for (j=1; j < orte_job_data->size; j++) {
-        if (NULL == (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, j))) {
-            /* since we are releasing jdata objects as we
-             * go, we can no longer assume that the job_data
-             * array is left justified
-             */
-            continue;
-        }
-        /* if this is the job we are checking AND it normally terminated,
-         * then activate the "notify_completed" state - this will release
-         * the job state, but is provided so that the HNP main code can
-         * take alternative actions if desired. If the state is killed_by_cmd,
-         * then go ahead and release it. We cannot release it if it
-         * abnormally terminated as mpirun needs the info so it can
-         * report appropriately to the user
-         *
-         * NOTE: do not release the primary job (j=1) so we
-         * can pretty-print completion message
-         */
-        if (NULL != jdata && job->jobid == jdata->jobid) {
-            if (jdata->state == ORTE_JOB_STATE_TERMINATED) {
-                OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                                     "%s state:base:check_job_completed state is terminated - activating notify",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_NOTIFY_COMPLETED);
-                one_still_alive = true;
-            } else if (jdata->state == ORTE_JOB_STATE_KILLED_BY_CMD ||
-                       jdata->state == ORTE_JOB_STATE_NOTIFIED) {
-                OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                                     "%s state:base:check_job_completed state is killed or notified - cleaning up",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                /* release this object, ensuring that the
-                 * pointer array internal accounting
-                 * is maintained!
-                 */
-                if (1 < j) {
-		    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
-			/* this was a debugger daemon. notify that a debugger has detached */
-			ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
-		    }
-                    opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
-                    OBJ_RELEASE(jdata);
-                }
-            }
-            continue;
-        }
-        /* if the job is flagged to not be monitored, skip it */
-        if (ORTE_FLAG_TEST(job, ORTE_JOB_FLAG_DO_NOT_MONITOR)) {
-            continue;
-        }
-        /* when checking for job termination, we must be sure to NOT check
-         * our own job as it - rather obviously - has NOT terminated!
-         */
-        if (job->num_terminated < job->num_procs) {
-            /* we have at least one job that is not done yet - we cannot
-             * just return, though, as we need to ensure we cleanout the
-             * job data for the job that just completed
-             */
-            OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                                 "%s state:base:check_job_completed job %s is not terminated (%d:%d)",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_JOBID_PRINT(job->jobid),
-                                 job->num_terminated, job->num_procs));
-            one_still_alive = true;
-        }
-        else {
-            OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                                 "%s state:base:check_job_completed job %s is terminated (%d vs %d [%s])",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_JOBID_PRINT(job->jobid),
-                                 job->num_terminated, job->num_procs,
-                                 (NULL == jdata) ? "UNKNOWN" : orte_job_state_to_str(jdata->state) ));
-        }
-    }
-    /* if a job is still alive, we just return */
-    if (one_still_alive) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
+        /* this was a debugger daemon. notify that a debugger has detached */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
+    } else if (jdata->state != ORTE_JOB_STATE_NOTIFIED) {
         OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                             "%s state:base:check_job_completed at least one job is not terminated",
+                             "%s state:dvm:check_job_completed state is terminated - activating notify",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        OBJ_RELEASE(caddy);
-        return;
-    }
-    /* if we get here, then all jobs are done, so terminate */
-    OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                         "%s state:base:check_job_completed all jobs terminated",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    /* stop the job timeout event, if set */
-    if (NULL != orte_mpiexec_timeout) {
-        OBJ_RELEASE(orte_mpiexec_timeout);
-        orte_mpiexec_timeout = NULL;
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_NOTIFY_COMPLETED);
+        /* mark the job as notified */
+        jdata->state = ORTE_JOB_STATE_NOTIFIED;
     }
 
-    /* set the exit status to 0 - this will only happen if it
-     * wasn't already set by an error condition
-     */
-    ORTE_UPDATE_EXIT_STATUS(0);
+    OBJ_RELEASE(caddy);
+}
 
-    /* order daemon termination - this tells us to cleanup
-     * our local procs as well as telling remote daemons
-     * to die
-     */
-    orte_plm.terminate_orteds();
-
+static void cleanup_job(int sd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     OBJ_RELEASE(caddy);
 }

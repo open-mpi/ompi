@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -48,8 +50,8 @@ AC_DEFUN([MCA_opal_timer_solaris_CONFIG],[
                          [timer_solaris_happy="yes"],
                          [timer_solaris_happy="no"])])
 
-   AS_IF([test "$timer_solaris_happy" = "no" -a \
-               "$timer_solaris_should_use" = "1"],
+   AS_IF([test "$timer_solaris_happy" = "no" && \
+          test "$timer_solaris_should_use" = "1"],
          [AC_MSG_ERROR([Solaris timer requested but not available.  Aborting.])])
 
     AS_IF([test "$timer_solaris_happy" = "yes"],

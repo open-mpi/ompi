@@ -11,6 +11,9 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      Broadcom Limited. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -44,7 +47,7 @@ AC_DEFUN([MCA_opal_timer_linux_CONFIG],[
                  [timer_linux_happy="no"])])
 
    case "${host}" in
-   i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc-*linux*|powerpc64-*linux*|sparc*-*linux*)
+   i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc-*linux*|powerpc64-*linux*|sparc*-*linux*|aarch64-*linux*)
         AS_IF([test "$timer_linux_happy" = "yes"],
               [AS_IF([test -r "/proc/cpuinfo"],
                      [timer_linux_happy="yes"],
@@ -55,8 +58,8 @@ AC_DEFUN([MCA_opal_timer_linux_CONFIG],[
         ;;
    esac
 
-   AS_IF([test "$timer_linux_happy" = "no" -a \
-               "$timer_linux_should_use" = "1"],
+   AS_IF([test "$timer_linux_happy" = "no" && \
+          test "$timer_linux_should_use" = "1"],
          [AC_MSG_ERROR([Linux timer requested but not available.  Aborting.])])
 
     AS_IF([test "$timer_linux_happy" = "yes"],

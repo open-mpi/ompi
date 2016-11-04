@@ -60,7 +60,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
     request_len = OPAL_ALIGN(request_len, 8, size_t);
 
     if (request_len > (mca_osc_rdma_component.buffer_size >> 1)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
     }
 
     OPAL_THREAD_LOCK(&module->lock);
@@ -73,9 +73,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
             module->rdma_frag = NULL;
 
             if (curr) {
-                OPAL_THREAD_UNLOCK(&module->lock);
                 ompi_osc_rdma_frag_complete (curr);
-                OPAL_THREAD_LOCK(&module->lock);
             }
 
             item = opal_free_list_get (&mca_osc_rdma_component.frags);

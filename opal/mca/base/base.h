@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +37,7 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/util/cmd_line.h"
+#include "opal/util/output.h"
 
 BEGIN_C_DECLS
 

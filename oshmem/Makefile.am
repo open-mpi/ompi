@@ -5,6 +5,7 @@
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -43,8 +44,7 @@ SUBDIRS += \
 	$(MCA_oshmem_FRAMEWORKS_SUBDIRS) \
 	$(MCA_oshmem_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
 	. \
-	$(MCA_oshmem_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
-	shmem/java
+	$(MCA_oshmem_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 endif
 
 DIST_SUBDIRS = \
@@ -52,8 +52,7 @@ DIST_SUBDIRS = \
 	shmem/c \
 	shmem/fortran \
 	$(MCA_oshmem_FRAMEWORKS_SUBDIRS) \
-	$(MCA_oshmem_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
-	shmem/java
+	$(MCA_oshmem_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
 # Build The main OSHMEM library, but only if we're building OSHMEM
 lib_LTLIBRARIES =
@@ -68,7 +67,7 @@ liboshmem_la_LIBADD = \
 	$(fortran_oshmem_lib) \
 	$(fortran_pshmem_lib) \
 	$(MCA_oshmem_FRAMEWORK_LIBS) \
-	$(OSHMEM_TOP_BUILDDIR)/ompi/libmpi.la
+	$(OSHMEM_TOP_BUILDDIR)/ompi/lib@OMPI_LIBMPI_NAME@.la
 liboshmem_la_DEPENDENCIES = $(liboshmem_la_LIBADD)
 liboshmem_la_LDFLAGS = \
         -version-info $(liboshmem_so_version) \
@@ -92,6 +91,7 @@ endif
 include op/Makefile.am
 include proc/Makefile.am
 include request/Makefile.am
+include info/Makefile.am
 include runtime/Makefile.am
 include shmem/Makefile.am
 include shmem/man/man3/Makefile.extra

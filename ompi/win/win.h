@@ -50,7 +50,25 @@ enum ompi_win_accumulate_ops_t {
 };
 typedef enum ompi_win_accumulate_ops_t ompi_win_accumulate_ops_t;
 
+/**
+ * Accumulate ordering flags. The default accumulate ordering in
+ * MPI-3.1 is rar,war,raw,waw.
+ */
+enum ompi_win_accumulate_order_flags_t {
+    /** no accumulate ordering (may valid with any other flag) */
+    OMPI_WIN_ACC_ORDER_NONE = 0x01,
+    /** read-after-read ordering */
+    OMPI_WIN_ACC_ORDER_RAR  = 0x02,
+    /** write-after-read ordering */
+    OMPI_WIN_ACC_ORDER_WAR  = 0x04,
+    /** read-after-write ordering */
+    OMPI_WIN_ACC_ORDER_RAW  = 0x08,
+    /** write-after-write ordering */
+    OMPI_WIN_ACC_ORDER_WAW  = 0x10,
+};
+
 OMPI_DECLSPEC extern mca_base_var_enum_t *ompi_win_accumulate_ops;
+OMPI_DECLSPEC extern mca_base_var_enum_flag_t *ompi_win_accumulate_order;
 
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_windows;
 
@@ -87,6 +105,9 @@ struct ompi_win_t {
 
     /* one sided interface */
     ompi_osc_base_module_t *w_osc_module;
+
+    /** Accumulate ordering (see ompi_win_accumulate_order_flags_t above) */
+    int32_t w_acc_order;
 };
 typedef struct ompi_win_t ompi_win_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_win_t);

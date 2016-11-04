@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -51,6 +52,9 @@ orte_init_finalize_DEPENDENCIES = $(orte_init_finalize_LDADD)
 opal_init_finalize_SOURCES = \
     opal_init_finalize.c
 opal_init_finalize_LDADD = \
-	$(top_builddir)/opal/libopen-pal.la \
+	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
 	$(top_builddir)/test/support/libsupport.a
 opal_init_finalize_DEPENDENCIES = $(opal_init_finalize_LDADD)
+
+distclean:
+	rm -rf *.dSYM .deps *.log *.o *.trs $(check_PROGRAMS) Makefile

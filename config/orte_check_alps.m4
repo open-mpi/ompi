@@ -10,9 +10,11 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -81,7 +83,7 @@ AC_DEFUN([ORTE_CHECK_ALPS_CLE4],[
 # ORTE_CHECK_ALPS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([ORTE_CHECK_ALPS],[
-    if test -z "$orte_check_alps_happy"; then
+    if test -z "$orte_check_cray_alps_happy"; then
 
         AC_ARG_WITH([alps],
                     [AC_HELP_STRING([--with-alps(=DIR|yes|no)],
@@ -129,7 +131,18 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                                                        AC_MSG_WARN([on the configure line using --with-alps option.])
                                                        AC_MSG_ERROR([Aborting])],[])]
                                                        )
-
+                               PKG_CHECK_MODULES_STATIC([CRAY_WLM_DETECT], [cray-wlm_detect],
+                                               [orte_check_cray_alps_happy="yes"
+                                                AC_DEFINE_UNQUOTED([CRAY_WLM_DETECT],[1],
+                                                                   [defined to 1 if cray wlm available, 0 otherwise])
+                                               ],
+                                               [orte_check_cray_alps_happy="no"]
+                                               [AS_IF([test "$with_alps" = "yes"],
+                                                      [AC_MSG_WARN([ALPS support requested but pkg-config failed.])
+                                                       AC_MSG_WARN([Need to explicitly indicate ALPS directory])
+                                                       AC_MSG_WARN([on the configure line using --with-alps option.])
+                                                       AC_MSG_ERROR([Aborting])],[])]
+                                                       )
                             ],
                             [AC_MSG_WARN([See ./configure --help for how to control Open MPI])
                              AC_MSG_WARN([configuration for ALPS on CLE 5 and higher systems])
@@ -144,16 +157,15 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                CRAY_ALPSUTIL_LIBS = $CRAY_ALPSUTIL_STATIC_LIBS],
               [])
 
-        AS_IF([test "$orte_check_cray_alps_happy" = "yes"],
-              [$1_LDFLAGS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS"
-               $1_CPPFLAGS="$CRAY_ALPSLLI_CFLAGS $CRAY_ALPSUTIL_CFLAGS $CRAY_ALPS_CFLAGS"
-               $1_LIBS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS"
-               $1_WRAPPER_EXTRA_LDFLAGS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS"
-               $1_WRAPPER_EXTRA_LIBS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS"],
-              [])
-
+	OPAL_SUMMARY_ADD([[Resource Managers]],[[Cray Alps]],[$1],[$orte_check_cray_alps_happy])
     fi
 
     AS_IF([test "$orte_check_cray_alps_happy" = "yes"],
-          [$2], [$3])
+          [$1_LDFLAGS="[$]$1_LDFLAGS $CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS"
+           $1_CPPFLAGS="[$]$1_CPPFLAGS $CRAY_ALPSLLI_CFLAGS $CRAY_ALPSUTIL_CFLAGS $CRAY_ALPS_CFLAGS $CRAY_WLM_DETECT_CFLAGS"
+           $1_LIBS="[$]$1_LIBS $CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"
+           $1_WRAPPER_EXTRA_LDFLAGS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"
+           $1_WRAPPER_EXTRA_LIBS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"
+	   $2],
+	  [$3])
 ])

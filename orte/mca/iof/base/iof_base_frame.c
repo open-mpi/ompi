@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -37,6 +37,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
+#include "orte/mca/rml/rml.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -51,132 +52,6 @@
 
 orte_iof_base_module_t orte_iof = {0};
 
-
-/* class instances */
-static void orte_iof_job_construct(orte_iof_job_t *ptr)
-{
-    ptr->jdata = NULL;
-    OBJ_CONSTRUCT(&ptr->xoff, opal_bitmap_t);
-}
-static void orte_iof_job_destruct(orte_iof_job_t *ptr)
-{
-    if (NULL != ptr->jdata) {
-        OBJ_RELEASE(ptr->jdata);
-    }
-    OBJ_DESTRUCT(&ptr->xoff);
-}
-OBJ_CLASS_INSTANCE(orte_iof_job_t,
-                   opal_object_t,
-                   orte_iof_job_construct,
-                   orte_iof_job_destruct);
-
-static void orte_iof_base_proc_construct(orte_iof_proc_t* ptr)
-{
-    ptr->revstdout = NULL;
-    ptr->revstderr = NULL;
-    ptr->revstddiag = NULL;
-    ptr->sink = NULL;
-}
-static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
-{
-    if (NULL != ptr->revstdout) {
-        OBJ_RELEASE(ptr->revstdout);
-    }
-    if (NULL != ptr->revstderr) {
-        OBJ_RELEASE(ptr->revstderr);
-    }
-    if (NULL != ptr->revstddiag) {
-        OBJ_RELEASE(ptr->revstddiag);
-    }
-}
-OBJ_CLASS_INSTANCE(orte_iof_proc_t,
-                   opal_list_item_t,
-                   orte_iof_base_proc_construct,
-                   orte_iof_base_proc_destruct);
-
-
-static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
-{
-    ptr->daemon.jobid = ORTE_JOBID_INVALID;
-    ptr->daemon.vpid = ORTE_VPID_INVALID;
-    ptr->wev = OBJ_NEW(orte_iof_write_event_t);
-    ptr->xoff = false;
-    ptr->exclusive = false;
-}
-static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
-{
-    OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
-                         "%s iof: closing sink for process %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&ptr->name)));
-    if (NULL != ptr->wev) {
-        OBJ_RELEASE(ptr->wev);
-    }
-}
-OBJ_CLASS_INSTANCE(orte_iof_sink_t,
-                   opal_list_item_t,
-                   orte_iof_base_sink_construct,
-                   orte_iof_base_sink_destruct);
-
-
-static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
-{
-    rev->fd = -1;
-    rev->active = false;
-    rev->ev = opal_event_alloc();
-}
-static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
-{
-    opal_event_free(rev->ev);
-    if (0 <= rev->fd) {
-        OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
-                             "%s iof: closing fd %d for process %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             rev->fd, ORTE_NAME_PRINT(&rev->name)));
-        close(rev->fd);
-        rev->fd = -1;
-    }
-}
-OBJ_CLASS_INSTANCE(orte_iof_read_event_t,
-                   opal_object_t,
-                   orte_iof_base_read_event_construct,
-                   orte_iof_base_read_event_destruct);
-
-static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
-{
-    wev->pending = false;
-    wev->fd = -1;
-    OBJ_CONSTRUCT(&wev->outputs, opal_list_t);
-    wev->ev = opal_event_alloc();
-}
-static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
-{
-    opal_event_free(wev->ev);
-    if (ORTE_PROC_IS_HNP && NULL != orte_xml_fp) {
-        int xmlfd = fileno(orte_xml_fp);
-        if (xmlfd == wev->fd) {
-            /* don't close this one - will get it later */
-            OBJ_DESTRUCT(&wev->outputs);
-            return;
-        }
-    }
-
-    if (2 < wev->fd) {
-        OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
-                             "%s iof: closing fd %d for write event",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
-        close(wev->fd);
-    }
-    OBJ_DESTRUCT(&wev->outputs);
-}
-OBJ_CLASS_INSTANCE(orte_iof_write_event_t,
-                   opal_list_item_t,
-                   orte_iof_base_write_event_construct,
-                   orte_iof_base_write_event_destruct);
-
-OBJ_CLASS_INSTANCE(orte_iof_write_output_t,
-                   opal_list_item_t,
-                   NULL, NULL);
 
 /*
  * Global variables
@@ -250,8 +125,7 @@ static int orte_iof_base_open(mca_base_open_flag_t flags)
     }
 
     /* daemons do not need to do this as they do not write out stdout/err */
-    if (!ORTE_PROC_IS_DAEMON ||
-        (ORTE_PROC_IS_DAEMON && ORTE_PROC_IS_CM)) {
+    if (!ORTE_PROC_IS_DAEMON) {
         if (orte_xml_output) {
             if (NULL != orte_xml_fp) {
                 /* user wants all xml-formatted output sent to file */
@@ -261,17 +135,17 @@ static int orte_iof_base_open(mca_base_open_flag_t flags)
             }
             /* setup the stdout event */
             ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stdout, ORTE_PROC_MY_NAME,
-                                 xmlfd, ORTE_IOF_STDOUT, orte_iof_base_write_handler, NULL);
+                                 xmlfd, ORTE_IOF_STDOUT, orte_iof_base_write_handler);
             /* don't create a stderr event - all output will go to
              * the stdout channel
              */
         } else {
             /* setup the stdout event */
             ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stdout, ORTE_PROC_MY_NAME,
-                                 1, ORTE_IOF_STDOUT, orte_iof_base_write_handler, NULL);
+                                 1, ORTE_IOF_STDOUT, orte_iof_base_write_handler);
             /* setup the stderr event */
             ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stderr, ORTE_PROC_MY_NAME,
-                                 2, ORTE_IOF_STDERR, orte_iof_base_write_handler, NULL);
+                                 2, ORTE_IOF_STDERR, orte_iof_base_write_handler);
         }
 
         /* do NOT set these file descriptors to non-blocking. If we do so,
@@ -294,3 +168,147 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, iof, "ORTE I/O Forwarding",
                            orte_iof_base_register, orte_iof_base_open, orte_iof_base_close,
                            mca_iof_base_static_components, 0);
 
+
+/* class instances */
+static void orte_iof_job_construct(orte_iof_job_t *ptr)
+{
+    ptr->jdata = NULL;
+    OBJ_CONSTRUCT(&ptr->xoff, opal_bitmap_t);
+}
+static void orte_iof_job_destruct(orte_iof_job_t *ptr)
+{
+    if (NULL != ptr->jdata) {
+        OBJ_RELEASE(ptr->jdata);
+    }
+    OBJ_DESTRUCT(&ptr->xoff);
+}
+OBJ_CLASS_INSTANCE(orte_iof_job_t,
+                   opal_object_t,
+                   orte_iof_job_construct,
+                   orte_iof_job_destruct);
+
+static void orte_iof_base_proc_construct(orte_iof_proc_t* ptr)
+{
+    ptr->stdinev = NULL;
+    ptr->revstdout = NULL;
+    ptr->revstderr = NULL;
+    ptr->revstddiag = NULL;
+    ptr->subscribers = NULL;
+    ptr->copy = true;
+}
+static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
+{
+    if (NULL != ptr->stdinev) {
+        OBJ_RELEASE(ptr->stdinev);
+    }
+    if (NULL != ptr->revstdout) {
+        OBJ_RELEASE(ptr->revstdout);
+    }
+    if (NULL != ptr->revstderr) {
+        OBJ_RELEASE(ptr->revstderr);
+    }
+    if (NULL != ptr->revstddiag) {
+        OBJ_RELEASE(ptr->revstddiag);
+    }
+    if (NULL != ptr->subscribers) {
+        OPAL_LIST_RELEASE(ptr->subscribers);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_iof_proc_t,
+                   opal_list_item_t,
+                   orte_iof_base_proc_construct,
+                   orte_iof_base_proc_destruct);
+
+
+static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
+{
+    ptr->daemon.jobid = ORTE_JOBID_INVALID;
+    ptr->daemon.vpid = ORTE_VPID_INVALID;
+    ptr->wev = OBJ_NEW(orte_iof_write_event_t);
+    ptr->xoff = false;
+    ptr->exclusive = false;
+}
+static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
+{
+    OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
+                         "%s iof: closing sink for process %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&ptr->name)));
+    if (NULL != ptr->wev && 0 <= ptr->wev->fd) {
+        OBJ_RELEASE(ptr->wev);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_iof_sink_t,
+                   opal_list_item_t,
+                   orte_iof_base_sink_construct,
+                   orte_iof_base_sink_destruct);
+
+
+static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
+{
+    rev->proc = NULL;
+    rev->fd = -1;
+    rev->active = false;
+    rev->ev = opal_event_alloc();
+    rev->sink = NULL;
+}
+static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
+{
+    orte_iof_proc_t *proct = (orte_iof_proc_t*)rev->proc;
+
+    opal_event_free(rev->ev);
+    if (0 <= rev->fd) {
+        OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
+                             "%s iof: closing fd %d for process %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rev->fd,
+                             (NULL == proct) ? "UNKNOWN" : ORTE_NAME_PRINT(&proct->name)));
+        close(rev->fd);
+        rev->fd = -1;
+    }
+    if (NULL != rev->sink) {
+        OBJ_RELEASE(rev->sink);
+    }
+    if (NULL != proct) {
+        OBJ_RELEASE(proct);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_iof_read_event_t,
+                   opal_object_t,
+                   orte_iof_base_read_event_construct,
+                   orte_iof_base_read_event_destruct);
+
+static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
+{
+    wev->pending = false;
+    wev->fd = -1;
+    OBJ_CONSTRUCT(&wev->outputs, opal_list_t);
+    wev->ev = opal_event_alloc();
+}
+static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
+{
+    opal_event_free(wev->ev);
+    if (ORTE_PROC_IS_HNP && NULL != orte_xml_fp) {
+        int xmlfd = fileno(orte_xml_fp);
+        if (xmlfd == wev->fd) {
+            /* don't close this one - will get it later */
+            OBJ_DESTRUCT(&wev->outputs);
+            return;
+        }
+    }
+
+    if (2 < wev->fd) {
+        OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
+                             "%s iof: closing fd %d for write event",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
+        close(wev->fd);
+    }
+    OBJ_DESTRUCT(&wev->outputs);
+}
+OBJ_CLASS_INSTANCE(orte_iof_write_event_t,
+                   opal_list_item_t,
+                   orte_iof_base_write_event_construct,
+                   orte_iof_base_write_event_destruct);
+
+OBJ_CLASS_INSTANCE(orte_iof_write_output_t,
+                   opal_list_item_t,
+                   NULL, NULL);

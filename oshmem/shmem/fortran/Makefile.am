@@ -35,9 +35,10 @@ liboshmem_fortran_la_SOURCES = shmem_finalize_f.c
 
 if ! OSHMEM_PROFILING
 liboshmem_fortran_la_SOURCES += \
-                    start_pes_f.c \
-                    num_pes_f.c \
-                    my_pe_f.c \
+                    shmem_init_f.c \
+                    shmem_global_exit_f.c \
+                    shmem_n_pes_f.c \
+                    shmem_my_pe_f.c \
                     shmem_barrier_all_f.c \
                     shpalloc_f.c \
                     shpdeallc_f.c \
@@ -68,6 +69,7 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_iput8_f.c \
                     shmem_logical_iput_f.c \
                     shmem_real_iput_f.c \
+                    shmem_put_nb_f.c \
                     shmem_character_get_f.c \
                     shmem_complex_get_f.c \
                     shmem_double_get_f.c \
@@ -90,15 +92,24 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_integer_iget_f.c \
                     shmem_logical_iget_f.c \
                     shmem_real_iget_f.c \
+                    shmem_get_nb_f.c \
                     shmem_swap_f.c \
                     shmem_int4_swap_f.c \
                     shmem_int8_swap_f.c \
                     shmem_real4_swap_f.c \
                     shmem_real8_swap_f.c \
+                    shmem_int4_set_f.c \
+                    shmem_int8_set_f.c \
+                    shmem_real4_set_f.c \
+                    shmem_real8_set_f.c \
                     shmem_int4_cswap_f.c \
                     shmem_int8_cswap_f.c \
                     shmem_int4_fadd_f.c \
                     shmem_int8_fadd_f.c \
+                    shmem_int4_fetch_f.c \
+                    shmem_int8_fetch_f.c \
+                    shmem_real4_fetch_f.c \
+                    shmem_real8_fetch_f.c \
                     shmem_int4_finc_f.c \
                     shmem_int8_finc_f.c \
                     shmem_int4_add_f.c \
@@ -119,12 +130,14 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_prod_to_all_f.c \
                     shmem_collect_f.c \
                     shmem_broadcast_f.c \
+                    shmem_alltoall_f.c \
                     shmem_lock_f.c \
                     shmem_cache_f.c \
                     shmem_int4_inc_f.c \
                     shmem_int8_inc_f.c \
                     shmem_quiet_f.c \
-                    shmem_fence_f.c
+                    shmem_fence_f.c \
+                    shmem_info_f.c
 
 AM_CPPFLAGS     = -DOSHMEM_PROFILING=0
 endif

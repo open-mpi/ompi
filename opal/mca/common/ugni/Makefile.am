@@ -35,7 +35,7 @@ lib@OPAL_LIB_PREFIX@mca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
 nodist_lib@OPAL_LIB_PREFIX@mca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
 lib@OPAL_LIB_PREFIX@mca_common_ugni_la_LIBADD = $(common_ugni_LIBS)
 lib@OPAL_LIB_PREFIX@mca_common_ugni_la_LDFLAGS = \
-        -version-info $(libmca_common_ugni_so_version) \
+        -version-info $(libmca_opal_common_ugni_so_version) \
         $(common_ugni_LDFLAGS)
 
 lib@OPAL_LIB_PREFIX@mca_common_ugni_noinst_la_SOURCES = \

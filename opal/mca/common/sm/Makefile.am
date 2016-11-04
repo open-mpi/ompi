@@ -9,8 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2010-2013 Los Alamos National Security, LLC.
+# Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2015 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 #
@@ -22,7 +22,7 @@
 # A word of explanation...
 #
 # This library is linked against various MCA components because all
-# shared-memory based components (e.g., mpool, ptl, etc.)  need to
+# shared-memory based components (e.g., btl/sm, btl/smcuda, etc.)  need to
 # share some common code and data.  There's two cases:
 #
 # 1. libmca_common_sm.la is a shared library.  By linking that shared
@@ -44,12 +44,14 @@
 # Header files
 
 headers = \
-        common_sm.h
+        common_sm.h \
+        common_sm_mpool.h
 
 # Source files
 
 sources = \
-        common_sm.c
+        common_sm.c \
+        common_sm_mpool.c
 
 # Help file
 
@@ -84,7 +86,7 @@ endif
 lib@OPAL_LIB_PREFIX@mca_common_sm_la_SOURCES = \
         $(headers) $(sources)
 lib@OPAL_LIB_PREFIX@mca_common_sm_la_LDFLAGS = \
-        -version-info $(libmca_common_sm_so_version)
+        -version-info $(libmca_opal_common_sm_so_version)
 lib@OPAL_LIB_PREFIX@mca_common_sm_noinst_la_SOURCES = \
         $(headers) $(sources)
 

@@ -1,3 +1,4 @@
+#include "orte_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +45,7 @@
 
 int main(int argc, char *argv[])
 {
-  char hostname[255] ;
+  char hostname[OPAL_MAXHOSTNAMELEN] ;
   char buff[255] ;
 
   int role ;
@@ -80,7 +81,7 @@ int main(int argc, char *argv[])
 
   /* get the node name */
   {
-    int retval = gethostname(hostname, 255) ;
+    int retval = gethostname(hostname, sizeof(hostname));
     if(retval == -1)
     {
       fprintf(stderr, "gethostname failed: %s\n", strerror(errno)) ;

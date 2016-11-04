@@ -14,6 +14,8 @@
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,7 +101,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     char env_string[256];
     int rc;
 
-    generated_key = getenv("OMPI_MCA_orte_precondition_transports");
+    generated_key = getenv(OPAL_MCA_PREFIX"orte_precondition_transports");
     memset(uu, 0, sizeof(psm_uuid_t));
 
     if (!generated_key || (strlen(generated_key) != 33) ||

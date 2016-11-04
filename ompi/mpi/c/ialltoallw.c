@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -69,7 +69,7 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
             memchecker_datatype(recvtypes[i]);
             ompi_datatype_type_extent(recvtypes[i], &recv_ext);
             memchecker_call(&opal_memchecker_base_isaddressable,
-                            (char *)(recvbuf)+sdispls[i]*recv_ext,
+                            (char *)(recvbuf)+rdispls[i]*recv_ext,
                             recvcounts[i], recvtypes[i]);
         }
     );
@@ -85,24 +85,23 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
                                           FUNC_NAME);
         }
 
+        if (MPI_IN_PLACE == sendbuf) {
+            sendcounts = recvcounts;
+            sdispls    = rdispls;
+            sendtypes  = recvtypes;
+        }
+
         if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
             (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
             (MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
             MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-        } else if (MPI_IN_PLACE == sendbuf) {
-            /* MPI_IN_PLACE is not fully implemented yet,
-               return MPI_ERR_INTERN for now */
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                          FUNC_NAME);
         }
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for (i = 0; i < size; ++i) {
-            if (MPI_IN_PLACE != sendbuf) {
-                OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
-                OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-            }
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
+            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
             OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtypes[i], recvcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }

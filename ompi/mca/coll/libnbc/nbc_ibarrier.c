@@ -9,6 +9,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -177,7 +178,7 @@ int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_reque
     }
 
     /* inform remote peers that all local peers have entered the barrier */
-    for (int peer = 0 ; peer < rsize ; ++peer) {
+    for (int peer = 1; peer < rsize ; ++peer) {
       res = NBC_Sched_send (0, true, 1, MPI_BYTE, peer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (handle);

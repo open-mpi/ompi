@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -15,6 +15,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016 Broadcom Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,10 +31,14 @@
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/timer/linux/timer_linux.h"
 #include "opal/constants.h"
+#include "opal/util/show_help.h"
 
 static opal_timer_t opal_timer_base_get_cycles_sys_timer(void);
 static opal_timer_t opal_timer_base_get_usec_sys_timer(void);
 
+/**
+ * Define some sane defaults until we call the _init function.
+ */
 #if OPAL_HAVE_CLOCK_GETTIME
 static opal_timer_t opal_timer_base_get_cycles_clock_gettime(void);
 static opal_timer_t opal_timer_base_get_usec_clock_gettime(void);
@@ -107,6 +112,10 @@ static int opal_timer_linux_find_freq(void)
 
     opal_timer_linux_freq = 0;
 
+#if OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+	opal_timer_linux_freq = opal_sys_timer_freq();
+#endif
+
     if (0 == opal_timer_linux_freq) {
         /* first, look for a timebase field.  probably only on PPC,
            but one never knows */
@@ -154,7 +163,7 @@ int opal_timer_linux_open(void)
     int ret = OPAL_SUCCESS;
 
     if(mca_timer_base_monotonic) {
-#if OPAL_HAVE_CLOCK_GETTIME
+#if OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_TIMER_MONOTONIC)
         struct timespec res;
         if( 0 == clock_getres(CLOCK_MONOTONIC, &res)) {
             opal_timer_linux_freq = 1.e9;
@@ -165,9 +174,9 @@ int opal_timer_linux_open(void)
 #else
 #if (0 == OPAL_TIMER_MONOTONIC)
         /* Monotonic time requested but cannot be found. Complain! */
-        opal_show_help("help-opal-timer-linux.txt", "monotonic not supported", 1);
+        opal_show_help("help-opal-timer-linux.txt", "monotonic not supported", true);
 #endif  /* (0 == OPAL_TIMER_MONOTONIC) */
-#endif
+#endif  /* OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_TIMER_MONOTONIC) */
     }
     ret = opal_timer_linux_find_freq();
     opal_timer_base_get_cycles = opal_timer_base_get_cycles_sys_timer;

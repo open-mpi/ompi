@@ -75,6 +75,9 @@ struct ompi_osc_rdma_peer_basic_t {
     /** remote peer's base pointer */
     osc_rdma_base_t base;
 
+    /** local pointer to peer's base */
+    osc_rdma_base_t local_base;
+
     /** registration handle associated with the base */
     mca_btl_base_registration_handle_t *base_handle;
 };

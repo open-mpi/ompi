@@ -49,11 +49,7 @@ int orte_iof_base_select(void)
                                         &orte_iof_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component, NULL) ) {
-        /* it is okay to not find a module if we are a CM process */
-        if (ORTE_PROC_IS_CM) {
-            return ORTE_SUCCESS;
-        }
-        /* otherwise, this is a problem */
+        /* this is a problem */
         return ORTE_ERR_NOT_FOUND;
     }
 

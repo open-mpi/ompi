@@ -40,21 +40,21 @@ static const char FUNC_NAME[] = "MPI_Type_commit";
 
 int MPI_Type_commit(MPI_Datatype *type)
 {
-  int rc;
+    int rc;
 
-  MEMCHECKER(
-      memchecker_datatype(*type);
-  );
+    MEMCHECKER(
+               memchecker_datatype(*type);
+               );
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == type || NULL == *type || MPI_DATATYPE_NULL == *type) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == type || NULL == *type || MPI_DATATYPE_NULL == *type) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+        }
     }
-  }
 
-  OPAL_CR_ENTER_LIBRARY();
+    OPAL_CR_ENTER_LIBRARY();
 
-  rc = ompi_datatype_commit( type );
-  OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
+    rc = ompi_datatype_commit( type );
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 }

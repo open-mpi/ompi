@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,6 @@
 static void do_dlopen(const char *fname, int flags,
                       void **handle, char **err_msg)
 {
-    assert(fname);
     assert(handle);
 
     *handle = dlopen(fname, flags);
@@ -50,7 +50,6 @@ static void do_dlopen(const char *fname, int flags,
 static int dlopen_open(const char *fname, bool use_ext, bool private_namespace,
                        opal_dl_handle_t **handle, char **err_msg)
 {
-    assert(fname);
     assert(handle);
 
     *handle = NULL;
@@ -66,7 +65,7 @@ static int dlopen_open(const char *fname, bool use_ext, bool private_namespace,
     /* If the caller wants to use filename extensions, loop through
        them */
     void *local_handle = NULL;
-    if (use_ext) {
+    if (use_ext && NULL != fname) {
         int i;
         char *ext;
 
@@ -109,7 +108,12 @@ static int dlopen_open(const char *fname, bool use_ext, bool private_namespace,
         (*handle)->dlopen_handle = local_handle;
 
 #if OPAL_ENABLE_DEBUG
-        (*handle)->filename = strdup(fname);
+        if( NULL != fname ) {
+            (*handle)->filename = strdup(fname);
+        }
+        else {
+            (*handle)->filename = strdup("(null)");
+        }
 #endif
     }
     return (NULL != local_handle) ? OPAL_SUCCESS : OPAL_ERROR;

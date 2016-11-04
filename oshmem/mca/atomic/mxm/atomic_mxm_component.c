@@ -30,7 +30,7 @@ const char *mca_atomic_mxm_component_version_string =
 /*
  * Global variable
  */
-mca_spml_ikrit_t *mca_spml_self = NULL;
+mca_spml_ikrit_t *mca_atomic_mxm_spml_self = NULL;
 
 /*
  * Local function
@@ -96,7 +96,7 @@ static int _mxm_open(void)
                        "Can not use atomic/mxm because spml ikrit component disabled");
         return OSHMEM_ERR_NOT_AVAILABLE;
     }
-    mca_spml_self = (mca_spml_ikrit_t *)mca_spml.self;
+    mca_atomic_mxm_spml_self = (mca_spml_ikrit_t *) mca_spml.self;
 
     return OSHMEM_SUCCESS;
 }

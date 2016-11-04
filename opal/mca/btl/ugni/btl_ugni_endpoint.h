@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -17,6 +17,7 @@
 
 enum mca_btl_ugni_endpoint_state_t {
     MCA_BTL_UGNI_EP_STATE_INIT = 0,
+    MCA_BTL_UGNI_EP_STATE_START,
     MCA_BTL_UGNI_EP_STATE_RDMA,
     MCA_BTL_UGNI_EP_STATE_CONNECTING,
     MCA_BTL_UGNI_EP_STATE_CONNECTED
@@ -30,7 +31,10 @@ typedef struct mca_btl_base_endpoint_t {
 
     opal_proc_t *peer_proc;
 
-    opal_mutex_t lock;
+    /** may need to lock recursively as the modex lookup could call opal_progress
+     * and hence our progress function. if this changes modify this mutex to not
+     * be recursive. also need to update the constructor function. */
+    opal_recursive_mutex_t lock;
     mca_btl_ugni_endpoint_state_t state;
 
     opal_common_ugni_endpoint_t *common;
@@ -48,6 +52,8 @@ typedef struct mca_btl_base_endpoint_t {
 
     opal_list_t frag_wait_list;
     bool wait_listed;
+    /** protect against race on connection */
+    bool dg_posted;
 
     int32_t smsg_progressing;
 
@@ -74,7 +80,6 @@ static inline int mca_btl_ugni_init_ep (mca_btl_ugni_module_t *ugni_module,
 
     endpoint->btl = btl;
     endpoint->peer_proc = peer_proc;
-    endpoint->common = NULL;
     endpoint->index = opal_pointer_array_add (&ugni_module->endpoints, endpoint);
 
     *ep = endpoint;
@@ -116,6 +121,7 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep
     switch (ep->state) {
     case MCA_BTL_UGNI_EP_STATE_INIT:
     case MCA_BTL_UGNI_EP_STATE_RDMA:
+    case MCA_BTL_UGNI_EP_STATE_START:
         rc = mca_btl_ugni_ep_connect_progress (ep);
         if (OPAL_SUCCESS != rc) {
             break;
@@ -139,7 +145,15 @@ static inline int mca_btl_ugni_ep_connect_rdma (mca_btl_base_endpoint_t *ep) {
         return OPAL_SUCCESS;
     }
 
-    /* get the modex info for this endpoint and setup a ugni endpoint */
+    /* protect against re-entry from opal_progress */
+    if (OPAL_UNLIKELY(MCA_BTL_UGNI_EP_STATE_START == ep->state)) {
+        return OPAL_ERR_RESOURCE_BUSY;
+    }
+
+    ep->state = MCA_BTL_UGNI_EP_STATE_START;
+
+    /* get the modex info for this endpoint and setup a ugni endpoint. this call may lead
+     * to re-entry through opal_progress(). */
     rc = opal_common_ugni_endpoint_for_proc (ep->btl->device, ep->peer_proc, &ep->common);
     if (OPAL_SUCCESS != rc) {
         assert (0);

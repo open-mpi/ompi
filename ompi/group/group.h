@@ -16,6 +16,8 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -153,6 +155,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_group_t *ompi_mpi_group_null_addr;
  * @return Pointer to new group structure
  */
 OMPI_DECLSPEC ompi_group_t *ompi_group_allocate(int group_size);
+ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_proc_t **procs, int group_size);
 ompi_group_t *ompi_group_allocate_sporadic(int group_size);
 ompi_group_t *ompi_group_allocate_strided(void);
 ompi_group_t *ompi_group_allocate_bmap(int orig_group_size, int group_size);
@@ -351,7 +354,7 @@ static inline struct ompi_proc_t *ompi_group_dense_lookup (ompi_group_t *group, 
 
         /* replace sentinel value with an actual ompi_proc_t */
         ompi_proc_t *real_proc =
-            (ompi_proc_t *) ompi_proc_for_name (ompi_proc_sentinel_to_name ((intptr_t) proc));
+            (ompi_proc_t *) ompi_proc_for_name (ompi_proc_sentinel_to_name ((uintptr_t) proc));
 
         if (opal_atomic_cmpset_ptr (group->grp_proc_pointers + peer_id, proc, real_proc)) {
             OBJ_RETAIN(real_proc);

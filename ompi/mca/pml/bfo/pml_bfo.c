@@ -95,8 +95,8 @@ int mca_pml_bfo_enable(bool enable)
     OBJ_CONSTRUCT(&mca_pml_bfo.lock, opal_mutex_t);
 
     /* fragments */
-    OBJ_CONSTRUCT(&mca_pml_bfo.rdma_frags, ompi_free_list_t);
-    ompi_free_list_init_new( &mca_pml_bfo.rdma_frags,
+    OBJ_CONSTRUCT(&mca_pml_bfo.rdma_frags, opal_free_list_t);
+    opal_free_list_init( &mca_pml_bfo.rdma_frags,
                          sizeof(mca_pml_bfo_rdma_frag_t),
                          opal_cache_line_size,
                          OBJ_CLASS(mca_pml_bfo_rdma_frag_t),
@@ -104,11 +104,10 @@ int mca_pml_bfo_enable(bool enable)
                          mca_pml_bfo.free_list_num,
                          mca_pml_bfo.free_list_max,
                          mca_pml_bfo.free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
-    OBJ_CONSTRUCT(&mca_pml_bfo.recv_frags, ompi_free_list_t);
-
-    ompi_free_list_init_new( &mca_pml_bfo.recv_frags,
+    OBJ_CONSTRUCT(&mca_pml_bfo.recv_frags, opal_free_list_t);
+    opal_free_list_init( &mca_pml_bfo.recv_frags,
                          sizeof(mca_pml_bfo_recv_frag_t) + mca_pml_bfo.unexpected_limit,
                          opal_cache_line_size,
                          OBJ_CLASS(mca_pml_bfo_recv_frag_t),
@@ -116,10 +115,10 @@ int mca_pml_bfo_enable(bool enable)
                          mca_pml_bfo.free_list_num,
                          mca_pml_bfo.free_list_max,
                          mca_pml_bfo.free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
-    OBJ_CONSTRUCT(&mca_pml_bfo.pending_pckts, ompi_free_list_t);
-    ompi_free_list_init_new( &mca_pml_bfo.pending_pckts,
+    OBJ_CONSTRUCT(&mca_pml_bfo.pending_pckts, opal_free_list_t);
+    opal_free_list_init( &mca_pml_bfo.pending_pckts,
                          sizeof(mca_pml_bfo_pckt_pending_t),
                          opal_cache_line_size,
                          OBJ_CLASS(mca_pml_bfo_pckt_pending_t),
@@ -127,12 +126,11 @@ int mca_pml_bfo_enable(bool enable)
                          mca_pml_bfo.free_list_num,
                          mca_pml_bfo.free_list_max,
                          mca_pml_bfo.free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
-
-    OBJ_CONSTRUCT(&mca_pml_bfo.buffers, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_pml_bfo.send_ranges, ompi_free_list_t);
-    ompi_free_list_init_new( &mca_pml_bfo.send_ranges,
+    OBJ_CONSTRUCT(&mca_pml_bfo.buffers, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_bfo.send_ranges, opal_free_list_t);
+    opal_free_list_init( &mca_pml_bfo.send_ranges,
                          sizeof(mca_pml_bfo_send_range_t) +
                          (mca_pml_bfo.max_send_per_range - 1) * sizeof(mca_pml_bfo_com_btl_t),
                          opal_cache_line_size,
@@ -141,7 +139,7 @@ int mca_pml_bfo_enable(bool enable)
                          mca_pml_bfo.free_list_num,
                          mca_pml_bfo.free_list_max,
                          mca_pml_bfo.free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
     /* pending operations */
     OBJ_CONSTRUCT(&mca_pml_bfo.send_pending, opal_list_t);
@@ -156,7 +154,7 @@ int mca_pml_bfo_enable(bool enable)
      * should get ownership for the send and receive requests list, and
      * initialize them with the size of our own requests.
      */
-    ompi_free_list_init_new( &mca_pml_base_send_requests,
+    opal_free_list_init( &mca_pml_base_send_requests,
                          sizeof(mca_pml_bfo_send_request_t) +
                          (mca_pml_bfo.max_rdma_per_request - 1) *
                          sizeof(mca_pml_bfo_com_btl_t),
@@ -166,9 +164,9 @@ int mca_pml_bfo_enable(bool enable)
                          mca_pml_bfo.free_list_num,
                          mca_pml_bfo.free_list_max,
                          mca_pml_bfo.free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
-    ompi_free_list_init_new( &mca_pml_base_recv_requests,
+    opal_free_list_init( &mca_pml_base_recv_requests,
                          sizeof(mca_pml_bfo_recv_request_t) +
                          (mca_pml_bfo.max_rdma_per_request - 1) *
                          sizeof(mca_pml_bfo_com_btl_t),
@@ -178,7 +176,7 @@ int mca_pml_bfo_enable(bool enable)
                          mca_pml_bfo.free_list_num,
                          mca_pml_bfo.free_list_max,
                          mca_pml_bfo.free_list_inc,
-                         NULL );
+                         NULL, 0, NULL, NULL, NULL );
 
     mca_pml_bfo.enabled = true;
     return OMPI_SUCCESS;

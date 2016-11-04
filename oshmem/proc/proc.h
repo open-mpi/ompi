@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,30 +37,18 @@ struct oshmem_group_t;
 
 #define OSHMEM_PE_INVALID   (-1)
 
-/**
- * Remote Open SHMEM process structure
- *
- * Remote Open SHMEM process structure.  Each process contains exactly
- * one oshmem_proc_t structure for each remote process it knows about.
- */
-struct oshmem_proc_t {
-    opal_proc_t                    super;
-    /* endpoint data */
-    void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
-    /*
-     * All transport channels are globally ordered.
-     * pe(s) can talk to each other via subset of transports
-     * these holds indexes of each transport into global array
-     *  proc -> id, where id can be btl id in yoda or mxm ptl id
-     *  in ikrit
-     *  spml is supposed to fill this during add_procs()
-     **/
-    int                             num_transports;
-    char                           *transport_ids;
+/* This struct will be copied into the padding field of an ompi_proc_t
+ * so the size of oshmem_proc_data_t must be less or equal than
+ * OMPI_PROC_PADDING_SIZE */
+struct oshmem_proc_data_t {
+    char * transport_ids;
+    int num_transports;
 };
 
-typedef struct oshmem_proc_t oshmem_proc_t;
-OBJ_CLASS_DECLARATION(oshmem_proc_t);
+typedef struct oshmem_proc_data_t oshmem_proc_data_t;
+
+#define OSHMEM_PROC_DATA(proc) \
+    ((oshmem_proc_data_t *)(proc)->padding)
 
 /**
  * Group of Open SHMEM processes structure
@@ -71,8 +61,8 @@ struct oshmem_group_t {
     int                         my_pe;
     int                         proc_count;     /**< number of processes in group */
     int                         is_member;   /* true if my_pe is part of the group, participate in collectives */
-    struct oshmem_proc_t      **proc_array;     /**< list of pointers to ompi_proc_t structures
-                                 for each process in the group */
+    struct ompi_proc_t          **proc_array; /**< list of pointers to ompi_proc_t structures
+                                                   for each process in the group */
     opal_list_t                 peer_list;
 
     /* Collectives module interface and data */
@@ -98,7 +88,7 @@ OSHMEM_DECLSPEC extern oshmem_group_t* oshmem_group_null;
  * easily determined by the run-time ahead of time (architecture and
  * hostname) will be published during this call.
  *
- * @note While an oshmem_proc_t will exist with mostly valid information
+ * @note While an ompi_proc_t will exist with mostly valid information
  * for each process in the pe set at the conclusion of this
  * call, some information will not be immediately available.  This
  * includes the architecture and hostname, which will be available by
@@ -114,7 +104,7 @@ OSHMEM_DECLSPEC int oshmem_proc_init(void);
  *
  * Finalize the Open SHMEM process subsystem.  This function will
  * release all memory created during the life of the application,
- * including all oshmem_proc_t structures.
+ * including all ompi_proc_t structures.
  *
  * @retval OSHMEM_SUCCESS  System successfully finalized
  */
@@ -129,9 +119,9 @@ OSHMEM_DECLSPEC int oshmem_proc_finalize(void);
  *
  * @return Pointer to the local process structure
  */
-static inline oshmem_proc_t *oshmem_proc_local(void)
+static inline ompi_proc_t *oshmem_proc_local(void)
 {
-    return (oshmem_proc_t *)ompi_proc_local_proc;
+    return (ompi_proc_t *)ompi_proc_local_proc;
 }
 
 /**
@@ -145,12 +135,12 @@ static inline oshmem_proc_t *oshmem_proc_local(void)
  *
  * @return Pointer to the process instance for \c name
  */
-static inline oshmem_proc_t *oshmem_proc_for_find(const orte_process_name_t name)
+static inline ompi_proc_t *oshmem_proc_for_find(const orte_process_name_t name)
 {
-    return (oshmem_proc_t *)ompi_proc_for_name(name);
+    return (ompi_proc_t *)ompi_proc_for_name(name);
 }
 
-static inline oshmem_proc_t *oshmem_proc_find(int pe)
+static inline ompi_proc_t *oshmem_proc_find(int pe)
 {
     orte_process_name_t name;
 
@@ -159,7 +149,7 @@ static inline oshmem_proc_t *oshmem_proc_find(int pe)
     return oshmem_proc_for_find(name);
 }
 
-static inline int oshmem_proc_pe(oshmem_proc_t *proc)
+static inline int oshmem_proc_pe(ompi_proc_t *proc)
 {
     return (proc ? (int) ((orte_process_name_t*)&proc->super.proc_name)->vpid : -1);
 }
@@ -222,16 +212,16 @@ OSHMEM_DECLSPEC oshmem_group_t *oshmem_proc_group_create(int pe_start,
  */
 OSHMEM_DECLSPEC void oshmem_proc_group_destroy(oshmem_group_t* group);
 
-static inline oshmem_proc_t *oshmem_proc_group_all(int pe)
+static inline ompi_proc_t *oshmem_proc_group_all(int pe)
 {
     return oshmem_group_all->proc_array[pe];
 }
 
-static inline oshmem_proc_t *oshmem_proc_group_find(oshmem_group_t* group,
+static inline ompi_proc_t *oshmem_proc_group_find(oshmem_group_t* group,
                                                     int pe)
 {
     int i = 0;
-    oshmem_proc_t* proc = NULL;
+    ompi_proc_t* proc = NULL;
 
     if (OPAL_LIKELY(group)) {
         if (OPAL_LIKELY(group == oshmem_group_all)) {
@@ -291,18 +281,18 @@ static inline int oshmem_my_proc_id(void)
 
 static inline int oshmem_get_transport_id(int pe)
 {
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
 
     proc = oshmem_proc_group_find(oshmem_group_all, pe);
 
-    return (int) proc->transport_ids[0];
+    return (int) OSHMEM_PROC_DATA(proc)->transport_ids[0];
 }
 
 static inline int oshmem_get_transport_count(int pe)
 {
-    oshmem_proc_t *proc;
+    ompi_proc_t *proc;
     proc = oshmem_proc_group_find(oshmem_group_all, pe);
-    return proc->num_transports;
+    return OSHMEM_PROC_DATA(proc)->num_transports;
 }
 
 END_C_DECLS

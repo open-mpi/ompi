@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,9 +10,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
- *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -91,7 +92,9 @@ static int orte_grpcomm_base_open(mca_base_open_flag_t flags)
     return mca_base_framework_components_open(&orte_grpcomm_base_framework, flags);
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(orte, grpcomm, NULL, NULL, orte_grpcomm_base_open, orte_grpcomm_base_close,
+MCA_BASE_FRAMEWORK_DECLARE(orte, grpcomm, "GRPCOMM", NULL,
+                           orte_grpcomm_base_open,
+                           orte_grpcomm_base_close,
                            mca_grpcomm_base_static_components, 0);
 
 OBJ_CLASS_INSTANCE(orte_grpcomm_base_active_t,
@@ -118,10 +121,11 @@ static void ccon(orte_grpcomm_coll_t *p)
 {
     p->sig = NULL;
     OBJ_CONSTRUCT(&p->bucket, opal_buffer_t);
+    OBJ_CONSTRUCT(&p->distance_mask_recv, opal_bitmap_t);
     p->dmns = NULL;
     p->ndmns = 0;
+    p->nexpected = 0;
     p->nreported = 0;
-    p->distance_mask_recv = NULL;
     p->cbfunc = NULL;
     p->cbdata = NULL;
     p->buffers = NULL;
@@ -132,13 +136,9 @@ static void cdes(orte_grpcomm_coll_t *p)
         OBJ_RELEASE(p->sig);
     }
     OBJ_DESTRUCT(&p->bucket);
-    if (NULL != p->dmns) {
-        free(p->dmns);
-    }
+    OBJ_DESTRUCT(&p->distance_mask_recv);
+    free(p->dmns);
     free(p->buffers);
-    if (NULL != p->distance_mask_recv) {
-        free(p->distance_mask_recv);
-    }
 }
 OBJ_CLASS_INSTANCE(orte_grpcomm_coll_t,
                    opal_list_item_t,

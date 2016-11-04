@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,9 +62,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     opal_buffer_t *buf=NULL;
     int rc;
     int32_t numbytes;
-    opal_list_item_t *item;
-    orte_iof_proc_t *proct;
-    orte_ns_cmp_bitmask_t mask;
+    orte_iof_proc_t *proct = (orte_iof_proc_t*)rev->proc;
 
     /* read up to the fragment size */
 #if !defined(__WINDOWS__)
@@ -77,10 +76,16 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     }
 #endif  /* !defined(__WINDOWS__) */
 
+    if (NULL == proct) {
+        /* nothing we can do */
+        ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
+        return;
+    }
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:orted:read handler read %d bytes from %s, fd %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         numbytes, ORTE_NAME_PRINT(&rev->name), fd));
+                         numbytes, ORTE_NAME_PRINT(&proct->name), fd));
 
     if (numbytes <= 0) {
         if (0 > numbytes) {
@@ -94,39 +99,21 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s iof:orted:read handler %s Error on connection:%d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&rev->name), fd));
+                                 ORTE_NAME_PRINT(&proct->name), fd));
         }
         /* numbytes must have been zero, so go down and close the fd etc */
         goto CLEAN_RETURN;
     }
 
     /* see if the user wanted the output directed to files */
-    if (NULL != orte_output_filename) {
-        /* find the sink for this rank */
-        for (item = opal_list_get_first(&mca_iof_orted_component.sinks);
-             item != opal_list_get_end(&mca_iof_orted_component.sinks);
-             item = opal_list_get_next(item)) {
-            orte_iof_sink_t *sink = (orte_iof_sink_t*)item;
-            /* if the target is set, then this sink is for another purpose - ignore it */
-            if (ORTE_JOBID_INVALID != sink->daemon.jobid) {
-                continue;
-            }
-            /* if this sink isn't for output, ignore it */
-            if (ORTE_IOF_STDIN & sink->tag) {
-                continue;
-            }
-
-            mask = ORTE_NS_CMP_ALL;
-
-            /* is this the desired proc? */
-            if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &sink->name, &rev->name)) {
-                /* output to the corresponding file */
-                orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, sink->wev);
-                /* done */
-                break;
-            }
-        }
-        goto RESTART;
+    if (NULL != rev->sink) {
+        /* output to the corresponding file */
+        orte_iof_base_write_output(&proct->name, rev->tag, data, numbytes, rev->sink->wev);
+    }
+    if (!proct->copy) {
+        /* re-add the event */
+        opal_event_add(rev->ev, 0);
+        return;
     }
 
     /* prep the buffer */
@@ -141,7 +128,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     }
 
     /* pack name of process that gave us this data */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rev->name, 1, ORTE_NAME))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &proct->name, 1, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         goto CLEAN_RETURN;
     }
@@ -157,10 +144,10 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
                          "%s iof:orted:read handler sending %d bytes to HNP",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
 
-    orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
-                            send_cb, NULL);
+    orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                    ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
+                                    send_cb, NULL);
 
- RESTART:
     /* re-add the event */
     opal_event_add(rev->ev, 0);
 
@@ -168,42 +155,33 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
 
  CLEAN_RETURN:
     /* must be an error, or zero bytes were read indicating that the
-     * proc terminated this IOF channel - either way, find this proc
-     * on our list and clean up
-     */
-    for (item = opal_list_get_first(&mca_iof_orted_component.procs);
-         item != opal_list_get_end(&mca_iof_orted_component.procs);
-         item = opal_list_get_next(item)) {
-        proct = (orte_iof_proc_t*)item;
-        mask = ORTE_NS_CMP_ALL;
-        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, &rev->name)) {
-            /* found it - release corresponding event. This deletes
-             * the read event and closes the file descriptor
-             */
-            if (rev->tag & ORTE_IOF_STDOUT) {
-                if( NULL != proct->revstdout ) {
-                    OBJ_RELEASE(proct->revstdout);
-                }
-            } else if (rev->tag & ORTE_IOF_STDERR) {
-                if( NULL != proct->revstderr ) {
-                    OBJ_RELEASE(proct->revstderr);
-                }
-            } else if (rev->tag & ORTE_IOF_STDDIAG) {
-                if( NULL != proct->revstddiag ) {
-                    OBJ_RELEASE(proct->revstddiag);
-                }
-            }
-            /* check to see if they are all done */
-            if (NULL == proct->revstdout &&
-                NULL == proct->revstderr &&
-                NULL == proct->revstddiag) {
-                /* this proc's iof is complete */
-                opal_list_remove_item(&mca_iof_orted_component.procs, item);
-                ORTE_ACTIVATE_PROC_STATE(&proct->name, ORTE_PROC_STATE_IOF_COMPLETE);
-                OBJ_RELEASE(proct);
-            }
-            break;
+     * proc terminated this IOF channel - either way, release the
+     * corresponding event. This deletes the read event and closes
+     * the file descriptor */
+    if (rev->tag & ORTE_IOF_STDOUT) {
+        if( NULL != proct->revstdout ) {
+            orte_iof_base_static_dump_output(proct->revstdout);
+            OBJ_RELEASE(proct->revstdout);
         }
+    } else if (rev->tag & ORTE_IOF_STDERR) {
+        if( NULL != proct->revstderr ) {
+            orte_iof_base_static_dump_output(proct->revstderr);
+            OBJ_RELEASE(proct->revstderr);
+        }
+    } else if (rev->tag & ORTE_IOF_STDDIAG) {
+        if( NULL != proct->revstddiag ) {
+            orte_iof_base_static_dump_output(proct->revstddiag);
+            OBJ_RELEASE(proct->revstddiag);
+        }
+    }
+    /* check to see if they are all done */
+    if (NULL == proct->revstdout &&
+        NULL == proct->revstderr &&
+        NULL == proct->revstddiag) {
+        /* this proc's iof is complete */
+        opal_list_remove_item(&mca_iof_orted_component.procs, &proct->super);
+        ORTE_ACTIVATE_PROC_STATE(&proct->name, ORTE_PROC_STATE_IOF_COMPLETE);
+        OBJ_RELEASE(proct);
     }
     if (NULL != buf) {
         OBJ_RELEASE(buf);

@@ -43,8 +43,6 @@ static int vader_register_error_cb (struct mca_btl_base_module_t* btl,
 
 static int vader_finalize (struct mca_btl_base_module_t* btl);
 
-static int vader_free (struct mca_btl_base_module_t* btl, mca_btl_base_descriptor_t* des);
-
 static struct mca_btl_base_descriptor_t *vader_prepare_src (
                                                             struct mca_btl_base_module_t *btl,
                                                             struct mca_btl_base_endpoint_t *endpoint,
@@ -69,7 +67,7 @@ mca_btl_vader_t mca_btl_vader = {
         .btl_del_procs = vader_del_procs,
         .btl_finalize = vader_finalize,
         .btl_alloc = mca_btl_vader_alloc,
-        .btl_free = vader_free,
+        .btl_free = mca_btl_vader_free,
         .btl_prepare_src = vader_prepare_src,
         .btl_send = mca_btl_vader_send,
         .btl_sendi = mca_btl_vader_sendi,
@@ -147,6 +145,12 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     /* set flag indicating btl has been inited */
     vader_btl->btl_inited = true;
 
+#if OPAL_BTL_VADER_HAVE_XPMEM
+    if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
+        mca_btl_vader_component.vma_module = mca_rcache_base_vma_module_alloc ();
+    }
+#endif
+
     return OPAL_SUCCESS;
 }
 
@@ -173,9 +177,8 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
         if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
             /* always use xpmem if it is available */
             ep->segment_data.xpmem.apid = xpmem_get (modex->xpmem.seg_id, XPMEM_RDWR, XPMEM_PERMIT_MODE, (void *) 0666);
-            ep->segment_data.xpmem.rcache = mca_rcache_base_module_create("vma");
             (void) vader_get_registation (ep, modex->xpmem.segment_base, mca_btl_vader_component.segment_size,
-                                          MCA_MPOOL_FLAGS_PERSIST, (void **) &ep->segment_base);
+                                          MCA_RCACHE_FLAGS_PERSIST, (void **) &ep->segment_base);
         } else {
 #endif
             /* store a copy of the segment information for detach */
@@ -356,6 +359,12 @@ static int vader_finalize(struct mca_btl_base_module_t *btl)
         opal_shmem_segment_detach (&mca_btl_vader_component.seg_ds);
     }
 
+#if OPAL_BTL_VADER_HAVE_XPMEM
+    if (NULL != mca_btl_vader_component.vma_module) {
+        OBJ_RELEASE(mca_btl_vader_component.vma_module);
+    }
+#endif
+
     return OPAL_SUCCESS;
 }
 
@@ -411,7 +420,7 @@ mca_btl_base_descriptor_t *mca_btl_vader_alloc(struct mca_btl_base_module_t *btl
  * @param btl (IN)      BTL module
  * @param segment (IN)  Allocated segment.
  */
-static int vader_free (struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des)
+int mca_btl_vader_free (struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des)
 {
     MCA_BTL_VADER_FRAG_RETURN((mca_btl_vader_frag_t *) des);
 
@@ -436,6 +445,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
     int rc;
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
+    assert (NULL != data_ptr);
 
     /* in place send fragment */
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
@@ -536,39 +546,21 @@ static int vader_ft_event (int state)
 static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
 {
     OBJ_CONSTRUCT(&ep->pending_frags, opal_list_t);
+    OBJ_CONSTRUCT(&ep->pending_frags_lock, opal_mutex_t);
     ep->fifo = NULL;
 }
+
+#if OPAL_BTL_VADER_HAVE_XPMEM
+#endif
 
 static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
 {
     OBJ_DESTRUCT(&ep->pending_frags);
+    OBJ_DESTRUCT(&ep->pending_frags_lock);
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
-        if (ep->segment_data.xpmem.rcache) {
-            /* clean out the registration cache */
-            const int nregs = 100;
-            mca_mpool_base_registration_t *regs[nregs];
-            int reg_cnt;
-
-            do {
-                reg_cnt = ep->segment_data.xpmem.rcache->rcache_find_all(ep->segment_data.xpmem.rcache, 0, (size_t)-1,
-                                                                          regs, nregs);
-
-                for (int i = 0 ; i < reg_cnt ; ++i) {
-                    /* otherwise dereg will fail on assert */
-                    regs[i]->ref_count = 0;
-                    OBJ_RELEASE(regs[i]);
-                }
-            } while (reg_cnt == nregs);
-
-            ep->segment_data.xpmem.rcache = NULL;
-        }
-
-        if (ep->segment_base) {
-            xpmem_release (ep->segment_data.xpmem.apid);
-            ep->segment_data.xpmem.apid = 0;
-        }
+        mca_btl_vader_xpmem_cleanup_endpoint (ep);
     } else
 #endif
     if (ep->segment_data.other.seg_ds) {

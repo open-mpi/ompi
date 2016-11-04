@@ -212,6 +212,12 @@ struct mca_btl_sm_component_t {
     char *sm_mpool_rndv_file_name;
     char *sm_ctl_file_name;
     char *sm_rndv_file_name;
+
+    /** minimum size of a btl/sm mpool */
+    unsigned long mpool_min_size;
+
+    /** allocator name to use with the mpool */
+    char *allocator;
 };
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
@@ -281,7 +287,7 @@ static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
 
     /* allocate the queue in the receiver's address space */
     fifo->queue_recv = (volatile void **)mpool->mpool_alloc(
-            mpool, sizeof(void *) * qsize, opal_cache_line_size, 0, NULL);
+            mpool, sizeof(void *) * qsize, opal_cache_line_size, 0);
     if(NULL == fifo->queue_recv) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

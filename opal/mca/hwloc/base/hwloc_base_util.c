@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -71,7 +71,7 @@ hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
        So first we have to see if we can find *any* cores by looking
        for the 0th core.  If we find it, then try to find the Nth
        core.  Otherwise, try to find the Nth PU. */
-    if (NULL == hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0)) {
+    if (opal_hwloc_use_hwthreads_as_cpus || (NULL == hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0))) {
         obj_type = HWLOC_OBJ_PU;
     }
 
@@ -399,7 +399,7 @@ int opal_hwloc_base_report_bind_failure(const char *file,
 
     if (!already_reported &&
         OPAL_HWLOC_BASE_MBFA_SILENT != opal_hwloc_base_mbfa) {
-        char hostname[64];
+        char hostname[OPAL_MAXHOSTNAMELEN];
         gethostname(hostname, sizeof(hostname));
 
         opal_show_help("help-opal-hwloc-base.txt", "mbind failure", true,
@@ -492,8 +492,11 @@ static void df_search_cores(hwloc_obj_t obj, unsigned int *cnt)
             obj->userdata = (void*)data;
         }
         if (NULL == opal_hwloc_base_cpu_set) {
-            if (!hwloc_bitmap_isincluded(obj->cpuset, obj->allowed_cpuset)) {
-                /* do not count not allowed cores */
+            if (!hwloc_bitmap_intersects(obj->cpuset, obj->allowed_cpuset)) {
+                /*
+                 * do not count not allowed cores (e.g. cores with zero allowed PU)
+                 * if SMT is enabled, do count cores with at least one allowed hwthread
+                 */
                 return;
             }
             data->npus = 1;
@@ -541,7 +544,6 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
                                       hwloc_obj_t obj)
 {
     opal_hwloc_obj_data_t *data;
-    int i;
     unsigned int cnt = 0;
     hwloc_cpuset_t cpuset;
 
@@ -579,16 +581,10 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
              * one bit for each available pu. We could just
              * subtract the first and last indices, but there
              * may be "holes" in the bitmap corresponding to
-             * offline or unallowed cpus - so we have to
-             * search for them
+             * offline or unallowed cpus - so we count them with
+             * the bitmap "weight" (a.k.a. population count) function
              */
-            for (i=hwloc_bitmap_first(cpuset), cnt=0;
-                 i <= hwloc_bitmap_last(cpuset);
-                 i++) {
-                if (hwloc_bitmap_isset(cpuset, i)) {
-                    cnt++;
-                }
-            }
+            cnt = hwloc_bitmap_weight(cpuset);
         }
         /* cache the info */
         data = (opal_hwloc_obj_data_t*)obj->userdata;  // in case it was added
@@ -2065,20 +2061,25 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
                 }else {
                     /* don't already know it - go get it */
                     /* firstly we check if we need to autodetect OpenFabrics  devices or we have the specified one */
+                    bool free_device_name = false;
                     if (!strcmp(device_name, "auto")) {
                         count = find_devices(topo, &device_name);
                         if (count > 1) {
                             free(device_name);
                             return count;
                         }
+                        free_device_name = true;
                     }
                     if (!device_name) {
                         return OPAL_ERR_NOT_FOUND;
-                    } else if (strlen(device_name) == 0) {
+                    } else if (free_device_name && (0 == strlen(device_name))) {
                         free(device_name);
                         return OPAL_ERR_NOT_FOUND;
                     }
                     sort_by_dist(topo, device_name, sorted_list);
+                    if (free_device_name) {
+                        free(device_name);
+                    }
                     /* store this info in summary object for later usage */
                     OPAL_LIST_FOREACH(numa, sorted_list, opal_rmaps_numa_node_t) {
                         copy_numa = OBJ_NEW(opal_rmaps_numa_node_t);

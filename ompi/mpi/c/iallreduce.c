@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,6 +93,16 @@ int MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
             OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+    }
+
+
+    /* MPI standard says that reductions have to have a count of at least 1,
+     * but some benchmarks (e.g., IMB) calls this function with a count of 0.
+     * So handle that case.
+     */
+    if (0 == count) {
+        *request = &ompi_request_empty;
+        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();

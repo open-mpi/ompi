@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -58,7 +58,7 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
-  res = MPI_Type_extent(recvtype, &rcvext);
+  res = ompi_datatype_type_extent(recvtype, &rcvext);
   if (MPI_SUCCESS != res) {
     return res;
   }
@@ -104,7 +104,7 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
         }
 
         /* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
-        res = NBC_Sched_send (sbuf, false, sendcount, sendtype, r, schedule, false);
+        res = NBC_Sched_send (sbuf, false, recvcount, recvtype, r, schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           OBJ_RELEASE(schedule);
           return res;
@@ -175,9 +175,9 @@ int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Da
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
-  res = MPI_Type_extent(recvtype, &rcvext);
+  res = ompi_datatype_type_extent(recvtype, &rcvext);
   if (MPI_SUCCESS != res) {
-    NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error ("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 

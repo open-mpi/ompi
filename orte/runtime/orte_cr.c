@@ -310,7 +310,7 @@ static int orte_cr_coord_post_restart(void) {
      * Add the previous session directory for cleanup
      */
     opal_crs_base_cleanup_append(orte_process_info.job_session_dir, true);
-    tmp_dir = opal_dirname(orte_process_info.job_session_dir);
+    tmp_dir = orte_process_info.jobfam_session_dir;
     if( NULL != tmp_dir ) {
         opal_crs_base_cleanup_append(tmp_dir, true);
         free(tmp_dir);

@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
@@ -67,16 +67,6 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
            AC_DEFINE_UNQUOTED(MCA_hwloc_external_openfabrics_header,
                   ["$opal_hwloc_dir/include/hwloc/openfabrics-verbs.h"],
                   [Location of external hwloc header])
-
-           # These flags need to get passed to the wrapper compilers
-           # (this is unnecessary for the internal/embedded hwloc)
-
-           # Finally, add some flags to the wrapper compiler if we're
-           # building with developer headers so that our headers can
-           # be found.
-           hwloc_external_WRAPPER_EXTRA_CPPFLAGS=$opal_hwloc_external_CPPFLAGS
-           hwloc_external_WRAPPER_EXTRA_LDFLAGS=$opal_hwloc_external_LDFLAGS
-           hwloc_external_WRAPPER_EXTRA_LIBS=$opal_hwloc_external_LIBS
           ])
     OPAL_VAR_SCOPE_POP
 ])dnl
@@ -181,8 +171,34 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                [AC_MSG_RESULT([yes])],
                [AC_MSG_RESULT([no])
                 AC_MSG_ERROR([Cannot continue])])
+           AC_MSG_CHECKING([if external hwloc version is lower than 2.0])
+           AS_IF([test "$opal_hwloc_dir" != ""],
+                 [opal_hwloc_external_CFLAGS_save=$CFLAGS
+                  CFLAGS="-I$opal_hwloc_dir/include $opal_hwloc_external_CFLAGS_save"])
+           AC_COMPILE_IFELSE(
+               [AC_LANG_PROGRAM([[#include <hwloc.h>]],
+                   [[
+#if HWLOC_API_VERSION >= 0x00020000
+#error "hwloc API version is greater or equal than 0x00020000"
+#endif
+                   ]])],
+               [AC_MSG_RESULT([yes])],
+               [AC_MSG_RESULT([no])
+                AC_MSG_ERROR([OMPI does not currently support hwloc v2 API
+Cannot continue])])
            AS_IF([test "$opal_hwloc_dir" != ""],
                  [CFLAGS=$opal_hwloc_external_CFLAGS_save])
+
+           # These flags need to get passed to the wrapper compilers
+           # (this is unnecessary for the internal/embedded hwloc)
+
+           # Finally, add some flags to the wrapper compiler if we're
+           # building with developer headers so that our headers can
+           # be found.
+           hwloc_external_WRAPPER_EXTRA_CPPFLAGS=$opal_hwloc_external_CPPFLAGS
+           hwloc_external_WRAPPER_EXTRA_LDFLAGS=$opal_hwloc_external_LDFLAGS
+           hwloc_external_WRAPPER_EXTRA_LIBS=$opal_hwloc_external_LIBS
+
            $1],
           [$2])
 

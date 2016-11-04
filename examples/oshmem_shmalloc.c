@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -19,10 +19,12 @@ int main(void)
 {
     long *x;
 
-    start_pes(0);
+    shmem_init();
 
-    x = (long *) shmalloc(sizeof(*x));
+    x = (long *) shmem_malloc(sizeof(*x));
 
-    shfree(x);
+    shmem_free(x);
+
+    shmem_finalize();
 }
 

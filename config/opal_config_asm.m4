@@ -13,6 +13,8 @@ dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -86,11 +88,119 @@ AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
 AC_DEFUN([OPAL_CHECK_SYNC_BUILTINS], [
   AC_MSG_CHECKING([for __sync builtin atomics])
 
-  AC_TRY_COMPILE([], [__sync_synchronize()],
+  AC_TRY_LINK([long tmp;], [__sync_synchronize();
+__sync_bool_compare_and_swap(&tmp, 0, 1);
+__sync_add_and_fetch(&tmp, 1);],
     [AC_MSG_RESULT([yes])
      $1],
     [AC_MSG_RESULT([no])
      $2])
+
+  AC_MSG_CHECKING([for 64-bit __sync builtin atomics])
+
+  AC_TRY_LINK([
+#include <stdint.h>
+uint64_t tmp;], [
+__sync_bool_compare_and_swap(&tmp, 0, 1);
+__sync_add_and_fetch(&tmp, 1);],
+    [AC_MSG_RESULT([yes])
+     opal_asm_sync_have_64bit=1],
+    [AC_MSG_RESULT([no])
+     opal_asm_sync_have_64bit=0])
+
+  AC_DEFINE_UNQUOTED([OPAL_ASM_SYNC_HAVE_64BIT],[$opal_asm_sync_have_64bit],
+		     [Whether 64-bit is supported by the __sync builtin atomics])
+
+  # Check for 128-bit support
+  OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
+])
+
+
+AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
+
+  OPAL_VAR_SCOPE_PUSH([atomic_compare_exchange_n_128_result CFLAGS_save])
+
+  AC_ARG_ENABLE([cross-cmpset128],[AC_HELP_STRING([--enable-cross-cmpset128],
+                [enable the use of the __sync builtin atomic compare-and-swap 128 when cross compiling])])
+
+  atomic_compare_exchange_n_128_result=0
+
+  if test ! "$enable_cross_cmpset128" = "yes" ; then
+      AC_MSG_CHECKING([for processor support of __atomic builtin atomic compare-and-swap on 128-bit values])
+
+      AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);])],
+	  [AC_MSG_RESULT([yes])
+	      atomic_compare_exchange_n_128_result=1],
+	  [AC_MSG_RESULT([no])],
+	  [AC_MSG_RESULT([no (cross compiling)])])
+
+      if test $atomic_compare_exchange_n_128_result = 0 ; then
+	  CFLAGS_save=$CFLAGS
+	  CFLAGS="$CFLAGS -mcx16"
+
+	  AC_MSG_CHECKING([for __atomic builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+          AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);])],
+              [AC_MSG_RESULT([yes])
+		  atomic_compare_exchange_n_128_result=1
+		  CFLAGS_save="$CFLAGS"],
+              [AC_MSG_RESULT([no])],
+	      [AC_MSG_RESULT([no (cross compiling)])])
+
+	  CFLAGS=$CFLAGS_save
+      fi
+
+      if test $atomic_compare_exchange_n_128_result = 1 ; then
+         AC_MSG_CHECKING([if __int128 atomic compare-and-swap is always lock-free])
+          AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_always_lock_free(16, 0)) { return 1; }])],
+              [AC_MSG_RESULT([yes])],
+              [AC_MSG_RESULT([no])
+                 OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
+                 atomic_compare_exchange_n_128_result=0],
+             [AC_MSG_RESULT([no (cross compiling)])])
+      fi
+  else
+      AC_MSG_CHECKING([for compiler support of __atomic builtin atomic compare-and-swap on 128-bit values])
+
+      # Check if the compiler supports the __atomic builtin
+      AC_TRY_LINK([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);],
+	  [AC_MSG_RESULT([yes])
+	      atomic_compare_exchange_n_128_result=1],
+	  [AC_MSG_RESULT([no])])
+
+      if test $atomic_compare_exchange_n_128_result = 0 ; then
+	  CFLAGS_save=$CFLAGS
+	  CFLAGS="$CFLAGS -mcx16"
+
+	  AC_MSG_CHECKING([for __atomic builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
+          AC_TRY_LINK([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);],
+              [AC_MSG_RESULT([yes])
+		  atomic_compare_exchange_n_128_result=1
+		  CFLAGS_save="$CFLAGS"],
+              [AC_MSG_RESULT([no])])
+
+	  CFLAGS=$CFLAGS_save
+      fi
+  fi
+
+  AC_DEFINE_UNQUOTED([OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128], [$atomic_compare_exchange_n_128_result],
+	[Whether the __atomic builtin atomic compare and swap is lock-free on 128-bit values])
+
+  OPAL_VAR_SCOPE_POP
+])
+
+AC_DEFUN([OPAL_CHECK_GCC_ATOMIC_BUILTINS], [
+  AC_MSG_CHECKING([for __atomic builtin atomics])
+
+  AC_TRY_LINK([long tmp, old = 0;], [__atomic_thread_fence(__ATOMIC_SEQ_CST);
+__atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+__atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);],
+    [AC_MSG_RESULT([yes])
+     $1],
+    [AC_MSG_RESULT([no])
+     $2])
+
+  # Check for 128-bit support
+  OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
 ])
 
 
@@ -738,34 +848,28 @@ AC_DEFUN([OPAL_CHECK_INLINE_C_GCC],[
 
     AC_MSG_CHECKING([if $CC supports GCC inline assembly])
 
-    if test "$opal_cv_c_compiler_vendor" = "portland group" ; then
-        # PGI seems to have some issues with our inline assembly.
-        # Disable for now.
-        asm_result="no (Portland Group)"
+    if test ! "$assembly" = "" ; then
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
+int ret = 1;
+int negone = -1;
+__asm__ __volatile__ ($assembly);
+return ret;
+                                                             ]])],
+                      [asm_result="yes"], [asm_result="no"],
+                      [asm_result="unknown"])
     else
-        if test ! "$assembly" = "" ; then
-                AC_RUN_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT],
-[[int ret = 1;
-int negone = -1;
-__asm__ __volatile__ ($assembly);
-return ret;]])],
-            [asm_result="yes"], [asm_result="no"],
-            [asm_result="unknown"])
-        else
-            assembly="test skipped - assuming no"
-        fi
+        assembly="test skipped - assuming no"
+    fi
 
-        # if we're cross compiling, just try to compile and figure good enough
-        if test "$asm_result" = "unknown" ; then
-            AC_LINK_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT],
-[[int ret = 1;
+    # if we're cross compiling, just try to compile and figure good enough
+    if test "$asm_result" = "unknown" ; then
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
+int ret = 1;
 int negone = -1;
 __asm__ __volatile__ ($assembly);
-return ret;]])],
-            [asm_result="yes"], [asm_result="no"])
-        fi
+return ret;
+                                                              ]])],
+                       [asm_result="yes"], [asm_result="no"])
     fi
 
     AC_MSG_RESULT([$asm_result])
@@ -872,15 +976,15 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
          [], [enable_osx_builtin_atomics="yes"])
 
     opal_cv_asm_builtin="BUILTIN_NO"
-    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" -a "$enable_builtin_atomics" = "yes" ; then
-       OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])
-       OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
+       OPAL_CHECK_GCC_ATOMIC_BUILTINS([opal_cv_asm_builtin="BUILTIN_GCC"], [])
     fi
-    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" -a "$enable_osx_builtin_atomics" = "yes" ; then
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
+       OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])
+    fi
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_osx_builtin_atomics" = "yes" ; then
        AC_CHECK_HEADER([libkern/OSAtomic.h],
                        [opal_cv_asm_builtin="BUILTIN_OSX"])
-    else
-       opal_cv_asm_builtin="BUILTIN_NO"
     fi
 
         OPAL_CHECK_ASM_PROC
@@ -914,6 +1018,14 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             opal_cv_asm_arch="IA64"
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
+            ;;
+	aarch64*)
+            opal_cv_asm_arch="ARM64"
+            OPAL_ASM_SUPPORT_64BIT=1
+            OPAL_ASM_ARM_VERSION=8
+            AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
+                               [What ARM assembly version to use])
+            OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
         armv7*)
@@ -1007,7 +1119,13 @@ AC_MSG_ERROR([Can not continue.])
             ;;
         esac
 
-      if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" ; then
+	if test "x$OPAL_ASM_SUPPORT_64BIT" = "x1" && test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" &&
+		test "$opal_asm_sync_have_64bit" = "0" ; then
+	    # __sync builtins exist but do not implement 64-bit support. Fall back on inline asm.
+	    opal_cv_asm_builtin="BUILTIN_NO"
+	fi
+
+      if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" || test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
           [Whether C compiler supports GCC style inline assembly])
       else

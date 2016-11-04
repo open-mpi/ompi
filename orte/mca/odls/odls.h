@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,12 +76,6 @@ typedef int (*orte_odls_base_module_signal_local_process_fn_t)(const orte_proces
                                                               int32_t signal);
 
 /**
- * Deliver a message to local processes
- */
-typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, opal_buffer_t *buffer,
-                                                          orte_rml_tag_t tag);
-
-/**
  * Restart a local process
  */
 typedef int (*orte_odls_base_module_restart_proc_fn_t)(orte_proc_t *child);
@@ -93,7 +88,6 @@ struct orte_odls_base_module_1_3_0_t {
     orte_odls_base_module_launch_local_processes_fn_t       launch_local_procs;
     orte_odls_base_module_kill_local_processes_fn_t         kill_local_procs;
     orte_odls_base_module_signal_local_process_fn_t         signal_local_procs;
-    orte_odls_base_module_deliver_message_fn_t              deliver_message;
     orte_odls_base_module_restart_proc_fn_t                 restart_proc;
 };
 

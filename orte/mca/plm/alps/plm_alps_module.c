@@ -121,6 +121,23 @@ static int plm_alps_init(void)
         return rc;
     }
 
+    /*
+     * owing to way the SLURM PLM component works, we can't use
+     * it on Cray XC systems as currently designed.  The problem
+     * is the MPI processes launched on the head node (where the
+     * ORTE_PROC_IS_HNP evalues to true) get launched by a daemon
+     * (mpirun) which is not a child of a slurmd daemon.  This
+     * means that any RDMA credentials obtained via the odls/alps
+     * local launcher are incorrect.
+     *
+     * So for now, we just don't support mpirun launched jobs
+     * on Cray XC systems using Native SLURM.
+     */
+    if (false == mca_plm_alps_using_aprun) {
+        orte_show_help("help-plm-alps.txt", "slurm-not-supported", true);
+        exit(-1);
+    }
+
     if (orte_do_not_launch) {
         /* must map daemons since we won't be launching them */
         orte_plm_globals.daemon_nodes_assigned_at_launch = true;

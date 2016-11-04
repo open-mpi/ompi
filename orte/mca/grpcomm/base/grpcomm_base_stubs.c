@@ -1,5 +1,5 @@
-/* -*- C -*-
- *
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -10,8 +10,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -157,7 +158,7 @@ static void allgather_stub(int fd, short args, void *cbdata)
     ret = opal_hash_table_set_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), (void *)&cd->sig->seq_num);
     if (OPAL_SUCCESS != ret) {
         OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
-                     "%s rpcomm:base:allgather can't not add new signature to hash table",
+                     "%s rpcomm:base:allgather cannot add new signature to hash table",
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cd);
@@ -208,6 +209,10 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
 {
     orte_grpcomm_coll_t *coll;
     int rc;
+    orte_namelist_t *nm;
+    opal_list_t children;
+    size_t n;
+    char *routed;
 
     /* search the existing tracker list to see if this already exists */
     OPAL_LIST_FOREACH(coll, &orte_grpcomm_base.ongoing, orte_grpcomm_coll_t) {
@@ -254,6 +259,41 @@ orte_grpcomm_coll_t* orte_grpcomm_base_get_tracker(orte_grpcomm_signature_t *sig
         ORTE_ERROR_LOG(rc);
         return NULL;
     }
+
+    /* get the routed module for our conduit */
+    routed = orte_rml.get_routed(orte_coll_conduit);
+    if (NULL == routed) {
+        /* this conduit is not routed, so we expect all daemons
+         * to directly participate */
+        coll->nexpected = coll->ndmns;
+    } else {
+        /* cycle thru the array of daemons and compare them to our
+         * children in the routing tree, counting the ones that match
+         * so we know how many daemons we should receive contributions from */
+        OBJ_CONSTRUCT(&children, opal_list_t);
+        orte_routed.get_routing_list(routed, &children);
+        while (NULL != (nm = (orte_namelist_t*)opal_list_remove_first(&children))) {
+            for (n=0; n < coll->ndmns; n++) {
+                if (nm->name.vpid == coll->dmns[n]) {
+                    coll->nexpected++;
+                    break;
+                }
+            }
+            OBJ_RELEASE(nm);
+        }
+        OPAL_LIST_DESTRUCT(&children);
+
+        /* see if I am in the array of participants - note that I may
+         * be in the rollup tree even though I'm not participating
+         * in the collective itself */
+        for (n=0; n < coll->ndmns; n++) {
+            if (coll->dmns[n] == ORTE_PROC_MY_NAME->vpid) {
+                coll->nexpected++;
+                break;
+            }
+        }
+    }
+
     return coll;
 }
 
@@ -292,9 +332,12 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
         /* all daemons hosting this jobid are participating */
         if (NULL == (jdata = orte_get_job_data_object(sig->signature[0].jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+            *ndmns = 0;
+            *dmns = NULL;
             return ORTE_ERR_NOT_FOUND;
         }
-        if (NULL == jdata->map) {
+        if (NULL == jdata->map || 0 == jdata->map->num_nodes) {
             /* we haven't generated a job map yet - if we are the HNP,
              * then we should only involve ourselves. Otherwise, we have
              * no choice but to abort to avoid hangs */
@@ -310,12 +353,6 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
             *dmns = NULL;
             return ORTE_ERR_NOT_FOUND;
         }
-        /* get the array */
-        if (0 == jdata->map->num_nodes) {
-            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            return ORTE_ERR_SILENT;
-        }
         dns = (orte_vpid_t*)malloc(jdata->map->num_nodes * sizeof(vpid));
         nds = 0;
         for (i=0; i < jdata->map->nodes->size && (int)nds < jdata->map->num_nodes; i++) {
@@ -326,7 +363,10 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                 /* should never happen */
                 ORTE_ERROR_LOG(ORTE_ERROR);
                 free(dns);
-                return ORTE_ERROR;
+                ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+                *ndmns = 0;
+                *dmns = NULL;
+                return ORTE_ERR_NOT_FOUND;
             }
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                  "%s grpcomm:base:create_dmns adding daemon %s to array",
@@ -343,6 +383,9 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
             if (NULL == (jdata = orte_get_job_data_object(sig->signature[n].jobid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 OPAL_LIST_DESTRUCT(&ds);
+                ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+                *ndmns = 0;
+                *dmns = NULL;
                 return ORTE_ERR_NOT_FOUND;
             }
             opal_output_verbose(5, orte_grpcomm_base_framework.framework_output,
@@ -352,12 +395,17 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, sig->signature[n].vpid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 OPAL_LIST_DESTRUCT(&ds);
+                ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+                *ndmns = 0;
+                *dmns = NULL;
                 return ORTE_ERR_NOT_FOUND;
             }
             if (NULL == proc->node || NULL == proc->node->daemon) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 OPAL_LIST_DESTRUCT(&ds);
                 ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+                *ndmns = 0;
+                *dmns = NULL;
                 return ORTE_ERR_NOT_FOUND;
             }
             vpid = proc->node->daemon->name.vpid;
@@ -377,7 +425,10 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
         if (0 == opal_list_get_size(&ds)) {
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
             OPAL_LIST_DESTRUCT(&ds);
-            return ORTE_ERR_BAD_PARAM;
+            ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+            *ndmns = 0;
+            *dmns = NULL;
+            return ORTE_ERR_NOT_FOUND;
         }
         dns = (orte_vpid_t*)malloc(opal_list_get_size(&ds) * sizeof(orte_vpid_t));
         nds = 0;
@@ -427,27 +478,12 @@ CLEANUP:
     return ORTE_SUCCESS;
 }
 
-void orte_grpcomm_base_mark_distance_recv(orte_grpcomm_coll_t *coll,
-                                   uint32_t distance) {
-    uint32_t maskNumber = distance / 32;
-    uint32_t bitNumber = distance % 32;
-
-    coll->distance_mask_recv[maskNumber] |= (1 << bitNumber);
-
-    return;
+void orte_grpcomm_base_mark_distance_recv (orte_grpcomm_coll_t *coll,
+                                           uint32_t distance) {
+    opal_bitmap_set_bit (&coll->distance_mask_recv, distance);
 }
 
-unsigned int orte_grpcomm_base_check_distance_recv(orte_grpcomm_coll_t *coll,
-                                   uint32_t distance) {
-    uint32_t maskNumber = distance / 32;
-    uint32_t bitNumber = distance % 32;
-
-    if (NULL == coll->distance_mask_recv) {
-        return 0;
-    } else {
-        if (0 == distance) {
-            return 1;
-        }
-        return (((coll->distance_mask_recv[maskNumber] & (1 << bitNumber)) != 0) ? 1 : 0);
-    }
+unsigned int orte_grpcomm_base_check_distance_recv (orte_grpcomm_coll_t *coll,
+                                                    uint32_t distance) {
+    return opal_bitmap_is_set_bit (&coll->distance_mask_recv, distance);
 }

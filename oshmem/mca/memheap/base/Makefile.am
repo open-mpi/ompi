@@ -1,5 +1,6 @@
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -8,6 +9,8 @@
 #
 
 dist_oshmemdata_DATA += base/help-oshmem-memheap.txt
+
+AM_CPPFLAGS = -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
 
 headers += \
         base/base.h

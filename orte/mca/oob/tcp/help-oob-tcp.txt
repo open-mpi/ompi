@@ -10,8 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
-# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -96,3 +96,15 @@ eventually timeout / abort.
   Errno:          %d (%s)
   Probable cause: %s
 #
+[privilege failure]
+An attempt was made to initiate a TCP connection from an
+unprivileged source while we are operating at privileged
+levels.
+
+  Local host:      %s
+  Listening port:  %d
+  Remote host:     %s
+  Remote port:    %d
+  
+
+The connection was rejected.

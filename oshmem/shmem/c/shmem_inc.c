@@ -23,8 +23,8 @@
  * one. The operation must be completed without the possibility of another process updating
  * target between the time of the fetch and the update.
  */
-#define SHMEM_TYPE_INC(type_name, type)    \
-    void shmem##type_name##_inc(type *target, int pe) \
+#define SHMEM_TYPE_INC(type_name, type, prefix)    \
+    void prefix##type_name##_inc(type *target, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -54,13 +54,13 @@
 #pragma weak shmem_int_inc = pshmem_int_inc
 #pragma weak shmem_long_inc = pshmem_long_inc
 #pragma weak shmem_longlong_inc = pshmem_longlong_inc
-#pragma weak shmem_int32_inc = pshmem_int32_inc
-#pragma weak shmem_int64_inc = pshmem_int64_inc
+#pragma weak shmemx_int32_inc = pshmemx_int32_inc
+#pragma weak shmemx_int64_inc = pshmemx_int64_inc
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_INC(_int, int)
-SHMEM_TYPE_INC(_long, long)
-SHMEM_TYPE_INC(_longlong, long long)
-SHMEM_TYPE_INC(_int32, int32_t)
-SHMEM_TYPE_INC(_int64, int64_t)
+SHMEM_TYPE_INC(_int, int, shmem)
+SHMEM_TYPE_INC(_long, long, shmem)
+SHMEM_TYPE_INC(_longlong, long long, shmem)
+SHMEM_TYPE_INC(_int32, int32_t, shmemx)
+SHMEM_TYPE_INC(_int64, int64_t, shmemx)

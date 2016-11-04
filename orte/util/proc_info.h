@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,8 +45,6 @@
 
 BEGIN_C_DECLS
 
-#define ORTE_MAX_HOSTNAME_SIZE  512
-
 typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_TYPE_NONE     0x0000
 #define ORTE_PROC_SINGLETON     0x0001
@@ -56,11 +54,8 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_NON_MPI       0x0010
 #define ORTE_PROC_MPI           0x0020
 #define ORTE_PROC_APP           0x0030
-#define ORTE_PROC_CM            0x0040
-#define ORTE_PROC_AGGREGATOR    0x0080
 #define ORTE_PROC_DVM           0x0102   // DVM + daemon
 #define ORTE_PROC_IOF_ENDPT     0x1000
-#define ORTE_PROC_SCHEDULER     0x2000
 #define ORTE_PROC_MASTER_ACTUAL 0x4000
 #define ORTE_PROC_MASTER        (ORTE_PROC_MASTER_ACTUAL + ORTE_PROC_HNP)
 
@@ -71,11 +66,8 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_IS_NON_MPI        (ORTE_PROC_NON_MPI & orte_process_info.proc_type)
 #define ORTE_PROC_IS_MPI            (ORTE_PROC_MPI & orte_process_info.proc_type)
 #define ORTE_PROC_IS_APP            (ORTE_PROC_APP & orte_process_info.proc_type)
-#define ORTE_PROC_IS_CM             (ORTE_PROC_CM & orte_process_info.proc_type)
-#define ORTE_PROC_IS_AGGREGATOR     (ORTE_PROC_AGGREGATOR & orte_process_info.proc_type)
 #define ORTE_PROC_IS_DVM            (ORTE_PROC_DVM & orte_process_info.proc_type)
 #define ORTE_PROC_IS_IOF_ENDPT      (ORTE_PROC_IOF_ENDPT & orte_process_info.proc_type)
-#define ORTE_PROC_IS_SCHEDULER      (ORTE_PROC_SCHEDULER & orte_process_info.proc_type)
 #define ORTE_PROC_IS_MASTER         (ORTE_PROC_MASTER_ACTUAL & orte_process_info.proc_type)
 
 
@@ -96,7 +88,6 @@ struct orte_proc_info_t {
     orte_process_name_t my_hnp;         /**< Name of my hnp */
     char *my_hnp_uri;                   /**< Contact info for my hnp */
     orte_process_name_t my_parent;      /**< Name of my parent (or my HNP if no parent was specified) */
-    orte_process_name_t my_scheduler;   /**< name of the scheduler for this system */
     pid_t hnp_pid;                      /**< hnp pid - used if singleton */
     orte_app_idx_t app_num;             /**< our index into the app_context array */
     orte_vpid_t num_procs;              /**< number of processes in this job */
@@ -121,8 +112,10 @@ struct orte_proc_info_t {
      */
     char *tmpdir_base;                  /**< Base directory of the session dir tree */
     char *top_session_dir;              /**< Top-most directory of the session tree */
+    char *jobfam_session_dir;           /**< Session directory for this family of jobs (i.e., share same mpirun) */
     char *job_session_dir;              /**< Session directory for job */
     char *proc_session_dir;             /**< Session directory for the process */
+    bool rm_session_dirs;               /**< Session directories will be cleaned up by RM */
 
     char *sock_stdin;                   /**< Path name to temp file for stdin. */
     char *sock_stdout;                  /**< Path name to temp file for stdout. */

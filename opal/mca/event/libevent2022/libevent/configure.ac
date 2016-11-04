@@ -64,12 +64,14 @@ fi
 
 # OS X Lion started deprecating the system openssl. Let's just disable
 # all deprecation warnings on OS X.
+if test "$GCC" = "yes" ; then
 case "$host_os" in
 
  darwin*)
     CFLAGS="$CFLAGS -Wno-deprecated-declarations"
     ;;
 esac
+fi
 
 AC_ARG_ENABLE(gcc-warnings,
      AS_HELP_STRING(--enable-gcc-warnings, enable verbose warnings with GCC))

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -25,7 +25,6 @@ struct pml_yalla_base_request {
     ompi_request_t               ompi;
     mca_pml_yalla_convertor_t    *convertor;
     int                          flags;
-    mxm_req_base_t               mxm_base[0]; /* overlaps with base of send/recv */
 };
 
 struct pml_yalla_send_request {
@@ -50,10 +49,12 @@ OBJ_CLASS_DECLARATION(mca_pml_yalla_recv_request_t);
 
 void mca_pml_yalla_init_reqs(void);
 
+#define PML_YALLA_MXM_REQBASE( x ) ( &((x)->mxm.base) )
+
 #define PML_YALLA_RESET_OMPI_REQ(_ompi_req, _state) \
     { \
         (_ompi_req)->req_state = _state; \
-        (_ompi_req)->req_complete = false; \
+        (_ompi_req)->req_complete = REQUEST_PENDING; \
         (_ompi_req)->req_status._cancelled = false; \
     }
 
@@ -64,9 +65,9 @@ void mca_pml_yalla_init_reqs(void);
         OBJ_RETAIN(_comm); \
     }
 
-#define PML_YALLA_RESET_PML_REQ(_pml_req) \
+#define PML_YALLA_RESET_PML_REQ(_pml_req, mxm_base) \
     { \
-        (_pml_req)->mxm_base[0].state = MXM_REQ_NEW; \
+        mxm_base->state = MXM_REQ_NEW; \
         PML_YALLA_RESET_PML_REQ_DATA(_pml_req); \
     }
 
@@ -126,28 +127,26 @@ void mca_pml_yalla_init_reqs(void);
         } \
     }
 
-#define MCA_PML_YALLA_RREQ_INIT(_buf, _count, _datatype, _src, _tag, _comm, _state) \
-    ({ \
-        mca_pml_yalla_recv_request_t *rreq = (mca_pml_yalla_recv_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.recv_reqs); \
-        \
-        PML_YALLA_INIT_OMPI_REQ(&rreq->super.ompi, _comm, _state); \
-        PML_YALLA_INIT_MXM_RECV_REQ(&rreq->mxm, _buf, _count, _datatype, _src, _tag, \
-                                 _comm, irecv, rreq); \
-        rreq; \
-    })
+static inline mca_pml_yalla_recv_request_t* MCA_PML_YALLA_RREQ_INIT(void *_buf, size_t _count, ompi_datatype_t *_datatype,
+        int _src, int _tag, struct ompi_communicator_t* _comm, int _state)
+{
+    mca_pml_yalla_recv_request_t *rreq = (mca_pml_yalla_recv_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.recv_reqs);
+    PML_YALLA_INIT_OMPI_REQ(&rreq->super.ompi, _comm, _state);
+    PML_YALLA_INIT_MXM_RECV_REQ(&rreq->mxm, _buf, _count, _datatype, _src, _tag, _comm, irecv, rreq);
+    return rreq;
+}
 
-#define MCA_PML_YALLA_SREQ_INIT(_buf, _count, _datatype, _dst, _tag, _mode, _comm, _state) \
-    ({ \
-        mca_pml_yalla_send_request_t *sreq = (mca_pml_yalla_send_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.send_reqs); \
-        \
-        PML_YALLA_INIT_OMPI_REQ(&sreq->super.ompi, _comm, _state); \
-        PML_YALLA_INIT_MXM_SEND_REQ(&sreq->mxm, _buf, _count, _datatype, _dst, _tag, \
-                                    mode, _comm, isend, sreq); \
-        sreq->super.ompi.req_status.MPI_TAG    = _tag; \
-        sreq->super.ompi.req_status.MPI_SOURCE = (_comm)->c_my_rank; \
-        sreq->super.ompi.req_status._ucount    = _count; \
-        sreq; \
-    })
+static inline mca_pml_yalla_send_request_t* MCA_PML_YALLA_SREQ_INIT(void *_buf, size_t _count, ompi_datatype_t *_datatype,
+        int _dst, int _tag, mca_pml_base_send_mode_t _mode, struct ompi_communicator_t* _comm, int _state)
+{
+    mca_pml_yalla_send_request_t *sreq = (mca_pml_yalla_send_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.send_reqs);
+    PML_YALLA_INIT_OMPI_REQ(&sreq->super.ompi, _comm, _state);
+    PML_YALLA_INIT_MXM_SEND_REQ(&sreq->mxm, _buf, _count, _datatype, _dst, _tag, _mode, _comm, isend, sreq);
+    sreq->super.ompi.req_status.MPI_TAG    = _tag;
+    sreq->super.ompi.req_status.MPI_SOURCE = (_comm)->c_my_rank;
+    sreq->super.ompi.req_status._ucount    = _count;
+    return sreq;
+}
 
 #define PML_YALLA_INIT_MXM_PROBE_REQ(_rreq, _rank, _tag, _comm) \
     { \
@@ -184,6 +183,7 @@ void mca_pml_yalla_init_reqs(void);
                 (_mpi_status)->MPI_ERROR  = OMPI_SUCCESS; \
                 break; \
             case MXM_ERR_CANCELED: \
+                (_mpi_status)->MPI_ERROR  = OMPI_SUCCESS; \
                 (_mpi_status)->_cancelled = true; \
                 break; \
             case MXM_ERR_MESSAGE_TRUNCATED: \

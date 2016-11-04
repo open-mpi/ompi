@@ -9,8 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,7 +54,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
     int ret;
 
     if (NULL == path) { /* protect ourselves from errors */
-        return(OPAL_ERROR);
+        return(OPAL_ERR_BAD_PARAM);
     }
 
     if (0 == (ret = stat(path, &buf))) { /* already exists */
@@ -65,9 +66,9 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
         }
         opal_output(0,
                     "opal_os_dirpath_create: "
-                    "Error: Unable to create directory (%s), unable to set the correct mode [%d]\n",
-                    path, ret);
-        return(OPAL_ERROR); /* can't set correct mode */
+                    "Error: Unable to create directory (%s), unable to set the correct mode [%d] (%s)\n",
+                    path, errno, strerror(errno));
+        return(OPAL_ERR_PERM); /* can't set correct mode */
     }
 
     /* quick -- try to make directory */
@@ -116,10 +117,15 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
            Create it if it doesn't exist. */
         ret = mkdir(tmp, mode);
         if ((0 > ret && EEXIST != errno) || 0 != stat(tmp, &buf)) {
-            opal_output(0,
-                        "opal_os_dirpath_create: "
-                        "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d]\n",
-                        tmp, path, ret);
+            if (0 > ret && EEXIST != errno) {
+                opal_output(0, "opal_os_dirpath_create: "
+                               "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d] (%s)]\n",
+                        tmp, path, errno, strerror(errno));
+            } else {
+                opal_output(0, "opal_os_dirpath_create: "
+                               "Error: Unable to stat the sub-directory (%s) of (%s), mkdir failed [%d] (%s)]\n",
+                        tmp, path, errno, strerror(errno));
+            }
             opal_argv_free(parts);
             free(tmp);
             return OPAL_ERROR;
@@ -150,9 +156,7 @@ int opal_os_dirpath_destroy(const char *path,
     DIR *dp;
     struct dirent *ep;
     char *filenm;
-#ifndef HAVE_STRUCT_DIRENT_D_TYPE
     struct stat buf;
-#endif
 
     if (NULL == path) {  /* protect against error */
         return OPAL_ERROR;
@@ -161,7 +165,7 @@ int opal_os_dirpath_destroy(const char *path,
     /*
      * Make sure we have access to the the base directory
      */
-    if( OPAL_SUCCESS != (rc = opal_os_dirpath_access(path, 0) ) ) {
+    if (OPAL_SUCCESS != (rc = opal_os_dirpath_access(path, 0))) {
         exit_status = rc;
         goto cleanup;
     }
@@ -172,12 +176,12 @@ int opal_os_dirpath_destroy(const char *path,
         return OPAL_ERROR;
     }
 
-    while (NULL != (ep = readdir(dp)) ) {
+    while (NULL != (ep = readdir(dp))) {
         /* skip:
          *  - . and ..
          */
         if ((0 == strcmp(ep->d_name, ".")) ||
-            (0 == strcmp(ep->d_name, "..")) ) {
+            (0 == strcmp(ep->d_name, ".."))) {
             continue;
         }
 
@@ -189,22 +193,17 @@ int opal_os_dirpath_destroy(const char *path,
          * allocating memory here, so we need to free it later on.
          */
         filenm = opal_os_path(false, path, ep->d_name, NULL);
-#ifdef HAVE_STRUCT_DIRENT_D_TYPE
-        if (DT_DIR == ep->d_type) {
-            is_dir = true;
-        }
-#else /* have dirent.d_type */
+
         rc = stat(filenm, &buf);
-        if (rc < 0 || S_ISDIR(buf.st_mode)) {
+        if (S_ISDIR(buf.st_mode)) {
             is_dir = true;
         }
-#endif /* have dirent.d_type */
 
         /*
          * If not recursively decending, then if we find a directory then fail
          * since we were not told to remove it.
          */
-        if( is_dir && !recursive) {
+        if (is_dir && !recursive) {
             /* Set the error indicating that we found a directory,
              * but continue removing files
              */
@@ -214,18 +213,18 @@ int opal_os_dirpath_destroy(const char *path,
         }
 
         /* Will the caller allow us to remove this file/directory? */
-        if(NULL != cbfunc) {
+        if (NULL != cbfunc) {
             /*
              * Caller does not wish to remove this file/directory,
              * continue with the rest of the entries
              */
-            if( ! (cbfunc(path, ep->d_name)) ) {
+            if (!(cbfunc(path, ep->d_name))) {
                 free(filenm);
                 continue;
             }
         }
         /* Directories are recursively destroyed */
-        if(is_dir) {
+        if (is_dir) {
             rc = opal_os_dirpath_destroy(filenm, recursive, cbfunc);
             free(filenm);
             if (OPAL_SUCCESS != rc) {
@@ -233,10 +232,9 @@ int opal_os_dirpath_destroy(const char *path,
                 closedir(dp);
                 goto cleanup;
             }
-        }
-        /* Files are removed right here */
-        else {
-            if( 0 != (rc = unlink(filenm) ) ) {
+        } else {
+            /* Files are removed right here */
+            if (0 != (rc = unlink(filenm))) {
                 exit_status = OPAL_ERROR;
             }
             free(filenm);
@@ -288,20 +286,18 @@ int opal_os_dirpath_access(const char *path, const mode_t in_mode ) {
     /*
      * If there was no mode specified, use the default mode
      */
-    if( 0 != in_mode ) {
+    if (0 != in_mode) {
         loc_mode = in_mode;
     }
 
     if (0 == stat(path, &buf)) { /* exists - check access */
         if ((buf.st_mode & loc_mode) == loc_mode) { /* okay, I can work here */
             return(OPAL_SUCCESS);
-        }
-        else {
+        } else {
             /* Don't have access rights to the existing path */
             return(OPAL_ERROR);
         }
-    }
-    else {
+    } else {
         /* We could not find the path */
         return( OPAL_ERR_NOT_FOUND );
     }

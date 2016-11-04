@@ -99,6 +99,7 @@ int bcol_basesmuma_free_buff( sm_buffer_mgmt * buff_block,
      *   associated with this bank have been freed.
      */
     assert(generation == buff_block->ctl_buffs_mgmt[memory_bank].bank_gen_counter);
+    (void)generation;  // silence compiler warning
 
     /*
      * increment counter of completed buffers

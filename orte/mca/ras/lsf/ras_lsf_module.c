@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include <lsf/lsbatch.h>
 
 #include "opal/util/argv.h"
+#include "opal/util/net.h"
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -38,6 +40,7 @@
 #include "orte/util/show_help.h"
 
 #include "orte/mca/ras/base/ras_private.h"
+#include "orte/mca/ras/base/base.h"
 #include "ras_lsf.h"
 
 
@@ -58,31 +61,15 @@ orte_ras_base_module_t orte_ras_lsf_module = {
     finalize
 };
 
-static char *orte_getline(FILE *fp)
-{
-    char *ret, *buff;
-    char input[1024];
-
-    ret = fgets(input, 1024, fp);
-    if (NULL != ret) {
-	   input[strlen(input)-1] = '\0';  /* remove newline */
-	   buff = strdup(input);
-	   return buff;
-    }
-
-    return NULL;
-}
-
 
 static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     char **nodelist;
     orte_node_t *node;
     int i, num_nodes;
-    char *affinity_file, *hstname;
-    bool found;
+    char *affinity_file;
     struct stat buf;
-    orte_app_context_t *app;
+    char *ptr;
 
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
@@ -94,10 +81,18 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 
     /* step through the list */
     for (i = 0; i < num_nodes; i++) {
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(nodelist[i]) ) {
+            if (NULL != (ptr = strchr(nodelist[i], '.'))) {
+                *ptr = '\0';
+            }
+        }
+
         /* is this a repeat of the current node? */
         if (NULL != node && 0 == strcmp(nodelist[i], node->name)) {
             /* it is a repeat - just bump the slot count */
             ++node->slots;
+            opal_output_verbose(10, orte_ras_base_framework.framework_output,
+                                "ras/lsf: +++ Node (%s) [slots=%d]", node->name, node->slots);
             continue;
         }
 
@@ -109,6 +104,9 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
         node->slots = 1;
         node->state = ORTE_NODE_STATE_UP;
         opal_list_append(nodes, &node->super);
+
+        opal_output_verbose(10, orte_ras_base_framework.framework_output,
+                            "ras/lsf: New Node (%s) [slots=%d]", node->name, node->slots);
     }
 
     /* release the nodelist from lsf */
@@ -142,14 +140,20 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
         if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
         }
-        /* get the apps and set the hostfile attribute in each to point to
-         * the hostfile */
-        for (i=0; i < jdata->apps->size; i++) {
-            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-                continue;
-            }
-            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, true, (void*)affinity_file, OPAL_STRING);
+        /*
+         * Do not set the hostfile attribute on each app_context since that
+         * would confuse the sequential mapper when it tries to assign bindings
+         * when running an MPMD job.
+         * Instead just overwrite the orte_default_hostfile so it will be
+         * general for all of the app_contexts.
+         */
+        if( NULL != orte_default_hostfile ) {
+            free(orte_default_hostfile);
+            orte_default_hostfile = NULL;
         }
+        orte_default_hostfile = strdup(affinity_file);
+        opal_output_verbose(10, orte_ras_base_framework.framework_output,
+                            "ras/lsf: Set default_hostfile to %s",orte_default_hostfile);
 
         return ORTE_SUCCESS;
     }

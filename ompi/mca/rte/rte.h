@@ -3,7 +3,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -111,8 +111,6 @@
  *     2. int ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs) -
  *        Abort the specified list of peers
  *     3. OMPI_ERROR_LOG(rc) - print error message regarding the given return code
- *     4. ompi_rte_register_errhandler - register a callback function for the RTE
- *        to report asynchronous errors to the caller
  *
  * (e) Init and finalize objects and operations
  *     1. ompi_rte_init - a function to initialize the RTE. The function
@@ -207,27 +205,27 @@ OMPI_DECLSPEC extern mca_base_framework_t ompi_rte_base_framework;
  * progress while waiting, so we loop over opal_progress, letting
  * the RTE progress thread move the RTE along
  */
-#define OMPI_WAIT_FOR_COMPLETION(flg)                                   \
-    do {                                                                \
-        opal_output_verbose(1, ompi_rte_base_framework.framework_output, \
-                            "%s waiting on RTE event at %s:%d",         \
-                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
-                            __FILE__, __LINE__);                        \
-        while ((flg)) {                                                \
-            opal_progress();                                            \
-        }                                                               \
+#define OMPI_WAIT_FOR_COMPLETION(flg)                                       \
+    do {                                                                    \
+        opal_output_verbose(1, ompi_rte_base_framework.framework_output,    \
+                            "%s waiting on RTE event at %s:%d",             \
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),             \
+                            __FILE__, __LINE__);                            \
+        while ((flg)) {                                                     \
+            opal_progress();                                                \
+        }                                                                   \
     }while(0);
 
-#define OMPI_LAZY_WAIT_FOR_COMPLETION(flg)                              \
-    do {                                                                \
-        opal_output_verbose(1, ompi_rte_base_framework.framework_output, \
-                            "%s lazy waiting on RTE event at %s:%d",    \
-                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
-                            __FILE__, __LINE__);                        \
-        while ((flg)) {                                                 \
-            opal_progress();                                            \
-            usleep(100);                                                \
-        }                                                               \
+#define OMPI_LAZY_WAIT_FOR_COMPLETION(flg)                                  \
+    do {                                                                    \
+        opal_output_verbose(1, ompi_rte_base_framework.framework_output,    \
+                            "%s lazy waiting on RTE event at %s:%d",        \
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),             \
+                            __FILE__, __LINE__);                            \
+        while ((flg)) {                                                     \
+            opal_progress();                                                \
+            usleep(100);                                                    \
+        }                                                                   \
     }while(0);
 
 typedef struct {

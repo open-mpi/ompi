@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +58,9 @@
 
 #include "opal/util/opal_pty.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -236,5 +239,112 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
         return ret;
     }
 
+    return ORTE_SUCCESS;
+}
+
+int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
+                                     orte_job_t *jobdat,
+                                     orte_iof_proc_t *proct,
+                                     orte_iof_sink_t **stdoutsink,
+                                     orte_iof_sink_t **stderrsink,
+                                     orte_iof_sink_t **stddiagsink)
+{
+    int rc;
+    char *dirname, *outdir, *outfile;
+    int np, numdigs, fdout, i;
+    char *p, **s;
+    bool usejobid = true;
+
+    /* see if we are to output to a file */
+    dirname = NULL;
+    if (orte_get_attribute(&jobdat->attributes, ORTE_JOB_OUTPUT_TO_FILE, (void**)&dirname, OPAL_STRING) &&
+        NULL != dirname) {
+        np = jobdat->num_procs / 10;
+        /* determine the number of digits required for max vpid */
+        numdigs = 1;
+        while (np > 0) {
+            numdigs++;
+            np = np / 10;
+        }
+        /* check for a conditional in the directory name */
+        if (NULL != (p = strchr(dirname, ':'))) {
+            *p = '\0';
+            ++p;
+            /* could me more than one directive */
+            s = opal_argv_split(p, ',');
+            for (i=0; NULL != s[i]; i++) {
+                if (0 == strcasecmp(s[i], "nojobid")) {
+                    usejobid = false;
+                } else if (0 == strcasecmp(s[i], "nocopy")) {
+                    proct->copy = false;
+                }
+            }
+        }
+
+        /* construct the directory where the output files will go */
+        if (usejobid) {
+            asprintf(&outdir, "%s/%d/rank.%0*lu", dirname,
+                     (int)ORTE_LOCAL_JOBID(proct->name.jobid),
+                     numdigs, (unsigned long)proct->name.vpid);
+        } else {
+            asprintf(&outdir, "%s/rank.%0*lu", dirname,
+                     numdigs, (unsigned long)proct->name.vpid);
+
+        }
+        /* ensure the directory exists */
+        if (OPAL_SUCCESS != (rc = opal_os_dirpath_create(outdir, S_IRWXU|S_IRGRP|S_IXGRP))) {
+            ORTE_ERROR_LOG(rc);
+            free(outdir);
+            return rc;
+        }
+        /* if they asked for stderr to be combined with stdout, then we
+         * only create one file and tell the IOF to put both streams
+         * into it. Otherwise, we create separate files for each stream */
+        if (orte_get_attribute(&jobdat->attributes, ORTE_JOB_MERGE_STDERR_STDOUT, NULL, OPAL_BOOL)) {
+            /* create the output file */
+            asprintf(&outfile, "%s/stdout", outdir);
+            fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
+            free(outfile);
+            if (fdout < 0) {
+                /* couldn't be opened */
+                ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+                return ORTE_ERR_FILE_OPEN_FAILURE;
+            }
+            /* define a sink to that file descriptor */
+            ORTE_IOF_SINK_DEFINE(stdoutsink, dst_name, fdout, ORTE_IOF_STDMERGE,
+                                 orte_iof_base_write_handler);
+            /* point the stderr read event to it as well */
+            OBJ_RETAIN(*stdoutsink);
+            *stderrsink = *stdoutsink;
+        } else {
+            /* create separate files for stderr and stdout */
+            asprintf(&outfile, "%s/stdout", outdir);
+            fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
+            free(outfile);
+            if (fdout < 0) {
+                /* couldn't be opened */
+                ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+                return ORTE_ERR_FILE_OPEN_FAILURE;
+            }
+            /* define a sink to that file descriptor */
+            ORTE_IOF_SINK_DEFINE(stdoutsink, dst_name, fdout, ORTE_IOF_STDOUT,
+                                 orte_iof_base_write_handler);
+
+            asprintf(&outfile, "%s/stderr", outdir);
+            fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
+            free(outfile);
+            if (fdout < 0) {
+                /* couldn't be opened */
+                ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+                return ORTE_ERR_FILE_OPEN_FAILURE;
+            }
+            /* define a sink to that file descriptor */
+            ORTE_IOF_SINK_DEFINE(stderrsink, dst_name, fdout, ORTE_IOF_STDERR,
+                                 orte_iof_base_write_handler);
+        }
+        /* always tie the sink for stddiag to stderr */
+        OBJ_RETAIN(*stderrsink);
+        *stddiagsink = *stderrsink;
+    }
     return ORTE_SUCCESS;
 }

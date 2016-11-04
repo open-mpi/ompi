@@ -1,0 +1,21 @@
+Copyright (c) 2016      Intel, Inc. All rights reserved
+
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+===========================================================================
+
+This is where bindings of ORTE functions to alternative programming languages
+such as Python and C++ reside. Not every ORTE function has been provided with
+a wrapper - it is purely on an as-needed basis. However, there is no restriction
+on the number of wrappers that can exist, nor on what type of function is wrapped.
+
+There is only one rule to observe: you can wrap a framework, but you cannot wrap a
+specific plugin within that framework. This constraint flows from the fact that
+plugins are only accessed via the framework interface - thus, there is no way to
+guarantee that a particular plugin will be the active selection.
+
+

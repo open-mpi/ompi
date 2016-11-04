@@ -1,0 +1,74 @@
+/*
+ * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#ifndef PMIX_RENAME_H
+#define PMIX_RENAME_H
+
+#define PMIx_Init                      @PMIX_RENAME@PMIx_Init
+#define PMIx_Initialized               @PMIX_RENAME@PMIx_Initialized
+#define PMIx_Finalize                  @PMIX_RENAME@PMIx_Finalize
+#define PMIx_Abort                     @PMIX_RENAME@PMIx_Abort
+#define PMIx_Put                       @PMIX_RENAME@PMIx_Put
+#define PMIx_Commit                    @PMIX_RENAME@PMIx_Commit
+#define PMIx_Fence                     @PMIX_RENAME@PMIx_Fence
+#define PMIx_Fence_nb                  @PMIX_RENAME@PMIx_Fence_nb
+#define PMIx_Get                       @PMIX_RENAME@PMIx_Get
+#define PMIx_Get_nb                    @PMIX_RENAME@PMIx_Get_nb
+#define PMIx_Publish                   @PMIX_RENAME@PMIx_Publish
+#define PMIx_Publish_nb                @PMIX_RENAME@PMIx_Publish_nb
+#define PMIx_Lookup                    @PMIX_RENAME@PMIx_Lookup
+#define PMIx_Lookup_nb                 @PMIX_RENAME@PMIx_Lookup_nb
+#define PMIx_Unpublish                 @PMIX_RENAME@PMIx_Unpublish
+#define PMIx_Unpublish_nb              @PMIX_RENAME@PMIx_Unpublish_nb
+#define PMIx_Spawn                     @PMIX_RENAME@PMIx_Spawn
+#define PMIx_Spawn_nb                  @PMIX_RENAME@PMIx_Spawn_nb
+#define PMIx_Connect                   @PMIX_RENAME@PMIx_Connect
+#define PMIx_Connect_nb                @PMIX_RENAME@PMIx_Connect_nb
+#define PMIx_Disconnect                @PMIX_RENAME@PMIx_Disconnect
+#define PMIx_Disconnect_nb             @PMIX_RENAME@PMIx_Disconnect_nb
+#define PMIx_Resolve_peers             @PMIX_RENAME@PMIx_Resolve_peers
+#define PMIx_Resolve_nodes             @PMIX_RENAME@PMIx_Resolve_nodes
+#define PMIx_Query_info_nb             @PMIX_RENAME@PMIx_Query_info_nb
+#define PMIx_Log_nb                    @PMIX_RENAME@PMIx_Log_nb
+
+#define PMIx_server_init               @PMIX_RENAME@PMIx_server_init
+#define PMIx_server_finalize           @PMIX_RENAME@PMIx_server_finalize
+#define PMIx_generate_regex            @PMIX_RENAME@PMIx_generate_regex
+#define PMIx_generate_ppn              @PMIX_RENAME@PMIx_generate_ppn
+#define PMIx_server_register_nspace    @PMIX_RENAME@PMIx_server_register_nspace
+#define PMIx_server_deregister_nspace  @PMIX_RENAME@PMIx_server_deregister_nspace
+#define PMIx_server_register_client    @PMIX_RENAME@PMIx_server_register_client
+#define PMIx_server_deregister_client  @PMIX_RENAME@PMIx_server_deregister_client
+#define PMIx_server_setup_fork         @PMIX_RENAME@PMIx_server_setup_fork
+#define PMIx_server_dmodex_request     @PMIX_RENAME@PMIx_server_dmodex_request
+
+#define PMIx_tool_init                 @PMIX_RENAME@PMIx_tool_init
+#define PMIx_tool_finalize             @PMIX_RENAME@PMIx_tool_finalize
+
+#define PMIx_Register_event_handler    @PMIX_RENAME@PMIx_Register_event_handler
+#define PMIx_Deregister_event_handler  @PMIX_RENAME@PMIx_Deregister_event_handler
+#define PMIx_Notify_event              @PMIX_RENAME@PMIx_Notify_event
+#define PMIx_Error_string              @PMIX_RENAME@PMIx_Error_string
+#define PMIx_Proc_state_string         @PMIX_RENAME@PMIx_Proc_state_string
+#define PMIx_Persistence_string        @PMIX_RENAME@PMIx_Persistence_string
+#define PMIx_Data_range_string         @PMIX_RENAME@PMIx_Data_range_string
+#define PMIx_Info_directives_string    @PMIX_RENAME@PMIx_Info_directives_string
+#define PMIx_Data_type_string          @PMIX_RENAME@PMIx_Data_type_string
+#define PMIx_Get_version               @PMIX_RENAME@PMIx_Get_version
+#define PMIx_Store_internal            @PMIX_RENAME@PMIx_Store_internal
+
+#define pmix_value_load                @PMIX_RENAME@pmix_value_load
+#define pmix_value_xfer                @PMIX_RENAME@pmix_value_xfer
+#define pmix_globals                   @PMIX_RENAME@pmix_globals
+#define pmix_output                    @PMIX_RENAME@pmix_output
+#define pmix_output_verbose            @PMIX_RENAME@pmix_output_verbose
+
+#endif

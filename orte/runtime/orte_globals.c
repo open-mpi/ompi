@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -71,6 +71,10 @@ char *orte_basename = NULL;
 bool orte_coprocessors_detected = false;
 opal_hash_table_t *orte_coprocessors = NULL;
 char *orte_topo_signature = NULL;
+char *orte_mgmt_transport = NULL;
+char *orte_coll_transport = NULL;
+int orte_mgmt_conduit = -1;
+int orte_coll_conduit = -1;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
@@ -130,7 +134,7 @@ orte_timer_t *orte_mpiexec_timeout = NULL;
 opal_buffer_t *orte_tree_launch_cmd = NULL;
 
 /* global arrays for data storage */
-opal_pointer_array_t *orte_job_data = NULL;
+opal_hash_table_t *orte_job_data = NULL;
 opal_pointer_array_t *orte_node_pool = NULL;
 opal_pointer_array_t *orte_node_topologies = NULL;
 opal_pointer_array_t *orte_local_children = NULL;
@@ -142,9 +146,6 @@ bool orte_timestamp_output = false;
 char *orte_output_filename = NULL;
 /* generate new xterm windows to display output from specified ranks */
 char *orte_xterm = NULL;
-
-/* whether or not to forward SIGTSTP and SIGCONT signals */
-bool orte_forward_job_control = false;
 
 /* report launch progress */
 bool orte_report_launch_progress = false;
@@ -416,22 +417,16 @@ int orte_dt_init(void)
 
 orte_job_t* orte_get_job_data_object(orte_jobid_t job)
 {
-    int32_t ljob;
+    orte_job_t *jdata;
 
     /* if the job data wasn't setup, we cannot provide the data */
     if (NULL == orte_job_data) {
         return NULL;
     }
 
-    /* the job is indexed by its local jobid, so we can
-     * just look it up here. it is not an error for this
-     * to not be found - could just be
-     * a race condition whereby the job has already been
-     * removed from the array. The get_item function
-     * will just return NULL in that case.
-     */
-    ljob = ORTE_LOCAL_JOBID(job);
-    return (orte_job_t*)opal_pointer_array_get_item(orte_job_data, ljob);
+    jdata = NULL;
+    opal_hash_table_get_value_uint32(orte_job_data, job, (void**)&jdata);
+    return jdata;
 }
 
 orte_proc_t* orte_get_proc_object(orte_process_name_t *proc)
@@ -633,7 +628,7 @@ static void orte_job_construct(orte_job_t* job)
                             ORTE_GLOBAL_ARRAY_MAX_SIZE,
                             2);
     job->num_apps = 0;
-    job->stdin_target = ORTE_VPID_INVALID;
+    job->stdin_target = 0;
     job->total_slots_alloc = 0;
     job->num_procs = 0;
     job->procs = OBJ_NEW(opal_pointer_array_t);
@@ -667,7 +662,6 @@ static void orte_job_destruct(orte_job_t* job)
 {
     orte_proc_t *proc;
     orte_app_context_t *app;
-    orte_job_t *jdata;
     int n;
     orte_timer_t *evtimer;
 
@@ -682,7 +676,7 @@ static void orte_job_destruct(orte_job_t* job)
     }
 
     if (NULL != job->personality) {
-        free(job->personality);
+        opal_argv_free(job->personality);
     }
     for (n=0; n < job->apps->size; n++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, n))) {
@@ -724,18 +718,9 @@ static void orte_job_destruct(orte_job_t* job)
     /* release the attributes */
     OPAL_LIST_DESTRUCT(&job->attributes);
 
-    /* find the job in the global array */
     if (NULL != orte_job_data && ORTE_JOBID_INVALID != job->jobid) {
-        for (n=0; n < orte_job_data->size; n++) {
-            if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, n))) {
-                continue;
-            }
-            if (jdata->jobid == job->jobid) {
-                /* set the entry to NULL */
-                opal_pointer_array_set_item(orte_job_data, n, NULL);
-                break;
-            }
-        }
+        /* remove the job from the global array */
+        opal_hash_table_remove_value_uint32(orte_job_data, job->jobid);
     }
 }
 

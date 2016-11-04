@@ -24,12 +24,12 @@
 #include <stdlib.h>
 
 #include "mpi.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
 #include "opal/util/show_help.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
 int mca_fbtl_base_file_unselect(mca_io_ompio_file_t *file)
 {

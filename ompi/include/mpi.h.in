@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
@@ -434,8 +434,8 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 /*
  * More constants
  */
-#define MPI_UNWEIGHTED           ((void *) 2)          /* unweighted graph */
-#define MPI_WEIGHTS_EMPTY        ((void *) 3)          /* empty weights */
+#define MPI_UNWEIGHTED           ((int *) 2)           /* unweighted graph */
+#define MPI_WEIGHTS_EMPTY        ((int *) 3)           /* empty weights */
 #define MPI_BOTTOM               ((void *) 0)          /* base reference address */
 #define MPI_IN_PLACE             ((void *) 1)          /* in place buffer */
 #define MPI_BSEND_OVERHEAD       128                   /* size of bsend header + ptr */
@@ -1006,7 +1006,6 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_aint;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_offset;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_count;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_bool;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_complex;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_float_complex;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_double_complex;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_long_double_complex;
@@ -1153,7 +1152,7 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_OFFSET                OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_offset)
 #define MPI_C_BOOL                OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_bool)
 #if HAVE_FLOAT__COMPLEX
-#define MPI_C_COMPLEX             OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_complex)
+#define MPI_C_COMPLEX             OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_float_complex)
 #define MPI_C_FLOAT_COMPLEX       OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_float_complex)
 #endif
 #if HAVE_DOUBLE__COMPLEX
@@ -1163,6 +1162,7 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_C_LONG_DOUBLE_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_long_double_complex)
 #endif
 #define MPI_CXX_BOOL              OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_bool)
+#define MPI_CXX_COMPLEX           OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_cplex)
 #define MPI_CXX_FLOAT_COMPLEX     OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_cplex)
 #define MPI_CXX_DOUBLE_COMPLEX    OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_dblcplex)
 #define MPI_CXX_LONG_DOUBLE_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_ldblcplex)

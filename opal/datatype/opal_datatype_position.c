@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -25,10 +25,6 @@
 
 #include <stddef.h>
 #include <stdlib.h>
-
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_convertor.h"
@@ -53,11 +49,17 @@
  * - the DT_CONTIGUOUS flag for the type OPAL_DATATYPE_END_LOOP is meaningless.
  */
 
-static inline void position_predefined_data( opal_convertor_t* CONVERTOR,
-                                             dt_elem_desc_t* ELEM,
-                                             uint32_t* COUNT,
-                                             unsigned char** POINTER,
-                                             size_t* SPACE )
+/**
+ * Advance the current position in the convertor based using the
+ * current element and a left-over counter. Update the head pointer
+ * and the leftover byte space.
+ */
+static inline void
+position_predefined_data( opal_convertor_t* CONVERTOR,
+                          dt_elem_desc_t* ELEM,
+                          uint32_t* COUNT,
+                          unsigned char** POINTER,
+                          size_t* SPACE )
 {
     uint32_t _copy_count = *(COUNT);
     size_t _copy_blength;
@@ -77,11 +79,17 @@ static inline void position_predefined_data( opal_convertor_t* CONVERTOR,
     *(COUNT)   -= _copy_count;
 }
 
-static inline void position_contiguous_loop( opal_convertor_t* CONVERTOR,
-                                             dt_elem_desc_t* ELEM,
-                                             uint32_t* COUNT,
-                                             unsigned char** POINTER,
-                                             size_t* SPACE )
+/**
+ * Advance the current position in the convertor based using the
+ * current contiguous loop and a left-over counter. Update the head
+ * pointer and the leftover byte space.
+ */
+static inline void
+position_contiguous_loop( opal_convertor_t* CONVERTOR,
+                          dt_elem_desc_t* ELEM,
+                          uint32_t* COUNT,
+                          unsigned char** POINTER,
+                          size_t* SPACE )
 {
     ddt_loop_desc_t *_loop = (ddt_loop_desc_t*)(ELEM);
     ddt_endloop_desc_t* _end_loop = (ddt_endloop_desc_t*)((ELEM) + (ELEM)->loop.items);

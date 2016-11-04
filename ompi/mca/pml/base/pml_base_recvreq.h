@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,7 +81,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
     (request)->req_base.req_sequence = 0;                                \
     (request)->req_base.req_datatype = datatype;                         \
     /* What about req_type ? */                                          \
-    (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
+    (request)->req_base.req_pml_complete = false;                        \
     (request)->req_base.req_free_called = false;                         \
 }
 /**
@@ -87,20 +90,21 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
  */
 #define MCA_PML_BASE_RECV_START( request )                                      \
     do {                                                                        \
-        (request)->req_pml_complete = false;                                    \
+        (request)->req_bytes_packed = 0;                                        \
+        (request)->req_base.req_pml_complete = false;                           \
                                                                                 \
         /* always set the req_status.MPI_TAG to ANY_TAG before starting the     \
          * request. This field is used if cancelled to find out if the request  \
          * has been matched or not.                                             \
          */                                                                     \
-        (request)->req_ompi.req_status.MPI_SOURCE = OMPI_ANY_SOURCE;            \
-        (request)->req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;                  \
-        (request)->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;                \
-        (request)->req_ompi.req_status._ucount = 0;                             \
-        (request)->req_ompi.req_status._cancelled = 0;                          \
+        (request)->req_base.req_ompi.req_status.MPI_SOURCE = OMPI_ANY_SOURCE;   \
+        (request)->req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;         \
+        (request)->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;       \
+        (request)->req_base.req_ompi.req_status._ucount = 0;                    \
+        (request)->req_base.req_ompi.req_status._cancelled = 0;                 \
                                                                                 \
-        (request)->req_ompi.req_complete = false;                               \
-        (request)->req_ompi.req_state = OMPI_REQUEST_ACTIVE;                    \
+        (request)->req_base.req_ompi.req_complete = REQUEST_PENDING;            \
+        (request)->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;           \
     } while (0)
 
 /**

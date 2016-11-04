@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,5 +27,6 @@ AC_DEFUN([MCA_orte_plm_rsh_CONFIG],[
 
     AC_CHECK_FUNC([fork], [plm_rsh_happy="yes"], [plm_rsh_happy="no"])
 
+    OPAL_SUMMARY_ADD([[Resource Managers]],[[ssh/rsh]],[$1],[$plm_rsh_happy])
     AS_IF([test "$plm_rsh_happy" = "yes"], [$1], [$2])
 ])dnl

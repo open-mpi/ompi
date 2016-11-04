@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +33,7 @@ orte_routed_radix_component_t mca_routed_radix_component = {
         information about the component itself */
 
         .base_version = {
-            ORTE_ROUTED_BASE_VERSION_2_0_0,
+            ORTE_ROUTED_BASE_VERSION_3_0_0,
 
             .mca_component_name = "radix",
             MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
@@ -59,14 +59,6 @@ static int orte_routed_radix_component_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_routed_radix_component.radix);
-
-    mca_routed_radix_component.max_connections = -1;
-    (void) mca_base_component_var_register(c, "max_connections",
-                                           "Send direct between daemons if the number of nodes is less than this number",
-                                           MCA_BASE_VAR_TYPE_INT, NULL,0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_routed_radix_component.max_connections);
 
     return ORTE_SUCCESS;
 }

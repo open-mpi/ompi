@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,12 +94,11 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
-    /* Do we need to do anything? Per MPI standard the (v3.1 page 168 line 48)
-     * the amount of data sent must be equal to the amount of data received.
-     */
-    ompi_datatype_type_size(recvtype, &recvtype_size);
-    if( (0 == recvcount) || (0 == recvtype_size) ) {
-        return MPI_SUCCESS;
+    if (! OMPI_COMM_IS_INTER(comm)) {
+        ompi_datatype_type_size(recvtype, &recvtype_size);
+        if( (0 == recvcount) || (0 == recvtype_size) ) {
+            return MPI_SUCCESS;
+        }
     }
 
     OPAL_CR_ENTER_LIBRARY();

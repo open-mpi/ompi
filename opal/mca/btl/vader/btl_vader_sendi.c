@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -105,6 +107,8 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     if (!vader_fifo_write_ep (frag->hdr, endpoint)) {
         if (descriptor) {
             *descriptor = &frag->base;
+        } else {
+            mca_btl_vader_free (btl, &frag->base);
         }
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

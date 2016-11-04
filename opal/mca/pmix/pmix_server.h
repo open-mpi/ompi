@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +32,9 @@ BEGIN_C_DECLS
 
 /* Notify the host server that a client connected to us */
 typedef int (*opal_pmix_server_client_connected_fn_t)(opal_process_name_t *proc,
-                                                      void* server_object);
+                                                      void* server_object,
+                                                      opal_pmix_op_cbfunc_t cbfunc,
+                                                      void *cbdata);
 
 /* Notify the host server that a client called pmix.finalize - note
  * that the client will be in a blocked state until the host server
@@ -162,11 +164,54 @@ typedef int (*opal_pmix_server_disconnect_fn_t)(opal_list_t *procs, opal_list_t 
  * manager may have access to events beyond process failure. In cases where
  * the client application requests to be notified of such events, the request
  * will be passed to the PMIx server, which in turn shall pass the request to
- * the resource manager. The list of opal_value_t will describe the
- * desired events */
+ * the resource manager. The list of opal_value_t will provide the OPAL
+ * error codes corresponding to the desired events */
  typedef int (*opal_pmix_server_register_events_fn_t)(opal_list_t *info,
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
+
+/* Deregister from the specified events. The list of opal_value_t will provide the OPAL
+ * error codes corresponding to the desired events */
+ typedef int (*opal_pmix_server_deregister_events_fn_t)(opal_list_t *info,
+                                                        opal_pmix_op_cbfunc_t cbfunc,
+                                                        void *cbdata);
+
+/* Notify  the specified processes of an event generated either by
+  * the PMIx server itself, or by one of its local clients. The RTE
+  * is requested to pass the notification to each PMIx server that
+  * hosts one or more of the specified processes */
+typedef int (*opal_pmix_server_notify_fn_t)(int code, opal_process_name_t *source,
+                                            opal_list_t *info,
+                                            opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+
+/* Query the RTE for information - the list is composed of opal_pmix_query_t items */
+typedef int (*opal_pmix_server_query_fn_t)(opal_process_name_t *requestor,
+                                           opal_list_t *queries,
+                                           opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* Register that a tool has connected to the server, and request
+ * that the tool be assigned a jobid for further interactions.
+ * The optional opal_value_t list can be used to pass qualifiers for
+ * the connection request:
+ *
+ * (a) OPAL_PMIX_USERID - effective userid of the tool
+ * (b) OPAL_PMIX_GRPID - effective groupid of the tool
+ * (c) OPAL_PMIX_FWD_STDOUT - forward any stdout to this tool
+ * (d) OPAL_PMIX_FWD_STDERR - forward any stderr to this tool
+ * (e) OPAL_PMIX_FWD_STDIN - forward stdin from this tool to any
+ *     processes spawned on its behalf
+ */
+typedef void (*opal_pmix_server_tool_connection_fn_t)(opal_list_t *info,
+                                                      opal_pmix_tool_connection_cbfunc_t cbfunc,
+                                                      void *cbdata);
+
+/* Log data on behalf of the client */
+typedef void (*opal_pmix_server_log_fn_t)(opal_process_name_t *requestor,
+                                          opal_list_t *info,
+                                          opal_list_t *directives,
+                                          opal_pmix_op_cbfunc_t cbfunc,
+                                          void *cbdata);
+
 
 /* Callback function for incoming connection requests from
  * local clients */
@@ -179,26 +224,31 @@ typedef void (*opal_pmix_connection_cbfunc_t)(int incoming_sd);
  * numbers of local clients such as occur when running on large
  * SMPs. The host server listener is required to call accept
  * on the incoming connection request, and then passing the
- * resulting soct to the provided cbfunc. A NULL for this function
+ * resulting socket to the provided cbfunc. A NULL for this function
  * will cause the internal PMIx server to spawn its own listener
  * thread */
 typedef int (*opal_pmix_server_listener_fn_t)(int listening_sd,
                                               opal_pmix_connection_cbfunc_t cbfunc);
 
 typedef struct opal_pmix_server_module_1_0_0_t {
-    opal_pmix_server_client_connected_fn_t client_connected;
-    opal_pmix_server_client_finalized_fn_t client_finalized;
-    opal_pmix_server_abort_fn_t            abort;
-    opal_pmix_server_fencenb_fn_t          fence_nb;
-    opal_pmix_server_dmodex_req_fn_t       direct_modex;
-    opal_pmix_server_publish_fn_t          publish;
-    opal_pmix_server_lookup_fn_t           lookup;
-    opal_pmix_server_unpublish_fn_t        unpublish;
-    opal_pmix_server_spawn_fn_t            spawn;
-    opal_pmix_server_connect_fn_t          connect;
-    opal_pmix_server_disconnect_fn_t       disconnect;
-    opal_pmix_server_register_events_fn_t  register_events;
-    opal_pmix_server_listener_fn_t         listener;
+    opal_pmix_server_client_connected_fn_t      client_connected;
+    opal_pmix_server_client_finalized_fn_t      client_finalized;
+    opal_pmix_server_abort_fn_t                 abort;
+    opal_pmix_server_fencenb_fn_t               fence_nb;
+    opal_pmix_server_dmodex_req_fn_t            direct_modex;
+    opal_pmix_server_publish_fn_t               publish;
+    opal_pmix_server_lookup_fn_t                lookup;
+    opal_pmix_server_unpublish_fn_t             unpublish;
+    opal_pmix_server_spawn_fn_t                 spawn;
+    opal_pmix_server_connect_fn_t               connect;
+    opal_pmix_server_disconnect_fn_t            disconnect;
+    opal_pmix_server_register_events_fn_t       register_events;
+    opal_pmix_server_deregister_events_fn_t     deregister_events;
+    opal_pmix_server_notify_fn_t                notify_event;
+    opal_pmix_server_query_fn_t                 query;
+    opal_pmix_server_tool_connection_fn_t       tool_connected;
+    opal_pmix_server_log_fn_t                   log;
+    opal_pmix_server_listener_fn_t              listener;
 } opal_pmix_server_module_t;
 
 

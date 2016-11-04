@@ -297,9 +297,12 @@ static int mca_btl_vader_component_close(void)
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_fragments);
 
-    if (NULL != mca_btl_vader_component.my_segment) {
+    if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism &&
+        NULL != mca_btl_vader_component.my_segment) {
         munmap (mca_btl_vader_component.my_segment, mca_btl_vader_component.segment_size);
     }
+
+    mca_btl_vader_component.my_segment = NULL;
 
 #if OPAL_BTL_VADER_HAVE_KNEM
     mca_btl_vader_knem_fini ();
@@ -570,13 +573,14 @@ void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, struct mca_btl_ba
     segments[0].seg_len       = hdr->len;
 
     if (hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) {
-        mca_mpool_base_registration_t *xpmem_reg;
+        mca_rcache_base_registration_t *xpmem_reg;
 
         xpmem_reg = vader_get_registation (endpoint, hdr->sc_iov.iov_base,
                                            hdr->sc_iov.iov_len, 0,
                                            &segments[1].seg_addr.pval);
+        assert (NULL != xpmem_reg);
 
-        segments[1].seg_len       = hdr->sc_iov.iov_len;
+        segments[1].seg_len = hdr->sc_iov.iov_len;
         frag.des_segment_count = 2;
 
         /* recv upcall */
@@ -630,22 +634,21 @@ static void mca_btl_vader_progress_waiting (mca_btl_base_endpoint_t *ep)
         return;
     }
 
-    OPAL_THREAD_LOCK(&ep->lock);
+    OPAL_THREAD_LOCK(&ep->pending_frags_lock);
     OPAL_LIST_FOREACH_SAFE(frag, next, &ep->pending_frags, mca_btl_vader_frag_t) {
-        OPAL_THREAD_UNLOCK(&ep->lock);
         ret = vader_fifo_write_ep (frag->hdr, ep);
         if (!ret) {
+            OPAL_THREAD_UNLOCK(&ep->pending_frags_lock);
             return;
         }
 
-        OPAL_THREAD_LOCK(&ep->lock);
         (void) opal_list_remove_first (&ep->pending_frags);
     }
 
     ep->waiting = false;
     opal_list_remove_item (&mca_btl_vader_component.pending_endpoints, &ep->super);
 
-    OPAL_THREAD_UNLOCK(&ep->lock);
+    OPAL_THREAD_UNLOCK(&ep->pending_frags_lock);
 }
 
 /**

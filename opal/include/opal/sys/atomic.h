@@ -131,6 +131,14 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #define OPAL_HAVE_INLINE_ATOMIC_SWAP_64 1
 #endif
 
+/**
+ * Enumeration of lock states
+ */
+enum {
+    OPAL_ATOMIC_UNLOCKED = 0,
+    OPAL_ATOMIC_LOCKED = 1
+};
+
 /**********************************************************************
  *
  * Load the appropriate architecture files and set some reasonable
@@ -141,12 +149,16 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 /* don't include system-level gorp when generating doxygen files */
 #elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_SYNC
 #include "opal/sys/sync_builtin/atomic.h"
+#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_GCC
+#include "opal/sys/gcc_builtin/atomic.h"
 #elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_OSX
 #include "opal/sys/osx/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_AMD64
 #include "opal/sys/amd64/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM
 #include "opal/sys/arm/atomic.h"
+#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+#include "opal/sys/arm64/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
 #include "opal/sys/ia32/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
@@ -263,15 +275,6 @@ void opal_atomic_wmb(void);
 #endif
 
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_SPINLOCKS || (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64)
-
-/**
- * Enumeration of lock states
- */
-enum {
-    OPAL_ATOMIC_UNLOCKED = 0,
-    OPAL_ATOMIC_LOCKED = 1
-};
-
 
 /**
  * Initialize a lock to value

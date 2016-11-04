@@ -9,9 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,9 +104,6 @@ OBJ_CLASS_DECLARATION(orte_odls_launch_local_t);
 
 ORTE_DECLSPEC void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata);
 
-ORTE_DECLSPEC int
-orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buffer, orte_rml_tag_t tag);
-
 ORTE_DECLSPEC void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata);
 
 /* define a function type to signal a local proc */
@@ -123,8 +121,7 @@ typedef bool (*orte_odls_base_child_died_fn_t)(orte_proc_t *child);
 
 ORTE_DECLSPEC int
 orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
-                                        orte_odls_base_kill_local_fn_t kill_local,
-                                        orte_odls_base_child_died_fn_t child_died);
+                                        orte_odls_base_kill_local_fn_t kill_local);
 
 ORTE_DECLSPEC int orte_odls_base_default_restart_proc(orte_proc_t *child,
                                                       orte_odls_base_fork_local_proc_fn_t fork_local);

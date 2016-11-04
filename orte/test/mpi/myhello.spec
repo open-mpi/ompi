@@ -1,0 +1,3 @@
+Name: myhello
+Exec: ./hello
+

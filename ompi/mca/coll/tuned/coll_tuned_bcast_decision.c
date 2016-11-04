@@ -118,46 +118,12 @@ int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mc
     return (MPI_SUCCESS);
 }
 
-
-int ompi_coll_tuned_bcast_intra_do_forced(void *buf, int count,
-                                          struct ompi_datatype_t *dtype,
-                                          int root,
-                                          struct ompi_communicator_t *comm,
-                                          mca_coll_base_module_t *module)
-{
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_do_forced algorithm %d",
-                 tuned_module->user_forced[BCAST].algorithm));
-
-    switch (tuned_module->user_forced[BCAST].algorithm) {
-    case (0):   return ompi_coll_tuned_bcast_intra_dec_fixed( buf, count, dtype, root, comm, module );
-    case (1):   return ompi_coll_base_bcast_intra_basic_linear( buf, count, dtype, root, comm, module );
-    case (2):   return ompi_coll_base_bcast_intra_chain( buf, count, dtype, root, comm, module,
-                                                         tuned_module->user_forced[BCAST].segsize,
-                                                         tuned_module->user_forced[BCAST].chain_fanout );
-    case (3):   return ompi_coll_base_bcast_intra_pipeline( buf, count, dtype, root, comm, module,
-                                                            tuned_module->user_forced[BCAST].segsize );
-    case (4):   return ompi_coll_base_bcast_intra_split_bintree( buf, count, dtype, root, comm, module,
-                                                                 tuned_module->user_forced[BCAST].segsize );
-    case (5):   return ompi_coll_base_bcast_intra_bintree( buf, count, dtype, root, comm, module,
-                                                           tuned_module->user_forced[BCAST].segsize );
-    case (6):   return ompi_coll_base_bcast_intra_binomial( buf, count, dtype, root, comm, module,
-                                                            tuned_module->user_forced[BCAST].segsize );
-    } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                 tuned_module->user_forced[BCAST].algorithm, ompi_coll_tuned_forced_max_algorithms[BCAST]));
-    return (MPI_ERR_ARG);
-}
-
-
 int ompi_coll_tuned_bcast_intra_do_this(void *buf, int count,
                                         struct ompi_datatype_t *dtype,
                                         int root,
                                         struct ompi_communicator_t *comm,
                                         mca_coll_base_module_t *module,
                                         int algorithm, int faninout, int segsize)
-
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_do_this algorithm %d topo faninout %d segsize %d",
                  algorithm, faninout, segsize));

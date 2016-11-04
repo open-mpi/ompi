@@ -2,14 +2,16 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,14 +63,12 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
 
     dim = comm->c_cube_dim;
     hibit = opal_hibit(vrank, dim);
-    if (hibit < 0) {
-        return MPI_ERR_OTHER;
-    }
     --dim;
 
     /* Receive data from parent in the tree. */
 
     if (vrank > 0) {
+        assert(hibit >= 0);
         peer = ((vrank & ~(1 << hibit)) + root) % size;
 
         err = MCA_PML_CALL(recv(buff, count, datatype, peer,
@@ -82,6 +82,7 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
     /* Send data to the children. */
 
     reqs = coll_base_comm_get_reqs(module->base_data, size);
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     err = MPI_SUCCESS;
     preq = reqs;
@@ -156,6 +157,8 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
                                 MPI_STATUS_IGNORE));
     } else {
         reqs = coll_base_comm_get_reqs(module->base_data, rsize);
+        if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
+
         /* root section */
         for (i = 0; i < rsize; i++) {
             err = MCA_PML_CALL(isend(buff, count, datatype, i,
@@ -163,7 +166,7 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
                                      MCA_PML_BASE_SEND_STANDARD,
                                      comm, &(reqs[i])));
             if (OMPI_SUCCESS != err) {
-                ompi_coll_base_free_reqs(reqs, rsize);
+                ompi_coll_base_free_reqs(reqs, i + 1);
                 return err;
             }
         }

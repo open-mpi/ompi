@@ -31,6 +31,8 @@
 #include <unistd.h>
 #endif
 
+#include "opal/runtime/opal_progress_threads.h"
+
 #include "orte/util/show_help.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"
@@ -45,15 +47,17 @@
 
 static int rte_init(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
+static int rte_finalize(void);
 
 
 orte_ess_base_module_t orte_ess_tool_module = {
     rte_init,
-    orte_ess_base_tool_finalize,
+    rte_finalize,
     rte_abort,
     NULL /* ft_event */
 };
 
+static bool progress_thread_running = false;
 
 static int rte_init(void)
 {
@@ -103,6 +107,14 @@ static int rte_init(void)
         ORTE_PROC_MY_NAME->vpid = 0;
     }
 
+    /* if requested, get an async event base - we use the
+     * opal_async one so we don't startup extra threads if
+     * not needed */
+    if (mca_ess_tool_component.async) {
+        orte_event_base = opal_progress_thread_init(NULL);
+        progress_thread_running = true;
+    }
+
     /* do the rest of the standard tool init */
     if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
         ORTE_ERROR_LOG(ret);
@@ -120,6 +132,19 @@ static int rte_init(void)
     }
 
     return ret;
+}
+
+static int rte_finalize(void)
+{
+    /* use the std finalize routing */
+    orte_ess_base_tool_finalize();
+
+    /* release the event base */
+    if (progress_thread_running) {
+        opal_progress_thread_finalize(NULL);
+        progress_thread_running = false;
+    }
+    return ORTE_SUCCESS;
 }
 
 /*

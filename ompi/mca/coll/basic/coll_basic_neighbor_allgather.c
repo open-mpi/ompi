@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -51,6 +51,8 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
     ompi_datatype_get_extent(rdtype, &lb, &extent);
 
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims );
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
+
     /* The ordering is defined as -1 then +1 in each dimension in
      * order of dimension. */
     for (dim = 0, nreqs = 0 ; dim < cart->ndims ; ++dim) {
@@ -63,12 +65,13 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
         }
 
         if (MPI_PROC_NULL != srank) {
-            nreqs += 2;
+            nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, srank,
                                     MCA_COLL_BASE_TAG_ALLGATHER,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
+            nreqs++;
             /* remove cast from const when the pml layer is updated to take
              * a const for the send buffer. */
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, srank,
@@ -81,13 +84,13 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
         rbuf = (char *) rbuf + extent * rcount;
 
         if (MPI_PROC_NULL != drank) {
-            nreqs += 2;
+            nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, drank,
                                     MCA_COLL_BASE_TAG_ALLGATHER,
                                     comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
-
+            nreqs++;
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, drank,
                                     MCA_COLL_BASE_TAG_ALLGATHER,
                                     MCA_PML_BASE_SEND_STANDARD,
@@ -134,6 +137,7 @@ mca_coll_basic_neighbor_allgather_graph(const void *sbuf, int scount,
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, 2 * degree);
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     for (neighbor = 0; neighbor < degree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, edges[neighbor], MCA_COLL_BASE_TAG_ALLGATHER,
@@ -183,6 +187,7 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, indegree + outdegree);
+    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     for (neighbor = 0; neighbor < indegree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, inedges[neighbor],
@@ -193,7 +198,7 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
     }
 
     if (OMPI_SUCCESS != rc) {
-        ompi_coll_base_free_reqs(reqs, neighbor);
+        ompi_coll_base_free_reqs(reqs, neighbor + 1);
         return rc;
     }
 
@@ -208,7 +213,7 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
     }
 
     if (OMPI_SUCCESS != rc) {
-        ompi_coll_base_free_reqs(reqs, indegree + neighbor);
+        ompi_coll_base_free_reqs(reqs, indegree + neighbor + 1);
         return rc;
     }
 

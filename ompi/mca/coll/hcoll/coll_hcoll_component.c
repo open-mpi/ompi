@@ -17,6 +17,7 @@
 
 #include "coll_hcoll.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "coll_hcoll_dtypes.h"
 
 /*
  * Public string showing the coll ompi_hcol component version number
@@ -90,40 +91,6 @@ enum {
     REGSTR_EMPTY_OK = 0x01,
     REGSTR_MAX = 0x88
 };
-
-
-/*
- * utility routine for string parameter registration
- */
-static int reg_string(const char* param_name,
-        const char* deprecated_param_name,
-        const char* param_desc,
-        const char* default_value, char **storage,
-        int flags)
-{
-    int index;
-
-    *storage = (char *) default_value;
-    index = mca_base_component_var_register(
-            &mca_coll_hcoll_component.super.collm_version,
-            param_name, param_desc, MCA_BASE_VAR_TYPE_STRING,
-            NULL, 0, 0, OPAL_INFO_LVL_9,
-            MCA_BASE_VAR_SCOPE_READONLY, storage);
-    if (NULL != deprecated_param_name) {
-        (void) mca_base_var_register_synonym(index,
-                "ompi", "coll", "hcoll", deprecated_param_name,
-                MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
-    }
-
-    if (0 != (flags & REGSTR_EMPTY_OK) &&
-            (NULL == *storage || 0 == strlen(*storage))) {
-        opal_output(0, "Bad parameter value for parameter \"%s\"",
-                param_name);
-        return OMPI_ERR_BAD_PARAM;
-    }
-
-    return OMPI_SUCCESS;
-}
 
 
 /*
@@ -207,7 +174,15 @@ static int hcoll_register(void)
                   1,
                   &mca_coll_hcoll_component.hcoll_datatype_fallback,
                   0));
-
+#if HCOLL_API >= HCOLL_VERSION(3,6)
+    CHECK(reg_int("dts",NULL,
+                  "[1|0|] Enable/Disable derived types support",
+                  1,
+                  &mca_coll_hcoll_component.derived_types_support_enabled,
+                  0));
+#else
+    mca_coll_hcoll_component.derived_types_support_enabled = 0;
+#endif
     mca_coll_hcoll_component.compiletime_version = HCOLL_VERNO_STRING;
     mca_base_component_var_register(&mca_coll_hcoll_component.super.collm_version,
             MCA_COMPILETIME_VER,
@@ -278,7 +253,7 @@ static int hcoll_close(void)
 
     HCOL_VERBOSE(5,"HCOLL FINALIZE");
     rc = hcoll_finalize();
-
+    OBJ_DESTRUCT(&cm->dtypes);
     opal_progress_unregister(mca_coll_hcoll_progress);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(1,"Hcol library finalize failed");

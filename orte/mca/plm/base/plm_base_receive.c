@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -127,7 +127,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     orte_exit_code_t exit_code;
     int32_t rc=ORTE_SUCCESS, ret;
     orte_app_context_t *app, *child_app;
-    orte_process_name_t name;
+    orte_process_name_t name, *nptr;
     pid_t pid;
     bool running;
     int i, room;
@@ -162,8 +162,17 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         jdata->originator.jobid = sender->jobid;
         jdata->originator.vpid = sender->vpid;
 
+        /* get the name of the actual spawn parent - i.e., the proc that actually
+         * requested the spawn */
+        nptr = &name;
+        if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, (void**)&nptr, OPAL_NAME)) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            rc = ORTE_ERR_NOT_FOUND;
+            goto ANSWER_LAUNCH;
+        }
+
         /* get the parent's job object */
-        if (NULL != (parent = orte_get_job_data_object(sender->jobid))) {
+        if (NULL != (parent = orte_get_job_data_object(name.jobid))) {
             /* if the prefix was set in the parent's job, we need to transfer
              * that prefix to the child's app_context so any further launch of
              * orteds can find the correct binary. There always has to be at
@@ -260,7 +269,8 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         }
 
         /* send the response back to the sender */
-        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_LAUNCH_RESP,
+        if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                               sender, answer, ORTE_RML_TAG_LAUNCH_RESP,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(answer);

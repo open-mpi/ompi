@@ -2,14 +2,14 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -48,8 +48,9 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
                                mca_coll_base_module_t *module)
 {
     int rank, root = 0, size, rsize, err, i, line;
-    char *tmpbuf = NULL, *ptmp;
-    ptrdiff_t rlb, slb, rextent, sextent, incr;
+    char *tmpbuf_free = NULL, *tmpbuf, *ptmp;
+    ptrdiff_t rlb, rextent, incr;
+    ptrdiff_t gap, span;
     ompi_request_t *req;
     ompi_request_t **reqs = NULL;
 
@@ -75,12 +76,10 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
         /* receive a msg. from all other procs. */
         err = ompi_datatype_get_extent(rdtype, &rlb, &rextent);
         if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
-        err = ompi_datatype_get_extent(sdtype, &slb, &sextent);
-        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         /* Get a requests arrays of the right size */
         reqs = coll_base_comm_get_reqs(module->base_data, rsize + 1);
-        if( NULL == reqs ) { line = __LINE__; goto exit; }
+        if( NULL == reqs ) { line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto exit; }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
         err = MCA_PML_CALL(isend(sbuf, scount, sdtype, 0,
@@ -107,8 +106,10 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
         if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         /* Step 2: exchange the resuts between the root processes */
-        tmpbuf = (char *) malloc(scount * size * sextent);
-        if (NULL == tmpbuf) { line = __LINE__; goto exit; }
+        span = opal_datatype_span(&sdtype->super, (int64_t)scount * (int64_t)size, &gap);
+        tmpbuf_free = (char *) malloc(span);
+        if (NULL == tmpbuf_free) { line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto exit; }
+        tmpbuf = tmpbuf_free - gap;
 
         err = MCA_PML_CALL(isend(rbuf, rsize * rcount, rdtype, 0,
                                  MCA_COLL_BASE_TAG_ALLGATHER,
@@ -155,10 +156,11 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
     if( MPI_SUCCESS != err ) {
         OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                       __FILE__, line, err, rank) );
+        (void)line;  // silence compiler warning
         if( NULL != reqs ) ompi_coll_base_free_reqs(reqs, rsize+1);
     }
-    if (NULL != tmpbuf) {
-        free(tmpbuf);
+    if (NULL != tmpbuf_free) {
+        free(tmpbuf_free);
     }
 
     return err;

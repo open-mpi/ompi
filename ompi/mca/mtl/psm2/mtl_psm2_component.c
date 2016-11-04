@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <glob.h>
 
 static int param_priority;
 
@@ -101,15 +102,46 @@ ompi_mtl_psm2_component_register(void)
 static int
 ompi_mtl_psm2_component_open(void)
 {
-  struct stat st;
+  glob_t globbuf;
+  globbuf.gl_offs = 0;
 
   /* Component available only if Omni-Path hardware is present */
-  if (0 == stat("/dev/hfi1", &st)) {
-    return OMPI_SUCCESS;
-  }
-  else {
+  if ((glob("/dev/hfi1_[0-9]", GLOB_DOOFFS, NULL, &globbuf) != 0) &&
+      (glob("/dev/hfi1_[0-9][0-9]", GLOB_APPEND, NULL, &globbuf) != 0)) {
     return OPAL_ERR_NOT_AVAILABLE;
   }
+
+  globfree(&globbuf);
+
+  /* Component available only if at least one hfi1 port is ACTIVE */
+  bool foundOnlineHfi1Port = false;
+  size_t i;
+  char portState[128];
+  FILE *devFile;
+  if (glob("/sys/class/infiniband/hfi1_*/ports/*/state",
+        GLOB_DOOFFS, NULL, &globbuf) != 0) {
+    return OPAL_ERR_NOT_AVAILABLE;
+  }
+
+  for (i=0;i < globbuf.gl_pathc; i++) {
+    devFile = fopen(globbuf.gl_pathv[i], "r");
+    fgets(portState, sizeof(portState), devFile);
+    fclose(devFile);
+
+    if (strstr(portState, "ACTIVE") != NULL) {
+      /* Found at least one ACTIVE port */
+      foundOnlineHfi1Port = true;
+      break;
+    }
+  }
+
+  globfree(&globbuf);
+
+  if (!foundOnlineHfi1Port) {
+    return OPAL_ERR_NOT_AVAILABLE;
+  }
+
+  return OMPI_SUCCESS;
 }
 
 static int

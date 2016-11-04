@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -80,7 +80,7 @@ int MPI_Send_init(const void *buf, int count, MPI_Datatype type,
            ompi_request_t */
         (*request)->req_type = OMPI_REQUEST_NOOP;
         (*request)->req_status = ompi_request_empty.req_status;
-        (*request)->req_complete = true;
+        (*request)->req_complete = REQUEST_COMPLETED;
         (*request)->req_state = OMPI_REQUEST_INACTIVE;
         (*request)->req_persistent = true;
         (*request)->req_free = ompi_request_persistent_proc_null_free;

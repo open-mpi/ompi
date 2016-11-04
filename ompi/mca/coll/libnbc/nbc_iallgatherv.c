@@ -11,7 +11,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  */
@@ -45,9 +45,9 @@ int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatyp
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
-  res = MPI_Type_extent (recvtype, &rcvext);
+  res = ompi_datatype_type_extent (recvtype, &rcvext);
   if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
-    NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error ("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
@@ -82,7 +82,8 @@ int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatyp
       return res;
     }
 
-    res = NBC_Sched_send (sbuf, false, sendcount, sendtype, speer, schedule, false);
+    /* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
+    res = NBC_Sched_send (sbuf, false, recvcounts[rank], recvtype, speer, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       OBJ_RELEASE(schedule);
       return res;
@@ -124,9 +125,9 @@ int ompi_coll_libnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_D
 
   rsize = ompi_comm_remote_size (comm);
 
-  res = MPI_Type_extent(recvtype, &rcvext);
+  res = ompi_datatype_type_extent(recvtype, &rcvext);
   if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
-    NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error ("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 

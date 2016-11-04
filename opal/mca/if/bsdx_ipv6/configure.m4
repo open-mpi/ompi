@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,7 +32,12 @@ AC_DEFUN([MCA_opal_if_bsdx_ipv6_CONFIG], [
     AS_IF([test "$opal_found_sockaddr" = "yes"],
           [AC_MSG_RESULT([yes (cached)])
            AC_MSG_CHECKING([some flavor of BSD])
-           AS_IF([test "$opal_found_netbsd" = "yes" -o "$opal_found_freebsd" = "yes" -o "$opal_found_openbsd" = "yes" -o "$opal_found_386bsd" = "yes" -o "$opal_found_bsdi" = "yes" -o "$opal_found_apple" = "yes"],
+           AS_IF([test "$opal_found_netbsd" = "yes" || \
+                  test "$opal_found_freebsd" = "yes" || \
+                  test "$opal_found_openbsd" = "yes" || \
+                  test "$opal_found_386bsd" = "yes" || \
+                  test "$opal_found_bsdi" = "yes" ||
+                  test "$opal_found_apple" = "yes"],
                  [AC_MSG_RESULT([yes])
                   $1],
                  [AC_MSG_RESULT([no])

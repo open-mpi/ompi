@@ -5,6 +5,9 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +24,9 @@
 
 #include <time.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "opal_stdint.h"
 #include "opal/class/opal_pointer_array.h"
@@ -35,26 +41,55 @@
 
 #define OPAL_PMI_PAD  10
 
-/********     ERRHANDLER SUPPORT     ********/
-static opal_pmix_errhandler_fn_t errhandler = NULL;
-
-void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err)
+void opal_pmix_base_set_evbase(opal_event_base_t *evbase)
 {
-    errhandler = err;
+    opal_pmix_base.evbase = evbase;
 }
 
-void opal_pmix_base_errhandler(int status,
-                               opal_list_t *procs,
-                               opal_list_t *info)
+/********     ERRHANDLER SUPPORT FOR COMPONENTS THAT
+ ********     DO NOT NATIVELY SUPPORT IT
+ ********/
+static opal_pmix_notification_fn_t evhandler = NULL;
+
+void opal_pmix_base_register_handler(opal_list_t *event_codes,
+                                     opal_list_t *info,
+                                     opal_pmix_notification_fn_t err,
+                                     opal_pmix_evhandler_reg_cbfunc_t cbfunc,
+                                     void *cbdata)
 {
-    if (NULL != errhandler) {
-        errhandler(status);
+    evhandler = err;
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, 0, cbdata);
     }
 }
 
-void opal_pmix_base_deregister_handler(void)
+void opal_pmix_base_evhandler(int status,
+                              const opal_process_name_t *source,
+                              opal_list_t *info, opal_list_t *results,
+                              opal_pmix_notification_complete_fn_t cbfunc, void *cbdata)
 {
-    errhandler = NULL;
+    if (NULL != evhandler) {
+        evhandler(status, source, info, results, cbfunc, cbdata);
+    }
+}
+
+void opal_pmix_base_deregister_handler(size_t errid,
+                                       opal_pmix_op_cbfunc_t cbfunc,
+                                       void *cbdata)
+{
+    evhandler = NULL;
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, cbdata);
+    }
+}
+
+int opal_pmix_base_notify_event(int status,
+                                const opal_process_name_t *source,
+                                opal_pmix_data_range_t range,
+                                opal_list_t *info,
+                                opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    return OPAL_SUCCESS;
 }
 
 struct lookup_caddy_t {
@@ -127,16 +162,14 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     info->type = OPAL_BOOL;
     info->data.flag = true;
     opal_list_append(&mlist, &info->super);
-    if (0 < timeout) {
-        /* give it a decent timeout as we don't know when
-         * the other side will publish - it doesn't
-         * have to be simultaneous */
-        info = OBJ_NEW(opal_value_t);
-        info->key = strdup(OPAL_PMIX_TIMEOUT);
-        info->type = OPAL_INT;
-        info->data.integer = timeout;
-        opal_list_append(&mlist, &info->super);
-    }
+    /* pass along the given timeout as we don't know when
+     * the other side will publish - it doesn't
+     * have to be simultaneous */
+    info = OBJ_NEW(opal_value_t);
+    info->key = strdup(OPAL_PMIX_TIMEOUT);
+    info->type = OPAL_INT;
+    info->data.integer = timeout;
+    opal_list_append(&mlist, &info->super);
 
     /* if a non-blocking version of lookup isn't
      * available, then use the blocking version */
@@ -243,8 +276,8 @@ int opal_pmix_base_store_encoded(const char *key, const void *data,
 
     /* serialize the opal datatype */
     pmi_packed_data_off += sprintf (pmi_packed_data + pmi_packed_data_off,
-            "%s%c%02x%c%04x%c", key, '\0', type, '\0',
-            (int) data_len, '\0');
+                                    "%s%c%02x%c%04x%c", key, '\0', type, '\0',
+                                    (int) data_len, '\0');
     if (NULL != data) {
         memmove (pmi_packed_data + pmi_packed_data_off, data, data_len);
         pmi_packed_data_off += data_len;
@@ -534,7 +567,7 @@ int opal_pmix_base_cache_keys_locally(const opal_process_name_t* id, const char*
     }
 
     /* search for each key in the decoded data */
-    for (offset = 0 ; offset < len && '\0' != tmp_val[offset] ; ) {
+    for (offset = 0 ; offset < len ; ) {
         /* type */
         tmp = tmp_val + offset + strlen (tmp_val + offset) + 1;
         /* size */
@@ -634,7 +667,7 @@ static char* setup_key(const opal_process_name_t* name, const char *key, int pmi
     char *pmi_kvs_key;
 
     if (pmix_keylen_max <= asprintf(&pmi_kvs_key, "%" PRIu32 "-%" PRIu32 "-%s",
-                                        name->jobid, name->vpid, key)) {
+                                    name->jobid, name->vpid, key)) {
         free(pmi_kvs_key);
         return NULL;
     }
@@ -647,11 +680,11 @@ static inline unsigned char pmi_base64_encsym (unsigned char value) {
     assert (value < 64);
 
     if (value < 26) {
-	return 'A' + value;
+        return 'A' + value;
     } else if (value < 52) {
-	return 'a' + (value - 26);
+        return 'a' + (value - 26);
     } else if (value < 62) {
-	return '0' + (value - 52);
+        return '0' + (value - 52);
     }
 
     return (62 == value) ? '+' : '/';
@@ -659,19 +692,18 @@ static inline unsigned char pmi_base64_encsym (unsigned char value) {
 
 static inline unsigned char pmi_base64_decsym (unsigned char value) {
     if ('+' == value) {
-	return 62;
+        return 62;
     } else if ('/' == value) {
-	return 63;
+        return 63;
     } else if (' ' == value) {
-	return 64;
+        return 64;
     } else if (value <= '9') {
-	return (value - '0') + 52;
+        return (value - '0') + 52;
     } else if (value <= 'Z') {
-	return (value - 'A');
+        return (value - 'A');
     } else if (value <= 'z') {
-	return (value - 'a') + 26;
+        return (value - 'a') + 26;
     }
-
     return 64;
 }
 
@@ -693,12 +725,12 @@ static inline int pmi_base64_decode_block (const char in[4], unsigned char out[3
 
     out[0] = in_dec[0] << 2 | in_dec[1] >> 4;
     if (64 == in_dec[2]) {
-	return 1;
+        return 1;
     }
 
     out[1] = in_dec[1] << 4 | in_dec[2] >> 2;
     if (64 == in_dec[3]) {
-	return 2;
+        return 2;
     }
 
     out[2] = ((in_dec[2] << 6) & 0xc0) | in_dec[3];
@@ -714,7 +746,7 @@ static char *pmi_encode(const void *val, size_t vallen)
 
     outdata = calloc (((2 + vallen) * 4) / 3 + 2, 1);
     if (NULL == outdata) {
-	return NULL;
+        return NULL;
     }
 
     for (i = 0, tmp = outdata ; i < vallen ; i += 3, tmp += 4) {
@@ -728,7 +760,7 @@ static char *pmi_encode(const void *val, size_t vallen)
 
 static uint8_t *pmi_decode (const char *data, size_t *retlen)
 {
-    size_t input_len = (strlen (data) - 1) / 4;
+    size_t input_len = strlen (data) / 4;
     unsigned char *ret;
     int out_len;
     size_t i;
@@ -736,16 +768,13 @@ static uint8_t *pmi_decode (const char *data, size_t *retlen)
     /* default */
     *retlen = 0;
 
-    ret = calloc (1, 3 * input_len + 1);
+    ret = calloc (1, 3 * input_len);
     if (NULL == ret) {
         return ret;
     }
-
     for (i = 0, out_len = 0 ; i < input_len ; i++, data += 4) {
-	out_len += pmi_base64_decode_block(data, ret + 3 * i);
+        out_len += pmi_base64_decode_block(data, ret + 3 * i);
     }
-
-    ret[out_len] = '\0';
     *retlen = out_len;
     return ret;
 }

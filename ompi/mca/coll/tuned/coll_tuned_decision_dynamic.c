@@ -81,8 +81,10 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (const void *sbuf, void *rbuf, int c
     } /*end if any com rules to check */
 
     if (tuned_module->user_forced[ALLREDUCE].algorithm) {
-        return ompi_coll_tuned_allreduce_intra_do_forced (sbuf, rbuf, count, dtype, op,
-                                                          comm, module);
+        return ompi_coll_tuned_allreduce_intra_do_this(sbuf, rbuf, count, dtype, op, comm, module,
+                                                       tuned_module->user_forced[ALLREDUCE].algorithm,
+                                                       tuned_module->user_forced[ALLREDUCE].tree_fanout,
+                                                       tuned_module->user_forced[ALLREDUCE].segsize);
     }
     return ompi_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op,
                                                       comm, module);
@@ -131,9 +133,13 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(const void *sbuf, int scount,
     } /*end if any com rules to check */
 
     if (tuned_module->user_forced[ALLTOALL].algorithm) {
-        return ompi_coll_tuned_alltoall_intra_do_forced (sbuf, scount, sdtype,
-                                                         rbuf, rcount, rdtype,
-                                                         comm, module);
+        return ompi_coll_tuned_alltoall_intra_do_this(sbuf, scount, sdtype,
+                                                      rbuf, rcount, rdtype,
+                                                      comm, module,
+                                                      tuned_module->user_forced[ALLTOALL].algorithm,
+                                                      tuned_module->user_forced[ALLTOALL].tree_fanout,
+                                                      tuned_module->user_forced[ALLTOALL].segsize,
+                                                      tuned_module->user_forced[ALLTOALL].max_requests);
     }
     return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype,
                                                      rbuf, rcount, rdtype,
@@ -179,9 +185,10 @@ int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, const int *sco
     } /*end if any com rules to check */
 
     if (tuned_module->user_forced[ALLTOALLV].algorithm) {
-        return ompi_coll_tuned_alltoallv_intra_do_forced(sbuf, scounts, sdisps, sdtype,
-                                                         rbuf, rcounts, rdisps, rdtype,
-                                                         comm, module);
+        return ompi_coll_tuned_alltoallv_intra_do_this(sbuf, scounts, sdisps, sdtype,
+                                                       rbuf, rcounts, rdisps, rdtype,
+                                                       comm, module,
+                                                       tuned_module->user_forced[ALLTOALLV].algorithm);
     }
     return ompi_coll_tuned_alltoallv_intra_dec_fixed(sbuf, scounts, sdisps, sdtype,
                                                      rbuf, rcounts, rdisps, rdtype,
@@ -218,7 +225,10 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm,
     } /*end if any com rules to check */
 
     if (tuned_module->user_forced[BARRIER].algorithm) {
-        return ompi_coll_tuned_barrier_intra_do_forced (comm, module);
+        return ompi_coll_tuned_barrier_intra_do_this(comm, module,
+                                                     tuned_module->user_forced[BARRIER].algorithm,
+                                                     tuned_module->user_forced[BARRIER].tree_fanout,
+                                                     tuned_module->user_forced[BARRIER].segsize);
     }
     return ompi_coll_tuned_barrier_intra_dec_fixed (comm, module);
 }
@@ -230,8 +240,8 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm,
  *   Accepts:   - same arguments as MPI_Bcast()
  *   Returns:   - MPI_SUCCESS or error code (passed from the bcast implementation)
  */
-int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
-                                            struct ompi_datatype_t *datatype, int root,
+int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buf, int count,
+                                            struct ompi_datatype_t *dtype, int root,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)
 {
@@ -245,7 +255,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
         int alg, faninout, segsize, ignoreme;
         size_t dsize;
 
-        ompi_datatype_type_size (datatype, &dsize);
+        ompi_datatype_type_size (dtype, &dsize);
         dsize *= count;
 
         alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[BCAST],
@@ -253,7 +263,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
 
         if (alg) {
             /* we have found a valid choice from the file based rules for this message size */
-            return ompi_coll_tuned_bcast_intra_do_this (buff, count, datatype, root,
+            return ompi_coll_tuned_bcast_intra_do_this (buf, count, dtype, root,
                                                         comm, module,
                                                         alg, faninout, segsize);
         } /* found a method */
@@ -261,10 +271,13 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
 
 
     if (tuned_module->user_forced[BCAST].algorithm) {
-        return ompi_coll_tuned_bcast_intra_do_forced (buff, count, datatype, root,
-                                                      comm, module);
+        return ompi_coll_tuned_bcast_intra_do_this(buf, count, dtype,
+                                                   root, comm, module,
+                                                   tuned_module->user_forced[BCAST].algorithm,
+                                                   tuned_module->user_forced[BCAST].chain_fanout,
+                                                   tuned_module->user_forced[BCAST].segsize);
     }
-    return ompi_coll_tuned_bcast_intra_dec_fixed (buff, count, datatype, root,
+    return ompi_coll_tuned_bcast_intra_dec_fixed (buf, count, dtype, root,
                                                   comm, module);
 }
 
@@ -276,8 +289,8 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
  *    Returns:    - MPI_SUCCESS or error code (passed from the reduce implementation)
  *
  */
-int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sendbuf, void *recvbuf,
-                                              int count, struct ompi_datatype_t* datatype,
+int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sbuf, void *rbuf,
+                                              int count, struct ompi_datatype_t* dtype,
                                               struct ompi_op_t* op, int root,
                                               struct ompi_communicator_t* comm,
                                               mca_coll_base_module_t *module)
@@ -293,7 +306,7 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sendbuf, void *recvbuf
         int alg, faninout, segsize, max_requests;
         size_t dsize;
 
-        ompi_datatype_type_size (datatype, &dsize);
+        ompi_datatype_type_size(dtype, &dsize);
         dsize *= count;
 
         alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[REDUCE],
@@ -301,23 +314,23 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sendbuf, void *recvbuf
 
         if (alg) {
             /* we have found a valid choice from the file based rules for this message size */
-            return  ompi_coll_tuned_reduce_intra_do_this (sendbuf, recvbuf, count, datatype,
-                                                          op, root,
-                                                          comm, module,
+            return  ompi_coll_tuned_reduce_intra_do_this (sbuf, rbuf, count, dtype,
+                                                          op, root, comm, module,
                                                           alg, faninout,
-                                                          segsize,
-                                                          max_requests);
+                                                          segsize, max_requests);
         } /* found a method */
     } /*end if any com rules to check */
 
     if (tuned_module->user_forced[REDUCE].algorithm) {
-        return ompi_coll_tuned_reduce_intra_do_forced (sendbuf, recvbuf, count, datatype,
-                                                       op, root,
-                                                       comm, module);
+        return ompi_coll_tuned_reduce_intra_do_this(sbuf, rbuf, count, dtype,
+                                                    op, root, comm, module,
+                                                    tuned_module->user_forced[REDUCE].algorithm,
+                                                    tuned_module->user_forced[REDUCE].chain_fanout,
+                                                    tuned_module->user_forced[REDUCE].segsize,
+                                                    tuned_module->user_forced[REDUCE].max_requests);
     }
-    return ompi_coll_tuned_reduce_intra_dec_fixed (sendbuf, recvbuf, count, datatype,
-                                                   op, root,
-                                                   comm, module);
+    return ompi_coll_tuned_reduce_intra_dec_fixed (sbuf, rbuf, count, dtype,
+                                                   op, root, comm, module);
 }
 
 /*
@@ -356,22 +369,21 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(const void *sbuf, void *rbu
                                                         &segsize, &ignoreme);
         if (alg) {
             /* we have found a valid choice from the file based rules for this message size */
-            return  ompi_coll_tuned_reduce_scatter_intra_do_this (sbuf, rbuf, rcounts,
-                                                                  dtype, op,
-                                                                  comm, module,
-                                                                  alg, faninout,
-                                                                  segsize);
+            return  ompi_coll_tuned_reduce_scatter_intra_do_this (sbuf, rbuf, rcounts, dtype,
+                                                                  op, comm, module,
+                                                                  alg, faninout, segsize);
         } /* found a method */
     } /*end if any com rules to check */
 
     if (tuned_module->user_forced[REDUCESCATTER].algorithm) {
-        return ompi_coll_tuned_reduce_scatter_intra_do_forced (sbuf, rbuf, rcounts,
-                                                               dtype, op,
-                                                               comm, module);
+        return ompi_coll_tuned_reduce_scatter_intra_do_this(sbuf, rbuf, rcounts, dtype,
+                                                            op, comm, module,
+                                                            tuned_module->user_forced[REDUCESCATTER].algorithm,
+                                                            tuned_module->user_forced[REDUCESCATTER].chain_fanout,
+                                                            tuned_module->user_forced[REDUCESCATTER].segsize);
     }
     return ompi_coll_tuned_reduce_scatter_intra_dec_fixed (sbuf, rbuf, rcounts,
-                                                           dtype, op,
-                                                           comm, module);
+                                                           dtype, op, comm, module);
 }
 
 /*
@@ -421,9 +433,12 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(const void *sbuf, int scount,
     /* We do not have file based rules */
     if (tuned_module->user_forced[ALLGATHER].algorithm) {
         /* User-forced algorithm */
-        return ompi_coll_tuned_allgather_intra_do_forced (sbuf, scount, sdtype,
-                                                          rbuf, rcount, rdtype,
-                                                          comm, module);
+        return ompi_coll_tuned_allgather_intra_do_this(sbuf, scount, sdtype,
+                                                       rbuf, rcount, rdtype,
+                                                       comm, module,
+                                                       tuned_module->user_forced[ALLGATHER].algorithm,
+                                                       tuned_module->user_forced[ALLGATHER].tree_fanout,
+                                                       tuned_module->user_forced[ALLGATHER].segsize);
     }
 
     /* Use default decision */
@@ -482,10 +497,12 @@ int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, int scount,
     /* We do not have file based rules */
     if (tuned_module->user_forced[ALLGATHERV].algorithm) {
         /* User-forced algorithm */
-        return ompi_coll_tuned_allgatherv_intra_do_forced (sbuf, scount, sdtype,
-                                                           rbuf, rcounts,
-                                                           rdispls, rdtype,
-                                                           comm, module);
+        return ompi_coll_tuned_allgatherv_intra_do_this(sbuf, scount, sdtype,
+                                                        rbuf, rcounts, rdispls, rdtype,
+                                                        comm, module,
+                                                        tuned_module->user_forced[ALLGATHERV].algorithm,
+                                                        tuned_module->user_forced[ALLGATHERV].tree_fanout,
+                                                        tuned_module->user_forced[ALLGATHERV].segsize);
     }
 
     /* Use default decision */
@@ -532,9 +549,12 @@ int ompi_coll_tuned_gather_intra_dec_dynamic(const void *sbuf, int scount,
     } /*end if any com rules to check */
 
     if (tuned_module->user_forced[GATHER].algorithm) {
-        return ompi_coll_tuned_gather_intra_do_forced (sbuf, scount, sdtype,
-                                                       rbuf, rcount, rdtype,
-                                                       root, comm, module);
+        return ompi_coll_tuned_gather_intra_do_this(sbuf, scount, sdtype,
+                                                    rbuf, rcount, rdtype,
+                                                    root, comm, module,
+                                                    tuned_module->user_forced[GATHER].algorithm,
+                                                    tuned_module->user_forced[GATHER].tree_fanout,
+                                                    tuned_module->user_forced[GATHER].segsize);
     }
 
     return ompi_coll_tuned_gather_intra_dec_fixed (sbuf, scount, sdtype,
@@ -578,9 +598,12 @@ int ompi_coll_tuned_scatter_intra_dec_dynamic(const void *sbuf, int scount,
     } /*end if any com rules to check */
 
     if (tuned_module->user_forced[SCATTER].algorithm) {
-        return ompi_coll_tuned_scatter_intra_do_forced (sbuf, scount, sdtype,
-                                                        rbuf, rcount, rdtype,
-                                                        root, comm, module);
+        return ompi_coll_tuned_scatter_intra_do_this(sbuf, scount, sdtype,
+                                                     rbuf, rcount, rdtype,
+                                                     root, comm, module,
+                                                     tuned_module->user_forced[SCATTER].algorithm,
+                                                     tuned_module->user_forced[SCATTER].chain_fanout,
+                                                     tuned_module->user_forced[SCATTER].segsize);
     }
 
     return ompi_coll_tuned_scatter_intra_dec_fixed (sbuf, scount, sdtype,

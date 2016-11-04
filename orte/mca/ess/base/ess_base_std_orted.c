@@ -14,7 +14,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,10 +47,10 @@
 
 #include "orte/mca/rtc/base/base.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/oob/base/base.h"
-#include "orte/mca/qos/base/base.h"
 #include "orte/mca/dfs/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -62,7 +62,6 @@
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/sstore/base/base.h"
 #endif
-#include "orte/mca/schizo/base/base.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -117,6 +116,7 @@ int orte_ess_base_orted_setup(char **hosts)
     char *param;
     hwloc_obj_t obj;
     unsigned i, j;
+    opal_list_t transports;
 
     /* my name is set, xfer it to the OPAL layer */
     orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
@@ -189,6 +189,11 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "opal_pstat_base_select";
         goto error;
     }
+
+    /* define the HNP name */
+    ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
+    ORTE_PROC_MY_HNP->vpid = 0;
+
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -239,10 +244,7 @@ int orte_ess_base_orted_setup(char **hosts)
         /* take a pass thru the session directory code to fillin the
          * tmpdir names - don't create anything yet
          */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(false,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
-                                                    ORTE_PROC_MY_NAME))) {
+        if (ORTE_SUCCESS != (ret = orte_session_dir(false, ORTE_PROC_MY_NAME))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_session_dir define";
             goto error;
@@ -252,10 +254,7 @@ int orte_ess_base_orted_setup(char **hosts)
          */
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
         /* now actually create the directory tree */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
-                                                    ORTE_PROC_MY_NAME))) {
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true, ORTE_PROC_MY_NAME))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_session_dir";
             goto error;
@@ -279,11 +278,8 @@ int orte_ess_base_orted_setup(char **hosts)
             /* define a log file name in the session directory */
             snprintf(log_file, PATH_MAX, "output-orted-%s-%s.log",
                      jobidstring, orte_process_info.nodename);
-            log_path = opal_os_path(false,
-                                    orte_process_info.tmpdir_base,
-                                    orte_process_info.top_session_dir,
-                                    log_file,
-                                    NULL);
+            log_path = opal_os_path(false, orte_process_info.top_session_dir,
+                                    log_file, NULL);
 
             fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0640);
             if (fd < 0) {
@@ -300,8 +296,109 @@ int orte_ess_base_orted_setup(char **hosts)
             }
         }
     }
+    /* setup the global job and node arrays */
+    orte_job_data = OBJ_NEW(opal_hash_table_t);
+    if (ORTE_SUCCESS != (ret = opal_hash_table_init(orte_job_data, 128))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup job array";
+        goto error;
+    }
+    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                               ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node array";
+        goto error;
+    }
+    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                               ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node topologies array";
+        goto error;
+    }
+    /* Setup the job data object for the daemons */
+    /* create and store the job data object */
+    jdata = OBJ_NEW(orte_job_t);
+    jdata->jobid = ORTE_PROC_MY_NAME->jobid;
+    opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
+    /* every job requires at least one app */
+    app = OBJ_NEW(orte_app_context_t);
+    opal_pointer_array_set_item(jdata->apps, 0, app);
+    jdata->num_apps++;
+    /* create and store a node object where we are */
+    node = OBJ_NEW(orte_node_t);
+    node->name = strdup(orte_process_info.nodename);
+    node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
+    /* point our topology to the one detected locally */
+    node->topology = opal_hwloc_topology;
+
+    /* create and store a proc object for us */
+    proc = OBJ_NEW(orte_proc_t);
+    proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
+    proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
+    proc->pid = orte_process_info.pid;
+    proc->state = ORTE_PROC_STATE_RUNNING;
+    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
+    /* record that the daemon (i.e., us) is on this node
+     * NOTE: we do not add the proc object to the node's
+     * proc array because we are not an application proc.
+     * Instead, we record it in the daemon field of the
+     * node object
+     */
+    OBJ_RETAIN(proc);   /* keep accounting straight */
+    node->daemon = proc;
+    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
+    node->state = ORTE_NODE_STATE_UP;
+    /* now point our proc node field to the node */
+    OBJ_RETAIN(node);   /* keep accounting straight */
+    proc->node = node;
+    /* record that the daemon job is running */
+    jdata->num_procs = 1;
+    jdata->state = ORTE_JOB_STATE_RUNNING;
+    /* obviously, we have "reported" */
+    jdata->num_reported = 1;
+
+    /* setup the PMIx framework - ensure it skips all non-PMIx components,
+     * but do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pmix_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
+        goto error;
+    }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        /* the server code already barked, so let's be quiet */
+        ret = ORTE_ERR_SILENT;
+        error = "pmix_server_init";
+        goto error;
+    }
+
     /* Setup the communication infrastructure */
-        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
+    /* Routed system */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_select";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_oob_base_open";
         goto error;
@@ -321,43 +418,46 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rml_base_select";
         goto error;
     }
-    /* Messaging QoS Layer */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_qos_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_qos_base_open";
-        goto error;
+
+    if (NULL != orte_process_info.my_hnp_uri) {
+        /* extract the HNP's name so we can update the routing table */
+        if (ORTE_SUCCESS != (ret = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                            ORTE_PROC_MY_HNP, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_rml_parse_HNP";
+            goto error;
+        }
+        /* Set the contact info in the RML - this won't actually establish
+         * the connection, but just tells the RML how to reach the HNP
+         * if/when we attempt to send to it
+         */
+        orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
     }
-    if (ORTE_SUCCESS != (ret = orte_qos_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_qos_base_select";
-        goto error;
-    }
+
     /* select the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_select";
         goto error;
     }
-    /* Routed system */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_select";
-        goto error;
-    }
-    /* setup the routed info - the selected routed component
-     * will know what to do.
-     */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed.init_routes";
-        goto error;
-    }
-    /*
+
+    /* get a conduit for our use - we never route IO over fabric */
+    OBJ_CONSTRUCT(&transports, opal_list_t);
+    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
+                       ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
+    orte_mgmt_conduit = orte_rml.open_conduit(&transports);
+    OPAL_LIST_DESTRUCT(&transports);
+
+    OBJ_CONSTRUCT(&transports, opal_list_t);
+    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
+                       ORTE_ATTR_LOCAL, orte_coll_transport, OPAL_STRING);
+    orte_coll_conduit = orte_rml.open_conduit(&transports);
+    OPAL_LIST_DESTRUCT(&transports);
+
+     /* add our contact info to our proc object */
+     proc->rml_uri = orte_rml.get_contact_info();
+
+   /*
      * Group communications
      */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_grpcomm_base_framework, 0))) {
@@ -392,12 +492,7 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rtc_base_select";
         goto error;
     }
-    /* enable communication with the rml */
-    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml.enable_comm";
-        goto error;
-    }
+
 #if ORTE_ENABLE_STATIC_PORTS
     /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly
@@ -409,7 +504,7 @@ int orte_ess_base_orted_setup(char **hosts)
         /* define the routing tree so we know the pattern
          * if we are trying to setup common or static ports
          */
-        orte_routed.update_routing_plan();
+        orte_routed.update_routing_plan(NULL);
         /* extract the node info from the environment and
          * build a nidmap from it
          */
@@ -424,7 +519,8 @@ int orte_ess_base_orted_setup(char **hosts)
      * to mpirun goes through the tree if static ports were enabled - still
      * need to do it anyway just to initialize things
      */
-    orte_routed.update_routing_plan();
+    orte_routed.update_routing_plan(NULL);
+
     /* Now provide a chance for the PLM
      * to perform any module-specific init functions. This
      * needs to occur AFTER the communications are setup
@@ -439,104 +535,7 @@ int orte_ess_base_orted_setup(char **hosts)
             goto error;
         }
     }
-    /* setup the global job and node arrays */
-    orte_job_data = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                                       1,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       1))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup job array";
-        goto error;
-    }
-    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup node array";
-        goto error;
-    }
-    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup node topologies array";
-        goto error;
-    }
-    /* Setup the job data object for the daemons */
-    /* create and store the job data object */
-    jdata = OBJ_NEW(orte_job_t);
-    jdata->jobid = ORTE_PROC_MY_NAME->jobid;
-    opal_pointer_array_set_item(orte_job_data, 0, jdata);
-    /* every job requires at least one app */
-    app = OBJ_NEW(orte_app_context_t);
-    opal_pointer_array_set_item(jdata->apps, 0, app);
-    jdata->num_apps++;
-    /* create and store a node object where we are */
-    node = OBJ_NEW(orte_node_t);
-    node->name = strdup(orte_process_info.nodename);
-    node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
-    /* point our topology to the one detected locally */
-    node->topology = opal_hwloc_topology;
 
-    /* create and store a proc object for us */
-    proc = OBJ_NEW(orte_proc_t);
-    proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
-    proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
-    proc->pid = orte_process_info.pid;
-    proc->rml_uri = orte_rml.get_contact_info();
-    proc->state = ORTE_PROC_STATE_RUNNING;
-    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
-    /* record that the daemon (i.e., us) is on this node
-     * NOTE: we do not add the proc object to the node's
-     * proc array because we are not an application proc.
-     * Instead, we record it in the daemon field of the
-     * node object
-     */
-    OBJ_RETAIN(proc);   /* keep accounting straight */
-    node->daemon = proc;
-    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
-    node->state = ORTE_NODE_STATE_UP;
-    /* now point our proc node field to the node */
-    OBJ_RETAIN(node);   /* keep accounting straight */
-    proc->node = node;
-    /* record that the daemon job is running */
-    jdata->num_procs = 1;
-    jdata->state = ORTE_JOB_STATE_RUNNING;
-    /* obviously, we have "reported" */
-    jdata->num_reported = 1;
-
-    /* setup the PMIx framework - ensure it skips all non-PMIx components */
-    putenv("OMPI_MCA_pmix=^s1,s2,cray");
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_pmix_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_pmix_base_select";
-        goto error;
-    }
-    /* setup the PMIx server */
-    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "pmix server init";
-        goto error;
-    }
-
-    /* setup the routed info - the selected routed component
-     * will know what to do.
-     */
-    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed.init_routes";
-        goto error;
-    }
     /* setup I/O forwarding system - must come after we init routes */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_iof_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -611,17 +610,7 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_dfs_select";
         goto error;
     }
-    /* setup the SCHIZO framework */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_schizo_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_schizo_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_schizo_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_schizo_select";
-        goto error;
-    }
+
     return ORTE_SUCCESS;
  error:
     orte_show_help("help-orte-runtime.txt",
@@ -652,8 +641,11 @@ int orte_ess_base_orted_finalize(void)
     pmix_server_finalize();
     (void) mca_base_framework_close(&opal_pmix_base_framework);
 
+    /* release the conduits */
+    orte_rml.close_conduit(orte_mgmt_conduit);
+    orte_rml.close_conduit(orte_coll_conduit);
+
     /* close frameworks */
-    (void) mca_base_framework_close(&orte_schizo_base_framework);
     (void) mca_base_framework_close(&orte_filem_base_framework);
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
     (void) mca_base_framework_close(&orte_iof_base_framework);
@@ -673,6 +665,8 @@ int orte_ess_base_orted_finalize(void)
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    /* release the job hash table */
+    OBJ_RELEASE(orte_job_data);
     return ORTE_SUCCESS;
 }
 

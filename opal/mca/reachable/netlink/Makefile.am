@@ -1,5 +1,7 @@
 #
 # Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,16 +31,16 @@ component_install =
 endif
 
 AM_CPPFLAGS = \
-        $(opal_reachable_netlink_LIBNL_CPPFLAGS) \
-        -DHAVE_LIBNL3=$(HAVE_LIBNL3)
+        $(opal_reachable_netlink_CPPFLAGS) \
+        -DOPAL_HAVE_LIBNL3=$(OPAL_HAVE_LIBNL3)
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_reachable_netlink_la_SOURCES = $(sources)
 mca_reachable_netlink_la_LDFLAGS = -module -avoid-version
-mca_reachable_netlink_la_LIBADD = $(opal_reachable_netlink_LIBNL_LIBS)
+mca_reachable_netlink_la_LIBADD = $(opal_reachable_netlink_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_reachable_netlink_la_SOURCES =$(sources)
 libmca_reachable_netlink_la_LDFLAGS = -module -avoid-version
-libmca_reachable_netlink_la_LIBADD = $(opal_reachable_netlink_LIBNL_LIBS)
+libmca_reachable_netlink_la_LIBADD = $(opal_reachable_netlink_LIBS)

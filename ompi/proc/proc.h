@@ -13,6 +13,8 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,13 +65,16 @@ BEGIN_C_DECLS
  * a tag increases the memory consumed by Open MPI, so should only be done
  * if unavoidable.
  */
+
+#define OMPI_PROC_PADDING_SIZE 16
+
 struct ompi_proc_t {
     opal_proc_t                     super;
 
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
 
-    char padding[16];         /* for future extensions (OSHMEM uses this area also)*/
+    char padding[OMPI_PROC_PADDING_SIZE]; /* for future extensions (OSHMEM uses this area also)*/
 };
 typedef struct ompi_proc_t ompi_proc_t;
 OBJ_CLASS_DECLARATION(ompi_proc_t);
@@ -119,6 +124,18 @@ OMPI_DECLSPEC int ompi_proc_init(void);
  * @retval OMPI_ERROR   Some info could not be initialized.
  */
 OMPI_DECLSPEC int ompi_proc_complete_init(void);
+
+/**
+ * Complete filling up the proc information (arch, name and locality) for
+ * a given proc. This function is to be called only after the modex exchange
+ * has been completed.
+ *
+ * @param[in] proc the proc whose information will be filled up
+ *
+ * @retval OMPI_SUCCESS All information correctly set.
+ * @retval OMPI_ERROR   Some info could not be initialized.
+ */
+OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc);
 
 /**
  * Finalize the OMPI Process subsystem
@@ -367,16 +384,66 @@ static inline bool ompi_proc_is_sentinel (ompi_proc_t *proc)
     return (intptr_t) proc & 0x1;
 }
 
-static inline intptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
+#if OPAL_SIZEOF_PROCESS_NAME_T == SIZEOF_VOID_P
+/*
+ * we assume an ompi_proc_t is at least aligned on two bytes,
+ * so if the LSB of a pointer to an ompi_proc_t is 1, we have to handle
+ * this pointer as a sentinel instead of a pointer.
+ * a sentinel can be seen as an uint64_t with the following format :
+ * - bit  0     : 1
+ * - bits 1-15  : local jobid
+ * - bits 16-31 : job family
+ * - bits 32-63 : vpid
+ */
+static inline uintptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
 {
-  return (*((intptr_t *) &name) << 1) | 0x1;
+    uintptr_t tmp, sentinel = 0;
+    /* local jobid must fit in 15 bits */
+    assert(! (OMPI_LOCAL_JOBID(name.jobid) & 0x8000));
+    sentinel |= 0x1;
+    tmp = (uintptr_t)OMPI_LOCAL_JOBID(name.jobid);
+    sentinel |= ((tmp << 1) & 0xfffe);
+    tmp = (uintptr_t)OMPI_JOB_FAMILY(name.jobid);
+    sentinel |= ((tmp << 16) & 0xffff0000);
+    tmp = (uintptr_t)name.vpid;
+    sentinel |= ((tmp << 32) & 0xffffffff00000000);
+    return sentinel;
 }
 
-static inline opal_process_name_t ompi_proc_sentinel_to_name (intptr_t sentinel)
+static inline opal_process_name_t ompi_proc_sentinel_to_name (uintptr_t sentinel)
 {
-  sentinel >>= 1;
-  return *((opal_process_name_t *) &sentinel);
+  opal_process_name_t name;
+  uint32_t local, family;
+  uint32_t vpid;
+  assert(sentinel & 0x1);
+  local = (sentinel >> 1) & 0x7fff;
+  family = (sentinel >> 16) & 0xffff;
+  vpid = (sentinel >> 32) & 0xffffffff;
+  name.jobid = OMPI_CONSTRUCT_JOBID(family,local);
+  name.vpid = vpid;
+  return name;
 }
+#elif 4 == SIZEOF_VOID_P
+/*
+ * currently, a sentinel is only made from the current jobid aka OMPI_PROC_MY_NAME->jobid
+ * so we only store the first 31 bits of the vpid
+ */
+static inline uintptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
+{
+    assert(OMPI_PROC_MY_NAME->jobid == name.jobid);
+    return (uintptr_t)((name.vpid <<1) | 0x1);
+}
+
+static inline opal_process_name_t ompi_proc_sentinel_to_name (uintptr_t sentinel)
+{
+  opal_process_name_t name;
+  name.jobid = OMPI_PROC_MY_NAME->jobid;
+  name.vpid = sentinel >> 1;
+  return name;
+}
+#else
+#error unsupported pointer size
+#endif
 
 END_C_DECLS
 

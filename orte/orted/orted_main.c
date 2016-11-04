@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,13 +11,13 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -59,6 +60,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
+#include "opal/util/fd.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/daemon_init.h"
@@ -73,6 +75,7 @@
 #include "orte/util/nidmap.h"
 #include "orte/util/parse_options.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#include "orte/util/pre_condition_transports.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -122,12 +125,11 @@ static struct {
     char* num_procs;
     int uri_pipe;
     int singleton_died_pipe;
-    int fail;
-    int fail_delay;
     bool abort;
     bool mapreduce;
     bool tree_spawn;
     char *hnp_topo_sig;
+    bool test_suicide;
 } orted_globals;
 
 /*
@@ -143,13 +145,9 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_spin_flag, OPAL_CMD_LINE_TYPE_BOOL,
       "Have the orted spin until we can connect a debugger to it" },
 
-    { NULL, '\0', NULL, "debug-failure", 1,
-      &orted_globals.fail, OPAL_CMD_LINE_TYPE_INT,
-      "Have the specified orted fail after init for debugging purposes" },
-
-    { NULL, '\0', NULL, "debug-failure-delay", 1,
-      &orted_globals.fail_delay, OPAL_CMD_LINE_TYPE_INT,
-      "Have the orted specified for failure delay for the provided number of seconds before failing" },
+    { NULL, '\0', NULL, "test-suicide", 1,
+      &orted_globals.test_suicide, OPAL_CMD_LINE_TYPE_BOOL,
+      "Suicide instead of clean abort after delay" },
 
     { "orte_debug", 'd', NULL, "debug", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -235,7 +233,7 @@ int orte_daemon(int argc, char *argv[])
     char *rml_uri;
     int i;
     opal_buffer_t *buffer;
-    char hostname[100];
+    char hostname[OPAL_MAXHOSTNAMELEN];
 #if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var = NULL;
 #endif
@@ -246,8 +244,6 @@ int orte_daemon(int argc, char *argv[])
     memset(&orted_globals, 0, sizeof(orted_globals));
     /* initialize the singleton died pipe to an illegal value so we can detect it was set */
     orted_globals.singleton_died_pipe = -1;
-    /* init the failure orted vpid to an invalid value */
-    orted_globals.fail = ORTE_VPID_INVALID;
 
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
@@ -256,7 +252,7 @@ int orte_daemon(int argc, char *argv[])
         exit(1);
     }
     mca_base_cmd_line_setup(cmd_line);
-    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
+    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false, false,
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
@@ -304,7 +300,7 @@ int orte_daemon(int argc, char *argv[])
      * away just in case we have a problem along the way
      */
     if (orted_globals.debug) {
-        gethostname(hostname, 100);
+        gethostname(hostname, sizeof(hostname));
         fprintf(stderr, "Daemon was launched on %s - beginning to initialize\n", hostname);
     }
 
@@ -428,23 +424,23 @@ int orte_daemon(int argc, char *argv[])
         }
     }
 
-    if ((int)ORTE_VPID_INVALID != orted_globals.fail) {
+    if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
         orted_globals.abort=false;
         /* some vpid was ordered to fail. The value can be positive
          * or negative, depending upon the desired method for failure,
          * so need to check both here
          */
-        if (0 > orted_globals.fail) {
-            orted_globals.fail = -1*orted_globals.fail;
+        if (0 > orted_debug_failure) {
+            orted_debug_failure = -1*orted_debug_failure;
             orted_globals.abort = true;
         }
         /* are we the specified vpid? */
-        if ((int)ORTE_PROC_MY_NAME->vpid == orted_globals.fail) {
+        if ((int)ORTE_PROC_MY_NAME->vpid == orted_debug_failure) {
             /* if the user specified we delay, then setup a timer
              * and have it kill us
              */
-            if (0 < orted_globals.fail_delay) {
-                ORTE_TIMER_EVENT(orted_globals.fail_delay, 0, shutdown_callback, ORTE_SYS_PRI);
+            if (0 < orted_debug_failure_delay) {
+                ORTE_TIMER_EVENT(orted_debug_failure_delay, 0, shutdown_callback, ORTE_SYS_PRI);
 
             } else {
                 opal_output(0, "%s is executing clean %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -532,16 +528,14 @@ int orte_daemon(int argc, char *argv[])
         orte_node_t *node;
         orte_app_context_t *app;
         char *tmp, *nptr, *sysinfo;
-        int32_t ljob;
-        char **singenv=NULL;
+        char **singenv=NULL, *string_key, *env_str;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
         /* default to ompi for now */
-        jdata->personality = strdup("ompi");
+        opal_argv_append_nosize(&jdata->personality, "ompi");
         orte_plm_base_create_jobid(jdata);
-        ljob = ORTE_LOCAL_JOBID(jdata->jobid);
-        opal_pointer_array_set_item(orte_job_data, ljob, jdata);
+        opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
 
         /* must create a map for it (even though it has no
          * info in it) so that the job info will be picked
@@ -555,6 +549,7 @@ int orte_daemon(int argc, char *argv[])
         app->app = strdup("singleton");
         app->num_procs = 1;
         opal_pointer_array_add(jdata->apps, app);
+        jdata->num_apps = 1;
 
         /* setup a proc object for the singleton - since we
          * -must- be the HNP, and therefore we stored our
@@ -594,6 +589,9 @@ int orte_daemon(int argc, char *argv[])
         proc->app_idx = 0;
         ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_LOCAL);
 
+        /* set the ORTE_JOB_TRANSPORT_KEY from the environment */
+        orte_pre_condition_transports(jdata);
+
         /* register the singleton's nspace with our PMIx server */
         if (ORTE_SUCCESS != (ret = orte_pmix_server_register_nspace(jdata))) {
           ORTE_ERROR_LOG(ret);
@@ -601,9 +599,19 @@ int orte_daemon(int argc, char *argv[])
         }
         /* use setup fork to create the envars needed by the singleton */
         if (OPAL_SUCCESS != (ret = opal_pmix.server_setup_fork(&proc->name, &singenv))) {
-          ORTE_ERROR_LOG(ret);
-          goto DONE;
+            ORTE_ERROR_LOG(ret);
+            goto DONE;
         }
+
+        /* append the transport key to the envars needed by the singleton */
+        if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_TRANSPORT_KEY, (void**)&string_key, OPAL_STRING) || NULL == string_key) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            goto DONE;
+        }
+        asprintf(&env_str, OPAL_MCA_PREFIX"orte_precondition_transports=%s", string_key);
+        opal_argv_append_nosize(&singenv, env_str);
+        free(env_str);
+
         nptr = opal_argv_join(singenv, ',');
         opal_argv_free(singenv);
         /* create a string that contains our uri + sysinfo + PMIx server URI envars */
@@ -613,10 +621,14 @@ int orte_daemon(int argc, char *argv[])
         free(nptr);
 
         /* pass that info to the singleton */
-        write(orted_globals.uri_pipe, tmp, strlen(tmp)+1); /* need to add 1 to get the NULL */
+        if (OPAL_SUCCESS != (ret = opal_fd_write(orted_globals.uri_pipe, strlen(tmp)+1, tmp))) { ; /* need to add 1 to get the NULL */
+            ORTE_ERROR_LOG(ret);
+            goto DONE;
+        }
 
         /* cleanup */
         free(tmp);
+        close(orted_globals.uri_pipe);
 
         /* since a singleton spawned us, we need to harvest
          * any MCA params from the local environment so
@@ -684,14 +696,14 @@ int orte_daemon(int argc, char *argv[])
         /* tell the routed module that we have a path
          * back to the HNP
          */
-        if (ORTE_SUCCESS != (ret = orte_routed.update_route(ORTE_PROC_MY_HNP, &parent))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.update_route(NULL, ORTE_PROC_MY_HNP, &parent))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
         /* set the lifeline to point to our parent so that we
          * can handle the situation if that lifeline goes away
          */
-        if (ORTE_SUCCESS != (ret = orte_routed.set_lifeline(&parent))) {
+        if (ORTE_SUCCESS != (ret = orte_routed.set_lifeline(NULL, &parent))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
@@ -733,12 +745,12 @@ int orte_daemon(int argc, char *argv[])
         if (orte_retain_aliases) {
             char **aliases=NULL;
             uint8_t naliases, ni;
-            char hostname[ORTE_MAX_HOSTNAME_SIZE];
+            char hostname[OPAL_MAXHOSTNAMELEN];
 
             /* if we stripped the prefix or removed the fqdn,
              * include full hostname as an alias
              */
-            gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+            gethostname(hostname, sizeof(hostname));
             if (strlen(orte_process_info.nodename) < strlen(hostname)) {
                 opal_argv_append_nosize(&aliases, hostname);
             }
@@ -796,7 +808,8 @@ int orte_daemon(int argc, char *argv[])
         }
 
         /* send to the HNP's callback - will be routed if routes are available */
-        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
+        if (0 > (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
+                                               ORTE_PROC_MY_HNP, buffer,
                                                ORTE_RML_TAG_ORTED_CALLBACK,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
@@ -902,11 +915,15 @@ static void shutdown_callback(int fd, short flags, void *arg)
 
     /* if we were ordered to abort, do so */
     if (orted_globals.abort) {
-        opal_output(0, "%s is executing clean abort", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s is executing %s abort", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    (orted_globals.test_suicide) ? "suicide" : "clean");
         /* do -not- call finalize as this will send a message to the HNP
          * indicating clean termination! Instead, just kill our
          * local procs, forcibly cleanup the local session_dir tree, and abort
          */
+        if (orted_globals.test_suicide) {
+            exit(1);
+        }
         orte_odls.kill_local_procs(NULL);
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
         abort();

@@ -5,6 +5,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,7 +58,7 @@ mca_pml_base_component_2_0_0_t mca_pml_v_component =
 };
 
 static bool pml_v_enable_progress_treads = OPAL_ENABLE_PROGRESS_THREADS;
-static bool pml_v_enable_mpi_thread_multiple = OMPI_ENABLE_THREAD_MULTIPLE;
+static bool pml_v_enable_mpi_thread_multiple = 1;
 
 static char *ompi_pml_vprotocol_include_list;
 static char *ompi_pml_v_output;
@@ -97,13 +99,23 @@ static int mca_pml_v_component_register(void)
 
 static int mca_pml_v_component_open(void)
 {
+    int rc;
     pml_v_output_open(ompi_pml_v_output, ompi_pml_v_verbose);
 
     V_OUTPUT_VERBOSE(500, "loaded");
 
     mca_vprotocol_base_set_include_list(ompi_pml_vprotocol_include_list);
 
-    return mca_base_framework_open(&ompi_vprotocol_base_framework, 0);
+    if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_vprotocol_base_framework, 0))) {
+        return rc;
+    }
+
+    if( NULL == mca_vprotocol_base_include_list ) {
+        pml_v_output_close();
+        return mca_base_framework_close(&ompi_vprotocol_base_framework);
+    }
+
+    return rc;
 }
 
 static int mca_pml_v_component_close(void)

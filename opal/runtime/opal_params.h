@@ -16,6 +16,8 @@
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
+ * Copyright (c) 2015      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +56,22 @@ OPAL_DECLSPEC extern int opal_leave_pinned;
  * Whether to use the "leave pinned pipeline" protocol or not.
  */
 OPAL_DECLSPEC extern bool opal_leave_pinned_pipeline;
+
+/**
+ * Whether an abort operation should print out a stack trace or not.
+ */
+OPAL_DECLSPEC extern bool opal_abort_print_stack;
+
+/**
+ * Whether  abort operation  should  print  out an  identifying  message
+ * (e.g., hostname  and PID)  and loop waiting  for a  debugger to
+ * attach.  The value of the integer is how many seconds to wait:
+ *
+ * 0 = do not print the message and do not loop
+ * negative value = print the message and loop forever
+ * positive value = print the message and delay for that many seconds
+ */
+OPAL_DECLSPEC extern int opal_abort_delay;
 
 #if OPAL_ENABLE_DEBUG
 extern bool opal_progress_debug;

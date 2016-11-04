@@ -57,9 +57,9 @@ int ompi_coll_libnbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype 
   p = ompi_comm_size (comm);
 
   if (rank == root) {
-    res = MPI_Type_extent (sendtype, &sndext);
+    res = ompi_datatype_type_extent (sendtype, &sndext);
     if (MPI_SUCCESS != res) {
-      NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+      NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
       return res;
     }
   }
@@ -183,9 +183,9 @@ int ompi_coll_libnbc_iscatter_inter (const void* sendbuf, int sendcount, MPI_Dat
     rsize = ompi_comm_remote_size (comm);
 
     if (MPI_ROOT == root) {
-        res = MPI_Type_extent(sendtype, &sndext);
+        res = ompi_datatype_type_extent(sendtype, &sndext);
         if (MPI_SUCCESS != res) {
-            NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+            NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
             return res;
         }
     }

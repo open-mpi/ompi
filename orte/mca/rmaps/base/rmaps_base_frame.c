@@ -253,6 +253,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     orte_rmaps_base.slot_list = NULL;
     orte_rmaps_base.mapping = 0;
     orte_rmaps_base.ranking = 0;
+    orte_rmaps_base.device = NULL;
 
     /* if a topology file was given, then set our topology
      * from it. Even though our actual topology may differ,
@@ -614,9 +615,10 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
     }
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                        "%s rmaps:base set policy with %s",
+                        "%s rmaps:base set policy with %s device %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        (NULL == inspec) ? "NULL" : inspec);
+                        (NULL == inspec) ? "NULL" : inspec,
+                        (NULL == device) ? "NULL" : "NONNULL");
 
     if (NULL == inspec) {
         ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
@@ -719,12 +721,14 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
              * we need to treat those hwthreads as separate cpus
              */
             opal_hwloc_use_hwthreads_as_cpus = true;
-        } else if ( NULL != device && 0 == strncasecmp(spec, "dist", len)) {
+        } else if (0 == strncasecmp(spec, "dist", len)) {
             if (NULL != rmaps_dist_device) {
                 if (NULL != (pch = strchr(rmaps_dist_device, ':'))) {
                     *pch = '\0';
                 }
-                *device = strdup(rmaps_dist_device);
+                if (NULL != device) {
+                    *device = strdup(rmaps_dist_device);
+                }
                 ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
             } else {
                 orte_show_help("help-orte-rmaps-base.txt", "device-not-specified", true);

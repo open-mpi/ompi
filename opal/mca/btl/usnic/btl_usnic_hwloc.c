@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,14 +9,7 @@
 
 #include "opal_config.h"
 
-/* Define this before including hwloc.h so that we also get the hwloc
-   verbs helper header file, too.  We have to do this level of
-   indirection because the hwloc subsystem is a component -- we don't
-   know its exact path.  We have to rely on the framework header files
-   to find the right hwloc verbs helper file for us. */
-#define OPAL_HWLOC_WANT_VERBS_HELPER 1
 #include "opal/mca/hwloc/hwloc.h"
-
 #include "opal/constants.h"
 
 #if BTL_IN_OPAL
@@ -169,7 +162,7 @@ static hwloc_obj_t find_device_numa(opal_btl_usnic_module_t *module)
     if (obj->type != HWLOC_OBJ_NODE) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:filter_numa: could not find NUMA node for %s; filtering by NUMA distance not possible",
-                            module->fabric_info->fabric_attr->name);
+                            module->linux_device_name);
         return NULL;
     }
 
@@ -225,7 +218,7 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
 
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:filter_numa: %s is distance %d from me",
-                            module->fabric_info->fabric_attr->name,
+                            module->linux_device_name,
                             module->numa_distance);
     }
 

@@ -7,8 +7,9 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -33,7 +34,7 @@ MOSTLYCLEANFILES = *.mod
 
 CLEANFILES += *.i90
 
-lib_LTLIBRARIES = libmpi_usempif08.la
+lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08.la
 
 module_sentinel_file = \
         libforce_usempif08_internal_modules_to_be_built.la
@@ -43,8 +44,6 @@ noinst_LTLIBRARIES = $(module_sentinel_file)
 mpi-f08.lo: $(module_sentinel_file)
 mpi-f08.lo: mpi-f08.F90
 mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
-mpi-f08.lo: attr-fn-f08-callback-interfaces.h
-mpi-f08.lo: conversion-fn-null-f08-interface.h
 mpi-f08.lo: sizeof_f08.h
 
 #
@@ -795,27 +794,22 @@ pmpi_api_files += \
         profile/pregister_datarep_f08.F90
 endif
 
-libmpi_usempif08_la_SOURCES = \
+lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \
         $(pmpi_api_files) \
         mpi-f-interfaces-bind.h \
         pmpi-f-interfaces-bind.h \
-        attr-fn-f08-callback-interfaces.h \
-        conversion-fn-null-f08-interface.h \
         mpi-f08.F90 \
-        mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h \
-        attr-fn-f08-callback-interfaces.h \
         buffer_detach.c \
-        conversion-fn-null-f08-interface.h \
         constants.h \
         constants.c
 
 # These are generated; do not ship them
-nodist_libmpi_usempif08_la_SOURCES =
+nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES =
 
 if BUILD_FORTRAN_SIZEOF
 SIZEOF_H = sizeof_f08.h
-nodist_libmpi_usempif08_la_SOURCES += \
+nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES += \
         sizeof_f08.h \
         sizeof_f08.f90 \
         profile/psizeof_f08.f90
@@ -825,13 +819,13 @@ endif
 # Include the mpi_f08-based MPI extensions in libmpi_usempif08, too.
 #
 
-libmpi_usempif08_la_LIBADD = \
+lib@OMPI_LIBMPI_NAME@_usempif08_la_LIBADD = \
         $(module_sentinel_file) \
         $(OMPI_MPIEXT_USEMPIF08_LIBS) \
-        $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
-        $(top_builddir)/ompi/libmpi.la
-libmpi_usempif08_la_DEPENDENCIES = $(module_sentinel_file)
-libmpi_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
+        $(top_builddir)/ompi/mpi/fortran/mpif-h/lib@OMPI_LIBMPI_NAME@_mpifh.la \
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = $(module_sentinel_file)
+lib@OMPI_LIBMPI_NAME@_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them
@@ -846,8 +840,6 @@ $(pmpi_api_lo_files): mpi-f08.lo
 
 mpi-f08.lo: $(module_sentinel_file) $(SIZEOF_H)
 mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
-mpi-f08.lo: attr-fn-f08-callback-interfaces.h
-mpi-f08.lo: conversion-fn-null-f08-interface.h
 
 ###########################################################################
 
@@ -857,6 +849,7 @@ libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
         mpi-f08-types.F90 \
         mpi-f08-interfaces.F90 \
         mpi-f08-interfaces-callbacks.F90 \
+        mpi-f08-callbacks.F90 \
         pmpi-f08-interfaces.F90
 
 config_h = \
@@ -876,6 +869,9 @@ mpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo
 mpi-f08-interfaces-callbacks.lo: $(config_h)
 mpi-f08-interfaces-callbacks.lo: mpi-f08-interfaces-callbacks.F90
 mpi-f08-interfaces-callbacks.lo: mpi-f08-types.lo
+mpi-f08-callbacks.lo: $(config_h)
+mpi-f08-callbacks.lo: mpi-f08-callbacks.F90
+mpi-f08-callbacks.lo: mpi-f08-types.lo
 pmpi-f08-interfaces.lo: $(config_h)
 pmpi-f08-interfaces.lo: pmpi-f08-interfaces.F90
 pmpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo

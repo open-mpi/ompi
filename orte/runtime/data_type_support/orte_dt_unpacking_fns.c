@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +28,7 @@
 #include "opal/dss/dss.h"
 #include "opal/dss/dss_internal.h"
 #include "opal/mca/hwloc/hwloc.h"
+#include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/data_type_support/orte_dt_support.h"
@@ -64,6 +65,7 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
     orte_job_t **jobs;
     orte_app_idx_t j;
     orte_attribute_t *kv;
+    char *tmp;
 
     /* unpack into array of orte_job_t objects */
     jobs = (orte_job_t**) dest;
@@ -85,10 +87,20 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
         }
         /* unpack the personality */
         n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &jobs[i]->personality, &n, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &count, &n, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        for (k=0; k < count; k++) {
+            n=1;
+            if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &tmp, &n, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            opal_argv_append_nosize(&jobs[i]->personality, tmp);
+            free(tmp);
+        }
+
         /* unpack the num apps */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
@@ -364,6 +376,14 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
                          (&(procs[i]->app_idx)), &n, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the app_rank */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                         (&(procs[i]->app_rank)), &n, OPAL_UINT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

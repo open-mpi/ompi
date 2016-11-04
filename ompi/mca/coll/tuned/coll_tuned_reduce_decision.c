@@ -142,50 +142,6 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
     return (MPI_SUCCESS);
 }
 
-
-int ompi_coll_tuned_reduce_intra_do_forced(const void *sbuf, void* rbuf, int count,
-                                           struct ompi_datatype_t *dtype,
-                                           struct ompi_op_t *op, int root,
-                                           struct ompi_communicator_t *comm,
-                                           mca_coll_base_module_t *module)
-{
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
-
-    const int segsize      = tuned_module->user_forced[REDUCE].segsize;
-    const int chain_fanout = tuned_module->user_forced[REDUCE].chain_fanout;
-    const int max_requests = tuned_module->user_forced[REDUCE].max_requests;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced selected algorithm %d",
-                 tuned_module->user_forced[REDUCE].algorithm));
-
-
-    switch (tuned_module->user_forced[REDUCE].algorithm) {
-    case (0):  return ompi_coll_tuned_reduce_intra_dec_fixed(sbuf, rbuf, count, dtype,
-                                                             op, root, comm, module);
-    case (1):  return ompi_coll_base_reduce_intra_basic_linear(sbuf, rbuf, count, dtype,
-                                                               op, root, comm, module);
-    case (2):  return ompi_coll_base_reduce_intra_chain(sbuf, rbuf, count, dtype,
-                                                        op, root, comm, module,
-                                                        segsize, chain_fanout, max_requests);
-    case (3):  return ompi_coll_base_reduce_intra_pipeline(sbuf, rbuf, count, dtype,
-                                                           op, root, comm, module,
-                                                           segsize, max_requests);
-    case (4):  return ompi_coll_base_reduce_intra_binary(sbuf, rbuf, count, dtype,
-                                                         op, root, comm, module,
-                                                         segsize, max_requests);
-    case (5):  return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype,
-                                                           op, root, comm, module,
-                                                           segsize, max_requests);
-    case (6):  return ompi_coll_base_reduce_intra_in_order_binary(sbuf, rbuf, count, dtype,
-                                                                  op, root, comm, module,
-                                                                  segsize, max_requests);
-    } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                 tuned_module->user_forced[REDUCE].algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
-    return (MPI_ERR_ARG);
-}
-
-
 int ompi_coll_tuned_reduce_intra_do_this(const void *sbuf, void* rbuf, int count,
                                          struct ompi_datatype_t *dtype,
                                          struct ompi_op_t *op, int root,

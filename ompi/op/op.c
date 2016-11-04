@@ -356,6 +356,9 @@ ompi_op_t *ompi_op_create_user(bool commute,
         new_op->o_flags |= OMPI_OP_FLAGS_COMMUTE;
     }
 
+    strncpy(new_op->o_name, "USER OP", sizeof(new_op->o_name) - 1);
+    new_op->o_name[sizeof(new_op->o_name) - 1] = '\0';
+
     /* Set the user-defined callback function.  The "fort_fn" member
        is part of a union, so it doesn't matter if this is a C or
        Fortan callback; we'll call the right flavor (per o_flags) at
@@ -442,6 +445,11 @@ static int add_intrinsic(ompi_op_t *op, int fort_handle, int flags,
 static void ompi_op_construct(ompi_op_t *new_op)
 {
     int i;
+
+    /* Provide a default of a high value. Useful for non-predefined ops. */
+    new_op->op_type = OMPI_OP_NUM_OF_TYPES;
+    new_op->o_flags = 0;
+    new_op->o_name[0] = '\0';
 
     /* assign entry in fortran <-> c translation array */
 

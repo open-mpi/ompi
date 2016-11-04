@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -149,13 +153,7 @@ static void opal_graph_construct(opal_graph_t *graph)
 
 static void opal_graph_destruct(opal_graph_t *graph)
 {
-    opal_adjacency_list_t *aj_list;
-
-    while (false == opal_list_is_empty(graph->adjacency_list)) {
-        aj_list = (opal_adjacency_list_t *)opal_list_remove_first(graph->adjacency_list);
-        OBJ_RELEASE(aj_list);
-    }
-    OBJ_RELEASE(graph->adjacency_list);
+    OPAL_LIST_RELEASE(graph->adjacency_list);
     graph->number_of_vertices = 0;
     graph->number_of_edges = 0;
 }
@@ -174,15 +172,8 @@ static void opal_adjacency_list_construct(opal_adjacency_list_t *aj_list)
 
 static void opal_adjacency_list_destruct(opal_adjacency_list_t *aj_list)
 {
-   opal_graph_edge_t *edge;
-
    aj_list->vertex = NULL;
-   while (false == opal_list_is_empty(aj_list->edges)) {
-       edge = (opal_graph_edge_t *)opal_list_remove_first(aj_list->edges);
-       OBJ_RELEASE(edge);
-   }
-   OBJ_RELEASE(aj_list->edges);
-
+   OPAL_LIST_RELEASE(aj_list->edges);
 }
 
 /**
@@ -347,16 +338,10 @@ void opal_graph_remove_edge (opal_graph_t *graph, opal_graph_edge_t *edge)
 void opal_graph_remove_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
 {
     opal_adjacency_list_t *adj_list;
-    opal_graph_edge_t *edge;
 
-    /**
-     * remove all the edges of this vertex and destruct them.
-     */
+    /* do not need to remove all the edges of this vertex and destruct them as
+     * they will be released in the destructor for adj_list */
     adj_list = vertex->in_adj_list;
-    while (false == opal_list_is_empty(adj_list->edges)) {
-        edge = (opal_graph_edge_t *)opal_list_remove_first(adj_list->edges);
-        OBJ_RELEASE(edge);
-    }
     /**
      * remove the adjscency list of this vertex from the graph and
      * destruct it.

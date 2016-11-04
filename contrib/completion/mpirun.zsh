@@ -158,6 +158,7 @@ _mpirun() {
 	'(-do-not-launch --do-not-launch)'{-do-not-launch,--do-not-launch}'[Perform all necessary operations to prepare to launch the application, but do not actually launch it]' \
 	'(-do-not-resolve --do-not-resolve)'{-do-not-resolve,--do-not-resolve}'[Do not attempt to resolve interfaces]' \
 	'(-enable-recovery --enable-recovery)'{-enable-recovery,--enable-recovery}'[Enable recovery from process failure (default: disabled)]' \
+	'(-get-stack-traces --get-stack-traces)'{-get-stack-traces,--get-stack-traces}'[Upon timeout, obtain stack traces from all still-alive MPI processes (default: disabled)]' \
 	'*'{-gmca,--gmca}'[Pass global MCA parameters that are applicable to all contexts (arg0 is the parameter name; arg1 is the parameter value)]:mca variable name:->mca_variable_name:mca variable value:->mca_variable_value' \
 	'(- *)'{-h,--help}'[Help message]' \
 	'*'{-H,-host,--host}'[List of hosts to invoke processes on]:hostnames:' \
@@ -192,6 +193,7 @@ _mpirun() {
 	'(-report-child-jobs-separately --report-child-jobs-separately)'{-report-child-jobs-separately,--report-child-jobs-separately}'[Return the exit status of the primary job only]' \
 	'(-report-events --report-events)'{-report-events,--report-events}'[Report events to a tool listening at the specified URI]:URI:' \
 	'(-report-pid --report-pid)'{-report-pid,--report-pid}'[Printout pid on stdout (-), stderr (+), or a file (anything else)]:report file:_report_file' \
+	'(-report-state-upon-timeout --report-state-upon-timeout)'{-report-state-upon-timeout,--report-state-upon-timeout}'[Upon timeout, print run-time status of each process]' \
 	'(-report-uri --report-uri)'{-report-uri,--report-uri}'[Printout URI on stdout (-), stderr (+), or a file (anything else)]:report file:_report_file' \
 	'(-rf --rankfile)'{-rf,--rankfile}'[Provide a rankfile file]:rank file:_files' \
 	'(-s --preload-binary)'{-s,--preload-binary}'[Preload the binary on the remote machine before starting the remote process.]' \
@@ -202,6 +204,7 @@ _mpirun() {
 	'(-staged --staged)'{-staged,--staged}'[Used staged execution if inadequate resources are present (cannot support MPI jobs)]' \
 	'(-stdin --stdin)'{-stdin,--stdin}'[Specify procs to receive stdin \[rank, all, none\] (default: 0, indicating rank 0)]:rank list:' \
 	'(-tag-output --tag-output)'{-tag-output,--tag-output}'[Tag all output with \[job,rank\]]' \
+	'(-timeout --timeout)'{-timeout,--timeout}'[Timeout, in seconds, for the entire job]' \
 	'(-timestamp-output --timestamp-output)'{-timestamp-output,--timestamp-output}'[Timestamp all application process output]' \
 	'(-use-hwthread-cpus --use-hwthread-cpus)'{-use-hwthread-cpus,--use-hwthread-cpus}'[Use hardware threads as independent cpus]' \
 	'(-use-regexp --use-regexp)'{-use-regexp,--use-regexp}'[Use regular expressions for launch]' \

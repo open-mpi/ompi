@@ -49,8 +49,8 @@ static inline int ompi_osc_rdma_lock_release_shared (ompi_osc_rdma_module_t *mod
                                                      ompi_osc_rdma_lock_t value, ptrdiff_t offset)
 {
     uint64_t lock = (uint64_t) (intptr_t) peer->state + offset;
-    void *temp = &module->state->scratch_lock;
     volatile bool atomic_complete = false;
+    void *temp = NULL;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "releasing shared lock %" PRIx64 " on peer %d. value 0x%lx", lock,
@@ -58,22 +58,34 @@ static inline int ompi_osc_rdma_lock_release_shared (ompi_osc_rdma_module_t *mod
 
     /* spin until the lock has been acquired */
     if (!ompi_osc_rdma_peer_local_state (peer)) {
+        ompi_osc_rdma_frag_t *frag = NULL;
+
         if (module->selected_btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS) {
             ret = module->selected_btl->btl_atomic_op (module->selected_btl, peer->state_endpoint, (intptr_t) lock, peer->state_handle,
                                                        MCA_BTL_ATOMIC_ADD, value, 0, MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete,
                                                        (void *) &atomic_complete, NULL);
         } else {
-            ret = module->selected_btl->btl_atomic_fop (module->selected_btl, peer->state_endpoint, temp, (intptr_t) lock, module->state_handle,
-                                                        peer->state_handle, MCA_BTL_ATOMIC_ADD, value, 0, MCA_BTL_NO_ORDER,
-                                                        ompi_osc_rdma_atomic_complete, (void *) &atomic_complete, NULL);
+            ret = ompi_osc_rdma_frag_alloc (module, 8, &frag, (char **) &temp);
+            if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+                return ret;
+            }
+
+            ret = module->selected_btl->btl_atomic_fop (module->selected_btl, peer->state_endpoint, temp, (intptr_t) lock,
+                                                        frag->handle, peer->state_handle, MCA_BTL_ATOMIC_ADD, value, 0,
+                                                        MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete, (void *) &atomic_complete,
+                                                        NULL);
         }
 
         if (OPAL_SUCCESS == ret) {
             while (!atomic_complete) {
                 ompi_osc_rdma_progress (module);
             }
-        } else if (1 == OPAL_SUCCESS) {
+        } else if (1 == ret) {
             ret = OMPI_SUCCESS;
+        }
+
+        if (frag) {
+            ompi_osc_rdma_frag_complete (frag);
         }
 
         return ret;
@@ -105,7 +117,7 @@ static inline int ompi_osc_rdma_lock_acquire_shared (ompi_osc_rdma_module_t *mod
 {
     uint64_t lock = (uint64_t) peer->state + offset;
     volatile bool atomic_complete;
-    ompi_osc_rdma_lock_t *temp;
+    ompi_osc_rdma_lock_t *temp = NULL;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "acquiring shared lock %" PRIx64 " on peer %d. value 0x%lx", lock,
@@ -279,32 +291,40 @@ static inline int ompi_osc_rdma_lock_release_exclusive (ompi_osc_rdma_module_t *
                                                         ptrdiff_t offset)
 {
     uint64_t lock = (uint64_t) (intptr_t) peer->state + offset;
-    void *temp = &module->state->scratch_lock;
     volatile bool atomic_complete = false;
+    void *temp = NULL;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "releasing exclusive lock %" PRIx64 " on peer %d", lock, peer->rank);
 
     if (!ompi_osc_rdma_peer_local_state (peer)) {
+        ompi_osc_rdma_frag_t *frag = NULL;
+
         if (module->selected_btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS) {
             ret = module->selected_btl->btl_atomic_op (module->selected_btl, peer->state_endpoint, lock, peer->state_handle, MCA_BTL_ATOMIC_ADD,
                                                        -OMPI_OSC_RDMA_LOCK_EXCLUSIVE, 0, MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete,
                                                        (void *) &atomic_complete, NULL);
         } else {
-            ret = module->selected_btl->btl_atomic_fop (module->selected_btl, peer->state_endpoint, temp, lock, module->state_handle,
+            ret = ompi_osc_rdma_frag_alloc (module, 8, &frag, (char **) &temp);
+            if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+                return ret;
+            }
+
+            ret = module->selected_btl->btl_atomic_fop (module->selected_btl, peer->state_endpoint, temp, lock, frag->handle,
                                                         peer->state_handle, MCA_BTL_ATOMIC_ADD, -OMPI_OSC_RDMA_LOCK_EXCLUSIVE, 0,
                                                         MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete, (void *) &atomic_complete, NULL);
-        }
-
-        if (OPAL_UNLIKELY(OMPI_SUCCESS > ret)) {
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "error releasing exclusive lock");
-            return ret;
         }
 
         if (OPAL_SUCCESS == ret) {
             while (!atomic_complete) {
                 ompi_osc_rdma_progress (module);
             }
+        } else if (1 == ret) {
+            ret = OMPI_SUCCESS;
+        }
+
+        if (frag) {
+            ompi_osc_rdma_frag_complete (frag);
         }
     } else {
         ompi_osc_rdma_unlock_local ((volatile ompi_osc_rdma_lock_t *)(intptr_t) lock);

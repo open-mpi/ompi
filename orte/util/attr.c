@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2014      Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -14,6 +14,7 @@
 #include "orte/constants.h"
 
 #include "opal/dss/dss.h"
+#include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -167,9 +168,13 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "APP-MAX-PPN";
         case ORTE_APP_PREFIX_DIR:
             return "APP-PREFIX-DIR";
+        case ORTE_APP_NO_CACHEDIR:
+            return "ORTE_APP_NO_CACHEDIR";
 
         case ORTE_NODE_USERNAME:
             return "NODE-USERNAME";
+        case ORTE_NODE_PORT:
+            return "NODE-PORT";
         case ORTE_NODE_LAUNCH_ID:
             return "NODE-LAUNCHID";
         case ORTE_NODE_HOSTID:
@@ -219,8 +224,6 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "JOB-CONTINUOUS-OP";
         case ORTE_JOB_RECOVER_DEFINED:
             return "JOB-RECOVERY-DEFINED";
-        case ORTE_JOB_ENABLE_RECOVERY:
-            return "JOB-ENABLE-RECOVERY";
         case ORTE_JOB_NON_ORTE_JOB:
             return "JOB-NON-ORTE-JOB";
         case ORTE_JOB_STDOUT_TARGET:
@@ -261,6 +264,26 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "JOB-LAUNCH-PROXY";
         case ORTE_JOB_NSPACE_REGISTERED:
             return "JOB-NSPACE-REGISTERED";
+        case ORTE_JOB_FIXED_DVM:
+            return "ORTE-JOB-FIXED-DVM";
+        case ORTE_JOB_DVM_JOB:
+            return "ORTE-JOB-DVM-JOB";
+        case ORTE_JOB_CANCELLED:
+            return "ORTE-JOB-CANCELLED";
+        case ORTE_JOB_OUTPUT_TO_FILE:
+            return "ORTE-JOB-OUTPUT-TO-FILE";
+        case ORTE_JOB_MERGE_STDERR_STDOUT:
+            return "ORTE-JOB-MERGE-STDERR-STDOUT";
+        case ORTE_JOB_TAG_OUTPUT:
+            return "ORTE-JOB-TAG-OUTPUT";
+        case ORTE_JOB_TIMESTAMP_OUTPUT:
+            return "ORTE-JOB-TIMESTAMP-OUTPUT";
+        case ORTE_JOB_MULTI_DAEMON_SIM:
+            return "ORTE_JOB_MULTI_DAEMON_SIM";
+        case ORTE_JOB_NOTIFY_COMPLETION:
+            return "ORTE_JOB_NOTIFY_COMPLETION";
+        case ORTE_JOB_TRANSPORT_KEY:
+            return "ORTE_JOB_TRANSPORT_KEY";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";
@@ -291,6 +314,26 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
         case ORTE_PROC_NBEATS:
             return "PROC-NBEATS";
 
+        case ORTE_RML_TRANSPORT_TYPE:
+            return "RML-TRANSPORT-TYPE";
+        case ORTE_RML_PROTOCOL_TYPE:
+            return "RML-PROTOCOL-TYPE";
+        case ORTE_RML_CONDUIT_ID:
+            return "RML-CONDUIT-ID";
+        case ORTE_RML_INCLUDE_COMP_ATTRIB:
+            return "RML-INCLUDE";
+        case ORTE_RML_EXCLUDE_COMP_ATTRIB:
+            return "RML-EXCLUDE";
+        case ORTE_RML_TRANSPORT_ATTRIB:
+            return "RML-TRANSPORT";
+        case ORTE_RML_QUALIFIER_ATTRIB:
+            return "RML-QUALIFIER";
+        case ORTE_RML_PROVIDER_ATTRIB:
+            return "RML-DESIRED-PROVIDERS";
+        case ORTE_RML_PROTOCOL_ATTRIB:
+            return "RML-DESIRED-PROTOCOLS";
+        case ORTE_RML_ROUTED_ATTRIB:
+            return "RML-DESIRED-ROUTED-MODULES";
         default:
             return "UNKNOWN-KEY";
         }
@@ -318,9 +361,24 @@ static int orte_attr_load(orte_attribute_t *kv,
     struct timeval *tv;
 
     kv->type = type;
-    if (NULL == data && OPAL_STRING != type && OPAL_BYTE_OBJECT != type) {
-        /* just set the fields to zero */
-        memset(&kv->data, 0, sizeof(kv->data));
+    if (NULL == data) {
+        /* if the type is BOOL, then the user wanted to
+         * use the presence of the attribute to indicate
+         * "true" - so let's mark it that way just in
+         * case a subsequent test looks for the value */
+        if (OPAL_BOOL == type) {
+            kv->data.flag = true;
+        } else {
+            /* otherwise, check to see if this type has storage
+             * that is already allocated, and free it if so */
+            if (OPAL_STRING == type && NULL != kv->data.string) {
+                free(kv->data.string);
+            } else if (OPAL_BYTE_OBJECT == type && NULL != kv->data.bo.bytes) {
+                free(kv->data.bo.bytes);
+            }
+            /* just set the fields to zero */
+            memset(&kv->data, 0, sizeof(kv->data));
+        }
         return OPAL_SUCCESS;
     }
 

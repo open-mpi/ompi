@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -97,6 +97,9 @@ ORTE_DECLSPEC char *orte_pretty_print_timing(int64_t secs, int64_t usecs);
 #define ORTE_CONSTRUCT_LOCAL_JOBID(local, job) \
     ( ((local) & 0xffff0000) | ((job) & 0x0000ffff) )
 
+#define ORTE_CONSTRUCT_JOBID(family, local) \
+    ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_CONSTRUCT_JOB_FAMILY(family), local)
+
 /* a macro for identifying that a proc is a daemon */
 #define ORTE_JOBID_IS_DAEMON(n)  \
     !((n) & 0x0000ffff)
@@ -114,6 +117,7 @@ typedef struct orte_namelist_t orte_namelist_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_namelist_t);
 
+ORTE_DECLSPEC int orte_util_snprintf_jobid(char *jobid_string, size_t size, const orte_jobid_t jobid);
 ORTE_DECLSPEC int orte_util_convert_jobid_to_string(char **jobid_string, const orte_jobid_t jobid);
 ORTE_DECLSPEC int orte_util_convert_string_to_jobid(orte_jobid_t *jobid, const char* jobidstring);
 ORTE_DECLSPEC int orte_util_convert_vpid_to_string(char **vpid_string, const orte_vpid_t vpid);

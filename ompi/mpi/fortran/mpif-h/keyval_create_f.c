@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -74,6 +74,7 @@ void ompi_keyval_create_f(ompi_mpi1_fortran_copy_attr_function* copy_attr_fn,
                          MPI_Fint *ierr)
 {
     int ret, c_ierr;
+    OMPI_SINGLE_NAME_DECL(keyval);
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
@@ -86,7 +87,7 @@ void ompi_keyval_create_f(ompi_mpi1_fortran_copy_attr_function* copy_attr_fn,
        functions). */
 
     ret = ompi_attr_create_keyval_fint(COMM_ATTR, copy_fn, del_fn,
-                                       keyval, *extra_state,
+                                       OMPI_SINGLE_NAME_CONVERT(keyval), *extra_state,
                                        OMPI_KEYVAL_F77 | OMPI_KEYVAL_F77_MPI1,
                                        NULL);
 
@@ -94,8 +95,9 @@ void ompi_keyval_create_f(ompi_mpi1_fortran_copy_attr_function* copy_attr_fn,
         c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
                                         MPI_ERR_OTHER,
                                         FUNC_NAME);
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     } else {
-        c_ierr = MPI_SUCCESS;
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+        OMPI_SINGLE_INT_2_FINT(keyval);
     }
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -18,10 +18,13 @@
 #
 
 headers += \
-        base/base.h
+        base/base.h \
+        base/fcoll_base_coll_array.h
 
 libmca_fcoll_la_SOURCES += \
         base/fcoll_base_frame.c \
         base/fcoll_base_file_select.c \
         base/fcoll_base_file_unselect.c \
-        base/fcoll_base_find_available.c
+        base/fcoll_base_find_available.c \
+        base/fcoll_base_sort.c \
+        base/fcoll_base_coll_array.c

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,6 +53,7 @@ ORTE_DECLSPEC int orte_plm_base_select(void);
 ORTE_DECLSPEC void orte_plm_base_app_report_launch(int fd, short event, void *data);
 ORTE_DECLSPEC void orte_plm_base_receive_process_msg(int fd, short event, void *data);
 
+ORTE_DECLSPEC void orte_plm_base_set_slots(orte_node_t *node);
 ORTE_DECLSPEC void orte_plm_base_setup_job(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_setup_job_complete(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_complete_setup(int fd, short args, void *cbdata);

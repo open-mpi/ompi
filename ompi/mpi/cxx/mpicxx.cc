@@ -25,6 +25,8 @@
    SEEK_SET and friends right */
 #include "ompi_config.h"
 
+#include "cxx_glue.h"
+
 #if OPAL_CXX_USE_PRAGMA_IDENT
 #pragma ident OMPI_IDENT_STRING
 #elif OPAL_CXX_USE_IDENT
@@ -33,8 +35,6 @@
 namespace MPI {
     const char ompi_libcxx_version_string[] = OMPI_IDENT_STRING;
 }
-
-#include "ompi/errhandler/errhandler.h"
 
 namespace MPI {
 
@@ -74,7 +74,7 @@ const Datatype DOUBLE_INT(MPI_DOUBLE_INT);
 const Datatype LONG_INT(MPI_LONG_INT);
 const Datatype TWOINT(MPI_2INT);
 const Datatype SHORT_INT(MPI_SHORT_INT);
-const Datatype LONG_DOUBLE_INT(MPI_LONG_DOUBLE);
+const Datatype LONG_DOUBLE_INT(MPI_LONG_DOUBLE_INT);
 
 #if OMPI_BUILD_FORTRAN_BINDINGS
 // elementary datatype (Fortran)

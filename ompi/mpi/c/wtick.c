@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -41,7 +41,15 @@ double MPI_Wtick(void)
     OPAL_CR_NOOP_PROGRESS();
 
 #if OPAL_TIMER_CYCLE_NATIVE
-    return opal_timer_base_get_freq();
+    {
+        opal_timer_t freq = opal_timer_base_get_freq();
+        if (0 == freq) {
+            /* That should never happen, but if it does, return a bogus value
+             * rather than crashing with a division by zero */
+            return (double)0.0;
+        }
+        return (double)1.0 / (double)freq;
+    }
 #elif OPAL_TIMER_USEC_NATIVE
     return 0.000001;
 #else

@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -42,6 +44,7 @@
 #include "orte/util/show_help.h"
 
 bool orte_help_want_aggregate = false;
+static int orte_help_output;
 
 /*
  * Local variable to know whether aggregated show_help is available or
@@ -446,7 +449,7 @@ static int show_help(const char *filename, const char *topic,
             fflush(orte_xml_fp);
             free(tmp);
         } else {
-            opal_output(orte_clean_output, "%s", output);
+            opal_output(orte_help_output, "%s", output);
         }
         if (!show_help_timer_set) {
             show_help_time_last_displayed = now;
@@ -536,6 +539,8 @@ cleanup:
 
 int orte_show_help_init(void)
 {
+    opal_output_stream_t lds;
+
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output, "orte_show_help init"));
 
     /* Show help duplicate detection */
@@ -544,6 +549,12 @@ int orte_show_help_init(void)
     }
 
     OBJ_CONSTRUCT(&abd_tuples, opal_list_t);
+
+    /* create an output stream for us */
+    OBJ_CONSTRUCT(&lds, opal_output_stream_t);
+    lds.lds_want_stderr = true;
+    orte_help_output = opal_output_open(&lds);
+    OBJ_DESTRUCT(&lds);
 
     save_help = opal_show_help;
     opal_show_help = orte_show_help;
@@ -558,6 +569,8 @@ void orte_show_help_finalize(void)
         return;
     }
     ready = false;
+
+    opal_output_close(orte_help_output);
 
     opal_show_help = save_help;
     save_help = NULL;
@@ -602,11 +615,23 @@ int orte_show_help(const char *filename, const char *topic,
     return rc;
 }
 
+static void cbfunc(int status, void *cbdata)
+{
+    volatile bool *active = (volatile bool*)cbdata;
+    *active = false;
+}
+
 int orte_show_help_norender(const char *filename, const char *topic,
                             bool want_error_header, const char *output)
 {
     int rc = ORTE_SUCCESS;
     int8_t have_output = 1;
+    opal_buffer_t *buf;
+    bool am_inside = false;
+    opal_list_t info;
+    opal_value_t *kv;
+    volatile bool active;
+    struct timespec tp;
 
     if (!ready) {
         /* if we are finalizing, then we have no way to process
@@ -628,41 +653,47 @@ int orte_show_help_norender(const char *filename, const char *topic,
      * mode, then all we can do is process this locally
      */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_TOOL ||
-        orte_standalone_operation ||
-        NULL == orte_rml.send_buffer_nb ||
-        NULL == orte_routed.get_route ||
-        NULL == orte_process_info.my_hnp_uri) {
+        orte_standalone_operation) {
         rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
+        goto CLEANUP;
+    } else if (ORTE_PROC_IS_DAEMON) {
+        if (NULL == orte_rml.send_buffer_nb ||
+            NULL == orte_routed.get_route ||
+            NULL == orte_process_info.my_hnp_uri) {
+            rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
+            goto CLEANUP;
+        }
     }
 
     /* otherwise, we relay the output message to
      * the HNP for processing
      */
-    else {
-        opal_buffer_t *buf;
-        static bool am_inside = false;
 
-        /* JMS Note that we *may* have a recursion situation here where
-           the RML could call show_help.  Need to think about this
-           properly, but put a safeguard in here for sure for the time
-           being. */
-        if (am_inside) {
-            rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
-        } else {
-            am_inside = true;
+    /* JMS Note that we *may* have a recursion situation here where
+       the RML could call show_help.  Need to think about this
+       properly, but put a safeguard in here for sure for the time
+       being. */
+    if (am_inside) {
+        rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
+    } else {
+        am_inside = true;
 
-            /* build the message to the HNP */
-            buf = OBJ_NEW(opal_buffer_t);
-            /* pack the filename of the show_help text file */
-            opal_dss.pack(buf, &filename, 1, OPAL_STRING);
-            /* pack the topic tag */
-            opal_dss.pack(buf, &topic, 1, OPAL_STRING);
-            /* pack the flag that we have a string */
-            opal_dss.pack(buf, &have_output, 1, OPAL_INT8);
-            /* pack the resulting string */
-            opal_dss.pack(buf, &output, 1, OPAL_STRING);
+        /* build the message to the HNP */
+        buf = OBJ_NEW(opal_buffer_t);
+        /* pack the filename of the show_help text file */
+        opal_dss.pack(buf, &filename, 1, OPAL_STRING);
+        /* pack the topic tag */
+        opal_dss.pack(buf, &topic, 1, OPAL_STRING);
+        /* pack the flag that we have a string */
+        opal_dss.pack(buf, &have_output, 1, OPAL_INT8);
+        /* pack the resulting string */
+        opal_dss.pack(buf, &output, 1, OPAL_STRING);
+
+        /* if we are a daemon, then send it via RML to the HNP */
+        if (ORTE_PROC_IS_DAEMON) {
             /* send it to the HNP */
-            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                                              ORTE_PROC_MY_HNP, buf,
                                                               ORTE_RML_TAG_SHOW_HELP,
                                                               orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
@@ -672,8 +703,33 @@ int orte_show_help_norender(const char *filename, const char *topic,
             } else {
                 rc = ORTE_SUCCESS;
             }
-            am_inside = false;
+        } else {
+            /* if we are not a daemon (i.e., we are an app) and if PMIx
+             * support for "log" is available, then use that channel */
+            if (NULL != opal_pmix.log) {
+                OBJ_CONSTRUCT(&info, opal_list_t);
+                kv = OBJ_NEW(opal_value_t),
+                kv->key = strdup(OPAL_PMIX_LOG_STDERR);
+                kv->type = OPAL_BYTE_OBJECT;
+                opal_dss.unload(buf, (void**)&kv->data.bo.bytes, &kv->data.bo.size);
+                opal_list_append(&info, &kv->super);
+                active = true;
+                tp.tv_sec = 0;
+                tp.tv_nsec = 1000000;
+                opal_pmix.log(&info, cbfunc, (void*)&active);
+                while (active) {
+                    nanosleep(&tp, NULL);
+                }
+                OBJ_RELEASE(buf);
+                kv->data.bo.bytes = NULL;
+                OPAL_LIST_DESTRUCT(&info);
+                rc = ORTE_SUCCESS;
+                goto CLEANUP;
+            } else {
+                rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
+            }
         }
+        am_inside = false;
     }
 
 CLEANUP:
@@ -730,7 +786,8 @@ int orte_show_help_suppress(const char *filename, const char *topic)
             /* pack the flag that we DO NOT have a string */
             opal_dss.pack(buf, &have_output, 1, OPAL_INT8);
             /* send it to the HNP */
-            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                                              ORTE_PROC_MY_HNP, buf,
                                                               ORTE_RML_TAG_SHOW_HELP,
                                                               orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);

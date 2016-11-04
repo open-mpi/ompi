@@ -2,14 +2,14 @@
  *  Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                          University Research and Technology
  *                          Corporation.  All rights reserved.
- *  Copyright (c) 2004-2005 The University of Tennessee and The University
+ *  Copyright (c) 2004-2016 The University of Tennessee and The University
  *                          of Tennessee Research Foundation.  All rights
  *                          reserved.
  *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2016 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -59,102 +59,9 @@ int mca_io_ompio_file_read (ompi_file_t *fp,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
-    ret = ompio_io_ompio_file_read(&data->ompio_fh,buf,count,datatype,status);
-
-    return ret;
-}
-
-int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
-			      void *buf,
-			      int count,
-			      struct ompi_datatype_t *datatype,
-			      ompi_status_public_t *status)
-{
-    int ret = OMPI_SUCCESS;
-
-    size_t total_bytes_read = 0;       /* total bytes that have been read*/
-    size_t bytes_per_cycle = 0;        /* total read in each cycle by each process*/
-    int index = 0;
-    int cycles = 0;
-
-    uint32_t iov_count = 0;
-    struct iovec *decoded_iov = NULL;
-
-    size_t max_data=0, real_bytes_read=0;
-    ssize_t ret_code=0;
-    int i = 0; /* index into the decoded iovec of the buffer */
-    int j = 0; /* index into the file vie iovec */
-
-    if ( 0 == count ) {
-	if ( MPI_STATUS_IGNORE != status ) {
-	    status->_ucount = 0;
-	}
-	return ret;
-    }
-
-    if (fh->f_amode & MPI_MODE_WRONLY){
-      printf("Improper use of FILE Mode, Using WRONLY for Read!\n");
-      ret = OMPI_ERROR;
-      return ret;
-    }
-
-    ompi_io_ompio_decode_datatype (fh,
-                                   datatype,
-                                   count,
-                                   buf,
-                                   &max_data,
-                                   &decoded_iov,
-                                   &iov_count);
-
-    if ( -1 == mca_io_ompio_cycle_buffer_size ) {
-	bytes_per_cycle = max_data;
-    }
-    else {
-	bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
-    }
-    cycles = ceil((float)max_data/bytes_per_cycle);
-
-#if 0
-	printf ("Bytes per Cycle: %d   Cycles: %d max_data:%d \n",bytes_per_cycle, cycles, max_data);
-#endif
-
-    j = fh->f_index_in_file_view;
-
-    for (index = 0; index < cycles; index++) {
-
-	mca_io_ompio_build_io_array ( fh,
-				      index,
-				      cycles,
-				      bytes_per_cycle,
-				      max_data,
-				      iov_count,
-				      decoded_iov,
-				      &i,
-				      &j,
-				      &total_bytes_read);
-
-        if (fh->f_num_of_io_entries) {
-            ret_code = fh->f_fbtl->fbtl_preadv (fh);
-	    if ( 0<= ret_code ) {
-		real_bytes_read+=(size_t)ret_code;
-	    }
-        }
-
-        fh->f_num_of_io_entries = 0;
-        if (NULL != fh->f_io_array) {
-            free (fh->f_io_array);
-            fh->f_io_array = NULL;
-        }
-    }
-
-    if (NULL != decoded_iov) {
-        free (decoded_iov);
-        decoded_iov = NULL;
-    }
-
-    if ( MPI_STATUS_IGNORE != status ) {
-	status->_ucount = real_bytes_read;
-    }
+    OPAL_THREAD_LOCK(&fp->f_mutex);
+    ret = mca_common_ompio_file_read(&data->ompio_fh,buf,count,datatype,status);
+    OPAL_THREAD_UNLOCK(&fp->f_mutex);
 
     return ret;
 }
@@ -170,38 +77,12 @@ int mca_io_ompio_file_read_at (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_read_at(&data->ompio_fh, offset,buf,count,datatype,status);
+    OPAL_THREAD_LOCK(&fh->f_mutex);
+    ret = mca_common_ompio_file_read_at(&data->ompio_fh, offset,buf,count,datatype,status);
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
 
     return ret;
 }
-
-int ompio_io_ompio_file_read_at (mca_io_ompio_file_t *fh,
-				 OMPI_MPI_OFFSET_TYPE offset,
-				 void *buf,
-				 int count,
-				 struct ompi_datatype_t *datatype,
-				 ompi_status_public_t * status)
-{
-    int ret = OMPI_SUCCESS;
-    OMPI_MPI_OFFSET_TYPE prev_offset;
-
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
-
-    ompi_io_ompio_set_explicit_offset (fh, offset);
-    ret = ompio_io_ompio_file_read (fh,
-				    buf,
-				    count,
-				    datatype,
-				    status);
-
-    // An explicit offset file operation is not suppsed to modify
-    // the internal file pointer. So reset the pointer
-    // to the previous value
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
-
-    return ret;
-}
-
 
 int mca_io_ompio_file_iread (ompi_file_t *fh,
 			     void *buf,
@@ -213,100 +94,13 @@ int mca_io_ompio_file_iread (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_iread(&data->ompio_fh,buf,count,datatype,request);
+    OPAL_THREAD_LOCK(&fh->f_mutex);
+    ret = mca_common_ompio_file_iread(&data->ompio_fh,buf,count,datatype,request);
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
 
     return ret;
 }
 
-
-int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
-			       void *buf,
-			       int count,
-			       struct ompi_datatype_t *datatype,
-			       ompi_request_t **request)
-{
-    int ret = OMPI_SUCCESS;
-    mca_ompio_request_t *ompio_req=NULL;
-
-    ompio_req = OBJ_NEW(mca_ompio_request_t);
-    ompio_req->req_type = MCA_OMPIO_REQUEST_READ;
-    ompio_req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;
-
-    if ( 0 == count ) {
-	ompi_request_complete (&ompio_req->req_ompi, 0);
-	ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
-	ompio_req->req_ompi.req_status._ucount = 0;
-	return OMPI_SUCCESS;
-    }
-
-    if ( NULL != fh->f_fbtl->fbtl_ipreadv ) {
-	// This fbtl has support for non-blocking operations
-
-	size_t total_bytes_read = 0;       /* total bytes that have been read*/
-	uint32_t iov_count = 0;
-	struct iovec *decoded_iov = NULL;
-
-	size_t max_data = 0;
-	int i = 0; /* index into the decoded iovec of the buffer */
-	int j = 0; /* index into the file vie iovec */
-
-	ompi_io_ompio_decode_datatype (fh,
-				       datatype,
-				       count,
-				       buf,
-				       &max_data,
-				       &decoded_iov,
-				       &iov_count);
-
-	// Non-blocking operations have to occur in a single cycle
-	j = fh->f_index_in_file_view;
-
-	mca_io_ompio_build_io_array ( fh,
-				      0,         // index
-				      1,         // no. of cyces
-				      max_data,  // setting bytes per cycle to match data
-				      max_data,
-				      iov_count,
-				      decoded_iov,
-				      &i,
-				      &j,
-				      &total_bytes_read);
-
-	if (fh->f_num_of_io_entries) {
-	  fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *) ompio_req);
-	}
-
-	if ( false == mca_io_ompio_progress_is_registered ) {
-            // Lazy initialization of progress function to minimize impact
-            // on other ompi functionality in case its not used.
-            opal_progress_register (mca_io_ompio_component_progress);
-            mca_io_ompio_progress_is_registered=true;
-        }
-
-	fh->f_num_of_io_entries = 0;
-	if (NULL != fh->f_io_array) {
-	    free (fh->f_io_array);
-	    fh->f_io_array = NULL;
-	}
-
-	if (NULL != decoded_iov) {
-	    free (decoded_iov);
-	    decoded_iov = NULL;
-	}
-    }
-    else {
-	// This fbtl does not  support non-blocking operations
-	ompi_status_public_t status;
-	ret = ompio_io_ompio_file_read (fh, buf, count, datatype, &status);
-
-	ompi_request_complete (&ompio_req->req_ompi, 0);
-	ompio_req->req_ompi.req_status.MPI_ERROR = ret;
-	ompio_req->req_ompi.req_status._ucount = status._ucount;
-    }
-
-    *request = (ompi_request_t *) ompio_req;
-    return ret;
-}
 
 int mca_io_ompio_file_iread_at (ompi_file_t *fh,
 				OMPI_MPI_OFFSET_TYPE offset,
@@ -319,38 +113,9 @@ int mca_io_ompio_file_iread_at (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_iread_at(&data->ompio_fh,offset,buf,count,datatype,request);
-
-    return ret;
-}
-
-int ompio_io_ompio_file_iread_at (mca_io_ompio_file_t *fh,
-				  OMPI_MPI_OFFSET_TYPE offset,
-				  void *buf,
-				  int count,
-				  struct ompi_datatype_t *datatype,
-				  ompi_request_t **request)
-{
-    int ret = OMPI_SUCCESS;
-    OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
-
-    ompi_io_ompio_set_explicit_offset (fh, offset);
-    ret = ompio_io_ompio_file_iread (fh,
-				    buf,
-				    count,
-				    datatype,
-				    request);
-
-    /* An explicit offset file operation is not suppsed to modify
-    ** the internal file pointer. So reset the pointer
-    ** to the previous value
-    ** It is OK to reset the position already here, althgouth
-    ** the operation might still be pending/ongoing, since
-    ** the entire array of <offset, length, memaddress> have
-    ** already been constructed in the file_iread operation
-    */
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
+    OPAL_THREAD_LOCK(&fh->f_mutex);
+    ret = mca_common_ompio_file_iread_at(&data->ompio_fh,offset,buf,count,datatype,request);
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
 
     return ret;
 }
@@ -369,12 +134,14 @@ int mca_io_ompio_file_read_all (ompi_file_t *fh,
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
+    OPAL_THREAD_LOCK(&fh->f_mutex);
     ret = data->ompio_fh.
         f_fcoll->fcoll_file_read_all (&data->ompio_fh,
                                      buf,
                                      count,
                                      datatype,
                                      status);
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
     if ( MPI_STATUS_IGNORE != status ) {
 	size_t size;
 
@@ -398,6 +165,7 @@ int mca_io_ompio_file_iread_all (ompi_file_t *fh,
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
     fp = &data->ompio_fh;
 
+    OPAL_THREAD_LOCK(&fh->f_mutex);
     if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
 	ret = fp->f_fcoll->fcoll_file_iread_all (&data->ompio_fh,
 						 buf,
@@ -409,8 +177,9 @@ int mca_io_ompio_file_iread_all (ompi_file_t *fh,
 	/* this fcoll component does not support non-blocking
 	   collective I/O operations. WE fake it with
 	   individual non-blocking I/O operations. */
-	ret = ompio_io_ompio_file_iread ( fp, buf, count, datatype, request );
+	ret = mca_common_ompio_file_iread ( fp, buf, count, datatype, request );
     }
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
 
     return ret;
 }
@@ -427,30 +196,10 @@ int mca_io_ompio_file_read_at_all (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_read_at_all(&data->ompio_fh,offset,buf,count,datatype,status);
+    OPAL_THREAD_LOCK(&fh->f_mutex);
+    ret = mca_common_ompio_file_read_at_all(&data->ompio_fh,offset,buf,count,datatype,status);
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
 
-    return ret;
-}
-
-int ompio_io_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
-				     OMPI_MPI_OFFSET_TYPE offset,
-				     void *buf,
-				     int count,
-				     struct ompi_datatype_t *datatype,
-				     ompi_status_public_t * status)
-{
-    int ret = OMPI_SUCCESS;
-    OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
-
-    ompi_io_ompio_set_explicit_offset (fh, offset);
-    ret = fh->f_fcoll->fcoll_file_read_all (fh,
-                                            buf,
-                                            count,
-                                            datatype,
-                                            status);
-
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
 
@@ -465,41 +214,12 @@ int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
-    ret = ompio_io_ompio_file_iread_at_all ( &data->ompio_fh, offset, buf, count, datatype, request );
+    OPAL_THREAD_LOCK(&fh->f_mutex);
+    ret = mca_common_ompio_file_iread_at_all ( &data->ompio_fh, offset, buf, count, datatype, request );
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
     return ret;
 }
 
-int ompio_io_ompio_file_iread_at_all (mca_io_ompio_file_t *fp,
-				      OMPI_MPI_OFFSET_TYPE offset,
-				      void *buf,
-				      int count,
-				      struct ompi_datatype_t *datatype,
-				      ompi_request_t **request)
-{
-    int ret = OMPI_SUCCESS;
-    OMPI_MPI_OFFSET_TYPE prev_offset;
-
-    ompio_io_ompio_file_get_position (fp, &prev_offset );
-    ompi_io_ompio_set_explicit_offset (fp, offset);
-
-    if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
-	ret = fp->f_fcoll->fcoll_file_iread_all (fp,
-						 buf,
-						 count,
-						 datatype,
-						 request);
-    }
-    else {
-	/* this fcoll component does not support non-blocking
-	   collective I/O operations. WE fake it with
-	   individual non-blocking I/O operations. */
-	ret = ompio_io_ompio_file_iread ( fp, buf, count, datatype, request );
-    }
-
-
-    ompi_io_ompio_set_explicit_offset (fp, prev_offset);
-    return ret;
-}
 
 /* Infrastructure for shared file pointer operations
 ** (individual and ordered)*/
@@ -524,7 +244,9 @@ int mca_io_ompio_file_read_shared (ompi_file_t *fp,
         opal_output(0, "No shared file pointer component found for the given communicator. Can not execute\n");
 	return OMPI_ERROR;
     }
+    OPAL_THREAD_LOCK(&fp->f_mutex);
     ret = shared_fp_base_module->sharedfp_read(fh,buf,count,datatype,status);
+    OPAL_THREAD_UNLOCK(&fp->f_mutex);
 
     return ret;
 }
@@ -549,7 +271,9 @@ int mca_io_ompio_file_iread_shared (ompi_file_t *fh,
         opal_output(0, "No shared file pointer component found for the given communicator. Can not execute\n");
 	return OMPI_ERROR;
     }
+    OPAL_THREAD_LOCK(&fh->f_mutex);
     ret = shared_fp_base_module->sharedfp_iread(ompio_fh,buf,count,datatype,request);
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
 
     return ret;
 }
@@ -574,8 +298,9 @@ int mca_io_ompio_file_read_ordered (ompi_file_t *fh,
         opal_output(0, "No shared file pointer component found for the given communicator. Can not execute\n");
 	return OMPI_ERROR;
     }
+    OPAL_THREAD_LOCK(&fh->f_mutex);
     ret = shared_fp_base_module->sharedfp_read_ordered(ompio_fh,buf,count,datatype,status);
-
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
     return ret;
 }
 
@@ -598,7 +323,9 @@ int mca_io_ompio_file_read_ordered_begin (ompi_file_t *fh,
         opal_output(0, "No shared file pointer component found for the given communicator. Can not execute\n");
 	return OMPI_ERROR;
     }
+    OPAL_THREAD_LOCK(&fh->f_mutex);
     ret = shared_fp_base_module->sharedfp_read_ordered_begin(ompio_fh,buf,count,datatype);
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
 
     return ret;
 }
@@ -621,7 +348,9 @@ int mca_io_ompio_file_read_ordered_end (ompi_file_t *fh,
         opal_output(0, "No shared file pointer component found for the given communicator. Can not execute\n");
 	return OMPI_ERROR;
     }
+    OPAL_THREAD_LOCK(&fh->f_mutex);
     ret = shared_fp_base_module->sharedfp_read_ordered_end(ompio_fh,buf,status);
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
 
     return ret;
 }
@@ -644,6 +373,7 @@ int mca_io_ompio_file_read_all_begin (ompi_file_t *fh,
 	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
 	return MPI_ERR_OTHER;
     }
+    /* No need for locking fh->f_mutex, that is done in file_iread_all */
     ret = mca_io_ompio_file_iread_all ( fh, buf, count, datatype, &fp->f_split_coll_req );
     fp->f_split_coll_in_use = true;
 
@@ -683,7 +413,9 @@ int mca_io_ompio_file_read_at_all_begin (ompi_file_t *fh,
 	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
 	return MPI_ERR_REQUEST;
     }
-    ret = ompio_io_ompio_file_iread_at_all ( fp, offset, buf, count, datatype, &fp->f_split_coll_req );
+    OPAL_THREAD_LOCK(&fh->f_mutex);
+    ret = mca_common_ompio_file_iread_at_all ( fp, offset, buf, count, datatype, &fp->f_split_coll_req );
+    OPAL_THREAD_UNLOCK(&fh->f_mutex);
     fp->f_split_coll_in_use = true;
     return ret;
 }

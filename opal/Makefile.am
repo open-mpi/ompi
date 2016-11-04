@@ -10,7 +10,9 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -56,12 +58,6 @@ lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
 lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = $(lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD)
 lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version)
 
-if OPAL_DESTRUCTOR_USE_FINI
-
-lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS += -Wl,-fini -Wl,opal_cleanup
-
-endif
-
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
@@ -76,7 +72,6 @@ nobase_opal_HEADERS = $(headers)
 endif
 
 include class/Makefile.am
-include errhandler/Makefile.am
 include memoryhooks/Makefile.am
 include runtime/Makefile.am
 include threads/Makefile.am

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,7 +80,21 @@ enum {
     OPAL_ERR_AUTHENTICATION_FAILED          = (OPAL_ERR_BASE - 50),
     OPAL_ERR_COMM_FAILURE                   = (OPAL_ERR_BASE - 51),
     OPAL_ERR_SERVER_NOT_AVAIL               = (OPAL_ERR_BASE - 52),
-    OPAL_ERR_IN_PROCESS                     = (OPAL_ERR_BASE - 53)
+    OPAL_ERR_IN_PROCESS                     = (OPAL_ERR_BASE - 53),
+    /* PMIx equivalents for notification support */
+    OPAL_ERR_DEBUGGER_RELEASE               = (OPAL_ERR_BASE - 54),
+    OPAL_ERR_HANDLERS_COMPLETE              = (OPAL_ERR_BASE - 55),
+    OPAL_ERR_PARTIAL_SUCCESS                = (OPAL_ERR_BASE - 56),
+    OPAL_ERR_PROC_ABORTED                   = (OPAL_ERR_BASE - 57),
+    OPAL_ERR_PROC_REQUESTED_ABORT           = (OPAL_ERR_BASE - 58),
+    OPAL_ERR_PROC_ABORTING                  = (OPAL_ERR_BASE - 59),
+    OPAL_ERR_NODE_DOWN                      = (OPAL_ERR_BASE - 60),
+    OPAL_ERR_NODE_OFFLINE                   = (OPAL_ERR_BASE - 61),
+    OPAL_ERR_JOB_TERMINATED                 = (OPAL_ERR_BASE - 62),
+    OPAL_ERR_PROC_RESTART                   = (OPAL_ERR_BASE - 63),
+    OPAL_ERR_PROC_CHECKPOINT                = (OPAL_ERR_BASE - 64),
+    OPAL_ERR_PROC_MIGRATE                   = (OPAL_ERR_BASE - 65),
+    OPAL_ERR_EVENT_REGISTRATION             = (OPAL_ERR_BASE - 66)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

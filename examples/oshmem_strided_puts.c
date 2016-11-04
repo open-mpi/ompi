@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -33,8 +33,8 @@ int main(void)
     static short target[10];
     int me;
 
-    start_pes(0);
-    me = _my_pe();
+    shmem_init();
+    me = shmem_my_pe();
 
     if (me == 0) {
         /* put 10 words into target on PE 1 */
@@ -49,6 +49,7 @@ int main(void)
         target[3], target[4] );
     }
     shmem_barrier_all(); /* sync before exiting */
+    shmem_finalize();
 
     return 0;
 }

@@ -165,3 +165,15 @@ void mca_spml_base_rmkey_unpack(sshmem_mkey_t *mkey, int pe)
 void mca_spml_base_rmkey_free(sshmem_mkey_t *mkey)
 {
 }
+
+int mca_spml_base_put_nb(void *dst_addr, size_t size,
+                         void *src_addr, int dst, void **handle)
+{
+    return OSHMEM_ERROR;
+}
+
+int mca_spml_base_get_nb(void *dst_addr, size_t size,
+                         void *src_addr, int src, void **handle)
+{
+    return OSHMEM_ERROR;
+}

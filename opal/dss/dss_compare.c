@@ -10,9 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -305,7 +305,64 @@ int opal_dss_compare_node_stat(opal_node_stats_t *value1, opal_node_stats_t *val
 /* OPAL_VALUE */
 int opal_dss_compare_value(opal_value_t *value1, opal_value_t *value2, opal_data_type_t type)
 {
-    return OPAL_EQUAL;  /* eventually compare field to field */
+    if (NULL == value1 && NULL == value2) {
+        return OPAL_EQUAL;
+    }
+    if (NULL == value2) {
+        return OPAL_VALUE1_GREATER;
+    }
+    if (NULL == value1) {
+        return OPAL_VALUE2_GREATER;
+    }
+    if (value1->type != value2->type) {
+        opal_output(0, "COMPARE-OPAL-VALUE: INCONSISTENT TYPE %d vs %d", (int)value1->type, (int)value2->type);
+        return OPAL_EQUAL;
+    }
+    switch (value1->type) {
+    case OPAL_BYTE:
+        return opal_dss_compare_byte((char *)&value1->data.byte, (char *)&value2->data.byte, type);
+    case OPAL_STRING:
+        return opal_dss_compare_string(value1->data.string, value2->data.string, type);
+    case OPAL_PID:
+        return opal_dss_compare_pid(&value1->data.pid, &value2->data.pid, type);
+    case OPAL_INT:
+        return opal_dss_compare_int(&value1->data.integer, &value2->data.integer, type);
+    case OPAL_INT8:
+        return opal_dss_compare_int8(&value1->data.int8, &value2->data.int8, type);
+    case OPAL_INT16:
+        return opal_dss_compare_int16(&value1->data.int16, &value2->data.int16, type);
+    case OPAL_INT32:
+        return opal_dss_compare_int32(&value1->data.int32, &value2->data.int32, type);
+    case OPAL_INT64:
+        return opal_dss_compare_int64(&value1->data.int64, &value2->data.int64, type);
+    case OPAL_UINT:
+        return opal_dss_compare_uint(&value1->data.uint, &value2->data.uint, type);
+    case OPAL_UINT8:
+        return opal_dss_compare_uint8(&value1->data.uint8, &value2->data.uint8, type);
+    case OPAL_UINT16:
+        return opal_dss_compare_uint16(&value1->data.uint16, &value2->data.uint16, type);
+    case OPAL_UINT32:
+        return opal_dss_compare_uint32(&value1->data.uint32, &value2->data.uint32, type);
+    case OPAL_UINT64:
+        return opal_dss_compare_uint64(&value1->data.uint64, &value2->data.uint64, type);
+    case OPAL_BYTE_OBJECT:
+        return opal_dss_compare_byte_object(&value1->data.bo, &value2->data.bo, type);
+    case OPAL_SIZE:
+        return opal_dss_compare_size(&value1->data.size, &value2->data.size, type);
+    case OPAL_FLOAT:
+        return opal_dss_compare_float(&value1->data.fval, &value2->data.fval, type);
+    case OPAL_DOUBLE:
+        return opal_dss_compare_double(&value1->data.dval, &value2->data.dval, type);
+    case OPAL_BOOL:
+        return opal_dss_compare_bool(&value1->data.flag, &value2->data.flag, type);
+    case OPAL_TIMEVAL:
+        return opal_dss_compare_timeval(&value1->data.tv, &value2->data.tv, type);
+    case OPAL_NAME:
+        return opal_dss_compare_name(&value1->data.name, &value2->data.name, type);
+    default:
+        opal_output(0, "COMPARE-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)value1->type);
+        return OPAL_EQUAL;
+    }
 }
 
 /* OPAL_BUFFER */
@@ -385,6 +442,15 @@ int opal_dss_compare_jobid(opal_jobid_t *value1,
     if (*value1 == OPAL_JOBID_WILDCARD ||
         *value2 == OPAL_JOBID_WILDCARD) return OPAL_EQUAL;
 
+    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
+
+    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
+
+    return OPAL_EQUAL;
+}
+
+int opal_dss_compare_status(int *value1, int *value2, opal_data_type_t type)
+{
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
 
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;

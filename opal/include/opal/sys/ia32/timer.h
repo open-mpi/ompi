@@ -35,9 +35,9 @@ opal_sys_timer_get_cycles(void)
     int tmp;
 
     __asm__ __volatile__(
-                         "xchg{l} {%%}ebx, %1\n"
+                         "xchgl %%ebx, %1\n"
                          "cpuid\n"
-                         "xchg{l} {%%}ebx, %1\n"
+                         "xchgl %%ebx, %1\n"
                          "rdtsc\n"
                          : "=A"(ret), "=r"(tmp)
                          :: "ecx");

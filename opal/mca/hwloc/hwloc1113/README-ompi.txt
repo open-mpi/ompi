@@ -1,0 +1,6 @@
+Cherry-picked commits after 1.11.3:
+
+open-mpi/hwloc@9549fd59af04dca2e2340e17f0e685f8c552d818
+open-mpi/hwloc@0ab7af5e90fc2b58be30b2126cc2a73f9f7ecfe9
+open-mpi/hwloc@8b44fb1c812d01582887548c2fc28ee78255619
+open-mpi/hwloc@d4565c351e5f01e27d3e106e3a4c2f971a37c9dd

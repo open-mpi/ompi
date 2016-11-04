@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -8,6 +8,10 @@
  *
  * $HEADER$
  */
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #include "pml_yalla.h"
 #include "pml_yalla_request.h"
@@ -66,14 +70,14 @@ static int send_ep_address(void)
     address = alloca(addrlen);
     error = mxm_ep_get_address(ompi_pml_yalla.mxm_ep, address, &addrlen);
     if (MXM_OK != error) {
-        PML_YALLA_ERROR("Failed to get EP address");
+        PML_YALLA_ERROR("%s", "Failed to get EP address");
         return OMPI_ERROR;
     }
 
     OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
                     &mca_pml_yalla_component.pmlm_version, address, addrlen);
     if (OMPI_SUCCESS != rc) {
-        PML_YALLA_ERROR("Open MPI couldn't distribute EP connection details");
+        PML_YALLA_ERROR("%s", "Open MPI couldn't distribute EP connection details");
         return OMPI_ERROR;
     }
 
@@ -87,7 +91,7 @@ static int recv_ep_address(ompi_proc_t *proc, void **address_p, size_t *addrlen_
     OPAL_MODEX_RECV(rc, &mca_pml_yalla_component.pmlm_version, &proc->super.proc_name,
                     address_p, addrlen_p);
     if (rc < 0) {
-        PML_YALLA_ERROR("Failed to receive EP address");
+        PML_YALLA_ERROR("%s", "Failed to receive EP address");
     }
     return rc;
 }
@@ -103,18 +107,18 @@ int mca_pml_yalla_open(void)
 {
     mxm_error_t error;
 
-    PML_YALLA_VERBOSE(1, "mca_pml_yalla_open");
+    PML_YALLA_VERBOSE(1, "%s", "mca_pml_yalla_open");
 
     /* Set memory hooks */
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
          opal_mem_hooks_support_level()))
     {
-        PML_YALLA_VERBOSE(1, "enabling on-demand memory mapping");
+        PML_YALLA_VERBOSE(1, "%s", "enabling on-demand memory mapping");
         opal_setenv("MXM_MPI_MEM_ON_DEMAND_MAP", "y", false, &environ);
         ompi_pml_yalla.using_mem_hooks = 1;
     } else {
-        PML_YALLA_VERBOSE(1, "disabling on-demand memory mapping");
+        PML_YALLA_VERBOSE(1, "%s", "disabling on-demand memory mapping");
         ompi_pml_yalla.using_mem_hooks = 0;
     }
     opal_setenv("MXM_MPI_SINGLE_THREAD", ompi_mpi_thread_multiple ? "n" : "y",
@@ -137,7 +141,7 @@ int mca_pml_yalla_open(void)
 
 int mca_pml_yalla_close(void)
 {
-    PML_YALLA_VERBOSE(1, "mca_pml_yalla_close");
+    PML_YALLA_VERBOSE(1, "%s", "mca_pml_yalla_close");
 
     if (ompi_pml_yalla.ctx_opts != NULL) {
         mxm_config_free_context_opts(ompi_pml_yalla.ctx_opts);
@@ -157,7 +161,7 @@ int mca_pml_yalla_init(void)
     mxm_error_t error;
     int rc;
 
-    PML_YALLA_VERBOSE(1, "mca_pml_yalla_init");
+    PML_YALLA_VERBOSE(1, "%s", "mca_pml_yalla_init");
 
     if (ompi_pml_yalla.using_mem_hooks) {
         opal_mem_hooks_register_release(mca_pml_yalla_mem_release_cb, NULL);
@@ -180,6 +184,8 @@ int mca_pml_yalla_init(void)
     OBJ_CONSTRUCT(&ompi_pml_yalla.convs, mca_pml_yalla_freelist_t);
 
     opal_progress_register(mca_pml_yalla_progress);
+    
+    ompi_pml_yalla.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
 
     PML_YALLA_VERBOSE(2, "created mxm context %p ep %p", (void *)ompi_pml_yalla.mxm_context,
                       (void *)ompi_pml_yalla.mxm_ep);
@@ -188,7 +194,7 @@ int mca_pml_yalla_init(void)
 
 int mca_pml_yalla_cleanup(void)
 {
-    PML_YALLA_VERBOSE(1, "mca_pml_yalla_cleanup");
+    PML_YALLA_VERBOSE(1, "%s", "mca_pml_yalla_cleanup");
 
     opal_progress_unregister(mca_pml_yalla_progress);
 
@@ -241,7 +247,7 @@ int mca_pml_yalla_add_procs(struct ompi_proc_t **procs, size_t nprocs)
         free(address);
 
         if (MXM_OK != error) {
-            PML_YALLA_ERROR("Failed to connect");
+            PML_YALLA_ERROR("%s", "Failed to connect");
             return OMPI_ERROR;
         }
 
@@ -256,7 +262,7 @@ int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
     size_t i;
 
     if (ompi_mpi_finalized) {
-        PML_YALLA_VERBOSE(3, "using bulk powerdown");
+        PML_YALLA_VERBOSE(3, "%s", "using bulk powerdown");
         mxm_ep_powerdown(ompi_pml_yalla.mxm_ep);
     }
 
@@ -303,7 +309,7 @@ int mca_pml_yalla_del_comm(struct ompi_communicator_t* comm)
     mxm_mq_h mq = (void*)comm->c_pml_comm;
 
     if (ompi_pml_yalla.mxm_context == NULL) {
-        PML_YALLA_ERROR("Destroying communicator after MXM context is destroyed");
+        PML_YALLA_ERROR("%s", "Destroying communicator after MXM context is destroyed");
         return OMPI_ERROR;
     }
 
@@ -390,7 +396,7 @@ int mca_pml_yalla_isend_init(const void *buf, size_t count, ompi_datatype_t *dat
 {
     mca_pml_yalla_send_request_t *sreq;
 
-    sreq = MCA_PML_YALLA_SREQ_INIT(buf, count, datatype, dst, tag, mode, comm,
+    sreq = MCA_PML_YALLA_SREQ_INIT((void *)buf, count, datatype, dst, tag, mode, comm,
                                    OMPI_REQUEST_INACTIVE);
     sreq->super.ompi.req_persistent = true;
     sreq->super.flags = MCA_PML_YALLA_REQUEST_FLAG_SEND;
@@ -459,7 +465,7 @@ int mca_pml_yalla_isend(const void *buf, size_t count, ompi_datatype_t *datatype
     mxm_error_t error;
     int rc;
 
-    sreq = MCA_PML_YALLA_SREQ_INIT(buf, count, datatype, dst, tag, mode, comm,
+    sreq = MCA_PML_YALLA_SREQ_INIT((void *)buf, count, datatype, dst, tag, mode, comm,
                                    OMPI_REQUEST_ACTIVE);
     sreq->super.ompi.req_persistent = false;
     sreq->super.flags = 0;
@@ -469,10 +475,8 @@ int mca_pml_yalla_isend(const void *buf, size_t count, ompi_datatype_t *datatype
 
     if (mode == MCA_PML_BASE_SEND_BUFFERED) {
         rc = mca_pml_yalla_bsend(&sreq->mxm);
-        OPAL_THREAD_LOCK(&ompi_request_lock);
         sreq->super.ompi.req_status.MPI_ERROR = rc;
         ompi_request_complete(&sreq->super.ompi, true);
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
         *request = &sreq->super.ompi;
         return rc;
     }
@@ -493,7 +497,7 @@ int mca_pml_yalla_send(const void *buf, size_t count, ompi_datatype_t *datatype,
     mxm_send_req_t sreq;
     mxm_error_t error;
 
-    PML_YALLA_INIT_MXM_SEND_REQ(&sreq, buf, count, datatype, dst, tag, mode, comm, send);
+    PML_YALLA_INIT_MXM_SEND_REQ(&sreq, (void *)buf, count, datatype, dst, tag, mode, comm, send);
     PML_YALLA_INIT_BLOCKING_MXM_SEND_REQ(&sreq);
 
     PML_YALLA_VERBOSE(8, "send to %d tag %d dtype %s count %zu", dst, tag,
@@ -677,7 +681,6 @@ int mca_pml_yalla_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
 int mca_pml_yalla_start(size_t count, ompi_request_t** requests)
 {
     mca_pml_yalla_base_request_t *req;
-    mca_pml_yalla_send_request_t *sreq;
     mxm_error_t error;
     size_t i;
     int rc;
@@ -692,17 +695,17 @@ int mca_pml_yalla_start(size_t count, ompi_request_t** requests)
 
         PML_YALLA_ASSERT(req->ompi.req_state != OMPI_REQUEST_INVALID);
         PML_YALLA_RESET_OMPI_REQ(&req->ompi, OMPI_REQUEST_ACTIVE);
-        PML_YALLA_RESET_PML_REQ(req);
 
         if (req->flags & MCA_PML_YALLA_REQUEST_FLAG_SEND) {
+            mca_pml_yalla_send_request_t *sreq;
             sreq = (mca_pml_yalla_send_request_t *)req;
+            PML_YALLA_RESET_PML_REQ(req, PML_YALLA_MXM_REQBASE(sreq));
+
             if (req->flags & MCA_PML_YALLA_REQUEST_FLAG_BSEND) {
                 PML_YALLA_VERBOSE(8, "start bsend request %p", (void *)sreq);
                 rc = mca_pml_yalla_bsend(&sreq->mxm);
-                OPAL_THREAD_LOCK(&ompi_request_lock);
                 sreq->super.ompi.req_status.MPI_ERROR = rc;
                 ompi_request_complete(&sreq->super.ompi, true);
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 if (OMPI_SUCCESS != rc) {
                     return rc;
                 }
@@ -714,8 +717,12 @@ int mca_pml_yalla_start(size_t count, ompi_request_t** requests)
                 }
             }
         } else {
+            mca_pml_yalla_recv_request_t *rreq;
+            rreq = (mca_pml_yalla_recv_request_t *)req;
+            PML_YALLA_RESET_PML_REQ(req, PML_YALLA_MXM_REQBASE(rreq));
+
             PML_YALLA_VERBOSE(8, "start recv request %p", (void *)req);
-            error = mxm_req_recv(&((mca_pml_yalla_recv_request_t *)req)->mxm);
+            error = mxm_req_recv(&rreq->mxm);
             if (MXM_OK != error) {
                 return OMPI_ERROR;
             }

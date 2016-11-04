@@ -90,7 +90,7 @@ ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, int coun
  *
  *	Function:	- seletects alltoall algorithm to use
  *	Accepts:	- same arguments as MPI_Alltoall()
- *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
+ *	Returns:	- MPI_SUCCESS or error code
  */
 
 int ompi_coll_tuned_alltoall_intra_dec_fixed(const void *sbuf, int scount,

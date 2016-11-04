@@ -26,7 +26,7 @@
 
 SUBDIRS = profile
 
-# if OMPI_BUILD_MPI_PROFILING is enabled when we want our generated MPI_* symbols
+# OMPI_BUILD_MPI_PROFILING is enabled when we want our generated MPI_* symbols
 # to be replaced by PMPI_*.
 # In this directory, we need it to be 0
 

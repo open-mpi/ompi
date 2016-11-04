@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +34,8 @@ void opal_btl_usnic_exit(opal_btl_usnic_module_t *module)
         }
         /* If we didn't find a PML error callback, just exit. */
         if (NULL == module) {
+            fprintf(stderr, "*** The Open MPI usnic BTL is aborting the MPI job (via exit(3)).\n");
+            fflush(stderr);
             exit(1);
         }
     }
@@ -47,7 +49,7 @@ void opal_btl_usnic_exit(opal_btl_usnic_module_t *module)
         module->pml_error_callback(&module->super,
                                    MCA_BTL_ERROR_FLAGS_FATAL,
                                    (opal_proc_t*) opal_proc_local_get(),
-                                   "usnic");
+                                   "The usnic BTL is aborting the MPI job (via PML error callback).");
     }
 
     /* If the PML error callback returns (or if there wasn't one),
@@ -65,7 +67,7 @@ void opal_btl_usnic_util_abort(const char *msg, const char *file, int line)
     opal_show_help("help-mpi-btl-usnic.txt", "internal error after init",
                    true,
                    opal_process_info.nodename,
-                   msg, file, line);
+                   file, line, msg);
 
     opal_btl_usnic_exit(NULL);
     /* Never returns */
@@ -115,24 +117,27 @@ opal_btl_usnic_dump_hex(void *vaddr, int len)
  * using inet_ntop()).
  */
 void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
-                                       uint32_t addr, uint32_t netmask)
+                                       uint32_t addr_be, uint32_t netmask_be)
 {
     int prefixlen;
+    uint32_t netmask = ntohl(netmask_be);
+    uint32_t addr = ntohl(addr_be);
     uint8_t *p = (uint8_t*) &addr;
+
     if (netmask != 0) {
         prefixlen = 33 - ffs(netmask);
         snprintf(out, maxlen, "%u.%u.%u.%u/%u",
-                 p[0],
-                 p[1],
-                 p[2],
                  p[3],
+                 p[2],
+                 p[1],
+                 p[0],
                  prefixlen);
     } else {
         snprintf(out, maxlen, "%u.%u.%u.%u",
-                 p[0],
-                 p[1],
+                 p[3],
                  p[2],
-                 p[3]);
+                 p[1],
+                 p[0]);
     }
 }
 

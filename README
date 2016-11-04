@@ -8,11 +8,11 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
-Copyright (c) 2008      IBM Corporation.  All rights reserved.
+Copyright (c) 2008-2016 IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
 Copyright (c) 2013-2015 Intel, Inc. All rights reserved
@@ -36,8 +36,8 @@ sign up on the user's and/or developer's mailing list (for user-level
 and developer-level questions; when in doubt, send to the user's
 list):
 
-        users@open-mpi.org
-        devel@open-mpi.org
+        users@lists.open-mpi.org
+        devel@lists.open-mpi.org
 
 Because of spam, only subscribers are allowed to post to these lists
 (ensure that you subscribe with and post from exactly the same e-mail
@@ -45,8 +45,8 @@ address -- joe@example.com is considered different than
 joe@mycomputer.example.com!).  Visit these pages to subscribe to the
 lists:
 
-     http://www.open-mpi.org/mailman/listinfo.cgi/users
-     http://www.open-mpi.org/mailman/listinfo.cgi/devel
+     http://lists.open-mpi.org/mailman/listinfo/users
+     http://lists.open-mpi.org/mailman/listinfo/devel
 
 Thanks for your time.
 
@@ -54,7 +54,7 @@ Thanks for your time.
 
 Much, much more information is also available in the Open MPI FAQ:
 
-    http://www.open-mpi.org/faq/
+    https://www.open-mpi.org/faq/
 
 ===========================================================================
 
@@ -108,7 +108,7 @@ General notes
 
 - The majority of Open MPI's documentation is here in this file, the
   included man pages, and on the web site FAQ
-  (http://www.open-mpi.org/).
+  (https://www.open-mpi.org/).
 
 - Note that Open MPI documentation uses the word "component"
   frequently; the word "plugin" is probably more familiar to most
@@ -131,7 +131,7 @@ General notes
   - Linux (various flavors/distros), 32 bit, with gcc
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
     Intel, and Portland (*)
-  - OS X (10.6, 10.7, 10.8, 10.9, 10.10), 32 and 64 bit (x86_64), with
+  - OS X (10.8, 10.9, 10.10, 10.11), 32 and 64 bit (x86_64), with
     XCode and Absoft compilers (*)
 
   (*) Be sure to read the Compiler Notes, below.
@@ -141,7 +141,7 @@ General notes
   - ARMv4, ARMv5, ARMv6, ARMv7, ARMv8
   - Other 64 bit platforms (e.g., Linux on PPC64)
   - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
-    with Oracle Solaris Studio 12.2, 12.3, and 12.4
+    with Oracle Solaris Studio 12.5
 
 Compiler Notes
 --------------
@@ -410,10 +410,10 @@ General Run-Time Support Notes
   is a shared library), unless using the --prefix or
   --enable-mpirun-prefix-by-default functionality (see below).
 
-- Open MPI's run-time behavior can be customized via MCA ("MPI
-  Component Architecture") parameters (see below for more information
-  on how to get/set MCA parameter values).  Some MCA parameters can be
-  set in a way that renders Open MPI inoperable (see notes about MCA
+- Open MPI's run-time behavior can be customized via MPI Component
+  Architecture (MCA) parameters (see below for more information on how
+  to get/set MCA parameter values).  Some MCA parameters can be set in
+  a way that renders Open MPI inoperable (see notes about MCA
   parameters later in this file).  In particular, some parameters have
   required options that must be included.
 
@@ -421,7 +421,7 @@ General Run-Time Support Notes
     component, or Open MPI will not be able to deliver messages to the
     same rank as the sender.  For example: "mpirun --mca btl tcp,self
     ..."
-  - If specified, the "btl_tcp_if_exclude" paramater must include the
+  - If specified, the "btl_tcp_if_exclude" parameter must include the
     loopback device ("lo" on many Linux platforms), or Open MPI will
     not be able to route MPI messages using the TCP BTL.  For example:
     "mpirun --mca btl_tcp_if_exclude lo,eth1 ..."
@@ -480,11 +480,12 @@ MPI Functionality and Features
   by default (it can be disabled via the --disable-libompitrace
   flag).  This library provides a simplistic tracing of select MPI
   function calls via the MPI profiling interface.  Linking it in to
-  your appliation via (e.g., via -lompitrace) will automatically
+  your application via (e.g., via -lompitrace) will automatically
   output to stderr when some MPI functions are invoked:
 
-  shell$ mpicc hello_world.c -o hello_world -lompitrace
-  shell$ mpirun -np 1 hello_world.c
+  shell$ cd examples/
+  shell$ mpicc hello_c.c -o hello_c -lompitrace
+  shell$ mpirun -np 1 hello_c
   MPI_INIT: argc 1
   Hello, world, I am 0 of 1
   MPI_BARRIER[0]: comm MPI_COMM_WORLD
@@ -594,9 +595,7 @@ Network Support
   MXM transport.
 
   - "ob1" supports a variety of networks that can be used in
-    combination with each other (per OS constraints; e.g., there are
-    reports that the GM and OpenFabrics kernel drivers do not operate
-    well together):
+    combination with each other:
 
     - OpenFabrics: InfiniBand, iWARP, and RoCE
     - Loopback (send-to-self)
@@ -714,7 +713,7 @@ Open MPI Extensions
     a string that contains what resources a process is bound to.  See
     its man page for more details.
   - cr: Provides routines to access to checkpoint restart routines.
-    See ompi/mpiext/cr/mpiext_cr_c.h for a listing of availble
+    See ompi/mpiext/cr/mpiext_cr_c.h for a listing of available
     functions.
   - cuda: When the library is compiled with CUDA-aware support, it provides
     two things.  First, a macro MPIX_CUDA_AWARE_SUPPORT. Secondly, the
@@ -830,6 +829,19 @@ INSTALLATION OPTIONS
   Load configure options for the build from FILE.  Options on the
   command line that are not in FILE are also used.  Options on the
   command line and in FILE are replaced by what is in FILE.
+
+--with-libmpi-name=STRING
+  Replace libmpi.* and libmpi_FOO.* (where FOO is one of the fortran
+  supporting libraries installed in lib) with libSTRING.* and
+  libSTRING_FOO.*. This is provided as a convenience mechanism for
+  third-party packagers of Open MPI that might want to rename these
+  libraries for their own purposes. This option is *not* intended for
+  typical users of Open MPI.
+
+--enable-mca-no-build=LIST
+  Comma-separated list of <type>-<component> pairs that will not be
+  built. For example, "--enable-mca-no-build=btl-portals,oob-ud" will
+  disable building the portals BTL and the ud OOB component.
 
 NETWORKING SUPPORT / OPTIONS
 
@@ -951,6 +963,17 @@ NETWORKING SUPPORT / OPTIONS
   will look in <verbs_directory>/lib and <verbs_ directory>/lib64,
   which covers most cases.  This option is only needed for special
   configurations.
+
+--with-verbs-usnic
+  This option will activate support in Open MPI for disabling a
+  dire-sounding warning message from libibverbs that Cisco usNIC
+  devices are not supported (because Cisco usNIC devices are supported
+  through libfabric, not libibverbs).  This libibverbs warning can
+  also be suppressed by installing the "no op" libusnic_verbs plugin
+  for libibverbs (see https://github.com/cisco/libusnic_verbs, or
+  download binaries from cisco.com).  This option is disabled by
+  default because it causes libopen-pal.so to depend on libibverbs.so,
+  which is undesirable to many downstream packagers.
 
 --with-usnic
   Abort configure if Cisco usNIC support cannot be built.
@@ -1075,7 +1098,7 @@ MISCELLANEOUS SUPPORT LIBRARIES
                  installation to use
 
   By default (or if --with-libevent is specified with no VALUE), Open
-  MPI will build and use the copy of libeveny that it has in its
+  MPI will build and use the copy of libevent that it has in its
   source tree.  However, if the VALUE is "external", Open MPI will
   look for the relevant libevent header file and library in default
   compiler / linker locations.  Or, VALUE can be a directory tree
@@ -1230,12 +1253,24 @@ MPI FUNCTIONALITY
 
   See "Open MPI API Extensions", below, for more details.
 
+--disable-mpi-io
+  Disable built-in support for MPI-2 I/O, likely because an externally-provided
+  MPI I/O package will be used. Default is to use the internal framework
+  system that uses the ompio component and a specially modified version of ROMIO
+  that fits inside the romio component
+
+--disable-io-romio
+  Disable the ROMIO MPI-IO component
+
 --with-io-romio-flags=flags
   Pass flags to the ROMIO distribution configuration script.  This
   option is usually only necessary to pass
   parallel-filesystem-specific preprocessor/compiler/linker flags back
   to the ROMIO system.
 
+--disable-io-ompio
+  Disable the ompio MPI-IO component
+ 
 --enable-sparse-groups
   Enable the usage of sparse groups. This would save memory
   significantly especially if you are creating large
@@ -1440,7 +1475,7 @@ format.  Each of the three numbers has a specific meaning:
     change in the code base and/or end-user functionality, and also
     indicate a break from backwards compatibility.  Specifically: Open
     MPI releases with different major version numbers are not
-    backwards compatibile with each other.
+    backwards compatibale with each other.
 
     CAVEAT: This rule does not extend to versions prior to v1.10.0.
             Specifically: v1.10.x is not guaranteed to be backwards
@@ -1561,7 +1596,6 @@ Here's how we apply those rules specifically to Open MPI:
     * libmpi_cxx
     * libmpi_java
     * liboshmem
-    * liboshmem_java
 
 ===========================================================================
 
@@ -1756,7 +1790,7 @@ configure script.  They are not necessary for MPI applications, but
 may be used by applications that use Open MPI's lower layer support
 libraries.
 
-orte:       Open MPI Run-Time Environment applicaions
+orte:       Open MPI Run-Time Environment applications
 opal:       Open Portable Access Layer applications
 
 ===========================================================================
@@ -1838,27 +1872,20 @@ component frameworks in Open MPI:
 MPI component frameworks:
 -------------------------
 
-allocator - Memory allocator
 bcol      - Base collective operations
 bml       - BTL management layer
-btl       - MPI point-to-point Byte Transfer Layer, used for MPI
-            point-to-point messages on some types of networks
 coll      - MPI collective algorithms
 crcp      - Checkpoint/restart coordination protocol
-dpm       - MPI dynamic process management
 fbtl      - file byte transfer layer: abstraction for individual
             read/write operations for OMPIO
 fcoll     - collective read and write operations for MPI I/O
 fs        - file system functions for MPI I/O
 io        - MPI I/O
-mpool     - Memory pooling
 mtl       - Matching transport layer, used for MPI point-to-point
             messages on some types of networks
 op        - Back end computations for intrinsic MPI_Op operators
 osc       - MPI one-sided communications
 pml       - MPI point-to-point management layer
-pubsub    - MPI publish/subscribe management
-rcache    - Memory registration cache
 rte       - Run-time environment operations
 sbgp      - Collective operation sub-group
 sharedfp  - shared file pointer operations for MPI I/O
@@ -1882,10 +1909,11 @@ Back-end run-time environment (RTE) component frameworks:
 
 dfs       - Distributed file system
 errmgr    - RTE error manager
-ess       - RTE environment-specfic services
+ess       - RTE environment-specific services
 filem     - Remote file management
 grpcomm   - RTE group communications
 iof       - I/O forwarding
+notifier  - System-level notification support
 odls      - OpenRTE daemon local launch subsystem
 oob       - Out of band messaging
 plm       - Process lifecycle management
@@ -1893,7 +1921,8 @@ ras       - Resource allocation system
 rmaps     - Resource mapping system
 rml       - RTE message layer
 routed    - Routing table for the RML
-sensor    - Software and hardware health monitoring
+rtc       - Run-time control framework
+schizo    - OpenRTE personality framework
 snapc     - Snapshot coordination
 sstore    - Distributed scalable storage
 state     - RTE state machine
@@ -1901,19 +1930,26 @@ state     - RTE state machine
 Miscellaneous frameworks:
 -------------------------
 
+allocator   - Memory allocator
 backtrace   - Debugging call stack backtrace support
+btl         - point-to-point Byte Transfer Layer
 compress    - Compression algorithms
 crs         - Checkpoint and restart service
-db          - Internal database support
 dl          - Dynamic loading library interface
 event       - Event library (libevent) versioning support
 hwloc       - Hardware locality (hwloc) versioning support
 if          - OS IP interface support
 installdirs - Installation directory relocation services
 memchecker  - Run-time memory checking
-memcpy      - Memopy copy support
+memcpy      - Memory copy support
 memory      - Memory management hooks
+mpool       - Memory pooling
+patcher     - Symbol patcher hooks
+pmix        - Process management interface (exascale)
 pstat       - Process status
+rcache      - Memory registration cache
+reachable   - Network reachability computations
+sec         - Security framework
 shmem       - Shared memory support (NOT related to OSHMEM)
 timer       - High-resolution timers
 
@@ -2014,7 +2050,7 @@ passed on the mpirun command line will override an environment
 variable; an environment variable will override the system-wide
 defaults.
 
-Each component typically activates itself when relavant.  For example,
+Each component typically activates itself when relevant.  For example,
 the MX component will detect that MX devices are present and will
 automatically be used for MPI communications.  The SLURM component
 will automatically detect when running inside a SLURM job and activate
@@ -2053,7 +2089,7 @@ Common Questions
 Many common questions about building and using Open MPI are answered
 on the FAQ:
 
-    http://www.open-mpi.org/faq/
+    https://www.open-mpi.org/faq/
 
 ===========================================================================
 
@@ -2067,24 +2103,24 @@ When submitting questions and problems, be sure to include as much
 extra information as possible.  This web page details all the
 information that we request in order to provide assistance:
 
-     http://www.open-mpi.org/community/help/
+     https://www.open-mpi.org/community/help/
 
 User-level questions and comments should generally be sent to the
-user's mailing list (users@open-mpi.org).  Because of spam, only
+user's mailing list (users@lists.open-mpi.org).  Because of spam, only
 subscribers are allowed to post to this list (ensure that you
 subscribe with and post from *exactly* the same e-mail address --
 joe@example.com is considered different than
 joe@mycomputer.example.com!).  Visit this page to subscribe to the
 user's list:
 
-     http://www.open-mpi.org/mailman/listinfo.cgi/users
+     http://lists.open-mpi.org/mailman/listinfo/users
 
 Developer-level bug reports, questions, and comments should generally
-be sent to the developer's mailing list (devel@open-mpi.org).  Please
+be sent to the developer's mailing list (devel@lists.open-mpi.org).  Please
 do not post the same question to both lists.  As with the user's list,
 only subscribers are allowed to post to the developer's list.  Visit
 the following web page to subscribe:
 
-     http://www.open-mpi.org/mailman/listinfo.cgi/devel
+     http://lists.open-mpi.org/mailman/listinfo/devel
 
 Make today an Open MPI day!

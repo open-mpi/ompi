@@ -1,0 +1,88 @@
+Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+                        University Research and Technology
+                        Corporation.  All rights reserved.
+Copyright (c) 2004-2005 The University of Tennessee and The University
+                        of Tennessee Research Foundation.  All rights
+                        reserved.
+Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+                        University of Stuttgart.  All rights reserved.
+Copyright (c) 2004-2005 The Regents of the University of California.
+                        All rights reserved.
+Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+
+For More Information
+====================
+
+This file is a *very* short overview of building and installing
+the PMIx library.  Much more information is available on the
+PMIx web site (e.g., see the FAQ section):
+
+    http://pmix.github.io/pmix/master
+
+
+Developer Builds
+================
+
+If you have checked out a DEVELOPER'S COPY of PMIx (i.e., you checked
+out from Git), you should read the HACKING file before attempting to
+build PMIx.  You must then run:
+
+shell$ ./autogen.sh
+
+You will need very recent versions of GNU Autoconf, Automake, and
+Libtool.  If autogen.sh fails, read the HACKING file.  If anything
+else fails, read the HACKING file.  Finally, we suggest reading the
+HACKING file.
+
+*** NOTE: Developer's copies of PMIx typically include a large
+performance penalty at run-time because of extra debugging overhead.
+
+
+User Builds
+===========
+
+Building PMIx is typically a combination of running "configure"
+and "make".  Execute the following commands to install the PMIx
+system from within the directory at the top of the tree:
+
+shell$ ./configure --prefix=/where/to/install
+[...lots of output...]
+shell$ make all install
+
+If you need special access to install, then you can execute "make
+all" as a user with write permissions in the build tree, and a
+separate "make install" as a user with write permissions to the
+install tree.
+
+Compiling support for specific compilers and environments may
+require additional command line flags when running configure.  See the
+README file for more details.  Note that VPATH builds are fully
+supported.  For example:
+
+shell$ gtar zxf pmix-X.Y.Z.tar.gz
+shell$ cd pmix-X.Y.Z
+shell$ mkdir build
+shell$ cd build
+shell$ ../configure ...your options...
+[...lots of output...]
+shell$ make all install
+
+Parallel builds are also supported (although some versions of "make",
+such as GNU make, will only use the first target listed on the command
+line when executable parallel builds).  For example (assume GNU make):
+
+shell$ make -j 4 all
+[...lots of output...]
+shell$ make install
+
+Parallel make is generally only helpful in the build phase; the
+installation process is mostly serial and does not benefit much from
+parallel make.
+

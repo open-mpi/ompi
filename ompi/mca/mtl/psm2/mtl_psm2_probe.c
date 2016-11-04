@@ -46,8 +46,8 @@ int ompi_mtl_psm2_iprobe(struct mca_mtl_base_module_t* mtl,
     if (err == PSM2_OK) {
 	*flag = 1;
 	if(MPI_STATUS_IGNORE != status) {
-            status->MPI_SOURCE = mqstat.msg_tag.tag2;
-            status->MPI_TAG = mqstat.msg_tag.tag1;
+            status->MPI_SOURCE = mqstat.msg_tag.tag1;
+            status->MPI_TAG = mqstat.msg_tag.tag0;
             status->_ucount = mqstat.nbytes;
 
             switch (mqstat.error_code) {
@@ -95,8 +95,8 @@ ompi_mtl_psm2_improbe(struct mca_mtl_base_module_t *mtl,
     if (err == PSM2_OK) {
 
 	if(MPI_STATUS_IGNORE != status) {
-            status->MPI_SOURCE = mqstat.msg_tag.tag2;
-            status->MPI_TAG = mqstat.msg_tag.tag1;
+            status->MPI_SOURCE = mqstat.msg_tag.tag1;
+            status->MPI_TAG = mqstat.msg_tag.tag0;
             status->_ucount = mqstat.nbytes;
 
             switch (mqstat.error_code) {
@@ -118,7 +118,7 @@ ompi_mtl_psm2_improbe(struct mca_mtl_base_module_t *mtl,
 
 	msg->comm = comm;
 	msg->req_ptr = mqreq;
-	msg->peer = mqstat.msg_tag.tag2;
+	msg->peer = mqstat.msg_tag.tag1;
 	msg->count = mqstat.nbytes;
 
 	*message = msg;

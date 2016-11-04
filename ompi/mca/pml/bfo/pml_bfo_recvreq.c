@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -14,6 +14,8 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,9 +25,8 @@
 
 #include "ompi_config.h"
 
-#include "opal/util/arch.h"
-#include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/mpool.h"
+#include "opal/util/arch.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
 #include "pml_bfo_comm.h"
@@ -35,6 +36,10 @@
 #include "pml_bfo_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/memchecker.h"
+#if OPAL_CUDA_SUPPORT
+#include "opal/datatype/opal_datatype_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
+#endif /* OPAL_CUDA_SUPPORT */
 
 #if OPAL_CUDA_SUPPORT
 int mca_pml_bfo_cuda_need_buffers(mca_pml_bfo_recv_request_t* recvreq,
@@ -67,11 +72,9 @@ static int mca_pml_bfo_recv_request_free(struct ompi_request_t** request)
 {
     mca_pml_bfo_recv_request_t* recvreq = *(mca_pml_bfo_recv_request_t**)request;
 
-    assert( false == recvreq->req_recv.req_base.req_free_called );
+    if(false == recvreq->req_recv.req_base.req_free_called) {
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_recv.req_base.req_free_called = true;
-
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
                              &(recvreq->req_recv.req_base), PERUSE_RECV );
 
@@ -88,7 +91,7 @@ static int mca_pml_bfo_recv_request_free(struct ompi_request_t** request)
         MCA_PML_BFO_RECV_REQUEST_RETURN( recvreq );
     }
 
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    }
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
@@ -130,14 +133,12 @@ static int mca_pml_bfo_recv_request_cancel(struct ompi_request_t* ompi_request, 
     }
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request->req_status._cancelled = true;
     /* This macro will set the req_complete to true so the MPI Test/Wait* functions
      * on this request will be able to complete. As the status is marked as
      * cancelled the cancel state will be detected.
      */
     MCA_PML_BFO_RECV_REQUEST_MPI_COMPLETE(request);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     /*
      * Receive request cancelled, make user buffer accessable.
      */
@@ -204,7 +205,7 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
                                                              (void *) des->des_remote,
                                                              des->des_remote_count, 0);
     }
-    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
+    OPAL_THREAD_SUB_SIZE_T(&recvreq->req_pipeline_depth, 1);
 
 #if PML_BFO
     btl->btl_free(btl, des);

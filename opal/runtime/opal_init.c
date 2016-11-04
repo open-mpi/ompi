@@ -10,13 +10,13 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -27,6 +27,10 @@
 
 /** @file **/
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "opal_config.h"
 
 #include "opal/util/malloc.h"
@@ -36,11 +40,13 @@
 #include "opal/util/proc.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/net.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/patcher/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/sec/base/base.h"
@@ -244,11 +250,81 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_SERVER_NOT_AVAIL:
         retval = "Server not available";
         break;
+    case OPAL_ERR_IN_PROCESS:
+        retval = "Operation in process";
+        break;
+    case OPAL_ERR_DEBUGGER_RELEASE:
+        retval = "Release debugger";
+        break;
+    case OPAL_ERR_HANDLERS_COMPLETE:
+        retval = "Event handlers complete";
+        break;
+    case OPAL_ERR_PARTIAL_SUCCESS:
+        retval = "Partial success";
+        break;
+    case OPAL_ERR_PROC_ABORTED:
+        retval = "Process abnormally terminated";
+        break;
+    case OPAL_ERR_PROC_REQUESTED_ABORT:
+        retval = "Process requested abort";
+        break;
+    case OPAL_ERR_PROC_ABORTING:
+        retval = "Process is aborting";
+        break;
+    case OPAL_ERR_NODE_DOWN:
+        retval = "Node has gone down";
+        break;
+    case OPAL_ERR_NODE_OFFLINE:
+        retval = "Node has gone offline";
+        break;
+    case OPAL_ERR_JOB_TERMINATED:
+        retval = "Job terminated";
+        break;
+    case OPAL_ERR_PROC_RESTART:
+        retval = "Process restarted";
+        break;
+    case OPAL_ERR_PROC_CHECKPOINT:
+        retval = "Process checkpoint";
+        break;
+    case OPAL_ERR_PROC_MIGRATE:
+        retval = "Process migrate";
+        break;
+    case OPAL_ERR_EVENT_REGISTRATION:
+        retval = "Event registration";
+        break;
     default:
-        retval = NULL;
+        retval = "UNRECOGNIZED";
     }
 
     *errmsg = retval;
+    return OPAL_SUCCESS;
+}
+
+
+int opal_init_psm(void)
+{
+    /* Very early in the init sequence -- before *ANY* MCA components
+       are opened -- we need to disable some behavior from the PSM and
+       PSM2 libraries (by default): at least some old versions of
+       these libraries hijack signal handlers during their library
+       constructors and then do not un-hijack them when the libraries
+       are unloaded.
+
+       It is a bit of an abstraction break that we have to put
+       vendor/transport-specific code in the OPAL core, but we're
+       out of options, unfortunately.
+
+       NOTE: We only disable this behavior if the corresponding
+       environment variables are not already set (i.e., if the
+       user/environment has indicated a preference for this behavior,
+       we won't override it). */
+    if (NULL == getenv("IPATH_NO_BACKTRACE")) {
+        opal_setenv("IPATH_NO_BACKTRACE", "1", true, &environ);
+    }
+    if (NULL == getenv("HFI_NO_BACKTRACE")) {
+        opal_setenv("HFI_NO_BACKTRACE", "1", true, &environ);
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -258,7 +334,7 @@ opal_init_util(int* pargc, char*** pargv)
 {
     int ret;
     char *error = NULL;
-    char hostname[512];
+    char hostname[OPAL_MAXHOSTNAMELEN];
 
     if( ++opal_util_initialized != 1 ) {
         if( opal_util_initialized < 1 ) {
@@ -267,23 +343,13 @@ opal_init_util(int* pargc, char*** pargv)
         return OPAL_SUCCESS;
     }
 
-#if OPAL_NO_LIB_DESTRUCTOR
-    if (opal_init_called) {
-        /* can't use show_help here */
-        fprintf (stderr, "opal_init_util: attempted to initialize after finalize without compiler "
-                 "support for either __attribute__(destructor) or linker support for -fini -- process "
-                 "will likely abort\n");
-        return OPAL_ERR_NOT_SUPPORTED;
-    }
-#endif
-
     opal_init_called = true;
 
     /* set the nodename right away so anyone who needs it has it. Note
      * that we don't bother with fqdn and prefix issues here - we let
      * the RTE later replace this with a modified name if the user
      * requests it */
-    gethostname(hostname, 512);
+    gethostname(hostname, sizeof(hostname));
     opal_process_info.nodename = strdup(hostname);
 
     /* initialize the memory allocator */
@@ -316,11 +382,22 @@ opal_init_util(int* pargc, char*** pargv)
         goto return_error;
     }
 
+    // Disable PSM signal hijacking (see comment in function for more
+    // details)
+    opal_init_psm();
+
     /* Setup the parameter system */
     if (OPAL_SUCCESS != (ret = mca_base_var_init())) {
         error = "mca_base_var_init";
         goto return_error;
     }
+
+    /* read any param files that were provided */
+    if (OPAL_SUCCESS != (ret = mca_base_var_cache_files(false))) {
+        error = "failed to cache files";
+        goto return_error;
+    }
+
 
     /* register params for opal */
     if (OPAL_SUCCESS != (ret = opal_register_params())) {
@@ -417,15 +494,6 @@ opal_init(int* pargc, char*** pargv)
      */
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_memcpy_base_framework, 0))) {
         error = "opal_memcpy_base_open";
-        goto return_error;
-    }
-
-    /* open the memory manager components.  Memory hooks may be
-       triggered before this (any time after mem_free_init(),
-       actually).  This is a hook available for memory manager hooks
-       without good initialization routine support */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_memory_base_framework, 0))) {
-        error = "opal_memory_base_open";
         goto return_error;
     }
 

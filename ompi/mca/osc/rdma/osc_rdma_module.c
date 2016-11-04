@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
@@ -103,18 +103,12 @@ int ompi_osc_rdma_free(ompi_win_t *win)
         }
 
         OBJ_DESTRUCT(&module->peer_hash);
-    } else {
+    } else if (NULL != module->comm) {
         for (int i = 0 ; i < ompi_comm_rank (module->comm) ; ++i) {
             if (NULL != module->peer_array[i]) {
                 OBJ_RELEASE(module->peer_array[i]);
             }
         }
-
-        free (module->peer_array);
-    }
-
-    if (NULL != module->outstanding_lock_array) {
-        free (module->outstanding_lock_array);
     }
 
     if (module->local_leaders && MPI_COMM_NULL != module->local_leaders) {
@@ -129,15 +123,14 @@ int ompi_osc_rdma_free(ompi_win_t *win)
         ompi_comm_free (&module->comm);
     }
 
-    if (NULL != module->free_after) {
-        free(module->free_after);
-    }
-
     if (module->segment_base) {
         opal_shmem_segment_detach (&module->seg_ds);
         module->segment_base = NULL;
     }
 
+    free (module->peer_array);
+    free (module->outstanding_lock_array);
+    free (module->free_after);
     free (module);
 
     return OMPI_SUCCESS;

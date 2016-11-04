@@ -13,9 +13,10 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +47,7 @@
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -69,6 +70,7 @@
 #include "orte/runtime/orte_quit.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/pre_condition_transports.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/regex.h"
 #include "orte/mca/state/state.h"
@@ -79,6 +81,38 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"
 
+void orte_plm_base_set_slots(orte_node_t *node)
+{
+    if (0 == strncmp(orte_set_slots, "cores", strlen(orte_set_slots))) {
+        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                         HWLOC_OBJ_CORE, 0,
+                                                         OPAL_HWLOC_LOGICAL);
+    } else if (0 == strncmp(orte_set_slots, "sockets", strlen(orte_set_slots))) {
+        if (0 == (node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                                   HWLOC_OBJ_SOCKET, 0,
+                                                                   OPAL_HWLOC_LOGICAL))) {
+            /* some systems don't report sockets - in this case,
+             * use numanodes */
+            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                             HWLOC_OBJ_NODE, 0,
+                                                             OPAL_HWLOC_LOGICAL);
+        }
+    } else if (0 == strncmp(orte_set_slots, "numas", strlen(orte_set_slots))) {
+        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                         HWLOC_OBJ_NODE, 0,
+                                                         OPAL_HWLOC_LOGICAL);
+    } else if (0 == strncmp(orte_set_slots, "hwthreads", strlen(orte_set_slots))) {
+        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                         HWLOC_OBJ_PU, 0,
+                                                         OPAL_HWLOC_LOGICAL);
+    } else {
+        /* must be a number */
+        node->slots = strtol(orte_set_slots, NULL, 10);
+    }
+    /* mark the node as having its slots "given" */
+    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
+}
+
 void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -88,10 +122,24 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     orte_proc_t *dmn1;
     int i;
 
-    /* if we got back topology info from the first node, then we use
-     * it as the "standard" for all other nodes unless they sent
-     * back their own topology */
-    if (1 < orte_process_info.num_procs) {
+    /* if we are not launching, then we just assume that all
+     * daemons share our topology */
+    if (orte_do_not_launch) {
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        t = node->topology;
+        for (i=1; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            if (NULL == node->topology) {
+                node->topology = t;
+            }
+        }
+    } else if (1 < orte_process_info.num_procs) {
+        /* if we got back topology info from the first node, then we use
+         * it as the "standard" for all other nodes unless they sent
+         * back their own topology */
+
         /* find daemon.vpid = 1 */
         jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
         if (NULL == (dmn1 = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 1))) {
@@ -109,20 +157,10 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
             OBJ_RELEASE(caddy);
             return;
         }
+
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setting topo to that from node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
-        for (i=1; i < orte_node_pool->size; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                continue;
-            }
-            if (NULL == node->topology) {
-                node->topology = t;
-            }
-        }
-    } else if (orte_do_not_launch) {
-        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-        t = node->topology;
         for (i=1; i < orte_node_pool->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
@@ -147,33 +185,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                          "%s plm:base:setting slots for node %s by %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, orte_set_slots));
-                    if (0 == strncmp(orte_set_slots, "cores", strlen(orte_set_slots))) {
-                        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                         HWLOC_OBJ_CORE, 0,
-                                                                         OPAL_HWLOC_LOGICAL);
-                    } else if (0 == strncmp(orte_set_slots, "sockets", strlen(orte_set_slots))) {
-                        if (0 == (node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                                   HWLOC_OBJ_SOCKET, 0,
-                                                                                   OPAL_HWLOC_LOGICAL))) {
-                            /* some systems don't report sockets - in this case,
-                             * use numanodes
-                             */
-                            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                             HWLOC_OBJ_NODE, 0,
-                                                                             OPAL_HWLOC_LOGICAL);
-                        }
-                    } else if (0 == strncmp(orte_set_slots, "numas", strlen(orte_set_slots))) {
-                        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                         HWLOC_OBJ_NODE, 0,
-                                                                         OPAL_HWLOC_LOGICAL);
-                    } else if (0 == strncmp(orte_set_slots, "hwthreads", strlen(orte_set_slots))) {
-                        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
-                                                                         HWLOC_OBJ_PU, 0,
-                                                                         OPAL_HWLOC_LOGICAL);
-                    } else {
-                        /* must be a number */
-                        node->slots = strtol(orte_set_slots, NULL, 10);
-                    }
+                    orte_plm_base_set_slots(node);
                 }
             }
         }
@@ -261,6 +273,9 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     int i;
     orte_app_context_t *app;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    char *key;
+    orte_job_t *parent;
+    orte_process_name_t name, *nptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:setup_job",
@@ -288,13 +303,57 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
          * the orte_rmaps_base_setup_virtual_machine routine to
          * search all apps for any hosts to be used by the vm
          */
-        opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(caddy->jdata->jobid), caddy->jdata);
+        opal_hash_table_set_value_uint32(orte_job_data, caddy->jdata->jobid, caddy->jdata);
     }
 
     /* if job recovery is not enabled, set it to default */
     if (!ORTE_FLAG_TEST(caddy->jdata, ORTE_JOB_FLAG_RECOVERABLE) &&
         orte_enable_recovery) {
         ORTE_FLAG_SET(caddy->jdata, ORTE_JOB_FLAG_RECOVERABLE);
+    }
+
+    /* setup transport keys in case the MPI layer needs them. If
+     * this is a dynamic spawn, then use the same keys as the
+     * parent process had so the new/old procs can communicate.
+     * Otherwise we can use the jobfam and stepid as unique keys
+     * because they are unique values assigned by the RM
+     */
+     nptr = &name;
+     if (orte_get_attribute(&caddy->jdata->attributes, ORTE_JOB_LAUNCH_PROXY, (void**)&nptr, OPAL_NAME)) {
+        /* get the parent jdata */
+        if (NULL == (parent = orte_get_job_data_object(name.jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+        key = NULL;
+        if (!orte_get_attribute(&parent->attributes, ORTE_JOB_TRANSPORT_KEY, (void**)&key, OPAL_STRING) ||
+            NULL == key) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+        /* record it */
+        orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_TRANSPORT_KEY, ORTE_ATTR_LOCAL, key, OPAL_STRING);
+        /* add the transport key envar to each app */
+        for (i=0; i < caddy->jdata->apps->size; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(caddy->jdata->apps, i))) {
+                continue;
+            }
+            opal_setenv(OPAL_MCA_PREFIX"orte_precondition_transports", key, true, &app->env);
+        }
+        free(key);
+    } else {
+        /* this will also record the transport key attribute in the job object, and
+         * adds the key envar to each app */
+        if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(caddy->jdata))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
     }
 
     /* if app recovery is not defined, set apps to defaults */
@@ -388,8 +447,8 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
 
-    /* ensure our routing plan is up-to-date */
-    orte_routed.update_routing_plan();
+    /* ensure all routing plans are up-to-date */
+    orte_routed.update_routing_plan(NULL);
 
     /* If this job is being started by me, then there is nothing
      * further we need to do as any user directives (e.g., to tie
@@ -512,8 +571,12 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     /* setup the buffer */
     buffer = OBJ_NEW(opal_buffer_t);
 
-    /* pack the add_local_procs command */
-    command = ORTE_DAEMON_ADD_LOCAL_PROCS;
+    /* pack the appropriate add_local_procs command */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FIXED_DVM, NULL, OPAL_BOOL)) {
+        command = ORTE_DAEMON_DVM_ADD_PROCS;
+    } else {
+        command = ORTE_DAEMON_ADD_LOCAL_PROCS;
+    }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -535,6 +598,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
     sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
     sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    sig->sz = 1;
     if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, buffer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -637,9 +701,10 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
      * it won't register and we need to send the response now.
      * Otherwise, it is an MPI job and we should wait for it
      * to register */
-    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, NULL, OPAL_BOOL)) {
+    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, NULL, OPAL_BOOL) &&
+        !orte_get_attribute(&jdata->attributes, ORTE_JOB_DVM_JOB, NULL, OPAL_BOOL)) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                             "%s plm:base:launch job %s is not MPI",
+                             "%s plm:base:launch job %s is MPI",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
         goto cleanup;
@@ -676,7 +741,8 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
                          ORTE_NAME_PRINT(&jdata->originator)));
-    if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
+    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                           &jdata->originator, answer,
                                            ORTE_RML_TAG_LAUNCH_RESP,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -686,10 +752,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
         return;
     }
 
- cleanup:
-    /* need to init_after_spawn for debuggers */
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
-
+  cleanup:
     /* cleanup */
     OBJ_RELEASE(caddy);
 }
@@ -724,13 +787,16 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
     caddy->jdata->state = caddy->job_state;
 
     /* if this isn't a dynamic spawn, just cleanup */
-    if (ORTE_JOBID_INVALID == jdata->originator.jobid) {
+    if (ORTE_JOBID_INVALID == jdata->originator.jobid ||
+        orte_get_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, NULL, OPAL_BOOL) ||
+        orte_get_attribute(&jdata->attributes, ORTE_JOB_DVM_JOB, NULL, OPAL_BOOL)) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:launch job %s is not a dynamic spawn",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
         goto cleanup;
     }
+
     /* if it was a dynamic spawn, send the response */
     rc = ORTE_SUCCESS;
     answer = OBJ_NEW(opal_buffer_t);
@@ -761,7 +827,8 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
                          ORTE_NAME_PRINT(&jdata->originator)));
-    if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
+    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                           &jdata->originator, answer,
                                            ORTE_RML_TAG_LAUNCH_RESP,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -789,7 +856,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     char *rml_uri = NULL, *ptr;
     int rc, idx;
     orte_proc_t *daemon=NULL;
-    char *nodename;
     orte_node_t *node;
     orte_job_t *jdata;
     orte_process_name_t dname;
@@ -810,6 +876,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     /* multiple daemons could be in this buffer, so unpack until we exhaust the data */
     idx = 1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(buffer, &dname, &idx, ORTE_NAME))) {
+        char *nodename = NULL;
         /* unpack its contact info */
         idx = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
@@ -1080,6 +1147,11 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                              ORTE_NAME_PRINT(&dname),
                              (NULL == daemon) ? "UNKNOWN" : daemon->rml_uri));
 
+        if (NULL != nodename) {
+            free(nodename);
+            nodename = NULL;
+        }
+
         if (orted_failed_launch) {
             ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_FAILED_TO_START);
             return;
@@ -1091,28 +1163,29 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                  jdatorted->num_reported, jdatorted->num_procs));
             if (jdatorted->num_procs == jdatorted->num_reported) {
                 bool dvm = true;
+                uint32_t key;
+                void *nptr;
                 jdatorted->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
                 /* activate the daemons_reported state for all jobs
                  * whose daemons were launched
                  */
-                for (idx=1; idx < orte_job_data->size; idx++) {
-                    if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, idx))) {
-                        continue;
+                rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jdata, &nptr);
+                while (OPAL_SUCCESS == rc) {
+                    if (ORTE_PROC_MY_NAME->jobid == jdata->jobid) {
+                        goto next;
                     }
                     dvm = false;
                     if (ORTE_JOB_STATE_DAEMONS_LAUNCHED == jdata->state) {
                         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
                     }
+                  next:
+                    rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jdata, nptr, &nptr);
                 }
                 if (dvm) {
                     /* must be launching a DVM - activate the state */
                     ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_DAEMONS_REPORTED);
                 }
             }
-        }
-        if (NULL != nodename) {
-            free(nodename);
-            nodename = NULL;
         }
         idx = 1;
     }
@@ -1123,7 +1196,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         /* if a tree-launch is underway, send the cmd back */
         relay = OBJ_NEW(opal_buffer_t);
         opal_dss.copy_payload(relay, orte_tree_launch_cmd);
-        orte_rml.send_buffer_nb(sender, relay,
+        orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                sender, relay,
                                 ORTE_RML_TAG_DAEMON,
                                 orte_rml_send_callback, NULL);
     }
@@ -1250,11 +1324,10 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "orte_report_bindings");
         opal_argv_append(argc, argv, "1");
     }
-    if (!ORTE_PROC_IS_CM) {
-       /* pass our topology signature */
-        opal_argv_append(argc, argv, "--hnp-topo-sig");
-        opal_argv_append(argc, argv, orte_topo_signature);
-    }
+    /* pass our topology signature */
+    opal_argv_append(argc, argv, "--hnp-topo-sig");
+    opal_argv_append(argc, argv, orte_topo_signature);
+
     if (orte_hetero_nodes) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "orte_hetero_nodes");
@@ -1270,18 +1343,9 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "1");
     }
 
-    /* the following two are not mca params */
-    if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
-        opal_argv_append(argc, argv, "--debug-failure");
-        asprintf(&param, "%d", orted_debug_failure);
-        opal_argv_append(argc, argv, param);
-        free(param);
-    }
-    if (0 < orted_debug_failure_delay) {
-        opal_argv_append(argc, argv, "--debug-failure-delay");
-        asprintf(&param, "%d", orted_debug_failure_delay);
-        opal_argv_append(argc, argv, param);
-        free(param);
+    /* the following is not an mca param */
+    if (NULL != getenv("ORTE_TEST_ORTED_SUICIDE")) {
+        opal_argv_append(argc, argv, "--test-suicide");
     }
 
     /* tell the orted what ESS component to use */
@@ -1516,8 +1580,9 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     bool one_filter = false;
     int num_nodes;
     bool default_hostfile_used;
-    char *hosts;
+    char *hosts = NULL;
     bool singleton=false;
+    bool multi_sim = false;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:setup_vm",
@@ -1527,14 +1592,25 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
+    if (NULL == daemons->map) {
+        daemons->map = OBJ_NEW(orte_job_map_t);
+    }
     map = daemons->map;
+
+    /* if this job is being launched against a fixed DVM, then there is
+     * nothing for us to do - the DVM will stand as is */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FIXED_DVM, NULL, OPAL_BOOL)) {
+        /* mark that the daemons have reported so we can proceed */
+        daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+        map->num_new_daemons = 0;
+        return ORTE_SUCCESS;
+    }
 
     /* if this is a dynamic spawn, then we don't make any changes to
      * the virtual machine unless specifically requested to do so
      */
     if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
-        OBJ_CONSTRUCT(&nodes, opal_list_t);
-        if (NULL == daemons->map) {
+        if (0 == map->num_nodes) {
             OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                  "%s plm:base:setup_vm creating map",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -1543,16 +1619,15 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
              * are obviously already here! The ess will already
              * have assigned our node to us.
              */
-            daemons->map = OBJ_NEW(orte_job_map_t);
             node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-            opal_pointer_array_add(daemons->map->nodes, (void*)node);
-            ++(daemons->map->num_nodes);
+            opal_pointer_array_add(map->nodes, (void*)node);
+            ++(map->num_nodes);
             /* maintain accounting */
             OBJ_RETAIN(node);
             /* mark that this is from a singleton */
             singleton = true;
         }
-        map = daemons->map;
+        OBJ_CONSTRUCT(&nodes, opal_list_t);
         for (i=1; i < orte_node_pool->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
@@ -1597,18 +1672,9 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
      * look across all jobs and ensure that the "VM" contains
      * all nodes with application procs on them
      */
-    if (orte_get_attribute(&daemons->attributes, ORTE_JOB_NO_VM, NULL, OPAL_BOOL)) {
+    multi_sim = orte_get_attribute(&jdata->attributes, ORTE_JOB_MULTI_DAEMON_SIM, NULL, OPAL_BOOL);
+    if (orte_get_attribute(&daemons->attributes, ORTE_JOB_NO_VM, NULL, OPAL_BOOL) || multi_sim) {
         OBJ_CONSTRUCT(&nodes, opal_list_t);
-        if (NULL == daemons->map) {
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                 "%s plm:base:setup_vm creating map",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            /* this is the first time thru, so the vm is just getting
-             * defined - create a map for it
-             */
-            daemons->map = OBJ_NEW(orte_job_map_t);
-        }
-        map = daemons->map;
         /* loop across all nodes and include those that have
          * num_procs > 0 && no daemon already on them
          */
@@ -1635,13 +1701,16 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                 /* not to be used */
                 continue;
             }
-            if (0 < node->num_procs) {
+            if (0 < node->num_procs || multi_sim) {
                 /* retain a copy for our use in case the item gets
                  * destructed along the way
                  */
                 OBJ_RETAIN(node);
                 opal_list_append(&nodes, &node->super);
             }
+        }
+        if (multi_sim) {
+            goto process;
         }
         /* see if anybody had procs */
         if (0 == opal_list_get_size(&nodes)) {
@@ -1666,23 +1735,21 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         goto process;
     }
 
-    if (NULL == daemons->map) {
+    if (0 == map->num_nodes) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setup_vm creating map",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* this is the first time thru, so the vm is just getting
-         * defined - create a map for it and put us in as we
+         * defined - put us in as we
          * are obviously already here! The ess will already
          * have assigned our node to us.
          */
-        daemons->map = OBJ_NEW(orte_job_map_t);
         node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-        opal_pointer_array_add(daemons->map->nodes, (void*)node);
-        ++(daemons->map->num_nodes);
+        opal_pointer_array_add(map->nodes, (void*)node);
+        ++(map->num_nodes);
         /* maintain accounting */
         OBJ_RETAIN(node);
     }
-    map = daemons->map;
 
     /* zero-out the number of new daemons as we will compute this
      * each time we are called
@@ -1710,6 +1777,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             /* if the app provided a dash-host, and we are not treating
              * them as requested or "soft" locations, then use those nodes
              */
+            hosts = NULL;
             if (!orte_soft_locations &&
                 orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING)) {
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
@@ -2049,8 +2117,8 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             orte_process_info.max_procs = orte_process_info.num_procs;
         }
 
-        /* ensure our routing plan is up-to-date */
-        orte_routed.update_routing_plan();
+        /* ensure all routing plans are up-to-date */
+        orte_routed.update_routing_plan(NULL);
     }
 
     /* mark that the daemon job changed */

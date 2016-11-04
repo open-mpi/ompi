@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -28,7 +30,7 @@ AC_DEFUN([MCA_oshmem_sshmem_mmap_CONFIG],[
            AC_SEARCH_LIBS([mmap], [c],
                   [oshmem_mmap_sm_build_mmap=1],
                   [oshmem_mmap_sm_build_mmap=0])])
-    AS_IF([test "$enable_mmap_sshmem" = "yes" -a "$oshmem_mmap_sm_build_mmap" = "0"],
+    AS_IF([test "$enable_mmap_sshmem" = "yes" && test "$oshmem_mmap_sm_build_mmap" = "0"],
           [AC_MSG_WARN([MMAP shared memory support requested but not found])
            AC_MSG_ERROR([Cannot continue])])
 

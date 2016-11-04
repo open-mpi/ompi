@@ -4,6 +4,7 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * Additional copyrights may follow
  *
@@ -31,14 +32,14 @@ slurm block distro of 4 ranks over 2 nodes:
  Tuple can be visualized as a rectangle on two
  dimensional (Hosts, Local Ranks) plane:
 
-           ------------------------------------ Hosts ->
-           |              H
-           |           +--------+
-           |<- base -->|        |
-           |           |        | L
-           |           +--------+
-        Local Ranks
-           V
+       ------------------------------------ Hosts ->
+       |              H
+       |           +--------+
+       |<- base -->|        |
+       |           |        | L
+       |           +--------+
+    Local Ranks
+       V
 
 Note that ranks increase by column. Tuple (0,2,3) looks like:
 0 3
@@ -100,8 +101,8 @@ static int *find_lrs(char *map, int my_node, int *nlrs)
                 max_lr += L;
             }
             /* skip (my_node - base) columns of L elems,
-             * numbers in my column are local to me
-             */
+         * numbers in my column are local to me
+         */
             for (i = 0; i < L; i++) {
                 lrs[*nlrs] = (my_node - base) * L + i + abs_rank;
                 (*nlrs) ++;
@@ -128,7 +129,7 @@ static int *find_lrs(char *map, int my_node, int *nlrs)
  * on failure. Array must be freed by the caller.
  */
 int *mca_common_pmi2_parse_pmap(char *pmap, int my_rank,
-                                  int *node, int *nlrs)
+                                int *node, int *nlrs)
 {
     char *p;
 
@@ -139,7 +140,7 @@ int *mca_common_pmi2_parse_pmap(char *pmap, int my_rank,
 
     *node = find_my_node(p, my_rank);
     if (0 > *node) {
-       return NULL;
+        return NULL;
     }
 
     return find_lrs(p, *node, nlrs);

@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -192,7 +192,7 @@ static int create_listen(void)
      * port in the range.  Otherwise, tcp_port_min will be 0, which
      * means "pick any port"
      */
-    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_AGGREGATOR) {
+    if (ORTE_PROC_IS_DAEMON) {
         if (NULL != mca_oob_tcp_component.tcp_static_ports) {
             /* if static ports were provided, take the
              * first entry in the list
@@ -209,7 +209,7 @@ static int create_listen(void)
             opal_argv_append_nosize(&ports, "0");
             orte_static_ports = false;
         }
-    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_SCHEDULER) {
+    } else if (ORTE_PROC_IS_HNP) {
         if (NULL != mca_oob_tcp_component.tcp_static_ports) {
             /* if static ports were provided, take the
              * first entry in the list
@@ -384,6 +384,7 @@ static int create_listen(void)
         /* add this port to our connections */
         conn = OBJ_NEW(mca_oob_tcp_listener_t);
         conn->sd = sd;
+        conn->port = ntohs(((struct sockaddr_in*) &inaddr)->sin_port);
         opal_list_append(&mca_oob_tcp_component.listeners, &conn->item);
         /* and to our ports */
         asprintf(&tconn, "%d", ntohs(((struct sockaddr_in*) &inaddr)->sin_port));
@@ -621,7 +622,9 @@ static int create_listen6(void)
 
         /* add this port to our connections */
         conn = OBJ_NEW(mca_oob_tcp_listener_t);
+        conn->tcp6 = true;
         conn->sd = sd;
+        conn->port = ntohs(((struct sockaddr_in6*) &inaddr)->sin6_port);
         opal_list_append(&mca_oob_tcp_component.listeners, &conn->item);
         /* and to our ports */
         asprintf(&tconn, "%d", ntohs(((struct sockaddr_in6*) &inaddr)->sin6_port));
@@ -739,6 +742,8 @@ static void* listen_thread(opal_object_t *obj)
                 pending_connection->fd = accept(sd,
                                                 (struct sockaddr*)&(pending_connection->addr),
                                                 &addrlen);
+
+                /* check for < 0 as indicating an error upon accept */
                 if (pending_connection->fd < 0) {
                     OBJ_RELEASE(pending_connection);
 
@@ -764,10 +769,9 @@ static void* listen_thread(opal_object_t *obj)
                         goto done;
                     }
 
-                    /* For all other cases, close the socket, print a
+                    /* For all other cases, print a
                        warning but try to continue */
                     else {
-                        CLOSE_THE_SOCKET(sd);
                         orte_show_help("help-oob-tcp.txt",
                                        "accept failed",
                                        true,
@@ -780,12 +784,33 @@ static void* listen_thread(opal_object_t *obj)
                 }
 
                 opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                    "%s mca_oob_tcp_listen_thread: new connection: "
+                                    "%s mca_oob_tcp_listen_thread: incoming connection: "
                                     "(%d, %d) %s:%d\n",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     pending_connection->fd, opal_socket_errno,
                                     opal_net_get_hostname((struct sockaddr*) &pending_connection->addr),
                                     opal_net_get_port((struct sockaddr*) &pending_connection->addr));
+
+                /* if we are on a privileged port, we only accept connections
+                 * from other privileged sockets. A privileged port is one
+                 * whose port is less than 1024 on Linux, so we'll check for that. */
+                if (1024 >= listener->port) {
+                    uint16_t inport;
+                    inport = opal_net_get_port((struct sockaddr*) &pending_connection->addr);
+                    if (1024 < inport) {
+                        /* someone tried to cross-connect privileges,
+                         * say something */
+                        orte_show_help("help-oob-tcp.txt",
+                                       "privilege failure", true,
+                                       opal_process_info.nodename, listener->port,
+                                       opal_net_get_hostname((struct sockaddr*) &pending_connection->addr),
+                                       inport);
+                        CLOSE_THE_SOCKET(pending_connection->fd);
+                        OBJ_RELEASE(pending_connection);
+                        continue;
+                    }
+                }
+
                 /* activate the event */
                 opal_event_active(&pending_connection->ev, OPAL_EV_WRITE, 1);
                 accepted_connections++;
@@ -909,7 +934,9 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
 static void tcp_ev_cons(mca_oob_tcp_listener_t* event)
 {
     event->ev_active = false;
+    event->tcp6 = false;
     event->sd = -1;
+    event->port = 0;
 }
 static void tcp_ev_des(mca_oob_tcp_listener_t* event)
 {

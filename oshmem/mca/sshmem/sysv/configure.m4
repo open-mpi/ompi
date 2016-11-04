@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -28,7 +30,7 @@ AC_DEFUN([MCA_oshmem_sshmem_sysv_CONFIG],[
           AC_CHECK_FUNC(shmget,
                   [oshmem_sysv_sm_build_sysv=1],
                   [oshmem_sysv_sm_build_sysv=0])])
-    AS_IF([test "$enable_sysv_sshmem" = "yes" -a "$oshmem_sysv_sm_build_sysv" = "0"],
+    AS_IF([test "$enable_sysv_sshmem" = "yes" && test "$oshmem_sysv_sm_build_sysv" = "0"],
           [AC_MSG_WARN([SYSV shared memory support requested but not found])
            AC_MSG_ERROR([Cannot continue])])
 

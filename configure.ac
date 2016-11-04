@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -20,8 +20,9 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
-# Copyright (c) 2014-2015 Research Organization for Information Science
+# Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -53,6 +54,8 @@ AC_INIT([project_name_long],
 AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
+
+OPAL_CAPTURE_CONFIGURE_CLI([OPAL_CONFIGURE_CLI])
 
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
@@ -132,12 +135,12 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
           AC_SUBST(libmpi_usempif08_so_version)
-          AC_SUBST(libmpi_java_so_version)])
+          AC_SUBST(libmpi_java_so_version)
+          AC_SUBST(libompitrace_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 m4_ifdef([project_oshmem],
-         [AC_SUBST(liboshmem_so_version)
-          AC_SUBST(liboshmem_java_so_version)])
+         [AC_SUBST(liboshmem_so_version)])
 AC_SUBST(libopen_pal_so_version)
 # It's icky that we have to hard-code the names of the
 # common components here.  :-( This could probably be done
@@ -145,12 +148,12 @@ AC_SUBST(libopen_pal_so_version)
 # and/or opal_mca.m4, but I don't have the cycles to do this
 # right now.
 AC_SUBST(libmca_opal_common_libfabric_so_version)
-AC_SUBST(libmca_common_cuda_so_version)
-AC_SUBST(libmca_common_ofacm_so_version)
-AC_SUBST(libmca_common_sm_so_version)
-AC_SUBST(libmca_common_ugni_so_version)
-AC_SUBST(libmca_common_verbs_so_version)
-AC_SUBST(libmca_common_alps_so_version)
+AC_SUBST(libmca_opal_common_cuda_so_version)
+AC_SUBST(libmca_opal_common_sm_so_version)
+AC_SUBST(libmca_opal_common_ugni_so_version)
+AC_SUBST(libmca_opal_common_verbs_so_version)
+AC_SUBST(libmca_orte_common_alps_so_version)
+AC_SUBST(libmca_ompi_common_ompio_so_version)
 
 #
 # Get the versions of the autotools that were used to bootstrap us
@@ -249,6 +252,7 @@ m4_ifdef([project_oshmem],
 OPAL_CONFIGURE_OPTIONS
 OPAL_CHECK_OS_FLAVORS
 OPAL_CHECK_CUDA
+OPAL_CHECK_PMIX
 m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
@@ -276,6 +280,8 @@ fi
 OPAL_SET_LIB_PREFIX([])
 m4_ifdef([project_orte],
           [ORTE_SET_LIB_PREFIX([])])
+m4_ifdef([project_ompi],
+          [OMPI_SET_LIB_NAME([])])
 
 ############################################################################
 # Libtool: part one
@@ -524,7 +530,6 @@ OPAL_CHECK_COMPILER_VERSION_ID
 ##################################
 # Only needed for OMPI
 m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
-m4_ifdef([project_oshmem], [OSHMEM_SETUP_JAVA_BINDINGS])
 
 
 ##################################
@@ -580,7 +585,8 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     dlfcn.h execinfo.h err.h fcntl.h grp.h libgen.h \
     libutil.h memory.h netdb.h netinet/in.h netinet/tcp.h \
     poll.h pthread.h pty.h pwd.h sched.h \
-    strings.h stropts.h sys/fcntl.h sys/ipc.h sys/shm.h \
+    strings.h stropts.h linux/ethtool.h linux/sockios.h \
+    sys/fcntl.h sys/ipc.h sys/shm.h \
     sys/ioctl.h sys/mman.h sys/param.h sys/queue.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
     sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/tree.h \
@@ -631,13 +637,64 @@ AC_CACHE_SAVE
 opal_show_title "Type tests"
 
 AC_CHECK_TYPES([socklen_t, struct sockaddr_in, struct sockaddr_in6,
-                struct sockaddr_storage],
+                struct sockaddr_storage, struct ifreq, struct ethtool_cmd],
                [], [], [AC_INCLUDES_DEFAULT
 #if HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_NET_IF_H
+#include <net/if.h>
+#endif])
+
+AC_CHECK_DECLS([ethtool_cmd_speed, SIOCETHTOOL],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
+#endif])
+
+AC_CHECK_MEMBERS([struct ethtool_cmd.speed_hi],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
+#endif])
+
+AC_CHECK_MEMBERS([struct ethtool_cmd.speed_hi],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
+#endif])
+
+AC_CHECK_MEMBERS([struct ethtool_cmd.speed_hi],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
+#endif])
+
+AC_CHECK_MEMBERS([struct ethtool_cmd.speed_hi],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_LINUX_ETHTOOL_H
+#include <linux/ethtool.h>
+#endif
+#ifdef HAVE_LINUX_SOCKIOS_H
+#include <linux/sockios.h>
 #endif])
 
 AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC, AF_INET6, PF_INET6],
@@ -766,20 +823,6 @@ AC_TRY_LINK([void finalize (void) {}], [], [AC_MSG_RESULT([yes])
 LDFLAGS=$LDFLAGS_save
 OPAL_VAR_SCOPE_POP
 
-opal_destructor_use_fini=0
-opal_no_destructor=0
-if test x$opal_cv___attribute__destructor = x0 ; then
-    if test x$opal_ld_have_fini = x1 ; then
-        opal_destructor_use_fini=1
-    else
-        opal_no_destructor=1;
-    fi
-fi
-
-AC_DEFINE_UNQUOTED(OPAL_NO_LIB_DESTRUCTOR, [$opal_no_destructor],
-    [Whether libraries can be configured with destructor functions])
-AM_CONDITIONAL(OPAL_DESTRUCTOR_USE_FINI, [test x$opal_destructor_use_fini = x1])
-
 ##################################
 # Libraries
 ##################################
@@ -805,7 +848,7 @@ OPAL_SEARCH_LIBS_CORE([ceil], [m])
 # -lrt might be needed for clock_gettime
 OPAL_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv __malloc_initialize_hook])
 
 # Sanity check: ensure that we got at least one of statfs or statvfs.
 if test $ac_cv_func_statfs = no && test $ac_cv_func_statvfs = no; then
@@ -899,7 +942,6 @@ OPAL_CHECK_BROKEN_QSORT
 # Check out what thread support we have
 #
 OPAL_CONFIG_THREADS
-OMPI_CONFIG_THREADS
 
 CFLAGS="$CFLAGS $THREAD_CFLAGS"
 CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
@@ -1375,12 +1417,14 @@ AC_CONFIG_FILES([
     test/event/Makefile
     test/asm/Makefile
     test/datatype/Makefile
+    test/dss/Makefile
     test/class/Makefile
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile
-    test/monitoring/Makefile
 ])
+m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile])])
+
 AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
                 [chmod +x contrib/dist/mofed/debian/rules])
 AC_CONFIG_FILES([contrib/dist/mofed/compile_debian_mlnx_example],
@@ -1391,4 +1435,8 @@ m4_ifdef([project_orte], [ORTE_CONFIG_FILES])
 m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIG_FILES])
 
+OPAL_CHECK_LIBNL_SUMMARY
+
 AC_OUTPUT
+
+OPAL_SUMMARY_PRINT

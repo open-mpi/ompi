@@ -33,6 +33,7 @@ OBJ_CLASS_DECLARATION(ompi_osc_portals4_request_t);
         req->super.req_mpi_object.win = win;                            \
         req->super.req_complete = false;                                \
         req->super.req_state = OMPI_REQUEST_ACTIVE;                     \
+        req->super.req_status.MPI_ERROR = MPI_SUCCESS;                  \
         req->ops_expected = 0;                                          \
         req->ops_committed = 0;                                         \
     } while (0)

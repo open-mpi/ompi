@@ -14,6 +14,8 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,7 +101,7 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
     char env_string[256];
     int rc;
 
-    generated_key = getenv("OMPI_MCA_orte_precondition_transports");
+    generated_key = getenv(OPAL_MCA_PREFIX"orte_precondition_transports");
     memset(uu, 0, sizeof(psm2_uuid_t));
 
     if (!generated_key || (strlen(generated_key) != 33) ||
@@ -419,9 +421,9 @@ int ompi_mtl_psm2_progress( void ) {
 	if (mtl_psm2_request->type == OMPI_mtl_psm2_IRECV) {
 
         mtl_psm2_request->super.ompi_req->req_status.MPI_SOURCE =
-            psm2_status.msg_tag.tag2;
+            psm2_status.msg_tag.tag1;
 	    mtl_psm2_request->super.ompi_req->req_status.MPI_TAG =
-		    psm2_status.msg_tag.tag1;
+		    psm2_status.msg_tag.tag0;
             mtl_psm2_request->super.ompi_req->req_status._ucount =
                 psm2_status.nbytes;
 

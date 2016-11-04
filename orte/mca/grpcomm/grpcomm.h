@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -42,6 +42,7 @@
 
 #include "orte/mca/mca.h"
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/dss/dss_types.h"
 
 #include "orte/mca/rml/rml_types.h"
@@ -72,11 +73,16 @@ typedef struct {
     opal_buffer_t bucket;
     /* participating daemons */
     orte_vpid_t *dmns;
+    /** number of participating daemons */
     size_t ndmns;
+    /** my index in the dmns array */
+    unsigned long my_rank;
+    /* number of buckets expected */
+    size_t nexpected;
     /* number reported in */
     size_t nreported;
     /* distance masks for receive */
-    uint32_t *distance_mask_recv;
+    opal_bitmap_t distance_mask_recv;
     /* received buckets */
     opal_buffer_t ** buffers;
     /* callback function */

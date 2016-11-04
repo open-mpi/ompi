@@ -10,7 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,10 +56,11 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                         ORTE_JOBID_PRINT(jdata->jobid), (int)num_slots, (unsigned long)num_procs);
 
     /* check to see if we can map all the procs */
-    if (num_slots < ((int)app->num_procs * orte_rmaps_base.cpus_per_rank)) {
+    if (num_slots < (int)app->num_procs) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return ORTE_ERR_SILENT;
         }
     }
@@ -82,11 +85,8 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                                 node->name);
             continue;
         }
-        /* assign a number of procs equal to the number of available
-         * slots divided by the number of cpus/rank the user
-         * requested
-         */
-        num_procs_to_assign = (node->slots - node->slots_inuse) / orte_rmaps_base.cpus_per_rank;
+        /* assign a number of procs equal to the number of available slots */
+        num_procs_to_assign = node->slots - node->slots_inuse;
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot assigning %d procs to node %s",
                             (int)num_procs_to_assign, node->name);
@@ -165,7 +165,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 --nxtra_nodes;
             }
         }
-        num_procs_to_assign = ((node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank) + extra_procs_to_assign;
+        num_procs_to_assign = node->slots - node->slots_inuse + extra_procs_to_assign;
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot adding up to %d procs to node %s",
                             num_procs_to_assign, node->name);
@@ -179,11 +179,29 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots < ((int)node->num_procs * orte_rmaps_base.cpus_per_rank)) {
+        if (node->slots < (int)node->num_procs) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+            /* check for permission */
+            if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                /* if we weren't given a directive either way, then we will error out
+                 * as the #slots were specifically given, either by the host RM or
+                 * via hostfile/dash-host */
+                if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                   true, app->num_procs, app->app);
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    return ORTE_ERR_SILENT;
+                } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                    /* if we were explicitly told not to oversubscribe, then don't */
+                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                   true, app->num_procs, app->app);
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    return ORTE_ERR_SILENT;
+                }
+            }
         }
         /* if we have mapped everything, then we are done */
         if (nprocs_mapped == app->num_procs) {
@@ -215,10 +233,11 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                         (int)num_slots, (unsigned long)num_procs);
 
     /* quick check to see if we can map all the procs */
-    if (num_slots < ((int)app->num_procs * orte_rmaps_base.cpus_per_rank)) {
+    if (num_slots < (int)app->num_procs) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return ORTE_ERR_SILENT;
         }
         oversubscribed = true;
@@ -314,8 +333,8 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                     }
                 }
                 /* if slots < avg + extra (adjusted for cpus/proc), then try to take all */
-                if ((node->slots - node->slots_inuse) < ((navg + extra_procs_to_assign) * orte_rmaps_base.cpus_per_rank)) {
-                    num_procs_to_assign = (node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank;
+                if ((node->slots - node->slots_inuse) < (navg + extra_procs_to_assign)) {
+                    num_procs_to_assign = node->slots - node->slots_inuse;
                     /* if we can't take any proc, skip following steps */
                     if (num_procs_to_assign == 0) {
                         continue;
@@ -344,11 +363,29 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             /* not all nodes are equal, so only set oversubscribed for
              * this node if it is in that state
              */
-            if (node->slots < ((int)node->num_procs * orte_rmaps_base.cpus_per_rank)) {
+            if (node->slots < (int)node->num_procs) {
                 /* flag the node as oversubscribed so that sched-yield gets
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                /* check for permission */
+                if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                    /* if we weren't given a directive either way, then we will error out
+                     * as the #slots were specifically given, either by the host RM or
+                     * via hostfile/dash-host */
+                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                        return ORTE_ERR_SILENT;
+                    } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                        /* if we were explicitly told not to oversubscribe, then don't */
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                        return ORTE_ERR_SILENT;
+                    }
+                }
             }
             if (nprocs_mapped == app->num_procs) {
                 /* we are done */
@@ -378,7 +415,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             /* not all nodes are equal, so only set oversubscribed for
              * this node if it is in that state
              */
-            if (node->slots < ((int)node->num_procs * orte_rmaps_base.cpus_per_rank)) {
+            if (node->slots < (int)node->num_procs) {
                 /* flag the node as oversubscribed so that sched-yield gets
                  * properly set
                  */
@@ -448,10 +485,11 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                         (int)num_slots, (unsigned long)num_procs);
 
     /* quick check to see if we can map all the procs */
-    if (num_slots < (app->num_procs * orte_rmaps_base.cpus_per_rank)) {
+    if (num_slots < app->num_procs) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return ORTE_ERR_SILENT;
         }
     }
@@ -487,7 +525,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 start = (jdata->bkmark_obj + 1) % nobjs;
             }
             /* compute the number of procs to go on this node */
-            nprocs = (node->slots - node->slots_inuse) / orte_rmaps_base.cpus_per_rank;
+            nprocs = node->slots - node->slots_inuse;
             opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:rr: calculated nprocs %d", nprocs);
             if (nprocs < 1) {
@@ -550,6 +588,24 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                /* check for permission */
+                if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                    /* if we weren't given a directive either way, then we will error out
+                     * as the #slots were specifically given, either by the host RM or
+                     * via hostfile/dash-host */
+                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                        return ORTE_ERR_SILENT;
+                    } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                        /* if we were explicitly told not to oversubscribe, then don't */
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                        return ORTE_ERR_SILENT;
+                    }
+                }
             }
             if (nprocs_mapped == app->num_procs) {
                 /* we are done */
@@ -589,10 +645,11 @@ static int byobj_span(orte_job_t *jdata,
                         (int)num_slots, (unsigned long)num_procs);
 
     /* quick check to see if we can map all the procs */
-    if (num_slots < (int)app->num_procs * orte_rmaps_base.cpus_per_rank) {
+    if (num_slots < (int)app->num_procs) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return ORTE_ERR_SILENT;
         }
     }
@@ -683,7 +740,7 @@ static int byobj_span(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots < (int)node->num_procs * orte_rmaps_base.cpus_per_rank) {
+        if (node->slots < (int)node->num_procs) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */

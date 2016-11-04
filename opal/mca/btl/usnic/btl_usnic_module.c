@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -44,6 +44,8 @@
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/rcache/rcache.h"
 #else
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -67,15 +69,40 @@
 static void finalize_one_channel(opal_btl_usnic_module_t *module,
                                  struct opal_btl_usnic_channel_t *channel);
 
+static int channel_addr2str(opal_btl_usnic_module_t *module, int channel,
+                            char *str, size_t len_param)
+{
+    size_t len;
+
+    len = len_param;
+    fi_av_straddr(module->av, module->mod_channels[channel].info->src_addr,
+                  str, &len);
+    if (len > len_param) {
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "libfabric API failed",
+                       true,
+                       opal_process_info.nodename,
+                       module->linux_device_name,
+                       "fi_av_straddr", __FILE__, __LINE__,
+                       FI_ENODATA,
+                       "Failed to convert address to string: buffer too short");
+
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    return OPAL_SUCCESS;
+}
+
 
 /*
- * Loop over all procs sent to us in add_procs and see if we want to
- * add a proc/endpoint for them.
+ * Loop over a block of procs sent to us in add_procs and see if we
+ * want to add a proc/endpoint for them.
  */
-static int add_procs_create_endpoints(opal_btl_usnic_module_t *module,
-                                      size_t nprocs,
-                                      opal_proc_t **procs,
-                                      mca_btl_base_endpoint_t **endpoints)
+static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
+                                            size_t block_offset,
+                                            size_t block_len,
+                                            opal_proc_t **procs,
+                                            mca_btl_base_endpoint_t **endpoints)
 {
     int rc;
     opal_proc_t* my_proc;
@@ -87,8 +114,8 @@ static int add_procs_create_endpoints(opal_btl_usnic_module_t *module,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    /* Loop over the procs we were given */
-    for (size_t i = 0; i < nprocs; i++) {
+    /* Loop over a block in the procs we were given */
+    for (size_t i = block_offset; i < (block_offset + block_len); i++) {
         struct opal_proc_t* opal_proc = procs[i];
         opal_btl_usnic_proc_t* usnic_proc;
         mca_btl_base_endpoint_t* usnic_endpoint;
@@ -97,11 +124,18 @@ static int add_procs_create_endpoints(opal_btl_usnic_module_t *module,
 
         /* Do not create loopback usnic connections */
         if (opal_proc == my_proc) {
+            opal_output_verbose(75, USNIC_OUT,
+                                "btl:usnic:add_procs:%s: not connecting to self",
+                                module->linux_device_name);
             continue;
         }
 
         /* usNIC does not support loopback to the same machine */
         if (OPAL_PROC_ON_LOCAL_NODE(opal_proc->proc_flags)) {
+            opal_output_verbose(75, USNIC_OUT,
+                                "btl:usnic:add_procs:%s: not connecting to %s on same server",
+                                module->linux_device_name,
+                                usnic_compat_proc_name_print(&opal_proc->proc_name));
             continue;
         }
 
@@ -114,6 +148,11 @@ static int add_procs_create_endpoints(opal_btl_usnic_module_t *module,
         if (OPAL_ERR_UNREACH == rc) {
             /* If the peer doesn't have usnic modex info, then we just
                skip it */
+            opal_output_verbose(75, USNIC_OUT,
+                                "btl:usnic:add_procs:%s: peer %s on %s does not have usnic modex info; skipping",
+                                module->linux_device_name,
+                                usnic_compat_proc_name_print(&opal_proc->proc_name),
+                                opal_get_proc_hostname(opal_proc));
             continue;
         } else if (OPAL_SUCCESS != rc) {
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -126,8 +165,10 @@ static int add_procs_create_endpoints(opal_btl_usnic_module_t *module,
                                             &usnic_endpoint);
         if (OPAL_SUCCESS != rc) {
             opal_output_verbose(5, USNIC_OUT,
-                                "btl:usnic:%s: unable to create endpoint for module=%p proc=%p\n",
-                                __func__, (void *)module, (void *)usnic_proc);
+                                "btl:usnic:add_procs:%s: unable to create endpoint to peer %s on %s",
+                                module->linux_device_name,
+                                usnic_compat_proc_name_print(&opal_proc->proc_name),
+                                opal_get_proc_hostname(opal_proc));
             OBJ_RELEASE(usnic_proc);
             continue;
         }
@@ -142,11 +183,29 @@ static int add_procs_create_endpoints(opal_btl_usnic_module_t *module,
                                           modex->ipv4_addr,
                                           modex->netmask);
 
+        char local_pri_addr[64] = {0};
+        rc = channel_addr2str(module, USNIC_PRIORITY_CHANNEL,
+                              local_pri_addr, sizeof(local_pri_addr));
+        if (OPAL_SUCCESS != rc) {
+            OBJ_RELEASE(usnic_proc);
+            continue;
+        }
+
+        char local_data_addr[64] = {0};
+        rc = channel_addr2str(module, USNIC_DATA_CHANNEL,
+                              local_data_addr, sizeof(local_data_addr));
+        if (OPAL_SUCCESS != rc) {
+            OBJ_RELEASE(usnic_proc);
+            continue;
+        }
+
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: new usnic peer endpoint: %s, proirity port %d, data port %d",
-                            str,
-                            modex->ports[USNIC_PRIORITY_CHANNEL],
-                            modex->ports[USNIC_DATA_CHANNEL]);
+                            "btl:usnic:add_procs:%s: new usnic peer endpoint: pri=%s:%d, data=%s:%d (local: pri=%s, data=%s)",
+                            module->linux_device_name,
+                            str, modex->ports[USNIC_PRIORITY_CHANNEL],
+                            str, modex->ports[USNIC_DATA_CHANNEL],
+                            local_pri_addr,
+                            local_data_addr);
 
         endpoints[i] = usnic_endpoint;
         ++num_created;
@@ -179,14 +238,14 @@ static void add_procs_warn_unreachable(opal_btl_usnic_module_t *module,
 
     opal_output_verbose(15, USNIC_OUT,
                         "btl:usnic: %s (which is %s) couldn't reach peer %s",
-                        module->fabric_info->fabric_attr->name,
+                        module->linux_device_name,
                         module->if_ipv4_addr_str,
                         remote);
     opal_show_help("help-mpi-btl-usnic.txt", "unreachable peer IP",
                    true,
                    opal_process_info.nodename,
                    module->if_ipv4_addr_str,
-                   module->fabric_info->fabric_attr->name,
+                   module->linux_device_name,
                    opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                    remote);
 }
@@ -195,9 +254,10 @@ static void add_procs_warn_unreachable(opal_btl_usnic_module_t *module,
  * invoked.  Go reap them all.
  */
 static int
-add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
-                             size_t array_len,
-                             struct mca_btl_base_endpoint_t **endpoints)
+add_procs_block_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
+                                   size_t block_offset,
+                                   size_t block_len,
+                                   struct mca_btl_base_endpoint_t **endpoints)
 {
     int ret = OPAL_SUCCESS;
     int num_left;
@@ -205,12 +265,11 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
     uint32_t event;
     struct fi_eq_entry entry;
     struct fi_eq_err_entry err_entry;
-
     bool error_occurred = false;
 
     /* compute num fi_av_insert completions we are waiting for */
     num_left = 0;
-    for (i = 0; i < array_len; ++i) {
+    for (i = block_offset; i < (block_offset + block_len); ++i) {
         if (NULL != endpoints[i]) {
             num_left += USNIC_NUM_CHANNELS;
         }
@@ -266,7 +325,7 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                        We therefore only want to print a pretty
                        warning about (and OBJ_RELEASE) that endpoint
                        the *first* time it is reported. */
-                    for (i = 0; i < array_len; ++i) {
+                    for (i = block_offset; i < (block_offset + block_len); ++i) {
                         if (endpoints[i] == context->endpoint) {
                             add_procs_warn_unreachable(module,
                                                        context->endpoint);
@@ -285,7 +344,7 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                                    "libfabric API failed",
                                    true,
                                    opal_process_info.nodename,
-                                   module->fabric_info->fabric_attr->name,
+                                   module->linux_device_name,
                                    "async insertion result", __FILE__, __LINE__,
                                    err_entry.err,
                                    "Failed to insert address to AV");
@@ -309,7 +368,7 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                                "internal error during init",
                                true,
                                opal_process_info.nodename,
-                               module->fabric_info->fabric_attr->name,
+                               module->linux_device_name,
                                "fi_eq_readerr()", __FILE__, __LINE__,
                                ret,
                                "Returned != sizeof(err_entry)");
@@ -330,7 +389,7 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                            "internal error during init",
                            true,
                            opal_process_info.nodename,
-                           module->fabric_info->fabric_attr->name,
+                           module->linux_device_name,
                            "fi_eq_sread()", __FILE__, __LINE__,
                            ret,
                            "Returned != (sizeof(entry) or -FI_EAVAIL)");
@@ -348,7 +407,7 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
        - If an otherwise-valid endpoint has no dest, that means we timed
          out trying to resolve it, so just release that endpoint. */
     size_t num_endpoints_created = 0;
-    for (i = 0; i < array_len; i++) {
+    for (i = block_offset; i < (block_offset + block_len); i++) {
         if (NULL != endpoints[i]) {
             bool happy;
 
@@ -383,6 +442,79 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
 }
 
 /*
+ * Create endpoints for the procs we were given in add_procs.
+ */
+static int add_procs_create_endpoints(struct opal_btl_usnic_module_t* module,
+                                      size_t nprocs,
+                                      struct opal_proc_t **procs,
+                                      struct mca_btl_base_endpoint_t** endpoints)
+{
+    /* We need to ensure that we don't overrun the libfabric AV EQ.
+       Divide up all the peer address resolutions we need to do into a
+       series of blocks; insert and complete each block before moving
+       to the next (note: if performance mandates it, we can move to a
+       sliding window style of AV inserts to get better concurrency of
+       AV resolution). */
+
+    /* Leave a few empty slots in the AV EQ, just for good measure */
+    if (module->av_eq_size < 8) {
+        opal_show_help("help-mpi-btl-usnic.txt", "fi_av_eq too small",
+                       true,
+                       opal_process_info.nodename,
+                       module->av_eq_size,
+                       8);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    size_t eq_size = module->av_eq_size - 8;
+    size_t block_len = eq_size;
+    size_t num_av_inserts = nprocs * USNIC_NUM_CHANNELS;
+    size_t num_blocks = num_av_inserts / block_len;
+    if (num_av_inserts % block_len != 0) {
+        ++num_blocks;
+    }
+
+    /* Per above, the blocks are expressed in terms of number of AV
+       inserts.  Convert them to be expressed in terms of number of
+       procs. */
+    block_len /= USNIC_NUM_CHANNELS;
+
+    /* Per above, loop over creating the endpoints so that we do not
+       overrun the libfabric AV EQ. */
+    int rc;
+    for (size_t block_offset = 0, block = 0; block < num_blocks;
+         block_offset += block_len, ++block) {
+        /* Adjust for the last block */
+        if (block_len > (nprocs - block_offset)) {
+            block_len = nprocs - block_offset;
+        }
+
+        /* First, create endpoints (and procs, if they're not already
+           created) for the usnic-reachable procs we were given. */
+        rc = add_procs_block_create_endpoints(module,
+                                              block_offset, block_len,
+                                              procs, endpoints);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+
+        /* For each endpoint that was created, we initiated the
+           process to create NUM_CHANNELS fi_addrs.  Go finish all of
+           those.  This will be the final determination of whether we
+           can use the endpoint or not because we'll find out if each
+           endpoint is reachable or not. */
+        rc = add_procs_block_reap_fi_av_inserts(module,
+                                                block_offset, block_len,
+                                                endpoints);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/*
  * Add procs to this BTL module, receiving endpoint information from
  * the modex.  This is done in 2 phases:
  *
@@ -408,19 +540,9 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
     opal_btl_usnic_module_t* module = (opal_btl_usnic_module_t*) base_module;
     int rc;
 
-    /* First, create endpoints (and procs, if they're not already
-       created) for all the usnic-reachable procs we were given. */
+    /* Go create the endpoints (including all relevant address
+       resolution) */
     rc = add_procs_create_endpoints(module, nprocs, procs, endpoints);
-    if (OPAL_SUCCESS != rc) {
-        goto fail;
-    }
-
-    /* For each endpoint that was created, we initiated the process to
-       create NUM_CHANNELS fi_addrs.  Go finish all of those.  This
-       will be the final determination of whether we can use the
-       endpoint or not because we'll find out if each endpoint is
-       reachable or not. */
-    rc = add_procs_reap_fi_av_inserts(module, nprocs, endpoints);
     if (OPAL_SUCCESS != rc) {
         goto fail;
     }
@@ -805,7 +927,11 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     OBJ_DESTRUCT(&module->chunk_segs);
     OBJ_DESTRUCT(&module->senders);
 
+#if RCACHE_VERSION == 30
+    mca_rcache_base_module_destroy(module->rcache);
+#else
     mca_mpool_base_module_destroy(module->super.btl_mpool);
+#endif
 
     if (NULL != module->av) {
         fi_close(&module->av->fid);
@@ -818,6 +944,8 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     }
     fi_close(&module->domain->fid);
     fi_close(&module->fabric->fid);
+
+    free(module->linux_device_name);
 
     return OPAL_SUCCESS;
 }
@@ -1001,6 +1129,7 @@ opal_btl_usnic_module_progress_sends(
     /*
      * Handle all the retransmits we can
      */
+    OPAL_THREAD_LOCK(&btl_usnic_lock);
     if (OPAL_UNLIKELY(!opal_list_is_empty(&module->pending_resend_segs))) {
         usnic_do_resends(module);
     }
@@ -1110,6 +1239,7 @@ opal_btl_usnic_module_progress_sends(
 
         endpoint = next_endpoint;
     }
+    OPAL_THREAD_UNLOCK(&btl_usnic_lock);
 }
 
 /*
@@ -1144,6 +1274,7 @@ usnic_send(
     opal_btl_usnic_module_t *module;
     opal_btl_usnic_send_segment_t *sseg;
 
+    OPAL_THREAD_LOCK(&btl_usnic_lock);
     endpoint = (opal_btl_usnic_endpoint_t *)base_endpoint;
     module = (opal_btl_usnic_module_t *)base_module;
     frag = (opal_btl_usnic_send_frag_t*) descriptor;
@@ -1205,7 +1336,7 @@ usnic_send(
         /* assign length */
         sseg->ss_len = sizeof(opal_btl_usnic_btl_header_t) + frag->sf_size;
 
-        sseg->ss_channel = USNIC_PRIORITY_CHANNEL;
+        sseg->ss_channel = USNIC_DATA_CHANNEL;
         sseg->ss_base.us_btl_header->tag = tag;
 #if MSGDEBUG1
         opal_output(0, "INLINE send, sseg=%p", (void *)sseg);
@@ -1252,6 +1383,7 @@ usnic_send(
 
     ++module->stats.pml_module_sends;
 
+    OPAL_THREAD_UNLOCK(&btl_usnic_lock);
     return rc;
 }
 
@@ -1334,7 +1466,7 @@ static void module_async_event_callback(int fd, short flags, void *arg)
         opal_show_help("help-mpi-btl-usnic.txt", "libfabric API failed",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "fi_eq_read()", __FILE__, __LINE__,
                        ret,
                        "Failed to get domain event");
@@ -1353,7 +1485,7 @@ static void module_async_event_callback(int fd, short flags, void *arg)
                ignore it. */
             opal_output_verbose(10, USNIC_OUT,
                                 "btl:usnic: got LINK_UP on %s",
-                                module->fabric_info->fabric_attr->name);
+                                module->linux_device_name);
             break;
 
             case 1: // USD_EVENT_LINK_DOWN:
@@ -1372,7 +1504,7 @@ static void module_async_event_callback(int fd, short flags, void *arg)
             opal_show_help("help-mpi-btl-usnic.txt", "async event",
                            true,
                            opal_process_info.nodename,
-                           module->fabric_info->fabric_attr->name,
+                           module->linux_device_name,
                            str, entry.data);
             fatal = true;
         }
@@ -1403,7 +1535,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "fi_dupinfo() failed", __FILE__, __LINE__,
                        -1, "Unknown");
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -1421,14 +1553,14 @@ static int create_ep(opal_btl_usnic_module_t* module,
             opal_process_info.my_local_rank);
     }
 
-    rc = fi_getinfo(FI_VERSION(1, 1), NULL, 0, 0, hint, &channel->info);
+    rc = fi_getinfo(module->libfabric_api, NULL, 0, 0, hint, &channel->info);
     fi_freeinfo(hint);
     if (0 != rc) {
         opal_show_help("help-mpi-btl-usnic.txt",
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "fi_getinfo() failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -1464,7 +1596,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "fi_endpoint() failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -1477,7 +1609,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "fi_ep_bind() SCQ to EP failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -1488,7 +1620,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "fi_ep_bind() RCQ to EP failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -1499,7 +1631,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "fi_ep_bind() AV to EP failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -1512,7 +1644,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "fi_enable() failed", __FILE__, __LINE__,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -1534,13 +1666,28 @@ static int create_ep(opal_btl_usnic_module_t* module,
                            "internal error during init",
                            true,
                            opal_process_info.nodename,
-                           module->fabric_info->fabric_attr->name,
+                           module->linux_device_name,
                            "fi_getname() failed", __FILE__, __LINE__,
                            rc, fi_strerror(-rc));
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
         assert(0 != sin->sin_port);
     }
+
+    char *str;
+    if (USNIC_PRIORITY_CHANNEL == channel->chan_index) {
+        str = "priority";
+    } else if (USNIC_DATA_CHANNEL == channel->chan_index) {
+        str = "data";
+    } else {
+        str = "UNKNOWN";
+    }
+    opal_output_verbose(15, USNIC_OUT,
+                        "btl:usnic:create_ep:%s: new usnic local endpoint channel %s: %s:%d",
+                        module->linux_device_name,
+                        str,
+                        inet_ntoa(sin->sin_addr),
+                        ntohs(sin->sin_port));
 
     /* actual sizes */
     channel->chan_rd_num = channel->info->rx_attr->size;
@@ -1625,7 +1772,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "failed to create CQ", __FILE__, __LINE__);
         goto error;
     }
@@ -1657,9 +1804,9 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
                                     rd_num /* num erorments to alloc */,
                                     rd_num /* max elements to alloc */,
                                     rd_num /* num elements per alloc */,
-                                    module->super.btl_mpool /* mpool for reg */,
+                                    module->super.btl_mpool /* mpool for (1.x, 2.0: reg, 2.1+: allocation) */,
                                     0 /* mpool reg flags */,
-                                    NULL /* unused0 */,
+                                    module->rcache /* registration cache for 2.1+ */,
                                     NULL /* item_init */,
                                     NULL /* item_init_context */);
     channel->recv_segs.ctx = module; /* must come after
@@ -1681,7 +1828,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
                            "internal error during init",
                            true,
                            opal_process_info.nodename,
-                           module->fabric_info->fabric_attr->name,
+                           module->linux_device_name,
                            "Failed to get receive buffer from freelist",
                            __FILE__, __LINE__);
             goto error;
@@ -1697,7 +1844,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
                            "internal error during init",
                            true,
                            opal_process_info.nodename,
-                           module->fabric_info->fabric_attr->name,
+                           module->linux_device_name,
                            "Failed to post receive buffer",
                            __FILE__, __LINE__);
             goto error;
@@ -1764,7 +1911,7 @@ static void init_local_modex_part1(opal_btl_usnic_module_t *module)
 
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: %s IP charactertics: %s, %u Mbps",
-                        module->fabric_info->fabric_attr->name,
+                        module->linux_device_name,
                         module->if_ipv4_addr_str,
                         modex->link_speed_mbps);
 }
@@ -1831,6 +1978,7 @@ static void init_queue_lengths(opal_btl_usnic_module_t *module)
     } else {
         module->cq_num = mca_btl_usnic_component.cq_num;
     }
+    module->av_eq_num = mca_btl_usnic_component.av_eq_num;
 
     /*
      * Queue sizes for priority channel scale with # of endpoint. A
@@ -1974,17 +2122,35 @@ static int init_mpool(opal_btl_usnic_module_t *module)
     mpool_resources.sizeof_reg = sizeof(opal_btl_usnic_reg_t);
     mpool_resources.register_mem = usnic_reg_mr;
     mpool_resources.deregister_mem = usnic_dereg_mr;
+#if RCACHE_VERSION == 30
+    mpool_resources.cache_name = mca_btl_usnic_component.usnic_rcache_name;
+    module->rcache =
+        mca_rcache_base_module_create (mca_btl_usnic_component.usnic_rcache_name,
+                                       &module->super, &mpool_resources);
+    if (NULL == module->rcache) {
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "internal error during init",
+                       true,
+                       opal_process_info.nodename,
+                       module->linux_device_name,
+                       "create rcache", __FILE__, __LINE__);
+        return OPAL_ERROR;
+    }
+    module->super.btl_mpool =
+        mca_mpool_base_module_lookup (mca_btl_usnic_component.usnic_mpool_hints);
+#else
     asprintf(&mpool_resources.pool_name, "%s",
-             module->fabric_info->fabric_attr->name);
+             module->linux_device_name);
     module->super.btl_mpool =
         mca_mpool_base_module_create(mca_btl_usnic_component.usnic_mpool_name,
                                      &module->super, &mpool_resources);
+#endif
     if (NULL == module->super.btl_mpool) {
         opal_show_help("help-mpi-btl-usnic.txt",
                        "internal error during init",
                        true,
                        opal_process_info.nodename,
-                       module->fabric_info->fabric_attr->name,
+                       module->linux_device_name,
                        "create mpool", __FILE__, __LINE__);
         return OPAL_ERROR;
     }
@@ -2018,12 +2184,15 @@ static int init_channels(opal_btl_usnic_module_t *module)
     }
 
     memset(&eq_attr, 0, sizeof(eq_attr));
-    eq_attr.size = 1024;
+    eq_attr.size = module->av_eq_num;
     eq_attr.wait_obj = FI_WAIT_UNSPEC;
     rc = fi_eq_open(module->fabric, &eq_attr, &module->av_eq, NULL);
     if (rc != OPAL_SUCCESS) {
         goto destroy;
     }
+    // Save the size of the created EQ
+    module->av_eq_size = eq_attr.size;
+
     eq_attr.wait_obj = FI_WAIT_FD;
     rc = fi_eq_open(module->fabric, &eq_attr, &module->dom_eq, NULL);
     if (rc != OPAL_SUCCESS) {
@@ -2094,7 +2263,7 @@ static void init_async_event(opal_btl_usnic_module_t *module)
                     "libfabric API failed",
                    true,
                    opal_process_info.nodename,
-                   module->fabric_info->fabric_attr->name,
+                   module->linux_device_name,
                    "fi_control(eq, FI_GETWAIT)", __FILE__, __LINE__,
                    ret,
                    fi_strerror(-ret));
@@ -2149,7 +2318,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
                              module->sd_num / 2,
                              module->super.btl_mpool,
                              0 /* mpool reg flags */,
-                             NULL /* unused0 */,
+                             module->rcache,
                              NULL /* item_init */,
                              NULL /* item_init_context */);
     assert(OPAL_SUCCESS == rc);
@@ -2204,7 +2373,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
                              module->sd_num / 2,
                              module->super.btl_mpool,
                              0 /* mpool reg flags */,
-                             NULL /* unused0 */,
+                             module->rcache,
                              NULL /* item_init */,
                              NULL /* item_init_context */);
     assert(OPAL_SUCCESS == rc);
@@ -2226,7 +2395,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
                              module->sd_num / 2,
                              module->super.btl_mpool,
                              0 /* mpool reg flags */,
-                             NULL /* unused0 */,
+                             module->rcache,
                              NULL /* item_init */,
                              NULL /* item_init_context */);
     assert(OPAL_SUCCESS == rc);
@@ -2283,7 +2452,11 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
     int ret;
     if (OPAL_SUCCESS != (ret = init_mpool(module)) ||
         OPAL_SUCCESS != (ret = init_channels(module))) {
+#if RCACHE_VERSION == 30
+        mca_rcache_base_module_destroy (module->rcache);
+#else
         mca_mpool_base_module_destroy(module->super.btl_mpool);
+#endif
         return ret;
     }
 
@@ -2341,7 +2514,11 @@ opal_btl_usnic_module_t opal_btl_usnic_module_template = {
         .btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT,
         .btl_flags =
             MCA_BTL_FLAGS_SEND |
-            MCA_BTL_FLAGS_SEND_INPLACE,
+            MCA_BTL_FLAGS_SEND_INPLACE |
+            /* Need to set FLAGS_SINGLE_ADD_PROCS until
+               btl_recv.h:lookup_sender() can handle an incoming
+               message with an unknown sender. */
+            MCA_BTL_FLAGS_SINGLE_ADD_PROCS,
 
         .btl_add_procs = usnic_add_procs,
         .btl_del_procs = usnic_del_procs,

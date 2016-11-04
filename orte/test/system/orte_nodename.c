@@ -5,6 +5,8 @@
  * The most basic of MPI applications
  */
 
+#include "orte_config.h"
+
 #include <stdio.h>
 #include <unistd.h>
 
@@ -20,7 +22,7 @@
 int main(int argc, char* argv[])
 {
     int rc, i, restart=-1;
-    char hostname[512], *rstrt;
+    char hostname[OPAL_MAXHOSTNAMELEN], *rstrt;
     pid_t pid;
 
     if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
@@ -32,7 +34,7 @@ int main(int argc, char* argv[])
         restart = strtol(rstrt, NULL, 10);
     }
 
-    gethostname(hostname, 512);
+    gethostname(hostname, sizeof(hostname));
     pid = getpid();
 
     printf("orte_nodename: Node %s Name %s Pid %ld Restarts: %d\n",

@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -64,7 +64,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
 
     uu = (unsigned long long *) unique_job_key;
 
-    generated_key = getenv("OMPI_MCA_orte_precondition_transports");
+    generated_key = getenv(OPAL_MCA_PREFIX"orte_precondition_transports");
     memset(uu, 0, sizeof(unique_job_key));
 
     if (!generated_key || (strlen(generated_key) != 33) || sscanf(generated_key, "%016llx-%016llx", &uu[0], &uu[1]) != 2) {
@@ -75,7 +75,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
     }
 
     /*
-     * decode OMPI_MCA_orte_precondition_transports that looks as
+     * decode OPAL_MCA_PREFIX"orte_precondition_transports" that looks as
      * 000003ca00000000-0000000100000000
      * jobfam-stepid
      * to get jobid coded with ORTE_CONSTRUCT_LOCAL_JOBID()
@@ -220,8 +220,8 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
 {
     char *modex_component_name = mca_base_component_to_string(&mca_mtl_mxm_component.super.mtl_version);
     char *modex_name = malloc(strlen(modex_component_name) + 5);
-    unsigned char *modex_buf_ptr;
-    size_t modex_cur_size;
+    uint8_t *modex_buf_ptr;
+    int32_t modex_cur_size;
     size_t modex_buf_size;
     size_t *address_len_buf_ptr;
     int modex_name_id = 0;
@@ -233,7 +233,7 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
     /* Receive address length */
     sprintf(modex_name, "%s-len", modex_component_name);
     OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super.proc_name,
-                           (char**)&address_len_buf_ptr,
+                           (uint8_t **)&address_len_buf_ptr,
                            &modex_cur_size);
     if (OMPI_SUCCESS != rc) {
         MXM_ERROR("Failed to receive ep address length");
@@ -254,7 +254,7 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
     while (modex_buf_size < *address_len_p) {
         sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);
         OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super.proc_name,
-                               (char**)&modex_buf_ptr,
+                               &modex_buf_ptr,
                                &modex_cur_size);
         if (OMPI_SUCCESS != rc) {
             MXM_ERROR("Open MPI couldn't distribute EP connection details");
@@ -389,6 +389,9 @@ int ompi_mtl_mxm_module_init(void)
 
     /* Register the MXM progress function */
     opal_progress_register(ompi_mtl_mxm_progress);
+    
+    ompi_mtl_mxm.super.mtl_flags |= MCA_MTL_BASE_FLAG_REQUIRE_WORLD;
+
 
 #if MXM_API >= MXM_VERSION(2,0)
     if (ompi_mtl_mxm.using_mem_hooks) {
@@ -598,7 +601,7 @@ int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     size_t i;
 
 #if MXM_API >= MXM_VERSION(3,1)
-    if (ompi_mtl_mxm.bulk_disconnect && nprocs == ompi_proc_world_size ()) {
+    if (ompi_mtl_mxm.bulk_disconnect && ((int)nprocs) == ompi_proc_world_size ()) {
         mxm_ep_powerdown(ompi_mtl_mxm.ep);
     }
 #endif

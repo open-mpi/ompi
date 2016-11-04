@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,10 +18,13 @@
 #include "opal/mca/pmix/pmix.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/iof/iof.h"
+#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/plm/plm.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
 
@@ -456,20 +459,84 @@ void orte_state_base_report_progress(int fd, short argc, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
+static void _send_notification(int status, orte_process_name_t *proc)
+{
+    opal_buffer_t buf;
+    orte_grpcomm_signature_t sig;
+    int rc;
+    opal_value_t kv, *kvptr;
+
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+
+    /* pack the status */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &status, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+
+    /* the source is me */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+
+    /* pass along the affected proc (one opal_value_t) */
+    rc = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &rc, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_PMIX_EVENT_AFFECTED_PROC);
+    kv.type = OPAL_NAME;
+    kv.data.name.jobid = proc->jobid;
+    kv.data.name.vpid = proc->vpid;
+    kvptr = &kv;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &kvptr, 1, OPAL_VALUE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kv);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+    OBJ_DESTRUCT(&kv);
+
+
+    /* xcast it to everyone */
+    OBJ_CONSTRUCT(&sig, orte_grpcomm_signature_t);
+    sig.signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig.signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig.signature[0].vpid = ORTE_VPID_WILDCARD;
+    sig.sz = 1;
+
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(&sig, ORTE_RML_TAG_NOTIFICATION, &buf))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_DESTRUCT(&sig);
+    OBJ_DESTRUCT(&buf);
+}
+
 void orte_state_base_track_procs(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_process_name_t *proc = &caddy->name;
+    orte_process_name_t wildcard_rank;
     orte_proc_state_t state = caddy->proc_state;
     orte_job_t *jdata;
     orte_proc_t *pdata;
     int i;
+    char *rtmod;
 
     opal_output_verbose(5, orte_state_base_framework.framework_output,
                         "%s state:base:track_procs called for proc %s state %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(proc),
                         orte_proc_state_to_str(state));
+
+    /* get our "lifeline" routed module */
+    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
 
     /* get the job object for this proc */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
@@ -480,7 +547,9 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
 
     if (ORTE_PROC_STATE_RUNNING == state) {
         /* update the proc state */
-        pdata->state = state;
+        if (pdata->state < ORTE_PROC_STATE_TERMINATED) {
+            pdata->state = state;
+        }
         jdata->num_launched++;
         if (jdata->num_launched == jdata->num_procs) {
             if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
@@ -491,14 +560,18 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         }
     } else if (ORTE_PROC_STATE_REGISTERED == state) {
         /* update the proc state */
-        pdata->state = state;
+        if (pdata->state < ORTE_PROC_STATE_TERMINATED) {
+            pdata->state = state;
+        }
         jdata->num_reported++;
         if (jdata->num_reported == jdata->num_procs) {
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_REGISTERED);
         }
     } else if (ORTE_PROC_STATE_IOF_COMPLETE == state) {
         /* update the proc state */
-        pdata->state = state;
+        if (pdata->state < ORTE_PROC_STATE_TERMINATED) {
+            pdata->state = state;
+        }
         /* Release only the stdin IOF file descriptor for this child, if one
          * was defined. File descriptors for the other IOF channels - stdout,
          * stderr, and stddiag - were released when their associated pipes
@@ -513,7 +586,9 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         }
     } else if (ORTE_PROC_STATE_WAITPID_FIRED == state) {
         /* update the proc state */
-        pdata->state = state;
+        if (pdata->state < ORTE_PROC_STATE_TERMINATED) {
+            pdata->state = state;
+        }
         ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_WAITPID);
         if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_IOF_COMPLETE)) {
             ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
@@ -521,20 +596,24 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     } else if (ORTE_PROC_STATE_TERMINATED == state) {
         /* update the proc state */
         ORTE_FLAG_UNSET(pdata, ORTE_PROC_FLAG_ALIVE);
-        pdata->state = state;
-	if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
+        if (pdata->state < ORTE_PROC_STATE_TERMINATED) {
+            pdata->state = state;
+        }
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
+            /* tell the PMIx subsystem to cleanup this client */
+            opal_pmix.server_deregister_client(proc, NULL, NULL);
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.
              */
             orte_session_dir_finalize(proc);
-	}
+        }
         /* if we are trying to terminate and our routes are
          * gone, then terminate ourselves IF no local procs
          * remain (might be some from another job)
          */
         if (orte_orteds_term_ordered &&
-            0 == orte_routed.num_routes()) {
+            0 == orte_routed.num_routes(rtmod)) {
             for (i=0; i < orte_local_children->size; i++) {
                 if (NULL != (pdata = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
                     ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_ALIVE)) {
@@ -551,11 +630,21 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         }
         /* return the allocated slot for reuse */
         cleanup_node(pdata);
-	/* track job status */
-	jdata->num_terminated++;
-	if (jdata->num_terminated == jdata->num_procs) {
+        /* track job status */
+        jdata->num_terminated++;
+        if (jdata->num_terminated == jdata->num_procs) {
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
-	}
+            /* if they requested notification upon completion, provide it */
+            if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NOTIFY_COMPLETION, NULL, OPAL_BOOL)) {
+                wildcard_rank.jobid = jdata->jobid;
+                wildcard_rank.vpid = ORTE_VPID_WILDCARD;
+                _send_notification(OPAL_ERR_JOB_TERMINATED, &wildcard_rank);
+            }
+        } else if (ORTE_PROC_STATE_TERMINATED < pdata->state &&
+                   !orte_job_term_ordered) {
+            /* if this was an abnormal term, notify the other procs of the termination */
+            _send_notification(OPAL_ERR_PROC_ABORTED, &pdata->name);
+        }
     }
 
  cleanup:
@@ -577,11 +666,18 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     bool one_still_alive;
     orte_vpid_t lowest=0;
     int32_t i32, *i32ptr;
+    uint32_t u32;
+    void *nptr;
+    char *rtmod;
 
     opal_output_verbose(2, orte_state_base_framework.framework_output,
                         "%s state:base:check_job_complete on job %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid));
+
+    /* get our "lifeline" routed module */
+    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
+
 
     if (NULL == jdata || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         /* just check to see if the daemons are complete */
@@ -601,6 +697,11 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     /* tell the IOF that the job is complete */
     if (NULL != orte_iof.complete) {
         orte_iof.complete(jdata);
+    }
+
+    /* tell the PMIx server to release its data */
+    if (NULL != opal_pmix.server_deregister_nspace) {
+        opal_pmix.server_deregister_nspace(jdata->jobid, NULL, NULL);
     }
 
     i32ptr = &i32;
@@ -648,7 +749,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
      */
  CHECK_DAEMONS:
     if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-        if (0 == orte_routed.num_routes()) {
+        if (0 == orte_routed.num_routes(rtmod)) {
             /* orteds are done! */
             OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                  "%s orteds complete - exiting",
@@ -672,7 +773,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
      * we call the errmgr so that any attempt to restart the job will
      * avoid doing so in the exact same place as the current job
      */
-    if (NULL != jdata->map  && jdata->state == ORTE_JOB_STATE_TERMINATED) {
+    if (NULL != jdata->map && jdata->state == ORTE_JOB_STATE_TERMINATED) {
         map = jdata->map;
         for (index = 0; index < map->nodes->size; index++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, index))) {
@@ -710,10 +811,6 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;
-        /* tell the PMIx server to release its data */
-        if (NULL != opal_pmix.server_deregister_nspace) {
-            opal_pmix.server_deregister_nspace(jdata->jobid);
-        }
     }
 
  CHECK_ALIVE:
@@ -721,13 +818,11 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
      * object when we find it
      */
     one_still_alive = false;
-    for (j=1; j < orte_job_data->size; j++) {
-        if (NULL == (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, j))) {
-            /* since we are releasing jdata objects as we
-             * go, we can no longer assume that the job_data
-             * array is left justified
-             */
-            continue;
+    j = opal_hash_table_get_first_key_uint32(orte_job_data, &u32, (void **)&job, &nptr);
+    while (OPAL_SUCCESS == j) {
+        /* skip the daemon job */
+        if (job->jobid == ORTE_PROC_MY_NAME->jobid) {
+            goto next;
         }
         /* if this is the job we are checking AND it normally terminated,
          * then activate the "notify_completed" state - this will release
@@ -757,24 +852,23 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                  * is maintained!
                  */
                 if (1 < j) {
-		    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
-			/* this was a debugger daemon. notify that a debugger has detached */
-			ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
-		    }
-                    opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
+                    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
+                        /* this was a debugger daemon. notify that a debugger has detached */
+                        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
+                    }
                     OBJ_RELEASE(jdata);
                 }
             }
-            continue;
+            goto next;
         }
         /* if the job is flagged to not be monitored, skip it */
         if (ORTE_FLAG_TEST(job, ORTE_JOB_FLAG_DO_NOT_MONITOR)) {
-            continue;
+            goto next;
         }
         /* when checking for job termination, we must be sure to NOT check
          * our own job as it - rather obviously - has NOT terminated!
          */
-        if (job->num_terminated < job->num_procs) {
+        if (ORTE_JOB_STATE_NOTIFIED != job->state) {
             /* we have at least one job that is not done yet - we cannot
              * just return, though, as we need to ensure we cleanout the
              * job data for the job that just completed
@@ -794,7 +888,10 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                                  job->num_terminated, job->num_procs,
                                  (NULL == jdata) ? "UNKNOWN" : orte_job_state_to_str(jdata->state) ));
         }
+      next:
+        j = opal_hash_table_get_next_key_uint32(orte_job_data, &u32, (void **)&job, nptr, &nptr);
     }
+
     /* if a job is still alive, we just return */
     if (one_still_alive) {
         OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,

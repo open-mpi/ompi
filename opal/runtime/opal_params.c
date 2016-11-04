@@ -19,6 +19,8 @@
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +43,7 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal_params.h"
 #include "opal/dss/dss.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
 #include "opal/util/timings.h"
 
@@ -65,6 +68,8 @@ bool opal_base_distill_checkpoint_ready = false;
  */
 int opal_leave_pinned = -1;
 bool opal_leave_pinned_pipeline = false;
+bool opal_abort_print_stack = false;
+int opal_abort_delay = 0;
 
 static bool opal_register_done = false;
 
@@ -279,6 +284,73 @@ int opal_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &opal_warn_on_fork);
+
+    opal_abort_delay = 0;
+    ret = mca_base_var_register("opal", "opal", NULL, "abort_delay",
+                                "If nonzero, print out an identifying message when abort operation is invoked (hostname, PID of the process that called abort) and delay for that many seconds before exiting (a negative delay value means to never abort).  This allows attaching of a debugger before quitting the job.",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_abort_delay);
+    if (0 > ret) {
+        return ret;
+    }
+
+    opal_abort_print_stack = false;
+    ret = mca_base_var_register("opal", "opal", NULL, "abort_print_stack",
+                                 "If nonzero, print out a stack trace when abort is invoked",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                /* If we do not have stack trace
+                                   capability, make this a constant
+                                   MCA variable */
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE
+                                 0,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+#else
+                                 MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_CONSTANT,
+#endif
+                                 &opal_abort_print_stack);
+    if (0 > ret) {
+        return ret;
+    }
+
+    /* register the envar-forwarding params */
+    (void)mca_base_var_register ("opal", "mca", "base", "env_list",
+                                 "Set SHELL env variables",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
+
+    mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
+    (void)mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
+                                 "Set SHELL env variables delimiter. Default: semicolon ';'",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
+
+    /* Set OMPI_MCA_mca_base_env_list variable, it might not be set before
+     * if mca variable was taken from amca conf file. Need to set it
+     * here because mca_base_var_process_env_list is called from schizo_ompi.c
+     * only when this env variable was set.
+     */
+    if (NULL != mca_base_env_list) {
+        char *name = NULL;
+        (void) mca_base_var_env_name ("mca_base_env_list", &name);
+        if (NULL != name) {
+            opal_setenv(name, mca_base_env_list, false, &environ);
+            free(name);
+        }
+    }
+
+    /* Register internal MCA variable mca_base_env_list_internal. It can be set only during
+     * parsing of amca conf file and contains SHELL env variables specified via -x there.
+     * Its format is the same as for mca_base_env_list.
+     */
+    (void)mca_base_var_register ("opal", "mca", "base", "env_list_internal",
+            "Store SHELL env variables from amca conf file",
+            MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_3,
+            MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_internal);
 
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();

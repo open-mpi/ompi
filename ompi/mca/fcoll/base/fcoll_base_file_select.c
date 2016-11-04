@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +27,7 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 
 /*
  * This structure is needed so that we can close the modules
@@ -269,6 +269,11 @@ int mca_fcoll_base_query_table (struct mca_io_ompio_file_t *file, char *name)
     if (!strcmp (name, "dynamic")) {
         if ((int)file->f_cc_size < file->f_bytes_per_agg &&
             file->f_cc_size >= file->f_stripe_size) {
+            return 1;
+        }
+    }
+    if (!strcmp (name, "dynamic_gen2")) {
+        if ( LUSTRE == file->f_fstype ) {
             return 1;
         }
     }

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -61,6 +61,7 @@ int opal_dss_std_copy(void **dest, void *src, opal_data_type_t type)
 
     case OPAL_INT:
     case OPAL_UINT:
+    case OPAL_STATUS:
         datasize = sizeof(int);
         break;
 
@@ -218,6 +219,7 @@ int opal_dss_copy_pstat(opal_pstats_t **dest, opal_pstats_t *src,
     p->time = src->time;
     p->priority = src->priority;
     p->num_threads = src->num_threads;
+    p->pss = src->pss;
     p->vsize = src->vsize;
     p->rss = src->rss;
     p->peak_vsize = src->peak_vsize;

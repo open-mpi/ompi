@@ -32,4 +32,6 @@ OPAL_DECLSPEC int opal_srand(opal_rng_buff_t *buff, uint32_t seed);
 
 OPAL_DECLSPEC uint32_t opal_rand(opal_rng_buff_t *buff);
 
+OPAL_DECLSPEC int opal_random(void);
+
 #endif /* OPAL_ALFG_H */

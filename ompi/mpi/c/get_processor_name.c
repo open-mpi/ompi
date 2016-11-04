@@ -66,7 +66,7 @@ int MPI_Get_processor_name(char *name, int *resultlen)
        Guard against gethostname() returning a *really long* hostname
        and not null-terminating the string.  The Fortran API version
        will pad to the right if necessary. */
-    gethostname(name, MPI_MAX_PROCESSOR_NAME - 1);
+    gethostname(name, (MPI_MAX_PROCESSOR_NAME - 1));
     name[MPI_MAX_PROCESSOR_NAME - 1] = '\0';
     *resultlen = (int) strlen(name);
 

@@ -1,9 +1,12 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
  *                         reseved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +16,7 @@
 
 #include "comm_request.h"
 
+#include "opal/class/opal_free_list.h"
 #include "opal/include/opal/sys/atomic.h"
 
 static opal_free_list_t ompi_comm_requests;
@@ -113,7 +117,7 @@ static int ompi_comm_request_progress (void)
             /* don't call ompi_request_test_all as it causes a recursive call into opal_progress */
             while (request_item->subreq_count) {
                 ompi_request_t *subreq = request_item->subreqs[request_item->subreq_count-1];
-                if (true == subreq->req_complete) {
+                if( REQUEST_COMPLETE(subreq) ) {
                     ompi_request_free (&subreq);
                     request_item->subreq_count--;
                 } else {
@@ -203,7 +207,7 @@ static int ompi_comm_request_free (struct ompi_request_t **ompi_req)
 {
     ompi_comm_request_t *request = (ompi_comm_request_t *) *ompi_req;
 
-    if (!(*ompi_req)->req_complete) {
+    if( !REQUEST_COMPLETE(*ompi_req) ) {
         return MPI_ERR_REQUEST;
     }
 
@@ -231,6 +235,7 @@ static void ompi_comm_request_destruct (ompi_comm_request_t *request)
 {
     OBJ_DESTRUCT(&request->schedule);
 }
+
 OBJ_CLASS_INSTANCE(ompi_comm_request_t, ompi_request_t,
                    ompi_comm_request_construct,
                    ompi_comm_request_destruct);
@@ -254,10 +259,10 @@ ompi_comm_request_t *ompi_comm_request_get (void)
 void ompi_comm_request_return (ompi_comm_request_t *request)
 {
     if (request->context) {
-        free (request->context);
-        request->context = NULL;
+        OBJ_RELEASE (request->context);
     }
 
+    OMPI_REQUEST_FINI(&request->super);
     opal_free_list_return (&ompi_comm_requests, (opal_free_list_item_t *) request);
 }
 

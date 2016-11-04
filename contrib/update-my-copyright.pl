@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 
@@ -186,7 +187,7 @@ foreach my $f (@files) {
     # Now act on it
     if (!defined($my_line_index)) {
         quiet_print "--- My copyright line not found; adding:\n";
-        my $str = "${prefix}Copyright (c) $year $my_formal_name\n";
+        my $str = "${prefix}Copyright (c) $year      $my_formal_name\n";
         quiet_print "    $str";
         $lines[$token_line_index] = $str . $lines[$token_line_index];
     } else {

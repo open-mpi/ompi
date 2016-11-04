@@ -50,6 +50,18 @@
  */
 orte_ras_base_t orte_ras_base = {0};
 
+static int ras_register(mca_base_register_flag_t flags)
+{
+    orte_ras_base.multiplier = 1;
+    mca_base_var_register("orte", "ras", "base", "multiplier",
+                          "Simulate a larger cluster by launching N daemons/node",
+                          MCA_BASE_VAR_TYPE_INT,
+                          NULL, 0, 0,
+                          OPAL_INFO_LVL_9,
+                          MCA_BASE_VAR_SCOPE_READONLY, &orte_ras_base.multiplier);
+    return ORTE_SUCCESS;
+}
+
 static int orte_ras_base_close(void)
 {
     /* Close selected component */
@@ -76,5 +88,5 @@ static int orte_ras_base_open(mca_base_open_flag_t flags)
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(orte, ras, "ORTE Resource Allocation Subsystem",
-                           NULL, orte_ras_base_open, orte_ras_base_close,
+                           ras_register, orte_ras_base_open, orte_ras_base_close,
                            mca_ras_base_static_components, 0);

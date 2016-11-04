@@ -9,10 +9,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,9 +32,6 @@
 #endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
-#if HAVE_ARPA_INET_H
-#include <arpa/inet.h>
 #endif
 #include <ctype.h>
 
@@ -61,7 +59,6 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     .my_hnp =                          ORTE_NAME_INVALID,
     .my_hnp_uri =                      NULL,
     .my_parent =                       ORTE_NAME_INVALID,
-    .my_scheduler =                    ORTE_NAME_INVALID,
     .hnp_pid =                         0,
     .app_num =                         0,
     .num_procs =                       1,
@@ -80,6 +77,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     .num_local_peers =                 0,
     .tmpdir_base =                     NULL,
     .top_session_dir =                 NULL,
+    .jobfam_session_dir =              NULL,
     .job_session_dir =                 NULL,
     .proc_session_dir =                NULL,
     .sock_stdin =                      NULL,
@@ -99,14 +97,14 @@ int orte_proc_info(void)
 
     int idx, i;
     char *ptr;
-    char hostname[ORTE_MAX_HOSTNAME_SIZE];
+    char hostname[OPAL_MAXHOSTNAMELEN];
     char **prefixes;
     bool match;
-    struct in_addr buf;
 
     if (init) {
         return ORTE_SUCCESS;
     }
+
     init = true;
 
     OBJ_CONSTRUCT(&orte_process_info.super, opal_proc_t);
@@ -168,29 +166,25 @@ int orte_proc_info(void)
     orte_process_info.pid = getpid();
 
     /* get the nodename */
-    gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+    gethostname(hostname, sizeof(hostname));
     /* add this to our list of aliases */
     opal_argv_append_nosize(&orte_process_info.aliases, hostname);
 
-    if (!orte_keep_fqdn_hostnames) {
-        /* if the nodename is an IP address, do not mess with it! */
-        if (0 == inet_pton(AF_INET, hostname, &buf) &&
-            0 == inet_pton(AF_INET6, hostname, &buf)) {
-            /* not an IP address, so remove any domain info */
-            if (NULL != (ptr = strchr(hostname, '.'))) {
-                *ptr = '\0';
-                /* add this to our list of aliases */
-                opal_argv_append_nosize(&orte_process_info.aliases, hostname);
-            }
+    // Strip off the FQDN if present, ignore IP addresses
+    if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(hostname) ) {
+        if (NULL != (ptr = strchr(hostname, '.'))) {
+            *ptr = '\0';
+            /* add this to our list of aliases */
+            opal_argv_append_nosize(&orte_process_info.aliases, hostname);
         }
     }
 
     orte_strip_prefix = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "strip_prefix",
-				  "Prefix(es) to match when deciding whether to strip leading characters and zeroes from "
-				  "node names returned by daemons", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-				  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-				  &orte_strip_prefix);
+                  "Prefix(es) to match when deciding whether to strip leading characters and zeroes from "
+                  "node names returned by daemons", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                  &orte_strip_prefix);
 
     /* we have to strip node names here, if user directs, to ensure that
      * the names exchanged in the modex match the names found locally
@@ -292,6 +286,11 @@ int orte_proc_info_finalize(void)
     if (NULL != orte_process_info.top_session_dir) {
         free(orte_process_info.top_session_dir);
         orte_process_info.top_session_dir = NULL;
+    }
+
+    if (NULL != orte_process_info.jobfam_session_dir) {
+        free(orte_process_info.jobfam_session_dir);
+        orte_process_info.jobfam_session_dir = NULL;
     }
 
     if (NULL != orte_process_info.job_session_dir) {

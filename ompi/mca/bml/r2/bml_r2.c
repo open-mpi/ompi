@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -12,13 +12,14 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -150,7 +151,7 @@ static mca_bml_base_endpoint_t *mca_bml_r2_allocate_endpoint (ompi_proc_t *proc)
     /* allocate bml specific proc data */
     bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
     if (NULL == bml_endpoint) {
-        opal_output(0, "mca_bml_r2_add_procs: unable to allocate resources");
+        opal_output(0, "%s: unable to allocate resources", __func__);
         return NULL;
     }
 
@@ -160,28 +161,35 @@ static mca_bml_base_endpoint_t *mca_bml_r2_allocate_endpoint (ompi_proc_t *proc)
     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
     bml_endpoint->btl_max_send_size = -1;
     bml_endpoint->btl_proc = proc;
-    proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint;
 
     bml_endpoint->btl_flags_or = 0;
     return bml_endpoint;
 }
 
-static void mca_bml_r2_register_progress (mca_btl_base_module_t *btl)
+static void mca_bml_r2_register_progress (mca_btl_base_module_t *btl, bool hp)
 {
     if (NULL != btl->btl_component->btl_progress) {
         bool found = false;
+        size_t p;
 
-        for (size_t p = 0 ; p < mca_bml_r2.num_btl_progress ; ++p) {
+        for (p = 0 ; p < mca_bml_r2.num_btl_progress ; ++p) {
             if(mca_bml_r2.btl_progress[p] == btl->btl_component->btl_progress) {
                 found = true;
                 break;
             }
         }
 
-        if (found == false) {
-            mca_bml_r2.btl_progress[mca_bml_r2.num_btl_progress++] =
-                btl->btl_component->btl_progress;
-            opal_progress_register (btl->btl_component->btl_progress);
+        if (found == false || hp) {
+            if (found == false) {
+                mca_bml_r2.btl_progress[mca_bml_r2.num_btl_progress++] =
+                    btl->btl_component->btl_progress;
+            }
+
+            if (hp) {
+                opal_progress_register (btl->btl_component->btl_progress);
+            } else {
+                opal_progress_register_lp (btl->btl_component->btl_progress);
+            }
         }
     }
 }
@@ -197,15 +205,16 @@ static int mca_bml_r2_endpoint_add_btl (struct ompi_proc_t *proc, mca_bml_base_e
     /* NTH: these flags should have been sanitized by the btl. Once that is verified these
      * checks can be safely removed. */
     if ((btl_flags & MCA_BTL_FLAGS_PUT) && (NULL == btl->btl_put)) {
-        opal_output(0, "mca_bml_r2_add_procs: The PUT flag is specified for"
+        opal_output(0, "%s: The PUT flag is specified for"
                     " the %s BTL without any PUT function attached. Discard the flag !",
+                    __func__,
                     btl->btl_component->btl_version.mca_component_name);
         btl_flags ^= MCA_BTL_FLAGS_PUT;
     }
     if ((btl_flags & MCA_BTL_FLAGS_GET) && (NULL == btl->btl_get)) {
-        opal_output(0, "mca_bml_r2_add_procs: The GET flag is specified for"
+        opal_output(0, "%s: The GET flag is specified for"
                     " the %s BTL without any GET function attached. Discard the flag !",
-                    btl->btl_component->btl_version.mca_component_name);
+                    __func__, btl->btl_component->btl_version.mca_component_name);
         btl_flags ^= MCA_BTL_FLAGS_GET;
     }
 
@@ -258,8 +267,9 @@ static int mca_bml_r2_endpoint_add_btl (struct ompi_proc_t *proc, mca_bml_base_e
         }
     }
 
-    /* always add rdma endpoints */
-    if ((btl_flags & MCA_BTL_FLAGS_RDMA) &&
+    /* always add rdma endpoints if they support full rdma */
+    if (((btl_in_use && (btl_flags & MCA_BTL_FLAGS_RDMA)) ||
+         (btl_flags & (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) == (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) &&
         !((proc->super.proc_arch != ompi_proc_local_proc->super.proc_arch) &&
           (0 == (btl->btl_flags & MCA_BTL_FLAGS_HETEROGENEOUS_RDMA)))) {
         mca_bml_base_btl_t *bml_btl_rdma = mca_bml_base_btl_array_insert(&bml_endpoint->btl_rdma);
@@ -404,12 +414,14 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
         if (OMPI_SUCCESS != rc) {
             btl->btl_del_procs (btl, 1, (opal_proc_t **) &proc, &btl_endpoint);
         } else {
-            mca_bml_r2_register_progress (btl);
+            mca_bml_r2_register_progress (btl, true);
             btl_in_use = true;
         }
     }
 
     if (!btl_in_use) {
+        proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
+        OBJ_RELEASE(bml_endpoint);
         /* no btl is available for this proc */
         if (mca_bml_r2.show_unreach_errors) {
             opal_show_help ("help-mca-bml-r2.txt", "unreachable proc", true,
@@ -427,6 +439,10 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
 
     /* compute metrics for registered btls */
     mca_bml_r2_compute_endpoint_metrics (bml_endpoint);
+
+    /* do it last, for the lazy initialization check in bml_base_get* */
+    opal_atomic_wmb();
+    proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint;
 
     return OMPI_SUCCESS;
 }
@@ -521,6 +537,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
 
             if (NULL == bml_endpoint) {
                 bml_endpoint = mca_bml_r2_allocate_endpoint (proc);
+                proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint;
                 if (NULL == bml_endpoint) {
                     free(btl_endpoints);
                     free(new_procs);
@@ -538,9 +555,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
             btl_inuse++;
         }
 
-        if (btl_inuse) {
-            mca_bml_r2_register_progress (btl);
-        }
+        mca_bml_r2_register_progress (btl, !!(btl_inuse));
     }
 
     free(btl_endpoints);

@@ -30,10 +30,6 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f oshcc$(EXEEXT); $(LN_S) mpicc$(EXEEXT) oshcc$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f shmemfort$(EXEEXT); $(LN_S) mpifort$(EXEEXT) shmemfort$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f oshfort$(EXEEXT); $(LN_S) mpifort$(EXEEXT) oshfort$(EXEEXT))
-if OSHMEM_WANT_JAVA_BINDINGS
-	(cd $(DESTDIR)$(bindir); rm -f shmemjavac$(EXEEXT); $(LN_S) mpijavac$(EXEEXT) shmemjavac$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f oshjavac$(EXEEXT); $(LN_S) mpijavac$(EXEEXT) oshjavac$(EXEEXT))
-endif
 
 install-data-hook:
 	(cd $(DESTDIR)$(pkgdatadir); rm -f oshcc-wrapper-data.txt; $(LN_S) shmemcc-wrapper-data.txt oshcc-wrapper-data.txt)
@@ -46,14 +42,10 @@ uninstall-local:
 	$(DESTDIR)$(bindir)/oshcc$(EXEEXT) \
 	$(DESTDIR)$(bindir)/shmemfort$(EXEEXT) \
 	$(DESTDIR)$(bindir)/oshfort$(EXEEXT) \
-	$(DESTDIR)$(bindir)/shmemjavac$(EXEEXT) \
-	$(DESTDIR)$(bindir)/oshjavac$(EXEEXT) \
 	$(DESTDIR)$(pkgdatadir)/shmemcc-wrapper-data.txt \
 	$(DESTDIR)$(pkgdatadir)/oshcc-wrapper-data.txt \
 	$(DESTDIR)$(pkgdatadir)/shmemfort-wrapper-data.txt \
-	$(DESTDIR)$(pkgdatadir)/oshfort-wrapper-data.txt \
-	$(DESTDIR)$(bindir)/oshjavac \
-	$(DESTDIR)$(bindir)/shmemjavac
+	$(DESTDIR)$(pkgdatadir)/oshfort-wrapper-data.txt
 
 
 ########################################################

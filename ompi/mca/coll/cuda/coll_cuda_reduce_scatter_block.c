@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      The University of Tennessee and The University
+ * Copyright (c) 2014-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
@@ -38,16 +38,16 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
                                    mca_coll_base_module_t *module)
 {
     mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
-    ptrdiff_t true_lb, true_extent, lb, extent;
+    ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
     const char *sbuf2;
     size_t sbufsize, rbufsize;
     int rc;
 
-    ompi_datatype_get_extent(dtype, &lb, &extent);
-    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-    sbufsize = (true_extent + (ptrdiff_t)(rcount - 1) * extent) * ompi_comm_size(comm);
-    rbufsize = true_extent + (ptrdiff_t)(rcount - 1) * extent;
+    rbufsize = opal_datatype_span(&dtype->super, rcount, &gap);
+
+    sbufsize = rbufsize * ompi_comm_size(comm);
+
     if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *)sbuf, NULL))) {
         sbuf1 = (char*)malloc(sbufsize);
         if (NULL == sbuf1) {
@@ -55,7 +55,7 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
         }
         opal_cuda_memcpy_sync(sbuf1, sbuf, sbufsize);
         sbuf2 = sbuf; /* save away original buffer */
-        sbuf = sbuf1 - true_lb;
+        sbuf = sbuf1 - gap;
     }
 
     if (opal_cuda_check_bufs(rbuf, NULL)) {
@@ -66,7 +66,7 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
         }
         opal_cuda_memcpy_sync(rbuf1, rbuf, rbufsize);
         rbuf2 = rbuf; /* save away original buffer */
-        rbuf = rbuf1 - true_lb;
+        rbuf = rbuf1 - gap;
     }
     rc = s->c_coll.coll_reduce_scatter_block(sbuf, rbuf, rcount, dtype, op, comm,
                                              s->c_coll.coll_reduce_scatter_block_module);

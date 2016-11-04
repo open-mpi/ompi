@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2012 University of Houston. All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,22 +32,27 @@ endif
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_io_ompio_la_SOURCES = $(sources)
+mca_io_ompio_la_SOURCES = $(headers) $(sources)
 mca_io_ompio_la_LDFLAGS = -module -avoid-version
+mca_io_ompio_la_LIBADD = $(io_ompio_LIBS) \
+    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/ompio/libmca_common_ompio.la
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_io_ompio_la_SOURCES = $(sources)
+libmca_io_ompio_la_SOURCES = $(headers) $(sources)
 libmca_io_ompio_la_LDFLAGS = -module -avoid-version
 
 # Source files
 
+headers = \
+	io_ompio.h \
+	io_ompio_request.h \
+	io_ompio_aggregators.h
+
 sources = \
-        io_ompio.h \
-        io_ompio_request.h \
         io_ompio.c \
+        io_ompio_aggregators.c \
         io_ompio_component.c \
         io_ompio_module.c \
-        io_ompio_coll_array.c \
         io_ompio_file_set_view.c \
         io_ompio_file_open.c \
         io_ompio_file_write.c \

@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -106,7 +106,7 @@ static int have_remote_peers(struct oshmem_group_t *group,
                              size_t size,
                              int *local_peers)
 {
-    struct oshmem_proc_t *proc;
+    struct ompi_proc_t *proc;
     size_t i;
     int ret;
 
@@ -130,7 +130,7 @@ static int have_remote_peers(struct oshmem_group_t *group,
 static int _get_local_ranks(mca_scoll_fca_module_t *fca_module)
 {
     struct oshmem_group_t *comm = fca_module->comm;
-    oshmem_proc_t* proc;
+    ompi_proc_t* proc;
     int i, rank;
 
     /* Count the local ranks */
@@ -391,6 +391,7 @@ static int _save_coll_handlers(mca_scoll_fca_module_t *fca_module)
     FCA_SAVE_PREV_SCOLL_API(broadcast);
     FCA_SAVE_PREV_SCOLL_API(collect);
     FCA_SAVE_PREV_SCOLL_API(reduce);
+    FCA_SAVE_PREV_SCOLL_API(alltoall);
 
     return OSHMEM_SUCCESS;
 }
@@ -450,6 +451,7 @@ static void mca_scoll_fca_module_clear(mca_scoll_fca_module_t *fca_module)
     fca_module->previous_broadcast = NULL;
     fca_module->previous_collect = NULL;
     fca_module->previous_reduce = NULL;
+    fca_module->previous_alltoall = NULL;
 }
 
 static void mca_scoll_fca_module_construct(mca_scoll_fca_module_t *fca_module)
@@ -465,6 +467,7 @@ static void mca_scoll_fca_module_destruct(mca_scoll_fca_module_t *fca_module)
     OBJ_RELEASE(fca_module->previous_broadcast_module);
     OBJ_RELEASE(fca_module->previous_collect_module);
     OBJ_RELEASE(fca_module->previous_reduce_module);
+    OBJ_RELEASE(fca_module->previous_alltoall_module);
     if (fca_module->fca_comm)
         _destroy_fca_comm(fca_module);
     free(fca_module->local_ranks);
@@ -541,6 +544,7 @@ mca_scoll_fca_comm_query(struct oshmem_group_t *comm, int *priority)
     fca_module->super.scoll_broadcast =
             mca_scoll_fca_component.fca_enable_bcast ? mca_scoll_fca_broadcast :
                                                        NULL;
+    fca_module->super.scoll_alltoall = NULL;
 
     *priority = mca_scoll_fca_component.fca_priority;
     module = &fca_module->super;

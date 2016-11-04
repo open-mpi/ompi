@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -27,6 +27,7 @@ static int mca_btl_openib_atomic_internal (struct mca_btl_base_module_t *btl, st
 {
     mca_btl_openib_get_frag_t* frag = NULL;
     int qp = order;
+    int32_t rkey;
     int rc;
 
     frag = to_get_frag(alloc_recv_user_frag());
@@ -61,26 +62,18 @@ static int mca_btl_openib_atomic_internal (struct mca_btl_base_module_t *btl, st
     frag->sr_desc.wr.atomic.compare_add = operand;
     frag->sr_desc.wr.atomic.swap = operand2;
 
+    rkey = remote_handle->rkey;
+
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if((endpoint->endpoint_proc->proc_opal->proc_arch & OPAL_ARCH_ISBIGENDIAN)
             != (opal_proc_local_get()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
-        frag->sr_desc.wr.atomic.rkey = opal_swap_bytes4 (remote_handle->rkey);
-    } else
-#endif
-    {
-        frag->sr_desc.wr.atomic.rkey = remote_handle->rkey;
-    }
-
-#if HAVE_XRC
-    if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-        frag->sr_desc.qp_type.xrc.remote_srqn = endpoint->rem_info.rem_srqs[qp].rem_srq_num;
-#else
-        frag->sr_desc.xrc_remote_srq_num = endpoint->rem_info.rem_srqs[qp].rem_srq_num;
-#endif
-
+        rkey = opal_swap_bytes4 (rkey);
     }
 #endif
+
+    frag->sr_desc.wr.atomic.rkey = rkey;
+
+    /* NTH: the SRQ# is set in mca_btl_get_internal */
 
     if (endpoint->endpoint_state != MCA_BTL_IB_CONNECTED) {
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
@@ -119,7 +112,7 @@ int mca_btl_openib_atomic_fop (struct mca_btl_base_module_t *btl, struct mca_btl
                                void *cbcontext, void *cbdata)
 {
 
-    if (OPAL_UNLIKELY(MCA_BTL_ATOMIC_ADD != op)) {
+    if (OPAL_UNLIKELY(MCA_BTL_ATOMIC_ADD != op || (MCA_BTL_ATOMIC_FLAG_32BIT & flags))) {
 	return OPAL_ERR_NOT_SUPPORTED;
     }
 
@@ -135,6 +128,10 @@ int mca_btl_openib_atomic_cswap (struct mca_btl_base_module_t *btl, struct mca_b
                                  uint64_t value, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                                  void *cbcontext, void *cbdata)
 {
+    if (OPAL_UNLIKELY(MCA_BTL_ATOMIC_FLAG_32BIT & flags)) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+
     return mca_btl_openib_atomic_internal (btl, endpoint, local_address, remote_address, local_handle,
 					   remote_handle, IBV_WR_ATOMIC_CMP_AND_SWP, compare, value,
 					   flags, order, cbfunc, cbcontext, cbdata);

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -62,6 +62,12 @@ int mca_pml_ob1_isend_init(const void *buf,
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &(sendreq)->req_send.req_base,
                              PERUSE_SEND);
+
+    /* Work around a leak in start by marking this request as complete. The
+     * problem occured because we do not have a way to differentiate an
+     * inital request and an incomplete pml request in start. This line
+     * allows us to detect this state. */
+    sendreq->req_send.req_base.req_pml_complete = true;
 
     *request = (ompi_request_t *) sendreq;
     return OMPI_SUCCESS;
@@ -140,6 +146,10 @@ int mca_pml_ob1_isend(const void *buf,
     int16_t seqn;
     int rc;
 
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        return OMPI_ERR_UNREACH;
+    }
+
     seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
@@ -189,6 +199,10 @@ int mca_pml_ob1_send(const void *buf,
     int16_t seqn;
     int rc;
 
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        return OMPI_ERR_UNREACH;
+    }
+
     if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_BUFFERED == sendmode)) {
         /* large buffered sends *need* a real request so use isend instead */
         ompi_request_t *brequest;
@@ -198,13 +212,9 @@ int mca_pml_ob1_send(const void *buf,
             return rc;
         }
 
-        /* free the request and return. don't care if it completes now */
+        ompi_request_wait_completion (brequest);
         ompi_request_free (&brequest);
         return OMPI_SUCCESS;
-    }
-
-    if (OPAL_UNLIKELY(NULL == endpoint)) {
-        return OMPI_ERR_UNREACH;
     }
 
     seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
@@ -222,16 +232,17 @@ int mca_pml_ob1_send(const void *buf,
         }
     }
 
-#if !OMPI_ENABLE_THREAD_MULTIPLE
-    sendreq = mca_pml_ob1_sendreq;
-    mca_pml_ob1_sendreq = NULL;
-    if( OPAL_UNLIKELY(NULL == sendreq) )
-#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
-        {
-            MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
-            if (NULL == sendreq)
-                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        }
+    if (OPAL_LIKELY(!ompi_mpi_thread_multiple)) {
+        sendreq = mca_pml_ob1_sendreq;
+        mca_pml_ob1_sendreq = NULL;
+    }
+
+    if( OPAL_UNLIKELY(NULL == sendreq) ) {
+        MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+        if (NULL == sendreq)
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
     sendreq->req_send.req_base.req_proc = dst_proc;
     sendreq->rdma_frag = NULL;
 
@@ -253,16 +264,12 @@ int mca_pml_ob1_send(const void *buf,
         rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
     }
 
-#if OMPI_ENABLE_THREAD_MULTIPLE
-    MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
-#else
-    if( NULL != mca_pml_ob1_sendreq ) {
+    if (OPAL_UNLIKELY(ompi_mpi_thread_multiple || NULL != mca_pml_ob1_sendreq)) {
         MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
     } else {
         mca_pml_ob1_send_request_fini (sendreq);
         mca_pml_ob1_sendreq = sendreq;
     }
-#endif
 
     return rc;
 }

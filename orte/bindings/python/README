@@ -1,0 +1,49 @@
+===========================================================================
+CFFI based Python wrapper for ORTE
+===========================================================================
+
+
+Example
+-------
+
+This example starts up a persistent DVM and then spawns some tasks using
+Python.
+
+$ virtualenv ve
+$ source ve/bin/activate
+$ pip install orte-cffi
+$ orte-dvm --report-uri dvm_uri
+$ python examples/submit.py
+
+
+Create a distfile
+----------------------------------------
+
+If you want to create a sdist file:
+
+$ virtualenv ve
+$ source ve/bin/activate
+$ python setup.py sdist
+
+
+Uploading sdist to pypi
+-----------------------
+
+Assuming you have admin privileges to the pypi package repository for this
+package, a new version can be uploaded using twine:
+
+$ virtualenv ve
+$ source ve/bin/activate
+$ pip install twine
+$ twine upload dist/orte-cffi-`python setup.py --version`.tar.gz
+
+
+Building (for development purposes only)
+----------------------------------------
+
+If you want to create a non-pip build:
+
+$ virtualenv ve
+$ source ve/bin/activate
+$ pip install cffi
+$ python src/orte-cffi/build.py

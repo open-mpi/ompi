@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,11 +49,13 @@ static bool test10(void);        /* verify KEYVAL */
 static bool test11(void);        /* verify int32_t */
 static bool test12(void);        /* verify pid_t */
 
-FILE *test_out;
+static FILE *test_out;
 
 
 int main (int argc, char* argv[])
 {
+    int ret = 0;
+
     opal_init(&argc, &argv);
 
     test_out = stderr;
@@ -61,104 +65,104 @@ int main (int argc, char* argv[])
     fprintf(test_out, "executing test1\n");
     if (test1()) {
         fprintf(test_out, "Test1 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "Test1 failed\n");
+      ret = 1;
     }
 
     fprintf(test_out, "executing test2\n");
     if (test2()) {
         fprintf(test_out, "Test2 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "Test2 failed\n");
+      ret = 2;
     }
 
     fprintf(test_out, "executing test3\n");
     if (test3()) {
         fprintf(test_out, "Test3 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "Test3 failed\n");
+      ret = 3;
     }
 
     fprintf(test_out, "executing test4\n");
     if (test4()) {
         fprintf(test_out, "Test4 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "Test4 failed\n");
+      ret = 4;
     }
 
     fprintf(test_out, "executing test5\n");
     if (test5()) {
         fprintf(test_out, "Test5 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "Test5 failed\n");
+      ret = 5;
     }
 
     fprintf(test_out, "executing test6\n");
     if (test6()) {
         fprintf(test_out, "Test6 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "Test6 failed\n");
+      ret = 6;
     }
 
     fprintf(test_out, "executing test7\n");
     if (test7()) {
         fprintf(test_out, "Test7 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "Test7 failed\n");
+      ret = 7;
     }
 
     fprintf(test_out, "executing test8\n");
     if (test8()) {
         fprintf(test_out, "Test8 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "Test8 failed\n");
+      ret = 8;
     }
 
     fprintf(test_out, "executing test9\n");
     if (test9()) {
         fprintf(test_out, "Test9 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "opal_dss test9 failed\n");
+      ret = 9;
     }
 
     fprintf(test_out, "executing test10\n");
     if (test10()) {
         fprintf(test_out, "Test10 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "opal_dss test10 failed\n");
+      ret = 10;
     }
 
     fprintf(test_out, "executing test11\n");
     if (test11()) {
         fprintf(test_out, "Test11 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "opal_dss test11 failed\n");
+      ret = 11;
     }
 
     fprintf(test_out, "executing test12\n");
     if (test12()) {
         fprintf(test_out, "Test12 succeeded\n");
-    }
-    else {
+    } else {
       fprintf(test_out, "opal_dss test12 failed\n");
+      ret = 12;
     }
 
     fclose(test_out);
 
     opal_finalize();
 
-    return(0);
+    return ret;
 }
 
 static bool test1(void)        /* verify different buffer inits */
@@ -199,7 +203,7 @@ static bool test2(void)
         return false;
     }
 
-    opal_dss.set_buffer_type(bufA, OPAL_DSS_BUFFER_NON_DESC);
+    bufA->type = OPAL_DSS_BUFFER_NON_DESC;
 
     for (i=0;i<NUM_ITERS;i++) {
         rc = opal_dss.pack(bufA, src, NUM_ELEMS, OPAL_INT16);
@@ -791,18 +795,18 @@ static bool test10(void)
     int rc;
     int i;
     int16_t i16[NUM_ELEMS];
-    opal_dss_value_t *src[NUM_ELEMS];
-    opal_dss_value_t *dst[NUM_ELEMS];
+    opal_value_t *src[NUM_ELEMS];
+    opal_value_t *dst[NUM_ELEMS];
 
     /* setup source array of data values */
     for(i=0; i<NUM_ELEMS; i++) {
         i16[i] = (int16_t)i;
-        src[i] = OBJ_NEW(opal_dss_value_t);
+        src[i] = OBJ_NEW(opal_value_t);
         src[i]->type = ((i % 2) == 0) ? OPAL_INT16 : OPAL_STRING;
         if (OPAL_INT16 == src[i]->type)
-            src[i]->data = &i16[i];
+            src[i]->data.uint16 = i16[i];
         else
-            src[i]->data = strdup("truly-a-dumb-test");
+            src[i]->data.string = strdup("truly-a-dumb-test");
     }
 
     bufA = OBJ_NEW(opal_buffer_t);
@@ -812,7 +816,7 @@ static bool test10(void)
     }
 
     for (i=0;i<NUM_ITERS;i++) {
-        rc = opal_dss.pack(bufA, src, NUM_ELEMS, OPAL_DATA_VALUE);
+        rc = opal_dss.pack(bufA, src, NUM_ELEMS, OPAL_VALUE);
         if (OPAL_SUCCESS != rc) {
             fprintf(test_out, "opal_dss.pack failed with error code %d\n", rc);
             return(false);
@@ -824,7 +828,7 @@ static bool test10(void)
         int32_t count = NUM_ELEMS;
         memset(dst,-1,sizeof(dst));
 
-        rc = opal_dss.unpack(bufA, dst, &count, OPAL_DATA_VALUE);
+        rc = opal_dss.unpack(bufA, dst, &count, OPAL_VALUE);
         if (OPAL_SUCCESS != rc || count != NUM_ELEMS) {
             fprintf(test_out,
             "opal_dss.unpack (DATA_VALUE) failed on iteration %d with error code %d\n",

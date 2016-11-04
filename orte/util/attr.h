@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2014-2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,21 +31,22 @@ typedef uint8_t orte_app_context_flags_t;
 
 
 /* APP_CONTEXT ATTRIBUTE KEYS */
-#define ORTE_APP_HOSTFILE         1    // string  - hostfile
-#define ORTE_APP_ADD_HOSTFILE     2    // string  - hostfile to be added
-#define ORTE_APP_DASH_HOST        3    // string  - hosts specified with -host option
-#define ORTE_APP_ADD_HOST         4    // string  - hosts to be added
-#define ORTE_APP_USER_CWD         5    // bool  - user specified cwd
-#define ORTE_APP_SSNDIR_CWD       6    // bool  - use session dir as cwd
-#define ORTE_APP_PRELOAD_BIN      7    // bool  - move binaries to remote nodes prior to exec
-#define ORTE_APP_PRELOAD_FILES    8    // string  - files to be moved to remote nodes prior to exec
-#define ORTE_APP_SSTORE_LOAD      9    // string
-#define ORTE_APP_RECOV_DEF       10    // bool  - whether or not a recovery policy was defined
-#define ORTE_APP_MAX_RESTARTS    11    // int32 - max number of times a process can be restarted
-#define ORTE_APP_MIN_NODES       12    // int64 - min number of nodes required
-#define ORTE_APP_MANDATORY       13    // bool - flag if nodes requested in -host are "mandatory" vs "optional"
-#define ORTE_APP_MAX_PPN         14    // uint32 - maximum number of procs/node for this app
-#define ORTE_APP_PREFIX_DIR      15    // string - prefix directory for this app, if override necessary
+#define ORTE_APP_HOSTFILE            1    // string  - hostfile
+#define ORTE_APP_ADD_HOSTFILE        2    // string  - hostfile to be added
+#define ORTE_APP_DASH_HOST           3    // string  - hosts specified with -host option
+#define ORTE_APP_ADD_HOST            4    // string  - hosts to be added
+#define ORTE_APP_USER_CWD            5    // bool  - user specified cwd
+#define ORTE_APP_SSNDIR_CWD          6    // bool  - use session dir as cwd
+#define ORTE_APP_PRELOAD_BIN         7    // bool  - move binaries to remote nodes prior to exec
+#define ORTE_APP_PRELOAD_FILES       8    // string  - files to be moved to remote nodes prior to exec
+#define ORTE_APP_SSTORE_LOAD         9    // string
+#define ORTE_APP_RECOV_DEF          10    // bool  - whether or not a recovery policy was defined
+#define ORTE_APP_MAX_RESTARTS       11    // int32 - max number of times a process can be restarted
+#define ORTE_APP_MIN_NODES          12    // int64 - min number of nodes required
+#define ORTE_APP_MANDATORY          13    // bool - flag if nodes requested in -host are "mandatory" vs "optional"
+#define ORTE_APP_MAX_PPN            14    // uint32 - maximum number of procs/node for this app
+#define ORTE_APP_PREFIX_DIR         15    // string - prefix directory for this app, if override necessary
+#define ORTE_APP_NO_CACHEDIR        16    // bool - flag that a cache dir is not to be specified for a Singularity container
 
 #define ORTE_APP_MAX_KEY        100
 
@@ -67,6 +70,7 @@ typedef uint8_t orte_node_flags_t;
                                                              // we need to know the id of our "host" to help any procs on us to determine locality
 #define ORTE_NODE_ALIAS          (ORTE_NODE_START_KEY + 4)   // comma-separate list of alternate names for the node
 #define ORTE_NODE_SERIAL_NUMBER  (ORTE_NODE_START_KEY + 5)   // string - serial number: used if node is a coprocessor
+#define ORTE_NODE_PORT           (ORTE_NODE_START_KEY + 6)   // int32 - Alternate port to be passed to plm
 
 #define ORTE_NODE_MAX_KEY        200
 
@@ -109,7 +113,6 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_SPIN_FOR_DEBUG         (ORTE_JOB_START_KEY + 18)    // bool - job consists of continuously operating apps
 #define ORTE_JOB_CONTINUOUS_OP          (ORTE_JOB_START_KEY + 19)    // bool - recovery policy defined for job
 #define ORTE_JOB_RECOVER_DEFINED        (ORTE_JOB_START_KEY + 20)    // bool - recovery policy has been defined
-#define ORTE_JOB_ENABLE_RECOVERY        (ORTE_JOB_START_KEY + 21)    // bool - enable recovery of these processes
 #define ORTE_JOB_NON_ORTE_JOB           (ORTE_JOB_START_KEY + 22)    // bool - non-orte job
 #define ORTE_JOB_STDOUT_TARGET          (ORTE_JOB_START_KEY + 23)    // orte_jobid_t - job that is to receive the stdout (on its stdin) from this one
 #define ORTE_JOB_POWER                  (ORTE_JOB_START_KEY + 24)    // string - power setting for nodes in job
@@ -130,6 +133,16 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_ROOM_NUM               (ORTE_JOB_START_KEY + 39)    // int - number of remote request's hotel room
 #define ORTE_JOB_LAUNCH_PROXY           (ORTE_JOB_START_KEY + 40)    // opal_process_name_t - name of spawn requestor
 #define ORTE_JOB_NSPACE_REGISTERED      (ORTE_JOB_START_KEY + 41)    // bool - job has been registered with embedded PMIx server
+#define ORTE_JOB_FIXED_DVM              (ORTE_JOB_START_KEY + 42)    // bool - do not change the size of the DVM for this job
+#define ORTE_JOB_DVM_JOB                (ORTE_JOB_START_KEY + 43)    // bool - job is using a DVM
+#define ORTE_JOB_CANCELLED              (ORTE_JOB_START_KEY + 44)    // bool - job was cancelled
+#define ORTE_JOB_OUTPUT_TO_FILE         (ORTE_JOB_START_KEY + 45)    // string - name of directory to which stdout/err is to be directed
+#define ORTE_JOB_MERGE_STDERR_STDOUT    (ORTE_JOB_START_KEY + 46)    // bool - merge stderr into stdout stream
+#define ORTE_JOB_TAG_OUTPUT             (ORTE_JOB_START_KEY + 47)    // bool - tag stdout/stderr
+#define ORTE_JOB_TIMESTAMP_OUTPUT       (ORTE_JOB_START_KEY + 48)    // bool - timestamp stdout/stderr
+#define ORTE_JOB_MULTI_DAEMON_SIM       (ORTE_JOB_START_KEY + 49)    // bool - multiple daemons/node to simulate large cluster
+#define ORTE_JOB_NOTIFY_COMPLETION      (ORTE_JOB_START_KEY + 50)    // bool - notify parent proc when spawned job terminates
+#define ORTE_JOB_TRANSPORT_KEY          (ORTE_JOB_START_KEY + 51)    // string - transport keys assigned to this job
 
 #define ORTE_JOB_MAX_KEY   300
 
@@ -171,15 +184,18 @@ typedef uint16_t orte_proc_flags_t;
 
 #define ORTE_PROC_MAX_KEY   400
 
-/*** MESSAGING QOS ATTRIBUTE KEYS ***/
-#define ORTE_QOS_START_KEY              ORTE_PROC_MAX_KEY
-#define ORTE_QOS_TYPE                   (ORTE_QOS_START_KEY + 1)         //uint8- defining what type of qos - refer to orte_qos_type enum for values
-#define ORTE_QOS_WINDOW_SIZE            (ORTE_QOS_START_KEY + 2)         // uint32 - number of messages in the window (stream)
-#define ORTE_QOS_ACK_NACK_TIMEOUT       (ORTE_QOS_START_KEY + 3)         //uint32 - timeout value in secs for msg/window ack nack
-#define ORTE_QOS_MSG_RETRY              (ORTE_QOS_START_KEY + 4)         // bool- resend message upon ACK fail or NACK or timeout.
-#define ORTE_QOS_NUM_RETRIES            (ORTE_QOS_START_KEY + 5)        // uint32 - number of retries.
-
-#define ORTE_QOS_MAX_KEY     500
+/*** RML ATTRIBUTE keys ***/
+#define ORTE_RML_START_KEY  ORTE_PROC_MAX_KEY
+#define ORTE_RML_TRANSPORT_TYPE         (ORTE_RML_START_KEY +  1)   // string - null terminated string containing transport type
+#define ORTE_RML_PROTOCOL_TYPE          (ORTE_RML_START_KEY +  2)   // string - protocol type (e.g., as returned by fi_info)
+#define ORTE_RML_CONDUIT_ID             (ORTE_RML_START_KEY +  3)   // orte_rml_conduit_t - conduit_id for this transport
+#define ORTE_RML_INCLUDE_COMP_ATTRIB    (ORTE_RML_START_KEY +  4)   // string - comma delimited list of RML component names to be considered
+#define ORTE_RML_EXCLUDE_COMP_ATTRIB    (ORTE_RML_START_KEY +  5)   // string - comma delimited list of RML component names to be excluded
+#define ORTE_RML_TRANSPORT_ATTRIB       (ORTE_RML_START_KEY +  6)   // string - comma delimited list of transport types to be considered (e.g., "fabric,ethernet")
+#define ORTE_RML_QUALIFIER_ATTRIB       (ORTE_RML_START_KEY +  7)   // string - comma delimited list of qualifiers (e.g., routed=direct,bandwidth=xxx)
+#define ORTE_RML_PROVIDER_ATTRIB        (ORTE_RML_START_KEY +  8)   // string - comma delimited list of provider names to be considered
+#define ORTE_RML_PROTOCOL_ATTRIB        (ORTE_RML_START_KEY +  9)   // string - comma delimited list of protocols to be considered (e.g., tcp,udp)
+#define ORTE_RML_ROUTED_ATTRIB          (ORTE_RML_START_KEY + 10)   // string - comma delimited list of routed modules to be considered
 
 #define ORTE_ATTR_KEY_MAX  1000
 

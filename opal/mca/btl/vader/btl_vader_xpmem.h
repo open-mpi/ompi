@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,23 +26,33 @@
   typedef int64_t xpmem_apid_t;
 #endif
 
+#include <opal/mca/rcache/base/rcache_base_vma.h>
+#include <opal/mca/rcache/rcache.h>
+
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
 
 /* largest address we can attach to using xpmem */
+#if defined(__x86_64__)
 #define VADER_MAX_ADDRESS ((uintptr_t)0x7ffffffff000ul)
+#else
+#define VADER_MAX_ADDRESS XPMEM_MAXADDR_SIZE
+#endif
+
+struct mca_btl_base_endpoint_t;
 
 int mca_btl_vader_xpmem_init (void);
 
-mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
- 						      size_t size, int flags, void **local_ptr);
+mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
+                                                       size_t size, int flags, void **local_ptr);
 
-void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
+void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
+void mca_btl_vader_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep);
 
 #else
 
-static inline mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
-                                                                        size_t size, int flags, void **local_ptr)
+static inline mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
+                                                                     size_t size, int flags, void **local_ptr)
 {
     (void) endpoint;
     (void) rem_ptr;
@@ -51,7 +62,7 @@ static inline mca_mpool_base_registration_t *vader_get_registation (struct mca_b
     return NULL;
 }
 
-static inline void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint)
+static inline void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint)
 {
     (void) reg;
     (void) endpoint;

@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -27,11 +28,12 @@
 
 #include "ompi/mca/crcp/crcp.h"
 
-int ompi_request_default_test( ompi_request_t ** rptr,
-                       int *completed,
-                       ompi_status_public_t * status )
+int ompi_request_default_test(ompi_request_t ** rptr,
+                              int *completed,
+                              ompi_status_public_t * status )
 {
     ompi_request_t *request = *rptr;
+
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
 
@@ -46,8 +48,12 @@ int ompi_request_default_test( ompi_request_t ** rptr,
         return OMPI_SUCCESS;
     }
 
-    if (request->req_complete) {
-        OMPI_CRCP_REQUEST_COMPLETE(request);
+    if( REQUEST_COMPLETE(request) ) {
+#if OPAL_ENABLE_FT_CR == 1
+        if( opal_cr_is_enabled) {
+            OMPI_CRCP_REQUEST_COMPLETE(request);
+        }
+#endif
 
         *completed = true;
         /* For a generalized request, we *have* to call the query_fn
@@ -117,8 +123,12 @@ int ompi_request_default_test_any(
             continue;
         }
 
-        if( request->req_complete ) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
+        if( REQUEST_COMPLETE(request) ) {
+#if OPAL_ENABLE_FT_CR == 1
+            if( opal_cr_is_enabled) {
+                OMPI_CRCP_REQUEST_COMPLETE(request);
+            }
+#endif
 
             *index = i;
             *completed = true;
@@ -193,8 +203,7 @@ int ompi_request_default_test_all(
         request = *rptr;
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ||
-            request->req_complete) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
+            REQUEST_COMPLETE(request) ) {
             num_completed++;
         }
     }
@@ -225,6 +234,11 @@ int ompi_request_default_test_all(
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
+#if OPAL_ENABLE_FT_CR == 1
+            if( opal_cr_is_enabled) {
+                OMPI_CRCP_REQUEST_COMPLETE(request);
+            }
+#endif
             statuses[i] = request->req_status;
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
@@ -255,6 +269,11 @@ int ompi_request_default_test_all(
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
+#if OPAL_ENABLE_FT_CR == 1
+            if( opal_cr_is_enabled) {
+                OMPI_CRCP_REQUEST_COMPLETE(request);
+            }
+#endif
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
                 continue;
@@ -282,7 +301,7 @@ int ompi_request_default_test_some(
     int * indices,
     ompi_status_public_t * statuses)
 {
-    size_t i, num_requests_null_inactive=0, num_requests_done = 0;
+    size_t i, num_requests_null_inactive = 0, num_requests_done = 0;
     int rc = OMPI_SUCCESS;
     ompi_request_t **rptr;
     ompi_request_t *request;
@@ -295,8 +314,12 @@ int ompi_request_default_test_some(
             num_requests_null_inactive++;
             continue;
         }
-        if (true == request->req_complete) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
+        if( REQUEST_COMPLETE(request) ) {
+#if OPAL_ENABLE_FT_CR == 1
+            if( opal_cr_is_enabled) {
+                OMPI_CRCP_REQUEST_COMPLETE(request);
+            }
+#endif
             indices[num_requests_done++] = i;
         }
     }

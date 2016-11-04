@@ -10,12 +10,13 @@
  *                         rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  */
 #include "nbc_internal.h"
@@ -111,7 +112,7 @@ static int nbc_schedule_round_append (NBC_Schedule *schedule, void *data, int da
 }
 
 /* this function puts a send into the schedule */
-int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
+static int NBC_Sched_send_internal (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, bool local, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_send send_args;
   int ret;
 
@@ -122,6 +123,7 @@ int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype dataty
   send_args.count = count;
   send_args.datatype = datatype;
   send_args.dest = dest;
+  send_args.local = local;
 
   /* append to the round-schedule */
   ret = nbc_schedule_round_append (schedule, &send_args, sizeof (send_args), barrier);
@@ -134,8 +136,16 @@ int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype dataty
   return OMPI_SUCCESS;
 }
 
+int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
+  return NBC_Sched_send_internal (buf, tmpbuf, count, datatype, dest, false, schedule, barrier);
+}
+
+int NBC_Sched_local_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
+  return NBC_Sched_send_internal (buf, tmpbuf, count, datatype, dest, true, schedule, barrier);
+}
+
 /* this function puts a receive into the schedule */
-int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier) {
+static int NBC_Sched_recv_internal (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, bool local, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_recv recv_args;
   int ret;
 
@@ -146,6 +156,7 @@ int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, in
   recv_args.count = count;
   recv_args.datatype = datatype;
   recv_args.source = source;
+  recv_args.local = local;
 
   /* append to the round-schedule */
   ret = nbc_schedule_round_append (schedule, &recv_args, sizeof (recv_args), barrier);
@@ -158,8 +169,16 @@ int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, in
   return OMPI_SUCCESS;
 }
 
+int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier) {
+  return NBC_Sched_recv_internal(buf, tmpbuf, count, datatype, source, false, schedule, barrier);
+}
+
+int NBC_Sched_local_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier) {
+  return NBC_Sched_recv_internal(buf, tmpbuf, count, datatype, source, true, schedule, barrier);
+}
+
 /* this function puts an operation into the schedule */
-int NBC_Sched_op (void *buf3, char tmpbuf3, const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+int NBC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
                   MPI_Op op, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_op op_args;
   int ret;
@@ -168,10 +187,8 @@ int NBC_Sched_op (void *buf3, char tmpbuf3, const void* buf1, char tmpbuf1, void
   op_args.type = OP;
   op_args.buf1 = buf1;
   op_args.buf2 = buf2;
-  op_args.buf3 = buf3;
   op_args.tmpbuf1 = tmpbuf1;
   op_args.tmpbuf2 = tmpbuf2;
-  op_args.tmpbuf3 = tmpbuf3;
   op_args.count = count;
   op_args.op = op;
   op_args.datatype = datatype;
@@ -182,7 +199,7 @@ int NBC_Sched_op (void *buf3, char tmpbuf3, const void* buf1, char tmpbuf1, void
     return ret;
   }
 
-  NBC_DEBUG(10, "added op - ends at byte %i\n", nbc_schedule_get_size (schedule));
+  NBC_DEBUG(10, "added op2 - ends at byte %i\n", nbc_schedule_get_size (schedule));
 
   return OMPI_SUCCESS;
 }
@@ -294,8 +311,10 @@ static inline void NBC_Free (NBC_Handle* handle) {
  * to be called *only* from the progress thread !!! */
 int NBC_Progress(NBC_Handle *handle) {
   int flag, res, ret=NBC_CONTINUE;
-  unsigned long size;
+  unsigned long size = 0;
   char *delim;
+  int i;
+  ompi_status_public_t status;
 
   /* the handle is done if there is no schedule attached */
   if (NULL == handle->schedule) {
@@ -309,8 +328,30 @@ int NBC_Progress(NBC_Handle *handle) {
 #endif
     res = ompi_request_test_all(handle->req_count, handle->req_array, &flag, MPI_STATUSES_IGNORE);
     if(res != OMPI_SUCCESS) {
-      NBC_Error ("MPI Error in MPI_Testall() (%i)", res);
-      return res;
+      // Attempt to cancel outstanding requests
+      for(i = 0; i < handle->req_count; ++i ) {
+        // If the request is complete, then try to report the error code
+        if( handle->req_array[i]->req_complete ) {
+          if( OMPI_SUCCESS != handle->req_array[i]->req_status.MPI_ERROR ) {
+            NBC_Error ("MPI Error in MPI_Testall() (req %d = %d)", i, handle->req_array[i]->req_status.MPI_ERROR);
+          }
+        }
+        else {
+          ompi_request_cancel(handle->req_array[i]);
+          // If the PML actually canceled the request, then wait on it
+          if( handle->req_array[i]->req_status._cancelled) {
+            ompi_request_wait(&handle->req_array[i], &status);
+          }
+          // Warn the user that we had to leave a PML message outstanding so
+          // bad things could happen if they continue using nonblocking collectives
+          else {
+            NBC_Error ("MPI Error: Not able to cancel the internal request %d. "
+                       "Be aware that continuing to use nonblocking collectives on this communicator may result in undefined behavior.", i);
+          }
+        }
+      }
+
+      return OMPI_ERROR;
     }
 #ifdef NBC_TIMING
     Test_time += MPI_Wtime();
@@ -373,7 +414,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
   NBC_Args_op         opargs;
   NBC_Args_copy     copyargs;
   NBC_Args_unpack unpackargs;
-  void *buf1,  *buf2, *buf3;
+  void *buf1,  *buf2;
 
   /* get round-schedule address */
   ptr = handle->schedule->data + handle->row_offset;
@@ -410,7 +451,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         handle->req_array = tmp;
 
         res = MCA_PML_CALL(isend(buf1, sendargs.count, sendargs.datatype, sendargs.dest, handle->tag,
-                                 MCA_PML_BASE_SEND_STANDARD, handle->comm,
+                                 MCA_PML_BASE_SEND_STANDARD, sendargs.local?handle->comm->c_local_comm:handle->comm,
                                  handle->req_array+handle->req_count - 1));
         if (OMPI_SUCCESS != res) {
           NBC_Error ("Error in MPI_Isend(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, sendargs.count,
@@ -444,7 +485,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 
         handle->req_array = tmp;
 
-        res = MCA_PML_CALL(irecv(buf1, recvargs.count, recvargs.datatype, recvargs.source, handle->tag, handle->comm,
+        res = MCA_PML_CALL(irecv(buf1, recvargs.count, recvargs.datatype, recvargs.source, handle->tag, recvargs.local?handle->comm->c_local_comm:handle->comm,
                                  handle->req_array+handle->req_count-1));
         if (OMPI_SUCCESS != res) {
           NBC_Error("Error in MPI_Irecv(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, recvargs.count,
@@ -456,10 +497,10 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 #endif
         break;
       case OP:
-        NBC_DEBUG(5, "  OP   (offset %li) ", offset);
+        NBC_DEBUG(5, "  OP2  (offset %li) ", offset);
         NBC_GET_BYTES(ptr,opargs);
-        NBC_DEBUG(5, "*buf1: %p, buf2: %p, buf3: %p, count: %i, type: %p)\n", opargs.buf1, opargs.buf2,
-                  opargs.buf3, opargs.count, opargs.datatype);
+        NBC_DEBUG(5, "*buf1: %p, buf2: %p, count: %i, type: %p)\n", opargs.buf1, opargs.buf2,
+                  opargs.count, opargs.datatype);
         /* get buffers */
         if(opargs.tmpbuf1) {
           buf1=(char*)handle->tmpbuf+(long)opargs.buf1;
@@ -471,12 +512,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         } else {
           buf2=opargs.buf2;
         }
-        if(opargs.tmpbuf3) {
-          buf3=(char*)handle->tmpbuf+(long)opargs.buf3;
-        } else {
-          buf3=opargs.buf3;
-        }
-        ompi_3buff_op_reduce(opargs.op, buf1, buf2, buf3, opargs.count, opargs.datatype);
+        ompi_op_reduce(opargs.op, buf1, buf2, opargs.count, opargs.datatype);
         break;
       case COPY:
         NBC_DEBUG(5, "  COPY   (offset %li) ", offset);
