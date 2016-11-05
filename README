@@ -819,6 +819,11 @@ INSTALLATION OPTIONS
   command line that are not in FILE are also used.  Options on the
   command line and in FILE are replaced by what is in FILE.
 
+--enable-mca-no-build=LIST
+  Comma-separated list of <type>-<component> pairs that will not be
+  built. For example, "--enable-mca-no-build=btl-portals,oob-ud" will
+  disable building the portals BTL and the ud OOB component.
+
 NETWORKING SUPPORT / OPTIONS
 
 --with-fca=<directory>
