@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,6 +67,8 @@ BEGIN_C_DECLS
 
 /* number of implemented collective functions */
 #define NBC_NUM_COLL 17
+
+extern bool libnbc_ibcast_skip_dt_decision;
 
 struct ompi_coll_libnbc_component_t {
     mca_coll_base_component_2_0_0_t super;
