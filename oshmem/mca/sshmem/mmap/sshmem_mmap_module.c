@@ -319,7 +319,7 @@ segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
             "(id: %d, addr: %p size: %lu, name: %s | va_base: 0x%p len: %d key %llx)\n",
             mca_sshmem_mmap_component.super.base_version.mca_type_name,
             mca_sshmem_mmap_component.super.base_version.mca_component_name,
-            ds_buf->seg_id, ds_buf->seg_base_addr, (unsigned long)ds_buf->seg_size, ds_buf->seg_name,
+            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size, ds_buf->seg_name,
             mkey->va_base, mkey->len, (unsigned long long)mkey->u.key)
         );
 
@@ -341,7 +341,7 @@ segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
             "(id: %d, addr: %p size: %lu, name: %s)\n",
             mca_sshmem_mmap_component.super.base_version.mca_type_name,
             mca_sshmem_mmap_component.super.base_version.mca_component_name,
-            ds_buf->seg_id, ds_buf->seg_base_addr, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
+            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
     );
 
     munmap((void *)ds_buf->super.va_base, ds_buf->seg_size);
@@ -366,7 +366,7 @@ segment_unlink(map_segment_t *ds_buf)
             "(id: %d, addr: %p size: %lu, name: %s)\n",
             mca_sshmem_mmap_component.super.base_version.mca_type_name,
             mca_sshmem_mmap_component.super.base_version.mca_component_name,
-            ds_buf->seg_id, ds_buf->seg_base_addr, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
+            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
     );
 
     /* don't completely reset.  in particular, only reset
