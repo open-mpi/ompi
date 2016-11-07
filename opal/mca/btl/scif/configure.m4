@@ -4,6 +4,7 @@
 #                         reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,6 +36,8 @@ AC_DEFUN([MCA_opal_btl_scif_CONFIG],[
     fi
 
     AS_IF([test "$opal_btl_scif_happy" = "yes"], [$1], [$2])
+
+    OPAL_SUMMARY_ADD([[Transports]],[[Intel SCIF]],[[btl_scif]],[$opal_btl_scif_happy])
 
     # substitute in the things needed to build scif
     AC_SUBST([btl_scif_CPPFLAGS])

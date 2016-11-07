@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -123,6 +123,8 @@ else
     AC_MSG_RESULT([no])
     CUDA_SUPPORT=0
 fi
+
+OPAL_SUMMARY_ADD([[Miscellaneous]],[[CUDA support]],[opal_cuda], [$opal_check_cuda_happy])
 
 AM_CONDITIONAL([OPAL_cuda_support], [test "x$CUDA_SUPPORT" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT],$CUDA_SUPPORT,
