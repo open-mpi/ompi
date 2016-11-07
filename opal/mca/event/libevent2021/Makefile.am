@@ -69,17 +69,12 @@ nobase_opal_HEADERS = $(headers)
 nobase_nodist_opal_HEADERS = libevent/include/event2/event-config.h
 endif
 
-# Make the output library in this directory, and name it either
-# mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
-# (for static builds).
 
-if MCA_BUILD_opal_event_libevent2021_DSO
-component_noinst =
-component_install = mca_event_libevent2021.la
-else
+# Make the output library in this directory, and name it
+# libmca_<type>_<name>.la because build is forced to be static-only
+
 component_noinst = libmca_event_libevent2021.la
 component_install =
-endif
 
 # We only ever build this component statically
 
@@ -88,6 +83,4 @@ libmca_event_libevent2021_la_SOURCES =$(sources)
 libmca_event_libevent2021_la_LDFLAGS = -module -avoid-version
 libmca_event_libevent2021_la_LIBADD = $(builddir)/libevent/libevent.la
 libmca_event_libevent2021_la_DEPENDENCIES = $(builddir)/libevent/libevent.la
-mca_event_libevent2021_la_DEPENDENCIES = $(builddir)/libevent/libevent.la
-
 
