@@ -30,6 +30,7 @@
 #include "pml_ob1_recvfrag.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/message/message.h"
+#include "ompi/memchecker.h"
 
 /**
  * Single usage request. As we allow recursive calls to recv
@@ -138,6 +139,17 @@ int mca_pml_ob1_recv(void *addr,
     }
 
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
+
+    if (recvreq->req_recv.req_base.req_pml_complete) {
+        /* make buffer defined when the request is compeleted,
+           and before releasing the objects. */
+        MEMCHECKER(
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            recvreq->req_recv.req_base.req_addr,
+                            recvreq->req_recv.req_base.req_count,
+                            recvreq->req_recv.req_base.req_datatype);
+        );
+    }
 
     if (OPAL_UNLIKELY(ompi_mpi_thread_multiple || NULL != mca_pml_ob1_recvreq)) {
         MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
