@@ -48,7 +48,6 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
                    MPI_Request *request)
 {
     int i, size, err;
-    size_t sendtype_size, recvtype_size;
 
     MEMCHECKER(
         ptrdiff_t recv_ext;
@@ -94,7 +93,8 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
 
         if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
             (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
-            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+            (MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
+            MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
@@ -108,6 +108,7 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
 
         if (MPI_IN_PLACE != sendbuf && !OMPI_COMM_IS_INTER(comm)) {
             int me = ompi_comm_rank(comm);
+            size_t sendtype_size, recvtype_size;
             ompi_datatype_type_size(sendtypes[me], &sendtype_size);
             ompi_datatype_type_size(recvtypes[me], &recvtype_size);
             if ((sendtype_size*sendcounts[me]) != (recvtype_size*recvcounts[me])) {
