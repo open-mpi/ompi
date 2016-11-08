@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
 	  and the process rank for ease of parsing with
 	  aggregate_profile.pl script
 	*/
-        sprintf(filename, with_mpit ? "prof/phase_1" : "prof/phase_1_%d.prof", rank);
+        sprintf(filename, "prof/phase_1.%d.prof", rank);
 
 	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
@@ -246,7 +246,7 @@ int main(int argc, char* argv[])
 	  and the process rank for ease of parsing with
 	  aggregate_profile.pl script
 	*/
-        sprintf(filename, with_mpit ? "prof/phase_2" : "prof/phase_2_%d.prof", rank);
+        sprintf(filename, "prof/phase_2.%d.prof", rank);
 
 	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
@@ -345,7 +345,7 @@ int main(int argc, char* argv[])
     
     if( with_mpit ) {
 	/* the filename for flushing monitoring now uses 3 as phase number! */
-	sprintf(filename, with_mpit ? "prof/phase_3" : "prof/phase_3_%d.prof", rank);
+	sprintf(filename, "prof/phase_3.%d.prof", rank);
 
 	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);

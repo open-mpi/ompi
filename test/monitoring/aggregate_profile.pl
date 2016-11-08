@@ -28,7 +28,7 @@
 # ensure that this script as the executable right: chmod +x ...
 #
 
-die "$0 <name of the  profile>\n\tProfile files should be of the form  \"name_phaseid_processesid.prof\"\n\tFor instance if you saved the monitoring into phase_0_0.prof, phase_0_1.prof, ..., phase_1_0.prof etc you should call: $0 phase\n" if ($#ARGV!=0);
+die "$0 <name of the  profile>\n\tProfile files should be of the form  \"name_phaseid_processesid.prof\"\n\tFor instance if you saved the monitoring into phase_0.0.prof, phase_0.1.prof, ..., phase_1.0.prof etc you should call: $0 phase\n" if ($#ARGV!=0);
 
 $name = $ARGV[0];
 
@@ -39,7 +39,7 @@ $name = $ARGV[0];
 
 # Detect the different phases
 foreach $file (@files) {
-  ($id)=($file =~ m/$name\_(\d+)_\d+/);
+  ($id)=($file =~ m/$name\_(\d+)\.\d+/);
   $phaseid{$id} = 1 if ($id);
 }
 
