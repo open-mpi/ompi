@@ -491,7 +491,7 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
         }
         SPML_VERBOSE(5,
                      "rank %d ptl %d addr %p size %llu %s",
-		     my_rank, i, addr, (unsigned long long)size,
+                     my_rank, i, addr, (unsigned long long)size,
                      mca_spml_base_mkey2str(&mkeys[i]));
 
         mca_spml_ikrit_cache_mkeys(&mkeys[i], memheap_find_segnum(addr), my_rank, i);
@@ -687,12 +687,11 @@ static inline int mca_spml_ikrit_get_async(void *src_addr,
 
     get_req = alloc_get_req();
 
-    if (OSHMEM_SUCCESS
-            != mca_spml_ikrit_get_helper(&get_req->mxm_req,
-                                         src_addr,
-                                         size,
-                                         dst_addr,
-                                         src)) {
+    if (OSHMEM_SUCCESS != mca_spml_ikrit_get_helper(&get_req->mxm_req,
+                                                    src_addr,
+                                                    size,
+                                                    dst_addr,
+                                                    src)) {
         oshmem_shmem_abort(-1);
         return OSHMEM_ERROR;
     }
@@ -818,16 +817,6 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     put_req->mxm_req.base.mq = mca_spml_ikrit.mxm_mq;
     /* request immediate responce if we are getting low on send buffers. We only get responce from remote on ack timeout.
      * Also request explicit ack once in a while  */
-#if 0
-    put_req->mxm_req.opcode = MXM_REQ_OP_PUT;
-    if (mca_spml_ikrit.free_list_max - mca_spml_ikrit.n_active_puts <= SPML_IKRIT_PUT_LOW_WATER ||
-            (mca_spml_ikrit.mxm_peers[dst]->n_active_puts + 1) % SPML_IKRIT_PACKETS_PER_SYNC == 0) {
-        put_req->mxm_req.base.flags = MXM_REQ_FLAG_SEND_SYNC;
-        need_progress = 1;
-    } else  {
-        put_req->mxm_req.base.flags = MXM_REQ_FLAG_SEND_LAZY|MXM_REQ_FLAG_SEND_SYNC;
-    }
-#endif
     put_req->mxm_req.flags = 0;
     if (mca_spml_ikrit.free_list_max - mca_spml_ikrit.n_active_puts <= SPML_IKRIT_PUT_LOW_WATER ||
             (int)opal_list_get_size(&mca_spml_ikrit.active_peers) > mca_spml_ikrit.unsync_conn_max ||
@@ -1007,11 +996,7 @@ int mca_spml_ikrit_fence(void)
         mca_spml_ikrit_mxm_fence(peer - mca_spml_ikrit.mxm_peers);
     }
 
-    while (0 < mca_spml_ikrit.n_mxm_fences) {
-        opal_progress();
-    }
-
-    while (0 < mca_spml_ikrit.n_active_gets) {
+    while (0 < mca_spml_ikrit.n_mxm_fences || 0 < mca_spml_ikrit.n_active_gets) {
         opal_progress();
     }
 

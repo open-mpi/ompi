@@ -85,7 +85,7 @@ int mca_memheap_seg_cmp(const void *k, const void *v)
 
 static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg)
 {
-    int i, n, tr_id;
+    int i, n;
     sshmem_mkey_t *mkey;
 
     /* go over all transports and pack mkeys */
@@ -93,14 +93,13 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg)
     opal_dss.pack(msg, &n, 1, OPAL_UINT32);
     MEMHEAP_VERBOSE(5, "found %d transports to %d", n, pe);
     for (i = 0; i < n; i++) {
-        tr_id = i;
-        mkey = mca_memheap_base_get_mkey(mca_memheap_seg2base_va(seg), tr_id);
+        mkey = mca_memheap_base_get_mkey(mca_memheap_seg2base_va(seg), i);
         if (!mkey) {
             MEMHEAP_ERROR("seg#%d tr_id: %d failed to find local mkey",
-                          seg, tr_id);
+                          seg, i);
             return OSHMEM_ERROR;
         }
-        opal_dss.pack(msg, &tr_id, 1, OPAL_UINT32);
+        opal_dss.pack(msg, &i, 1, OPAL_UINT32);
         opal_dss.pack(msg, &mkey->va_base, 1, OPAL_UINT64);
         if (0 == mkey->va_base) {
             opal_dss.pack(msg, &mkey->u.key, 1, OPAL_UINT64);
@@ -112,7 +111,7 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg)
         }
         MEMHEAP_VERBOSE(5,
                         "seg#%d tr_id: %d %s",
-                        seg, tr_id, mca_spml_base_mkey2str(mkey));
+                        seg, i, mca_spml_base_mkey2str(mkey));
     }
     return OSHMEM_SUCCESS;
 }
@@ -470,13 +469,6 @@ static int memheap_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
                             pe,
                             i,
                             mca_spml_base_mkey2str(&mkeys[i]));
-            int my_pe = oshmem_my_proc_id();
-            if (my_pe == 0) 
-            printf(
-                            "MKEY CALCULATED BY LOCAL SPML: pe: %d tr_id: %d %s\n",
-                            pe,
-                            i,
-                            mca_spml_base_mkey2str(&mkeys[i]));
         }
         return OSHMEM_SUCCESS;
     }
@@ -742,7 +734,7 @@ uint64_t mca_memheap_base_find_offset(int pe,
 
 int mca_memheap_base_is_symmetric_addr(const void* va)
 {
-    return (memheap_find_va(va) ? 1 : 0);
+    return (memheap_find_va((void *)va) ? 1 : 0);
 }
 
 int mca_memheap_base_detect_addr_type(void* va)
