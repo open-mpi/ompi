@@ -162,24 +162,22 @@ extern int mca_memheap_seg_cmp(const void *k, const void *v);
 
 extern mca_memheap_map_t* memheap_map;
 
-static inline int map_segment_is_va_in(map_base_segment_t *s, const void *va)
+static inline int map_segment_is_va_in(map_base_segment_t *s, void *va)
 {
-    return ((uintptr_t)va >= (uintptr_t)s->va_base &&
-            (uintptr_t)va <  (uintptr_t)s->va_end);
+    return (va >= s->va_base && va < s->va_end);
 }
 
-static inline map_segment_t *memheap_find_seg(const int segno)
+static inline map_segment_t *memheap_find_seg(int segno)
 {
     return &mca_memheap_base_map.mem_segs[segno];
 }
 
-static inline int memheap_is_va_in_segment(const void *va, const int segno) 
+static inline int memheap_is_va_in_segment(void *va, int segno) 
 {
-
     return map_segment_is_va_in(&memheap_find_seg(segno)->super, va);
 }
 
-static inline int memheap_find_segnum(const void *va)
+static inline int memheap_find_segnum(void *va)
 {
     if (OPAL_LIKELY(memheap_is_va_in_segment(va, SYMB_SEG_INDEX))) {
         return SYMB_SEG_INDEX;
@@ -189,19 +187,19 @@ static inline int memheap_find_segnum(const void *va)
     return MEMHEAP_SEG_INVALID;
 }
 
-static inline void* memheap_va2rva(const void* va, const void* local_base, const void* remote_base)
+static inline void* memheap_va2rva(void* va, void* local_base, void* remote_base)
 {
     return (void*) (remote_base > local_base ?
             (uintptr_t)va + ((uintptr_t)remote_base - (uintptr_t)local_base) :
             (uintptr_t)va - ((uintptr_t)local_base - (uintptr_t)remote_base));
 }
 
-static inline void *map_segment_va2rva(mkey_segment_t *seg, const void *va)
+static inline void *map_segment_va2rva(mkey_segment_t *seg, void *va)
 {
     return memheap_va2rva(va, seg->super.va_base, seg->rva_base);
 }
 
-static inline map_base_segment_t *map_segment_find_va(map_base_segment_t *segs, size_t elem_size, const void *va) 
+static inline map_base_segment_t *map_segment_find_va(map_base_segment_t *segs, size_t elem_size, void *va) 
 {
     map_base_segment_t *rseg;
 
@@ -220,8 +218,7 @@ static inline map_base_segment_t *map_segment_find_va(map_base_segment_t *segs, 
 
 void mkey_segment_init(mkey_segment_t *seg, sshmem_mkey_t *mkey, uint32_t segno);
 
-
-static inline map_segment_t *memheap_find_va(const void* va)
+static inline map_segment_t *memheap_find_va(void* va)
 {
     map_segment_t *s;
 
@@ -295,7 +292,6 @@ static inline void* mca_memheap_seg2base_va(int seg)
 {
     return memheap_map->mem_segs[seg].super.va_base;
 }
-
 
 END_C_DECLS
 
