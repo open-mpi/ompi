@@ -39,6 +39,7 @@ const char *mca_coll_libnbc_component_version_string =
 
 
 static int libnbc_priority = 10;
+bool libnbc_ibcast_skip_dt_decision = true;
 
 
 static int libnbc_open(void);
@@ -130,6 +131,27 @@ libnbc_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &libnbc_priority);
+
+    /* ibcast decision function can make the wrong decision if a legal
+     * non-uniform data type signature is used. This has resulted in the
+     * collective operation failing, and possibly producing wrong answers.
+     * We are investigating a fix for this problem, but it is taking a while.
+     *   https://github.com/open-mpi/ompi/issues/2256
+     *   https://github.com/open-mpi/ompi/issues/1763
+     * As a result we are adding an MCA parameter to make a conservative
+     * decision to avoid this issue. If the user knows that their application
+     * does not use data types in this way, then they can set this parameter
+     * to get the old behavior. Once the issue is truely fixed, then this
+     * parameter can be removed.
+     */
+    libnbc_ibcast_skip_dt_decision = true;
+    (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                           "ibcast_skip_dt_decision",
+                                           "In ibcast only use size of communicator to choose algorithm, exclude data type signature. Set to 'false' to use data type signature in decision. WARNING: If you set this to 'false' then your application should not use non-uniform data type signatures in calls to ibcast.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &libnbc_ibcast_skip_dt_decision);
 
     return OMPI_SUCCESS;
 }
