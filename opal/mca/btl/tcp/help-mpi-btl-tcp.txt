@@ -4,6 +4,8 @@
 # Copyright (c) 2015-2016 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -66,14 +68,6 @@ available), and may eventually timeout / abort.
   Local host: %s
   PID:        %d
   Errno:      %d (%s)
-#
-[unsuported progress thread]
-WARNING: Support for the TCP progress thread has not been compiled in.
-Fall back to the normal progress.
-
-  Local host: %s
-  Value:      %s
-  Message:    %s
 #
 [peer hung up]
 An MPI communication peer process has unexpectedly disconnected.  This

@@ -17,7 +17,7 @@
  *                         reserved.
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -97,13 +97,11 @@ static int mca_btl_tcp_component_open(void);
 static int mca_btl_tcp_component_close(void);
 
 opal_event_base_t* mca_btl_tcp_event_base = NULL;
-#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
 int mca_btl_tcp_progress_thread_trigger = -1;
 int mca_btl_tcp_pipe_to_progress[2] = { -1, -1 };
 static opal_thread_t mca_btl_tcp_progress_thread = { { 0 } };
 opal_list_t mca_btl_tcp_ready_frag_pending_queue = { { 0 } };
 opal_mutex_t mca_btl_tcp_ready_frag_mutex = OPAL_MUTEX_STATIC_INIT;
-#endif  /* MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD */
 
 mca_btl_tcp_component_t mca_btl_tcp_component = {
     .super = {
@@ -292,16 +290,6 @@ static int mca_btl_tcp_component_register(void)
     /* Check if we should support async progress */
     mca_btl_tcp_param_register_int ("progress_thread", NULL, 0, OPAL_INFO_LVL_1,
                                      &mca_btl_tcp_component.tcp_enable_progress_thread);
-#if !defined(MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD)
-    if( mca_btl_tcp_component.tcp_enable_progress_thread ) {
-        opal_show_help("help-mpi-btl-tcp.txt",
-                       "unsuported progress thread",
-                       true, "progress thread",
-                       opal_process_info.nodename,
-                       mca_btl_tcp_component.tcp_if_seq,
-                       "Progress thread support compiled out");
-    }
-#endif  /* !defined(MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD) */
     mca_btl_tcp_component.report_all_unfound_interfaces = false;
     (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
                                            "warn_all_unfound_interfaces",
@@ -362,13 +350,11 @@ static int mca_btl_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, opal_free_list_t);
     opal_proc_table_init(&mca_btl_tcp_component.tcp_procs, 16, 256);
 
-#if  MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_ready_frag_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_ready_frag_pending_queue, opal_list_t);
-#endif  /*  MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD */
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS !=
@@ -396,7 +382,6 @@ static int mca_btl_tcp_component_close(void)
 {
     mca_btl_tcp_event_t *event, *next;
 
-#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
     /**
      * If we have a progress thread we should shut it down before
      * moving forward with the TCP tearing down process.
@@ -433,7 +418,6 @@ static int mca_btl_tcp_component_close(void)
 
     OBJ_DESTRUCT(&mca_btl_tcp_ready_frag_mutex);
     OBJ_DESTRUCT(&mca_btl_tcp_ready_frag_pending_queue);
-#endif
 
     if (NULL != mca_btl_tcp_component.tcp_btls) {
         free(mca_btl_tcp_component.tcp_btls);
@@ -786,7 +770,6 @@ static int mca_btl_tcp_component_create_instances(void)
     return ret;
 }
 
-#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
 static void* mca_btl_tcp_progress_thread_engine(opal_object_t *obj)
 {
     opal_thread_t* current_thread = (opal_thread_t*)obj;
@@ -813,7 +796,6 @@ static void mca_btl_tcp_component_event_async_handler(int fd, short unused, void
         opal_event_add(event, 0);
     }
 }
-#endif
 
 /*
  * Create a listen socket and bind to all interfaces
