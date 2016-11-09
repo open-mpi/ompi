@@ -86,7 +86,7 @@ static int with_mpit = 0;
 
 int main(int argc, char* argv[])
 {
-    int rank, size, n, to, from, tagno, MPIT_result, provided, count;
+    int rank, size, n, to, from, tagno, MPIT_result, provided, count, world_rank;
     MPI_T_pvar_session session;
     MPI_Status status;
     MPI_Comm newcomm;
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
 
     if( argc > 1 ) {
         if( 0 == strcmp(argv[1], "--with-mpit") ) {
-            with_mpit= 1;
+            with_mpit = 1;
             printf("enable MPIT support\n");
         }
     }
@@ -103,8 +103,9 @@ int main(int argc, char* argv[])
     /* first phase : make a token circulated in MPI_COMM_WORLD */
     n = -1;
     MPI_Init(NULL, NULL);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    rank = world_rank;
     to = (rank + 1) % size;
     from = (rank - 1) % size;
     tagno = 201;
@@ -169,10 +170,11 @@ int main(int argc, char* argv[])
 	  and the process rank for ease of parsing with
 	  aggregate_profile.pl script
 	*/
-        sprintf(filename, "prof/phase_1.%d.prof", rank);
+        sprintf(filename, "prof/phase_1");
 
 	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
-            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+            fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n",
+                    world_rank, filename, world_rank);
         }
         /* Force the writing of the monitoring data */
         MPIT_result = MPI_T_pvar_stop(session, flush_handle);
@@ -193,7 +195,7 @@ int main(int argc, char* argv[])
          */
 
         if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf) ) {
-            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+            fprintf(stderr, "Process %d cannot save monitoring in %s\n", world_rank, filename);
         }
     }
 
@@ -247,10 +249,11 @@ int main(int argc, char* argv[])
 	  and the process rank for ease of parsing with
 	  aggregate_profile.pl script
 	*/
-        sprintf(filename, "prof/phase_2.%d.prof", rank);
+        sprintf(filename, "prof/phase_2");
 
 	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
-            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+            fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n",
+                    world_rank, filename, world_rank);
         }
         /* Force the writing of the monitoring data */
         MPIT_result = MPI_T_pvar_stop(session, flush_handle);
@@ -270,7 +273,7 @@ int main(int argc, char* argv[])
          * will be generated.
          */
         if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf ) ) {
-            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+            fprintf(stderr, "Process %d cannot save monitoring in %s\n", world_rank, filename);
         }
     }
 
@@ -346,12 +349,13 @@ int main(int argc, char* argv[])
     
     if( with_mpit ) {
 	/* the filename for flushing monitoring now uses 3 as phase number! */
-	sprintf(filename, "prof/phase_3.%d.prof", rank);
+        sprintf(filename, "prof/phase_3");
 
 	if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
-            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+            fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n",
+                    world_rank, filename, world_rank);
         }
-
+        
         MPIT_result = MPI_T_pvar_stop(session, flush_handle);
         if (MPIT_result != MPI_SUCCESS) {
             printf("failed to stop handle on \"%s\" pvar, check that you have monitoring pml\n",
