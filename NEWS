@@ -53,6 +53,21 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+2.0.2 -- TBD
+-----------------------
+
+- The following backwards-incompatible changes to the Fortran API were
+  made.  They were made because Open MPI's Fortran bindings for these
+  were incorrect; any MPI applications using them were therefore also
+  erroneous, and not subject to backwards compatibility constraints.
+  - All Fortran bindings:
+    - The type of MPI_DISPLACEMENT_CURRENT was changed from INTEGER to
+      INTEGER(KIND=MPI_OFFSET_KIND)
+  - Fortran "use mpi" module:
+    - MPI_File_wr_at_all_begin -> MPI_File_write_at_all_begin
+    - MPI_File_read_ord_begin -> MPI_File_read_ordered_begin
+
+
 2.0.1 -- 2 September 2016
 -----------------------
 
