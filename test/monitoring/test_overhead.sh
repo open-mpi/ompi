@@ -45,8 +45,14 @@ function filter_output() {
     done
 }
 
+# clean previous execution if any
+if [ -d $tmpdir ]
+then
+    rm -fr $tmpdir
+fi
 mkdir -p $tmpdir
 
+# start creating the sql file for data post-processing
 cat > $dbscript <<EOF
 -- Enables mode Comma-Separated Values for input and output
 .mode csv
@@ -63,6 +69,7 @@ do
     echo -e "create table if not exists ${op}_mon (nbprocs integer, datasize integer, lat float, speed float, MBspeed float, media float, q1 float, q3 float, d1 float, d9 float, average float, maximum float, primary key (nbprocs, datasize) on conflict abort);\ncreate table if not exists ${op}_nomon (nbprocs integer, datasize integer, lat float, speed float, MBspeed float, media float, q1 float, q3 float, d1 float, d9 float, average float, maximum float, primary key (nbprocs, datasize) on conflict abort);" >> $dbscript
 done
 
+# main loop to launch benchmarks
 for nbprocs in 2 4 8 12 16 20 24
 do
     echo "$nbprocs procs..."
@@ -96,8 +103,10 @@ EOF
 done
 echo -e "\n-- End of the script\n.quit" >> $dbscript
 
+# data post processing + create output files
 sqlite3 $dbfile < $dbscript
 
+# create plotting script
 cat > $plotfile <<EOF
 set terminal pngcairo
 #set key inside bottom right box
@@ -133,7 +142,5 @@ EOF
 echo "Generating graphs..."
 
 gnuplot < $plotfile
-
-rm -r $tmpdir
 
 echo "Done."
