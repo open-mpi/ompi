@@ -4,6 +4,8 @@
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -68,17 +70,12 @@ nobase_opal_HEADERS = $(headers)
 nobase_nodist_opal_HEADERS = libevent/include/event2/event-config.h
 endif
 
-# Make the output library in this directory, and name it either
-# mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
-# (for static builds).
+# Make the output library in this directory, and name it
+# libmca_<type>_<name>.la because build is forced to be static-only
 
-if MCA_BUILD_opal_event_libevent2022_DSO
-component_noinst =
-component_install = mca_event_libevent2022.la
-else
 component_noinst = libmca_event_libevent2022.la
 component_install =
-endif
+
 
 # We only ever build this component statically
 
@@ -86,4 +83,5 @@ noinst_LTLIBRARIES = $(component_noinst)
 libmca_event_libevent2022_la_SOURCES =$(sources)
 libmca_event_libevent2022_la_LDFLAGS = -module -avoid-version
 libmca_event_libevent2022_la_LIBADD = $(builddir)/libevent/libevent.la
+libmca_event_libevent2022_la_DEPENDENCIES = $(builddir)/libevent/libevent.la
 
