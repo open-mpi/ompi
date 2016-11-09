@@ -119,8 +119,7 @@ int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
                                                     * accurate answer upon MPI_Finalize. */
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_STOP:
-        return mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
-                                           *mca_common_monitoring_current_filename);
+        return mca_common_monitoring_flush(3, *mca_common_monitoring_current_filename);
     }
     return OMPI_ERROR;
 }
@@ -423,7 +422,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
 
     /* Dump incoming messages */
     for (int i = 0 ; i < nbprocs ; i++) {
-        if(messages_count[i] > 0) {
+        if(rmessages_count[i] > 0) {
             fprintf(pf, "R\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, recv_data[i], rmessages_count[i]);
         }
@@ -464,13 +463,17 @@ int mca_common_monitoring_flush(int fd, char* filename)
     } else {
         FILE *pf = NULL;
         char* tmpfn = NULL;
-    
-        if( NULL != filename ) {
+
+        if( NULL == filename ) { /* No filename */
+            OPAL_MONITORING_VERBOSE(0, "Error while flushing: no filename provided");
+            return -1;
+        } else {
             asprintf(&tmpfn, "%s.%d.prof", filename, rank_world);
             pf = fopen(tmpfn, "w");
             free(tmpfn);
         }
-        if(NULL == pf) {  /* No filename or error during open */
+
+        if(NULL == pf) {  /* Error during open */
             OPAL_MONITORING_VERBOSE(0, "Error while flushing to: %s.%d.prof",
                                     filename, rank_world);
             return -1;
