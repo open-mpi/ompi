@@ -101,7 +101,7 @@ do {                                                                    \
     request->req_base.req_comm = comm;                                  \
     request->req_base.req_datatype = datatype;                          \
     OBJ_RETAIN(comm);                                                   \
-    OBJ_RETAIN(datatype);                                               \
+    OMPI_DATATYPE_RETAIN(datatype);                                     \
                                                                         \
     if( MPI_ANY_SOURCE == src ) {                                       \
         ompi_proc = ompi_proc_local_proc;                               \
@@ -132,7 +132,7 @@ do {                                                                    \
     request->req_base.req_comm = comm;                                  \
     request->req_base.req_datatype = datatype;                          \
     OBJ_RETAIN(comm);                                                   \
-    OBJ_RETAIN(datatype);                                               \
+    OMPI_DATATYPE_RETAIN(datatype);                                     \
                                                                         \
     opal_convertor_copy_and_prepare_for_recv(                           \
         ompi_mpi_local_convertor,                                       \
@@ -166,7 +166,7 @@ do {                                                                    \
     request->req_addr = addr;                                           \
     request->req_count = count;                                         \
     OBJ_RETAIN(comm);                                                   \
-    OBJ_RETAIN(datatype);                                               \
+    OMPI_DATATYPE_RETAIN(datatype);                                     \
                                                                         \
     if( MPI_ANY_SOURCE == src ) {                                       \
         ompi_proc = ompi_proc_local_proc;                               \
@@ -203,7 +203,7 @@ do {                                                                    \
     request->req_addr = addr;                                           \
     request->req_count = count;                                         \
     OBJ_RETAIN(comm);                                                   \
-    OBJ_RETAIN(datatype);                                               \
+    OMPI_DATATYPE_RETAIN(datatype);                                     \
                                                                         \
     opal_convertor_copy_and_prepare_for_recv(                           \
         ompi_mpi_local_convertor,                                       \
@@ -349,7 +349,7 @@ do {                                                                    \
 #define MCA_PML_CM_HVY_RECV_REQUEST_RETURN(recvreq)                     \
 {                                                                       \
     OBJ_RELEASE((recvreq)->req_base.req_comm);                          \
-    OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
+    OMPI_DATATYPE_RELEASE((recvreq)->req_base.req_datatype);            \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
     opal_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
     opal_free_list_return ( &mca_pml_base_recv_requests,                \
@@ -362,7 +362,7 @@ do {                                                                    \
 #define MCA_PML_CM_THIN_RECV_REQUEST_RETURN(recvreq)                    \
 {                                                                       \
     OBJ_RELEASE((recvreq)->req_base.req_comm);                          \
-    OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
+    OMPI_DATATYPE_RELEASE((recvreq)->req_base.req_datatype);            \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
     opal_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
     opal_free_list_return ( &mca_pml_base_recv_requests,                \

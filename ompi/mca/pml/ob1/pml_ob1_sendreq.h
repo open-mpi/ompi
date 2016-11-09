@@ -99,6 +99,7 @@ add_request_to_send_pending(mca_pml_ob1_send_request_t* sendreq,
         opal_list_prepend(&mca_pml_ob1.send_pending, item);
 
     OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+    mca_pml_ob1_enable_progress(1);
 }
 
 static inline mca_pml_ob1_send_request_t*

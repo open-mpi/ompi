@@ -399,4 +399,10 @@ mca_pml_ob1_calc_weighted_length( mca_pml_ob1_com_btl_t *btls, int num_btls, siz
     btls[0].length += length_left;
 }
 
+/**
+ * A thread-safe function that should be called every time we need the OB1
+ * progress to be turned (or kept) on.
+ */
+int mca_pml_ob1_enable_progress(int32_t count);
+
 #endif

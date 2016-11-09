@@ -36,6 +36,7 @@
 
 #include "ompi/constants.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/util/output.h"
 #include "mpi.h"
 
 BEGIN_C_DECLS
@@ -373,6 +374,26 @@ OMPI_DECLSPEC int ompi_datatype_unpack_external( const char datarep[], const voi
 
 OMPI_DECLSPEC int ompi_datatype_pack_external_size( const char datarep[], int incount,
                                                     ompi_datatype_t *datatype, MPI_Aint *size);
+
+#define OMPI_DATATYPE_RETAIN(ddt)                                       \
+    {                                                                   \
+        if( !ompi_datatype_is_predefined((ddt)) ) {                     \
+            OBJ_RETAIN((ddt));                                          \
+            OPAL_OUTPUT_VERBOSE((0, 100, "Datatype %p [%s] refcount %d in file %s:%d\n",     \
+                                (void*)(ddt), (ddt)->name, (ddt)->super.super.obj_reference_count, \
+                                __FILE__, __LINE__));                   \
+        }                                                               \
+    }
+
+#define OMPI_DATATYPE_RELEASE(ddt)                                      \
+    {                                                                   \
+        if( !ompi_datatype_is_predefined((ddt)) ) {                     \
+            OPAL_OUTPUT_VERBOSE((0, 100, "Datatype %p [%s] refcount %d in file %s:%d\n",     \
+                                (void*)(ddt), (ddt)->name, (ddt)->super.super.obj_reference_count, \
+                                __func__, __LINE__));                   \
+            OBJ_RELEASE((ddt));                                         \
+        }                                                               \
+    }
 
 END_C_DECLS
 #endif  /* OMPI_DATATYPE_H_HAS_BEEN_INCLUDED */

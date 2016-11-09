@@ -1635,7 +1635,7 @@ int progress_one_cuda_htod_event(struct mca_btl_base_descriptor_t **frag) {
         return 1;
     }
     OPAL_THREAD_UNLOCK(&common_cuda_htod_lock);
-    return 0;
+    return OPAL_ERR_RESOURCE_BUSY;
 }
 
 
