@@ -31,6 +31,7 @@
 #include <lsf/lsbatch.h>
 
 #include "opal/util/argv.h"
+#include "opal/util/net.h"
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -60,31 +61,15 @@ orte_ras_base_module_t orte_ras_lsf_module = {
     finalize
 };
 
-static char *orte_getline(FILE *fp)
-{
-    char *ret, *buff;
-    char input[1024];
-
-    ret = fgets(input, 1024, fp);
-    if (NULL != ret) {
-	   input[strlen(input)-1] = '\0';  /* remove newline */
-	   buff = strdup(input);
-	   return buff;
-    }
-
-    return NULL;
-}
-
 
 static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     char **nodelist;
     orte_node_t *node;
     int i, num_nodes;
-    char *affinity_file, *hstname;
-    bool found;
+    char *affinity_file;
     struct stat buf;
-    orte_app_context_t *app;
+    char *ptr;
 
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
@@ -96,6 +81,12 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 
     /* step through the list */
     for (i = 0; i < num_nodes; i++) {
+        if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(nodelist[i]) ) {
+            if (NULL != (ptr = strchr(nodelist[i], '.'))) {
+                *ptr = '\0';
+            }
+        }
+
         /* is this a repeat of the current node? */
         if (NULL != node && 0 == strcmp(nodelist[i], node->name)) {
             /* it is a repeat - just bump the slot count */
