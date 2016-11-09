@@ -1,26 +1,29 @@
 #!/bin/bash
 
 exe=test_overhead
-#dir
+# dir
 resdir=res
 tmpdir=$resdir/.tmp
-#files
+# files
 base_nomon=$resdir/unmonitored
 base_mon=$resdir/monitored
 dbfile=$tmpdir/base.db
 dbscript=$tmpdir/overhead.sql
 plotfile=$tmpdir/plot.gp
-#operations
+# operations
 ops=(send a2a bcast)
 
+# no_monitoring(nb_nodes, exe_name, output_filename)
 function no_monitoring() {
-    mpiexec -n $1 --mca pml ^monitoring $2 2>/dev/null | tee $3
+    mpiexec -n $1 --bind-to core --mca pml ^monitoring --mca osc ^monitoring $2 2> /dev/null > $3
 }
 
+# monitoring(nb_nodes, exe_name, output_filename)
 function monitoring() {
-    mpiexec -n $1 --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename prof/toto $2 2>/dev/null | tee $3
+    mpiexec -n $1 --bind-to core --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename "prof/toto" $2 2> /dev/null > $3
 }
 
+# filter_output(filenames_list)
 function filter_output() {
     for filename in "$@"
     do
@@ -44,7 +47,7 @@ function filter_output() {
 
 mkdir -p $tmpdir
 
-cat >> $dbscript <<EOF
+cat > $dbscript <<EOF
 -- Enables mode Comma-Separated Values for input and output
 .mode csv
 
