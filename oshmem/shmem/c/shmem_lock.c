@@ -270,10 +270,22 @@ static uint64_t shmem_lock_cswap(void *target,
 
         prev_value = prev_value_32;
     }
-    /* function is used to busy wait for the value. 
-     * Call opal_progress() so that ompi will no deadlock
-     * (for example may need to respond to rkey requests)
-     */
+    return prev_value;
+}
+
+/* function is used to busy wait for the value. 
+ * Call opal_progress() so that ompi will no deadlock
+ * (for example may need to respond to rkey requests)
+ */
+static uint64_t shmem_lock_cswap_poll(void *target,
+                                      int target_size,
+                                      uint64_t cond,
+                                      uint64_t value,
+                                      int pe)
+{
+    uint64_t prev_value;
+
+    prev_value = shmem_lock_cswap(target, target_size, cond, value, pe);
     opal_progress();
     return prev_value;
 }
@@ -320,11 +332,11 @@ static int pack_first_word(void *lock,
         extract_second_word(&lock_value, lock_size, &two);
         pack_2_words(&new_long_value, lock_size, one, &two);
         while (lock_value
-                != (temp = shmem_lock_cswap(lock,
-                                            lock_size,
-                                            lock_value,
-                                            new_long_value,
-                                            my_pe))) {
+                != (temp = shmem_lock_cswap_poll(lock,
+                                                 lock_size,
+                                                 lock_value,
+                                                 new_long_value,
+                                                 my_pe))) {
             lock_value = temp;
             extract_second_word(&lock_value, lock_size, &two);
             pack_2_words(&new_long_value, lock_size, one, &two);
@@ -371,11 +383,11 @@ static int pack_second_word(void *lock,
         extract_first_word(&lock_value, lock_size, &one);
         pack_2_words(&new_long_value, lock_size, &one, two);
         while (lock_value
-                != (temp = shmem_lock_cswap(lock,
-                                            lock_size,
-                                            lock_value,
-                                            new_long_value,
-                                            my_pe))) {
+                != (temp = shmem_lock_cswap_poll(lock,
+                                                 lock_size,
+                                                 lock_value,
+                                                 new_long_value,
+                                                 my_pe))) {
             lock_value = temp;
             extract_first_word(&lock_value, lock_size, &one);
             pack_2_words(&new_long_value, lock_size, &one, two);
@@ -695,11 +707,11 @@ static int shmem_lock_wait_for_ticket(void *lock,
         new_server_lock = server_lock = temp;
         lock_pack_pe_last(&new_server_lock, lock_size, &my_pe, 0);
     } while (server_lock
-            != (temp = shmem_lock_cswap(lock,
-                                        lock_size,
-                                        server_lock,
-                                        new_server_lock,
-                                        server_pe)));
+            != (temp = shmem_lock_cswap_poll(lock,
+                                             lock_size,
+                                             server_lock,
+                                             new_server_lock,
+                                             server_pe)));
     lock_extract_pe_last(&server_lock, lock_size, pe_last);
     if (*pe_last == -1) {
         /* we are first in queue for the lock */
@@ -755,11 +767,11 @@ static int shmem_lock_subscribe_for_informing(void *lock,
         prev_remote_value += my_pe + 1;
 
         while (prev_remote_value
-                != (temp_value = shmem_lock_cswap(lock,
-                                                  lock_size,
-                                                  prev_remote_value,
-                                                  new_remote_value,
-                                                  pe_last))) {
+                != (temp_value = shmem_lock_cswap_poll(lock,
+                                                       lock_size,
+                                                       prev_remote_value,
+                                                       new_remote_value,
+                                                       pe_last))) {
             prev_remote_value = temp_value;
             lock_extract_counter(&prev_remote_value,
                                  lock_size,
@@ -853,11 +865,11 @@ static int shmem_lock_inform_next(void *lock, int lock_size, int pe_next)
                 | (((uint64_t) 1) << (lock_bitwise_size - 1));
 
         while (remote_value
-                != (temp_value = shmem_lock_cswap(lock,
-                                                  lock_size,
-                                                  remote_value,
-                                                  new_remote_value,
-                                                  pe_next))) {
+                != (temp_value = shmem_lock_cswap_poll(lock,
+                                                       lock_size,
+                                                       remote_value,
+                                                       new_remote_value,
+                                                       pe_next))) {
             remote_value = temp_value;
             new_remote_value = remote_value
                     | (((uint64_t) 1) << (lock_bitwise_size - 1));
@@ -942,7 +954,7 @@ static int shmem_lock_try_inform_server(void *lock, int lock_size)
                                     &incorrect_pe,
                                     &my_pe);
     return !(remote_value
-            == shmem_lock_cswap(lock, lock_size, remote_value, zero, server_pe));
+            == shmem_lock_cswap_poll(lock, lock_size, remote_value, zero, server_pe));
 }
 
 /***************************************************************************/
