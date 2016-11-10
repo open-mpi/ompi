@@ -62,12 +62,18 @@ int nprocs_world = 0;
 
 opal_hash_table_t *translation_ht = NULL;
 
+/* Reset all the monitoring arrays */
+static void mca_common_monitoring_reset( void );
+
+/* Flushes the monitored data and reset the values */
+static int mca_common_monitoring_flush(int fd, char* filename);
+
 /* Return the current status of the monitoring system 0 if off, 1 if the
  * seperation between internal tags and external tags is enabled. Any other
  * positive value if the segregation between point-to-point and collective is
  * disabled.
  */
-inline int mca_common_monitoring_filter( void )
+static inline int mca_common_monitoring_filter( void )
 {
     return mca_common_monitoring_current_state;
 }
@@ -302,7 +308,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
     return OMPI_SUCCESS;
 }
 
-void mca_common_monitoring_reset( void )
+static void mca_common_monitoring_reset( void )
 {
     memset(sent_data, 0, nprocs_world * sizeof(uint64_t));
     memset(recv_data, 0, nprocs_world * sizeof(uint64_t));
@@ -449,7 +455,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
  * Flushes the monitoring into filename
  * Useful for phases (see example in test/monitoring)
  */
-int mca_common_monitoring_flush(int fd, char* filename)
+static int mca_common_monitoring_flush(int fd, char* filename)
 {
     if( 0 == mca_common_monitoring_filter() || 0 == fd ) /* if disabled do nothing */
         return OMPI_SUCCESS;
