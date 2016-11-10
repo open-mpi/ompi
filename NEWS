@@ -53,6 +53,52 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+2.0.2 -- 15 December 2016
+-----------------------
+
+Bug fixes/minor improvements:
+
+- Remove use of DATE in the message queue version string reported to debuggers to
+  insure bit-wise reproducibility of binaries.  Thanks to Alastair McKinstry
+  for help in fixing this problem.
+- Fix a problem with early exit of a MPI process without calling MPI_FINALIZE
+  of MPI_ABORT that could lead to job hangs.  Thanks to Christof Koehler for
+  reporting.
+- Fix a problem with forward of SIGTERM signal from mpirun to MPI processes
+  in a job.  Thanks to Noel Rycroft for reporting this problem
+- Plug some memory leaks in MPI_WIN_FREE discovered using Valgrind.  Thanks
+  to Joseph Schuchart for reporting.
+- Fix a problems  MPI_NEIGHOR_ALLTOALL when using a communicator with an empty topology
+  graph.  Thanks to Daniel Ibanez for reporting.
+- Fix a typo in a PMIx component help file.  Thanks to @njoly for reporting this.
+- Fix a problem with Valgrind false positives when using Open MPI's internal memchecker.
+  Thanks to Yvan Fournier for reporting.
+- Fix a problem with MPI_FILE_DELETE returning MPI_SUCCESS when
+  deleting a non-existent file. Thanks to Wei-keng Liao for reporting.
+- Fix a problem with MPI_IMPROBE that could lead to hangs in subsequent MPI
+  point to point or collective calls.  Thanks to Chris Pattison for reporting.
+- Fix a problem when configure Open MPI for powerpc with --enable-mpi-cxx
+  enabled.  Thanks to amckinstry for reporting.
+- Fix a problem using MPI_IALLTOALL with MPI_IN_PLACE argument.  Thanks to
+  Chris Ward for reporting.
+- Fix a problem using MPI_RACCUMULATE with the Portals4 transport.  Thanks to
+  @PDeveze for reporting.
+- Fix an issue with static linking and duplicate symbols arising from PMIx
+  Slurm components.  Thanks to Limin Gu for reporting.
+- Fix a problem when using MPI dynamic memory windows.  Thanks to
+  Christoph Niethammer for reporting.
+- Fix a problem with Open MPI's pkgconfig files.  Thanks to Alastair McKinstry
+  for reporting.
+- Fix a problem with MPI_IREDUCE when the same buffer is supplied for the
+  send and recv buffer arguments.  Thanks to Valentin Petrov for reporting.
+- Fix a problem with atomic operations on PowerPC.  Thanks to Paul
+  Hargrove for reporting.
+
+Known issues (to be addressed in v2.0.3):
+
+- See the list of fixes slated for v2.0.3 here:
+  https://github.com/open-mpi/ompi/milestone/23
+
 2.0.1 -- 2 September 2016
 -----------------------
 
@@ -577,7 +623,7 @@ Bug fixes / minor enhancements:
 - Fix typo in MPI_Scatter(3) man page.  Thanks to Akshay Venkatesh for
   noticing the mistake.
 - Add rudimentary protection from TCP port scanners.
-- Fix typo in Open MPI error handling.  Thanks to Åke Sandgren for
+- Fix typo in Open MPI error handling.  Thanks to Ã…ke Sandgren for
   pointing out the error.
 - Increased the performance of the CM PML (i.e., the Portals, PSM,
   PSM2, MXM, and OFI transports).
@@ -793,7 +839,7 @@ Bug fixes / minor enhancements:
   output extra bytes if the system was very heavily loaded
 - Fix a bug where specifying mca_component_show_load_errors=0 could
   cause ompi_info to segfault
-- Updated valgrind suppression file
+- Updated Valgrind suppression file
 
 
 1.8.3: 26 Sep 2014
@@ -953,7 +999,7 @@ Bug fixes / minor enhancements:
 - Add version check during startup to ensure you are using the same
   version of Open MPI on all nodes in a job.
 - Significantly improved the performance of MPI_DIMS_CREATE for large
-  values.  Thanks to Andreas Schäfer for the contribution.
+  values.  Thanks to Andreas SchÃ¤fer for the contribution.
 - Removed ASYNCHRONOUS keyword from the "ignore TKR" mpi_f08 module.
 - Deprecated the following mpirun options:
   --bynode, --bycore, --byslot: replaced with --map-by node|core|slot.
@@ -1541,7 +1587,7 @@ Bug fixes / minor enhancements:
 - Removed the broken --cpu-set mpirun option.
 - Fix cleanup of MPI errorcodes.  Thanks to Alexey Bayduraev for the
   patch.
-- Fix default hostfile location.  Thanks to Götz Waschk for noticing
+- Fix default hostfile location.  Thanks to GÃ¶tz Waschk for noticing
   the issue.
 - Improve several error messages.
 
@@ -1653,7 +1699,7 @@ Bug fixes / minor enhancements:
 - Add support for dynamic service levels (SLs) in the openib BTL.
 - Fixed C++ bindings cosmetic/warnings issue with
   MPI::Comm::NULL_COPY_FN and MPI::Comm::NULL_DELETE_FN.  Thanks to
-  Júlio Hoffimann for identifying the issues.
+  JÃºlio Hoffimann for identifying the issues.
 - Also allow the word "slots" in rankfiles (i.e., not just "slot").
   (** also to appear in 1.4.4)
 - Add Mellanox ConnectX 3 device IDs to the openib BTL defaults.
@@ -1948,7 +1994,7 @@ Bug fixes / minor enhancements:
 
 - Modified a memcpy() call in the openib btl connection setup to use
   memmove() instead because of the possibility of an overlapping
-  copy (as identified by valgrind).
+  copy (as identified by Valgrind).
 - Changed use of sys_timer_get_cycles() to the more appropriate
   wrapper: opal_timer_base_get_cycles().  Thanks to Jani Monoses
   for this fix.
@@ -2094,7 +2140,7 @@ Bug fixes / minor enhancements:
 - Fixed an issue with VampirTrace's wrapper for MPI_init_thread.
 - Updated mca-btl-openib-device-params.ini file with various new vendor id's.
 - Configuration fixes to ensure CPPFLAGS in handled properly if a non-standard
-  valgrind location was specified.
+  Valgrind location was specified.
 - Various man page updates
 
 
@@ -2136,7 +2182,7 @@ Bug fixes / minor enhancements:
 - Fixed some problems with the collective "hierarch" implementation
   that could occur in some obscure conditions.
 - Various MPI_REQUEST_NULL, API parameter checking, and attribute
-  error handling fixes.  Thanks to Lisandro DalcÃ­n for reporting the
+  error handling fixes.  Thanks to Lisandro DalcÃƒÂ­n for reporting the
   issues.
 - Fix case where MPI_GATHER erroneously used datatypes on non-root
   nodes.  Thanks to Michael Hofmann for investigating the issue.
@@ -2456,7 +2502,7 @@ and v1.4.
 - Elimiated duplicated error messages when multiple MPI processes fail
   with the same error.
 - Added NUMA support to the shared memory BTL.
-- Add Valgrind-based memory checking for MPI-semantic checks.
+- Add valgrind-based memory checking for MPI-semantic checks.
 - Add support for some optional Fortran datatypes (MPI_LOGICAL1,
   MPI_LOGICAL2, MPI_LOGICAL4 and MPI_LOGICAL8).
 - Remove the use of the STL from the C++ bindings.
