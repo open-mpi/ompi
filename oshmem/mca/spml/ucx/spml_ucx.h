@@ -135,12 +135,20 @@ mca_spml_ucx_get_mkey(int pe, void *va, void **rva)
 
 static inline int ucx_status_to_oshmem(ucs_status_t status)
 {
+#if OSHMEM_PARAM_CHECK == 1
     return OPAL_LIKELY(UCS_OK == status) ? OSHMEM_SUCCESS : OSHMEM_ERROR;
+#else
+    return OSHMEM_SUCCESS;
+#endif
 }
 
 static inline int ucx_status_to_oshmem_nb(ucs_status_t status)
 {
+#if OSHMEM_PARAM_CHECK == 1
     return OPAL_LIKELY(status >= 0) ? OSHMEM_SUCCESS : OSHMEM_ERROR;
+#else
+    return OSHMEM_SUCCESS;
+#endif
 }
 
 END_C_DECLS
