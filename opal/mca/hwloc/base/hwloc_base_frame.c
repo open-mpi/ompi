@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -312,6 +314,7 @@ static void buffer_cleanup(void *value)
             free(ptr->buffers[i]);
         }
     }
+    free(ptr);
 }
 
 opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void)
