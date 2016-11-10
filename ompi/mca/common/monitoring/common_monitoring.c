@@ -156,7 +156,7 @@ void mca_common_monitoring_init( void )
 {
     char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
     /* If first to enable the common parts */
-    if( 0 == __sync_fetch_and_add(&mca_common_monitoring_hold, 1) ) {
+    if( 1 == opal_atomic_add_32(&mca_common_monitoring_hold, 1) ) {
         /* Open the opal_output stream */
         gethostname(hostname, sizeof(hostname));
         asprintf(&mca_common_monitoring_output_stream_obj.lds_prefix,
@@ -168,7 +168,7 @@ void mca_common_monitoring_init( void )
 
 void mca_common_monitoring_finalize( void )
 {
-    if( 0 == __sync_sub_and_fetch(&mca_common_monitoring_hold, 1) /* Release if last component */
+    if( 0 == opal_atomic_sub_32(&mca_common_monitoring_hold, 1) /* Release if last component */
         && mca_common_monitoring_enabled && mca_common_monitoring_active ) {
         /* If we are not drived by MPIT then dump the monitoring information */
         if( mca_common_monitoring_output_enabled ) {
