@@ -38,6 +38,7 @@
     /* Generate the proper symbol for the                               \
        ompi_osc_monitoring_module_## template ##_template variable */   \
     OMPI_OSC_MONITORING_MODULE_GENERATE(template);                      \
+    OMPI_OSC_MONITORING_MODULE_INIT_GENERATE(template);			\
     /* Generate module specific module->comm accessor */                \
     static inline struct ompi_communicator_t*                           \
     ompi_osc_monitoring_## template ##_get_comm(ompi_win_t*win)         \
@@ -57,14 +58,17 @@
     static inline void*                                                 \
     ompi_osc_monitoring_## template ##_set_template (ompi_osc_base_module_t*module) \
     {                                                                   \
-        /* Saves the original module functions in                       \
-         * ompi_osc_monitoring_module_## template ##_template           \
-         */                                                             \
-        memcpy(&OMPI_OSC_MONITORING_MODULE_VARIABLE(template),          \
-               module, sizeof(ompi_osc_base_module_t));                 \
-        /* Replace the original functions with our generated ones */    \
-        return memcpy(module, &OMPI_OSC_MONITORING_TEMPLATE_VARIABLE(template), \
-                      sizeof(ompi_osc_base_module_t));                  \
+	if( ! __sync_fetch_and_add(&OMPI_OSC_MONITORING_MODULE_INIT(template), 1) ) { \
+	    /* Saves the original module functions in			\
+	     * ompi_osc_monitoring_module_## template ##_template	\
+	     */								\
+	    memcpy(&OMPI_OSC_MONITORING_MODULE_VARIABLE(template),	\
+		   module, sizeof(ompi_osc_base_module_t));		\
+	}								\
+	/* Replace the original functions with our generated ones */	\
+	memcpy(module, &OMPI_OSC_MONITORING_TEMPLATE_VARIABLE(template), \
+	       sizeof(ompi_osc_base_module_t));				\
+	return module;							\
     }
 
 #define OSC_MONITORING_SET_TEMPLATE(template, module)           \
