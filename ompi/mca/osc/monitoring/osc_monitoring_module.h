@@ -15,8 +15,12 @@
 #include <ompi/mca/osc/osc.h>
 
 /* Define once and for all the module_template variable name */
-#define OMPI_OSC_MONITORING_MODULE_VARIABLE(template)  \
+#define OMPI_OSC_MONITORING_MODULE_VARIABLE(template)	\
     ompi_osc_monitoring_module_## template ##_template
+
+/* Define once and for all the module_template variable name */
+#define OMPI_OSC_MONITORING_MODULE_INIT(template)	\
+    ompi_osc_monitoring_module_## template ##_init_done
 
 /* Define once and for all the template variable name */
 #define OMPI_OSC_MONITORING_TEMPLATE_VARIABLE(template) \
@@ -25,6 +29,10 @@
 /* Define the ompi_osc_monitoring_module_## template ##_template variable */
 #define OMPI_OSC_MONITORING_MODULE_GENERATE(template)                   \
     static ompi_osc_base_module_t OMPI_OSC_MONITORING_MODULE_VARIABLE(template)
+
+/* Define the ompi_osc_monitoring_module_## template ##_init_done variable */
+#define OMPI_OSC_MONITORING_MODULE_INIT_GENERATE(template)	\
+    static int OMPI_OSC_MONITORING_MODULE_INIT(template)
 
 /* Define and set the ompi_osc_monitoring_## template ##_template
  * variable. The functions recorded here are linked to the original
