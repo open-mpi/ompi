@@ -67,9 +67,6 @@ OMPI_DECLSPEC int mca_common_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
 OMPI_DECLSPEC void mca_common_monitoring_enable(bool enable, void*pml_monitoring_component);
 OMPI_DECLSPEC void mca_common_monitoring_init( void );
 OMPI_DECLSPEC void mca_common_monitoring_finalize( void );
-OMPI_DECLSPEC int mca_common_monitoring_filter( void );
-OMPI_DECLSPEC void mca_common_monitoring_reset( void );
-OMPI_DECLSPEC int mca_common_monitoring_flush(int fd, char* filename);
 OMPI_DECLSPEC void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag);
 OMPI_DECLSPEC void mca_common_monitoring_recv_data(int world_rank, size_t data_size, int tag);
 OMPI_DECLSPEC int mca_common_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs);
