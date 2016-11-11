@@ -774,6 +774,8 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
  */
 void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr, int sd)
 {
+    int len = 0;
+
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
     for( size_t i = 0; i < btl_proc->proc_endpoint_count; i++ ) {
         mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
@@ -789,6 +791,9 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                         sizeof(struct in_addr) ) ) {
                 continue;
             }
+
+            // Add space for: "xxx.xxx.xxx.xxx, "
+            len += 18;
             break;
 #if OPAL_ENABLE_IPV6
         case AF_INET6:
@@ -797,6 +802,9 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                         sizeof(struct in6_addr) ) ) {
                 continue;
             }
+
+            // Add space for "xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx, "
+            len += 42;
             break;
 #endif
         default:
@@ -807,9 +815,38 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
         OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
         return;
     }
-    OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+
     /* No further use of this socket. Close it */
     CLOSE_THE_SOCKET(sd);
+
+    // Make a useful message to show about the fact that we dropped an
+    // inbound connection.
+    char *addr_str = alloca(len);
+    if (NULL == addr_str) {
+        addr_str = "error from alloca";
+    } else {
+        memset(addr_str, 0, len);
+        for (size_t i = 0; i < btl_proc->proc_endpoint_count; i++) {
+            mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
+            if (btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
+                continue;
+            }
+
+            if (addr_str[0] != '\0') {
+                strncat(addr_str, ", ", len);
+            }
+            strcat(addr_str, opal_net_get_hostname(addr));
+        }
+    }
+
+    opal_output(opal_btl_base_framework.framework_output,
+                "btl: tcp: Incoming connection from %s does not match known addresses for peer %s [hostname=%s addr=%s]. Drop !\n",
+                opal_net_get_hostname((struct sockaddr*)addr),
+                OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
+                btl_proc->proc_opal->proc_hostname,
+                addr_str);
+
+    OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
 }
 
 /*
