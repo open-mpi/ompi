@@ -16,4 +16,4 @@ except due to an internal OPAL error.
 
 Job state: %s
 
-This information should probably be repopald to the OMPI developers.
+This information should probably be reported to the OMPI developers.
