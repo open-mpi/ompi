@@ -395,8 +395,10 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
     total_reqs =  (((max_outstanding_reqs > (size - 1)) ||
                     (max_outstanding_reqs <= 0)) ?
                    (size - 1) : (max_outstanding_reqs));
-    reqs = coll_base_comm_get_reqs(module->base_data, 2 * total_reqs);
-    if (NULL == reqs) { error = -1; line = __LINE__; goto error_hndl; }
+    if (0 < total_reqs) {
+        reqs = coll_base_comm_get_reqs(module->base_data, 2 * total_reqs);
+        if (NULL == reqs) { error = -1; line = __LINE__; goto error_hndl; }
+    }
 
     prcv = (char *) rbuf;
     psnd = (char *) sbuf;
