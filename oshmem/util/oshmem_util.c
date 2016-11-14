@@ -23,7 +23,7 @@ void oshmem_output_verbose(int level, int output_id, const char* prefix,
     char *buff, *str;
     int ret = 0;
 
-    if (level < opal_output_get_verbosity(output_id)) {
+    if (level <= opal_output_get_verbosity(output_id)) {
         UNREFERENCED_PARAMETER(ret);
 
         va_start(args, format);

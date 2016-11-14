@@ -33,16 +33,12 @@
 #include "opal/class/opal_list.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "oshmem/mca/memheap/base/base.h"
 
 #include <mxm/api/mxm_api.h>
 
 #ifndef MXM_VERSION
 #define MXM_VERSION(major, minor) (((major)<<MXM_MAJOR_BIT)|((minor)<<MXM_MINOR_BIT))
-#endif
-
-#if MXM_API < MXM_VERSION(2,0)
-#include <mxm/api/mxm_addr.h>
-#include <mxm/api/mxm_stats.h>
 #endif
 
 #define MXM_SHMEM_MQ_ID 0x7119
@@ -52,22 +48,38 @@
 /* request explicit ack (SYNC) per every X put requests per connection */
 #define SPML_IKRIT_PACKETS_PER_SYNC  64
 
+#define spml_ikrit_container_of(ptr, type, member) ( \
+                (type *)( ((char *)(ptr)) - offsetof(type,member) ))
+
+#define MXM_MAX_ADDR_LEN 512
+
+#define MXM_PTL_RDMA 0
+#define MXM_PTL_SHM  1
+#define MXM_PTL_LAST 2
+
 BEGIN_C_DECLS
 
 /**
- * UD MXM SPML module
+ * MXM SPML module
  */
+/* TODO: move va_xx to base struct */
+struct spml_ikrit_mkey {
+    mkey_segment_t  super;
+    mxm_mem_key_t   key;
+};
+typedef struct spml_ikrit_mkey spml_ikrit_mkey_t;
+
 struct mxm_peer {
-    opal_list_item_t    super;
     mxm_conn_h          mxm_conn;
     mxm_conn_h          mxm_hw_rdma_conn;
-    int                 pe;
+    uint8_t             ptl_id;
+    uint8_t             need_fence;
     int32_t             n_active_puts;
-    int                 need_fence;
+    opal_list_item_t    link;
+    spml_ikrit_mkey_t   mkeys[MCA_MEMHEAP_SEG_COUNT];
 };
 
 typedef struct mxm_peer mxm_peer_t;
-OBJ_CLASS_DECLARATION(mxm_peer_t);
 
 struct mca_spml_ikrit_t {
     mca_spml_base_module_t super;
@@ -79,7 +91,7 @@ struct mca_spml_ikrit_t {
     mxm_ep_h mxm_ep;
     mxm_ep_h mxm_hw_rdma_ep;
     mxm_mq_h mxm_mq;
-    mxm_peer_t **mxm_peers;
+    mxm_peer_t *mxm_peers;
 
     int32_t n_active_puts;
     int32_t n_active_gets;
@@ -103,22 +115,13 @@ struct mca_spml_ikrit_t {
     int hw_rdma_channel;  /* true if we provide separate channel that
                        has true one sided capability */
     int np;
-#if MXM_API >= MXM_VERSION(2,0)
     int unsync_conn_max;
-#endif
     size_t put_zcopy_threshold; /* enable zcopy in put if message size is
                                    greater than the threshold */
 };
 
 typedef struct mca_spml_ikrit_t mca_spml_ikrit_t;
 
-#define MXM_MAX_ADDR_LEN 512
-
-#if MXM_API >= MXM_VERSION(2,0)
-#define MXM_PTL_SHM  0
-#define MXM_PTL_RDMA 1
-#define MXM_PTL_LAST 2
-#endif
 
 typedef struct spml_ikrit_mxm_ep_conn_info_t {
     union {
@@ -139,11 +142,6 @@ extern int mca_spml_ikrit_get_nb(void* src_addr,
                                  void* dst_addr,
                                  int src,
                                  void **handle);
-/* extension. used 4 fence implementation b4 fence was added to mxm */
-extern int mca_spml_ikrit_get_async(void *src_addr,
-                                    size_t size,
-                                    void *dst_addr,
-                                    int src);
 
 extern int mca_spml_ikrit_put(void* dst_addr,
                               size_t size,
@@ -167,13 +165,37 @@ extern sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
                                                 int *count);
 extern int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys);
 extern int mca_spml_ikrit_oob_get_mkeys(int pe,
-                                        uint32_t seg,
+                                        uint32_t segno,
                                         sshmem_mkey_t *mkeys);
 
 extern int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ikrit_fence(void);
 extern int spml_ikrit_progress(void);
+
+mxm_mem_key_t *mca_spml_ikrit_get_mkey_slow(int pe, void *va, int ptl_id, void **rva);
+
+/* the functionreturns NULL if data can be directly copied via shared memory 
+ * else it returns mxm mem key
+ *
+ * the function will abort() if va is not symmetric var address.
+ */
+static inline mxm_mem_key_t *mca_spml_ikrit_get_mkey(int pe, void *va, int ptl_id, void **rva) 
+{
+    spml_ikrit_mkey_t *mkey;
+
+    if (OPAL_UNLIKELY(MXM_PTL_RDMA != ptl_id)) {
+        return mca_spml_ikrit_get_mkey_slow(pe, va, ptl_id, rva);
+    }
+
+    mkey = mca_spml_ikrit.mxm_peers[pe].mkeys;
+    mkey = (spml_ikrit_mkey_t *)map_segment_find_va(&mkey->super.super, sizeof(*mkey), va);
+    if (OPAL_UNLIKELY(NULL == mkey)) {
+        return mca_spml_ikrit_get_mkey_slow(pe, va, ptl_id, rva);
+    }
+    *rva = map_segment_va2rva(&mkey->super, va);
+    return &mkey->key;
+}
 
 END_C_DECLS
 

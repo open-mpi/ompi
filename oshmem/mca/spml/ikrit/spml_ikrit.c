@@ -34,6 +34,7 @@
 #include "oshmem/mca/spml/base/spml_base_putreq.h"
 #include "oshmem/runtime/runtime.h"
 #include "orte/util/show_help.h"
+#include "oshmem/mca/sshmem/sshmem.h"
 
 #include "oshmem/mca/spml/ikrit/spml_ikrit_component.h"
 
@@ -55,44 +56,25 @@ do { \
     } \
 } while(0)
 
-typedef struct spml_ikrit_am_hdr {
-    uint64_t va;
-} spml_ikrit_am_hdr_t;
+static int mca_spml_ikrit_get_async(void *src_addr,
+                                    size_t size,
+                                    void *dst_addr,
+                                    int src);
 
 struct mca_spml_ikrit_put_request {
-    mca_spml_base_put_request_t req_put;
-    mxm_send_req_t mxm_req;
-    int pe;
-    mxm_req_buffer_t iov[2];
-    spml_ikrit_am_hdr_t am_pkt;
+    opal_free_list_item_t   link;   /* must be a first member */
+    mxm_send_req_t          mxm_req;
+    int                     pe;
 };
 
 typedef struct mca_spml_ikrit_put_request mca_spml_ikrit_put_request_t;
-OBJ_CLASS_DECLARATION(mca_spml_ikrit_put_request_t);
 
-#if MXM_API < MXM_VERSION(2,0)
-static int spml_ikrit_get_ep_address(spml_ikrit_mxm_ep_conn_info_t *ep_info,
-                                     mxm_ptl_id_t ptlid)
+
+static inline int get_ptl_id(int dst)
 {
-    size_t addrlen;
-    mxm_error_t err;
-
-    addrlen = sizeof(ep_info->addr.ptl_addr[ptlid]);
-    err = mxm_ep_address(mca_spml_ikrit.mxm_ep,
-                         ptlid,
-                         (struct sockaddr *) &ep_info->addr.ptl_addr[ptlid],
-                         &addrlen);
-    if (MXM_OK != err) {
-        orte_show_help("help-oshmem-spml-ikrit.txt",
-                       "unable to get endpoint address",
-                       true,
-                       mxm_error_string(err));
-        return OSHMEM_ERROR;
-    }
-
-    return OSHMEM_SUCCESS;
+    return mca_spml_ikrit.mxm_peers[dst].ptl_id;
 }
-#else
+
 static inline mxm_mem_key_t *to_mxm_mkey(sshmem_mkey_t *mkey) {
 
     if (0 == mkey->len) {
@@ -100,8 +82,6 @@ static inline mxm_mem_key_t *to_mxm_mkey(sshmem_mkey_t *mkey) {
     }
     return (mxm_mem_key_t *)mkey->u.data;
 }
-#endif
-
 
 static inline void mca_spml_irkit_req_wait(mxm_req_base_t *req)
 {
@@ -114,100 +94,62 @@ static inline void mca_spml_irkit_req_wait(mxm_req_base_t *req)
     } while (!mxm_req_test(req));
 }
 
-static int mca_spml_ikrit_put_request_free(struct oshmem_request_t** request)
+static inline void free_put_req(mca_spml_ikrit_put_request_t *put_req)
 {
-    mca_spml_ikrit_put_request_t *put_req =
-            *(mca_spml_ikrit_put_request_t **) request;
-
-    OPAL_THREAD_LOCK(&oshmem_request_lock);
-    assert(false == put_req->req_put.req_base.req_free_called);
-    put_req->req_put.req_base.req_free_called = true;
     opal_free_list_return (&mca_spml_base_put_requests,
                            (opal_free_list_item_t*)put_req);
     opal_memchecker_base_mem_noaccess(put_req, sizeof(*put_req));
-    OPAL_THREAD_UNLOCK(&oshmem_request_lock);
-
-    *request = SHMEM_REQUEST_NULL; /*MPI_REQUEST_NULL;*/
-
-    return OSHMEM_SUCCESS;
 }
 
-static int mca_spml_ikrit_put_request_cancel(struct oshmem_request_t * request,
-                                             int complete)
+static inline mca_spml_ikrit_put_request_t *alloc_put_req(void)
 {
-    return OSHMEM_SUCCESS;
+    mca_spml_ikrit_put_request_t *req;
+    opal_free_list_item_t* item;
+
+    item = opal_free_list_wait (&mca_spml_base_put_requests);
+    assert(item != NULL);
+
+    req = (mca_spml_ikrit_put_request_t *) item;
+    opal_memchecker_base_mem_undefined(req, sizeof(*req));
+
+    return req;
 }
 
-static void mca_spml_ikrit_put_request_construct(mca_spml_ikrit_put_request_t* req)
-{
-    req->req_put.req_base.req_type = MCA_SPML_REQUEST_PUT;
-    req->req_put.req_base.req_oshmem.req_free = mca_spml_ikrit_put_request_free;
-    req->req_put.req_base.req_oshmem.req_cancel =
-            mca_spml_ikrit_put_request_cancel;
-}
-
-static void mca_spml_ikrit_put_request_destruct(mca_spml_ikrit_put_request_t* req)
-{
-}
-
-OBJ_CLASS_INSTANCE( mca_spml_ikrit_put_request_t,
-                   mca_spml_base_put_request_t,
-                   mca_spml_ikrit_put_request_construct,
-                   mca_spml_ikrit_put_request_destruct);
 
 struct mca_spml_ikrit_get_request {
-    mca_spml_base_get_request_t req_get;
-    mxm_send_req_t mxm_req;
+    opal_free_list_item_t   link;   /* must be a first member */
+    mxm_send_req_t          mxm_req;
 };
 
 typedef struct mca_spml_ikrit_get_request mca_spml_ikrit_get_request_t;
-OBJ_CLASS_DECLARATION(mca_spml_ikrit_get_request_t);
 
-static int mca_spml_ikrit_get_request_free(struct oshmem_request_t** request)
+static inline void free_get_req(mca_spml_ikrit_get_request_t *get_req)
 {
-    mca_spml_ikrit_get_request_t *get_req =
-            *(mca_spml_ikrit_get_request_t **) request;
-
-    OPAL_THREAD_LOCK(&oshmem_request_lock);
-    assert(false == get_req->req_get.req_base.req_free_called);
-    get_req->req_get.req_base.req_free_called = true;
     opal_free_list_return (&mca_spml_base_get_requests,
                            (opal_free_list_item_t*)get_req);
     opal_memchecker_base_mem_noaccess(get_req, sizeof(*get_req));
-    OPAL_THREAD_UNLOCK(&oshmem_request_lock);
-
-    *request = SHMEM_REQUEST_NULL; /*MPI_REQUEST_NULL;*/
-
-    return OSHMEM_SUCCESS;
 }
 
-static int mca_spml_ikrit_get_request_cancel(struct oshmem_request_t * request,
-                                             int complete)
+static inline mca_spml_ikrit_get_request_t *alloc_get_req(void)
 {
-    return OSHMEM_SUCCESS;
+    mca_spml_ikrit_get_request_t *req;
+    opal_free_list_item_t* item;
+
+    item = opal_free_list_wait (&mca_spml_base_get_requests);
+    assert(item != NULL);
+
+    req = (mca_spml_ikrit_get_request_t *) item;
+    opal_memchecker_base_mem_undefined(req, sizeof(*req));
+    return req;
 }
 
-static void mca_spml_ikrit_get_request_construct(mca_spml_ikrit_get_request_t* req)
-{
-    req->req_get.req_base.req_type = MCA_SPML_REQUEST_GET;
-    req->req_get.req_base.req_oshmem.req_free = mca_spml_ikrit_get_request_free;
-    req->req_get.req_base.req_oshmem.req_cancel =
-            mca_spml_ikrit_get_request_cancel;
-}
-
-static void mca_spml_ikrit_get_request_destruct(mca_spml_ikrit_get_request_t* req)
-{
-}
-
-OBJ_CLASS_INSTANCE( mca_spml_ikrit_get_request_t,
-                   mca_spml_base_get_request_t,
-                   mca_spml_ikrit_get_request_construct,
-                   mca_spml_ikrit_get_request_destruct);
 
 int mca_spml_ikrit_put_simple(void* dst_addr,
                               size_t size,
                               void* src_addr,
                               int dst);
+
+static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *, uint32_t seg, int remote_pe, int tr_id);
 
 mca_spml_ikrit_t mca_spml_ikrit = {
     {
@@ -227,73 +169,60 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_base_wait,
         mca_spml_base_wait_nb,
         mca_spml_ikrit_fence,
-        mca_spml_base_rmkey_unpack,
+        mca_spml_ikrit_cache_mkeys,
         mca_spml_base_rmkey_free,
 
         (void*)&mca_spml_ikrit
     }
 };
 
-#if MXM_API < MXM_VERSION(2,0)
-void mca_spml_ikrit_dump_stats(void);
-void mca_spml_ikrit_dump_stats()
+static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *mkey, uint32_t seg, int dst_pe, int tr_id)
 {
-    int num_procs;
-    int i;
-    char sbuf[1024];
-    FILE *fp;
+    mxm_peer_t *peer;
 
-    fp = fmemopen(sbuf, sizeof(sbuf), "rw");
-    num_procs = oshmem_num_procs();
-    for (i = 0; i < num_procs; i++) {
-        mxm_print_conn_state(mca_spml_ikrit.mxm_peers[i]->mxm_conn,
-                             MXM_STATE_DETAIL_LEVEL_DATA,
-                             "",
-                             fp);
-        printf("=========== pe:%d conn:%p stats:\n %s==================\n",
-               i,
-               mca_spml_ikrit.mxm_peers[i]->mxm_conn,
-               sbuf);
-        rewind(fp);
+    if (MXM_PTL_RDMA != tr_id) {
+        return;
     }
-    fclose(fp);
-}
-#endif
 
-static inline mca_spml_ikrit_put_request_t *alloc_put_req(void)
-{
-    mca_spml_ikrit_put_request_t *req;
-    opal_free_list_item_t* item;
+    peer = &mca_spml_ikrit.mxm_peers[dst_pe];
+    mkey_segment_init(&peer->mkeys[seg].super, mkey, seg);
 
-    item = opal_free_list_wait (&mca_spml_base_put_requests);
-
-    req = (mca_spml_ikrit_put_request_t *) item;
-    opal_memchecker_base_mem_undefined(req, sizeof(*req));
-    opal_memchecker_base_mem_defined(&req->req_put.req_base,
-                                     sizeof(req->req_put.req_base));
-
-    req->req_put.req_base.req_free_called = false;
-    req->req_put.req_base.req_oshmem.req_complete = false;
-
-    return req;
+    if (0 != mkey->len) {
+        memcpy(&peer->mkeys[seg].key, mkey->u.data, mkey->len);
+    } else {
+        memcpy(&peer->mkeys[seg].key, &mxm_empty_mem_key, sizeof(mxm_empty_mem_key));
+    }
 }
 
-static inline mca_spml_ikrit_get_request_t *alloc_get_req(void)
+mxm_mem_key_t *mca_spml_ikrit_get_mkey_slow(int pe, void *va, int ptl_id, void **rva)
 {
-    mca_spml_ikrit_get_request_t *req;
-    opal_free_list_item_t* item;
+    sshmem_mkey_t *mkey;
 
-    item = opal_free_list_wait (&mca_spml_base_get_requests);
+retry:
+    mkey = mca_memheap_base_get_cached_mkey(pe, va, ptl_id, rva);
+    if (NULL == mkey) {
+        SPML_ERROR("pe=%d: %p is not address of shared variable", pe, va);
+        oshmem_shmem_abort(-1);
+        return NULL;
+    }
 
-    req = (mca_spml_ikrit_get_request_t *) item;
-    opal_memchecker_base_mem_undefined(req, sizeof(*req));
-    opal_memchecker_base_mem_defined(&req->req_get.req_base,
-                                     sizeof(req->req_get.req_base));
+    if (MXM_PTL_SHM == ptl_id) {
+        if (mca_memheap_base_can_local_copy(mkey, va)) {
+            return NULL;
+        }
 
-    req->req_get.req_base.req_free_called = false;
-    req->req_get.req_base.req_oshmem.req_complete = false;
+        /* if dst addr is on memheap and local copy is not allowed 
+         * disable direct shm transport
+         */ 
+        if (memheap_is_va_in_segment(va, HEAP_SEG_INDEX)) {
+            mca_spml_ikrit.mxm_peers[pe].ptl_id = MXM_PTL_RDMA;
+        }
+        /* going via mxm must always work */
+        ptl_id = MXM_PTL_RDMA;
+        goto retry;
+    }
 
-    return req;
+    return to_mxm_mkey(mkey);
 }
 
 int mca_spml_ikrit_enable(bool enable)
@@ -306,7 +235,7 @@ int mca_spml_ikrit_enable(bool enable)
     opal_free_list_init (&mca_spml_base_put_requests,
                          sizeof(mca_spml_ikrit_put_request_t),
                          opal_cache_line_size,
-                         OBJ_CLASS(mca_spml_ikrit_put_request_t),
+                         OBJ_CLASS(opal_free_list_item_t),
                          0,
                          opal_cache_line_size,
                          mca_spml_ikrit.free_list_num,
@@ -317,7 +246,7 @@ int mca_spml_ikrit_enable(bool enable)
     opal_free_list_init (&mca_spml_base_get_requests,
                          sizeof(mca_spml_ikrit_get_request_t),
                          opal_cache_line_size,
-                         OBJ_CLASS(mca_spml_ikrit_get_request_t),
+                         OBJ_CLASS(opal_free_list_item_t),
                          0,
                          opal_cache_line_size,
                          mca_spml_ikrit.free_list_num,
@@ -330,51 +259,18 @@ int mca_spml_ikrit_enable(bool enable)
     return OSHMEM_SUCCESS;
 }
 
-static int create_ptl_idx(int dst_pe)
-{
-    ompi_proc_t *proc;
-
-    proc = oshmem_proc_group_find(oshmem_group_all, dst_pe);
-
-    OSHMEM_PROC_DATA(proc)->transport_ids = (char *) malloc(MXM_PTL_LAST * sizeof(char));
-    if (NULL == OSHMEM_PROC_DATA(proc)->transport_ids)
-        return OSHMEM_ERROR;
-
-    OSHMEM_PROC_DATA(proc)->num_transports = 1;
-#if MXM_API < MXM_VERSION(2,0)
-    if (oshmem_my_proc_id() == dst_pe)
-        OSHMEM_PROC_DATA(proc)->transport_ids[0] = MXM_PTL_SELF;
-    else
-#endif
-        OSHMEM_PROC_DATA(proc)->transport_ids[0] = MXM_PTL_RDMA;
-    return OSHMEM_SUCCESS;
-}
-
-static void destroy_ptl_idx(int dst_pe)
-{
-    ompi_proc_t *proc;
-
-    proc = oshmem_proc_group_find(oshmem_group_all, dst_pe);
-    if (NULL != OSHMEM_PROC_DATA(proc)->transport_ids)
-        free(OSHMEM_PROC_DATA(proc)->transport_ids);
-}
-
 static void mxm_peer_construct(mxm_peer_t *p)
 {
-    p->pe = -1;
     p->n_active_puts = 0;
-    p->need_fence = 0;
+    p->need_fence    = 0;
+    p->ptl_id        = MXM_PTL_RDMA;
+    OBJ_CONSTRUCT(&p->link, opal_list_item_t);
 }
 
 static void mxm_peer_destruct(mxm_peer_t *p)
 {
-    /* may be we need to remov item from list */
+    OBJ_DESTRUCT(&p->link);
 }
-
-OBJ_CLASS_INSTANCE( mxm_peer_t,
-                   opal_list_item_t,
-                   mxm_peer_construct,
-                   mxm_peer_destruct);
 
 int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
@@ -382,11 +278,9 @@ int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs)
     int my_rank = oshmem_my_proc_id();
 
     oshmem_shmem_barrier();
-#if MXM_API >= MXM_VERSION(2,0)
     if (mca_spml_ikrit.bulk_disconnect) {
         mxm_ep_powerdown(mca_spml_ikrit.mxm_ep);
     }
-#endif
 
     while (NULL != opal_list_remove_first(&mca_spml_ikrit.active_peers)) {
     };
@@ -394,13 +288,12 @@ int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs)
 
     for (n = 0; n < nprocs; n++) {
         i = (my_rank + n) % nprocs;
-        mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i]->mxm_conn);
+        mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i].mxm_conn);
         if (mca_spml_ikrit.hw_rdma_channel) {
-            assert(mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn != mca_spml_ikrit.mxm_peers[i]->mxm_conn);
-            mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn);
+            assert(mca_spml_ikrit.mxm_peers[i].mxm_hw_rdma_conn != mca_spml_ikrit.mxm_peers[i].mxm_conn);
+            mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i].mxm_hw_rdma_conn);
         }
-        destroy_ptl_idx(i);
-        OBJ_RELEASE(mca_spml_ikrit.mxm_peers[i]);
+        mxm_peer_destruct(&mca_spml_ikrit.mxm_peers[i]);
     }
     free(mca_spml_ikrit.mxm_peers);
 
@@ -411,13 +304,8 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     spml_ikrit_mxm_ep_conn_info_t *ep_info = NULL;
     spml_ikrit_mxm_ep_conn_info_t *ep_hw_rdma_info = NULL;
-    spml_ikrit_mxm_ep_conn_info_t my_ep_info = {{0}};
-#if MXM_API < MXM_VERSION(2,0)
-    mxm_conn_req_t *conn_reqs;
-    int timeout;
-#else
+    spml_ikrit_mxm_ep_conn_info_t my_ep_info;
     size_t mxm_addr_len = MXM_MAX_ADDR_LEN;
-#endif
     mxm_error_t err;
     size_t i, n;
     int rc = OSHMEM_ERROR;
@@ -426,14 +314,6 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
 
     OBJ_CONSTRUCT(&mca_spml_ikrit.active_peers, opal_list_t);
     /* Allocate connection requests */
-#if MXM_API < MXM_VERSION(2,0)
-    conn_reqs = malloc(nprocs * sizeof(mxm_conn_req_t));
-    if (NULL == conn_reqs) {
-        rc = OSHMEM_ERR_OUT_OF_RESOURCE;
-        goto bail;
-    }
-    memset(conn_reqs, 0x0, sizeof(mxm_conn_req_t));
-#endif
     ep_info = calloc(sizeof(spml_ikrit_mxm_ep_conn_info_t), nprocs);
     if (NULL == ep_info) {
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
@@ -448,25 +328,14 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
         }
     }
 
-    mca_spml_ikrit.mxm_peers = (mxm_peer_t **) malloc(nprocs
-            * sizeof(*(mca_spml_ikrit.mxm_peers)));
+    mca_spml_ikrit.mxm_peers = (mxm_peer_t *) calloc(nprocs , sizeof(mxm_peer_t));
     if (NULL == mca_spml_ikrit.mxm_peers) {
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
         goto bail;
     }
 
-#if MXM_API < MXM_VERSION(2,0)
-    if (OSHMEM_SUCCESS
-            != spml_ikrit_get_ep_address(&my_ep_info, MXM_PTL_SELF)) {
-        rc = OSHMEM_ERROR;
-        goto bail;
-    }
-    if (OSHMEM_SUCCESS
-            != spml_ikrit_get_ep_address(&my_ep_info, MXM_PTL_RDMA)) {
-        rc = OSHMEM_ERROR;
-        goto bail;
-    }
-#else
+    memset(&my_ep_info, 0, sizeof(my_ep_info));
+
     if (mca_spml_ikrit.hw_rdma_channel) {
         err = mxm_ep_get_address(mca_spml_ikrit.mxm_hw_rdma_ep, &my_ep_info.addr.ep_addr, &mxm_addr_len);
         if (MXM_OK != err) {
@@ -485,7 +354,7 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
         rc = OSHMEM_ERROR;
         goto bail;
     }
-#endif
+
     oshmem_shmem_allgather(&my_ep_info, ep_info,
                            sizeof(spml_ikrit_mxm_ep_conn_info_t));
 
@@ -497,86 +366,35 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
         /* mxm 2.0 keeps its connections on a list. Make sure
          * that list have different order on every rank */
         i = (my_rank + n) % nprocs;
-        mca_spml_ikrit.mxm_peers[i] = OBJ_NEW(mxm_peer_t);
-        if (NULL == mca_spml_ikrit.mxm_peers[i]) {
-            rc = OSHMEM_ERR_OUT_OF_RESOURCE;
-            goto bail;
-        }
-        mca_spml_ikrit.mxm_peers[i]->pe = i;
+        mxm_peer_construct(&mca_spml_ikrit.mxm_peers[i]);
 
-#if MXM_API < MXM_VERSION(2,0)
-        conn_reqs[i].ptl_addr[MXM_PTL_SELF] =
-                (struct sockaddr *) &ep_info[i].addr.ptl_addr[MXM_PTL_SELF];
-        conn_reqs[i].ptl_addr[MXM_PTL_SHM] = NULL;
-        conn_reqs[i].ptl_addr[MXM_PTL_RDMA] =
-                (struct sockaddr *) &ep_info[i].addr.ptl_addr[MXM_PTL_RDMA];
-#else
-        err = mxm_ep_connect(mca_spml_ikrit.mxm_ep, ep_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i]->mxm_conn);
+        err = mxm_ep_connect(mca_spml_ikrit.mxm_ep, ep_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i].mxm_conn);
         if (MXM_OK != err) {
             SPML_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
             goto bail;
         }
-        if (OSHMEM_SUCCESS != create_ptl_idx(i))
-                goto bail;
-        mxm_conn_ctx_set(mca_spml_ikrit.mxm_peers[i]->mxm_conn, mca_spml_ikrit.mxm_peers[i]);
+        mxm_conn_ctx_set(mca_spml_ikrit.mxm_peers[i].mxm_conn, &mca_spml_ikrit.mxm_peers[i]);
         if (mca_spml_ikrit.hw_rdma_channel) {
-            err = mxm_ep_connect(mca_spml_ikrit.mxm_hw_rdma_ep, ep_hw_rdma_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn);
+            err = mxm_ep_connect(mca_spml_ikrit.mxm_hw_rdma_ep, ep_hw_rdma_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i].mxm_hw_rdma_conn);
             if (MXM_OK != err) {
                 SPML_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
                 goto bail;
             }
         } else {
-            mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn = mca_spml_ikrit.mxm_peers[i]->mxm_conn;
+            mca_spml_ikrit.mxm_peers[i].mxm_hw_rdma_conn = mca_spml_ikrit.mxm_peers[i].mxm_conn;
         }
-#endif
     }
 
-#if MXM_API < MXM_VERSION(2,0)
-    /* Connect to remote peers */
-    if (mxm_get_version() < MXM_VERSION(1,5)) {
-        timeout = 1000;
-    } else {
-        timeout = -1;
-    }
-    err = mxm_ep_connect(mca_spml_ikrit.mxm_ep, conn_reqs, nprocs, timeout);
-    if (MXM_OK != err) {
-        SPML_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
-        for (i = 0; i < nprocs; ++i) {
-            if (MXM_OK != conn_reqs[i].error) {
-                SPML_ERROR("MXM EP connect to %s error: %s\n",
-                           procs[i]->proc_hostname, mxm_error_string(conn_reqs[i].error));
-            }
-        }
-        rc = OSHMEM_ERR_CONNECTION_FAILED;
-        goto bail;
-    }
-
-    /* Save returned connections */
-    for (i = 0; i < nprocs; ++i) {
-        mca_spml_ikrit.mxm_peers[i]->mxm_conn = conn_reqs[i].conn;
-        if (OSHMEM_SUCCESS != create_ptl_idx(i)) {
-            rc = OSHMEM_ERR_CONNECTION_FAILED;
-            goto bail;
-        }
-
-        mxm_conn_ctx_set(conn_reqs[i].conn, mca_spml_ikrit.mxm_peers[i]);
-    }
-
-    if (conn_reqs)
-        free(conn_reqs);
-#endif
     if (ep_info)
         free(ep_info);
     if (ep_hw_rdma_info)
         free(ep_hw_rdma_info);
 
-#if MXM_API >= MXM_VERSION(2,0)
     if (mca_spml_ikrit.bulk_connect) {
         /* Need a barrier to ensure remote peers already created connection */
         oshmem_shmem_barrier();
         mxm_ep_wireup(mca_spml_ikrit.mxm_ep);
     }
-#endif
 
     proc_self = oshmem_proc_group_find(oshmem_group_all, my_rank);
     /* identify local processes and change transport to SHM */
@@ -588,20 +406,14 @@ int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs)
         if (procs[i] == proc_self)
             continue;
 
-        /* use zcopy for put/get via sysv shared memory */
-        OSHMEM_PROC_DATA(procs[i])->transport_ids[0] = MXM_PTL_SHM;
-        OSHMEM_PROC_DATA(procs[i])->transport_ids[1] = MXM_PTL_RDMA;
-        OSHMEM_PROC_DATA(procs[i])->num_transports = 2;
+        /* use zcopy for put/get via sysv shared memory with fallback to RDMA */
+        mca_spml_ikrit.mxm_peers[i].ptl_id = MXM_PTL_SHM;
     }
 
     SPML_VERBOSE(50, "*** ADDED PROCS ***");
     return OSHMEM_SUCCESS;
 
 bail:
-#if MXM_API < MXM_VERSION(2,0)
-	if (conn_reqs)
-		free(conn_reqs);
-#endif
 	if (ep_info)
 		free(ep_info);
 	if (ep_hw_rdma_info)
@@ -619,10 +431,9 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
 {
     int i;
     sshmem_mkey_t *mkeys;
-#if MXM_API >= MXM_VERSION(2,0)
     mxm_error_t err;
     mxm_mem_key_t *m_key;
-#endif
+    int my_rank = oshmem_my_proc_id();
 
     *count = 0;
     mkeys = (sshmem_mkey_t *) calloc(1, MXM_PTL_LAST * sizeof(*mkeys));
@@ -643,19 +454,10 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
             }
             mkeys[i].spml_context = 0;
             break;
-#if MXM_API < MXM_VERSION(2,0)
-        case MXM_PTL_SELF:
-            mkeys[i].len = 0;
-            mkeys[i].spml_context = 0;
-            mkeys[i].va_base = addr;
-            break;
-#endif
         case MXM_PTL_RDMA:
             mkeys[i].va_base = addr;
             mkeys[i].spml_context = 0;
-#if MXM_API < MXM_VERSION(2,0)
-            mkeys[i].len = 0;
-#else
+
             if (mca_spml_ikrit.ud_only) {
                 mkeys[i].len = 0;
                 break;
@@ -681,7 +483,6 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
                 SPML_ERROR("Failed to get memory key: %s", mxm_error_string(err));
                 goto error_out;
             }
-#endif
             break;
 
         default:
@@ -690,9 +491,10 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
         }
         SPML_VERBOSE(5,
                      "rank %d ptl %d addr %p size %llu %s",
-		     oshmem_proc_pe(oshmem_proc_local()), i, addr, (unsigned long long)size,
+                     my_rank, i, addr, (unsigned long long)size,
                      mca_spml_base_mkey2str(&mkeys[i]));
 
+        mca_spml_ikrit_cache_mkeys(&mkeys[i], memheap_find_segnum(addr), my_rank, i);
     }
     *count = MXM_PTL_LAST;
 
@@ -714,16 +516,12 @@ int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys)
 
     for (i = 0; i < MXM_PTL_LAST; i++) {
         switch (i) {
-#if MXM_API < MXM_VERSION(2,0)
-        case MXM_PTL_SELF:
-#endif
         case MXM_PTL_SHM:
             break;
         case MXM_PTL_RDMA:
             /* dereg memory */
             if (!mkeys[i].spml_context)
                 break;
-#if MXM_API >= MXM_VERSION(2,0)
             mxm_mem_unmap(mca_spml_ikrit.mxm_context,
                     (void *)mkeys[i].va_base,
                     (unsigned long)mkeys[i].spml_context,
@@ -731,7 +529,6 @@ int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys)
             if (0 < mkeys[i].len) {
                 free(mkeys[i].u.data);
             }
-#endif
             break;
         }
     }
@@ -741,23 +538,10 @@ int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys)
 
 }
 
-static inline int get_ptl_id(int dst)
-{
-    ompi_proc_t *proc;
-
-    /* get endpoint and btl */
-    proc = oshmem_proc_group_all(dst);
-    if (!proc) {
-        SPML_ERROR("Can not find destination proc for pe=%d", dst);
-        oshmem_shmem_abort(-1);
-        return -1;
-    }
-    return OSHMEM_PROC_DATA(proc)->transport_ids[0];
-}
-
 int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
 {
     int ptl;
+
     ptl = get_ptl_id(pe);
     if (ptl < 0)
         return OSHMEM_ERROR;
@@ -765,71 +549,45 @@ int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
     if (ptl != MXM_PTL_RDMA)
         return OSHMEM_ERROR;
 
-#if MXM_API < MXM_VERSION(2,0)
-    if (seg > 1)
-        return OSHMEM_ERROR;
-
-    mkeys[ptl].len = 0;
-    mkeys[ptl].u.key = MAP_SEGMENT_SHM_INVALID;
-    return OSHMEM_SUCCESS;
-#else
     /* we are actually registering memory in 2.0 and later.
      * So can only skip mkey exchange when ud is the only transport
      */
     if (mca_spml_ikrit.ud_only) {
-        mkeys[ptl].len = 0;
-        mkeys[ptl].u.key = MAP_SEGMENT_SHM_INVALID;
+        /* assumes that remote has the same va_base as we do */
+        mkeys[ptl].len     = 0;
+        mkeys[ptl].va_base = mca_memheap_seg2base_va(seg);
+        mkeys[ptl].u.key   = MAP_SEGMENT_SHM_INVALID;
+        mca_spml_ikrit_cache_mkeys(&mkeys[ptl], seg, pe, ptl);
         return OSHMEM_SUCCESS;
     }
 
     return OSHMEM_ERROR;
-#endif
 }
 
-static int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
-                                     void *src_addr,
-                                     size_t size,
-                                     void *dst_addr,
-                                     int src)
+static inline int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
+                                            void *src_addr,
+                                            size_t size,
+                                            void *dst_addr,
+                                            int src)
 {
     /* shmem spec states that get() operations are blocking. So it is enough
      to have single mxm request. Also we count on mxm doing copy */
     void *rva;
-    sshmem_mkey_t *r_mkey;
-    int ptl_id;
+    mxm_mem_key_t *mkey;
 
-    ptl_id = get_ptl_id(src);
-    /* already tried to send via shm and failed. go via rdma */
-    if (ptl_id == MXM_PTL_SHM)
-        ptl_id = MXM_PTL_RDMA;
+    mkey = mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_RDMA, &rva);
 
-    /**
-     * Get the address to the remote rkey.
-     **/
-    r_mkey = mca_memheap_base_get_cached_mkey(src, src_addr, ptl_id, &rva);
-    if (!r_mkey) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                   src, src_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
-
-    SPML_VERBOSE(100,
-                 "get: pe:%d ptl=%d src=%p -> dst: %p sz=%d. src_rva=%p, %s",
-                 src, ptl_id, src_addr, dst_addr, (int)size, (void *)rva, mca_spml_base_mkey2str(r_mkey));
+    SPML_VERBOSE_FASTPATH(100,
+                          "get: pe:%d ptl=%d src=%p -> dst: %p sz=%d. src_rva=%p",
+                          src, MXM_PTL_RDMA, src_addr, dst_addr, (int)size, (void *)rva);
 
     /* mxm does not really cares for get lkey */
     sreq->base.mq = mca_spml_ikrit.mxm_mq;
-    sreq->base.conn = mca_spml_ikrit.mxm_peers[src]->mxm_conn;
+    sreq->base.conn = mca_spml_ikrit.mxm_peers[src].mxm_conn;
     sreq->base.data_type = MXM_REQ_DATA_BUFFER;
     sreq->base.data.buffer.ptr = dst_addr;
     sreq->base.data.buffer.length = size;
-#if MXM_API < MXM_VERSION(2,0)
-    sreq->base.data.buffer.memh = NULL;
-    sreq->op.mem.remote_memh = NULL;
-#else
-    sreq->op.mem.remote_mkey = to_mxm_mkey(r_mkey);
-#endif
+    sreq->op.mem.remote_mkey = mkey; 
     sreq->opcode = MXM_REQ_OP_GET;
     sreq->op.mem.remote_vaddr = (intptr_t) rva;
     sreq->base.state = MXM_REQ_NEW;
@@ -844,7 +602,6 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
 {
     int ptl_id;
     void *rva;
-    sshmem_mkey_t *r_mkey;
 
     ptl_id = get_ptl_id(src);
     /**
@@ -853,20 +610,13 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
     if (ptl_id != MXM_PTL_SHM)
         return OSHMEM_ERROR;
 
-    r_mkey = mca_memheap_base_get_cached_mkey(src, src_addr, ptl_id, &rva);
-    if (!r_mkey) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                   src, src_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
-
-    if (!mca_memheap_base_can_local_copy(r_mkey, src_addr))
+    if (NULL != mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_SHM, &rva))
         return OSHMEM_ERROR;
 
-    SPML_VERBOSE(100,
-                 "shm get: pe:%d src=%p -> dst: %p sz=%d. src_rva=%p, %s",
-                 src, src_addr, dst_addr, (int)size, (void *)rva, mca_spml_base_mkey2str(r_mkey));
+    SPML_VERBOSE_FASTPATH(100,
+                          "shm get: pe:%d src=%p -> dst: %p sz=%d. src_rva=%p",
+                          src, src_addr, dst_addr, (int)size, (void *)rva);
+
     memcpy(dst_addr, (void *) (unsigned long) rva, size);
     opal_progress();
     return OSHMEM_SUCCESS;
@@ -922,18 +672,13 @@ static inline void get_completion_cb(void *ctx)
     mca_spml_ikrit_get_request_t *get_req = (mca_spml_ikrit_get_request_t *) ctx;
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_gets, -1);
-    get_req->req_get.req_base.req_spml_complete = true;
-    get_req->req_get.req_base.req_oshmem.req_status.SHMEM_ERROR =
-            OSHMEM_SUCCESS;
-    oshmem_request_complete(&get_req->req_get.req_base.req_oshmem, 1);
-    oshmem_request_free((oshmem_request_t**) &get_req);
+    free_get_req(get_req);
 }
 
-/* extension. used 4 fence implementation b4 fence was added to mxm */
-int mca_spml_ikrit_get_async(void *src_addr,
-                             size_t size,
-                             void *dst_addr,
-                             int src)
+static inline int mca_spml_ikrit_get_async(void *src_addr,
+                                           size_t size,
+                                           void *dst_addr,
+                                           int src)
 {
     mca_spml_ikrit_get_request_t *get_req;
 
@@ -941,27 +686,17 @@ int mca_spml_ikrit_get_async(void *src_addr,
         return OSHMEM_SUCCESS;
 
     get_req = alloc_get_req();
-    if (NULL == get_req) {
-        SPML_ERROR("out of get requests - aborting");
+
+    if (OSHMEM_SUCCESS != mca_spml_ikrit_get_helper(&get_req->mxm_req,
+                                                    src_addr,
+                                                    size,
+                                                    dst_addr,
+                                                    src)) {
         oshmem_shmem_abort(-1);
         return OSHMEM_ERROR;
     }
 
-    if (OSHMEM_SUCCESS
-            != mca_spml_ikrit_get_helper(&get_req->mxm_req,
-                                         src_addr,
-                                         size,
-                                         dst_addr,
-                                         src)) {
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
-
-#if MXM_API < MXM_VERSION(2,0)
-    get_req->mxm_req.base.flags = 0;
-#else
     get_req->mxm_req.flags = 0;
-#endif
     get_req->mxm_req.base.completed_cb = get_completion_cb;
     get_req->mxm_req.base.context = get_req;
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_gets, 1);
@@ -977,11 +712,7 @@ static inline void fence_completion_cb(void *ctx)
             (mca_spml_ikrit_get_request_t *) ctx;
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_mxm_fences, -1);
-    fence_req->req_get.req_base.req_spml_complete = true;
-    fence_req->req_get.req_base.req_oshmem.req_status.SHMEM_ERROR =
-            OSHMEM_SUCCESS;
-    oshmem_request_complete(&fence_req->req_get.req_base.req_oshmem, 1);
-    oshmem_request_free((oshmem_request_t**) &fence_req);
+    free_get_req(fence_req);
 }
 
 static int mca_spml_ikrit_mxm_fence(int dst)
@@ -989,18 +720,9 @@ static int mca_spml_ikrit_mxm_fence(int dst)
     mca_spml_ikrit_get_request_t *fence_req;
 
     fence_req = alloc_get_req();
-    if (NULL == fence_req) {
-        SPML_ERROR("out of get requests - aborting");
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
 
     fence_req->mxm_req.base.mq = mca_spml_ikrit.mxm_mq;
-    fence_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst]->mxm_conn;
-#if MXM_API < MXM_VERSION(2,0)
-    fence_req->mxm_req.opcode = MXM_REQ_OP_FENCE;
-    fence_req->mxm_req.base.flags = MXM_REQ_FLAG_SEND_SYNC;
-#else
+    fence_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst].mxm_conn;
     fence_req->mxm_req.opcode = MXM_REQ_OP_PUT_SYNC;
     fence_req->mxm_req.flags  = MXM_REQ_SEND_FLAG_FENCE;
     fence_req->mxm_req.op.mem.remote_vaddr = 0;
@@ -1008,7 +730,6 @@ static int mca_spml_ikrit_mxm_fence(int dst)
     fence_req->mxm_req.base.data_type      = MXM_REQ_DATA_BUFFER;
     fence_req->mxm_req.base.data.buffer.ptr    = 0;
     fence_req->mxm_req.base.data.buffer.length = 0;
-#endif
     fence_req->mxm_req.base.state = MXM_REQ_NEW;
     fence_req->mxm_req.base.completed_cb = fence_completion_cb;
     fence_req->mxm_req.base.context = fence_req;
@@ -1024,7 +745,8 @@ static inline void put_completion_cb(void *ctx)
     mxm_peer_t *peer;
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, -1);
-    peer = mca_spml_ikrit.mxm_peers[put_req->pe];
+    /* TODO: keep pointer to peer in the request */
+    peer = &mca_spml_ikrit.mxm_peers[put_req->pe];
 
     /* this was last put in progress. Remove peer from the list so that we do not need explicit fence */
 #if SPML_IKRIT_PUT_DEBUG == 1
@@ -1041,26 +763,14 @@ static inline void put_completion_cb(void *ctx)
 
     if (0 < peer->n_active_puts) {
         peer->n_active_puts--;
-#if MXM_API < MXM_VERSION(2,0)
-        if (0 == peer->n_active_puts &&
-                (put_req->mxm_req.base.flags & MXM_REQ_FLAG_SEND_SYNC)) {
-            opal_list_remove_item(&mca_spml_ikrit.active_peers, &peer->super);
-            peer->need_fence = 0;
-        }
-#else
         if (0 == peer->n_active_puts &&
                 (put_req->mxm_req.opcode == MXM_REQ_OP_PUT_SYNC)) {
-            opal_list_remove_item(&mca_spml_ikrit.active_peers, &peer->super);
+            opal_list_remove_item(&mca_spml_ikrit.active_peers, &peer->link);
             peer->need_fence = 0;
         }
-#endif
     }
 
-    put_req->req_put.req_base.req_spml_complete = true;
-    put_req->req_put.req_base.req_oshmem.req_status.SHMEM_ERROR =
-            OSHMEM_SUCCESS;
-    oshmem_request_complete(&put_req->req_put.req_base.req_oshmem, 1);
-    oshmem_request_free((oshmem_request_t**) &put_req);
+    free_put_req(put_req);
 }
 
 /**
@@ -1076,60 +786,30 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     void *rva;
     mca_spml_ikrit_put_request_t *put_req;
     int ptl_id;
-    sshmem_mkey_t *r_mkey;
     static int count;
     int need_progress = 0;
+    mxm_mem_key_t *mkey;
 
-    if (0 >= size) {
+    if (OPAL_UNLIKELY(0 >= size)) {
         return OSHMEM_SUCCESS;
     }
 
     ptl_id = get_ptl_id(dst);
-    /* Get rkey of remote PE (dst proc) which must be on memheap  */
-    r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, ptl_id, &rva);
-    if (!r_mkey) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                   dst, dst_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
+    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva);
+
+    if (OPAL_UNLIKELY(NULL == mkey)) {
+        memcpy((void *) (unsigned long) rva, src_addr, size);
+        /* call progress as often as we would have with regular put */
+        if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
+            mxm_progress(mca_spml_ikrit.mxm_context);
+        return OSHMEM_SUCCESS;
     }
 
-#if SPML_IKRIT_PUT_DEBUG == 1
-
-    SPML_VERBOSE(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
-            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, mca_spml_base_mkey2str(r_mkey));
-#endif
-    if (ptl_id == MXM_PTL_SHM) {
-
-        if (mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
-            memcpy((void *) (unsigned long) rva, src_addr, size);
-            /* call progress as often as we would have with regular put */
-            if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
-                mxm_progress(mca_spml_ikrit.mxm_context);
-            return OSHMEM_SUCCESS;
-        }
-        /* segment not mapped - fallback to rmda */
-        ptl_id = MXM_PTL_RDMA;
-        r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, ptl_id, &rva);
-        if (!r_mkey) {
-            SPML_ERROR("pe=%d: %p is not address of shared variable",
-                       dst, dst_addr);
-            oshmem_shmem_abort(-1);
-            return OSHMEM_ERROR;
-        }
-    }
-
-#if SPML_IKRIT_PUT_DEBUG == 1
-    SPML_VERBOSE(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
-            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, mca_spml_base_mkey2str(r_mkey));
-#endif
+    SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
+                          dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva);
 
     put_req = alloc_put_req();
-    if (NULL == put_req) {
-        SPML_ERROR("out of put requests - aborting");
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
+
     if (handle)
         *handle = put_req;
 
@@ -1137,20 +817,10 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     put_req->mxm_req.base.mq = mca_spml_ikrit.mxm_mq;
     /* request immediate responce if we are getting low on send buffers. We only get responce from remote on ack timeout.
      * Also request explicit ack once in a while  */
-#if MXM_API < MXM_VERSION(2,0)
-    put_req->mxm_req.opcode = MXM_REQ_OP_PUT;
-    if (mca_spml_ikrit.free_list_max - mca_spml_ikrit.n_active_puts <= SPML_IKRIT_PUT_LOW_WATER ||
-            (mca_spml_ikrit.mxm_peers[dst]->n_active_puts + 1) % SPML_IKRIT_PACKETS_PER_SYNC == 0) {
-        put_req->mxm_req.base.flags = MXM_REQ_FLAG_SEND_SYNC;
-        need_progress = 1;
-    } else  {
-        put_req->mxm_req.base.flags = MXM_REQ_FLAG_SEND_LAZY|MXM_REQ_FLAG_SEND_SYNC;
-    }
-#else
     put_req->mxm_req.flags = 0;
     if (mca_spml_ikrit.free_list_max - mca_spml_ikrit.n_active_puts <= SPML_IKRIT_PUT_LOW_WATER ||
             (int)opal_list_get_size(&mca_spml_ikrit.active_peers) > mca_spml_ikrit.unsync_conn_max ||
-            (mca_spml_ikrit.mxm_peers[dst]->n_active_puts + 1) % SPML_IKRIT_PACKETS_PER_SYNC == 0) {
+            (mca_spml_ikrit.mxm_peers[dst].n_active_puts + 1) % SPML_IKRIT_PACKETS_PER_SYNC == 0) {
         need_progress = 1;
         put_req->mxm_req.opcode = MXM_REQ_OP_PUT_SYNC;
     } else  {
@@ -1163,9 +833,8 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
             put_req->mxm_req.opcode = MXM_REQ_OP_PUT_SYNC;
         }
     }
-#endif
 
-    put_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst]->mxm_conn;
+    put_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst].mxm_conn;
     put_req->mxm_req.base.data_type = MXM_REQ_DATA_BUFFER;
     put_req->mxm_req.base.data.buffer.ptr = src_addr;
     put_req->mxm_req.base.data.buffer.length = size;
@@ -1175,21 +844,16 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     put_req->mxm_req.base.state = MXM_REQ_NEW;
     put_req->pe = dst;
 
-#if MXM_API < MXM_VERSION(2,0)
-    put_req->mxm_req.base.data.buffer.memh = NULL;
-    put_req->mxm_req.op.mem.remote_memh = NULL;
-#else
-    put_req->mxm_req.op.mem.remote_mkey = to_mxm_mkey(r_mkey);
-#endif
+    put_req->mxm_req.op.mem.remote_mkey = mkey; 
 
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, 1);
-    if (mca_spml_ikrit.mxm_peers[dst]->need_fence == 0) {
+    if (mca_spml_ikrit.mxm_peers[dst].need_fence == 0) {
         opal_list_append(&mca_spml_ikrit.active_peers,
-                         &mca_spml_ikrit.mxm_peers[dst]->super);
-        mca_spml_ikrit.mxm_peers[dst]->need_fence = 1;
+                         &mca_spml_ikrit.mxm_peers[dst].link);
+        mca_spml_ikrit.mxm_peers[dst].need_fence = 1;
     }
 
-    mca_spml_ikrit.mxm_peers[dst]->n_active_puts++;
+    mca_spml_ikrit.mxm_peers[dst].n_active_puts++;
 
     SPML_IKRIT_MXM_POST_SEND(put_req->mxm_req);
 
@@ -1214,60 +878,30 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     mxm_send_req_t mxm_req;
     mxm_wait_t wait;
     int ptl_id;
-    sshmem_mkey_t *r_mkey;
+    mxm_mem_key_t *mkey;
     static int count;
 
     ptl_id = get_ptl_id(dst);
-    /* Get rkey of remote PE (dst proc) which must be on memheap  */
-    r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, ptl_id, &rva);
-    if (!r_mkey) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                   dst, dst_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
+    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva);
+
+    SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
+                          dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva);
+
+    if (NULL == mkey) {
+        memcpy((void *) (unsigned long) rva, src_addr, size);
+        /* call progress as often as we would have with regular put */
+        if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
+            mxm_progress(mca_spml_ikrit.mxm_context);
+        return OSHMEM_SUCCESS;
     }
 
-#if SPML_IKRIT_PUT_DEBUG == 1
-    SPML_VERBOSE(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
-            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, mca_spml_base_mkey2str(r_mkey));
-#endif
-    if (ptl_id == MXM_PTL_SHM) {
-
-        if (mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
-            memcpy((void *) (unsigned long) rva, src_addr, size);
-            /* call progress as often as we would have with regular put */
-            if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
-                mxm_progress(mca_spml_ikrit.mxm_context);
-            return OSHMEM_SUCCESS;
-        }
-        /* segment not mapped - fallback to rmda */
-        ptl_id = MXM_PTL_RDMA;
-        r_mkey = mca_memheap_base_get_cached_mkey(dst,
-                                                     //(unsigned long) dst_addr,
-                                                     dst_addr,
-                                                     ptl_id,
-                                                     &rva);
-        if (!r_mkey) {
-            SPML_ERROR("pe=%d: %p is not address of shared variable",
-                       dst, dst_addr);
-            oshmem_shmem_abort(-1);
-            return OSHMEM_ERROR;
-        }
-    }
-
-#if SPML_IKRIT_PUT_DEBUG == 1
-    SPML_VERBOSE(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
-            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, mca_spml_base_mkey2str(r_mkey));
-#endif
+    SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
+                          dst, MXM_PTL_RDMA, dst_addr, src_addr, (int)size, (void *)rva);
 
     /* fill out request */
     mxm_req.base.mq = mca_spml_ikrit.mxm_mq;
-#if MXM_API <  MXM_VERSION(2,0)
-    mxm_req.base.flags = MXM_REQ_FLAG_BLOCKING;
-#else
     mxm_req.flags = MXM_REQ_SEND_FLAG_BLOCKING;
-#endif
-    mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst]->mxm_conn;
+    mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst].mxm_conn;
     mxm_req.base.data_type = MXM_REQ_DATA_BUFFER;
     mxm_req.base.data.buffer.ptr = src_addr;
     mxm_req.base.data.buffer.length = size;
@@ -1278,17 +912,12 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     mxm_req.base.state = MXM_REQ_NEW;
     mxm_req.base.error = MXM_OK;
 
-#if MXM_API < MXM_VERSION(2, 0)
-    mxm_req.base.data.buffer.memh = NULL;
-    mxm_req.op.mem.remote_memh = NULL;
-#else
-    mxm_req.op.mem.remote_mkey = to_mxm_mkey(r_mkey);
-#endif
+    mxm_req.op.mem.remote_mkey = mkey;
 
-    if (mca_spml_ikrit.mxm_peers[dst]->need_fence == 0) {
+    if (mca_spml_ikrit.mxm_peers[dst].need_fence == 0) {
         opal_list_append(&mca_spml_ikrit.active_peers,
-                         &mca_spml_ikrit.mxm_peers[dst]->super);
-        mca_spml_ikrit.mxm_peers[dst]->need_fence = 1;
+                         &mca_spml_ikrit.mxm_peers[dst].link);
+        mca_spml_ikrit.mxm_peers[dst].need_fence = 1;
     }
 
     SPML_IKRIT_MXM_POST_SEND(mxm_req);
@@ -1361,14 +990,14 @@ int mca_spml_ikrit_fence(void)
     /* puts(unless are send sync) are completed by remote side lazily. That is either when remote decides to
      * ack window which can take hundreds of ms. So speed things up by doing fence */
     while (NULL != (item = opal_list_remove_first(&mca_spml_ikrit.active_peers))) {
-        peer = (mxm_peer_t *) item;
+        peer = spml_ikrit_container_of(item, mxm_peer_t, link);
         peer->n_active_puts = 0;
         peer->need_fence = 0;
-        mca_spml_ikrit_mxm_fence(peer->pe);
+        mca_spml_ikrit_mxm_fence(peer - mca_spml_ikrit.mxm_peers);
     }
 
-    while (0 < mca_spml_ikrit.n_mxm_fences) {
-        oshmem_request_wait_any_completion();
+    while (0 < mca_spml_ikrit.n_mxm_fences || 0 < mca_spml_ikrit.n_active_gets) {
+        opal_progress();
     }
 
     SPML_VERBOSE(20, "fence completed");
@@ -1392,9 +1021,6 @@ int mca_spml_ikrit_recv(void* buf, size_t size, int src)
     req.base.state = MXM_REQ_NEW;
     req.base.mq = mca_spml_ikrit.mxm_mq;
     req.base.conn = NULL;
-#if MXM_API < MXM_VERSION(2,0)
-    req.base.flags           = MXM_REQ_FLAG_BLOCKING;
-#endif
     req.base.completed_cb = NULL;
 
     req.base.data_type = MXM_REQ_DATA_BUFFER;
@@ -1435,12 +1061,8 @@ int mca_spml_ikrit_send(void* buf,
 
     req.base.state = MXM_REQ_NEW;
     req.base.mq = mca_spml_ikrit.mxm_mq;
-    req.base.conn = mca_spml_ikrit.mxm_peers[dst]->mxm_conn;
-#if MXM_API < MXM_VERSION(2,0)
-    req.base.flags           = MXM_REQ_FLAG_BLOCKING;
-#else
-    req.flags                = MXM_REQ_SEND_FLAG_BLOCKING;
-#endif
+    req.base.conn = mca_spml_ikrit.mxm_peers[dst].mxm_conn;
+    req.flags             = MXM_REQ_SEND_FLAG_BLOCKING;
     req.base.completed_cb = NULL;
 
     req.base.data_type = MXM_REQ_DATA_BUFFER;
