@@ -108,8 +108,10 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
         if (NULL == tmpbuf) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
         pml_buffer = tmpbuf - gap;
 
-        reqs = coll_base_comm_get_reqs(module->base_data, rsize - 1);
-        if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
+        if (rsize > 1) {
+            reqs = coll_base_comm_get_reqs(module->base_data, rsize - 1);
+            if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
+        }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
         err = MCA_PML_CALL(irecv(rbuf, count, dtype, 0,
