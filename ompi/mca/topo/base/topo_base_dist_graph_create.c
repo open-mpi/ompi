@@ -10,6 +10,7 @@
  * Copyright (c) 2011-2013 Université Bordeaux 1
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  */
 
 #include "ompi_config.h"
@@ -115,7 +116,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
 
     err = comm->c_coll.coll_reduce_scatter_block( MPI_IN_PLACE, idx, 2,
                                                   (ompi_datatype_t*)&ompi_mpi_int, MPI_SUM, comm,
-                                                  comm->c_coll.coll_allreduce_module);
+                                                  comm->c_coll.coll_reduce_scatter_block_module);
     /**
      * At this point in the indexes array we have:
      * - idx[0].in  total number of IN  edges
