@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -45,6 +45,8 @@ mca_coll_basic_neighbor_alltoallw_cart(const void *sbuf, const int scounts[], co
     const int rank = ompi_comm_rank (comm);
     int rc = MPI_SUCCESS, dim, i, nreqs;
     ompi_request_t **reqs, **preqs;
+
+    if (0 == cart->ndims) return OMPI_SUCCESS;
 
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims );
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
@@ -129,6 +131,8 @@ mca_coll_basic_neighbor_alltoallw_graph(const void *sbuf, const int scounts[], c
     const int *edges;
 
     mca_topo_base_graph_neighbors_count (comm, rank, &degree);
+    if (0 == degree) return OMPI_SUCCESS;
+
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, 2 * degree );
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
@@ -186,6 +190,8 @@ mca_coll_basic_neighbor_alltoallw_dist_graph(const void *sbuf, const int scounts
 
     inedges = dist_graph->in;
     outedges = dist_graph->out;
+
+    if (0 == indegree+outdegree) return OMPI_SUCCESS;
 
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, indegree + outdegree );
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
