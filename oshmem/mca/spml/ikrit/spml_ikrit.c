@@ -634,7 +634,6 @@ int mca_spml_ikrit_get_nb(void* src_addr,
 int mca_spml_ikrit_get(void *src_addr, size_t size, void *dst_addr, int src)
 {
     mxm_send_req_t sreq;
-    mxm_error_t err;
 
     if (0 >= size) {
         return OSHMEM_SUCCESS;

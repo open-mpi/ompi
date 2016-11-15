@@ -164,7 +164,6 @@ segment_create(map_segment_t *ds_buf,
                size_t size)
 {
     int rc = OSHMEM_SUCCESS;
-    void *addr = NULL;
     openib_device_t *device = &memheap_device;
     int num_devs = 0;
     int i = 0;
