@@ -60,6 +60,7 @@ int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype
 
         break;
     case MCA_BASE_VAR_TYPE_STRING:
+    case MCA_BASE_VAR_TYPE_VERSION_STRING:
         *datatype = MPI_CHAR;
         break;
     case MCA_BASE_VAR_TYPE_BOOL:
