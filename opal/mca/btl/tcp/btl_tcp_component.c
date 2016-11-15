@@ -474,6 +474,7 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
             return OPAL_ERR_OUT_OF_RESOURCE;
         memcpy(btl, &mca_btl_tcp_module, sizeof(mca_btl_tcp_module));
         OBJ_CONSTRUCT(&btl->tcp_endpoints, opal_list_t);
+        OBJ_CONSTRUCT(&btl->tcp_endpoints_mutex, opal_mutex_t);
         mca_btl_tcp_component.tcp_btls[mca_btl_tcp_component.tcp_num_btls++] = btl;
 
         /* initialize the btl */
