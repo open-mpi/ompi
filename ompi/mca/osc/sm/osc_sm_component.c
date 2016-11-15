@@ -473,6 +473,8 @@ ompi_osc_sm_free(struct ompi_win_t *win)
         free(module->bases[0]);
         free(module->bases);
         free(module->sizes);
+        free(module->disp_units);
+        free(module->outstanding_locks);
     }
 
     free (module->posts);
