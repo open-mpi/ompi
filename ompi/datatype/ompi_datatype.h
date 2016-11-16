@@ -120,6 +120,7 @@ OMPI_DECLSPEC int32_t ompi_datatype_default_convertors_fini( void );
 
 OMPI_DECLSPEC void ompi_datatype_dump (const ompi_datatype_t* pData);
 OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_create( int32_t expectedSize );
+OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_create_temporary( int32_t expectedSize );
 
 static inline int32_t
 ompi_datatype_is_committed( const ompi_datatype_t* type )
