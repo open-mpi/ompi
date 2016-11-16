@@ -18,7 +18,6 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 #include "opal/types.h"
-
 #include "opal_stdint.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/argv.h"
@@ -27,11 +26,8 @@
 #include "opal/util/proc.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-
-#include <string.h>
-#include <pmi.h>
-#include <pmi2.h>
-
+#include "opal/util/opal_getcwd.h"
+#include "opal/constants.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/base/pmix_base_hash.h"
 #include "pmix_cray.h"
@@ -157,6 +153,133 @@ static char* pmix_error(int pmix_err);
 		    pmi_func, __FILE__, __LINE__, __func__,     \
 		    pmix_error(pmi_err));                       \
     } while(0);
+
+static void cray_get_more_info(void)
+{
+    int alps_status = 0, i;
+    uint64_t apid;
+    size_t alps_count;
+    int lli_ret = 0, place_ret;
+    alpsAppLayout_t layout;
+    char *npstring;
+    char *firstrankstring;
+    char **nps, **firstranks;
+    int *base_pe_in_app;
+    int *pes_in_app;
+    char pbuf[OPAL_PATH_MAX];
+
+    /*
+     * First get our apid
+     */
+
+    lli_ret = alps_app_lli_lock();
+    if (0 != lli_ret) {
+        OPAL_OUTPUT_VERBOSE((20, opal_pmix_base_framework.framework_output,
+                             "%s pmix:cray: alps_app_lli_lock returned %d",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), lli_ret));
+        goto fn_exit;
+    }
+
+    lli_ret = alps_app_lli_put_request(ALPS_APP_LLI_ALPS_REQ_APID, NULL, 0);
+    if (ALPS_APP_LLI_ALPS_STAT_OK != lli_ret) {
+        OPAL_OUTPUT_VERBOSE((20, opal_pmix_base_framework.framework_output,
+                             "%s pmix:cray: alps_app_lli_put_request - APID returned %d",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), lli_ret));
+        goto fn_exit_w_lock;
+    }
+
+    lli_ret = alps_app_lli_get_response (&alps_status, &alps_count);
+    if (ALPS_APP_LLI_ALPS_STAT_OK != alps_status) {
+        OPAL_OUTPUT_VERBOSE((20, opal_pmix_base_framework.framework_output,
+                             "%s pmix:cray: alps_app_lli_get_response returned %d",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), alps_status));
+        goto fn_exit_w_lock;
+    }
+
+    lli_ret = alps_app_lli_get_response_bytes (&apid, sizeof(apid));
+    if (ALPS_APP_LLI_ALPS_STAT_OK != lli_ret) {
+        OPAL_OUTPUT_VERBOSE((20, opal_pmix_base_framework.framework_output,
+                             "%s pmix:cray: alps_app_lli_get_response_bytes returned %d",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), lli_ret));
+        goto fn_exit_w_lock;
+    }
+
+    /*
+     * get some items from alps placement file
+     */
+    place_ret = alps_get_placement_info(apid,
+                                        &layout,
+                                        NULL,
+                                        NULL,
+                                        NULL,
+                                        NULL,
+                                        NULL,
+                                        &base_pe_in_app,
+                                        &pes_in_app,
+                                        NULL,
+                                        NULL);
+    if (1 != place_ret) {
+        OPAL_OUTPUT_VERBOSE((20, opal_pmix_base_framework.framework_output,
+                             "%s pmix:cray: alps_get_placement_info returned %d (%s)",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), place_ret, strerror(errno)));
+        goto fn_exit;
+    }
+
+    OPAL_OUTPUT_VERBOSE((2, opal_pmix_base_framework.framework_output,
+                           "%s pmix:cray: alps_get_placement_info returned %d first pe on node is %d",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), place_ret, layout.firstPe));
+
+    nps = NULL;
+    firstranks = NULL;
+    for (i=0; i < layout.numCmds; i++) {
+        snprintf(pbuf, sizeof(pbuf), "%d", pes_in_app[i]);
+        opal_argv_append_nosize(&nps, pbuf);
+        snprintf(pbuf, sizeof(pbuf), "%d", base_pe_in_app[i]);
+        opal_argv_append_nosize(&firstranks, pbuf);
+    }
+
+    npstring = opal_argv_join(nps, ' ');
+    firstrankstring = opal_argv_join(firstranks, ' ');
+    opal_argv_free(nps);
+    opal_argv_free(firstranks);
+
+    /*
+     * stuff values into environment variables
+     */
+
+    /* add these envars to prep MPI-2 info pre-defined key/values */
+    snprintf(pbuf, sizeof(pbuf), "%d", layout.numCmds);
+    opal_setenv("OMPI_NUM_APP_CTX", pbuf, true, &environ);
+    opal_setenv("OMPI_FIRST_RANKS", firstrankstring, true, &environ);
+    opal_setenv("OMPI_APP_CTX_NUM_PROCS", npstring, true, &environ);
+    free(firstrankstring);
+    free(npstring);
+    free(base_pe_in_app);
+    free(pes_in_app);
+
+    /*
+     * ALPS always starts the application in the directory
+     * where the aprun command was run to do the launch.
+     * For SLURM, we have to check the SLURM_WORKING_DIR env.
+     * variable.  If it is set, we can't set wdir since
+     * we can't assume PWD is where we started.
+     */
+    if(getenv("SLURM_WORKING_DIR") == NULL) {
+        opal_getcwd(pbuf, OPAL_PATH_MAX);
+        opal_setenv("OMPI_MCA_initial_wdir", pbuf, true, &environ);
+    }
+
+   fn_exit_w_lock:
+    lli_ret = alps_app_lli_unlock();
+    if (ALPS_APP_LLI_ALPS_STAT_OK != lli_ret) {
+        OPAL_OUTPUT_VERBOSE((20, opal_pmix_base_framework.framework_output,
+                             "%s pmix:cray: alps_app_lli_unlock returned %d",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), lli_ret));
+    }
+
+   fn_exit:
+    return;
+}
 
 static int cray_init(void)
 {
@@ -418,6 +541,8 @@ static int cray_init(void)
 	goto err_exit;
     }
     OBJ_DESTRUCT(&kv);
+
+    cray_get_more_info();
 
     return OPAL_SUCCESS;
 err_exit:
