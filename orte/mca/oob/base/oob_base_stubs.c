@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,9 +117,16 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
                  * this is a local proc we just haven't heard from
                  * yet due to a race condition. Check that situation */
                 if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
-                    ORTE_OOB_SEND(msg);
-                    return;
+                    ++msg->retries;
+                    if (msg->retries < orte_rml_base.max_retries) {
+                        ORTE_OOB_SEND(msg);
+                        return;
+                    }
                 }
+                opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                    "%s CANNOT SEND TO %s: TAG %d",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&msg->dst), msg->tag);
                 msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
                 ORTE_RML_SEND_COMPLETE(msg);
                 return;
@@ -396,4 +403,3 @@ static void process_uri(char *uri)
     }
     opal_argv_free(uris);
 }
-

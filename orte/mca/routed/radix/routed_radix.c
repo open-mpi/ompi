@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -372,6 +372,10 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     /* find out what daemon hosts this proc */
     if (ORTE_VPID_INVALID == (daemon.vpid = orte_get_proc_daemon_vpid(target))) {
+        opal_output_verbose(2, orte_routed_base_framework.framework_output,
+                            "%s ATTEMPTING TO SEND TO %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(target));
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         ret = ORTE_NAME_INVALID;
         goto found;

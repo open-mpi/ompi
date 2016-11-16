@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +22,6 @@ int orte_schizo_base_parse_cli(char *personality,
     orte_schizo_base_active_module_t *mod;
 
     if (NULL == personality) {
-        opal_output(0, "NULL PERSONALITY");
         return ORTE_ERR_NOT_SUPPORTED;
     }
 
@@ -63,6 +62,11 @@ int orte_schizo_base_setup_fork(orte_job_t *jdata,
     int rc;
     orte_schizo_base_active_module_t *mod;
 
+    /* if no personality was specified, then nothing to do */
+    if (NULL == jdata->personality) {
+        return ORTE_SUCCESS;
+    }
+
     OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
         if (0 == strcmp(jdata->personality, mod->component->mca_component_name)) {
             if (NULL != mod->module->setup_fork) {
@@ -80,6 +84,11 @@ int orte_schizo_base_setup_child(orte_job_t *jdata,
 {
     int rc;
     orte_schizo_base_active_module_t *mod;
+
+    /* if no personality was specified, then nothing to do */
+    if (NULL == jdata->personality) {
+        return ORTE_SUCCESS;
+    }
 
     OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
         if (0 == strcmp(jdata->personality, mod->component->mca_component_name)) {

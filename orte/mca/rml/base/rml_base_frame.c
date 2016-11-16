@@ -61,6 +61,14 @@ static int orte_rml_base_register(mca_base_register_flag_t flags)
                                    &orte_rml_base_wrapper);
     (void) mca_base_var_register_synonym(var_id, "orte", "rml",NULL,"wrapper", 0);
 
+    orte_rml_base.max_retries = 3;
+    mca_base_var_register("orte", "rml", "base", "max_retries",
+                           "Max #times to retry sending a message",
+                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                           OPAL_INFO_LVL_9,
+                           MCA_BASE_VAR_SCOPE_READONLY,
+                           &orte_rml_base.max_retries);
+
 #if OPAL_ENABLE_TIMING
     orte_rml_base.timing = false;
     (void) mca_base_var_register ("orte", "rml", "base", "timing",
@@ -259,6 +267,7 @@ void orte_rml_recv_callback(int status, orte_process_name_t* sender,
 /***   RML CLASS INSTANCES   ***/
 static void send_cons(orte_rml_send_t *ptr)
 {
+    ptr->retries = 0;
     ptr->cbdata = NULL;
     ptr->iov = NULL;
     ptr->buffer = NULL;
@@ -325,4 +334,3 @@ static void prq_des(orte_rml_recv_request_t *ptr)
 OBJ_CLASS_INSTANCE(orte_rml_recv_request_t,
                    opal_object_t,
                    prq_cons, prq_des);
-
