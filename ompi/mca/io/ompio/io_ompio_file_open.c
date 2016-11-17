@@ -488,7 +488,7 @@ int mca_io_ompio_file_get_position (ompi_file_t *fd,
     data = (mca_io_ompio_data_t *) fd->f_io_selected_data;
     fh = &data->ompio_fh;
 
-    OPAL_THREAD_UNLOCK(&fd->f_mutex);
+    OPAL_THREAD_LOCK(&fd->f_mutex);
     ret = mca_common_ompio_file_get_position (fh, offset);
     OPAL_THREAD_UNLOCK(&fd->f_mutex);
 
