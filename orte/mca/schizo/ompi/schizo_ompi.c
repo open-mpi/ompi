@@ -751,6 +751,11 @@ static int setup_fork(orte_job_t *jdata,
                         "%s schizo:ompi: setup_fork",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
+    /* if no personality was specified, then nothing to do */
+    if (NULL == jdata->personality) {
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
     if (NULL != orte_schizo_base.personalities) {
     /* see if we are included */
         for (i=0; NULL != jdata->personality[i]; i++) {
@@ -991,6 +996,11 @@ static int setup_child(orte_job_t *jdata,
     opal_output_verbose(1, orte_schizo_base_framework.framework_output,
                         "%s schizo:ompi: setup_child",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    /* if no personality was specified, then nothing to do */
+    if (NULL == jdata->personality) {
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
 
     if (NULL != orte_schizo_base.personalities) {
         /* see if we are included */

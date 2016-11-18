@@ -306,7 +306,7 @@ int orte_register_params(void)
                                   "Test debugger colaunch after debugger attachment",
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_debugger_test_daemon);
+                                  &orte_debugger_test_attach);
 
     orte_debugger_check_rate = 0;
     (void) mca_base_var_register ("orte", "orte", NULL, "debugger_check_rate",
