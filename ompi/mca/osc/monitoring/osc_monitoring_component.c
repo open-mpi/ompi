@@ -99,14 +99,14 @@ static int mca_osc_monitoring_component_close(void)
 static int mca_osc_monitoring_component_init(bool enable_progress_threads,
                                              bool enable_mpi_threads)
 {
-    OPAL_MONITORING_VERBOSE(0, "component_init");
+    OPAL_MONITORING_PRINT_INFO("component_init");
     mca_common_monitoring_init();
     return OMPI_SUCCESS;
 }
 
 static int mca_osc_monitoring_component_finish(void)
 {
-    OPAL_MONITORING_VERBOSE(0, "component_finish");
+    OPAL_MONITORING_PRINT_INFO("component_finish");
     mca_common_monitoring_finalize();
     return OMPI_SUCCESS;
 }
@@ -120,7 +120,7 @@ static int mca_osc_monitoring_component_query(struct ompi_win_t *win, void **bas
                                               struct ompi_communicator_t *comm, struct ompi_info_t *info,
                                               int flavor)
 {
-    OPAL_MONITORING_VERBOSE(0, "component_query");
+    OPAL_MONITORING_PRINT_INFO("component_query");
     return mca_osc_monitoring_component.priority;
 }
 
@@ -128,7 +128,7 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
                                                struct ompi_communicator_t *comm, struct ompi_info_t *info,
                                                int flavor, int *model)
 {
-    OPAL_MONITORING_VERBOSE(0, "component_select");
+    OPAL_MONITORING_PRINT_INFO("component_select");
     opal_list_item_t *item;
     ompi_osc_base_component_t *best_component = NULL;
     int best_priority = -1, priority, ret = OMPI_SUCCESS;
@@ -159,7 +159,7 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
     }
 
     if (NULL == best_component) return OMPI_ERR_NOT_SUPPORTED;
-    OPAL_MONITORING_VERBOSE(0, "Chosen one: %s", best_component->osc_version.mca_component_name);
+    OPAL_MONITORING_PRINT_INFO("Chosen one: %s", best_component->osc_version.mca_component_name);
     ret = best_component->osc_select(win, base, size, disp_unit, comm, info, flavor, model);
     if( OMPI_SUCCESS == ret ) {
         /* Intercept module functions with ours, based on selected component */

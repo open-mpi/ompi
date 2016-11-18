@@ -32,7 +32,7 @@
 
 /* Define the ompi_osc_monitoring_module_## template ##_init_done variable */
 #define OMPI_OSC_MONITORING_MODULE_INIT_GENERATE(template)	\
-    static int OMPI_OSC_MONITORING_MODULE_INIT(template)
+    static uint64_t OMPI_OSC_MONITORING_MODULE_INIT(template)
 
 /* Define and set the ompi_osc_monitoring_## template ##_template
  * variable. The functions recorded here are linked to the original
