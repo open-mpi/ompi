@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -90,8 +90,9 @@ static int pmix_s1_component_register(void)
 
 static int pmix_s1_component_query(mca_base_module_t **module, int *priority)
 {
-    /* disqualify ourselves if we are not under slurm */
-    if (NULL == getenv("SLURM_STEP_NUM_TASKS")) {
+    /* disqualify ourselves if we are not under slurm or flux */
+    if (NULL == getenv("SLURM_STEP_NUM_TASKS") &&
+        NULL == getenv("FLUX_URI")) {
         *priority = 0;
         *module = NULL;
         return OPAL_ERROR;
