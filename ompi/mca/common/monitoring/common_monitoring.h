@@ -19,13 +19,25 @@ BEGIN_C_DECLS
 #include <opal/class/opal_hash_table.h>
 #include <opal/mca/base/mca_base_pvar.h>
 
-#define MCA_MONITORING_MAKE_VERSION MCA_BASE_MAKE_VERSION(component,    \
-                                                          OMPI_MAJOR_VERSION, \
-                                                          OMPI_MINOR_VERSION, \
-                                                          OMPI_RELEASE_VERSION)
+#define MCA_MONITORING_MAKE_VERSION                                     \
+    MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION)
 
-#define OPAL_MONITORING_VERBOSE(x, ...) \
+#define OPAL_MONITORING_VERBOSE(x, ...)                                 \
     OPAL_OUTPUT_VERBOSE((x, mca_common_monitoring_output_stream_id, __VA_ARGS__))
+
+#if OPAL_ENABLE_DEBUG
+#define OPAL_MONITORING_PRINT_ERR(...)          \
+    OPAL_MONITORING_VERBOSE(0, __VA_ARGS__)
+#else /* if( ! OPAL_ENABLE_DEBUG ) */
+#define OPAL_MONITORING_PRINT_ERR(...)          \
+    OPAL_MONITORING_VERBOSE(1, __VA_ARGS__)
+#endif /* OPAL_ENABLE_DEBUG */
+
+#define OPAL_MONITORING_PRINT_WARN(...)         \
+    OPAL_MONITORING_VERBOSE(5, __VA_ARGS__)
+
+#define OPAL_MONITORING_PRINT_INFO(...)         \
+    OPAL_MONITORING_VERBOSE(10, __VA_ARGS__)
 
 extern int mca_common_monitoring_output_stream_id;
 extern int mca_common_monitoring_enabled;

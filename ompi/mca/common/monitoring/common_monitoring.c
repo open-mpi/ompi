@@ -165,6 +165,9 @@ void mca_common_monitoring_init( void )
                  "[%s:%05d] monitoring: ", hostname, getpid());
         mca_common_monitoring_output_stream_id =
             opal_output_open(&mca_common_monitoring_output_stream_obj);
+        /* Initialize proc translation hashtable */
+        translation_ht = OBJ_NEW(opal_hash_table_t);
+        opal_hash_table_init(translation_ht, 2048);
     }
 }
 
@@ -186,7 +189,7 @@ void mca_common_monitoring_finalize( void )
         /* Free internal data structure */
         free(sent_data);  /* a single allocation */
         opal_hash_table_remove_all( translation_ht );
-        free(translation_ht);
+        OBJ_RELEASE(translation_ht);
     }
 }
 
@@ -268,10 +271,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
     if( !nprocs_world )
         nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
     
-    if( NULL == translation_ht ) {
-        translation_ht = OBJ_NEW(opal_hash_table_t);
-        opal_hash_table_init(translation_ht, 2048);
-
+    if( NULL == sent_data ) {
         sent_data               = (uint64_t*)calloc(6 * nprocs_world, sizeof(uint64_t));
         recv_data               = sent_data + nprocs_world;
         messages_count          = recv_data + nprocs_world;
@@ -473,17 +473,17 @@ static int mca_common_monitoring_flush(int fd, char* filename)
         return OMPI_SUCCESS;
 
     if( 1 == fd ) {
-        OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to stdout", rank_world);
+        OPAL_MONITORING_PRINT_INFO("Proc %d flushing monitoring to stdout", rank_world);
         mca_common_monitoring_output( stdout, rank_world, nprocs_world );
     } else if( 2 == fd ) {
-        OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to stderr", rank_world);
+        OPAL_MONITORING_PRINT_INFO("Proc %d flushing monitoring to stderr", rank_world);
         mca_common_monitoring_output( stderr, rank_world, nprocs_world );
     } else {
         FILE *pf = NULL;
         char* tmpfn = NULL;
 
         if( NULL == filename ) { /* No filename */
-            OPAL_MONITORING_VERBOSE(0, "Error while flushing: no filename provided");
+            OPAL_MONITORING_PRINT_ERR("Error while flushing: no filename provided");
             return -1;
         } else {
             asprintf(&tmpfn, "%s.%d.prof", filename, rank_world);
@@ -492,12 +492,12 @@ static int mca_common_monitoring_flush(int fd, char* filename)
         }
 
         if(NULL == pf) {  /* Error during open */
-            OPAL_MONITORING_VERBOSE(0, "Error while flushing to: %s.%d.prof",
+            OPAL_MONITORING_PRINT_ERR("Error while flushing to: %s.%d.prof",
                                     filename, rank_world);
             return -1;
         }
 
-        OPAL_MONITORING_VERBOSE(0, "Proc %d flushing monitoring to: %s.%d.prof",
+        OPAL_MONITORING_PRINT_INFO("Proc %d flushing monitoring to: %s.%d.prof",
                                 rank_world, filename, rank_world);
 
         mca_common_monitoring_output( pf, rank_world, nprocs_world );

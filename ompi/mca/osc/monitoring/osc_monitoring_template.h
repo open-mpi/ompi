@@ -12,7 +12,7 @@
 
 #include <ompi/communicator/communicator.h>
 #include <ompi/win/win.h>
-
+#include <opal/sys/atomic.h>
 #include <osc_monitoring_accumulate.h>
 #include <osc_monitoring_active_target.h>
 #include <osc_monitoring_comm.h>
@@ -58,7 +58,7 @@
     static inline void*                                                 \
     ompi_osc_monitoring_## template ##_set_template (ompi_osc_base_module_t*module) \
     {                                                                   \
-	if( ! __sync_fetch_and_add(&OMPI_OSC_MONITORING_MODULE_INIT(template), 1) ) { \
+        if( 1 == opal_atomic_add_64(&(OMPI_OSC_MONITORING_MODULE_INIT(template)), 1) ) { \
 	    /* Saves the original module functions in			\
 	     * ompi_osc_monitoring_module_## template ##_template	\
 	     */								\

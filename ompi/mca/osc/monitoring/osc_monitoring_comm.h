@@ -35,7 +35,7 @@
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
             mca_common_monitoring_send_data(world_rank, data_size, 1);  \
-            OPAL_MONITORING_VERBOSE(10, "MPI_Put to %d intercepted", world_rank); \
+            OPAL_MONITORING_PRINT_INFO("MPI_Put to %d intercepted", world_rank); \
         }                                                               \
         return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_put(origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win); \
     }                                                                   \
@@ -60,7 +60,7 @@
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
             mca_common_monitoring_send_data(world_rank, data_size, 1);  \
-            OPAL_MONITORING_VERBOSE(10, "MPI_Rput to %d intercepted", world_rank); \
+            OPAL_MONITORING_PRINT_INFO("MPI_Rput to %d intercepted", world_rank); \
         }                                                               \
         return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_rput(origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win, request); \
     }                                                                   \
@@ -84,7 +84,7 @@
             data_size = origin_count*type_size;                         \
             mca_common_monitoring_send_data(world_rank, 0, -1);         \
             mca_common_monitoring_recv_data(world_rank, data_size, 1);  \
-            OPAL_MONITORING_VERBOSE(10, "MPI_Get to %d intercepted", world_rank); \
+            OPAL_MONITORING_PRINT_INFO("MPI_Get to %d intercepted", world_rank); \
         }                                                               \
         return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_get(origin_addr, origin_count, origin_datatype, source_rank, source_disp, source_count, source_datatype, win); \
     }                                                                   \
@@ -109,7 +109,7 @@
             data_size = origin_count*type_size;                         \
             mca_common_monitoring_send_data(world_rank, 0, -1);         \
             mca_common_monitoring_recv_data(world_rank, data_size, 1);  \
-            OPAL_MONITORING_VERBOSE(10, "MPI_Rget to %d intercepted", world_rank); \
+            OPAL_MONITORING_PRINT_INFO("MPI_Rget to %d intercepted", world_rank); \
         }                                                               \
         return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_rget(origin_addr, origin_count, origin_datatype, source_rank, source_disp, source_count, source_datatype, win, request); \
     }
