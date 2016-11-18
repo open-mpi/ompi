@@ -742,8 +742,6 @@ static int rml_ofi_component_init(void)
                         }
             }
 
-            
-
             /**
             * Set the ANY_SRC address.
             */

@@ -178,8 +178,6 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
          */
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &msg->sender, &post->peer) &&
             msg->tag == post->tag) {
-//Anandhi
-            opal_output(0, "%s Found matching recv posted for tag %d ",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),msg->tag);
             /* deliver the data to this location */
             if (post->buffer_data) {
                 /* deliver it in a buffer */
@@ -187,17 +185,15 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
                 opal_dss.load(&buf, msg->iov.iov_base, msg->iov.iov_len);
                 /* xfer ownership of the malloc'd data to the buffer */
                 msg->iov.iov_base = NULL;
-//Anandhi
-            opal_output(0, "%s calling Recv callback fn for matching posted recv for tag %d",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),msg->tag);
                 post->cbfunc.buffer(ORTE_SUCCESS, &msg->sender, &buf, msg->tag, post->cbdata);
                 /* the user must have unloaded the buffer if they wanted
                  * to retain ownership of it, so release whatever remains
                  */
-                opal_output(0, 
+                OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                                      "%s message received  bytes from %s for tag %d called callback",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&msg->sender),
-                                     msg->tag);
+                                     msg->tag));
                 OBJ_DESTRUCT(&buf);
             } else {
                 /* deliver as an iovec */
@@ -209,10 +205,10 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
             }
             /* release the message */
             OBJ_RELEASE(msg);
-            opal_output(0, 
+            OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                                  "%s message tag %d on released",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 post->tag);
+                                 post->tag));
             /* if the recv is non-persistent, remove it */
             if (!post->persistent) {
                 opal_list_remove_item(&orte_rml_base.posted_recvs, &post->super);
@@ -229,11 +225,11 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
     /* we get here if no matching recv was found - we then hold
      * the message until such a recv is issued
      */
-     opal_output(0, 
+     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                             "%s message received bytes from %s for tag %d Not Matched adding to unmatched msgs",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&msg->sender),
-                            msg->tag);
+                            msg->tag));
      opal_list_append(&orte_rml_base.unmatched_msgs, &msg->super);
 }
 
@@ -280,11 +276,11 @@ static void msg_match_recv(orte_rml_posted_recv_t *rcv, bool get_all)
 void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
 {
     orte_rml_recv_t *msg = (orte_rml_recv_t*)cbdata;
-    opal_output(0, 
+    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                          "%s message received from %s for tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&msg->sender),
-                         msg->tag);
+                         msg->tag));
 
     OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
                        ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
