@@ -681,7 +681,7 @@ int orte_submit_job(char *argv[], int *index,
                     void *complete_cbdata)
 {
     opal_buffer_t *req;
-    int rc;
+    int rc, n;
     orte_app_idx_t i;
     orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_SPAWN_JOB_CMD;
     char *param;
@@ -728,6 +728,14 @@ int orte_submit_job(char *argv[], int *index,
          */
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    /* see if they specified the personality */
+    if (NULL != orte_cmd_options.personality) {
+        jdata->personality = opal_argv_split(orte_cmd_options.personality, ',');
+    } else {
+        /* default to OMPI */
+        opal_argv_append_nosize(&jdata->personality, "ompi");
+    }
+
     trk = OBJ_NEW(trackr_t);
     trk->jdata = jdata;
     trk->launch_cb = launch_cb;
@@ -872,6 +880,20 @@ int orte_submit_job(char *argv[], int *index,
     if (orte_cmd_options.continuous) {
         /* mark this job as continuously operating */
         orte_set_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+    }
+
+    /* check for debugger test envars and forward them if necessary */
+    if (NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
+        char *evar;
+        evar = getenv("ORTE_TEST_DEBUGGER_SLEEP");
+        for (n=0; n < (int)jdata->num_apps; n++) {
+            if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
+                opal_setenv("ORTE_TEST_DEBUGGER_ATTACH", "1", true, &app->env);
+                if (NULL != evar) {
+                    opal_setenv("ORTE_TEST_DEBUGGER_SLEEP", evar, true, &app->env);
+                }
+            }
+        }
     }
 
     /* check for suicide test directives */
@@ -2123,9 +2145,9 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
 
     if (!MPIR_being_debugged && !orte_in_parallel_debugger) {
         /* if we were given a test debugger, then we still want to
-         * colaunch it
+         * colaunch it - unless we are testing attach to a running job
          */
-        if (NULL != orte_debugger_test_daemon) {
+        if (NULL != orte_debugger_test_daemon && !orte_debugger_test_attach) {
             opal_output_verbose(2, orte_debug_output,
                                 "%s No debugger test daemon specified",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -2509,7 +2531,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             /* notify all procs that the debugger is ready */
             _send_notification();
-        } else {
+        } else if (!orte_debugger_test_attach) {
             /* if I am launching debugger daemons, then I need to do so now
              * that the job has been started and I know which nodes have
              * apps on them
@@ -2724,9 +2746,9 @@ static void open_fifo(void)
 
     orte_debugger_attach_fd = open(MPIR_attach_fifo, O_RDONLY | O_NONBLOCK, 0);
     if (orte_debugger_attach_fd < 0) {
-    opal_output(0, "%s unable to open debugger attach fifo",
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    return;
+        opal_output(0, "%s unable to open debugger attach fifo",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        return;
     }
 
     /* Set this fd to be close-on-exec so that children don't see it */
@@ -2749,6 +2771,8 @@ static void open_fifo(void)
     orte_debugger_fifo_active = true;
     opal_event_add(orte_debugger_attach, 0);
 }
+
+static bool did_once = false;
 
 static void attach_debugger(int fd, short event, void *arg)
 {
@@ -2804,6 +2828,12 @@ static void attach_debugger(int fd, short event, void *arg)
                             (NULL == orte_debugger_test_daemon) ?
                             MPIR_executable_path : orte_debugger_test_daemon);
         setup_debugger_job();
+        did_once = true;
+    }
+
+    /* if we are testing, ensure we only do this once */
+    if (NULL != orte_debugger_test_daemon && did_once) {
+        return;
     }
 
     /* reset the read or timer event */
