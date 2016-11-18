@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -715,13 +715,31 @@ static int rml_ofi_component_init(void)
              * for daemons the set/get_contact_info is used to exchange this information */
             if (ORTE_PROC_IS_APP) {
                         asprintf(&pmix_key,"%s%d",orte_rml_ofi.ofi_prov[cur_ofi_prov].fabric_info->fabric_attr->prov_name,cur_ofi_prov);
-                        opal_output_verbose(25, orte_rml_base_framework.framework_output,
-                         "%s calling OPAL_MODEX_SEND_STRING key - %s ", 
+                        opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                         "%s calling OPAL_MODEX_SEND_STRING for key - %s ", 
                           ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), pmix_key );
                         OPAL_MODEX_SEND_STRING( ret, OPAL_PMIX_GLOBAL,
                                             pmix_key,
                                             orte_rml_ofi.ofi_prov[cur_ofi_prov].ep_name,
                                             orte_rml_ofi.ofi_prov[cur_ofi_prov].epnamelen);
+                        /*print debug information on opal_modex_string */
+                        switch ( orte_rml_ofi.ofi_prov[cur_ofi_prov].fabric_info->addr_format)
+                        {
+                         case  FI_SOCKADDR_IN :
+                             opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                                     "%s:%d In FI_SOCKADDR_IN.  ",__FILE__,__LINE__);
+                                    /*  Address is of type sockaddr_in (IPv4) */
+                             opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                                        "%s sending Opal modex string for ofi prov_id %d, epnamelen = %d  ",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),cur_ofi_prov,orte_rml_ofi.ofi_prov[cur_ofi_prov].epnamelen);
+                                    /*[debug] - print the sockaddr - port and s_addr */
+                             struct sockaddr_in* ep_sockaddr = (struct sockaddr_in*)orte_rml_ofi.ofi_prov[cur_ofi_prov].ep_name;
+                             opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                                                "%s port = 0x%x, InternetAddr = 0x%s  ",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
+                             break;
+                        }
+                        /* end of printing opal_modex_string and port, IP */
                         free(pmix_key);
                         if (ORTE_SUCCESS != ret) {
                             opal_output_verbose(1, orte_rml_base_framework.framework_output,
@@ -940,6 +958,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
     char **comps;
     int i;
     orte_attribute_t *attr;
+    opal_list_t provider;
 
     opal_output_verbose(20,orte_rml_base_framework.framework_output,
                     "%s - Entering rml_ofi_open_conduit()",
@@ -959,6 +978,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         return NULL;
     }    
+
 
     /* someone may require this specific component, so look for "ofi" */
     if (orte_get_attribute(attributes, ORTE_RML_INCLUDE_COMP_ATTRIB, (void**)&comp_attrib, OPAL_STRING) &&
@@ -987,6 +1007,27 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
             }
         }
     }
+
+    /*[Debug] to check for daemon commn over ofi-ethernet, enable the default conduit  ORTE_MGMT_CONDUIT over ofi */
+    if (orte_get_attribute(attributes, ORTE_RML_TRANSPORT_TYPE, (void**)&comp_attrib, OPAL_STRING) &&
+        NULL != comp_attrib) {
+            opal_output_verbose(20,orte_rml_base_framework.framework_output,
+                    "%s - Forcibly returning ofi socket provider for ethernet transport request",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),comp_attrib);
+        comps = opal_argv_split(comp_attrib, ',');
+        for (i=0; NULL != comps[i]; i++) {
+            if (0 == strcmp(comps[i], "ethernet")) {
+                /* we are a candidate,  */
+                opal_argv_free(comps);
+                OBJ_CONSTRUCT(&provider, opal_list_t);
+                orte_set_attribute(&provider, ORTE_RML_PROVIDER_ATTRIB,
+                         ORTE_ATTR_LOCAL, "sockets", OPAL_STRING);
+                return make_module(get_ofi_prov_id(&provider));
+            }
+        }
+        opal_argv_free(comps);
+    }
+    /*[Debug]
 
     /* Alternatively, check the attributes to see if we qualify - we only handle
      * "pt2pt" */
@@ -1204,15 +1245,15 @@ void convert_to_sockaddr( char *ofiuri, struct sockaddr_in* ep_sockaddr)
     sin_port = tmp + 1;
     *tmp = '\0';
 
-    opal_output_verbose(10,orte_rml_base_framework.framework_output,
+    opal_output_verbose(1,orte_rml_base_framework.framework_output,
                         "%s OFI convert_to_sockaddr uri strings got -> family = %s, InternetAddr = %s, port = %s  ",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),sin_fly,sin_addr, sin_port);
     ep_sockaddr->sin_family = atoi( sin_fly );
     port = atoi( sin_port);
     ep_sockaddr->sin_port   = htons(port);
     res = inet_aton(sin_addr,(struct in_addr *)&ep_sockaddr->sin_addr);
-    opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                        "%s OFI convert_to_sockaddr() port = 0x%x, InternetAddr = %s  ",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ntohs(ep_sockaddr->sin_port),
+    opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                        "%s OFI convert_to_sockaddr() port = 0x%x decimal-%d, InternetAddr = %s  ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ntohs(ep_sockaddr->sin_port),ntohs(ep_sockaddr->sin_port),
                             inet_ntoa(ep_sockaddr->sin_addr));
 } 
