@@ -722,25 +722,24 @@ static int rml_ofi_component_init(void)
                                             pmix_key,
                                             orte_rml_ofi.ofi_prov[cur_ofi_prov].ep_name,
                                             orte_rml_ofi.ofi_prov[cur_ofi_prov].epnamelen);
-                        //Anandhi added for debug purpose
+                        /*print debug information on opal_modex_string */
                         switch ( orte_rml_ofi.ofi_prov[cur_ofi_prov].fabric_info->addr_format)
                         {
                          case  FI_SOCKADDR_IN :
                              opal_output_verbose(1,orte_rml_base_framework.framework_output,
                                      "%s:%d In FI_SOCKADDR_IN.  ",__FILE__,__LINE__);
                                     /*  Address is of type sockaddr_in (IPv4) */
-                                    opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                             opal_output_verbose(1,orte_rml_base_framework.framework_output,
                                         "%s sending Opal modex string for ofi prov_id %d, epnamelen = %d  ",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),cur_ofi_prov,orte_rml_ofi.ofi_prov[cur_ofi_prov].epnamelen);
                                     /*[debug] - print the sockaddr - port and s_addr */
-                                    struct sockaddr_in* ep_sockaddr = (struct sockaddr_in*)orte_rml_ofi.ofi_prov[cur_ofi_prov].ep_name;
-                                    opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                             struct sockaddr_in* ep_sockaddr = (struct sockaddr_in*)orte_rml_ofi.ofi_prov[cur_ofi_prov].ep_name;
+                             opal_output_verbose(1,orte_rml_base_framework.framework_output,
                                                 "%s port = 0x%x, InternetAddr = 0x%s  ",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
-                                /*[end debug]*/
-                            break;
+                             break;
                         }
-                        //Anandhi end debug
+                        /* end of printing opal_modex_string and port, IP */
                         free(pmix_key);
                         if (ORTE_SUCCESS != ret) {
                             opal_output_verbose(1, orte_rml_base_framework.framework_output,
@@ -751,8 +750,6 @@ static int rml_ofi_component_init(void)
                             continue;
                         }
             }
-
-            
 
             /**
             * Set the ANY_SRC address.

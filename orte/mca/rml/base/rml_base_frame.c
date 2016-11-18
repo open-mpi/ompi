@@ -216,7 +216,6 @@ void orte_rml_send_callback(int status, orte_process_name_t *peer,
 
 {
     OBJ_RELEASE(buffer);
-    opal_output(0, "%s orte_rml_send_callback called for peer %s tag - %d",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer), tag);
     if (ORTE_SUCCESS != status) {
         ORTE_ACTIVATE_PROC_STATE(peer, ORTE_PROC_STATE_UNABLE_TO_SEND_MSG);
     }
@@ -228,7 +227,6 @@ void orte_rml_recv_callback(int status, orte_process_name_t* sender,
 {
     orte_rml_recv_cb_t *blob = (orte_rml_recv_cb_t*)cbdata;
 
-    opal_output(0, "%s orte_rml_recv_callback called, sender is %s tag - %d",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&blob->name), tag);
     /* transfer the sender */
     blob->name.jobid = sender->jobid;
     blob->name.vpid = sender->vpid;
