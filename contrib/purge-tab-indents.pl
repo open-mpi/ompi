@@ -81,7 +81,7 @@ foreach my $f (@files) {
         next;
     }
 
-    print "FILE: ", $f, "\n";
+    quiet_print "FILE: $f\n";
 
     open(FILE, "$f");
     my @lines_with_tabs = <FILE>;
