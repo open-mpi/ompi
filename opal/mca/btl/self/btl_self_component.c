@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -20,20 +20,26 @@
  * $HEADER$
  */
 #include "opal_config.h"
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNISTD_H */
-#include <string.h>
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif  /* HAVE_SYS_TYPES_H */
 
-#include "opal/runtime/opal.h"
-#include "opal/mca/event/event.h"
 #include "btl_self.h"
 #include "btl_self_frag.h"
+#include "opal/mca/base/mca_base_var.h"
 
 static int mca_btl_self_component_register(void);
+static int mca_btl_self_component_open(void);
+static int mca_btl_self_component_close(void);
+
+/**
+ * SELF module initialization.
+ *
+ * @param num_btls (OUT)                  Number of BTLs returned in BTL array.
+ * @param enable_progress_threads (IN)    Flag indicating whether BTL is allowed to have progress threads
+ * @param enable_mpi_threads (IN)         Flag indicating whether BTL must support multilple simultaneous invocations from different threads
+ *
+ */
+static mca_btl_base_module_t **mca_btl_self_component_init (int *num_btls,
+                                                            bool enable_progress_threads,
+                                                            bool enable_mpi_threads);
 
 /*
  * Shared Memory (SELF) component instance.
@@ -76,14 +82,15 @@ static int mca_btl_self_component_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_self_component.free_list_num);
-    mca_btl_self_component.free_list_max = -1;
+    /* NTH: free list buffers are not released until we tear down so DO NOT make them unlimited here */
+    mca_btl_self_component.free_list_max = 64;
     (void) mca_base_component_var_register(&mca_btl_self_component.super.btl_version, "free_list_max",
                                            "Maximum number of fragments",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_self_component.free_list_max);
-    mca_btl_self_component.free_list_inc = 32;
+    mca_btl_self_component.free_list_inc = 8;
     (void) mca_base_component_var_register(&mca_btl_self_component.super.btl_version, "free_list_inc",
                                            "Increment by this number of fragments",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -92,25 +99,23 @@ static int mca_btl_self_component_register(void)
                                            &mca_btl_self_component.free_list_inc);
 
     mca_btl_self.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
-    mca_btl_self.btl_eager_limit = 128 * 1024;
+    mca_btl_self.btl_eager_limit = 1024;
     mca_btl_self.btl_rndv_eager_limit = 128 * 1024;
-    mca_btl_self.btl_max_send_size = 256 * 1024;
+    mca_btl_self.btl_max_send_size = 16 * 1024;
     mca_btl_self.btl_rdma_pipeline_send_length = INT_MAX;
     mca_btl_self.btl_rdma_pipeline_frag_size = INT_MAX;
     mca_btl_self.btl_min_rdma_pipeline_size = 0;
-    mca_btl_self.btl_flags = MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND;
+    mca_btl_self.btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND;
     mca_btl_self.btl_bandwidth = 100;
     mca_btl_self.btl_latency = 0;
-    mca_btl_base_param_register(&mca_btl_self_component.super.btl_version,
-            &mca_btl_self);
+    mca_btl_base_param_register (&mca_btl_self_component.super.btl_version, &mca_btl_self);
 
     return OPAL_SUCCESS;
 }
 
-int mca_btl_self_component_open(void)
+static int mca_btl_self_component_open(void)
 {
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_btl_self_component.self_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_eager, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_send, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_rdma, opal_free_list_t);
@@ -123,64 +128,67 @@ int mca_btl_self_component_open(void)
  * component cleanup - sanity checking of queue lengths
  */
 
-int mca_btl_self_component_close(void)
+static int mca_btl_self_component_close(void)
 {
-    OBJ_DESTRUCT(&mca_btl_self_component.self_lock);
     OBJ_DESTRUCT(&mca_btl_self_component.self_frags_eager);
     OBJ_DESTRUCT(&mca_btl_self_component.self_frags_send);
     OBJ_DESTRUCT(&mca_btl_self_component.self_frags_rdma);
     return OPAL_SUCCESS;
 }
 
-
 /*
  *  SELF component initialization
  */
-mca_btl_base_module_t** mca_btl_self_component_init( int *num_btls,
-                                                     bool enable_progress_threads,
-                                                     bool enable_mpi_threads )
+static mca_btl_base_module_t **mca_btl_self_component_init (int *num_btls,
+                                                            bool enable_progress_threads,
+                                                            bool enable_mpi_threads)
 {
     mca_btl_base_module_t **btls = NULL;
-    *num_btls = 0;
+    int ret;
 
-    /* allocate the Shared Memory PTL */
-    *num_btls = 1;
-    btls = (mca_btl_base_module_t**)malloc((*num_btls)*sizeof(mca_btl_base_module_t*));
+    /* initialize free lists */
+    ret = opal_free_list_init (&mca_btl_self_component.self_frags_eager,
+                               sizeof (mca_btl_self_frag_eager_t) + mca_btl_self.btl_eager_limit,
+                               opal_cache_line_size, OBJ_CLASS(mca_btl_self_frag_eager_t), 0,
+                               opal_cache_line_size, mca_btl_self_component.free_list_num,
+                               mca_btl_self_component.free_list_max,
+                               mca_btl_self_component.free_list_inc,
+                               NULL, 0, NULL, NULL, NULL);
+    if (OPAL_SUCCESS != ret) {
+        return NULL;
+    }
+
+    ret = opal_free_list_init (&mca_btl_self_component.self_frags_send,
+                               sizeof (mca_btl_self_frag_send_t) + mca_btl_self.btl_max_send_size,
+                               opal_cache_line_size, OBJ_CLASS(mca_btl_self_frag_send_t), 0,
+                               opal_cache_line_size, mca_btl_self_component.free_list_num,
+                               mca_btl_self_component.free_list_max,
+                               mca_btl_self_component.free_list_inc,
+                               NULL, 0, NULL, NULL, NULL);
+    if (OPAL_SUCCESS != ret) {
+        return NULL;
+    }
+
+    ret = opal_free_list_init (&mca_btl_self_component.self_frags_rdma,
+                               sizeof (mca_btl_self_frag_rdma_t) + MCA_BTL_SELF_MAX_INLINE_SIZE,
+                               opal_cache_line_size, OBJ_CLASS(mca_btl_self_frag_rdma_t), 0,
+                               opal_cache_line_size, mca_btl_self_component.free_list_num,
+                               mca_btl_self_component.free_list_max,
+                               mca_btl_self_component.free_list_inc,
+                               NULL, 0, NULL, NULL, NULL);
+    if (OPAL_SUCCESS != ret) {
+        return NULL;
+    }
+
+    /* get pointer to the btls */
+    btls = (mca_btl_base_module_t **) malloc (sizeof (mca_btl_base_module_t *));
     if (NULL == btls) {
         return NULL;
     }
 
-    /* initialize free lists */
-    opal_free_list_init (&mca_btl_self_component.self_frags_eager,
-                         sizeof(mca_btl_self_frag_eager_t) + mca_btl_self.btl_eager_limit,
-                         opal_cache_line_size,
-                         OBJ_CLASS(mca_btl_self_frag_eager_t),
-                         0,opal_cache_line_size,
-                         mca_btl_self_component.free_list_num,
-                         mca_btl_self_component.free_list_max,
-                         mca_btl_self_component.free_list_inc,
-                         NULL, 0, NULL, NULL, NULL);
-    opal_free_list_init (&mca_btl_self_component.self_frags_send,
-                         sizeof(mca_btl_self_frag_send_t) + mca_btl_self.btl_max_send_size,
-                         opal_cache_line_size,
-                         OBJ_CLASS(mca_btl_self_frag_send_t),
-                         0,opal_cache_line_size,
-                         mca_btl_self_component.free_list_num,
-                         mca_btl_self_component.free_list_max,
-                         mca_btl_self_component.free_list_inc,
-                         NULL, 0, NULL, NULL, NULL);
-    opal_free_list_init (&mca_btl_self_component.self_frags_rdma,
-                         sizeof(mca_btl_self_frag_rdma_t),
-                         opal_cache_line_size,
-                         OBJ_CLASS(mca_btl_self_frag_rdma_t),
-                         0,opal_cache_line_size,
-                         mca_btl_self_component.free_list_num,
-                         mca_btl_self_component.free_list_max,
-                         mca_btl_self_component.free_list_inc,
-                         NULL, 0, NULL, NULL, NULL);
+    btls[0] = &mca_btl_self;
+    *num_btls = 1;
 
-    /* get pointer to the btls */
-    btls[0] = (mca_btl_base_module_t *)(&mca_btl_self);
     return btls;
 }
 
