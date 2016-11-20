@@ -114,8 +114,8 @@ shmem_ds_reset(map_segment_t *ds_buf)
 
       MAP_SEGMENT_RESET_FLAGS(ds_buf);
       ds_buf->seg_id = MAP_SEGMENT_SHM_INVALID;
-      ds_buf->seg_base_addr = 0;
-      ds_buf->end = 0;
+      ds_buf->super.va_base = 0;
+      ds_buf->super.va_end = 0;
       ds_buf->seg_size = 0;
       ds_buf->type = MAP_SEGMENT_UNKNOWN;
       memset(ds_buf->seg_name, '\0', sizeof(ds_buf->seg_name));
@@ -225,9 +225,9 @@ segment_create(map_segment_t *ds_buf,
 
     ds_buf->type = MAP_SEGMENT_ALLOC_SHM;
     ds_buf->seg_id = shmid;
-    ds_buf->seg_base_addr = addr;
+    ds_buf->super.va_base = addr;
     ds_buf->seg_size = size;
-    ds_buf->end = (void*)((uintptr_t)ds_buf->seg_base_addr + ds_buf->seg_size);
+    ds_buf->super.va_end = (void*)((uintptr_t)ds_buf->super.va_base + ds_buf->seg_size);
 
     OPAL_OUTPUT_VERBOSE(
           (70, oshmem_sshmem_base_framework.framework_output,
@@ -236,7 +236,7 @@ segment_create(map_segment_t *ds_buf,
            mca_sshmem_sysv_component.super.base_version.mca_type_name,
            mca_sshmem_sysv_component.super.base_version.mca_component_name,
            (rc ? "failure" : "successful"),
-           ds_buf->seg_id, ds_buf->seg_base_addr, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
+           ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
       );
 
     return rc;
@@ -264,7 +264,7 @@ segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
             "(id: %d, addr: %p size: %lu, name: %s | va_base: 0x%p len: %d key %llx)\n",
             mca_sshmem_sysv_component.super.base_version.mca_type_name,
             mca_sshmem_sysv_component.super.base_version.mca_component_name,
-            ds_buf->seg_id, ds_buf->seg_base_addr, (unsigned long)ds_buf->seg_size, ds_buf->seg_name,
+            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size, ds_buf->seg_name,
             mkey->va_base, mkey->len, (unsigned long long)mkey->u.key)
     );
 
@@ -286,7 +286,7 @@ segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
             "(id: %d, addr: %p size: %lu, name: %s)\n",
             mca_sshmem_sysv_component.super.base_version.mca_type_name,
             mca_sshmem_sysv_component.super.base_version.mca_component_name,
-            ds_buf->seg_id, ds_buf->seg_base_addr, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
+            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
     );
 
     if (ds_buf->seg_id != MAP_SEGMENT_SHM_INVALID) {

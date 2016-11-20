@@ -19,6 +19,7 @@
 
 /* This component does uses SPML:IKRIT */
 #include "oshmem/mca/spml/ikrit/spml_ikrit.h"
+#include "oshmem/runtime/runtime.h"
 
 
 BEGIN_C_DECLS
@@ -60,16 +61,76 @@ struct mca_atomic_mxm_module_t {
 typedef struct mca_atomic_mxm_module_t mca_atomic_mxm_module_t;
 OBJ_CLASS_DECLARATION(mca_atomic_mxm_module_t);
 
-END_C_DECLS
 
-#if MXM_API >= MXM_VERSION(2,0)
-static inline mxm_mem_key_t *to_mxm_mkey(sshmem_mkey_t *mkey) {
-
-    if (0 == mkey->len) {
-        return &mxm_empty_mem_key;
+static inline uint8_t mca_atomic_mxm_order(size_t nlong)
+{
+    if (OPAL_LIKELY(8 == nlong)) {
+        return 3;
     }
-    return (mxm_mem_key_t *)mkey->u.data;
+
+    if (OPAL_LIKELY(4 == nlong)) {
+        return 2;
+    }
+
+    if (2 == nlong) {
+        return 1;
+    }
+
+    if (1 == nlong) {
+        return 0;
+    }
+
+    ATOMIC_ERROR("Type size must be 1/2/4 or 8 bytes.");
+    oshmem_shmem_abort(-1);
+    return OSHMEM_ERR_BAD_PARAM;
 }
-#endif
+
+static inline void mca_atomic_mxm_req_init(mxm_send_req_t *sreq, int pe, void *target, size_t nlong)
+{
+    uint8_t nlong_order;
+    void *remote_addr;
+    mxm_mem_key_t *mkey;
+
+    nlong_order = mca_atomic_mxm_order(nlong);
+
+    mkey = mca_spml_ikrit_get_mkey(pe, target, MXM_PTL_RDMA, &remote_addr);
+
+    /* mxm request init */
+    sreq->base.state        = MXM_REQ_NEW;
+    sreq->base.mq           = mca_atomic_mxm_spml_self->mxm_mq;
+    sreq->base.conn         = mca_atomic_mxm_spml_self->mxm_peers[pe].mxm_hw_rdma_conn;
+    sreq->base.completed_cb = NULL;
+    sreq->base.data_type    = MXM_REQ_DATA_BUFFER;
+
+    sreq->base.data.buffer.memh   = MXM_INVALID_MEM_HANDLE;
+    sreq->base.data.buffer.length = nlong;
+
+    sreq->op.atomic.remote_vaddr = (uintptr_t) remote_addr;
+    sreq->op.atomic.remote_mkey  = mkey;
+    sreq->op.atomic.order        = nlong_order;
+
+    sreq->flags = 0;
+}
+
+static inline void mca_atomic_mxm_post(mxm_send_req_t *sreq)
+{
+    mxm_error_t mxm_err;
+
+    mxm_err = mxm_req_send(sreq);
+    if (OPAL_UNLIKELY(MXM_OK != mxm_err)) {
+        ATOMIC_ERROR("mxm_req_send failed, mxm_error = %d",
+                     mxm_err);
+        oshmem_shmem_abort(-1);
+    }
+
+    mxm_req_wait(&sreq->base);
+    if (OPAL_UNLIKELY(MXM_OK != sreq->base.error)) {
+        ATOMIC_ERROR("mxm_req_wait got non MXM_OK error: %d",
+                     sreq->base.error);
+        oshmem_shmem_abort(-1);
+    }
+}
+
+END_C_DECLS
 
 #endif /* MCA_ATOMIC_MXM_H */

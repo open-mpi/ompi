@@ -218,10 +218,10 @@ static memheap_context_t* _memheap_create(void)
         context.user_size = user_size;
         context.private_size = MEMHEAP_BASE_PRIVATE_SIZE;
         context.user_base_addr =
-                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].seg_base_addr
+                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].super.va_base
                         + 0);
         context.private_base_addr =
-                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].seg_base_addr
+                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].super.va_base
                         + context.user_size);
     }
 
