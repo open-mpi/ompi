@@ -428,6 +428,7 @@ int mca_common_monitoring_get_rmessages_size(const struct mca_base_pvar_t *pvar,
 static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
 {
     /* Dump outgoing messages */
+    fprintf(pf, "# POINT TO POINT\n");
     for (int i = 0 ; i < nbprocs ; i++) {
         if(messages_count[i] > 0) {
             fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
@@ -441,7 +442,21 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
         messages_count[i] = 0;
     }
 
+    /* Dump outgoing synchronization/collective messages */
+    if( 1 == mca_common_monitoring_filter() ) {
+        for (int i = 0 ; i < nbprocs ; i++) {
+            if(filtered_messages_count[i] > 0) {
+                fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
+                        my_rank, i, filtered_sent_data[i], filtered_messages_count[i]);
+            }
+            /* reset phase array */
+            filtered_sent_data[i] = 0;
+            filtered_messages_count[i] = 0;
+        }
+    }
+
     /* Dump incoming messages */
+    fprintf(pf, "# RMA\n");
     for (int i = 0 ; i < nbprocs ; i++) {
         if(rmessages_count[i] > 0) {
             fprintf(pf, "R\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
@@ -450,19 +465,6 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
         /* reset phase array */
         recv_data[i] = 0;
         rmessages_count[i] = 0;
-    }
-    
-    if( 1 != mca_common_monitoring_filter() ) return;
-
-    /* Dump outgoing synchronization/collective messages */
-    for (int i = 0 ; i < nbprocs ; i++) {
-        if(filtered_messages_count[i] > 0) {
-            fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
-                    my_rank, i, filtered_sent_data[i], filtered_messages_count[i]);
-        }
-        /* reset phase array */
-        filtered_sent_data[i] = 0;
-        filtered_messages_count[i] = 0;
     }
 }
 
