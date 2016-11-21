@@ -22,15 +22,15 @@ dnl
 dnl $HEADER$
 dnl
 
-# ORTE_CHECK_ALPS_CLE4([action-if-found], [action-if-not-found])
+# OPAL_CHECK_ALPS_CLE4([action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-AC_DEFUN([ORTE_CHECK_ALPS_CLE4],[
+AC_DEFUN([OPAL_CHECK_ALPS_CLE4],[
 
 #
 #   if we've gotten here, its because we are building on a CLE 4 system
 #
-    orte_check_alps_cle4_libdir_happy="no"
-    orte_check_alps_cle4_dir_happy="no"
+    opal_check_alps_cle4_libdir_happy="no"
+    opal_check_alps_cle4_dir_happy="no"
 
     AC_MSG_CHECKING([Checking for ALPS components on a CLE 4 system with alps  $with_alps])
 
@@ -48,31 +48,31 @@ AC_DEFUN([ORTE_CHECK_ALPS_CLE4],[
      AS_IF([test -z "$with_alps_libdir"],
            [AS_IF([test "$with_alps" != "yes" && test "$with_alps" != "auto"],
                   [AS_IF([test -d "$with_alps_libdir/lib64"],
-                         [orte_check_alps_libdir="$with_alps_libdir/lib64"],
-                         [orte_check_alps_libdir="$with_alps_libdir/lib"])],
-                  [ orte_check_alps_libdir="$default_alps_dir/lib/alps"])
+                         [opal_check_alps_libdir="$with_alps_libdir/lib64"],
+                         [opal_check_alps_libdir="$with_alps_libdir/lib"])],
+                  [ opal_check_alps_libdir="$default_alps_dir/lib/alps"])
            ],[])
 
      AS_IF([test "$with_alps" = "yes" || test "$with_alps" = "auto"],
-           [orte_check_alps_dir=$default_alps_dir],
-           [orte_check_alps_dir=$with_alps])
+           [opal_check_alps_dir=$default_alps_dir],
+           [opal_check_alps_dir=$with_alps])
 
-    AC_MSG_CHECKING([if $orte_check_alps_libdir/libalps.a is present])
-    AS_IF([test -f "$orte_check_alps_libdir/libalps.a"],
-          [orte_check_alps_libdir_cle4_happy="yes"],
-          [orte_check_alps_libdir_cle4_happy="no",
+    AC_MSG_CHECKING([if $opal_check_alps_libdir/libalps.a is present])
+    AS_IF([test -f "$opal_check_alps_libdir/libalps.a"],
+          [opal_check_alps_libdir_cle4_happy="yes"],
+          [opal_check_alps_libdir_cle4_happy="no",
            AC_MSG_RESULT([no])])
 
-    AC_MSG_CHECKING([if $orte_check_alps_dir/include/alps/apInfo.h is present])
-    AS_IF([test -f "$orte_check_alps_dir/include/alps/apInfo.h"],
-          [orte_check_alps_dir_cle4_happy="yes"],
-          [orte_check_alps_dir_cle4_happy="no"
+    AC_MSG_CHECKING([if $opal_check_alps_dir/include/alps/apInfo.h is present])
+    AS_IF([test -f "$opal_check_alps_dir/include/alps/apInfo.h"],
+          [opal_check_alps_dir_cle4_happy="yes"],
+          [opal_check_alps_dir_cle4_happy="no"
            AC_MSG_RESULT([no])])
 
-    AS_IF([test "$orte_check_alps_libdir_cle4_happy" = "yes" && test "$orte_check_alps_dir_cle4_happy" = "yes"],
-          [CRAY_ALPSLLI_CFLAGS="-I$orte_check_alps_dir/include"
-           CRAY_ALPSLLI_LIBS="-L$orte_check_alps_libdir -lalpslli -lalpsutil"
-           CRAY_ALPSLLI_STATIC_LIBS="-L$orte_check_alps_libdir -lalpslli -lalpsutil"
+    AS_IF([test "$opal_check_alps_libdir_cle4_happy" = "yes" && test "$opal_check_alps_dir_cle4_happy" = "yes"],
+          [CRAY_ALPSLLI_CFLAGS="-I$opal_check_alps_dir/include"
+           CRAY_ALPSLLI_LIBS="-L$opal_check_alps_libdir -lalpslli -lalpsutil"
+           CRAY_ALPSLLI_STATIC_LIBS="-L$opal_check_alps_libdir -lalpslli -lalpsutil"
            $1],
           [$2])
 ])
@@ -80,10 +80,10 @@ AC_DEFUN([ORTE_CHECK_ALPS_CLE4],[
 
 
 
-# ORTE_CHECK_ALPS(prefix, [action-if-found], [action-if-not-found])
+# OPAL_CHECK_ALPS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-AC_DEFUN([ORTE_CHECK_ALPS],[
-    if test -z "$orte_check_cray_alps_happy"; then
+AC_DEFUN([OPAL_CHECK_ALPS],[
+    if test -z "$opal_check_cray_alps_happy"; then
 
         AC_ARG_WITH([alps],
                     [AC_HELP_STRING([--with-alps(=DIR|yes|no)],
@@ -97,15 +97,15 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
 
         AC_MSG_CHECKING([for ALPS support cle level $cle_level])
         AS_IF([test "$cle_level" = "4" && test "$with_alps" != "no"],
-              [ORTE_CHECK_ALPS_CLE4([orte_check_cray_alps_happy="yes"],
-                                    [orte_check_cray_alps_happy="no"])],
+              [OPAL_CHECK_ALPS_CLE4([opal_check_cray_alps_happy="yes"],
+                                    [opal_check_cray_alps_happy="no"])],
               [AS_IF([test "$with_alps" = "no"],
                      [AC_MSG_RESULT([no])
                       $3],
                      [AS_IF([test "$with_alps" = "auto" || test "$with_alps" = "yes"],
                             [PKG_CHECK_MODULES_STATIC([CRAY_ALPSLLI], [cray-alpslli],
-                                                      [orte_check_cray_alps_happy="yes"],
-                                                      [orte_check_cray_alps_happy="no"]
+                                                      [opal_check_cray_alps_happy="yes"],
+                                                      [opal_check_cray_alps_happy="no"]
                                                       [AS_IF([test "$with_alps" = "yes"],
                                                              [AC_MSG_WARN([ALPS support requested but pkg-config failed.])
                                                               AC_MSG_WARN([Need to explicitly indicate ALPS directory])
@@ -113,8 +113,8 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                                                               AC_MSG_ERROR([Aborting])],[])]
                                                       )
                               PKG_CHECK_MODULES_STATIC([CRAY_ALPSUTIL], [cray-alpsutil],
-                                                [orte_check_cray_alps_happy="yes"],
-                                                [orte_check_cray_alps_happy="no"]
+                                                [opal_check_cray_alps_happy="yes"],
+                                                [opal_check_cray_alps_happy="no"]
                                                 [AS_IF([test "$with_alps" = "yes"],
                                                        [AC_MSG_WARN([ALPS support requested but pkg-config failed.])
                                                         AC_MSG_WARN([Need to explicitly indicate ALPS directory])
@@ -123,8 +123,8 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                                                        )
 
                                PKG_CHECK_MODULES_STATIC([CRAY_ALPS], [cray-alps],
-                                               [orte_check_cray_alps_happy="yes"],
-                                               [orte_check_cray_alps_happy="no"]
+                                               [opal_check_cray_alps_happy="yes"],
+                                               [opal_check_cray_alps_happy="no"]
                                                [AS_IF([test "$with_alps" = "yes"],
                                                       [AC_MSG_WARN([ALPS support requested but pkg-config failed.])
                                                        AC_MSG_WARN([Need to explicitly indicate ALPS directory])
@@ -132,11 +132,11 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                                                        AC_MSG_ERROR([Aborting])],[])]
                                                        )
                                PKG_CHECK_MODULES_STATIC([CRAY_WLM_DETECT], [cray-wlm_detect],
-                                               [orte_check_cray_alps_happy="yes"
+                                               [opal_check_cray_alps_happy="yes"
                                                 AC_DEFINE_UNQUOTED([CRAY_WLM_DETECT],[1],
                                                                    [defined to 1 if cray wlm available, 0 otherwise])
                                                ],
-                                               [orte_check_cray_alps_happy="no"]
+                                               [opal_check_cray_alps_happy="no"]
                                                [AS_IF([test "$with_alps" = "yes"],
                                                       [AC_MSG_WARN([ALPS support requested but pkg-config failed.])
                                                        AC_MSG_WARN([Need to explicitly indicate ALPS directory])
@@ -150,17 +150,17 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                     ])
                ])
 
-        AC_MSG_RESULT([orte_check_cray_alps_happy = $orte_check_cray_alps_happy])
+        AC_MSG_RESULT([opal_check_cray_alps_happy = $opal_check_cray_alps_happy])
 
-        AS_IF([test "$orte_check_cray_alps_happy" = "yes" && test "$enable_static" = "yes"],
+        AS_IF([test "$opal_check_cray_alps_happy" = "yes" && test "$enable_static" = "yes"],
               [CRAY_ALPSLLI_LIBS = $CRAY_ALPSLLI_STATIC_LIBS
                CRAY_ALPSUTIL_LIBS = $CRAY_ALPSUTIL_STATIC_LIBS],
               [])
 
-	OPAL_SUMMARY_ADD([[Resource Managers]],[[Cray Alps]],[$1],[$orte_check_cray_alps_happy])
+	OPAL_SUMMARY_ADD([[Resource Managers]],[[Cray Alps]],[$1],[$opal_check_cray_alps_happy])
     fi
 
-    AS_IF([test "$orte_check_cray_alps_happy" = "yes"],
+    AS_IF([test "$opal_check_cray_alps_happy" = "yes"],
           [$1_LDFLAGS="[$]$1_LDFLAGS $CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS"
            $1_CPPFLAGS="[$]$1_CPPFLAGS $CRAY_ALPSLLI_CFLAGS $CRAY_ALPSUTIL_CFLAGS $CRAY_ALPS_CFLAGS $CRAY_WLM_DETECT_CFLAGS"
            $1_LIBS="[$]$1_LIBS $CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"
