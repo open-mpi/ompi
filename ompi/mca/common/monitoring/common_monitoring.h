@@ -101,6 +101,19 @@ static inline int mca_common_monitoring_get_world_rank(int dst, struct ompi_comm
                                             key, (void *)world_rank);
 }
 
+/* Collective operation monitoring */
+struct mca_monitoring_coll_data_t;
+typedef struct mca_monitoring_coll_data_t mca_monitoring_coll_data_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_monitoring_coll_data_t);
+
+OMPI_DECLSPEC mca_monitoring_coll_data_t*mca_common_monitoring_coll_new(ompi_communicator_t*comm);
+OMPI_DECLSPEC void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data);
+OMPI_DECLSPEC void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data);
+OMPI_DECLSPEC void mca_common_monitoring_coll_flush_all(FILE *pf);
+OMPI_DECLSPEC void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*data);
+OMPI_DECLSPEC void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*data);
+OMPI_DECLSPEC void mca_common_monitoring_coll_a2a(uint64_t size, mca_monitoring_coll_data_t*data);
+
 END_C_DECLS
 
 #endif  /* MCA_COMMON_MONITORING_H */
