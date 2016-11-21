@@ -20,6 +20,7 @@
 #include <opal/mca/base/mca_base_component_repository.h>
 #include <opal/class/opal_hash_table.h>
 #include <opal/util/output.h>
+#include <math.h>
 
 /*** Monitoring specific variables ***/
 /* Keep tracks of how many components are currently using the common part */
@@ -57,7 +58,8 @@ uint64_t* rmessages_count = NULL;
 uint64_t* filtered_sent_data = NULL;
 uint64_t* filtered_messages_count = NULL;
 
-uint64_t histogram[65];
+uint64_t* size_histogram = NULL;
+const int max_size_histogram = 66;
 
 int rank_world = -1;
 int nprocs_world = 0;
@@ -272,12 +274,15 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
         nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
     
     if( NULL == sent_data ) {
-        sent_data               = (uint64_t*)calloc(6 * nprocs_world, sizeof(uint64_t));
+        int array_size = 6 + max_size_histogram * nprocs_world;
+        sent_data               = (uint64_t*)calloc(array_size, sizeof(uint64_t));
         recv_data               = sent_data + nprocs_world;
         messages_count          = recv_data + nprocs_world;
         rmessages_count         = messages_count + nprocs_world;
         filtered_sent_data      = rmessages_count + nprocs_world;
         filtered_messages_count = filtered_sent_data + nprocs_world;
+
+        size_histogram = filtered_messages_count + nprocs_world;
     }
 
     /* For all procs in the same MPI_COMM_WORLD we need to add them to the hash table */
@@ -312,13 +317,8 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
 
 static void mca_common_monitoring_reset( void )
 {
-    memset(sent_data, 0, nprocs_world * sizeof(uint64_t));
-    memset(recv_data, 0, nprocs_world * sizeof(uint64_t));
-    memset(messages_count, 0, nprocs_world * sizeof(uint64_t));
-    memset(rmessages_count, 0, nprocs_world * sizeof(uint64_t));
-    memset(filtered_sent_data, 0, nprocs_world * sizeof(uint64_t));
-    memset(filtered_messages_count, 0, nprocs_world * sizeof(uint64_t));
-    memset(histogram, 0, 64 * sizeof(uint64_t));
+    int array_size = 6 + max_size_histogram * nprocs_world;
+    memset(sent_data, 0, array_size * sizeof(uint64_t));
 }
 
 void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
@@ -327,11 +327,11 @@ void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
 
     /* Keep tracks of the data_size distribution */
     if( 0 == data_size ) {
-        opal_atomic_add_64(&histogram[0], 1);
+        opal_atomic_add_64(&size_histogram[world_rank * nprocs_world], 1);
     } else {
-        int log2_size = log10(data_size)/log10(2.)
-            OMPI_MONITORING_PRINT_INFO("log2_size=%d",log2_size);
-        //        opal_atomic_add_64(&histogram[log2_size], 1);
+        int log2_size = log10(data_size)/log10(2.);
+        OPAL_MONITORING_PRINT_INFO("data_size=%lu, log2_size=%d", data_size, log2_size);
+        opal_atomic_add_64(&size_histogram[world_rank * nprocs_world + log2_size], 1);
     }
         
     /* distinguishses positive and negative tags if requested */
@@ -430,8 +430,11 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     /* Dump outgoing messages */
     for (int i = 0 ; i < nbprocs ; i++) {
         if(messages_count[i] > 0) {
-            fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
+            fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
                     my_rank, i, sent_data[i], messages_count[i]);
+            for(int j = 0 ; j < max_size_histogram ; ++j)
+                fprintf(pf, "%" PRIu64 "%s", size_histogram[i * nbprocs + j],
+                        j < max_size_histogram - 1 ? "," : "\n");
         }
         /* reset phase array */
         sent_data[i] = 0;
