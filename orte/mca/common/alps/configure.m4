@@ -13,7 +13,7 @@
 # Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
-# Copyright (c) 2014      Los Alamos National Security, LLC.
+# Copyright (c) 2014-2016 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 #
@@ -28,7 +28,7 @@
 AC_DEFUN([MCA_orte_common_alps_CONFIG],[
     AC_CONFIG_FILES([orte/mca/common/alps/Makefile])
 
-    ORTE_CHECK_ALPS([common_alps], [common_alps_happy="yes"], [common_alps_happy="no"])
+    OPAL_CHECK_ALPS([common_alps], [common_alps_happy="yes"], [common_alps_happy="no"])
 
     AS_IF([test "$common_alps_happy" = "yes"],
           [$1

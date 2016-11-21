@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2011-2016 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 #
@@ -25,7 +25,7 @@
 AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
     AC_CONFIG_FILES([orte/mca/ess/alps/Makefile])
 
-    ORTE_CHECK_ALPS([ess_alps], [ess_alps_happy="yes"], [ess_alps_happy="no"])
+    OPAL_CHECK_ALPS([ess_alps], [ess_alps_happy="yes"], [ess_alps_happy="no"])
 
     AS_IF([test "$ess_alps_happy" = "yes"],
           [$1

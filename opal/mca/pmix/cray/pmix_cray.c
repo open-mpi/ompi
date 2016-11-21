@@ -207,6 +207,7 @@ static void cray_get_more_info(void)
     /*
      * get some items from alps placement file
      */
+
     place_ret = alps_get_placement_info(apid,
                                         &layout,
                                         NULL,
