@@ -76,7 +76,7 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
     vader_check_reg_ctx_t check_ctx = {.ep = ep, .reg = &reg, .vma_module = vma_module};
     xpmem_addr_t xpmem_addr;
     uintptr_t base, bound;
-    int rc, i;
+    int rc;
 
     base = OPAL_DOWN_ALIGN((uintptr_t) rem_ptr, attach_align, uintptr_t);
     bound = OPAL_ALIGN((uintptr_t) rem_ptr + size - 1, attach_align, uintptr_t) + 1;

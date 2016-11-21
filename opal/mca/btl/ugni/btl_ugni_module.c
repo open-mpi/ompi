@@ -131,7 +131,6 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *)btl;
     mca_btl_base_endpoint_t *ep;
     uint64_t key;
-    void *node;
     int rc;
 
     while (ugni_module->active_send_count) {
