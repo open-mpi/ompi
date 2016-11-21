@@ -77,7 +77,7 @@ static int mca_common_monitoring_flush(int fd, char* filename);
  * positive value if the segregation between point-to-point and collective is
  * disabled.
  */
-static inline int mca_common_monitoring_filter( void )
+int mca_common_monitoring_filter( void )
 {
     return mca_common_monitoring_current_state;
 }
@@ -466,6 +466,9 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
         recv_data[i] = 0;
         rmessages_count[i] = 0;
     }
+
+    /* Dump collectives */
+    mca_common_monitoring_coll_flush_all(pf);
 }
 
 /*

@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-sources = common_monitoring.c
+sources = common_monitoring.c common_monitoring_coll.c
 header = common_monitoring.h
 
 lib_LTLIBRARIES =
