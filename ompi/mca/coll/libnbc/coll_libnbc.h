@@ -13,7 +13,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -76,6 +76,7 @@ struct ompi_coll_libnbc_component_t {
     opal_list_t active_requests;
     int32_t active_comms;
     opal_atomic_lock_t progress_lock;
+    opal_mutex_t lock;
 };
 typedef struct ompi_coll_libnbc_component_t ompi_coll_libnbc_component_t;
 
