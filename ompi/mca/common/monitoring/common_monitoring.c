@@ -57,6 +57,8 @@ uint64_t* rmessages_count = NULL;
 uint64_t* filtered_sent_data = NULL;
 uint64_t* filtered_messages_count = NULL;
 
+uint64_t histogram[65];
+
 int rank_world = -1;
 int nprocs_world = 0;
 
@@ -316,12 +318,22 @@ static void mca_common_monitoring_reset( void )
     memset(rmessages_count, 0, nprocs_world * sizeof(uint64_t));
     memset(filtered_sent_data, 0, nprocs_world * sizeof(uint64_t));
     memset(filtered_messages_count, 0, nprocs_world * sizeof(uint64_t));
+    memset(histogram, 0, 64 * sizeof(uint64_t));
 }
 
 void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
 {
     if( 0 == mca_common_monitoring_filter() ) return;  /* right now the monitoring is not started */
 
+    /* Keep tracks of the data_size distribution */
+    if( 0 == data_size ) {
+        opal_atomic_add_64(&histogram[0], 1);
+    } else {
+        int log2_size = log10(data_size)/log10(2.)
+            OMPI_MONITORING_PRINT_INFO("log2_size=%d",log2_size);
+        //        opal_atomic_add_64(&histogram[log2_size], 1);
+    }
+        
     /* distinguishses positive and negative tags if requested */
     if( (tag < 0) && (1 == mca_common_monitoring_filter()) ) {
         filtered_sent_data[world_rank] += data_size;
