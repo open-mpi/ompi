@@ -1,7 +1,0 @@
-The functions in this directory are all intended to test registry operations against a persistent seed. Thus, they perform a system init/finalize. The functions in the directory above this one should be used to test basic registry operations within the replica - they will isolate the replica so as to avoid the communications issues and the init/finalize problems in other subsystems that may cause problems here.
-
-To run these tests, you need to first start a persistent daemon. This can be done using the command:
-
-orted --seed --scope public --persistent
-
-The daemon will "daemonize" itself and establish the registry (as well as other central services) replica, and then return a system prompt. You can then run any of these functions. If desired, you can utilize gdb and/or debug options on the persistent orted to watch/debug replica operations as well.

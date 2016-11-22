@@ -1,1 +1,0 @@
-.so man3/shmem_char_put.3

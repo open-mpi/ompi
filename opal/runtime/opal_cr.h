@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,39 +98,6 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
      */
     OPAL_DECLSPEC extern bool opal_cr_continue_like_restart;
 
-#if OPAL_ENABLE_CRDEBUG == 1
-    /* Whether or not C/R Debugging is enabled for this process */
-    OPAL_DECLSPEC extern int MPIR_debug_with_checkpoint;
-
-    /*
-     * Set/clear the current thread id for the checkpointing thread
-     */
-    OPAL_DECLSPEC int opal_cr_debug_set_current_ckpt_thread_self(void);
-    OPAL_DECLSPEC int opal_cr_debug_clear_current_ckpt_thread(void);
-
-    /*
-     * This MPI Debugger function needs to be accessed here and have a specific
-     * name. Thus we are breaking the traditional naming conventions to provide this functionality.
-     */
-    OPAL_DECLSPEC int MPIR_checkpoint_debugger_detach(void);
-
-    /**
-     * A tight loop to wait for debugger to release this process from the
-     * breakpoint.
-     */
-    OPAL_DECLSPEC void *MPIR_checkpoint_debugger_breakpoint(void);
-
-    /**
-     * A function for the debugger or CRS to force all threads into
-     */
-    OPAL_DECLSPEC void *MPIR_checkpoint_debugger_waitpoint(void);
-
-    /**
-     * A signal handler to force all threads to wait when debugger detaches
-     */
-    OPAL_DECLSPEC void MPIR_checkpoint_debugger_signal_handler(int signo);
-#endif
-
     /*
      * Refresh environment variables after a restart
      */
@@ -180,20 +148,9 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     OPAL_DECLSPEC extern bool opal_cr_stall_check;
     OPAL_DECLSPEC extern bool opal_cr_currently_stalled;
 
-#if OPAL_ENABLE_FT_THREAD == 1
-    /* Some thread functions */
-    OPAL_DECLSPEC void opal_cr_thread_init_library(void);
-    OPAL_DECLSPEC void opal_cr_thread_finalize_library(void);
-    OPAL_DECLSPEC void opal_cr_thread_abort_library(void);
-    OPAL_DECLSPEC void opal_cr_thread_enter_library(void);
-    OPAL_DECLSPEC void opal_cr_thread_exit_library(void);
-    OPAL_DECLSPEC void opal_cr_thread_noop_progress(void);
-#endif /* OPAL_ENABLE_FT_THREAD == 1 */
-
     /*
      * If not using FT then make the #defines noops
      */
-#if OPAL_ENABLE_FT == 0 || OPAL_ENABLE_FT_CR == 0
 #define OPAL_CR_TEST_CHECKPOINT_READY() ;
 #define OPAL_CR_TEST_CHECKPOINT_READY_STALL() ;
 #define OPAL_CR_INIT_LIBRARY() ;
@@ -202,65 +159,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
 #define OPAL_CR_ENTER_LIBRARY() ;
 #define OPAL_CR_EXIT_LIBRARY() ;
 #define OPAL_CR_NOOP_PROGRESS() ;
-#endif /* #if OPAL_ENABLE_FT == 0 || OPAL_ENABLE_FT_CR == 0 */
 
-    /*
-     * If using FT
-     */
-#if OPAL_ENABLE_FT_CR == 1
-#define OPAL_CR_TEST_CHECKPOINT_READY()      \
-  {                                          \
-    if(OPAL_UNLIKELY(opal_cr_is_enabled) ) { \
-      opal_cr_test_if_checkpoint_ready();    \
-    }                                        \
-  }
-
-#define OPAL_CR_TEST_CHECKPOINT_READY_STALL()        \
-  {                                                  \
-    if(OPAL_UNLIKELY(opal_cr_is_enabled && !opal_cr_stall_check)) { \
-      opal_cr_test_if_checkpoint_ready();            \
-    }                                                \
-  }
-
-/* If *not* using FT thread */
-#if OPAL_ENABLE_FT_THREAD == 0
-#define OPAL_CR_INIT_LIBRARY()     OPAL_CR_TEST_CHECKPOINT_READY();
-#define OPAL_CR_FINALIZE_LIBRARY() OPAL_CR_TEST_CHECKPOINT_READY();
-#define OPAL_CR_ABORT_LIBRARY()    OPAL_CR_TEST_CHECKPOINT_READY();
-#define OPAL_CR_ENTER_LIBRARY()    OPAL_CR_TEST_CHECKPOINT_READY();
-#define OPAL_CR_EXIT_LIBRARY()     OPAL_CR_TEST_CHECKPOINT_READY();
-#define OPAL_CR_NOOP_PROGRESS()    OPAL_CR_TEST_CHECKPOINT_READY();
-#endif /* OPAL_ENABLE_FT_THREAD == 0 */
-
-/* If using FT thread */
-#if OPAL_ENABLE_FT_THREAD == 1
-#define OPAL_CR_INIT_LIBRARY()    \
- {                                \
-   opal_cr_thread_init_library(); \
- }
-#define OPAL_CR_FINALIZE_LIBRARY()    \
- {                                    \
-   opal_cr_thread_finalize_library(); \
- }
-#define OPAL_CR_ABORT_LIBRARY()    \
- {                                 \
-   opal_cr_thread_abort_library(); \
- }
-#define OPAL_CR_ENTER_LIBRARY()    \
- {                                 \
-   opal_cr_thread_enter_library(); \
- }
-#define OPAL_CR_EXIT_LIBRARY()    \
- {                                \
-   opal_cr_thread_exit_library(); \
- }
-#define OPAL_CR_NOOP_PROGRESS()    \
- {                                 \
-   opal_cr_thread_noop_progress(); \
- }
-#endif /* OPAL_ENABLE_FT_THREAD == 1 */
-
-#endif /* OPAL_ENABLE_FT_CR == 1 */
 
     /*******************************
      * Notification Routines
@@ -415,4 +314,3 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
 END_C_DECLS
 
 #endif /* OPAL_CR_H */
-
