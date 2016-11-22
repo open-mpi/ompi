@@ -24,7 +24,7 @@
 
 /*** Monitoring specific variables ***/
 /* Keep tracks of how many components are currently using the common part */
-int mca_common_monitoring_hold = 0;
+uint32_t mca_common_monitoring_hold = 0;
 /* Output parameters */
 int mca_common_monitoring_output_stream_id = -1;
 static opal_output_stream_t mca_common_monitoring_output_stream_obj = {
@@ -60,6 +60,7 @@ uint64_t* filtered_messages_count = NULL;
 
 uint64_t* size_histogram = NULL;
 const int max_size_histogram = 66;
+double log10_2 = 0.;
 
 int rank_world = -1;
 int nprocs_world = 0;
@@ -161,6 +162,8 @@ void mca_common_monitoring_init( void )
     char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
     /* If first to enable the common parts */
     if( 1 == opal_atomic_add_32(&mca_common_monitoring_hold, 1) ) {
+        /* Initialize constant */
+        log10_2 = log10(2.);
         /* Open the opal_output stream */
         gethostname(hostname, sizeof(hostname));
         asprintf(&mca_common_monitoring_output_stream_obj.lds_prefix,
@@ -170,6 +173,7 @@ void mca_common_monitoring_init( void )
         /* Initialize proc translation hashtable */
         translation_ht = OBJ_NEW(opal_hash_table_t);
         opal_hash_table_init(translation_ht, 2048);
+        OPAL_MONITORING_PRINT_INFO("common_component_init");
     }
 }
 
@@ -177,6 +181,7 @@ void mca_common_monitoring_finalize( void )
 {
     if( 0 == opal_atomic_sub_32(&mca_common_monitoring_hold, 1) /* Release if last component */
         && mca_common_monitoring_enabled && mca_common_monitoring_active ) {
+        OPAL_MONITORING_PRINT_INFO("common_component_finish");
         /* If we are not drived by MPIT then dump the monitoring information */
         if( mca_common_monitoring_output_enabled ) {
   	    mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
@@ -267,7 +272,6 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
     opal_process_name_t tmp, wp_name;
     size_t i, peer_rank;
     uint64_t key;
-
     if( 0 > rank_world )
         rank_world = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
     if( !nprocs_world )
@@ -327,11 +331,10 @@ void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
 
     /* Keep tracks of the data_size distribution */
     if( 0 == data_size ) {
-        opal_atomic_add_64(&size_histogram[world_rank * nprocs_world], 1);
+        opal_atomic_add_64(&size_histogram[world_rank * max_size_histogram], 1);
     } else {
-        int log2_size = log10(data_size)/log10(2.);
-        OPAL_MONITORING_PRINT_INFO("data_size=%lu, log2_size=%d", data_size, log2_size);
-        opal_atomic_add_64(&size_histogram[world_rank * nprocs_world + log2_size], 1);
+        int log2_size = log10(data_size)/log10_2;
+        opal_atomic_add_64(&size_histogram[world_rank * max_size_histogram + log2_size + 1], 1);
     }
         
     /* distinguishses positive and negative tags if requested */
