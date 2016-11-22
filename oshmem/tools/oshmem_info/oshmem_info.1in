@@ -1,0 +1,205 @@
+.\" Man page contributed by Dirk Eddelbuettel <edd@debian.org>
+.\" and released under the BSD license
+.\" Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+.TH OSHMEM_INFO 1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+oshmem_info - Display information about the Open MPI installation
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.B oshmem_info [options]
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.PP
+.B oshmem_info
+provides detailed information about the Open MPI/SHMEM installation.  It can
+be useful for at least three common scenarios:
+.PP
+1. Checking local configuration and seeing how Open MPI/SHMEM was installed.
+.PP
+2. Submitting bug reports / help requests to the Open MPI/SHMEM community
+(see
+.IR http://www.open-mpi.org/community/help/ )
+.PP
+3. Seeing a list of installed Open MPI/SHMEM plugins and querying what
+MCA parameters they support.
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.B oshmem_info
+accepts the following options:
+.TP 8
+.I \-a|\-\-all
+Show all configuration options and MCA parameters
+.TP 8
+.I \-\-arch
+Show architecture Open MPI/SHMEM was compiled on
+.TP 8
+.I \-c|\-\-config
+Show configuration options
+.TP 8
+.I \-gmca|\-\-gmca <param> <value>
+Pass global MCA parameters that are applicable to all contexts.
+.TP 8
+.I \-h|\-\-help
+Shows help / usage message
+.TP 8
+.I \-\-hostname
+Show the hostname that Open MPI/SHMEM was configured and built on
+.TP 8
+.I \-\-internal
+Show internal MCA parameters (not meant to be modified by users)
+.TP 8
+.I \-\-level
+Show only variables with at most this level (1-9). The default is 1 unless
+\-\-all is specified without \-\-level in which case the default is 9. See
+the LEVEL section for more information.
+.TP 8
+.I \-mca|\-\-mca <param> <value>
+Pass context-specific MCA parameters; they are considered global if --gmca is
+not used and only one context is specified.
+.TP 8
+.I \-\-param <type> <component>
+Show MCA parameters.  The first parameter is the type of the component
+to display; the second parameter is the specific component to display
+(or the keyword "all", meaning "display all components of this type").
+.TP 8
+.I \-\-parsable
+When used in conjunction with other parameters, the output is
+displayed in a machine-parsable format
+.I \-\-parseable
+Synonym for --parsable
+.TP 8
+.I \-\-path <type>
+Show paths that Open MPI/SHMEM was configured with.  Accepts the following
+parameters: prefix, bindir, libdir, incdir, pkglibdir, sysconfdir.
+.TP 8
+.I \-\-pretty
+When used in conjunction with other parameters, the output is
+displayed in 'prettyprint' format (default)
+.TP 8
+.I \-\-selected-only
+Show only variables from selected components.
+.TP 8
+.I \-V|\-\-version
+Show version of Open MPI/SHMEM.
+.
+.\" **************************
+.\"    Levels Section
+.\" **************************
+.SH LEVELS
+.TP 4
+1
+Basic information of interest to users
+.
+.TP
+2
+Detailed information of interest to users
+.
+.TP
+3
+All remaining information of interest to users
+.
+.TP
+4
+Basic information required for tuning
+.
+.TP
+5
+Detailed information required for tuning
+.
+.TP
+6
+All remaining information required for tuning
+.
+.TP
+7
+Basic information for MPI implementors
+.
+.TP
+8
+Detailed information for MPI implementors
+.
+.TP
+9
+All remaining information for MPI implementors
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.TP 4
+oshmem_info
+Show the default output of options and listing of installed
+components in a human-readable / prettyprint format.
+.
+.
+.TP
+oshmem_info --parsable
+Show the default output of options and listing of installed
+components in a machine-parsable format.
+.
+.
+.TP
+oshmem_info --param btl openib
+Show the MCA parameters of the "openib" BTL component in a
+human-readable / prettyprint format.
+.
+.
+.TP
+oshmem_info --param btl openib --parsable
+Show the MCA parameters of the "openib" BTL component in a
+machine-parsable format.
+.
+.
+.TP
+oshmem_info --path bindir
+Show the "bindir" that Open MPI was configured with.
+.
+.
+.TP
+oshmem_info --version ompi full --parsable
+Show the full version numbers of Open MPI/SHMEM (including the ORTE and OPAL
+version numbers) in a machine-readable format.
+.
+.
+.TP
+oshmem_info --version btl major
+Show the major version number of all BTL components in a prettyprint
+format.
+.
+.
+.TP
+oshmem_info --version btl:tcp minor
+Show the minor version number of the TCP BTL component in a
+prettyprint format.
+.
+.
+.TP
+oshmem_info --all
+Show
+.I all
+information about the Open MPI/SHMEM installation, including all components
+that can be found, the MCA parameters that they support, versions of
+Open MPI/SHMEM and the components, etc.
+.
+.
+.\" **************************
+.\"    Authors Section
+.\" **************************
+.SH AUTHORS
+The Open MPI/SHMEM maintainers -- see
+.I http://www.openmpi.org/
+or the file
+.IR AUTHORS .
+.PP
+This manual page was originally contributed by Dirk Eddelbuettel
+<edd@debian.org>, one of the Debian GNU/Linux maintainers for Open
+MPI, and may be used by others.

@@ -1,0 +1,59 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_BARRIER\\_ALL" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+shmem_barrier_all \- Suspends the execution of the calling PE until all other PEs issue a call
+to this particular shmem_barrier_all() statement.
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+void shmem_barrier_all(void);
+.Ve
+Fortran:
+.Vb
+include 'mpp/shmem.h'
+
+CALL SHMEM_BARRIER_ALL
+.Ve
+.SH DESCRIPTION
+
+The shmem_barrier_all routine does not return until all other PEs have entered this routine
+at the same point of the execution path.
+.PP
+Prior to synchronizing with other PEs, shmem_barrier_all ensures completion of all
+previously issued local memory stores and remote memory updates issued via SHMEM
+functions such as \fIshmem_put32\fP(3)\&.
+.PP
+.SH EXAMPLES
+
+.Vb
+setup_data()
+{
+  if (shmem_my_pe() == 0) {
+    setup();
+  }
+
+  /* All PEs wait for PE 0 to complete setup().  */
+  shmem_barrier_all();
+}
+.Ve
+.PP
+.SH SEE ALSO
+
+\fIshmem_barrier\fP(3),
+\fIshmem_init\fP(3)

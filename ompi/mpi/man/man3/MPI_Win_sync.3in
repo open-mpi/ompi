@@ -1,0 +1,55 @@
+.\" -*- nroff -*-
+.\" Copyright 2014 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
+.TH MPI_Win_sync 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Win_sync\fP, \- Synchronize the private and public copies of the window
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Win_sync (MPI_Win \fIwin\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_WIN_SYNC(\fIWIN, IERROR\fP)
+	INTEGER \fIWIN, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_sync(\fIwin\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+win
+Window object (handle).
+
+.SH OUTPUT PARAMETER
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+\fBMPI_Win_sync\fP synchronizes the private and public window copies of \fIwin\fP. For the purposes of synchronizing the private and public window, \fBMPI_Win_sync\fP has the effect of ending and reopening an access and exposure epoch on the window (note that it does not actually end an epoch or complete any pending MPI RMA operations).
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with \fBMPI_Comm_set_errhandler\fP; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.

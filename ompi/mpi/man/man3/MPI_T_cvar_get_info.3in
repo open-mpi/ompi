@@ -1,0 +1,170 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.\" $COPYRIGHT$
+.TH MPI_T_cvar_get_info 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_cvar_get_info\fP \- Query information from a control variable
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_cvar_get_info(int \fIcvar_index\fP, char *\fIname\fP, int *\fIname_len\fP,
+                        int *\fIverbosity\fP, MPI_Datatype *\fIdatatype\fP, MPI_T_enum *\fIenumtype\fP,
+                        const *\fIdesc\fP, int *\fIdesc_len\fP, int *\fIbind\fP, int *\fIscope\fP)
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+cvar_index
+Index of the control variable to be queried.
+.
+.
+.SH INPUT/OUTPUT PARAMETERS
+.ft R
+.TP 1i
+name_len
+Length of the string and/or buffer for name.
+.TP 1i
+desc_len
+Length of the string and/or buffer for desc.
+.
+.
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+name
+Buffer to return the string containing the name of the
+control variable.
+.TP 1i
+verbosity
+Verbosity level of this variable.
+.TP 1i
+datatype
+MPI datatype of the information stored in the control
+variable.
+.TP 1i
+enumtype
+Optional descriptor for enumeration information.
+.TP 1i
+desc
+Buffer to return the string containing the description
+of the control variable.
+.TP 1i
+bind
+Type of MPI object to which this variable must be
+bound.
+.TP 1i
+scope
+Scope of when changes to this variable are possible.
+.
+.
+.SH DESCRIPTION
+.ft R
+MPI_T_cvar_get_info can be used to query information about a control variable. The function returns
+the verbosity, datatype, enumeration type, binding, and scope of the queried control variable in the arguments
+\fIverbosity\fP, \fIdatatype\fP, \fIenumtype\fP, \fIbind\fP, and \fIscope\fP, respectively. Control variables
+in Open MPI are the same as MCA parameters.
+.
+.
+.SH VERBOSITY
+.ft R
+As Open MPI exposes a very large number of MCA parameters (control variables), control variables are
+categorized into nine verbosity levels corresponding to the equivalent ompi_info level. The nine levels are
+(in increasing order):
+.TP 1i
+MPI_T_VERBOSITY_USER_BASIC
+Basic information of interest to users
+.TP 1i
+MPI_T_VERBOSITY_USER_DETAIL
+Detailed information of interest to users
+.TP 1i
+MPI_T_VERBOSITY_USER_ALL
+All remaining information of interest to users
+.TP 1i
+MPI_T_VERBOSITY_TUNER_BASIC
+Basic information required for tuning
+.TP 1i
+MPI_T_VERBOSITY_TUNER_DETAIL
+Detailed information required for tuning
+.TP 1i
+MPI_T_VERBOSITY_TUNER_ALL
+All remaining information required for tuning
+.TP 1i
+MPI_T_VERBOSITY_MPIDEV_BASIC
+Basic information for MPI implementors
+.TP 1i
+MPI_T_VERBOSITY_MPIDEV_DETAIL
+Detailed information for MPI implementors
+.TP 1i
+MPI_T_VERBOSITY_MPIDEV_ALL
+All remaining information for MPI implementors
+
+For more information see MPI-3 \[char167] 14.3.1.
+
+.SH DATATYPE
+.ft R
+The datatype returned by MPI_T_cvar_get_info is restricted to one of the following datatypes: MPI_INT,
+MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG, MPI_COUNT, MPI_CHAR, and MPI_DOUBLE. For more
+information on datatypes in MPI_T see MPI-3 \[char167] 14.3.5.
+
+.SH SCOPE
+.ft R
+The scope describes when and how changes can be made to a control variable. From MPI-3 \[char167] 14.3.6, the scope may be any of the following:
+.TP 1i
+MPI_T_SCOPE_CONSTANT
+read-only, value is constant
+.TP 1i
+MPI_T_SCOPE_READONLY
+read-only, cannot be written, but can change
+.TP 1i
+MPI_T_SCOPE_LOCAL
+may be writeable, writing is a local operation
+.TP 1i
+MPI_T_SCOPE_GROUP
+may be writeable, must be done to a group of processes, all processes in a group must be set to consistent values
+.TP 1i
+MPI_T_SCOPE_GROUP_EQ
+may be writeable, must be done to a group of processes, all processes in a group must be set to the same value
+.TP 1i
+MPI_T_SCOPE_ALL
+may be writeable, must be done to all processes, all connected processes must be set to consistent values
+.TP 1i
+MPI_T_SCOPE_ALL_EQ
+may be writeable, must be done to all processes, all connected processes must be set to the same value
+
+For more information see MPI-3 \[char167] 14.3.6 Table 14.4.
+
+.SH NOTES
+.ft R
+This MPI tool interface function returns two strings. This function takes two argument for each string:
+a buffer to store the string, and a length which must initially specify the size of the buffer. If the
+length passed is n then this function will copy at most n - 1 characters of the string into the
+corresponding buffer and set the length to the number of characters copied - 1. If the length argument
+is NULL or the value specified in the length is 0 the corresponding string buffer is ignored and the
+string is not returned.
+.sp
+Open MPI does not currently support binding control variables to MPI objects.
+.
+.
+.SH ERRORS
+.ft R
+MPI_T_cvar_get_info() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_INDEX]
+The control variable index is invalid
+.
+.SH SEE ALSO
+.ft R
+.nf
+ompi_info

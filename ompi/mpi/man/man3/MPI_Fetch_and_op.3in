@@ -1,0 +1,124 @@
+.\" -*- nroff -*-
+.\" Copyright 2013-2015 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
+.TH MPI_Fetch_and_op 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Fetch_and_op\fP \- Combines the contents of the origin buffer with that of a target buffer and returns the target buffer value.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Fetch_and_op(const void *\fIorigin_addr\fP, void *\fIresult_addr\fP,
+	MPI_Datatype \fIdatatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP,
+	MPI_Op \fIop\fP, MPI_Win \fIwin\fP)
+
+.fi
+.SH Fortran Syntax (see FORTRAN 77 NOTES)
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_FETCH_AND_OP(\fIORIGIN_ADDR, RESULT_ADDR, DATATYPE, TARGET_RANK,
+                 TARGET_DISP, OP, WIN, IERROR\fP)
+	<type> \fIORIGIN_ADDR\fP, \fIRESULT_ADDR\fP(*)
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
+	INTEGER \fIDATATYPE, TARGET_RANK, OP, WIN, IERROR \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Fetch_and_op(\fIorigin_addr\fP, \fIresult_addr\fP, \fIdatatype\fP, \fItarget_rank\fP,
+		\fItarget_disp\fP, \fIop\fP, \fIwin\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIorigin_addr\fP
+	TYPE(*), DIMENSION(..) :: \fIresult_addr\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(IN) :: \fItarget_rank\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fItarget_disp\fP
+	TYPE(MPI_Op), INTENET(IN) :: \fIop\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+origin_addr
+Initial address of buffer (choice).
+.ft R
+.TP
+result_addr
+Initial address of result buffer (choice).
+.ft R
+.TP
+datatype
+Data type of the entry in origin, result, and target buffers (handle).
+.ft R
+.TP 1i
+target_rank
+Rank of target (nonnegative integer).
+.ft R
+.TP 1i
+target_disp
+Displacement from start of window to beginning of target buffer (nonnegative integer).
+.ft R
+.TP 1i
+op
+Reduce operation (handle).
+.ft R
+.TP 1i
+win
+Window object (handle).
+
+.SH OUTPUT PARAMETER
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+Accumulate one element of type \fIdatatype\fP from the origin buffer (\fIorigin_addr\fP) to the buffer at offset \fItarget_disp\fP, in the target window specified by \fItarget_rank\fP and \fIwin\fP, using the operation \fIop\fP and return in the result buffer \fIresult_addr\fP the contents of the target buffer before the accumulation.
+.sp
+The origin and result buffers (\fIorigin_addr\fP and \fIresult_addr\fP) must be disjoint. Any of the predefined operations for \fBMPI_Rreduce\fP, as well as MPI_NO_OP or MPI_REPLACE, can be specified as \fIop\fP; user-defined functions cannot be used. The \fIdatatype\fP argument must be a predefined datatype. The operation is executed atomically.
+.sp
+A new predefined operation, MPI_REPLACE, is defined. It corresponds to the associative function f(a, b) =b; that is, the current value in the target memory is replaced by the value supplied by the origin.
+.sp
+A new predefined operation, MPI_NO_OP, is defined. It corresponds to the assiciative function f(a, b) = a; that is the current value in the target memory is returned in the result buffer at the origin and no operation is performed on the target buffer.
+
+.SH FORTRAN 77 NOTES
+.ft R
+The MPI standard prescribes portable Fortran syntax for
+the \fITARGET_DISP\fP argument only for Fortran 90.  FORTRAN 77
+users may use the non-portable syntax
+.sp
+.nf
+     INTEGER*MPI_ADDRESS_KIND \fITARGET_DISP\fP
+.fi
+.sp
+where MPI_ADDRESS_KIND is a constant defined in mpif.h
+and gives the length of the declared integer in bytes.
+
+.SH NOTES
+It is the user's responsibility to guarantee that, when
+using the accumulate functions, the target displacement argument is such
+that accesses to the window are properly aligned according to the data
+type arguments in the call to the MPI_Fetch_and_op function.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler
+may be changed with \fBMPI_Comm_set_errhandler\fP; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+.ft R
+.sp
+MPI_Get_accumulate
+.br
+MPI_Reduce

@@ -1,0 +1,79 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_FADD" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+\fIshmem_int4_fadd\fP(3),
+\fIshmem_int8_fadd\fP(3),
+\fIshmem_int_fadd\fP(3),
+\fIshmem_long_fadd\fP(3),
+\fIshmem_longlong_fadd\fP(3)
+\- Performs an atomic fetch\-and\-add operation on a remote data object
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+int shmem_int_fadd(int *target, int value, int pe);
+
+long shmem_long_fadd(long *target, long value, int pe);
+
+long long shmem_longlong_fadd(long long *target, longlong value,
+  int pe);
+.Ve
+Fortran:
+.Vb
+INCLUDE "mpp/shmem.fh"
+
+INTEGER pe
+
+INTEGER(KIND=4) SHMEM_INT4_FADD, ires, target, value
+ires = SHMEM_INT4_FADD(target, value, pe)
+
+INTEGER(KIND=8) SHMEM_INT8_FADD, ires, target, value
+ires = SHMEM_INT8_FADD(target, value, pe)
+.Ve
+.SH DESCRIPTION
+
+shmem_fadd functions perform an atomic fetch\-and\-add operation. An atomic
+fetch\-and\-add operation fetches the old target and adds value to target without the
+possibility of another process updating target between the time of the fetch and the update.
+These routines add value to target on Processing Element (PE) pe and return the previous
+contents of target as an atomic operation.
+.PP
+The arguments are as follows:
+.TP
+target
+The remotely accessible integer data object to be updated on the remote PE. The
+type of target should match that implied in the SYNOPSIS section.
+.TP
+value
+The value to be atomically added to target. The type of value should match that
+implied in the SYNOPSIS section.
+.TP
+pe
+An integer that indicates the PE number on which target is to be updated. If you are
+using Fortran, it must be a default integer value.
+.PP
+.SH NOTES
+
+The term remotely accessible is defined in \fIintro_shmem\fP(3)\&.
+.SH RETURN VALUES
+
+The contents that had been at the target address on the remote PE prior to the atomic addition
+operation.
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3)

@@ -1,0 +1,75 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      Research Organization for Information Science
+.\"                         and Technology (RIST). All rights reserved.
+.\" $COPYRIGHT$
+.TH MPI_Win_get_info 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Win_get_info\fP \- Retrieves active window info hints
+.
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Win_get_info(MPI_Win \fIwin\fP, MPI_Info \fI*info_used\fP)
+.
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_WIN_GET_INFO(\fIWIN, INFO_USED, IERROR\fP)
+	INTEGER	\fICOMM, INFO_USED, IERROR \fP
+.
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_get_info(\fIwin\fP, \fIinfo_used\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	TYPE(MPI_Info), INTENT(OUT) :: \fIinfo_used\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+win
+Window from which to receive active info hints
+.
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+info_used
+New info object returned with all active hints on this window.
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+.
+.SH DESCRIPTION
+.ft R
+MPI_Win_get_info returns a new info object containing the hints of
+the window associated with
+.IR win .
+The current setting of all hints actually used by the system related
+to this window is returned in
+.IR info_used .
+If no such hints exist, a handle to a newly created info object is
+returned that contains no key/value pair. The user is responsible for
+freeing info_used via MPI_Info_free.
+.
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value
+of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for
+I/O function errors. The error handler may be changed with
+MPI_Comm_set_errhandler; the predefined error handler
+MPI_ERRORS_RETURN may be used to cause error values to be
+returned. Note that MPI does not guarantee that an MPI program can
+continue past an error.
+.
+.SH SEE ALSO
+MPI_Win_set_info,
+MPI_Win_free

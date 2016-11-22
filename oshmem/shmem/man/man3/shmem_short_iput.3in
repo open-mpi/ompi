@@ -1,0 +1,220 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_IPUT" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+\fIshmem_complex_iput\fP(3),
+\fIshmem_double_iput\fP(3),
+\fIshmem_float_iput\fP(3),
+\fIshmem_int_iput\fP(3),
+\fIshmem_integer_iput\fP(3),
+\fIshmem_iput4\fP(3),
+\fIshmem_iput8\fP(3),
+\fIshmem_iput32\fP(3),
+\fIshmem_iput64\fP(3),
+\fIshmem_iput128\fP(3),
+\fIshmem_logical_iput\fP(3),
+\fIshmem_long_iput\fP(3),
+\fIshmem_longdouble_iput\fP(3),
+\fIshmem_longlong_iput\fP(3),
+\fIshmem_real_iput\fP(3),
+\fIshmem_short_iput\fP(3)
+\- Transfer strided data to a specified processing element (PE).
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+void shmem_double_iput(double *target, const double *source,
+  ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+
+void shmem_float_iput(float *target, const float *source,
+  ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+
+void shmem_int_iput(int *target, const int *source,
+  ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+
+void shmem_iput32(void *target, const void *source,
+  ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+
+void shmem_iput64(void *target, const void *source,
+  ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+
+void shmem_iput128(void *target, const void *source,
+  ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+
+void shmem_long_iput(long *target, const long *source,
+  ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+
+void shmem_longdouble_iput(long double *target,
+  const long double *source, ptrdiff_t tst, ptrdiff_t sst,
+  size_t len, int pe);
+
+void shmem_longlong_iput(long long *target,
+  const long long *source, ptrdiff_t tst, ptrdiff_t sst,
+  size_t len, int pe);
+
+void shmem_short_iput(short *target, const short *source,
+  ptrdiff_t tst, ptrdiff_t sst, size_t len, int pe);
+.Ve
+Fortran:
+.Vb
+INCLUDE "mpp/shmem.fh"
+
+INTEGER tst, sst, len, pe
+
+CALL SHMEM_COMPLEX_IPUT(target, source, tst, sst, len,
+& pe)
+
+CALL SHMEM_DOUBLE_IPUT(target, source, tst, sst, len,
+& pe)
+
+CALL SHMEM_INTEGER_IPUT(target, source, tst, sst, len,
+& pe)
+
+CALL SHMEM_IPUT4(target, source, tst, sst, len, pe)
+
+CALL SHMEM_IPUT8(target, source, tst, sst, len, pe)
+
+CALL SHMEM_IPUT32(target, source, tst, sst, len, pe)
+
+CALL SHMEM_IPUT64(target, source, tst, sst, len, pe)
+
+CALL SHMEM_IPUT128(target, source, tst, sst, len, pe)
+
+CALL SHMEM_LOGICAL_IPUT(target, source, tst, sst, len,
+& pe)
+
+CALL SHMEM_REAL_IPUT(target, source, tst, sst, len, pe)
+.Ve
+.PP
+.SH DESCRIPTION
+
+The shmem_iput routines read the elements of a local array (\fBsource\fP)
+and write them
+to a remote array (\fBtarget\fP)
+on the PE indicated by \fBpe\fP\&.
+These routines return
+when the data has been copied out of the source array on the local PE but not necessarily
+before the data has been delivered to the remote data object.
+.PP
+The arguments are as follows:
+.TP
+target
+Array to be updated on the remote PE. This data object must be remotely
+accessible.
+.TP
+source
+Array containing the data to be copied.
+.TP
+tst
+The stride between consecutive elements of the target array. The stride is scaled by
+the element size of the target array. A value of 1 indicates contiguous data. tst must be of
+type integer. If you are using Fortran, it must be a default integer value.
+.TP
+sst
+The stride between consecutive elements of the source array. The stride is scaled
+by the element size of the source array. A value of 1 indicates contiguous data. sst must be
+of type integer. If you are using Fortran, it must be a default integer value.
+.TP
+len
+Number of elements in the target and source arrays. len must be of type integer. If
+you are using Fortran, it must be a constant, variable, or array element of default integer
+type.
+.TP
+pe
+PE number of the remote PE. pe must be of type integer. If you are using Fortran, it
+must be a constant, variable, or array element of default integer type.
+.PP
+The target and source data objects must conform to typing constraints, which are as follows:
+.PP
+.TP
+\fBshmem_iput32, shmem_iput4\fP: Any noncharacter type that has a storage size equal
+to 32 bits.
+.TP
+\fBshmem_iput64, shmem_iput8\fP: Any noncharacter type that has a storage size equal
+to 64 bits.
+.TP
+\fBshmem_iput128\fP: Any noncharacter type that has a storage size equal to 128 bits.
+.TP
+\fBshmem_short_iput\fP: Elements of type short.
+.TP
+\fBshmem_int_iput\fP: Elements of type int.
+.TP
+\fBshmem_long_iput\fP: Elements of type long.
+.TP
+\fBshmem_longlong_iput\fP: Elements of type long long.
+.TP
+\fBshmem_float_iput\fP: Elements of type float.
+.TP
+\fBshmem_double_iput\fP: Elements of type double.
+.TP
+\fBshmem_longdouble_iput\fP: Elements of type long double.
+.TP
+\fBSHMEM_COMPLEX_IPUT\fP: Elements of type complex of default size.
+.TP
+\fBSHMEM_DOUBLE_IPUT\fP: (Fortran) Elements of type double precision.
+.TP
+\fBSHMEM_INTEGER_IPUT\fP: Elements of type integer.
+.TP
+\fBSHMEM_LOGICAL_IPUT\fP: Elements of type logical.
+.TP
+\fBSHMEM_REAL_IPUT\fP: Elements of type real.
+.TP
+\fBSHMEM_LOGICAL_IPUT\fP: Elements of type logical.
+.TP
+\fBSHMEM_REAL_IPUT\fP: Elements of type real.
+.PP
+If you are using Fortran, data types must be of default size. For example, a real variable must
+be declared as REAL, REAL*4 or REAL(KIND=4).
+.PP
+.SH NOTES
+
+See \fIintro_shmem\fP(3)
+for a definition of the term remotely accessible.
+.PP
+.SH EXAMPLES
+
+Consider the following simple shmem_long_iput example for C/C++ programs.
+.Vb
+#include <mpp/shmem.h>
+
+main()
+{
+  short source[10] = { 1, 2, 3, 4, 5,
+  6, 7, 8, 9, 10 };
+  static short target[10];
+
+  shmem_init();
+  if (shmem_my_pe() == 0) {
+    /* put 10 words into target on PE 1 */
+    shmem_short_iput(target, source, 1, 2, 5, 1);
+  }
+  shmem_barrier_all(); /* sync sender and receiver */
+  if (shmem_my_pe() == 1) {
+    shmem_udcflush(); /* not required on IRIX systems */
+    printf("target on PE %d is %d %d %d %d %d0, shmem_my_pe(),
+    (int)target[0], (int)target[1], (int)target[2],
+    (int)target[3], (int)target[4] );
+  }
+  shmem_barrier_all(); /* sync before exiting */
+}
+.Ve
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3),
+\fIshmem_iget\fP(3),
+\fIshmem_put\fP(3),
+\fIshmem_quiet\fP(3)

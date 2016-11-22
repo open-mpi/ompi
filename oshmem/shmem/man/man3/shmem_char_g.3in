@@ -1,0 +1,64 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_CHAR\\_G" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+\fIshmem_char_g\fP(3),
+\fIshmem_float_g\fP(3),
+\fIshmem_int_g\fP(3),
+\fIshmem_long_g\fP(3),
+\fIshmem_short_g\fP(3),
+\fIshmem_longlong_g\fP(3),
+\fIshmem_longdouble_g\fP(3)
+\- These routines provide a low latency mechanism to read basic types (char, short, int, float, double, long, long long, long double) from symmetric data objects on remote PEs.
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+
+char shmem_char_g(const char *addr, int pe);
+
+short shmem_short_g(const short *addr, int pe);
+
+int shmem_int_g(const int *addr, int pe);
+
+long shmem_long_g(const long *addr, int pe);
+
+long shmem_longlong_g(const long long *addr, int pe);
+
+float shmem_float_g(const float *addr, int pe);
+
+double shmem_double_g(const double *addr, int pe);
+
+long shmem_longdouble_g(const long double *addr, int pe);
+
+.Ve
+.SH DESCRIPTION
+
+These routines provide a very low latency get capability for single elements of most basic types.
+.PP
+The arguments are as follows:
+.TP
+addr
+The remotely accessible array element or scalar data object which will receive the
+data on the remote PE.
+.TP
+pe
+The number of the remote PE.
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3),
+\fIshmem_get\fP(3)

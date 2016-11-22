@@ -1,0 +1,38 @@
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# There can be multiple blocks of configuration data, chosen by
+# compiler flags (using the compiler_args key to chose which block
+# should be activated.  This can be useful for multilib builds.  See the
+# multilib page at:
+#    https://github.com/open-mpi/ompi/wiki/compilerwrapper3264
+# for more information.
+
+project=Open SHMEM
+project_short=OSHMEM
+version=@OSHMEM_VERSION@
+language=Fortran
+compiler_env=FC
+compiler_flags_env=FCFLAGS
+compiler=@FC@
+preprocessor_flags=
+compiler_flags=@OMPI_WRAPPER_EXTRA_FCFLAGS@
+linker_flags=@OMPI_WRAPPER_EXTRA_FC_LDFLAGS@
+# Note that per https://svn.open-mpi.org/trac/ompi/ticket/3422, we
+# intentionally only link in the SHMEM and MPI libraries (ORTE, OPAL,
+# etc. are pulled in implicitly) because we intend SHMEM/MPI
+# applications to only use the SHMEM and MPI APIs.
+libs=-loshmem -l@OMPI_LIBMPI_NAME@_mpifh -l@OMPI_LIBMPI_NAME@
+libs_static=-loshmem -l@OMPI_LIBMPI_NAME@_mpifh -l@OMPI_LIBMPI_NAME@ -l@ORTE_LIB_PREFIX@open-rte -l@OPAL_LIB_PREFIX@open-pal @OMPI_WRAPPER_EXTRA_LIBS@
+dyn_lib_file=liboshmem.@OPAL_DYN_LIB_SUFFIX@
+static_lib_file=liboshmem.a
+required_file=@OMPI_WRAPPER_FORTRAN_REQUIRED_FILE@
+includedir=${includedir}
+libdir=${libdir}

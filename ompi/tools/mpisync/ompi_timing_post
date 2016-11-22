@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# Copyright (c) 2014      Artem Polyakov <artpol84@gmail.com>
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+
+#####################################################################
+# Evaluate a floating point number expression.
+
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Need the name of a timing file and the output file"
+    exit 0
+fi
+
+initfile=$1
+postfile=$2
+
+# 1. Filter OPAL_TRACE entrieas only
+#    and put the timestamp to the first place
+#.2. Sort considering that we dealing with
+#    floating point numbers
+# 3. Return to initial field order and count relative fields
+cat $initfile | \
+awk 'BEGIN { FPAT = "([^ ]+)|(\"[^\"]+\")" }
+{
+    if( $0 ~ /\[OPAL_TRACE\]/ ){
+        x = $NF
+        $NF = $1
+        $1 = x
+        print $0
+    }
+}' | sort --general-numeric-sort | \
+awk 'BEGIN {
+    FPAT = "([^ ]+)|(\"[^\"]+\")"
+    first = 0
+    prev = 0
+}
+{
+    if( first == 0 ){
+	first = $1
+	prev = $1
+    }
+    x = $1
+    $1 = $NF
+    $NF = x
+    rel_to_first = x - first
+    rel_to_prev = x - prev
+    prev = x
+    print $0, " ", rel_to_prev, " ", rel_to_first
+}' > $postfile
+
+
+
+
+

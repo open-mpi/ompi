@@ -1,0 +1,17 @@
+# -*- text -*-
+#
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+[internal_oom_error]
+'%s' operation failed. Unable to allocate buffer, need %d bytes.
+Try increasing 'spml_yoda_bml_alloc_threshold' value or setting it to '0' to
+force waiting for all puts completion.
+
+  spml_yoda_bml_alloc_threshold: %d
+

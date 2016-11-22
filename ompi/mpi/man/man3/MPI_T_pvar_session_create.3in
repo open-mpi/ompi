@@ -1,0 +1,50 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.\" $COPYRIGHT$
+.TH MPI_T_pvar_session_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_pvar_session_create\fP, \fBMPI_T_pvar_session_free\fP \- Create/free performance variable session
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_pvar_session_create(MPI_T_pvar_session *\fIsession\fP)
+
+int MPI_T_pvar_session_free(MPI_T_pvar_session *\fIsession\fP)
+
+.SH DESCRIPTION
+.ft R
+MPI_T_pvar_session_create creates a session for accessing performance variables. The
+new session is returned in the \fIsession\fP parameter.
+
+MPI_T_pvar_session_free releases a session allocated by MPI_T_pvar_session_create and sets
+the \fIsession\fP parameter to MPI_T_PVAR_SESSION_NULL.
+
+.SH ERRORS
+.ft R
+MPI_T_pvar_session_create() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_MEMORY]
+Out of memory
+.TP 1i
+[MPI_T_ERR_OUT_OF_SESSIONS]
+No more sessions available
+.TP 1i
+MPI_T_pvar_session_free() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_SESSION]
+The session parameter is not a valid session
+

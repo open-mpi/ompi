@@ -1,0 +1,20 @@
+#
+# Copyright (c) 2014      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+
+[lib-call-fail]
+A library call unexpectedly failed.  This is a terminal error; please
+show this message to an OSHMEM wizard:
+
+         Library call: %s
+          Source file: %s
+   Source line number: %d
+
+Aborting...

@@ -1,0 +1,42 @@
+# -*- text -*-
+#
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for Open SHMEM.
+#
+[shmem_init:startup:internal-failure]
+It looks like %s failed for some reason; your parallel process is
+likely to abort.  There are many reasons that a parallel process can
+fail during %s; some of which are due to configuration or environment
+problems.  This failure appears to be an internal failure; here's some
+additional information (which may only be relevant to an Open SHMEM
+developer):
+
+  %s
+  --> Returned "%s" (%d) instead of "Success" (0)
+#
+[oshmem shmem abort:cannot guarantee all killed]
+A SHMEM process is aborting at a time when it cannot guarantee that all
+of its peer processes in the job will be killed properly.  You should
+double check that everything has shut down cleanly.
+
+Local host: %s
+PID:        %d
+#
+[oshmem_init:print-version]
+Open SHMEM version:
+%s
+#
+[oshmem_init:print-info]
+Open SHMEM environment variables:
+%s - print the library version at start-up
+%s - print helpful text about all these environment variables
+%s - number of bytes to allocate for symmetric heap
+%s - enable debugging messages

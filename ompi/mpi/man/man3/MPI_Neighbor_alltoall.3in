@@ -1,0 +1,193 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
+.TH MPI_Neighbor_alltoall 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+
+.SH NAME
+\fBMPI_Neighbor_alltoall, MPI_Ineighbor_alltoall\fP \- All processes send data to neighboring processes in a virtual topology communicator
+
+.SH SYNTAX
+.ft R
+
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Neighbor_alltoall(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP)
+
+int MPI_Ineighbor_alltoall(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Request \fI*request\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_NEIGHBOR_ALLTOALL(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+	RECVTYPE, COMM, IERROR\fP)
+
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE\fP
+	INTEGER	\fICOMM, IERROR\fP
+
+MPI_INEIGHBOR_ALLTOALL(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+	RECVTYPE, COMM, REQUEST, IERROR\fP)
+
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE\fP
+	INTEGER	\fICOMM, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Neighbor_alltoall(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
+		\fIrecvtype\fP, \fIcomm\fP, \fIierror\fP)
+
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Ineighbor_alltoall(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
+		\fIrecvtype\fP, \fIcomm\fP, \fIrequest\fP, \fIierror\fP)
+
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1.2i
+sendbuf
+Starting address of send buffer (choice).
+.TP 1.2i
+sendcount
+Number of elements to send to each process (integer).
+.TP 1.2i
+sendtype
+Datatype of send buffer elements (handle).
+.TP 1.2i
+recvcount
+Number of elements to receive from each process (integer).
+.TP 1.2i
+recvtype
+Datatype of receive buffer elements (handle).
+.TP 1.2i
+comm
+Communicator over which data is to be exchanged (handle).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1.2i
+recvbuf
+Starting address of receive buffer (choice).
+.TP 1i
+request
+Request (handle, non-blocking only).
+.ft R
+.TP 1.2i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+MPI_Neighbor_alltoall is a collective operation in which all processes send and receive the same amount of data to each neighbor. The operation of this routine can be represented as follows, where each process performs 2n (n being the number of neighbors in communicator \fIcomm\fP) independent point-to-point communications. The neighbors and buffer layout are determined by the topology of \fIcomm\fP.
+.sp
+Example of MPI_Neighbor_alltoall semantics for cartesian topologies:
+.sp
+.nf
+        MPI_Cart_get(\fIcomm\fP, maxdims, dims, periods, coords);
+        for (dim = 0, i = 0 ; dim < dims ; ++dim) {
+            MPI_Cart_shift(\fIcomm\fP, dim, 1, &r0, &r1);
+            MPI_Isend(\fIsendbuf\fP + i * \fIsendcount\fP * extent(\fIsendtype\fP),
+                      \fIsendcount\fP, \fIsendtype\fP, r0, ..., \fIcomm\fP, ...);
+            MPI_Irecv(\fIrecvbuf\fP + i * \fIrecvcount\fP * extent(\fIrecvtype\fP),
+                      \fIrecvcount\fP, \fIrecvtype\fP, r0, ..., \fIcomm\fP, ...);
+            ++i;
+            MPI_Isend(\fIsendbuf\fP + i * \fIsendcount\fP * extent(\fIsendtype\fP),
+                      \fIsendcount\fP, \fIsendtype\fP, r1, ..., \fIcomm\fP, &req[i]);
+            MPI_Irecv(\fIrecvbuf\fP + i * \fIrecvcount\fP * extent(\fIrecvtype\fP),
+                      \fIrecvcount\fP, \fIrecvtype\fP, r1, ..., \fIcomm\fP, ...);
+            ++i;
+        }
+
+        MPI_Waitall (...);
+.fi
+.sp
+Each process breaks up its local \fIsendbuf\fP into n blocks \- each
+containing \fIsendcount\fP elements of type \fIsendtype\fP \- and
+divides its \fIrecvbuf\fP similarly according to \fIrecvcount\fP and
+\fIrecvtype\fP. Process j sends the k-th block of its local
+\fIsendbuf\fP to neighbor k, which places the data in the j-th block of
+its local \fIrecvbuf\fP. The amount of data sent must be equal to the
+amount of data received, pairwise, between every pair of processes.
+
+.sp
+.SH NEIGHBOR ORDERING
+For a distributed graph topology, created with MPI_Dist_graph_create, the sequence of neighbors
+in the send and receive buffers at each process is defined as the sequence returned by MPI_Dist_graph_neighbors
+for destinations and sources, respectively. For a general graph topology, created with MPI_Graph_create, the order of
+neighbors in the send and receive buffers is defined as the sequence of neighbors as returned by MPI_Graph_neighbors.
+Note that general graph topologies should generally be replaced by the distributed graph topologies.
+
+For a Cartesian topology, created with MPI_Cart_create, the sequence of neighbors in the send and receive
+buffers at each process is defined by order of the dimensions, first the neighbor in the negative direction
+and then in the positive direction with displacement 1. The numbers of sources and destinations in the
+communication routines are 2*ndims with ndims defined in MPI_Cart_create. If a neighbor does not exist, i.e., at
+the border of a Cartesian topology in the case of a non-periodic virtual grid dimension (i.e.,
+periods[...]==false), then this neighbor is defined to be MPI_PROC_NULL.
+
+If a neighbor in any of the functions is MPI_PROC_NULL, then the neighborhood collective communication behaves
+like a point-to-point communication with MPI_PROC_NULL in this direction. That is, the buffer is still part of
+the sequence of neighbors but it is neither communicated nor updated.
+
+.sp
+.SH NOTES
+.ft R
+The MPI_IN_PLACE option for \fIsendbuf\fP is not meaningful for this function.
+.sp
+All arguments on all processes are significant. The \fIcomm\fP argument,
+in particular, must describe the same communicator on all processes. \fIcomm\fP
+must be either a cartesian, graph, or dist graph communicator.
+.sp
+There are two MPI library functions that are more general than
+MPI_Neighbor_alltoall. MPI_Neighbor_alltoallv allows all-to-all communication to and
+from buffers that need not be contiguous; different processes may
+send and receive different amounts of data. MPI_Neighbor_alltoallw expands
+MPI_Neighbor_alltoallv's functionality to allow the exchange of data with
+different datatypes.
+
+.SH ERRORS
+.ft R
+Almost all MPI routines return an error value; C routines as
+the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for
+I/O function errors. The error handler may be changed with
+MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
+may be used to cause error values to be returned. Note that MPI does not
+guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+.ft R
+.nf
+MPI_Neighbor_alltoallv
+MPI_Neighbor_alltoallw
+MPI_Cart_create
+MPI_Graph_create
+MPI_Dist_graph_create
+MPI_Dist_graph_create_adjacent

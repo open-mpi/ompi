@@ -1,0 +1,132 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
+.TH MPI_Dist_graph_create_adjacent 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Dist_graph_create_adjacent \fP \- Makes a new communicator to which topology information has been attached.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Dist_graph_create_adjacent(MPI_Comm \fIcomm_old\fP, int\fI indegree\fP, const int\fI sources[]\fP,
+	const int\fI sourceweights[]\fP, int\fI outdegree\fP, const int\fI destinations\fP[], const int\fI destweights\fP[],
+        MPI_Info info, int\fI reorder\fP, MPI_Comm\fI *comm_dist_graph\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_DIST_GRAPH_CREATE_ADJACENT(\fICOMM_OLD, INDEGREE, SOURCES, SOURCEWEIGHTS, OUTDEGREE,
+                DESTINATIONS, DESTWEIGHTS, INFO, REORDER, COMM_DIST_GRAPH, IERROR\fP)
+	INTEGER	\fICOMM_OLD, INDEGREE, SOURCES(*), SOURCEWEIGHTS(*), OUTDEGREE, DESTINATIONS(*), DESTWEIGHTS(*), INFO\fP
+	INTEGER	\fICOMM_DIST_GRAPH, IERROR\fP
+	LOGICAL \fIREORDER\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Dist_Graph_create_adjacent(\fIcomm_old\fP, \fIndegree\fP, \fIsources\fP, \fIsourceweights\fP,
+		\fIoutdegree\fP, \fIdestinations\fP, \fIdestweights\fP, \fIinfo\fP, \fIreorder\fP,
+		\fIcomm_dist_graph\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm_old\fP
+	INTEGER, INTENT(IN) :: \fIindegree\fP, \fIsources(indegree)\fP, \fIoutdegree\fP, \fIdestinations(outdegree)\fP
+	INTEGER, INTENT(IN) :: \fIsourceweights(*)\fP, \fIdestweights(*)\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	LOGICAL, INTENT(IN) :: reorder
+	TYPE(MPI_Comm), INTENT(OUT) :: \fIcomm_dist_graph\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+comm_old
+Input communicator without topology (handle).
+.TP 1i
+indegree
+Size of \fIsources\fP and \fIsourceweights\fP arrays (non-negative integer).
+.TP 1i
+sources
+Ranks of processes for which the calling process is a destination (array of non-negative integers).
+.TP 1i
+sourceweights
+Weights of the edges into the calling process (array of non-negative integers).
+.TP 1i
+outdegree
+Size of \fIdestinations\fP and \fIdestweights\fP arrays (non-negative integer).
+.TP 1i
+destinations
+Ranks of processes for which the calling process is a source (array of non-negative integers).
+.TP 1i
+destweights
+Weights of the edges out of the calling process (array of non-negative integers).
+.TP 1i
+Hints on optimization and interpretation of weights (handle).
+.TP 1i
+reorder
+Ranking may be reordered (true) or not (false) (logical).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+comm_dist_graph
+Communicator with distibuted graph topology added (handle).
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+MPI_Dist_graph_create_adjacent creats a new communicator \fIcomm_dist_graph\fP with distrubuted
+graph topology and returns a handle to the new communicator. The number of processes in
+\fIcomm_dist_graph\fP is identical to the number of processes in \fIcomm_old\fP. Each process passes all
+information about its incoming and outgoing edges in the virtual distributed graph topology.
+The calling processes must ensure that each edge of the graph is described in the source
+and in the destination process with the same weights. If there are multiple edges for a given
+(source,dest) pair, then the sequence of the weights of these edges does not matter. The
+complete communication topology is the combination of all edges shown in the \fIsources\fP arrays
+of all processes in comm_old, which must be identical to the combination of all edges shown
+in the \fIdestinations\fP arrays. Source and destination ranks must be process ranks of comm_old.
+This allows a fully distributed specication of the communication graph. Isolated processes
+(i.e., processes with no outgoing or incoming edges, that is, processes that have specied
+indegree and outdegree as zero and thus do not occur as source or destination rank in the
+graph specication) are allowed. The call to MPI_Dist_graph_create_adjacent is collective.
+
+.SH WEIGHTS
+.ft R
+Weights are specied as non-negative integers and can be used to influence the process
+remapping strategy and other internal MPI optimizations. For instance, approximate count
+arguments of later communication calls along specic edges could be used as their edge
+weights. Multiplicity of edges can likewise indicate more intense communication between
+pairs of processes. However, the exact meaning of edge weights is not specied by the MPI
+standard and is left to the implementation. An application can supply the special value
+MPI_UNWEIGHTED for the weight array to indicate that all edges have the same (effectively
+no) weight. It is erroneous to supply MPI_UNWEIGHTED for some but not all processes of
+comm_old. If the graph is weighted but \fIindegree\fP or \fIoutdegree\fP is zero, then
+MPI_WEIGHTS_EMPTY or any arbitrary array may be passed to sourceweights or destweights
+respectively. Note that MPI_UNWEIGHTED and MPI_WEIGHTS_EMPTY are not special weight values;
+rather they are special values for the total array argument. In Fortran, MPI_UNWEIGHTED
+and MPI_WEIGHTS_EMPTY are objects like MPI_BOTTOM (not usable for initialization or
+assignment). See MPI-3 § 2.5.4.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+.ft R
+.sp
+MPI_Dist_graph_create
+MPI_Dist_graph_neighbors
+MPI_Dist_graph_neighbors_count
+

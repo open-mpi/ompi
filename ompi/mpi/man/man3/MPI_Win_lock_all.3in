@@ -1,0 +1,79 @@
+.\" -*- nroff -*-
+.\" Copyright 2014 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
+.TH MPI_Win_lock_all 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Win_lock_all\fP \- Starts an RMA access epoch locking access to all processes in the window
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Win_lock_all(int \fIassert\fP, MPI_Win \fIwin\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_WIN_LOCK_ALL(\fIASSERT, WIN, IERROR\fP)
+	INTEGER \fIASSERT, WIN, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_lock_all(\fIassert\fP, \fIwin\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIassert\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+assert
+Program assertion (integer).
+.TP 1i
+win
+Window object (handle).
+
+.SH OUTPUT PARAMETER
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+Starts an RMA access epoch to all processes in \fIwin\fP, with a lock type of MPI_LOCK_SHARED. During the epoch, the calling process can access the window memory on all processes in \fIwin\fP by using RMA operations. A window locked with MPI_Win_lock_all must be unlocked with MPI_Win_unlock_all. This routine is not collective — the ALL refers to a lock on all members of the group of the window.
+.sp
+Locks are used to protect accesses to the locked target window effected by RMA calls issued between the lock and unlock call, and to protect local load/store accesses to a locked local window executed between the lock and unlock call.
+Accesses that are protected by an exclusive lock will not be concurrent at the window site with other accesses to the same window that are lock protected. Accesses that are protected by a shared lock will not be concurrent at the window site with accesses protected by an exclusive lock to the same window.
+.sp
+The \fIassert\fP argument is used to provide assertions on the context of the call that may be used for various optimizations. (See Section 6.4.4 of the MPI-2 Standard.) A value of \fIassert\fP = 0 is always valid.
+.sp
+.ft
+.SH NOTES
+.ft R
+In a client/server environment in which clients connect to
+a server and create windows that span both the client and the
+server, if a client or server that has obtained a lock
+on such a window and then terminates abnormally, the server or other clients
+may hang in a MPI_Win_lock_all call, failing to notice that the peer MPI job
+has terminated.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+MPI_Win_unlock_all
+MPI_Win_lock
+.br

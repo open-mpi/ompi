@@ -1,0 +1,24 @@
+# -*- text -*-
+#
+# Copyright (c) 2014      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for Open SHMEM MCA error messages.
+#
+[sysv:create segment failure]
+
+You can try the following:
+
+1. Use a different sshmem plugin (e.g., "mmap") with "--mca sshmem mmap".
+2. Decrease the symmetric heap area size with "-x
+   SHMEM_SYMMETRIC_HEAP_SIZE=<value>".
+3. Increase your system's allowable SYSV shared memory segment size
+   (e.g., via the SHMMAX and/or SMMAX kernel parameters).
+4. Set "--mca sshmem_base_start_address 0" for
+   automatic selection by OS of virtual start address for sshmem.

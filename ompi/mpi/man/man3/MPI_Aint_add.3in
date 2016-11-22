@@ -1,0 +1,94 @@
+.\" -*- nroff -*-
+.\" Copyright 2013-2015 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
+.TH MPI_Aint_add 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Aint_add\fP, \fBMPI_Aint_diff\fP \- Portable functions for
+arithmetic on MPI_Aint values.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+MPI_Aint MPI_Aint_add(MPI_Aint \fIbase\fP, MPI_Aint \fIdisp\fP)
+
+MPI_Aint MPI_Aint_diff(MPI_Aint \fIaddr1\fP, MPI_Aint \fIaddr2\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+INTEGER(KIND=MPI_ADDRESS_KIND) MPI_AINT_ADD(\fIBASE, DISP\fP)
+        INTEGER(KIND=MPI_ADDRESS_KIND) \fIBASE, DISP\fP
+
+INTEGER(KIND=MPI_ADDRESS_KIND) MPI_AINT_DIFF(\fIADDR1, ADDR2\fP)
+        INTEGER(KIND=MPI_ADDRESS_KIND) \fIADDR1, ADDR2\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+INTEGER(KIND=MPI_ADDRESS_KIND) MPI_AINT_ADD(\fIBASE, DISP\fP)
+        INTEGER(KIND=MPI_ADDRESS_KIND) \fIBASE, DISP\fP
+
+INTEGER(KIND=MPI_ADDRESS_KIND) MPI_AINT_DIFF(\fIADDR1, ADDR2\fP)
+        INTEGER(KIND=MPI_ADDRESS_KIND) \fIADDR1, ADDR2\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+base
+Base address (integer).
+.ft R
+.TP 1i
+disp
+Displacement (integer).
+.ft R
+.TP 1i
+addr1
+Minuend address (integer).
+.ft R
+.TP
+addr2
+Subtrahend address (integer).
+
+.SH DESCRIPTION
+.ft R
+\fBMPI_Aint_add\fP produces a new MPI_Aint value that is equivalent to the sum of
+the \fIbase\fP and \fIdisp\fP arguments, where \fIbase\fP represents
+a base address returned by a call to \fBMPI_Get_address\fP and
+\fIdisp\fP represents a signed integer displacement. The resulting
+address is valid only at the process that generated \fIbase\fP, and it
+must correspond to a location in the same object referenced by
+\fIbase\fP, as described in MPI-3.1 \[char167] 4.1.12. The addition is
+performed in a manner that results in the correct MPI_Aint
+representation of the output address, as if the process that
+originally produced \fIbase\fP had called:
+
+.nf
+        \fBMPI_Get_address\fP ((char *) \fIbase\fP + \fIdisp\fP, &\fIresult\fP);
+.fi
+.sp
+.ft R
+\fBMPI_Aint_diff\fP produces a new MPI_Aint value that is equivalent
+to the difference between \fIaddr1\fP and \fIaddr2\fP arguments, where
+\fIaddr1\fP and \fIaddr2\fP represent addresses returned by calls to
+\fBMPI_Get_address\fP. The resulting address is valid only at the
+process that generated \fIaddr1\fP and \fIaddr2\fP, and \fIaddr1\fP
+and \fIaddr2\fP must correspond to locations in the same object in the
+same process, as described in MPI-3.1 \[char167] 4.1.12. The difference is
+calculated in a manner that results in the signed difference from
+\fIaddr1\fP to \fIaddr2\fP, as if the process that originally produced
+the addresses had called (char *) \fIaddr1\fP - (char *) \fIaddr2\fP
+on the addresses initially passed to \fBMPI_Get_address\fP.
+
+.SH SEE ALSO
+.ft R
+.sp
+MPI_Get_address

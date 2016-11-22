@@ -1,0 +1,122 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+.\" Copyright 2012 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
+.TH MPI_Improbe 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Improbe\fP \- Non-blocking matched probe for a message.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Improbe(int \fIsource\fP, int\fI tag\fP, MPI_Comm\fI comm\fP,
+	int\fI *flag\fP, MPI_Message\fI *message\fP, MPI_Status\fI *status\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_IMPROBE(\fISOURCE, TAG, COMM, FLAG, MESSAGE, STATUS, IERROR\fP)
+	LOGICAL	\fIFLAG\fP
+	INTEGER	\fISOURCE, TAG, COMM, MESSAGE\fP
+	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Improbe(\fIsource\fP, \fItag\fP, \fIcomm\fP, \fIflag\fP, \fImessage\fP, \fIstatus\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIsource\fP, \fItag\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(OUT) :: \fIflag\fP
+	TYPE(MPI_Message), INTENT(OUT) :: \fImessage\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH C++ Syntax
+.nf
+There is no C++ binding for this function.
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+source
+Source rank or MPI_ANY_SOURCE (integer).
+.TP 1i
+tag
+Tag value or MPI_ANY_TAG (integer).
+.TP 1i
+comm
+Communicator (handle).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+flag
+Flag (logical).
+.ft R
+.TP 1i
+message
+Message (handle).
+.ft R
+.TP 1i
+status
+Status object (status).
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+Like MPI_Probe and MPI_Iprobe, the MPI_Mprobe and MPI_Improbe operations
+allow incoming messages to be queried without actually receiving
+them, except that MPI_Mprobe and MPI_Improbe provide a mechanism to
+receive the specific message that was matched regardless of other
+intervening probe or receive operations.  This gives the application
+an opportunity to decide how to receive the message, based on the
+information returned by the probe.  In particular, the application may
+allocate memory for the receive buffer according to the length of the
+probed message.
+.sp
+A matching probe with MPI_PROC_NULL as \fIsource\fP returns \fIflag\fP
+= true, \fImessage\fP = MPI_MESSAGE_NO_PROC, and the \fIstatus\fP object
+returns source = MPI_PROC_NULL, tag = MPI_ANY_TAG, and count = 0.
+.sp
+MPI_Iprobe returns a true value in \fIflag\fP if a message has been
+matched and can be received by passing the \fImessage\fP handle to the
+MPI_Mrecv or MPI_Imrecv functions, provided the \fIsource\fP was not
+MPI_PROC_NULL.
+
+.SH NOTE
+This is an MPI-3 function and has no C++ binding.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value
+of the function and Fortran routines in the last argument. C++
+functions do not return errors.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for
+I/O function errors. The error handler may be changed with
+MPI_Comm_set_errhandler; the predefined error handler
+MPI_ERRORS_RETURN may be used to cause error values to be
+returned. Note that MPI does not guarantee that an MPI program can
+continue past an error.
+
+.SH SEE ALSO
+.ft R
+.nf
+MPI_Mprobe
+MPI_Probe
+MPI_Iprobe
+MPI_Mrecv
+MPI_Imrecv
+MPI_Cancel

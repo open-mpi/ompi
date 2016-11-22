@@ -1,0 +1,56 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_ADDR\\_ACCESSIBLE" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+shmem_addr_accessible \- Indicates if an address is accessible via OpenSHMEM operations
+from the specified remote PE.
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+int shmem_addr_accessible(const void *addr, int pe);
+.Ve
+Fortran:
+.Vb
+INCLUDE "mpp/shmem.fh"
+
+LOGICAL LOG, SHMEM_ADDR_ACCESSIBLE
+INTEGER pe
+
+LOG = SHMEM_ADDR_ACCESSIBLE(addr, pe)
+.Ve
+.SH DESCRIPTION
+
+shmem_addr_accessible is a query function that indicates whether a local address is
+accessible via SHMEM operations from the specified remote PE.
+.PP
+This function verifies that the remote PE is accessible via SHMEM data transfer functions from
+the local PE, and that the specified address is in a symmetric data segment with respect to the
+remote PE.
+.PP
+.SH RETURN VALUES
+
+C: The return value is 1 if addr is a symmetric data object and accessible via SHMEM
+operations from the specified remote PE; otherwise, it is 0.
+.PP
+Fortran: The return value is \&.TRUE. if addr is a symmetric data object and accessible via
+SHMEM operations from the specified remote PE; otherwise, it is \&.FALSE..
+.PP
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3),
+\fIshmem_pe_accessible\fP(3)

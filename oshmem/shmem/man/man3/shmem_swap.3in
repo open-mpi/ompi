@@ -1,0 +1,115 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_SWAP" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+\fIshmem_double_swap\fP(3),
+\fIshmem_float_swap\fP(3),
+\fIshmem_int_swap\fP(3),
+\fIshmem_long_swap\fP(3),
+\fIshmem_swap\fP(3),
+\fIshmem_int4_swap\fP(3),
+\fIshmem_int8_swap\fP(3),
+\fIshmem_real4_swap\fP(3),
+\fIshmem_real8_swap\fP(3),
+\fIshmem_longlong_swap\fP(3)
+\- Performs an atomic swap to a remote data object
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+double shmem_double_swap(double *target, double value,
+  int pe);
+
+float shmem_float_swap(float *target, float value, int pe);
+
+int shmem_int_swap(int *target, int value, int pe);
+
+long shmem_long_swap(long *target, long value, int pe);
+
+long long shmem_longlong_swap(long long *target,
+  long long value, int pe);
+
+long shmem_swap(long *target, long value, int pe);
+.Ve
+Fortran:
+.Vb
+INCLUDE "mpp/shmem.fh"
+
+INTEGER pe
+
+INTEGER SHMEM_SWAP
+ires = SHMEM_SWAP(target, value, pe)
+
+INTEGER(KIND=4) SHMEM_INT4_SWAP
+ires = SHMEM_INT4_SWAP(target, value, pe)
+
+INTEGER(KIND=8) SHMEM_INT8_SWAP
+ires = SHMEM_INT8_SWAP(target, value, pe)
+
+REAL(KIND=4) SHMEM_REAL4_SWAP
+res = SHMEM_REAL4_SWAP(target, value, pe)
+
+REAL(KIND=8) SHMEM_REAL8_SWAP
+res = SHMEM_REAL8_SWAP(target, value, pe)
+.Ve
+.SH DESCRIPTION
+
+The atomic swap routines write \fBvalue\fP
+to address target on PE \fBpe\fP,
+and return
+the previous contents of \fBtarget\fP
+in one atomic operation.
+.PP
+The arguments are as follows:
+.TP
+target
+The remotely accessible integer data object to be updated on the remote PE. If
+you are using C/C++, the type of target should match that implied in the SYNOPSIS section. If
+you are using Fortran, it must be of the following type:
+.RS
+.TP
+\fBSHMEM_SWAP:\fP Integer of default kind
+.TP
+\fBSHMEM_INT4_SWAP:\fP 4\-byte integer
+.TP
+\fBSHMEM_INT8_SWAP:\fP 8\-byte integer
+.TP
+\fBSHMEM_REAL4_SWAP:\fP 4\-byte real
+.TP
+\fBSHMEM_REAL8_SWAP:\fP 8\-byte real
+.RE
+.RS
+.PP
+.RE
+.TP
+value
+Value to be atomically written to the remote PE. value is the same type as target.
+.TP
+pe
+An integer that indicates the PE number on which target is to be updated. If you are
+using Fortran, it must be a default integer value.
+.PP
+.SH NOTES
+
+The term remotely accessible is defined in \fIintro_shmem\fP(3)\&.
+.SH RETURN VALUES
+
+The contents that had been at the target address on the remote PE prior to the swap is
+returned.
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3)

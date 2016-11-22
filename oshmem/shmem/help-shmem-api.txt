@@ -1,0 +1,14 @@
+# -*- text -*-
+#
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for Open SHMEM.
+#
+[shmem-abort]
+SHMEM_ABORT was invoked on rank %d (pid %d, host=%s) with errorcode %d.

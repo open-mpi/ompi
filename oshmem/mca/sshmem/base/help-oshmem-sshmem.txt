@@ -1,0 +1,25 @@
+# -*- text -*-
+#
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for Open SHMEM MCA error messages.
+#
+[create segment failure]
+The OpenSHMEM "(%s)" plugin in the "sshmem" framework failed to
+allocate a shared memory segment via the system call.  This
+usually means that there are not enough resources available to memory subsystem on your server.
+
+Your OpenSHMEM job will now abort.
+
+   Server:                %s
+   Requested shared
+   memory segment size:   %llu
+   Specific error:        %s (%d)
+

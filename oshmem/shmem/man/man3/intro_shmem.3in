@@ -1,0 +1,1311 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "INTRO\\_SHMEM" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+intro_shmem \- Introduction to the OpenSHMEM programming model
+.PP
+.SH DESCRIPTION
+
+The SHMEM programming model consists of library routines that provide low\-latency,
+high\-bandwidth communication for use in highly parallelized scalable programs. The
+routines in the OpenSHMEM application programming interface (API) provide a programming
+model for exchanging data between cooperating parallel processes. The resulting programs
+are similar in style to Message Passing Interface (MPI) programs. The SHMEM API can
+be used either alone or in combination with MPI routines in the same parallel program.
+.PP
+An OpenSHMEM program is SPMD (single program, multiple data) in style. The SHMEM
+processes, called processing elements or PEs, all start at the same time and they all run the
+same program. Usually the PEs perform computation on their own subdomains of the larger
+problem and periodically communicate with other PEs to exchange information on
+which the next computation phase depends.
+.PP
+The OpenSHMEM routines minimize the overhead associated with data transfer requests,
+maximize bandwidth and minimize data latency. Data latency is the period of time that
+starts when a PE initiates a transfer of data and ends when a PE can use the data.
+OpenSHMEM routines support remote data transfer through put operations, which transfer
+data to a different PE, get operations, which transfer data from a different PE, and remote
+pointers, which allow direct references to data objects owned by another PE. Other
+operations supported are collective broadcast and reduction, barrier synchronization, and
+atomic memory operations. An atomic memory operation is an atomic read\-and\-update
+operation, such as a fetch\-and\-increment, on a remote or local data object.
+.PP
+.SH OPENSHMEM ROUTINES
+
+This section lists the significant OpenSHMEM message\-passing routines.
+.TP
+PE queries
+.PP
+.RS
+.TP
+.B *
+C/C++ only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fI_num_pes\fP(3)
+.TP
+.B *
+\fI_my_pe\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fINUM_PES\fP(3)
+.TP
+.B *
+\fIMY_PE\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Elemental data put routines
+.PP
+.RS
+.TP
+.B *
+C/C++ only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_double_p\fP(3)
+.TP
+.B *
+\fIshmem_float_p\fP(3)
+.TP
+.B *
+\fIshmem_int_p\fP(3)
+.TP
+.B *
+\fIshmem_long_p\fP(3)
+.TP
+.B *
+\fIshmem_short_p.\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Block data put routines
+.PP
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_put32\fP(3)
+.TP
+.B *
+\fIshmem_put64\fP(3)
+.TP
+.B *
+\fIshmem_put128\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+C/C++ only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_double_put\fP(3)
+.TP
+.B *
+\fIshmem_float_put\fP(3)
+.TP
+.B *
+\fIshmem_int_put\fP(3)
+.TP
+.B *
+\fIshmem_long_put\fP(3)
+.TP
+.B *
+\fIshmem_short_put.\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_complex_put\fP(3)
+.TP
+.B *
+\fIshmem_integer_put\fP(3)
+.TP
+.B *
+\fIshmem_logical_put\fP(3)
+.TP
+.B *
+\fIshmem_real_put\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Elemental data get routines
+.PP
+.RS
+.TP
+.B *
+C/C++ only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_double_g\fP(3)
+.TP
+.B *
+\fIshmem_float_g\fP(3)
+.TP
+.B *
+\fIshmem_int_g\fP(3)
+.TP
+.B *
+\fIshmem_long_g\fP(3)
+.TP
+.B *
+\fIshmem_short_g\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Block data get routines
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_get32\fP(3)
+.TP
+.B *
+\fIshmem_get64\fP(3)
+.TP
+.B *
+\fIshmem_get128\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+C/C++ only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_double_get\fP(3)
+.TP
+.B *
+\fIshmem_float_get\fP(3)
+.TP
+.B *
+\fIshmem_int_get\fP(3)
+.TP
+.B *
+\fIshmem_long_get\fP(3)
+.TP
+.B *
+\fIshmem_short_get\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_complex_get\fP(3)
+.TP
+.B *
+\fIshmem_integer_get\fP(3)
+.TP
+.B *
+\fIshmem_logical_get\fP(3)
+.TP
+.B *
+\fIshmem_real_get\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Strided put routines
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_iput32\fP(3)
+.TP
+.B *
+\fIshmem_iput64\fP(3)
+.TP
+.B *
+\fIshmem_iput128\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+C/C++ only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_double_iput\fP(3)
+.TP
+.B *
+\fIshmem_float_iput\fP(3)
+.TP
+.B *
+\fIshmem_int_iput\fP(3)
+.TP
+.B *
+\fIshmem_long_iput\fP(3)
+.TP
+.B *
+\fIshmem_short_iput\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_complex_iput\fP(3)
+.TP
+.B *
+\fIshmem_integer_iput\fP(3)
+.TP
+.B *
+\fIshmem_logical_iput\fP(3)
+.TP
+.B *
+\fIshmem_real_iput\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Strided get routines
+.PP
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_iget32\fP(3)
+.TP
+.B *
+\fIshmem_iget64\fP(3)
+.TP
+.B *
+\fIshmem_iget128\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+C/C++ only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_double_iget\fP(3)
+.TP
+.B *
+\fIshmem_float_iget\fP(3)
+.TP
+.B *
+\fIshmem_int_iget\fP(3)
+.TP
+.B *
+\fIshmem_long_iget\fP(3)
+.TP
+.B *
+\fIshmem_short_iget\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_complex_iget\fP(3)
+.TP
+.B *
+\fIshmem_integer_iget\fP(3)
+.TP
+.B *
+\fIshmem_logical_iget\fP(3)
+.TP
+.B *
+\fIshmem_real_iget\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Point\-to\-point synchronization routines
+.RS
+.TP
+.B *
+C/C++ only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_int_wait\fP(3)
+.TP
+.B *
+\fIshmem_int_wait_until\fP(3)
+.TP
+.B *
+\fIshmem_long_wait\fP(3)
+.TP
+.B *
+\fIshmem_long_wait_until\fP(3)
+.TP
+.B *
+\fIshmem_longlong_wait\fP(3)
+.TP
+.B *
+\fIshmem_longlong_wait_until\fP(3)
+.TP
+.B *
+\fIshmem_short_wait\fP(3)
+.TP
+.B *
+\fIshmem_short_wait_until\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_int4_wait\fP(3)
+.TP
+.B *
+\fIshmem_int4_wait_until\fP(3)
+.TP
+.B *
+\fIshmem_int8_wait\fP(3)
+.TP
+.B *
+\fIshmem_int8_wait_until\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Barrier synchronization routines
+.PP
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_barrier_all\fP(3)
+.TP
+.B *
+\fIshmem_barrier\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Atomic memory fetch\-and\-operate (fetch\-op) routines
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.TP
+.B *
+shmem_swap
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Reduction routines
+.RS
+.TP
+.B *
+C/C++ only:
+.RS
+.TP
+.B *
+\fIshmem_int_and_to_all\fP(3)
+.TP
+.B *
+\fIshmem_long_and_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longlong_and_to_all\fP(3)
+.TP
+.B *
+\fIshmem_short_and_to_all\fP(3)
+.TP
+.B *
+\fIshmem_double_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_float_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_long_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longlong_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_short_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_double_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_float_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_long_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longlong_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_short_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_double_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_float_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_long_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longlong_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_short_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_double_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_float_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_long_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longlong_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_short_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int_or_to_all\fP(3)
+.TP
+.B *
+\fIshmem_long_or_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longlong_or_to_all\fP(3)
+.TP
+.B *
+\fIshmem_short_or_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int_xor_to_all\fP(3)
+.TP
+.B *
+\fIshmem_long_xor_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longlong_xor_to_all\fP(3)
+.TP
+.B *
+\fIshmem_short_xor_to_all\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran only:
+.RS
+.TP
+.B *
+\fIshmem_int4_and_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int8_and_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real4_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real8_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int4_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int8_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real4_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real8_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int4_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int8_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real4_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real8_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int4_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int8_sum_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real4_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real8_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int4_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int8_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int4_or_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int8_or_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int4_xor_to_all\fP(3)
+.TP
+.B *
+\fIshmem_int8_xor_to_all\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Broadcast routines
+.PP
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_broadcast32\fP(3)
+.TP
+.B *
+\fIshmem_broadcast64\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Cache management routines
+.PP
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_udcflush\fP(3)
+.TP
+.B *
+\fIshmem_udcflush_line\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Byte\-granularity block put routines
+.PP
+.RS
+.TP
+.B *
+C/C++ and Fortran
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_putmem\fP(3)
+.TP
+.B *
+\fIshmem_getmem\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_character_put\fP(3)
+.TP
+.B *
+\fIshmem_character_get\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Collect routines
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_collect32\fP(3)
+.TP
+.B *
+\fIshmem_collect64\fP(3)
+.TP
+.B *
+\fIshmem_fcollect32\fP(3)
+.TP
+.B *
+\fIshmem_fcollect64\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Atomic memory fetch\-and\-operate (fetch\-op) routines
+.RS
+.TP
+.B *
+C/C++ only:
+.RS
+.TP
+.B *
+\fIshmem_double_swap\fP(3)
+.TP
+.B *
+\fIshmem_float_swap\fP(3)
+.TP
+.B *
+\fIshmem_int_cswap\fP(3)
+.TP
+.B *
+\fIshmem_int_fadd\fP(3)
+.TP
+.B *
+\fIshmem_int_finc\fP(3)
+.TP
+.B *
+\fIshmem_int_swap\fP(3)
+.TP
+.B *
+\fIshmem_long_cswap\fP(3)
+.TP
+.B *
+\fIshmem_long_fadd\fP(3)
+.TP
+.B *
+\fIshmem_long_finc\fP(3)
+.TP
+.B *
+\fIshmem_long_swap\fP(3)
+.TP
+.B *
+\fIshmem_longlong_cswap\fP(3)
+.TP
+.B *
+\fIshmem_longlong_fadd\fP(3)
+.TP
+.B *
+\fIshmem_longlong_finc\fP(3)
+.TP
+.B *
+\fIshmem_longlong_swap\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran only:
+.RS
+.TP
+.B *
+\fIshmem_int4_cswap\fP(3)
+.TP
+.B *
+\fIshmem_int4_fadd\fP(3)
+.TP
+.B *
+\fIshmem_int4_finc\fP(3)
+.TP
+.B *
+\fIshmem_int4_swap\fP(3)
+.TP
+.B *
+\fIshmem_int8_swap\fP(3)
+.TP
+.B *
+\fIshmem_real4_swap\fP(3)
+.TP
+.B *
+\fIshmem_real8_swap\fP(3)
+.TP
+.B *
+\fIshmem_int8_cswap\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Atomic memory operation routines
+.RS
+.TP
+.B *
+Fortran only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_int4_add\fP(3)
+.TP
+.B *
+\fIshmem_int4_inc\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Remote memory pointer function
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_ptr\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Reduction routines
+.RS
+.TP
+.B *
+C/C++ only:
+.RS
+.TP
+.B *
+\fIshmem_longdouble_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longdouble_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longdouble_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_longdouble_sum_to_all\fP(3)
+.RE
+.RS
+.PP
+.RE
+.TP
+.B *
+Fortran only:
+.RS
+.PP
+.RS
+.RE
+.TP
+.B *
+\fIshmem_real16_max_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real16_min_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real16_prod_to_all\fP(3)
+.TP
+.B *
+\fIshmem_real16_sum_to_all\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Accessibility query routines
+.RS
+.TP
+.B *
+C/C++ and Fortran:
+.RS
+.TP
+.B *
+\fIshmem_pe_accessible\fP(3)
+.TP
+.B *
+\fIshmem_addr_accessible\fP(3)
+.RE
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+Symmetric Data Objects
+.PP
+Consistent with the SPMD nature of the OpenSHMEM programming model is the
+concept of symmetric data objects. These are arrays or variables that
+exist with the same size, type, and relative address on all PEs.
+Another term for symmetric data objects is "remotely accessible data objects".
+In the interface definitions for OpenSHMEM data transfer routines, one or more of the
+parameters are typically required to be symmetric or remotely accessible.
+.PP
+The following kinds of data objects are symmetric:
+.RS
+.TP
+.B *
+Fortran data objects in common blocks or with the SAVE attribute. These data
+objects must not be defined in a dynamic shared object (DSO).
+.TP
+.B *
+Non\-stack C and C++ variables. These data objects must not be defined in a DSO.
+.TP
+.B *
+Fortran arrays allocated with \fIshpalloc\fP(3F)
+.TP
+.B *
+C and C++ data allocated by \fIshmalloc\fP(3C)
+.RE
+.RS
+.PP
+.RE
+.TP
+Collective Routines
+Some SHMEM routines, for example, \fIshmem_broadcast\fP(3)
+and
+\fIshmem_float_sum_to_all\fP(3),
+are classified as collective routines
+because they distribute work across a set of PEs.
+They must be called concurrently by all PEs in the active set defined by the PE_start,
+logPE_stride, PE_size argument triplet. The following man pages describe the OpenSHMEM
+collective routines:
+.RS
+.TP
+.B *
+\fIshmem_and\fP(3)
+.TP
+.B *
+\fIshmem_barrier\fP(3)
+.TP
+.B *
+\fIshmem_broadcast\fP(3)
+.TP
+.B *
+\fIshmem_collect\fP(3)
+.TP
+.B *
+\fIshmem_max\fP(3)
+.TP
+.B *
+\fIshmem_min\fP(3)
+.TP
+.B *
+\fIshmem_or\fP(3)
+.TP
+.B *
+\fIshmem_prod\fP(3)
+.TP
+.B *
+\fIshmem_sum\fP(3)
+.TP
+.B *
+\fIshmem_xor\fP(3)
+.RE
+.RS
+.PP
+.RE
+.PP
+.SH USING THE SYMMETRIC WORK ARRAY, PSYNC
+
+Multiple pSync arrays are often needed if a particular PE calls as OpenSHMEM collective
+routine twice without intervening barrier synchronization. Problems would occur if some PEs
+in the active set for call 2 arrive at call 2 before processing of call 1 is complete by all PEs in
+the call 1 active set. You can use \fIshmem_barrier\fP(3)
+or \fIshmem_barrier_all\fP(3)
+to perform a barrier synchronization between consecutive calls to OpenSHMEM collective
+routines.
+.PP
+There are two special cases:
+.RE
+.TP
+.B *
+The \fIshmem_barrier\fP(3) routine allows the same pSync array to be used on
+consecutive calls as long as the active PE set does not change.
+.TP
+.B *
+If the same collective routine is called multiple times with the same active set, the
+calls may alternate between two pSync arrays. The SHMEM routines guarantee that a
+first call is completely finished by all PEs by the time processing of a third call begins
+on any PE.
+.PP
+Because the SHMEM routines restore pSync to its original contents, multiple calls that
+use the same pSync array do not require that pSync be reinitialized after the first call.
+.PP
+.SH SHMEM ENVIRONMENT VARIABLES
+
+This section lists the significant SHMEM environment variables.
+.TP
+.B *
+\fBSMA_VERSION\fP print the library version at start\-up.
+.TP
+.B *
+\fBSMA_INFO\fP print helpful text about all these environment variables.
+.TP
+.B *
+\fBSMA_SYMMETRIC_SIZE\fP number of bytes to allocate for the symmetric heap.
+.TP
+.B *
+\fBSMA_DEBUG\fP enable debugging messages.
+.PP
+The first call to SHMEM must be \fIstart_pes\fP(3)\&.
+This routines initialize the SHMEM runtime.
+.PP
+Calling any other SHMEM routines beforehand has undefined behavior. Multiple calls
+to this routine is not allowed.
+.PP
+.SH COMPILING AND RUNNING OPENSHMEM PROGRAMS
+
+The OpenSHMEM specification is silent regarding how OpenSHMEM programs are compiled,
+linked and run. This section shows some examples of how wrapper programs could be utilized
+to compile and launch applications. The commands are styled after wrapper programs
+found in many MPI implementations.
+.PP
+The following sample command line demonstrates running an OpenSHMEM Program using a wrapper script (\fBoshrun\fP
+in this case):
+.PP
+.TP
+.B *
+C/C++:
+.Vb
+oshcc c_program.c
+.Ve
+.TP
+.B *
+FORTRAN:
+.Vb
+oshfort fortran_program.f
+.Ve
+.PP
+The following sample command line demonstrates running an OpenSHMEM Program assuming that the library provides a wrapper script for such purpose
+(named \fBoshrun\fP
+for this example):
+.PP
+.Vb
+oshrun \-np 32 ./a.out
+.Ve
+.PP
+.SH EXAMPLES
+
+\fBExample 1\fP:
+The following Fortran OpenSHMEM program directs all PEs to sum
+simultaneously the numbers in the VALUES variable across all PEs:
+.Vb
+PROGRAM REDUCTION
+  REAL VALUES, SUM
+  COMMON /C/ VALUES
+  REAL WORK
+
+  CALL START_PES(0)
+  VALUES = MY_PE()
+  CALL SHMEM_BARRIER_ALL ! Synchronize all PEs
+  SUM = 0.0
+  DO I = 0, NUM_PES()\-1
+    CALL SHMEM_REAL_GET(WORK, VALUES, 1, I) ! Get next value
+    SUM = SUM + WORK                ! Sum it
+  ENDDO
+  PRINT *, 'PE ', MY_PE(), ' COMPUTED SUM=', SUM
+  CALL SHMEM_BARRIER_ALL
+END
+.Ve
+\fBExample 2\fP:
+The following C OpenSHMEM program transfers an array of 10 longs from
+PE 0 to PE 1:
+.Vb
+#include <mpp/shmem.h>
+
+main() {
+  long source[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+  static long target[10];
+
+  shmem_init();
+  if (shmem_my_pe() == 0) {
+    /* put 10 elements into target on PE 1 */
+    shmem_long_put(target, source, 10, 1);
+  }
+  shmem_barrier_all(); /* sync sender and receiver */
+  if (shmem_my_pe() == 1)
+    printf("target[0] on PE %d is %d\\n", shmem_my_pe(), target[0]);
+}
+.Ve
+.SH SEE ALSO
+
+The following man pages also contain information on OpenSHMEM routines. See the
+specific man pages for implementation information.
+.PP
+\fIshmem_add\fP(3),
+\fIshmem_and\fP(3),
+\fIshmem_barrier\fP(3),
+\fIshmem_barrier_all\fP(3),
+\fIshmem_broadcast\fP(3),
+\fIshmem_cache\fP(3),
+\fIshmem_collect\fP(3),
+\fIshmem_cswap\fP(3),
+\fIshmem_fadd\fP(3),
+\fIshmem_fence\fP(3),
+\fIshmem_finc\fP(3),
+\fIshmem_get\fP(3),
+\fIshmem_iget\fP(3),
+\fIshmem_inc\fP(3),
+\fIshmem_iput\fP(3),
+\fIshmem_lock\fP(3),
+\fIshmem_max\fP(3),
+\fIshmem_min\fP(3),
+\fIshmem_my_pe\fP(3),
+\fIshmem_or\fP(3),
+\fIshmem_prod\fP(3),
+\fIshmem_put\fP(3),
+\fIshmem_quiet\fP(3),
+\fIshmem_short_g\fP(3),
+\fIshmem_short_p\fP(3),
+\fIshmem_sum\fP(3),
+\fIshmem_swap\fP(3),
+\fIshmem_wait\fP(3),
+\fIshmem_xor\fP(3),
+\fIshmem_pe_accessible\fP(3),
+\fIshmem_addr_accessible\fP(3),
+\fIshmem_init\fP(3),
+\fIshmem_malloc\fP(3C),
+\fIshmem_my_pe\fP(3I),
+\fIshmem_n_pes\fP(3I)

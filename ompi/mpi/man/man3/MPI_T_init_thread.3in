@@ -1,0 +1,90 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.\" $COPYRIGHT$
+.TH MPI_T_init_thread 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_init_thread\fP \- Initializes the MPI Tool imformation interface
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_init_thread(int \fIrequired\fP, int *\fIprovided\fP)
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+required
+Desired level of thread support (integer).
+.
+.
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+provided
+Available level of thread support (integer).
+.
+.
+.SH DESCRIPTION
+.ft R
+MPI_T_init_thread() initializes the MPI tool information interface. Calls to MPI tool functions
+are allowed at any point in execution (including before MPI_Init() and after MPI_Finalize()) as
+long as MPI_T_init_thread() has been called at least once and the number of calls to
+MPI_T_init_thread() is greater than the number of calls to MPI_T_finalize(). If at any point in
+execution the number of calls to MPI_T_finalize() equals the number of calls to
+MPI_T_init_thread() the MPI tool interface will no longer be available until another call to
+MPI_T_init_thread().
+
+.sp
+MPI_T_init_thread, like MPI_Init_thread, has a provision to request a
+certain level of thread support in \fIrequired\fP:
+.TP 2.4i
+MPI_THREAD_SINGLE
+Only one thread will execute.
+.TP 2.4i
+MPI_THREAD_FUNNELED
+If the process is multithreaded, only the thread that called
+MPI_Init_thread will make MPI calls.
+.TP 2.4i
+MPI_THREAD_SERIALIZED
+If the process is multithreaded, only one thread will make MPI library
+calls at one time.
+.TP 2.4i
+MPI_THREAD_MULTIPLE
+If the process is multithreaded, multiple threads may call MPI at once
+with no restrictions.
+.
+.PP
+The level of thread support available to the program is set in
+\fIprovided\fP. In Open MPI, the value is dependent on how the library was
+configured and built. Note that there is no guarantee that
+\fIprovided\fP will be greater than or equal to \fIrequired\fP.
+.
+.SH NOTES
+.ft R
+It is the caller's responsibility to check the value of \fIprovided\fP,
+as it may be less than what was requested in \fIrequired\fP.
+
+.SH ERRORS
+.ft R
+MPI_T_init_thread() will fail if:
+.TP 1i
+[MPI_T_ERR_MEMORY]
+Out of memory
+.TP 1i
+[MPI_T_ERR_CANNOT_INIT]
+Interface not in the state to be initialized
+
+.SH SEE ALSO
+.ft R
+.nf
+MPI_Init_thread
+MPI_T_finalize
+

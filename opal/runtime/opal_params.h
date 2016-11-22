@@ -18,7 +18,6 @@
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,6 +75,10 @@ OPAL_DECLSPEC extern int opal_abort_delay;
 
 #if OPAL_ENABLE_DEBUG
 extern bool opal_progress_debug;
+#endif
+
+#if OPAL_ENABLE_FT_CR == 1
+extern bool opal_base_distill_checkpoint_ready;
 #endif
 
 #endif

@@ -1,0 +1,74 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
+.TH MPI_Dist_graph_neighbors_count 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Dist_graph_neighbors_count \fP \- Returns the number of in and out edges for the calling processes in a distributed graph topology and a flag indicating whether the distributed graph is weighted.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Dist_graph_neighbors_count(MPI_Comm \fIcomm\fP, int\fI *indegree\fP,
+	int\fI *outdegree\fP, int\fI *weighted\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_DIST_GRAPH_NEIGHBORS_COUNT(\fICOMM, INDEGREE, OUTDEGREE, WEIGHTED, IERROR\fP)
+	INTEGER	\fICOMM, INDEGREE, OUTDEGREE, IERROR\fP
+        LOGICAL \fIWEIGHTED\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Dist_graph_neighbors_count(\fIcomm\fP, \fIindegree\fP, \fIoutdegree\fP, \fIweighted\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fIindegree\fP, \fIoutdegree\fP
+	INTEGER, INTENT(OUT) :: \fIweighted\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+comm
+Communicator with distributed graph topology (handle).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+indegree
+Number of edges into this process (non-negative integer).
+.TP 1i
+outdegree
+Number of edges out of this process (non-negative integer).
+.TP 1i
+weighted
+False if MPI_UNWEIGHTED was supplied during creation, true otherwise (logical).
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+MPI_Dist_graph_neighbors_count and MPI_Graph_neighbors provide adjacency information for a distributed graph topology. MPI_Dist_graph_neighbors_count returns the number of sources and destinations for the calling process.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+.ft R
+.sp
+MPI_Dist_graph_neighbors

@@ -1,0 +1,48 @@
+.\" Copyright (c) 2014      Artem Polyakov <artpol84@gmail.com>.  All rights reserved.
+.TH MPISYNC 1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+Open MPI timing tools
+.
+.SH SYNTAX
+.B mpisync
+[\fIoptions\fR]
+.br
+.B mpirun_prof
+[\fIoptions\fR]
+.br
+.B ompi_timing_post
+[\fI<timing-file>\fR] [\fI<processed-file>\fR]
+.
+.SH DESCRIPTION
+.PP
+.BR mpisync
+determines clock offsets relative to Head Node Process (HNP). It accepts the following options:
+.TP
+\fB\-o\fR, \fB\-\-output\fR
+The name of output file where offsets related to HNP will be written
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help information
+.PP
+.BR ompi_timing_post
+takes the timing output file as input parameter. The events are sorted by the timestamps. Next, the timestamps are replaced with time offsets relative to the
+.BR first
+:
+.BR previous
+event.
+.PP
+.BR mpirun_prof
+is a wrapper around
+.BR mpirun
+that performs clock synchronisation and post-processing of the timing output file.
+
+.SH NOTES
+.PP
+The mpisync code was derived from MPIPerf project:
+http://mpiperf.cpct.sibsutis.ru/index.php/Main/Documentation
+.
+.SH FILES
+.PP
+The output file has following format:
+.PP
+<hostname> <round-trip-time> <offset-from-hnp>

@@ -1,0 +1,44 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
+.TH MPI_T_finalize 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_T_finalize \fP \- Finalize the MPI tool information interface
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_finalize(void)
+
+.SH DESCRIPTION
+.ft R
+MPI_T_finalize() finalizes the MPI tool information interface and must be called the same
+number of times as MPI_T_init_thread() by the end of execution. Calls to MPI tool functions
+are allowed at any point in execution as long as MPI_T_init_thread() has been called at least
+once and the number of calls to MPI_T_init_thread() is greater than the number of calls to
+MPI_T_finalize(). If at any point in execution the number of calls to MPI_T_finalize() equals
+the number of calls to MPI_T_init_thread() the MPI tool interface will no longer be available
+until another call to MPI_T_init_thread().
+
+.SH NOTES
+.ft R
+Before the end of execution the number of calls to MPI_T_init_thread() and MPI_T_finalize must
+be the same.
+
+.SH ERRORS
+.ft R
+MPI_T_finalize() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+
+.SH SEE ALSO
+.ft T
+.nf
+MPI_T_init_thread
+

@@ -1,0 +1,129 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_PTR" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+\fIshmem_ptr\fP(3)
+\- Returns a pointer to a data object on a specified processing element
+(PE).
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+void *shmem_ptr(const void *target, int pe);
+.Ve
+Fortran:
+.Vb
+INCLUDE "mpp/shmem.fh"
+
+POINTER (PTR, POINTEE)
+INTEGER pe
+
+PTR = SHMEM_PTR(target, pe)
+.Ve
+.SH DESCRIPTION
+
+The shmem_ptr routine returns an address that can be used to directly reference
+\fBtarget\fP
+on the remote PE \fBpe\fP\&.
+With this address we can perform ordinary loads
+and stores to the remote address.
+.PP
+When a sequence of loads (gets) and stores (puts) to a data object on a remote PE does not
+match the access pattern provided in a SHMEM data transfer routine like
+\fIshmem_put32\fP(3)
+or \fIshmem_real_iget\fP(3),
+the shmem_ptr function can
+provide an efficient means to accomplish the communication.
+.PP
+The arguments are as follows:
+.TP
+target
+The symmetric data object to be referenced.
+.TP
+pe
+An integer that indicates the PE number on which target is to be accessed. If you
+are using Fortran, it must be a default integer value.
+.PP
+.SH EXAMPLES
+
+This Fortran program calls shmem_ptr and then PE 0 writes to the BIGD array on PE 1:
+.Vb
+PROGRAM REMOTEWRITE
+  INCLUDE 'mpp/shmem.fh'
+
+  INTEGER BIGD(100)
+  SAVE BIGD
+  INTEGER POINTEE(*)
+
+  POINTER (PTR,POINTEE)
+  CALL START_PES(0)
+  IF (MY_PE() .EQ. 0) THEN
+                             ! initialize PE 1's BIGD array
+    PTR = SHMEM_PTR(BIGD, 1) ! get address of PE 1's BIGD
+                             ! array
+    DO I=1,100
+      POINTEE(I) = I
+    ENDDO
+  ENDIF
+  CALL SHMEM_BARRIER_ALL
+  IF (MY_PE() .EQ. 1) THEN
+    PRINT *, 'BIGD on PE 1 is: '
+    PRINT *, BIGD
+  ENDIF
+END
+.Ve
+This is the equivalent program written in C:
+.Vb
+#include <mpp/shmem.h>
+main()
+{
+  static int bigd[100];
+  int *ptr;
+  int i;
+
+  shmem_init();
+  if (shmem_my_pe() == 0) {
+  /* initialize PE 1's bigd array */
+    ptr = shmem_ptr(bigd, 1);
+    for (i=0; i<100; i++)
+      *ptr++ = i+1;
+  }
+  shmem_barrier_all();
+  if (shmem_my_pe() == 1) {
+    printf("bigd on PE 1 is:\\n");
+    for (i=0; i<100; i++)
+      printf(" %d\\n",bigd[i]);
+    printf("\\n");
+  }
+}
+.Ve
+.SH NOTES
+
+The shmem_ptr function is available only on systems where ordinary memory loads and
+stores are used to implement SHMEM put and get operations.
+.PP
+.SH RETURN VALUES
+
+shmem_ptr returns a pointer to the data object on the specified remote PE. If target is not
+remotely accessible, a NULL pointer is returned.
+.PP
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3),
+\fIshmem_put\fP(3),
+\fIshmem_get\fP(3)
+.PP

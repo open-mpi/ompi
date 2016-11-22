@@ -1,0 +1,78 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_LOCK" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+\fIshmem_set_lock\fP(3),
+\fIshmem_clear_lock\fP(3),
+\fIshmem_test_lock\fP(3)
+\- Releases, locks, and tests a mutual exclusion memory lock.
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+void shmem_clear_lock(volatile long *lock);
+
+void shmem_set_lock(volatile long *lock);
+
+int shmem_test_lock(volatile long *lock);
+.Ve
+Fortran:
+.Vb
+INCLUDE "mpp/shmem.fh"
+
+INTEGER lock, SHMEM_TEST_LOCK
+
+CALL SHMEM_CLEAR_LOCK(lock)
+
+CALL SHMEM_SET_LOCK(lock)
+
+I = SHMEM_TEST_LOCK(lock)
+.Ve
+.SH DESCRIPTION
+
+The shmem_set_lock routine sets a mutual exclusion lock after waiting for the lock to be
+freed by any other PE currently holding the lock. Waiting PEs are assured of getting the lock
+in a first\-come, first\-served manner.
+.PP
+The shmem_clear_lock routine releases a lock previously set by shmem_set_lock after
+ensuring that all local and remote stores initiated in the critical region are complete.
+.PP
+The shmem_test_lock function sets a mutual exclusion lock only if it is currently cleared.
+By using this function, a PE can avoid blocking on a set lock. If the lock is currently set, the
+function returns without waiting.
+These routines are appropriate for protecting a critical region from simultaneous update by
+multiple PEs.
+They accept the following arguments:
+.TP
+lock
+A symmetric data object that is a scalar variable or an array of length 1. This
+data object must be set to 0 on all processing elements (PEs) prior to the first use. lock must
+be of type integer. If you are using Fortran, it must be of default kind.
+.PP
+.SH NOTES
+
+The term symmetric data object is defined on \fIintro_shmem\fP(3)\&.
+.PP
+.SH RETURN VALUES
+
+The shmem_test_lock function returns 0 if the lock was originally cleared and this call
+was able to set the lock. A value of 1 is returned if the lock had been set and the call returned
+without waiting to set the lock.
+.PP
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3)
