@@ -89,7 +89,7 @@ foreach my $f (@files) {
 
     my @expanded_lines = expand(@lines_with_tabs);
     open(TEMP, ">temp.txt");
-    print TEMP join("\n",@expanded_lines),"\n";
+    print TEMP @expanded_lines;
     close(TEMP);
     system("mv temp.txt $f");
 }
