@@ -23,8 +23,8 @@
         } else {                                                        \
             /* If no function previously provided, do not monitor */    \
             __module->super.coll_ ## __api = NULL;                      \
-            OPAL_MONITORING_PRINT_WARN("COMM " PRIu64 ": No monitoring available for coll_" # __api, \
-                                    __comm->c_base.obj_magic_id);       \
+            OPAL_MONITORING_PRINT_WARN("COMM \"%s\": No monitoring available for " \
+                                       "coll_" # __api, __comm->c_name); \
         }                                                               \
         if( NULL != __comm->c_coll.coll_i ## __api ## _module ) {       \
             __module->real.coll_i ## __api = __comm->c_coll.coll_i ## __api; \
@@ -33,19 +33,25 @@
         } else {                                                        \
             /* If no function previously provided, do not monitor */    \
             __module->super.coll_i ## __api = NULL;                     \
-            OPAL_MONITORING_PRINT_WARN("COMM " PRIu64 ": No monitoring available for coll_i" # __api, \
-                                    __comm->c_base.obj_magic_id);       \
+            OPAL_MONITORING_PRINT_WARN("COMM \"%s\": No monitoring available for " \
+                                       "coll_i" # __api, __comm->c_name); \
         }                                                               \
     } while(0)
 
 #define MONITORING_RELEASE_PREV_COLL_API(__module, __comm, __api)       \
     do {                                                                \
         if( NULL != __module->real.coll_ ## __api ## _module ) {        \
+            if( NULL != __module->real.coll_ ## __api ## _module->coll_module_disable ) { \
+                __module->real.coll_ ## __api ## _module->coll_module_disable(__module->real.coll_ ## __api ## _module, __comm); \
+            }                                                           \
             OBJ_RELEASE(__module->real.coll_ ## __api ## _module);      \
             __module->real.coll_ ## __api = NULL;                       \
             __module->real.coll_ ## __api ## _module = NULL;            \
         }                                                               \
         if( NULL != __module->real.coll_i ## __api ## _module ) {       \
+            if( NULL != __module->real.coll_i ## __api ## _module->coll_module_disable ) { \
+                __module->real.coll_i ## __api ## _module->coll_module_disable(__module->real.coll_i ## __api ## _module, __comm); \
+            }                                                           \
             OBJ_RELEASE(__module->real.coll_i ## __api ## _module);     \
             __module->real.coll_i ## __api = NULL;                      \
             __module->real.coll_i ## __api ## _module = NULL;           \
@@ -116,6 +122,7 @@ mca_coll_monitoring_module_enable(mca_coll_base_module_t*module, struct ompi_com
     if( 1 == opal_atomic_add_64(&monitoring_module->is_initialized, 1) ) {
         MONITORING_SAVE_FULL_PREV_COLL_API(monitoring_module, comm);
         monitoring_module->data = mca_common_monitoring_coll_new(comm);
+        OPAL_MONITORING_PRINT_INFO("coll_module_enabled");    
     }
     return OMPI_SUCCESS;
 }
@@ -128,6 +135,7 @@ mca_coll_monitoring_module_disable(mca_coll_base_module_t*module, struct ompi_co
         MONITORING_RELEASE_FULL_PREV_COLL_API(monitoring_module, comm);
         mca_common_monitoring_coll_release(monitoring_module->data);
         monitoring_module->data = NULL;
+        OPAL_MONITORING_PRINT_INFO("coll_module_disabled");    
     }
     return OMPI_SUCCESS;
 }
