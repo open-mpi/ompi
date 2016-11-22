@@ -63,6 +63,10 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
         mca_common_monitoring_get_world_rank(0, data->p_comm, &world_rank);
         pos = asprintf(&data->procs, "%d,", world_rank);
         for(i = 1; i < size; ++i) {
+            /* WARNING : Keep the order of the next two instruction :
+               it sometimes happened with gcc/4.9.2 that the return
+               from opal_hash_table_get_value_uint_64() set tmp_procs
+               to NULL (while returning OPAL_SUCCESS). */
             mca_common_monitoring_get_world_rank(i, data->p_comm, &world_rank);
             tmp_procs = data->procs;
             pos = asprintf(&data->procs, "%s%d,", tmp_procs, world_rank);

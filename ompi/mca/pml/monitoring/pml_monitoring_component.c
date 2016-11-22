@@ -155,6 +155,7 @@ mca_pml_monitoring_component_init(int* priority,
                                   bool enable_progress_threads,
                                   bool enable_mpi_threads)
 {
+    OPAL_MONITORING_PRINT_INFO("pml_component_init");
     mca_common_monitoring_init();
     if( mca_common_monitoring_enabled ) {
         *priority = 0;  /* I'm up but don't select me */
@@ -166,6 +167,7 @@ mca_pml_monitoring_component_init(int* priority,
 static int mca_pml_monitoring_component_finish(void)
 {
     if( mca_common_monitoring_enabled && mca_common_monitoring_active ) {
+        OPAL_MONITORING_PRINT_INFO("pml_component_finish");
         /* Free internal data structure */
         mca_common_monitoring_finalize();
         /* Restore the original PML */
