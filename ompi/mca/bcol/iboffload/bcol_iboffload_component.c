@@ -931,9 +931,8 @@ static int progress_one_device(mca_bcol_iboffload_device_t *device)
 
             if (coll_request->n_frag_mpi_complete ==
                             coll_request->n_fragments) {
-                coll_request->super.req_complete = true;
-                opal_condition_broadcast(&ompi_request_cond);
-                IBOFFLOAD_VERBOSE(10, ("After opal_condition_broadcast.\n"));
+                OPAL_ATOMIC_SWAP_PTR(&coll_request->super.reg_complete, REQUEST_COMPLETED);
+                IBOFFLOAD_VERBOSE(10, ("After request completion.\n"));
             }
 
             rc = handle_collfrag_done(coll_frag, coll_request, device);

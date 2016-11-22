@@ -319,8 +319,6 @@ OMPI_DECLSPEC extern size_t                 ompi_request_waiting;
 OMPI_DECLSPEC extern size_t                 ompi_request_completed;
 OMPI_DECLSPEC extern size_t                 ompi_request_failed;
 OMPI_DECLSPEC extern int32_t                ompi_request_poll;
-OMPI_DECLSPEC extern opal_recursive_mutex_t ompi_request_lock;
-OMPI_DECLSPEC extern opal_condition_t       ompi_request_cond;
 OMPI_DECLSPEC extern ompi_predefined_request_t        ompi_request_null;
 OMPI_DECLSPEC extern ompi_predefined_request_t        *ompi_request_null_addr;
 OMPI_DECLSPEC extern ompi_request_t         ompi_request_empty;
