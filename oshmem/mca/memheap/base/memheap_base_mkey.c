@@ -714,23 +714,6 @@ sshmem_mkey_t *mca_memheap_base_get_mkey(void* va, int tr_id)
     return ((s && MAP_SEGMENT_IS_VALID(s)) ? &s->mkeys[tr_id] : NULL );
 }
 
-uint64_t mca_memheap_base_find_offset(int pe,
-                                      int tr_id,
-                                      void* va,
-                                      void* rva)
-{
-    map_segment_t *s;
-    int my_pe = oshmem_my_proc_id();
-
-    s = memheap_find_va(va);
-
-    if (my_pe == pe) {
-        return (uintptr_t)va - (uintptr_t)s->super.va_base;
-    }
-    else {
-        return ((s && MAP_SEGMENT_IS_VALID(s)) ? ((uintptr_t)rva - (uintptr_t)(s->mkeys_cache[pe][tr_id].va_base)) : 0);
-    }
-}
 
 int mca_memheap_base_is_symmetric_addr(const void* va)
 {
