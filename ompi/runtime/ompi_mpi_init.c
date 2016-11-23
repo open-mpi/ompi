@@ -20,6 +20,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -279,7 +280,6 @@ opal_list_t ompi_registered_datareps = {{0}};
 
 bool ompi_enable_timing = false, ompi_enable_timing_ext = false;
 extern bool ompi_mpi_yield_when_idle;
-extern bool ompi_mpi_lazy_wait_in_init;
 extern int ompi_mpi_event_tick_rate;
 
 /**
@@ -529,11 +529,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_pmix.register_evhandler(NULL, &info, ompi_errhandler_callback,
                                  ompi_errhandler_registration_callback,
                                  (void*)&errtrk);
-    if( ompi_mpi_lazy_wait_in_init ){
-        OMPI_LAZY_WAIT_FOR_COMPLETION(errtrk.active);
-    } else {
-        OMPI_WAIT_FOR_COMPLETION(errtrk.active);
-    }
+    OMPI_LAZY_WAIT_FOR_COMPLETION(errtrk.active);
 
     OPAL_LIST_DESTRUCT(&info);
     if (OPAL_SUCCESS != errtrk.status) {
@@ -660,11 +656,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         if (NULL != opal_pmix.fence_nb) {
             opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
                                fence_release, (void*)&active);
-            if( ompi_mpi_lazy_wait_in_init ){
-                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-            } else {
-                OMPI_WAIT_FOR_COMPLETION(active);
-            }
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
             opal_pmix.fence(NULL, opal_pmix_collect_all_data);
         }
@@ -841,11 +833,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         if (NULL != opal_pmix.fence_nb) {
             opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
                                fence_release, (void*)&active);
-            if( ompi_mpi_lazy_wait_in_init ){
-                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-            } else {
-                OMPI_WAIT_FOR_COMPLETION(active);
-            }
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
             opal_pmix.fence(NULL, opal_pmix_collect_all_data);
         }
