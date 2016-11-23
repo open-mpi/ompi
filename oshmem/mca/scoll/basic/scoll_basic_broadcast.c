@@ -146,11 +146,15 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
                 rc = MCA_SPML_CALL(put(target, nlong, (void *)source, pe_cur));
             }
         }
+        /* fence (which currently acts as quiet) is needed
+         * because scoll level barrier does not guarantee put completion 
+         */
+        MCA_SPML_CALL(fence());
     }
 
-    /* Wait for operation completion to set needed size */
     if (rc == OSHMEM_SUCCESS) {
         SCOLL_VERBOSE(14, "[#%d] Wait for operation completion", group->my_pe);
+        /* wait until root finishes sending data  */
         rc = BARRIER_FUNC(group,
                 (pSync + 1),
                 SCOLL_DEFAULT_ALG);
