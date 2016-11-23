@@ -33,9 +33,6 @@
 #include "ompi/constants.h"
 
 opal_pointer_array_t             ompi_request_f_to_c_table = {{0}};
-size_t                           ompi_request_waiting = 0;
-size_t                           ompi_request_completed = 0;
-size_t                           ompi_request_failed = 0;
 ompi_predefined_request_t        ompi_request_null = {{{{{0}}}}};
 ompi_predefined_request_t        *ompi_request_null_addr = &ompi_request_null;
 ompi_request_t                   ompi_request_empty = {{{{0}}}};

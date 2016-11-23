@@ -84,10 +84,6 @@ struct mpidbg_name_map_t *mpidbg_status_name_map = NULL;
  * cases like the above with compilers that require the symbol (like
  * Sun Studio) we add in these definitions here.
  */
-size_t ompi_request_completed;
-opal_condition_t ompi_request_cond;
-size_t ompi_request_waiting;
-opal_mutex_t ompi_request_lock;
 opal_mutex_t opal_event_lock;
 int opal_progress_spin_count;
 bool opal_mutex_check_locks;

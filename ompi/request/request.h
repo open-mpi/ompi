@@ -315,10 +315,6 @@ typedef struct ompi_request_fns_t {
  * Globals used for tracking requests and request completion.
  */
 OMPI_DECLSPEC extern opal_pointer_array_t   ompi_request_f_to_c_table;
-OMPI_DECLSPEC extern size_t                 ompi_request_waiting;
-OMPI_DECLSPEC extern size_t                 ompi_request_completed;
-OMPI_DECLSPEC extern size_t                 ompi_request_failed;
-OMPI_DECLSPEC extern int32_t                ompi_request_poll;
 OMPI_DECLSPEC extern ompi_predefined_request_t        ompi_request_null;
 OMPI_DECLSPEC extern ompi_predefined_request_t        *ompi_request_null_addr;
 OMPI_DECLSPEC extern ompi_request_t         ompi_request_empty;
@@ -430,10 +426,6 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
             }
         } else
             request->req_complete = REQUEST_COMPLETED;
-
-        if( OPAL_UNLIKELY(MPI_SUCCESS != request->req_status.MPI_ERROR) ) {
-            ompi_request_failed++;
-        }
     }
 
     return OMPI_SUCCESS;
