@@ -14,6 +14,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -572,6 +574,9 @@ static int rte_init(void)
 
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
+    if (NULL != proc->rml_uri) {
+        free(proc->rml_uri);
+    }
     proc->rml_uri = strdup(orte_process_info.my_hnp_uri);
 
     /* we are also officially a daemon, so better update that field too */
@@ -775,6 +780,8 @@ static int rte_init(void)
 static int rte_finalize(void)
 {
     char *contact_path;
+    orte_job_t *jdata;
+    uint32_t key;
 
     if (signals_set) {
         /* Remove the epipe handler */
@@ -846,7 +853,14 @@ static int rte_finalize(void)
     }
 
     /* release the job hash table */
+    OPAL_HASH_TABLE_FOREACH(key, uint32, jdata, orte_job_data) {
+        OBJ_RELEASE(jdata);
+    }
     OBJ_RELEASE(orte_job_data);
+
+    if (NULL != orte_process_info.super.proc_hostname) {
+        free(orte_process_info.super.proc_hostname);
+    }
     return ORTE_SUCCESS;
 }
 
