@@ -195,6 +195,15 @@ int opal_os_dirpath_destroy(const char *path,
         filenm = opal_os_path(false, path, ep->d_name, NULL);
 
         rc = stat(filenm, &buf);
+        if (0 > rc) {
+            /* Handle a race condition. filenm might have been deleted by an
+             * other process running on the same node. That typically occurs
+             * when one task is removing the job_session_dir and an other task
+             * is still removing its proc_session_dir.
+             */
+            free(filenm);
+            continue;
+        }
         if (S_ISDIR(buf.st_mode)) {
             is_dir = true;
         }
