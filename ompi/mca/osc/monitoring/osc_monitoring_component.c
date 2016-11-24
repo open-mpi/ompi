@@ -42,61 +42,6 @@ OSC_MONITORING_MODULE_TEMPLATE_GENERATE(portals4, ompi_osc_portals4_module_t, co
 
 /***************************************/
 
-static int mca_osc_monitoring_component_open(void)
-{
-    return OMPI_SUCCESS;
-}
-
-static int mca_osc_monitoring_component_close(void)
-{
-    if( !mca_common_monitoring_enabled )
-        goto release_and_return;
-
-    /**
-     * If this component is already active, then we are currently monitoring
-     * the execution and this call to close if the one from MPI_Finalize.
-     * Clean up and release the extra reference on ourselves.
-     */
-    if( mca_common_monitoring_active ) {  /* Already active, turn off */
-        mca_base_component_repository_release(&mca_osc_monitoring_component.super.osc_version);
-        mca_common_monitoring_active = 0;
-        goto release_and_return;
-    }
-
-    /**
-     * We are supposed to monitor the execution. Save the winner OSC component and
-     * module, and swap it with ourselves. Increase our refcount so that we are
-     * not dlclose.
-     */
-    /* if( OPAL_SUCCESS != mca_base_component_repository_retain_component(mca_osc_monitoring_component.super.osc_version.mca_type_name, */
-    /*                                                                    mca_osc_monitoring_component.super.osc_version.mca_component_name) ) { */
-    /*     return OMPI_ERROR; */
-    /* } */
-
-    /* Save a copy of the selected OSC */
-    /* osc_selected_component = ompi_osc_base_selected_component; */
-    /* osc_selected_module = mca_osc; */
-    /* Install our interception layer */
-    /* mca_osc_base_selected_component = mca_osc_monitoring_component; */
-    /* mca_osc = mca_osc_monitoring; */
-    /* Restore some of the original valued: progress, flags, tags and context id */
-    /* mca_osc.osc_progress = osc_selected_module.osc_progress; */
-    /* mca_osc.osc_max_contextid = osc_selected_module.osc_max_contextid; */
-    /* mca_osc.osc_max_tag = osc_selected_module.osc_max_tag; */
-    /* mca_osc.osc_flags = osc_selected_module.osc_flags; */
-
-    mca_common_monitoring_active = 1;
-
-    return OMPI_SUCCESS;
-
- release_and_return:
-    /* if( NULL != mca_osc_monitoring_current_filename ) { */
-    /*     free(mca_osc_monitoring_current_filename); */
-    /*     mca_osc_monitoring_current_filename = NULL; */
-    /* } */
-    return OMPI_SUCCESS;
-}
-
 static int mca_osc_monitoring_component_init(bool enable_progress_threads,
                                              bool enable_mpi_threads)
 {
@@ -192,8 +137,6 @@ ompi_osc_monitoring_component_t mca_osc_monitoring_component = {
 
             .mca_component_name = "monitoring", /* MCA component name */
             MCA_MONITORING_MAKE_VERSION,
-            .mca_open_component = mca_osc_monitoring_component_open,  /* component open */
-            .mca_close_component = mca_osc_monitoring_component_close, /* component close */
             .mca_register_component_params = mca_osc_monitoring_component_register
         },
         .osc_data = {

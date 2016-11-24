@@ -41,14 +41,14 @@ static opal_output_stream_t mca_common_monitoring_output_stream_obj = {
 };
 
 /*** MCA params to mark the monitoring as enabled. ***/
-/* This signals that the monitoring will highjack the PML or OSC */
+/* This signals that the monitoring will highjack the PML, OSC and COLL */
 int mca_common_monitoring_enabled = 0;
+int mca_common_monitoring_current_state = 0;
 /* Signals there will be an output of the monitored data at component close */
 int mca_common_monitoring_output_enabled = 0;
-int mca_common_monitoring_active = 0;
-int mca_common_monitoring_current_state = 0;
 /* File where to output the monitored data */
-char** mca_common_monitoring_current_filename = NULL;
+char* mca_common_monitoring_initial_filename = NULL;
+char* mca_common_monitoring_current_filename = NULL;
 
 /* array for stroring monitoring data*/
 uint64_t* sent_data = NULL;
@@ -73,16 +73,6 @@ static void mca_common_monitoring_reset( void );
 /* Flushes the monitored data and reset the values */
 static int mca_common_monitoring_flush(int fd, char* filename);
 
-/* Return the current status of the monitoring system 0 if off, 1 if the
- * seperation between internal tags and external tags is enabled. Any other
- * positive value if the segregation between point-to-point and collective is
- * disabled.
- */
-int mca_common_monitoring_filter( void )
-{
-    return mca_common_monitoring_current_state;
-}
-
 inline opal_hash_table_t*mca_common_monitoring_get_translation_ht()
 {
     return translation_ht;
@@ -91,14 +81,14 @@ inline opal_hash_table_t*mca_common_monitoring_get_translation_ht()
 int mca_common_monitoring_set_flush(struct mca_base_pvar_t *pvar,
                                     const void *value, void *obj)
 {
-    if( NULL != *mca_common_monitoring_current_filename ) {
-        free(*mca_common_monitoring_current_filename);
+    if( NULL != mca_common_monitoring_current_filename ) {
+        free(mca_common_monitoring_current_filename);
     }
     if( NULL == *(char**)value || 0 == strlen((char*)value) ) {  /* No more output */
-        *mca_common_monitoring_current_filename = NULL;
+        mca_common_monitoring_current_filename = NULL;
     } else {
-        *mca_common_monitoring_current_filename = strdup((char*)value);
-        if( NULL == *mca_common_monitoring_current_filename )
+        mca_common_monitoring_current_filename = strdup((char*)value);
+        if( NULL == mca_common_monitoring_current_filename )
             return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
@@ -120,8 +110,7 @@ int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
     case MCA_BASE_PVAR_HANDLE_BIND:
         mca_common_monitoring_reset();
         *count = (NULL == mca_common_monitoring_current_filename
-                  || NULL == *mca_common_monitoring_current_filename
-                  ? 0 : strlen(*mca_common_monitoring_current_filename));
+                  ? 0 : strlen(mca_common_monitoring_current_filename));
     case MCA_BASE_PVAR_HANDLE_UNBIND:
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_START:
@@ -130,7 +119,7 @@ int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
                                                     * accurate answer upon MPI_Finalize. */
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_STOP:
-        return mca_common_monitoring_flush(3, *mca_common_monitoring_current_filename);
+        return mca_common_monitoring_flush(3, mca_common_monitoring_current_filename);
     }
     return OMPI_ERROR;
 }
@@ -159,77 +148,121 @@ int mca_common_monitoring_messages_notify(mca_base_pvar_t *pvar,
 
 void mca_common_monitoring_init( void )
 {
+    if( mca_common_monitoring_enabled &&
+        1 < opal_atomic_add_32(&mca_common_monitoring_hold, 1) ) return; /* Already initialized */
+
     char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
-    /* If first to enable the common parts */
-    if( 1 == opal_atomic_add_32(&mca_common_monitoring_hold, 1) ) {
-        /* Initialize constant */
-        log10_2 = log10(2.);
-        /* Open the opal_output stream */
-        gethostname(hostname, sizeof(hostname));
-        asprintf(&mca_common_monitoring_output_stream_obj.lds_prefix,
-                 "[%s:%05d] monitoring: ", hostname, getpid());
-        mca_common_monitoring_output_stream_id =
-            opal_output_open(&mca_common_monitoring_output_stream_obj);
-        /* Initialize proc translation hashtable */
-        translation_ht = OBJ_NEW(opal_hash_table_t);
-        opal_hash_table_init(translation_ht, 2048);
-        OPAL_MONITORING_PRINT_INFO("common_component_init");
-    }
+    /* Initialize constant */
+    log10_2 = log10(2.);
+    /* Open the opal_output stream */
+    gethostname(hostname, sizeof(hostname));
+    asprintf(&mca_common_monitoring_output_stream_obj.lds_prefix,
+             "[%s:%05d] monitoring: ", hostname, getpid());
+    mca_common_monitoring_output_stream_id =
+        opal_output_open(&mca_common_monitoring_output_stream_obj);
+    /* Initialize proc translation hashtable */
+    translation_ht = OBJ_NEW(opal_hash_table_t);
+    opal_hash_table_init(translation_ht, 2048);
 }
+
 
 void mca_common_monitoring_finalize( void )
 {
-    if( 0 == opal_atomic_sub_32(&mca_common_monitoring_hold, 1) /* Release if last component */
-        && mca_common_monitoring_enabled && mca_common_monitoring_active ) {
-        OPAL_MONITORING_PRINT_INFO("common_component_finish");
-        /* If we are not drived by MPIT then dump the monitoring information */
-        if( mca_common_monitoring_output_enabled ) {
-  	    mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
-                                        *mca_common_monitoring_current_filename);
-        }
-        /* Disable all monitoring */
-        mca_common_monitoring_active = 0;
-        mca_common_monitoring_enabled = 0;
-        /* Close the opal_output stream */
-        opal_output_close(mca_common_monitoring_output_stream_id);
-        free(mca_common_monitoring_output_stream_obj.lds_prefix);
-        /* Free internal data structure */
-        free(sent_data);  /* a single allocation */
-        opal_hash_table_remove_all( translation_ht );
-        OBJ_RELEASE(translation_ht);
+    if( ! mca_common_monitoring_enabled || /* Don't release if not last */
+        0 < opal_atomic_sub_32(&mca_common_monitoring_hold, 1) ) return;
+    
+    OPAL_MONITORING_PRINT_INFO("common_component_finish");
+    /* Dump monitoring informations */
+    mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
+                                mca_common_monitoring_current_filename);
+    /* Disable all monitoring */
+    mca_common_monitoring_enabled = 0;
+    /* Close the opal_output stream */
+    opal_output_close(mca_common_monitoring_output_stream_id);
+    free(mca_common_monitoring_output_stream_obj.lds_prefix);
+    /* Free internal data structure */
+    free(sent_data);  /* a single allocation */
+    opal_hash_table_remove_all( translation_ht );
+    OBJ_RELEASE(translation_ht);
+    if( NULL != mca_common_monitoring_current_filename ) {
+        free(mca_common_monitoring_current_filename);
+        mca_common_monitoring_current_filename = NULL;
     }
 }
 
-void mca_common_monitoring_enable(bool enable, void*pml_monitoring_component)
+void mca_common_monitoring_register(void*pml_monitoring_component)
 {
-    /* If we reach this point we were succesful at hijacking the interface of
-     * the real PML, and we are now correctly interleaved between the upper
-     * layer and the real PML.
+    /* Because we are playing tricks with the component close, we should not
+     * use mca_base_component_var_register but instead stay with the basic
+     * version mca_base_var_register.
      */
-    if( NULL != pml_monitoring_component ) {
-        (void)mca_base_pvar_register("ompi", "pml", "monitoring", "flush", "Flush the monitoring information"
-                                     "in the provided file", OPAL_INFO_LVL_1, MCA_BASE_PVAR_CLASS_GENERIC,
-                                     MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT,
-                                     0,
-                                     mca_common_monitoring_get_flush, mca_common_monitoring_set_flush,
-                                     mca_common_monitoring_notify_flush, pml_monitoring_component);
-    }
+    (void)mca_base_var_register("ompi", "pml", "monitoring", "enable",
+                                "Enable the monitoring at the PML level. A value of 0 "
+                                "will disable the monitoring (default). A value of 1 will "
+                                "aggregate all monitoring information (point-to-point and "
+                                "collective). Any other value will enable filtered monitoring",
+                                MCA_BASE_VAR_TYPE_INT, NULL, MPI_T_BIND_NO_OBJECT,
+                                MCA_BASE_VAR_FLAG_DWG, OPAL_INFO_LVL_4,
+                                MCA_BASE_VAR_SCOPE_READONLY,
+                                &mca_common_monitoring_enabled);
+
+    mca_common_monitoring_current_state = mca_common_monitoring_enabled;
     
-    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count", "Number of messages "
-                                 "sent to each peer in a communicator", OPAL_INFO_LVL_4,
-                                 MPI_T_PVAR_CLASS_SIZE,
-                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+    (void)mca_base_var_register("ompi", "pml", "monitoring", "enable_output",
+                                "Enable the PML monitoring textual output at MPI_Finalize "
+                                "(it will be automatically turned off when MPIT is used to "
+                                "monitor communications). This value should be different "
+                                "than 0 in order for the output to be enabled (default disable)",
+                                MCA_BASE_VAR_TYPE_INT, NULL, MPI_T_BIND_NO_OBJECT,
+                                MCA_BASE_VAR_FLAG_DWG, OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY,
+                                &mca_common_monitoring_output_enabled);
+    
+    (void)mca_base_var_register("ompi", "pml", "monitoring", "filename",
+                                /*&mca_common_monitoring_component.pmlm_version, "filename",*/
+                                "The name of the file where the monitoring information "
+                                "should be saved (the filename will be extended with the "
+                                "process rank and the \".prof\" extension). If this field "
+                                "is NULL the monitoring will not be saved.",
+                                MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT,
+                                MCA_BASE_VAR_FLAG_DWG, OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY,
+                                &mca_common_monitoring_initial_filename);
+
+    /* Now that the MCA variables are automatically unregistered when
+     * their component close, we need to keep a safe copy of the
+     * filename.  
+     * Keep the copy completely separated in order to let the initial
+     * filename to be handled by the framework. It's easier to deal
+     * with the string lifetime.
+     */
+    if( NULL != mca_common_monitoring_initial_filename )
+        mca_common_monitoring_current_filename = strdup(mca_common_monitoring_initial_filename);
+
+    /* Register PVARs */
+    
+    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "flush", "Flush the monitoring "
+                                 "information in the provided file", OPAL_INFO_LVL_1,
+                                 MCA_BASE_PVAR_CLASS_GENERIC,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT, 0,
+                                 mca_common_monitoring_get_flush, mca_common_monitoring_set_flush,
+                                 mca_common_monitoring_notify_flush, pml_monitoring_component);
+
+    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count",
+                                 "Number of messages sent to each peer in a communicator",
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
                                  mca_common_monitoring_get_messages_count, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
-    
+                                 mca_common_monitoring_comm_size_notify, NULL);
+
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_size", "Size of messages "
                                  "sent to each peer in a communicator", OPAL_INFO_LVL_4,
                                  MPI_T_PVAR_CLASS_SIZE,
-                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
                                  mca_common_monitoring_get_messages_size, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
+                                 mca_common_monitoring_comm_size_notify, NULL);
 
     (void)mca_base_pvar_register("ompi", "osc", "monitoring", "messages_count", "Number of messages "
                                  "receive from each peer in a communicator", OPAL_INFO_LVL_4,
@@ -327,7 +360,7 @@ static void mca_common_monitoring_reset( void )
 
 void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
 {
-    if( 0 == mca_common_monitoring_filter() ) return;  /* right now the monitoring is not started */
+    if( 0 == mca_common_monitoring_current_state ) return;  /* right now the monitoring is not started */
 
     /* Keep tracks of the data_size distribution */
     if( 0 == data_size ) {
@@ -338,7 +371,7 @@ void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
     }
         
     /* distinguishses positive and negative tags if requested */
-    if( (tag < 0) && (1 == mca_common_monitoring_filter()) ) {
+    if( (tag < 0) && (mca_common_monitoring_filter()) ) {
         filtered_sent_data[world_rank] += data_size;
         filtered_messages_count[world_rank]++;
     } else { /* if filtered monitoring is not activated data is aggregated indifferently */
@@ -349,7 +382,7 @@ void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
 
 void mca_common_monitoring_recv_data(int world_rank, size_t data_size, int tag)
 {
-    if( 0 == mca_common_monitoring_filter() ) return;  /* right now the monitoring is not started */
+    if( 0 == mca_common_monitoring_current_state ) return;  /* right now the monitoring is not started */
     recv_data[world_rank] += data_size;
     rmessages_count[world_rank]++;
 }
@@ -437,7 +470,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
             fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
                     my_rank, i, sent_data[i], messages_count[i]);
             for(int j = 0 ; j < max_size_histogram ; ++j)
-                fprintf(pf, "%" PRIu64 "%s", size_histogram[i * nbprocs + j],
+                fprintf(pf, "%" PRIu64 "%s", size_histogram[i * max_size_histogram + j],
                         j < max_size_histogram - 1 ? "," : "\n");
         }
         /* reset phase array */
@@ -446,7 +479,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     }
 
     /* Dump outgoing synchronization/collective messages */
-    if( 1 == mca_common_monitoring_filter() ) {
+    if( mca_common_monitoring_filter() ) {
         for (int i = 0 ; i < nbprocs ; i++) {
             if(filtered_messages_count[i] > 0) {
                 fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
@@ -480,7 +513,8 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
  */
 static int mca_common_monitoring_flush(int fd, char* filename)
 {
-    if( 0 == mca_common_monitoring_filter() || 0 == fd ) /* if disabled do nothing */
+    /* If we are not drived by MPIT then dump the monitoring information */
+    if( 0 == mca_common_monitoring_current_state || 0 == fd ) /* if disabled do nothing */
         return OMPI_SUCCESS;
 
     if( 1 == fd ) {

@@ -20,6 +20,8 @@
 #include <ompi/mca/common/monitoring/common_monitoring.h>
 #include <opal/mca/base/mca_base_component_repository.h>
 
+static int mca_pml_monitoring_active = 0;
+
 mca_pml_base_component_t pml_selected_component = {{0}};
 mca_pml_base_module_t pml_selected_module = {0};
 
@@ -80,7 +82,6 @@ int mca_pml_monitoring_dump(struct ompi_communicator_t* comm,
 
 int mca_pml_monitoring_enable(bool enable)
 {
-    mca_common_monitoring_enable(enable, &mca_pml_monitoring_component);
     return pml_selected_module.pml_enable(enable);
 }
 
@@ -95,21 +96,18 @@ static int mca_pml_monitoring_component_open(void)
 
 static int mca_pml_monitoring_component_close(void)
 {
-    if( !mca_common_monitoring_enabled )
-        goto release_and_return;
+    if( !mca_common_monitoring_enabled ) return OMPI_SUCCESS;
 
     /**
      * If this component is already active, then we are currently monitoring
      * the execution and this call to close if the one from MPI_Finalize.
      * Clean up and release the extra reference on ourselves.
      */
-    if( mca_common_monitoring_active ) {  /* Already active, turn off */
+    if( mca_pml_monitoring_active ) {  /* Already active, turn off */
         pml_selected_component.pmlm_version.mca_close_component();
-        memset(&pml_selected_component, 0, sizeof(mca_pml_base_component_t));
-        memset(&pml_selected_module, 0, sizeof(mca_pml_base_module_t));
         mca_base_component_repository_release((mca_base_component_t*)&mca_pml_monitoring_component);
-        mca_common_monitoring_active = 0;
-        goto release_and_return;
+        mca_pml_monitoring_active = 0;
+        return OMPI_SUCCESS;
     }
 
     /**
@@ -134,19 +132,8 @@ static int mca_pml_monitoring_component_close(void)
     mca_pml.pml_max_tag = pml_selected_module.pml_max_tag;
     mca_pml.pml_flags = pml_selected_module.pml_flags;
 
-    mca_common_monitoring_active = 1;
+    mca_pml_monitoring_active = 1;
 
-    return OMPI_SUCCESS;
-
- release_and_return:
-    if( NULL != mca_common_monitoring_current_filename ) {
-        if( NULL != *mca_common_monitoring_current_filename ) {
-            free(*mca_common_monitoring_current_filename);
-            *mca_common_monitoring_current_filename = NULL;
-        }
-        /* The variable will be freed when desallocating the pvar's */
-        mca_common_monitoring_current_filename = NULL;
-    }
     return OMPI_SUCCESS;
 }
 
@@ -155,7 +142,6 @@ mca_pml_monitoring_component_init(int* priority,
                                   bool enable_progress_threads,
                                   bool enable_mpi_threads)
 {
-    OPAL_MONITORING_PRINT_INFO("pml_component_init");
     mca_common_monitoring_init();
     if( mca_common_monitoring_enabled ) {
         *priority = 0;  /* I'm up but don't select me */
@@ -166,8 +152,7 @@ mca_pml_monitoring_component_init(int* priority,
 
 static int mca_pml_monitoring_component_finish(void)
 {
-    if( mca_common_monitoring_enabled && mca_common_monitoring_active ) {
-        OPAL_MONITORING_PRINT_INFO("pml_component_finish");
+    if( mca_common_monitoring_enabled && mca_pml_monitoring_active ) {
         /* Free internal data structure */
         mca_common_monitoring_finalize();
         /* Restore the original PML */
@@ -186,68 +171,7 @@ static int mca_pml_monitoring_component_finish(void)
 
 static int mca_pml_monitoring_component_register(void)
 {
-    /* Because we are playing tricks with the component close, we should not
-     * use mca_base_component_var_register but instead stay with the basic
-     * version mca_base_var_register.
-     */
-    (void)mca_base_component_var_register(&mca_pml_monitoring_component.pmlm_version, "enable",
-                                          "Enable the monitoring at the PML level. A value of 0 "
-                                          "will disable the monitoring (default). "
-                                          "A value of 1 will aggregate all monitoring "
-                                          "information (point-to-point and collective). "
-                                          "Any other value will enable filtered monitoring",
-                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                          OPAL_INFO_LVL_4,
-                                          MCA_BASE_VAR_SCOPE_READONLY,
-                                          &mca_common_monitoring_enabled);
-
-    (void)mca_base_component_var_register(&mca_pml_monitoring_component.pmlm_version,
-                                          "enable_output", "Enable the PML monitoring textual "
-                                          "output at MPI_Finalize (it will be automatically "
-                                          "turned off when MPIT is used to monitor "
-                                          "communications). This value should be different than "
-                                          "0 in order for the output to be enabled (default "
-                                          "disable)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                          OPAL_INFO_LVL_9,
-                                          MCA_BASE_VAR_SCOPE_READONLY,
-                                          &mca_common_monitoring_output_enabled);
-    
-    mca_common_monitoring_current_state = mca_common_monitoring_enabled;
-
-    if( NULL == mca_common_monitoring_current_filename )
-	mca_common_monitoring_current_filename = malloc(sizeof(char*));
-
-    (void)mca_base_var_register("ompi", "pml", "monitoring", "filename",
-                                /*&mca_common_monitoring_component.pmlm_version, "filename",*/
-                                "The name of the file where the monitoring information should be "
-                                "saved (the filename will be extended with the process rank and "
-                                "the \".prof\" extension). If this field is NULL the monitoring "
-                                "will not be saved.", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                OPAL_INFO_LVL_4,
-                                MCA_BASE_VAR_SCOPE_READONLY,
-                                mca_common_monitoring_current_filename);
-    /* Now that the MCA variables are automatically unregistered when their component
-     * close, we need to keep a safe copy of the filename.
-     */
-    if( NULL != mca_common_monitoring_current_filename && NULL != *mca_common_monitoring_current_filename )
-        *mca_common_monitoring_current_filename = strdup(*mca_common_monitoring_current_filename);
-
-    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count",
-                                 "Number of messages sent to each peer in a communicator",
-                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
-                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                 mca_common_monitoring_get_messages_count, NULL,
-                                 mca_common_monitoring_comm_size_notify, NULL);
-
-    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_size", "Size of messages "
-                                 "sent to each peer in a communicator", OPAL_INFO_LVL_4,
-                                 MPI_T_PVAR_CLASS_SIZE,
-                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                 mca_common_monitoring_get_messages_size, NULL,
-                                 mca_common_monitoring_comm_size_notify, NULL);
-
+    mca_common_monitoring_register(&mca_pml_monitoring_component);
     return OMPI_SUCCESS;
 }
 
