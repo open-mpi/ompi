@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,9 +71,15 @@ static void gccon(orte_grpcomm_caddy_t *p)
     p->cbfunc = NULL;
     p->cbdata = NULL;
 }
+static void gcdes(orte_grpcomm_caddy_t *p)
+{
+    if (NULL != p->buf) {
+        OBJ_RELEASE(p->buf);
+    }
+}
 static OBJ_CLASS_INSTANCE(orte_grpcomm_caddy_t,
                           opal_object_t,
-                          gccon, NULL);
+                          gccon, gcdes);
 
 int orte_grpcomm_API_xcast(orte_grpcomm_signature_t *sig,
                            orte_rml_tag_t tag,
@@ -165,6 +173,7 @@ static void allgather_stub(int fd, short args, void *cbdata)
         return;
     }
     coll = orte_grpcomm_base_get_tracker(cd->sig, true);
+    OBJ_RELEASE(cd->sig);
     coll->cbfunc = cd->cbfunc;
     coll->cbdata = cd->cbdata;
 
