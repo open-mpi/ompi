@@ -16,7 +16,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -1011,11 +1011,11 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
 
     /* Mark that we no longer support this peer */
     memcpy(&ui64, (char*)&pop->peer, sizeof(uint64_t));
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
-                                                         ui64, (void**)&bpr) || NULL == bpr) {
-        bpr = OBJ_NEW(orte_oob_base_peer_t);
+    if (OPAL_SUCCESS == opal_hash_table_get_value_uint64(&orte_oob_base.peers,
+                                                         ui64, (void**)&bpr) && NULL != bpr) {
+        opal_bitmap_clear_bit(&bpr->addressable, mca_oob_tcp_component.super.idx);
+        OBJ_RELEASE(bpr);
     }
-    opal_bitmap_clear_bit(&bpr->addressable, mca_oob_tcp_component.super.idx);
     if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
                                                                ui64, NULL))) {
         ORTE_ERROR_LOG(rc);
