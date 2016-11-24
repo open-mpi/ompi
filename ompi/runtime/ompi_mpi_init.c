@@ -20,6 +20,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -639,7 +640,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         if (NULL != opal_pmix.fence_nb) {
             opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
                                fence_release, (void*)&active);
-            OMPI_WAIT_FOR_COMPLETION(active);
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
             opal_pmix.fence(NULL, opal_pmix_collect_all_data);
         }
@@ -809,7 +810,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (NULL != opal_pmix.fence_nb) {
         opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
                            fence_release, (void*)&active);
-        OMPI_WAIT_FOR_COMPLETION(active);
+        OMPI_LAZY_WAIT_FOR_COMPLETION(active);
     } else {
         opal_pmix.fence(NULL, opal_pmix_collect_all_data);
     }
