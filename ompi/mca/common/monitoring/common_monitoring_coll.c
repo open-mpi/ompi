@@ -21,11 +21,9 @@
 #include <opal/class/opal_hash_table.h>
 #include <assert.h>
 
-extern int mca_common_monitoring_filter( void );
-
 /*** Monitoring specific variables ***/
 struct mca_monitoring_coll_data_t {
-    opal_list_item_t super;
+    opal_object_t super;
     char*procs;
     char*comm_name;
     int world_rank;
@@ -172,7 +170,7 @@ void mca_common_monitoring_coll_flush_all(FILE *pf)
 
 void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*data)
 {
-    if( 0 == mca_common_monitoring_filter() ) return; /* right now the monitoring is not started */
+    if( 0 == mca_common_monitoring_current_state ) return; /* right now the monitoring is not started */
 #if OPAL_ENABLE_DEBUG
     if( NULL == data ) {
         OPAL_MONITORING_PRINT_ERR("coll: o2a: data structure empty");
@@ -185,7 +183,7 @@ void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*da
 
 void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*data)
 {
-    if( 0 == mca_common_monitoring_filter() ) return; /* right now the monitoring is not started */
+    if( 0 == mca_common_monitoring_current_state ) return; /* right now the monitoring is not started */
 #if OPAL_ENABLE_DEBUG
     if( NULL == data ) {
         OPAL_MONITORING_PRINT_ERR("coll: a2o: data structure empty");
@@ -198,7 +196,7 @@ void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*da
 
 void mca_common_monitoring_coll_a2a(uint64_t size, mca_monitoring_coll_data_t*data)
 {
-    if( 0 == mca_common_monitoring_filter() ) return; /* right now the monitoring is not started */
+    if( 0 == mca_common_monitoring_current_state ) return; /* right now the monitoring is not started */
 #if OPAL_ENABLE_DEBUG
     if( NULL == data ) {
         OPAL_MONITORING_PRINT_ERR("coll: a2a: data structure empty");
@@ -223,4 +221,6 @@ static void mca_monitoring_coll_construct (mca_monitoring_coll_data_t*coll_data)
     coll_data->a2a_size   = 0;
 }
 
-OBJ_CLASS_INSTANCE(mca_monitoring_coll_data_t, opal_list_item_t, mca_monitoring_coll_construct, NULL);
+static void mca_monitoring_coll_destruct (mca_monitoring_coll_data_t*coll_data){}
+
+OBJ_CLASS_INSTANCE(mca_monitoring_coll_data_t, opal_list_item_t, mca_monitoring_coll_construct, mca_monitoring_coll_destruct);
