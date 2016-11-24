@@ -72,7 +72,8 @@ mca_spml_ucx_t mca_spml_ucx = {
     NULL,   /* ucp_worker */
     NULL,   /* ucp_peers */
     0,      /* using_mem_hooks */
-    1       /* num_disconnect */
+    1,      /* num_disconnect */
+    0       /* heap_reg_nb */
 };
 
 int mca_spml_ucx_enable(bool enable)
@@ -390,6 +391,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     size_t len;
     int my_pe = oshmem_my_proc_id();
     int seg;
+    unsigned flags;
 
     *count = 0;
     mkeys = (sshmem_mkey_t *) calloc(1, sizeof(*mkeys));
@@ -402,7 +404,11 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     ucx_mkey = &mca_spml_ucx.ucp_peers[my_pe].mkeys[seg].key;
     mkeys[0].spml_context = ucx_mkey;
 
-    err = ucp_mem_map(mca_spml_ucx.ucp_context, &addr, size, 0, &ucx_mkey->mem_h);
+    flags = 0;
+    if (mca_spml_ucx.heap_reg_nb && memheap_is_va_in_segment(addr, HEAP_SEG_INDEX)) {
+        flags = UCP_MEM_MAP_NONBLOCK;
+    }
+    err = ucp_mem_map(mca_spml_ucx.ucp_context, &addr, size, flags, &ucx_mkey->mem_h);
     if (UCS_OK != err) {
         goto error_out;
     }
