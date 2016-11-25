@@ -9,6 +9,8 @@
 # $HEADER$
 #
 
+dist_opaldata_DATA = help-pmix-cray.txt
+
 sources = \
         pmix_cray.h \
         pmix_cray_component.c \

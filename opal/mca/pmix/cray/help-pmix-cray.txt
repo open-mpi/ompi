@@ -1,0 +1,17 @@
+ -*- text -*-
+#
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+#                         reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for OPAL PMIX Cray module.
+#
+[aprun-not-supported]
+Direct launch with aprun only works when either the PMI_NO_FORK environment
+variable is set, or Open MPI is built with dlopen support disabled.
