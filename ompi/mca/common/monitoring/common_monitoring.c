@@ -47,7 +47,7 @@ int mca_common_monitoring_current_state = 0;
 /* Signals there will be an output of the monitored data at component close */
 int mca_common_monitoring_output_enabled = 0;
 /* File where to output the monitored data */
-char* mca_common_monitoring_initial_filename = NULL;
+char* mca_common_monitoring_initial_filename = "";
 char* mca_common_monitoring_current_filename = NULL;
 
 /* array for stroring monitoring data*/
@@ -311,7 +311,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
         nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
     
     if( NULL == sent_data ) {
-        int array_size = 6 + max_size_histogram * nprocs_world;
+        int array_size = (6 + max_size_histogram) * nprocs_world;
         sent_data               = (uint64_t*)calloc(array_size, sizeof(uint64_t));
         recv_data               = sent_data + nprocs_world;
         messages_count          = recv_data + nprocs_world;
@@ -354,7 +354,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
 
 static void mca_common_monitoring_reset( void )
 {
-    int array_size = 6 + max_size_histogram * nprocs_world;
+    int array_size = (6 + max_size_histogram) * nprocs_world;
     memset(sent_data, 0, array_size * sizeof(uint64_t));
 }
 
