@@ -812,6 +812,8 @@ ompi_proc_unpack(opal_buffer_t* buf,
                 /* Save the hostname */
                 plist[i]->super.proc_hostname = new_hostname;
             }
+        } else if (NULL != new_hostname) {
+            free(new_hostname);
         }
     }
 
