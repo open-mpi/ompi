@@ -17,6 +17,7 @@
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -344,6 +345,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
     char *lib_base=NULL, *bin_base=NULL;
     char *opal_prefix = getenv("OPAL_PREFIX");
     char* full_orted_cmd = NULL;
+    char *ld_library_path, *oldstr;
 
     /* Figure out the basenames for the libdir and bindir.  This
        requires some explanation:
@@ -458,6 +460,29 @@ static int setup_launch(int *argcptr, char ***argvptr,
         asprintf(&lib_base, "%s/%s", prefix_dir, param);
     }
     free(param);
+
+    if (true == mca_plm_rsh_component.propagate_libpath) {
+        /* if the user requested we pass the current node's LD_LIBRARY_PATH to
+         * the ORTED's environment on the remote node, we append it. */
+        ld_library_path = getenv("LD_LIBRARY_PATH");
+
+        if (NULL != ld_library_path) {
+            /* the user actually has a LD_LIBRARY_PATH we need to pass */
+            oldstr = lib_base;
+            lib_base = NULL;
+
+            if (NULL == oldstr) {
+                /* if no previous lib_base were set, we just copy the current
+                 * LD_LIBRARY_PATH into lib_base. */
+                lib_base = strdup(ld_library_path);
+            } else {
+                /* In this case we concatenate the old lib_base (which is in
+                 * oldstr) to the current ld_library_path. */
+                asprintf(&lib_base, "%s:%s", ld_library_path, oldstr);
+                free(oldstr);
+            }
+        }
+    }
 
     /* we now need to assemble the actual cmd that will be executed - this depends
      * upon whether or not a prefix directory is being used
