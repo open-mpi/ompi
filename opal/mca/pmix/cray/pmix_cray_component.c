@@ -21,6 +21,7 @@
 
 #include "opal/constants.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/show_help.h"
 #include "pmix_cray.h"
 #include <sys/syscall.h>
 #include <pmi.h>
@@ -79,6 +80,28 @@ opal_pmix_cray_component_t mca_pmix_cray_component = {
 
 static int pmix_cray_component_open(void)
 {
+    /*
+     * Turns out that there's a lot of reliance on libevent
+     * and the default behavior of Cray PMI to fork
+     * in a constructor breaks libevent.
+     *
+     * Open MPI will not launch correctly on Cray XE/XC systems
+     * under these conditions:
+     *
+     * 1) direct launch using aprun, and
+     * 2) PMI_NO_FORK env. variable is not set, nor was
+     * 3) --disable-dlopen used as part of configury
+     *
+     * Under SLURM, PMI_NO_FORK is always set, so we can combine
+     * the check for conditions 1) and 2) together
+     */
+
+#if OPAL_ENABLE_DLOPEN_SUPPORT
+    if (NULL == getenv("PMI_NO_FORK")) {
+        opal_show_help("help-pmix-cray.txt", "aprun-not-supported", true);
+        exit(-1);
+    }
+#endif
     return OPAL_SUCCESS;
 }
 
