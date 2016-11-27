@@ -6,11 +6,11 @@
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -107,7 +107,7 @@ static inline int memchecker_call (int (*f)(void *, size_t), const void * addr,
 
     if( datatype->super.size == (size_t) (datatype->super.true_ub - datatype->super.true_lb) ) {
         /*  We have a contiguous type. */
-        f( (void*)addr , datatype->super.size * count );
+        f( (void*)((char *)addr+datatype->super.true_lb), datatype->super.size * count );
     } else {
         /* Now we got a noncontigous type. */
         uint32_t         elem_pos = 0, i;
@@ -128,7 +128,18 @@ static inline int memchecker_call (int (*f)(void *, size_t), const void * addr,
 
             while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
                 /* now here we have a basic datatype */
-                f( (void *)(source_base + pElem->elem.disp), pElem->elem.count*pElem->elem.extent );
+                size_t blength = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
+                if ((size_t)pElem->elem.extent == blength) {
+                    /* block is made of contiguous basic datatype */
+                    f( (void *)(source_base + pElem->elem.disp), pElem->elem.count*pElem->elem.extent );
+                } else {
+                    uint32_t j;
+                    ptrdiff_t offset;
+                    for (j = 0, offset=0; j < pElem->elem.count; j++) {
+                        f( (void *)(source_base + pElem->elem.disp + offset), blength);
+                        offset += pElem->elem.extent;
+                    }
+                }
                 elem_pos++;       /* advance to the next data */
                 pElem = &(description[elem_pos]);
                 continue;
