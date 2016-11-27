@@ -101,6 +101,10 @@ static int mca_spml_ucx_component_register(void)
                                     "How may disconnects go in parallel",
                                     &mca_spml_ucx.num_disconnect);
 
+    mca_spml_ucx_param_register_int("heap_reg_nb", 0,
+                                    "Use non-blocking memory registration for shared heap",
+                                    &mca_spml_ucx.heap_reg_nb);
+
     return OSHMEM_SUCCESS;
 }
 

@@ -64,6 +64,7 @@ struct mca_spml_ucx {
     ucp_worker_h             ucp_worker;
     ucp_peer_t              *ucp_peers;
     int                      num_disconnect;
+    int                      heap_reg_nb;
 
     int                      priority; /* component priority */
     bool                     enabled;
