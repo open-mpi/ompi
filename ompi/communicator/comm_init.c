@@ -206,10 +206,6 @@ int ompi_comm_init(void)
     OBJ_RETAIN(&ompi_mpi_group_null.group);
     OBJ_RETAIN(&ompi_mpi_errors_are_fatal.eh);
 
-    /* initialize the comm_reg stuff for multi-threaded comm_cid
-       allocation */
-    ompi_comm_reg_init();
-
     /* initialize communicator requests (for ompi_comm_idup) */
     ompi_comm_request_init ();
 
@@ -328,24 +324,12 @@ int ompi_comm_finalize(void)
         }
     }
 
-
     OBJ_DESTRUCT (&ompi_mpi_communicators);
     OBJ_DESTRUCT (&ompi_comm_f_to_c_table);
-
-    /* finalize the comm_reg stuff */
-    ompi_comm_reg_finalize();
 
     /* finalize communicator requests */
     ompi_comm_request_fini ();
 
-    return OMPI_SUCCESS;
-}
-
-/*
- * For linking only. To be checked.
- */
-int ompi_comm_link_function(void)
-{
     return OMPI_SUCCESS;
 }
 
