@@ -10,7 +10,7 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -47,13 +47,15 @@ int ompi_coll_libnbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype 
   int rank, p, res;
   MPI_Aint sndext = 0;
   NBC_Schedule *schedule;
-  char *sbuf, inplace;
+  char *sbuf, inplace = 0;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
-  NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
   rank = ompi_comm_rank (comm);
+  if (root == rank) {
+    NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+  }
   p = ompi_comm_size (comm);
 
   if (rank == root) {
