@@ -134,7 +134,7 @@ static void send_self_exe(int fd, short args, void* data)
 /** Send callback */
 /* [Desc] This is called from the progress fn when a send completion
 ** is received in the cq
-** wc [in] 	: the completion queue data entry
+** wc [in]      : the completion queue data entry
 ** ofi_send_req [in]:  ofi send request with the send msg and callback
 */
 int orte_rml_ofi_send_callback(struct fi_cq_data_entry *wc,
@@ -174,7 +174,7 @@ int orte_rml_ofi_send_callback(struct fi_cq_data_entry *wc,
 /** Error callback */
 /* [Desc] This is called from the progress fn when a send completion
 ** is received in the cq
-** wc [in] 	: the completion queue data entry
+** wc [in]      : the completion queue data entry
 ** ofi_send_req [in]:  ofi send request with the send msg and callback
 */
 int orte_rml_ofi_error_callback(struct fi_cq_err_entry *error,
@@ -195,7 +195,7 @@ int orte_rml_ofi_error_callback(struct fi_cq_err_entry *error,
 /** Recv handler */
 /* [Desc] This is called from the progress fn when a recv completion
 ** is received in the cq
-** wc [in] 	: the completion queue data entry */
+** wc [in]      : the completion queue data entry */
 int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t ofi_prov_id)
 {
     orte_rml_ofi_msg_header_t msg_hdr;
@@ -435,7 +435,7 @@ static void send_msg(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(peer), tag);
 
 
-    /* get the peer address by doing modex_receive 	*/
+    /* get the peer address by doing modex_receive      */
     opal_output_verbose(10, orte_rml_base_framework.framework_output,
                          "%s calling OPAL_MODEX_RECV_STRING ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) );
     // if dest is same as me then instead of doing lookup just populate the dest_ep_name
@@ -451,9 +451,9 @@ static void send_msg(int fd, short args, void *cbdata)
     if (ORTE_PROC_IS_APP ) {
             asprintf(&pmix_key,"%s%d",orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->fabric_attr->prov_name,ofi_prov_id);
             opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                     "%s calling OPAL_MODEX_RECV_STRING for ORTE_PROC_APP peer - %s, key - %s ", 
+                     "%s calling OPAL_MODEX_RECV_STRING for ORTE_PROC_APP peer - %s, key - %s ",
                       ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer),pmix_key );
-            OPAL_MODEX_RECV_STRING(ret, pmix_key, peer , (char **) &dest_ep_name, &dest_ep_namelen);
+            OPAL_MODEX_RECV_STRING(ret, pmix_key, peer , (uint8_t **) &dest_ep_name, &dest_ep_namelen);
             opal_output_verbose(10, orte_rml_base_framework.framework_output, "Returned from MODEX_RECV");
             opal_output_verbose(50, orte_rml_base_framework.framework_output,
                          "%s  Return value from OPAL_MODEX_RECV_STRING - %d, length returned - %lu",
@@ -461,7 +461,7 @@ static void send_msg(int fd, short args, void *cbdata)
             free(pmix_key);
     } else {
         opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                  "%s calling OPAL_MODEX_RECV_STRING for DAEMON peer %s", 
+                  "%s calling OPAL_MODEX_RECV_STRING for DAEMON peer %s",
                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_NAME)) {
                  opal_output_verbose(1, orte_rml_base_framework.framework_output,
@@ -530,19 +530,19 @@ static void send_msg(int fd, short args, void *cbdata)
              */
             ORTE_RML_ACTIVATE_MESSAGE(rcv);
             OBJ_RELEASE(req);
-            return; 
+            return;
        } else {
              memcpy(&ui64, (char*)peer, sizeof(uint64_t));
              if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
                                                      ui64, (void**)&pr) || NULL == pr) {
                   opal_output_verbose(1, orte_rml_base_framework.framework_output,
                                 "%s rml:ofi: Send failed to get peer OFI contact info ",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));                      
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                   return;
              }
              opal_output_verbose(1, orte_rml_base_framework.framework_output,
                                 "%s rml:ofi: OFI peer contact info got from hash table",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));         
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
              dest_ep_name = pr->ofi_ep;
              dest_ep_namelen = pr->ofi_ep_len;
              ret = OPAL_SUCCESS;
@@ -557,7 +557,7 @@ static void send_msg(int fd, short args, void *cbdata)
                     /*[debug] - print the sockaddr - port and s_addr */
                     ep_sockaddr = (struct sockaddr_in*)dest_ep_name;
                     opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                            "%s peer %s epnamelen is %d, port = %d (or) 0x%x, InternetAddr = 0x%s  ",
+                            "%s peer %s epnamelen is %lu, port = %d (or) 0x%x, InternetAddr = 0x%s  ",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_NAME_PRINT(peer),
                             orte_rml_ofi.ofi_prov[ofi_prov_id].epnamelen,ntohs(ep_sockaddr->sin_port),
                             ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
@@ -576,8 +576,8 @@ static void send_msg(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ret );
             /* call the send-callback fn with error and return, also return failure status */
             snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
-  
-                ORTE_RML_SEND_COMPLETE(snd);      
+
+                ORTE_RML_SEND_COMPLETE(snd);
                 return;
         }
     } else {
@@ -597,12 +597,12 @@ static void send_msg(int fd, short args, void *cbdata)
     ofi_send_req->completion_count = 1;
 
     /* [DESC] we want to send the pid,seqnum,tag in addition to the data
-    * 	copy all of this to header of message from the ofi_send_t* send
+    *   copy all of this to header of message from the ofi_send_t* send
     */
     ofi_send_req->hdr.dst = ofi_send_req->send->dst;
     ofi_send_req->hdr.origin = ofi_send_req->send->origin;
     ofi_send_req->hdr.seq_num = ofi_send_req->send->seq_num;
-    ofi_send_req->hdr.tag	  = ofi_send_req->send->tag;
+    ofi_send_req->hdr.tag         = ofi_send_req->send->tag;
 
     /*
      *  also insert ofi plugin specific header details -
@@ -658,7 +658,7 @@ static void send_msg(int fd, short args, void *cbdata)
     ofi_send_req->hdr.tot_pkts = total_packets;
 
     opal_output_verbose(15, orte_rml_base_framework.framework_output,
-                         "%s datalen_per_pkt = %lu, ofi_send_req->length= %d, total packets = %d",
+                         "%s datalen_per_pkt = %lu, ofi_send_req->length= %lu, total packets = %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), datalen_per_pkt, ofi_send_req->length, total_packets );
 
     /* in a loop send create and send the packets */
@@ -676,7 +676,7 @@ static void send_msg(int fd, short args, void *cbdata)
         ofi_msg_pkt->data = malloc( ofi_msg_pkt->pkt_size);
         memcpy(ofi_msg_pkt->data, &ofi_send_req->hdr, hdrsize );
         memcpy( ( (char *)ofi_msg_pkt->data + hdrsize ),
-                (ofi_send_req->data_blob + sent_data),
+                ((char*)ofi_send_req->data_blob + sent_data),
                 data_in_pkt);
         opal_output_verbose(15, orte_rml_base_framework.framework_output,
                          "%s Copying header, data into packets completed",
