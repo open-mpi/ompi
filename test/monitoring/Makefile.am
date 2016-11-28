@@ -1,8 +1,8 @@
 #
-# Copyright (c) 2013-2015 The University of Tennessee and The University
+# Copyright (c) 2013-2016 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2013-2016 Inria.  All rights reserved.
+# Copyright (c) 2013-2017 Inria.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -33,19 +33,6 @@ if PROJECT_OMPI
     test_overhead_LDADD = \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
 	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
-    test_overhead_SCRIPTS = test_overhead.sh
-    test_overheaddir = $(bindir)/test/monitoring
-
-    CLEANFILES += $(test_overhead_SCRIPTS)
-
-install-exec-hook:
-	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	(cd $(top_builddir)/test/monitoring; rm -f $(test_overhead_SCRIPTS); $(LN_S)  $(top_srcdir)/test/monitoring/test_overhead.sh test_overhead.sh)
-	(rm -f $(DESTDIR)$(bindir)/$(test_overhead_SCRIPTS); cp -u $(top_srcdir)/test/monitoring/test_overhead.sh $(DESTDIR)$(bindir)/test_overhead.sh)
-
-uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/test_overhead.sh
-
 
 if MCA_BUILD_ompi_pml_monitoring_DSO
     lib_LTLIBRARIES = ompi_monitoring_prof.la
@@ -60,4 +47,4 @@ endif # MCA_BUILD_ompi_pml_monitoring_DSO
 endif # PROJECT_OMPI
 
 distclean:
-	rm -rf *.dSYM .deps .libs *.la *.lo monitoring_test test_overhead{,.sh} prof *.log *.o *.trs Makefile
+	rm -rf *.dSYM .deps .libs *.la *.lo monitoring_test prof *.log *.o *.trs Makefile
