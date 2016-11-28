@@ -3,6 +3,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +34,8 @@ OPAL_DECLSPEC int opal_srand(opal_rng_buff_t *buff, uint32_t seed);
 
 OPAL_DECLSPEC uint32_t opal_rand(opal_rng_buff_t *buff);
 
-OPAL_DECLSPEC int opal_random(void);
+OPAL_DECLSPEC int opal_rand_helper(void);
+
+OPAL_DECLSPEC long int opal_random_helper(void);
 
 #endif /* OPAL_ALFG_H */

@@ -129,7 +129,18 @@ uint32_t opal_rand(opal_rng_buff_t *buff){
  * @param[in]  none
  * @param[out] int, the same as normal rand(3)
  */
-int opal_random(void){
+int opal_rand_helper(void){
     /* always return a positive int */
     return (int)(opal_rand(&alfg_buffer) & 0x7FFFFFFF);
+}
+
+/**
+ * @brief      A wrapper for opal_rand() with our global ALFG buffer;
+ *
+ * @param[in]  none
+ * @param[out] long int, the same as normal random(3)
+ */
+long int opal_random_helper(void){
+    /* always return a positive int */
+    return (long int)(opal_rand_helper());
 }
