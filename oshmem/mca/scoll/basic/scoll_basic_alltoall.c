@@ -105,6 +105,10 @@ static int _algorithm_simple(struct oshmem_group_t *group,
             break;
         }
     }
+    /* fence (which currently acts as quiet) is needed
+     * because scoll level barrier does not guarantee put completion
+     */
+    MCA_SPML_CALL(fence());
 
     /* Wait for operation completion */
     if (rc == OSHMEM_SUCCESS) {
@@ -116,3 +120,4 @@ static int _algorithm_simple(struct oshmem_group_t *group,
 
     return rc;
 }
+
