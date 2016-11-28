@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -48,11 +48,9 @@ int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int i, size, err;
 
     MEMCHECKER(
-        int rank;
         ptrdiff_t ext;
 
         size = ompi_comm_remote_size(comm);
-        rank = ompi_comm_rank(comm);
         ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_comm(comm);
