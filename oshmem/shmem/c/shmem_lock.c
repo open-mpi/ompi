@@ -25,6 +25,7 @@
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "oshmem/shmem/shmem_lock.h"
 #include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/atomic/atomic.h"
 
 #define OPAL_BITWISE_SIZEOF_LONG (SIZEOF_LONG * 8)
@@ -170,8 +171,16 @@ int shmem_lock_finalize()
 
 static int shmem_lock_get_server(void *lock)
 {
-    uint64_t offset =  MCA_MEMHEAP_CALL(find_offset(shmem_my_pe(), 0, lock, lock));
-    return (offset / 8) % shmem_n_pes();
+    map_segment_t *s;
+
+    s = memheap_find_va(lock);
+    if (NULL == s) {
+        SHMEM_API_ERROR("PE#%i lock %p is not a shared variable", shmem_my_pe(), lock);
+        oshmem_shmem_abort(-1);
+        return 0;
+    }
+
+    return ((int)((uintptr_t)lock - (uintptr_t)s->super.va_base)/8) % shmem_n_pes();
 }
 
 static uint64_t get_lock_value(const void *lock, int lock_size)

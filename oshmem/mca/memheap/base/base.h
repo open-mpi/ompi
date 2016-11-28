@@ -69,10 +69,6 @@ int mca_memheap_base_dereg(mca_memheap_map_t *);
 int memheap_oob_init(mca_memheap_map_t *);
 void memheap_oob_destruct(void);
 
-OSHMEM_DECLSPEC uint64_t mca_memheap_base_find_offset(int pe,
-                                                      int tr_id,
-                                                      void* va,
-                                                      void* rva);
 OSHMEM_DECLSPEC int mca_memheap_base_is_symmetric_addr(const void* va);
 OSHMEM_DECLSPEC sshmem_mkey_t *mca_memheap_base_get_mkey(void* va,
                                                            int tr_id);
