@@ -85,11 +85,18 @@ OMPI_DECLSPEC opal_hash_table_t*mca_common_monitoring_get_translation_ht();
 static inline int mca_common_monitoring_get_world_rank(int dst, struct ompi_communicator_t*comm,
                                                        int*world_rank)
 {
+    opal_process_name_t tmp;
+    
     /* find the processor of the destination */
     ompi_proc_t *proc = ompi_group_get_proc_ptr(comm->c_remote_group, dst, true);
-
+    if( ompi_proc_is_sentinel(proc) ) {
+        tmp = ompi_proc_sentinel_to_name((uintptr_t)proc);
+    } else {
+        tmp = proc->super.proc_name;
+    }
+    
     /* find its name*/
-    uint64_t key = *((uint64_t*)&(proc->super.proc_name));
+    uint64_t key = *((uint64_t*)&tmp);
     /**
      * If this fails the destination is not part of my MPI_COM_WORLD
      * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
