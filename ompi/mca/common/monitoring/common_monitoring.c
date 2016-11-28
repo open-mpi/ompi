@@ -157,7 +157,7 @@ void mca_common_monitoring_init( void )
     /* Open the opal_output stream */
     gethostname(hostname, sizeof(hostname));
     asprintf(&mca_common_monitoring_output_stream_obj.lds_prefix,
-             "[%s:%05d] monitoring: ", hostname, getpid());
+             "[%s:%06d] monitoring: ", hostname, getpid());
     mca_common_monitoring_output_stream_id =
         opal_output_open(&mca_common_monitoring_output_stream_obj);
     /* Initialize proc translation hashtable */
@@ -309,7 +309,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
         rank_world = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
     if( !nprocs_world )
         nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
-    
+
     if( NULL == sent_data ) {
         int array_size = (6 + max_size_histogram) * nprocs_world;
         sent_data               = (uint64_t*)calloc(array_size, sizeof(uint64_t));
@@ -337,7 +337,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
         /* each process will only be added once, so there is no way it already exists in the hash */
         for( peer_rank = 0; peer_rank < nprocs_world; peer_rank++ ) {
             wp_name = ompi_group_get_proc_name(((ompi_communicator_t*)&ompi_mpi_comm_world)->c_remote_group, peer_rank);
-            if( 0 != opal_compare_proc( tmp, wp_name) )
+            if( 0 != opal_compare_proc( tmp, wp_name ) )
                 continue;
 
             key = *((uint64_t*)&tmp);

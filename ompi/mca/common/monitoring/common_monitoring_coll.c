@@ -42,7 +42,6 @@ static opal_hash_table_t *comm_data = NULL;
 static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*data)
 {
     int world_rank;
-
     if( -1 == data->world_rank ) {
         /* Get current process world_rank */
         mca_common_monitoring_get_world_rank(ompi_comm_rank(data->p_comm), data->p_comm,
@@ -51,15 +50,14 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
     if( NULL == data->comm_name ) {
         data->comm_name = strdup(data->p_comm->c_name);
     }
-    
     if( NULL == data->procs ) {
-        /* FIX-ME: the algorithm is O(n^2) */
         int i, pos, size = ompi_comm_size(data->p_comm);
         char*tmp_procs;
         assert( 0 < size );
         /* Get first rank (there is at least one node if we reach this point) */
         mca_common_monitoring_get_world_rank(0, data->p_comm, &world_rank);
         pos = asprintf(&data->procs, "%d,", world_rank);
+        /* FIX-ME: the algorithm is O(n^2) when creating the string */
         for(i = 1; i < size; ++i) {
             /* WARNING : Keep the order of the next two instruction :
                it sometimes happened with gcc/4.9.2 that the return
@@ -71,14 +69,6 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
             free(tmp_procs);
         }
         data->procs[pos - 1] = '\0'; /* Remove final coma */
-    }
-    if( -1 == data->world_rank ) {
-        /* Get current process world_rank */
-        mca_common_monitoring_get_world_rank(ompi_comm_rank(data->p_comm), data->p_comm,
-                                             &data->world_rank);
-    }
-    if( NULL == data->comm_name ) {
-        data->comm_name = strdup(data->p_comm->c_name);
     }
 }
 
@@ -108,6 +98,9 @@ mca_monitoring_coll_data_t*mca_common_monitoring_coll_new( ompi_communicator_t*c
         OPAL_MONITORING_PRINT_ERR("coll: new: failed to allocate memory or "
                                   "growing the hash table");
     }
+
+    /* Cache data so the procs can be released without affecting the output */
+    mca_common_monitoring_coll_cache(data);
 
     return data;
 }

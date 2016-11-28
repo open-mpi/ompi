@@ -130,7 +130,7 @@ static int mca_pml_monitoring_component_close(void)
     mca_pml.pml_progress = pml_selected_module.pml_progress;
     mca_pml.pml_max_contextid = pml_selected_module.pml_max_contextid;
     mca_pml.pml_max_tag = pml_selected_module.pml_max_tag;
-    mca_pml.pml_flags = pml_selected_module.pml_flags;
+    mca_pml.pml_flags = pml_selected_module.pml_flags | MCA_PML_BASE_FLAG_REQUIRE_WORLD;
 
     mca_pml_monitoring_active = 1;
 
