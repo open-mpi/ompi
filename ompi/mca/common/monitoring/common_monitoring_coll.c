@@ -125,6 +125,12 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
     }
 }
 
+void mca_common_monitoring_coll_finalize( void )
+{
+    opal_hash_table_remove_all( comm_data );
+    OBJ_RELEASE(comm_data);
+}
+
 void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
 {
     /* Set data->procs, data->world_rank and data->comm_name */
@@ -159,6 +165,7 @@ void mca_common_monitoring_coll_flush_all(FILE *pf)
         mca_common_monitoring_coll_flush(pf, (mca_monitoring_coll_data_t*)data);
         previous = data;
     }
+    mca_common_monitoring_coll_release(previous);
 }
 
 void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*data)
