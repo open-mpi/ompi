@@ -67,6 +67,9 @@ int nprocs_world = 0;
 
 opal_hash_table_t *translation_ht = NULL;
 
+/* Release static structures from common_monitoring_coll.c */
+extern void mca_common_monitoring_coll_finalize( void );
+
 /* Reset all the monitoring arrays */
 static void mca_common_monitoring_reset( void );
 
@@ -184,6 +187,7 @@ void mca_common_monitoring_finalize( void )
     free(sent_data);  /* a single allocation */
     opal_hash_table_remove_all( translation_ht );
     OBJ_RELEASE(translation_ht);
+    mca_common_monitoring_coll_finalize();
     if( NULL != mca_common_monitoring_current_filename ) {
         free(mca_common_monitoring_current_filename);
         mca_common_monitoring_current_filename = NULL;
