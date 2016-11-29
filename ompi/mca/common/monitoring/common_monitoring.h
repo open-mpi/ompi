@@ -96,13 +96,17 @@ static inline int mca_common_monitoring_get_world_rank(int dst, struct ompi_comm
     }
     
     /* find its name*/
-    uint64_t key = *((uint64_t*)&tmp);
+    uint64_t rank, key = *((uint64_t*)&tmp);
     /**
      * If this fails the destination is not part of my MPI_COM_WORLD
      * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
      */
-    return opal_hash_table_get_value_uint64(mca_common_monitoring_get_translation_ht(),
-                                            key, (void *)world_rank);
+    int ret = opal_hash_table_get_value_uint64(mca_common_monitoring_get_translation_ht(),
+                                               key, (void *)&rank);
+
+    /* Use intermediate variable to avoid overwriting while looking up in the hashtbale. */
+    *world_rank = (int)rank;
+    return ret;
 }
 
 /* Return the current status of the monitoring system 0 if off, 1 if the
