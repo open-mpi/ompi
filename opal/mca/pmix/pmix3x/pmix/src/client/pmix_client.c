@@ -72,6 +72,7 @@
 #endif /* PMIX_ENABLE_DSTORE */
 
 #include "pmix_client_ops.h"
+#include "src/include/pmix_jobdata.h"
 
 #define PMIX_MAX_RETRIES 10
 
@@ -191,8 +192,11 @@ static void job_data(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     }
     assert(NULL != nspace);
     free(nspace);
+
     /* decode it */
-    pmix_client_process_nspace_blob(pmix_globals.myid.nspace, buf);
+#if !(defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1))
+    pmix_job_data_htable_store(pmix_globals.myid.nspace, buf);
+#endif
     cb->status = PMIX_SUCCESS;
     cb->active = false;
 }
@@ -716,11 +720,26 @@ static void _peersfn(int sd, short args, void *cbdata)
     pmix_status_t rc;
     char **nsprocs=NULL, **nsps=NULL, **tmp;
     pmix_nspace_t *nsptr;
+#if !(defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1))
     pmix_nrec_t *nptr;
+#endif
     size_t i;
 
     /* cycle across our known nspaces */
     tmp = NULL;
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    if (PMIX_SUCCESS == (rc = pmix_dstore_fetch(cb->nspace, PMIX_RANK_WILDCARD,
+                      cb->key, &cb->value))) {
+
+        tmp = pmix_argv_split(cb->value->data.string, ',');
+        for (i=0; NULL != tmp[i]; i++) {
+            pmix_argv_append_nosize(&nsps, cb->nspace);
+            pmix_argv_append_nosize(&nsprocs, tmp[i]);
+        }
+        pmix_argv_free(tmp);
+        tmp = NULL;
+    }
+#else
     PMIX_LIST_FOREACH(nsptr, &pmix_globals.nspaces, pmix_nspace_t) {
         if (0 == strncmp(nsptr->nspace, cb->nspace, PMIX_MAX_NSLEN)) {
             /* cycle across the nodes in this nspace */
@@ -738,6 +757,7 @@ static void _peersfn(int sd, short args, void *cbdata)
             }
         }
     }
+#endif
     if (0 == (i = pmix_argv_count(nsps))) {
         /* we don't know this nspace */
         rc = PMIX_ERR_NOT_FOUND;
@@ -1010,160 +1030,8 @@ static pmix_status_t send_connect_ack(int sd)
     return PMIX_SUCCESS;
 }
 
-void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
+static pmix_status_t usock_connect(struct sockaddr *addr, int *fd)
 {
-    pmix_status_t rc;
-    int32_t cnt;
-    int rank;
-    pmix_kval_t *kptr, *kp2, kv;
-    pmix_buffer_t buf2;
-    pmix_byte_object_t *bo;
-    size_t nnodes, i, j;
-    pmix_nspace_t *nsptr, *nsptr2;
-    pmix_nrec_t *nrec, *nr2;
-    char **procs;
-
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix: PROCESSING BLOB FOR NSPACE %s", nspace);
-
-    /* cycle across our known nspaces */
-    nsptr = NULL;
-    PMIX_LIST_FOREACH(nsptr2, &pmix_globals.nspaces, pmix_nspace_t) {
-        if (0 == strcmp(nsptr2->nspace, nspace)) {
-            nsptr = nsptr2;
-            break;
-        }
-    }
-    if (NULL == nsptr) {
-        /* we don't know this nspace - add it */
-        nsptr = PMIX_NEW(pmix_nspace_t);
-        (void)strncpy(nsptr->nspace, nspace, PMIX_MAX_NSLEN);
-        pmix_list_append(&pmix_globals.nspaces, &nsptr->super);
-    }
-
-    /* unpack any info structs provided */
-    cnt = 1;
-    kptr = PMIX_NEW(pmix_kval_t);
-    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(bptr, kptr, &cnt, PMIX_KVAL))) {
-        if (0 == strcmp(kptr->key, PMIX_PROC_BLOB)) {
-            /* transfer the byte object for unpacking */
-            bo = &(kptr->value->data.bo);
-            PMIX_CONSTRUCT(&buf2, pmix_buffer_t);
-            PMIX_LOAD_BUFFER(&buf2, bo->bytes, bo->size);
-            /* start by unpacking the rank */
-            cnt = 1;
-            if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(&buf2, &rank, &cnt, PMIX_PROC_RANK))) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_DESTRUCT(&buf2);
-                return;
-            }
-            kp2 = PMIX_NEW(pmix_kval_t);
-            kp2->key = strdup(PMIX_RANK);
-            PMIX_VALUE_CREATE(kp2->value, 1);
-            kp2->value->type = PMIX_PROC_RANK;
-            kp2->value->data.rank = rank;
-            if (PMIX_SUCCESS != (rc = pmix_hash_store(&nsptr->internal, rank, kp2))) {
-                PMIX_ERROR_LOG(rc);
-            }
-            PMIX_RELEASE(kp2); // maintain accounting
-            cnt = 1;
-            kp2 = PMIX_NEW(pmix_kval_t);
-            while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(&buf2, kp2, &cnt, PMIX_KVAL))) {
-                /* this is data provided by a job-level exchange, so store it
-                 * in the job-level data hash_table */
-                if (PMIX_SUCCESS != (rc = pmix_hash_store(&nsptr->internal, rank, kp2))) {
-                    PMIX_ERROR_LOG(rc);
-                }
-                PMIX_RELEASE(kp2); // maintain accounting
-                kp2 = PMIX_NEW(pmix_kval_t);
-            }
-            /* cleanup */
-            PMIX_DESTRUCT(&buf2);  // releases the original kptr data
-            PMIX_RELEASE(kp2);
-        } else if (0 == strcmp(kptr->key, PMIX_MAP_BLOB)) {
-            /* transfer the byte object for unpacking */
-            bo = &(kptr->value->data.bo);
-            PMIX_CONSTRUCT(&buf2, pmix_buffer_t);
-            PMIX_LOAD_BUFFER(&buf2, bo->bytes, bo->size);
-            /* start by unpacking the number of nodes */
-            cnt = 1;
-            if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(&buf2, &nnodes, &cnt, PMIX_SIZE))) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_DESTRUCT(&buf2);
-                return;
-            }
-            /* unpack the list of procs on each node */
-            for (i=0; i < nnodes; i++) {
-                cnt = 1;
-                PMIX_CONSTRUCT(&kv, pmix_kval_t);
-                if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(&buf2, &kv, &cnt, PMIX_KVAL))) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_DESTRUCT(&buf2);
-                    PMIX_DESTRUCT(&kv);
-                    return;
-                }
-                /* the name of the node is in the key, and the value is
-                 * a comma-delimited list of procs on that node. See if we already
-                 * have this node */
-                 nrec = NULL;
-                 PMIX_LIST_FOREACH(nr2, &nsptr->nodes, pmix_nrec_t) {
-                    if (0 == strcmp(nr2->name, kv.key)) {
-                        nrec = nr2;
-                        break;
-                    }
-                }
-                if (NULL == nrec) {
-                    /* Create a node record and store that list */
-                    nrec = PMIX_NEW(pmix_nrec_t);
-                    nrec->name = strdup(kv.key);
-                    pmix_list_append(&nsptr->nodes, &nrec->super);
-                } else {
-                    /* refresh the list */
-                    if (NULL != nrec->procs) {
-                        free(nrec->procs);
-                    }
-                }
-                nrec->procs = strdup(kv.value->data.string);
-                /* split the list of procs so we can store their
-                 * individual location data */
-                procs = pmix_argv_split(nrec->procs, ',');
-                for (j=0; NULL != procs[j]; j++) {
-                    /* store the hostname for each proc - again, this is
-                     * data obtained via a job-level exchange, so store it
-                     * in the job-level data hash_table */
-                     kp2 = PMIX_NEW(pmix_kval_t);
-                     kp2->key = strdup(PMIX_HOSTNAME);
-                     kp2->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
-                     kp2->value->type = PMIX_STRING;
-                     kp2->value->data.string = strdup(nrec->name);
-                     rank = strtol(procs[j], NULL, 10);
-                     if (PMIX_SUCCESS != (rc = pmix_hash_store(&nsptr->internal, rank, kp2))) {
-                        PMIX_ERROR_LOG(rc);
-                    }
-                    PMIX_RELEASE(kp2); // maintain accounting
-                }
-                pmix_argv_free(procs);
-                PMIX_DESTRUCT(&kv);
-            }
-            /* cleanup */
-            PMIX_DESTRUCT(&buf2);  // releases the original kptr data
-        } else {
-            /* this is job-level data, so just add it to that hash_table
-             * with the wildcard rank */
-            if (PMIX_SUCCESS != (rc = pmix_hash_store(&nsptr->internal, PMIX_RANK_WILDCARD, kptr))) {
-                PMIX_ERROR_LOG(rc);
-            }
-         }
-         PMIX_RELEASE(kptr);
-         kptr = PMIX_NEW(pmix_kval_t);
-         cnt = 1;
-     }
-    /* need to release the leftover kptr */
-     PMIX_RELEASE(kptr);
- }
-
- static pmix_status_t usock_connect(struct sockaddr *addr, int *fd)
- {
     int sd=-1;
     pmix_status_t rc;
     pmix_socklen_t addrlen = 0;

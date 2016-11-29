@@ -54,6 +54,7 @@
 #include "src/usock/usock.h"
 
 #include "pmix_client_ops.h"
+#include "src/include/pmix_jobdata.h"
 
 static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata);
@@ -179,7 +180,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     char nspace[PMIX_MAX_NSLEN+1];
-    char *n2;
+    char *n2 = NULL;
     pmix_status_t rc, ret;
     int32_t cnt;
 
@@ -203,10 +204,15 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
             PMIX_ERROR_LOG(rc);
             ret = rc;
         }
+        pmix_output_verbose(1, pmix_globals.debug_output,
+                        "pmix:client recv '%s'", n2);
+
         if (NULL != n2) {
             (void)strncpy(nspace, n2, PMIX_MAX_NSLEN);
+#if !(defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1))
             /* extract and process any proc-related info for this nspace */
-            pmix_client_process_nspace_blob(nspace, buf);
+            pmix_job_data_htable_store(nspace, buf);
+#endif
             free(n2);
         }
     }
@@ -226,4 +232,3 @@ static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata)
     }
     cb->active = false;
 }
-
