@@ -484,7 +484,7 @@ static int tcp_peer_send_connect_nack(int sd, orte_process_name_t name)
 
     /* send it */
     if (ORTE_SUCCESS != tcp_peer_send_blocking(sd, msg, sdsize)) {
-        /* it's ok if it fails - remote side may already 
+        /* it's ok if it fails - remote side may already
          * identifiet the collision and closed the connection
          */
         rc = ORTE_SUCCESS;
@@ -837,7 +837,7 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
     /* Check the type of acknowledgement */
     memcpy(&ack_flag, msg + offset, sizeof(ack_flag));
     offset += sizeof(ack_flag);
-    
+
     ack_flag = ntohs(ack_flag);
     if( !ack_flag ){
         if (MCA_OOB_TCP_CONNECT_ACK == peer->state) {
@@ -878,8 +878,8 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
      * let the higher ranked process retry - if I'm the lower ranked
      * process, I'll simply defer until I receive the request
      */
-    if (is_new && 
-	( MCA_OOB_TCP_CONNECTED == peer->state ||
+    if (is_new &&
+        ( MCA_OOB_TCP_CONNECTED == peer->state ||
           MCA_OOB_TCP_CONNECTING == peer->state ||
          MCA_OOB_TCP_CONNECT_ACK == peer->state ) ) {
         if (retry(peer, sd, false)) {
@@ -888,7 +888,7 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
     }
 
     /* check that this is from a matching version */
-    version = (char*)((void*)msg + offset);
+    version = (char*)((char*)msg + offset);
     offset += strlen(version) + 1;
     if (0 != strcmp(version, orte_version_string)) {
         opal_output(0, "%s tcp_peer_recv_connect_ack: "
@@ -908,7 +908,7 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
                         ORTE_NAME_PRINT(&peer->name));
 
     /* check security token */
-    cred = (char*)((void*)msg + offset);
+    cred = (char*)((char*)msg + offset);
     credsize = hdr.nbytes - offset;
     if (OPAL_SUCCESS != (rc = opal_sec.authenticate(cred, credsize, &peer->auth_method))) {
         char *hostname;
