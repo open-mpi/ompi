@@ -102,6 +102,7 @@ typedef struct {
     opal_pointer_array_t conduits;  /* array to hold the open conduits */
     opal_list_t posted_recvs;
     opal_list_t unmatched_msgs;
+    int max_retries;
 #if OPAL_ENABLE_TIMING
     bool timing;
 #endif
@@ -116,6 +117,7 @@ typedef struct {
     orte_process_name_t origin;
     int status;                  // returned status on send
     orte_rml_tag_t tag;          // targeted tag
+    int retries;                 // #times we have tried to send it
 
     /* user's send callback functions and data */
     union {

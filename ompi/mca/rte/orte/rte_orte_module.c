@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -133,6 +133,8 @@ void ompi_rte_wait_for_debugger(void)
     int debugger;
     opal_list_t *codes;
     opal_value_t *kv;
+    char *evar;
+    int time;
 
     /* See lengthy comment in orte/tools/orterun/debuggers.c about
        orte_in_parallel_debugger */
@@ -151,6 +153,12 @@ void ompi_rte_wait_for_debugger(void)
      * the correct plug-ins
      */
     ompi_debugger_setup_dlls();
+
+    if (NULL != (evar = getenv("ORTE_TEST_DEBUGGER_SLEEP"))) {
+        time = strtol(evar, NULL, 10);
+        sleep(time);
+        return;
+    }
 
     if (orte_standalone_operation) {
         /* spin until debugger attaches and releases us */
