@@ -18,12 +18,12 @@
 #include <ompi/constants.h>
 #include <ompi/communicator/communicator.h>
 #include <opal/mca/base/mca_base_component_repository.h>
-#include <opal/class/opal_hash_table.h>
+#include <opal/class/opal_list.h>
 #include <assert.h>
 
 /*** Monitoring specific variables ***/
 struct mca_monitoring_coll_data_t {
-    opal_object_t super;
+    opal_list_item_t super;
     char*procs;
     char*comm_name;
     int world_rank;
@@ -37,7 +37,7 @@ struct mca_monitoring_coll_data_t {
 };
 
 /* Collectives operation monitoring */
-static opal_hash_table_t *comm_data = NULL;
+static opal_list_t *comm_data = NULL;
 
 static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*data)
 {
@@ -82,22 +82,17 @@ mca_monitoring_coll_data_t*mca_common_monitoring_coll_new( ompi_communicator_t*c
 
     data->p_comm = comm;
     
-    /* Allocate hashtable */
+    /* Allocate list */
     if( NULL == comm_data ) {
-        comm_data = OBJ_NEW(opal_hash_table_t);
+        comm_data = OBJ_NEW(opal_list_t);
         if( NULL == comm_data ) {
-            OPAL_MONITORING_PRINT_ERR("coll: new: failed to allocate hashtable");
+            OPAL_MONITORING_PRINT_ERR("coll: new: failed to allocate list");
             return data;
         }
-        opal_hash_table_init(comm_data, 2048);
     }
-
-    /* Insert in hashtable */
-    uint64_t key = *((uint64_t*)&data);
-    if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(comm_data, key, (void*)data) ) {
-        OPAL_MONITORING_PRINT_ERR("coll: new: failed to allocate memory or "
-                                  "growing the hash table");
-    }
+    
+    /* Insert in list */
+    opal_list_append(comm_data, &data->super);
 
     /* Cache data so the procs can be released without affecting the output */
     mca_common_monitoring_coll_cache(data);
@@ -115,7 +110,7 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
 #endif /* OPAL_ENABLE_DEBUG */
     
     if( NULL == data->p_comm ) { /* if the communicator is already released */
-        opal_hash_table_remove_value_uint64(comm_data, *((uint64_t*)&data));
+        opal_list_remove_item(comm_data, &data->super);
         free(data->comm_name);
         free(data->procs);
         OBJ_RELEASE(data);
@@ -127,8 +122,7 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
 
 void mca_common_monitoring_coll_finalize( void )
 {
-    opal_hash_table_remove_all( comm_data );
-    OBJ_RELEASE(comm_data);
+    OPAL_LIST_DESTRUCT(comm_data);
 }
 
 void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
@@ -151,21 +145,15 @@ void mca_common_monitoring_coll_flush_all(FILE *pf)
 {
     if( NULL == comm_data ) return; /* No hashtable */
         
-    uint64_t key;
-    void*data;
+    mca_monitoring_coll_data_t*data;
     mca_monitoring_coll_data_t*previous = NULL;
 
     fprintf(pf, "# COLLECTIVES\n");
     
-    OPAL_HASH_TABLE_FOREACH(key, uint64, data, comm_data) {
-        if( NULL != previous && NULL == previous->p_comm ) {
-            /* Phase flushed -> free already released once coll_data_t */
-            mca_common_monitoring_coll_release(previous);
-        }
-        mca_common_monitoring_coll_flush(pf, (mca_monitoring_coll_data_t*)data);
-        previous = data;
+    OPAL_LIST_FOREACH(data, comm_data, mca_monitoring_coll_data_t) {
+        mca_common_monitoring_coll_flush(pf, data);
+        mca_common_monitoring_coll_release(data);
     }
-    mca_common_monitoring_coll_release(previous);
 }
 
 void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*data)
