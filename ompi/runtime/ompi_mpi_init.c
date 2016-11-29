@@ -17,7 +17,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
@@ -831,11 +831,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (!ompi_async_mpi_init) {
         active = true;
         if (NULL != opal_pmix.fence_nb) {
-            opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
+            opal_pmix.fence_nb(NULL, false,
                                fence_release, (void*)&active);
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
-            opal_pmix.fence(NULL, opal_pmix_collect_all_data);
+            opal_pmix.fence(NULL, false);
         }
     }
 
