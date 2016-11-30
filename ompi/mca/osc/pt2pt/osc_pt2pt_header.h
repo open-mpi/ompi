@@ -13,7 +13,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -133,6 +133,9 @@ typedef struct ompi_osc_pt2pt_header_lock_t ompi_osc_pt2pt_header_lock_t;
 
 struct ompi_osc_pt2pt_header_lock_ack_t {
     ompi_osc_pt2pt_header_base_t base;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t padding[2];
+#endif
     uint32_t source;
     uint64_t lock_ptr;
 };
@@ -179,6 +182,9 @@ typedef struct ompi_osc_pt2pt_header_flush_ack_t ompi_osc_pt2pt_header_flush_ack
 
 struct ompi_osc_pt2pt_frag_header_t {
     ompi_osc_pt2pt_header_base_t base;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
+    uint8_t padding[2];
+#endif
     uint32_t source; /* rank in window of source process */
     opal_atomic_int32_t num_ops; /* number of operations in this buffer */
     uint32_t pad; /* ensure the fragment header is a multiple of 8 bytes */
