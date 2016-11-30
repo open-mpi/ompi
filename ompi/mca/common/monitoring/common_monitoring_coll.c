@@ -15,15 +15,16 @@
 
 #include <ompi_config.h>
 #include <common_monitoring.h>
+#include <common_monitoring_coll.h>
 #include <ompi/constants.h>
 #include <ompi/communicator/communicator.h>
 #include <opal/mca/base/mca_base_component_repository.h>
-#include <opal/class/opal_list.h>
+#include <opal/class/opal_hash_table.h>
 #include <assert.h>
 
 /*** Monitoring specific variables ***/
 struct mca_monitoring_coll_data_t {
-    opal_list_item_t super;
+    opal_object_t super;
     char*procs;
     char*comm_name;
     int world_rank;
@@ -37,7 +38,7 @@ struct mca_monitoring_coll_data_t {
 };
 
 /* Collectives operation monitoring */
-static opal_list_t *comm_data = NULL;
+static opal_hash_table_t *comm_data = NULL;
 
 static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*data)
 {
@@ -80,19 +81,24 @@ mca_monitoring_coll_data_t*mca_common_monitoring_coll_new( ompi_communicator_t*c
         return NULL;
     }
 
-    data->p_comm  = comm;
+    data->p_comm = comm;
     
     /* Allocate list */
     if( NULL == comm_data ) {
-        comm_data = OBJ_NEW(opal_list_t);
+        comm_data = OBJ_NEW(opal_hash_table_t);
         if( NULL == comm_data ) {
-            OPAL_MONITORING_PRINT_ERR("coll: new: failed to allocate list");
+            OPAL_MONITORING_PRINT_ERR("coll: new: failed to allocate hashtable");
             return data;
         }
+        opal_hash_table_init(comm_data, 2048);
     }
     
-    /* Insert in list */
-    opal_list_append(comm_data, &data->super);
+    /* Insert in hashtable */
+    uint64_t key = *((uint64_t*)&comm);
+    if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(comm_data, key, (void*)data) ) {
+        OPAL_MONITORING_PRINT_ERR("coll: new: failed to allocate memory or "
+                                  "growing the hash table");
+    }
 
     /* Cache data so the procs can be released without affecting the output */
     mca_common_monitoring_coll_cache(data);
@@ -110,7 +116,7 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
 #endif /* OPAL_ENABLE_DEBUG */
         
     if( NULL == data->p_comm ) { /* if the communicator is already released */
-        opal_list_remove_item(comm_data, &data->super);
+        opal_hash_table_remove_value_uint64(comm_data, *((uint64_t*)&data->p_comm));
         free(data->comm_name);
         free(data->procs);
         OBJ_RELEASE(data);
@@ -122,7 +128,8 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
 
 void mca_common_monitoring_coll_finalize( void )
 {
-    OPAL_LIST_DESTRUCT(comm_data);
+    opal_hash_table_remove_all( comm_data );
+    OBJ_RELEASE(comm_data);
 }
 
 void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
@@ -142,16 +149,22 @@ void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
 void mca_common_monitoring_coll_flush_all(FILE *pf)
 {
     if( NULL == comm_data ) return; /* No hashtable */
-        
-    mca_monitoring_coll_data_t*data;
+
+    uint64_t key;
+    void*data;
     mca_monitoring_coll_data_t*previous = NULL;
 
     fprintf(pf, "# COLLECTIVES\n");
-    
-    OPAL_LIST_FOREACH(data, comm_data, mca_monitoring_coll_data_t) {
-        mca_common_monitoring_coll_flush(pf, data);
-        mca_common_monitoring_coll_release(data);
+
+    OPAL_HASH_TABLE_FOREACH(key, uint64, data, comm_data) {
+        if( NULL != previous && NULL == previous->p_comm ) {
+            /* Phase flushed -> free already released once coll_data_t */
+            mca_common_monitoring_coll_release(previous);
+        }
+        mca_common_monitoring_coll_flush(pf, (mca_monitoring_coll_data_t*)data);
+        previous = data;
     }
+    mca_common_monitoring_coll_release(previous);
 }
 
 void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*data)
@@ -167,6 +180,30 @@ void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*da
     opal_atomic_add_64(&data->o2a_count, 1);
 }
 
+int mca_common_monitoring_coll_get_o2a_count(const struct mca_base_pvar_t *pvar,
+                                              void *value,
+                                              void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    uint64_t *value_uint64 = (uint64_t*) value;
+    mca_monitoring_coll_data_t*data;
+    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
+    *value_uint64 = data->o2a_count;
+    return OMPI_SUCCESS;
+}
+
+int mca_common_monitoring_coll_get_o2a_size(const struct mca_base_pvar_t *pvar,
+                                             void *value,
+                                             void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    uint64_t *value_uint64 = (uint64_t*) value;
+    mca_monitoring_coll_data_t*data;
+    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
+    *value_uint64 = data->o2a_size;
+    return OMPI_SUCCESS;
+}
+
 void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*data)
 {
     if( 0 == mca_common_monitoring_current_state ) return; /* right now the monitoring is not started */
@@ -180,6 +217,30 @@ void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*da
     opal_atomic_add_64(&data->a2o_count, 1);
 }
 
+int mca_common_monitoring_coll_get_a2o_count(const struct mca_base_pvar_t *pvar,
+                                              void *value,
+                                              void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    uint64_t *value_uint64 = (uint64_t*) value;
+    mca_monitoring_coll_data_t*data;
+    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
+    *value_uint64 = data->a2o_count;
+    return OMPI_SUCCESS;
+}
+
+int mca_common_monitoring_coll_get_a2o_size(const struct mca_base_pvar_t *pvar,
+                                             void *value,
+                                             void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    uint64_t *value_uint64 = (uint64_t*) value;
+    mca_monitoring_coll_data_t*data;
+    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
+    *value_uint64 = data->a2o_size;
+    return OMPI_SUCCESS;
+}
+
 void mca_common_monitoring_coll_a2a(uint64_t size, mca_monitoring_coll_data_t*data)
 {
     if( 0 == mca_common_monitoring_current_state ) return; /* right now the monitoring is not started */
@@ -191,6 +252,30 @@ void mca_common_monitoring_coll_a2a(uint64_t size, mca_monitoring_coll_data_t*da
 #endif /* OPAL_ENABLE_DEBUG */
     opal_atomic_add_64(&data->a2a_size, size);
     opal_atomic_add_64(&data->a2a_count, 1);
+}
+
+int mca_common_monitoring_coll_get_a2a_count(const struct mca_base_pvar_t *pvar,
+                                              void *value,
+                                              void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    uint64_t *value_uint64 = (uint64_t*) value;
+    mca_monitoring_coll_data_t*data;
+    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
+    *value_uint64 = data->a2a_count;
+    return OMPI_SUCCESS;
+}
+
+int mca_common_monitoring_coll_get_a2a_size(const struct mca_base_pvar_t *pvar,
+                                             void *value,
+                                             void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    uint64_t *value_uint64 = (uint64_t*) value;
+    mca_monitoring_coll_data_t*data;
+    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
+    *value_uint64 = data->a2a_size;
+    return OMPI_SUCCESS;
 }
 
 static void mca_monitoring_coll_construct (mca_monitoring_coll_data_t*coll_data)

@@ -126,8 +126,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_monitoring_coll_data_t);
 
 OMPI_DECLSPEC mca_monitoring_coll_data_t*mca_common_monitoring_coll_new(ompi_communicator_t*comm);
 OMPI_DECLSPEC void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data);
-OMPI_DECLSPEC void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data);
-OMPI_DECLSPEC void mca_common_monitoring_coll_flush_all(FILE *pf);
 OMPI_DECLSPEC void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*data);
 OMPI_DECLSPEC void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*data);
 OMPI_DECLSPEC void mca_common_monitoring_coll_a2a(uint64_t size, mca_monitoring_coll_data_t*data);
