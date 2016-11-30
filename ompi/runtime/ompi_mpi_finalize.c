@@ -105,6 +105,8 @@ int ompi_mpi_finalize(void)
     ompi_proc_t** procs;
     size_t nprocs;
     volatile bool active;
+    uint32_t key;
+    ompi_datatype_t * datatype;
     OPAL_TIMING_DECLARE(tm);
     OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
@@ -297,14 +299,16 @@ int ompi_mpi_finalize(void)
     }
     OBJ_DESTRUCT(&ompi_registered_datareps);
 
-    /* Remove all F90 types from the hash tables. As the OBJ_DESTRUCT will
-     * call a special destructor able to release predefined types, we can
-     * simply call the OBJ_DESTRUCT on the hash table and all memory will
-     * be correctly released.
-     */
-    OBJ_DESTRUCT( &ompi_mpi_f90_integer_hashtable );
-    OBJ_DESTRUCT( &ompi_mpi_f90_real_hashtable );
-    OBJ_DESTRUCT( &ompi_mpi_f90_complex_hashtable );
+    /* Remove all F90 types from the hash tables */
+    OPAL_HASH_TABLE_FOREACH(key, uint32, datatype, &ompi_mpi_f90_integer_hashtable)
+        OBJ_RELEASE(datatype);
+    OBJ_DESTRUCT(&ompi_mpi_f90_integer_hashtable);
+    OPAL_HASH_TABLE_FOREACH(key, uint32, datatype, &ompi_mpi_f90_real_hashtable)
+        OBJ_RELEASE(datatype);
+    OBJ_DESTRUCT(&ompi_mpi_f90_real_hashtable);
+    OPAL_HASH_TABLE_FOREACH(key, uint32, datatype, &ompi_mpi_f90_complex_hashtable)
+        OBJ_RELEASE(datatype);
+    OBJ_DESTRUCT(&ompi_mpi_f90_complex_hashtable);
 
     /* Free communication objects */
 
