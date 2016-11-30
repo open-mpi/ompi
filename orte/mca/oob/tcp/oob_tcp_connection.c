@@ -869,6 +869,7 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
              */
             mca_oob_tcp_peer_close(peer);
         }
+        free(msg);
         return ORTE_ERR_UNREACH;
     }
 
@@ -883,6 +884,7 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
           MCA_OOB_TCP_CONNECTING == peer->state ||
          MCA_OOB_TCP_CONNECT_ACK == peer->state ) ) {
         if (retry(peer, sd, false)) {
+            free(msg);
             return ORTE_ERR_UNREACH;
         }
     }
