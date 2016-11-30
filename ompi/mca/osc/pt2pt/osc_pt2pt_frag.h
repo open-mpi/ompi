@@ -3,6 +3,8 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,11 +93,18 @@ static inline ompi_osc_pt2pt_frag_t *ompi_osc_pt2pt_frag_alloc_non_buffered (omp
 
     curr->header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_FRAG;
     curr->header->base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
+#if OPAL_ENABLE_DEBUG
+    curr->header->padding[0] = 0;
+    curr->header->padding[1] = 0;
+#endif
     if (module->passive_target_access_epoch) {
         curr->header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET;
     }
     curr->header->source = ompi_comm_rank(module->comm);
     curr->header->num_ops = 1;
+#if OPAL_ENABLE_DEBUG
+    curr->header->pad = 0;
+#endif
 
     return curr;
 }
