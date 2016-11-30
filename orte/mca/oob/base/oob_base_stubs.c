@@ -125,8 +125,6 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
                         ORTE_OOB_SEND(msg);
                         return;
                     }
-                    ORTE_OOB_SEND(msg);
-                    return;
                 }
                 msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
                 ORTE_RML_SEND_COMPLETE(msg);

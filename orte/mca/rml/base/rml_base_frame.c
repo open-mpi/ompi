@@ -24,6 +24,7 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/util/output.h"
 
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_wait.h"
@@ -225,6 +226,11 @@ void orte_rml_send_callback(int status, orte_process_name_t *peer,
 {
     OBJ_RELEASE(buffer);
     if (ORTE_SUCCESS != status) {
+        opal_output_verbose(2, orte_rml_base_framework.framework_output,
+                            "%s UNABLE TO SEND MESSAGE TO %s TAG %d: %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(peer), tag,
+                            ORTE_ERROR_NAME(status));
         ORTE_ACTIVATE_PROC_STATE(peer, ORTE_PROC_STATE_UNABLE_TO_SEND_MSG);
     }
 }
