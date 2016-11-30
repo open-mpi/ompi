@@ -471,7 +471,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     fprintf(pf, "# POINT TO POINT\n");
     for (int i = 0 ; i < nbprocs ; i++) {
         if(messages_count[i] > 0) {
-            fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
+            fprintf(pf, "I\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
                     my_rank, i, sent_data[i], messages_count[i]);
             for(int j = 0 ; j < max_size_histogram ; ++j)
                 fprintf(pf, "%" PRIu64 "%s", size_histogram[i * max_size_histogram + j],
@@ -486,7 +486,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     if( mca_common_monitoring_filter() ) {
         for (int i = 0 ; i < nbprocs ; i++) {
             if(filtered_messages_count[i] > 0) {
-                fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
+                fprintf(pf, "E\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                         my_rank, i, filtered_sent_data[i], filtered_messages_count[i]);
             }
             /* reset phase array */
@@ -499,7 +499,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     fprintf(pf, "# RMA\n");
     for (int i = 0 ; i < nbprocs ; i++) {
         if(rmessages_count[i] > 0) {
-            fprintf(pf, "R\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
+            fprintf(pf, "R\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, recv_data[i], rmessages_count[i]);
         }
         /* reset phase array */
@@ -522,10 +522,10 @@ static int mca_common_monitoring_flush(int fd, char* filename)
         return OMPI_SUCCESS;
 
     if( 1 == fd ) {
-        OPAL_MONITORING_PRINT_INFO("Proc %d flushing monitoring to stdout", rank_world);
+        OPAL_MONITORING_PRINT_INFO("Proc %" PRId32 " flushing monitoring to stdout", rank_world);
         mca_common_monitoring_output( stdout, rank_world, nprocs_world );
     } else if( 2 == fd ) {
-        OPAL_MONITORING_PRINT_INFO("Proc %d flushing monitoring to stderr", rank_world);
+        OPAL_MONITORING_PRINT_INFO("Proc %" PRId32 " flushing monitoring to stderr", rank_world);
         mca_common_monitoring_output( stderr, rank_world, nprocs_world );
     } else {
         FILE *pf = NULL;
@@ -535,19 +535,19 @@ static int mca_common_monitoring_flush(int fd, char* filename)
             OPAL_MONITORING_PRINT_ERR("Error while flushing: no filename provided");
             return -1;
         } else {
-            asprintf(&tmpfn, "%s.%d.prof", filename, rank_world);
+            asprintf(&tmpfn, "%s.%" PRId32 ".prof", filename, rank_world);
             pf = fopen(tmpfn, "w");
             free(tmpfn);
         }
 
         if(NULL == pf) {  /* Error during open */
-            OPAL_MONITORING_PRINT_ERR("Error while flushing to: %s.%d.prof",
-                                    filename, rank_world);
+            OPAL_MONITORING_PRINT_ERR("Error while flushing to: %s.%" PRId32 ".prof",
+                                      filename, rank_world);
             return -1;
         }
 
-        OPAL_MONITORING_PRINT_INFO("Proc %d flushing monitoring to: %s.%d.prof",
-                                rank_world, filename, rank_world);
+        OPAL_MONITORING_PRINT_INFO("Proc %d flushing monitoring to: %s.%" PRId32 ".prof",
+                                   rank_world, filename, rank_world);
 
         mca_common_monitoring_output( pf, rank_world, nprocs_world );
 
