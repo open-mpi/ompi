@@ -1150,6 +1150,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
         if (MPI_SUCCESS != ret) {
             return ret;
         }
+        OBJ_RELEASE(old_attr);
         had_old = true;
     }
 
