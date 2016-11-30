@@ -354,6 +354,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "FAULT TOLERANCE RESTART";
     case ORTE_JOB_STATE_ANY:
         return "ANY";
+    case ORTE_JOB_STATE_DEBUGGER_DETACH:
+        return "DEBUGGER DETACH";
     default:
         return "UNKNOWN STATE!";
     }

@@ -896,6 +896,20 @@ int orte_submit_job(char *argv[], int *index,
         }
     }
 
+    /* check for debugger test envars and forward them if necessary */
+    if (NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
+        char *evar;
+        evar = getenv("ORTE_TEST_DEBUGGER_SLEEP");
+        for (i=0; i < (int)jdata->num_apps; i++) {
+            if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                opal_setenv("ORTE_TEST_DEBUGGER_ATTACH", "1", true, &app->env);
+                if (NULL != evar) {
+                    opal_setenv("ORTE_TEST_DEBUGGER_SLEEP", evar, true, &app->env);
+                }
+            }
+        }
+    }
+
     /* check for suicide test directives */
     if (NULL != getenv("ORTE_TEST_HNP_SUICIDE") ||
         NULL != getenv("ORTE_TEST_ORTED_SUICIDE")) {
@@ -2149,8 +2163,9 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
          */
         if (NULL != orte_debugger_test_daemon && !orte_debugger_test_attach) {
             opal_output_verbose(2, orte_debug_output,
-                                "%s No debugger test daemon specified",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                                "%s Debugger test daemon specified: %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                orte_debugger_test_daemon);
             goto launchit;
         }
         /* if we were given an auto-detect rate, then we want to setup
@@ -2362,6 +2377,8 @@ static void setup_debugger_job(void)
         proc = OBJ_NEW(orte_proc_t);
         proc->name.jobid = debugger->jobid;
         proc->name.vpid = vpid++;
+        /* point the proc at the local ORTE daemon as its parent */
+        proc->parent = node->daemon->name.vpid;
         /* set the local/node ranks - we don't actually care
          * what these are, but the odls needs them
          */
@@ -2741,7 +2758,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
 static void open_fifo(void)
 {
     if (orte_debugger_attach_fd > 0) {
-    close(orte_debugger_attach_fd);
+        close(orte_debugger_attach_fd);
     }
 
     orte_debugger_attach_fd = open(MPIR_attach_fifo, O_RDONLY | O_NONBLOCK, 0);
@@ -2760,10 +2777,16 @@ static void open_fifo(void)
         return;
     }
 
-    opal_output_verbose(2, orte_debug_output,
-            "%s Monitoring debugger attach fifo %s",
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            MPIR_attach_fifo);
+    if (orte_debugger_test_attach) {
+        opal_output(0, "%s Monitoring debugger attach fifo %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    MPIR_attach_fifo);
+    } else {
+        opal_output_verbose(2, orte_debug_output,
+                            "%s Monitoring debugger attach fifo %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            MPIR_attach_fifo);
+    }
     orte_debugger_attach = (opal_event_t*)malloc(sizeof(opal_event_t));
     opal_event_set(orte_event_base, orte_debugger_attach, orte_debugger_attach_fd,
                    OPAL_EV_READ, attach_debugger, orte_debugger_attach);
@@ -3232,4 +3255,3 @@ void orte_profile_wakeup(int sd, short args, void *cbdata)
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
 }
-
