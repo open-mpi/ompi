@@ -80,7 +80,7 @@ mca_monitoring_coll_data_t*mca_common_monitoring_coll_new( ompi_communicator_t*c
         return NULL;
     }
 
-    data->p_comm = comm;
+    data->p_comm  = comm;
     
     /* Allocate list */
     if( NULL == comm_data ) {
@@ -108,7 +108,7 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
         return;
     }
 #endif /* OPAL_ENABLE_DEBUG */
-    
+        
     if( NULL == data->p_comm ) { /* if the communicator is already released */
         opal_list_remove_item(comm_data, &data->super);
         free(data->comm_name);
@@ -127,14 +127,12 @@ void mca_common_monitoring_coll_finalize( void )
 
 void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
 {
-    /* Set data->procs, data->world_rank and data->comm_name */
-    mca_common_monitoring_coll_cache(data);
     /* Flush data */
     fprintf(pf,
             "C\t%s\tprocs: %s\n"
-            "O2A\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
-            "A2O\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
-            "A2A\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
+            "O2A\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
+            "A2O\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
+            "A2A\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
             data->comm_name, data->procs,
             data->world_rank, data->o2a_size, data->o2a_count,
             data->world_rank, data->a2o_size, data->a2o_count,
