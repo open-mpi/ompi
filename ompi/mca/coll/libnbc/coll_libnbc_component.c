@@ -263,8 +263,11 @@ ompi_coll_libnbc_progress(void)
     ompi_coll_libnbc_request_t* request, *next;
     int res;
 
+    /* return if invoked recursively */
     if (opal_atomic_trylock(&mca_coll_libnbc_component.progress_lock)) return 0;
 
+    /* process active requests, and use mca_coll_libnbc_component.lock to access the
+     * mca_coll_libnbc_component.active_requests list */
     OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
     OPAL_LIST_FOREACH_SAFE(request, next, &mca_coll_libnbc_component.active_requests,
                            ompi_coll_libnbc_request_t) {
