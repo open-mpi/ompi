@@ -105,7 +105,7 @@ static inline int mca_common_monitoring_get_world_rank(int dst, struct ompi_comm
                                                key, (void *)&rank);
 
     /* Use intermediate variable to avoid overwriting while looking up in the hashtbale. */
-    *world_rank = (int)rank;
+    if( ret == OPAL_SUCCESS ) *world_rank = (int)rank;
     return ret;
 }
 
