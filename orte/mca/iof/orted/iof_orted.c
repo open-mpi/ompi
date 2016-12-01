@@ -152,6 +152,8 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     proct->name.jobid = dst_name->jobid;
     proct->name.vpid = dst_name->vpid;
     opal_list_append(&mca_iof_orted_component.procs, &proct->super);
+
+SETUP:
     /* get the local jobdata for this proc */
     if (NULL == (jobdat = orte_get_job_data_object(proct->name.jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -162,8 +164,6 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
-SETUP:
     /* define a read event and activate it */
     if (src_tag & ORTE_IOF_STDOUT) {
         ORTE_IOF_READ_EVENT(&proct->revstdout, proct, fd, ORTE_IOF_STDOUT,

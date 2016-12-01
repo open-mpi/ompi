@@ -900,7 +900,7 @@ int orte_submit_job(char *argv[], int *index,
     if (NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
         char *evar;
         evar = getenv("ORTE_TEST_DEBUGGER_SLEEP");
-        for (i=0; i < (int)jdata->num_apps; i++) {
+        for (i=0; i < (orte_app_idx_t)jdata->num_apps; i++) {
             if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
                 opal_setenv("ORTE_TEST_DEBUGGER_ATTACH", "1", true, &app->env);
                 if (NULL != evar) {
