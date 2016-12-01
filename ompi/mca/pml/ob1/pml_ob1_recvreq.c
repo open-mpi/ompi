@@ -632,6 +632,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     bytes_remaining = hdr->hdr_rndv.hdr_msg_length;
     recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
     recvreq->req_send_offset = 0;
+    recvreq->req_rdma_offset = 0;
 
     MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_rndv.hdr_match);
 
