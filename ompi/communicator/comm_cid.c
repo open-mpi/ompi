@@ -848,7 +848,7 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
 
     if (OPAL_SUCCESS != (rc = opal_dss.pack(&sbuf, context->tmpbuf, (int32_t)context->count, OPAL_INT))) {
         OBJ_DESTRUCT(&sbuf);
-        fprintf (stderr, "pack failed. rc  %d\n", rc);
+        opal_output_verbose (verbosity_level, output_id, "pack failed. rc  %d\n", rc);
         return rc;
     }
 
