@@ -26,9 +26,6 @@ typedef struct {
 
 extern pmix_client_globals_t pmix_client_globals;
 
-void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr);
-
-
 END_C_DECLS
 
 #endif /* PMIX_CLIENT_OPS_H */

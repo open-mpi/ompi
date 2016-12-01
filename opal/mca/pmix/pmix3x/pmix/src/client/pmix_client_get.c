@@ -24,6 +24,7 @@
 #include <pmix_rename.h>
 
 #include "src/include/pmix_globals.h"
+#include "src/include/pmix_jobdata.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -58,6 +59,7 @@
 #endif /* PMIX_ENABLE_DSTORE */
 
 #include "pmix_client_ops.h"
+#include "src/include/pmix_jobdata.h"
 
 static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
                                const pmix_info_t info[], size_t ninfo,
@@ -283,8 +285,12 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
         goto done;
     }
 
-#if (PMIX_ENABLE_DSTORE == 1)
-    rc = pmix_dstore_fetch(nptr->nspace, cb->rank, cb->key, &val);
+#if (defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1))
+    if (PMIX_SUCCESS != (rc = pmix_dstore_fetch(nptr->nspace, cb->rank, cb->key, &val))){
+        /* DO NOT error log this status - it is perfectly okay
+         * for a key not to be found */
+        goto done;
+    }
 #else
     /* we received the entire blob for this process, so
      * unpack and store it in the modex - this could consist
@@ -308,7 +314,12 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                     return;
                 }
                 free(nspace);
-                pmix_client_process_nspace_blob(cb->nspace, bptr);
+                pmix_job_data_htable_store(cb->nspace, bptr);
+
+                /* Check if the key is in this blob */
+
+                pmix_hash_fetch(&nptr->internal, cb->rank, cb->key, &val);
+
             } else {
                 cnt = 1;
                 cur_kval = PMIX_NEW(pmix_kval_t);
@@ -550,11 +561,29 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         return;
     }
 
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->internal, cb->rank, cb->key, &val))) {
+        /* found it - we are in an event, so we can
+         * just execute the callback */
+        cb->value_cbfunc(rc, val, cb->cbdata);
+        /* cleanup */
+        if (NULL != val) {
+            PMIX_VALUE_RELEASE(val);
+        }
+        PMIX_RELEASE(cb);
+        return;
+    }
+#endif
+
     /* if the key is in the PMIx namespace, then they are looking for data
      * that was provided at startup */
     if (0 == strncmp(cb->key, "pmix", 4)) {
         /* should be in the internal hash table. */
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+        if (PMIX_SUCCESS == (rc = pmix_dstore_fetch(cb->nspace, cb->rank, cb->key, &val))) {
+#else
         if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->internal, cb->rank, cb->key, &val))) {
+#endif
             /* found it - we are in an event, so we can
              * just execute the callback */
             cb->value_cbfunc(rc, val, cb->cbdata);

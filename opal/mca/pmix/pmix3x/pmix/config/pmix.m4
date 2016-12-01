@@ -926,4 +926,3 @@ AC_DEFUN([PMIX_DO_AM_CONDITIONALS],[
     ])
     pmix_did_am_conditionals=yes
 ])dnl
-

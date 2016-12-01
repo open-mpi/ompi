@@ -206,3 +206,18 @@ static void qcon(pmix_query_caddy_t *p)
 PMIX_CLASS_INSTANCE(pmix_query_caddy_t,
                     pmix_object_t,
                     qcon, NULL);
+
+static void jdcon(pmix_job_data_caddy_t *p)
+{
+    p->nsptr = NULL;
+    p->job_data = NULL;
+    p->dstore_fn = NULL;
+    p->hstore_fn = NULL;
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    p->bufs = NULL;
+#endif
+}
+
+PMIX_CLASS_INSTANCE(pmix_job_data_caddy_t,
+                    pmix_object_t,
+                    jdcon, NULL);

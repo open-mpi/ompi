@@ -567,4 +567,3 @@ PMIX_CLASS_DECLARATION(pmix_output_stream_t);
 END_C_DECLS
 
 #endif /* PMIX_OUTPUT_H_ */
-
