@@ -45,7 +45,7 @@ AC_DEFUN([MCA_opal_pmix_ext11_CONFIG],[
            # check for the 1.1.4 version
            AC_MSG_CHECKING([if external component is version 1.1.4])
            AS_IF([test "$opal_external_pmix_version" = "11" ||
-                  test "$opal_external_pmix_version" = "1X"],
+                  test "$opal_external_pmix_version" = "1x"],
                  [AC_MSG_RESULT([yes])
                   opal_pmix_external_11_happy=yes],
                  [AC_MSG_RESULT([no])
