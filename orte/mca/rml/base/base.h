@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,6 +84,7 @@ ORTE_DECLSPEC void orte_rml_base_comm_stop(void);
 typedef struct {
     opal_list_t posted_recvs;
     opal_list_t unmatched_msgs;
+    int max_retries;
 #if OPAL_ENABLE_TIMING
     bool timing;
 #endif
@@ -123,6 +124,7 @@ typedef struct {
     orte_process_name_t origin;
     int status;                  // returned status on send
     orte_rml_tag_t tag;          // targeted tag
+    int retries;                 // #times we have tried to send it
 
     /* user's send callback functions and data */
     union {
