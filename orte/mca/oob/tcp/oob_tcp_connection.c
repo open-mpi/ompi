@@ -191,6 +191,7 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(&(peer->name)), peer->sd);
 
     addrlen = sizeof(struct sockaddr_in);
+    peer->active_addr = NULL;
     OPAL_LIST_FOREACH(addr, &peer->addrs, mca_oob_tcp_addr_t) {
         opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                             "%s orte_tcp_peer_try_connect: "
@@ -288,7 +289,7 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
         /* no address succeeded, so we cannot reach this peer */
         peer->state = MCA_OOB_TCP_FAILED;
         host = orte_get_proc_hostname(&(peer->name));
-        if (NULL == host) {
+        if (NULL == host && NULL != peer->active_addr) {
             host = opal_net_get_hostname((struct sockaddr*)&(peer->active_addr->addr));
         }
         /* use an opal_output here instead of show_help as we may well
