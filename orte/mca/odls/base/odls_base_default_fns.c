@@ -1367,13 +1367,30 @@ typedef struct {
 
 static void kill_cbfunc(int fd, short args, void *cbdata)
 {
-    odls_kill_caddy_t *cd = (odls_kill_caddy_t*)cbdata;
+    orte_timer_t *tm = (orte_timer_t*)cbdata;
+    odls_kill_caddy_t *cd = (odls_kill_caddy_t*)tm->payload;
 
-    if (!ORTE_FLAG_TEST(cd->child, ORTE_PROC_FLAG_ALIVE) || 0 == cd->child->pid) {
-        free(cd);
-        return;
-    }
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                         "%s SENDING FORCE SIGKILL TO %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&cd->child->name)));
+
     cd->kill_local(cd->child->pid, SIGKILL);
+    /* indicate the waitpid fired as this is effectively what
+     * has happened
+     */
+    ORTE_FLAG_SET(cd->child, ORTE_PROC_FLAG_WAITPID);
+    cd->child->pid = 0;
+
+    /* ensure the child's session directory is cleaned up */
+    orte_session_dir_finalize(&cd->child->name);
+    /* check for everything complete - this will remove
+     * the child object from our local list
+     */
+    if (ORTE_FLAG_TEST(cd->child, ORTE_PROC_FLAG_IOF_COMPLETE) &&
+        ORTE_FLAG_TEST(cd->child, ORTE_PROC_FLAG_WAITPID)) {
+        ORTE_ACTIVATE_PROC_STATE(&cd->child->name, cd->child->state);
+    }
     free(cd);
 }
 
@@ -1386,6 +1403,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
     orte_proc_t *proc, proctmp;
     int i, j;
     opal_pointer_array_t procarray, *procptr;
+    odls_kill_caddy_t *cd;
     bool do_cleanup;
 
     OBJ_CONSTRUCT(&procs_killed, opal_list_t);
@@ -1503,53 +1521,30 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
              */
             orte_wait_cb_cancel(child);
 
-            if (!do_cleanup) {
-                odls_kill_caddy_t *cd;
-
-                /* if we are killing only selected procs, then do so in a gentle
-                   fashion. First send a SIGCONT in case the process is in stopped state.
-                   If it is in a stopped state and we do not first change it to
-                   running, then SIGTERM will not get delivered.  Ignore return
-                   value. */
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                     "%s SENDING SIGCONT TO %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&child->name)));
-                kill_local(child->pid, SIGCONT);
-
-                /* Send a sigterm to the process before sigkill to be nice */
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                     "%s SENDING SIGTERM TO %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&child->name)));
-                kill_local(child->pid, SIGTERM);
-                /* provide a polite delay so the proc has a chance to react */
-                cd = (odls_kill_caddy_t*)malloc(sizeof(odls_kill_caddy_t));
-                OBJ_RETAIN(child);  // protect against race conditions
-                cd->child = child;
-                cd->kill_local = kill_local;
-                ORTE_TIMER_EVENT(1, 0, kill_cbfunc, ORTE_SYS_PRI);
-                continue;
-            }
-
-            /* Force the SIGKILL just to make sure things are dead
-             * This fixes an issue that, if the application is masking
-             * SIGTERM, then the child_died()
-             * may return 'true' even though waipid returns with 0.
-             * It does this to avoid a race condition, per documentation
-             * in odls_default_module.c.
-             */
+            /* First send a SIGCONT in case the process is in stopped state.
+               If it is in a stopped state and we do not first change it to
+               running, then SIGTERM will not get delivered.  Ignore return
+               value. */
             OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                 "%s SENDING FORCE SIGKILL TO %s pid %lu",
+                                 "%s SENDING SIGCONT TO %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&child->name), (unsigned long)child->pid));
-            kill_local(child->pid, SIGKILL);
+                                 ORTE_NAME_PRINT(&child->name)));
+            kill_local(child->pid, SIGCONT);
 
-            /* indicate the waitpid fired as this is effectively what
-             * has happened
-             */
-            ORTE_FLAG_SET(child, ORTE_PROC_FLAG_WAITPID);
-            child->pid = 0;
+            /* Send a sigterm to the process before sigkill to be nice */
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                                 "%s SENDING SIGTERM TO %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&child->name)));
+            kill_local(child->pid, SIGTERM);
+            /* provide a polite delay so the proc has a chance to react */
+            cd = (odls_kill_caddy_t*)malloc(sizeof(odls_kill_caddy_t));
+            OBJ_RETAIN(child);  // protect against race conditions
+            cd->child = child;
+            cd->kill_local = kill_local;
+            ORTE_DETECT_TIMEOUT(1, orte_odls_globals.timeout_before_sigkill,
+                                10000000, kill_cbfunc, cd);
+            continue;
 
         CLEANUP:
             /* ensure the child's session directory is cleaned up */
