@@ -130,15 +130,38 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
     if(!reorder) {  /* No reorder. Create a new communicator, then   */
                     /* jump out to attach the dist_graph and return */
+        int num_procs, rank, i;
+        ompi_proc_t **topo_procs = NULL;
+        ompi_communicator_t * new_comm;
     fallback:
-
-        if( OMPI_SUCCESS == (err = ompi_comm_create(comm_old,
-                                                    comm_old->c_local_group,
-                                                    newcomm))){
-            /* Attach the dist_graph to the newly created communicator */
-            (*newcomm)->c_flags        |= OMPI_COMM_DIST_GRAPH;
-            (*newcomm)->c_topo          = topo_module;
-            (*newcomm)->c_topo->reorder = reorder;
+        num_procs = ompi_comm_size(comm_old);
+        rank = ompi_comm_rank(comm_old);
+        topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
+        if(OMPI_GROUP_IS_DENSE(comm_old->c_local_group)) {
+            memcpy(topo_procs, 
+                   comm_old->c_local_group->grp_proc_pointers,
+                   num_procs * sizeof(ompi_proc_t *));
+        } else {
+            for(i = 0 ; i < num_procs; i++) {
+                topo_procs[i] = ompi_group_peer_lookup(comm_old->c_local_group,i);
+            }
+        }
+        new_comm = ompi_comm_allocate(num_procs, 0);
+        if (NULL == new_comm) {
+            free(topo_procs);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        /* Attach the dist_graph to the newly created communicator */
+        new_comm->c_flags        |= OMPI_COMM_DIST_GRAPH;
+        new_comm->c_topo          = topo_module;
+        new_comm->c_topo->reorder = reorder;
+        err = ompi_comm_enable(comm_old, new_comm,
+                               rank, num_procs, topo_procs);
+        if (OMPI_SUCCESS == err) {
+            *newcomm = new_comm;
+        } else {
+            free(topo_procs);
+            ompi_comm_free(&new_comm);
         }
         return err;
     }  /* reorder == yes */
