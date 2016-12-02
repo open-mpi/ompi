@@ -14,7 +14,7 @@
  * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -102,10 +102,6 @@ int pmix_ifnametoaddr(const char* if_name, struct sockaddr* addr, int length)
 {
     pmix_pif_t* intf;
 
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
-    }
-
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
         intf =  (pmix_pif_t*)pmix_list_get_next(intf)) {
@@ -127,10 +123,6 @@ int pmix_ifnametoindex(const char* if_name)
 {
     pmix_pif_t* intf;
 
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return -1;
-    }
-
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
         intf =  (pmix_pif_t*)pmix_list_get_next(intf)) {
@@ -151,10 +143,6 @@ int16_t pmix_ifnametokindex(const char* if_name)
 {
     pmix_pif_t* intf;
 
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return -1;
-    }
-
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
         intf =  (pmix_pif_t*)pmix_list_get_next(intf)) {
@@ -174,10 +162,6 @@ int16_t pmix_ifnametokindex(const char* if_name)
 int pmix_ifindextokindex(int if_index)
 {
     pmix_pif_t* intf;
-
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return -1;
-    }
 
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
@@ -207,10 +191,6 @@ int pmix_ifaddrtoname(const char* if_addr, char* if_name, int length)
          * the node to be non-local
          */
         return PMIX_ERR_NOT_FOUND;
-    }
-
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
     }
 
     memset(&hints, 0, sizeof(hints));
@@ -274,10 +254,6 @@ int16_t pmix_ifaddrtokindex(const char* if_addr)
     int if_kernel_index;
     size_t len;
 
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
-    }
-
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -326,10 +302,6 @@ int16_t pmix_ifaddrtokindex(const char* if_addr)
 
 int pmix_ifcount(void)
 {
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return 0;
-    }
-
     return pmix_list_get_size(&pmix_if_list);
 }
 
@@ -342,10 +314,6 @@ int pmix_ifcount(void)
 int pmix_ifbegin(void)
 {
     pmix_pif_t *intf;
-
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return -1;
-    }
 
     intf = (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
     if (NULL != intf)
@@ -363,10 +331,6 @@ int pmix_ifbegin(void)
 int pmix_ifnext(int if_index)
 {
     pmix_pif_t *intf;
-
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return -1;
-    }
 
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
@@ -396,10 +360,6 @@ int pmix_ifindextoaddr(int if_index, struct sockaddr* if_addr, unsigned int leng
 {
     pmix_pif_t* intf;
 
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
-    }
-
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
          intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
          intf =  (pmix_pif_t*)pmix_list_get_next(intf)) {
@@ -419,10 +379,6 @@ int pmix_ifindextoaddr(int if_index, struct sockaddr* if_addr, unsigned int leng
 int pmix_ifkindextoaddr(int if_kindex, struct sockaddr* if_addr, unsigned int length)
 {
     pmix_pif_t* intf;
-
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
-    }
 
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
          intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
@@ -444,10 +400,6 @@ int pmix_ifkindextoaddr(int if_kindex, struct sockaddr* if_addr, unsigned int le
 int pmix_ifindextomask(int if_index, uint32_t* if_mask, int length)
 {
     pmix_pif_t* intf;
-
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
-    }
 
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
@@ -509,10 +461,6 @@ int pmix_ifindextoflags(int if_index, uint32_t* if_flags)
 {
     pmix_pif_t* intf;
 
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
-    }
-
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
         intf =  (pmix_pif_t*)pmix_list_get_next(intf)) {
@@ -535,10 +483,6 @@ int pmix_ifindextoname(int if_index, char* if_name, int length)
 {
     pmix_pif_t *intf;
 
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
-    }
-
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
         intf =  (pmix_pif_t*)pmix_list_get_next(intf)) {
@@ -559,10 +503,6 @@ int pmix_ifindextoname(int if_index, char* if_name, int length)
 int pmix_ifkindextoname(int if_kindex, char* if_name, int length)
 {
     pmix_pif_t *intf;
-
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
-    }
 
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
@@ -692,10 +632,6 @@ bool pmix_ifisloopback(int if_index)
 {
     pmix_pif_t* intf;
 
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return PMIX_ERROR;
-    }
-
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);
         intf =  (pmix_pif_t*)pmix_list_get_next(intf)) {
@@ -769,10 +705,6 @@ void pmix_ifgetaliases(char ***aliases)
 
     /* set default answer */
     *aliases = NULL;
-
-    if (PMIX_SUCCESS != pmix_mca_base_framework_open(&pmix_pif_base_framework, 0)) {
-        return;
-    }
 
     for (intf =  (pmix_pif_t*)pmix_list_get_first(&pmix_if_list);
         intf != (pmix_pif_t*)pmix_list_get_end(&pmix_if_list);

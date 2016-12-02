@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -79,6 +79,7 @@ static int pmix_pif_base_close(void)
     if (!frameopen) {
         return PMIX_SUCCESS;
     }
+    frameopen = false;
 
     while (NULL != (item = pmix_list_remove_first(&pmix_if_list))) {
         PMIX_RELEASE(item);

@@ -270,6 +270,23 @@ typedef struct {
 } pmix_server_trkr_t;
 PMIX_CLASS_DECLARATION(pmix_server_trkr_t);
 
+typedef int (*pmix_store_dstor_cbfunc_t)(const char *nsname,
+                                         pmix_rank_t rank, pmix_kval_t *kv);
+typedef int (*pmix_store_hash_cbfunc_t)(pmix_hash_table_t *table,
+                                         pmix_rank_t rank, pmix_kval_t *kv);
+
+typedef struct {
+    pmix_object_t super;
+    pmix_nspace_t *nsptr;
+    pmix_buffer_t *job_data;
+    pmix_store_dstor_cbfunc_t dstore_fn;
+    pmix_store_hash_cbfunc_t hstore_fn;
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    /* array of buffers per rank */
+    pmix_value_array_t *bufs;
+#endif
+} pmix_job_data_caddy_t;
+PMIX_CLASS_DECLARATION(pmix_job_data_caddy_t);
 
 /****    THREAD-RELATED    ****/
  /* define a caddy for thread-shifting operations */

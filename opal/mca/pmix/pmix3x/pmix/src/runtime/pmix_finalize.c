@@ -34,6 +34,7 @@
 #include "src/util/show_help.h"
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_var.h"
+#include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
 #include "src/mca/psec/base/base.h"
 #include "src/dstore/pmix_dstore.h"
@@ -99,6 +100,7 @@ void pmix_rte_finalize(void)
     pmix_util_keyval_parse_finalize();
 
     (void)pmix_mca_base_framework_close(&pmix_pinstalldirs_base_framework);
+    (void)pmix_mca_base_framework_close(&pmix_pif_base_framework);
     (void)pmix_mca_base_close();
 
     /* finalize the show_help system */
