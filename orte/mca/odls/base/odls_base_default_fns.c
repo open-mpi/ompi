@@ -1466,7 +1466,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(procptr, i))) {
             continue;
         }
-        for(j=0; j < orte_local_children->size; j++) {
+        for (j=0; j < orte_local_children->size; j++) {
             if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, j))) {
                 continue;
             }
