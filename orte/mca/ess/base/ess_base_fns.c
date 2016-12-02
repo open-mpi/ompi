@@ -71,6 +71,14 @@ int orte_ess_base_proc_binding(void)
         /* the topology system will pickup the binding pattern */
     }
 
+    /* direct launched: use whatever the extarnal launcher has set */
+    if ((NULL == orte_process_info.my_daemon_uri) && !opal_hwloc_base_bind_direct_launched) {
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
+                             "%s Process externally launched -- use their binding",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        goto MOVEON;
+    }
+
     /* see if we were bound when launched */
     if (!orte_proc_is_bound) {
         OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,

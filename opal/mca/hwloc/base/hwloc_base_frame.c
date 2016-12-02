@@ -44,6 +44,7 @@ hwloc_cpuset_t opal_hwloc_base_given_cpus=NULL;
 opal_hwloc_base_map_t opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
 opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_WARN;
 opal_binding_policy_t opal_hwloc_binding_policy=0;
+bool opal_hwloc_base_bind_direct_launched = false;
 char *opal_hwloc_base_slot_list=NULL;
 char *opal_hwloc_base_cpu_set=NULL;
 bool opal_hwloc_report_bindings=false;
@@ -166,6 +167,12 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
                                  "Read local topology from file instead of directly sensing it",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_topo_file);
+
+    opal_hwloc_base_bind_direct_launched = true;
+    (void) mca_base_var_register("opal", "hwloc", "base", "bind_direct_launched",
+                                 "bind processes when direct launched ",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_bind_direct_launched);
 
     /* register parameters */
     return OPAL_SUCCESS;
