@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,6 +88,10 @@ int orte_finalize(void)
 
     /* Close the general debug stream */
     opal_output_close(orte_debug_output);
+
+    if (NULL != orte_fork_agent) {
+        opal_argv_free(orte_fork_agent);
+    }
 
     /* finalize the opal utilities */
     rc = opal_finalize();
