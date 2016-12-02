@@ -115,10 +115,10 @@ int mca_io_ompio_file_delete (const char *filename,
 
     if (0 > ret ) {
         if ( ENOENT == errno ) {
-//            opal_output (1, "errno = %d %s\n", errno, strerror(errno));
             return MPI_ERR_NO_SUCH_FILE;
         } else {
-            opal_output (1, "errno = %d %s\n", errno, strerror(errno));
+            opal_output (0, "mca_io_ompio_file_delete: Could not remove file %s errno = %d %s\n", filename,
+                         errno, strerror(errno));
             return MPI_ERR_ACCESS;
         }
     }
