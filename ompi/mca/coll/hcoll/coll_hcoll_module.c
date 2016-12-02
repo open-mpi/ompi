@@ -138,7 +138,7 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
         OBJ_RELEASE(hcoll_module->previous_reduce_scatter_module);
         OBJ_RELEASE(hcoll_module->previous_reduce_module);
         */
-#if HCOLL_API < HCOLL_VERSION(3,7)
+#if !defined(HAVE_HCOLL_CONTEXT_FREE)
         context_destroyed = 0;
         hcoll_destroy_context(hcoll_module->hcoll_context,
                               (rte_grp_handle_t)hcoll_module->comm,
@@ -206,7 +206,7 @@ static int hcoll_comm_attr_del_fn(MPI_Comm comm, int keyval, void *attr_val, voi
     mca_coll_hcoll_module_t *hcoll_module;
     hcoll_module = (mca_coll_hcoll_module_t*) attr_val;
 
-#if HCOLL_API >= HCOLL_VERSION(3,7)
+#ifdef HAVE_HCOLL_CONTEXT_FREE
     hcoll_context_free(hcoll_module->hcoll_context, (rte_grp_handle_t)comm);
 #else
     hcoll_group_destroy_notify(hcoll_module->hcoll_context);
