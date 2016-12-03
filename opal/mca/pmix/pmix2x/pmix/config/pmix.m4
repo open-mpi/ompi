@@ -278,7 +278,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         # fails
         # - checks for __inline__, which then emits no error, and works
         #
-        # This also works nicely for gcc 2.x because "inline" will work on
+        # This also works nicely for gcc 3.x because "inline" will work on
         # the first check, and all is fine.  :-)
 
         PMIX_CFLAGS_save=$CFLAGS

@@ -269,7 +269,7 @@ PMIx provides forward ABI compatibility in all versions of a given
 feature release series and its corresponding
 super stable series.  For example, on a single platform, an pmix
 application linked against PMIx v1.3.2 shared libraries can be
-updated to point to the shared libraries in any successive v1.2.x or
+updated to point to the shared libraries in any successive v1.3.x or
 v1.4 release and still work properly (e.g., via the LD_LIBRARY_PATH
 environment variable or other operating system mechanism).
 
