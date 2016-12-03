@@ -11,6 +11,7 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/event/event.h"
