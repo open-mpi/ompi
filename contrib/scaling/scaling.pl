@@ -10,7 +10,7 @@ use Getopt::Long;
 # globals
 my $num_nodes = 2;
 my $my_arg;
-my $reps = 1;
+my $reps = 5;
 my $usedvm = 0;
 my $usesrun = 0;
 my $usempirun = 0;
@@ -19,14 +19,14 @@ my $useaprun = 0;
 my $myapp;
 my $runall = 0;
 my $rawoutput = 0;
-my $myresults;
+my $myresults = "myresults";
 my @csvrow;
 
 my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
 my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
 my @starters = qw(mpirun orterun srun aprun);
-my @starteroptions = ("-npernode 1 --novm",
-                      "--hnp file:dvm_uri -pernode",
+my @starteroptions = ("--map-by node --novm",
+                      "--hnp file:dvm_uri --map-by node",
                       "--distribution=cyclic",
                       "-N 1");
 
@@ -276,7 +276,9 @@ foreach $starter (@starters) {
             system("rm -f dvm_uri");
         }
         $cmd = "orte-dvm --report-uri dvm_uri 2>&1 &";
-        print $cmd . "\n";
+        if ($myresults) {
+            print FILE "\n\n$cmd\n";
+        }
         if (!$SHOWME) {
             system($cmd);
             # wait for the rendezvous file to appear
@@ -288,14 +290,14 @@ foreach $starter (@starters) {
     }
 
     if ($myresults) {
-        print FILE "\n\n$starter\n\n";
+        print FILE "$starter\n\n";
     }
     my $testnum = 0;
     foreach $test (@tests) {
         $option = $options[$testnum];
         if (-e $test) {
             if ($myresults) {
-                print FILE "#nodes,$test\n";
+                print FILE "#nodes,$test,$option\n";
             }
             if (!$SHOWME) {
                 # pre-position the executable
@@ -341,4 +343,3 @@ foreach $starter (@starters) {
 if ($myresults) {
     close(FILE);
 }
-

@@ -463,8 +463,14 @@ orte_session_dir_finalize(orte_process_name_t *proc)
                             false, orte_dir_check_file);
     opal_os_dirpath_destroy(orte_process_info.job_session_dir,
                             false, orte_dir_check_file);
-    opal_os_dirpath_destroy(orte_process_info.jobfam_session_dir,
-                            false, orte_dir_check_file);
+    /* only remove the jobfam session dir if we are the
+     * local daemon and we are finalizing our own session dir */
+    if ((ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) &&
+        (ORTE_PROC_MY_NAME == proc)) {
+        opal_os_dirpath_destroy(orte_process_info.jobfam_session_dir,
+                                false, orte_dir_check_file);
+    }
+
     if( NULL != orte_process_info.top_session_dir ){
         opal_os_dirpath_destroy(orte_process_info.top_session_dir,
                                 false, orte_dir_check_file);
