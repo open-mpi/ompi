@@ -1328,18 +1328,19 @@ static void pmix2x_log(opal_list_t *info,
     opal_value_t *ival;
     size_t n, ninfo;
     pmix2x_opcaddy_t *cd;
-
-    /* bozo check */
-    if (NULL == info || 0 == (ninfo = opal_list_get_size(info))) {
-        rc = OPAL_ERR_BAD_PARAM;
-        goto CLEANUP;
-    }
+    pmix_status_t prc;
 
     /* setup the operation */
     cd = OBJ_NEW(pmix2x_opcaddy_t);
     cd->opcbfunc = cbfunc;
     cd->cbdata = cbdata;
     cd->ninfo = ninfo;
+
+    /* bozo check */
+    if (NULL == info || 0 == (ninfo = opal_list_get_size(info))) {
+        rc = OPAL_ERR_BAD_PARAM;
+        goto CLEANUP;
+    }
 
     /* convert the list to an array of info objects */
     PMIX_INFO_CREATE(cd->info, cd->ninfo);
@@ -1351,14 +1352,19 @@ static void pmix2x_log(opal_list_t *info,
     }
 
     /* pass it down */
-    PMIx_Log_nb(cd->info, cd->ninfo, NULL, 0,
-                opcbfunc, cd);
+    if (PMIX_SUCCESS != (prc = PMIx_Log_nb(cd->info, cd->ninfo, NULL, 0,
+                                           opcbfunc, cd))) {
+        /* do not hang! */
+        rc = pmix2x_convert_rc(prc);
+        goto CLEANUP;
+    }
     return;
 
   CLEANUP:
     if (NULL != cbfunc) {
         cbfunc(rc, cbdata);
     }
+    OBJ_RELEASE(cd);
 }
 
 /****  INSTANTIATE INTERNAL CLASSES  ****/
