@@ -702,7 +702,9 @@ int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
   }
+  OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
   opal_list_append(&mca_coll_libnbc_component.active_requests, &(handle->super.super.super));
+  OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
 
   return OMPI_SUCCESS;
 }
