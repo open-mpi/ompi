@@ -1334,10 +1334,11 @@ static void pmix2x_log(opal_list_t *info,
     cd = OBJ_NEW(pmix2x_opcaddy_t);
     cd->opcbfunc = cbfunc;
     cd->cbdata = cbdata;
+    ninfo = opal_list_get_size(info);
     cd->ninfo = ninfo;
 
     /* bozo check */
-    if (NULL == info || 0 == (ninfo = opal_list_get_size(info))) {
+    if (NULL == info || 0 == ninfo) {
         rc = OPAL_ERR_BAD_PARAM;
         goto CLEANUP;
     }
