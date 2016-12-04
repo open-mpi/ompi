@@ -1330,18 +1330,19 @@ static void pmix2x_log(opal_list_t *info,
     pmix2x_opcaddy_t *cd;
     pmix_status_t prc;
 
-    /* setup the operation */
+    /* create the caddy */
     cd = OBJ_NEW(pmix2x_opcaddy_t);
-    cd->opcbfunc = cbfunc;
-    cd->cbdata = cbdata;
-    ninfo = opal_list_get_size(info);
-    cd->ninfo = ninfo;
 
     /* bozo check */
-    if (NULL == info || 0 == ninfo) {
+    if (NULL == info || 0 == (ninfo = opal_list_get_size(info))) {
         rc = OPAL_ERR_BAD_PARAM;
         goto CLEANUP;
     }
+
+    /* setup the operation */
+    cd->opcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    cd->ninfo = ninfo;
 
     /* convert the list to an array of info objects */
     PMIX_INFO_CREATE(cd->info, cd->ninfo);
