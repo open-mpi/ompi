@@ -37,6 +37,7 @@
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -351,6 +352,11 @@ int pmix_server_notify_event(int code, opal_process_name_t *source,
     opal_value_t *val;
     orte_grpcomm_signature_t *sig;
 
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s local process %s generated event code %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(source), code);
+
     /* a local process has generated an event - we need to xcast it
      * to all the daemons so it can be passed down to their local
      * procs */
@@ -442,6 +448,10 @@ static void _query(int sd, short args, void *cbdata)
     void *nptr;
     char **nspaces=NULL, nspace[512];
 
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s processing query",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
     results = OBJ_NEW(opal_list_t);
 
     /* see what they wanted */
@@ -508,15 +518,75 @@ int pmix_server_query_fn(opal_process_name_t *requestor,
 static void _toolconn(int sd, short args, void *cbdata)
 {
     orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
-    orte_job_t jdata;
+    orte_job_t *jdata;
+    orte_app_context_t *app;
+    orte_proc_t *proc;
+    orte_node_t *node;
     orte_process_name_t tool;
     int rc;
 
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s TOOL CONNECTION PROCESSING",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
    /* if we are the HNP, we can directly assign the jobid */
     if (ORTE_PROC_IS_HNP) {
-        OBJ_CONSTRUCT(&jdata, orte_job_t);
-        rc = orte_plm_base_create_jobid(&jdata);
-        tool.jobid = jdata.jobid;
+        jdata = OBJ_NEW(orte_job_t);
+        rc = orte_plm_base_create_jobid(jdata);
+        opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
+        /* setup some required job-level fields in case this
+         * tool calls spawn, or uses some other functions that
+         * need them */
+        /* must create a map for it (even though it has no
+         * info in it) so that the job info will be picked
+         * up in subsequent pidmaps or other daemons won't
+         * know how to route
+         */
+        jdata->map = OBJ_NEW(orte_job_map_t);
+
+        /* setup an app_context for the singleton */
+        app = OBJ_NEW(orte_app_context_t);
+        app->app = strdup("tool");
+        app->num_procs = 1;
+        opal_pointer_array_add(jdata->apps, app);
+        jdata->num_apps = 1;
+
+        /* setup a proc object for the singleton - since we
+         * -must- be the HNP, and therefore we stored our
+         * node on the global node pool, and since the singleton
+         * -must- be on the same node as us, indicate that
+         */
+        proc = OBJ_NEW(orte_proc_t);
+        proc->name.jobid = jdata->jobid;
+        proc->name.vpid = 0;
+        proc->parent = ORTE_PROC_MY_NAME->vpid;
+        ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ALIVE);
+        proc->state = ORTE_PROC_STATE_RUNNING;
+        proc->app_idx = 0;
+        /* obviously, it is on my node */
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        proc->node = node;
+        OBJ_RETAIN(node);  /* keep accounting straight */
+        opal_pointer_array_add(jdata->procs, proc);
+        jdata->num_procs = 1;
+        /* add the node to the job map */
+        OBJ_RETAIN(node);
+        opal_pointer_array_add(jdata->map->nodes, node);
+        jdata->map->num_nodes++;
+        /* and it obviously is on the node */
+        OBJ_RETAIN(proc);
+        opal_pointer_array_add(node->procs, proc);
+        node->num_procs++;
+        /* set the trivial */
+        proc->local_rank = 0;
+        proc->node_rank = 0;
+        proc->app_rank = 0;
+        proc->state = ORTE_PROC_STATE_RUNNING;
+        proc->app_idx = 0;
+        ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_LOCAL);
+
+        /* pass back the assigned jobid */
+        tool.jobid = jdata->jobid;
         tool.vpid = 0;
         if (NULL != cd->toolcbfunc) {
             cd->toolcbfunc(rc, tool, cd->cbdata);
@@ -541,7 +611,9 @@ void pmix_tool_connected_fn(opal_list_t *info,
 {
     orte_pmix_server_op_caddy_t *cd;
 
-    opal_output(0, "TOOL CONNECTION REQUEST RECVD");
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s TOOL CONNECTION REQUEST RECVD",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* need to threadshift this request */
     cd = OBJ_NEW(orte_pmix_server_op_caddy_t);
@@ -565,6 +637,10 @@ void pmix_server_log_fn(opal_process_name_t *requestor,
     opal_value_t *val;
     opal_buffer_t *buf;
     int rc;
+
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s logging info",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* for now, we only support logging show_help messages */
     OPAL_LIST_FOREACH(val, info, opal_value_t) {
