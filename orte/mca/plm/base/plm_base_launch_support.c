@@ -327,24 +327,29 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
             OBJ_RELEASE(caddy);
             return;
         }
+        /* a tool might be the parent calling spawn, so cannot require that
+         * a job transport key has been assigned to it */
         key = NULL;
-        if (!orte_get_attribute(&parent->attributes, ORTE_JOB_TRANSPORT_KEY, (void**)&key, OPAL_STRING) ||
-            NULL == key) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            OBJ_RELEASE(caddy);
-            return;
-        }
-        /* record it */
-        orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_TRANSPORT_KEY, ORTE_ATTR_LOCAL, key, OPAL_STRING);
-        /* add the transport key envar to each app */
-        for (i=0; i < caddy->jdata->apps->size; i++) {
-            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(caddy->jdata->apps, i))) {
-                continue;
+        if (orte_get_attribute(&parent->attributes, ORTE_JOB_TRANSPORT_KEY, (void**)&key, OPAL_STRING) &&
+            NULL != key) {
+            /* record it */
+            orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_TRANSPORT_KEY, ORTE_ATTR_LOCAL, key, OPAL_STRING);
+            /* add the transport key envar to each app */
+            for (i=0; i < caddy->jdata->apps->size; i++) {
+                if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(caddy->jdata->apps, i))) {
+                    continue;
+                }
+                opal_setenv(OPAL_MCA_PREFIX"orte_precondition_transports", key, true, &app->env);
             }
-            opal_setenv(OPAL_MCA_PREFIX"orte_precondition_transports", key, true, &app->env);
+            free(key);
+        } else {
+            if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(caddy->jdata))) {
+                ORTE_ERROR_LOG(rc);
+                ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                OBJ_RELEASE(caddy);
+                return;
+            }
         }
-        free(key);
     } else {
         /* this will also record the transport key attribute in the job object, and
          * adds the key envar to each app */
