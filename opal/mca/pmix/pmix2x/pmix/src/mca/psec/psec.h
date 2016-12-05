@@ -33,6 +33,7 @@
 #include "src/mca/mca.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/base/pmix_mca_base_framework.h"
+#include "src/mca/ptl/ptl_types.h"
 
 BEGIN_C_DECLS
 
@@ -45,7 +46,7 @@ struct pmix_peer_t;
  * Initialize the module. Returns an error if the module cannot
  * run, success if it can and wants to be used.
  */
-typedef int (*pmix_psec_base_module_init_fn_t)(void);
+typedef pmix_status_t (*pmix_psec_base_module_init_fn_t)(void);
 
 /**
  * Finalize the module. Tear down any allocated storage, disconnect
@@ -55,10 +56,12 @@ typedef void (*pmix_psec_base_module_fini_fn_t)(void);
 
 /****    CLIENT-SIDE FUNCTIONS    ****/
 /**
- * Create and return a string representation of a credential for this
- * client
+ * Create and return a credential for this client - this
+ * could be a string or a byte array, which is why we must
+ * also return the length
  */
-typedef char* (*pmix_psec_base_module_create_cred_fn_t)(void);
+typedef pmix_status_t (*pmix_psec_base_module_create_cred_fn_t)(pmix_listener_protocol_t protocol,
+                                                                char **cred, size_t *len);
 
 /**
  * Perform the client-side handshake. Note that it is not required
@@ -70,9 +73,12 @@ typedef pmix_status_t (*pmix_psec_base_module_client_hndshk_fn_t)(int sd);
 
 /****    SERVER-SIDE FUNCTIONS    ****/
 /**
- * Validate a client's credential
+ * Validate a client's credential - the credential could be a string
+ * or an array of bytes, which is why we include the length
  */
-typedef pmix_status_t (*pmix_psec_base_module_validate_cred_fn_t)(struct pmix_peer_t *peer, char *cred);
+typedef pmix_status_t (*pmix_psec_base_module_validate_cred_fn_t)(struct pmix_peer_t *peer,
+                                                                  pmix_listener_protocol_t protocol,
+                                                                  char *cred, size_t len);
 
 /**
  * Perform the server-side handshake. Note that it is not required
@@ -98,6 +104,50 @@ typedef struct {
 } pmix_psec_module_t;
 
 
+/* define an API module */
+
+/* get a list of available options - caller must free results
+ * when done */
+typedef char* (*pmix_psec_API_get_available_modules_fn_t)(void);
+
+/* Select a psec module for a given peer */
+typedef pmix_status_t (*pmix_psec_API_assign_module_fn_t)(struct pmix_peer_t *peer,
+                                                          const char *options);
+
+/**
+ * Create and return a string representation of a credential for this
+ * client
+ */
+typedef pmix_status_t (*pmix_psec_API_create_cred_fn_t)(struct pmix_peer_t *peer,
+                                                        pmix_listener_protocol_t protocol,
+                                                        char **cred, size_t *len);
+
+/**
+ * Perform the client-side handshake. Note that it is not required
+ * (and indeed, would be rare) for a protocol to use both the
+ * credential and handshake interfaces. It is acceptable, therefore,
+ * for one of them to be NULL */
+typedef pmix_status_t (*pmix_psec_API_client_hndshk_fn_t)(struct pmix_peer_t *peer, int sd);
+
+
+/****    SERVER-SIDE FUNCTIONS    ****/
+/**
+ * Validate a client's connection request
+ */
+typedef pmix_status_t (*pmix_psec_API_validate_connection_fn_t)(struct pmix_peer_t *peer,
+                                                                pmix_listener_protocol_t protocol,
+                                                                char *cred, size_t len);
+
+typedef struct {
+    pmix_psec_API_get_available_modules_fn_t    get_available_modules;
+    pmix_psec_API_assign_module_fn_t            assign_module;
+    pmix_psec_API_create_cred_fn_t              create_cred;
+    pmix_psec_API_client_hndshk_fn_t            client_handshake;
+    pmix_psec_API_validate_connection_fn_t      validate_connection;
+} pmix_psec_API_t;
+
+PMIX_EXPORT extern pmix_psec_API_t pmix_psec;
+
 /****    COMPONENT STRUCTURE DEFINITION    ****/
 
 /* define a component-level API for initializing the component */
@@ -121,14 +171,6 @@ struct pmix_psec_base_component_t {
     pmix_psec_base_component_assign_module_fn_t      assign_module;
 };
 typedef struct pmix_psec_base_component_t pmix_psec_base_component_t;
-
-/* Select a psec module for a given peer */
-pmix_psec_module_t* pmix_psec_base_assign_module(const char *options);
-
-/* get a list of available options - caller must free results
- * when done */
-char* pmix_psec_base_get_available_modules(void);
-
 
 /*
  * Macro for use in components that are of type psec

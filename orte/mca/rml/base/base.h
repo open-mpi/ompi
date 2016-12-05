@@ -184,6 +184,22 @@ typedef struct {
 } orte_rml_recv_request_t;
 OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
 
+/* define a structure for sending a message to myself */
+typedef struct {
+    opal_object_t object;
+    opal_event_t ev;
+    orte_rml_tag_t tag;
+    struct iovec* iov;
+    int count;
+    opal_buffer_t *buffer;
+    union {
+        orte_rml_callback_fn_t        iov;
+        orte_rml_buffer_callback_fn_t buffer;
+    } cbfunc;
+    void *cbdata;
+} orte_self_send_xfer_t;
+OBJ_CLASS_DECLARATION(orte_self_send_xfer_t);
+
 #define ORTE_RML_POST_MESSAGE(p, t, s, b, l)                            \
     do {                                                                \
         orte_rml_recv_t *msg;                                           \

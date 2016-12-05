@@ -25,7 +25,7 @@
 #include "src/include/pmix_globals.h"
 #include "pmix_server.h"
 #include "src/class/pmix_list.h"
-#include "src/usock/usock.h"
+#include "src/mca/ptl/base/base.h"
 
 #include "test_common.h"
 
