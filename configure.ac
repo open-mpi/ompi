@@ -65,6 +65,10 @@ OPAL_LOAD_PLATFORM
 # Start it up
 #
 
+AC_CHECK_PROG([PERL],[perl],[perl],[no])
+AS_IF([test "X$PERL" = "Xno"],
+      [AC_MSG_ERROR(["Open MPI requires perl. Aborting"])])
+
 OPAL_CONFIGURE_SETUP
 opal_show_title "Configuring project_name_long"
 
