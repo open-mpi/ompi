@@ -83,6 +83,10 @@ foreach my $f (@files) {
 
     quiet_print "FILE: $f\n";
 
+    my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+        $atime,$mtime,$ctime,$blksize,$blocks)
+           = stat($f);
+
     open(FILE, "$f");
     my @lines_with_tabs = <FILE>;
     close(FILE);
@@ -92,6 +96,7 @@ foreach my $f (@files) {
     print TEMP @expanded_lines;
     close(TEMP);
     system("mv temp.txt $f");
+    chmod($mode, $f);
 }
 
 # Returns a list of file names (relative to pwd) which the VCS considers to be modified.
@@ -157,7 +162,6 @@ sub find_modified_files {
             my $relname = $fullname;
             $relname =~ s!^([^/]*/){$n_strip}!!g;
 
-            print "RELNAME", $relname, "\n";
             push @files, $relname
                 if (-f $relname);
         }
