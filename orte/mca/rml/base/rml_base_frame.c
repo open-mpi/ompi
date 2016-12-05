@@ -252,6 +252,18 @@ void orte_rml_recv_callback(int status, orte_process_name_t* sender,
 
 
 /***   RML CLASS INSTANCES   ***/
+static void xfer_cons(orte_self_send_xfer_t *xfer)
+{
+    xfer->iov = NULL;
+    xfer->cbfunc.iov = NULL;
+    xfer->buffer = NULL;
+    xfer->cbfunc.buffer = NULL;
+    xfer->cbdata = NULL;
+}
+OBJ_CLASS_INSTANCE(orte_self_send_xfer_t,
+                   opal_object_t,
+                   xfer_cons, NULL);
+
 static void send_cons(orte_rml_send_t *ptr)
 {
     ptr->retries = 0;

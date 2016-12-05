@@ -73,32 +73,6 @@ OBJ_CLASS_INSTANCE(ofi_recv_msg_queue_t,
                    ofi_recv_msg_queue_cons, ofi_recv_msg_queue_des);
 
 
-typedef struct {
-    opal_object_t object;
-    opal_event_t ev;
-    orte_rml_tag_t tag;
-    struct iovec* iov;
-    int count;
-    opal_buffer_t *buffer;
-    union {
-        orte_rml_callback_fn_t        iov;
-        orte_rml_buffer_callback_fn_t buffer;
-    } cbfunc;
-    void *cbdata;
-} orte_self_send_xfer_t;
-static void xfer_cons(orte_self_send_xfer_t *xfer)
-{
-    xfer->iov = NULL;
-    xfer->cbfunc.iov = NULL;
-    xfer->buffer = NULL;
-    xfer->cbfunc.buffer = NULL;
-    xfer->cbdata = NULL;
-}
-OBJ_CLASS_INSTANCE(orte_self_send_xfer_t,
-                   opal_object_t,
-                   xfer_cons, NULL);
-
-
 static void send_self_exe(int fd, short args, void* data)
 {
     orte_self_send_xfer_t *xfer = (orte_self_send_xfer_t*)data;
