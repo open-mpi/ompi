@@ -119,8 +119,8 @@ int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_START:
         mca_common_monitoring_current_state = mca_common_monitoring_enabled;
-        mca_common_monitoring_output_enabled = 0;  /* we can't control the monitoring via MPIT and expect
-                                                    * accurate answer upon MPI_Finalize. */
+        mca_common_monitoring_output_enabled = 0;  /* we can't control the monitoring via MPIT and
+                                                    * expect accurate answer upon MPI_Finalize. */
         return OMPI_SUCCESS;
     case MCA_BASE_PVAR_HANDLE_STOP:
         return mca_common_monitoring_flush(3, mca_common_monitoring_current_filename);
@@ -246,27 +246,27 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
 
     /* Register PVARs */
 
-    /* PML PVARs */    
+    /* PML PVARs */
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "flush", "Flush the monitoring "
                                  "information in the provided file", OPAL_INFO_LVL_1,
                                  MCA_BASE_PVAR_CLASS_GENERIC,
                                  MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT, 0,
                                  mca_common_monitoring_get_flush, mca_common_monitoring_set_flush,
-                                 mca_common_monitoring_notify_flush, pml_monitoring_component);
+                                 mca_common_monitoring_notify_flush, NULL);
 
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count",
                                  "Number of messages sent to each peer in a communicator",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
-                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY,
                                  mca_common_monitoring_get_messages_count, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_size", "Size of messages "
                                  "sent to each peer in a communicator", OPAL_INFO_LVL_4,
                                  MPI_T_PVAR_CLASS_SIZE,
-                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY,
                                  mca_common_monitoring_get_messages_size, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
@@ -290,51 +290,51 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
     /* COLL PVARs */
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "o2a_count", "Number of messages "
                                  "exchanged as one-to-all operations in a communicator",
-                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_COUNTER,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
                                  mca_common_monitoring_coll_get_o2a_count, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
+                                 mca_common_monitoring_coll_messages_notify, NULL);
     
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "o2a_size", "Size of messages "
                                  "exchanged as one-to-all operations in a communicator",
-                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
                                  mca_common_monitoring_coll_get_o2a_size, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
+                                 mca_common_monitoring_coll_messages_notify, NULL);
 
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2o_count", "Number of messages "
                                  "exchanged as all-to-one operations in a communicator",
-                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_COUNTER,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
                                  mca_common_monitoring_coll_get_a2o_count, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
+                                 mca_common_monitoring_coll_messages_notify, NULL);
     
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2o_size", "Size of messages "
                                  "exchanged as all-to-one operations in a communicator",
-                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
                                  mca_common_monitoring_coll_get_a2o_size, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
+                                 mca_common_monitoring_coll_messages_notify, NULL);
 
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2a_count", "Number of messages "
                                  "exchanged as all-to-all operations in a communicator",
-                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_COUNTER,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
                                  mca_common_monitoring_coll_get_a2a_count, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
+                                 mca_common_monitoring_coll_messages_notify, NULL);
     
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2a_size", "Size of messages "
                                  "exchanged as all-to-all operations in a communicator",
-                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
                                  mca_common_monitoring_coll_get_a2a_size, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
+                                 mca_common_monitoring_coll_messages_notify, NULL);
 }
 
 int mca_common_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
@@ -585,7 +585,7 @@ static int mca_common_monitoring_flush(int fd, char* filename)
 
         if( NULL == filename ) { /* No filename */
             OPAL_MONITORING_PRINT_ERR("Error while flushing: no filename provided");
-            return -1;
+            return OMPI_ERROR;
         } else {
             asprintf(&tmpfn, "%s.%" PRId32 ".prof", filename, rank_world);
             pf = fopen(tmpfn, "w");
@@ -595,7 +595,7 @@ static int mca_common_monitoring_flush(int fd, char* filename)
         if(NULL == pf) {  /* Error during open */
             OPAL_MONITORING_PRINT_ERR("Error while flushing to: %s.%" PRId32 ".prof",
                                       filename, rank_world);
-            return -1;
+            return OMPI_ERROR;
         }
 
         OPAL_MONITORING_PRINT_INFO("Proc %d flushing monitoring to: %s.%" PRId32 ".prof",
