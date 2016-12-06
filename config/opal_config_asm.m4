@@ -1033,7 +1033,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
-        armv7*)
+        armv7*|arm-*-linux-gnueabihf)
             opal_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_ASM_ARM_VERSION=7
@@ -1052,7 +1052,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
-        armv5*linux*|armv4*linux*)
+        armv5*linux*|armv4*linux*|arm-*-linux-gnueabi)
             # uses Linux kernel helpers for some atomic operations
             opal_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=0
