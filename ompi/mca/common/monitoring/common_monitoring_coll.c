@@ -21,6 +21,7 @@
 #include <opal/mca/base/mca_base_component_repository.h>
 #include <opal/class/opal_hash_table.h>
 #include <assert.h>
+#include <math.h>
 
 /*** Monitoring specific variables ***/
 struct mca_monitoring_coll_data_t {
@@ -28,6 +29,7 @@ struct mca_monitoring_coll_data_t {
     char*procs;
     char*comm_name;
     int world_rank;
+    int is_released;
     ompi_communicator_t*p_comm;
     uint64_t o2a_count;
     uint64_t o2a_size;
@@ -52,24 +54,25 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
         data->comm_name = strdup(data->p_comm->c_name);
     }
     if( NULL == data->procs ) {
-        int i, pos, size = ompi_comm_size(data->p_comm);
+        int i, pos = 0, size, world_size;
+        size = ompi_comm_size(data->p_comm);
+        world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world) - 1;
         char*tmp_procs;
         assert( 0 < size );
-        /* Get first rank (there is at least one node if we reach this point) */
-        mca_common_monitoring_get_world_rank(0, data->p_comm, &world_rank);
-        pos = asprintf(&data->procs, "%d,", world_rank);
-        /* FIX-ME: the algorithm is O(n^2) when creating the string */
-        for(i = 1; i < size; ++i) {
-            /* WARNING : Keep the order of the next two instruction :
-               it sometimes happened with gcc/4.9.2 that the return
-               from opal_hash_table_get_value_uint_64() set tmp_procs
-               to NULL (while returning OPAL_SUCCESS). */
-            mca_common_monitoring_get_world_rank(i, data->p_comm, &world_rank);
-            tmp_procs = data->procs;
-            pos = asprintf(&data->procs, "%s%d,", tmp_procs, world_rank);
-            free(tmp_procs);
+        /* Allocate enough space for list */
+        tmp_procs = malloc((2 + log10((double)world_size)) * size * sizeof(char));
+        if( NULL == tmp_procs ) {
+            OPAL_MONITORING_PRINT_ERR("%s: Cannot allocate memory for caching proc list.");
+        } else {
+            tmp_procs[0] = '\0';
+            /* Build procs list */
+            for(i = 0; i < size; ++i) {
+                mca_common_monitoring_get_world_rank(i, data->p_comm, &world_rank);
+                pos += sprintf(&tmp_procs[pos], "%d,", world_rank);
+            }
+            tmp_procs[pos - 1] = '\0'; /* Remove final coma */
+            data->procs = realloc(tmp_procs, pos * sizeof(char)); /* Adjust size required */
         }
-        data->procs[pos - 1] = '\0'; /* Remove final coma */
     }
 }
 
@@ -83,7 +86,7 @@ mca_monitoring_coll_data_t*mca_common_monitoring_coll_new( ompi_communicator_t*c
 
     data->p_comm = comm;
     
-    /* Allocate list */
+    /* Allocate hashtable */
     if( NULL == comm_data ) {
         comm_data = OBJ_NEW(opal_hash_table_t);
         if( NULL == comm_data ) {
@@ -117,7 +120,7 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
         
     /* not flushed yet */
     mca_common_monitoring_coll_cache(data);
-    data->p_comm = NULL;
+    data->is_released = 1;
 }
 
 static void mca_common_monitoring_coll_cond_release(mca_monitoring_coll_data_t*data)
@@ -129,8 +132,9 @@ static void mca_common_monitoring_coll_cond_release(mca_monitoring_coll_data_t*d
     }
 #endif /* OPAL_ENABLE_DEBUG */
         
-    if( NULL == data->p_comm ) { /* if the communicator is already released */
+    if( data->is_released ) { /* if the communicator is already released */
         opal_hash_table_remove_value_uint64(comm_data, *((uint64_t*)&data->p_comm));
+        data->p_comm = NULL;
         free(data->comm_name);
         free(data->procs);
         OBJ_RELEASE(data);
@@ -324,18 +328,19 @@ int mca_common_monitoring_coll_get_a2a_size(const struct mca_base_pvar_t *pvar,
 
 static void mca_monitoring_coll_construct (mca_monitoring_coll_data_t*coll_data)
 {
-    coll_data->procs      = NULL;
-    coll_data->comm_name  = NULL;
-    coll_data->world_rank = -1;
-    coll_data->p_comm     = NULL;
-    coll_data->o2a_count  = 0;
-    coll_data->o2a_size   = 0;
-    coll_data->a2o_count  = 0;
-    coll_data->a2o_size   = 0;
-    coll_data->a2a_count  = 0;
-    coll_data->a2a_size   = 0;
+    coll_data->procs       = NULL;
+    coll_data->comm_name   = NULL;
+    coll_data->world_rank  = -1;
+    coll_data->p_comm      = NULL;
+    coll_data->is_released = 0;
+    coll_data->o2a_count   = 0;
+    coll_data->o2a_size    = 0;
+    coll_data->a2o_count   = 0;
+    coll_data->a2o_size    = 0;
+    coll_data->a2a_count   = 0;
+    coll_data->a2a_size    = 0;
 }
 
 static void mca_monitoring_coll_destruct (mca_monitoring_coll_data_t*coll_data){}
 
-OBJ_CLASS_INSTANCE(mca_monitoring_coll_data_t, opal_list_item_t, mca_monitoring_coll_construct, mca_monitoring_coll_destruct);
+OBJ_CLASS_INSTANCE(mca_monitoring_coll_data_t, opal_object_t, mca_monitoring_coll_construct, mca_monitoring_coll_destruct);
