@@ -16,7 +16,7 @@
 # This test requires multiple processes to run. Don't run it as part
 # of 'make check'
 if PROJECT_OMPI
-    noinst_PROGRAMS = monitoring_test test_pvar_access test_overhead
+    noinst_PROGRAMS = monitoring_test test_pvar_access test_overhead check_monitoring
     monitoring_test_SOURCES = monitoring_test.c
     monitoring_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
     monitoring_test_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la $(top_builddir)/opal/libopen-pal.la
@@ -26,6 +26,9 @@ if PROJECT_OMPI
     test_overhead_SOURCES = test_overhead.c
     test_overhead_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
     test_overhead_LDADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/opal/libopen-pal.la
+    check_monitoring_SOURCES = check_monitoring.c
+    check_monitoring_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+    check_monitoring_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la $(top_builddir)/opal/libopen-pal.la
 
     test_overheaddir = $(bindir)/test/monitoring
 
