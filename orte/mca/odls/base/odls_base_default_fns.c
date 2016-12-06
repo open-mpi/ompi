@@ -1379,14 +1379,12 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
 }
 
 typedef struct {
-    opal_object_t super;
+    opal_list_item_t super;
     orte_proc_t *child;
-    orte_odls_base_kill_local_fn_t kill_local;
 } orte_odls_quick_caddy_t;
 static void qcdcon(orte_odls_quick_caddy_t *p)
 {
     p->child = NULL;
-    p->kill_local = NULL;
 }
 static void qcddes(orte_odls_quick_caddy_t *p)
 {
@@ -1395,37 +1393,8 @@ static void qcddes(orte_odls_quick_caddy_t *p)
     }
 }
 OBJ_CLASS_INSTANCE(orte_odls_quick_caddy_t,
-                   opal_object_t,
+                   opal_list_item_t,
                    qcdcon, qcddes);
-
-static void send_kill(int sd, short args, void *cbdata)
-{
-    orte_timer_t *tm = (orte_timer_t*)cbdata;
-    orte_odls_quick_caddy_t *cd = (orte_odls_quick_caddy_t*)tm->payload;
-
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                         "%s SENDING FORCE SIGKILL TO %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&cd->child->name)));
-
-    cd->kill_local(cd->child->pid, SIGKILL);
-    /* indicate the waitpid fired as this is effectively what
-     * has happened
-     */
-    ORTE_FLAG_SET(cd->child, ORTE_PROC_FLAG_WAITPID);
-    cd->child->pid = 0;
-
-    /* ensure the child's session directory is cleaned up */
-    orte_session_dir_finalize(&cd->child->name);
-    /* check for everything complete - this will remove
-     * the child object from our local list
-     */
-    if (ORTE_FLAG_TEST(cd->child, ORTE_PROC_FLAG_IOF_COMPLETE) &&
-        ORTE_FLAG_TEST(cd->child, ORTE_PROC_FLAG_WAITPID)) {
-        ORTE_ACTIVATE_PROC_STATE(&cd->child->name, cd->child->state);
-    }
-    OBJ_RELEASE(cd);
-}
 
 int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                             orte_odls_base_kill_local_fn_t kill_local)
@@ -1536,11 +1505,6 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                 }
             }
 
-            /* mark the child as "killed" since the waitpid will
-             * fire as soon as we kill it
-             */
-            child->state = ORTE_PROC_STATE_KILLED_BY_CMD;  /* we ordered it to die */
-
             /* ensure the stdin IOF channel for this child is closed. The other
              * channels will automatically close when the proc is killed
              */
@@ -1561,21 +1525,11 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                  "%s SENDING SIGCONT TO %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&child->name)));
-            kill_local(child->pid, SIGCONT);
-
-            /* Send a sigterm to the process before sigkill to be nice */
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                 "%s SENDING SIGTERM TO %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&child->name)));
-            kill_local(child->pid, SIGTERM);
-
             cd = OBJ_NEW(orte_odls_quick_caddy_t);
             OBJ_RETAIN(child);
             cd->child = child;
-            cd->kill_local = kill_local;
-            ORTE_DETECT_TIMEOUT(1, orte_odls_globals.timeout_before_sigkill,
-                                10000000, send_kill, cd);
+            opal_list_append(&procs_killed, &cd->super);
+            kill_local(child->pid, SIGCONT);
             continue;
 
         CLEANUP:
@@ -1591,7 +1545,50 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
         }
     }
 
-    /* cleanup, if required */
+    /* if we are issuing signals, then we need to wait a little
+     * and send the next in sequence */
+    if (0 < opal_list_get_size(&procs_killed)) {
+        sleep(orte_odls_globals.timeout_before_sigkill);
+        /* issue a SIGTERM to all */
+        OPAL_LIST_FOREACH(cd, &procs_killed, orte_odls_quick_caddy_t) {
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                                 "%s SENDING SIGTERM TO %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&child->name)));
+            kill_local(cd->child->pid, SIGTERM);
+        }
+        /* wait a little again */
+        sleep(orte_odls_globals.timeout_before_sigkill);
+        /* issue a SIGKILL to all */
+        OPAL_LIST_FOREACH(cd, &procs_killed, orte_odls_quick_caddy_t) {
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                                 "%s SENDING SIGKILL TO %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&child->name)));
+            kill_local(cd->child->pid, SIGKILL);
+            /* indicate the waitpid fired as this is effectively what
+             * has happened
+             */
+            ORTE_FLAG_SET(cd->child, ORTE_PROC_FLAG_WAITPID);
+            cd->child->pid = 0;
+
+            /* mark the child as "killed" */
+            cd->child->state = ORTE_PROC_STATE_KILLED_BY_CMD;  /* we ordered it to die */
+
+            /* ensure the child's session directory is cleaned up */
+            orte_session_dir_finalize(&cd->child->name);
+            /* check for everything complete - this will remove
+             * the child object from our local list
+             */
+            if (ORTE_FLAG_TEST(cd->child, ORTE_PROC_FLAG_IOF_COMPLETE) &&
+                ORTE_FLAG_TEST(cd->child, ORTE_PROC_FLAG_WAITPID)) {
+                ORTE_ACTIVATE_PROC_STATE(&cd->child->name, cd->child->state);
+            }
+        }
+    }
+    OPAL_LIST_DESTRUCT(&procs_killed);
+
+    /* cleanup arrays, if required */
     if (do_cleanup) {
         OBJ_DESTRUCT(&procarray);
         OBJ_DESTRUCT(&proctmp);
