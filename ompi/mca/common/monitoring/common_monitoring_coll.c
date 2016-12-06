@@ -115,14 +115,25 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
     }
 #endif /* OPAL_ENABLE_DEBUG */
         
+    /* not flushed yet */
+    mca_common_monitoring_coll_cache(data);
+    data->p_comm = NULL;
+}
+
+static void mca_common_monitoring_coll_cond_release(mca_monitoring_coll_data_t*data)
+{
+#if OPAL_ENABLE_DEBUG
+    if( NULL == data ) {
+        OPAL_MONITORING_PRINT_ERR("coll: release: data structure empty or already desallocated");
+        return;
+    }
+#endif /* OPAL_ENABLE_DEBUG */
+        
     if( NULL == data->p_comm ) { /* if the communicator is already released */
         opal_hash_table_remove_value_uint64(comm_data, *((uint64_t*)&data->p_comm));
         free(data->comm_name);
         free(data->procs);
         OBJ_RELEASE(data);
-    } else { /* not flushed yet */
-        mca_common_monitoring_coll_cache(data);
-        data->p_comm = NULL;
     }
 }
 
@@ -148,23 +159,44 @@ void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
 
 void mca_common_monitoring_coll_flush_all(FILE *pf)
 {
+    fprintf(pf, "# COLLECTIVES\n");
+
     if( NULL == comm_data ) return; /* No hashtable */
 
     uint64_t key;
     void*data;
     mca_monitoring_coll_data_t*previous = NULL;
 
-    fprintf(pf, "# COLLECTIVES\n");
-
     OPAL_HASH_TABLE_FOREACH(key, uint64, data, comm_data) {
         if( NULL != previous && NULL == previous->p_comm ) {
             /* Phase flushed -> free already released once coll_data_t */
-            mca_common_monitoring_coll_release(previous);
+            mca_common_monitoring_coll_cond_release(previous);
         }
         mca_common_monitoring_coll_flush(pf, (mca_monitoring_coll_data_t*)data);
         previous = data;
     }
-    mca_common_monitoring_coll_release(previous);
+    mca_common_monitoring_coll_cond_release(previous);
+}
+
+int mca_common_monitoring_coll_messages_notify(mca_base_pvar_t *pvar,
+                                               mca_base_pvar_event_t event,
+                                               void *obj_handle,
+                                               int *count)
+{
+    switch (event) {
+    case MCA_BASE_PVAR_HANDLE_BIND:
+        *count = 1;
+    case MCA_BASE_PVAR_HANDLE_UNBIND:
+        return OMPI_SUCCESS;
+    case MCA_BASE_PVAR_HANDLE_START:
+        mca_common_monitoring_current_state = mca_common_monitoring_enabled;
+        return OMPI_SUCCESS;
+    case MCA_BASE_PVAR_HANDLE_STOP:
+        mca_common_monitoring_current_state = 0;
+        return OMPI_SUCCESS;
+    }
+
+    return OMPI_ERROR;
 }
 
 void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*data)
@@ -181,27 +213,31 @@ void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*da
 }
 
 int mca_common_monitoring_coll_get_o2a_count(const struct mca_base_pvar_t *pvar,
-                                              void *value,
-                                              void *obj_handle)
-{
-    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    uint64_t *value_uint64 = (uint64_t*) value;
-    mca_monitoring_coll_data_t*data;
-    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
-    *value_uint64 = data->o2a_count;
-    return OMPI_SUCCESS;
-}
-
-int mca_common_monitoring_coll_get_o2a_size(const struct mca_base_pvar_t *pvar,
                                              void *value,
                                              void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
     uint64_t *value_uint64 = (uint64_t*) value;
     mca_monitoring_coll_data_t*data;
-    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
-    *value_uint64 = data->o2a_size;
-    return OMPI_SUCCESS;
+    int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
+    if( OPAL_SUCCESS == ret ) {
+        *value_uint64 = data->o2a_count;
+    }
+    return ret;
+}
+
+int mca_common_monitoring_coll_get_o2a_size(const struct mca_base_pvar_t *pvar,
+                                            void *value,
+                                            void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    uint64_t *value_uint64 = (uint64_t*) value;
+    mca_monitoring_coll_data_t*data;
+    int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
+    if( OPAL_SUCCESS == ret ) {
+        *value_uint64 = data->o2a_size;
+    }
+    return ret;
 }
 
 void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*data)
@@ -218,27 +254,31 @@ void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*da
 }
 
 int mca_common_monitoring_coll_get_a2o_count(const struct mca_base_pvar_t *pvar,
-                                              void *value,
-                                              void *obj_handle)
-{
-    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    uint64_t *value_uint64 = (uint64_t*) value;
-    mca_monitoring_coll_data_t*data;
-    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
-    *value_uint64 = data->a2o_count;
-    return OMPI_SUCCESS;
-}
-
-int mca_common_monitoring_coll_get_a2o_size(const struct mca_base_pvar_t *pvar,
                                              void *value,
                                              void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
     uint64_t *value_uint64 = (uint64_t*) value;
     mca_monitoring_coll_data_t*data;
-    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
-    *value_uint64 = data->a2o_size;
-    return OMPI_SUCCESS;
+    int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
+    if( OPAL_SUCCESS == ret ) {
+        *value_uint64 = data->a2o_count;
+    }
+    return ret;
+}
+
+int mca_common_monitoring_coll_get_a2o_size(const struct mca_base_pvar_t *pvar,
+                                            void *value,
+                                            void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    uint64_t *value_uint64 = (uint64_t*) value;
+    mca_monitoring_coll_data_t*data;
+    int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
+    if( OPAL_SUCCESS == ret ) {
+        *value_uint64 = data->a2o_size;
+    }
+    return ret;
 }
 
 void mca_common_monitoring_coll_a2a(uint64_t size, mca_monitoring_coll_data_t*data)
@@ -255,27 +295,31 @@ void mca_common_monitoring_coll_a2a(uint64_t size, mca_monitoring_coll_data_t*da
 }
 
 int mca_common_monitoring_coll_get_a2a_count(const struct mca_base_pvar_t *pvar,
-                                              void *value,
-                                              void *obj_handle)
-{
-    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    uint64_t *value_uint64 = (uint64_t*) value;
-    mca_monitoring_coll_data_t*data;
-    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
-    *value_uint64 = data->a2a_count;
-    return OMPI_SUCCESS;
-}
-
-int mca_common_monitoring_coll_get_a2a_size(const struct mca_base_pvar_t *pvar,
                                              void *value,
                                              void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
     uint64_t *value_uint64 = (uint64_t*) value;
     mca_monitoring_coll_data_t*data;
-    opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)data);
-    *value_uint64 = data->a2a_size;
-    return OMPI_SUCCESS;
+    int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
+    if( OPAL_SUCCESS == ret ) {
+        *value_uint64 = data->a2a_count;
+    }
+    return ret;
+}
+
+int mca_common_monitoring_coll_get_a2a_size(const struct mca_base_pvar_t *pvar,
+                                            void *value,
+                                            void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    uint64_t *value_uint64 = (uint64_t*) value;
+    mca_monitoring_coll_data_t*data;
+    int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
+    if( OPAL_SUCCESS == ret ) {
+        *value_uint64 = data->a2a_size;
+    }
+    return ret;
 }
 
 static void mca_monitoring_coll_construct (mca_monitoring_coll_data_t*coll_data)

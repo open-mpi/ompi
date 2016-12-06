@@ -19,6 +19,11 @@ OMPI_DECLSPEC void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_col
 
 OMPI_DECLSPEC void mca_common_monitoring_coll_flush_all(FILE *pf);
 
+OMPI_DECLSPEC int mca_common_monitoring_coll_messages_notify(mca_base_pvar_t *pvar,
+                                                             mca_base_pvar_event_t event,
+                                                             void *obj_handle,
+                                                             int *count);
+
 OMPI_DECLSPEC int mca_common_monitoring_coll_get_o2a_count(const struct mca_base_pvar_t *pvar,
                                                            void *value,
                                                            void *obj_handle);
