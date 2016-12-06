@@ -54,7 +54,6 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
-#include "src/usock/usock.h"
 
 #include "pmix_server_ops.h"
 
@@ -1594,34 +1593,6 @@ PMIX_CLASS_INSTANCE(pmix_dmdx_local_t,
                     pmix_list_item_t,
                     lmcon, lmdes);
 
-static void pccon(pmix_pending_connection_t *p)
-{
-    memset(p->nspace, 0, PMIX_MAX_NSLEN+1);
-    p->info = NULL;
-    p->ninfo = 0;
-    p->bfrop = NULL;
-    p->psec = NULL;
-    p->cred = NULL;
-}
-static void pcdes(pmix_pending_connection_t *p)
-{
-    if (NULL != p->info) {
-        PMIX_INFO_FREE(p->info, p->ninfo);
-    }
-    if (NULL != p->bfrop) {
-        free(p->bfrop);
-    }
-    if (NULL != p->psec) {
-        free(p->psec);
-    }
-    if (NULL != p->cred) {
-        free(p->cred);
-    }
-}
-PMIX_CLASS_INSTANCE(pmix_pending_connection_t,
-                    pmix_object_t,
-                    pccon, pcdes);
-
 static void prevcon(pmix_peer_events_info_t *p)
 {
     p->peer = NULL;
@@ -1647,38 +1618,3 @@ static void regdes(pmix_regevents_info_t *p)
 PMIX_CLASS_INSTANCE(pmix_regevents_info_t,
                     pmix_list_item_t,
                     regcon, regdes);
-
-static void lcon(pmix_listener_t *p)
-{
-    memset(&p->address, 0, sizeof(struct sockaddr_un));
-    p->address.sun_family = AF_UNIX;
-    p->socket = -1;
-    p->varname = NULL;
-    p->uri = NULL;
-    p->owner_given = false;
-    p->group_given = false;
-    p->mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
-}
-static void ldes(pmix_listener_t *p)
-{
-    if (0 <= p->socket) {
-        CLOSE_THE_SOCKET(p->socket);
-    }
-    /* cleanup the rendezvous file */
-    if (0 == access(p->address.sun_path, F_OK)) {
-        unlink(p->address.sun_path);
-    }
-    if (NULL != p->varname) {
-        free(p->varname);
-    }
-    if (NULL != p->uri) {
-        free(p->uri);
-    }
-}
-PMIX_CLASS_INSTANCE(pmix_listener_t,
-                    pmix_list_item_t,
-                    lcon, ldes);
-
-PMIX_CLASS_INSTANCE(pmix_usock_queue_t,
-                   pmix_object_t,
-                   NULL, NULL);

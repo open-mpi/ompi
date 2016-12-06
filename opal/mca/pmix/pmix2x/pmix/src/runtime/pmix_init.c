@@ -44,12 +44,13 @@
 #include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
 #include "src/mca/psec/base/base.h"
+#include "src/mca/ptl/base/base.h"
 
 #include "src/event/pmix_event.h"
 #include "src/include/types.h"
-#include "src/usock/usock.h"
 #include "src/util/error.h"
 #include "src/util/keyval_parse.h"
+#include "src/buffer_ops/buffer_ops.h"
 
 #include "src/runtime/pmix_rte.h"
 #include "src/runtime/pmix_progress_threads.h"
@@ -82,11 +83,10 @@ PMIX_EXPORT pmix_globals_t pmix_globals = {
 
 int pmix_rte_init(pmix_proc_type_t type,
                   pmix_info_t info[], size_t ninfo,
-                  pmix_usock_cbfunc_t notifycbfunc)
+                  pmix_ptl_cbfunc_t notifycbfunc)
 {
     int ret, debug_level;
     char *error = NULL, *evar;
-    char *param;
     size_t n;
 
     if( ++pmix_initialized != 1 ) {
@@ -179,32 +179,27 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
     pmix_bfrop_open();
 
-#if 0
-    /* open the bfrops - we will select the active plugin later */
-    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_bfrops_base_framework, 0)) ) {
-        error = "pmix_bfrops_base_open";
-        goto return_error;
-    }
-    if( PMIX_SUCCESS != (ret = pmix_bfrop_base_select()) ) {
-        error = "pmix_bfrops_base_select";
-        goto return_error;
-    }
-#endif
+    /* the choice of modules to use when communicating with a peer
+     * will be done by the individual init functions and at the
+     * time of connection to that peer */
 
-    /* open the psec and select the default module for this environment */
+    /* open the ptl and select the active plugins */
+    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_ptl_base_framework, 0)) ) {
+        error = "pmix_ptl_base_open";
+        goto return_error;
+    }
+    if( PMIX_SUCCESS != (ret = pmix_ptl_base_select()) ) {
+        error = "pmix_ptl_base_select";
+        goto return_error;
+    }
+
+    /* open the psec and select the active plugins */
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_psec_base_framework, 0))) {
         error = "pmix_psec_base_open";
         goto return_error;
     }
     if (PMIX_SUCCESS != (ret = pmix_psec_base_select())) {
         error = "pmix_psec_base_select";
-        goto return_error;
-    }
-    param = getenv("PMIX_SEC_MODULE");  // if directive was given, use it
-    pmix_globals.mypeer->compat.psec = pmix_psec_base_assign_module(param);
-    if (NULL == pmix_globals.mypeer->compat.psec) {
-        ret = PMIX_ERR_NOT_SUPPORTED;
-        error = "no psec module";
         goto return_error;
     }
 
@@ -216,6 +211,8 @@ int pmix_rte_init(pmix_proc_type_t type,
 
     /* tell libevent that we need thread support */
     pmix_event_use_threads();
+
+    /* if an external event base wasn't provide, create one */
     if (!pmix_globals.external_evbase) {
         /* create an event base and progress thread for us */
         if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
@@ -224,33 +221,6 @@ int pmix_rte_init(pmix_proc_type_t type,
             goto return_error;
         }
     }
-
-#if 0
-    /* open the PMIx Transport Layer (ptl) - we will select the
-     * active plugin later */
-    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_ptl_base_framework, 0)) ) {
-        error = "pmix_ptl_base_open";
-        goto return_error;
-    }
-    if( PMIX_SUCCESS != (ret = pmix_ptl_base_select()) ) {
-        error = "pmix_ptl_base_select";
-        goto return_error;
-    }
-
-    /* open the dstor framework - we will select the active
-     * plugin later */
-    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_pdstor_base_framework, 0)) ) {
-        error = "pmix_pdstor_base_open";
-        goto return_error;
-    }
-    if( PMIX_SUCCESS != (ret = pmix_pdstor_base_select()) ) {
-        error = "pmix_pdstor_base_select";
-        goto return_error;
-    }
-#endif
-
-    /* setup the usock service */
-    pmix_usock_init(notifycbfunc);
 
     return PMIX_SUCCESS;
 

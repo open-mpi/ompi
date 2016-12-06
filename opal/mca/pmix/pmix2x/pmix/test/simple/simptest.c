@@ -44,7 +44,6 @@
 #include "src/util/printf.h"
 #include "src/util/argv.h"
 #include "src/buffer_ops/buffer_ops.h"
-#include "src/usock/usock.h"
 
 static pmix_status_t connected(const pmix_proc_t *proc, void *server_object,
                                pmix_op_cbfunc_t cbfunc, void *cbdata);
@@ -209,7 +208,9 @@ int main(int argc, char **argv)
     myxfer_t *x;
     pmix_proc_t proc;
     wait_tracker_t *child;
-    pmix_info_t info;
+    pmix_info_t info[2];
+    bool cross_version = false;
+    bool usock = true;
 
     /* smoke test */
     if (PMIX_SUCCESS != 0) {
@@ -219,14 +220,57 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "Testing version %s\n", PMIx_Get_version());
 
+    /* see if we were passed the number of procs to run or
+     * the executable to use */
+    for (n=1; n < argc; n++) {
+        if (0 == strcmp("-n", argv[n]) &&
+            NULL != argv[n+1]) {
+            nprocs = strtol(argv[n+1], NULL, 10);
+            ++n;  // step over the argument
+        } else if (0 == strcmp("-e", argv[n]) &&
+                   NULL != argv[n+1]) {
+            executable = strdup(argv[n+1]);
+            for (k=n+2; NULL != argv[k]; k++) {
+                pmix_argv_append_nosize(&client_argv, argv[k]);
+            }
+            n += k;
+        } else if (0 == strcmp("-x", argv[n])) {
+            /* cross-version test - we will set one child to
+             * run at a different version. Requires -n >= 2 */
+            cross_version = true;
+            usock = false;
+        } else if (0 == strcmp("-u", argv[n])) {
+            /* enable usock */
+            usock = false;
+        } else if (0 == strcmp("-h", argv[n])) {
+            /* print the options and exit */
+            fprintf(stderr, "usage: simptest <options>\n");
+            fprintf(stderr, "    -n N     Number of clients to run\n");
+            fprintf(stderr, "    -e foo   Name of the client executable to run (default: simpclient\n");
+            fprintf(stderr, "    -x       Test cross-version support\n");
+            fprintf(stderr, "    -u       Enable legacy usock support\n");
+            exit(0);
+        }
+    }
+    if (NULL == executable) {
+        executable = strdup("./simpclient");
+    }
+    if (cross_version && nprocs < 2) {
+        fprintf(stderr, "Cross-version testing requires at least two clients\n");
+        exit(1);
+    }
+
     /* setup the server library and tell it to support tool connections */
-    PMIX_INFO_CONSTRUCT(&info);
-    (void)strncpy(info.key, PMIX_SERVER_TOOL_SUPPORT, PMIX_MAX_KEYLEN);
-    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, &info, 1))) {
+    PMIX_INFO_CONSTRUCT(&info[0]);
+    (void)strncpy(info[0].key, PMIX_SERVER_TOOL_SUPPORT, PMIX_MAX_KEYLEN);
+    PMIX_INFO_CONSTRUCT(&info[1]);
+    PMIX_INFO_LOAD(&info[1], PMIX_USOCK_DISABLE, &usock, PMIX_BOOL);
+    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, info, 2))) {
         fprintf(stderr, "Init failed with error %d\n", rc);
         return rc;
     }
-    PMIX_INFO_DESTRUCT(&info);
+    PMIX_INFO_DESTRUCT(&info[0]);
+    PMIX_INFO_DESTRUCT(&info[1]);
 
     /* register the errhandler */
     PMIx_Register_event_handler(NULL, 0, NULL, 0,
@@ -240,26 +284,6 @@ int main(int argc, char **argv)
     event_assign(&handler, pmix_globals.evbase, SIGCHLD,
                  EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
     event_add(&handler, NULL);
-
-    /* see if we were passed the number of procs to run or
-     * the executable to use */
-    for (n=1; n < (argc-1); n++) {
-        if (0 == strcmp("-n", argv[n]) &&
-            NULL != argv[n+1]) {
-            nprocs = strtol(argv[n+1], NULL, 10);
-            ++n;  // step over the argument
-        } else if (0 == strcmp("-e", argv[n]) &&
-                   NULL != argv[n+1]) {
-            executable = strdup(argv[n+1]);
-            for (k=n+2; NULL != argv[k]; k++) {
-                pmix_argv_append_nosize(&client_argv, argv[k]);
-            }
-            n += k;
-        }
-    }
-    if (NULL == executable) {
-        executable = strdup("./simpclient");
-    }
 
     /* we have a single namespace for all clients */
     atmp = NULL;
@@ -296,10 +320,19 @@ int main(int argc, char **argv)
             PMIx_server_finalize();
             return rc;
         }
+        /* if cross-version test is requested, then oscillate PTL support
+         * by rank */
+        if (cross_version) {
+            if (0 == n % 2) {
+                pmix_setenv("PMIX_MCA_ptl", "tcp", true, &client_env);
+            } else {
+                pmix_setenv("PMIX_MCA_ptl", "usock", true, &client_env);
+            }
+        }
         x = PMIX_NEW(myxfer_t);
         if (PMIX_SUCCESS != (rc = PMIx_server_register_client(&proc, myuid, mygid,
                                                               NULL, opcbfunc, x))) {
-            fprintf(stderr, "Server fork setup failed with error %d\n", rc);
+            fprintf(stderr, "Server register client failed with error %d\n", rc);
             PMIx_server_finalize();
             return rc;
         }
@@ -425,9 +458,8 @@ static pmix_status_t connected(const pmix_proc_t *proc, void *server_object,
 static pmix_status_t finalized(const pmix_proc_t *proc, void *server_object,
                      pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output(0, "SERVER: FINALIZED %s:%d",
-                proc->nspace, proc->rank);
-    --wakeup;
+    pmix_output(0, "SERVER: FINALIZED %s:%d WAKEUP %d",
+                proc->nspace, proc->rank, wakeup);
     /* ensure we call the cbfunc so the proc can exit! */
     if (NULL != cbfunc) {
         cbfunc(PMIX_SUCCESS, cbdata);

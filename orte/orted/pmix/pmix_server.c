@@ -272,6 +272,12 @@ int pmix_server_init(void)
     kv->type = OPAL_STRING;
     kv->data.string = strdup(orte_process_info.tmpdir_base);
     opal_list_append(&info, &kv->super);
+    /* disable usock */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_USOCK_DISABLE);
+    kv->type = OPAL_BOOL;
+    kv->data.flag = true;
+    opal_list_append(&info, &kv->super);
 
     /* setup the local server */
     if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server, &info))) {

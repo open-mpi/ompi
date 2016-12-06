@@ -633,7 +633,7 @@ static int fork_hnp(void)
         orte_process_info.my_hnp_uri = orted_uri;
 
         /* split the pmix_uri into its parts */
-        argv = opal_argv_split(cptr, ',');
+        argv = opal_argv_split(cptr, '*');
         count = opal_argv_count(argv);
         /* push each piece into the environment */
         for (i=0; i < count; i++) {

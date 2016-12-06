@@ -62,7 +62,17 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_GRPID                         "pmix.egid"             // (uint32_t) effective group id
 
 /* attributes for the rendezvous socket  */
+#define OPAL_PMIX_USOCK_DISABLE                 "pmix.usock.disable"    // (bool) disable legacy usock support
 #define OPAL_PMIX_SOCKET_MODE                   "pmix.sockmode"         // (uint32_t) POSIX mode_t (9 bits valid)
+
+/* attributes for TCP connections */
+#define OPAL_PMIX_TCP_URI                       "pmix.tcp.uri"          // (char*) URI of server to connect to
+#define OPAL_PMIX_TCP_IF_INCLUDE                "pmix.tcp.ifinclude"    // (char*) comma-delimited list of devices and/or CIDR notation
+#define OPAL_PMIX_TCP_IF_EXCLUDE                "pmix.tcp.ifexclude"    // (char*) comma-delimited list of devices and/or CIDR notation
+#define OPAL_PMIX_TCP_IPV4_PORT                 "pmix.tcp.ipv4"         // (int) IPv4 port to be used
+#define OPAL_PMIX_TCP_IPV6_PORT                 "pmix.tcp.ipv6"         // (int) IPv6 port to be used
+#define OPAL_PMIX_TCP_DISABLE_IPV4              "pmix.tcp.disipv4"      // (bool) true to disable IPv4 family
+#define OPAL_PMIX_TCP_DISABLE_IPV6              "pmix.tcp.disipv6"      // (bool) true to disable IPv6 family
 
 /* general proc-level attributes */
 #define OPAL_PMIX_CPUSET                        "pmix.cpuset"           // (char*) hwloc bitmap applied to proc upon launch
@@ -123,6 +133,8 @@ BEGIN_C_DECLS
 /* request-related info */
 #define OPAL_PMIX_COLLECT_DATA                  "pmix.collect"          // (bool) collect data and return it at the end of the operation
 #define OPAL_PMIX_TIMEOUT                       "pmix.timeout"          // (int) time in sec before specified operation should time out
+#define OPAL_PMIX_IMMEDIATE                     "pmix.immediate"        // (bool) specified operation should immediately return an error if requested
+                                                                        //        data cannot be found - do not request it from the host RM
 #define OPAL_PMIX_WAIT                          "pmix.wait"             // (int) caller requests that the server wait until at least the specified
                                                                         //       #values are found (0 => all and is the default)
 #define OPAL_PMIX_COLLECTIVE_ALGO               "pmix.calgo"            // (char*) comma-delimited list of algorithms to use for collective

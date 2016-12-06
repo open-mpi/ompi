@@ -34,6 +34,7 @@
 #include PMIX_EVENT_HEADER
 
 #include "src/include/pmix_globals.h"
+#include "src/mca/ptl/ptl_types.h"
 
 BEGIN_C_DECLS
 
@@ -58,7 +59,7 @@ extern const char pmix_version_string[];
  */
 pmix_status_t pmix_rte_init(pmix_proc_type_t type,
                             pmix_info_t info[], size_t ninfo,
-                            pmix_usock_cbfunc_t cbfunc);
+                            pmix_ptl_cbfunc_t cbfunc);
 
 /**
  * Finalize the PMIX layer, including the MCA system.

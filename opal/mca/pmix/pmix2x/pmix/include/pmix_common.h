@@ -109,13 +109,15 @@ typedef uint32_t pmix_rank_t;
                                                                     //                       of the internal progress thread
 #define PMIX_SERVER_TOOL_SUPPORT            "pmix.srvr.tool"        // (bool) The host RM wants to declare itself as willing to
                                                                     //        accept tool connection requests
+#define PMIX_SERVER_REMOTE_CONNECTIONS      "pmix.srvr.remote"      // (bool) Allow connections from remote tools (do not use loopback device)
 #define PMIX_SERVER_SYSTEM_SUPPORT          "pmix.srvr.sys"         // (bool) The host RM wants to declare itself as being the local
                                                                     //        system server for PMIx connection requests
 #define PMIX_SERVER_PIDINFO                 "pmix.srvr.pidinfo"     // (pid_t) pid of the target server
+#define PMIX_SERVER_HOSTNAME                "pmix.srvr.host"        // (char*) node where target server is located
 #define PMIX_SERVER_TMPDIR                  "pmix.srvr.tmpdir"      // (char*) temp directory where PMIx server will place
-                                                                    //        client rendezvous points
+                                                                    //        client rendezvous points and contact info
 #define PMIX_SYSTEM_TMPDIR                  "pmix.sys.tmpdir"       // (char*) temp directory for this system, where PMIx
-                                                                    //        server will place tool rendezvous points
+                                                                    //        server will place tool rendezvous points and contact info
 #define PMIX_CONNECT_TO_SYSTEM              "pmix.cnct.sys"         // (bool) The requestor requires that a connection be made only to
                                                                     //        a local system-level PMIx server
 #define PMIX_CONNECT_SYSTEM_FIRST           "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
@@ -124,9 +126,21 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_USERID                         "pmix.euid"             // (uint32_t) effective user id
 #define PMIX_GRPID                          "pmix.egid"             // (uint32_t) effective group id
 #define PMIX_DSTPATH                        "pmix.dstpath"          // (char*) path to dstore files
+#define PMIX_VERSION_INFO                   "pmix.version"          // (char*) PMIx version of contactor
 
-/* attributes for the rendezvous socket  */
+
+/* attributes for the USOCK rendezvous socket  */
+#define PMIX_USOCK_DISABLE                  "pmix.usock.disable"    // (bool) disable legacy usock support
 #define PMIX_SOCKET_MODE                    "pmix.sockmode"         // (uint32_t) POSIX mode_t (9 bits valid)
+
+/* attributes for TCP connections */
+#define PMIX_TCP_URI                        "pmix.tcp.uri"          // (char*) URI of server to connect to
+#define PMIX_TCP_IF_INCLUDE                 "pmix.tcp.ifinclude"    // (char*) comma-delimited list of devices and/or CIDR notation
+#define PMIX_TCP_IF_EXCLUDE                 "pmix.tcp.ifexclude"    // (char*) comma-delimited list of devices and/or CIDR notation
+#define PMIX_TCP_IPV4_PORT                  "pmix.tcp.ipv4"         // (int) IPv4 port to be used
+#define PMIX_TCP_IPV6_PORT                  "pmix.tcp.ipv6"         // (int) IPv6 port to be used
+#define PMIX_TCP_DISABLE_IPV4               "pmix.tcp.disipv4"      // (bool) true to disable IPv4 family
+#define PMIX_TCP_DISABLE_IPV6               "pmix.tcp.disipv6"      // (bool) true to disable IPv6 family
 
 /* general proc-level attributes */
 #define PMIX_CPUSET                         "pmix.cpuset"           // (char*) hwloc bitmap applied to proc upon launch
@@ -267,6 +281,10 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_LOG_STDOUT                     "pmix.log.stdout"        // (bool) log data to stdout
 #define PMIX_LOG_SYSLOG                     "pmix.log.syslog"        // (bool) log data to syslog - defaults to ERROR priority unless
                                                                      //        modified by directive
+/* debugger attributes */
+#define PMIX_SPAWN_UNDER_DEBUGGER           "pmix.dbg.pause"         // (bool) job is being spawned under debugger - instruct it to pause on start
+#define PMIX_JOB_BEING_DEBUGGED             "pmix.dbg.job"           // (char*) nspace of the job to be debugged - the RM/PMIx server are
+                                                                     //     to provide the job-level info of that job to each debugger daemon
 
 /****    PROCESS STATE DEFINITIONS    ****/
 typedef uint8_t pmix_proc_state_t;

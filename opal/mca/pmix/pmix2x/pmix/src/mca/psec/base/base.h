@@ -80,6 +80,18 @@ typedef struct pmix_psec_globals_t pmix_psec_globals_t;
 
 extern pmix_psec_globals_t pmix_psec_globals;
 
+PMIX_EXPORT char* pmix_psec_base_get_available_modules(void);
+PMIX_EXPORT pmix_status_t pmix_psec_base_assign_module(struct pmix_peer_t *peer,
+                                                       const char *options);
+PMIX_EXPORT pmix_status_t pmix_psec_base_create_cred(struct pmix_peer_t *peer,
+                                                     pmix_listener_protocol_t protocol,
+                                                     char **cred, size_t *len);
+PMIX_EXPORT pmix_status_t pmix_psec_base_client_handshake(struct pmix_peer_t *peer, int sd);
+PMIX_EXPORT pmix_status_t pmix_psec_base_validate_connection(struct pmix_peer_t *peer,
+                                                             pmix_listener_protocol_t protocol,
+                                                             char *cred, size_t len);
+
+
 END_C_DECLS
 
 #endif
