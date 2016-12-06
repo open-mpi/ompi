@@ -476,8 +476,8 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         goto sockerror;
     }
 
-    if (bind(lt->socket, (struct sockaddr*)&mca_ptl_tcp_component.connection, addrlen) < 0) {
-        printf("%s:%d bind() failed\n", __FILE__, __LINE__);
+    if (bind(lt->socket, (struct sockaddr*)&mca_ptl_tcp_component.connection, sizeof(struct sockaddr)) < 0) {
+        printf("%s:%d bind() failed: %s\n", __FILE__, __LINE__, strerror(errno));
         CLOSE_THE_SOCKET(lt->socket);
         goto sockerror;
     }
