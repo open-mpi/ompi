@@ -5,7 +5,7 @@
 # need the "trusty" distro because it has more recent versions of the
 # GNU Autotools (i.e., autogen.pl will fail if you use the regular
 # distro because the GNU Autotools are too old).
-sudo: required
+sudo: false
 dist: trusty
 language: c
 
@@ -17,7 +17,6 @@ compiler:
 # Iterate over 2 different OSs
 os:
     - linux
-    - osx
 
 addons:
     # For Linux, make sure we have some extra packages that we like to
@@ -33,6 +32,9 @@ addons:
             - libnl-route-3-dev
             - libibverbs-dev
             - librdmacm-dev
+            - gcc-6
+            - g++-6
+            - gfortran-6
         sources:
             - ubuntu-toolchain-r-test
 
@@ -50,11 +52,12 @@ env:
 # not currently using the verbs provider in Libfabric, so we might as
 # well not build it.
 before_install:
+    - gcc --version || true
+    - gcc-6 --version || true
     - if [[ "GCC_VERSION" == "6" ]]; then COMPILERS="CC=gcc-6 CXX=g++-6 FC=gfortran-6"; fi
     - export CONFIGURE_ARGS="--prefix=$HOME/bogus $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - export DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "6" ]] ; then sudo apt-get --assume-yes install gcc-6 g++-6 gfortran-6; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; brew upgrade automake || true; brew upgrade libtool || true; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "6" ]] ; then brew install gcc || true; brew upgrade gcc || true ; fi
