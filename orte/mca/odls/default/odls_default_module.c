@@ -329,9 +329,11 @@ static int do_child(orte_app_context_t* context,
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
     char *param, *msg;
 
+#if HAVE_SETPGID
     /* Set a new process group for this child, so that any
      * signals we send to it will reach any children it spawns */
     setpgid(0, 0);
+#endif
 
     /* Setup the pipe to be close-on-exec */
     opal_fd_set_cloexec(write_fd);

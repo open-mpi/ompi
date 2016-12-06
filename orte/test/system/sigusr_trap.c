@@ -28,6 +28,10 @@ void sigusr_handler(int signum)
             fprintf(stderr, "%s Trapped SIGUSR2\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             return;
 
+        case SIGCONT:
+            fprintf(stderr, "%s Trapped SIGCONT\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            return;
+
         default:
             fprintf(stderr, "%s Undefined signal %d trapped\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), signum);
             return;
@@ -55,6 +59,7 @@ void exit_handler(int signum)
             fprintf(stderr, "%s Undefined signal %d trapped\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), signum);
             break;
     }
+    return;
 
     exit(1);
 }
@@ -75,6 +80,11 @@ int main(int argc, char* argv[])
     }
 
     if (signal(SIGUSR2, sigusr_handler) == SIG_IGN) {
+        fprintf(stderr, "Could not setup signal trap for SIGUSR2\n");
+        exit(1);
+    }
+
+    if (signal(SIGCONT, sigusr_handler) == SIG_IGN) {
         fprintf(stderr, "Could not setup signal trap for SIGUSR2\n");
         exit(1);
     }
