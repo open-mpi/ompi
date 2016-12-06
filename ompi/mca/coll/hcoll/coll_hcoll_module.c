@@ -138,11 +138,12 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
         OBJ_RELEASE(hcoll_module->previous_reduce_scatter_module);
         OBJ_RELEASE(hcoll_module->previous_reduce_module);
         */
-
+#if HCOLL_API < HCOLL_VERSION(3,7)
         context_destroyed = 0;
         hcoll_destroy_context(hcoll_module->hcoll_context,
                               (rte_grp_handle_t)hcoll_module->comm,
                               &context_destroyed);
+#endif
     }
     mca_coll_hcoll_module_clear(hcoll_module);
 }
@@ -205,7 +206,11 @@ int hcoll_comm_attr_del_fn(MPI_Comm comm, int keyval, void *attr_val, void *extr
     mca_coll_hcoll_module_t *hcoll_module;
     hcoll_module = (mca_coll_hcoll_module_t*) attr_val;
 
+#if HCOLL_API >= HCOLL_VERSION(3,7)
+    hcoll_context_free(hcoll_module->hcoll_context, (rte_grp_handle_t)comm);
+#else
     hcoll_group_destroy_notify(hcoll_module->hcoll_context);
+#endif
     return OMPI_SUCCESS;
 
 }
@@ -399,8 +404,11 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     hcoll_module->super.coll_gather = /*hcoll_collectives.coll_gather ? mca_coll_hcoll_gather :*/ NULL;
     hcoll_module->super.coll_igatherv = hcoll_collectives.coll_igatherv ? mca_coll_hcoll_igatherv : NULL;
     hcoll_module->super.coll_ialltoall = /*hcoll_collectives.coll_ialltoall ? mca_coll_hcoll_ialltoall : */ NULL;
-    hcoll_module->super.coll_ialltoallv = /*hcoll_collectives.coll_ialltoallv ? mca_coll_hcoll_ialltoallv : */ NULL;
-
+#if HCOLL_API >= HCOLL_VERSION(3,7)
+    hcoll_module->super.coll_ialltoallv = hcoll_collectives.coll_ialltoallv ? mca_coll_hcoll_ialltoallv : NULL;
+#else
+    hcoll_module->super.coll_ialltoallv = NULL;
+#endif
     *priority = cm->hcoll_priority;
     module = &hcoll_module->super;
 

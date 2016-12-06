@@ -471,9 +471,11 @@ ompi_osc_sm_free(struct ompi_win_t *win)
         free(module->node_states);
         free(module->global_state);
         free(module->bases[0]);
-        free(module->bases);
-        free(module->sizes);
     }
+    free(module->disp_units);
+    free(module->outstanding_locks);
+    free(module->sizes);
+    free(module->bases);
 
     free (module->posts);
 

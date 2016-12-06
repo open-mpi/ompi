@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -757,9 +757,10 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
     }
 
  cleanup:
-    /* need to init_after_spawn for debuggers */
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
-
+    /* if this wasn't a debugger job, then need to init_after_spawn for debuggers */
+    if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
+    }
     OBJ_RELEASE(caddy);
 }
 

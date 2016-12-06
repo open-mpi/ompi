@@ -12,7 +12,7 @@
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -306,6 +306,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "FAULT TOLERANCE RESTART";
     case ORTE_JOB_STATE_ANY:
         return "ANY";
+    case ORTE_JOB_STATE_DEBUGGER_DETACH:
+        return "DEBUGGER DETACHED";
     default:
         return "UNKNOWN STATE!";
     }
