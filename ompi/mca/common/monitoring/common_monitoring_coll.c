@@ -21,6 +21,7 @@
 #include <opal/mca/base/mca_base_component_repository.h>
 #include <opal/class/opal_hash_table.h>
 #include <assert.h>
+#include <math.h>
 
 /*** Monitoring specific variables ***/
 struct mca_monitoring_coll_data_t {
@@ -52,24 +53,25 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
         data->comm_name = strdup(data->p_comm->c_name);
     }
     if( NULL == data->procs ) {
-        int i, pos, size = ompi_comm_size(data->p_comm);
+        int i, pos = 0, size, world_size;
+        size = ompi_comm_size(data->p_comm);
+        world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
         char*tmp_procs;
         assert( 0 < size );
-        /* Get first rank (there is at least one node if we reach this point) */
-        mca_common_monitoring_get_world_rank(0, data->p_comm, &world_rank);
-        pos = asprintf(&data->procs, "%d,", world_rank);
-        /* FIX-ME: the algorithm is O(n^2) when creating the string */
-        for(i = 1; i < size; ++i) {
-            /* WARNING : Keep the order of the next two instruction :
-               it sometimes happened with gcc/4.9.2 that the return
-               from opal_hash_table_get_value_uint_64() set tmp_procs
-               to NULL (while returning OPAL_SUCCESS). */
-            mca_common_monitoring_get_world_rank(i, data->p_comm, &world_rank);
-            tmp_procs = data->procs;
-            pos = asprintf(&data->procs, "%s%d,", tmp_procs, world_rank);
-            free(tmp_procs);
+        /* Allocate enough space for list */
+        tmp_procs = malloc((2 + log10((double)world_size)) * size * sizeof(char));
+        if( NULL == tmp_procs ) {
+            OPAL_MONITORING_PRINT_ERR("%s: Cannot allocate memory for caching proc list.");
+        } else {
+            tmp_procs[0] = '\0';
+            /* Build procs list */
+            for(i = 0; i < size; ++i) {
+                mca_common_monitoring_get_world_rank(i, data->p_comm, &world_rank);
+                pos += sprintf(&tmp_procs[pos], "%d,", world_rank);
+            }
+            tmp_procs[pos - 1] = '\0'; /* Remove final coma */
+            data->procs = realloc(tmp_procs, pos * sizeof(char)); /* Adjust size required */
         }
-        data->procs[pos - 1] = '\0'; /* Remove final coma */
     }
 }
 
