@@ -15,7 +15,6 @@
 
 #include "src/buffer_ops/buffer_ops.h"
 #include "src/class/pmix_hash_table.h"
-#include "src/usock/usock.h"
 
 BEGIN_C_DECLS
 

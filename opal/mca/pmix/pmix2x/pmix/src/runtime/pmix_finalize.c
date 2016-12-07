@@ -28,7 +28,6 @@
 
 #include "src/class/pmix_object.h"
 #include "src/client/pmix_client_ops.h"
-#include "src/usock/usock.h"
 #include "src/util/output.h"
 #include "src/util/keyval_parse.h"
 #include "src/util/show_help.h"
@@ -37,6 +36,7 @@
 #include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
 #include "src/mca/psec/base/base.h"
+#include "src/mca/ptl/base/base.h"
 #include "src/dstore/pmix_dstore.h"
 #include PMIX_EVENT_HEADER
 
@@ -73,17 +73,7 @@ void pmix_rte_finalize(void)
     }
 
     /* cleanup communications */
-    pmix_usock_finalize();
-
-    if (!pmix_globals.external_evbase) {
-        /* finalize the progress thread */
-        (void)pmix_progress_thread_finalize(NULL);
-    }
-
-    if (PMIX_PROC_SERVER != pmix_globals.proc_type &&
-        0 <= pmix_client_globals.myserver.sd) {
-        CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
-    }
+    (void)pmix_mca_base_framework_close(&pmix_ptl_base_framework);
     #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
         pmix_dstore_finalize();
     #endif /* PMIX_ENABLE_DSTORE */

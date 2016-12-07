@@ -35,11 +35,17 @@
 #include "src/buffer_ops/types.h"
 #include "src/util/output.h"
 #include "src/util/printf.h"
-#include "src/usock/usock.h"
 
 static uint32_t nprocs;
 static pmix_proc_t myproc;
 static uint32_t getcount = 0;
+
+#define PMIX_WAIT_FOR_COMPLETION(a)             \
+    do {                                        \
+        while ((a)) {                           \
+            usleep(10);                         \
+        }                                       \
+    } while (0)
 
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {

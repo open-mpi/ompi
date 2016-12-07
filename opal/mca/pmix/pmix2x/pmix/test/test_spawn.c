@@ -18,6 +18,13 @@ typedef struct {
     char nspace[PMIX_MAX_NSLEN];
 } spawn_cbdata;
 
+#define PMIX_WAIT_FOR_COMPLETION(a)             \
+    do {                                        \
+        while ((a)) {                           \
+            usleep(10);                         \
+        }                                       \
+    } while (0)
+
 static void spawn_cb(pmix_status_t status,
                       char nspace[], void *cbdata)
 {

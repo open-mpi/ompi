@@ -52,7 +52,7 @@
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/output.h"
-#include "src/usock/usock.h"
+#include "src/mca/ptl/ptl.h"
 
 #include "pmix_client_ops.h"
 
@@ -61,7 +61,7 @@ static pmix_status_t pack_fence(pmix_buffer_t *msg, pmix_cmd_t cmd,
                                 const pmix_proc_t *procs, size_t nprocs,
                                 const pmix_info_t *info, size_t ninfo);
 static void wait_cbfunc(struct pmix_peer_t *pr,
-                        pmix_usock_hdr_t *hdr,
+                        pmix_ptl_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata);
 static void op_cbfunc(pmix_status_t status, void *cbdata);
 
@@ -160,9 +160,11 @@ PMIX_EXPORT pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, wait_cbfunc, cb);
-
-    return PMIX_SUCCESS;
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
+        PMIX_RELEASE(msg);
+        PMIX_RELEASE(cb);
+    }
+    return rc;
 }
 
 static pmix_status_t unpack_return(pmix_buffer_t *data)
@@ -223,7 +225,7 @@ static pmix_status_t pack_fence(pmix_buffer_t *msg, pmix_cmd_t cmd,
     return PMIX_SUCCESS;
 }
 
-static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
+static void wait_cbfunc(struct pmix_peer_t *pr, pmix_ptl_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
