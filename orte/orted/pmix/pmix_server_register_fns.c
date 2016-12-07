@@ -332,6 +332,10 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
             if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
                 continue;
             }
+            /* only consider procs from this job */
+            if (pptr->name.jobid != jdata->jobid) {
+                continue;
+            }
             /* setup the proc map object */
             kv = OBJ_NEW(opal_value_t);
             kv->key = strdup(OPAL_PMIX_PROC_DATA);
