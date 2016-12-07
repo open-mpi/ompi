@@ -62,7 +62,7 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
     return rc;
 }
 
-static void notify_event_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
+static void notify_event_cbfunc(struct pmix_peer_t *pr, pmix_ptl_hdr_t *hdr,
                                 pmix_buffer_t *buf, void *cbdata)
 {
     pmix_status_t rc, ret;
@@ -155,8 +155,13 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     cb = PMIX_NEW(pmix_cb_t);
     cb->op_cbfunc = cbfunc;
     cb->cbdata = cbdata;
-    /* push the message into our event base to send to the server */
-    PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, notify_event_cbfunc, cb);
+    /* send to the server */
+    rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, notify_event_cbfunc, cb);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(cb);
+        goto cleanup;
+    }
 
     /* now notify any matching registered callbacks we have */
     pmix_invoke_local_event_hdlr(chain);

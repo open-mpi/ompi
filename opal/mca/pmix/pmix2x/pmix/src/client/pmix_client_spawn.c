@@ -51,12 +51,13 @@
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
-#include "src/usock/usock.h"
+#include "src/mca/ptl/ptl.h"
 
 #include "pmix_client_ops.h"
 #include "src/include/pmix_jobdata.h"
 
-static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
+static void wait_cbfunc(struct pmix_peer_t *pr,
+                        pmix_ptl_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata);
 static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata);
 
@@ -169,13 +170,17 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, wait_cbfunc, cb);
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
+        PMIX_RELEASE(msg);
+        PMIX_RELEASE(cb);
+    }
 
-    return PMIX_SUCCESS;
+    return rc;
 }
 
 /* callback for wait completion */
-static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
+static void wait_cbfunc(struct pmix_peer_t *pr,
+                        pmix_ptl_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;

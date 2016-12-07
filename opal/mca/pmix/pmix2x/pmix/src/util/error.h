@@ -62,6 +62,8 @@
 #define PMIX_ERR_PERM                                   (PMIX_INTERNAL_ERR_BASE - 31)
 #define PMIX_ERR_OPERATION_IN_PROGRESS                  (PMIX_INTERNAL_ERR_BASE - 32)
 #define PMIX_ERR_NETWORK_NOT_PARSEABLE                  (PMIX_INTERNAL_ERR_BASE - 33)
+#define PMIX_ERR_FILE_OPEN_FAILURE                      (PMIX_INTERNAL_ERR_BASE - 34)
+#define PMIX_ERR_FILE_READ_FAILURE                      (PMIX_INTERNAL_ERR_BASE - 35)
 
 #define PMIX_ERROR_LOG(r)                                           \
  do {                                                               \

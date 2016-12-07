@@ -89,7 +89,7 @@ BEGIN_C_DECLS
 
 typedef struct pmix_pif_t {
     pmix_list_item_t     super;
-    char                if_name[IF_NAMESIZE];
+    char                if_name[IF_NAMESIZE+1];
     int                 if_index;
     uint16_t            if_kernel_index;
     uint16_t            af_family;
