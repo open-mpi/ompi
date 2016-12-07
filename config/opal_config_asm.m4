@@ -1003,6 +1003,11 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         OPAL_GCC_INLINE_ASSIGN=""
         OPAL_ASM_SUPPORT_64BIT=0
         case "${host}" in
+        x86_64-*x32)
+            opal_cv_asm_arch="AMD64"
+            OPAL_ASM_SUPPORT_64BIT=1
+            OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
+            ;;
         i?86-*|x86_64*)
             if test "$ac_cv_sizeof_long" = "4" ; then
                 opal_cv_asm_arch="IA32"
@@ -1028,7 +1033,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
-        armv7*)
+        armv7*|arm-*-linux-gnueabihf)
             opal_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_ASM_ARM_VERSION=7
@@ -1047,7 +1052,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
-        armv5*linux*|armv4*linux*)
+        armv5*linux*|armv4*linux*|arm-*-linux-gnueabi)
             # uses Linux kernel helpers for some atomic operations
             opal_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=0
@@ -1255,27 +1260,21 @@ if test "$opal_cv_asm_arch" != "WINDOWS" && test "$opal_cv_asm_builtin" != "BUIL
     rm -rf conftest.*
 
     if test "$opal_cv_asm_file" = "" ; then
-        if test ! "$PERL" = "" ; then
-            # we have perl...  Can we generate a file?
-            AC_MSG_CHECKING([whether possible to generate assembly file])
-            mkdir -p opal/asm/generated
-            opal_cv_asm_file="atomic-local.s"
-            opal_try='$PERL $OPAL_TOP_SRCDIR/opal/asm/generate-asm.pl $opal_cv_asm_arch "$opal_cv_asm_format" $OPAL_TOP_SRCDIR/opal/asm/base $OPAL_TOP_BUILDDIR/opal/asm/generated/$opal_cv_asm_file >conftest.out 2>&1'
-            if AC_TRY_EVAL(opal_try) ; then
-                # save the warnings
-                cat conftest.out >&AC_FD_CC
-                AC_MSG_RESULT([yes])
-            else
-                # save output
-                cat conftest.out >&AC_FD_CC
-                opal_cv_asm_file=""
-                AC_MSG_RESULT([failed])
-                AC_MSG_WARN([Could not build atomic operations assembly file.])
-                AC_MSG_WARN([There will be no atomic operations for this build.])
-            fi
+        # Can we generate a file?
+        AC_MSG_CHECKING([whether possible to generate assembly file])
+        mkdir -p opal/asm/generated
+        opal_cv_asm_file="atomic-local.s"
+        opal_try='$PERL $OPAL_TOP_SRCDIR/opal/asm/generate-asm.pl $opal_cv_asm_arch "$opal_cv_asm_format" $OPAL_TOP_SRCDIR/opal/asm/base $OPAL_TOP_BUILDDIR/opal/asm/generated/$opal_cv_asm_file >conftest.out 2>&1'
+        if AC_TRY_EVAL(opal_try) ; then
+            # save the warnings
+            cat conftest.out >&AC_FD_CC
+            AC_MSG_RESULT([yes])
         else
-            AC_MSG_WARN([Could not find prebuilt atomic operations file and could not])
-            AC_MSG_WARN([find perl to attempt to generate a custom assembly file.])
+            # save output
+            cat conftest.out >&AC_FD_CC
+            opal_cv_asm_file=""
+            AC_MSG_RESULT([failed])
+            AC_MSG_WARN([Could not build atomic operations assembly file.])
             AC_MSG_WARN([There will be no atomic operations for this build.])
         fi
     fi
