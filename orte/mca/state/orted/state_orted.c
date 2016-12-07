@@ -252,7 +252,7 @@ static void track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata, *pptr;
     opal_buffer_t *alert;
-    int rc, i;
+    int rc, i, j;
     orte_plm_cmd_flag_t cmd;
     char *rtmod;
 
@@ -416,6 +416,31 @@ static void track_procs(int fd, short argc, void *cbdata)
             }
             /* mark that we sent it so we ensure we don't do it again */
             orte_set_attribute(&jdata->attributes, ORTE_JOB_TERM_NOTIFIED, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+            /* cleanup the procs as these are gone */
+            for (i=0; i < orte_local_children->size; i++) {
+                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                    continue;
+                }
+                /* if this child is part of the job... */
+                if (pptr->name.jobid == jdata->jobid) {
+                    /* clear the entry in the local children */
+                    opal_pointer_array_set_item(orte_local_children, i, NULL);
+                    /* find it in the node->procs array */
+                    for (j=0; j < pptr->node->procs->size; j++) {
+                        if (NULL == (pdata = (orte_proc_t*)opal_pointer_array_get_item(pptr->node->procs, j))) {
+                            continue;
+                        }
+                        if (pdata == pptr) {
+                            /* remove it */
+                            opal_pointer_array_set_item(pptr->node->procs, j, NULL);
+                            OBJ_RELEASE(pdata);  // maintain accounting
+                            break;
+                        }
+                    }
+                    OBJ_RELEASE(pptr);  // maintain accounting
+                }
+            }
+
         }
     }
 
