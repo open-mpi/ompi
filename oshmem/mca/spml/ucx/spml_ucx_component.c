@@ -149,9 +149,13 @@ static int mca_spml_ucx_component_close(void)
 
 static int spml_ucx_init(void)
 {
+    ucp_worker_params_t params;
     ucs_status_t err;
 
-    err = ucp_worker_create(mca_spml_ucx.ucp_context, UCS_THREAD_MODE_SINGLE,
+    params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
+    params.thread_mode = UCS_THREAD_MODE_SINGLE;
+
+    err = ucp_worker_create(mca_spml_ucx.ucp_context, &params,
                             &mca_spml_ucx.ucp_worker);
     if (UCS_OK != err) {
         return OSHMEM_ERROR;
