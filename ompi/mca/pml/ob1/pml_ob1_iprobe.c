@@ -36,7 +36,7 @@ int mca_pml_ob1_iprobe(int src,
     recvreq.req_recv.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
     recvreq.req_recv.req_base.req_type = MCA_PML_REQUEST_IPROBE;
 
-    MCA_PML_OB1_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char.dt, src, tag, comm, true);
+    MCA_PML_OB1_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char.dt, src, tag, comm, false);
     MCA_PML_OB1_RECV_REQUEST_START(&recvreq);
 
     if( REQUEST_COMPLETE( &(recvreq.req_recv.req_base.req_ompi)) ) {
@@ -66,7 +66,7 @@ int mca_pml_ob1_probe(int src,
     recvreq.req_recv.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
     recvreq.req_recv.req_base.req_type = MCA_PML_REQUEST_PROBE;
 
-    MCA_PML_OB1_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char.dt, src, tag, comm, true);
+    MCA_PML_OB1_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char.dt, src, tag, comm, false);
     MCA_PML_OB1_RECV_REQUEST_START(&recvreq);
 
     ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);
