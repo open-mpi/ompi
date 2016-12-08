@@ -7,6 +7,8 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -330,4 +332,6 @@ int ompi_fetch_opal_pointer_array_info(mqs_process *proc, mqs_taddr_t addr,
 int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr,
                                        mpi_process_info *p_info, int index,
                                        mqs_taddr_t *item);
+#define OMPI_MAX_VER_SIZE 256
+int ompi_get_lib_version(char *buf, int size);
 #endif
