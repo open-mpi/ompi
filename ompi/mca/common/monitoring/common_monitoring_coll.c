@@ -29,6 +29,7 @@ struct mca_monitoring_coll_data_t {
     char*procs;
     char*comm_name;
     int world_rank;
+    int is_released;
     ompi_communicator_t*p_comm;
     uint64_t o2a_count;
     uint64_t o2a_size;
@@ -119,7 +120,7 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
         
     /* not flushed yet */
     mca_common_monitoring_coll_cache(data);
-    data->p_comm = NULL;
+    data->is_released = 1;
 }
 
 static void mca_common_monitoring_coll_cond_release(mca_monitoring_coll_data_t*data)
@@ -131,8 +132,9 @@ static void mca_common_monitoring_coll_cond_release(mca_monitoring_coll_data_t*d
     }
 #endif /* OPAL_ENABLE_DEBUG */
         
-    if( NULL == data->p_comm ) { /* if the communicator is already released */
+    if( data->is_released ) { /* if the communicator is already released */
         opal_hash_table_remove_value_uint64(comm_data, *((uint64_t*)&data->p_comm));
+        data->p_comm = NULL;
         free(data->comm_name);
         free(data->procs);
         OBJ_RELEASE(data);
@@ -326,16 +328,17 @@ int mca_common_monitoring_coll_get_a2a_size(const struct mca_base_pvar_t *pvar,
 
 static void mca_monitoring_coll_construct (mca_monitoring_coll_data_t*coll_data)
 {
-    coll_data->procs      = NULL;
-    coll_data->comm_name  = NULL;
-    coll_data->world_rank = -1;
-    coll_data->p_comm     = NULL;
-    coll_data->o2a_count  = 0;
-    coll_data->o2a_size   = 0;
-    coll_data->a2o_count  = 0;
-    coll_data->a2o_size   = 0;
-    coll_data->a2a_count  = 0;
-    coll_data->a2a_size   = 0;
+    coll_data->procs       = NULL;
+    coll_data->comm_name   = NULL;
+    coll_data->world_rank  = -1;
+    coll_data->p_comm      = NULL;
+    coll_data->is_released = 0;
+    coll_data->o2a_count   = 0;
+    coll_data->o2a_size    = 0;
+    coll_data->a2o_count   = 0;
+    coll_data->a2o_size    = 0;
+    coll_data->a2a_count   = 0;
+    coll_data->a2a_size    = 0;
 }
 
 static void mca_monitoring_coll_destruct (mca_monitoring_coll_data_t*coll_data){}
