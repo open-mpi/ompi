@@ -59,7 +59,7 @@ PMIX_CLASS_INSTANCE(pmix_rshift_caddy_t,
                     rscon, rsdes);
 
 
-static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
+static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_ptl_hdr_t *hdr,
                              pmix_buffer_t *buf, void *cbdata)
 {
     pmix_rshift_caddy_t *rb = (pmix_rshift_caddy_t*)cbdata;
@@ -152,9 +152,13 @@ static pmix_status_t _send_to_server(pmix_rshift_caddy_t *rcd)
             return rc;
         }
     }
-    PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, regevents_cbfunc, rcd);
+    rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, regevents_cbfunc, rcd);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+    }
 
-    return PMIX_SUCCESS;
+    return rc;
 }
 
 static pmix_status_t _add_hdlr(pmix_list_t *list, pmix_list_item_t *item,
@@ -565,8 +569,11 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
 
   report:
     if (NULL != msg) {
-        /* push the message into our event base to send to the server */
-        PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, NULL, NULL);
+        /* send to the server */
+        rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, NULL, NULL);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+        }
     }
 
   cleanup:

@@ -19,11 +19,11 @@
 
 #if defined(HAVE_STRNLEN)
 #define PMIX_STRNLEN(c, a, b)       \
-    (c) = (int)strnlen(a, b)
+    (c) = strnlen(a, b)
 #else
 #define PMIX_STRNLEN(c, a, b)           \
     do {                                \
-        int _x;                         \
+        size_t _x;                      \
         (c) = 0;                        \
         for (_x=0; _x < (b); _x++) {    \
             if ('\0' == (a)[_x]) {      \

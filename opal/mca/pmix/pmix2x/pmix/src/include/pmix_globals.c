@@ -40,26 +40,75 @@
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
 
-
-void pmix_globals_init(void)
+static void cbcon(pmix_cb_t *p)
 {
-    memset(&pmix_globals.myid, 0, sizeof(pmix_proc_t));
-    PMIX_CONSTRUCT(&pmix_globals.nspaces, pmix_list_t);
-    PMIX_CONSTRUCT(&pmix_globals.events, pmix_events_t);
+    p->active = false;
+    p->checked = false;
+    PMIX_CONSTRUCT(&p->data, pmix_buffer_t);
+    p->cbfunc = NULL;
+    p->op_cbfunc = NULL;
+    p->value_cbfunc = NULL;
+    p->lookup_cbfunc = NULL;
+    p->spawn_cbfunc = NULL;
+    p->cbdata = NULL;
+    memset(p->nspace, 0, PMIX_MAX_NSLEN+1);
+    p->rank = -1;
+    p->key = NULL;
+    p->value = NULL;
+    p->procs = NULL;
+    p->info = NULL;
+    p->ninfo = 0;
+    p->nvals = 0;
 }
-
-void pmix_globals_finalize(void)
+static void cbdes(pmix_cb_t *p)
 {
-    PMIX_LIST_DESTRUCT(&pmix_globals.nspaces);
-    if (NULL != pmix_globals.cache_local) {
-        PMIX_RELEASE(pmix_globals.cache_local);
-    }
-    if (NULL != pmix_globals.cache_remote) {
-        PMIX_RELEASE(pmix_globals.cache_remote);
-    }
-    PMIX_DESTRUCT(&pmix_globals.events);
+    PMIX_DESTRUCT(&p->data);
 }
+PMIX_CLASS_INSTANCE(pmix_cb_t,
+                   pmix_list_item_t,
+                   cbcon, cbdes);
 
+static void pcon(pmix_peer_t *p)
+{
+    p->info = NULL;
+    p->proc_cnt = 0;
+    p->server_object = NULL;
+    p->index = 0;
+    p->sd = -1;
+    p->send_ev_active = false;
+    p->recv_ev_active = false;
+    PMIX_CONSTRUCT(&p->send_queue, pmix_list_t);
+    p->send_msg = NULL;
+    p->recv_msg = NULL;
+    memset(&p->compat, 0, sizeof(p->compat));
+}
+static void pdes(pmix_peer_t *p)
+{
+    if (0 <= p->sd) {
+        CLOSE_THE_SOCKET(p->sd);
+    }
+    if (p->send_ev_active) {
+        event_del(&p->send_event);
+    }
+    if (p->recv_ev_active) {
+        event_del(&p->recv_event);
+    }
+
+    if (NULL != p->info) {
+        PMIX_RELEASE(p->info);
+    }
+
+    PMIX_LIST_DESTRUCT(&p->send_queue);
+    if (NULL != p->send_msg) {
+        PMIX_RELEASE(p->send_msg);
+    }
+    if (NULL != p->recv_msg) {
+        PMIX_RELEASE(p->recv_msg);
+    }
+}
+PMIX_CLASS_INSTANCE(pmix_peer_t,
+                   pmix_object_t,
+                   pcon, pdes);
 
 static void nscon(pmix_nspace_t *p)
 {

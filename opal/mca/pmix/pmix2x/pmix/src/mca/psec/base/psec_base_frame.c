@@ -45,6 +45,13 @@
 
 /* Instantiate the global vars */
 pmix_psec_globals_t pmix_psec_globals = {{{0}}};
+pmix_psec_API_t pmix_psec = {
+    .get_available_modules = pmix_psec_base_get_available_modules,
+    .assign_module = pmix_psec_base_assign_module,
+    .create_cred = pmix_psec_base_create_cred,
+    .client_handshake = pmix_psec_base_client_handshake,
+    .validate_connection = pmix_psec_base_validate_connection
+};
 
 static pmix_status_t pmix_psec_close(void)
 {

@@ -25,14 +25,14 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/buffer_ops/buffer_ops.h"
-#include "src/usock/usock.h"
+#include "src/mca/ptl/ptl.h"
 
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/include/pmix_globals.h"
 
 static void log_cbfunc(struct pmix_peer_t *peer,
-                       pmix_usock_hdr_t *hdr,
+                       pmix_ptl_hdr_t *hdr,
                        pmix_buffer_t *buf, void *cbdata)
 {
     pmix_shift_caddy_t *cd = (pmix_shift_caddy_t*)cbdata;
@@ -84,6 +84,7 @@ PMIX_EXPORT pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
             pmix_host_server.log(&pmix_globals.myid,
                                  data, ndata, directives, ndirs,
                                  cbfunc, cbdata);
+            rc = PMIX_SUCCESS;
     } else {
         /* if we are a client, then relay this request to the server */
         cd = PMIX_NEW(pmix_shift_caddy_t);
@@ -125,7 +126,9 @@ PMIX_EXPORT pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
 
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix:query sending to server");
-        PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, log_cbfunc, cd);
+        if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, log_cbfunc, (void*)cd))){
+            PMIX_RELEASE(cd);
+        }
     }
-    return PMIX_SUCCESS;
+    return rc;
 }

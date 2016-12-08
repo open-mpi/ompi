@@ -53,7 +53,7 @@
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/output.h"
-#include "src/usock/usock.h"
+#include "src/mca/ptl/ptl.h"
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
 #include "src/dstore/pmix_dstore.h"
 #endif /* PMIX_ENABLE_DSTORE */
@@ -67,8 +67,9 @@ static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
 
 static void _getnbfn(int sd, short args, void *cbdata);
 
-static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
-                         pmix_buffer_t *buf, void *cbdata);
+static void _getnb_cbfunc(struct pmix_peer_t *pr,
+                          pmix_ptl_hdr_t *hdr,
+                          pmix_buffer_t *buf, void *cbdata);
 
 static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata);
 
@@ -234,7 +235,8 @@ static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
 /* this callback is coming from the usock recv, and thus
  * is occurring inside of our progress thread - hence, no
  * need to thread shift */
-static void _getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
+static void _getnb_cbfunc(struct pmix_peer_t *pr,
+                          pmix_ptl_hdr_t *hdr,
                          pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
@@ -737,10 +739,13 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
                         cb->nspace, cb->rank, cb->key);
 
-    /* create a callback object as we need to pass it to the
-     * recv routine so we know which callback to use when
-     * the return message is recvd */
+    /* track the callback object */
     pmix_list_append(&pmix_client_globals.pending_requests, &cb->super);
-    /* push the message into our event base to send to the server */
-    PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, _getnb_cbfunc, cb);
+    /* send to the server */
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, _getnb_cbfunc, (void*)cb))){
+        pmix_list_remove_item(&pmix_client_globals.pending_requests, &cb->super);
+        cb->value_cbfunc(PMIX_ERROR, NULL, cb->cbdata);
+        PMIX_RELEASE(cb);
+        return;
+    }
 }

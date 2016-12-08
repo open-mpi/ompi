@@ -60,7 +60,7 @@ void cli_connect(cli_info_t *cli, int sd, struct event_base * ebase, event_callb
     cli->ev = event_new(ebase, sd,
                       EV_READ|EV_PERSIST, callback, cli);
     event_add(cli->ev,NULL);
-    pmix_usock_set_nonblocking(sd);
+    pmix_ptl_base_set_nonblocking(sd);
     TEST_VERBOSE(("Connection accepted from rank %d", cli_rank(cli) ));
     cli->state = CLI_CONNECTED;
 }

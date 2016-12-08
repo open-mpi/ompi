@@ -46,8 +46,9 @@ headers += \
         util/strnlen.h \
         util/hash.h \
         util/net.h \
+        util/pif.h \
         util/tsd.h \
-        util/pif.h
+        util/parse_options.h
 
 sources += \
         util/argv.c \
@@ -67,7 +68,8 @@ sources += \
         util/getid.c \
         util/hash.c \
         util/net.c \
-        util/pif.c
+        util/pif.c \
+        util/parse_options.c
 
 libpmix_la_LIBADD += \
         util/keyval/libpmixutilkeyval.la

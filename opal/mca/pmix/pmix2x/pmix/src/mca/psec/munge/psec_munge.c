@@ -28,10 +28,12 @@
 #include "src/mca/psec/psec.h"
 #include "psec_munge.h"
 
-static int munge_init(void);
+static pmix_status_t munge_init(void);
 static void munge_finalize(void);
-static char* create_cred(void);
-static int validate_cred(pmix_peer_t *peer, char *cred);
+static pmix_status_t create_cred(pmix_listener_protocol_t protocol,
+                                 char **cred, size_t *len);
+static pmix_status_t validate_cred(pmix_listener_protocol_t protocol,
+                                   pmix_peer_t *peer, char *cred, size_t len);
 
 pmix_psec_module_t pmix_munge_module = {
     "munge",
@@ -47,7 +49,7 @@ static char *mycred = NULL;
 static bool initialized = false;
 static bool refresh = false;
 
-static int munge_init(void)
+static pmix_status_t munge_init(void)
 {
     int rc;
 
@@ -81,10 +83,10 @@ static void munge_finalize(void)
     }
 }
 
-static char* create_cred(void)
+static pmix_status_t create_cred(pmix_listener_protocol_t protocol,
+                                 char **cred, size_t *len)
 {
     int rc;
-    char *resp=NULL;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "psec: munge create_cred");
@@ -92,7 +94,8 @@ static char* create_cred(void)
     if (initialized) {
         if (!refresh) {
             refresh = true;
-            resp = strdup(mycred);
+            *cred = strdup(mycred);
+            *len = strlen(mycred) + 1;
         } else {
             /* munge does not allow reuse of a credential, so we have to
              * refresh it for every use */
@@ -105,13 +108,15 @@ static char* create_cred(void)
                                     munge_strerror(rc));
                 return NULL;
             }
-            resp = strdup(mycred);
+            *cred = strdup(mycred);
+            *len = strlen(mycred) + 1;
         }
     }
-    return resp;
+    return PMIX_SUCCESS;
 }
 
-static int validate_cred(pmix_peer_t *peer, char *cred)
+static pmix_status_t validate_cred(pmix_listener_protocol_t protocol,
+                                   pmix_peer_t *peer, char *cred, size_t len)
 {
     uid_t uid;
     gid_t gid;
