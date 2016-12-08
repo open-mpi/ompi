@@ -142,13 +142,14 @@ typedef struct ompi_predefined_request_t ompi_predefined_request_t;
  * performance path (since requests may be re-used, it is possible
  * that we will have to initialize a request multiple times).
  */
-#define OMPI_REQUEST_INIT(request, persistent)        \
-    do {                                              \
-        (request)->req_complete = REQUEST_PENDING;    \
-        (request)->req_state = OMPI_REQUEST_INACTIVE; \
-        (request)->req_persistent = (persistent);     \
-        (request)->req_complete_cb  = NULL;           \
-        (request)->req_complete_cb_data = NULL;       \
+#define OMPI_REQUEST_INIT(request, persistent)                  \
+    do {                                                        \
+        (request)->req_complete =                               \
+            (persistent) ? REQUEST_COMPLETED : REQUEST_PENDING; \
+        (request)->req_state = OMPI_REQUEST_INACTIVE;           \
+        (request)->req_persistent = (persistent);               \
+        (request)->req_complete_cb  = NULL;                     \
+        (request)->req_complete_cb_data = NULL;                 \
     } while (0);
 
 
