@@ -47,6 +47,15 @@ AC_DEFUN([OMPI_CHECK_HCOLL],[
                               [ompi_check_hcoll_happy="yes"],
                               [ompi_check_hcoll_happy="no"])
 
+           AS_IF([test "$ompi_check_hcoll_happy" = "yes"],
+                 [
+                     CPPFLAGS=$coll_hcoll_CPPFLAGS
+                     LDFLAGS=$coll_hcoll_LDFLAGS
+                     LIBS=$coll_hcoll_LIBS
+                     AC_CHECK_FUNCS(hcoll_context_free, [], [])
+                 ],
+                 [])
+
            CPPFLAGS=$CPPFLAGS_save
            LDFLAGS=$LDFLAGS_save
            LIBS=$LIBS_save],
