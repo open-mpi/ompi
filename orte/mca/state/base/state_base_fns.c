@@ -491,6 +491,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     } else if (ORTE_PROC_STATE_REGISTERED == state) {
         /* update the proc state */
         pdata->state = state;
+        ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_REG);
         jdata->num_reported++;
         if (jdata->num_reported == jdata->num_procs) {
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_REGISTERED);
