@@ -56,7 +56,7 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
     if( NULL == data->procs ) {
         int i, pos = 0, size, world_size;
         size = ompi_comm_size(data->p_comm);
-        world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
+        world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world) - 1;
         char*tmp_procs;
         assert( 0 < size );
         /* Allocate enough space for list */
@@ -86,7 +86,7 @@ mca_monitoring_coll_data_t*mca_common_monitoring_coll_new( ompi_communicator_t*c
 
     data->p_comm = comm;
     
-    /* Allocate list */
+    /* Allocate hashtable */
     if( NULL == comm_data ) {
         comm_data = OBJ_NEW(opal_hash_table_t);
         if( NULL == comm_data ) {
@@ -343,4 +343,4 @@ static void mca_monitoring_coll_construct (mca_monitoring_coll_data_t*coll_data)
 
 static void mca_monitoring_coll_destruct (mca_monitoring_coll_data_t*coll_data){}
 
-OBJ_CLASS_INSTANCE(mca_monitoring_coll_data_t, opal_list_item_t, mca_monitoring_coll_construct, mca_monitoring_coll_destruct);
+OBJ_CLASS_INSTANCE(mca_monitoring_coll_data_t, opal_object_t, mca_monitoring_coll_construct, mca_monitoring_coll_destruct);
