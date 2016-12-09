@@ -843,6 +843,7 @@ static void info_cbfunc(int status,
             OPAL_LIST_FOREACH(kv, info, opal_value_t) {
                 (void)strncpy(pcaddy->info[n].key, kv->key, PMIX_MAX_KEYLEN);
                 pmix2x_value_load(&pcaddy->info[n].value, kv);
+                ++n;
             }
         }
     }

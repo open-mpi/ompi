@@ -263,6 +263,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_FWD_STDOUT                     "pmix.fwd.stdout"        // (bool) forward stdout from spawned procs to me
 #define PMIX_FWD_STDERR                     "pmix.fwd.stderr"        // (bool) forward stderr from spawned procs to me
 #define PMIX_DEBUGGER_DAEMONS               "pmix.debugger"          // (bool) spawned app consists of debugger daemons
+#define PMIX_COSPAWN_APP                    "pmix.cospawn"           // (bool) designated app is to be spawned as a disconnected
+                                                                     //     job - i.e., not part of the "comm_world" of the job
 
 /* query attributes */
 #define PMIX_QUERY_NAMESPACES               "pmix.qry.ns"            // (char*) request a comma-delimited list of active nspaces
@@ -274,7 +276,9 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_QUERY_LOCAL_PROC_TABLE         "pmix.qry.lptable"       // (char*) input nspace of job whose info is being requested
                                                                      //     returns (pmix_data_array_t) an array of pmix_proc_info_t for
                                                                      //     procs in job on same node
-#define PMIX_QUERY_AUTHORIZATIONS           "pmix.qry.auths"         // return operations tool is authorized to perform"
+#define PMIX_QUERY_AUTHORIZATIONS           "pmix.qry.auths"         // return operations tool is authorized to perform
+#define PMIX_QUERY_SPAWN_SUPPORT            "pmix.qry.spawn"         // return a comma-delimited list of supported spawn attributes
+#define PMIX_QUERY_DEBUG_SUPPORT            "pmix.qry.debug"         // return a comma-delimited list of supported debug attributes
 
 /* log attributes */
 #define PMIX_LOG_STDERR                     "pmix.log.stderr"        // (bool) log data to stderr
@@ -282,9 +286,10 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_LOG_SYSLOG                     "pmix.log.syslog"        // (bool) log data to syslog - defaults to ERROR priority unless
                                                                      //        modified by directive
 /* debugger attributes */
-#define PMIX_SPAWN_UNDER_DEBUGGER           "pmix.dbg.pause"         // (bool) job is being spawned under debugger - instruct it to pause on start
-#define PMIX_JOB_BEING_DEBUGGED             "pmix.dbg.job"           // (char*) nspace of the job to be debugged - the RM/PMIx server are
-                                                                     //     to provide the job-level info of that job to each debugger daemon
+#define PMIX_DEBUG_STOP_ON_EXEC             "pmix.dbg.exec"          // (bool) job is being spawned under debugger - instruct it to pause on start
+#define PMIX_DEBUG_STOP_IN_INIT             "pmix.dbg.init"          // (bool) instruct job to stop during init (e.g., MPI_Init) - must
+                                                                     //     occur after PMIx init completes
+#define PMIX_DEBUG_JOB                      "pmix.dbg.job"           // (char*) nspace of the job to be debugged - the RM/PMIx server are
 
 /****    PROCESS STATE DEFINITIONS    ****/
 typedef uint8_t pmix_proc_state_t;
