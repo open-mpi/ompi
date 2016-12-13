@@ -21,6 +21,7 @@ BEGIN_C_DECLS
 typedef struct {
     pmix_peer_t myserver;           // messaging support to/from my server
     pmix_list_t pending_requests;   // list of pmix_cb_t pending data requests
+    bool wait_for_debugger;         // stop at the end of PMIx_Init and wait for notification of debugger release
 } pmix_client_globals_t;
 
 extern pmix_client_globals_t pmix_client_globals;

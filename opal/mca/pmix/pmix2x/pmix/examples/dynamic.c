@@ -95,7 +95,6 @@ int main(int argc, char **argv)
             exit(1);
         }
         app->maxprocs = 2;
-        app->argc = 1;
         app->argv = (char**)malloc(2 * sizeof(char*));
         if (0 > asprintf(&app->argv[0], "%s/client", dir)) {
             exit(1);

@@ -633,7 +633,6 @@ PMIX_EXPORT int PMI_Spawn_multiple(int count,
         apps[i].cmd = strdup(cmds[i]);
         apps[i].maxprocs = maxprocs[i];
         apps[i].argv = pmix_argv_copy((char**) argvs[i]);
-        apps[i].argc = pmix_argv_count(apps[i].argv);
         apps[i].ninfo = info_keyval_sizesp[i];
         if (0 < apps[i].ninfo) {
             apps[i].info = (pmix_info_t*)malloc(apps[i].ninfo * sizeof(pmix_info_t));

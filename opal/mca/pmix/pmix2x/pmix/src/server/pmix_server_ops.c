@@ -1009,7 +1009,7 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
     pmix_notify_caddy_t *cd;
     int i;
     bool enviro_events = false;
-    bool found;
+    bool found, matched;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "recvd register events");
@@ -1173,7 +1173,25 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
             }
         }
         if (found) {
-           /* have a match - notify */
+           /* if we were given specific targets, check if this is one */
+            if (NULL != cd->targets) {
+                matched = false;
+                for (n=0; n < cd->ntargets; n++) {
+                    if (0 != strncmp(peer->info->nptr->nspace, cd->targets[n].nspace, PMIX_MAX_NSLEN)) {
+                        continue;
+                    }
+                    if (PMIX_RANK_WILDCARD == cd->targets[n].rank ||
+                        peer->info->rank == cd->targets[n].rank) {
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    /* do not notify this one */
+                    continue;
+                }
+            }
+           /* all matches - notify */
             PMIX_RETAIN(cd->buf);
             PMIX_SERVER_QUEUE_REPLY(peer, 0, cd->buf);
         }
@@ -1536,6 +1554,8 @@ static void ncon(pmix_notify_caddy_t *p)
     memset(p->source.nspace, 0, PMIX_MAX_NSLEN+1);
     p->source.rank = PMIX_RANK_UNDEF;
     p->range = PMIX_RANGE_UNDEF;
+    p->targets = NULL;
+    p->ntargets = 0;
     p->nondefault = false;
     p->info = NULL;
     p->ninfo = 0;
@@ -1545,6 +1565,9 @@ static void ndes(pmix_notify_caddy_t *p)
 {
     if (NULL != p->info) {
         PMIX_INFO_FREE(p->info, p->ninfo);
+    }
+    if (NULL != p->targets) {
+        free(p->targets);
     }
     if (NULL != p->buf) {
         PMIX_RELEASE(p->buf);

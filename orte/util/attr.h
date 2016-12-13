@@ -143,6 +143,7 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_MULTI_DAEMON_SIM       (ORTE_JOB_START_KEY + 49)    // bool - multiple daemons/node to simulate large cluster
 #define ORTE_JOB_NOTIFY_COMPLETION      (ORTE_JOB_START_KEY + 50)    // bool - notify parent proc when spawned job terminates
 #define ORTE_JOB_TRANSPORT_KEY          (ORTE_JOB_START_KEY + 51)    // string - transport keys assigned to this job
+#define ORTE_JOB_INFO_CACHE             (ORTE_JOB_START_KEY + 52)    // opal_list_t - list of opal_value_t to be included in job_info
 
 #define ORTE_JOB_MAX_KEY   300
 

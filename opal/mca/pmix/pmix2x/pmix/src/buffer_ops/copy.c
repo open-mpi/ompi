@@ -557,12 +557,14 @@ PMIX_EXPORT pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
                     if (NULL != sa[n].cmd) {
                         pa[n].cmd = strdup(sa[n].cmd);
                     }
-                    pa[n].argc = sa[n].argc;
                     if (NULL != sa[n].argv) {
                         pa[n].argv = pmix_argv_copy(sa[n].argv);
                     }
                     if (NULL != sa[n].env) {
                         pa[n].env = pmix_argv_copy(sa[n].env);
+                    }
+                    if (NULL != sa[n].cwd) {
+                        pa[n].cwd = strdup(sa[n].cwd);
                     }
                     pa[n].maxprocs = sa[n].maxprocs;
                     if (0 < sa[n].ninfo && NULL != sa[n].info) {
@@ -844,9 +846,11 @@ pmix_status_t pmix_bfrop_copy_app(pmix_app_t **dest, pmix_app_t *src,
 
     *dest = (pmix_app_t*)malloc(sizeof(pmix_app_t));
     (*dest)->cmd = strdup(src->cmd);
-    (*dest)->argc = src->argc;
     (*dest)->argv = pmix_argv_copy(src->argv);
     (*dest)->env = pmix_argv_copy(src->env);
+    if (NULL != src->cwd) {
+        (*dest)->cwd = strdup(src->cwd);
+    }
     (*dest)->maxprocs = src->maxprocs;
     (*dest)->ninfo = src->ninfo;
     (*dest)->info = (pmix_info_t*)malloc(src->ninfo * sizeof(pmix_info_t));
@@ -1174,12 +1178,14 @@ pmix_status_t pmix_bfrop_copy_darray(pmix_data_array_t **dest,
                 if (NULL != sa[n].cmd) {
                     pa[n].cmd = strdup(sa[n].cmd);
                 }
-                pa[n].argc = sa[n].argc;
                 if (NULL != sa[n].argv) {
                     pa[n].argv = pmix_argv_copy(sa[n].argv);
                 }
                 if (NULL != sa[n].env) {
                     pa[n].env = pmix_argv_copy(sa[n].env);
+                }
+                if (NULL != sa[n].cwd) {
+                    pa[n].cwd = strdup(sa[n].cwd);
                 }
                 pa[n].maxprocs = sa[n].maxprocs;
                 if (0 < sa[n].ninfo && NULL != sa[n].info) {

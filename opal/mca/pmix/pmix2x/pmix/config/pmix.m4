@@ -328,11 +328,11 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       netdb.h ucred.h])
 
     AC_CHECK_HEADERS([sys/mount.h], [], [],
-                    [AC_INCLUDES_DEFAULT
-                     #if HAVE_SYS_PARAM_H
-                     #include <sys/param.h>
-                     #endif
-                     ])
+                     [AC_INCLUDES_DEFAULT
+                      #if HAVE_SYS_PARAM_H
+                      #include <sys/param.h>
+                      #endif
+                      ])
 
     AC_CHECK_HEADERS([sys/sysctl.h], [], [],
                      [AC_INCLUDES_DEFAULT
@@ -357,6 +357,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       # include <sys/socket.h>
                       #endif
                       ])
+
 
     # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
     # have both Portland and GNU installed; using pgcc will find GNU's

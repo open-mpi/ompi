@@ -88,6 +88,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_TDIR_RMCLEAN                  "pmix.tdir.rmclean"     // (bool)  Resource Manager will clean session directories
 
 /* information about relative ranks as assigned by the RM */
+#define OPAL_PMIX_NSPACE                        "pmix.nspace"           // (char*) nspace of a job
 #define OPAL_PMIX_JOBID                         "pmix.jobid"            // (uint32_t) jobid assigned by scheduler
 #define OPAL_PMIX_APPNUM                        "pmix.appnum"           // (uint32_t) app number within the job
 #define OPAL_PMIX_RANK                          "pmix.rank"             // (uint32_t) process rank within the job
@@ -200,6 +201,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_FWD_STDOUT                    "pmix.fwd.stdout"       // (bool) forward stdout from spawned procs to me
 #define OPAL_PMIX_FWD_STDERR                    "pmix.fwd.stderr"       // (bool) forward stderr from spawned procs to me
 #define OPAL_PMIX_DEBUGGER_DAEMONS              "pmix.debugger"         // (bool) spawned app consists of debugger daemons
+#define OPAL_PMIX_COSPAWN_APP                   "pmix.cospawn"          // (bool) designated app is to be spawned as a disconnected
+                                                                        //     job - i.e., not part of the "comm_world" of the job
 
 /* query attributes */
 #define OPAL_PMIX_QUERY_NAMESPACES              "pmix.qry.ns"           // (char*) request a comma-delimited list of active nspaces
@@ -212,11 +215,21 @@ BEGIN_C_DECLS
                                                                         //     returns (pmix_data_array_t) an array of pmix_proc_info_t for
                                                                         //     procs in job on same node
 #define OPAL_PMIX_QUERY_AUTHORIZATIONS          "pmix.qry.auths"        // return operations tool is authorized to perform"
+#define OPAL_PMIX_QUERY_SPAWN_SUPPORT           "pmix.qry.spawn"        // return a comma-delimited list of supported spawn attributes
+#define OPAL_PMIX_QUERY_DEBUG_SUPPORT           "pmix.qry.debug"        // return a comma-delimited list of supported debug attributes
 
 /* log attributes */
 #define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"        // (bool) log data to stderr
 #define OPAL_PMIX_LOG_STDOUT                    "pmix.log.stdout"        // (bool) log data to stdout
 #define OPAL_PMIX_LOG_SYSLOG                    "pmix.log.syslog"        // (bool) log data to syslog - defaults to ERROR priority unless
+
+/* debugger attributes */
+#define OPAL_PMIX_DEBUG_STOP_ON_EXEC            "pmix.dbg.exec"          // (bool) job is being spawned under debugger - instruct it to pause on start
+#define OPAL_PMIX_DEBUG_STOP_IN_INIT            "pmix.dbg.init"          // (bool) instruct job to stop during PMIx init
+#define OPAL_PMIX_DEBUG_WAIT_FOR_NOTIFY         "pmix.dbg.notify"        // (bool) block at desired point until receiving debugger release notification
+#define OPAL_PMIX_DEBUG_JOB                     "pmix.dbg.job"           // (char*) nspace of the job to be debugged - the RM/PMIx server are
+#define OPAL_PMIX_DEBUG_WAITING_FOR_NOTIFY      "pmix.dbg.waiting"       // (bool) job to be debugged is waiting for a release
+
 
 /* define a scope for data "put" by PMI per the following:
  *
@@ -278,9 +291,9 @@ OBJ_CLASS_DECLARATION(opal_pmix_pdata_t);
 typedef struct {
     opal_list_item_t super;
     char *cmd;
-    int argc;
     char **argv;
     char **env;
+    char *cwd;
     int maxprocs;
     opal_list_t info;
 } opal_pmix_app_t;

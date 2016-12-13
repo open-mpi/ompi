@@ -939,11 +939,11 @@ pmix_status_t pmix_bfrop_unpack_app(pmix_buffer_t *buffer, void *dest,
         }
         /* unpack argc */
         m=1;
-        if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_int(buffer, &ptr[i].argc, &m, PMIX_INT))) {
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_int(buffer, &nval, &m, PMIX_INT32))) {
             return ret;
         }
         /* unpack argv */
-        for (k=0; k < ptr[i].argc; k++) {
+        for (k=0; k < nval; k++) {
             m=1;
             tmp = NULL;
             if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_string(buffer, &tmp, &m, PMIX_STRING))) {
@@ -971,6 +971,11 @@ pmix_status_t pmix_bfrop_unpack_app(pmix_buffer_t *buffer, void *dest,
             }
             pmix_argv_append_nosize(&ptr[i].env, tmp);
             free(tmp);
+        }
+        /* unpack cwd */
+        m=1;
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_string(buffer, &ptr[i].cwd, &m, PMIX_STRING))) {
+            return ret;
         }
         /* unpack maxprocs */
         m=1;

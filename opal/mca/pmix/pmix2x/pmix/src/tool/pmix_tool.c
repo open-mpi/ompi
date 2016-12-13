@@ -162,6 +162,14 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         return PMIX_ERR_BAD_PARAM;
     }
 
+    /* if we were given an nspace in the environment, then we
+     * must have been spawned by a PMIx server - so even though
+     * we technically will operate as a tool, we are actually
+     * a "client" of the PMIx server and should connect that way */
+    if (NULL != getenv("PMIX_NAMESPACE")) {
+        return PMIx_Init(proc, info, ninfo);
+    }
+
     if (0 < pmix_globals.init_cntr) {
         /* since we have been called before, the nspace and
          * rank should be known. So return them here if

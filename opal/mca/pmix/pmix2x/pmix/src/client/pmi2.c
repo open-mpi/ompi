@@ -184,7 +184,6 @@ PMIX_EXPORT int PMI2_Job_Spawn(int count, const char * cmds[],
         apps[i].cmd = strdup(cmds[i]);
         apps[i].maxprocs = maxprocs[i];
         apps[i].argv = pmix_argv_copy((char**)argvs[i]);
-        apps[i].argc = pmix_argv_count(apps[i].argv);
         apps[i].ninfo = info_keyval_sizes[i];
         apps[i].info = (pmix_info_t*)malloc(apps[i].ninfo * sizeof(pmix_info_t));
         /* copy the info objects */

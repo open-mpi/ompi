@@ -53,6 +53,8 @@ typedef struct {
     pmix_status_t status;
     pmix_proc_t source;
     pmix_data_range_t range;
+    pmix_proc_t *targets;
+    size_t ntargets;
     bool nondefault;
     pmix_info_t *info;
     size_t ninfo;
