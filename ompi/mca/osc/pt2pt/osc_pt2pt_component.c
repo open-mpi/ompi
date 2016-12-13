@@ -153,8 +153,12 @@ static int component_register (void)
 
 static int component_progress (void)
 {
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.pending_operations_lock);
     int pending_count = opal_list_get_size (&mca_osc_pt2pt_component.pending_operations);
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.pending_operations_lock);
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.pending_receives_lock);
     int recv_count = opal_list_get_size (&mca_osc_pt2pt_component.pending_receives);
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.pending_receives_lock);
     ompi_osc_pt2pt_pending_t *pending, *next;
 
     if (recv_count) {
@@ -335,6 +339,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     if (OPAL_SUCCESS != ret) {
         goto cleanup;
     }
+
+    module->num_complete_msgs = 0;
 
     /* options */
     /* FIX ME: should actually check this value... */
