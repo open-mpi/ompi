@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -491,6 +491,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     } else if (ORTE_PROC_STATE_REGISTERED == state) {
         /* update the proc state */
         pdata->state = state;
+        ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_REG);
         jdata->num_reported++;
         if (jdata->num_reported == jdata->num_procs) {
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_REGISTERED);
@@ -521,13 +522,13 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         /* update the proc state */
         ORTE_FLAG_UNSET(pdata, ORTE_PROC_FLAG_ALIVE);
         pdata->state = state;
-	if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.
              */
             orte_session_dir_finalize(proc);
-	}
+        }
         /* if we are trying to terminate and our routes are
          * gone, then terminate ourselves IF no local procs
          * remain (might be some from another job)
@@ -550,11 +551,11 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         }
         /* return the allocated slot for reuse */
         cleanup_node(pdata);
-	/* track job status */
-	jdata->num_terminated++;
-	if (jdata->num_terminated == jdata->num_procs) {
+        /* track job status */
+        jdata->num_terminated++;
+        if (jdata->num_terminated == jdata->num_procs) {
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
-	}
+        }
     }
 
  cleanup:
@@ -752,10 +753,10 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                  * is maintained!
                  */
                 if (1 < j) {
-		    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
-			/* this was a debugger daemon. notify that a debugger has detached */
-			ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
-		    }
+                    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
+                        /* this was a debugger daemon. notify that a debugger has detached */
+                        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
+                    }
                     opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
                     OBJ_RELEASE(jdata);
                 }
