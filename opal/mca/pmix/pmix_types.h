@@ -212,11 +212,20 @@ BEGIN_C_DECLS
                                                                         //     returns (pmix_data_array_t) an array of pmix_proc_info_t for
                                                                         //     procs in job on same node
 #define OPAL_PMIX_QUERY_AUTHORIZATIONS          "pmix.qry.auths"        // return operations tool is authorized to perform"
+#define OPAL_PMIX_QUERY_SPAWN_SUPPORT           "pmix.qry.spawn"        // return a comma-delimited list of supported spawn attributes
+#define OPAL_PMIX_QUERY_DEBUG_SUPPORT           "pmix.qry.debug"        // return a comma-delimited list of supported debug attributes
 
 /* log attributes */
 #define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"        // (bool) log data to stderr
 #define OPAL_PMIX_LOG_STDOUT                    "pmix.log.stdout"        // (bool) log data to stdout
 #define OPAL_PMIX_LOG_SYSLOG                    "pmix.log.syslog"        // (bool) log data to syslog - defaults to ERROR priority unless
+
+/* debugger attributes */
+#define OPAL_PMIX_DEBUG_STOP_ON_EXEC            "pmix.dbg.exec"          // (bool) job is being spawned under debugger - instruct it to pause on start
+#define OPAL_PMIX_DEBUG_STOP_IN_INIT            "pmix.dbg.init"          // (bool) instruct job to stop during init (e.g., MPI_Init) - must
+                                                                         //     occur after PMIx init completes
+#define OPAL_PMIX_DEBUG_JOB                     "pmix.dbg.job"           // (char*) nspace of the job to be debugged - the RM/PMIx server are
+
 
 /* define a scope for data "put" by PMI per the following:
  *

@@ -116,6 +116,7 @@ typedef struct {
     opal_pmix_value_cbfunc_t valcbfunc;
     opal_pmix_lookup_cbfunc_t lkcbfunc;
     opal_pmix_spawn_cbfunc_t spcbfunc;
+    opal_pmix_info_cbfunc_t infocbfunc;
     void *cbdata;
 } pmix2x_opcaddy_t;
 OBJ_CLASS_DECLARATION(pmix2x_opcaddy_t);
