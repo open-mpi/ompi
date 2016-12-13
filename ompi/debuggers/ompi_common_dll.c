@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
@@ -43,6 +43,8 @@
 #include "ompi_config.h"
 
 #include "ompi_common_dll_defs.h"
+
+#include <string.h>
 
 /* Basic callbacks into the debugger */
 const mqs_basic_callbacks *mqs_basic_entrypoints = NULL;
@@ -628,4 +630,21 @@ int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr,
                                p_info);
 
     return mqs_ok;
+}
+
+int ompi_get_lib_version(char * buf, int size) {
+    int ret;
+    ret = snprintf(buf, size-1, "Open MPI v%d.%d.%d%s%s%s%s%s%s%s%s%s",
+                   OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION,
+                   (strlen(OMPI_GREEK_VERSION) > 0)?OMPI_GREEK_VERSION:"",
+                   (strlen(OPAL_PACKAGE_STRING) > 0)?", package: ":"",
+                   (strlen(OPAL_PACKAGE_STRING) > 0)?OPAL_PACKAGE_STRING:"",
+                   (strlen(OPAL_IDENT_STRING)> 0)?", ident: ":"",
+                   (strlen(OPAL_IDENT_STRING)> 0)?OMPI_IDENT_STRING:"",
+                   (strlen(OMPI_REPO_REV) > 0)?", repo rev: ":"",
+                   (strlen(OMPI_REPO_REV) > 0)?OMPI_REPO_REV:"",
+                   (strlen(OMPI_RELEASE_DATE) > 0)?", ":"",
+                   (strlen(OMPI_RELEASE_DATE) > 0)?OMPI_RELEASE_DATE:"");
+    buf[size-1] = '\0';
+    return ret;
 }
