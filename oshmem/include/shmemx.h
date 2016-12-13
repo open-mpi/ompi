@@ -12,6 +12,8 @@
 #ifndef OSHMEM_SHMEMX_H
 #define OSHMEM_SHMEMX_H
 
+#include <shmem.h>
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

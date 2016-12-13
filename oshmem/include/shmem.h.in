@@ -49,7 +49,6 @@
 #endif
 
 #include <shmem-compat.h>
-#include <shmemx.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
