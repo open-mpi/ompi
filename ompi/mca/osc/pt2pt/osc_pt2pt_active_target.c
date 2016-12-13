@@ -213,9 +213,11 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     ompi_osc_pt2pt_sync_t *sync = &module->all_sync;
 
     OPAL_THREAD_LOCK(&module->lock);
+    OPAL_THREAD_LOCK(&sync->lock);
 
     /* check if we are already in an access epoch */
     if (ompi_osc_pt2pt_access_epoch_active (module)) {
+        OPAL_THREAD_UNLOCK(&sync->lock);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -249,6 +251,7 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     if (0 == ompi_group_size (group)) {
         /* nothing more to do. this is an empty start epoch */
         sync->eager_send_active = true;
+        OPAL_THREAD_UNLOCK(&sync->lock);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_SUCCESS;
     }
@@ -258,12 +261,12 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     /* translate the group ranks into the communicator */
     sync->peer_list.peers = ompi_osc_pt2pt_get_peers (module, group);
     if (NULL == sync->peer_list.peers) {
+        OPAL_THREAD_UNLOCK(&sync->lock);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     if (!(assert & MPI_MODE_NOCHECK)) {
-        OPAL_THREAD_LOCK(&sync->lock);
         for (int i = 0 ; i < sync->num_peers ; ++i) {
             ompi_osc_pt2pt_peer_t *peer = sync->peer_list.peers[i];
 
@@ -276,7 +279,6 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
                 ompi_osc_pt2pt_peer_set_unex (peer, false);
             }
         }
-        OPAL_THREAD_UNLOCK(&sync->lock);
     } else {
         sync->sync_expected = 0;
     }
@@ -295,6 +297,7 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
                          "ompi_osc_pt2pt_start complete. eager sends active: %d",
                          sync->eager_send_active));
 
+    OPAL_THREAD_UNLOCK(&sync->lock);
     OPAL_THREAD_UNLOCK(&module->lock);
     return OMPI_SUCCESS;
 }
