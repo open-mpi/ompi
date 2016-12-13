@@ -175,13 +175,17 @@ int mca_pml_ucx_close(void)
 
 int mca_pml_ucx_init(void)
 {
+    ucp_worker_params_t params;
     ucs_status_t status;
     int rc;
 
     PML_UCX_VERBOSE(1, "mca_pml_ucx_init");
 
     /* TODO check MPI thread mode */
-    status = ucp_worker_create(ompi_pml_ucx.ucp_context, UCS_THREAD_MODE_SINGLE,
+    params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
+    params.thread_mode = UCS_THREAD_MODE_SINGLE;
+
+    status = ucp_worker_create(ompi_pml_ucx.ucp_context, &params,
                                &ompi_pml_ucx.ucp_worker);
     if (UCS_OK != status) {
         return OMPI_ERROR;
@@ -231,6 +235,7 @@ int mca_pml_ucx_cleanup(void)
 
 ucp_ep_h mca_pml_ucx_add_proc(ompi_communicator_t *comm, int dst)
 {
+    ucp_ep_params_t ep_params;
     ucp_address_t *address;
     ucs_status_t status;
     size_t addrlen;
@@ -254,7 +259,11 @@ ucp_ep_h mca_pml_ucx_add_proc(ompi_communicator_t *comm, int dst)
     }
 
     PML_UCX_VERBOSE(2, "connecting to proc. %d", proc_peer->super.proc_name.vpid);
-    status = ucp_ep_create(ompi_pml_ucx.ucp_worker, address, &ep);
+
+    ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
+    ep_params.address    = address;
+
+    status = ucp_ep_create(ompi_pml_ucx.ucp_worker, &ep_params, &ep);
     free(address);
     if (UCS_OK != status) {
         PML_UCX_ERROR("Failed to connect to proc: %d, %s", proc_peer->super.proc_name.vpid,
@@ -269,6 +278,7 @@ ucp_ep_h mca_pml_ucx_add_proc(ompi_communicator_t *comm, int dst)
 
 int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
+    ucp_ep_params_t ep_params;
     ucp_address_t *address;
     ucs_status_t status;
     ompi_proc_t *proc;
@@ -299,7 +309,11 @@ int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
         }
 
         PML_UCX_VERBOSE(2, "connecting to proc. %d", proc->super.proc_name.vpid);
-        status = ucp_ep_create(ompi_pml_ucx.ucp_worker, address, &ep);
+
+        ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
+        ep_params.address    = address;
+
+        status = ucp_ep_create(ompi_pml_ucx.ucp_worker, &ep_params, &ep);
         free(address);
 
         if (UCS_OK != status) {

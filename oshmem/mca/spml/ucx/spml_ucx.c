@@ -255,6 +255,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     size_t wk_addr_len;
     int *wk_roffs, *wk_rsizes;
     char *wk_raddrs;
+    ucp_ep_params_t ep_params;
 
 
     mca_spml_ucx.ucp_peers = (ucp_peer_t *) calloc(nprocs, sizeof(*(mca_spml_ucx.ucp_peers)));
@@ -280,9 +281,13 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     for (n = 0; n < nprocs; ++n) {
         i = (my_rank + n) % nprocs;
         dump_address(i, (char *)(wk_raddrs + wk_roffs[i]), wk_rsizes[i]);
+
+        ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
+        ep_params.address    = (ucp_address_t *)(wk_raddrs + wk_roffs[i]);
+
         err = ucp_ep_create(mca_spml_ucx.ucp_worker, 
-                (ucp_address_t *)(wk_raddrs + wk_roffs[i]),
-                &mca_spml_ucx.ucp_peers[i].ucp_conn);
+                            &ep_params,
+                            &mca_spml_ucx.ucp_peers[i].ucp_conn);
         if (UCS_OK != err) {
             SPML_ERROR("ucp_ep_create failed!!!\n");
             goto error2;
@@ -390,6 +395,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     spml_ucx_mkey_t   *ucx_mkey;
     size_t len;
     int my_pe = oshmem_my_proc_id();
+    ucp_mem_map_params_t mem_map_params;
     int seg;
     unsigned flags;
 
@@ -408,7 +414,15 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     if (mca_spml_ucx.heap_reg_nb && memheap_is_va_in_segment(addr, HEAP_SEG_INDEX)) {
         flags = UCP_MEM_MAP_NONBLOCK;
     }
-    err = ucp_mem_map(mca_spml_ucx.ucp_context, &addr, size, flags, &ucx_mkey->mem_h);
+
+    mem_map_params.field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
+                                UCP_MEM_MAP_PARAM_FIELD_LENGTH |
+                                UCP_MEM_MAP_PARAM_FIELD_FLAGS;
+    mem_map_params.address    = addr;
+    mem_map_params.length     = size;
+    mem_map_params.flags      = flags;
+
+    err = ucp_mem_map(mca_spml_ucx.ucp_context, &mem_map_params, &ucx_mkey->mem_h);
     if (UCS_OK != err) {
         goto error_out;
     }
@@ -434,7 +448,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     }
 
     mkeys[0].len     = len;
-    mkeys[0].va_base = addr;
+    mkeys[0].va_base = mem_map_params.address;
     *count = 1;
     mca_spml_ucx_cache_mkey(&mkeys[0], seg, my_pe);
     return mkeys;
