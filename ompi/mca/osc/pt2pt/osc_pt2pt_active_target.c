@@ -227,6 +227,12 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     /* haven't processed any post messages yet */
     sync->sync_expected = sync->num_peers;
 
+    /* If the previous epoch was from Fence, then eager_send_active is still
+     * set to true at this time, but it shoulnd't be true until we get our
+     * incoming Posts. So reset to 'false' for this new epoch.
+     */
+    sync->eager_send_active = false;
+
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_start entering with group size %d...",
                          sync->num_peers));
