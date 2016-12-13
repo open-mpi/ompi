@@ -5,6 +5,8 @@
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -164,12 +166,17 @@ int mpidbg_interface_version_compatibility(void)
 }
 
 
+static char mpidbg_version_str[OMPI_MAX_VER_SIZE];
+
 /* Returns a string specific to OMPI */
 char *mpidbg_version_string(void)
 {
+    int offset;
     printf("mpidbg_version_string\n");
-    return "Open MPI handle interpretation support for parallel"
-           " debuggers compiled on " __DATE__;
+    offset = snprintf(mpidbg_version_str, OMPI_MAX_VER_SIZE-1,  
+                      "Open MPI handle interpretation support for parallel debuggers ");
+    ompi_get_lib_version(mpidbg_version_str+offset, OMPI_MAX_VER_SIZE-offset);
+    return mpidbg_version_str;
 }
 
 
