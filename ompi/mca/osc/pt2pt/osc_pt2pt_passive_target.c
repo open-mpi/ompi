@@ -425,7 +425,18 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
              */
             OPAL_THREAD_LOCK(&module->lock);
             while (module->outgoing_frag_count < module->outgoing_frag_signal_count) {
+#ifdef OSC_PT2PT_HARD_SPIN_NO_CV_WAIT
+                /* It is possible that mark_outgoing_completion() is called just after the
+                 * while loop condition, and before we go into the _wait() below. This will mean
+                 * that we miss the signal, and block forever in the _wait().
+                 */
+                OPAL_THREAD_UNLOCK(&module->lock);
+                usleep(100);
+                opal_progress();
+                OPAL_THREAD_LOCK(&module->lock);
+#else
                 opal_condition_wait(&module->cond, &module->lock);
+#endif
             }
             OPAL_THREAD_UNLOCK(&module->lock);
 
