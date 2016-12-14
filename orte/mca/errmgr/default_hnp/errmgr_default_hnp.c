@@ -142,6 +142,9 @@ static void job_errors(int fd, short args, void *cbdata)
         return;
     }
 
+    /* ensure we have an error exit status */
+    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+
     /* if the jdata is NULL, then we abort as this
      * is reporting an unrecoverable error
      */
@@ -177,6 +180,7 @@ static void job_errors(int fd, short args, void *cbdata)
          */
         orte_routing_is_enabled = false;
         jdata->num_terminated = jdata->num_procs;
+        /* activate the terminated state so we can exit */
         ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_TERMINATED);
         /* if it was a dynamic spawn, then we better tell them this didn't work */
         if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
