@@ -147,11 +147,13 @@ my @sorted_people = sort(keys(%{$people}));
 foreach my $p (@sorted_people) {
     print AUTHORS $p;
     if (exists($people->{$p}->{org})) {
-        print AUTHORS ", $people->{$p}->{org}";
-
-        # Record this so that we can warn about it
-        push(@people_with_unknown_orgs, $p)
-            if ($people->{$p}->{org} eq $unknown_org);
+        my $org = $people->{$p}->{org};
+        if ($org ne $unknown_org) {
+            print AUTHORS ", $org";
+        } else {
+            # Record this so that we can warn about it
+            push(@people_with_unknown_orgs, $p);
+        }
     }
     print AUTHORS "\n";
 
