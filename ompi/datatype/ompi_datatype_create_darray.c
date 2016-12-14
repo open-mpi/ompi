@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -278,14 +280,13 @@ int32_t ompi_datatype_create_darray(int size,
             rc = ompi_datatype_create_hindexed( 1, blength_hindexed, displs_hindexed, lastType, newtype);
         }
         ompi_datatype_destroy(&lastType);
-        opal_datatype_resize( &(*newtype)->super, 0, displs[1] );
+        opal_datatype_resize( &(*newtype)->super, 0, displs[2] );
         /* need to destroy the old type even in error condition, so
            don't check return code from above until after cleanup. */
-        if (MPI_SUCCESS != rc) goto cleanup;
     }
 
  cleanup:
-    if (NULL != st_offsets) free(st_offsets);
-    if (NULL != coords) free(coords);
-    return OMPI_SUCCESS;
+    free (st_offsets);
+    free (coords);
+    return rc;
 }
