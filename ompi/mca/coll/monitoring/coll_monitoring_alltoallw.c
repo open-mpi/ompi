@@ -23,10 +23,24 @@ int mca_coll_monitoring_alltoallw(const void *sbuf, const int *scounts,
                                   mca_coll_base_module_t *module)
 {
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    size_t type_size, data_size, rank = ompi_comm_rank(comm);
-    ompi_datatype_type_size(sdtypes[rank], &type_size);
-    data_size = scounts[rank]*type_size;
-    mca_common_monitoring_coll_a2a(data_size, monitoring_module->data);
+    size_t type_size, data_size, data_size_aggreg = 0;
+    const int comm_size = ompi_comm_size(comm);
+    const int my_rank = ompi_comm_rank(comm);
+    int i, rank;
+    for( i = 0; i < comm_size; ++i ) {
+        if( my_rank == i ) continue; /* No communication for self */
+        ompi_datatype_type_size(sdtypes[i], &type_size);
+        data_size = scounts[i] * type_size;
+        /**
+         * If this fails the destination is not part of my MPI_COM_WORLD
+         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+         */
+        if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm, &rank) ) {
+            mca_common_monitoring_record_coll(rank, data_size);
+            data_size_aggreg += data_size;
+        }
+    }
+    mca_common_monitoring_coll_a2a(data_size_aggreg, monitoring_module->data);
     return monitoring_module->real.coll_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes, comm, monitoring_module->real.coll_alltoallw_module);
 }
 
@@ -41,44 +55,23 @@ int mca_coll_monitoring_ialltoallw(const void *sbuf, const int *scounts,
                                    mca_coll_base_module_t *module)
 {
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    size_t type_size, data_size, rank = ompi_comm_rank(comm);
-    ompi_datatype_type_size(sdtypes[rank], &type_size);
-    data_size = scounts[rank]*type_size;
-    mca_common_monitoring_coll_a2a(data_size, monitoring_module->data);
+    size_t type_size, data_size, data_size_aggreg = 0;
+    const int comm_size = ompi_comm_size(comm);
+    const int my_rank = ompi_comm_rank(comm);
+    int i, rank;
+    for( i = 0; i < comm_size; ++i ) {
+        if( my_rank == i ) continue; /* No communication for self */
+        ompi_datatype_type_size(sdtypes[i], &type_size);
+        data_size = scounts[i] * type_size;
+        /**
+         * If this fails the destination is not part of my MPI_COM_WORLD
+         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+         */
+        if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm, &rank) ) {
+            mca_common_monitoring_record_coll(rank, data_size);
+            data_size_aggreg += data_size;
+        }
+    }
+    mca_common_monitoring_coll_a2a(data_size_aggreg, monitoring_module->data);
     return monitoring_module->real.coll_ialltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes, comm, request, monitoring_module->real.coll_ialltoallw_module);
-}
-
-int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, const int *scounts,
-                                           const MPI_Aint *sdisps,
-                                           struct ompi_datatype_t * const *sdtypes,
-                                           void *rbuf, const int *rcounts,
-                                           const MPI_Aint *rdisps,
-                                           struct ompi_datatype_t * const *rdtypes,
-                                           struct ompi_communicator_t *comm,
-                                           mca_coll_base_module_t *module)
-{
-    mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    size_t type_size, data_size, rank = ompi_comm_rank(comm);
-    ompi_datatype_type_size(sdtypes[rank], &type_size);
-    data_size = scounts[rank]*type_size;
-    mca_common_monitoring_coll_a2a(data_size, monitoring_module->data);
-    return monitoring_module->real.coll_neighbor_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes, comm, monitoring_module->real.coll_neighbor_alltoallw_module);
-}
-
-int mca_coll_monitoring_ineighbor_alltoallw(const void *sbuf, const int *scounts,
-                                            const MPI_Aint *sdisps,
-                                            struct ompi_datatype_t * const *sdtypes,
-                                            void *rbuf, const int *rcounts,
-                                            const MPI_Aint *rdisps,
-                                            struct ompi_datatype_t * const *rdtypes,
-                                            struct ompi_communicator_t *comm,
-                                            ompi_request_t ** request,
-                                            mca_coll_base_module_t *module)
-{
-    mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    size_t type_size, data_size, rank = ompi_comm_rank(comm);
-    ompi_datatype_type_size(sdtypes[rank], &type_size);
-    data_size = scounts[rank]*type_size;
-    mca_common_monitoring_coll_a2a(data_size, monitoring_module->data);
-    return monitoring_module->real.coll_ineighbor_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes, comm, request, monitoring_module->real.coll_ineighbor_alltoallw_module);
 }

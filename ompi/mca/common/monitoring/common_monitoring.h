@@ -25,6 +25,7 @@ BEGIN_C_DECLS
 #define OPAL_MONITORING_VERBOSE(x, ...)                                 \
     OPAL_OUTPUT_VERBOSE((x, mca_common_monitoring_output_stream_id, __VA_ARGS__))
 
+/* When built in debug mode, always display error messages */
 #if OPAL_ENABLE_DEBUG
 #define OPAL_MONITORING_PRINT_ERR(...)          \
     OPAL_MONITORING_VERBOSE(0, __VA_ARGS__)
@@ -42,46 +43,30 @@ BEGIN_C_DECLS
 extern int mca_common_monitoring_output_stream_id;
 extern int mca_common_monitoring_enabled;
 extern int mca_common_monitoring_current_state;
-
-OMPI_DECLSPEC int mca_common_monitoring_get_messages_count (const struct mca_base_pvar_t *pvar,
-                                                            void *value, void *obj_handle);
-
-OMPI_DECLSPEC int mca_common_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar,
-                                                           void *value, void *obj_handle);
-
-OMPI_DECLSPEC int mca_common_monitoring_get_rmessages_count (const struct mca_base_pvar_t *pvar,
-                                                             void *value, void *obj_handle);
-
-OMPI_DECLSPEC int mca_common_monitoring_get_rmessages_size (const struct mca_base_pvar_t *pvar,
-                                                            void *value, void *obj_handle);
-
-OMPI_DECLSPEC int mca_common_monitoring_set_flush(struct mca_base_pvar_t *pvar,
-                                                  const void *value, void *obj);
-
-OMPI_DECLSPEC int mca_common_monitoring_get_flush(const struct mca_base_pvar_t *pvar,
-                                                  void *value, void *obj);
-
-OMPI_DECLSPEC int mca_common_monitoring_messages_notify(mca_base_pvar_t *pvar,
-                                                        mca_base_pvar_event_t event,
-                                                        void *obj_handle, int *count);
-
-OMPI_DECLSPEC int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
-                                                     mca_base_pvar_event_t event,
-                                                     void *obj, int *count);
-
-OMPI_DECLSPEC int mca_common_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
-                                                         mca_base_pvar_event_t event,
-                                                         void *obj_handle, int *count);
+extern opal_hash_table_t *common_monitoring_translation_ht;
 
 OMPI_DECLSPEC void mca_common_monitoring_register(void*pml_monitoring_component);
 OMPI_DECLSPEC void mca_common_monitoring_init( void );
 OMPI_DECLSPEC void mca_common_monitoring_finalize( void );
-OMPI_DECLSPEC void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag);
-OMPI_DECLSPEC void mca_common_monitoring_recv_data(int world_rank, size_t data_size, int tag);
 OMPI_DECLSPEC int mca_common_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs);
 
-OMPI_DECLSPEC opal_hash_table_t*mca_common_monitoring_get_translation_ht();
+/* Records PML communication */
+OMPI_DECLSPEC void mca_common_monitoring_record_pml(int world_rank, size_t data_size, int tag);
 
+/* SEND corresponds to data emitted from the current proc to the given
+ * one. RECV represents data emitted from the given proc to the
+ * current one.
+ */
+enum mca_monitoring_osc_direction { SEND, RECV };
+
+/* Records OSC communications. */
+OMPI_DECLSPEC void mca_common_monitoring_record_osc(int world_rank, size_t data_size,
+                                                    enum mca_monitoring_osc_direction dir);
+
+/* Records COLL communications. */
+OMPI_DECLSPEC void mca_common_monitoring_record_coll(int world_rank, size_t data_size);
+
+/* Translate the rank from the given communicator of a process to its rank in MPI_COMM_RANK. */
 static inline int mca_common_monitoring_get_world_rank(int dst, struct ompi_communicator_t*comm,
                                                        int*world_rank)
 {
@@ -101,7 +86,7 @@ static inline int mca_common_monitoring_get_world_rank(int dst, struct ompi_comm
      * If this fails the destination is not part of my MPI_COM_WORLD
      * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
      */
-    int ret = opal_hash_table_get_value_uint64(mca_common_monitoring_get_translation_ht(),
+    int ret = opal_hash_table_get_value_uint64(common_monitoring_translation_ht,
                                                key, (void *)&rank);
 
     /* Use intermediate variable to avoid overwriting while looking up in the hashtbale. */

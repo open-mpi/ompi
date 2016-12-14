@@ -25,7 +25,7 @@
 
 /*** Monitoring specific variables ***/
 /* Keep tracks of how many components are currently using the common part */
-uint32_t mca_common_monitoring_hold = 0;
+static uint32_t mca_common_monitoring_hold = 0;
 /* Output parameters */
 int mca_common_monitoring_output_stream_id = -1;
 static opal_output_stream_t mca_common_monitoring_output_stream_obj = {
@@ -46,27 +46,31 @@ static opal_output_stream_t mca_common_monitoring_output_stream_obj = {
 int mca_common_monitoring_enabled = 0;
 int mca_common_monitoring_current_state = 0;
 /* Signals there will be an output of the monitored data at component close */
-int mca_common_monitoring_output_enabled = 0;
+static int mca_common_monitoring_output_enabled = 0;
 /* File where to output the monitored data */
-char* mca_common_monitoring_initial_filename = "";
-char* mca_common_monitoring_current_filename = NULL;
+static char* mca_common_monitoring_initial_filename = "";
+static char* mca_common_monitoring_current_filename = NULL;
 
 /* array for stroring monitoring data*/
-uint64_t* sent_data = NULL;
-uint64_t* recv_data = NULL;
-uint64_t* messages_count = NULL;
-uint64_t* rmessages_count = NULL;
-uint64_t* filtered_sent_data = NULL;
-uint64_t* filtered_messages_count = NULL;
+static uint64_t* pml_data = NULL;
+static uint64_t* pml_count = NULL;
+static uint64_t* filtered_pml_data = NULL;
+static uint64_t* filtered_pml_count = NULL;
+static uint64_t* osc_data_s = NULL;
+static uint64_t* osc_count_s = NULL;
+static uint64_t* osc_data_r = NULL;
+static uint64_t* osc_count_r = NULL;
+static uint64_t* coll_data = NULL;
+static uint64_t* coll_count = NULL;
 
-uint64_t* size_histogram = NULL;
-const int max_size_histogram = 66;
-double log10_2 = 0.;
+static uint64_t* size_histogram = NULL;
+static const int max_size_histogram = 66;
+static double log10_2 = 0.;
 
-int rank_world = -1;
-int nprocs_world = 0;
+static int rank_world = -1;
+static int nprocs_world = 0;
 
-opal_hash_table_t *translation_ht = NULL;
+opal_hash_table_t *common_monitoring_translation_ht = NULL;
 
 /* Release static structures from common_monitoring_coll.c */
 extern void mca_common_monitoring_coll_finalize( void );
@@ -77,13 +81,66 @@ static void mca_common_monitoring_reset( void );
 /* Flushes the monitored data and reset the values */
 static int mca_common_monitoring_flush(int fd, char* filename);
 
-inline opal_hash_table_t*mca_common_monitoring_get_translation_ht()
+/* Retreive the PML recorded count of messages sent */
+static int mca_common_monitoring_get_pml_count (const struct mca_base_pvar_t *pvar,
+                                                void *value, void *obj_handle);
+
+/* Retreive the PML recorded amount of data sent */
+static int mca_common_monitoring_get_pml_size (const struct mca_base_pvar_t *pvar,
+                                               void *value, void *obj_handle);
+
+/* Retreive the OSC recorded count of messages sent */
+static int mca_common_monitoring_get_osc_sent_count (const struct mca_base_pvar_t *pvar,
+                                                     void *value, void *obj_handle);
+
+/* Retreive the OSC recorded amount of data sent */
+static int mca_common_monitoring_get_osc_sent_size (const struct mca_base_pvar_t *pvar,
+                                                    void *value, void *obj_handle);
+
+/* Retreive the OSC recorded count of messages received */
+static int mca_common_monitoring_get_osc_recv_count (const struct mca_base_pvar_t *pvar,
+                                                     void *value, void *obj_handle);
+
+/* Retreive the OSC recorded amount of data received */
+static int mca_common_monitoring_get_osc_recv_size (const struct mca_base_pvar_t *pvar,
+                                                    void *value, void *obj_handle);
+
+/* Retreive the COLL recorded count of messages sent */
+static int mca_common_monitoring_get_coll_count (const struct mca_base_pvar_t *pvar,
+                                                 void *value, void *obj_handle);
+
+/* Retreive the COLL recorded amount of data sent */
+static int mca_common_monitoring_get_coll_size (const struct mca_base_pvar_t *pvar,
+                                                void *value, void *obj_handle);
+
+/* Set the filename where to output the monitored data */
+static int mca_common_monitoring_set_flush(struct mca_base_pvar_t *pvar,
+                                           const void *value, void *obj);
+
+/* Does nothing, as the pml_monitoring_flush pvar as no point to be read */
+static int mca_common_monitoring_get_flush(const struct mca_base_pvar_t *pvar,
+                                           void *value, void *obj);
+
+/* pml_monitoring_count, pml_monitoring_size,
+   osc_monitoring_sent_count, osc_monitoring sent_size,
+   osc_monitoring_recv_size and osc_monitoring_recv_count pvar notify
+   function */
+static int mca_common_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
+                                                  mca_base_pvar_event_t event,
+                                                  void *obj_handle, int *count);
+
+/* pml_monitoring_flush pvar notify function */
+static int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
+                                              mca_base_pvar_event_t event,
+                                              void *obj, int *count);
+
+inline opal_hash_table_t*mca_common_monitoring_get_common_monitoring_translation_ht()
 {
-    return translation_ht;
+    return common_monitoring_translation_ht;
 }
 
-int mca_common_monitoring_set_flush(struct mca_base_pvar_t *pvar,
-                                    const void *value, void *obj)
+static int mca_common_monitoring_set_flush(struct mca_base_pvar_t *pvar,
+                                           const void *value, void *obj)
 {
     if( NULL != mca_common_monitoring_current_filename ) {
         free(mca_common_monitoring_current_filename);
@@ -98,15 +155,15 @@ int mca_common_monitoring_set_flush(struct mca_base_pvar_t *pvar,
     return OMPI_SUCCESS;
 }
 
-int mca_common_monitoring_get_flush(const struct mca_base_pvar_t *pvar,
-                                    void *value, void *obj)
+static int mca_common_monitoring_get_flush(const struct mca_base_pvar_t *pvar,
+                                           void *value, void *obj)
 {
     return OMPI_SUCCESS;
 }
 
-int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
-                                       mca_base_pvar_event_t event,
-                                       void *obj, int *count)
+static int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
+                                              mca_base_pvar_event_t event,
+                                              void *obj, int *count)
 {
     int rank, size;
 
@@ -128,10 +185,10 @@ int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
     return OMPI_ERROR;
 }
 
-int mca_common_monitoring_messages_notify(mca_base_pvar_t *pvar,
-                                          mca_base_pvar_event_t event,
-                                          void *obj_handle,
-                                          int *count)
+static int mca_common_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
+                                                  mca_base_pvar_event_t event,
+                                                  void *obj_handle,
+                                                  int *count)
 {
     switch (event) {
     case MCA_BASE_PVAR_HANDLE_BIND:
@@ -165,10 +222,9 @@ void mca_common_monitoring_init( void )
     mca_common_monitoring_output_stream_id =
         opal_output_open(&mca_common_monitoring_output_stream_obj);
     /* Initialize proc translation hashtable */
-    translation_ht = OBJ_NEW(opal_hash_table_t);
-    opal_hash_table_init(translation_ht, 2048);
+    common_monitoring_translation_ht = OBJ_NEW(opal_hash_table_t);
+    opal_hash_table_init(common_monitoring_translation_ht, 2048);
 }
-
 
 void mca_common_monitoring_finalize( void )
 {
@@ -185,9 +241,9 @@ void mca_common_monitoring_finalize( void )
     opal_output_close(mca_common_monitoring_output_stream_id);
     free(mca_common_monitoring_output_stream_obj.lds_prefix);
     /* Free internal data structure */
-    free(sent_data);  /* a single allocation */
-    opal_hash_table_remove_all( translation_ht );
-    OBJ_RELEASE(translation_ht);
+    free(pml_data);  /* a single allocation */
+    opal_hash_table_remove_all( common_monitoring_translation_ht );
+    OBJ_RELEASE(common_monitoring_translation_ht);
     mca_common_monitoring_coll_finalize();
     if( NULL != mca_common_monitoring_current_filename ) {
         free(mca_common_monitoring_current_filename);
@@ -248,48 +304,82 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
 
     /* PML PVARs */
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "flush", "Flush the monitoring "
-                                 "information in the provided file", OPAL_INFO_LVL_1,
-                                 MCA_BASE_PVAR_CLASS_GENERIC,
+                                 "information in the provided file. The filename is append with "
+                                 "the .%d.prof suffix, where %d is replaced with the processus "
+                                 "rank in MPI_COMM_WORLD.",
+                                 OPAL_INFO_LVL_1, MCA_BASE_PVAR_CLASS_GENERIC,
                                  MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT, 0,
                                  mca_common_monitoring_get_flush, mca_common_monitoring_set_flush,
                                  mca_common_monitoring_notify_flush, NULL);
 
-    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count",
-                                 "Number of messages sent to each peer in a communicator",
+    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count", "Number of "
+                                 "messages sent to each peer through the PML framework.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
-                                 mca_common_monitoring_get_messages_count, NULL,
+                                 mca_common_monitoring_get_pml_count, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_size", "Size of messages "
-                                 "sent to each peer in a communicator", OPAL_INFO_LVL_4,
-                                 MPI_T_PVAR_CLASS_SIZE,
+                                 "sent to each peer in a communicator through the PML framework.",
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
-                                 mca_common_monitoring_get_messages_size, NULL,
+                                 mca_common_monitoring_get_pml_size, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
     /* OSC PVARs */
-    (void)mca_base_pvar_register("ompi", "osc", "monitoring", "messages_count", "Number of messages "
-                                 "received from each peer in a communicator", OPAL_INFO_LVL_4,
-                                 MPI_T_PVAR_CLASS_SIZE,
+    (void)mca_base_pvar_register("ompi", "osc", "monitoring", "messages_sent_count", "Number of "
+                                 "messages sent through the OSC framework with each peer.",
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
-                                 mca_common_monitoring_get_rmessages_count, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
+                                 mca_common_monitoring_get_osc_sent_count, NULL,
+                                 mca_common_monitoring_comm_size_notify, NULL);
     
-    (void)mca_base_pvar_register("ompi", "osc", "monitoring", "messages_size", "Size of messages "
-                                 "received from each peer in a communicator", OPAL_INFO_LVL_4,
-                                 MPI_T_PVAR_CLASS_SIZE,
+    (void)mca_base_pvar_register("ompi", "osc", "monitoring", "messages_sent_size", "Size of "
+                                 "messages sent through the OSC framework with each peer.",
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
-                                 mca_common_monitoring_get_rmessages_size, NULL,
-                                 mca_common_monitoring_messages_notify, NULL);
+                                 mca_common_monitoring_get_osc_sent_size, NULL,
+                                 mca_common_monitoring_comm_size_notify, NULL);
+
+    (void)mca_base_pvar_register("ompi", "osc", "monitoring", "messages_recv_count", "Number of "
+                                 "messages received through the OSC framework with each peer.",
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 mca_common_monitoring_get_osc_recv_count, NULL,
+                                 mca_common_monitoring_comm_size_notify, NULL);
+
+    (void)mca_base_pvar_register("ompi", "osc", "monitoring", "messages_recv_size", "Size of "
+                                 "messages received through the OSC framework with each peer.",
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 mca_common_monitoring_get_osc_recv_size, NULL,
+                                 mca_common_monitoring_comm_size_notify, NULL);
 
     /* COLL PVARs */
+    (void)mca_base_pvar_register("ompi", "coll", "monitoring", "messages_count", "Number of "
+                                 "messages exchanged through the COLL framework with each peer.",
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 mca_common_monitoring_get_coll_count, NULL,
+                                 mca_common_monitoring_comm_size_notify, NULL);
+
+    (void)mca_base_pvar_register("ompi", "coll", "monitoring", "messages_size", "Size of "
+                                 "messages exchanged through the COLL framework with each peer.",
+                                 OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 mca_common_monitoring_get_coll_size, NULL,
+                                 mca_common_monitoring_comm_size_notify, NULL);
+
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "o2a_count", "Number of messages "
-                                 "exchanged as one-to-all operations in a communicator",
+                                 "exchanged as one-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_COUNTER,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
@@ -297,7 +387,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  mca_common_monitoring_coll_messages_notify, NULL);
     
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "o2a_size", "Size of messages "
-                                 "exchanged as one-to-all operations in a communicator",
+                                 "exchanged as one-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
@@ -305,7 +395,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  mca_common_monitoring_coll_messages_notify, NULL);
 
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2o_count", "Number of messages "
-                                 "exchanged as all-to-one operations in a communicator",
+                                 "exchanged as all-to-one operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_COUNTER,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
@@ -313,7 +403,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  mca_common_monitoring_coll_messages_notify, NULL);
     
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2o_size", "Size of messages "
-                                 "exchanged as all-to-one operations in a communicator",
+                                 "exchanged as all-to-one operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
@@ -321,7 +411,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  mca_common_monitoring_coll_messages_notify, NULL);
 
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2a_count", "Number of messages "
-                                 "exchanged as all-to-all operations in a communicator",
+                                 "exchanged as all-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_COUNTER,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
@@ -329,25 +419,12 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  mca_common_monitoring_coll_messages_notify, NULL);
     
     (void)mca_base_pvar_register("ompi", "coll", "monitoring", "a2a_size", "Size of messages "
-                                 "exchanged as all-to-all operations in a communicator",
+                                 "exchanged as all-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
                                  MCA_BASE_PVAR_FLAG_READONLY,
                                  mca_common_monitoring_coll_get_a2a_size, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
-}
-
-int mca_common_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
-                                           mca_base_pvar_event_t event,
-                                           void *obj_handle,
-                                           int *count)
-{
-    if (MCA_BASE_PVAR_HANDLE_BIND == event) {
-        /* Return the size of the communicator as the number of values */
-        *count = ompi_comm_size ((ompi_communicator_t *) obj_handle);
-    }
-
-    return OMPI_SUCCESS;
 }
 
 /**
@@ -366,16 +443,20 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
     if( !nprocs_world )
         nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
 
-    if( NULL == sent_data ) {
-        int array_size = (6 + max_size_histogram) * nprocs_world;
-        sent_data               = (uint64_t*)calloc(array_size, sizeof(uint64_t));
-        recv_data               = sent_data + nprocs_world;
-        messages_count          = recv_data + nprocs_world;
-        rmessages_count         = messages_count + nprocs_world;
-        filtered_sent_data      = rmessages_count + nprocs_world;
-        filtered_messages_count = filtered_sent_data + nprocs_world;
+    if( NULL == pml_data ) {
+        int array_size = (10 + max_size_histogram) * nprocs_world;
+        pml_data           = (uint64_t*)calloc(array_size, sizeof(uint64_t));
+        pml_count          = pml_data + nprocs_world;
+        filtered_pml_data  = pml_count + nprocs_world;
+        filtered_pml_count = filtered_pml_data + nprocs_world;
+        osc_data_s         = filtered_pml_count + nprocs_world;
+        osc_count_s        = osc_data_s + nprocs_world;
+        osc_data_r         = osc_count_s + nprocs_world;
+        osc_count_r        = osc_data_r + nprocs_world;
+        coll_data          = osc_data_s + nprocs_world;
+        coll_count         = coll_data + nprocs_world;
 
-        size_histogram = filtered_messages_count + nprocs_world;
+        size_histogram     = coll_count + nprocs_world;
     }
 
     /* For all procs in the same MPI_COMM_WORLD we need to add them to the hash table */
@@ -398,7 +479,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
 
             key = *((uint64_t*)&tmp);
             /* save the rank of the process in MPI_COMM_WORLD in the hash using the proc_name as the key */
-            if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(translation_ht,
+            if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(common_monitoring_translation_ht,
                                                                  key, (void*)(uintptr_t)peer_rank) ) {
                 return OMPI_ERR_OUT_OF_RESOURCE;  /* failed to allocate memory or growing the hash table */
             }
@@ -410,11 +491,11 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
 
 static void mca_common_monitoring_reset( void )
 {
-    int array_size = (6 + max_size_histogram) * nprocs_world;
-    memset(sent_data, 0, array_size * sizeof(uint64_t));
+    int array_size = (10 + max_size_histogram) * nprocs_world;
+    memset(pml_data, 0, array_size * sizeof(uint64_t));
 }
 
-void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
+void mca_common_monitoring_record_pml(int world_rank, size_t data_size, int tag)
 {
     if( 0 == mca_common_monitoring_current_state ) return;  /* right now the monitoring is not started */
 
@@ -428,90 +509,179 @@ void mca_common_monitoring_send_data(int world_rank, size_t data_size, int tag)
         
     /* distinguishses positive and negative tags if requested */
     if( (tag < 0) && (mca_common_monitoring_filter()) ) {
-        filtered_sent_data[world_rank] += data_size;
-        filtered_messages_count[world_rank]++;
+        filtered_pml_data[world_rank] += data_size;
+        filtered_pml_count[world_rank]++;
     } else { /* if filtered monitoring is not activated data is aggregated indifferently */
-        sent_data[world_rank] += data_size;
-        messages_count[world_rank]++;
+        pml_data[world_rank] += data_size;
+        pml_count[world_rank]++;
     }
 }
 
-void mca_common_monitoring_recv_data(int world_rank, size_t data_size, int tag)
-{
-    if( 0 == mca_common_monitoring_current_state ) return;  /* right now the monitoring is not started */
-    recv_data[world_rank] += data_size;
-    rmessages_count[world_rank]++;
-}
-
-int mca_common_monitoring_get_messages_count(const struct mca_base_pvar_t *pvar,
-                                             void *value,
-                                             void *obj_handle)
+static int mca_common_monitoring_get_pml_count(const struct mca_base_pvar_t *pvar,
+                                               void *value,
+                                               void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
     int i, comm_size = ompi_comm_size (comm);
     uint64_t *values = (uint64_t*) value;
 
-    if(comm != &ompi_mpi_comm_world.comm || NULL == messages_count)
+    if(comm != &ompi_mpi_comm_world.comm || NULL == pml_count)
         return OMPI_ERROR;
 
     for (i = 0 ; i < comm_size ; ++i) {
-        values[i] = messages_count[i];
+        values[i] = pml_count[i];
     }
 
     return OMPI_SUCCESS;
 }
 
-int mca_common_monitoring_get_messages_size(const struct mca_base_pvar_t *pvar,
-                                            void *value,
-                                            void *obj_handle)
-{
-    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    int comm_size = ompi_comm_size (comm);
-    uint64_t *values = (uint64_t*) value;
-    int i;
-
-    if(comm != &ompi_mpi_comm_world.comm || NULL == sent_data)
-        return OMPI_ERROR;
-
-    for (i = 0 ; i < comm_size ; ++i) {
-        values[i] = sent_data[i];
-    }
-
-    return OMPI_SUCCESS;
-}
-
-int mca_common_monitoring_get_rmessages_count(const struct mca_base_pvar_t *pvar,
+static int mca_common_monitoring_get_pml_size(const struct mca_base_pvar_t *pvar,
                                               void *value,
                                               void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    int i, comm_size = ompi_comm_size (comm);
+    int comm_size = ompi_comm_size (comm);
     uint64_t *values = (uint64_t*) value;
+    int i;
 
-    if(comm != &ompi_mpi_comm_world.comm || NULL == messages_count)
+    if(comm != &ompi_mpi_comm_world.comm || NULL == pml_data)
         return OMPI_ERROR;
 
     for (i = 0 ; i < comm_size ; ++i) {
-        values[i] = rmessages_count[i];
+        values[i] = pml_data[i];
     }
 
     return OMPI_SUCCESS;
 }
 
-int mca_common_monitoring_get_rmessages_size(const struct mca_base_pvar_t *pvar,
-                                             void *value,
-                                             void *obj_handle)
+void mca_common_monitoring_record_osc(int world_rank, size_t data_size,
+                                      enum mca_monitoring_osc_direction dir)
+{
+    if( 0 == mca_common_monitoring_current_state ) return;  /* right now the monitoring is not started */
+
+    if( SEND == dir ) {
+        osc_data_s[world_rank] += data_size;
+        ++osc_count_s[world_rank];
+    } else {
+        osc_data_r[world_rank] += data_size;
+        ++osc_count_r[world_rank];
+    }
+}
+
+static int mca_common_monitoring_get_osc_sent_count(const struct mca_base_pvar_t *pvar,
+                                                    void *value,
+                                                    void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    int i, comm_size = ompi_comm_size (comm);
+    uint64_t *values = (uint64_t*) value;
+
+    if(comm != &ompi_mpi_comm_world.comm || NULL == pml_count)
+        return OMPI_ERROR;
+
+    for (i = 0 ; i < comm_size ; ++i) {
+        values[i] = osc_count_s[i];
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_common_monitoring_get_osc_sent_size(const struct mca_base_pvar_t *pvar,
+                                                   void *value,
+                                                   void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
     int comm_size = ompi_comm_size (comm);
     uint64_t *values = (uint64_t*) value;
     int i;
 
-    if(comm != &ompi_mpi_comm_world.comm || NULL == sent_data)
+    if(comm != &ompi_mpi_comm_world.comm || NULL == pml_data)
         return OMPI_ERROR;
 
     for (i = 0 ; i < comm_size ; ++i) {
-        values[i] = recv_data[i];
+        values[i] = osc_data_s[i];
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_common_monitoring_get_osc_recv_count(const struct mca_base_pvar_t *pvar,
+                                                    void *value,
+                                                    void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    int i, comm_size = ompi_comm_size (comm);
+    uint64_t *values = (uint64_t*) value;
+
+    if(comm != &ompi_mpi_comm_world.comm || NULL == pml_count)
+        return OMPI_ERROR;
+
+    for (i = 0 ; i < comm_size ; ++i) {
+        values[i] = osc_count_r[i];
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_common_monitoring_get_osc_recv_size(const struct mca_base_pvar_t *pvar,
+                                                   void *value,
+                                                   void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    int comm_size = ompi_comm_size (comm);
+    uint64_t *values = (uint64_t*) value;
+    int i;
+
+    if(comm != &ompi_mpi_comm_world.comm || NULL == pml_data)
+        return OMPI_ERROR;
+
+    for (i = 0 ; i < comm_size ; ++i) {
+        values[i] = osc_data_r[i];
+    }
+
+    return OMPI_SUCCESS;
+}
+
+void mca_common_monitoring_record_coll(int world_rank, size_t data_size)
+{
+    if( 0 == mca_common_monitoring_current_state ) return;  /* right now the monitoring is not started */
+
+    coll_data[world_rank] += data_size;
+    ++coll_count[world_rank];
+}
+
+static int mca_common_monitoring_get_coll_count(const struct mca_base_pvar_t *pvar,
+                                                void *value,
+                                                void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    int i, comm_size = ompi_comm_size (comm);
+    uint64_t *values = (uint64_t*) value;
+
+    if(comm != &ompi_mpi_comm_world.comm || NULL == pml_count)
+        return OMPI_ERROR;
+
+    for (i = 0 ; i < comm_size ; ++i) {
+        values[i] = coll_count[i];
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_common_monitoring_get_coll_size(const struct mca_base_pvar_t *pvar,
+                                               void *value,
+                                               void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    int comm_size = ompi_comm_size (comm);
+    uint64_t *values = (uint64_t*) value;
+    int i;
+
+    if(comm != &ompi_mpi_comm_world.comm || NULL == pml_data)
+        return OMPI_ERROR;
+
+    for (i = 0 ; i < comm_size ; ++i) {
+        values[i] = coll_data[i];
     }
 
     return OMPI_SUCCESS;
@@ -522,45 +692,61 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     /* Dump outgoing messages */
     fprintf(pf, "# POINT TO POINT\n");
     for (int i = 0 ; i < nbprocs ; i++) {
-        if(messages_count[i] > 0) {
+        if(pml_count[i] > 0) {
             fprintf(pf, "I\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
-                    my_rank, i, sent_data[i], messages_count[i]);
+                    my_rank, i, pml_data[i], pml_count[i]);
             for(int j = 0 ; j < max_size_histogram ; ++j)
                 fprintf(pf, "%" PRIu64 "%s", size_histogram[i * max_size_histogram + j],
                         j < max_size_histogram - 1 ? "," : "\n");
         }
         /* reset phase array */
-        sent_data[i] = 0;
-        messages_count[i] = 0;
+        pml_data[i] = 0;
+        pml_count[i] = 0;
     }
 
     /* Dump outgoing synchronization/collective messages */
     if( mca_common_monitoring_filter() ) {
         for (int i = 0 ; i < nbprocs ; i++) {
-            if(filtered_messages_count[i] > 0) {
+            if(filtered_pml_count[i] > 0) {
                 fprintf(pf, "E\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
-                        my_rank, i, filtered_sent_data[i], filtered_messages_count[i]);
+                        my_rank, i, filtered_pml_data[i], filtered_pml_count[i]);
             }
             /* reset phase array */
-            filtered_sent_data[i] = 0;
-            filtered_messages_count[i] = 0;
+            filtered_pml_data[i] = 0;
+            filtered_pml_count[i] = 0;
         }
     }
 
     /* Dump incoming messages */
     fprintf(pf, "# RMA\n");
     for (int i = 0 ; i < nbprocs ; i++) {
-        if(rmessages_count[i] > 0) {
+        if(osc_count_s[i] > 0) {
+            fprintf(pf, "S\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
+                    my_rank, i, osc_data_s[i], osc_count_s[i]);
+        }
+        if(osc_count_r[i] > 0) {
             fprintf(pf, "R\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
-                    my_rank, i, recv_data[i], rmessages_count[i]);
+                    my_rank, i, osc_data_r[i], osc_count_r[i]);
         }
         /* reset phase array */
-        recv_data[i] = 0;
-        rmessages_count[i] = 0;
+        osc_data_s[i]  = 0;
+        osc_count_s[i] = 0;
+        osc_data_r[i]  = 0;
+        osc_count_r[i] = 0;
     }
 
     /* Dump collectives */
+    fprintf(pf, "# COLLECTIVES\n");
     mca_common_monitoring_coll_flush_all(pf);
+    for (int i = 0 ; i < nbprocs ; i++) {
+        if(coll_count[i] > 0) {
+            fprintf(pf, "C\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
+                    my_rank, i, coll_data[i], coll_count[i]);
+        }
+        /* reset phase array */
+        coll_data[i] = 0;
+        coll_count[i] = 0;
+    }
 }
 
 /*
