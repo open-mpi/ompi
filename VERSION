@@ -82,7 +82,7 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=12:4:0
+libmpi_so_version=12:5:0
 libmpi_cxx_so_version=2:3:1
 libmpi_mpifh_so_version=12:1:0
 libmpi_usempi_tkr_so_version=6:0:1
