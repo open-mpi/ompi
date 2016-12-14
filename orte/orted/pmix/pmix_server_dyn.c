@@ -159,7 +159,8 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
     orte_job_t *jdata;
     orte_app_context_t *app;
     opal_pmix_app_t *papp;
-    opal_value_t *info;
+    opal_value_t *info, *next;
+    opal_list_t *cache;
     int rc;
     char cwd[OPAL_PATH_MAX];
 
@@ -173,7 +174,7 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
     jdata->map = OBJ_NEW(orte_job_map_t);
 
     /* transfer the job info across */
-    OPAL_LIST_FOREACH(info, job_info, opal_value_t) {
+    OPAL_LIST_FOREACH_SAFE(info, next, job_info, opal_value_t) {
         if (0 == strcmp(info->key, OPAL_PMIX_PERSONALITY)) {
             jdata->personality = opal_argv_split(info->data.string, ',');
         } else if (0 == strcmp(info->key, OPAL_PMIX_MAPPER)) {
@@ -246,10 +247,21 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
                 orte_set_attribute(&jdata->attributes, ORTE_JOB_NOTIFY_COMPLETION,
                                    ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
             }
+        } else if (0 == strcmp(info->key, OPAL_PMIX_DEBUG_STOP_ON_EXEC)) {
+            /* we don't know how to do this */
+            return ORTE_ERR_NOT_SUPPORTED;
         } else {
-            /* unrecognized key */
-            orte_show_help("help-orted.txt", "bad-key",
-                           true, "spawn", "job level", info->key);
+            /* cache for inclusion with job info at registration */
+            cache = NULL;
+            opal_list_remove_item(job_info, &info->super);
+            if (orte_get_attribute(&jdata->attributes, ORTE_JOB_INFO_CACHE, (void**)&cache, OPAL_PTR) &&
+                NULL != cache) {
+                opal_list_append(cache, &info->super);
+            } else {
+                cache = OBJ_NEW(opal_list_t);
+                opal_list_append(cache, &info->super);
+                orte_set_attribute(&jdata->attributes, ORTE_JOB_INFO_CACHE, ORTE_ATTR_LOCAL, (void*)cache, OPAL_PTR);
+            }
         }
     }
     /* if the job is missing a personality setting, add it */
@@ -262,9 +274,16 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
         app = OBJ_NEW(orte_app_context_t);
         app->idx = opal_pointer_array_add(jdata->apps, app);
         jdata->num_apps++;
-        app->app = strdup(papp->cmd);
+        if (NULL != papp->cmd) {
+            app->app = strdup(papp->cmd);
+        } else {
+            app->app = strdup(papp->argv[0]);
+        }
         app->argv = opal_argv_copy(papp->argv);
         app->env = opal_argv_copy(papp->env);
+        if (NULL != papp->cwd) {
+            app->cwd = strdup(papp->cwd);
+        }
         app->num_procs = papp->maxprocs;
         OPAL_LIST_FOREACH(info, &papp->info, opal_value_t) {
             if (0 == strcmp(info->key, OPAL_PMIX_HOST)) {

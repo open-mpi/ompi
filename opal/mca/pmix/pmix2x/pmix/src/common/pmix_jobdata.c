@@ -13,6 +13,7 @@
 #include <pmix_server.h>
 #include <pmix_common.h>
 #include "src/include/pmix_globals.h"
+#include "src/client/pmix_client_ops.h"
 #include "src/class/pmix_value_array.h"
 #include "src/util/error.h"
 #include "src/buffer_ops/internal.h"
@@ -308,6 +309,13 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
             }
             /* cleanup */
             PMIX_DESTRUCT(&buf2);
+        } else if (0 == strcmp(kptr->key, PMIX_DEBUG_STOP_IN_INIT)) {
+            /* set the flag - we don't store this value */
+            if (PMIX_UNDEF == kptr->value->type) {
+                pmix_client_globals.wait_for_debugger = true;
+            } else {
+                pmix_client_globals.wait_for_debugger = kptr->value->data.flag;
+            }
         } else {
             if (PMIX_SUCCESS != (rc = _add_key_for_rank(PMIX_RANK_WILDCARD, kptr, cb))) {
                 PMIX_ERROR_LOG(rc);

@@ -41,7 +41,7 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
                   [AC_HELP_STRING([--enable-pmix-dstore],
                                   [Enable PMIx shared memory data store (default: disabled)])])
     AC_MSG_CHECKING([if PMIx shared memory data store is enabled])
-    if test "$enable_pmix2_dstore" != "no"; then
+    if test "$enable_pmix_dstore" != "no"; then
         AC_MSG_RESULT([yes])
         opal_pmix_pmix2x_sm_flag=--enable-dstore
     else

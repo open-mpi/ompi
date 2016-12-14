@@ -65,6 +65,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     orte_app_context_t *app;
     uid_t uid;
     gid_t gid;
+    opal_list_t *cache;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s register nspace for %s",
@@ -89,6 +90,17 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     kv->data.uint32 = jdata->offset;
     kv->type = OPAL_UINT32;
     opal_list_append(info, &kv->super);
+
+    /* check for cached values to add to the job info */
+    cache = NULL;
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_INFO_CACHE, (void**)&cache, OPAL_PTR) &&
+        NULL != cache) {
+        while (NULL != (kv = (opal_value_t*)opal_list_remove_first(cache))) {
+            opal_list_append(info, &kv->super);
+        }
+        orte_remove_attribute(&jdata->attributes, ORTE_JOB_INFO_CACHE);
+        OBJ_RELEASE(cache);
+    }
 
     /* assemble the node and proc map info */
     list = NULL;

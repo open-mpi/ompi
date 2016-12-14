@@ -66,6 +66,8 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
     orte_app_idx_t j;
     orte_attribute_t *kv;
     char *tmp;
+    opal_value_t *val;
+    opal_list_t *cache;
 
     /* unpack into array of orte_job_t objects */
     jobs = (orte_job_t**) dest;
@@ -219,6 +221,26 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             }
             kv->local = ORTE_ATTR_GLOBAL;  // obviously not a local value
             opal_list_append(&jobs[i]->attributes, &kv->super);
+        }
+        /* unpack any job info */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &count,
+                                                         &n, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (0 < count){
+            cache = OBJ_NEW(opal_list_t);
+            orte_set_attribute(&jobs[i]->attributes, ORTE_JOB_INFO_CACHE, ORTE_ATTR_LOCAL, (void*)cache, OPAL_PTR);
+            for (k=0; k < count; k++) {
+                n=1;
+                if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &val,
+                                                                 &n, OPAL_VALUE))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                opal_list_append(cache, &val->super);
+            }
         }
     }
 

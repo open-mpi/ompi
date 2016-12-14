@@ -88,9 +88,9 @@ int main(int argc, char **argv)
         PMIX_APP_CREATE(app, 1);
         app->cmd = strdup("gumby");
         app->maxprocs = 2;
-        pmix_argv_append(&app->argc, &app->argv, "gumby");
-        pmix_argv_append(&app->argc, &app->argv, "-n");
-        pmix_argv_append(&app->argc, &app->argv, "2");
+        pmix_argv_append_nosize(&app->argv, "gumby");
+        pmix_argv_append_nosize(&app->argv, "-n");
+        pmix_argv_append_nosize(&app->argv, "2");
         pmix_setenv("PMIX_ENV_VALUE", "3", true, &app->env);
         PMIX_INFO_CREATE(app->info, 2);
         (void)strncpy(app->info[0].key, "DARTH", PMIX_MAX_KEYLEN);

@@ -753,10 +753,11 @@ pmix_status_t pmix_bfrop_pack_app(pmix_buffer_t *buffer, const void *src,
             return ret;
         }
         /* argv */
-        if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_int(buffer, &app[i].argc, 1, PMIX_INT))) {
+        nvals = pmix_argv_count(app[i].argv);
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_int(buffer, &nvals, 1, PMIX_INT32))) {
             return ret;
         }
-        for (j=0; j < app[i].argc; j++) {
+        for (j=0; j < nvals; j++) {
             if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &app[i].argv[j], 1, PMIX_STRING))) {
                 return ret;
             }
@@ -770,6 +771,10 @@ pmix_status_t pmix_bfrop_pack_app(pmix_buffer_t *buffer, const void *src,
             if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &app[i].env[j], 1, PMIX_STRING))) {
                 return ret;
             }
+        }
+        /* cwd */
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &app[i].cwd, 1, PMIX_STRING))) {
+            return ret;
         }
         /* maxprocs */
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_int(buffer, &app[i].maxprocs, 1, PMIX_INT))) {

@@ -1554,7 +1554,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                                  "%s SENDING SIGTERM TO %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&child->name)));
+                                 ORTE_NAME_PRINT(&cd->child->name)));
             kill_local(cd->child->pid, SIGTERM);
         }
         /* wait a little again */
@@ -1564,7 +1564,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                                  "%s SENDING SIGKILL TO %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&child->name)));
+                                 ORTE_NAME_PRINT(&cd->child->name)));
             kill_local(cd->child->pid, SIGKILL);
             /* indicate the waitpid fired as this is effectively what
              * has happened

@@ -447,6 +447,7 @@ static void _query(int sd, short args, void *cbdata)
     uint32_t key;
     void *nptr;
     char **nspaces=NULL, nspace[512];
+    char **ans = NULL;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s processing query",
@@ -457,6 +458,9 @@ static void _query(int sd, short args, void *cbdata)
     /* see what they wanted */
     OPAL_LIST_FOREACH(q, cd->info, opal_pmix_query_t) {
         for (n=0; NULL != q->keys[n]; n++) {
+            opal_output_verbose(2, orte_pmix_server_globals.output,
+                                "%s processing key %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), q->keys[n]);
             if (0 == strcmp(q->keys[n], OPAL_PMIX_QUERY_NAMESPACES)) {
                 /* get the current jobids */
                 rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jdata, &nptr);
@@ -470,6 +474,7 @@ static void _query(int sd, short args, void *cbdata)
                 }
                 /* join the results into a single comma-delimited string */
                 kv = OBJ_NEW(opal_value_t);
+                kv->key = strdup(OPAL_PMIX_QUERY_NAMESPACES);
                 kv->type = OPAL_STRING;
                 if (NULL != nspaces) {
                     kv->data.string = opal_argv_join(nspaces, ',');
@@ -477,9 +482,42 @@ static void _query(int sd, short args, void *cbdata)
                     kv->data.string = NULL;
                 }
                 opal_list_append(results, &kv->super);
+            } else if (0 == strcmp(q->keys[n], OPAL_PMIX_QUERY_SPAWN_SUPPORT)) {
+                opal_argv_append_nosize(&ans, OPAL_PMIX_HOST);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_HOSTFILE);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_ADD_HOST);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_ADD_HOSTFILE);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_PREFIX);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_WDIR);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_MAPPER);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_PPR);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_MAPBY);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_RANKBY);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_BINDTO);
+                /* create the return kv */
+                kv = OBJ_NEW(opal_value_t);
+                kv->key = strdup(OPAL_PMIX_QUERY_SPAWN_SUPPORT);
+                kv->type = OPAL_STRING;
+                kv->data.string = opal_argv_join(ans, ',');
+                opal_list_append(results, &kv->super);
+                opal_argv_free(ans);
+                ans = NULL;
+            } else if (0 == strcmp(q->keys[n], OPAL_PMIX_QUERY_DEBUG_SUPPORT)) {
+                opal_argv_append_nosize(&ans, OPAL_PMIX_DEBUG_STOP_IN_INIT);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_DEBUG_JOB);
+                opal_argv_append_nosize(&ans, OPAL_PMIX_DEBUG_WAIT_FOR_NOTIFY);
+                /* create the return kv */
+                kv = OBJ_NEW(opal_value_t);
+                kv->key = strdup(OPAL_PMIX_QUERY_DEBUG_SUPPORT);
+                kv->type = OPAL_STRING;
+                kv->data.string = opal_argv_join(ans, ',');
+                opal_list_append(results, &kv->super);
+                opal_argv_free(ans);
+                ans = NULL;
             }
         }
     }
+
     if (0 == opal_list_get_size(results)) {
         rc = ORTE_ERR_NOT_FOUND;
     } else if (opal_list_get_size(results) < opal_list_get_size(cd->info)) {

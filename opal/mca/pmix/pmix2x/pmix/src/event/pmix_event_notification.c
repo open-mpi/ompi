@@ -435,6 +435,8 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     pmix_notify_caddy_t *rbout;
     pmix_regevents_info_t *reginfoptr;
     pmix_peer_events_info_t *pr;
+    size_t n;
+    bool matched;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix_server: _notify_error notifying clients of error %d",
@@ -463,6 +465,24 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                 if (0 == strncmp(cd->source.nspace, pr->peer->info->nptr->nspace, PMIX_MAX_NSLEN) &&
                     cd->source.rank == pr->peer->info->rank) {
                     continue;
+                }
+                /* if we were given specific targets, check if this is one */
+                if (NULL != cd->targets) {
+                    matched = false;
+                    for (n=0; n < cd->ntargets; n++) {
+                        if (0 != strncmp(pr->peer->info->nptr->nspace, cd->targets[n].nspace, PMIX_MAX_NSLEN)) {
+                            continue;
+                        }
+                        if (PMIX_RANK_WILDCARD == cd->targets[n].rank ||
+                            pr->peer->info->rank == cd->targets[n].rank) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched) {
+                        /* do not notify this one */
+                        continue;
+                    }
                 }
                 pmix_output_verbose(2, pmix_globals.debug_output,
                                     "pmix_server: notifying client %s:%d",
@@ -515,6 +535,18 @@ static pmix_status_t notify_client_of_event(pmix_status_t status,
         for (n=0; n < ninfo; n++) {
             if (0 == strncmp(info[n].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
                 cd->nondefault = true;
+            } else if (strncmp(info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN)) {
+                /* provides an array of pmix_proc_t identifying the procs
+                 * that are to receive this notification */
+                if (PMIX_DATA_ARRAY != info[n].value.type ||
+                    NULL == info[n].value.data.darray ||
+                    NULL == info[n].value.data.darray->array) {
+                    /* this is an error */
+                    return PMIX_ERR_BAD_PARAM;
+                }
+                cd->ntargets = info[n].value.data.darray->size;
+                PMIX_PROC_CREATE(cd->targets, cd->ntargets);
+                memcpy(cd->targets, info[n].value.data.darray->array, cd->ntargets * sizeof(pmix_proc_t));
             }
         }
     }

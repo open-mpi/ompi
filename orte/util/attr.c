@@ -284,6 +284,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "ORTE_JOB_NOTIFY_COMPLETION";
         case ORTE_JOB_TRANSPORT_KEY:
             return "ORTE_JOB_TRANSPORT_KEY";
+        case ORTE_JOB_INFO_CACHE:
+            return "ORTE_JOB_INFO_CACHE";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";

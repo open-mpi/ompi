@@ -206,6 +206,28 @@ PMIX_EXPORT const char* PMIx_Get_version(void)
     return pmix_version_string;
 }
 
+volatile bool waiting_for_debugger = true;
+static void notification_fn(size_t evhdlr_registration_id,
+                            pmix_status_t status,
+                            const pmix_proc_t *source,
+                            pmix_info_t info[], size_t ninfo,
+                            pmix_info_t results[], size_t nresults,
+                            pmix_event_notification_cbfunc_fn_t cbfunc,
+                            void *cbdata)
+{
+    if (NULL != cbfunc) {
+        cbfunc(PMIX_EVENT_ACTION_COMPLETE, NULL, 0, NULL, NULL, cbdata);
+    }
+    waiting_for_debugger = false;
+}
+static void evhandler_reg_callbk(pmix_status_t status,
+                                 size_t evhandler_ref,
+                                 void *cbdata)
+{
+    volatile int *active = (volatile int*)cbdata;
+    *active = status;
+}
+
 PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
                                     pmix_info_t info[], size_t ninfo)
 {
@@ -215,6 +237,8 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     pmix_cb_t cb;
     pmix_buffer_t *req;
     pmix_cmd_t cmd = PMIX_REQ_CMD;
+    volatile int active;
+    pmix_status_t code = PMIX_ERR_DEBUGGER_RELEASE;
 
     if (NULL == proc) {
         return PMIX_ERR_BAD_PARAM;
@@ -247,6 +271,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     /* setup the globals */
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_client_globals.myserver, pmix_peer_t);
+    pmix_client_globals.wait_for_debugger = false;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: init called");
@@ -320,8 +345,27 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
 
     if (PMIX_SUCCESS == rc) {
         pmix_globals.init_cntr++;
+    } else {
+        return rc;
     }
-    return rc;
+
+    /* check if we are to wait here for debugger attach */
+    if (pmix_client_globals.wait_for_debugger) {
+        /* register for the debugger release notificaation */
+        active = -1;
+        PMIx_Register_event_handler(&code, 1, NULL, 0,
+                                    notification_fn, evhandler_reg_callbk, (void*)&active);
+        while (-1 == active) {
+            sleep(1);
+        }
+        if (0 != active) {
+            return active;
+        }
+        /* wait for it to arrive */
+        PMIX_WAIT_FOR_COMPLETION(waiting_for_debugger);
+    }
+
+    return PMIX_SUCCESS;
 }
 
 PMIX_EXPORT int PMIx_Initialized(void)
