@@ -184,6 +184,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     size_t wk_addr_len;
     int *wk_roffs, *wk_rsizes;
     char *wk_raddrs;
+    ucp_ep_params_t ep_params;
 
 
     mca_spml_ucx.ucp_peers = (ucp_peer_t *) calloc(nprocs, sizeof(*(mca_spml_ucx.ucp_peers)));
@@ -210,9 +211,13 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
         i = (my_rank + n) % nprocs;
         //if (i == my_rank) continue;
         dump_address(i, (char *)(wk_raddrs + wk_roffs[i]), wk_rsizes[i]);
+
+        ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
+        ep_params.address    = (ucp_address_t *)(wk_raddrs + wk_roffs[i]);
+
         err = ucp_ep_create(mca_spml_ucx.ucp_worker, 
-                (ucp_address_t *)(wk_raddrs + wk_roffs[i]),
-                &mca_spml_ucx.ucp_peers[i].ucp_conn);
+                            &ep_params,
+                            &mca_spml_ucx.ucp_peers[i].ucp_conn);
         if (UCS_OK != err) {
             SPML_ERROR("ucp_ep_create failed!!!\n");
             goto error2;
@@ -298,6 +303,8 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     ucs_status_t err;
     spml_ucx_mkey_t   *ucx_mkey;
     size_t len;
+    int my_pe = oshmem_my_proc_id();
+    ucp_mem_map_params_t mem_map_params;
 
     *count = 0;
     mkeys = (sshmem_mkey_t *) calloc(1, sizeof(*mkeys));
@@ -311,8 +318,13 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     }
 
     mkeys[0].spml_context = ucx_mkey;
-    err = ucp_mem_map(mca_spml_ucx.ucp_context, 
-            &addr, size, 0, &ucx_mkey->mem_h);
+
+    mem_map_params.field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
+                                UCP_MEM_MAP_PARAM_FIELD_LENGTH; 
+    mem_map_params.address    = addr;
+    mem_map_params.length     = size;
+
+    err = ucp_mem_map(mca_spml_ucx.ucp_context, &mem_map_params, &ucx_mkey->mem_h);
     if (UCS_OK != err) {
         goto error_out1;
     }
@@ -338,7 +350,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     }
 
     mkeys[0].len     = len;
-    mkeys[0].va_base = addr;
+    mkeys[0].va_base = mem_map_params.address;
     *count = 1;
     return mkeys;
 
