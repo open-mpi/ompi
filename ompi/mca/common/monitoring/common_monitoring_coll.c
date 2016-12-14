@@ -151,7 +151,7 @@ void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
 {
     /* Flush data */
     fprintf(pf,
-            "C\t%s\tprocs: %s\n"
+            "D\t%s\tprocs: %s\n"
             "O2A\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
             "A2O\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
             "A2A\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
@@ -163,8 +163,6 @@ void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
 
 void mca_common_monitoring_coll_flush_all(FILE *pf)
 {
-    fprintf(pf, "# COLLECTIVES\n");
-
     if( NULL == comm_data ) return; /* No hashtable */
 
     uint64_t key;

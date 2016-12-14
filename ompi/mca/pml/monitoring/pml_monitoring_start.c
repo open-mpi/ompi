@@ -42,7 +42,7 @@ int mca_pml_monitoring_start(size_t count,
             size_t type_size, data_size;
             ompi_datatype_type_size(pml_request->req_datatype, &type_size);
             data_size = pml_request->req_count * type_size;
-            mca_common_monitoring_send_data(world_rank, data_size, 1);
+            mca_common_monitoring_record_pml(world_rank, data_size, 1);
         }
     }
     return pml_selected_module.pml_start(count, requests);

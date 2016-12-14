@@ -21,6 +21,11 @@ monitoring_sources  = \
 	coll_monitoring_exscan.c     \
 	coll_monitoring_gather.c     \
 	coll_monitoring_gatherv.c    \
+	coll_monitoring_neighbor_allgather.c  \
+	coll_monitoring_neighbor_allgatherv.c \
+	coll_monitoring_neighbor_alltoall.c   \
+	coll_monitoring_neighbor_alltoallv.c  \
+	coll_monitoring_neighbor_alltoallw.c  \
 	coll_monitoring_reduce.c     \
 	coll_monitoring_reduce_scatter.c \
 	coll_monitoring_reduce_scatter_block.c \
