@@ -298,7 +298,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
                     free(mca_ptl_tcp_component.super.uri);
                 }
                 mca_ptl_tcp_component.super.uri = strdup(info[n].value.data.string);
-            } else if (0 == strcmp(info[n].key, PMIX_SYSTEM_TMPDIR)) {
+            } else if (0 == strcmp(info[n].key, PMIX_SERVER_TMPDIR)) {
                 if (NULL != mca_ptl_tcp_component.tmpdir) {
                     free(mca_ptl_tcp_component.tmpdir);
                 }
@@ -451,7 +451,6 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     lt->protocol = PMIX_PROTOCOL_V2;
     lt->ptl = (struct pmix_ptl_module_t*)&pmix_ptl_tcp_module;
     lt->cbfunc = connection_handler;
-    pmix_list_append(&pmix_ptl_globals.listeners, &lt->super);
 
     addrlen = sizeof(struct sockaddr_storage);
     /* create a listen socket for incoming connection attempts */
@@ -558,11 +557,11 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
 
     /* we need listener thread support */
     *need_listener = true;
+    pmix_list_append(&pmix_ptl_globals.listeners, &lt->super);
 
     return PMIX_SUCCESS;
 
   sockerror:
-    pmix_list_remove_item(&pmix_ptl_globals.listeners, &lt->super);
     PMIX_RELEASE(lt);
     return PMIX_ERROR;
 }
