@@ -336,7 +336,14 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
 
     if (is_long_msg) {
         /* wait for eager sends to be active before starting a long put */
-        ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
+        if (pt2pt_sync->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK) {
+            ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
+            while (!(peer->flags | OMPI_OSC_PT2PT_PEER_FLAG_EAGER)) {
+                opal_condition_wait(&pt2pt_sync->cond, &pt2pt_sync->lock);
+            }
+        } else {
+            ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
+        }
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -495,7 +502,14 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
 
     if (is_long_msg) {
         /* wait for synchronization before posting a long message */
-        ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
+        if (pt2pt_sync->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK) {
+            ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
+            while (!(peer->flags | OMPI_OSC_PT2PT_PEER_FLAG_EAGER)) {
+                opal_condition_wait(&pt2pt_sync->cond, &pt2pt_sync->lock);
+            }
+        } else {
+            ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
+        }
     }
 
     header = (ompi_osc_pt2pt_header_acc_t*) ptr;
