@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +30,7 @@
 
 
 #include <stdio.h>
+#include <pthread.h>
 
 #include "src/class/pmix_object.h"
 
@@ -48,9 +51,12 @@ pmix_class_t pmix_object_t_class = {
     sizeof(pmix_object_t) /* size of the pmix object */
 };
 
+int pmix_class_init_epoch = 1;
+
 /*
  * Local variables
  */
+static pthread_mutex_t class_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void** classes = NULL;
 static int num_classes = 0;
 static int max_classes = 0;
@@ -81,7 +87,17 @@ void pmix_class_initialize(pmix_class_t *cls)
     /* Check to see if anyone initialized
        this class before we got a chance to */
 
-    if (1 == cls->cls_initialized) {
+    if (pmix_class_init_epoch == cls->cls_initialized) {
+        return;
+    }
+    pthread_mutex_lock(&class_mutex);
+
+    /* If another thread initializing this same class came in at
+       roughly the same time, it may have gotten the lock and
+       initialized.  So check again. */
+
+    if (pmix_class_init_epoch == cls->cls_initialized) {
+        pthread_mutex_unlock(&class_mutex);
         return;
     }
 
@@ -141,10 +157,12 @@ void pmix_class_initialize(pmix_class_t *cls)
     }
     *cls_destruct_array = NULL;  /* end marker for the destructors */
 
-    cls->cls_initialized = 1;
+    cls->cls_initialized = pmix_class_init_epoch;
     save_class(cls);
 
     /* All done */
+
+    pthread_mutex_unlock(&class_mutex);
 }
 
 
@@ -154,6 +172,12 @@ void pmix_class_initialize(pmix_class_t *cls)
 int pmix_class_finalize(void)
 {
     int i;
+
+    if (INT_MAX == pmix_class_init_epoch) {
+        pmix_class_init_epoch = 1;
+    } else {
+        pmix_class_init_epoch++;
+    }
 
     if (NULL != classes) {
         for (i = 0; i < num_classes; ++i) {

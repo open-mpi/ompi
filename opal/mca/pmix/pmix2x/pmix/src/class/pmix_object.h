@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -162,6 +164,8 @@ struct pmix_class_t {
                                     /**< array of parent class destructors */
     size_t cls_sizeof;              /**< size of an object instance */
 };
+
+extern int pmix_class_init_epoch;
 
 /**
  * For static initializations of OBJects.
@@ -347,7 +351,7 @@ do {                                                            \
 #define PMIX_CONSTRUCT_INTERNAL(object, type)                        \
 do {                                                                \
     PMIX_SET_MAGIC_ID((object), PMIX_OBJ_MAGIC_ID);              \
-    if (0 == (type)->cls_initialized) {                             \
+    if (pmix_class_init_epoch != (type)->cls_initialized) {                             \
         pmix_class_initialize((type));                              \
     }                                                               \
     ((pmix_object_t *) (object))->obj_class = (type);               \
@@ -467,7 +471,7 @@ static inline pmix_object_t *pmix_obj_new(pmix_class_t * cls)
     assert(cls->cls_sizeof >= sizeof(pmix_object_t));
 
     object = (pmix_object_t *) malloc(cls->cls_sizeof);
-    if (0 == cls->cls_initialized) {
+    if (pmix_class_init_epoch != cls->cls_initialized) {
         pmix_class_initialize(cls);
     }
     if (NULL != object) {
