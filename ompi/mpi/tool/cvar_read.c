@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,7 @@
 
 int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
 {
-    const mca_base_var_storage_t *value;
+    const mca_base_var_storage_t *value = NULL;
     int rc = MPI_SUCCESS;
 
     if (!mpit_is_initialized ()) {
@@ -38,7 +39,7 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
 
     do {
         rc = mca_base_var_get_value(handle->var->mbv_index, &value, NULL, NULL);
-        if (OPAL_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc || NULL == value) {
             /* shouldn't happen */
             rc = MPI_ERR_OTHER;
             break;

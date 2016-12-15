@@ -7,6 +7,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,12 +33,12 @@ ompi_init_preconnect_mpi(void)
     int param, next, prev, i, ret = OMPI_SUCCESS;
     struct ompi_request_t * requests[2];
     char inbuf[1], outbuf[1];
-    const bool *value;
+    const bool *value = NULL;
 
     param = mca_base_var_find("ompi", "mpi", NULL, "preconnect_mpi");
     if (0 > param) return OMPI_SUCCESS;
     ret = mca_base_var_get_value(param, &value, NULL, NULL);
-    if (OMPI_SUCCESS != ret || 0 == value[0]) {
+    if (OMPI_SUCCESS != ret || (NULL != value && 0 == value[0])) {
         return OMPI_SUCCESS;
     }
 

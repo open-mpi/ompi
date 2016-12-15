@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -313,8 +313,8 @@ static void buffer_cleanup(void *value)
         for (i=0; i < OPAL_HWLOC_PRINT_NUM_BUFS; i++) {
             free(ptr->buffers[i]);
         }
+        free(ptr);
     }
-    free(ptr);
 }
 
 opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void)

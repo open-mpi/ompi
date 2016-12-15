@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -237,7 +238,7 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
         target_address = target_address & ~btl_alignment_mask;
 
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating btl get. local: %p (handle %p), remote: 0x%" PRIx64
-                         " (handle %p)", ptr, (void *) frag->handle, target_address, (void *) target_handle);
+                         " (handle %p)", (void*)ptr, (void *) frag->handle, target_address, (void *) target_handle);
 
         ret = module->selected_btl->btl_get (module->selected_btl, peer->data_endpoint, ptr,
                                              target_address, frag->handle, target_handle, aligned_len,
@@ -248,7 +249,7 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
         memcpy (ptr, source, len);
 
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating btl put. local: %p (handle %p), remote: 0x%" PRIx64
-                         " (handle %p)", ptr, (void *) frag->handle, target_address, (void *) target_handle);
+                         " (handle %p)", (void*)ptr, (void *) frag->handle, target_address, (void *) target_handle);
 
         ret = module->selected_btl->btl_put (module->selected_btl, peer->data_endpoint, ptr,
                                              target_address, frag->handle, target_handle, len, 0,

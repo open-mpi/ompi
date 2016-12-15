@@ -5,7 +5,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -444,7 +444,7 @@ static bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr, i
         /* is addr past the end of the file? */
         if ((unsigned char *) seg+length < myaddr) {
             opal_output (ompi_bcol_base_framework.framework_output, "mca_bcol_basesmuma_sm_alloc_mmap: memory region too small len %lu add %p",
-                        (unsigned long) length, myaddr);
+                        (unsigned long) length, (void*)myaddr);
             OBJ_RELEASE(map);
             munmap ((void *)seg, length);
             return NULL;
