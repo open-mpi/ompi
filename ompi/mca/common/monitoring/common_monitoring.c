@@ -453,7 +453,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
         osc_count_s        = osc_data_s + nprocs_world;
         osc_data_r         = osc_count_s + nprocs_world;
         osc_count_r        = osc_data_r + nprocs_world;
-        coll_data          = osc_data_s + nprocs_world;
+        coll_data          = osc_count_r + nprocs_world;
         coll_count         = coll_data + nprocs_world;
 
         size_histogram     = coll_count + nprocs_world;
@@ -737,7 +737,6 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
 
     /* Dump collectives */
     fprintf(pf, "# COLLECTIVES\n");
-    mca_common_monitoring_coll_flush_all(pf);
     for (int i = 0 ; i < nbprocs ; i++) {
         if(coll_count[i] > 0) {
             fprintf(pf, "C\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
@@ -747,6 +746,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
         coll_data[i] = 0;
         coll_count[i] = 0;
     }
+    mca_common_monitoring_coll_flush_all(pf);
 }
 
 /*

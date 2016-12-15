@@ -82,30 +82,30 @@
         int MPIT_result;                                                \
         /* Stop PVAR */                                                 \
         MPIT_result = pvar_prefix ## _stop(session);                    \
-        /* Free handle */                                               \
-        MPIT_result = MPI_T_pvar_handle_free(session, &(pvar_prefix ## _handle)); \
-        if( MPI_SUCCESS != MPIT_result ) {                              \
-            fprintf(stderr, "Failed to allocate handle on \"%s\" pvar, check that you have " \
-                    "enabled the monitoring component.\n", pvar_prefix ## _pvar_name); \
-            MPI_Abort(MPI_COMM_WORLD, MPIT_result);                     \
-            return MPIT_result;                                         \
-        }                                                               \
-        return MPIT_result;                                             \
+	    /* Free handle */						\
+	    MPIT_result = MPI_T_pvar_handle_free(session, &(pvar_prefix ## _handle)); \
+	    if( MPI_SUCCESS != MPIT_result ) {				\
+		fprintf(stderr, "Failed to allocate handle on \"%s\" pvar, check that you have " \
+			"enabled the monitoring component.\n", pvar_prefix ## _pvar_name); \
+		MPI_Abort(MPI_COMM_WORLD, MPIT_result);			\
+		return MPIT_result;					\
+	    }								\
+	    return MPIT_result;						\
     }                                                                   \
     static inline int pvar_prefix ## _read(MPI_T_pvar_session session, void*values) \
     {                                                                   \
         int MPIT_result;                                                \
         /* Stop pvar */                                                 \
         MPIT_result = pvar_prefix ## _stop(session);                    \
-        /* Read values */                                               \
-        MPIT_result = MPI_T_pvar_read(session, pvar_prefix ## _handle, values); \
-        if( MPI_SUCCESS != MPIT_result ) {                              \
-            fprintf(stderr, "Failed to read handle on \"%s\" pvar, check that you have " \
-                    "enabled the monitoring component.\n", pvar_prefix ## _pvar_name); \
-            MPI_Abort(MPI_COMM_WORLD, MPIT_result);                     \
-        }                                                               \
-        /* Start and return */                                          \
-        return pvar_prefix ## _start(session);                          \
+	    /* Read values */						\
+	    MPIT_result = MPI_T_pvar_read(session, pvar_prefix ## _handle, values); \
+	    if( MPI_SUCCESS != MPIT_result ) {				\
+		fprintf(stderr, "Failed to read handle on \"%s\" pvar, check that you have " \
+			"enabled the monitoring component.\n", pvar_prefix ## _pvar_name); \
+		MPI_Abort(MPI_COMM_WORLD, MPIT_result);			\
+	    }								\
+	    /* Start and return */					\
+	    return pvar_prefix ## _start(session);			\
     }
 
 #define GENERATE_CS(prefix, pvar_name_prefix, pvar_class_c, pvar_class_s) \
@@ -114,24 +114,26 @@
     static inline int pvar_ ## prefix ## _init(MPI_T_pvar_session session) \
     {                                                                   \
         prefix ## _count_init(session);                                 \
-        prefix ## _size_init(session);                                  \
+	    prefix ## _size_init(session);				\
     }                                                                   \
     static inline int pvar_ ## prefix ## _finalize(MPI_T_pvar_session session) \
     {                                                                   \
         prefix ## _count_finalize(session);                             \
-        prefix ## _size_finalize(session);                              \
+	    prefix ## _size_finalize(session);				\
     }                                                                   \
     static inline void pvar_ ## prefix ## _read(MPI_T_pvar_session session, \
                                                 uint64_t*cvalues, uint64_t*svalues) \
     {                                                                   \
         /* Read count values */                                         \
         prefix ## _count_read(session, cvalues);                        \
-        /* Read size values */                                          \
-        prefix ## _size_read(session, svalues);                         \
+	    /* Read size values */					\
+	    prefix ## _size_read(session, svalues);			\
     }
 
 GENERATE_CS(pml, "pml_monitoring_messages", MPI_T_PVAR_CLASS_SIZE, MPI_T_PVAR_CLASS_SIZE)
-GENERATE_CS(osc, "osc_monitoring_messages", MPI_T_PVAR_CLASS_SIZE, MPI_T_PVAR_CLASS_SIZE)
+GENERATE_CS(osc_s, "osc_monitoring_messages_sent", MPI_T_PVAR_CLASS_SIZE, MPI_T_PVAR_CLASS_SIZE)
+GENERATE_CS(osc_r, "osc_monitoring_messages_recv", MPI_T_PVAR_CLASS_SIZE, MPI_T_PVAR_CLASS_SIZE)
+GENERATE_CS(coll, "coll_monitoring_messages", MPI_T_PVAR_CLASS_SIZE, MPI_T_PVAR_CLASS_SIZE)
 GENERATE_CS(o2a, "coll_monitoring_o2a", MPI_T_PVAR_CLASS_COUNTER, MPI_T_PVAR_CLASS_AGGREGATE)
 GENERATE_CS(a2o, "coll_monitoring_a2o", MPI_T_PVAR_CLASS_COUNTER, MPI_T_PVAR_CLASS_AGGREGATE)
 GENERATE_CS(a2a, "coll_monitoring_a2a", MPI_T_PVAR_CLASS_COUNTER, MPI_T_PVAR_CLASS_AGGREGATE)
@@ -154,7 +156,9 @@ static inline void pvar_all_init(MPI_T_pvar_session*session, int world_size)
     old_cvalues = malloc(2 * world_size * sizeof(uint64_t));
     old_svalues = old_cvalues + world_size;
     pvar_pml_init(*session);
-    pvar_osc_init(*session);
+    pvar_osc_s_init(*session);
+    pvar_osc_r_init(*session);
+    pvar_coll_init(*session);
     pvar_o2a_init(*session);
     pvar_a2o_init(*session);
     pvar_a2a_init(*session);
@@ -164,7 +168,9 @@ static inline void pvar_all_finalize(MPI_T_pvar_session*session)
 {
     int MPIT_result;
     pvar_pml_finalize(*session);
-    pvar_osc_finalize(*session);
+    pvar_osc_s_finalize(*session);
+    pvar_osc_r_finalize(*session);
+    pvar_coll_finalize(*session);
     pvar_o2a_finalize(*session);
     pvar_a2o_finalize(*session);
     pvar_a2a_finalize(*session);
@@ -179,7 +185,7 @@ static inline void pvar_all_finalize(MPI_T_pvar_session*session)
 
 static inline int pvar_pml_check(MPI_T_pvar_session session, int world_size, int world_rank)
 {
-    int ret = MPI_SUCCESS, i;
+    int i, ret = MPI_SUCCESS;
     uint64_t *cvalues, *svalues;
     cvalues = malloc(2 * world_size * sizeof(uint64_t));
     svalues = cvalues + world_size;
@@ -189,21 +195,21 @@ static inline int pvar_pml_check(MPI_T_pvar_session session, int world_size, int
         /* Check count values */
         if( i == world_rank && (cvalues[i] - old_cvalues[i]) != 0 ) {
             fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be equal to %d.\n",
-                    __FUNCTION__, i, cvalues[i], 0);
+                    __FUNCTION__, i, cvalues[i] - old_cvalues[i], 0);
             ret = -1;
         } else if ( i != world_rank && (cvalues[i] - old_cvalues[i]) < (uint64_t) world_size ) {
             fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be >= %d.\n",
-                    __FUNCTION__, i, cvalues[i], world_size);
+                    __FUNCTION__, i, cvalues[i] - old_cvalues[i], world_size);
             ret = -1;
         }
         /* Check size values */
         if( i == world_rank && (svalues[i] - old_svalues[i]) != 0 ) {
             fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be equal to %lu.\n",
-                    __FUNCTION__, i, svalues[i], (uint64_t) 0);
+                    __FUNCTION__, i, svalues[i] - old_svalues[i], (uint64_t) 0);
             ret = -1;
-        } else if ( i != world_rank && (svalues[i] - old_svalues[i]) < (uint64_t) (world_size * 13) ) {
+        } else if ( i != world_rank && (svalues[i] - old_svalues[i]) < (uint64_t) (world_size * 13 * sizeof(char)) ) {
             fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, i, svalues[i], (uint64_t) (world_size * 13));
+                    __FUNCTION__, i, svalues[i] - old_svalues[i], (uint64_t) (world_size * 13));
             ret = -1;
         }
     }
@@ -212,7 +218,7 @@ static inline int pvar_pml_check(MPI_T_pvar_session session, int world_size, int
     } else {
         fprintf(stdout, "Check PML...[FAIL]\n");
     }
-    /* Keep old values */
+    /* Keep old PML values */
     memcpy(old_cvalues, cvalues, 2 * world_size * sizeof(uint64_t));
     /* Free arrays */
     free(cvalues);
@@ -221,30 +227,14 @@ static inline int pvar_pml_check(MPI_T_pvar_session session, int world_size, int
 
 static inline int pvar_osc_check(MPI_T_pvar_session session, int world_size, int world_rank)
 {
-    int ret = MPI_SUCCESS, i;
+    int i, ret = MPI_SUCCESS;
     uint64_t *cvalues, *svalues;
     cvalues = malloc(2 * world_size * sizeof(uint64_t));
     svalues = cvalues + world_size;
-    /* Get PML values */
-    pvar_pml_read(session, cvalues, svalues);
-    for( i = 0; i < world_size && MPI_SUCCESS == ret; ++i ) {
-        /* Check count values */
-        if( (cvalues[i] - old_cvalues[i]) < (uint64_t) (world_size * 2) ) {
-            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, i, cvalues[i] - old_cvalues[i], (uint64_t) world_size);
-            ret = -1;
-        }
-        /* Check size values */
-        if( (svalues[i] - old_svalues[i]) < (uint64_t) (world_rank * 13) ) {
-            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, i, svalues[i] - old_svalues[i], (uint64_t) (world_size * 13));
-            ret = -1;
-        }
-    }
-    memcpy(old_cvalues, cvalues, 2 * world_size * sizeof(uint64_t));
     /* Get OSC values */
     memset(cvalues, 0, 2 * world_size * sizeof(uint64_t));
-    pvar_osc_read(session, cvalues, svalues);
+    /* Check OSC sent values */
+    pvar_osc_s_read(session, cvalues, svalues);
     for( i = 0; i < world_size && MPI_SUCCESS == ret; ++i ) {
         /* Check count values */
         if( cvalues[i] < (uint64_t) world_size ) {
@@ -253,9 +243,25 @@ static inline int pvar_osc_check(MPI_T_pvar_session session, int world_size, int
             ret = -1;
         }
         /* Check size values */
-        if( svalues[i] < (uint64_t) (world_size * 13) ) {
+        if( svalues[i] < (uint64_t) (world_size * 13 * sizeof(char)) ) {
             fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be >= %lu.\n",
                     __FUNCTION__, i, svalues[i], (uint64_t) (world_size * 13));
+            ret = -1;
+        }
+    }
+    /* Check OSC received values */
+    pvar_osc_r_read(session, cvalues, svalues);
+    for( i = 0; i < world_size && MPI_SUCCESS == ret; ++i ) {
+        /* Check count values */
+        if( cvalues[i] < (uint64_t) world_size ) {
+            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be >= %d.\n",
+                    __FUNCTION__, i, cvalues[i], world_size);
+            ret = -1;
+        }
+        /* Check size values */
+        if( svalues[i] < (uint64_t) (world_size * 13 * sizeof(char)) ) {
+            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be >= %lu.\n",
+                    __FUNCTION__, i, svalues[i], (uint64_t) (world_size * 13 * sizeof(char)));
             ret = -1;
         }
     }
@@ -264,33 +270,60 @@ static inline int pvar_osc_check(MPI_T_pvar_session session, int world_size, int
     } else {
         fprintf(stdout, "Check OSC...[FAIL]\n");
     }
-    /* Keep old values */
+    /* Keep old PML values */
     memcpy(old_cvalues, cvalues, 2 * world_size * sizeof(uint64_t));
     /* Free arrays */
     free(cvalues);
     return ret;
 }
 
-static inline int pvar_coll_check(MPI_T_pvar_session session, int world_size) {
-    int ret = MPI_SUCCESS;
+static inline int pvar_coll_check(MPI_T_pvar_session session, int world_size, int world_rank) {
+    int i, ret = MPI_SUCCESS;
     uint64_t count, size;
+    uint64_t *cvalues, *svalues;
+    cvalues = malloc(2 * world_size * sizeof(uint64_t));
+    svalues = cvalues + world_size;
+    /* Get COLL values */
+    pvar_coll_read(session, cvalues, svalues);
+    for( i = 0; i < world_size && MPI_SUCCESS == ret; ++i ) {
+        /* Check count values */
+        if( i == world_rank && cvalues[i] != 0 ) {
+            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be equal to %d.\n",
+                    __FUNCTION__, i, cvalues[i], 0);
+            ret = -1;
+        } else if ( i != world_rank && cvalues[i] < (uint64_t) (world_size + 1) * 4 ) {
+            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be >= %lu.\n",
+                    __FUNCTION__, i, cvalues[i], (uint64_t) (world_size + 1) * 4);
+            ret = -1;
+        }
+        /* Check size values */
+        if( i == world_rank && svalues[i] != 0 ) {
+            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be equal to %lu.\n",
+                    __FUNCTION__, i, svalues[i], (uint64_t) 0);
+            ret = -1;
+        } else if ( i != world_rank && svalues[i] < (uint64_t) ((world_size * (world_size - 1) * 2 * 13 * sizeof(char)) + 3 * 13 * sizeof(char) + sizeof(int)) ) {
+            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be >= %lu.\n",
+                    __FUNCTION__, i, svalues[i], (uint64_t) ((world_size * (world_size - 1) * 2 * 13 * sizeof(char)) + 3 * 13 * sizeof(char) + sizeof(int)));
+            ret = -1;
+        }
+    }
     /* Check One-to-all COLL values */
     pvar_o2a_read(session, &count, &size);
     if( count < (uint64_t) 2 ) {
         fprintf(stderr, "Error in %s: count_o2a=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, count, (uint64_t) 2);
+		__FUNCTION__, count, (uint64_t) 2);
         ret = -1;
     }
-    if( size < (uint64_t) (13 * 2 * sizeof(char)) ) {
+    if( size < (uint64_t) ((world_size - 1) * 13 * 2 * sizeof(char)) ) {
         fprintf(stderr, "Error in %s: size_o2a=%lu, and should be >= %lu.\n",
-                __FUNCTION__, size, (uint64_t) (13 * 2 * sizeof(char)));
+                __FUNCTION__, size, (uint64_t) ((world_size - 1) * 13 * 2 * sizeof(char)));
         ret = -1;
     }
     /* Check All-to-one COLL values */
     pvar_a2o_read(session, &count, &size);
-    if( count < (uint64_t) ((world_size - 1) * 2) ) {
+    if( count < (uint64_t) 2 ) {
         fprintf(stderr, "Error in %s: count_a2o=%lu, and should be >= %lu.\n",
-                __FUNCTION__, count, (uint64_t) ((world_size - 1) * 2));
+                __FUNCTION__, count, (uint64_t) 2);
         ret = -1;
     }
     if( size < (uint64_t) ((world_size - 1) * (13 * sizeof(char) + sizeof(int))) ) {
@@ -303,22 +336,24 @@ static inline int pvar_coll_check(MPI_T_pvar_session session, int world_size) {
     pvar_a2a_read(session, &count, &size);
     if( count < (uint64_t) (world_size * 4) ) {
         fprintf(stderr, "Error in %s: count_a2a=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, count, (uint64_t) (world_size * 4));
+		__FUNCTION__, count, (uint64_t) (world_size * 4));
         ret = -1;
     }
-    if( size < (uint64_t) (world_size * (2 * 13 * sizeof(char) + sizeof(int))) ) {
-       fprintf(stderr, "Error in %s: size_a2a=%lu, and should be >= %lu.\n",
-               __FUNCTION__, size,
-               (uint64_t) (world_size * (2 * 13 * sizeof(char) + sizeof(int))));
-       ret = -1;
+    if( size < (uint64_t) (world_size * (world_size - 1) * (2 * 13 * sizeof(char) + sizeof(int))) ) {
+	fprintf(stderr, "Error in %s: size_a2a=%lu, and should be >= %lu.\n",
+		__FUNCTION__, size,
+		(uint64_t) (world_size * (world_size - 1) * (2 * 13 * sizeof(char) + sizeof(int))));
+	ret = -1;
     }
     if( MPI_SUCCESS == ret ) {
         fprintf(stdout, "Check COLL...[ OK ]\n");
     } else {
         fprintf(stdout, "Check COLL...[FAIL]\n");
     }
-    /* Keep old values */
+    /* Keep old PML values */
     pvar_pml_read(session, old_cvalues, old_svalues);
+    /* Free arrays */
+    free(cvalues);
     return ret;
 }
 
@@ -416,7 +451,7 @@ int main(int argc, char* argv[])
         }        
     }
     free(coll_buff);
-    if( -1 == pvar_coll_check(session, size) ) MPI_Abort(MPI_COMM_WORLD, -1);
+    if( -1 == pvar_coll_check(session, size, world_rank) ) MPI_Abort(MPI_COMM_WORLD, -1);
 
     /* second phase: exchange size times data with everyone except self
        in MPI_COMM_WORLD with Send/Recv */    
