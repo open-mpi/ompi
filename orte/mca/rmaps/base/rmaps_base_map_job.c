@@ -327,6 +327,16 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         return;
     }
 
+    /* if any node is oversubscribed, then check to see if a binding
+     * directive was given - if not, then we want to clear the default
+     * binding policy so we don't attempt to bind */
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED)) {
+        if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+            /* clear any default binding policy we might have set */
+            OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        }
+    }
+
     /* compute and save local ranks */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
         ORTE_ERROR_LOG(rc);

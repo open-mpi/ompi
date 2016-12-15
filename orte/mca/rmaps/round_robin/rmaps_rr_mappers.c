@@ -184,6 +184,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
              * properly set
              */
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+            ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
             /* check for permission */
             if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                 /* if we weren't given a directive either way, then we will error out
@@ -368,6 +369,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
                 /* check for permission */
                 if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                     /* if we weren't given a directive either way, then we will error out
@@ -420,6 +422,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
             }
             if (nprocs_mapped == app->num_procs) {
                 /* we are done */
@@ -588,6 +591,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
                 /* check for permission */
                 if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                     /* if we weren't given a directive either way, then we will error out
@@ -745,6 +749,7 @@ static int byobj_span(orte_job_t *jdata,
              * properly set
              */
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+            ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
         }
         if (nprocs_mapped == app->num_procs) {
             /* we are done */

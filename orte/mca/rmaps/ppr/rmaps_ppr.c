@@ -351,6 +351,7 @@ static int ppr_mapper(orte_job_t *jdata)
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
                 /* check for permission */
                 if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                     /* if we weren't given a directive either way, then we will error out

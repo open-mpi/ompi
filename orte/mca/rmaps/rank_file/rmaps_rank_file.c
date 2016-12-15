@@ -299,6 +299,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
             }
             /* set the vpid */
             proc->name.vpid = rank;

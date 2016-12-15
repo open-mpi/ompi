@@ -230,6 +230,7 @@ static int mindist_map(orte_job_t *jdata)
                         goto error;
                     } else {
                         ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                        ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
                     }
                 }
             }
@@ -349,6 +350,7 @@ static int mindist_map(orte_job_t *jdata)
                 if (nprocs_mapped == app->num_procs)
                     break;
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
                 opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:mindist: second pass assigning %d extra procs to node %s",
                         (int)num_procs_to_assign, node->name);
