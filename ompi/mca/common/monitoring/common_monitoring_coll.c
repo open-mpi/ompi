@@ -50,10 +50,10 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
         mca_common_monitoring_get_world_rank(ompi_comm_rank(data->p_comm), data->p_comm,
                                              &data->world_rank);
     }
-    if( NULL == data->comm_name ) {
-        data->comm_name = strdup(data->p_comm->c_name);
+    if( NULL == data->comm_name && 0 < strlen(data->p_comm->c_name) ) {
+	data->comm_name = strdup(data->p_comm->c_name);
     }
-    if( NULL == data->procs ) {
+    if( NULL == data->procs || 0 == strlen(data->procs) ) {
         int i, pos = 0, size, world_size;
         size = ompi_comm_size(data->p_comm);
         world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world) - 1;
@@ -155,7 +155,7 @@ void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
             "O2A\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
             "A2O\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
             "A2A\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
-            data->comm_name, data->procs,
+            data->comm_name ? data->comm_name : "(no-name)", data->procs,
             data->world_rank, data->o2a_size, data->o2a_count,
             data->world_rank, data->a2o_size, data->a2o_count,
             data->world_rank, data->a2a_size, data->a2a_count);

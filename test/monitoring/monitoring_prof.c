@@ -61,8 +61,8 @@ struct monitoring_result
 typedef struct monitoring_result monitoring_result;
 
 /* PML Sent */
-static monitoring_result counts;
-static monitoring_result sizes;
+static monitoring_result pml_counts;
+static monitoring_result pml_sizes;
 /* OSC Sent */
 static monitoring_result osc_scounts;
 static monitoring_result osc_ssizes;
