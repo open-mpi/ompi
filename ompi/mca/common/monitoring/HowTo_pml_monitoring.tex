@@ -90,11 +90,11 @@ Three new parameters have been introduced:
 Also, in order to run an application without any monitoring enabled,
 you need to add the following parameters at mpirun time:
 \begin{description}
-\item [\texttt{----pml ^monitoring}] This parameter disable the
+\item [\texttt{----mca pml ^monitoring}] This parameter disable the
   monitoring component of the PML framework
-\item [\texttt{----osc ^monitoring}] This parameter disable the
+\item [\texttt{----mca osc ^monitoring}] This parameter disable the
   monitoring component of the OSC framework
-\item [\texttt{----coll ^monitoring}] This parameter disable the
+\item [\texttt{----mca coll ^monitoring}] This parameter disable the
     monitoring component of the COLL framework
 \end{description}
 
@@ -104,7 +104,7 @@ This mode should be used to monitor the whole application from
 its start until its end. It is defined such as you can record the
 amount of communications without any code modification.
 
-In order to do so, you have to get Open~MPI compiled with monitoring
+In order to do so, you have to get Open-MPI compiled with monitoring
 enabled. When you launch your application, you need to set the
 parameter \texttt{pml\_monitoring\_enable} to a value $> 0$, and, if
 \texttt{pml\_monitoring\_enable\_output} $\ge$ 3, to set the
@@ -120,8 +120,12 @@ Performance variable name:
 \item \textit{pml\_monitoring\_flush}
 \item \textit{pml\_monitoring\_messages\_count}
 \item \textit{pml\_monitoring\_messages\_size}
-\item \textit{osc\_monitoring\_messages\_count}
-\item \textit{osc\_monitoring\_messages\_size}
+\item \textit{osc\_monitoring\_messages\_sent\_count}
+\item \textit{osc\_monitoring\_messages\_sent\_size}
+\item \textit{osc\_monitoring\_messages\_recv\_count}
+\item \textit{osc\_monitoring\_messages\_recv\_size}
+\item \textit{coll\_monitoring\_messages\_count}
+\item \textit{coll\_monitoring\_messages\_size}
 \item \textit{coll\_monitoring\_o2a\_count}
 \item \textit{coll\_monitoring\_o2a\_size}
 \item \textit{coll\_monitoring\_a2o\_count}
@@ -230,36 +234,68 @@ Three performance variables are defined in the monitoring component:
   the PML framework with each node from the bound communicator
   (\textit{MPI\_Comm}). This variable returns an array of number of
   nodes unsigned long integers.
-\item [\textit{osc\_monitoring\_messages\_sent\_count}] Allow the user to
-  access within the application the number of messages sent
-  through the OSC framework with each node from the bound communicator
-  (\textit{MPI\_Comm}). This variable returns an array of number of
-  nodes unsigned long integers.
-\item [\textit{osc\_monitoring\_messages\_sent\_size}] Allow the user to
-  access within the application the amount of data sent through
+\item [\textit{osc\_monitoring\_messages\_sent\_count}] Allow the user
+  to access within the application the number of messages sent through
   the OSC framework with each node from the bound communicator
   (\textit{MPI\_Comm}). This variable returns an array of number of
   nodes unsigned long integers.
-  \item [\textit{osc\_monitoring\_messages\_recv\_count}] Allow the user to
-  access within the application the number of messages received
+\item [\textit{osc\_monitoring\_messages\_sent\_size}] Allow the user
+  to access within the application the amount of data sent through the
+  OSC framework with each node from the bound communicator
+  (\textit{MPI\_Comm}). This variable returns an array of number of
+  nodes unsigned long integers.
+\item [\textit{osc\_monitoring\_messages\_recv\_count}] Allow the user
+  to access within the application the number of messages received
   through the OSC framework with each node from the bound communicator
   (\textit{MPI\_Comm}). This variable returns an array of number of
   nodes unsigned long integers.
-\item [\textit{osc\_monitoring\_messages\_recv\_size}] Allow the user to
-  access within the application the amount of data received through
+\item [\textit{osc\_monitoring\_messages\_recv\_size}] Allow the user
+  to access within the application the amount of data received through
   the OSC framework with each node from the bound communicator
   (\textit{MPI\_Comm}). This variable returns an array of number of
   nodes unsigned long integers.
 \item [\textit{coll\_monitoring\_messages\_count}] Allow the user to
   access within the application the number of messages exchanged
-  through the COLL framework with each node from the bound communicator
-  (\textit{MPI\_Comm}). This variable returns an array of number of
-  nodes unsigned long integers.
+  through the COLL framework with each node from the bound
+  communicator (\textit{MPI\_Comm}). This variable returns an array of
+  number of nodes unsigned long integers.
 \item [\textit{coll\_monitoring\_messages\_size}] Allow the user to
   access within the application the amount of data exchanged through
   the COLL framework with each node from the bound communicator
   (\textit{MPI\_Comm}). This variable returns an array of number of
   nodes unsigned long integers.
+\item [\textit{coll\_monitoring\_o2a\_count}] Allow the user to access
+  within the application the number of one-to-all collective
+  operations accross the bound communicator (\textit{MPI\_Comm}) where
+  the process was defined as root. This variable returns a single
+  unsigned long integer.
+\item [\textit{coll\_monitoring\_o2a\_size}] Allow the user to access
+  within the application the amount of data sent as one-to-all
+  collective operations accross the bound communicator
+  (\textit{MPI\_Comm}). This variable returns a single unsigned long
+  integers. The communications between a process and itself are not
+  taken in account
+\item [\textit{coll\_monitoring\_a2o\_count}] Allow the user to access
+  within the application the number of all-to-one collective
+  operations accross the bound communicator (\textit{MPI\_Comm}) where
+  the process was defined as root. This variable returns a single
+  unsigned long integer.
+\item [\textit{coll\_monitoring\_a2o\_size}] Allow the user to access
+  within the application the amount of data received from all-to-one
+  collective operations accross the bound communicator
+  (\textit{MPI\_Comm}). This variable returns a single unsigned long
+  integers. The communications between a process and itself are not
+  taken in account
+\item [\textit{coll\_monitoring\_a2a\_count}] Allow the user to access
+  within the application the number of all-to-all collective
+  operations accross the bound communicator (\textit{MPI\_Comm}). This
+  variable returns a single unsigned long integer.
+\item [\textit{coll\_monitoring\_a2a\_size}] Allow the user to access
+  within the application the amount of data sent as all-to-all
+  collective operations accross the bound communicator
+  (\textit{MPI\_Comm}). This variable returns a single unsigned long
+  integers. The communications between a process and itself are not
+  taken in account
 \end{description}
 
 Once bound to a session and to the proper MPI object, these variables
@@ -272,8 +308,8 @@ The first variable may be modified by using the
 using \texttt{MPI\_T\_pvar\_read} but cannot be written. Stopping the
 \textit{flush} performance variable, with a call to
 \texttt{MPI\_T\_pvar\_stop}, force the counters to be flushed into the
-given file. Also, binding a new handle to the \textit{flush} variable
-will reset the counters.
+given file, reseting the counters at the same time. Also, binding a
+new handle to the \textit{flush} variable will reset the counters.
 
 The monitoring will start on the call to the
 \texttt{MPI\_T\_pvar\_start} until the moment you call the
