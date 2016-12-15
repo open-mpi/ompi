@@ -104,7 +104,7 @@ This mode should be used to monitor the whole application from
 its start until its end. It is defined such as you can record the
 amount of communications without any code modification.
 
-In order to do so, you have to get Open-MPI compiled with monitoring
+In order to do so, you have to get Open~MPI compiled with monitoring
 enabled. When you launch your application, you need to set the
 parameter \texttt{pml\_monitoring\_enable} to a value $> 0$, and, if
 \texttt{pml\_monitoring\_enable\_output} $\ge$ 3, to set the
@@ -309,7 +309,9 @@ using \texttt{MPI\_T\_pvar\_read} but cannot be written. Stopping the
 \textit{flush} performance variable, with a call to
 \texttt{MPI\_T\_pvar\_stop}, force the counters to be flushed into the
 given file, reseting the counters at the same time. Also, binding a
-new handle to the \textit{flush} variable will reset the counters.
+new handle to the \textit{flush} variable will reset the
+counters. Finally, please note that the size and counter performance
+variables may overflow for multiple large amounts of communications.
 
 The monitoring will start on the call to the
 \texttt{MPI\_T\_pvar\_start} until the moment you call the
@@ -335,6 +337,15 @@ application, you can add the following option in addition to the
 This library automatically gathers sent and received data into one
 communication matrix. Although, the use of monitoring \mpit{} within
 the code may interfere with this library.
+
+The resulting communcation matrices are as close as possible as the
+effective amount of data exchanged between nodes. But it has to be
+kept in mind that because of the stack of the logical layers in
+Open~MPI, the amount of data recorded as part of collectives or
+one-sided operations may be dupplicated when the PML layer handles the
+communication. For an exact measure of communications, the application
+must use \mpit{}'s monitoring performance variables to potentially
+substract double-recorded data.
 
 \subsection{Example}
 
