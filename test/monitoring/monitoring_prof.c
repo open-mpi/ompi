@@ -165,8 +165,8 @@ int MPI_Finalize(void)
     PMPI_Gather(osc_ssizes.vector,  comm_world_size, MPI_UNSIGNED_LONG, exchange_ssize_matrix,  comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
     PMPI_Gather(osc_rcounts.vector, comm_world_size, MPI_UNSIGNED_LONG, exchange_rcount_matrix, comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
     PMPI_Gather(osc_rsizes.vector,  comm_world_size, MPI_UNSIGNED_LONG, exchange_rsize_matrix,  comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-    PMPI_Gather(osc_ccounts.vector, comm_world_size, MPI_UNSIGNED_LONG, exchange_rcount_matrix, comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-    PMPI_Gather(osc_csizes.vector,  comm_world_size, MPI_UNSIGNED_LONG, exchange_rsize_matrix,  comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    PMPI_Gather(coll_counts.vector, comm_world_size, MPI_UNSIGNED_LONG, exchange_ccount_matrix, comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    PMPI_Gather(coll_sizes.vector,  comm_world_size, MPI_UNSIGNED_LONG, exchange_csize_matrix,  comm_world_size, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
     if (0 == comm_world_rank) {
         int i, j;
