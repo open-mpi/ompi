@@ -15,7 +15,7 @@ Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
-Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -181,6 +181,10 @@ Compiler Notes
 - Similarly, there is a known Fortran PGI compiler issue with long
   source directory path names that was resolved in 9.0-4 (9.0-3 is
   known to be broken in this regard).
+
+- If building C++ bindings or VT, we advise against use of CXX=pgc++
+  prior to PGI 16.10. Users report that using CXX=pgCC instead of pgc++
+  resolves the problem. Otherwise, pgc++ appears usable from 14.3 forward.
 
 - IBM's xlf compilers: NO known good version that can build/link
   the MPI f08 bindings or build/link the OSHMEM Fortran bindings.
