@@ -918,11 +918,14 @@ static inline ompi_osc_pt2pt_sync_t *ompi_osc_pt2pt_module_sync_lookup (ompi_osc
 
         return &module->all_sync;
     case OMPI_OSC_PT2PT_SYNC_TYPE_PSCW:
+        OPAL_THREAD_LOCK(&module->all_sync.lock);
         if (ompi_osc_pt2pt_sync_pscw_peer (module, target, peer)) {
+            OPAL_THREAD_UNLOCK(&module->all_sync.lock);
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                                  "osc/pt2pt: found PSCW access epoch target for %d", target));
             return &module->all_sync;
         }
+        OPAL_THREAD_UNLOCK(&module->all_sync.lock);
     }
 
     return NULL;
