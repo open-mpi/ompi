@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016 Broadcom Limited. All rights reserved.
@@ -162,7 +162,7 @@ int opal_timer_linux_open(void)
 {
     int ret = OPAL_SUCCESS;
 
-    if(mca_timer_base_monotonic) {
+    if (mca_timer_base_monotonic && !opal_sys_timer_is_monotonic ()) {
 #if OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_TIMER_MONOTONIC)
         struct timespec res;
         if( 0 == clock_getres(CLOCK_MONOTONIC, &res)) {
@@ -172,10 +172,8 @@ int opal_timer_linux_open(void)
             return ret;
         }
 #else
-#if (0 == OPAL_TIMER_MONOTONIC)
         /* Monotonic time requested but cannot be found. Complain! */
         opal_show_help("help-opal-timer-linux.txt", "monotonic not supported", true);
-#endif  /* (0 == OPAL_TIMER_MONOTONIC) */
 #endif  /* OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_TIMER_MONOTONIC) */
     }
     ret = opal_timer_linux_find_freq();
@@ -187,22 +185,20 @@ int opal_timer_linux_open(void)
 #if OPAL_HAVE_CLOCK_GETTIME
 opal_timer_t opal_timer_base_get_usec_clock_gettime(void)
 {
-    struct timespec tp;
+    struct timespec tp = {.tv_sec = 0, .tv_nsec = 0};
 
-    if( 0 == clock_gettime(CLOCK_MONOTONIC, &tp) ) {
-        return (tp.tv_sec * 1e6 + tp.tv_nsec/1000);
-    }
-    return 0;
+    (void) clock_gettime (CLOCK_MONOTONIC, &tp);
+
+    return (tp.tv_sec * 1e6 + tp.tv_nsec/1000);
 }
 
 opal_timer_t opal_timer_base_get_cycles_clock_gettime(void)
 {
-    struct timespec tp;
+    struct timespec tp = {.tv_sec = 0, .tv_nsec = 0};
 
-    if( 0 == clock_gettime(CLOCK_MONOTONIC, &tp) ) {
-        return (tp.tv_sec * 1e9 + tp.tv_nsec);
-    }
-    return 0;
+    (void) clock_gettime(CLOCK_MONOTONIC, &tp);
+
+    return (tp.tv_sec * 1e9 + tp.tv_nsec);
 }
 #endif  /* OPAL_HAVE_CLOCK_GETTIME */
 
