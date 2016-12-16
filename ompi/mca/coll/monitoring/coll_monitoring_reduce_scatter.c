@@ -22,10 +22,18 @@ int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf,
                                        mca_coll_base_module_t *module)
 {
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    /* size_t type_size, data_size, rank = ompi_comm_rank(comm); */
-    /* ompi_datatype_type_size(dtype, &type_size); */
-    /* data_size = rcounts[rank]*type_size; */
-    /* mca_common_monitoring_coll_o2a(data_size, monitoring_module->data); */
+    size_t type_size, data_size, data_size_aggreg = 0;
+    const int comm_size = ompi_comm_size(comm);
+    const int my_rank = ompi_comm_rank(comm);
+    int i, rank;
+    ompi_datatype_type_size(dtype, &type_size);
+    for( i = 0; i < comm_size; ++i ) {
+        if( my_rank == i ) continue; /* No communication for self */
+        data_size = rcounts[i] * type_size;
+        /* Something to be done here probably */
+        data_size_aggreg += data_size;
+    }
+    mca_common_monitoring_coll_a2a(data_size, monitoring_module->data);
     return monitoring_module->real.coll_reduce_scatter(sbuf, rbuf, rcounts, dtype, op, comm, monitoring_module->real.coll_reduce_scatter_module);
 }
 
@@ -38,9 +46,17 @@ int mca_coll_monitoring_ireduce_scatter(const void *sbuf, void *rbuf,
                                         mca_coll_base_module_t *module)
 {
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    /* size_t type_size, data_size, rank = ompi_comm_rank(comm); */
-    /* ompi_datatype_type_size(dtype, &type_size); */
-    /* data_size = rcounts[rank]*type_size; */
-    /* mca_common_monitoring_coll_o2a(data_size, monitoring_module->data); */
+    size_t type_size, data_size, data_size_aggreg = 0;
+    const int comm_size = ompi_comm_size(comm);
+    const int my_rank = ompi_comm_rank(comm);
+    int i, rank;
+    ompi_datatype_type_size(dtype, &type_size);
+    for( i = 0; i < comm_size; ++i ) {
+        if( my_rank == i ) continue; /* No communication for self */
+        data_size = rcounts[i] * type_size;
+        /* Something to be done here probably */
+        data_size_aggreg += data_size;
+    }
+    mca_common_monitoring_coll_a2a(data_size, monitoring_module->data);
     return monitoring_module->real.coll_ireduce_scatter(sbuf, rbuf, rcounts, dtype, op, comm, request, monitoring_module->real.coll_ireduce_scatter_module);
 }

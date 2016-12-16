@@ -35,9 +35,11 @@ if($#ARGV < 0){
    $filename=$ARGV[0];
 }
 
-profile($filename,"I|E|S|R","all");
+profile($filename,"I|E|S|R|C","all");
 if ( profile($filename,"E","external") ){
-   profile($filename,"I","internal");
+    profile($filename,"I","internal");
+    profile($filename,"S|R","osc");
+    profile($filename,"C","coll");
 }
 
 sub profile{

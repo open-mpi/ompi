@@ -718,7 +718,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     }
 
     /* Dump incoming messages */
-    fprintf(pf, "# RMA\n");
+    fprintf(pf, "# OSC\n");
     for (int i = 0 ; i < nbprocs ; i++) {
         if(osc_count_s[i] > 0) {
             fprintf(pf, "S\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
