@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,6 +109,17 @@ BEGIN_C_DECLS
 
 typedef long opal_timer_t;
 #endif
+#endif
+
+#ifndef OPAL_HAVE_SYS_TIMER_IS_MONOTONIC
+
+#define OPAL_HAVE_SYS_TIMER_IS_MONOTONIC 1
+
+static inline bool opal_sys_timer_is_monotonic (void)
+{
+    return OPAL_TIMER_MONOTONIC;
+}
+
 #endif
 
 END_C_DECLS
