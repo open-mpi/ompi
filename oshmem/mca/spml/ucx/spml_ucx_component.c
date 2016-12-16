@@ -127,7 +127,8 @@ static int mca_spml_ucx_component_open(void)
 
     memset(&params, 0, sizeof(params));
     params.field_mask = UCP_PARAM_FIELD_FEATURES;
-    params.features   = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64;
+    params.features   = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64|UCP_PARAM_FIELD_MT_WORKERS_SHARED;
+    params.mt_workers_shared = 0;
 
     err = ucp_init(&params, ucp_config, &mca_spml_ucx.ucp_context);
     ucp_config_release(ucp_config);
@@ -153,7 +154,7 @@ static int spml_ucx_init(void)
     ucs_status_t err;
 
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-    params.thread_mode = UCS_THREAD_MODE_SINGLE;
+    params.thread_mode = UCS_THREAD_MODE_MULTI;
 
     err = ucp_worker_create(mca_spml_ucx.ucp_context, &params,
                             &mca_spml_ucx.ucp_worker);
