@@ -62,7 +62,7 @@ Bug fixes/minor improvements:
   insure bit-wise reproducibility of binaries.  Thanks to Alastair McKinstry
   for help in fixing this problem.
 - Fix a problem with early exit of a MPI process without calling MPI_FINALIZE
-  of MPI_ABORT that could lead to job hangs.  Thanks to Christof Koehler for
+  or MPI_ABORT that could lead to job hangs.  Thanks to Christof Koehler for
   reporting.
 - Fix a problem with forward of SIGTERM signal from mpirun to MPI processes
   in a job.  Thanks to Noel Rycroft for reporting this problem
