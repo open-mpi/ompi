@@ -693,7 +693,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     fprintf(pf, "# POINT TO POINT\n");
     for (int i = 0 ; i < nbprocs ; i++) {
         if(pml_count[i] > 0) {
-            fprintf(pf, "I\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
+            fprintf(pf, "E\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
                     my_rank, i, pml_data[i], pml_count[i]);
             for(int j = 0 ; j < max_size_histogram ; ++j)
                 fprintf(pf, "%" PRIu64 "%s", size_histogram[i * max_size_histogram + j],
@@ -708,7 +708,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     if( mca_common_monitoring_filter() ) {
         for (int i = 0 ; i < nbprocs ; i++) {
             if(filtered_pml_count[i] > 0) {
-                fprintf(pf, "E\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
+                fprintf(pf, "I\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                         my_rank, i, filtered_pml_data[i], filtered_pml_count[i]);
             }
             /* reset phase array */
@@ -718,7 +718,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     }
 
     /* Dump incoming messages */
-    fprintf(pf, "# RMA\n");
+    fprintf(pf, "# OSC\n");
     for (int i = 0 ; i < nbprocs ; i++) {
         if(osc_count_s[i] > 0) {
             fprintf(pf, "S\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
