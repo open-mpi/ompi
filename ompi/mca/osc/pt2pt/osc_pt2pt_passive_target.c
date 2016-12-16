@@ -10,7 +10,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2016 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
@@ -420,6 +420,16 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
 
             /* wait for unlock acks. this signals remote completion of fragments */
             ompi_osc_pt2pt_sync_wait_expected (lock);
+
+            /* It is possible for the unlock to finish too early before the data
+             * is actually present in the recv buffer (for non-contiguous datatypes)
+             * So make sure to wait for all of the fragments to arrive.
+             */
+            OPAL_THREAD_LOCK(&module->lock);
+            while (module->outgoing_frag_count < module->outgoing_frag_signal_count) {
+                opal_condition_wait(&module->cond, &module->lock);
+            }
+            OPAL_THREAD_UNLOCK(&module->lock);
 
             OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                                  "ompi_osc_pt2pt_unlock: unlock of %d complete", target));
