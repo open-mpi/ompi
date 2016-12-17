@@ -466,11 +466,15 @@ PMIX_EXPORT void pmix_value_load(pmix_value_t *v, void *data,
                                  pmix_data_type_t type)
 {
     pmix_byte_object_t *bo;
+    pmix_proc_info_t *pi;
 
     v->type = type;
     if (NULL == data) {
         /* just set the fields to zero */
         memset(&v->data, 0, sizeof(v->data));
+        if (PMIX_BOOL == type) {
+          v->data.flag = true; // existence of the attribute indicates true unless specified different
+        }
     } else {
         switch(type) {
         case PMIX_UNDEF:
@@ -529,19 +533,63 @@ PMIX_EXPORT void pmix_value_load(pmix_value_t *v, void *data,
         case PMIX_TIMEVAL:
             memcpy(&(v->data.tv), data, sizeof(struct timeval));
             break;
+        case PMIX_TIME:
+            memcpy(&(v->data.time), data, sizeof(time_t));
+            break;
         case PMIX_STATUS:
             memcpy(&(v->data.status), data, sizeof(pmix_status_t));
+            break;
+        case PMIX_PROC_RANK:
+            memcpy(&(v->data.rank), data, sizeof(pmix_rank_t));
+            break;
+        case PMIX_PROC:
+            PMIX_PROC_CREATE(v->data.proc, 1);
+            if (NULL == v->data.proc) {
+                PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                return;
+            }
+            memcpy(v->data.proc, data, sizeof(pmix_proc_t));
             break;
         case PMIX_BYTE_OBJECT:
             bo = (pmix_byte_object_t*)data;
             v->data.bo.bytes = bo->bytes;
             memcpy(&(v->data.bo.size), &bo->size, sizeof(size_t));
             break;
+        case PMIX_PERSIST:
+            memcpy(&(v->data.persist), data, sizeof(pmix_persistence_t));
+            break;
+        case PMIX_SCOPE:
+            memcpy(&(v->data.scope), data, sizeof(pmix_scope_t));
+            break;
+        case PMIX_DATA_RANGE:
+            memcpy(&(v->data.range), data, sizeof(pmix_data_range_t));
+            break;
+        case PMIX_PROC_STATE:
+            memcpy(&(v->data.state), data, sizeof(pmix_proc_state_t));
+            break;
+        case PMIX_PROC_INFO:
+            PMIX_PROC_INFO_CREATE(v->data.pinfo, 1);
+            if (NULL == v->data.pinfo) {
+                PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                return;
+            }
+            pi = (pmix_proc_info_t*)data;
+            memcpy(&(v->data.pinfo->proc), &pi->proc, sizeof(pmix_proc_t));
+            if (NULL != pi->hostname) {
+                v->data.pinfo->hostname = strdup(pi->hostname);
+            }
+            if (NULL != pi->executable_name) {
+                v->data.pinfo->executable_name = strdup(pi->executable_name);
+            }
+            memcpy(&(v->data.pinfo->pid), &pi->pid, sizeof(pid_t));
+            memcpy(&(v->data.pinfo->exit_code), &pi->exit_code, sizeof(int));
+            break;
         case PMIX_POINTER:
             memcpy(&(v->data.ptr), data, sizeof(void*));
             break;
         default:
             /* silence warnings */
+            PMIX_ERROR_LOG(PMIX_ERR_UNKNOWN_DATA_TYPE);
             break;
         }
     }
@@ -551,6 +599,7 @@ pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
                                 size_t *sz, pmix_data_type_t type)
 {
     pmix_status_t rc;
+    pmix_proc_t *pc;
 
     rc = PMIX_SUCCESS;
     if (type != kv->type) {
@@ -637,9 +686,28 @@ pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
             memcpy(*data, &(kv->data.tv), sizeof(struct timeval));
             *sz = sizeof(struct timeval);
             break;
+        case PMIX_TIME:
+            memcpy(*data, &(kv->data.time), sizeof(time_t));
+            *sz = sizeof(time_t);
+            break;
         case PMIX_STATUS:
             memcpy(*data, &(kv->data.status), sizeof(pmix_status_t));
             *sz = sizeof(pmix_status_t);
+            break;
+        case PMIX_PROC_RANK:
+            memcpy(*data, &(kv->data.rank), sizeof(pmix_rank_t));
+            *sz = sizeof(pmix_rank_t);
+            break;
+        case PMIX_PROC:
+            PMIX_PROC_CREATE(pc, 1);
+            if (NULL == pc) {
+                PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                rc = PMIX_ERR_NOMEM;
+                break;
+            }
+            memcpy(pc, kv->data.proc, sizeof(pmix_proc_t));
+            *sz = sizeof(pmix_proc_t);
+            *data = pc;
             break;
         case PMIX_BYTE_OBJECT:
             if (NULL != kv->data.bo.bytes && 0 < kv->data.bo.size) {
@@ -649,6 +717,22 @@ pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
                 *data = NULL;
                 *sz = 0;
             }
+            break;
+        case PMIX_PERSIST:
+            memcpy(*data, &(kv->data.persist), sizeof(pmix_persistence_t));
+            *sz = sizeof(pmix_persistence_t);
+            break;
+        case PMIX_SCOPE:
+            memcpy(*data, &(kv->data.scope), sizeof(pmix_scope_t));
+            *sz = sizeof(pmix_scope_t);
+            break;
+        case PMIX_DATA_RANGE:
+            memcpy(*data, &(kv->data.range), sizeof(pmix_data_range_t));
+            *sz = sizeof(pmix_data_range_t);
+            break;
+        case PMIX_PROC_STATE:
+            memcpy(*data, &(kv->data.state), sizeof(pmix_proc_state_t));
+            *sz = sizeof(pmix_proc_state_t);
             break;
         case PMIX_POINTER:
             memcpy(*data, &(kv->data.ptr), sizeof(void*));

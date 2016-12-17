@@ -239,6 +239,9 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     pmix_cmd_t cmd = PMIX_REQ_CMD;
     volatile int active;
     pmix_status_t code = PMIX_ERR_DEBUGGER_RELEASE;
+    pmix_proc_t wildcard;
+    pmix_info_t ginfo;
+    pmix_value_t *val = NULL;
 
     if (NULL == proc) {
         return PMIX_ERR_BAD_PARAM;
@@ -271,7 +274,6 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     /* setup the globals */
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_client_globals.myserver, pmix_peer_t);
-    pmix_client_globals.wait_for_debugger = false;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: init called");
@@ -349,14 +351,19 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         return rc;
     }
 
-    /* check if we are to wait here for debugger attach */
-    if (pmix_client_globals.wait_for_debugger) {
+    /* lood for a debugger attach key */
+    (void)strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+    wildcard.rank = PMIX_RANK_WILDCARD;
+    PMIX_INFO_LOAD(&ginfo, PMIX_IMMEDIATE, NULL, PMIX_BOOL);
+    if (PMIX_SUCCESS == PMIx_Get(&wildcard, PMIX_DEBUG_STOP_IN_INIT, &ginfo, 1, &val)) {
+        PMIX_VALUE_FREE(val, 1); // cleanup memory
+        /* if the value was found, then we need to wait for debugger attach here */
         /* register for the debugger release notificaation */
         active = -1;
         PMIx_Register_event_handler(&code, 1, NULL, 0,
                                     notification_fn, evhandler_reg_callbk, (void*)&active);
         while (-1 == active) {
-            sleep(1);
+            usleep(100);
         }
         if (0 != active) {
             return active;
@@ -364,6 +371,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         /* wait for it to arrive */
         PMIX_WAIT_FOR_COMPLETION(waiting_for_debugger);
     }
+    PMIX_INFO_DESTRUCT(&ginfo);
 
     return PMIX_SUCCESS;
 }

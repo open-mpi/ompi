@@ -390,7 +390,7 @@ int pmix_server_notify_event(int code, opal_process_name_t *source,
     }
     if (0 < ninfo) {
         OPAL_LIST_FOREACH(val, info, opal_value_t) {
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, val, 1, OPAL_VALUE))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &val, 1, OPAL_VALUE))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
                 return rc;

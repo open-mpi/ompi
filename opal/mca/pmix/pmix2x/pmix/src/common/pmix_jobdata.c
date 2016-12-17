@@ -309,13 +309,6 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
             }
             /* cleanup */
             PMIX_DESTRUCT(&buf2);
-        } else if (0 == strcmp(kptr->key, PMIX_DEBUG_STOP_IN_INIT)) {
-            /* set the flag - we don't store this value */
-            if (PMIX_UNDEF == kptr->value->type) {
-                pmix_client_globals.wait_for_debugger = true;
-            } else {
-                pmix_client_globals.wait_for_debugger = kptr->value->data.flag;
-            }
         } else {
             if (PMIX_SUCCESS != (rc = _add_key_for_rank(PMIX_RANK_WILDCARD, kptr, cb))) {
                 PMIX_ERROR_LOG(rc);

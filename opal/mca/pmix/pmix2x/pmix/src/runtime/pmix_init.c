@@ -83,7 +83,7 @@ PMIX_EXPORT pmix_globals_t pmix_globals = {
 
 int pmix_rte_init(pmix_proc_type_t type,
                   pmix_info_t info[], size_t ninfo,
-                  pmix_ptl_cbfunc_t notifycbfunc)
+                  pmix_ptl_cbfunc_t cbfunc)
 {
     int ret, debug_level;
     char *error = NULL, *evar;
@@ -190,6 +190,11 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
     if( PMIX_SUCCESS != (ret = pmix_ptl_base_select()) ) {
         error = "pmix_ptl_base_select";
+        goto return_error;
+    }
+    /* set the notification callback function */
+    if (PMIX_SUCCESS != (ret = pmix_ptl.set_notification_cbfunc(cbfunc))) {
+        error = "pmix_ptl_set_notification_cbfunc";
         goto return_error;
     }
 

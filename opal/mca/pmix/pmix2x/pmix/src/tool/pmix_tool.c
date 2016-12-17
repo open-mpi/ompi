@@ -107,7 +107,7 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
     }
     /* unpack the status */
     cnt=1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &chain->status, &cnt, PMIX_INT))) {
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &chain->status, &cnt, PMIX_STATUS))) {
         PMIX_ERROR_LOG(rc);
         goto error;
     }
