@@ -799,6 +799,10 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_TIME\tKey: %s\tValue: %s", prefx,
                  src->key, ctime(&src->data.time));
         break;
+    case OPAL_NAME:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_NAME\tKey: %s\tValue: %s", prefx,
+                 src->key, OPAL_NAME_PRINT(src->data.name));
+        break;
     case OPAL_PTR:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_PTR\tKey: %s", prefx, src->key);
         break;

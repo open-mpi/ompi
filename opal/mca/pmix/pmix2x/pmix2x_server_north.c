@@ -784,7 +784,6 @@ static pmix_status_t server_notify_event(pmix_status_t code,
 
     /* convert the source */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&src.jobid, source->nspace))) {
-        opal_output(0, "FILE: %s LINE %d", __FILE__, __LINE__);
         OBJ_RELEASE(opalcaddy);
         return pmix2x_convert_opalrc(rc);
     }
@@ -881,7 +880,6 @@ static pmix_status_t server_query(pmix_proc_t *proct,
 
     /* convert the requestor */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&requestor.jobid, proct->nspace))) {
-        opal_output(0, "FILE: %s LINE %d", __FILE__, __LINE__);
         OBJ_RELEASE(opalcaddy);
         return pmix2x_convert_opalrc(rc);
     }
@@ -996,7 +994,6 @@ static void server_log(const pmix_proc_t *proct,
 
     /* convert the requestor */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&requestor.jobid, proct->nspace))) {
-    opal_output(0, "FILE: %s LINE %d", __FILE__, __LINE__);
     OBJ_RELEASE(opalcaddy);
     ret = pmix2x_convert_opalrc(rc);
         if (NULL != cbfunc) {
