@@ -40,7 +40,8 @@ OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_request_t);
     do {                                                                \
         opal_free_list_item_t *item;                                    \
         do {                                                            \
-            item = opal_free_list_get (&mca_osc_pt2pt_component.requests); \
+            OPAL_THREAD_SCOPED_LOCK(&mca_osc_pt2pt_component.lock, \
+                                    item = opal_free_list_get (&mca_osc_pt2pt_component.requests)); \
             if (NULL == item) {                                         \
                 opal_progress();                                        \
             }                                                           \
@@ -58,8 +59,9 @@ OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_request_t);
     do {                                                                \
         OMPI_REQUEST_FINI(&(req)->super);                               \
         (req)->outstanding_requests = 0;                                \
-        opal_free_list_return (&mca_osc_pt2pt_component.requests,       \
-                                 (opal_free_list_item_t *) (req));      \
+        OPAL_THREAD_SCOPED_LOCK(&mca_osc_pt2pt_component.lock, \
+                                opal_free_list_return (&mca_osc_pt2pt_component.requests, \
+                                                       (opal_free_list_item_t *) (req))); \
     } while (0)
 
 static inline void ompi_osc_pt2pt_request_complete (ompi_osc_pt2pt_request_t *request, int mpi_error)

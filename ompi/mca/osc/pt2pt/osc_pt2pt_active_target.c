@@ -186,7 +186,18 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
     /* wait for completion */
     while (module->outgoing_frag_count != module->outgoing_frag_signal_count ||
            module->active_incoming_frag_count < module->active_incoming_frag_signal_count) {
+#ifdef OSC_PT2PT_HARD_SPIN_NO_CV_WAIT
+        /* It is possible that mark_outgoing_completion() is called just after the
+         * while loop condition, and before we go into the _wait() below. This will mean
+         * that we miss the signal, and block forever in the _wait().
+         */
+        OPAL_THREAD_UNLOCK(&module->lock);
+        usleep(100);
+        opal_progress();
+        OPAL_THREAD_LOCK(&module->lock);
+#else
         opal_condition_wait(&module->cond, &module->lock);
+#endif
     }
 
     if (assert & MPI_MODE_NOSUCCEED) {
@@ -213,9 +224,11 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     ompi_osc_pt2pt_sync_t *sync = &module->all_sync;
 
     OPAL_THREAD_LOCK(&module->lock);
+    OPAL_THREAD_LOCK(&sync->lock);
 
     /* check if we are already in an access epoch */
     if (ompi_osc_pt2pt_access_epoch_active (module)) {
+        OPAL_THREAD_UNLOCK(&sync->lock);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -226,6 +239,12 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
 
     /* haven't processed any post messages yet */
     sync->sync_expected = sync->num_peers;
+
+    /* If the previous epoch was from Fence, then eager_send_active is still
+     * set to true at this time, but it shoulnd't be true until we get our
+     * incoming Posts. So reset to 'false' for this new epoch.
+     */
+    sync->eager_send_active = false;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_start entering with group size %d...",
@@ -243,6 +262,7 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     if (0 == ompi_group_size (group)) {
         /* nothing more to do. this is an empty start epoch */
         sync->eager_send_active = true;
+        OPAL_THREAD_UNLOCK(&sync->lock);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_SUCCESS;
     }
@@ -252,12 +272,12 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     /* translate the group ranks into the communicator */
     sync->peer_list.peers = ompi_osc_pt2pt_get_peers (module, group);
     if (NULL == sync->peer_list.peers) {
+        OPAL_THREAD_UNLOCK(&sync->lock);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     if (!(assert & MPI_MODE_NOCHECK)) {
-        OPAL_THREAD_LOCK(&sync->lock);
         for (int i = 0 ; i < sync->num_peers ; ++i) {
             ompi_osc_pt2pt_peer_t *peer = sync->peer_list.peers[i];
 
@@ -270,7 +290,6 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
                 ompi_osc_pt2pt_peer_set_unex (peer, false);
             }
         }
-        OPAL_THREAD_UNLOCK(&sync->lock);
     } else {
         sync->sync_expected = 0;
     }
@@ -289,6 +308,7 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
                          "ompi_osc_pt2pt_start complete. eager sends active: %d",
                          sync->eager_send_active));
 
+    OPAL_THREAD_UNLOCK(&sync->lock);
     OPAL_THREAD_UNLOCK(&module->lock);
     return OMPI_SUCCESS;
 }
@@ -398,7 +418,18 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
     /* wait for outgoing requests to complete.  Don't wait for incoming, as
        we're only completing the access epoch, not the exposure epoch */
     while (module->outgoing_frag_count != module->outgoing_frag_signal_count) {
+#ifdef OSC_PT2PT_HARD_SPIN_NO_CV_WAIT
+        /* It is possible that mark_outgoing_completion() is called just after the
+         * while loop condition, and before we go into the _wait() below. This will mean
+         * that we miss the signal, and block forever in the _wait().
+         */
+        OPAL_THREAD_UNLOCK(&module->lock);
+        usleep(100);
+        opal_progress();
+        OPAL_THREAD_LOCK(&module->lock);
+#else
         opal_condition_wait(&module->cond, &module->lock);
+#endif
     }
 
     /* unlock here, as group cleanup can take a while... */
@@ -516,7 +547,15 @@ int ompi_osc_pt2pt_wait (ompi_win_t *win)
                              "active_incoming_frag_count = %d, active_incoming_frag_signal_count = %d",
                              module->num_complete_msgs, module->active_incoming_frag_count,
                              module->active_incoming_frag_signal_count));
+#ifdef OSC_PT2PT_HARD_SPIN_NO_CV_WAIT
+        /* Possible to not receive the signal to release based upon num_complete_msgs in osc_pt2pt_incoming_complete() */
+        OPAL_THREAD_UNLOCK(&module->lock);
+        usleep(100);
+        opal_progress();
+        OPAL_THREAD_LOCK(&module->lock);
+#else
         opal_condition_wait(&module->cond, &module->lock);
+#endif
     }
 
     group = module->pw_group;

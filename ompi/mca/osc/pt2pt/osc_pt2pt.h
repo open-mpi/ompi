@@ -46,6 +46,19 @@
 
 BEGIN_C_DECLS
 
+/*
+ * JJH: This is a hack, but it'll help us make forward progress for now.
+ * It is possible, in a multthreaded scenario, that the 'outgoing_frag_{signal_} count'
+ * is incremented in such a way that those waiting in opal_condition_wait for it
+ * to change never receive a signal. This is because the functions incrementing this
+ * value do not grab the 'module' lock, and doing so can lead to deadlock...
+ *
+ * Ideally we would grab the module lock in the mark_outgoing_completion() to
+ * prevent that race, but this can result in a deadlock by double locking that
+ * mutex. So that code need to be audited a bit more.
+ */
+#define OSC_PT2PT_HARD_SPIN_NO_CV_WAIT 1
+
 struct ompi_osc_pt2pt_frag_t;
 struct ompi_osc_pt2pt_receive_t;
 
@@ -913,11 +926,14 @@ static inline ompi_osc_pt2pt_sync_t *ompi_osc_pt2pt_module_sync_lookup (ompi_osc
 
         return &module->all_sync;
     case OMPI_OSC_PT2PT_SYNC_TYPE_PSCW:
+        OPAL_THREAD_LOCK(&module->all_sync.lock);
         if (ompi_osc_pt2pt_sync_pscw_peer (module, target, peer)) {
+            OPAL_THREAD_UNLOCK(&module->all_sync.lock);
             OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                                  "osc/pt2pt: found PSCW access epoch target for %d", target));
             return &module->all_sync;
         }
+        OPAL_THREAD_UNLOCK(&module->all_sync.lock);
     }
 
     return NULL;
