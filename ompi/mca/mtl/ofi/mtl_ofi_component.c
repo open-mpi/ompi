@@ -383,6 +383,20 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 
 
     /**
+     * Skip the 'sockets' provider by default unless it has been
+     * specifically selected via the command line option.
+     *
+     * e.g. --mca mtl_ofi_provider sockets
+     */
+    if (0 == (strncmp(prov->fabric_attr->prov_name, "sockets", 7)) &&
+        (NULL == ompi_mtl_ofi.provider_name ||
+         0 != (strncmp(ompi_mtl_ofi.provider_name, "sockets", 7)))) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                "Skipping 'sockets' provider.\n");
+        goto error;
+    }
+
+    /**
      * Open fabric
      * The getinfo struct returns a fabric attribute struct that can be used to
      * instantiate the virtual or physical network. This opens a "fabric
