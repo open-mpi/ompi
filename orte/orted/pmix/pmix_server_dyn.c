@@ -245,7 +245,7 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
         } else if (0 == strcmp(info->key, OPAL_PMIX_NOTIFY_COMPLETION)) {
             if (OPAL_UNDEF == info->type || info->data.flag) {
                 orte_set_attribute(&jdata->attributes, ORTE_JOB_NOTIFY_COMPLETION,
-                                   ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+                                   ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
             }
         } else if (0 == strcmp(info->key, OPAL_PMIX_DEBUG_STOP_ON_EXEC)) {
             /* we don't know how to do this */

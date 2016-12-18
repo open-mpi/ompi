@@ -455,8 +455,8 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     bool matched;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix_server: _notify_error notifying clients of error %d",
-                        cd->status);
+                        "pmix_server: _notify_error notifying clients of error %s",
+                        PMIx_Error_string(cd->status));
 
     /* we cannot know if everyone who wants this notice has had a chance
      * to register for it - the notice may be coming too early. So cache
