@@ -518,16 +518,74 @@ static void _send_notification(int status, orte_process_name_t *proc)
     OBJ_DESTRUCT(&buf);
 }
 
+static void _send_direct_notify(int status, orte_process_name_t *proc)
+{
+    opal_buffer_t *buf;
+    int rc;
+    opal_value_t kv, *kvptr;
+    orte_process_name_t daemon;
+
+    buf = OBJ_NEW(opal_buffer_t);
+
+    /* pack the status */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &status, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return;
+    }
+
+    /* the source is me */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return;
+    }
+
+    /* pass along the proc to be notified (one opal_value_t) */
+    rc = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return;
+    }
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_PMIX_EVENT_CUSTOM_RANGE);
+    kv.type = OPAL_NAME;
+    kv.data.name.jobid = proc->jobid;
+    kv.data.name.vpid = proc->vpid;
+    kvptr = &kv;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kv);
+        OBJ_RELEASE(buf);
+        return;
+    }
+    OBJ_DESTRUCT(&kv);
+
+
+    /* get the daemon hosting the proc to be notified */
+    daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+    daemon.vpid = orte_get_proc_daemon_vpid(proc);
+    /* send the notification to that daemon */
+    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                                      &daemon, buf,
+                                                      ORTE_RML_TAG_NOTIFICATION,
+                                                      orte_rml_send_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+    }
+}
+
 void orte_state_base_track_procs(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_process_name_t *proc = &caddy->name;
-    orte_process_name_t wildcard_rank;
     orte_proc_state_t state = caddy->proc_state;
     orte_job_t *jdata;
     orte_proc_t *pdata;
     int i;
     char *rtmod;
+    orte_process_name_t parent, *npptr;
 
     opal_output_verbose(5, orte_state_base_framework.framework_output,
                         "%s state:base:track_procs called for proc %s state %s",
@@ -636,9 +694,15 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
             /* if they requested notification upon completion, provide it */
             if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NOTIFY_COMPLETION, NULL, OPAL_BOOL)) {
-                wildcard_rank.jobid = jdata->jobid;
-                wildcard_rank.vpid = ORTE_VPID_WILDCARD;
-                _send_notification(OPAL_ERR_JOB_TERMINATED, &wildcard_rank);
+                /* notify_completion => notify the parent of the termination
+                 * of this child job. So get the parent jobid info */
+                npptr = &parent;
+                if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, (void**)&npptr, OPAL_NAME)) {
+                    /* notify everyone who asked for it */
+                    _send_direct_notify(OPAL_ERR_JOB_TERMINATED, ORTE_NAME_WILDCARD);
+                } else {
+                    _send_direct_notify(OPAL_ERR_JOB_TERMINATED, &parent);
+                }
             }
         } else if (ORTE_PROC_STATE_TERMINATED < pdata->state &&
                    !orte_job_term_ordered) {
