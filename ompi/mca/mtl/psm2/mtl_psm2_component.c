@@ -14,6 +14,8 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -102,16 +104,24 @@ ompi_mtl_psm2_component_register(void)
 static int
 ompi_mtl_psm2_component_open(void)
 {
+  int res;
   glob_t globbuf;
   globbuf.gl_offs = 0;
 
   /* Component available only if Omni-Path hardware is present */
-  if ((glob("/dev/hfi1_[0-9]", GLOB_DOOFFS, NULL, &globbuf) != 0) &&
-      (glob("/dev/hfi1_[0-9][0-9]", GLOB_APPEND, NULL, &globbuf) != 0)) {
-    return OPAL_ERR_NOT_AVAILABLE;
+  res = glob("/dev/hfi1_[0-9]", GLOB_DOOFFS, NULL, &globbuf);
+  if (0 == res || GLOB_NOMATCH == res) {
+      globfree(&globbuf);
   }
-
-  globfree(&globbuf);
+  if (0 != res) {
+      res = glob("/dev/hfi1_[0-9][0-9]", GLOB_APPEND, NULL, &globbuf);
+      if (0 == res || GLOB_NOMATCH == res) {
+          globfree(&globbuf);
+      }
+      if (0 != res) {
+          return OPAL_ERR_NOT_AVAILABLE;
+      }
+  }
 
   /* Component available only if at least one hfi1 port is ACTIVE */
   bool foundOnlineHfi1Port = false;
