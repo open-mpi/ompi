@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -59,6 +59,9 @@ static bool recv_issued = false;
 static int orte_grpcomm_base_close(void)
 {
     orte_grpcomm_base_active_t *active;
+    void *key;
+    size_t size;
+    uint32_t *seq_number;
 
     if (recv_issued) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_XCAST);
@@ -73,6 +76,10 @@ static int orte_grpcomm_base_close(void)
     }
     OPAL_LIST_DESTRUCT(&orte_grpcomm_base.actives);
     OPAL_LIST_DESTRUCT(&orte_grpcomm_base.ongoing);
+    for (void *_nptr=NULL;                                   \
+         OPAL_SUCCESS == opal_hash_table_get_next_key_ptr(&orte_grpcomm_base.sig_table, &key, &size, (void **)&seq_number, _nptr, &_nptr);) {
+        free(seq_number);
+    }
     OBJ_DESTRUCT(&orte_grpcomm_base.sig_table);
 
     return mca_base_framework_components_close(&orte_grpcomm_base_framework, NULL);

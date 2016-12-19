@@ -141,7 +141,7 @@ static void allgather_stub(int fd, short args, void *cbdata)
     int rc;
     orte_grpcomm_base_active_t *active;
     orte_grpcomm_coll_t *coll;
-    void *seq_number;
+    uint32_t *seq_number;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:allgather stub",
@@ -150,11 +150,14 @@ static void allgather_stub(int fd, short args, void *cbdata)
     /* retrieve an existing tracker, create it if not
      * already found. The allgather module is responsible
      * for releasing it upon completion of the collective */
-    ret = opal_hash_table_get_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), &seq_number);
+    ret = opal_hash_table_get_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), (void **)&seq_number);
     if (OPAL_ERR_NOT_FOUND == ret) {
         cd->sig->seq_num = 0;
+        seq_number = (uint32_t *)malloc(sizeof(uint32_t));
+        *seq_number = 0;
     } else if (OPAL_SUCCESS == ret) {
-        cd->sig->seq_num = *((uint32_t *)(seq_number)) + 1;
+        *seq_number = *seq_number + 1;
+        cd->sig->seq_num = *seq_number;
     } else {
         OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
                      "%s rpcomm:base:allgather cannot get signature from hash table",
@@ -163,7 +166,7 @@ static void allgather_stub(int fd, short args, void *cbdata)
         OBJ_RELEASE(cd);
         return;
     }
-    ret = opal_hash_table_set_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), (void *)&cd->sig->seq_num);
+    ret = opal_hash_table_set_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), (void *)seq_number);
     if (OPAL_SUCCESS != ret) {
         OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
                      "%s rpcomm:base:allgather cannot add new signature to hash table",
