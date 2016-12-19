@@ -459,73 +459,24 @@ void orte_state_base_report_progress(int fd, short argc, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
-static void _send_notification(int status, orte_process_name_t *proc)
-{
-    opal_buffer_t buf;
-    orte_grpcomm_signature_t sig;
-    int rc;
-    opal_value_t kv, *kvptr;
-
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-
-    /* pack the status */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &status, 1, OPAL_INT))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
-        return;
-    }
-
-    /* the source is me */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
-        return;
-    }
-
-    /* pass along the affected proc (one opal_value_t) */
-    rc = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &rc, 1, OPAL_INT))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
-        return;
-    }
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_PMIX_EVENT_AFFECTED_PROC);
-    kv.type = OPAL_NAME;
-    kv.data.name.jobid = proc->jobid;
-    kv.data.name.vpid = proc->vpid;
-    kvptr = &kv;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &kvptr, 1, OPAL_VALUE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&kv);
-        OBJ_DESTRUCT(&buf);
-        return;
-    }
-    OBJ_DESTRUCT(&kv);
-
-
-    /* xcast it to everyone */
-    OBJ_CONSTRUCT(&sig, orte_grpcomm_signature_t);
-    sig.signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
-    sig.signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
-    sig.signature[0].vpid = ORTE_VPID_WILDCARD;
-    sig.sz = 1;
-
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(&sig, ORTE_RML_TAG_NOTIFICATION, &buf))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    OBJ_DESTRUCT(&sig);
-    OBJ_DESTRUCT(&buf);
-}
-
-static void _send_direct_notify(int status, orte_process_name_t *proc)
+static void _send_notification(int status,
+                               orte_process_name_t *proc,
+                               orte_process_name_t *target)
 {
     opal_buffer_t *buf;
+    orte_grpcomm_signature_t sig;
     int rc;
     opal_value_t kv, *kvptr;
     orte_process_name_t daemon;
 
     buf = OBJ_NEW(opal_buffer_t);
+
+    opal_output_verbose(5, orte_state_base_framework.framework_output,
+                        "%s state:base:sending notification %s proc %s target %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_ERROR_NAME(status),
+                        ORTE_NAME_PRINT(proc),
+                        ORTE_NAME_PRINT(target));
 
     /* pack the status */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &status, 1, OPAL_INT))) {
@@ -541,15 +492,17 @@ static void _send_direct_notify(int status, orte_process_name_t *proc)
         return;
     }
 
-    /* pass along the proc to be notified (one opal_value_t) */
-    rc = 1;
+    /* we are going to pass three opal_value_t's */
+    rc = 3;
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return;
     }
+
+    /* pass along the affected proc(s) */
     OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_PMIX_EVENT_CUSTOM_RANGE);
+    kv.key = strdup(OPAL_PMIX_EVENT_AFFECTED_PROC);
     kv.type = OPAL_NAME;
     kv.data.name.jobid = proc->jobid;
     kv.data.name.vpid = proc->vpid;
@@ -562,17 +515,66 @@ static void _send_direct_notify(int status, orte_process_name_t *proc)
     }
     OBJ_DESTRUCT(&kv);
 
-
-    /* get the daemon hosting the proc to be notified */
-    daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-    daemon.vpid = orte_get_proc_daemon_vpid(proc);
-    /* send the notification to that daemon */
-    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                      &daemon, buf,
-                                                      ORTE_RML_TAG_NOTIFICATION,
-                                                      orte_rml_send_callback, NULL))) {
+    /* pass along the proc(s) to be notified */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_PMIX_EVENT_CUSTOM_RANGE);
+    kv.type = OPAL_NAME;
+    kv.data.name.jobid = target->jobid;
+    kv.data.name.vpid = target->vpid;
+    kvptr = &kv;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kv);
         OBJ_RELEASE(buf);
+        return;
+    }
+    OBJ_DESTRUCT(&kv);
+
+    /* mark this as intended for non-default event handlers */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_PMIX_EVENT_NON_DEFAULT);
+    kv.type = OPAL_BOOL;
+    kv.data.flag = true;
+    kvptr = &kv;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kv);
+        OBJ_RELEASE(buf);
+        return;
+    }
+    OBJ_DESTRUCT(&kv);
+
+    /* if the targets are a wildcard, then xcast it to everyone */
+    if (ORTE_VPID_WILDCARD == target->vpid) {
+        OBJ_CONSTRUCT(&sig, orte_grpcomm_signature_t);
+        sig.signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+        sig.signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+        sig.signature[0].vpid = ORTE_VPID_WILDCARD;
+        sig.sz = 1;
+
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(&sig, ORTE_RML_TAG_NOTIFICATION, buf))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        OBJ_DESTRUCT(&sig);
+        OBJ_RELEASE(buf);
+    } else {
+        /* get the daemon hosting the proc to be notified */
+        daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+        daemon.vpid = orte_get_proc_daemon_vpid(target);
+        /* send the notification to that daemon */
+        opal_output_verbose(5, orte_state_base_framework.framework_output,
+                            "%s state:base:sending notification %s to proc %s at daemon %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_ERROR_NAME(status),
+                            ORTE_NAME_PRINT(target),
+                            ORTE_NAME_PRINT(&daemon));
+        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                                          &daemon, buf,
+                                                          ORTE_RML_TAG_NOTIFICATION,
+                                                          orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+        }
     }
 }
 
@@ -585,7 +587,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     orte_proc_t *pdata;
     int i;
     char *rtmod;
-    orte_process_name_t parent, *npptr;
+    orte_process_name_t parent, target, *npptr;
 
     opal_output_verbose(5, orte_state_base_framework.framework_output,
                         "%s state:base:track_procs called for proc %s state %s",
@@ -699,15 +701,21 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
                 npptr = &parent;
                 if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, (void**)&npptr, OPAL_NAME)) {
                     /* notify everyone who asked for it */
-                    _send_direct_notify(OPAL_ERR_JOB_TERMINATED, ORTE_NAME_WILDCARD);
+                    target.jobid = jdata->jobid;
+                    target.vpid = ORTE_VPID_WILDCARD;
+                    _send_notification(OPAL_ERR_JOB_TERMINATED, &target, ORTE_NAME_WILDCARD);
                 } else {
-                    _send_direct_notify(OPAL_ERR_JOB_TERMINATED, &parent);
+                    target.jobid = jdata->jobid;
+                    target.vpid = ORTE_VPID_WILDCARD;
+                    _send_notification(OPAL_ERR_JOB_TERMINATED, &target, &parent);
                 }
             }
         } else if (ORTE_PROC_STATE_TERMINATED < pdata->state &&
                    !orte_job_term_ordered) {
             /* if this was an abnormal term, notify the other procs of the termination */
-            _send_notification(OPAL_ERR_PROC_ABORTED, &pdata->name);
+            parent.jobid = jdata->jobid;
+            parent.vpid = ORTE_VPID_WILDCARD;
+            _send_notification(OPAL_ERR_PROC_ABORTED, &pdata->name, &parent);
         }
     }
 
