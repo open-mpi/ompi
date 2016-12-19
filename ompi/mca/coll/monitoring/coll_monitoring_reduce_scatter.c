@@ -30,10 +30,16 @@ int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf,
     for( i = 0; i < comm_size; ++i ) {
         if( my_rank == i ) continue; /* No communication for self */
         data_size = rcounts[i] * type_size;
-        /* Something to be done here probably */
+        /**
+         * If this fails the destination is not part of my MPI_COM_WORLD
+         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+         */
+        if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm, &rank) ) {
+            mca_common_monitoring_record_coll(rank, data_size);
+        }
         data_size_aggreg += data_size;
     }
-    mca_common_monitoring_coll_a2a(data_size, monitoring_module->data);
+    mca_common_monitoring_coll_a2a(data_size_aggreg, monitoring_module->data);
     return monitoring_module->real.coll_reduce_scatter(sbuf, rbuf, rcounts, dtype, op, comm, monitoring_module->real.coll_reduce_scatter_module);
 }
 
@@ -54,9 +60,15 @@ int mca_coll_monitoring_ireduce_scatter(const void *sbuf, void *rbuf,
     for( i = 0; i < comm_size; ++i ) {
         if( my_rank == i ) continue; /* No communication for self */
         data_size = rcounts[i] * type_size;
-        /* Something to be done here probably */
+        /**
+         * If this fails the destination is not part of my MPI_COM_WORLD
+         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+         */
+        if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm, &rank) ) {
+            mca_common_monitoring_record_coll(rank, data_size);
+        }
         data_size_aggreg += data_size;
     }
-    mca_common_monitoring_coll_a2a(data_size, monitoring_module->data);
+    mca_common_monitoring_coll_a2a(data_size_aggreg, monitoring_module->data);
     return monitoring_module->real.coll_ireduce_scatter(sbuf, rbuf, rcounts, dtype, op, comm, request, monitoring_module->real.coll_ireduce_scatter_module);
 }
