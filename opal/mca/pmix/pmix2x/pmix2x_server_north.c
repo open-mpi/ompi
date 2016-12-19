@@ -920,13 +920,22 @@ static void toolcbfunc(int status,
     pmix2x_opalcaddy_t *opalcaddy = (pmix2x_opalcaddy_t*)cbdata;
     pmix_status_t rc;
     pmix_proc_t p;
+    opal_pmix2x_jobid_trkr_t *job;
 
     /* convert the status */
     rc = pmix2x_convert_opalrc(status);
 
-    /* convert the process name */
-    (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc.jobid);
-    p.rank = pmix2x_convert_opalrank(proc.vpid);
+    memset(&p, 0, sizeof(pmix_proc_t));
+    if (OPAL_SUCCESS == status) {
+        /* convert the process name */
+        (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc.jobid);
+        p.rank = pmix2x_convert_opalrank(proc.vpid);
+        /* store this job in our list of known nspaces */
+        job = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
+        (void)strncpy(job->nspace, p.nspace, PMIX_MAX_NSLEN);
+        job->jobid = proc.jobid;
+        opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
+    }
 
     /* pass it down */
     if (NULL != opalcaddy->toolcbfunc) {

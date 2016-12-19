@@ -501,8 +501,9 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                     }
                 }
                 pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "pmix_server: notifying client %s:%d",
-                                    pr->peer->info->nptr->nspace, pr->peer->info->rank);
+                                    "pmix_server: notifying client %s:%d of status %s",
+                                    pr->peer->info->nptr->nspace, pr->peer->info->rank,
+                                    PMIx_Error_string(cd->status));
                 PMIX_RETAIN(cd->buf);
                 PMIX_SERVER_QUEUE_REPLY(pr->peer, 0, cd->buf);
             }
@@ -555,7 +556,7 @@ static pmix_status_t notify_client_of_event(pmix_status_t status,
         for (n=0; n < ninfo; n++) {
             if (0 == strncmp(info[n].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
                 cd->nondefault = true;
-            } else if (strncmp(info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN)) {
+            } else if (0 == strncmp(info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN)) {
                 /* provides an array of pmix_proc_t identifying the procs
                  * that are to receive this notification */
                 if (PMIX_DATA_ARRAY == info[n].value.type &&
@@ -570,6 +571,7 @@ static pmix_status_t notify_client_of_event(pmix_status_t status,
                     memcpy(cd->targets, info[n].value.data.proc, sizeof(pmix_proc_t));
                 } else {
                     /* this is an error */
+                    PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
                     return PMIX_ERR_BAD_PARAM;
                 }
             }
