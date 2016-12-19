@@ -71,6 +71,9 @@ included in the vX.Y.Z section and be denoted as:
 - Fix ompi_coll_base_{gather,scatter}_intra_binomial
 - Fixed an issue with MPI_Type_get_extent returning the wrong extent
   for distributed array datatypes.
+- Re-enable use of rtdtsc instruction as a monotonic clock source if
+  the processor has a core-invariant tsc. This is a partial fix for a
+  performance regression introduced in Open MPI v1.10.3.
 
 
 1.10.4 - 01 Sept 2016
