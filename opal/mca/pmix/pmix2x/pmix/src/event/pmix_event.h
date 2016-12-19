@@ -117,6 +117,13 @@ PMIX_CLASS_DECLARATION(pmix_event_chain_t);
  * affected, plus any additional info provided by the server */
 void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain);
 
+/* invoke the server event notification handler */
+pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
+                                                 const pmix_proc_t *source,
+                                                 pmix_data_range_t range,
+                                                 pmix_info_t info[], size_t ninfo,
+                                                 pmix_op_cbfunc_t cbfunc, void *cbdata);
+
 #define PMIX_REPORT_EVENT(e, f)                     \
     do {                                            \
         pmix_event_chain_t *_ch;                    \

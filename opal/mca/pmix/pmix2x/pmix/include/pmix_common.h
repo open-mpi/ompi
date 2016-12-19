@@ -264,6 +264,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_FWD_STDOUT                     "pmix.fwd.stdout"        // (bool) forward stdout from spawned procs to me
 #define PMIX_FWD_STDERR                     "pmix.fwd.stderr"        // (bool) forward stderr from spawned procs to me
 #define PMIX_DEBUGGER_DAEMONS               "pmix.debugger"          // (bool) spawned app consists of debugger daemons
+#define PMIX_COSPAWN_APP                    "pmix.cospawn"           // (bool) designated app is to be spawned as a disconnected
+                                                                     //     job - i.e., not part of the "comm_world" of the job
 
 /* query attributes */
 #define PMIX_QUERY_NAMESPACES               "pmix.qry.ns"            // (char*) request a comma-delimited list of active nspaces
@@ -275,7 +277,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_QUERY_LOCAL_PROC_TABLE         "pmix.qry.lptable"       // (char*) input nspace of job whose info is being requested
                                                                      //     returns (pmix_data_array_t) an array of pmix_proc_info_t for
                                                                      //     procs in job on same node
-#define PMIX_QUERY_AUTHORIZATIONS           "pmix.qry.auths"         // return operations tool is authorized to perform"
+#define PMIX_QUERY_AUTHORIZATIONS           "pmix.qry.auths"         // return operations tool is authorized to perform
 #define PMIX_QUERY_SPAWN_SUPPORT            "pmix.qry.spawn"         // return a comma-delimited list of supported spawn attributes
 #define PMIX_QUERY_DEBUG_SUPPORT            "pmix.qry.debug"         // return a comma-delimited list of supported debug attributes
 

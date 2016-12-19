@@ -406,7 +406,7 @@ static void check_complete(int fd, short args, void *cbdata)
                 continue;
             }
             OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                                 "%s releasing procs from node %s",
+                                 "%s state:dvm releasing procs from node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  node->name));
             for (i = 0; i < node->procs->size; i++) {
@@ -420,7 +420,7 @@ static void check_complete(int fd, short args, void *cbdata)
                 node->slots_inuse--;
                 node->num_procs--;
                 OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                                     "%s releasing proc %s from node %s",
+                                     "%s state:dvm releasing proc %s from node %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc->name), node->name));
                 /* set the entry in the node array to NULL */

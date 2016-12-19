@@ -27,12 +27,6 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
                                             pmix_info_t info[], size_t ninfo,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-static pmix_status_t notify_client_of_event(pmix_status_t status,
-                                            const pmix_proc_t *source,
-                                            pmix_data_range_t range,
-                                            pmix_info_t info[], size_t ninfo,
-                                            pmix_op_cbfunc_t cbfunc, void *cbdata);
-
 /* if we are a client, we call this function to notify the server of
  * an event. If we are a server, our host RM will call this function
  * to notify us of an event */
@@ -45,9 +39,9 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
     int rc;
 
     if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
-        rc = notify_client_of_event(status, source, range,
-                                    info, ninfo,
-                                    cbfunc, cbdata);
+        rc = pmix_server_notify_client_of_event(status, source, range,
+                                                info, ninfo,
+                                                cbfunc, cbdata);
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix_server_notify_event source = %s:%d event_status = %d, rc= %d",
                             (NULL == source) ? "UNKNOWN" : source->nspace,
@@ -501,9 +495,8 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                     }
                 }
                 pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "pmix_server: notifying client %s:%d of status %s",
-                                    pr->peer->info->nptr->nspace, pr->peer->info->rank,
-                                    PMIx_Error_string(cd->status));
+                                    "pmix_server: notifying client %s:%d",
+                                    pr->peer->info->nptr->nspace, pr->peer->info->rank);
                 PMIX_RETAIN(cd->buf);
                 PMIX_SERVER_QUEUE_REPLY(pr->peer, 0, cd->buf);
             }
@@ -525,11 +518,11 @@ static void _notify_client_event(int sd, short args, void *cbdata)
  * (b) callback any of our own functions that have registered
  *     for this event
  */
-static pmix_status_t notify_client_of_event(pmix_status_t status,
-                                            const pmix_proc_t *source,
-                                            pmix_data_range_t range,
-                                            pmix_info_t info[], size_t ninfo,
-                                            pmix_op_cbfunc_t cbfunc, void *cbdata)
+pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
+                                                 const pmix_proc_t *source,
+                                                 pmix_data_range_t range,
+                                                 pmix_info_t info[], size_t ninfo,
+                                                 pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_notify_caddy_t *cd;
     pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
@@ -558,7 +551,7 @@ static pmix_status_t notify_client_of_event(pmix_status_t status,
                 cd->nondefault = true;
             } else if (0 == strncmp(info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN)) {
                 /* provides an array of pmix_proc_t identifying the procs
-                 * that are to receive this notification */
+                 * that are to receive this notification, or a single pmix_proc_t  */
                 if (PMIX_DATA_ARRAY == info[n].value.type &&
                     NULL != info[n].value.data.darray &&
                     NULL != info[n].value.data.darray->array) {

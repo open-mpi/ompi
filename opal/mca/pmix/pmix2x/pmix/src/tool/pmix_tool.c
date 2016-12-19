@@ -209,7 +209,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         return rc;
     }
 
-pmix_output(0, "TOOL: SERVER CONNECTION COMPLETE");
     /* increment our init reference counter */
     pmix_globals.init_cntr++;
 
@@ -229,7 +228,6 @@ pmix_output(0, "TOOL: SERVER CONNECTION COMPLETE");
         }
     }
     if (NULL == nsptr) {
-pmix_output(0, "TOOL: NSPACE NOT FOUND");
         return PMIX_ERR_NOT_FOUND;
     }
 
@@ -464,8 +462,26 @@ pmix_output(0, "TOOL: NSPACE NOT FOUND");
     return rc;
 }
 
+/* callback for wait completion */
+static void wait_cbfunc(struct pmix_peer_t *pr,
+                        pmix_ptl_hdr_t *hdr,
+                        pmix_buffer_t *buf, void *cbdata)
+{
+    volatile bool *active = (volatile bool*)cbdata;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:tool wait_cbfunc received");
+
+    *active = false;
+}
+
 PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
 {
+    pmix_buffer_t *msg;
+    pmix_cmd_t cmd = PMIX_FINALIZE_CMD;
+    pmix_status_t rc;
+    volatile bool active;
+
     if (1 != pmix_globals.init_cntr) {
         --pmix_globals.init_cntr;
         return PMIX_SUCCESS;
@@ -474,6 +490,32 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:tool finalize called");
+
+    /* setup a cmd message to notify the PMIx
+     * server that we are normally terminating */
+    msg = PMIX_NEW(pmix_buffer_t);
+    /* pack the cmd */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
+
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                         "pmix:tool sending finalize sync to server");
+
+    /* send to the server */
+    active = true;;
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg,
+                                                 wait_cbfunc, (void*)&active))){
+        return rc;
+    }
+
+    /* wait for the ack to return */
+    PMIX_WAIT_FOR_COMPLETION(active);
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                         "pmix:tool finalize sync received");
 
     /* shutdown services */
     pmix_rte_finalize();

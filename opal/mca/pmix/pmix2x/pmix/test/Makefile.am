@@ -20,7 +20,7 @@
 #
 
 if !WANT_HIDDEN
-# these tests use interanl symbols
+# these tests use internal symbols
 # use --disable-visibility
 SUBDIRS = simple
 endif

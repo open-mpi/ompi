@@ -852,9 +852,9 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                 continue;
             }
             OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                                 "%s releasing procs from node %s",
+                                 "%s releasing procs for job %s from node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 node->name));
+                                 ORTE_JOBID_PRINT(jdata->jobid), node->name));
             for (i = 0; i < node->procs->size; i++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
                     continue;

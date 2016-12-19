@@ -59,17 +59,17 @@ static void _client_conn(int sd, short args, void *cbdata)
     } else {
         /* find the named process */
         p = NULL;
-        if (NULL == (jdata = orte_get_job_data_object(cd->proc->jobid))) {
+        if (NULL == (jdata = orte_get_job_data_object(cd->proc.jobid))) {
             return;
         }
         for (i=0; i < jdata->procs->size; i++) {
             if (NULL == (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
                 continue;
             }
-            if (cd->proc->jobid != ptr->name.jobid) {
+            if (cd->proc.jobid != ptr->name.jobid) {
                 continue;
             }
-            if (cd->proc->vpid == ptr->name.vpid) {
+            if (cd->proc.vpid == ptr->name.vpid) {
                 p = ptr;
                 break;
             }
@@ -108,21 +108,29 @@ static void _client_finalized(int sd, short args, void *cbdata)
     } else {
         /* find the named process */
         p = NULL;
-        if (NULL == (jdata = orte_get_job_data_object(cd->proc->jobid))) {
+        if (NULL == (jdata = orte_get_job_data_object(cd->proc.jobid))) {
             return;
         }
         for (i=0; i < jdata->procs->size; i++) {
             if (NULL == (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
                 continue;
             }
-            if (cd->proc->jobid != ptr->name.jobid) {
+            if (cd->proc.jobid != ptr->name.jobid) {
                 continue;
             }
-            if (cd->proc->vpid == ptr->name.vpid) {
+            if (cd->proc.vpid == ptr->name.vpid) {
                 p = ptr;
                 break;
             }
         }
+        /* if we came thru this code path, then this client must be an
+         * independent tool that connected to us - i.e., it wasn't
+         * something we spawned. For accounting purposes, we have to
+         * ensure the job complete procedure is run - otherwise, slots
+         * and other resources won't correctly be released */
+        ORTE_FLAG_SET(p, ORTE_PROC_FLAG_IOF_COMPLETE);
+        ORTE_FLAG_SET(p, ORTE_PROC_FLAG_WAITPID);
+        ORTE_ACTIVATE_PROC_STATE(&cd->proc, ORTE_PROC_STATE_TERMINATED);
     }
     if (NULL != p) {
         ORTE_FLAG_SET(p, ORTE_PROC_FLAG_HAS_DEREG);
@@ -157,17 +165,17 @@ static void _client_abort(int sd, short args, void *cbdata)
     } else {
         /* find the named process */
         p = NULL;
-        if (NULL == (jdata = orte_get_job_data_object(cd->proc->jobid))) {
+        if (NULL == (jdata = orte_get_job_data_object(cd->proc.jobid))) {
             return;
         }
         for (i=0; i < jdata->procs->size; i++) {
             if (NULL == (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
                 continue;
             }
-            if (cd->proc->jobid != ptr->name.jobid) {
+            if (cd->proc.jobid != ptr->name.jobid) {
                 continue;
             }
-            if (cd->proc->vpid == ptr->name.vpid) {
+            if (cd->proc.vpid == ptr->name.vpid) {
                 p = ptr;
                 break;
             }
@@ -540,7 +548,7 @@ int pmix_server_query_fn(opal_process_name_t *requestor,
 
     /* need to threadshift this request */
     cd = OBJ_NEW(orte_pmix_server_op_caddy_t);
-    cd->proc = requestor;
+    cd->proc = *requestor;
     cd->info = queries;
     cd->infocbfunc = cbfunc;
     cd->cbdata = cbdata;

@@ -185,11 +185,13 @@ static pmix_status_t component_open(void)
 
     /* check for environ-based directives
      * on system tmpdir to use */
-    if (NULL == (tdir = getenv("PMIX_SYSTEM_TMPDIR"))) {
-        if (NULL == (tdir = getenv("TMPDIR"))) {
-            if (NULL == (tdir = getenv("TEMP"))) {
-                if (NULL == (tdir = getenv("TMP"))) {
-                    tdir = "/tmp";
+    if (NULL == (tdir = getenv("PMIX_SERVER_TMPDIR"))) {
+        if (NULL == (tdir = getenv("PMIX_SYSTEM_TMPDIR"))) {
+            if (NULL == (tdir = getenv("TMPDIR"))) {
+                if (NULL == (tdir = getenv("TEMP"))) {
+                    if (NULL == (tdir = getenv("TMP"))) {
+                        tdir = "/tmp";
+                    }
                 }
             }
         }

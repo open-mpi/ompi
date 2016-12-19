@@ -27,8 +27,8 @@
 /*
  * Public string showing the pmix external component version number
  */
-const char *opal_pmix_pmix2x_component_version_string =
-    "OPAL pmix2x MCA component version " OPAL_VERSION;
+const char *opal_pmix_ext2x_component_version_string =
+    "OPAL ext2x MCA component version " OPAL_VERSION;
 
 /*
  * Local function
