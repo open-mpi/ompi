@@ -16,6 +16,7 @@
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,7 @@
 #include "osc_pt2pt_data_move.h"
 
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+
 
 static int component_register(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
@@ -124,6 +126,45 @@ static bool check_config_value_bool(char *key, ompi_info_t *info, bool result)
 
 static int component_register (void)
 {
+    mca_osc_pt2pt_component.enable = true;
+    (void) mca_base_component_var_register(&mca_osc_pt2pt_component.super.osc_version,
+                                           "enable",
+                                           "Enable/Disable osc_pt2pt (default: true)",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_1,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_osc_pt2pt_component.enable);
+
+    mca_osc_pt2pt_component.allow_thread_multiple = true;
+    (void) mca_base_component_var_register(&mca_osc_pt2pt_component.super.osc_version,
+                                           "allow_thread_multiple",
+                                           "Allow osc_pt2pt to run when user passes in MPI_THREAD_MULTIPLE (default: true)",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_1,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_osc_pt2pt_component.allow_thread_multiple);
+
+    mca_osc_pt2pt_component.verbose = ompi_osc_base_framework.framework_verbose;
+    (void) mca_base_component_var_register(&mca_osc_pt2pt_component.super.osc_version,
+                                           "verbose",
+                                           "Verbosity of osc_pt2pt",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_osc_pt2pt_component.verbose);
+
+    mca_osc_pt2pt_component.output = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_osc_pt2pt_component.output, mca_osc_pt2pt_component.verbose);
+
+    mca_osc_pt2pt_component.priority = 10;
+    (void) mca_base_component_var_register(&mca_osc_pt2pt_component.super.osc_version,
+                                           "priority",
+                                           "[0-99] Priority of osc_pt2pt",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_osc_pt2pt_component.priority);
+
     ompi_osc_pt2pt_no_locks = false;
     (void) mca_base_component_var_register(&mca_osc_pt2pt_component.super.osc_version,
                                            "no_locks",
@@ -208,6 +249,18 @@ component_init(bool enable_progress_threads,
 {
     int ret;
 
+    if (!mca_osc_pt2pt_component.enable) {
+        opal_output_verbose(2,mca_osc_pt2pt_component.output, "osc_pt2pt component_init DISABLED.\n");
+        return -1;
+    }
+
+    if (!mca_osc_pt2pt_component.allow_thread_multiple && enable_mpi_threads) {
+        opal_output_verbose(1, mca_osc_pt2pt_component.output,
+           "osc_pt2pt Disabled for MPI_THREAD_INIT (MCA: osc_pt2pt_allow_thread_multiple == 0)\n");
+        return -1;
+    }
+
+
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations, opal_list_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations_lock, opal_mutex_t);
@@ -247,6 +300,10 @@ component_init(bool enable_progress_threads,
         return ret;
     }
 
+    opal_output_verbose(3,mca_osc_pt2pt_component.output,
+                        "osc_pt2pt component_init succeeded.  Priority: %d\n",
+                        mca_osc_pt2pt_component.priority);
+
     return ret;
 }
 
@@ -255,6 +312,10 @@ int
 component_finalize(void)
 {
     size_t num_modules;
+
+    if (!mca_osc_pt2pt_component.enable) {
+        OPAL_OUTPUT_VERBOSE((2,mca_osc_pt2pt_component.output, "%s:%d: osc_pt2pt component_finalize, on DISABLED comp.\n", __FILE__, __LINE__));
+    }
 
     if (mca_osc_pt2pt_component.progress_enable) {
 	opal_progress_unregister (component_progress);
@@ -276,6 +337,12 @@ component_finalize(void)
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_receives);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_receives_lock);
 
+    if (mca_osc_pt2pt_component.enable) {
+        opal_output_verbose(2,mca_osc_pt2pt_component.output, "%s:%d: osc_pt2pt component_finalize.\n", __FILE__, __LINE__);
+    }
+    opal_output_close(mca_osc_pt2pt_component.output);
+    mca_osc_pt2pt_component.output = 0;
+
     return OMPI_SUCCESS;
 }
 
@@ -285,9 +352,10 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                 struct ompi_communicator_t *comm, struct ompi_info_t *info,
                 int flavor)
 {
+    if (!mca_osc_pt2pt_component.enable) return -1;
     if (MPI_WIN_FLAVOR_SHARED == flavor) return -1;
 
-    return 10;
+    return mca_osc_pt2pt_component.priority;
 }
 
 
@@ -303,6 +371,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* We don't support shared windows; that's for the sm onesided
        component */
     if (MPI_WIN_FLAVOR_SHARED == flavor) return OMPI_ERR_NOT_SUPPORTED;
+
+    if (!mca_osc_pt2pt_component.enable) return OMPI_ERR_NOT_SUPPORTED;  /* OMPI_ERR_DISABLED */
 
     /* create module structure with all fields initialized to zero */
     module = (ompi_osc_pt2pt_module_t*)

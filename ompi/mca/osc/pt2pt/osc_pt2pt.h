@@ -15,6 +15,7 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,6 +89,21 @@ struct ompi_osc_pt2pt_component_t {
 
     /** Is the progress function enabled? */
     bool progress_enable;
+
+    /** opal_output_verbose stream id */
+    int output;
+
+    /** MCA parameter: priority of this component */
+    int priority;
+
+    /** MCA parameter: Verbose level of this component */
+    int verbose;
+
+    /** MCA parameters: Enable osc_pt2pt component */
+    bool enable;
+
+    /** Allow osc_pt2pt to run when user passes in MPI_THREAD_MULTIPLE */
+    bool allow_thread_multiple;
 };
 typedef struct ompi_osc_pt2pt_component_t ompi_osc_pt2pt_component_t;
 
