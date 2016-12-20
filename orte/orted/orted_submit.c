@@ -590,8 +590,6 @@ void orte_submit_finalize(void)
     trackr_t *trk;
     int i;
 
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_LAUNCH_RESP);
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFY_COMPLETE);
     for (i=0; i < tool_jobs.size; i++) {
         if (NULL != (trk = (trackr_t*)opal_pointer_array_get_item(&tool_jobs, i))) {
             OBJ_RELEASE(trk);
