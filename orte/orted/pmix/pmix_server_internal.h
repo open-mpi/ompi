@@ -75,7 +75,7 @@ typedef struct {
     opal_object_t super;
     opal_event_t ev;
     int status;
-    opal_process_name_t *proc;
+    opal_process_name_t proc;
     const char *msg;
     void *server_object;
     opal_list_t *procs;
@@ -140,7 +140,8 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
     do {                                                        \
         orte_pmix_server_op_caddy_t *_cd;                       \
         _cd = OBJ_NEW(orte_pmix_server_op_caddy_t);             \
-        _cd->proc = (p);                                        \
+        _cd->proc.jobid = (p)->jobid;                           \
+        _cd->proc.vpid = (p)->vpid;                             \
         _cd->server_object = (s);                               \
         _cd->status = (st);                                     \
         _cd->msg = (m);                                         \
@@ -237,4 +238,3 @@ extern pmix_server_globals_t orte_pmix_server_globals;
 END_C_DECLS
 
 #endif /* PMIX_SERVER_INTERNAL_H_ */
-

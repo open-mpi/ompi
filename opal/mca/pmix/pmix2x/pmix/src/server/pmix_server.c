@@ -517,9 +517,7 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
     }
 
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    if (0 > (rc = pmix_dstore_nspace_del(cd->proc.nspace))) {
-        PMIX_ERROR_LOG(rc);
-    }
+    rc = pmix_dstore_nspace_del(cd->proc.nspace);
 #endif
 
     if (NULL != cd->opcbfunc) {

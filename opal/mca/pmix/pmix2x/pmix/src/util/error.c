@@ -153,10 +153,10 @@ const char* PMIx_Error_string(pmix_status_t errnum)
         return "PMIX_ERR_PERM";
     case PMIX_ERR_JOB_TERMINATED:
         return "PMIX_ERR_JOB_TERMINATED";
-    case PMIX_SUCCESS:
-        return "SUCCESS";
     case PMIX_MAX_ERR_CONSTANT:
         return "PMIX_ERR_WILDCARD";
+    case PMIX_SUCCESS:
+        return "SUCCESS";
     default:
         return "ERROR STRING NOT FOUND";
     }

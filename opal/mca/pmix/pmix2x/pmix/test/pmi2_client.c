@@ -10,10 +10,12 @@
  *
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdarg.h>
 
 #include "pmi2.h"
 
@@ -22,24 +24,53 @@ static int _legacy = 0;
 /* Verbose level 0-silent, 1-fatal, 2-error, 3+ debug*/
 static int _verbose = 1;
 
-#define log_fatal(fmt, ...) \
-    do {                                                     \
-        if (_verbose > 0)                               \
-            fprintf(stderr, "FATAL " fmt, ##__VA_ARGS__);    \
-            exit(rc);    \
-    } while (0)
+static void log_fatal(const char *format, ...)
+{
+    va_list arglist;
+    char **output = NULL;
 
-#define log_error(fmt, ...) \
-    do {                                                     \
-        if (_verbose > 1)                          \
-            fprintf(stderr, "ERROR " fmt, ##__VA_ARGS__);    \
-    } while (0)
+    va_start(arglist, format);
+    if (_verbose > 0) {
+        if (0 > vasprintf(output, format, arglist)) {
+            return;
+        }
+        fprintf(stderr, "FATAL: %s", *output);
+        va_end(arglist);
+        free(*output);
+    }
+}
 
-#define log_info(fmt, ...) \
-    do {                                                     \
-        if (_verbose > 2)                          \
-            fprintf(stderr, "INFO  " fmt, ##__VA_ARGS__);    \
-    } while (0)
+static void log_error(const char *format, ...)
+{
+    va_list arglist;
+    char **output = NULL;
+
+    va_start(arglist, format);
+    if (_verbose > 0) {
+        if (0 > vasprintf(output, format, arglist)) {
+            return;
+        }
+        fprintf(stderr, "ERROR: %s", *output);
+        va_end(arglist);
+        free(*output);
+    }
+}
+
+static void log_info(const char *format, ...)
+{
+    va_list arglist;
+    char **output = NULL;
+
+    va_start(arglist, format);
+    if (_verbose > 0) {
+        if (0 > vasprintf(output, format, arglist)) {
+            return;
+        }
+        fprintf(stderr, "INFO: %s", *output);
+        va_end(arglist);
+        free(*output);
+    }
+}
 
 #define log_assert(e, msg) \
     do {                                                                \

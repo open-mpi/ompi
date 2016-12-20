@@ -588,7 +588,6 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
         if (NULL != apps[n].cmd) {
             app->cmd = strdup(apps[n].cmd);
         }
-        app->argc = apps[n].argc;
         if (NULL != apps[n].argv) {
             app->argv = opal_argv_copy(apps[n].argv);
         }
@@ -785,7 +784,6 @@ static pmix_status_t server_notify_event(pmix_status_t code,
 
     /* convert the source */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&src.jobid, source->nspace))) {
-        opal_output(0, "FILE: %s LINE %d", __FILE__, __LINE__);
         OBJ_RELEASE(opalcaddy);
         return pmix2x_convert_opalrc(rc);
     }
@@ -882,7 +880,6 @@ static pmix_status_t server_query(pmix_proc_t *proct,
 
     /* convert the requestor */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&requestor.jobid, proct->nspace))) {
-        opal_output(0, "FILE: %s LINE %d", __FILE__, __LINE__);
         OBJ_RELEASE(opalcaddy);
         return pmix2x_convert_opalrc(rc);
     }
@@ -923,13 +920,22 @@ static void toolcbfunc(int status,
     pmix2x_opalcaddy_t *opalcaddy = (pmix2x_opalcaddy_t*)cbdata;
     pmix_status_t rc;
     pmix_proc_t p;
+    opal_pmix2x_jobid_trkr_t *job;
 
     /* convert the status */
     rc = pmix2x_convert_opalrc(status);
 
-    /* convert the process name */
-    (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc.jobid);
-    p.rank = pmix2x_convert_opalrank(proc.vpid);
+    memset(&p, 0, sizeof(pmix_proc_t));
+    if (OPAL_SUCCESS == status) {
+        /* convert the process name */
+        (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc.jobid);
+        p.rank = pmix2x_convert_opalrank(proc.vpid);
+        /* store this job in our list of known nspaces */
+        job = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
+        (void)strncpy(job->nspace, p.nspace, PMIX_MAX_NSLEN);
+        job->jobid = proc.jobid;
+        opal_list_append(&mca_pmix_ext2x_component.jobids, &job->super);
+    }
 
     /* pass it down */
     if (NULL != opalcaddy->toolcbfunc) {
@@ -997,7 +1003,6 @@ static void server_log(const pmix_proc_t *proct,
 
     /* convert the requestor */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&requestor.jobid, proct->nspace))) {
-    opal_output(0, "FILE: %s LINE %d", __FILE__, __LINE__);
     OBJ_RELEASE(opalcaddy);
     ret = pmix2x_convert_opalrc(rc);
         if (NULL != cbfunc) {

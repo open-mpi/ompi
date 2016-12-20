@@ -32,9 +32,68 @@
 
 #include <pmix.h>
 
+static volatile bool waiting_for_debugger = true;
+static pmix_proc_t myproc;
+
+/* this is the event notification function we pass down below
+ * when registering for general events - i.e.,, the default
+ * handler. We don't technically need to register one, but it
+ * is usually good practice to catch any events that occur */
+static void notification_fn(size_t evhdlr_registration_id,
+                            pmix_status_t status,
+                            const pmix_proc_t *source,
+                            pmix_info_t info[], size_t ninfo,
+                            pmix_info_t results[], size_t nresults,
+                            pmix_event_notification_cbfunc_fn_t cbfunc,
+                            void *cbdata)
+{
+    if (NULL != cbfunc) {
+        cbfunc(PMIX_EVENT_ACTION_COMPLETE, NULL, 0, NULL, NULL, cbdata);
+    }
+}
+
+/* this is an event notification function that we explicitly request
+ * be called when the PMIX_ERR_DEBUGGER_RELEASE notification is issued.
+ * We could catch it in the general event notification function and test
+ * the status to see if it was "debugger release", but it often is simpler
+ * to declare a use-specific notification callback point. In this case,
+ * we are asking to know when we are told the debugger released us */
+static void release_fn(size_t evhdlr_registration_id,
+                       pmix_status_t status,
+                       const pmix_proc_t *source,
+                       pmix_info_t info[], size_t ninfo,
+                       pmix_info_t results[], size_t nresults,
+                       pmix_event_notification_cbfunc_fn_t cbfunc,
+                       void *cbdata)
+{
+    if (NULL != cbfunc) {
+        cbfunc(PMIX_EVENT_ACTION_COMPLETE, NULL, 0, NULL, NULL, cbdata);
+    }
+    waiting_for_debugger = false;
+}
+
+/* event handler registration is done asynchronously because it
+ * may involve the PMIx server registering with the host RM for
+ * external events. So we provide a callback function that returns
+ * the status of the request (success or an error), plus a numerical index
+ * to the registered event. The index is used later on to deregister
+ * an event handler - if we don't explicitly deregister it, then the
+ * PMIx server will do so when it see us exit */
+static void evhandler_reg_callbk(pmix_status_t status,
+                                 size_t evhandler_ref,
+                                 void *cbdata)
+{
+    volatile int *active = (volatile int*)cbdata;
+
+    if (PMIX_SUCCESS != status) {
+        fprintf(stderr, "Client %s:%d EVENT HANDLER REGISTRATION FAILED WITH STATUS %d, ref=%lu\n",
+                   myproc.nspace, myproc.rank, status, (unsigned long)evhandler_ref);
+    }
+    *active = status;
+}
+
 int main(int argc, char **argv)
 {
-    pmix_proc_t myproc;
     int rc;
     pmix_value_t value;
     pmix_value_t *val = &value;
@@ -43,17 +102,65 @@ int main(int argc, char **argv)
     uint32_t nprocs, n;
     pmix_info_t *info;
     bool flag;
+    volatile int active;
+    pmix_status_t dbg = PMIX_ERR_DEBUGGER_RELEASE;
 
-    /* init us */
+    /* init us - note that the call to "init" includes the return of
+     * any job-related info provided by the RM. This includes any
+     * debugger flag instructing us to stop-in-init. If such a directive
+     * is included, then the process will be stopped in this call until
+     * the "debugger release" notification arrives */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Init failed: %d\n", myproc.nspace, myproc.rank, rc);
         exit(0);
     }
     fprintf(stderr, "Client ns %s rank %d: Running\n", myproc.nspace, myproc.rank);
 
+
+    /* register our default event handler - again, this isn't strictly
+     * required, but is generally good practice */
+    active = -1;
+    PMIx_Register_event_handler(NULL, 0, NULL, 0,
+                                notification_fn, evhandler_reg_callbk, (void*)&active);
+    while (-1 == active) {
+        sleep(1);
+    }
+    if (0 != active) {
+        fprintf(stderr, "[%s:%d] Default handler registration failed\n", myproc.nspace, myproc.rank);
+        exit(active);
+    }
+
+    /* job-related info is found in our nspace, assigned to the
+     * wildcard rank as it doesn't relate to a specific rank. Setup
+     * a name to retrieve such values */
     PMIX_PROC_CONSTRUCT(&proc);
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
+
+    /* check to see if we have been instructed to wait for a debugger
+     * to attach to us. We won't get both a stop-in-init AND a
+     * wait-for-notify directive, so we should never stop twice. This
+     * directive is provided so that something like an MPI implementation
+     * can do some initial setup in MPI_Init prior to pausing for the
+     * debugger */
+    if (PMIX_SUCCESS == (rc = PMIx_Get(&proc, PMIX_DEBUG_WAIT_FOR_NOTIFY, NULL, 0, &val))) {
+        /* register for debugger release */
+        active = -1;
+        PMIx_Register_event_handler(&dbg, 1, NULL, 0,
+                                    release_fn, evhandler_reg_callbk, (void*)&active);
+        /* wait for registration to complete */
+        while (-1 == active) {
+            sleep(1);
+        }
+        if (0 != active) {
+            fprintf(stderr, "[%s:%d] Debug handler registration failed\n", myproc.nspace, myproc.rank);
+            exit(active);
+        }
+        /* wait for debugger release */
+        while (waiting_for_debugger) {
+            sleep(1);
+        }
+    }
 
     /* get our universe size */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
@@ -98,12 +205,15 @@ int main(int argc, char **argv)
     }
     free(tmp);
 
+    /* push the data to our PMIx server */
     if (PMIX_SUCCESS != (rc = PMIx_Commit())) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Commit failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }
 
-    /* call fence to ensure the data is received */
+    /* call fence to synchronize with our peers - instruct
+     * the fence operation to collect and return all "put"
+     * data from our peers */
     PMIX_INFO_CREATE(info, 1);
     flag = true;
     PMIX_INFO_LOAD(info, PMIX_COLLECT_DATA, &flag, PMIX_BOOL);

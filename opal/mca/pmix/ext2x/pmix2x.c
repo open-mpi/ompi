@@ -733,6 +733,9 @@ pmix_persistence_t pmix2x_convert_opalpersist(opal_pmix_persistence_t persist)
 void pmix2x_value_load(pmix_value_t *v,
                        opal_value_t *kv)
 {
+    opal_pmix2x_jobid_trkr_t *job;
+    bool found;
+
     switch(kv->type) {
         case OPAL_UNDEF:
             v->type = PMIX_UNDEF;
@@ -829,7 +832,18 @@ void pmix2x_value_load(pmix_value_t *v,
             v->type = PMIX_PROC;
             /* have to stringify the jobid */
             PMIX_PROC_CREATE(v->data.proc, 1);
-            (void)opal_snprintf_jobid(v->data.proc->nspace, PMIX_MAX_NSLEN, kv->data.name.vpid);
+            /* see if this job is in our list of known nspaces */
+            found = false;
+            OPAL_LIST_FOREACH(job, &mca_pmix_ext2x_component.jobids, opal_pmix2x_jobid_trkr_t) {
+                if (job->jobid == kv->data.name.jobid) {
+                    (void)strncpy(v->data.proc->nspace, job->nspace, PMIX_MAX_NSLEN);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                (void)opal_snprintf_jobid(v->data.proc->nspace, PMIX_MAX_NSLEN, kv->data.name.vpid);
+            }
             v->data.proc->rank = pmix2x_convert_opalrank(kv->data.name.vpid);
             break;
         case OPAL_BYTE_OBJECT:
@@ -875,7 +889,8 @@ int pmix2x_value_unload(opal_value_t *kv,
                        const pmix_value_t *v)
 {
     int rc=OPAL_SUCCESS;
-
+    bool found;
+    opal_pmix2x_jobid_trkr_t *job;
 
     switch(v->type) {
     case PMIX_UNDEF:
@@ -969,8 +984,19 @@ int pmix2x_value_unload(opal_value_t *kv,
         break;
     case PMIX_PROC:
         kv->type = OPAL_NAME;
-        if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&kv->data.name.jobid, v->data.proc->nspace))) {
-            return pmix2x_convert_opalrc(rc);
+        /* see if this job is in our list of known nspaces */
+        found = false;
+        OPAL_LIST_FOREACH(job, &mca_pmix_ext2x_component.jobids, opal_pmix2x_jobid_trkr_t) {
+            if (0 == strncmp(job->nspace, v->data.proc->nspace, PMIX_MAX_NSLEN)) {
+                kv->data.name.jobid = job->jobid;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&kv->data.name.jobid, v->data.proc->nspace))) {
+                return pmix2x_convert_opalrc(rc);
+            }
         }
         kv->data.name.vpid = pmix2x_convert_rank(v->data.proc->rank);
         break;
@@ -1330,17 +1356,19 @@ static void pmix2x_log(opal_list_t *info,
     pmix2x_opcaddy_t *cd;
     pmix_status_t prc;
 
-    /* setup the operation */
+    /* create the caddy */
     cd = OBJ_NEW(pmix2x_opcaddy_t);
-    cd->opcbfunc = cbfunc;
-    cd->cbdata = cbdata;
-    cd->ninfo = ninfo;
 
     /* bozo check */
     if (NULL == info || 0 == (ninfo = opal_list_get_size(info))) {
         rc = OPAL_ERR_BAD_PARAM;
         goto CLEANUP;
     }
+
+    /* setup the operation */
+    cd->opcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    cd->ninfo = ninfo;
 
     /* convert the list to an array of info objects */
     PMIX_INFO_CREATE(cd->info, cd->ninfo);
@@ -1358,6 +1386,7 @@ static void pmix2x_log(opal_list_t *info,
         rc = pmix2x_convert_rc(prc);
         goto CLEANUP;
     }
+
     return;
 
   CLEANUP:

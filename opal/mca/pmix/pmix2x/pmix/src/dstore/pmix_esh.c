@@ -1250,7 +1250,6 @@ static int _esh_nspace_del(const char *nspace)
 
     if (NULL == (ns_map_data = _esh_session_map_search(nspace))) {
         rc = PMIX_ERR_NOT_AVAILABLE;
-        PMIX_ERROR_LOG(rc);
         return rc;
     }
 

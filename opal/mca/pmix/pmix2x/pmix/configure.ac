@@ -218,7 +218,8 @@ AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 . $srcdir/VERSION
 AC_SUBST([libpmix_so_version])
 
-AC_CONFIG_FILES(pmix_config_prefix[examples/Makefile]
+AC_CONFIG_FILES(pmix_config_prefix[contrib/Makefile]
+                pmix_config_prefix[examples/Makefile]
                 pmix_config_prefix[man/Makefile]
                 pmix_config_prefix[test/Makefile]
                 pmix_config_prefix[test/simple/Makefile])

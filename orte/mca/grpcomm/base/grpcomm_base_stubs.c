@@ -317,8 +317,9 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == sig->signature) ? "NULL" : "NON-NULL"));
 
-    /* if NULL == procs, then all daemons are participating */
-    if (NULL == sig->signature) {
+    /* if NULL == procs, or the target jobid is our own,
+     * then all daemons are participating */
+    if (NULL == sig->signature || ORTE_PROC_MY_NAME->jobid == sig->signature[0].jobid) {
         *ndmns = orte_process_info.num_procs;
         *dmns = NULL;
         return ORTE_SUCCESS;
@@ -348,6 +349,7 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                 *dmns = dns;
                 return ORTE_SUCCESS;
             }
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
             *ndmns = 0;
             *dmns = NULL;

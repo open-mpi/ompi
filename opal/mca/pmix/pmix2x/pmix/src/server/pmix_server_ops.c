@@ -1339,6 +1339,20 @@ pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
         }
     }
 
+    /* check the range directive - if it is LOCAL, then we just
+     * process it ourselves. Otherwise, it needs to go up to our
+     * host for dissemination */
+    if (PMIX_RANGE_LOCAL == cd->range) {
+        if (PMIX_SUCCESS != (rc = pmix_server_notify_client_of_event(cd->status,
+                                                                     &cd->source,
+                                                                     cd->range,
+                                                                     cd->info, cd->ninfo,
+                                                                     local_cbfunc, cd))) {
+            goto exit;
+        }
+        return PMIX_SUCCESS;
+    }
+
     /* when we receive an event from a client, we just pass it to
      * our host RM for distribution - if any targeted recipients
      * are local to us, the host RM will let us know */
