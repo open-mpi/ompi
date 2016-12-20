@@ -1,4 +1,4 @@
-#!/bin/sh -f
+#!/bin/bash -f
 #
 # Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -71,6 +71,7 @@ specfile="openmpi.spec"
 prefix=${prefix:-"/opt/openmpi"}
 rpmbuild_options=${rpmbuild_options:-"--define 'mflags -j4' --define '_source_filedigest_algorithm md5'  --define '_binary_filedigest_algorithm md5'"}
 configure_options=${configure_options:-""}
+unpack_spec=0
 
 # Helpful when debugging
 #rpmbuild_options="--define 'mflags -j4' --define 'install_in_opt 1' --define 'cflags -g' --define 'install_modulefile 1' --define 'modules_rpm_name dhcp'"
