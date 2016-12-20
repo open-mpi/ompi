@@ -933,10 +933,6 @@ int orte_dt_unpack_sig(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ptr[i]->seq_num, &cnt, OPAL_UINT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
         if (0 < ptr[i]->sz) {
             /* allocate space for the array */
             ptr[i]->signature = (orte_process_name_t*)malloc(ptr[i]->sz * sizeof(orte_process_name_t));

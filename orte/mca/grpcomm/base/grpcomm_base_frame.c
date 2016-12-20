@@ -112,7 +112,6 @@ static void scon(orte_grpcomm_signature_t *p)
 {
     p->signature = NULL;
     p->sz = 0;
-    p->seq_num = 0;
 }
 static void sdes(orte_grpcomm_signature_t *p)
 {

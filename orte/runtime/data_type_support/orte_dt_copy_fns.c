@@ -319,7 +319,6 @@ int orte_dt_copy_sig(orte_grpcomm_signature_t **dest, orte_grpcomm_signature_t *
     }
     (*dest)->sz = src->sz;
     (*dest)->signature = (orte_process_name_t*)malloc(src->sz * sizeof(orte_process_name_t));
-    (*dest)->seq_num = src->seq_num;
     if (NULL == (*dest)->signature) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(*dest);

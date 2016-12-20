@@ -152,12 +152,10 @@ static void allgather_stub(int fd, short args, void *cbdata)
      * for releasing it upon completion of the collective */
     ret = opal_hash_table_get_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), (void **)&seq_number);
     if (OPAL_ERR_NOT_FOUND == ret) {
-        cd->sig->seq_num = 0;
         seq_number = (uint32_t *)malloc(sizeof(uint32_t));
         *seq_number = 0;
     } else if (OPAL_SUCCESS == ret) {
         *seq_number = *seq_number + 1;
-        cd->sig->seq_num = *seq_number;
     } else {
         OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
                      "%s rpcomm:base:allgather cannot get signature from hash table",

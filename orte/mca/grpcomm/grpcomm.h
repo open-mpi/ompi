@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,7 +61,6 @@ typedef struct {
     opal_object_t super;
     orte_process_name_t *signature;
     size_t sz;
-    uint32_t seq_num;
 } orte_grpcomm_signature_t;
 OBJ_CLASS_DECLARATION(orte_grpcomm_signature_t);
 
