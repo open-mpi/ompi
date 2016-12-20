@@ -216,6 +216,29 @@ Master (not on release branches yet)
   Alastair McKinstry for reporting.
 
 
+1.10.5 - 19 Dec 2016
+------
+- Update UCX APIs
+- Fix bug in darray that caused MPI/IO failures
+- Use a MPI_Get_library_version() like string to tag the debugger DLL.
+  Thanks to Alastair McKinstry for the report
+- Fix multi-threaded race condition in coll/libnbc
+- Several fixes to OSHMEM
+- Fix bug in UCX support due to uninitialized field
+- Fix MPI_Ialltoallv with MPI_IN_PLACE and without MPI param check
+- Correctly reset receive request type before init. Thanks Chris Pattison
+  for the report and test case.
+- Fix bug in iallgather[v]
+- Fix concurrency issue with MPI_Comm_accept. Thanks to Pieter Noordhuis
+  for the patch
+- Fix ompi_coll_base_{gather,scatter}_intra_binomial
+- Fixed an issue with MPI_Type_get_extent returning the wrong extent
+  for distributed array datatypes.
+- Re-enable use of rtdtsc instruction as a monotonic clock source if
+  the processor has a core-invariant tsc. This is a partial fix for a
+  performance regression introduced in Open MPI v1.10.3.
+
+
 1.10.4 - 01 Sept 2016
 ------
 
