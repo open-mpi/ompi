@@ -13,8 +13,11 @@
  *
  */
 
+#include <pthread.h>
 #include "server_callbacks.h"
 #include "src/util/argv.h"
+
+extern int spawn_wait;
 
 pmix_server_module_t mymodule = {
     connected,
@@ -260,13 +263,27 @@ typedef struct {
     void *cbdata;
 } release_cbdata;
 
-static void release_cb(pmix_status_t status, void *cbdata)
+
+static void * _release_cb(void *arg)
 {
-    release_cbdata *cb = (release_cbdata*)cbdata;
+    release_cbdata *cb = (release_cbdata*)arg;
     if (NULL != cb->cbfunc) {
         cb->cbfunc(cb->status, "foobar", cb->cbdata);
     }
     free(cb);
+    spawn_wait = false;
+    pthread_exit(NULL);
+}
+
+static void release_cb(pmix_status_t status, void *cbdata)
+{
+    pthread_t thread;
+
+    if (0 > pthread_create(&thread, NULL, _release_cb, cbdata)) {
+        spawn_wait = false;
+        return;
+    }
+    pthread_detach(thread);
 }
 
 pmix_status_t spawn_fn(const pmix_proc_t *proc,
@@ -275,9 +292,12 @@ pmix_status_t spawn_fn(const pmix_proc_t *proc,
              pmix_spawn_cbfunc_t cbfunc, void *cbdata)
 {
     release_cbdata *cb = malloc(sizeof(release_cbdata));
+
     cb->status = PMIX_SUCCESS;
     cb->cbfunc = cbfunc;
     cb->cbdata = cbdata;
+
+    spawn_wait = true;
     PMIx_server_register_nspace("foobar", napps, NULL, 0, release_cb, (void*)cb);
     return PMIX_SUCCESS;
 }

@@ -13,6 +13,5 @@
 #define PMIX_INCLUDE_CONFIG_H
 
 #include <pmix/autogen/config.h>
-#include <pmix/rename.h>
 
 #endif /* PMIX_INCLUDE_CONFIG_H */

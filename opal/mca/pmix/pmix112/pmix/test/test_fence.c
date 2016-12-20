@@ -313,7 +313,7 @@ int test_fence(test_params params, char *my_nspace, int my_rank)
                     PMIX_LIST_DESTRUCT(&test_fences);
                     return rc;
                 }
-                GET(int, fence_num+p->proc.rank, p->proc.nspace, p->proc.rank, fence_num, put_ind++, params.use_same_keys, 0, 0);
+                GET(int, (int)(fence_num+p->proc.rank), p->proc.nspace, p->proc.rank, fence_num, put_ind++, params.use_same_keys, 0, 0);
                 if (PMIX_SUCCESS != rc) {
                     TEST_ERROR(("%s:%d: PMIx_Get failed (%d) from %s:%d", my_nspace, my_rank, rc, p->proc.nspace, p->proc.rank));
                     PMIX_PROC_FREE(pcs, npcs);

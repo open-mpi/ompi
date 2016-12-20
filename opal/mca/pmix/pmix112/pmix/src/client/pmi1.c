@@ -247,18 +247,16 @@ PMIX_EXPORT int PMI_Get_size(int *size)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
-    pmix_proc_t proc;
     pmix_info_t info[1];
     bool  val_optinal = 1;
+    pmix_proc_t proc = myproc;
+    proc.rank = PMIX_RANK_WILDCARD;
 
     PMI_CHECK();
 
     if (NULL == size) {
         return PMI_ERR_INVALID_ARG;
     }
-
-    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
-    proc.rank = PMIX_RANK_UNDEF;
 
     /* set controlling parameters
      * PMIX_OPTIONAL - expect that these keys should be available on startup
@@ -293,18 +291,16 @@ PMIX_EXPORT int PMI_Get_universe_size(int *size)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
-    pmix_proc_t proc;
     pmix_info_t info[1];
     bool  val_optinal = 1;
+    pmix_proc_t proc = myproc;
+    proc.rank = PMIX_RANK_WILDCARD;
 
     PMI_CHECK();
 
     if (NULL == size) {
         return PMI_ERR_INVALID_ARG;
     }
-
-    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
-    proc.rank = PMIX_RANK_UNDEF;
 
     /* set controlling parameters
      * PMIX_OPTIONAL - expect that these keys should be available on startup
@@ -327,18 +323,16 @@ PMIX_EXPORT int PMI_Get_appnum(int *appnum)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
-    pmix_proc_t proc;
     pmix_info_t info[1];
     bool  val_optinal = 1;
+    pmix_proc_t proc = myproc;
+    proc.rank = PMIX_RANK_WILDCARD;
 
     PMI_CHECK();
 
     if (NULL == appnum) {
         return PMI_ERR_INVALID_ARG;
     }
-
-    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
-    proc.rank = PMIX_RANK_UNDEF;
 
     /* set controlling parameters
      * PMIX_OPTIONAL - expect that these keys should be available on startup
@@ -481,6 +475,8 @@ PMIX_EXPORT int PMI_Get_clique_size(int *size)
     pmix_value_t *val;
     pmix_info_t info[1];
     bool  val_optinal = 1;
+    pmix_proc_t proc = myproc;
+    proc.rank = PMIX_RANK_WILDCARD;
 
     PMI_CHECK();
 
@@ -494,7 +490,7 @@ PMIX_EXPORT int PMI_Get_clique_size(int *size)
     PMIX_INFO_CONSTRUCT(&info[0]);
     PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
 
-    rc = PMIx_Get(&myproc, PMIX_LOCAL_SIZE, info, 1, &val);
+    rc = PMIx_Get(&proc, PMIX_LOCAL_SIZE, info, 1, &val);
     if (PMIX_SUCCESS == rc) {
         rc = convert_int(size, val);
         PMIX_VALUE_RELEASE(val);
@@ -511,6 +507,8 @@ PMIX_EXPORT int PMI_Get_clique_ranks(int ranks[], int length)
     pmix_value_t *val;
     char **rks;
     int i;
+    pmix_proc_t proc = myproc;
+    proc.rank = PMIX_RANK_WILDCARD;
 
     PMI_CHECK();
 
@@ -518,7 +516,7 @@ PMIX_EXPORT int PMI_Get_clique_ranks(int ranks[], int length)
         return PMI_ERR_INVALID_ARGS;
     }
 
-    rc = PMIx_Get(&myproc, PMIX_LOCAL_PEERS, NULL, 0, &val);
+    rc = PMIx_Get(&proc, PMIX_LOCAL_PEERS, NULL, 0, &val);
     if (PMIX_SUCCESS == rc) {
         /* kv will contain a string of comma-separated
          * ranks on my node */
