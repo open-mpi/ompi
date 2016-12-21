@@ -63,7 +63,7 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
            # the MCA_hwloc_external_openfabrics_helper define).
            AS_IF([test "$opal_hwloc_dir" != ""],
                  [opal_hwloc_include="$opal_hwloc_dir/include/hwloc.h"
-                  opal_hwloc_openfabrics_include="$opal_hwloc_dir/include/hwloc/hwloc/openfabrics-verbs.h"],
+                  opal_hwloc_openfabrics_include="$opal_hwloc_dir/include/hwloc/openfabrics-verbs.h"],
                  [opal_hwloc_include="hwloc.h"
                   opal_hwloc_openfabrics_include="hwloc/openfabrics-verbs.h"])
            AC_DEFINE_UNQUOTED(MCA_hwloc_external_header,
@@ -71,7 +71,7 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
                   [Location of external hwloc header])
            AC_DEFINE_UNQUOTED(MCA_hwloc_external_openfabrics_header,
                   ["$opal_hwloc_openfabrics_include"],
-                  [Location of external hwloc openfabrics header])
+                  [Location of external hwloc OpenFabrics header])
           ])
     OPAL_VAR_SCOPE_POP
 ])dnl
