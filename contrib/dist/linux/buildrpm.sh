@@ -267,7 +267,11 @@ fi
 # Find where the top RPM-building directory is
 #
 
-rpmtopdir=${rpmtopdir:-"`grep %_topdir $HOME/.rpmmacros | awk '{ print $2 }'`"}
+rpmtopdir=
+file=~/.rpmmacros
+if test -r $file; then
+    rpmtopdir=${rpmtopdir:-"`grep %_topdir $file | awk '{ print $2 }'`"}
+fi
 if test "$rpmtopdir" != ""; then
 	rpmbuild_options="$rpmbuild_options --define '_topdir $rpmtopdir'"
     if test ! -d "$rpmtopdir"; then
