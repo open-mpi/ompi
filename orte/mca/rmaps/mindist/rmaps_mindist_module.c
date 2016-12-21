@@ -280,9 +280,21 @@ static int mindist_map(orte_job_t *jdata)
                         break;
                     }
                 }
-                opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
-                        "mca:rmaps:mindist: assigned %d procs to node %s",
-                        j, node->name);
+                if (0 != j) {
+                    /* add the node to the map, if needed */
+                    if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
+                        if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                            ORTE_ERROR_LOG(rc);
+                            goto error;
+                        }
+                        ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
+                        OBJ_RETAIN(node);  /* maintain accounting on object */
+                        jdata->map->num_nodes++;
+                    }
+                    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:mindist: assigned %d procs to node %s",
+                            j, node->name);
+                }
             } else {
                 if (hwloc_get_nbobjs_by_type(node->topology, HWLOC_OBJ_SOCKET) > 1) {
                     /* don't have info about pci locality */
@@ -304,18 +316,6 @@ static int mindist_map(orte_job_t *jdata)
                     num_procs_to_assign--;
                 }
             }
-
-            /* add the node to the map, if needed */
-            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
-                if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto error;
-                }
-                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
-                OBJ_RETAIN(node);  /* maintain accounting on object */
-                jdata->map->num_nodes++;
-            }
-
         }
 
         /* If we get to the end of all the nodes and still have procs remaining, then
