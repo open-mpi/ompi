@@ -18,6 +18,8 @@
 # $HEADER$
 #
 
+dist_ompidata_DATA = help-osc-pt2pt.txt
+
 pt2pt_sources = \
 	osc_pt2pt.h \
 	osc_pt2pt_module.c \
