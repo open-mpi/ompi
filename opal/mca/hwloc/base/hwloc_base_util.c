@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -38,8 +38,10 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/threads/tsd.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -200,7 +202,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
     return OPAL_SUCCESS;
 }
 
-static void fill_cache_line_size(void)
+static void fill_cache_line_size(hwloc_topology_t topo)
 {
     int i = 0, cache_level = 2;
     unsigned size;
@@ -212,7 +214,7 @@ static void fill_cache_line_size(void)
     while (cache_level > 0 && !found) {
         i=0;
         while (1) {
-            obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
+            obj = opal_hwloc_base_get_obj_by_type(topo,
                                                   HWLOC_OBJ_CACHE, cache_level,
                                                   i, OPAL_HWLOC_LOGICAL);
             if (NULL == obj) {
@@ -238,72 +240,139 @@ static void fill_cache_line_size(void)
     }
 }
 
-int opal_hwloc_base_get_topology(void)
+hwloc_topology_t opal_hwloc_base_get_topology(void)
 {
     int rc=OPAL_SUCCESS;
+    char *val;
+    opal_process_name_t wildcard_rank;
+    opal_value_t *kv;
+    int u32;
+    hwloc_topology_t topo;
 
     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_topology"));
 
     if (NULL == opal_hwloc_base_topo_file) {
-        if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
-            0 != hwloc_topology_set_flags(opal_hwloc_topology,
-                                          (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
-                                           HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) ||
-            0 != hwloc_topology_load(opal_hwloc_topology)) {
-            return OPAL_ERR_NOT_SUPPORTED;
-        }
-        if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
-            return rc;
+        /* setup a name for retrieving data associated with the job */
+        wildcard_rank.jobid = OPAL_PROC_MY_NAME.jobid;
+        wildcard_rank.vpid = OPAL_NAME_WILDCARD->vpid;
+
+        /* retrieve our topology */
+        val = NULL;
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCAL_TOPO,
+                                       &wildcard_rank, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == rc && NULL != val) {
+            /* load the topology */
+            if (0 != hwloc_topology_init(&topo)) {
+                free(val);
+                return NULL;
+            }
+            if (0 != hwloc_topology_set_xmlbuffer(topo, val, strlen(val))) {
+                free(val);
+                hwloc_topology_destroy(topo);
+                return NULL;
+            }
+            /* since we are loading this from an external source, we have to
+             * explicitly set a flag so hwloc sets things up correctly
+             */
+            if (0 != hwloc_topology_set_flags(topo,
+                                             (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                                              HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
+                                              HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
+                hwloc_topology_destroy(topo);
+                free(val);
+                return NULL;
+            }
+            /* now load the topology */
+            if (0 != hwloc_topology_load(topo)) {
+                hwloc_topology_destroy(topo);
+                free(val);
+                return NULL;
+            }
+            free(val);
+            /* filter the cpus thru any default cpu set */
+            if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(topo))) {
+                OPAL_ERROR_LOG(rc);
+                hwloc_topology_destroy(topo);
+                return NULL;
+            }
+        } else {
+            /* it wasn't passed down to us, so go get it */
+            if (0 != hwloc_topology_init(&topo) ||
+                0 != hwloc_topology_set_flags(topo,
+                                              (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
+                                               HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) ||
+                0 != hwloc_topology_load(topo)) {
+                if (NULL != topo) {
+                    hwloc_topology_destroy(topo);
+                }
+                return NULL;
+            }
+            if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(topo))) {
+                OPAL_ERROR_LOG(rc);
+                hwloc_topology_destroy(topo);
+                return NULL;
+            }
+            /* push it into the PMIx database in case someone
+             * tries to retrieve it so we avoid an attempt to
+             * get it again */
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
+            kv->type = OPAL_STRING;
+            if (0 != (rc = hwloc_topology_export_xmlbuffer(topo, &kv->data.string, &u32))) {
+                OBJ_RELEASE(kv);
+                hwloc_topology_destroy(topo);
+                return NULL;
+            }
+            opal_pmix.store_local(&wildcard_rank, kv);  // it is okay for this to fail
+            OBJ_RELEASE(kv);
         }
     } else {
-        if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file))) {
-            return rc;
+        if (NULL == (topo = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file))) {
+            return NULL;
         }
     }
 
     /* fill opal_cache_line_size global with the smallest L1 cache
        line size */
-    fill_cache_line_size();
+    fill_cache_line_size(topo);
 
-    return rc;
+    return topo;
 }
 
-int opal_hwloc_base_set_topology(char *topofile)
+hwloc_topology_t opal_hwloc_base_set_topology(char *topofile)
 {
     struct hwloc_topology_support *support;
     int rc;
+    hwloc_topology_t topo;
 
-     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                          "hwloc:base:set_topology %s", topofile));
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                        "hwloc:base:set_topology %s", topofile));
 
-   if (NULL != opal_hwloc_topology) {
-        hwloc_topology_destroy(opal_hwloc_topology);
+    if (0 != hwloc_topology_init(&topo)) {
+        return NULL;
     }
-    if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
-        return OPAL_ERR_NOT_SUPPORTED;
-    }
-    if (0 != hwloc_topology_set_xml(opal_hwloc_topology, topofile)) {
-        hwloc_topology_destroy(opal_hwloc_topology);
+    if (0 != hwloc_topology_set_xml(topo, topofile)) {
+        hwloc_topology_destroy(topo);
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:set_topology bad topo file"));
-        return OPAL_ERR_NOT_SUPPORTED;
+        return NULL;
     }
     /* since we are loading this from an external source, we have to
      * explicitly set a flag so hwloc sets things up correctly
      */
-    if (0 != hwloc_topology_set_flags(opal_hwloc_topology,
+    if (0 != hwloc_topology_set_flags(topo,
                                       (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
                                        HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
                                        HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
-        hwloc_topology_destroy(opal_hwloc_topology);
-        return OPAL_ERR_NOT_SUPPORTED;
+        hwloc_topology_destroy(topo);
+        return NULL;
     }
-    if (0 != hwloc_topology_load(opal_hwloc_topology)) {
-        hwloc_topology_destroy(opal_hwloc_topology);
+    if (0 != hwloc_topology_load(topo)) {
+        hwloc_topology_destroy(topo);
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:set_topology failed to load"));
-        return OPAL_ERR_NOT_SUPPORTED;
+        return NULL;
     }
 
     /* unfortunately, hwloc does not include support info in its
@@ -311,22 +380,23 @@ int opal_hwloc_base_set_topology(char *topofile)
      * systems that use this option are likely to provide
      * binding support
      */
-    support = (struct hwloc_topology_support*)hwloc_topology_get_support(opal_hwloc_topology);
+    support = (struct hwloc_topology_support*)hwloc_topology_get_support(topo);
     support->cpubind->set_thisproc_cpubind = true;
     support->membind->set_thisproc_membind = true;
 
     /* filter the cpus thru any default cpu set */
-    rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology);
+    rc = opal_hwloc_base_filter_cpus(topo);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        hwloc_topology_destroy(topo);
+        return NULL;
     }
 
     /* fill opal_cache_line_size global with the smallest L1 cache
        line size */
-    fill_cache_line_size();
+    fill_cache_line_size(topo);
 
     /* all done */
-    return OPAL_SUCCESS;
+    return topo;
 }
 
 static void free_object(hwloc_obj_t obj)
@@ -353,6 +423,10 @@ void opal_hwloc_base_free_topology(hwloc_topology_t topo)
     opal_hwloc_topo_data_t *rdata;
     unsigned k;
 
+    if (NULL == topo) {
+        return;
+    }
+
     obj = hwloc_get_root_obj(topo);
     /* release the root-level userdata */
     if (NULL != obj->userdata) {
@@ -369,23 +443,23 @@ void opal_hwloc_base_free_topology(hwloc_topology_t topo)
     hwloc_topology_destroy(topo);
 }
 
-void opal_hwloc_base_get_local_cpuset(void)
+void opal_hwloc_base_get_local_cpuset(hwloc_topology_t topo)
 {
     hwloc_obj_t root;
     hwloc_cpuset_t base_cpus;
 
-    if (NULL != opal_hwloc_topology) {
+    if (NULL != topo) {
         if (NULL == opal_hwloc_my_cpuset) {
             opal_hwloc_my_cpuset = hwloc_bitmap_alloc();
         }
 
         /* get the cpus we are bound to */
-        if (hwloc_get_cpubind(opal_hwloc_topology,
+        if (hwloc_get_cpubind(topo,
                               opal_hwloc_my_cpuset,
                               HWLOC_CPUBIND_PROCESS) < 0) {
             /* we are not bound - use the root's available cpuset */
-            root = hwloc_get_root_obj(opal_hwloc_topology);
-            base_cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
+            root = hwloc_get_root_obj(topo);
+            base_cpus = opal_hwloc_base_get_available_cpus(topo, root);
             hwloc_bitmap_copy(opal_hwloc_my_cpuset, base_cpus);
         }
     }
@@ -1205,7 +1279,7 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
     int core_id, lower_range, upper_range;
 
     /* bozo checks */
-    if (NULL == opal_hwloc_topology) {
+    if (NULL == topo) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
     if (NULL == slot_str || 0 == strlen(slot_str)) {
@@ -1502,9 +1576,9 @@ static char *hwloc_getline(FILE *fp)
 
     ret = fgets(input, OPAL_HWLOC_MAX_ELOG_LINE, fp);
     if (NULL != ret) {
-	   input[strlen(input)-1] = '\0';  /* remove newline */
-	   buff = strdup(input);
-	   return buff;
+           input[strlen(input)-1] = '\0';  /* remove newline */
+           buff = strdup(input);
+           return buff;
     }
 
     return NULL;

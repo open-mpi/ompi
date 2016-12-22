@@ -286,6 +286,7 @@ static void _register_nspace(int sd, short args, void *cbdata)
     pmix_info_t *iptr;
     pmix_value_t val;
     char *msg;
+    bool nodata = false;
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
     pmix_buffer_t *jobdata = PMIX_NEW(pmix_buffer_t);
     char *nspace = NULL;
@@ -335,6 +336,14 @@ static void _register_nspace(int sd, short args, void *cbdata)
                             "pmix:server _register_nspace recording %s",
                             cd->info[i].key);
 
+        if (0 == strcmp(cd->info[i].key, PMIX_REGISTER_NODATA)) {
+            /* we don't want to save any job data for this nspace */
+            nodata = true;
+            /* free anything that was previously stored */
+            PMIX_DESTRUCT(&nptr->server->job_info);
+            PMIX_CONSTRUCT(&nptr->server->job_info, pmix_buffer_t);
+            break;
+        }
         if (0 == strcmp(cd->info[i].key, PMIX_NODE_MAP)) {
             /* parse the regex to get the argv array of node names */
             if (PMIX_SUCCESS != (rc = pmix_regex_parse_nodes(cd->info[i].value.data.string, &nodes))) {
@@ -436,19 +445,21 @@ static void _register_nspace(int sd, short args, void *cbdata)
         PMIX_ERROR_LOG(rc);
         goto release;
     }
-    pmix_bfrop.copy_payload(jobdata, &nptr->server->job_info);
-    pmix_bfrop.copy_payload(jobdata, &pmix_server_globals.gdata);
+    if (!nodata) {
+        pmix_bfrop.copy_payload(jobdata, &nptr->server->job_info);
+        pmix_bfrop.copy_payload(jobdata, &pmix_server_globals.gdata);
 
-    /* unpack the nspace - we don't really need it, but have to
-    * unpack it to maintain sequence */
-    cnt = 1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(jobdata, &nspace, &cnt, PMIX_STRING))) {
-        PMIX_ERROR_LOG(rc);
-        goto release;
-    }
-    if (PMIX_SUCCESS != (rc = pmix_job_data_dstore_store(cd->proc.nspace, jobdata))) {
-        PMIX_ERROR_LOG(rc);
-        goto release;
+        /* unpack the nspace - we don't really need it, but have to
+        * unpack it to maintain sequence */
+        cnt = 1;
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(jobdata, &nspace, &cnt, PMIX_STRING))) {
+            PMIX_ERROR_LOG(rc);
+            goto release;
+        }
+        if (PMIX_SUCCESS != (rc = pmix_job_data_dstore_store(cd->proc.nspace, jobdata))) {
+            PMIX_ERROR_LOG(rc);
+            goto release;
+        }
     }
 #endif
 

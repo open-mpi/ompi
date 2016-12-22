@@ -388,7 +388,7 @@ int orte_daemon(int argc, char *argv[])
             res = hwloc_bitmap_alloc();
             for (i=0; NULL != cores[i]; i++) {
                 core = strtoul(cores[i], NULL, 10);
-                if (NULL == (pu = opal_hwloc_base_get_pu(opal_hwloc_topology, core, OPAL_HWLOC_LOGICAL))) {
+                if (NULL == (pu = opal_hwloc_base_get_pu(orte_server_topology, core, OPAL_HWLOC_LOGICAL))) {
                     /* turn off the show help forwarding as we won't
                      * be able to cycle the event library to send
                      */
@@ -409,9 +409,9 @@ int orte_daemon(int argc, char *argv[])
             }
             /* if the result is all zeros, then don't bind */
             if (!hwloc_bitmap_iszero(ours)) {
-                (void)hwloc_set_cpubind(opal_hwloc_topology, ours, 0);
+                (void)hwloc_set_cpubind(orte_server_topology, ours, 0);
                 if (opal_hwloc_report_bindings) {
-                    opal_hwloc_base_cset2mapstr(tmp, sizeof(tmp), opal_hwloc_topology, ours);
+                    opal_hwloc_base_cset2mapstr(tmp, sizeof(tmp), orte_server_topology, ours);
                     opal_output(0, "Daemon %s is bound to cores %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
                 }
@@ -785,7 +785,7 @@ int orte_daemon(int argc, char *argv[])
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_topo_signature, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
             }
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_server_topology, 1, OPAL_HWLOC_TOPO))) {
                 ORTE_ERROR_LOG(ret);
             }
         } else {
@@ -795,7 +795,7 @@ int orte_daemon(int argc, char *argv[])
             }
         }
         /* detect and add any coprocessors */
-        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+        coprocessors = opal_hwloc_base_find_coprocessors(orte_server_topology);
         if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
         }

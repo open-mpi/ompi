@@ -64,9 +64,9 @@ static void cbdes(pmix_cb_t *p)
 {
     PMIX_DESTRUCT(&p->data);
 }
-PMIX_CLASS_INSTANCE(pmix_cb_t,
-                   pmix_list_item_t,
-                   cbcon, cbdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_cb_t,
+                                pmix_list_item_t,
+                                cbcon, cbdes);
 
 static void pcon(pmix_peer_t *p)
 {
@@ -106,9 +106,9 @@ static void pdes(pmix_peer_t *p)
         PMIX_RELEASE(p->recv_msg);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_peer_t,
-                   pmix_object_t,
-                   pcon, pdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_peer_t,
+                                pmix_object_t,
+                                pcon, pdes);
 
 static void nscon(pmix_nspace_t *p)
 {
@@ -142,9 +142,9 @@ static void nsdes(pmix_nspace_t *p)
         PMIX_RELEASE(p->server);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_nspace_t,
-                    pmix_list_item_t,
-                    nscon, nsdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nspace_t,
+                                pmix_list_item_t,
+                                nscon, nsdes);
 
 static void ncon(pmix_nrec_t *p)
 {
@@ -160,9 +160,9 @@ static void ndes(pmix_nrec_t *p)
         free(p->procs);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_nrec_t,
-                    pmix_list_item_t,
-                    ncon, ndes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nrec_t,
+                                pmix_list_item_t,
+                                ncon, ndes);
 
 static void sncon(pmix_server_nspace_t *p)
 {
@@ -185,9 +185,9 @@ static void sndes(pmix_server_nspace_t *p)
     PMIX_DESTRUCT(&p->myremote);
     PMIX_DESTRUCT(&p->remote);
 }
-PMIX_CLASS_INSTANCE(pmix_server_nspace_t,
-                    pmix_object_t,
-                    sncon, sndes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_server_nspace_t,
+                                pmix_object_t,
+                                sncon, sndes);
 
 static void info_con(pmix_rank_info_t *info)
 {
@@ -204,9 +204,9 @@ static void info_des(pmix_rank_info_t *info)
         PMIX_RELEASE(info->nptr);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_rank_info_t,
-                    pmix_list_item_t,
-                    info_con, info_des);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_rank_info_t,
+                                pmix_list_item_t,
+                                info_con, info_des);
 
 static void scon(pmix_shift_caddy_t *p)
 {
@@ -236,9 +236,9 @@ static void scdes(pmix_shift_caddy_t *p)
         PMIX_RELEASE(p->kv);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_shift_caddy_t,
-                    pmix_object_t,
-                    scon, scdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_shift_caddy_t,
+                                pmix_object_t,
+                                scon, scdes);
 
 PMIX_CLASS_INSTANCE(pmix_info_caddy_t,
                     pmix_list_item_t,

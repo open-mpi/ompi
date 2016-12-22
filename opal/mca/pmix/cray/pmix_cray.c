@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -690,6 +690,7 @@ static void fencenb(int sd, short args, void *cbdata)
     opal_hwloc_locality_t locality;
     opal_list_t vals;
     char *cpuset = NULL;
+    hwloc_topology_t topo = NULL;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray executing fence cache_global %p cache_local %p",
@@ -827,6 +828,9 @@ static void fencenb(int sd, short args, void *cbdata)
      *  we only need to set locality for each local rank as "not found"
      * equates to "non-local"
      */
+    if (NULL == (topo = opal_hwloc_base_get_topology())) {
+        goto fn_exit;
+    }
 
     for (i=0; i < pmix_nlranks; i++) {
         id.vpid = pmix_lranks[i];
@@ -856,7 +860,7 @@ static void fencenb(int sd, short args, void *cbdata)
                 locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
             } else {
                 /* determine relative location on our node */
-                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                locality = opal_hwloc_base_get_relative_locality(topo,
                                                                  cpuset,
                                                                  kp->data.string);
             }
@@ -877,6 +881,9 @@ static void fencenb(int sd, short args, void *cbdata)
     }
 
 fn_exit:
+    if (NULL != topo) {
+        opal_hwloc_base_free_topology(topo);
+    }
     if (NULL != cpuset) {
         free(cpuset);
     }

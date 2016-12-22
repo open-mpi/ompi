@@ -64,7 +64,7 @@ PMIX_CLASS_DECLARATION(pmix_ring_buffer_t);
  * @return PMIX_SUCCESS if all initializations were succesful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-int pmix_ring_buffer_init(pmix_ring_buffer_t* ring, int size);
+PMIX_EXPORT int pmix_ring_buffer_init(pmix_ring_buffer_t* ring, int size);
 
 /**
  * Push an item onto the ring buffer, displacing the oldest
@@ -76,7 +76,7 @@ int pmix_ring_buffer_init(pmix_ring_buffer_t* ring, int size);
  * @return Pointer to displaced item, NULL if ring
  *         is not yet full
  */
-void* pmix_ring_buffer_push(pmix_ring_buffer_t *ring, void *ptr);
+PMIX_EXPORT void* pmix_ring_buffer_push(pmix_ring_buffer_t *ring, void *ptr);
 
 
 /**
@@ -88,14 +88,14 @@ void* pmix_ring_buffer_push(pmix_ring_buffer_t *ring, void *ptr);
  * @return Error code.  NULL indicates an error.
  */
 
-void* pmix_ring_buffer_pop(pmix_ring_buffer_t *ring);
+PMIX_EXPORT void* pmix_ring_buffer_pop(pmix_ring_buffer_t *ring);
 
 /*
  * Access an element of the ring, without removing it, indexed
  * starting at the tail - a value of -1 will return the element
  * at the head of the ring
  */
-void* pmix_ring_buffer_poke(pmix_ring_buffer_t *ring, int i);
+PMIX_EXPORT void* pmix_ring_buffer_poke(pmix_ring_buffer_t *ring, int i);
 
 END_C_DECLS
 

@@ -17,6 +17,7 @@ pmix_proc_t this_proc;
 void pmi_init(int *rank, int *size)
 {
     pmix_value_t value, *val = &value;
+    pmix_proc_t job_proc;
     int rc;
 
     /* init us */
@@ -30,8 +31,12 @@ void pmi_init(int *rank, int *size)
         abort();
     }
 
+    job_proc = this_proc;
+#if (PMIX_VERSION_MAJOR > 1 )
+    job_proc.rank = PMIX_RANK_WILDCARD;
+#endif
     /* get our job size */
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&this_proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&job_proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Get job size failed: %d", this_proc.nspace, this_proc.rank, rc);
         abort();
     }
@@ -45,9 +50,13 @@ void pmi_get_local_ranks(int **local_ranks, int *local_cnt)
     pmix_value_t value, *val = &value;
     char *ptr;
     int i, rc;
+    pmix_proc_t job_proc = this_proc;
+#if (PMIX_VERSION_MAJOR > 1 )
+    job_proc.rank = PMIX_RANK_WILDCARD;
+#endif
 
     /* get our job size */
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&this_proc, PMIX_LOCAL_SIZE, NULL, 0, &val))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&job_proc, PMIX_LOCAL_SIZE, NULL, 0, &val))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Get PMIX_LOCAL_SIZE failed: %d", this_proc.nspace, this_proc.rank, rc);
         abort();
     }
@@ -56,7 +65,7 @@ void pmi_get_local_ranks(int **local_ranks, int *local_cnt)
 
     *local_ranks = calloc(*local_cnt, sizeof(int));
     /* get our job size */
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&this_proc, PMIX_LOCAL_PEERS, NULL, 0, &val))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&job_proc, PMIX_LOCAL_PEERS, NULL, 0, &val))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Get PMIX_LOCAL_PEERS failed: %d", this_proc.nspace, this_proc.rank, rc);
         abort();
     }

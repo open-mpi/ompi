@@ -73,6 +73,9 @@
 #include "pmix_server.h"
 #include "pmix_server_internal.h"
 
+/* global variable */
+hwloc_topology_t orte_server_topology = NULL;
+
 /*
  * Local utility functions
  */
@@ -239,12 +242,12 @@ int pmix_server_init(void)
      * topology themselves as this could overwhelm the local
      * system on large-scale SMPs */
     OBJ_CONSTRUCT(&info, opal_list_t);
-    if (NULL != opal_hwloc_topology) {
+    if (NULL != orte_server_topology) {
         char *xmlbuffer=NULL;
         int len;
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
-        if (0 != hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len)) {
+        if (0 != hwloc_topology_export_xmlbuffer(orte_server_topology, &xmlbuffer, &len)) {
             OBJ_RELEASE(kv);
             OBJ_DESTRUCT(&info);
             return ORTE_ERROR;

@@ -18,7 +18,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -232,14 +232,15 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     int my_mem_node, num_mem_nodes, i, rc;
     mca_common_sm_mpool_resources_t *res = NULL;
     mca_btl_smcuda_component_t* m = &mca_btl_smcuda_component;
+    hwloc_topology_t topo = NULL;
 
     /* Assume we don't have hwloc support and fill in dummy info */
     mca_btl_smcuda_component.mem_node = my_mem_node = 0;
     mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = 1;
 
     /* If we have hwloc support, then get accurate information */
-    if (NULL != opal_hwloc_topology) {
-        i = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology,
+    if (NULL != (topo = opal_hwloc_base_get_topology())) {
+        i = opal_hwloc_base_get_nbobjs_by_type(topo,
                                                HWLOC_OBJ_NODE, 0,
                                                OPAL_HWLOC_AVAILABLE);
 
@@ -262,13 +263,13 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
             if (NULL != opal_process_info.cpuset) {
                 /* count the number of NUMA nodes to which we are bound */
                 for (w=0; w < i; w++) {
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
+                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(topo,
                                                                        HWLOC_OBJ_NODE, 0, w,
                                                                        OPAL_HWLOC_AVAILABLE))) {
                         continue;
                     }
                     /* get that NUMA node's available cpus */
-                    avail = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
+                    avail = opal_hwloc_base_get_available_cpus(topo, obj);
                     /* see if we intersect */
                     if (hwloc_bitmap_intersects(avail, opal_hwloc_my_cpuset)) {
                         n_bound++;
@@ -285,6 +286,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
                 }
             }
         }
+        opal_hwloc_base_free_topology(topo);
     }
 
     if (NULL == (res = calloc(1, sizeof(*res)))) {
@@ -431,7 +433,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
                              mca_btl_smcuda_component.sm_free_list_inc,
                              mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
-	    return i;
+            return i;
 
     mca_btl_smcuda_component.num_outstanding_frags = 0;
 
@@ -1120,8 +1122,8 @@ int mca_btl_smcuda_get_cuda (struct mca_btl_base_module_t *btl,
     mca_common_wait_stream_synchronize(&rget_reg);
 
     rc = mca_common_cuda_memcpy(local_address, remote_memory_address, size,
-				"mca_btl_smcuda_get", (mca_btl_base_descriptor_t *)frag,
-				&done);
+                                "mca_btl_smcuda_get", (mca_btl_base_descriptor_t *)frag,
+                                &done);
     if (OPAL_SUCCESS != rc) {
         /* Out of resources can be handled by upper layers. */
         if (OPAL_ERR_OUT_OF_RESOURCE != rc) {

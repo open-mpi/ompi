@@ -138,21 +138,36 @@ int orte_ess_base_orted_setup(char **hosts)
     setup_sighandler(SIGUSR2, &sigusr2_handler, signal_callback);
     signals_set = true;
 
-    /* get the local topology */
-    if (NULL == opal_hwloc_topology) {
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
-            error = "topology discovery";
-            goto error;
-        }
+    /* setup the PMIx framework - ensure it skips all non-PMIx components,
+     * but do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pmix_base_open";
+        goto error;
     }
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
+        goto error;
+    }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
+
+    /* ensure we have the local topology */
+    if (NULL == (orte_server_topology = opal_hwloc_base_get_topology())) {
+        error = "topology discovery";
+        goto error;
+    }
+
     /* generate the signature */
-    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+    orte_topo_signature = opal_hwloc_base_get_topo_signature(orte_server_topology);
     /* remove the hostname from the topology. Unfortunately, hwloc
      * decided to add the source hostname to the "topology", thus
      * rendering it unusable as a pure topological description. So
      * we remove that information here.
      */
-    obj = hwloc_get_root_obj(opal_hwloc_topology);
+    obj = hwloc_get_root_obj(orte_server_topology);
     for (i=0; i < obj->infos_count; i++) {
         if (NULL == obj->infos[i].name ||
             NULL == obj->infos[i].value) {
@@ -173,7 +188,7 @@ int orte_ess_base_orted_setup(char **hosts)
     }
     if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
         opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+        opal_dss.dump(0, orte_server_topology, OPAL_HWLOC_TOPO);
     }
 
     /* open and setup the opal_pstat framework so we can provide
@@ -335,7 +350,7 @@ int orte_ess_base_orted_setup(char **hosts)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
     /* point our topology to the one detected locally */
-    node->topology = opal_hwloc_topology;
+    node->topology = orte_server_topology;
 
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -363,21 +378,6 @@ int orte_ess_base_orted_setup(char **hosts)
     /* obviously, we have "reported" */
     jdata->num_reported = 1;
 
-    /* setup the PMIx framework - ensure it skips all non-PMIx components,
-     * but do not override anything we were given */
-    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_pmix_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_pmix_base_select";
-        goto error;
-    }
-    /* set the event base */
-    opal_pmix_base_set_evbase(orte_event_base);
     /* setup the PMIx server */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
         /* the server code already barked, so let's be quiet */
@@ -657,6 +657,10 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
+    /* cleanup topology */
+    if (NULL != orte_server_topology) {
+        opal_hwloc_base_free_topology(orte_server_topology);
+    }
     /* remove our use of the session directory tree */
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     /* ensure we scrub the session directory tree */

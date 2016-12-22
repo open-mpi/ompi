@@ -73,7 +73,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
- pmix_ptl_tcp_component_t mca_ptl_tcp_component = {
+ PMIX_EXPORT pmix_ptl_tcp_component_t mca_ptl_tcp_component = {
     .super = {
         .base = {
             PMIX_PTL_BASE_VERSION_1_0_0,

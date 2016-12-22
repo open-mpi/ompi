@@ -3,6 +3,9 @@
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -42,8 +45,6 @@
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
- *
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $HEADER$
  */
@@ -121,6 +122,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_CONNECT_TO_SYSTEM              "pmix.cnct.sys"         // (bool) The requestor requires that a connection be made only to
                                                                     //        a local system-level PMIx server
 #define PMIX_CONNECT_SYSTEM_FIRST           "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
+#define PMIX_REGISTER_NODATA                "pmix.reg.nodata"       // (bool) Registration is for nspace only, do not copy job data
 
 /* identification attributes */
 #define PMIX_USERID                         "pmix.euid"             // (uint32_t) effective user id
@@ -435,28 +437,28 @@ typedef uint16_t pmix_data_type_t;
 #define PMIX_STATUS             20  // needs to be tracked separately from integer for those times
                                     // when we are embedded and it needs to be converted to the
                                     // host error definitions
-#define PMIX_HWLOC_TOPO         21
-#define PMIX_VALUE              22
-#define PMIX_PROC               23
-#define PMIX_APP                24
-#define PMIX_INFO               25
-#define PMIX_PDATA              26
-#define PMIX_BUFFER             27
-#define PMIX_BYTE_OBJECT        28
-#define PMIX_KVAL               29
-#define PMIX_MODEX              30
-#define PMIX_PERSIST            31
-#define PMIX_POINTER            32
-#define PMIX_SCOPE              33
-#define PMIX_DATA_RANGE         34
-#define PMIX_COMMAND            35
-#define PMIX_INFO_DIRECTIVES    36
-#define PMIX_DATA_TYPE          37
-#define PMIX_PROC_STATE         38
-#define PMIX_PROC_INFO          39
-#define PMIX_DATA_ARRAY         40
-#define PMIX_PROC_RANK          41
-#define PMIX_QUERY              42
+#define PMIX_VALUE              21
+#define PMIX_PROC               22
+#define PMIX_APP                23
+#define PMIX_INFO               24
+#define PMIX_PDATA              25
+#define PMIX_BUFFER             26
+#define PMIX_BYTE_OBJECT        27
+#define PMIX_KVAL               28
+#define PMIX_MODEX              29
+#define PMIX_PERSIST            30
+#define PMIX_POINTER            31
+#define PMIX_SCOPE              32
+#define PMIX_DATA_RANGE         33
+#define PMIX_COMMAND            34
+#define PMIX_INFO_DIRECTIVES    35
+#define PMIX_DATA_TYPE          36
+#define PMIX_PROC_STATE         37
+#define PMIX_PROC_INFO          38
+#define PMIX_DATA_ARRAY         39
+#define PMIX_PROC_RANK          40
+#define PMIX_QUERY              41
+#define PMIX_COMPRESSED_STRING  42  // string compressed with zlib
 /**** DEPRECATED ****/
 #define PMIX_INFO_ARRAY         43
 /********************/
@@ -681,7 +683,8 @@ typedef struct pmix_value {
             if (NULL != (m)->data.string) {                                     \
                 free((m)->data.string);                                         \
             }                                                                   \
-        } else if (PMIX_BYTE_OBJECT == (m)->type) {                             \
+        } else if ((PMIX_BYTE_OBJECT == (m)->type) ||                           \
+                   (PMIX_COMPRESSED_STRING == (m)->type)) {                     \
             if (NULL != (m)->data.bo.bytes) {                                   \
                 free((m)->data.bo.bytes);                                       \
             }                                                                   \
@@ -765,7 +768,7 @@ typedef struct pmix_value {
  * includes internal functions - we don't
  * want to expose the entire header here
  */
-void pmix_value_load(pmix_value_t *v, void *data, pmix_data_type_t type);
+void pmix_value_load(pmix_value_t *v, const void *data, pmix_data_type_t type);
 pmix_status_t pmix_value_xfer(pmix_value_t *kv, pmix_value_t *src);
 pmix_status_t pmix_argv_append_nosize(char ***argv, const char *arg);
 pmix_status_t pmix_setenv(const char *name, const char *value,
@@ -1363,6 +1366,9 @@ pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
 #define PMIX_VAL_CMP_string     PMIX_VAL_cmp_ptr
 #define PMIX_VAL_CMP_byte       PMIX_VAL_cmp_val
 #define PMIX_VAL_CMP_flag       PMIX_VAL_cmp_val
+
+#define PMIX_VAL_ASSIGN(_v, _field, _val) \
+    PMIX_VAL_set_assign(_v, _field, _val)
 
 #define PMIX_VAL_CMP(_field, _val1, _val2) \
     PMIX_VAL_CMP_ ## _field(_val1, _val2)

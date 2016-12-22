@@ -131,7 +131,7 @@ int pmix_show_help_finalize(void);
  */
 typedef int (*pmix_show_help_fn_t)(const char *filename, const char *topic,
                                    bool want_error_header, ...);
-extern pmix_show_help_fn_t pmix_show_help;
+PMIX_EXPORT extern pmix_show_help_fn_t pmix_show_help;
 
 /**
  * This function does the same thing as pmix_show_help(), but accepts
@@ -139,23 +139,23 @@ extern pmix_show_help_fn_t pmix_show_help;
  */
 typedef int (*pmix_show_vhelp_fn_t)(const char *filename, const char *topic,
                                     bool want_error_header, va_list ap);
-extern pmix_show_vhelp_fn_t pmix_show_vhelp;
+PMIX_EXPORT extern pmix_show_vhelp_fn_t pmix_show_vhelp;
 
 /**
  * This function does the same thing as pmix_show_help(), but returns
  * its output in a string (that must be freed by the caller).
  */
-char* pmix_show_help_string(const char *filename,
-                                          const char *topic,
-                                          bool want_error_header, ...);
+PMIX_EXPORT char* pmix_show_help_string(const char *filename,
+                                        const char *topic,
+                                        bool want_error_header, ...);
 
 /**
  * This function does the same thing as pmix_show_help_string(), but
  * accepts a va_list form of varargs.
  */
-char* pmix_show_help_vstring(const char *filename,
-                                          const char *topic,
-                                          bool want_error_header, va_list ap);
+PMIX_EXPORT char* pmix_show_help_vstring(const char *filename,
+                                         const char *topic,
+                                         bool want_error_header, va_list ap);
 
 /**
  * This function adds another search location for the files that

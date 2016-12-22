@@ -1076,7 +1076,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                         found = true;
                         node->topology = t->topo;
-                        hwloc_topology_destroy(topo);
+                        opal_hwloc_base_free_topology(topo);
                         free(sig);
                         break;
                     }

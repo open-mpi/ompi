@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -33,6 +33,7 @@
 #include "opal/mca/base/base.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "orte/orted/pmix/pmix_server.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -261,13 +262,16 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
      * for mapping purposes
      */
     if (NULL != rmaps_base_topo_file) {
-        if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_topology(rmaps_base_topo_file))) {
+        if (NULL != orte_server_topology) {
+            opal_hwloc_base_free_topology(orte_server_topology);
+        }
+        if (NULL == (orte_server_topology = opal_hwloc_base_set_topology(rmaps_base_topo_file))) {
             orte_show_help("help-orte-rmaps-base.txt", "topo-file", true, rmaps_base_topo_file);
             return ORTE_ERR_SILENT;
         }
     }
 
-    /* check for violations that has to be detected before we parse the mapping option */
+    /* check for violations that have to be detected before we parse the mapping option */
     if (NULL != orte_rmaps_base.ppr) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
                        "--ppr, -ppr", "--map-by ppr:<pattern>",

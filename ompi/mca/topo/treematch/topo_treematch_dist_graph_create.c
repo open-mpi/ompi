@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
  * Copyright (c) 2012-2015 Bordeaux Poytechnic Institute
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -145,6 +145,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     mca_topo_base_comm_dist_graph_2_2_0_t *topo = NULL;
     ompi_proc_t *proc = NULL;
     MPI_Request  *reqs = NULL;
+    hwloc_topology_t mytopo = NULL;
     hwloc_cpuset_t set;
     hwloc_obj_t object,root_obj;
     hwloc_obj_t *tracker = NULL;
@@ -256,14 +257,19 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     /* Then, we need to know if the processes are bound */
     /* We make the hypothesis that all processes are in  */
     /* the same state : all bound or none bound */
-    assert(NULL != opal_hwloc_topology);
-    root_obj = hwloc_get_root_obj(opal_hwloc_topology);
+
+    /* ensure the topology is present */
+    if (NULL == (mytopo = opal_hwloc_base_get_topology())) {
+        goto fallback;
+    }
+
+    root_obj = hwloc_get_root_obj(mytopo);
     if (NULL == root_obj) goto fallback;
 
     /* if cpubind returns an error, it will be full anyway */
     set = hwloc_bitmap_alloc_full();
-    hwloc_get_cpubind(opal_hwloc_topology,set,0);
-    num_pus_in_node = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_PU);
+    hwloc_get_cpubind(mytopo,set,0);
+    num_pus_in_node = hwloc_get_nbobjs_by_type(mytopo, HWLOC_OBJ_PU);
 
     if(hwloc_bitmap_isincluded(root_obj->cpuset,set)){
         /* processes are not bound on the machine */
@@ -274,8 +280,8 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
         /* we try to bind to cores or above objects if enough are present */
         /* Not sure that cores are present in ALL nodes */
-        depth = hwloc_get_type_or_above_depth(opal_hwloc_topology,HWLOC_OBJ_CORE);
-        num_objs_in_node = hwloc_get_nbobjs_by_depth(opal_hwloc_topology,depth);
+        depth = hwloc_get_type_or_above_depth(mytopo,HWLOC_OBJ_CORE);
+        num_objs_in_node = hwloc_get_nbobjs_by_depth(mytopo,depth);
 
         /* Check for oversubscribing */
         oversubscribing_objs = check_oversubscribing(rank,num_nodes,
@@ -295,7 +301,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 FALLBACK();
             } else {
                 obj_rank = ompi_process_info.my_local_rank%num_pus_in_node;
-                effective_depth = hwloc_topology_get_depth(opal_hwloc_topology) - 1;
+                effective_depth = hwloc_topology_get_depth(mytopo) - 1;
                 num_objs_in_node = num_pus_in_node;
 #ifdef __DEBUG__
                 fprintf(stdout,"Process not bound : binding on PU#%i \n",obj_rank);
@@ -304,22 +310,22 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         } else {
             obj_rank = ompi_process_info.my_local_rank%num_objs_in_node;
             effective_depth = depth;
-            object = hwloc_get_obj_by_depth(opal_hwloc_topology,effective_depth,obj_rank);
+            object = hwloc_get_obj_by_depth(mytopo,effective_depth,obj_rank);
             if( NULL == object) FALLBACK();
 
             hwloc_bitmap_copy(set,object->cpuset);
             hwloc_bitmap_singlify(set); /* we don't want the process to move */
-            hwloc_err = hwloc_set_cpubind(opal_hwloc_topology,set,0);
+            hwloc_err = hwloc_set_cpubind(mytopo,set,0);
             if( -1 == hwloc_err) FALLBACK();
 #ifdef __DEBUG__
             fprintf(stdout,"Process not bound : binding on OBJ#%i \n",obj_rank);
 #endif
         }
     } else {    /* the processes are already bound */
-        object = hwloc_get_obj_covering_cpuset(opal_hwloc_topology,set);
+        object = hwloc_get_obj_covering_cpuset(mytopo,set);
         obj_rank = object->logical_index;
         effective_depth = object->depth;
-        num_objs_in_node = hwloc_get_nbobjs_by_depth(opal_hwloc_topology, effective_depth);
+        num_objs_in_node = hwloc_get_nbobjs_by_depth(mytopo, effective_depth);
 
         /* Check for oversubscribing */
         oversubscribing_objs = check_oversubscribing(rank,num_nodes,
@@ -346,7 +352,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         int *myhierarchy = (int *)calloc(array_size,sizeof(int));
 
         for (i = 0; i < array_size ; i++) {
-            myhierarchy[i] = hwloc_get_nbobjs_by_depth(opal_hwloc_topology,i);
+            myhierarchy[i] = hwloc_get_nbobjs_by_depth(mytopo,i);
 #ifdef __DEBUG__
             fprintf(stdout,"hierarchy[%i] = %i\n",i,myhierarchy[i]);
 #endif
@@ -361,15 +367,15 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         i = 1;
         while (i < array_size){
             if(myhierarchy[i] != myhierarchy[i-1])
-                tracker[idx++] = hwloc_get_obj_by_depth(opal_hwloc_topology,i-1,0);
+                tracker[idx++] = hwloc_get_obj_by_depth(mytopo,i-1,0);
             i++;
         }
-        tracker[idx] = hwloc_get_obj_by_depth(opal_hwloc_topology,effective_depth,0);
+        tracker[idx] = hwloc_get_obj_by_depth(mytopo,effective_depth,0);
         free(myhierarchy);
 
 #ifdef __DEBUG__
         fprintf(stdout,">>>>>>>>>>>>>>>>>>>>> Effective depth is : %i (total depth %i)| num_levels %i\n",
-                effective_depth,hwloc_topology_get_depth(opal_hwloc_topology),numlevels);
+                effective_depth,hwloc_topology_get_depth(mytopo),numlevels);
         for(i = 0 ; i < numlevels ; i++)
             fprintf(stdout,"tracker[%i] : arity %i | depth %i\n",i,tracker[i]->arity,tracker[i]->depth);
 #endif
@@ -379,17 +385,26 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
         for(i = 1;  i < num_procs_in_node; i++) {
             if (OMPI_SUCCESS != ( err = MCA_PML_CALL(irecv(&localrank_to_objnum[i],1,MPI_INT,
-                                                           local_procs[i],111, comm_old,&reqs[i-1]))))
+                                                           local_procs[i],111, comm_old,&reqs[i-1])))) {
+                opal_hwloc_base_free_topology(mytopo);
+                mytopo = NULL;
                 return err;
+            }
         }
         if (OMPI_SUCCESS != ( err = ompi_request_wait_all(num_procs_in_node-1,
-                                                          reqs,MPI_STATUSES_IGNORE)))
+                                                          reqs,MPI_STATUSES_IGNORE))) {
+            opal_hwloc_base_free_topology(mytopo);
+            mytopo = NULL;
             return err;
+        }
     } else {
         /* sending my core number to my local master on the node */
         if (OMPI_SUCCESS != (err = MCA_PML_CALL(send(&obj_rank, 1, MPI_INT, local_procs[0],
-                                                     111, MCA_PML_BASE_SEND_STANDARD, comm_old))))
+                                                     111, MCA_PML_BASE_SEND_STANDARD, comm_old)))) {
+            opal_hwloc_base_free_topology(mytopo);
+            mytopo = NULL;
             return err;
+        }
     }
     free(reqs);
 
@@ -417,8 +432,11 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_gather(MPI_IN_PLACE, size, MPI_DOUBLE,
                                                                         local_pattern, size, MPI_DOUBLE,
                                                                         0, comm_old,
-                                                                        comm_old->c_coll.coll_gather_module)))
+                                                                        comm_old->c_coll.coll_gather_module))) {
+                    opal_hwloc_base_free_topology(mytopo);
+                    mytopo = NULL;
                     return err;
+                }
             }
         } else {
             local_pattern = (double *)calloc(size,sizeof(double));
@@ -430,8 +448,11 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_gather(local_pattern, size, MPI_DOUBLE,
                                                                         NULL,0,0,
                                                                         0, comm_old,
-                                                                        comm_old->c_coll.coll_gather_module)))
+                                                                        comm_old->c_coll.coll_gather_module))) {
+                    opal_hwloc_base_free_topology(mytopo);
+                    mytopo = NULL;
                     return err;
+                }
             }
         }
 
@@ -448,7 +469,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             for(i = 0 ; i < num_objs_in_node ; i++)
                 obj_to_rank_in_comm[i] = -1;
             for(i = 0 ; i < num_objs_in_node ; i++) {
-                object = hwloc_get_obj_by_depth(opal_hwloc_topology,effective_depth,i);
+                object = hwloc_get_obj_by_depth(mytopo,effective_depth,i);
                 for( j = 0; j < num_procs_in_node ; j++ )
                     if(localrank_to_objnum[j] == (int)(object->logical_index))
                         break;
@@ -796,7 +817,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             tm_topology->nb_nodes  = (int *)calloc(tm_topology->nb_levels,sizeof(int));
             tm_topology->node_id   = (int **)malloc(tm_topology->nb_levels*sizeof(int *));
             for(i = 0 ; i < tm_topology->nb_levels ; i++){
-                int nb_objs = hwloc_get_nbobjs_by_depth(opal_hwloc_topology,tracker[i]->depth);
+                int nb_objs = hwloc_get_nbobjs_by_depth(mytopo,tracker[i]->depth);
                 tm_topology->nb_nodes[i] = nb_objs;
                 tm_topology->node_id[i]  = (int*)malloc(sizeof(int)*nb_objs);
                 tm_topology->arity[i]    = tracker[i]->arity;
@@ -864,16 +885,16 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                                                                 localcomm->c_coll.coll_bcast_module)))
             ERR_EXIT(err);
 
-        object = hwloc_get_obj_by_depth(opal_hwloc_topology,
+        object = hwloc_get_obj_by_depth(mytopo,
                                         effective_depth,matching[ompi_process_info.my_local_rank]);
         if( NULL == object) goto fallback;
         hwloc_bitmap_copy(set,object->cpuset);
         hwloc_bitmap_singlify(set);
-        hwloc_err = hwloc_set_cpubind(opal_hwloc_topology,set,0);
+        hwloc_err = hwloc_set_cpubind(mytopo,set,0);
         if( -1 == hwloc_err) goto fallback;
 
         /* Report new binding to ORTE/OPAL */
-        /*	hwloc_bitmap_list_asprintf(&orte_process_info.cpuset,set);   */
+        /*      hwloc_bitmap_list_asprintf(&orte_process_info.cpuset,set);   */
         err = hwloc_bitmap_snprintf (set_as_string,64,set);
 
 #ifdef __DEBUG__
@@ -888,7 +909,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         (void)opal_pmix.store_local((opal_process_name_t*)ORTE_PROC_MY_NAME, &kv);
         OBJ_DESTRUCT(&kv);
 
-        locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+        locality = opal_hwloc_base_get_relative_locality(mytopo,
                                                          orte_process_info.cpuset,set_as_string);
         OBJ_CONSTRUCT(&kv, opal_value_t);
         kv.key = strdup(OPAL_PMIX_LOCALITY);
@@ -912,6 +933,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         free(lrank_to_grank);
     } /* distributed reordering end */
 
+    if (NULL != mytopo) {
+        opal_hwloc_base_free_topology(mytopo);
+    }
     if(rank == local_procs[0])
         free(tracker);
     free(nodes_roots);
