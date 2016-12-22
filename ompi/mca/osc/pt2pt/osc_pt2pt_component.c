@@ -24,6 +24,7 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/show_help.h"
 
 #include <string.h>
 
@@ -110,6 +111,7 @@ ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_template = {
 };
 
 bool ompi_osc_pt2pt_no_locks = false;
+static bool using_thread_multiple = false;
 
 /* look up parameters for configuring this window.  The code first
    looks in the info structure passed by the user, then through mca
@@ -208,6 +210,10 @@ component_init(bool enable_progress_threads,
 {
     int ret;
 
+    if (enable_mpi_threads) {
+        using_thread_multiple = true;
+    }
+
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations, opal_list_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations_lock, opal_mutex_t);
@@ -303,6 +309,15 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* We don't support shared windows; that's for the sm onesided
        component */
     if (MPI_WIN_FLAVOR_SHARED == flavor) return OMPI_ERR_NOT_SUPPORTED;
+
+    /*
+     * workaround for issue https://github.com/open-mpi/ompi/issues/2614
+     * The following check needs to be removed once 2614 is addressed.
+     */
+    if (using_thread_multiple) {
+        opal_show_help("help-osc-pt2pt.txt", "mpi-thread-multiple-not-supported", true);
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
 
     /* create module structure with all fields initialized to zero */
     module = (ompi_osc_pt2pt_module_t*)
