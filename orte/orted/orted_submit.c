@@ -588,7 +588,7 @@ int orte_submit_init(int argc, char *argv[],
 void orte_submit_finalize(void)
 {
     trackr_t *trk;
-    int i;
+    int i, rc;
 
     for (i=0; i < tool_jobs.size; i++) {
         if (NULL != (trk = (trackr_t*)opal_pointer_array_get_item(&tool_jobs, i))) {
@@ -596,6 +596,17 @@ void orte_submit_finalize(void)
         }
     }
     OBJ_DESTRUCT(&tool_jobs);
+
+    /* close the SCHIZO framework */
+    if (ORTE_SUCCESS != (rc = mca_base_framework_close(&orte_schizo_base_framework))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* finalize only the util portion of OPAL */
+    if (OPAL_SUCCESS != (rc = opal_finalize_util())) {
+        return;
+    }
 
     /* destruct the cmd line object */
     if (NULL != orte_cmd_line) {
@@ -614,6 +625,12 @@ void orte_submit_finalize(void)
 
     if (NULL != orte_cmd_options.prefix) {
         free(orte_cmd_options.prefix);
+    }
+    if (NULL != orte_launch_environ) {
+        opal_argv_free(orte_launch_environ);
+    }
+    if (NULL != orte_basename) {
+        free(orte_basename);
     }
 }
 
