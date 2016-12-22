@@ -193,8 +193,6 @@ static char mqs_version_str[OMPI_MAX_VER_SIZE];
 /* This one can say what you like */
 char *mqs_version_string (void)
 {
-    return "Open MPI message queue support for parallel"
-           " debuggers compiled on " __DATE__;
     int offset;
     offset = snprintf(mqs_version_str, OMPI_MAX_VER_SIZE-1,  
                       "Open MPI message queue support for parallel debuggers ");
