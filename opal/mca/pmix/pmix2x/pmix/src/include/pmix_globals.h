@@ -45,6 +45,7 @@ BEGIN_C_DECLS
 /* some limits */
 #define PMIX_MAX_CRED_SIZE      131072              // set max at 128kbytes
 #define PMIX_MAX_ERR_CONSTANT   INT_MIN
+#define PMIX_STRING_LIMIT       512                 // max length of string before compressing
 
 
 /****   ENUM DEFINITIONS    ****/

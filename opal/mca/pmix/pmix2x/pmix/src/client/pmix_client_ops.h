@@ -23,7 +23,7 @@ typedef struct {
     pmix_list_t pending_requests;   // list of pmix_cb_t pending data requests
 } pmix_client_globals_t;
 
-extern pmix_client_globals_t pmix_client_globals;
+PMIX_EXPORT extern pmix_client_globals_t pmix_client_globals;
 
 END_C_DECLS
 

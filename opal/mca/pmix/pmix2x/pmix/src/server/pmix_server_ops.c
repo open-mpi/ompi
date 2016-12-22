@@ -1558,9 +1558,9 @@ static void scadcon(pmix_setup_caddy_t *p)
 static void scaddes(pmix_setup_caddy_t *p)
 {
 }
-PMIX_CLASS_INSTANCE(pmix_setup_caddy_t,
-                    pmix_object_t,
-                    scadcon, scaddes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_setup_caddy_t,
+                                pmix_object_t,
+                                scadcon, scaddes);
 
 static void ncon(pmix_notify_caddy_t *p)
 {

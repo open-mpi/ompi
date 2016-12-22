@@ -38,7 +38,6 @@
  * Globals
  */
 bool opal_hwloc_base_inited = false;
-hwloc_topology_t opal_hwloc_topology=NULL;
 hwloc_cpuset_t opal_hwloc_my_cpuset=NULL;
 hwloc_cpuset_t opal_hwloc_base_given_cpus=NULL;
 opal_hwloc_base_map_t opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
@@ -286,14 +285,6 @@ static int opal_hwloc_base_close(void)
         hwloc_bitmap_free(opal_hwloc_my_cpuset);
         opal_hwloc_my_cpuset = NULL;
     }
-
-    /* destroy the topology */
-    if (NULL != opal_hwloc_topology) {
-        opal_hwloc_base_free_topology(opal_hwloc_topology);
-        opal_hwloc_topology = NULL;
-    }
-
-
     /* All done */
     opal_hwloc_base_inited = false;
     return OPAL_SUCCESS;

@@ -550,6 +550,7 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
             }
             break;
         case PMIX_BYTE_OBJECT:
+        case PMIX_COMPRESSED_STRING:
             if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.bo, 1, PMIX_BYTE_OBJECT))) {
                 return ret;
             }
@@ -818,65 +819,6 @@ pmix_status_t pmix_bfrop_pack_kval(pmix_buffer_t *buffer, const void *src,
 
     return PMIX_SUCCESS;
 }
-
-#if PMIX_HAVE_HWLOC
-pmix_status_t pmix_bfrop_pack_topo(pmix_buffer_t *buffer, const void *src,
-                         int32_t num_vals, pmix_data_type_t type)
-{
-    /* NOTE: hwloc defines topology_t as a pointer to a struct! */
-    hwloc_topology_t t, *tarray  = (hwloc_topology_t*)src;
-    pmix_status_t rc;
-    int i;
-    char *xmlbuffer=NULL;
-    int len;
-    struct hwloc_topology_support *support;
-
-    for (i=0; i < num_vals; i++) {
-        t = tarray[i];
-
-        /* extract an xml-buffer representation of the tree */
-        if (0 != hwloc_topology_export_xmlbuffer(t, &xmlbuffer, &len)) {
-            return PMIX_ERROR;
-        }
-
-        /* add to buffer */
-        if (PMIX_SUCCESS != (rc = pmix_bfrop_pack_string(buffer, &xmlbuffer, 1, PMIX_STRING))) {
-            free(xmlbuffer);
-            return rc;
-        }
-
-        /* cleanup */
-        if (NULL != xmlbuffer) {
-            free(xmlbuffer);
-        }
-
-        /* get the available support - hwloc unfortunately does
-         * not include this info in its xml export!
-         */
-         support = (struct hwloc_topology_support*)hwloc_topology_get_support(t);
-        /* pack the discovery support */
-         if (PMIX_SUCCESS != (rc = pmix_bfrop_pack_byte(buffer, support->discovery,
-             sizeof(struct hwloc_topology_discovery_support),
-             PMIX_BYTE))) {
-            return rc;
-    }
-        /* pack the cpubind support */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop_pack_byte(buffer, support->cpubind,
-        sizeof(struct hwloc_topology_cpubind_support),
-        PMIX_BYTE))) {
-        return rc;
-    }
-    /* pack the membind support */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop_pack_byte(buffer, support->membind,
-        sizeof(struct hwloc_topology_membind_support),
-        PMIX_BYTE))) {
-        return rc;
-    }
-}
-
-return PMIX_SUCCESS;
-}
-#endif
 
 pmix_status_t pmix_bfrop_pack_modex(pmix_buffer_t *buffer, const void *src,
                                     int32_t num_vals, pmix_data_type_t type)

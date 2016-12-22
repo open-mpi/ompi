@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sched.h>
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "mpi.h"
 
 #include "orte/util/proc_info.h"
@@ -18,6 +18,7 @@
 int main(int argc, char* argv[])
 {
     int rank, size, rc;
+    hwloc_topology_t topo;
     hwloc_cpuset_t cpus;
     char *bindings;
     cpu_set_t *mask;
@@ -31,8 +32,10 @@ int main(int argc, char* argv[])
 
     gethostname(hostname, 1024);
     cpus = hwloc_bitmap_alloc();
-    rc = hwloc_get_cpubind(opal_hwloc_topology, cpus, HWLOC_CPUBIND_PROCESS);
+    topo = opal_hwloc_base_get_topology();
+    rc = hwloc_get_cpubind(topo, cpus, HWLOC_CPUBIND_PROCESS);
     hwloc_bitmap_list_asprintf(&bindings, cpus);
+    opal_hwloc_base_free_topology(topo);
 
     printf("[%s;%d] Hello, World, I am %d of %d [%d local peers]: get_cpubind: %d bitmap %s\n",
            hostname, (int)getpid(), rank, size, orte_process_info.num_local_peers, rc,

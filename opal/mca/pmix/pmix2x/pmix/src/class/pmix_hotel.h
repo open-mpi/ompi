@@ -157,7 +157,7 @@ PMIX_CLASS_DECLARATION(pmix_hotel_t);
  * @return PMIX_SUCCESS if all initializations were succesful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-int pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
+PMIX_EXPORT int pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
                                   pmix_event_base_t *evbase,
                                   uint32_t eviction_timeout,
                                   int eviction_event_priority,

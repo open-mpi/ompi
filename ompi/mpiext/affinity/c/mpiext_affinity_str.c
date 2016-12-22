@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,12 +42,18 @@ static const char ompi_nobind_str[] = "Open MPI did not bind this process";
 static const char not_bound_str[] = "Not bound (i.e., bound to all processors)";
 
 
-static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX]);
-static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX]);
-static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX]);
-static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX]);
-static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX]);
-static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX]);
+static int get_rsrc_ompi_bound(hwloc_topology_t topo,
+                               char str[OMPI_AFFINITY_STRING_MAX]);
+static int get_rsrc_current_binding(hwloc_topology_t topo,
+                                    char str[OMPI_AFFINITY_STRING_MAX]);
+static int get_rsrc_exists(hwloc_topology_t topo,
+                           char str[OMPI_AFFINITY_STRING_MAX]);
+static int get_layout_ompi_bound(hwloc_topology_t topo,
+                                 char str[OMPI_AFFINITY_STRING_MAX]);
+static int get_layout_current_binding(hwloc_topology_t topo,
+                                      char str[OMPI_AFFINITY_STRING_MAX]);
+static int get_layout_exists(hwloc_topology_t topo,
+                             char str[OMPI_AFFINITY_STRING_MAX]);
 
 
 int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
@@ -56,28 +62,33 @@ int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
                       char exists[OMPI_AFFINITY_STRING_MAX])
 {
     int ret;
+    hwloc_topology_t topo;
 
     memset(ompi_bound, 0, OMPI_AFFINITY_STRING_MAX);
     memset(current_binding, 0, OMPI_AFFINITY_STRING_MAX);
 
     /* If we have no hwloc support, return nothing */
-    if (NULL == opal_hwloc_topology) {
+    if (NULL == (topo = opal_hwloc_base_get_topology())) {
         return MPI_SUCCESS;
     }
 
     /* Otherwise, return useful information */
     switch (fmt_type) {
     case OMPI_AFFINITY_RSRC_STRING_FMT:
-    if (OMPI_SUCCESS != (ret = get_rsrc_ompi_bound(ompi_bound)) ||
-        OMPI_SUCCESS != (ret = get_rsrc_current_binding(current_binding)) ||
-        OMPI_SUCCESS != (ret = get_rsrc_exists(exists))) {
+    if (OMPI_SUCCESS != (ret = get_rsrc_ompi_bound(topo, ompi_bound)) ||
+        OMPI_SUCCESS != (ret = get_rsrc_current_binding(topo, current_binding)) ||
+        OMPI_SUCCESS != (ret = get_rsrc_exists(topo, exists))) {
+        opal_hwloc_base_free_topology(topo);
+        topo = NULL;
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
     }
     break;
     case OMPI_AFFINITY_LAYOUT_FMT:
-    if (OMPI_SUCCESS != (ret = get_layout_ompi_bound(ompi_bound)) ||
-        OMPI_SUCCESS != (ret = get_layout_current_binding(current_binding)) ||
-        OMPI_SUCCESS != (ret = get_layout_exists(exists))) {
+    if (OMPI_SUCCESS != (ret = get_layout_ompi_bound(topo, ompi_bound)) ||
+        OMPI_SUCCESS != (ret = get_layout_current_binding(topo, current_binding)) ||
+        OMPI_SUCCESS != (ret = get_layout_exists(topo, exists))) {
+        opal_hwloc_base_free_topology(topo);
+        topo = NULL;
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
     }
     break;
@@ -85,6 +96,8 @@ int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
     return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
 
+    opal_hwloc_base_free_topology(topo);
+    topo = NULL;
     return MPI_SUCCESS;
 }
 
@@ -93,7 +106,8 @@ int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
 /*
  * Where did OMPI bind this process? (prettyprint)
  */
-static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
+static int get_rsrc_ompi_bound(hwloc_topology_t topo,
+                               char str[OMPI_AFFINITY_STRING_MAX])
 {
     int ret;
 
@@ -107,7 +121,7 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
         ret = OPAL_ERR_NOT_BOUND;
     } else {
         ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX,
-                                       opal_hwloc_topology,
+                                       topo,
                                        orte_proc_applied_binding);
     }
     if (OPAL_ERR_NOT_BOUND == ret) {
@@ -121,7 +135,8 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
 /*
  * Where is this process currently bound? (prettyprint)
  */
-static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
+static int get_rsrc_current_binding(hwloc_topology_t topo,
+                                    char str[OMPI_AFFINITY_STRING_MAX])
 {
     int ret;
     hwloc_obj_t root;
@@ -129,12 +144,12 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
     bool bound = false;
 
     /* get our root object */
-    root = hwloc_get_root_obj(opal_hwloc_topology);
-    rootset = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
+    root = hwloc_get_root_obj(topo);
+    rootset = opal_hwloc_base_get_available_cpus(topo, root);
 
     /* get our bindings */
     boundset = hwloc_bitmap_alloc();
-    if (hwloc_get_cpubind(opal_hwloc_topology, boundset,
+    if (hwloc_get_cpubind(topo, boundset,
                           HWLOC_CPUBIND_PROCESS) < 0) {
         /* we are NOT bound if get_cpubind fails, nor can we be bound
            - the environment does not support it */
@@ -158,7 +173,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
     /* If we are bound, print it out */
     else {
         ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX,
-                                       opal_hwloc_topology,
+                                       topo,
                                        boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {
             strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
@@ -176,7 +191,8 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
  * this is *everything* -- not just the ones that are available to
  * this process.
  */
-static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
+static int get_rsrc_exists(hwloc_topology_t topo,
+                           char str[OMPI_AFFINITY_STRING_MAX])
 {
     bool first = true;
     int i, num_cores, num_pus;
@@ -185,7 +201,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
     hwloc_obj_t socket, core, c2;
 
     str[0] = '\0';
-    for (socket = hwloc_get_obj_by_type(opal_hwloc_topology,
+    for (socket = hwloc_get_obj_by_type(topo,
                                         HWLOC_OBJ_SOCKET, 0);
          NULL != socket; socket = socket->next_cousin) {
         /* If this isn't the first socket, add a delimiter */
@@ -200,15 +216,15 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
         /* Find out how many cores are inside this socket, and get an
            object pointing to the first core.  Also count how many PUs
            are in the first core. */
-        num_cores = hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology,
+        num_cores = hwloc_get_nbobjs_inside_cpuset_by_type(topo,
                                                            socket->cpuset,
                                                            HWLOC_OBJ_CORE);
-        core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+        core = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                    socket->cpuset,
                                                    HWLOC_OBJ_CORE, 0);
         if (NULL != core) {
             num_pus =
-                hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology,
+                hwloc_get_nbobjs_inside_cpuset_by_type(topo,
                                                        core->cpuset,
                                                        HWLOC_OBJ_PU);
 
@@ -234,7 +250,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
 
                 /* Do all the cores have the same number of PUs? */
                 for (c2 = core; NULL != c2; c2 = c2->next_cousin) {
-                    if (hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology,
+                    if (hwloc_get_nbobjs_inside_cpuset_by_type(topo,
                                                                core->cpuset,
                                                                HWLOC_OBJ_PU) !=
                         num_pus) {
@@ -264,7 +280,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                         }
                         first = false;
 
-                        i = hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology,
+                        i = hwloc_get_nbobjs_inside_cpuset_by_type(topo,
                                                                    core->cpuset,
                                                                    HWLOC_OBJ_PU);
                         snprintf(tmp, stmp, "%d", i);
@@ -285,7 +301,8 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
 /*
  * Where did OMPI bind this process? (layout string)
  */
-static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
+static int get_layout_ompi_bound(hwloc_topology_t topo,
+                                 char str[OMPI_AFFINITY_STRING_MAX])
 {
     int ret;
 
@@ -300,7 +317,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
         ret = OPAL_ERR_NOT_BOUND;
     } else {
         ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
-                                          opal_hwloc_topology,
+                                          topo,
                                           orte_proc_applied_binding);
     }
     if (OPAL_ERR_NOT_BOUND == ret) {
@@ -314,7 +331,8 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
 /*
  * Where is this process currently bound? (layout string)
  */
-static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
+static int get_layout_current_binding(hwloc_topology_t topo,
+                                      char str[OMPI_AFFINITY_STRING_MAX])
 {
     int ret;
     hwloc_obj_t root;
@@ -322,12 +340,12 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
     bool bound = false;
 
     /* get our root object */
-    root = hwloc_get_root_obj(opal_hwloc_topology);
-    rootset = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
+    root = hwloc_get_root_obj(topo);
+    rootset = opal_hwloc_base_get_available_cpus(topo, root);
 
     /* get our bindings */
     boundset = hwloc_bitmap_alloc();
-    if (hwloc_get_cpubind(opal_hwloc_topology, boundset,
+    if (hwloc_get_cpubind(topo, boundset,
                           HWLOC_CPUBIND_PROCESS) < 0) {
         /* we are NOT bound if get_cpubind fails, nor can we be bound
            - the environment does not support it */
@@ -351,7 +369,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
     /* If we are bound, print it out */
     else {
         ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
-                                          opal_hwloc_topology,
+                                          topo,
                                           boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {
             strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
@@ -373,7 +391,8 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
  *        / - signifies core
  *        . - signifies PU
  */
-static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
+static int get_layout_exists(hwloc_topology_t topo,
+                             char str[OMPI_AFFINITY_STRING_MAX])
 {
     int core_index, pu_index;
     int len = OMPI_AFFINITY_STRING_MAX;
@@ -382,7 +401,7 @@ static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
     str[0] = '\0';
 
     /* Iterate over all existing sockets */
-    for (socket = hwloc_get_obj_by_type(opal_hwloc_topology,
+    for (socket = hwloc_get_obj_by_type(topo,
                                         HWLOC_OBJ_SOCKET, 0);
          NULL != socket;
          socket = socket->next_cousin) {
@@ -390,11 +409,11 @@ static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
 
         /* Iterate over all existing cores in this socket */
         core_index = 0;
-        for (core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+        for (core = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                         socket->cpuset,
                                                         HWLOC_OBJ_CORE, core_index);
              NULL != core;
-             core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+             core = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                         socket->cpuset,
                                                         HWLOC_OBJ_CORE, ++core_index)) {
             if (core_index > 0) {
@@ -403,11 +422,11 @@ static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
 
             /* Iterate over all existing PUs in this core */
             pu_index = 0;
-            for (pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+            for (pu = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                           core->cpuset,
                                                           HWLOC_OBJ_PU, pu_index);
                  NULL != pu;
-                 pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+                 pu = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                           core->cpuset,
                                                           HWLOC_OBJ_PU, ++pu_index)) {
                 strncat(str, ".", len - strlen(str));

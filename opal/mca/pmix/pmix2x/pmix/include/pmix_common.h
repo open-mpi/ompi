@@ -121,6 +121,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_CONNECT_TO_SYSTEM              "pmix.cnct.sys"         // (bool) The requestor requires that a connection be made only to
                                                                     //        a local system-level PMIx server
 #define PMIX_CONNECT_SYSTEM_FIRST           "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
+#define PMIX_REGISTER_NODATA                "pmix.reg.nodata"       // (bool) Registration is for nspace only, do not copy job data
 
 /* identification attributes */
 #define PMIX_USERID                         "pmix.euid"             // (uint32_t) effective user id
@@ -435,28 +436,28 @@ typedef uint16_t pmix_data_type_t;
 #define PMIX_STATUS             20  // needs to be tracked separately from integer for those times
                                     // when we are embedded and it needs to be converted to the
                                     // host error definitions
-#define PMIX_HWLOC_TOPO         21
-#define PMIX_VALUE              22
-#define PMIX_PROC               23
-#define PMIX_APP                24
-#define PMIX_INFO               25
-#define PMIX_PDATA              26
-#define PMIX_BUFFER             27
-#define PMIX_BYTE_OBJECT        28
-#define PMIX_KVAL               29
-#define PMIX_MODEX              30
-#define PMIX_PERSIST            31
-#define PMIX_POINTER            32
-#define PMIX_SCOPE              33
-#define PMIX_DATA_RANGE         34
-#define PMIX_COMMAND            35
-#define PMIX_INFO_DIRECTIVES    36
-#define PMIX_DATA_TYPE          37
-#define PMIX_PROC_STATE         38
-#define PMIX_PROC_INFO          39
-#define PMIX_DATA_ARRAY         40
-#define PMIX_PROC_RANK          41
-#define PMIX_QUERY              42
+#define PMIX_VALUE              21
+#define PMIX_PROC               22
+#define PMIX_APP                23
+#define PMIX_INFO               24
+#define PMIX_PDATA              25
+#define PMIX_BUFFER             26
+#define PMIX_BYTE_OBJECT        27
+#define PMIX_KVAL               28
+#define PMIX_MODEX              29
+#define PMIX_PERSIST            30
+#define PMIX_POINTER            31
+#define PMIX_SCOPE              32
+#define PMIX_DATA_RANGE         33
+#define PMIX_COMMAND            34
+#define PMIX_INFO_DIRECTIVES    35
+#define PMIX_DATA_TYPE          36
+#define PMIX_PROC_STATE         37
+#define PMIX_PROC_INFO          38
+#define PMIX_DATA_ARRAY         39
+#define PMIX_PROC_RANK          40
+#define PMIX_QUERY              41
+#define PMIX_COMPRESSED_STRING  42  // string compressed with zlib
 /**** DEPRECATED ****/
 #define PMIX_INFO_ARRAY         43
 /********************/

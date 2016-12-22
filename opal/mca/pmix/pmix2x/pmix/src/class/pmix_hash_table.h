@@ -75,10 +75,10 @@ typedef struct pmix_hash_table_t pmix_hash_table_t;
  *
  */
 
-int pmix_hash_table_init(pmix_hash_table_t* ht, size_t table_size);
+PMIX_EXPORT int pmix_hash_table_init(pmix_hash_table_t* ht, size_t table_size);
 
 /* this could be the new init if people wanted a more general API */
-int pmix_hash_table_init2(pmix_hash_table_t* ht, size_t estimated_max_size,
+PMIX_EXPORT int pmix_hash_table_init2(pmix_hash_table_t* ht, size_t estimated_max_size,
                                         int density_numer, int density_denom,
                                         int growth_numer, int growth_denom);
 
@@ -103,7 +103,7 @@ static inline size_t pmix_hash_table_get_size(pmix_hash_table_t *ht)
  *
  */
 
-int pmix_hash_table_remove_all(pmix_hash_table_t *ht);
+PMIX_EXPORT int pmix_hash_table_remove_all(pmix_hash_table_t *ht);
 
 /**
  *  Retrieve value via uint32_t key.
@@ -118,7 +118,7 @@ int pmix_hash_table_remove_all(pmix_hash_table_t *ht);
  *
  */
 
-int pmix_hash_table_get_value_uint32(pmix_hash_table_t* table, uint32_t key,
+PMIX_EXPORT int pmix_hash_table_get_value_uint32(pmix_hash_table_t* table, uint32_t key,
                                                    void** ptr);
 
 /**
@@ -131,7 +131,7 @@ int pmix_hash_table_get_value_uint32(pmix_hash_table_t* table, uint32_t key,
  *
  */
 
-int pmix_hash_table_set_value_uint32(pmix_hash_table_t* table, uint32_t key, void* value);
+PMIX_EXPORT int pmix_hash_table_set_value_uint32(pmix_hash_table_t* table, uint32_t key, void* value);
 
 /**
  *  Remove value based on uint32_t key.
@@ -142,7 +142,7 @@ int pmix_hash_table_set_value_uint32(pmix_hash_table_t* table, uint32_t key, voi
  *
  */
 
-int pmix_hash_table_remove_value_uint32(pmix_hash_table_t* table, uint32_t key);
+PMIX_EXPORT int pmix_hash_table_remove_value_uint32(pmix_hash_table_t* table, uint32_t key);
 
 /**
  *  Retrieve value via uint64_t key.
@@ -157,7 +157,7 @@ int pmix_hash_table_remove_value_uint32(pmix_hash_table_t* table, uint32_t key);
  *
  */
 
-int pmix_hash_table_get_value_uint64(pmix_hash_table_t *table, uint64_t key,
+PMIX_EXPORT int pmix_hash_table_get_value_uint64(pmix_hash_table_t *table, uint64_t key,
                                                    void **ptr);
 
 /**
@@ -170,7 +170,7 @@ int pmix_hash_table_get_value_uint64(pmix_hash_table_t *table, uint64_t key,
  *
  */
 
-int pmix_hash_table_set_value_uint64(pmix_hash_table_t *table, uint64_t key, void* value);
+PMIX_EXPORT int pmix_hash_table_set_value_uint64(pmix_hash_table_t *table, uint64_t key, void* value);
 
 /**
  *  Remove value based on uint64_t key.
@@ -181,7 +181,7 @@ int pmix_hash_table_set_value_uint64(pmix_hash_table_t *table, uint64_t key, voi
  *
  */
 
-int pmix_hash_table_remove_value_uint64(pmix_hash_table_t *table, uint64_t key);
+PMIX_EXPORT int pmix_hash_table_remove_value_uint64(pmix_hash_table_t *table, uint64_t key);
 
 /**
  *  Retrieve value via arbitrary length binary key.
@@ -196,7 +196,7 @@ int pmix_hash_table_remove_value_uint64(pmix_hash_table_t *table, uint64_t key);
  *
  */
 
-int pmix_hash_table_get_value_ptr(pmix_hash_table_t *table, const void* key,
+PMIX_EXPORT int pmix_hash_table_get_value_ptr(pmix_hash_table_t *table, const void* key,
                                                 size_t keylen, void **ptr);
 
 /**
@@ -209,7 +209,7 @@ int pmix_hash_table_get_value_ptr(pmix_hash_table_t *table, const void* key,
  *
  */
 
-int pmix_hash_table_set_value_ptr(pmix_hash_table_t *table, const void* key, size_t keylen, void* value);
+PMIX_EXPORT int pmix_hash_table_set_value_ptr(pmix_hash_table_t *table, const void* key, size_t keylen, void* value);
 
 /**
  *  Remove value based on arbitrary length binary key.
@@ -220,7 +220,7 @@ int pmix_hash_table_set_value_ptr(pmix_hash_table_t *table, const void* key, siz
  *
  */
 
-int pmix_hash_table_remove_value_ptr(pmix_hash_table_t *table, const void* key, size_t keylen);
+PMIX_EXPORT int pmix_hash_table_remove_value_ptr(pmix_hash_table_t *table, const void* key, size_t keylen);
 
 
 /** The following functions are only for allowing iterating through
@@ -245,7 +245,7 @@ int pmix_hash_table_remove_value_ptr(pmix_hash_table_t *table, const void* key, 
  *
  */
 
-int pmix_hash_table_get_first_key_uint32(pmix_hash_table_t *table, uint32_t *key,
+PMIX_EXPORT int pmix_hash_table_get_first_key_uint32(pmix_hash_table_t *table, uint32_t *key,
                                         void **value, void **node);
 
 
@@ -263,7 +263,7 @@ int pmix_hash_table_get_first_key_uint32(pmix_hash_table_t *table, uint32_t *key
  *
  */
 
-int pmix_hash_table_get_next_key_uint32(pmix_hash_table_t *table, uint32_t *key,
+PMIX_EXPORT int pmix_hash_table_get_next_key_uint32(pmix_hash_table_t *table, uint32_t *key,
                                        void **value, void *in_node,
                                        void **out_node);
 
@@ -281,7 +281,7 @@ int pmix_hash_table_get_next_key_uint32(pmix_hash_table_t *table, uint32_t *key,
  *
  */
 
-int pmix_hash_table_get_first_key_uint64(pmix_hash_table_t *table, uint64_t *key,
+PMIX_EXPORT int pmix_hash_table_get_first_key_uint64(pmix_hash_table_t *table, uint64_t *key,
                                        void **value, void **node);
 
 
@@ -299,7 +299,7 @@ int pmix_hash_table_get_first_key_uint64(pmix_hash_table_t *table, uint64_t *key
  *
  */
 
-int pmix_hash_table_get_next_key_uint64(pmix_hash_table_t *table, uint64_t *key,
+PMIX_EXPORT int pmix_hash_table_get_next_key_uint64(pmix_hash_table_t *table, uint64_t *key,
                                        void **value, void *in_node,
                                        void **out_node);
 
@@ -318,7 +318,7 @@ int pmix_hash_table_get_next_key_uint64(pmix_hash_table_t *table, uint64_t *key,
  *
  */
 
-int pmix_hash_table_get_first_key_ptr(pmix_hash_table_t *table, void* *key,
+PMIX_EXPORT int pmix_hash_table_get_first_key_ptr(pmix_hash_table_t *table, void* *key,
                                         size_t *key_size, void **value, void **node);
 
 
@@ -337,7 +337,7 @@ int pmix_hash_table_get_first_key_ptr(pmix_hash_table_t *table, void* *key,
  *
  */
 
-int pmix_hash_table_get_next_key_ptr(pmix_hash_table_t *table, void* *key,
+PMIX_EXPORT int pmix_hash_table_get_next_key_ptr(pmix_hash_table_t *table, void* *key,
                                        size_t *key_size, void **value,
                                        void *in_node, void **out_node);
 

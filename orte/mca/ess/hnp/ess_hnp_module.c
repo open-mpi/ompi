@@ -198,19 +198,34 @@ static int rte_init(void)
     setup_sighandler(SIGCONT, &sigcont_handler, signal_forward_callback);
     signals_set = true;
 
-    /* get the local topology */
-    if (NULL == opal_hwloc_topology) {
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
-            error = "topology discovery";
-            goto error;
-        }
+    /* setup the PMIx framework - ensure it skips all non-PMIx components, but
+     * do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pmix_base_open";
+        goto error;
     }
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
+        goto error;
+    }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
+
+    /* ensure we have the local topology */
+    if (NULL == (orte_server_topology = opal_hwloc_base_get_topology())) {
+        error = "topology discovery";
+        goto error;
+    }
+
     /* generate the signature */
-    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+    orte_topo_signature = opal_hwloc_base_get_topo_signature(orte_server_topology);
 
     if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
         opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+        opal_dss.dump(0, orte_server_topology, OPAL_HWLOC_TOPO);
     }
 
 
@@ -429,7 +444,7 @@ static int rte_init(void)
 
     /* add it to the array of known topologies */
     t = OBJ_NEW(orte_topology_t);
-    t->topo = opal_hwloc_topology;
+    t->topo = orte_server_topology;
     t->sig = strdup(orte_topo_signature);
     opal_pointer_array_add(orte_node_topologies, t);
 
@@ -511,7 +526,7 @@ static int rte_init(void)
      * will have reset our topology. Ensure we always get the right
      * one by setting our node topology afterwards
      */
-    node->topology = opal_hwloc_topology;
+    node->topology = orte_server_topology;
 
     /* init the hash table, if necessary */
     if (NULL == orte_coprocessors) {
@@ -519,7 +534,7 @@ static int rte_init(void)
         opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
     }
     /* detect and add any coprocessors */
-    coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+    coprocessors = opal_hwloc_base_find_coprocessors(orte_server_topology);
     if (NULL != coprocessors) {
         /* separate the serial numbers of the coprocessors
          * on this host
@@ -616,22 +631,6 @@ static int rte_init(void)
         }
         free(contact_path);
     }
-
-    /* setup the PMIx framework - ensure it skips all non-PMIx components, but
-     * do not override anything we were given */
-    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_pmix_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_pmix_base_select";
-        goto error;
-    }
-    /* set the event base */
-    opal_pmix_base_set_evbase(orte_event_base);
 
     /* setup the PMIx server */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
@@ -830,6 +829,9 @@ static int rte_finalize(void)
     /* shutdown the messaging frameworks */
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_oob_base_framework);
+
+    /* cleanup topology */
+    opal_hwloc_base_free_topology(orte_server_topology);
 
     /* remove our use of the session directory tree */
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);

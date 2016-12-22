@@ -493,7 +493,7 @@ int main(int argc, char **argv)
         fprintf(stderr,"get:           max loc %lf rem %lf (loc: %d, rem: %d)\n",
                 max_get_loc_time, max_get_rem_time, max_get_loc_idx, max_get_rem_idx);
         fprintf(stderr,"total:         max %lf min %lf\n", max_total_time, min_total_time);
-        fprintf(stderr,"mem:           loc %0.2lf rem %0.2lf min %0.2lf max %0.2lf total %0.2lf Kb\n",
+        fprintf(stderr,"mem:           loc %0.2lf avg %0.2lf min %0.2lf max %0.2lf total %0.2lf Kb\n",
                 mem_pss, cum_mem_pss / nproc, min_mem_pss, max_mem_pss, cum_mem_pss);
 
 

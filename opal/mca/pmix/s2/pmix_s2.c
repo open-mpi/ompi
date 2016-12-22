@@ -555,6 +555,7 @@ static void fencenb(int sd, short args, void *cbdata)
     int rc = OPAL_SUCCESS;
     int32_t i;
     opal_value_t *kp, kvn;
+    hwloc_topology_t topo = NULL;
     opal_hwloc_locality_t locality;
     opal_process_name_t pname;
 
@@ -581,6 +582,9 @@ static void fencenb(int sd, short args, void *cbdata)
         got_modex_data = true;
         /* we only need to set locality for each local rank as "not found"
      * equates to "non-local" */
+        if (NULL == (topo = opal_hwloc_base_get_topology())) {
+            goto cleanup;
+        }
         for (i=0; i < s2_nlranks; i++) {
             pname.vpid = s2_lranks[i];
             rc = opal_pmix_base_cache_keys_locally(&s2_pname, OPAL_PMIX_CPUSET,
@@ -596,7 +600,7 @@ static void fencenb(int sd, short args, void *cbdata)
                 locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
             } else {
                 /* determine relative location on our node */
-                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                locality = opal_hwloc_base_get_relative_locality(topo,
                                                                  opal_process_info.cpuset,
                                                                  kp->data.string);
             }
@@ -619,6 +623,9 @@ static void fencenb(int sd, short args, void *cbdata)
     }
 
 cleanup:
+    if (NULL != topo) {
+        opal_hwloc_base_free_topology(topo);
+    }
     if (NULL != op->opcbfunc) {
         op->opcbfunc(rc, op->cbdata);
     }

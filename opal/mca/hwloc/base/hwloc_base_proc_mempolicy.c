@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,15 +24,14 @@
  * which has to do some extra steps to get error messages to be
  * displayed).
  */
-int opal_hwloc_base_set_process_membind_policy(void)
+int opal_hwloc_base_set_process_membind_policy(hwloc_topology_t topo)
 {
     int rc = 0, flags;
     hwloc_membind_policy_t policy;
     hwloc_cpuset_t cpuset;
 
-    /* Make sure opal_hwloc_topology has been set by the time we've
-       been called */
-    if (NULL == opal_hwloc_topology) {
+    /* bozo check */
+    if (NULL == topo) {
         return OPAL_ERR_BAD_PARAM;
     }
 
@@ -55,9 +55,8 @@ int opal_hwloc_base_set_process_membind_policy(void)
         rc = OPAL_ERR_OUT_OF_RESOURCE;
     } else {
         int e;
-        hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
-        rc = hwloc_set_membind(opal_hwloc_topology,
-                               cpuset, policy, flags);
+        hwloc_get_cpubind(topo, cpuset, 0);
+        rc = hwloc_set_membind(topo, cpuset, policy, flags);
         e = errno;
         hwloc_bitmap_free(cpuset);
 

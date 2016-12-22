@@ -84,8 +84,6 @@ static int rte_init(void)
 {
     int rc, ret;
     char *error = NULL;
-    opal_value_t *kv;
-    char *val = NULL;
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
     orte_process_name_t name;
@@ -267,73 +265,10 @@ static int rte_init(void)
      */
     assert (NULL != getenv(OPAL_MCA_PREFIX"orte_precondition_transports"));
 
-    /* retrieve our topology */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_TOPO,
-                          &name, &val, OPAL_STRING);
-    if (OPAL_SUCCESS == ret && NULL != val) {
-        /* load the topology */
-        if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
-            ret = OPAL_ERROR;
-            free(val);
-            error = "setting topology";
-            goto error;
-        }
-        if (0 != hwloc_topology_set_xmlbuffer(opal_hwloc_topology, val, strlen(val))) {
-            ret = OPAL_ERROR;
-            free(val);
-            hwloc_topology_destroy(opal_hwloc_topology);
-            error = "setting topology";
-            goto error;
-        }
-        /* since we are loading this from an external source, we have to
-         * explicitly set a flag so hwloc sets things up correctly
-         */
-        if (0 != hwloc_topology_set_flags(opal_hwloc_topology,
-                                         (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
-                                          HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
-                                          HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
-            ret = OPAL_ERROR;
-            hwloc_topology_destroy(opal_hwloc_topology);
-            free(val);
-            error = "setting topology";
-            goto error;
-        }
-        /* now load the topology */
-        if (0 != hwloc_topology_load(opal_hwloc_topology)) {
-            ret = OPAL_ERROR;
-            hwloc_topology_destroy(opal_hwloc_topology);
-            free(val);
-            error = "setting topology";
-            goto error;
-        }
-        free(val);
-    } else {
-        /* it wasn't passed down to us, so go get it */
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
-            error = "topology discovery";
-            goto error;
-        }
-        /* push it into the PMIx database in case someone
-         * tries to retrieve it so we avoid an attempt to
-         * get it again */
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
-        kv->type = OPAL_STRING;
-        if (0 != (ret = hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &kv->data.string, &u32))) {
-            error = "topology export";
-            goto error;
-        }
-        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_NAME, kv))) {
-            error = "topology store";
-            goto error;
-        }
-        OBJ_RELEASE(kv);
-    }
-
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup(true))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+        error = "app setup";
+        goto error;
     }
 
     /* push our hostname so others can find us, if they need to */

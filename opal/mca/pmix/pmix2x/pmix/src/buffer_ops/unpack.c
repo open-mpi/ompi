@@ -646,6 +646,7 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             }
             break;
         case PMIX_BYTE_OBJECT:
+        case PMIX_COMPRESSED_STRING:
             if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.bo, &m, PMIX_BYTE_OBJECT))) {
                 return ret;
             }
@@ -1031,89 +1032,6 @@ pmix_status_t pmix_bfrop_unpack_kval(pmix_buffer_t *buffer, void *dest,
     return PMIX_SUCCESS;
 }
 
-#if PMIX_HAVE_HWLOC
-pmix_status_t pmix_bfrop_unpack_topo(pmix_buffer_t *buffer, void *dest,
-                           int32_t *num_vals,
-                           pmix_data_type_t type)
-{
-    /* NOTE: hwloc defines topology_t as a pointer to a struct! */
-    hwloc_topology_t t, *tarray  = (hwloc_topology_t*)dest;
-    pmix_status_t rc=PMIX_SUCCESS;
-    int32_t cnt, i, j;
-    char *xmlbuffer;
-    struct hwloc_topology_support *support;
-
-    for (i=0, j=0; i < *num_vals; i++) {
-        /* unpack the xml string */
-        cnt=1;
-        xmlbuffer = NULL;
-        if (PMIX_SUCCESS != (rc = pmix_bfrop_unpack_string(buffer, &xmlbuffer, &cnt, PMIX_STRING))) {
-            goto cleanup;
-        }
-        if (NULL == xmlbuffer) {
-            goto cleanup;
-        }
-        /* convert the xml */
-        if (0 != hwloc_topology_init(&t)) {
-            rc = PMIX_ERROR;
-            goto cleanup;
-        }
-        if (0 != hwloc_topology_set_xmlbuffer(t, xmlbuffer, strlen(xmlbuffer))) {
-            rc = PMIX_ERROR;
-            free(xmlbuffer);
-            hwloc_topology_destroy(t);
-            goto cleanup;
-        }
-        /* since we are loading this from an external source, we have to
-         * explicitly set a flag so hwloc sets things up correctly
-         */
-         if (0 != hwloc_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) {
-            free(xmlbuffer);
-            rc = PMIX_ERROR;
-            hwloc_topology_destroy(t);
-            goto cleanup;
-        }
-        /* now load the topology */
-        if (0 != hwloc_topology_load(t)) {
-            free(xmlbuffer);
-            rc = PMIX_ERROR;
-            hwloc_topology_destroy(t);
-            goto cleanup;
-        }
-        if (NULL != xmlbuffer) {
-            free(xmlbuffer);
-        }
-
-        /* get the available support - hwloc unfortunately does
-         * not include this info in its xml import!
-         */
-         support = (struct hwloc_topology_support*)hwloc_topology_get_support(t);
-         cnt = sizeof(struct hwloc_topology_discovery_support);
-         if (PMIX_SUCCESS != (rc = pmix_bfrop_unpack_byte(buffer, support->discovery, &cnt, PMIX_BYTE))) {
-            goto cleanup;
-        }
-        cnt = sizeof(struct hwloc_topology_cpubind_support);
-        if (PMIX_SUCCESS != (rc = pmix_bfrop_unpack_byte(buffer, support->cpubind, &cnt, PMIX_BYTE))) {
-            goto cleanup;
-        }
-        cnt = sizeof(struct hwloc_topology_membind_support);
-        if (PMIX_SUCCESS != (rc = pmix_bfrop_unpack_byte(buffer, support->membind, &cnt, PMIX_BYTE))) {
-            goto cleanup;
-        }
-
-        /* pass it back */
-        tarray[i] = t;
-
-        /* track the number added */
-        j++;
-    }
-
-    cleanup:
-    *num_vals = j;
-    return rc;
-}
-#endif
-
 pmix_status_t pmix_bfrop_unpack_modex(pmix_buffer_t *buffer, void *dest,
                             int32_t *num_vals, pmix_data_type_t type)
 {
@@ -1144,7 +1062,6 @@ pmix_status_t pmix_bfrop_unpack_modex(pmix_buffer_t *buffer, void *dest,
     }
     return PMIX_SUCCESS;
 }
-
 
 pmix_status_t pmix_bfrop_unpack_persist(pmix_buffer_t *buffer, void *dest,
                                         int32_t *num_vals, pmix_data_type_t type)
@@ -1354,6 +1271,7 @@ pmix_status_t pmix_bfrop_unpack_darray(pmix_buffer_t *buffer, void *dest,
                 nbytes = sizeof(pmix_proc_t);
                 break;
             case PMIX_BYTE_OBJECT:
+            case PMIX_COMPRESSED_STRING:
                 nbytes = sizeof(pmix_byte_object_t);
                 break;
             case PMIX_PERSIST:

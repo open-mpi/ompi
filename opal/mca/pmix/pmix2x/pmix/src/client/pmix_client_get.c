@@ -45,6 +45,10 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+
+#if PMIX_HAVE_ZLIB
+#include <zlib.h>
+#endif
 #include PMIX_EVENT_HEADER
 
 #include "src/class/pmix_list.h"
@@ -72,6 +76,63 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
                           pmix_buffer_t *buf, void *cbdata);
 
 static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata);
+
+#if PMIX_HAVE_ZLIB
+static void uncompress_string(char **outstring, uint8_t *inbytes, size_t len)
+{
+    uint8_t *dest;
+    int32_t len2;
+    z_stream strm;
+    int rc;
+
+    /* set the default error answer */
+    *outstring = NULL;
+
+    /* the first 4 bytes contains the uncompressed size */
+    memcpy(&len2, inbytes, sizeof(uint32_t));
+
+    pmix_output_verbose(10, pmix_globals.debug_output,
+                        "DECOMPRESSING INPUT OF LEN %lu OUTPUT %d", len, len2);
+
+    /* setting destination to the fully decompressed size, +1 to
+     * hold the NULL terminator */
+    dest = (uint8_t*)malloc(len2+1);
+    if (NULL == dest) {
+        return;
+    }
+    memset(dest, 0, len2+1);
+
+    memset (&strm, 0, sizeof (strm));
+    if (Z_OK != inflateInit(&strm)) {
+        free(dest);
+        return;
+    }
+    strm.avail_in = len;
+    strm.next_in = (uint8_t*)(inbytes + sizeof(uint32_t));
+    strm.avail_out = len2;
+    strm.next_out = (uint8_t*)dest;
+
+    rc = inflate (&strm, Z_FINISH);
+    inflateEnd (&strm);
+    /* ensure this is NULL terminated! */
+    dest[len2] = '\0';
+    *outstring = (char*)dest;
+    pmix_output_verbose(10, pmix_globals.debug_output,
+                        "\tFINAL LEN: %lu CODE: %d", strlen(*outstring), rc);
+    return;
+}
+#else
+/* this can never actually be used - there is no way we should
+ * receive a PMIX_COMPRESSED_STRING unless we compressed it,
+ * which means PMIX_HAVE_ZLIB must have been true. Still, we
+ * include the stub just to avoid requiring #if's in the rest
+ * of the code */
+static void uncompress_string(char **outstring, uint8_t *inbytes, size_t len)
+{
+    *outstring = NULL;
+}
+#endif
+
 
 PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
                                    const pmix_info_t info[], size_t ninfo,
@@ -249,6 +310,7 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
 #if (PMIX_ENABLE_DSTORE != 1)
     pmix_rank_t cur_rank;
 #endif
+    char *tmp;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: get_nb callback recvd");
@@ -370,6 +432,21 @@ done:
     if (NULL != cb && NULL != cb->value_cbfunc) {
         if (NULL == val) {
             rc = PMIX_ERR_NOT_FOUND;
+        } else {
+            /* if this is a compressed string, then uncompress it */
+            if (PMIX_COMPRESSED_STRING == val->type) {
+                uncompress_string(&tmp, (uint8_t*)val->data.bo.bytes, val->data.bo.size);
+                if (NULL == tmp) {
+                    PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                    rc = PMIX_ERR_NOMEM;
+                    PMIX_VALUE_RELEASE(val);
+                    val = NULL;
+                } else {
+                    free(val->data.bo.bytes);
+                    val->type = PMIX_STRING;
+                    val->data.string = tmp;
+                }
+            }
         }
         cb->value_cbfunc(rc, val, cb->cbdata);
     }
@@ -462,6 +539,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     pmix_status_t rc;
     pmix_nspace_t *ns, *nptr;
     size_t n, nvals;
+    char *tmp;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: getnbfn value for proc %s:%d key %s",
@@ -550,7 +628,18 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         for (n=0; n < (size_t)results.size && n < nvals; n++) {
             if (NULL != (info = (pmix_info_t*)pmix_pointer_array_get_item(&results, n))) {
                 (void)strncpy(iptr[n].key, info->key, PMIX_MAX_KEYLEN);
-                pmix_value_xfer(&iptr[n].value, &info->value);
+                /* if this is a compressed string, then uncompress it */
+                if (PMIX_COMPRESSED_STRING == info->value.type) {
+                    iptr[n].value.type = PMIX_STRING;
+                    uncompress_string(&iptr[n].value.data.string,
+                                      (uint8_t*)info->value.data.bo.bytes,
+                                      info->value.data.bo.size);
+                    if (NULL == iptr[n].value.data.string) {
+                        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                    }
+                } else {
+                    pmix_value_xfer(&iptr[n].value, &info->value);
+                }
                 PMIX_INFO_FREE(info, 1);
             }
         }
@@ -565,6 +654,20 @@ static void _getnbfn(int fd, short flags, void *cbdata)
 
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
     if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->internal, cb->rank, cb->key, &val))) {
+        /* if this is a compressed string, then uncompress it */
+        if (PMIX_COMPRESSED_STRING == val->type) {
+            uncompress_string(&tmp, (uint8_t*)val->data.bo.bytes, val->data.bo.size);
+            if (NULL == tmp) {
+                PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                rc = PMIX_ERR_NOMEM;
+                PMIX_VALUE_RELEASE(val);
+                val = NULL;
+            } else {
+                free(val->data.bo.bytes);
+                val->type = PMIX_STRING;
+                val->data.string = tmp;
+            }
+        }
         /* found it - we are in an event, so we can
          * just execute the callback */
         cb->value_cbfunc(rc, val, cb->cbdata);
@@ -586,6 +689,20 @@ static void _getnbfn(int fd, short flags, void *cbdata)
 #else
         if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->internal, cb->rank, cb->key, &val))) {
 #endif
+            /* if this is a compressed string, then uncompress it */
+            if (PMIX_COMPRESSED_STRING == val->type) {
+                uncompress_string(&tmp, (uint8_t*)val->data.bo.bytes, val->data.bo.size);
+                if (NULL == tmp) {
+                    PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                    rc = PMIX_ERR_NOMEM;
+                    PMIX_VALUE_RELEASE(val);
+                    val = NULL;
+                } else {
+                    free(val->data.bo.bytes);
+                    val->type = PMIX_STRING;
+                    val->data.string = tmp;
+                }
+            }
             /* found it - we are in an event, so we can
              * just execute the callback */
             cb->value_cbfunc(rc, val, cb->cbdata);
@@ -635,6 +752,20 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     if ( PMIX_SUCCESS == rc ) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix_get[%d]: value retrieved from dstore", __LINE__);
+        /* if this is a compressed string, then uncompress it */
+        if (PMIX_COMPRESSED_STRING == val->type) {
+            uncompress_string(&tmp, (uint8_t*)val->data.bo.bytes, val->data.bo.size);
+            if (NULL == tmp) {
+                PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                rc = PMIX_ERR_NOMEM;
+                PMIX_VALUE_RELEASE(val);
+                val = NULL;
+            } else {
+                free(val->data.string);
+                val->type = PMIX_STRING;
+                val->data.string = tmp;
+            }
+        }
         /* found it - we are in an event, so we can
          * just execute the callback */
         cb->value_cbfunc(rc, val, cb->cbdata);

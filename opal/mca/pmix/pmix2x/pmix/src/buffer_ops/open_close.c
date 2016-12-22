@@ -297,14 +297,6 @@ pmix_status_t pmix_bfrop_open(void)
                        pmix_bfrop_std_copy,
                        pmix_bfrop_print_status);
 
-#if PMIX_HAVE_HWLOC
-    PMIX_REGISTER_TYPE("PMIX_HWLOC_TOPO", PMIX_HWLOC_TOPO,
-                       pmix_bfrop_pack_topo,
-                       pmix_bfrop_unpack_topo,
-                       pmix_bfrop_copy_topo,
-                       pmix_bfrop_print_topo);
-#endif
-
     PMIX_REGISTER_TYPE("PMIX_VALUE", PMIX_VALUE,
                        pmix_bfrop_pack_value,
                        pmix_bfrop_unpack_value,
@@ -424,6 +416,13 @@ pmix_status_t pmix_bfrop_open(void)
                        pmix_bfrop_unpack_query,
                        pmix_bfrop_copy_query,
                        pmix_bfrop_print_query);
+
+    PMIX_REGISTER_TYPE("PMIX_COMPRESSED_STRING",
+                       PMIX_COMPRESSED_STRING,
+                       pmix_bfrop_pack_bo,
+                       pmix_bfrop_unpack_bo,
+                       pmix_bfrop_copy_bo,
+                       pmix_bfrop_print_bo);
 
     /**** DEPRECATED ****/
     PMIX_REGISTER_TYPE("PMIX_INFO_ARRAY", PMIX_INFO_ARRAY,
