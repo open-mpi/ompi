@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,7 +69,7 @@ static int init(void)
 
 static void finalize(void)
 {
-    if (initialized) {
+    if (initialized && !refresh) {
         free(my_cred.credential);
     }
 }
@@ -95,7 +95,7 @@ static int get_my_cred(opal_process_name_t *my_id,
             my_cred.size = strlen(my_cred.credential)+1;
         }
         cred->method = strdup("munge");
-        cred->credential = strdup(my_cred.credential);
+        cred->credential = my_cred.credential;
         cred->size = my_cred.size;
     } else {
         rc = OPAL_ERROR;
