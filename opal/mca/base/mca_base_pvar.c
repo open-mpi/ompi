@@ -183,7 +183,7 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
                             int bind, mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
                             mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify, void *ctx)
 {
-    int ret, group_index;
+    int ret, group_index, pvar_index;
     mca_base_pvar_t *pvar;
 
     /* assert on usage errors */
@@ -288,15 +288,18 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
                 }
             }
 
-            /* add this performance variable to the MCA variable group */
-            ret = mca_base_var_group_add_pvar (group_index, pvar_count);
-            if (0 > ret) {
+            pvar_index = opal_pointer_array_add (&registered_pvars, pvar);
+            if (0 > pvar_index) {
                 break;
             }
+            pvar->pvar_index = pvar_index;
 
-            ret = opal_pointer_array_add (&registered_pvars, pvar);
-            if (0 > ret) {
-                break;
+            /* add this performance variable to the MCA variable group */
+            if (0 <= group_index) {
+                ret = mca_base_var_group_add_pvar (group_index, pvar_index);
+                if (0 > ret) {
+                    break;
+                }
             }
 
             pvar->pvar_index = pvar_count;
