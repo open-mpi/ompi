@@ -928,6 +928,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                         /* this was a debugger daemon. notify that a debugger has detached */
                         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
                     }
+                    opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
                     OBJ_RELEASE(jdata);
                 }
             }

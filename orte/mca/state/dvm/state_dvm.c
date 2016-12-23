@@ -457,5 +457,10 @@ static void check_complete(int fd, short args, void *cbdata)
 static void cleanup_job(int sd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = caddy->jdata;
+
+    /* remove this object from the job array */
+    opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
+
     OBJ_RELEASE(caddy);
 }
