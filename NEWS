@@ -53,18 +53,20 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-2.0.2 -- 15 December 2016
------------------------
+2.0.2 -- 23 December 2016
+-------------------------
 
 Bug fixes/minor improvements:
 
+- Fix a problem with building Open MPI against an external hwloc installation.
+  Thanks to Orion Poplawski for reporting this issue.
 - Remove use of DATE in the message queue version string reported to debuggers to
   insure bit-wise reproducibility of binaries.  Thanks to Alastair McKinstry
   for help in fixing this problem.
 - Fix a problem with early exit of a MPI process without calling MPI_FINALIZE
   or MPI_ABORT that could lead to job hangs.  Thanks to Christof Koehler for
   reporting.
-- Fix a problem with forward of SIGTERM signal from mpirun to MPI processes
+- Fix a problem with forwarding of SIGTERM signal from mpirun to MPI processes
   in a job.  Thanks to Noel Rycroft for reporting this problem
 - Plug some memory leaks in MPI_WIN_FREE discovered using Valgrind.  Thanks
   to Joseph Schuchart for reporting.
@@ -78,7 +80,7 @@ Bug fixes/minor improvements:
 - Fix a problem with MPI_IMPROBE that could lead to hangs in subsequent MPI
   point to point or collective calls.  Thanks to Chris Pattison for reporting.
 - Fix a problem when configure Open MPI for powerpc with --enable-mpi-cxx
-  enabled.  Thanks to amckinstry for reporting.
+  enabled.  Thanks to Alastair McKinstry for reporting.
 - Fix a problem using MPI_IALLTOALL with MPI_IN_PLACE argument.  Thanks to
   Chris Ward for reporting.
 - Fix a problem using MPI_RACCUMULATE with the Portals4 transport.  Thanks to
