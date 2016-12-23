@@ -248,6 +248,12 @@ Compiler Notes
   version of the Intel 12.1 Linux compiler suite, the problem will go
   away.
 
+- Problems have been reported with the Intel 16.0.3 and 16.0.4 compiler
+  suite that prevent Open MPI from working.  Symptoms are similar to those
+  described above for the Intel 12.1 Linux compiler. These are known issues,
+  and the recommended solution is to avoid those two versions of the
+  compiler suite.
+
 - It has been reported that Pathscale 5.0.5 and 6.0.527 compilers
   give an internal compiler error when trying to Open MPI.
 
