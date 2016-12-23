@@ -477,6 +477,7 @@ static void send_callback(int status, orte_process_name_t *peer,
 
     OBJ_RELEASE(buffer);
     /* cleanup the job object */
+    opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
     OBJ_RELEASE(jdata);
 }
 
@@ -530,4 +531,3 @@ static void notify_requestor(int sd, short args, void *cbdata)
      * up in the send callback */
     OBJ_RELEASE(caddy);
 }
-
