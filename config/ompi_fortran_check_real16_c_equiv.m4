@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -49,7 +49,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                              [AC_MSG_CHECKING([if intel compiler _Quad == REAL*16])
                               CFLAGS_save="$CFLAGS"
                               CFLAGS="$CFLAGS -Qoption,cpp,--extended_float_types"
-                              OPAL_UNIQ([CFLAGS])
+                              OPAL_FLAGS_UNIQ([CFLAGS])
                               OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([_Quad], [q])
                               AS_IF([test "$happy" = "yes"],
                                     [OMPI_FORTRAN_REAL16_C_TYPE="_Quad"
@@ -59,7 +59,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                              ])
                        AS_IF([test "$opal_cv_c_compiler_vendor" = "gnu" && test "$ac_cv_type___float128" = "yes"],
                              [AC_MSG_CHECKING([if gnu compiler __float128 == REAL*16])
-                              OPAL_UNIQ([CFLAGS])
+                              OPAL_FLAGS_UNIQ([CFLAGS])
                               OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([__float128], [q])
                               AS_IF([test "$happy" = "yes"],
                                     [OMPI_FORTRAN_REAL16_C_TYPE="__float128"
