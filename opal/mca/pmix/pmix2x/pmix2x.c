@@ -435,7 +435,7 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
     }
 }
 
-opal_vpid_t pmix2x_convert_rank(int rank)
+opal_vpid_t pmix2x_convert_rank(pmix_rank_t rank)
 {
     switch(rank) {
     case PMIX_RANK_UNDEF:
@@ -859,15 +859,15 @@ void pmix2x_value_load(pmix_value_t *v,
             break;
         case OPAL_PERSIST:
             v->type = PMIX_PERSIST;
-            v->data.persist = pmix2x_convert_opalpersist(kv->data.uint8);
+            v->data.persist = pmix2x_convert_opalpersist((opal_pmix_persistence_t)kv->data.uint8);
             break;
         case OPAL_SCOPE:
             v->type = PMIX_SCOPE;
-            v->data.scope = pmix2x_convert_opalscope(kv->data.uint8);
+            v->data.scope = pmix2x_convert_opalscope((opal_pmix_scope_t)kv->data.uint8);
             break;
         case OPAL_DATA_RANGE:
             v->type = PMIX_DATA_RANGE;
-            v->data.range = pmix2x_convert_opalrange(kv->data.uint8);
+            v->data.range = pmix2x_convert_opalrange((opal_pmix_data_range_t)kv->data.uint8);
             break;
         case OPAL_PROC_STATE:
             v->type = PMIX_PROC_STATE;
