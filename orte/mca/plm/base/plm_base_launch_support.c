@@ -158,14 +158,14 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
             return;
         }
 
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                             "%s plm:base:setting topo to that from node %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
         for (i=1; i < orte_node_pool->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
             }
             if (NULL == node->topology) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                     "%s plm:base:setting topo on node %s to that from node %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, dmn1->node->name));
                 node->topology = t;
             }
         }
@@ -1045,8 +1045,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 goto CLEANUP;
             }
             OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                 "%s RECEIVED TOPOLOGY FROM NODE %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
+                                 "%s RECEIVED TOPOLOGY SIG %s FROM NODE %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), sig, nodename));
             if (10 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
                 opal_dss.dump(0, topo, OPAL_HWLOC_TOPO);
             }
