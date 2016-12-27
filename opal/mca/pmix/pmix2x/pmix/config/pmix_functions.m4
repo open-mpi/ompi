@@ -326,6 +326,103 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
+# Remove all duplicate -I, -L, and -l flags from the variable named $1
+AC_DEFUN([PMIX_FLAGS_UNIQ],[
+    # 1 is the variable name to be uniq-ized
+    pmix_name=$1
+
+    # Go through each item in the variable and only keep the unique ones
+
+    pmix_count=0
+    for val in ${$1}; do
+        pmix_done=0
+        pmix_i=1
+        pmix_found=0
+
+        # Loop over every token we've seen so far
+
+        pmix_done="`expr $pmix_i \> $pmix_count`"
+        while test "$pmix_found" = "0" && test "$pmix_done" = "0"; do
+
+            # Have we seen this token already?  Prefix the comparison
+            # with "x" so that "-Lfoo" values won't be cause an error.
+
+	    pmix_eval="expr x$val = x\$pmix_array_$pmix_i"
+	    pmix_found=`eval $pmix_eval`
+
+            # Check the ending condition
+
+	    pmix_done="`expr $pmix_i \>= $pmix_count`"
+
+            # Increment the counter
+
+	    pmix_i="`expr $pmix_i + 1`"
+        done
+
+        # Check for special cases where we do want to allow repeated
+        # arguments (per
+        # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php
+        # and
+        # https://github.com/open-mpi/ompi/issues/324).
+
+        case $val in
+        -Xclang)
+                pmix_found=0
+                pmix_i=`expr $pmix_count + 1`
+                ;;
+        -framework)
+                pmix_found=0
+                pmix_i=`expr $pmix_count + 1`
+                ;;
+        --param)
+                pmix_found=0
+                pmix_i=`expr $pmix_count + 1`
+                ;;
+        esac
+
+        # If we didn't find the token, add it to the "array"
+
+        if test "$pmix_found" = "0"; then
+	    pmix_eval="pmix_array_$pmix_i=$val"
+	    eval $pmix_eval
+	    pmix_count="`expr $pmix_count + 1`"
+        else
+	    pmix_i="`expr $pmix_i - 1`"
+        fi
+    done
+
+    # Take all the items in the "array" and assemble them back into a
+    # single variable
+
+    pmix_i=1
+    pmix_done="`expr $pmix_i \> $pmix_count`"
+    pmix_newval=
+    while test "$pmix_done" = "0"; do
+        pmix_eval="pmix_newval=\"$pmix_newval \$pmix_array_$pmix_i\""
+        eval $pmix_eval
+
+        pmix_eval="unset pmix_array_$pmix_i"
+        eval $pmix_eval
+
+        pmix_done="`expr $pmix_i \>= $pmix_count`"
+        pmix_i="`expr $pmix_i + 1`"
+    done
+
+    # Done; do the assignment
+
+    pmix_newval="`echo $pmix_newval`"
+    pmix_eval="$pmix_name=\"$pmix_newval\""
+    eval $pmix_eval
+
+    # Clean up
+
+    unset pmix_name pmix_i pmix_done pmix_newval pmix_eval pmix_count
+])dnl
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
 # PMIX_APPEND_UNIQ(variable, new_argument)
 # ----------------------------------------
 # Append new_argument to variable if not already in variable.  This assumes a
