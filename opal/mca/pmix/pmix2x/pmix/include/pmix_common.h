@@ -682,7 +682,8 @@ typedef struct pmix_value {
             if (NULL != (m)->data.string) {                                     \
                 free((m)->data.string);                                         \
             }                                                                   \
-        } else if (PMIX_BYTE_OBJECT == (m)->type) {                             \
+        } else if (PMIX_BYTE_OBJECT == (m)->type ||                             \
+                   PMIX_COMPRESSED_STRING == (m)->type) {                       \
             if (NULL != (m)->data.bo.bytes) {                                   \
                 free((m)->data.bo.bytes);                                       \
             }                                                                   \
