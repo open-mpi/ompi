@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -1502,9 +1502,9 @@ static char *hwloc_getline(FILE *fp)
 
     ret = fgets(input, OPAL_HWLOC_MAX_ELOG_LINE, fp);
     if (NULL != ret) {
-	   input[strlen(input)-1] = '\0';  /* remove newline */
-	   buff = strdup(input);
-	   return buff;
+           input[strlen(input)-1] = '\0';  /* remove newline */
+           buff = strdup(input);
+           return buff;
     }
 
     return NULL;
@@ -2127,4 +2127,250 @@ char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
                  nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt, arch);
     }
     return sig;
+}
+
+char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
+                                          char *bitmap)
+{
+    hwloc_obj_t obj;
+    char *locality=NULL, *tmp, *t2;
+    unsigned depth, d, width, w;
+    hwloc_cpuset_t cpuset, avail, result;
+    hwloc_obj_type_t type;
+
+    /* if this proc is not bound, then there is no locality. We
+     * know it isn't bound if the cpuset is NULL, or if it is
+     * all 1's */
+    if (NULL == bitmap) {
+        return NULL;
+    }
+    cpuset = hwloc_bitmap_alloc();
+    hwloc_bitmap_list_sscanf(cpuset, bitmap);
+    if (hwloc_bitmap_isfull(cpuset)) {
+        hwloc_bitmap_free(cpuset);
+        return NULL;
+    }
+
+    /* we are going to use a bitmap to save the results so
+     * that we can use a hwloc utility to print them */
+    result = hwloc_bitmap_alloc();
+
+    /* get the max depth of the topology */
+    depth = hwloc_topology_get_depth(topo);
+
+    /* start at the first depth below the top machine level */
+    for (d=1; d < depth; d++) {
+        /* get the object type at this depth */
+        type = hwloc_get_depth_type(topo, d);
+        /* if it isn't one of interest, then ignore it */
+        if (HWLOC_OBJ_NODE != type &&
+            HWLOC_OBJ_SOCKET != type &&
+            HWLOC_OBJ_CACHE != type &&
+            HWLOC_OBJ_CORE != type &&
+            HWLOC_OBJ_PU != type) {
+            continue;
+        }
+
+        /* get the width of the topology at this depth */
+        width = hwloc_get_nbobjs_by_depth(topo, d);
+
+        /* scan all objects at this depth to see if
+         * the location overlaps with them
+         */
+        for (w=0; w < width; w++) {
+            /* get the object at this depth/index */
+            obj = hwloc_get_obj_by_depth(topo, d, w);
+            /* get the available cpuset for this obj */
+            avail = opal_hwloc_base_get_available_cpus(topo, obj);
+            /* see if the location intersects with it */
+            if (hwloc_bitmap_intersects(avail, cpuset)) {
+                hwloc_bitmap_set(result, w);
+            }
+        }
+        /* it should be impossible, but allow for the possibility
+         * that we came up empty at this depth */
+        if (!hwloc_bitmap_iszero(result)) {
+            hwloc_bitmap_list_asprintf(&tmp, result);
+            switch(obj->type) {
+                case HWLOC_OBJ_NODE:
+                    asprintf(&t2, "%sNM%s:", (NULL == locality) ? "" : locality, tmp);
+                    if (NULL != locality) {
+                        free(locality);
+                    }
+                    locality = t2;
+                    break;
+                case HWLOC_OBJ_SOCKET:
+                    asprintf(&t2, "%sSK%s:", (NULL == locality) ? "" : locality, tmp);
+                    if (NULL != locality) {
+                        free(locality);
+                    }
+                    locality = t2;
+                    break;
+                case HWLOC_OBJ_CACHE:
+                    if (3 == obj->attr->cache.depth) {
+                        asprintf(&t2, "%sL3%s:", (NULL == locality) ? "" : locality, tmp);
+                        if (NULL != locality) {
+                            free(locality);
+                        }
+                        locality = t2;
+                        break;
+                    } else if (2 == obj->attr->cache.depth) {
+                        asprintf(&t2, "%sL2%s:", (NULL == locality) ? "" : locality, tmp);
+                        if (NULL != locality) {
+                            free(locality);
+                        }
+                        locality = t2;
+                        break;
+                    } else {
+                        asprintf(&t2, "%sL1%s:", (NULL == locality) ? "" : locality, tmp);
+                        if (NULL != locality) {
+                            free(locality);
+                        }
+                        locality = t2;
+                        break;
+                    }
+                    break;
+                case HWLOC_OBJ_CORE:
+                    asprintf(&t2, "%sCR%s:", (NULL == locality) ? "" : locality, tmp);
+                    if (NULL != locality) {
+                        free(locality);
+                    }
+                    locality = t2;
+                    break;
+                case HWLOC_OBJ_PU:
+                    asprintf(&t2, "%sHT%s:", (NULL == locality) ? "" : locality, tmp);
+                    if (NULL != locality) {
+                        free(locality);
+                    }
+                    locality = t2;
+                    break;
+                default:
+                    /* just ignore it */
+                    break;
+            }
+            free(tmp);
+        }
+        hwloc_bitmap_zero(result);
+    }
+    hwloc_bitmap_free(result);
+    hwloc_bitmap_free(cpuset);
+
+    /* remove the trailing colon */
+    if (NULL != locality) {
+        locality[strlen(locality)-1] = '\0';
+    }
+    return locality;
+}
+
+char* opal_hwloc_base_get_location(char *locality,
+                                   hwloc_obj_type_t type,
+                                   unsigned index)
+{
+    char **loc;
+    char *srch, *ans = NULL;
+    size_t n;
+
+    if (NULL == locality) {
+        return NULL;
+    }
+    switch(type) {
+        case HWLOC_OBJ_NODE:
+            srch = "NM";
+            break;
+        case HWLOC_OBJ_SOCKET:
+            srch = "SK";
+            break;
+        case HWLOC_OBJ_CACHE:
+            if (3 == index) {
+                srch = "L3";
+            } else if (2 == index) {
+                srch = "L2";
+            } else {
+                srch = "L0";
+            }
+            break;
+        case HWLOC_OBJ_CORE:
+            srch = "CR";
+            break;
+        case HWLOC_OBJ_PU:
+            srch = "HT";
+            break;
+        default:
+            return NULL;
+    }
+    loc = opal_argv_split(locality, ':');
+    for (n=0; NULL != loc[n]; n++) {
+        if (0 == strncmp(loc[n], srch, 2)) {
+            ans = strdup(&loc[n][2]);
+            break;
+        }
+    }
+    opal_argv_free(loc);
+
+    return ans;
+}
+
+opal_hwloc_locality_t opal_hwloc_compute_relative_locality(char *loc1, char *loc2)
+{
+    opal_hwloc_locality_t locality;
+    char **set1, **set2;
+    hwloc_bitmap_t bit1, bit2;
+    size_t n1, n2;
+
+    /* start with what we know - they share a node on a cluster
+     * NOTE: we may alter that latter part as hwloc's ability to
+     * sense multi-cu, multi-cluster systems grows
+     */
+    locality = OPAL_PROC_ON_NODE | OPAL_PROC_ON_HOST | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER;
+
+    /* if either location is NULL, then that isn't bound */
+    if (NULL == loc1 || NULL == loc2) {
+        return locality;
+    }
+
+    set1 = opal_argv_split(loc1, ':');
+    set2 = opal_argv_split(loc2, ':');
+    bit1 = hwloc_bitmap_alloc();
+    bit2 = hwloc_bitmap_alloc();
+
+    /* check each matching type */
+    for (n1=0; NULL != set1[n1]; n1++) {
+        /* convert the location into bitmap */
+        hwloc_bitmap_list_sscanf(bit1, &set1[n1][2]);
+        /* find the matching type in set2 */
+        for (n2=0; NULL != set2[n2]; n2++) {
+            if (0 == strncmp(set1[n1], set2[n2], 2)) {
+                /* convert the location into bitmap */
+                hwloc_bitmap_list_sscanf(bit2, &set2[n2][2]);
+                /* see if they intersect */
+                if (hwloc_bitmap_intersects(bit1, bit2)) {
+                    /* set the corresponding locality bit */
+                    if (0 == strncmp(set1[n1], "NM", 2)) {
+                        locality |= OPAL_PROC_ON_NUMA;
+                    } else if (0 == strncmp(set1[n1], "SK", 2)) {
+                        locality |= OPAL_PROC_ON_SOCKET;
+                    } else if (0 == strncmp(set1[n1], "L3", 2)) {
+                        locality |= OPAL_PROC_ON_L3CACHE;
+                    } else if (0 == strncmp(set1[n1], "L2", 2)) {
+                        locality |= OPAL_PROC_ON_L2CACHE;
+                    } else if (0 == strncmp(set1[n1], "L1", 2)) {
+                        locality |= OPAL_PROC_ON_L1CACHE;
+                    } else if (0 == strncmp(set1[n1], "CR", 2)) {
+                        locality |= OPAL_PROC_ON_CORE;
+                    } else if (0 == strncmp(set1[n1], "HT", 2)) {
+                        locality |= OPAL_PROC_ON_HWTHREAD;
+                    } else {
+                        /* should never happen */
+                        opal_output(0, "UNRECOGNIZED LOCALITY %s", set1[n1]);
+                    }
+                }
+                break;
+            }
+        }
+    }
+    opal_argv_free(set1);
+    opal_argv_free(set2);
+    hwloc_bitmap_free(bit1);
+    hwloc_bitmap_free(bit2);
+    return locality;
 }

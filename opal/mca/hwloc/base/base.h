@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -275,6 +275,16 @@ OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
  * if responsible for freeing the returned string */
 OPAL_DECLSPEC char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo);
 
+
+/* get a string describing the locality of a given process */
+OPAL_DECLSPEC char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo, char *bitmap);
+
+/* extract a location from the locality string */
+OPAL_DECLSPEC char* opal_hwloc_base_get_location(char *locality,
+                                                 hwloc_obj_type_t type,
+                                                 unsigned index);
+
+OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_compute_relative_locality(char *loc1, char *loc2);
 
 END_C_DECLS
 
