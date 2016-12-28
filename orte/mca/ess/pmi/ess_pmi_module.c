@@ -94,7 +94,7 @@ static int rte_init(void)
     char *val;
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
-    char **peers=NULL, *mycpuset, **cpusets=NULL;
+    char **peers=NULL, *mycpuset;
     opal_process_name_t wildcard_rank, pname;
     bool bool_val, *bool_ptr = &bool_val, tdir_mca_override = false;
     size_t i;
@@ -248,7 +248,7 @@ static int rte_init(void)
     /* retrieve temp directories info */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_TMPDIR, &wildcard_rank, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
-        /* We want to provide user with ability 
+        /* We want to provide user with ability
          * to override RM settings at his own risk
          */
         if( NULL == orte_process_info.top_session_dir ){
@@ -264,7 +264,7 @@ static int rte_init(void)
     if( !tdir_mca_override ){
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NSDIR, &wildcard_rank, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
-            /* We want to provide user with ability 
+            /* We want to provide user with ability
              * to override RM settings at his own risk
              */
             if( NULL == orte_process_info.job_session_dir ){
@@ -281,7 +281,7 @@ static int rte_init(void)
     if( !tdir_mca_override ){
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_PROCDIR, &wildcard_rank, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
-            /* We want to provide user with ability 
+            /* We want to provide user with ability
              * to override RM settings at his own risk
              */
             if( NULL == orte_process_info.proc_session_dir ){
@@ -385,65 +385,64 @@ static int rte_init(void)
         if (OPAL_SUCCESS == ret && NULL != val) {
             peers = opal_argv_split(val, ',');
             free(val);
-            /* and their cpusets, if available */
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS,
-                                           &wildcard_rank, &val, OPAL_STRING);
-            if (OPAL_SUCCESS == ret && NULL != val) {
-                cpusets = opal_argv_split(val, ':');
-                free(val);
-            } else {
-                cpusets = NULL;
-            }
         } else {
             peers = NULL;
-            cpusets = NULL;
         }
     } else {
         peers = NULL;
-        cpusets = NULL;
     }
 
     /* set the locality */
     if (NULL != peers) {
-        /* indentify our cpuset */
-        if (NULL != cpusets) {
-            mycpuset = cpusets[orte_process_info.my_local_rank];
+        /* identify our location */
+        val = NULL;
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+                                       ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != val) {
+            mycpuset = val;
         } else {
             mycpuset = NULL;
         }
         pname.jobid = ORTE_PROC_MY_NAME->jobid;
         for (i=0; NULL != peers[i]; i++) {
-            kv = OBJ_NEW(opal_value_t);
-            kv->key = strdup(OPAL_PMIX_LOCALITY);
-            kv->type = OPAL_UINT16;
             pname.vpid = strtoul(peers[i], NULL, 10);
             if (pname.vpid == ORTE_PROC_MY_NAME->vpid) {
                 /* we are fully local to ourselves */
                 u16 = OPAL_PROC_ALL_LOCAL;
-            } else if (NULL == mycpuset || NULL == cpusets[i] ||
-                       0 == strcmp(cpusets[i], "UNBOUND")) {
-                /* all we can say is that it shares our node */
-                u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
             } else {
-                /* we have it, so compute the locality */
-                u16 = opal_hwloc_base_get_relative_locality(opal_hwloc_topology, mycpuset, cpusets[i]);
+                val = NULL;
+                OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+                                               &pname, &val, OPAL_STRING);
+                if (OPAL_SUCCESS == ret && NULL != val) {
+                    u16 = opal_hwloc_compute_relative_locality(mycpuset, val);
+                } else {
+                    /* all we can say is that it shares our node */
+                    u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+                }
             }
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_LOCALITY);
+            kv->type = OPAL_UINT16;
             OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
-                                 "%s ess:pmi:locality: proc %s locality %x",
+                                 "%s ess:pmi:locality: proc %s locality %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&pname), u16));
+                                 ORTE_NAME_PRINT(&pname), opal_hwloc_base_print_locality(u16)));
             kv->data.uint16 = u16;
             ret = opal_pmix.store_local(&pname, kv);
             if (OPAL_SUCCESS != ret) {
                 error = "local store of locality";
                 opal_argv_free(peers);
-                opal_argv_free(cpusets);
+                if (NULL != mycpuset) {
+                    free(mycpuset);
+                }
                 goto error;
             }
             OBJ_RELEASE(kv);
         }
         opal_argv_free(peers);
-        opal_argv_free(cpusets);
+        if (NULL != mycpuset) {
+            free(mycpuset);
+        }
     }
 
     /* now that we have all required info, complete the setup */
