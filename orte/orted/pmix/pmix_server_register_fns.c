@@ -326,7 +326,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
                     kv->key = strdup(OPAL_PMIX_LOCALITY_STRING);
                     kv->type = OPAL_STRING;
                     kv->data.string = opal_hwloc_base_get_locality_string(opal_hwloc_topology, tmp);
-                    opal_output(0, "PROC %s LOCALITY %s", ORTE_NAME_PRINT(&pptr->name), kv->data.string);
                     opal_list_append(pmap, &kv->super);
                     free(tmp);
                 }
