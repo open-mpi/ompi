@@ -195,9 +195,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             /* if the user explicitly mapped-by some object, then we default
              * to binding to that object */
             orte_mapping_policy_t mpol;
-            mpol = ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping);
-            if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping) &&
-                ORTE_MAPPING_BYBOARD < mpol && mpol < ORTE_MAPPING_BYSLOT) {
+            mpol = ORTE_GET_MAPPING_POLICY(jdata->map->mapping);
+            if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                 if (ORTE_MAPPING_BYHWTHREAD == mpol) {
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
                 } else if (ORTE_MAPPING_BYCORE == mpol) {
