@@ -22,7 +22,7 @@ static void fill_cache_line_size(void)
     /* Look for the smallest L2 cache size */
     size = 4096;
     while (1) {
-        obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
+        obj = opal_hwloc_base_get_obj_by_type(my_topology,
                                               HWLOC_OBJ_CACHE, 2,
                                               i, OPAL_HWLOC_LOGICAL);
         if (NULL == obj) {
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
         return OPAL_ERR_NOT_SUPPORTED;
     }
     if (0 != hwloc_topology_set_xml(my_topology, argv[1])) {
-        hwloc_topology_destroy(my_topology);
+        opal_hwloc_base_free_topology(my_topology);
         return OPAL_ERR_NOT_SUPPORTED;
     }
     /* since we are loading this from an external source, we have to
@@ -76,11 +76,11 @@ int main(int argc, char* argv[])
                                       (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
                                        HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
                                        HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
-        hwloc_topology_destroy(my_topology);
+        opal_hwloc_base_free_topology(my_topology);
         return OPAL_ERR_NOT_SUPPORTED;
     }
     if (0 != hwloc_topology_load(my_topology)) {
-        hwloc_topology_destroy(my_topology);
+        opal_hwloc_base_free_topology(my_topology);
         return OPAL_ERR_NOT_SUPPORTED;
     }
     /* remove the hostname from the topology. Unfortunately, hwloc
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "DIDN'T FIND A CORE\n");
     }
 
-    hwloc_topology_destroy(my_topology);
+    opal_hwloc_base_free_topology(my_topology);
 
     opal_finalize();
 

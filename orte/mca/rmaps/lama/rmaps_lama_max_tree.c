@@ -4,6 +4,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -262,7 +263,7 @@ static int rmaps_lama_convert_hwloc_tree_to_opal_tree(opal_tree_t *opal_tree, hw
     if( 15 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
         opal_output_verbose(15, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: ----- Converting Topology:");
-        /* opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO); */
+        /* opal_dss.dump(0, orte_server_topology, OPAL_HWLOC_TOPO); */
         opal_dss.dump(0, *hwloc_topo, OPAL_HWLOC_TOPO);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,7 @@
 #include "orte/util/show_help.h"
 #include "orte/util/error_strings.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/orted/pmix/pmix_server.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 
@@ -91,7 +92,7 @@ static void set(orte_job_t *jobdat,
         NULL == cpu_bitmap || 0 == strlen(cpu_bitmap)) {
         /* if the daemon is bound, then we need to "free" this proc */
         if (NULL != orte_daemon_cores) {
-            root = hwloc_get_root_obj(opal_hwloc_topology);
+            root = hwloc_get_root_obj(orte_server_topology);
             if (NULL == root->userdata) {
                 orte_rtc_base_send_warn_show_help(write_fd,
                                                   "help-orte-odls-default.txt", "incorrectly bound",
@@ -100,7 +101,7 @@ static void set(orte_job_t *jobdat,
             }
             sum = (opal_hwloc_topo_data_t*)root->userdata;
             /* bind this proc to all available processors */
-            rc = hwloc_set_cpubind(opal_hwloc_topology, sum->available, 0);
+            rc = hwloc_set_cpubind(orte_server_topology, sum->available, 0);
             /* if we got an error and this wasn't a default binding policy, then report it */
             if (rc < 0  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
                 if (errno == ENOSYS) {
@@ -168,7 +169,7 @@ static void set(orte_job_t *jobdat,
             }
         }
         /* bind as specified */
-        rc = hwloc_set_cpubind(opal_hwloc_topology, cpuset, 0);
+        rc = hwloc_set_cpubind(orte_server_topology, cpuset, 0);
         /* if we got an error and this wasn't a default binding policy, then report it */
         if (rc < 0  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
             char *tmp = NULL;
@@ -208,16 +209,16 @@ static void set(orte_job_t *jobdat,
             hwloc_cpuset_t mycpus;
             /* get the cpus we are bound to */
             mycpus = hwloc_bitmap_alloc();
-            if (hwloc_get_cpubind(opal_hwloc_topology,
+            if (hwloc_get_cpubind(orte_server_topology,
                                   mycpus,
                                   HWLOC_CPUBIND_PROCESS) < 0) {
                 opal_output(0, "MCW rank %d is not bound",
                             child->name.vpid);
             } else {
-                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
+                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), orte_server_topology, mycpus)) {
                     opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
                 } else {
-                    opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
+                    opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), orte_server_topology, mycpus);
                     opal_output(0, "MCW rank %d bound to %s: %s",
                                 child->name.vpid, tmp1, tmp2);
                 }
@@ -231,7 +232,7 @@ static void set(orte_job_t *jobdat,
         /* set memory affinity policy - if we get an error, don't report
          * anything unless the user actually specified the binding policy
          */
-        rc = opal_hwloc_base_set_process_membind_policy();
+        rc = opal_hwloc_base_set_process_membind_policy(orte_server_topology);
         if (ORTE_SUCCESS != rc  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
             if (errno == ENOSYS) {
                 msg = "hwloc indicates memory binding not supported";

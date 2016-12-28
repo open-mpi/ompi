@@ -157,9 +157,9 @@ static void srcon(pmix_ptl_sr_t *p)
     p->cbfunc = NULL;
     p->cbdata = NULL;
 }
-PMIX_CLASS_INSTANCE(pmix_ptl_sr_t,
-                    pmix_object_t,
-                    srcon, NULL);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_sr_t,
+                                pmix_object_t,
+                                srcon, NULL);
 
 static void pccon(pmix_pending_connection_t *p)
 {
@@ -186,9 +186,9 @@ static void pcdes(pmix_pending_connection_t *p)
         free(p->cred);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_pending_connection_t,
-                    pmix_object_t,
-                    pccon, pcdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_pending_connection_t,
+                                pmix_object_t,
+                                pccon, pcdes);
 
 static void lcon(pmix_listener_t *p)
 {
@@ -211,10 +211,10 @@ static void ldes(pmix_listener_t *p)
         free(p->uri);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_listener_t,
-                    pmix_list_item_t,
-                    lcon, ldes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_listener_t,
+                                pmix_list_item_t,
+                                lcon, ldes);
 
-PMIX_CLASS_INSTANCE(pmix_ptl_queue_t,
-                   pmix_object_t,
-                   NULL, NULL);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_queue_t,
+                                pmix_object_t,
+                                NULL, NULL);

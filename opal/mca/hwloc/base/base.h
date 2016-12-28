@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +42,6 @@ BEGIN_C_DECLS
  * Debugging output stream
  */
 OPAL_DECLSPEC extern bool opal_hwloc_base_inited;
-OPAL_DECLSPEC extern bool opal_hwloc_topology_inited;
 
 OPAL_DECLSPEC extern mca_base_framework_t opal_hwloc_base_framework;
 
@@ -94,7 +93,7 @@ OPAL_DECLSPEC int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *poli
  * not bound, use the hwloc root object's (available and online)
  * cpuset.
  */
-OPAL_DECLSPEC void opal_hwloc_base_get_local_cpuset(void);
+OPAL_DECLSPEC void opal_hwloc_base_get_local_cpuset(hwloc_topology_t topo);
 
 struct opal_rmaps_numa_node_t {
     opal_list_item_t super;
@@ -140,12 +139,12 @@ OPAL_DECLSPEC int opal_hwloc_base_filter_cpus(hwloc_topology_t topo);
  * Discover / load the hwloc topology (i.e., call hwloc_topology_init() and
  * hwloc_topology_load()).
  */
-OPAL_DECLSPEC int opal_hwloc_base_get_topology(void);
+OPAL_DECLSPEC hwloc_topology_t opal_hwloc_base_get_topology(void);
 
 /**
  * Set the hwloc topology to that from the given topo file
  */
-OPAL_DECLSPEC int opal_hwloc_base_set_topology(char *topofile);
+OPAL_DECLSPEC hwloc_topology_t opal_hwloc_base_set_topology(char *topofile);
 
 /**
  * Free the hwloc topology.
@@ -219,14 +218,15 @@ OPAL_DECLSPEC int opal_hwloc_base_report_bind_failure(const char *file,
  * loaded by opal_hwloc_base_open().  Hence, an upper layer needs to
  * invoke this function after opal_hwloc_topology has been loaded.
  */
-OPAL_DECLSPEC int opal_hwloc_base_set_process_membind_policy(void);
+OPAL_DECLSPEC int opal_hwloc_base_set_process_membind_policy(hwloc_topology_t topo);
 
 OPAL_DECLSPEC int opal_hwloc_base_membind(opal_hwloc_base_memory_segment_t *segs,
                                           size_t count, int node_id);
 
 OPAL_DECLSPEC int opal_hwloc_base_node_name_to_id(char *node_name, int *id);
 
-OPAL_DECLSPEC int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments,
+OPAL_DECLSPEC int opal_hwloc_base_memory_set(hwloc_topology_t topo,
+                                             opal_hwloc_base_memory_segment_t *segments,
                                              size_t num_segments);
 
 /* datatype support */

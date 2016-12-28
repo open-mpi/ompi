@@ -15,7 +15,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -124,9 +124,9 @@ static int mca_coll_sm_module_disable(mca_coll_base_module_t *module, struct omp
 {
     mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
     if (NULL != sm_module->previous_reduce_module) {
-	sm_module->previous_reduce = NULL;
+        sm_module->previous_reduce = NULL;
         OBJ_RELEASE(sm_module->previous_reduce_module);
-	sm_module->previous_reduce_module = NULL;
+        sm_module->previous_reduce_module = NULL;
     }
     return OMPI_SUCCESS;
 }
@@ -174,7 +174,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
     if (OMPI_COMM_IS_INTER(comm) || 1 == ompi_comm_size(comm) || ompi_group_have_remote_peers (comm->c_local_group)) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:comm_query (%d/%s): intercomm, comm is too small, or not all peers local; disqualifying myself", comm->c_contextid, comm->c_name);
-	return NULL;
+        return NULL;
     }
 
     /* Get the priority level attached to this module. If priority is less
@@ -183,7 +183,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
     if (mca_coll_sm_component.sm_priority <= 0) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:comm_query (%d/%s): priority too low; disqualifying myself", comm->c_contextid, comm->c_name);
-	return NULL;
+        return NULL;
     }
 
     sm_module = OBJ_NEW(mca_coll_sm_module_t);
@@ -246,6 +246,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     mca_coll_sm_comm_t *data = NULL;
     size_t control_size, frag_size;
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
+    hwloc_topology_t topo;
     opal_hwloc_base_memory_segment_t *maffinity;
     int parent, min_child, num_children;
     unsigned char *base = NULL;
@@ -446,7 +447,10 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 
     /* Setup memory affinity so that the pages that belong to this
        process are local to this process */
-    opal_hwloc_base_memory_set(maffinity, j);
+    if (NULL != (topo = opal_hwloc_base_get_topology())) {
+        opal_hwloc_base_memory_set(topo, maffinity, j);
+        opal_hwloc_base_free_topology(topo);
+    }
     free(maffinity);
 
     /* Zero out the control structures that belong to this process */

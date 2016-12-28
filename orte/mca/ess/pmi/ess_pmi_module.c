@@ -98,6 +98,7 @@ static int rte_init(void)
     opal_process_name_t wildcard_rank, pname;
     bool bool_val, *bool_ptr = &bool_val, tdir_mca_override = false;
     size_t i;
+    hwloc_topology_t topo;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -248,7 +249,7 @@ static int rte_init(void)
     /* retrieve temp directories info */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_TMPDIR, &wildcard_rank, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
-        /* We want to provide user with ability 
+        /* We want to provide user with ability
          * to override RM settings at his own risk
          */
         if( NULL == orte_process_info.top_session_dir ){
@@ -264,7 +265,7 @@ static int rte_init(void)
     if( !tdir_mca_override ){
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_NSDIR, &wildcard_rank, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
-            /* We want to provide user with ability 
+            /* We want to provide user with ability
              * to override RM settings at his own risk
              */
             if( NULL == orte_process_info.job_session_dir ){
@@ -281,7 +282,7 @@ static int rte_init(void)
     if( !tdir_mca_override ){
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_PROCDIR, &wildcard_rank, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
-            /* We want to provide user with ability 
+            /* We want to provide user with ability
              * to override RM settings at his own risk
              */
             if( NULL == orte_process_info.proc_session_dir ){
@@ -300,75 +301,6 @@ static int rte_init(void)
         if (OPAL_SUCCESS == ret ) {
             orte_process_info.rm_session_dirs = bool_val;
         }
-    }
-
-    /* retrieve our topology */
-    val = NULL;
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_TOPO,
-                                   &wildcard_rank, &val, OPAL_STRING);
-    if (OPAL_SUCCESS == ret && NULL != val) {
-        /* load the topology */
-        if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
-            ret = OPAL_ERROR;
-            free(val);
-            error = "setting topology";
-            goto error;
-        }
-        if (0 != hwloc_topology_set_xmlbuffer(opal_hwloc_topology, val, strlen(val))) {
-            ret = OPAL_ERROR;
-            free(val);
-            hwloc_topology_destroy(opal_hwloc_topology);
-            error = "setting topology";
-            goto error;
-        }
-        /* since we are loading this from an external source, we have to
-         * explicitly set a flag so hwloc sets things up correctly
-         */
-        if (0 != hwloc_topology_set_flags(opal_hwloc_topology,
-                                         (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
-                                          HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
-                                          HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
-            ret = OPAL_ERROR;
-            hwloc_topology_destroy(opal_hwloc_topology);
-            free(val);
-            error = "setting topology";
-            goto error;
-        }
-        /* now load the topology */
-        if (0 != hwloc_topology_load(opal_hwloc_topology)) {
-            ret = OPAL_ERROR;
-            hwloc_topology_destroy(opal_hwloc_topology);
-            free(val);
-            error = "setting topology";
-            goto error;
-        }
-        free(val);
-        /* filter the cpus thru any default cpu set */
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
-            error = "filtering topology";
-            goto error;
-        }
-    } else {
-        /* it wasn't passed down to us, so go get it */
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
-            error = "topology discovery";
-            goto error;
-        }
-        /* push it into the PMIx database in case someone
-         * tries to retrieve it so we avoid an attempt to
-         * get it again */
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
-        kv->type = OPAL_STRING;
-        if (0 != (ret = hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &kv->data.string, &u32))) {
-            error = "topology export";
-            goto error;
-        }
-        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(&wildcard_rank, kv))) {
-            error = "topology store";
-            goto error;
-        }
-        OBJ_RELEASE(kv);
     }
 
     /* get our local peers */
@@ -405,7 +337,12 @@ static int rte_init(void)
 
     /* set the locality */
     if (NULL != peers) {
-        /* indentify our cpuset */
+        /* retrieve our topology */
+        if (NULL == (topo = opal_hwloc_base_get_topology())) {
+            error = "getting topology";
+            goto error;
+        }
+        /* identify our cpuset */
         if (NULL != cpusets) {
             mycpuset = cpusets[orte_process_info.my_local_rank];
         } else {
@@ -426,7 +363,7 @@ static int rte_init(void)
                 u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
             } else {
                 /* we have it, so compute the locality */
-                u16 = opal_hwloc_base_get_relative_locality(opal_hwloc_topology, mycpuset, cpusets[i]);
+                u16 = opal_hwloc_base_get_relative_locality(topo, mycpuset, cpusets[i]);
             }
             OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                                  "%s ess:pmi:locality: proc %s locality %x",
@@ -438,10 +375,12 @@ static int rte_init(void)
                 error = "local store of locality";
                 opal_argv_free(peers);
                 opal_argv_free(cpusets);
+                opal_hwloc_base_free_topology(topo);
                 goto error;
             }
             OBJ_RELEASE(kv);
         }
+        opal_hwloc_base_free_topology(topo);
         opal_argv_free(peers);
         opal_argv_free(cpusets);
     }

@@ -907,7 +907,7 @@ static void tcon(orte_topology_t *t)
 static void tdes(orte_topology_t *t)
 {
     if (NULL != t->topo) {
-        hwloc_topology_destroy(t->topo);
+        opal_hwloc_base_free_topology(t->topo);
     }
     if (NULL != t->sig) {
         free(t->sig);

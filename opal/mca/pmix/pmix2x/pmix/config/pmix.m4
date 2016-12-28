@@ -358,7 +358,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       #endif
                       ])
 
-
     # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
     # have both Portland and GNU installed; using pgcc will find GNU's
     # <stdbool.h>, which all it does -- by standard -- is define "bool" to
@@ -641,11 +640,11 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     PMIX_LIBEVENT_CONFIG
 
     ##################################
-    # HWLOC
+    # ZLIB COMPRESSION
     ##################################
-    pmix_show_title "HWLOC"
+    pmix_show_title "ZLIB"
 
-    PMIX_HWLOC_CONFIG
+    PMIX_ZLIB_CONFIG
 
     ##################################
     # MCA

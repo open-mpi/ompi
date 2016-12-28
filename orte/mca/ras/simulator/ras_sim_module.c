@@ -3,7 +3,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -25,6 +25,7 @@
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/orted/pmix/pmix_server.h"
 
 #include "ras_sim.h"
 
@@ -118,7 +119,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
         /* check for topology */
         if (use_local_topology) {
             /* use our topology */
-            topo = opal_hwloc_topology;
+            topo = orte_server_topology;
         } else if (NULL != files) {
             if (0 != hwloc_topology_init(&topo)) {
                 orte_show_help("help-ras-simulator.txt",
@@ -129,7 +130,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             if (0 != hwloc_topology_set_xml(topo, files[n])) {
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc failed to load xml", true, files[n]);
-                hwloc_topology_destroy(topo);
+                opal_hwloc_base_free_topology(topo);
                 goto error_silent;
             }
             /* since we are loading this from an external source, we have to
@@ -139,14 +140,14 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc API fail", true,
                                __FILE__, __LINE__, "hwloc_topology_set_flags");
-                hwloc_topology_destroy(topo);
+                opal_hwloc_base_free_topology(topo);
                 goto error_silent;
             }
             if (0 != hwloc_topology_load(topo)) {
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc API fail", true,
                                __FILE__, __LINE__, "hwloc_topology_load");
-                hwloc_topology_destroy(topo);
+                opal_hwloc_base_free_topology(topo);
                 goto error_silent;
             }
             /* remove the hostname from the topology. Unfortunately, hwloc
@@ -195,21 +196,21 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc API fail", true,
                                __FILE__, __LINE__, "hwloc_topology_set_synthetic");
-                hwloc_topology_destroy(topo);
+                opal_hwloc_base_free_topology(topo);
                 goto error_silent;
             }
             if (0 != hwloc_topology_load(topo)) {
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc API fail", true,
                                __FILE__, __LINE__, "hwloc_topology_load");
-                hwloc_topology_destroy(topo);
+                opal_hwloc_base_free_topology(topo);
                 goto error_silent;
             }
             if (OPAL_SUCCESS != opal_hwloc_base_filter_cpus(topo)) {
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc API fail", true,
                                __FILE__, __LINE__, "opal_hwloc_base_filter_cpus");
-                hwloc_topology_destroy(topo);
+                opal_hwloc_base_free_topology(topo);
                 goto error_silent;
             }
             /* remove the hostname from the topology. Unfortunately, hwloc

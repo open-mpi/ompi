@@ -47,6 +47,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/orted/pmix/pmix_server.h"
 
 #include "orte/mca/schizo/base/base.h"
 
@@ -871,8 +872,8 @@ static int setup_fork(orte_job_t *jdata,
      */
     hwloc_obj_t obj;
     char *htmp;
-    if (NULL != opal_hwloc_topology) {
-        obj = hwloc_get_root_obj(opal_hwloc_topology);
+    if (NULL != orte_server_topology) {
+        obj = hwloc_get_root_obj(orte_server_topology);
         if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUType")) ||
             NULL != (htmp = orte_local_cpu_type)) {
             opal_setenv("OMPI_MCA_orte_cpu_type", htmp, true, &app->env);

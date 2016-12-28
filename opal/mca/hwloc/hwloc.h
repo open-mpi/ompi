@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
@@ -211,7 +211,6 @@ typedef uint16_t opal_binding_policy_t;
     (OPAL_BIND_ALLOW_OVERLOAD & (n))
 
 /* some global values */
-OPAL_DECLSPEC extern hwloc_topology_t opal_hwloc_topology;
 OPAL_DECLSPEC extern opal_binding_policy_t opal_hwloc_binding_policy;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_my_cpuset;
 OPAL_DECLSPEC extern bool opal_hwloc_report_bindings;

@@ -18,7 +18,7 @@
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
@@ -1502,13 +1502,20 @@ static uint64_t read_module_param(char *file, uint64_t value, uint64_t max)
 static uint64_t calculate_total_mem (void)
 {
     hwloc_obj_t machine;
+    hwloc_topology_t topo;
+    uint64_t mem;
 
-    machine = hwloc_get_next_obj_by_type (opal_hwloc_topology, HWLOC_OBJ_MACHINE, NULL);
-    if (NULL == machine) {
+    if (NULL == (topo = opal_hwloc_base_get_topology())) {
         return 0;
     }
+    machine = hwloc_get_next_obj_by_type (topo, HWLOC_OBJ_MACHINE, NULL);
+    if (NULL == machine) {
+        mem = 0;
+    }
 
-    return machine->memory.total_memory;
+    mem = machine->memory.total_memory;
+    opal_hwloc_base_free_topology(topo);
+    return mem;
 }
 
 
@@ -2320,15 +2327,19 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     int i;
     hwloc_cpuset_t my_cpuset = NULL, ibv_cpuset = NULL;
     hwloc_obj_t my_obj, ibv_obj, node_obj;
+    hwloc_topology_t topo = NULL;
 
     /* Note that this struct is owned by hwloc; there's no need to
        free it at the end of time */
     static const struct hwloc_distances_s *hwloc_distances = NULL;
 
+    if (NULL == (topo = opal_hwloc_base_get_topology())) {
+        goto out;
+    }
+
     if (NULL == hwloc_distances) {
         hwloc_distances =
-            hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
-                                                    HWLOC_OBJ_NODE);
+            hwloc_get_whole_distance_matrix_by_type(topo, HWLOC_OBJ_NODE);
     }
 
     /* If we got no info, just return 0 */
@@ -2341,10 +2352,10 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     if (NULL == ibv_cpuset) {
         goto out;
     }
-    if (0 != hwloc_ibv_get_device_cpuset(opal_hwloc_topology, dev, ibv_cpuset)) {
+    if (0 != hwloc_ibv_get_device_cpuset(topo, dev, ibv_cpuset)) {
         goto out;
     }
-    ibv_obj = hwloc_get_obj_covering_cpuset(opal_hwloc_topology, ibv_cpuset);
+    ibv_obj = hwloc_get_obj_covering_cpuset(topo, ibv_cpuset);
     if (NULL == ibv_obj) {
         goto out;
     }
@@ -2390,10 +2401,10 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     if (NULL == my_cpuset) {
         goto out;
     }
-    if (0 != hwloc_get_cpubind(opal_hwloc_topology, my_cpuset, 0)) {
+    if (0 != hwloc_get_cpubind(topo, my_cpuset, 0)) {
         goto out;
     }
-    my_obj = hwloc_get_obj_covering_cpuset(opal_hwloc_topology, my_cpuset);
+    my_obj = hwloc_get_obj_covering_cpuset(topo, my_cpuset);
     if (NULL == my_obj) {
         goto out;
     }
@@ -2427,11 +2438,11 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         /* If the obj is above a NUMA node, then we're bound to more than
            one NUMA node.  Find the max distance. */
         i = 0;
-        for (node_obj = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+        for (node_obj = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                             ibv_obj->cpuset,
                                                             HWLOC_OBJ_NODE, i);
              NULL != node_obj;
-             node_obj = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+             node_obj = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                             ibv_obj->cpuset,
                                                             HWLOC_OBJ_NODE, ++i)) {
 
@@ -2448,6 +2459,9 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     }
 
  out:
+    if (NULL != topo) {
+        opal_hwloc_base_free_topology(topo);
+    }
     if (NULL != ibv_cpuset) {
         hwloc_bitmap_free(ibv_cpuset);
     }
