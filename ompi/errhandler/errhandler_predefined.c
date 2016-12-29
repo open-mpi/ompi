@@ -15,6 +15,7 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +52,7 @@ static void out(char *str, char *arg);
 
 
 void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
-					    int *error_code, ...)
+                                            int *error_code, ...)
 {
   char *name;
   struct ompi_communicator_t *abort_comm;
@@ -72,7 +73,7 @@ void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
 
 
 void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
-					    int *error_code, ...)
+                                            int *error_code, ...)
 {
   char *name;
   struct ompi_communicator_t *abort_comm;
@@ -93,7 +94,7 @@ void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
 
 
 void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
-					   int *error_code, ...)
+                                           int *error_code, ...)
 {
   char *name;
   struct ompi_communicator_t *abort_comm = NULL;
@@ -111,7 +112,7 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
 }
 
 void ompi_mpi_errors_return_comm_handler(struct ompi_communicator_t **comm,
-					 int *error_code, ...)
+                                         int *error_code, ...)
 {
     /* Don't need anything more -- just need this function to exist */
     /* Silence some compiler warnings */
@@ -123,7 +124,7 @@ void ompi_mpi_errors_return_comm_handler(struct ompi_communicator_t **comm,
 
 
 void ompi_mpi_errors_return_file_handler(struct ompi_file_t **file,
-					 int *error_code, ...)
+                                         int *error_code, ...)
 {
     /* Don't need anything more -- just need this function to exist */
     /* Silence some compiler warnings */
@@ -135,7 +136,7 @@ void ompi_mpi_errors_return_file_handler(struct ompi_file_t **file,
 
 
 void ompi_mpi_errors_return_win_handler(struct ompi_win_t **win,
-					int *error_code, ...)
+                                        int *error_code, ...)
 {
     /* Don't need anything more -- just need this function to exist */
     /* Silence some compiler warnings */
@@ -181,6 +182,7 @@ static void backend_fatal_aggregate(char *type,
     const char* const unknown_error_code = "Error code: %d (no associated error message)";
     const char* const unknown_error = "Unknown error";
     const char* const unknown_prefix = "[?:?]";
+    bool generated = false;
 
     // these do not own what they point to; they're
     // here to avoid repeating expressions such as
@@ -209,6 +211,8 @@ static void backend_fatal_aggregate(char *type,
                 err_msg = NULL;
                 opal_output(0, "%s", "Could not write to err_msg");
                 opal_output(0, unknown_error_code, *error_code);
+            } else {
+                generated = true;
             }
         }
     }
@@ -254,7 +258,9 @@ static void backend_fatal_aggregate(char *type,
     }
 
     free(prefix);
-    free(err_msg);
+    if (generated) {
+        free(err_msg);
+    }
 }
 
 /*

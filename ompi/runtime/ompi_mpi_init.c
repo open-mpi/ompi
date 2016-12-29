@@ -508,16 +508,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* check for timing request - get stop time and report elapsed time if so */
     OPAL_TIMING_MNEXT((&tm,"time from completion of rte_init to modex"));
 
-    /* if hwloc is available but didn't get setup for some
-     * reason, do so now
-     */
-    if (NULL == opal_hwloc_topology) {
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
-            error = "Topology init";
-            goto error;
-        }
-    }
-
     /* Register the default errhandler callback  */
     errtrk.status = OPAL_ERROR;
     errtrk.active = true;

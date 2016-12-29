@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,7 +10,7 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/constants.h"
 
 #if BTL_IN_OPAL
@@ -190,6 +191,13 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
 
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic:filter_numa: filtering devices by NUMA distance");
+
+    /* ensure we have the topology */
+    if (OPAL_SUCCESS !=- opal_hwloc_base_get_topology()) {
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic:filter_numa: not sorting devices by NUMA distance (topology not available)");
+        return OPAL_SUCCESS;
+    }
 
     /* Get the hwloc distance matrix for all NUMA nodes */
     if (OPAL_SUCCESS != (ret = get_distance_matrix())) {
