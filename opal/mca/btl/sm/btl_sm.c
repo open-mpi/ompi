@@ -52,7 +52,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 
@@ -242,7 +242,7 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
         free(loc);
     } else {
         /* If we have hwloc support, then get accurate information */
-        if (NULL != opal_hwloc_topology) {
+        if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
             i = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology,
                                                    HWLOC_OBJ_NODE, 0,
                                                    OPAL_HWLOC_AVAILABLE);
@@ -257,6 +257,7 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
         }
     }
     /* see if we were given our location */
+    loc = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCALITY_STRING,
                                    &OPAL_PROC_MY_NAME, &loc, OPAL_STRING);
     if (OPAL_SUCCESS == rc) {
@@ -283,8 +284,7 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
         }
     } else {
         /* If we have hwloc support, then get accurate information */
-        if (NULL != opal_hwloc_topology && num_mem_nodes > 0 &&
-            NULL != opal_process_info.cpuset) {
+        if (OPAL_SUCCESS == opal_hwloc_base_get_topology() && num_mem_nodes > 0) {
             int numa=0, w;
             unsigned n_bound=0;
             hwloc_cpuset_t avail;

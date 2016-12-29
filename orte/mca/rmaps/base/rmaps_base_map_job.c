@@ -190,6 +190,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             /* if the user specified a default binding policy via
              * MCA param, then we use it - this can include a directive
              * to overload */
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps[%d] binding policy given", __LINE__);
             jdata->map->binding = opal_hwloc_binding_policy;
         } else if (1 < jdata->map->cpus_per_rank) {
             /* bind to cpus */
@@ -238,6 +240,26 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
+                } else {
+                    /* we are mapping by node or some other non-object method */
+                    if (nprocs <= 2) {
+                        if (opal_hwloc_use_hwthreads_as_cpus) {
+                            /* if we are using hwthread cpus, then bind to those */
+                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                            "mca:rmaps[%d] binding not given - using byhwthread", __LINE__);
+                            OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
+                        } else {
+                            /* for performance, bind to core */
+                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                            "mca:rmaps[%d] binding not given - using bycore", __LINE__);
+                            OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                        }
+                    } else {
+                        /* for performance, bind to NUMA */
+                        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                            "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
+                        OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
+                    }
                 }
             } else if (nprocs <= 2) {
                 if (opal_hwloc_use_hwthreads_as_cpus) {

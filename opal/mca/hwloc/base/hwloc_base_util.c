@@ -40,6 +40,7 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/show_help.h"
 #include "opal/threads/tsd.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -240,12 +241,65 @@ static void fill_cache_line_size(void)
 
 int opal_hwloc_base_get_topology(void)
 {
-    int rc=OPAL_SUCCESS;
+    int rc;
+    opal_process_name_t wildcard_rank;
+    char *val = NULL;
 
-    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((2, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_topology"));
 
-    if (NULL == opal_hwloc_base_topo_file) {
+    /* see if we already got it */
+    if (NULL != opal_hwloc_topology) {
+        return OPAL_SUCCESS;
+    }
+
+    if (NULL != opal_pmix.get) {
+        /* try to retrieve it from the PMIx store */
+        opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
+                            "hwloc:base instantiating topology");
+        wildcard_rank.jobid = OPAL_PROC_MY_NAME.jobid;
+        wildcard_rank.vpid = OPAL_VPID_WILDCARD;
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCAL_TOPO,
+                                       &wildcard_rank, &val, OPAL_STRING);
+    } else {
+        rc = OPAL_ERR_NOT_SUPPORTED;
+    }
+
+    if (OPAL_SUCCESS == rc && NULL != val) {
+        /* load the topology */
+        if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
+            free(val);
+            return OPAL_ERROR;
+        }
+        if (0 != hwloc_topology_set_xmlbuffer(opal_hwloc_topology, val, strlen(val))) {
+            free(val);
+            hwloc_topology_destroy(opal_hwloc_topology);
+            return OPAL_ERROR;
+        }
+        /* since we are loading this from an external source, we have to
+         * explicitly set a flag so hwloc sets things up correctly
+         */
+        if (0 != hwloc_topology_set_flags(opal_hwloc_topology,
+                                         (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                                          HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
+                                          HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
+            hwloc_topology_destroy(opal_hwloc_topology);
+            free(val);
+            return OPAL_ERROR;
+        }
+        /* now load the topology */
+        if (0 != hwloc_topology_load(opal_hwloc_topology)) {
+            hwloc_topology_destroy(opal_hwloc_topology);
+            free(val);
+            return OPAL_ERROR;
+        }
+        free(val);
+        /* filter the cpus thru any default cpu set */
+        if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
+            hwloc_topology_destroy(opal_hwloc_topology);
+            return rc;
+        }
+    } else if (NULL == opal_hwloc_base_topo_file) {
         if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
             0 != hwloc_topology_set_flags(opal_hwloc_topology,
                                           (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
@@ -266,7 +320,12 @@ int opal_hwloc_base_get_topology(void)
        line size */
     fill_cache_line_size();
 
-    return rc;
+    /* get or update our local cpuset - it will get used multiple
+     * times, so it's more efficient to keep a global copy
+     */
+    opal_hwloc_base_get_local_cpuset();
+
+    return OPAL_SUCCESS;
 }
 
 int opal_hwloc_base_set_topology(char *topofile)

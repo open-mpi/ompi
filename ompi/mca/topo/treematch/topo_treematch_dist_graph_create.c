@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
  * Copyright (c) 2012-2015 Bordeaux Poytechnic Institute
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -256,7 +256,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     /* Then, we need to know if the processes are bound */
     /* We make the hypothesis that all processes are in  */
     /* the same state : all bound or none bound */
-    assert(NULL != opal_hwloc_topology);
+    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+        goto fallback;
+    }
     root_obj = hwloc_get_root_obj(opal_hwloc_topology);
     if (NULL == root_obj) goto fallback;
 
@@ -873,7 +875,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         if( -1 == hwloc_err) goto fallback;
 
         /* Report new binding to ORTE/OPAL */
-        /*	hwloc_bitmap_list_asprintf(&orte_process_info.cpuset,set);   */
+        /*      hwloc_bitmap_list_asprintf(&orte_process_info.cpuset,set);   */
         err = hwloc_bitmap_snprintf (set_as_string,64,set);
 
 #ifdef __DEBUG__
