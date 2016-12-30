@@ -147,9 +147,12 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
 
     /* as we might want to use some client-side functions, be sure
      * to register our own nspace */
+    PMIX_INFO_CREATE(pinfo, 1);
+    PMIX_INFO_LOAD(&pinfo[0], PMIX_REGISTER_NODATA, NULL, PMIX_BOOL);
     active = true;
-    PMIx_server_register_nspace(job->nspace, 1, NULL, 0, op2cbfunc, (void*)&active);
+    PMIx_server_register_nspace(job->nspace, 1, pinfo, 1, op2cbfunc, (void*)&active);
     PMIX_WAIT_FOR_COMPLETION(active);
+    PMIX_INFO_FREE(pinfo, 1);
 
     return OPAL_SUCCESS;
 }

@@ -18,6 +18,7 @@
 #include "src/util/error.h"
 #include "src/buffer_ops/internal.h"
 #include "src/util/argv.h"
+#include "src/util/compress.h"
 #include "src/util/hash.h"
 #include "src/include/pmix_jobdata.h"
 
@@ -27,6 +28,7 @@
 
 static inline int _add_key_for_rank(pmix_rank_t rank, pmix_kval_t *kv, void *cbdata);
 static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata);
+
 
 static inline int _add_key_for_rank(pmix_rank_t rank, pmix_kval_t *kv, void *cbdata)
 {
@@ -135,13 +137,14 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
     pmix_nspace_t *nsptr = NULL, *nsptr2 = NULL;
     pmix_kval_t *kptr, *kp2, kv;
     int32_t cnt;
-    size_t nnodes;
+    size_t nnodes, len;
     uint32_t i;
 #if !(defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1))
     uint32_t j;
 #endif
     pmix_nrec_t *nrec, *nr2;
     char **procs = NULL;
+    uint8_t *tmp;
     pmix_byte_object_t *bo;
     pmix_buffer_t buf2;
     int rank;
@@ -149,7 +152,9 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
                             "server" : "client";
 
     pmix_output_verbose(10, pmix_globals.debug_output,
-                    "pmix:%s pmix_jobdata_store %s", proc_type_str, nspace);
+                    "[%s:%d] pmix:%s pmix_jobdata_store %s",
+                    pmix_globals.myid.nspace, pmix_globals.myid.rank,
+                    proc_type_str, nspace);
 
     /* check buf data */
     if ((NULL == job_data) && (0 != job_data->bytes_used)) {
@@ -213,6 +218,21 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
             cnt = 1;
             kp2 = PMIX_NEW(pmix_kval_t);
             while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(&buf2, kp2, &cnt, PMIX_KVAL))) {
+                /* if the value contains a string that is longer than the
+                 * limit, then compress it */
+                if (PMIX_STRING_SIZE_CHECK(kp2->value)) {
+                    if (pmix_util_compress_string(kp2->value->data.string, &tmp, &len)) {
+                        if (NULL == tmp) {
+                            PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                            rc = PMIX_ERR_NOMEM;
+                            goto exit;
+                        }
+                        kp2->value->type = PMIX_COMPRESSED_STRING;
+                        free(kp2->value->data.string);
+                        kp2->value->data.bo.bytes = (char*)tmp;
+                        kp2->value->data.bo.size = len;
+                    }
+                }
                 /* this is data provided by a job-level exchange, so store it
                  * in the job-level data hash_table */
                 if (PMIX_SUCCESS != (rc = _add_key_for_rank(rank, kp2, cb))) {
@@ -248,6 +268,21 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
                     PMIX_DESTRUCT(&buf2);
                     PMIX_DESTRUCT(&kv);
                     goto exit;
+                }
+                /* if the value contains a string that is longer than the
+                 * limit, then compress it */
+                if (PMIX_STRING_SIZE_CHECK(kv.value)) {
+                    if (pmix_util_compress_string(kv.value->data.string, &tmp, &len)) {
+                        if (NULL == tmp) {
+                            PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                            rc = PMIX_ERR_NOMEM;
+                            goto exit;
+                        }
+                        kv.value->type = PMIX_COMPRESSED_STRING;
+                        free(kv.value->data.string);
+                        kv.value->data.bo.bytes = (char*)tmp;
+                        kv.value->data.bo.size = len;
+                    }
                 }
                 /* the name of the node is in the key, and the value is
                  * a comma-delimited list of procs on that node. See if we already
@@ -310,6 +345,21 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
             /* cleanup */
             PMIX_DESTRUCT(&buf2);
         } else {
+            /* if the value contains a string that is longer than the
+             * limit, then compress it */
+            if (PMIX_STRING_SIZE_CHECK(kptr->value)) {
+                if (pmix_util_compress_string(kptr->value->data.string, &tmp, &len)) {
+                    if (NULL == tmp) {
+                        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                        rc = PMIX_ERR_NOMEM;
+                        goto exit;
+                    }
+                    kptr->value->type = PMIX_COMPRESSED_STRING;
+                    free(kptr->value->data.string);
+                    kptr->value->data.bo.bytes = (char*)tmp;
+                    kptr->value->data.bo.size = len;
+                }
+            }
             if (PMIX_SUCCESS != (rc = _add_key_for_rank(PMIX_RANK_WILDCARD, kptr, cb))) {
                 PMIX_ERROR_LOG(rc);
                 PMIX_RELEASE(kptr);

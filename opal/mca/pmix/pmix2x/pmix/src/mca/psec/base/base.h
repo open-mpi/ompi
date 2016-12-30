@@ -33,9 +33,6 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-#if PMIX_HAVE_HWLOC
-#include PMIX_HWLOC_HEADER
-#endif
 
 #include "src/class/pmix_pointer_array.h"
 #include "src/mca/mca.h"

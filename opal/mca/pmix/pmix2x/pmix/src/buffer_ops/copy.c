@@ -259,6 +259,12 @@ bool pmix_value_cmp(pmix_value_t *p, pmix_value_t *p1)
         case PMIX_STRING:
             rc = strcmp(p->data.string, p1->data.string);
             break;
+        case PMIX_COMPRESSED_STRING:
+            if (p->data.bo.size != p1->data.bo.size) {
+                return false;
+            } else {
+                return true;
+            }
         case PMIX_STATUS:
             rc = (p->data.status == p1->data.status);
             break;
@@ -370,6 +376,7 @@ PMIX_EXPORT pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
         memcpy(&p->data.proc, &src->data.rank, sizeof(pmix_rank_t));
         break;
     case PMIX_BYTE_OBJECT:
+    case PMIX_COMPRESSED_STRING:
         memset(&p->data.bo, 0, sizeof(pmix_byte_object_t));
         if (NULL != src->data.bo.bytes && 0 < src->data.bo.size) {
             p->data.bo.bytes = malloc(src->data.bo.size);
@@ -612,6 +619,7 @@ PMIX_EXPORT pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
                 }
                 break;
             case PMIX_BYTE_OBJECT:
+            case PMIX_COMPRESSED_STRING:
                 p->data.darray->array = (pmix_byte_object_t*)malloc(src->data.darray->size * sizeof(pmix_byte_object_t));
                 if (NULL == p->data.darray->array) {
                     return PMIX_ERR_NOMEM;
@@ -890,16 +898,6 @@ pmix_status_t pmix_bfrop_copy_proc(pmix_proc_t **dest, pmix_proc_t *src,
     (*dest)->rank = src->rank;
     return PMIX_SUCCESS;
 }
-
-#if PMIX_HAVE_HWLOC
-pmix_status_t pmix_bfrop_copy_topo(hwloc_topology_t *dest,
-                                   hwloc_topology_t src,
-                                   pmix_data_type_t type)
-{
-    /* use the hwloc dup function */
-    return hwloc_topology_dup(dest, src);
-}
-#endif
 
 pmix_status_t pmix_bfrop_copy_modex(pmix_modex_data_t **dest, pmix_modex_data_t *src,
                                     pmix_data_type_t type)
@@ -1240,6 +1238,7 @@ pmix_status_t pmix_bfrop_copy_darray(pmix_data_array_t **dest,
             }
             break;
         case PMIX_BYTE_OBJECT:
+        case PMIX_COMPRESSED_STRING:
             p->array = (pmix_byte_object_t*)malloc(src->size * sizeof(pmix_byte_object_t));
             if (NULL == p->array) {
                 free(p);

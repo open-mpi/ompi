@@ -400,7 +400,7 @@ int pmix_mca_base_var_init(void);
  * the caller may free the original string after this function returns
  * successfully.
  */
-int pmix_mca_base_var_register (const char *project_name, const char *framework_name,
+PMIX_EXPORT int pmix_mca_base_var_register (const char *project_name, const char *framework_name,
                                 const char *component_name, const char *variable_name,
                                 const char *description, pmix_mca_base_var_type_t type,
                                 pmix_mca_base_var_enum_t *enumerator, int bind, pmix_mca_base_var_flag_t flags,
@@ -416,7 +416,7 @@ int pmix_mca_base_var_register (const char *project_name, const char *framework_
  * be unregistered / made unavailable when that component is closed by
  * its framework.
  */
-int pmix_mca_base_component_var_register (const pmix_mca_base_component_t *component,
+PMIX_EXPORT int pmix_mca_base_component_var_register (const pmix_mca_base_component_t *component,
                                           const char *variable_name, const char *description,
                                           pmix_mca_base_var_type_t type, pmix_mca_base_var_enum_t *enumerator,
                                           int bind, pmix_mca_base_var_flag_t flags,
@@ -428,7 +428,7 @@ int pmix_mca_base_component_var_register (const pmix_mca_base_component_t *compo
  * function is equivalent to pmix_mca_base_var_register with component_name = "base" and
  * with the MCA_BASE_VAR_FLAG_DWG set. See pmix_mca_base_var_register().
  */
-int pmix_mca_base_framework_var_register (const pmix_mca_base_framework_t *framework,
+PMIX_EXPORT int pmix_mca_base_framework_var_register (const pmix_mca_base_framework_t *framework,
                                           const char *variable_name,
                                           const char *help_msg, pmix_mca_base_var_type_t type,
                                           pmix_mca_base_var_enum_t *enumerator, int bind,
@@ -471,7 +471,7 @@ int pmix_mca_base_framework_var_register (const pmix_mca_base_framework_t *frame
  * variable names "B" and "C" (and does *not* set a value for
  * "A"), it is undefined as to which value will be used.
  */
-int pmix_mca_base_var_register_synonym (int synonym_for, const char *project_name,
+PMIX_EXPORT int pmix_mca_base_var_register_synonym (int synonym_for, const char *project_name,
                                         const char *framework_name,
                                         const char *component_name,
                                         const char *synonym_name,
