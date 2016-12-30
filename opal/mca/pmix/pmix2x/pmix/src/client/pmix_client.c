@@ -45,6 +45,10 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+
+#if PMIX_HAVE_ZLIB
+#include <zlib.h>
+#endif
 #include PMIX_EVENT_HEADER
 #include PMIX_EVENT2_THREAD_HEADER
 
@@ -60,6 +64,7 @@
 #include "src/buffer_ops/buffer_ops.h"
 #include "src/event/pmix_event.h"
 #include "src/util/argv.h"
+#include "src/util/compress.h"
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/output.h"
@@ -70,6 +75,9 @@
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
 #include "src/dstore/pmix_dstore.h"
 #endif /* PMIX_ENABLE_DSTORE */
+#ifdef HAVE_ZLIB_H
+#include <zlib.h>
+#endif
 
 #include "pmix_client_ops.h"
 #include "src/include/pmix_jobdata.h"
@@ -547,12 +555,30 @@ static void _putfn(int sd, short args, void *cbdata)
     pmix_status_t rc;
     pmix_kval_t *kv;
     pmix_nspace_t *ns;
+    uint8_t *tmp;
+    size_t len;
 
     /* setup to xfer the data */
     kv = PMIX_NEW(pmix_kval_t);
     kv->key = strdup(cb->key);  // need to copy as the input belongs to the user
     kv->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
-    rc = pmix_value_xfer(kv->value, cb->value);
+    if (PMIX_STRING_SIZE_CHECK(cb->value)) {
+        /* compress large strings */
+        if (pmix_util_compress_string(cb->value->data.string, &tmp, &len)) {
+            if (NULL == tmp) {
+                PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                rc = PMIX_ERR_NOMEM;
+            }
+            kv->value->type = PMIX_COMPRESSED_STRING;
+            kv->value->data.bo.bytes = (char*)tmp;
+            kv->value->data.bo.size = len;
+            rc = PMIX_SUCCESS;
+        } else {
+            rc = pmix_value_xfer(kv->value, cb->value);
+        }
+    } else {
+        rc = pmix_value_xfer(kv->value, cb->value);
+    }
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         goto done;
@@ -595,7 +621,7 @@ static void _putfn(int sd, short args, void *cbdata)
         }
     }
 
-    done:
+  done:
     PMIX_RELEASE(kv);  // maintain accounting
     cb->pstatus = rc;
     cb->active = false;

@@ -24,4 +24,12 @@ make sure that both MPI and PMIx libraries are visible for the loader.
 
 For PMIx testing "convenience" there is a `run.sh` script that can be used to
 ensure that environment is set properly (not a production grade so may not work
-for all environments)
+for all environments). To use it open it and fix:
+- OMPI_BASE to point to your MPI installation
+- PMIX_LIB to point to your PMIx installation
+
+If you are running inside the supported batch system you shoud be fine to
+just run fixed `run.sh` with the first argument defining how many processes
+needs to be launched and all other parameters will be passed to the performance
+tool. For example:
+$ ./run.sh 10 -d

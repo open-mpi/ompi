@@ -12,7 +12,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights
 #                         reserved.
 # Copyright (c) 2016      Intel, Inc. All rights reserved.
@@ -41,7 +41,7 @@ EXTRA_DIST = \
 	pmix.m4 \
 	pmix_search_libs.m4 \
 	pmix_setup_cc.m4 \
-	pmix_setup_hwloc.m4 \
+	pmix_setup_zlib.m4 \
 	pmix_setup_libevent.m4 \
 	pmix_mca_priority_sort.pl
 

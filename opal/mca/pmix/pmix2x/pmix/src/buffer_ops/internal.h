@@ -39,9 +39,6 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-#if PMIX_HAVE_HWLOC
-#include PMIX_HWLOC_HEADER
-#endif
 
  BEGIN_C_DECLS
 
@@ -279,11 +276,6 @@ pmix_status_t pmix_bfrop_pack_time(pmix_buffer_t *buffer, const void *src,
                                    int32_t num_vals, pmix_data_type_t type);
 pmix_status_t pmix_bfrop_pack_status(pmix_buffer_t *buffer, const void *src,
                                      int32_t num_vals, pmix_data_type_t type);
-
-#if PMIX_HAVE_HWLOC
-pmix_status_t pmix_bfrop_pack_topo(pmix_buffer_t *buffer, const void *src,
-                                   int32_t num_vals, pmix_data_type_t type);
-#endif
 pmix_status_t pmix_bfrop_pack_value(pmix_buffer_t *buffer, const void *src,
                                     int32_t num_vals, pmix_data_type_t type);
 pmix_status_t pmix_bfrop_pack_proc(pmix_buffer_t *buffer, const void *src,
@@ -364,11 +356,6 @@ pmix_status_t pmix_bfrop_pack_array(pmix_buffer_t *buffer, const void *src,
                                       int32_t *num_vals, pmix_data_type_t type);
  pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
                                         int32_t *num_vals, pmix_data_type_t type);
-
-#if PMIX_HAVE_HWLOC
- pmix_status_t pmix_bfrop_unpack_topo(pmix_buffer_t *buffer, void *dest,
-                                      int32_t *num_vals, pmix_data_type_t type);
-#endif
  pmix_status_t pmix_bfrop_unpack_value(pmix_buffer_t *buffer, void *dest,
                                        int32_t *num_vals, pmix_data_type_t type);
  pmix_status_t pmix_bfrop_unpack_proc(pmix_buffer_t *buffer, void *dest,
@@ -418,15 +405,8 @@ pmix_status_t pmix_bfrop_unpack_array(pmix_buffer_t *buffer, void *dest,
  * Internal copy functions
  */
 
- pmix_status_t pmix_bfrop_std_copy(void **dest, void *src, pmix_data_type_t type);
-
- pmix_status_t pmix_bfrop_copy_string(char **dest, char *src, pmix_data_type_t type);
-
-#if PMIX_HAVE_HWLOC
- pmix_status_t pmix_bfrop_copy_topo(hwloc_topology_t *dest,
-                          hwloc_topology_t src,
-                          pmix_data_type_t type);
-#endif
+pmix_status_t pmix_bfrop_std_copy(void **dest, void *src, pmix_data_type_t type);
+pmix_status_t pmix_bfrop_copy_string(char **dest, char *src, pmix_data_type_t type);
 pmix_status_t pmix_bfrop_copy_value(pmix_value_t **dest, pmix_value_t *src,
                                     pmix_data_type_t type);
 pmix_status_t pmix_bfrop_copy_proc(pmix_proc_t **dest, pmix_proc_t *src,
@@ -487,11 +467,6 @@ pmix_status_t pmix_bfrop_print_double(char **output, char *prefix, double *src, 
 pmix_status_t pmix_bfrop_print_timeval(char **output, char *prefix, struct timeval *src, pmix_data_type_t type);
 pmix_status_t pmix_bfrop_print_time(char **output, char *prefix, time_t *src, pmix_data_type_t type);
 pmix_status_t pmix_bfrop_print_status(char **output, char *prefix, pmix_status_t *src, pmix_data_type_t type);
-
-#if PMIX_HAVE_HWLOC
-pmix_status_t pmix_bfrop_print_topo(char **output, char *prefix,
-                                    hwloc_topology_t src, pmix_data_type_t type);
-#endif
 pmix_status_t pmix_bfrop_print_value(char **output, char *prefix, pmix_value_t *src, pmix_data_type_t type);
 pmix_status_t pmix_bfrop_print_proc(char **output, char *prefix,
                                     pmix_proc_t *src, pmix_data_type_t type);

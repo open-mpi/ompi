@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,7 @@ int opal_hwloc_base_set_process_membind_policy(void)
 
     /* Make sure opal_hwloc_topology has been set by the time we've
        been called */
-    if (NULL == opal_hwloc_topology) {
+    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
         return OPAL_ERR_BAD_PARAM;
     }
 
@@ -82,7 +83,7 @@ int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments,
     hwloc_cpuset_t cpuset = NULL;
 
     /* bozo check */
-    if (NULL == opal_hwloc_topology) {
+    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
         msg = "hwloc_set_area_membind() failure - topology not available";
         return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
                                                    msg, rc);
@@ -137,7 +138,7 @@ int opal_hwloc_base_membind(opal_hwloc_base_memory_segment_t *segs,
     hwloc_cpuset_t cpuset = NULL;
 
     /* bozo check */
-    if (NULL == opal_hwloc_topology) {
+    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
         msg = "hwloc_set_area_membind() failure - topology not available";
         return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
                                                    msg, rc);

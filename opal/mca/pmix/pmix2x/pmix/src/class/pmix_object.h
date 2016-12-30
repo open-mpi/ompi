@@ -165,7 +165,7 @@ struct pmix_class_t {
     size_t cls_sizeof;              /**< size of an object instance */
 };
 
-extern int pmix_class_init_epoch;
+PMIX_EXPORT extern int pmix_class_init_epoch;
 
 /**
  * For static initializations of OBJects.
@@ -394,7 +394,7 @@ PMIX_CLASS_DECLARATION(pmix_object_t);
  *
  * @param class    Pointer to class descriptor
  */
-void pmix_class_initialize(pmix_class_t *);
+PMIX_EXPORT void pmix_class_initialize(pmix_class_t *);
 
 /**
  * Shut down the class system and release all memory
@@ -405,7 +405,7 @@ void pmix_class_initialize(pmix_class_t *);
  * tools like valgrind and purify don't report still-reachable memory
  * upon process termination.
  */
-int pmix_class_finalize(void);
+PMIX_EXPORT int pmix_class_finalize(void);
 
 /**
  * Run the hierarchy of class constructors for this object, in a
