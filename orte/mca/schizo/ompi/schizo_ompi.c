@@ -1101,11 +1101,6 @@ static int setup_child(orte_job_t *jdata,
         opal_setenv("OMPI_MCA_orte_do_not_barrier", "1", true, &app->env);
     }
 
-    /* if we are using staged execution, tell it */
-    if (orte_staged_execution) {
-        opal_setenv("OMPI_MCA_orte_staged_execution", "1", true, &app->env);
-    }
-
     /* if the proc isn't going to forward IO, then we need to flag that
      * it has "completed" iof termination as otherwise it will never fire
      */

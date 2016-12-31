@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -157,6 +157,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_TDIR_RMCLEAN                   "pmix.tdir.rmclean"     // (bool)  Resource Manager will clean session directories
 
 /* information about relative ranks as assigned by the RM */
+#define PMIX_PROCID                         "pmix.procid"           // (pmix_proc_t) process identifier
 #define PMIX_NSPACE                         "pmix.nspace"           // (char*) nspace of a job
 #define PMIX_JOBID                          "pmix.jobid"            // (char*) jobid assigned by scheduler
 #define PMIX_APPNUM                         "pmix.appnum"           // (uint32_t) app number within the job
@@ -282,6 +283,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_QUERY_AUTHORIZATIONS           "pmix.qry.auths"         // return operations tool is authorized to perform
 #define PMIX_QUERY_SPAWN_SUPPORT            "pmix.qry.spawn"         // return a comma-delimited list of supported spawn attributes
 #define PMIX_QUERY_DEBUG_SUPPORT            "pmix.qry.debug"         // return a comma-delimited list of supported debug attributes
+#define PMIX_QUERY_MEMORY_USAGE             "pmix.qry.mem"           // return info on memory usage for the procs indicated in the qualifiers
+#define PMIX_QUERY_LOCAL_ONLY               "pmix.qry.local"         // constrain the query to local information only
 
 /* log attributes */
 #define PMIX_LOG_STDERR                     "pmix.log.stderr"        // (bool) log data to stderr

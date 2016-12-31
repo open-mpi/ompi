@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -36,7 +36,6 @@
 
 static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
-static size_t errhdler_ref = 0;
 
 #define PMIX_WAIT_FOR_COMPLETION(a)             \
     do {                                        \
@@ -50,7 +49,9 @@ static void errreg_cbfunc (pmix_status_t status,
                            size_t errhandler_ref,
                            void *cbdata)
 {
-    errhdler_ref = errhandler_ref;
+    opal_pmix2x_event_t *event = (opal_pmix2x_event_t*)cbdata;
+
+    event->index = errhandler_ref;
     opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                         "PMIX client errreg_cbfunc - error handler registered status=%d, reference=%lu",
                         status, (unsigned long)errhandler_ref);
@@ -62,6 +63,7 @@ int pmix2x_client_init(void)
     pmix_status_t rc;
     int dbg;
     opal_pmix2x_jobid_trkr_t *job;
+    opal_pmix2x_event_t *event;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client init");
@@ -98,7 +100,9 @@ int pmix2x_client_init(void)
     opal_proc_set_name(&pname);
 
     /* register the default event handler */
-    PMIx_Register_event_handler(NULL, 0, NULL, 0, pmix2x_event_hdlr, errreg_cbfunc, NULL);
+    event = OBJ_NEW(opal_pmix2x_event_t);
+    opal_list_append(&mca_pmix_pmix2x_component.events, &event->super);
+    PMIx_Register_event_handler(NULL, 0, NULL, 0, pmix2x_event_hdlr, errreg_cbfunc, event);
     return OPAL_SUCCESS;
 
 }
@@ -106,12 +110,16 @@ int pmix2x_client_init(void)
 int pmix2x_client_finalize(void)
 {
     pmix_status_t rc;
+    opal_pmix2x_event_t *event;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client finalize");
 
-    /* deregister the default event handler */
-    PMIx_Deregister_event_handler(errhdler_ref, NULL, NULL);
+    /* deregister all event handlers */
+    OPAL_LIST_FOREACH(event, &mca_pmix_pmix2x_component.events, opal_pmix2x_event_t) {
+        PMIx_Deregister_event_handler(event->index, NULL, NULL);
+    }
+    /* the list will be destructed when the component is finalized */
 
     rc = PMIx_Finalize(NULL, 0);
     return pmix2x_convert_rc(rc);

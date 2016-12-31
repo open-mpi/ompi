@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -39,9 +39,7 @@ typedef struct {
   opal_list_t jobids;
   bool native_launch;
   size_t evindex;
-  opal_list_t single_events;
-  opal_list_t multi_events;
-  opal_list_t default_events;
+  opal_list_t events;
   int cache_size;
   opal_list_t cache;
 } mca_pmix_pmix2x_component_t;
@@ -61,42 +59,10 @@ OBJ_CLASS_DECLARATION(opal_pmix2x_jobid_trkr_t);
 typedef struct {
     opal_list_item_t super;
     size_t index;
-    int code;
     opal_pmix_notification_fn_t handler;
-} opal_pmix2x_single_event_t;
-OBJ_CLASS_DECLARATION(opal_pmix2x_single_event_t);
-
-typedef struct {
-    opal_list_item_t super;
-    size_t index;
-    int *codes;
-    size_t ncodes;
-    opal_pmix_notification_fn_t handler;
-} opal_pmix2x_multi_event_t;
-OBJ_CLASS_DECLARATION(opal_pmix2x_multi_event_t);
-
-typedef struct {
-    opal_list_item_t super;
-    size_t index;
-    opal_pmix_notification_fn_t handler;
-} opal_pmix2x_default_event_t;
-OBJ_CLASS_DECLARATION(opal_pmix2x_default_event_t);
-
-typedef struct {
-    opal_list_item_t super;
-    int status;
-    bool nondefault;
-    opal_process_name_t source;
-    pmix_data_range_t range;
-    opal_list_t *info;
-    opal_list_t results;
-    opal_pmix2x_single_event_t *sing;
-    opal_pmix2x_multi_event_t *multi;
-    opal_pmix2x_default_event_t *def;
-    opal_pmix_op_cbfunc_t final_cbfunc;
-    void *final_cbdata;
-} opal_pmix2x_event_chain_t;
-OBJ_CLASS_DECLARATION(opal_pmix2x_event_chain_t);
+    void *cbdata;
+} opal_pmix2x_event_t;
+OBJ_CLASS_DECLARATION(opal_pmix2x_event_t);
 
 typedef struct {
     opal_object_t super;
@@ -111,11 +77,16 @@ typedef struct {
     pmix_app_t *apps;
     size_t sz;
     volatile bool active;
+    opal_list_t *codes;
+    pmix_status_t *pcodes;
+    size_t ncodes;
+    opal_pmix2x_event_t *event;
     opal_pmix_op_cbfunc_t opcbfunc;
     opal_pmix_modex_cbfunc_t mdxcbfunc;
     opal_pmix_value_cbfunc_t valcbfunc;
     opal_pmix_lookup_cbfunc_t lkcbfunc;
     opal_pmix_spawn_cbfunc_t spcbfunc;
+    opal_pmix_evhandler_reg_cbfunc_t evregcbfunc;
     void *cbdata;
 } pmix2x_opcaddy_t;
 OBJ_CLASS_DECLARATION(pmix2x_opcaddy_t);
@@ -152,27 +123,14 @@ typedef struct {
     size_t handler;
     opal_list_t *event_codes;
     opal_list_t *info;
+    opal_list_t results;
     opal_pmix_notification_fn_t evhandler;
     opal_pmix_evhandler_reg_cbfunc_t cbfunc;
     opal_pmix_op_cbfunc_t opcbfunc;
+    pmix_event_notification_cbfunc_fn_t pmixcbfunc;
     void *cbdata;
 } pmix2x_threadshift_t;
 OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
-
-#define OPAL_PMIX_OPCD_THREADSHIFT(i, s, sr, if, nif, fn, cb, cd)   \
-    do {                                                    \
-        pmix2x_opalcaddy_t *_cd;                            \
-        _cd = OBJ_NEW(pmix2x_opalcaddy_t);                  \
-        _cd->id = (i);                                      \
-        _cd->status = (s);                                  \
-        _cd->source = (sr);                                 \
-        _cd->info = (i);                                    \
-        _cd->evcbfunc = (cb);                               \
-        _cd->cbdata = (cd);                                 \
-        event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
-                     -1, EV_WRITE, (fn), (_cd));            \
-        event_active(&((_cd)->ev), EV_WRITE, 1);            \
-    } while(0)
 
 #define OPAL_PMIX_OP_THREADSHIFT(e, fn, cb, cd)             \
     do {                                                    \

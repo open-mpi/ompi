@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -553,10 +553,17 @@ static void _putfn(int sd, short args, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_status_t rc;
-    pmix_kval_t *kv;
+    pmix_kval_t *kv = NULL;
     pmix_nspace_t *ns;
     uint8_t *tmp;
     size_t len;
+
+    /* no need to push info that starts with "pmix" as that is
+     * info we would have been provided at startup */
+    if (0 == strncmp(cb->key, "pmix", 4)) {
+        rc = PMIX_SUCCESS;
+        goto done;
+    }
 
     /* setup to xfer the data */
     kv = PMIX_NEW(pmix_kval_t);
@@ -622,7 +629,9 @@ static void _putfn(int sd, short args, void *cbdata)
     }
 
   done:
-    PMIX_RELEASE(kv);  // maintain accounting
+    if (NULL != kv) {
+        PMIX_RELEASE(kv);  // maintain accounting
+    }
     cb->pstatus = rc;
     cb->active = false;
 }

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -763,7 +763,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
      * us to attempt to retrieve it from the server */
     for (n=0; n < cb->ninfo; n++) {
         if (0 == strcmp(cb->info[n].key, PMIX_OPTIONAL) &&
-            cb->info[n].value.data.flag) {
+            (PMIX_UNDEF == cb->info[n].value.type || cb->info[n].value.data.flag)) {
             /* they don't want us to try and retrieve it */
             pmix_output_verbose(2, pmix_globals.debug_output,
                                 "PMIx_Get key=%s for rank = %d, namespace = %s was not found - request was optional",

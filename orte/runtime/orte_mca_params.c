@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -429,6 +429,13 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_retain_aliases);
 
+    orte_hostname_cutoff = 1000;
+    (void) mca_base_var_register ("orte", "orte", NULL, "hostname_cutoff",
+                                  "Pass hostnames to all procs when #nodes is less than cutoff [default:1000]",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_hostname_cutoff);
+
     /* which alias to use in MPIR_proctab */
     orte_use_hostname_alias = 1;
     (void) mca_base_var_register ("orte", "orte", NULL, "hostname_alias_index",
@@ -659,13 +666,6 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_allowed_exit_without_sync);
 
-    orte_staged_execution = false;
-    (void) mca_base_var_register ("orte", "orte", NULL, "staged_execution",
-                                  "Staged execution is being used",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_staged_execution);
-
     orte_report_child_jobs_separately = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "report_child_jobs_separately",
                                   "Return the exit status of the primary job only",
@@ -753,17 +753,6 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                   OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_daemon_cores);
-
-    /* cutoff for full modex */
-    orte_direct_modex_cutoff = UINT32_MAX;
-    id = mca_base_var_register ("orte", "orte", NULL, "direct_modex_cutoff",
-                                "If the number of processes in the application exceeds the provided value,"
-                                "modex will be done upon demand [default: UINT32_MAX]",
-                                MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
-                                OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                &orte_direct_modex_cutoff);
-    /* register a synonym for old name */
-    mca_base_var_register_synonym (id, "ompi", "ompi", "hostname", "cutoff", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     /* get the conduit params */
     orte_coll_transport = "fabric,ethernet";

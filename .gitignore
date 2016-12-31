@@ -111,6 +111,7 @@ contrib/platform/intel/bend/*orcm*
 contrib/scaling/orte_no_op
 contrib/scaling/mpi_no_op
 contrib/scaling/mpi_barrier
+contrib/scaling/mpi_memprobe
 
 examples/hello_c
 examples/hello_cxx

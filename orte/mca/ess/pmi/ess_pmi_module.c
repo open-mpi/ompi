@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -89,7 +89,6 @@ static int rte_init(void)
     char *envar, *ev1, *ev2;
     uint64_t unique_key[2];
     char *string_key;
-    char *rmluri;
     opal_value_t *kv;
     char *val;
     int u32, *u32ptr;
@@ -399,19 +398,9 @@ static int rte_init(void)
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
 
-    /***  PUSH DATA FOR OTHERS TO FIND   ***/
-
-    /* push our RML URI in case others need to talk directly to us */
-    rmluri = orte_rml.get_contact_info();
-    /* push it out for others to use */
-    OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_PROC_URI, rmluri, OPAL_STRING);
-    if (ORTE_SUCCESS != ret) {
-        error = "pmix put uri";
-        goto error;
-    }
-    free(rmluri);
-
-    /* push our hostname so others can find us, if they need to */
+    /* push our hostname so others can find us, if they need to - the
+     * native PMIx component will ignore this request as the hostname
+     * is provided by the system */
     OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_HOSTNAME, orte_process_info.nodename, OPAL_STRING);
     if (ORTE_SUCCESS != ret) {
         error = "db store hostname";
