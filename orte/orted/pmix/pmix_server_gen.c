@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -35,6 +35,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/pstat/pstat.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -449,13 +450,18 @@ static void _query(int sd, short args, void *cbdata)
     opal_pmix_query_t *q;
     opal_value_t *kv;
     orte_job_t *jdata;
-    int rc;
-    opal_list_t *results;
+    orte_proc_t *proct;
+    int rc, i, num_replies;
+    opal_list_t *results, targets, *array;
     size_t n;
     uint32_t key;
     void *nptr;
     char **nspaces=NULL, nspace[512];
     char **ans = NULL;
+    bool local_only;
+    orte_namelist_t *nm;
+    opal_pstats_t pstat;
+    float pss;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s processing query",
@@ -522,6 +528,84 @@ static void _query(int sd, short args, void *cbdata)
                 opal_list_append(results, &kv->super);
                 opal_argv_free(ans);
                 ans = NULL;
+            } else if (0 == strcmp(q->keys[n], OPAL_PMIX_QUERY_MEMORY_USAGE)) {
+                /* check the qualifiers to find the procs they want to
+                 * know about - if qualifiers are NULL, then get it for
+                 * the daemons + all active jobs */
+                if (0 == opal_list_get_size(&q->qualifiers)) {
+                    /* create a request tracker */
+                    /* xcast a request for all memory usage */
+                    /* return success - the callback will be done
+                     * once we get the results */
+                    return;
+                }
+
+                /* scan the qualifiers */
+                OPAL_LIST_FOREACH(kv, &q->qualifiers, opal_value_t) {
+                    if (0 == strcmp(kv->key, OPAL_PMIX_QUERY_LOCAL_ONLY)) {
+                        if (OPAL_UNDEF == kv->type || kv->data.flag) {
+                            local_only = true;
+                        } else {
+                            local_only = false;
+                        }
+                    } else if (0 == strcmp(kv->key, OPAL_PMIX_PROCID)) {
+                        /* save this directive on our list of targets */
+                        nm = OBJ_NEW(orte_namelist_t);
+                    }
+                }
+
+                /* if they have asked for only our local procs or daemon,
+                 * then we can just get the data directly */
+                if (local_only) {
+                    if (0 == opal_list_get_size(&targets)) {
+                        kv = OBJ_NEW(opal_value_t);
+                        kv->key = strdup(OPAL_PMIX_QUERY_MEMORY_USAGE);
+                        kv->type = OPAL_PTR;
+                        array = OBJ_NEW(opal_list_t);
+                        kv->data.ptr = array;
+                        opal_list_append(results, &kv->super);
+                        /* collect my memory usage */
+                        OBJ_CONSTRUCT(&pstat, opal_pstats_t);
+                        opal_pstat.query(orte_process_info.pid, &pstat, NULL);
+                        kv = OBJ_NEW(opal_value_t);
+                        kv->key = strdup(OPAL_PMIX_DAEMON_MEMORY);
+                        kv->type = OPAL_FLOAT;
+                        kv->data.fval = pstat.pss;
+                        opal_list_append(array, &kv->super);
+                        OBJ_DESTRUCT(&pstat);
+                        /* collect the memory usage of all my children */
+                        pss = 0.0;
+                        num_replies = 0;
+                        for (i=0; i < orte_local_children->size; i++) {
+                            if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
+                                ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_ALIVE)) {
+                                /* collect the stats on this proc */
+                                OBJ_CONSTRUCT(&pstat, opal_pstats_t);
+                                if (OPAL_SUCCESS == opal_pstat.query(proct->pid, &pstat, NULL)) {
+                                    pss += pstat.pss;
+                                    ++num_replies;
+                                }
+                                OBJ_DESTRUCT(&pstat);
+                            }
+                        }
+                        /* compute the average value */
+                        if (0 < num_replies) {
+                            pss /= (float)num_replies;
+                        }
+                        kv = OBJ_NEW(opal_value_t);
+                        kv->key = strdup(OPAL_PMIX_CLIENT_AVG_MEMORY);
+                        kv->type = OPAL_FLOAT;
+                        kv->data.fval = pss;
+                        opal_list_append(array, &kv->super);
+                    } else {
+
+                    }
+                } else {
+                    /* if they want it for remote procs, see who is hosting them
+                     * and ask directly for the info - if rank=wildcard, then
+                     * we need to xcast the request and collect the results */
+                }
+
             }
         }
     }

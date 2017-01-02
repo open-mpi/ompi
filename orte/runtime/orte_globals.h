@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -466,6 +466,7 @@ ORTE_DECLSPEC extern bool orte_have_fqdn_allocation;
 ORTE_DECLSPEC extern bool orte_show_resolved_nodenames;
 ORTE_DECLSPEC extern bool orte_retain_aliases;
 ORTE_DECLSPEC extern int orte_use_hostname_alias;
+ORTE_DECLSPEC extern int orte_hostname_cutoff;
 
 /* debug flags */
 ORTE_DECLSPEC extern int orted_debug_failure;
@@ -564,10 +565,6 @@ ORTE_DECLSPEC extern int orte_stat_history_size;
 /* envars to forward */
 ORTE_DECLSPEC extern char **orte_forwarded_envars;
 
-/* map-reduce mode */
-ORTE_DECLSPEC extern bool orte_map_reduce;
-ORTE_DECLSPEC extern bool orte_staged_execution;
-
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 ORTE_DECLSPEC extern bool orte_map_stddiag_to_stderr;
 
@@ -581,9 +578,6 @@ ORTE_DECLSPEC extern char *orte_base_user_debugger;
  * to certain cores
  */
 ORTE_DECLSPEC extern char *orte_daemon_cores;
-
-/* cutoff for collective modex */
-ORTE_DECLSPEC extern uint32_t orte_direct_modex_cutoff;
 
 END_C_DECLS
 

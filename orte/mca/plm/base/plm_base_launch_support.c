@@ -1341,9 +1341,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "1");
     }
 
-    if (orte_map_reduce) {
-        opal_argv_append(argc, argv, "--mapreduce");
-    }
     if (orte_map_stddiag_to_stderr) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "orte_map_stddiag_to_stderr");

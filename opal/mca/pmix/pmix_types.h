@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -88,6 +88,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_TDIR_RMCLEAN                  "pmix.tdir.rmclean"     // (bool)  Resource Manager will clean session directories
 
 /* information about relative ranks as assigned by the RM */
+#define OPAL_PMIX_PROCID                        "pmix.procid"           // (opal_process_name_t) process identifier
 #define OPAL_PMIX_NSPACE                        "pmix.nspace"           // (char*) nspace of a job
 #define OPAL_PMIX_JOBID                         "pmix.jobid"            // (uint32_t) jobid assigned by scheduler
 #define OPAL_PMIX_APPNUM                        "pmix.appnum"           // (uint32_t) app number within the job
@@ -117,6 +118,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_LOCAL_CPUSETS                 "pmix.lcpus"            // (char*) colon-delimited cpusets of local peers within the specified nspace
 #define OPAL_PMIX_PROC_URI                      "opal.puri"             // (char*) URI containing contact info for proc - NOTE: this is published by procs and
                                                                         //            thus cannot be prefixed with "pmix"
+#define OPAL_PMIX_DAEMON_MEMORY                 "pmix.dmn.mem"          // (float) Mbytes of memory currently used by daemon
+#define OPAL_PMIX_CLIENT_AVG_MEMORY             "pmix.cl.mem.avg"       // (float) Average Mbytes of memory used by client processes
 
 /* size info */
 #define OPAL_PMIX_UNIV_SIZE                     "pmix.univ.size"        // (uint32_t) #procs in this nspace
@@ -220,6 +223,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_QUERY_AUTHORIZATIONS          "pmix.qry.auths"        // return operations tool is authorized to perform"
 #define OPAL_PMIX_QUERY_SPAWN_SUPPORT           "pmix.qry.spawn"        // return a comma-delimited list of supported spawn attributes
 #define OPAL_PMIX_QUERY_DEBUG_SUPPORT           "pmix.qry.debug"        // return a comma-delimited list of supported debug attributes
+#define OPAL_PMIX_QUERY_MEMORY_USAGE            "pmix.qry.mem"          // return info on memory usage for the procs indicated in the qualifiers
+#define OPAL_PMIX_QUERY_LOCAL_ONLY              "pmix.qry.local"        // constrain the query to local information only
 
 /* log attributes */
 #define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"        // (bool) log data to stderr
