@@ -64,6 +64,8 @@ BEGIN_C_DECLS
 /* attributes for the rendezvous socket  */
 #define OPAL_PMIX_USOCK_DISABLE                 "pmix.usock.disable"    // (bool) disable legacy usock support
 #define OPAL_PMIX_SOCKET_MODE                   "pmix.sockmode"         // (uint32_t) POSIX mode_t (9 bits valid)
+#define OPAL_PMIX_SINGLE_LISTENER               "pmix.sing.listnr"      // (bool) use only one rendezvous socket, letting priorities and/or
+                                                                        //        MCA param select the active transport
 
 /* attributes for TCP connections */
 #define OPAL_PMIX_TCP_URI                       "pmix.tcp.uri"          // (char*) URI of server to connect to

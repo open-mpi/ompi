@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -69,9 +69,22 @@ static pmix_status_t setup_listeners(pmix_info_t *info, size_t ninfo, bool *need
 {
     pmix_ptl_base_active_t *active;
     pmix_status_t rc;
+    size_t n;
+    bool single = false;
 
     if (!pmix_ptl_globals.initialized) {
         return PMIX_ERR_INIT;
+    }
+
+    /* scan the directives to see if they want only one listener setup */
+    if (NULL != info) {
+        for (n=0; n < ninfo; n++) {
+            if (0 == strncmp(info[n].key, PMIX_SINGLE_LISTENER, PMIX_MAX_KEYLEN) &&
+                (PMIX_UNDEF == info[n].value.type || info[n].value.data.flag)) {
+                single = true;
+                break;
+            }
+        }
     }
 
     PMIX_LIST_FOREACH(active, &pmix_ptl_globals.actives, pmix_ptl_base_active_t) {
@@ -79,6 +92,9 @@ static pmix_status_t setup_listeners(pmix_info_t *info, size_t ninfo, bool *need
             rc = active->component->setup_listener(info, ninfo, need_listener);
             if (PMIX_SUCCESS != rc && PMIX_ERR_NOT_AVAILABLE != rc) {
                 return rc;
+            }
+            if (single) {
+                return PMIX_SUCCESS;
             }
         }
     }
