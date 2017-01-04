@@ -225,6 +225,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_QUERY_DEBUG_SUPPORT           "pmix.qry.debug"        // return a comma-delimited list of supported debug attributes
 #define OPAL_PMIX_QUERY_MEMORY_USAGE            "pmix.qry.mem"          // return info on memory usage for the procs indicated in the qualifiers
 #define OPAL_PMIX_QUERY_LOCAL_ONLY              "pmix.qry.local"        // constrain the query to local information only
+#define OPAL_PMIX_QUERY_REPORT_AVG              "pmix.qry.avg"          // report average values
+#define OPAL_PMIX_QUERY_REPORT_MINMAX           "pmix.qry.minmax"       // report minimum and maximum value
 
 /* log attributes */
 #define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"        // (bool) log data to stderr
