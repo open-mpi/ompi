@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
@@ -478,10 +478,17 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
     pmix_ptl_queue_t *queue = (pmix_ptl_queue_t*)cbdata;
     pmix_ptl_send_t *snd;
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "[%s:%d] queue callback called: reply to %s:%d on tag %d",
+                        "[%s:%d] send to %s:%d on tag %d",
                         __FILE__, __LINE__,
                         (queue->peer)->info->nptr->nspace,
                         (queue->peer)->info->rank, (queue->tag));
+
+    if (queue->peer->sd < 0) {
+        /* this peer's socket has been closed */
+        PMIX_RELEASE(queue);
+        return;
+    }
+
     snd = PMIX_NEW(pmix_ptl_send_t);
     snd->hdr.pindex = htonl(pmix_globals.pindex);
     snd->hdr.tag = htonl(queue->tag);
@@ -512,6 +519,12 @@ void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
     pmix_ptl_posted_recv_t *req;
     pmix_ptl_send_t *snd;
     uint32_t tag;
+
+    if (ms->peer->sd < 0) {
+        /* this peer's socket has been closed */
+        PMIX_RELEASE(ms);
+        return;
+    }
 
     /* set the tag */
     tag = current_tag++;

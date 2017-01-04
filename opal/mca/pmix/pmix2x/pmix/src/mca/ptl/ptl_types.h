@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -236,7 +236,7 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
             pmix_list_append(&(p)->send_queue, &snd->super);                            \
         }                                                                               \
         /* ensure the send event is active */                                           \
-        if (!(p)->send_ev_active) {                                                     \
+        if (!(p)->send_ev_active && 0 <= (p)->sd) {                                     \
             event_add(&(p)->send_event, 0);                                             \
             (p)->send_ev_active = true;                                                 \
         }                                                                               \

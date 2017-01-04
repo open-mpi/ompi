@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -272,9 +272,9 @@ int pmix_server_init(void)
     kv->type = OPAL_STRING;
     kv->data.string = strdup(orte_process_info.tmpdir_base);
     opal_list_append(&info, &kv->super);
-    /* disable usock */
+    /* use only one listener */
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_USOCK_DISABLE);
+    kv->key = strdup(OPAL_PMIX_SINGLE_LISTENER);
     kv->type = OPAL_BOOL;
     kv->data.flag = true;
     opal_list_append(&info, &kv->super);

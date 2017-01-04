@@ -64,6 +64,8 @@ BEGIN_C_DECLS
 /* attributes for the rendezvous socket  */
 #define OPAL_PMIX_USOCK_DISABLE                 "pmix.usock.disable"    // (bool) disable legacy usock support
 #define OPAL_PMIX_SOCKET_MODE                   "pmix.sockmode"         // (uint32_t) POSIX mode_t (9 bits valid)
+#define OPAL_PMIX_SINGLE_LISTENER               "pmix.sing.listnr"      // (bool) use only one rendezvous socket, letting priorities and/or
+                                                                        //        MCA param select the active transport
 
 /* attributes for TCP connections */
 #define OPAL_PMIX_TCP_URI                       "pmix.tcp.uri"          // (char*) URI of server to connect to
@@ -225,6 +227,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_QUERY_DEBUG_SUPPORT           "pmix.qry.debug"        // return a comma-delimited list of supported debug attributes
 #define OPAL_PMIX_QUERY_MEMORY_USAGE            "pmix.qry.mem"          // return info on memory usage for the procs indicated in the qualifiers
 #define OPAL_PMIX_QUERY_LOCAL_ONLY              "pmix.qry.local"        // constrain the query to local information only
+#define OPAL_PMIX_QUERY_REPORT_AVG              "pmix.qry.avg"          // report average values
+#define OPAL_PMIX_QUERY_REPORT_MINMAX           "pmix.qry.minmax"       // report minimum and maximum value
 
 /* log attributes */
 #define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"        // (bool) log data to stderr

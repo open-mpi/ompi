@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -270,6 +270,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (PMIX_SUCCESS != (rc = send_connect_ack(sd))) {
         PMIX_ERROR_LOG(rc);
         CLOSE_THE_SOCKET(sd);
+        pmix_client_globals.myserver.sd = -1;
         return rc;
     }
 
@@ -277,6 +278,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (PMIX_SUCCESS != (rc = recv_connect_ack(sd))) {
         PMIX_ERROR_LOG(rc);
         CLOSE_THE_SOCKET(sd);
+        pmix_client_globals.myserver.sd = -1;
         return rc;
     }
 
