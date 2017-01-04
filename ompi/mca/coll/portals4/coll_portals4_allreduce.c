@@ -417,10 +417,7 @@ int
 ompi_coll_portals4_iallreduce_intra_fini(struct ompi_coll_portals4_request_t *request)
 {
     allreduce_kary_tree_bottom(request);
-
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_complete(&request->super, true);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     return (OMPI_SUCCESS);
 }
