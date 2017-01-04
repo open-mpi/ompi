@@ -134,14 +134,12 @@ int mca_pml_ucx_open(void)
                              UCP_PARAM_FIELD_REQUEST_SIZE |
                              UCP_PARAM_FIELD_REQUEST_INIT |
                              UCP_PARAM_FIELD_REQUEST_CLEANUP |
-                             UCP_PARAM_FIELD_TAG_SENDER_MASK |
-                             UCP_PARAM_FIELD_MT_WORKERS_SHARED;
+                             UCP_PARAM_FIELD_TAG_SENDER_MASK;
     params.features        = UCP_FEATURE_TAG;
     params.request_size    = sizeof(ompi_request_t);
     params.request_init    = mca_pml_ucx_request_init;
     params.request_cleanup = mca_pml_ucx_request_cleanup;
     params.tag_sender_mask = PML_UCX_SPECIFIC_SOURCE_MASK;
-    params.mt_workers_shared = 0;
 
     status = ucp_init(&params, config, &ompi_pml_ucx.ucp_context);
     ucp_config_release(config);
@@ -185,7 +183,7 @@ int mca_pml_ucx_init(void)
 
     /* TODO check MPI thread mode */
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-    params.thread_mode = UCS_THREAD_MODE_MULTI;
+    params.thread_mode = UCS_THREAD_MODE_SINGLE;
 
     status = ucp_worker_create(ompi_pml_ucx.ucp_context, &params,
                                &ompi_pml_ucx.ucp_worker);
