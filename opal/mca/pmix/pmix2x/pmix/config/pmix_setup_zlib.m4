@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -58,10 +58,13 @@ AC_DEFUN([PMIX_ZLIB_CONFIG],[
                            [pmix_zlib_support=0])
         if test $pmix_zlib_support == "1"; then
             LIBS="$LIBS -lz"
+            PMIX_EMBEDDED_LIBS="$PMIX_EMBEDDED_LIBS -lz"
             if test "$pmix_zlib_standard_header_location" != "yes"; then
+                PMIX_EMBEDDED_CPPFLAGS="$PMIX_EMBEDDED_CPPFLAGS $pmix_zlib_CPPFLAGS"
                 CPPFLAGS="$CPPFLAGS $pmix_zlib_CPPFLAGS"
             fi
             if test "$pmix_zlib_standard_lib_location" != "yes"; then
+                PMIX_EMBEDDED_LDFLAGS="$PMIX_EMBEDDED_LDFLAGS $pmix_zlib_LDFLAGS"
                 LDFLAGS="$LDFLAGS $pmix_zlib_LDFLAGS"
             fi
         fi
