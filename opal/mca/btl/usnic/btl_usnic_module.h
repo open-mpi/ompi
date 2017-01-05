@@ -71,7 +71,7 @@ typedef struct opal_btl_usnic_channel_t {
     int chan_rd_num;
     int chan_sd_num;
 
-    int credits;  /* RFXXX until libfab credits fixed */
+    int credits;
     uint32_t rx_post_cnt;
 
     /* fastsend enabled if num_credits_available >= fastsend_wqe_thresh */

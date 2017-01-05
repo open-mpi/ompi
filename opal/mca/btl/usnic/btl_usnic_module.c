@@ -987,7 +987,7 @@ usnic_do_resends(
             /* resends are always standard segments */
             sseg->ss_channel = USNIC_DATA_CHANNEL;
 
-            /* re-send the segment */
+            /* re-send the segment (we have a send credit available) */
             opal_btl_usnic_post_segment(module, endpoint, sseg);
 
             /* consume a send credit for this endpoint.  May send us
@@ -1017,6 +1017,9 @@ usnic_do_resends(
  * endpoint_send_segment() it.  Takes care of subsequent frag
  * cleanup/bookkeeping (dequeue, descriptor callback, etc.) if this frag was
  * completed by this segment.
+ *
+ * ASSUMES THAT THE CALLER HAS ALREADY CHECKED TO SEE IF WE HAVE
+ * A SEND CREDIT!
  */
 static void
 usnic_handle_large_send(
@@ -1070,7 +1073,8 @@ usnic_handle_large_send(
     /* payload length into the header*/
     sseg->ss_base.us_btl_header->payload_len = payload_len;
 
-    /* do the send */
+    // We assume that the caller has checked to see that we have a
+    // send credit, so do the send.
     opal_btl_usnic_endpoint_send_segment(module, sseg);
 
     /* do fragment bookkeeping */
@@ -1182,7 +1186,7 @@ opal_btl_usnic_module_progress_sends(
                     sseg->ss_base.us_btl_header->tag);
 #endif
 
-            /* post the send */
+            /* post the send (we have a send credit available) */
             opal_btl_usnic_endpoint_send_segment(module, sseg);
 
             /* don't do callback yet if this is a put */
@@ -1342,7 +1346,7 @@ usnic_send(
         opal_output(0, "INLINE send, sseg=%p", (void *)sseg);
 #endif
 
-        /* post the segment now */
+        /* post the segment now (we have a send credit available) */
         opal_btl_usnic_endpoint_send_segment(module, sseg);
 
         /* If we own the frag and callback was requested, callback now,
