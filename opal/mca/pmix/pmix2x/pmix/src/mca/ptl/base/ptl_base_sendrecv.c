@@ -253,72 +253,30 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
                         (NULL == msg) ? "NULL" : "NON-NULL");
 
     if (NULL != msg) {
-        if (!msg->hdr_sent) {
-            pmix_output_verbose(2, pmix_globals.debug_output,
-                                "ptl:base:send_handler SENDING HEADER");
-            if (PMIX_SUCCESS == (rc = send_bytes(peer->sd, &msg->sdptr, &msg->sdbytes))) {
-                /* header is completely sent */
-                pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "ptl:base:send_handler HEADER SENT");
-                msg->hdr_sent = true;
-                /* setup to send the data */
-                if (NULL == msg->data) {
-                    /* this was a zero-byte msg - nothing more to do */
-                    PMIX_RELEASE(msg);
-                    peer->send_msg = NULL;
-                    goto next;
-                } else {
-                    /* send the data as a single block */
-                    msg->sdptr = msg->data->base_ptr;
-                    msg->sdbytes = ntohl(msg->hdr.nbytes);
-                }
-                /* fall thru and let the send progress */
-            } else if (PMIX_ERR_RESOURCE_BUSY == rc ||
-                       PMIX_ERR_WOULD_BLOCK == rc) {
-                /* exit this event and let the event lib progress */
-                pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "ptl:base:send_handler RES BUSY OR WOULD BLOCK");
-                return;
-            } else {
-                // report the error
-                event_del(&peer->send_event);
-                peer->send_ev_active = false;
-                PMIX_RELEASE(msg);
-                peer->send_msg = NULL;
-                lost_connection(peer, rc);
-                return;
-            }
+        struct iovec iov[2];
+        int iov_cnt = 1;
+        ssize_t tot;
+        iov[0].iov_base = msg->sdptr;
+        iov[0].iov_len = msg->sdbytes;
+        tot = iov[0].iov_len;
+        if (NULL != msg->data) {
+            iov[1].iov_base = msg->data->base_ptr;
+            iov[1].iov_len = ntohl(msg->hdr.nbytes);
+            tot += iov[1].iov_len;
+            iov_cnt++;
         }
-
-        if (msg->hdr_sent) {
-            pmix_output_verbose(2, pmix_globals.debug_output,
-                                "ptl:base:send_handler SENDING BODY OF MSG");
-            if (PMIX_SUCCESS == (rc = send_bytes(peer->sd, &msg->sdptr, &msg->sdbytes))) {
-                // message is complete
-                pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "ptl:base:send_handler BODY SENT");
-                PMIX_RELEASE(msg);
-                peer->send_msg = NULL;
-            } else if (PMIX_ERR_RESOURCE_BUSY == rc ||
-                       PMIX_ERR_WOULD_BLOCK == rc) {
-                /* exit this event and let the event lib progress */
-                pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "ptl:base:send_handler RES BUSY OR WOULD BLOCK");
-                return;
-            } else {
-                // report the error
-                pmix_output(0, "ptl:base:peer_send_handler: unable to send message ON SOCKET %d",
-                            peer->sd);
-                event_del(&peer->send_event);
-                peer->send_ev_active = false;
-                PMIX_RELEASE(msg);
-                peer->send_msg = NULL;
-                lost_connection(peer, rc);
-                return;
-            }
+        if (tot != writev(peer->sd, iov, iov_cnt)) {
+            // report the error
+            event_del(&peer->send_event);
+            peer->send_ev_active = false;
+            PMIX_RELEASE(msg);
+            peer->send_msg = NULL;
+            lost_connection(peer, rc);
+            return;
         }
+        PMIX_RELEASE(msg);
+        peer->send_msg = NULL;
 
-    next:
         /* if current message completed - progress any pending sends by
          * moving the next in the queue into the "on-deck" position. Note
          * that this doesn't mean we send the message right now - we will
