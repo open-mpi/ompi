@@ -60,13 +60,18 @@ opal_btl_usnic_frag_send_complete(opal_btl_usnic_module_t *module,
     --frag->sf_seg_post_cnt;
 
     /* checks for returnability made inside */
+    opal_btl_usnic_endpoint_t *ep = frag->sf_endpoint;
     opal_btl_usnic_send_frag_return_cond(module, frag);
 
+    // In a short frag segment, the sseg is embedded in the frag.  So
+    // there's no need to return the sseg (because we already returned
+    // the frag).
+
     /* do bookkeeping */
-    ++frag->sf_endpoint->endpoint_send_credits;
+    ++ep->endpoint_send_credits;
 
     /* see if this endpoint needs to be made ready-to-send */
-    opal_btl_usnic_check_rts(frag->sf_endpoint);
+    opal_btl_usnic_check_rts(ep);
 
     ++module->mod_channels[sseg->ss_channel].credits;
 }
