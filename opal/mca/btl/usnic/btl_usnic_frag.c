@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,15 +50,15 @@ common_send_seg_helper(opal_btl_usnic_send_segment_t *seg)
 
 static void
 chunk_seg_constructor(
-    opal_btl_usnic_send_segment_t *seg)
+    opal_btl_usnic_chunk_segment_t *cseg)
 {
     opal_btl_usnic_segment_t *bseg;
 
-    bseg = &seg->ss_base;
+    bseg = &cseg->ss_base;
     bseg->us_type = OPAL_BTL_USNIC_SEG_CHUNK;
 
     /* some more common initializaiton */
-    common_send_seg_helper(seg);
+    common_send_seg_helper(cseg);
 
     /* payload starts next byte beyond BTL chunk header */
     bseg->us_payload.raw = (uint8_t *)(bseg->us_btl_chunk_header + 1);
@@ -68,15 +68,15 @@ chunk_seg_constructor(
 
 static void
 frag_seg_constructor(
-    opal_btl_usnic_send_segment_t *seg)
+    opal_btl_usnic_frag_segment_t *fseg)
 {
     opal_btl_usnic_segment_t *bseg;
 
-    bseg = &seg->ss_base;
+    bseg = &fseg->ss_base;
     bseg->us_type = OPAL_BTL_USNIC_SEG_FRAG;
 
     /* some more common initializaiton */
-    common_send_seg_helper(seg);
+    common_send_seg_helper(fseg);
 
     /* payload starts next byte beyond BTL header */
     bseg->us_payload.raw = (uint8_t *)(bseg->us_btl_header + 1);
@@ -86,7 +86,7 @@ frag_seg_constructor(
 
 static void
 ack_seg_constructor(
-    opal_btl_usnic_send_segment_t *ack)
+    opal_btl_usnic_ack_segment_t *ack)
 {
     opal_btl_usnic_segment_t *bseg;
 
