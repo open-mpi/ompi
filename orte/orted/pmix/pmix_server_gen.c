@@ -38,12 +38,13 @@
 #include "opal/mca/pstat/pstat.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/iof/iof.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
- #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/base/plm_private.h"
 
 #include "pmix_server_internal.h"
 
@@ -529,6 +530,7 @@ static void _query(int sd, short args, void *cbdata)
                 opal_argv_free(ans);
                 ans = NULL;
             } else if (0 == strcmp(q->keys[n], OPAL_PMIX_QUERY_MEMORY_USAGE)) {
+                OBJ_CONSTRUCT(&targets, opal_list_t);
                 /* check the qualifiers to find the procs they want to
                  * know about - if qualifiers are NULL, then get it for
                  * the daemons + all active jobs */
@@ -537,6 +539,7 @@ static void _query(int sd, short args, void *cbdata)
                     /* xcast a request for all memory usage */
                     /* return success - the callback will be done
                      * once we get the results */
+                    OPAL_LIST_DESTRUCT(&targets);
                     return;
                 }
 
@@ -551,6 +554,8 @@ static void _query(int sd, short args, void *cbdata)
                     } else if (0 == strcmp(kv->key, OPAL_PMIX_PROCID)) {
                         /* save this directive on our list of targets */
                         nm = OBJ_NEW(orte_namelist_t);
+                        memcpy(&nm->name, &kv->data.name, sizeof(opal_process_name_t));
+                        opal_list_append(&targets, &nm->super);
                     }
                 }
 
@@ -601,6 +606,7 @@ static void _query(int sd, short args, void *cbdata)
 
                     }
                 } else {
+                    opal_output(0, "NONLOCAL");
                     /* if they want it for remote procs, see who is hosting them
                      * and ask directly for the info - if rank=wildcard, then
                      * we need to xcast the request and collect the results */
@@ -772,24 +778,37 @@ void pmix_server_log_fn(opal_process_name_t *requestor,
                         "%s logging info",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    /* for now, we only support logging show_help messages */
     OPAL_LIST_FOREACH(val, info, opal_value_t) {
-        /* we ignore the key as irrelevant - we only want to
-         * pull out the blob */
-        if (OPAL_BYTE_OBJECT != val->type) {
+        if (NULL == val->key) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
             continue;
         }
-        buf = OBJ_NEW(opal_buffer_t);
-        opal_dss.load(buf, val->data.bo.bytes, val->data.bo.size);
-        val->data.bo.bytes = NULL;
-        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                          ORTE_PROC_MY_HNP, buf,
-                                                          ORTE_RML_TAG_SHOW_HELP,
-                                                          orte_rml_send_callback, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buf);
+        if (0 == strcmp(val->key, OPAL_PMIX_LOG_MSG)) {
+            /* pull out the blob */
+            if (OPAL_BYTE_OBJECT != val->type) {
+                continue;
+            }
+            buf = OBJ_NEW(opal_buffer_t);
+            opal_dss.load(buf, val->data.bo.bytes, val->data.bo.size);
+            val->data.bo.bytes = NULL;
+            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                                              ORTE_PROC_MY_HNP, buf,
+                                                              ORTE_RML_TAG_SHOW_HELP,
+                                                              orte_rml_send_callback, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buf);
+            }
+        } else if (0 == strcmp(val->key, OPAL_PMIX_LOG_STDERR)) {
+            if (ORTE_SUCCESS != (rc = orte_iof.output(requestor, ORTE_IOF_STDERR, val->data.string))) {
+                ORTE_ERROR_LOG(rc);
+            }
+        } else if (0 == strcmp(val->key, OPAL_PMIX_LOG_STDOUT)) {
+            if (ORTE_SUCCESS != (rc = orte_iof.output(requestor, ORTE_IOF_STDOUT, val->data.string))) {
+                ORTE_ERROR_LOG(rc);
+            }
         }
     }
+
     if (NULL != cbfunc) {
         cbfunc(OPAL_SUCCESS, cbdata);
     }

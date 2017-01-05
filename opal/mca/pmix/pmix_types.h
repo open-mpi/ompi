@@ -231,9 +231,10 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_QUERY_REPORT_MINMAX           "pmix.qry.minmax"       // report minimum and maximum value
 
 /* log attributes */
-#define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"        // (bool) log data to stderr
-#define OPAL_PMIX_LOG_STDOUT                    "pmix.log.stdout"        // (bool) log data to stdout
-#define OPAL_PMIX_LOG_SYSLOG                    "pmix.log.syslog"        // (bool) log data to syslog - defaults to ERROR priority unless
+#define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"        // (char*) log string to stderr
+#define OPAL_PMIX_LOG_STDOUT                    "pmix.log.stdout"        // (char*) log string to stdout
+#define OPAL_PMIX_LOG_SYSLOG                    "pmix.log.syslog"        // (char*) log data to syslog - defaults to ERROR priority unless
+#define OPAL_PMIX_LOG_MSG                       "pmix.log.msg"           // (pmix_byte_object_t) message blob to be sent somewhere
 
 /* debugger attributes */
 #define OPAL_PMIX_DEBUG_STOP_ON_EXEC            "pmix.dbg.exec"          // (bool) job is being spawned under debugger - instruct it to pause on start

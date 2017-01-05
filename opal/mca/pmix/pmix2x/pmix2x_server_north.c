@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -1015,6 +1015,7 @@ static void server_log(const pmix_proc_t *proct,
     /* convert the data */
     for (n=0; n < ndata; n++) {
         oinfo = OBJ_NEW(opal_value_t);
+        oinfo->key = strdup(data[n].key);
         /* we "borrow" the info field of the caddy as we and the
          * server function both agree on what will be there */
         opal_list_append(&opalcaddy->info, &oinfo->super);

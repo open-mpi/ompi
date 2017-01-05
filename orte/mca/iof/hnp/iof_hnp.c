@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +68,10 @@ static int hnp_pull(const orte_process_name_t* src_name,
 static int hnp_close(const orte_process_name_t* peer,
                  orte_iof_tag_t source_tag);
 
+static int hnp_output(const orte_process_name_t* peer,
+                      orte_iof_tag_t source_tag,
+                      const char *msg);
+
 static int finalize(void);
 
 static int hnp_ft_event(int state);
@@ -79,13 +83,13 @@ static int hnp_ft_event(int state);
  */
 
 orte_iof_base_module_t orte_iof_hnp_module = {
-    init,
-    hnp_push,
-    hnp_pull,
-    hnp_close,
-    NULL,
-    finalize,
-    hnp_ft_event
+    .init = init,
+    .push = hnp_push,
+    .pull = hnp_pull,
+    .close = hnp_close,
+    .output = hnp_output,
+    .finalize = finalize,
+    .ft_event = hnp_ft_event
 };
 
 /* Initialize the module */
@@ -598,4 +602,18 @@ CHECK:
             opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
         }
     }
+}
+
+static int hnp_output(const orte_process_name_t* peer,
+                      orte_iof_tag_t source_tag,
+                      const char *msg)
+{
+    /* output this to our local output */
+    if (ORTE_IOF_STDOUT & source_tag || orte_xml_output) {
+        orte_iof_base_write_output(peer, source_tag, (const unsigned char*)msg, strlen(msg), orte_iof_base.iof_write_stdout->wev);
+    } else {
+        orte_iof_base_write_output(peer, source_tag, (const unsigned char*)msg, strlen(msg), orte_iof_base.iof_write_stderr->wev);
+    }
+
+    return ORTE_SUCCESS;
 }

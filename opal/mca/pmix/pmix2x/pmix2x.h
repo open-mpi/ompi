@@ -80,6 +80,8 @@ typedef struct {
     opal_list_t *codes;
     pmix_status_t *pcodes;
     size_t ncodes;
+    pmix_query_t *queries;
+    size_t nqueries;
     opal_pmix2x_event_t *event;
     opal_pmix_op_cbfunc_t opcbfunc;
     opal_pmix_modex_cbfunc_t mdxcbfunc;
@@ -87,6 +89,7 @@ typedef struct {
     opal_pmix_lookup_cbfunc_t lkcbfunc;
     opal_pmix_spawn_cbfunc_t spcbfunc;
     opal_pmix_evhandler_reg_cbfunc_t evregcbfunc;
+    opal_pmix_info_cbfunc_t qcbfunc;
     void *cbdata;
 } pmix2x_opcaddy_t;
 OBJ_CLASS_DECLARATION(pmix2x_opcaddy_t);

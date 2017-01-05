@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -78,7 +78,11 @@ static void query_cbfunc(struct pmix_peer_t *peer,
         cnt = results->ninfo;
         if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, results->info, &cnt, PMIX_INFO))) {
             PMIX_ERROR_LOG(rc);
-            goto complete;
+            pmix_output(0, "TYPE: %d", results->info[0].value.type);
+            results->status = rc;
+            PMIX_INFO_FREE(results->info, results->ninfo);
+            results->info = NULL;
+            results->ninfo = 0;
         }
     }
 
