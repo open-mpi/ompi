@@ -26,18 +26,24 @@
 #include "btl_usnic_connectivity.h"
 
 /*
- * Force a retrans of a segment
+ * Special case: we know exactly which segment is missing at the
+ * receive; explicitly force retrans of that segment.
  */
 static void
-opal_btl_usnic_force_retrans(
+opal_btl_usnic_fast_retrans(
     opal_btl_usnic_endpoint_t *endpoint,
     opal_btl_usnic_seq_t ack_seq)
 {
     opal_btl_usnic_send_segment_t *sseg;
     int is;
 
-    is = WINDOW_SIZE_MOD(ack_seq+1);
+    is = WINDOW_SIZE_MOD(ack_seq + 1);
     sseg = endpoint->endpoint_sent_segs[is];
+
+    // If the sseg is NULL, then there's nothing to retransmit.  If
+    // the hotel room is -1, the segment has already been queued up
+    // for retransmit and there's nothing additional we need to do
+    // here.
     if (sseg == NULL || sseg->ss_hotel_room == -1) {
         return;
     }
@@ -79,12 +85,14 @@ opal_btl_usnic_handle_ack(
 #endif
         ++module->stats.num_old_dup_acks;
         return;
+    }
 
-    /* A duplicate ACK means next seg was lost */
-    } else if (ack_seq == endpoint->endpoint_ack_seq_rcvd) {
+    /* A duplicate ACK means the sender did not receive the next
+       seg that we sent */
+    else if (ack_seq == endpoint->endpoint_ack_seq_rcvd) {
         ++module->stats.num_dup_acks;
 
-        opal_btl_usnic_force_retrans(endpoint, ack_seq);
+        opal_btl_usnic_fast_retrans(endpoint, ack_seq);
         return;
     }
 
@@ -114,12 +122,11 @@ opal_btl_usnic_handle_ack(
            already been evicted and queued for resend.
            If it's not in the hotel, don't check it out! */
         if (OPAL_LIKELY(sseg->ss_hotel_room != -1)) {
-
             opal_hotel_checkout(&endpoint->endpoint_hotel, sseg->ss_hotel_room);
             sseg->ss_hotel_room = -1;
-
+        }
         /* hotel_room == -1 means queued for resend, remove it */
-        } else {
+        else {
             opal_list_remove_item((&module->pending_resend_segs),
                     &sseg->ss_base.us_list.super);
         }
@@ -291,4 +298,3 @@ opal_btl_usnic_ack_timeout(
     /* Stats */
     ++module->stats.num_timeout_retrans;
 }
-

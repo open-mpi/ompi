@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,7 +52,10 @@ opal_btl_usnic_check_rts(
 }
 
 /*
- * Common point for posting a segment
+ * Common point for posting a segment.
+ *
+ * ASSUMES THAT THE CALLER HAS ALREADY CHECKED TO SEE IF WE HAVE
+ * A SEND CREDIT!
  */
 static inline void
 opal_btl_usnic_post_segment(
@@ -105,6 +108,9 @@ opal_btl_usnic_post_segment(
 
 /*
  * Common point for posting an ACK
+ *
+ * ASSUMES THAT THE CALLER HAS ALREADY CHECKED TO SEE IF WE HAVE
+ * A SEND CREDIT!
  */
 static inline void
 opal_btl_usnic_post_ack(
@@ -230,10 +236,10 @@ opal_btl_usnic_endpoint_send_segment(
     /* do the actual send */
     opal_btl_usnic_post_segment(module, endpoint, sseg);
 
-    /* Track this header by stashing in an array on the endpoint that
-       is the same length as the sender's window (i.e., WINDOW_SIZE).
-       To find a unique slot in this array, use (seq % WINDOW_SIZE).
-     */
+    /* Stash this segment in an array on the endpoint that is the same
+       length as the sender's window (i.e., WINDOW_SIZE) until it
+       receives its ACK.  To find a unique slot in this array, use
+       (seq % WINDOW_SIZE). */
     sfi = WINDOW_SIZE_MOD(sseg->ss_base.us_btl_header->pkt_seq);
     endpoint->endpoint_sent_segs[sfi] = sseg;
     sseg->ss_ack_pending = true;
