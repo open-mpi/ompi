@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -200,8 +200,8 @@ ORTE_DECLSPEC int orte_iof_base_flush(void);
 ORTE_DECLSPEC extern orte_iof_base_t orte_iof_base;
 
 /* base functions */
-ORTE_DECLSPEC int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
-                                             unsigned char *data, int numbytes,
+ORTE_DECLSPEC int orte_iof_base_write_output(const orte_process_name_t *name, orte_iof_tag_t stream,
+                                             const unsigned char *data, int numbytes,
                                              orte_iof_write_event_t *channel);
 ORTE_DECLSPEC void orte_iof_base_static_dump_output(orte_iof_read_event_t *rev);
 ORTE_DECLSPEC void orte_iof_base_write_handler(int fd, short event, void *cbdata);

@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,18 +52,22 @@ static int tool_pull(const orte_process_name_t* src_name,
 static int tool_close(const orte_process_name_t* peer,
                        orte_iof_tag_t source_tag);
 
+static int tool_output(const orte_process_name_t* peer,
+                       orte_iof_tag_t source_tag,
+                       const char *msg);
+
 static int finalize(void);
 
 static int tool_ft_event(int state);
 
 orte_iof_base_module_t orte_iof_tool_module = {
-    init,
-    tool_push,
-    tool_pull,
-    tool_close,
-    NULL,
-    finalize,
-    tool_ft_event
+    .init = init,
+    .push = tool_push,
+    .pull = tool_pull,
+    .close = tool_close,
+    .output = tool_output,
+    .finalize = finalize,
+    .ft_event = tool_ft_event
 };
 
 
@@ -272,6 +276,20 @@ static int finalize(void)
 
     /* Cancel the RML receive */
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
+
+    return ORTE_SUCCESS;
+}
+
+static int tool_output(const orte_process_name_t* peer,
+                       orte_iof_tag_t source_tag,
+                       const char *msg)
+{
+    /* output this to our local output */
+    if (ORTE_IOF_STDOUT & source_tag || orte_xml_output) {
+        orte_iof_base_write_output(peer, source_tag, (const unsigned char*)msg, strlen(msg), orte_iof_base.iof_write_stdout->wev);
+    } else {
+        orte_iof_base_write_output(peer, source_tag, (const unsigned char*)msg, strlen(msg), orte_iof_base.iof_write_stderr->wev);
+    }
 
     return ORTE_SUCCESS;
 }

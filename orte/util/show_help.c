@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -709,7 +709,7 @@ int orte_show_help_norender(const char *filename, const char *topic,
             if (NULL != opal_pmix.log) {
                 OBJ_CONSTRUCT(&info, opal_list_t);
                 kv = OBJ_NEW(opal_value_t),
-                kv->key = strdup(OPAL_PMIX_LOG_STDERR);
+                kv->key = strdup(OPAL_PMIX_LOG_MSG);
                 kv->type = OPAL_BYTE_OBJECT;
                 opal_dss.unload(buf, (void**)&kv->data.bo.bytes, &kv->data.bo.size);
                 opal_list_append(&info, &kv->super);

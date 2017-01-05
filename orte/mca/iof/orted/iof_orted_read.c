@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,18 +42,6 @@
 #include "orte/mca/iof/base/base.h"
 
 #include "iof_orted.h"
-
-/*
- * Callback when non-blocking RML send completes.
- */
-static void send_cb(int status, orte_process_name_t *peer,
-                    opal_buffer_t *buf, orte_rml_tag_t tag,
-                    void *cbdata)
-{
-    /* nothing to do here - just release buffer and return */
-    OBJ_RELEASE(buf);
-}
-
 
 void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
 {
@@ -146,7 +134,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
 
     orte_rml.send_buffer_nb(orte_mgmt_conduit,
                                     ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
-                                    send_cb, NULL);
+                                    orte_rml_send_callback, NULL);
 
     /* re-add the event */
     opal_event_add(rev->ev, 0);

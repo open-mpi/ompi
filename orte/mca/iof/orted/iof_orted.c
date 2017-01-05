@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,6 +69,10 @@ static int orted_pull(const orte_process_name_t* src_name,
 static int orted_close(const orte_process_name_t* peer,
                        orte_iof_tag_t source_tag);
 
+static int orted_output(const orte_process_name_t* peer,
+                        orte_iof_tag_t source_tag,
+                        const char *msg);
+
 static int finalize(void);
 
 static int orted_ft_event(int state);
@@ -82,13 +86,13 @@ static int orted_ft_event(int state);
  */
 
 orte_iof_base_module_t orte_iof_orted_module = {
-    init,
-    orted_push,
-    orted_pull,
-    orted_close,
-    NULL,
-    finalize,
-    orted_ft_event
+    .init = init,
+    .push = orted_push,
+    .pull = orted_pull,
+    .close = orted_close,
+    .output = orted_output,
+    .finalize = finalize,
+    .ft_event = orted_ft_event
 };
 
 static int init(void)
@@ -436,4 +440,47 @@ CHECK:
             orte_iof_orted_send_xonxoff(ORTE_IOF_XON);
         }
     }
+}
+
+static int orted_output(const orte_process_name_t* peer,
+                        orte_iof_tag_t source_tag,
+                        const char *msg)
+{
+    opal_buffer_t *buf;
+    int rc;
+
+    /* prep the buffer */
+    buf = OBJ_NEW(opal_buffer_t);
+
+    /* pack the stream first - we do this so that flow control messages can
+     * consist solely of the tag
+     */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &source_tag, 1, ORTE_IOF_TAG))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* pack name of process that gave us this data */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, peer, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* pack the data - for compatibility, we have to pack this as OPAL_BYTE,
+     * so ensure we include the NULL string terminator */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, msg, strlen(msg)+1, OPAL_BYTE))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* start non-blocking RML call to forward received data */
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+                         "%s iof:orted:output sending %d bytes to HNP",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)strlen(msg)+1));
+
+    orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                            ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
+                            orte_rml_send_callback, NULL);
+
+    return ORTE_SUCCESS;
 }

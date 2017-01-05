@@ -785,6 +785,9 @@ int pmix2x_value_unload(opal_value_t *kv,
     int rc=OPAL_SUCCESS;
     bool found;
     opal_pmix2x_jobid_trkr_t *job;
+    opal_list_t *lt;
+    opal_value_t *ival;
+    size_t n;
 
     switch(v->type) {
     case PMIX_UNDEF:
@@ -926,6 +929,25 @@ int pmix2x_value_unload(opal_value_t *kv,
     case PMIX_POINTER:
         kv->type = OPAL_PTR;
         kv->data.ptr = v->data.ptr;
+        break;
+    case PMIX_DATA_ARRAY:
+        if (NULL == v->data.darray || NULL == v->data.darray->array) {
+            kv->data.ptr = NULL;
+            break;
+        }
+        lt = OBJ_NEW(opal_list_t);
+        kv->type = OPAL_PTR;
+        kv->data.ptr = (void*)lt;
+        for (n=0; n < v->data.darray->size; n++) {
+            ival = OBJ_NEW(opal_value_t);
+            opal_list_append(lt, &ival->super);
+            /* handle the various types */
+            if (PMIX_INFO == v->data.darray->type) {
+                pmix_info_t *iptr = (pmix_info_t*)v->data.darray->array;
+                ival->key = strdup(iptr[n].key);
+                pmix2x_value_unload(ival, &iptr[n].value);
+            }
+        }
         break;
     default:
         /* silence warnings */
@@ -1138,12 +1160,109 @@ static int notify_event(int status,
     return OPAL_SUCCESS;
 }
 
+static void relcbfunc(void *cbdata)
+{
+    opal_list_t *results = (opal_list_t*)cbdata;
+    if (NULL != results) {
+        OPAL_LIST_RELEASE(results);
+    }
+}
+
+static void infocbfunc(pmix_status_t status,
+                       pmix_info_t *info, size_t ninfo,
+                       void *cbdata,
+                       pmix_release_cbfunc_t release_fn,
+                       void *release_cbdata)
+{
+    pmix2x_opcaddy_t *cd = (pmix2x_opcaddy_t*)cbdata;
+    int rc = OPAL_SUCCESS;
+    opal_list_t *results = NULL;
+    opal_value_t *iptr;
+    size_t n;
+
+    /* convert the array of pmix_info_t to the list of info */
+    if (NULL != info) {
+        results = OBJ_NEW(opal_list_t);
+        for (n=0; n < ninfo; n++) {
+            iptr = OBJ_NEW(opal_value_t);
+            opal_list_append(results, &iptr->super);
+            iptr->key = strdup(info[n].key);
+            if (OPAL_SUCCESS != (rc = pmix2x_value_unload(iptr, &info[n].value))) {
+                OPAL_LIST_RELEASE(results);
+                results = NULL;
+                break;
+            }
+        }
+    }
+
+    if (NULL != release_fn) {
+        release_fn(release_cbdata);
+    }
+
+    /* return the values to the original requestor */
+    if (NULL != cd->qcbfunc) {
+        cd->qcbfunc(rc, results, cd->cbdata, relcbfunc, results);
+    }
+    OBJ_RELEASE(cd);
+}
+
 static void pmix2x_query(opal_list_t *queries,
                          opal_pmix_info_cbfunc_t cbfunc, void *cbdata)
 {
-    if (NULL != cbfunc) {
-        cbfunc(OPAL_ERR_NOT_SUPPORTED, NULL, cbdata, NULL, NULL);
+    int rc;
+    opal_value_t *ival;
+    size_t n, nqueries, nq;
+    pmix2x_opcaddy_t *cd;
+    pmix_status_t prc;
+    opal_pmix_query_t *q;
+
+    /* create the caddy */
+    cd = OBJ_NEW(pmix2x_opcaddy_t);
+
+    /* bozo check */
+    if (NULL == queries || 0 == (nqueries = opal_list_get_size(queries))) {
+        rc = OPAL_ERR_BAD_PARAM;
+        goto CLEANUP;
     }
+
+    /* setup the operation */
+    cd->qcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    cd->nqueries = nqueries;
+
+    /* convert the list to an array of query objects */
+    PMIX_QUERY_CREATE(cd->queries, cd->nqueries);
+    n=0;
+    OPAL_LIST_FOREACH(q, queries, opal_pmix_query_t) {
+        cd->queries[n].keys = opal_argv_copy(q->keys);
+        cd->queries[n].nqual = opal_list_get_size(&q->qualifiers);
+        if (0 < cd->queries[n].nqual) {
+            PMIX_INFO_CREATE(cd->queries[n].qualifiers, cd->queries[n].nqual);
+            nq = 0;
+            OPAL_LIST_FOREACH(ival, &q->qualifiers, opal_value_t) {
+                (void)strncpy(cd->queries[n].qualifiers[nq].key, ival->key, PMIX_MAX_KEYLEN);
+                pmix2x_value_load(&cd->queries[n].qualifiers[nq].value, ival);
+                ++nq;
+            }
+        }
+        ++n;
+    }
+
+    /* pass it down */
+    if (PMIX_SUCCESS != (prc = PMIx_Query_info_nb(cd->queries, cd->nqueries,
+                                                  infocbfunc, cd))) {
+        /* do not hang! */
+        rc = pmix2x_convert_rc(prc);
+        goto CLEANUP;
+    }
+
+    return;
+
+  CLEANUP:
+    if (NULL != cbfunc) {
+        cbfunc(rc, NULL, cbdata, NULL, NULL);
+    }
+    OBJ_RELEASE(cd);
     return;
 }
 
@@ -1234,6 +1353,8 @@ static void opcon(pmix2x_opcaddy_t *p)
     p->active = false;
     p->codes = NULL;
     p->pcodes = NULL;
+    p->queries = NULL;
+    p->nqueries = 0;
     p->event = NULL;
     p->opcbfunc = NULL;
     p->mdxcbfunc = NULL;
@@ -1259,6 +1380,9 @@ static void opdes(pmix2x_opcaddy_t *p)
     }
     if (NULL != p->pcodes) {
         free(p->pcodes);
+    }
+    if (NULL != p->queries) {
+        PMIX_QUERY_FREE(p->queries, p->nqueries);
     }
 }
 OBJ_CLASS_INSTANCE(pmix2x_opcaddy_t,
