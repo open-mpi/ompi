@@ -525,7 +525,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                                     "pmix_server: notifying client %s:%d of code %d",
                                     pr->peer->info->nptr->nspace, pr->peer->info->rank, cd->status);
                 PMIX_RETAIN(cd->buf);
-                PMIX_SERVER_QUEUE_REPLY(pr->peer, 0, cd->buf);
+                PMIX_PTL_SEND(pr->peer, 0, cd->buf);
             }
         }
     }

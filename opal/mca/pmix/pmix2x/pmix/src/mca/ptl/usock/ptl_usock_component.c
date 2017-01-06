@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -402,7 +402,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     char *msg, *nspace, *version, *cred;
     pmix_status_t rc;
     unsigned int rank;
-    pmix_usock_hdr_t hdr;
+    pmix_ptl_hdr_t hdr;
     pmix_nspace_t *nptr, *tmp;
     pmix_rank_info_t *info;
     pmix_peer_t *psave = NULL;
@@ -414,10 +414,10 @@ static void connection_handler(int sd, short args, void *cbdata)
                         "USOCK CONNECTION FROM PEER ON SOCKET %d", pnd->sd);
 
     /* ensure all is zero'd */
-    memset(&hdr, 0, sizeof(pmix_usock_hdr_t));
+    memset(&hdr, 0, sizeof(pmix_ptl_hdr_t));
 
     /* get the header */
-    if (PMIX_SUCCESS != (rc = pmix_ptl_base_recv_blocking(pnd->sd, (char*)&hdr, sizeof(pmix_usock_hdr_t)))) {
+    if (PMIX_SUCCESS != (rc = pmix_ptl_base_recv_blocking(pnd->sd, (char*)&hdr, sizeof(pmix_ptl_hdr_t)))) {
         CLOSE_THE_SOCKET(pnd->sd);
         PMIX_RELEASE(pnd);
         return;

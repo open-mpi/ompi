@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -226,7 +226,7 @@ static pmix_status_t send_oneway(struct pmix_peer_t *peer,
 static pmix_status_t send_connect_ack(int sd)
 {
     char *msg;
-    pmix_usock_hdr_t hdr;
+    pmix_ptl_hdr_t hdr;
     size_t sdsize=0, csize=0, len;
     char *cred = NULL;
     pmix_status_t rc;
@@ -235,8 +235,7 @@ static pmix_status_t send_connect_ack(int sd)
                         "pmix: SEND CONNECT ACK");
 
     /* setup the header */
-    memset(&hdr, 0, sizeof(pmix_usock_hdr_t));
-    hdr.pindex = -1;
+    memset(&hdr, 0, sizeof(pmix_ptl_hdr_t));
     hdr.tag = UINT32_MAX;
 
     /* reserve space for the nspace and rank info */
@@ -264,8 +263,8 @@ static pmix_status_t send_connect_ack(int sd)
 
     /* load the message */
     csize=0;
-    memcpy(msg, &hdr, sizeof(pmix_usock_hdr_t));
-    csize += sizeof(pmix_usock_hdr_t);
+    memcpy(msg, &hdr, sizeof(pmix_ptl_hdr_t));
+    csize += sizeof(pmix_ptl_hdr_t);
     memcpy(msg+csize, pmix_globals.myid.nspace, strlen(pmix_globals.myid.nspace));
     csize += strlen(pmix_globals.myid.nspace)+1;
     memcpy(msg+csize, &pmix_globals.myid.rank, sizeof(int));
@@ -341,12 +340,6 @@ static pmix_status_t recv_connect_ack(int sd)
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: RECV CONNECT CONFIRMATION");
 
-    /* receive our index into the server's client array */
-    rc = pmix_ptl_base_recv_blocking(sd, (char*)&pmix_globals.pindex, sizeof(int));
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        return rc;
-    }
     if (sockopt) {
         /* return the socket to normal */
         if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {

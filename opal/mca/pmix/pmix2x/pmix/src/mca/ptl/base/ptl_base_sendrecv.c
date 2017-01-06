@@ -142,46 +142,74 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
     PMIX_REPORT_EVENT(err, _notify_complete);
 }
 
-static pmix_status_t send_bytes(int sd, char **buf, size_t *remain)
+static pmix_status_t send_bytes(int sd, pmix_ptl_send_t *msg)
 {
-    pmix_status_t ret = PMIX_SUCCESS;
-    int rc;
-    char *ptr = *buf;
-    while (0 < *remain) {
-        rc = write(sd, ptr, *remain);
-        if (rc < 0) {
+    int cnt=-1;
+    size_t i, num_vecs;
+
+    /* non-blocking write, but continue if interrupted */
+    pmix_output(0, "WORKING %lu", msg->iov_idx);
+
+    while (cnt < 0) {
+        cnt = writev(sd, msg->iov_ptr, msg->iov_cnt);
+        if (cnt < 0) {
             if (pmix_socket_errno == EINTR) {
+                pmix_output(0, "CYCLING");
                 continue;
             } else if (pmix_socket_errno == EAGAIN) {
                 /* tell the caller to keep this message on active,
                  * but let the event lib cycle so other messages
                  * can progress while this socket is busy
                  */
-                ret = PMIX_ERR_RESOURCE_BUSY;
-                goto exit;
+                return PMIX_ERR_RESOURCE_BUSY;
             } else if (pmix_socket_errno == EWOULDBLOCK) {
                 /* tell the caller to keep this message on active,
                  * but let the event lib cycle so other messages
                  * can progress while this socket is busy
                  */
-                ret = PMIX_ERR_WOULD_BLOCK;
-                goto exit;
+                return PMIX_ERR_WOULD_BLOCK;
             }
             /* we hit an error and cannot progress this message */
             pmix_output(0, "pmix_ptl_base_msg_send_bytes: write failed: %s (%d) [sd = %d]",
                         strerror(pmix_socket_errno),
                         pmix_socket_errno, sd);
-            ret = PMIX_ERR_UNREACH;
-            goto exit;
+            return PMIX_ERR_UNREACH;
         }
-        /* update location */
-        (*remain) -= rc;
-        ptr += rc;
     }
-    /* we sent the full data block */
-exit:
-    *buf = ptr;
-    return ret;
+
+    /* if the write was partial - update the iovec state */
+    num_vecs = msg->iov_cnt;
+    pmix_output(0, "NVECS %lu", num_vecs);
+    for (i=0; i < num_vecs; i++) {
+        if (cnt >= (int)msg->iov_ptr->iov_len) {
+            /* we wrote all of this iovec and maybe more, so move
+             * to the next iovec */
+            cnt -= msg->iov_ptr->iov_len;
+            msg->iov_ptr++;
+            msg->iov_idx++;
+            msg->iov_cnt--;
+        } else {
+            /* we didn't write out all of this iovec's contents,
+             * so adjust the pointer to the correct starting
+             * point and we will try again */
+            msg->iov_ptr->iov_base = (IOVBASE_TYPE*)
+                (((unsigned char*)msg->iov_ptr->iov_base) + cnt);
+            msg->iov_ptr->iov_len -= cnt;
+            break;
+        }
+    }
+
+    if (0 == msg->iov_cnt) {
+        pmix_output(0, "MSG SENT");
+        /* the message has been completely sent */
+        return PMIX_SUCCESS;
+    }
+
+    /* tell the caller to keep this message on active,
+     * but let the event lib cycle so other messages
+     * can progress while this socket is busy
+     */
+    return PMIX_ERR_RESOURCE_BUSY;
 }
 
 static pmix_status_t read_bytes(int sd, char **buf, size_t *remain)
@@ -231,11 +259,10 @@ static pmix_status_t read_bytes(int sd, char **buf, size_t *remain)
         ptr += rc;
     }
     /* we read the full data block */
-exit:
+  exit:
     *buf = ptr;
     return ret;
 }
-
 /*
  * A file descriptor is available/ready for send. Check the state
  * of the socket and take the appropriate action.
@@ -246,38 +273,54 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
     pmix_ptl_send_t *msg = peer->send_msg;
     pmix_status_t rc;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+   // pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output(0,
                         "ptl:base:send_handler SENDING TO PEER %s:%d tag %u with %s msg",
                         peer->info->nptr->nspace, peer->info->rank,
                         (NULL == msg) ? UINT_MAX : ntohl(msg->hdr.tag),
                         (NULL == msg) ? "NULL" : "NON-NULL");
 
-    if (NULL != msg) {
-        struct iovec iov[2];
-        int iov_cnt = 1;
-        ssize_t tot;
-        iov[0].iov_base = msg->sdptr;
-        iov[0].iov_len = msg->sdbytes;
-        tot = iov[0].iov_len;
-        if (NULL != msg->data) {
-            iov[1].iov_base = msg->data->base_ptr;
-            iov[1].iov_len = ntohl(msg->hdr.nbytes);
-            tot += iov[1].iov_len;
-            iov_cnt++;
+    /* last chance check in case socket has been closed */
+    if (peer->sd < 0) {
+        pmix_output(0, "SD CLOSED");
+        if (NULL != msg) {
+            OBJ_RELEASE(msg);
         }
-        if (tot != writev(peer->sd, iov, iov_cnt)) {
-            // report the error
+        /* clear the queue */
+        while (NULL != (msg = (pmix_ptl_send_t*)pmix_list_remove_first(&peer->send_queue))) {
+            OBJ_RELEASE(msg);
+        }
+        /* ensure the event if de-activated */
+        if (peer->send_ev_active) {
             event_del(&peer->send_event);
             peer->send_ev_active = false;
-            PMIX_RELEASE(msg);
-            peer->send_msg = NULL;
-            lost_connection(peer, rc);
+        }
+        return;
+    }
+
+    if (NULL != msg) {
+        pmix_output(0, "SENDING");
+        if (PMIX_SUCCESS != (rc = send_bytes(peer->sd, msg))) {
+            /* if it was a fatal error, then report it */
+            if (PMIX_ERR_UNREACH == rc ) {
+                pmix_output(0, "UNREACH");
+                event_del(&peer->send_event);
+                peer->send_ev_active = false;
+                PMIX_RELEASE(msg);
+                peer->send_msg = NULL;
+                lost_connection(peer, rc);
+                return;
+            }
+            /* otherwise, we want to let things continue */
+            pmix_output(0, "CONTINUING");
             return;
         }
+        pmix_output(0, "MSG SENT");
+        /* the message has been sent */
         PMIX_RELEASE(msg);
         peer->send_msg = NULL;
 
-        /* if current message completed - progress any pending sends by
+        /* progress any pending sends by
          * moving the next in the queue into the "on-deck" position. Note
          * that this doesn't mean we send the message right now - we will
          * wait for another send_event to fire before doing so. This gives
@@ -308,7 +351,8 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
     size_t nbytes;
     char *ptr;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+   // pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output(0,
                         "ptl:base:recv:handler called with peer %s:%d",
                         (NULL == peer) ? "NULL" : peer->info->nptr->nspace,
                         (NULL == peer) ? PMIX_RANK_UNDEF : peer->info->rank);
@@ -334,7 +378,8 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
     msg->sd = sd;
     /* if the header hasn't been completely read, read it */
     if (!msg->hdr_recvd) {
-         pmix_output_verbose(2, pmix_globals.debug_output,
+        // pmix_output_verbose(2, pmix_globals.debug_output,
+        pmix_output(0,
                             "ptl:base:recv:handler read hdr on socket %d", peer->sd);
         nbytes = sizeof(pmix_ptl_hdr_t);
         ptr = (char*)&hdr;
@@ -342,10 +387,10 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
             /* completed reading the header */
             peer->recv_msg->hdr_recvd = true;
             /* convert the hdr to host format */
-            peer->recv_msg->hdr.pindex = ntohl(hdr.pindex);
             peer->recv_msg->hdr.tag = ntohl(hdr.tag);
             peer->recv_msg->hdr.nbytes = ntohl(hdr.nbytes);
-            pmix_output_verbose(2, pmix_globals.debug_output,
+           // pmix_output_verbose(2, pmix_globals.debug_output,
+            pmix_output(0,
                                 "RECVD MSG FOR TAG %d SIZE %d",
                                 (int)peer->recv_msg->hdr.tag,
                                 (int)peer->recv_msg->hdr.nbytes);
@@ -359,7 +404,8 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
                 peer->recv_msg->rdptr = NULL;
                 peer->recv_msg->rdbytes = 0;
             } else {
-                pmix_output_verbose(2, pmix_globals.debug_output,
+               // pmix_output_verbose(2, pmix_globals.debug_output,
+                pmix_output(0,
                                     "ptl:base:recv:handler allocate data region of size %lu",
                                     (unsigned long)peer->recv_msg->hdr.nbytes);
                 /* allocate the data region */
@@ -370,28 +416,35 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
                 peer->recv_msg->rdbytes = peer->recv_msg->hdr.nbytes;
             }
             /* fall thru and attempt to read the data */
-        } else if (PMIX_ERR_RESOURCE_BUSY == rc ||
-                   PMIX_ERR_WOULD_BLOCK == rc) {
+        } else if (PMIX_ERR_RESOURCE_BUSY == rc) {
+            pmix_output(0, "RECV BUSY");
+            /* exit this event and let the event lib progress */
+            return;
+        } else if (PMIX_ERR_WOULD_BLOCK == rc) {
+            pmix_output(0, "RECV WOULD BLOCK");
             /* exit this event and let the event lib progress */
             return;
         } else {
             /* the remote peer closed the connection - report that condition
              * and let the caller know
              */
-            pmix_output_verbose(2, pmix_globals.debug_output,
+          //  pmix_output_verbose(2, pmix_globals.debug_output,
+            pmix_output(0,
                                 "ptl:base:msg_recv: peer closed connection");
             goto err_close;
         }
     }
 
     if (peer->recv_msg->hdr_recvd) {
+        pmix_output(0, "HDR RECVD");
         /* continue to read the data block - we start from
          * wherever we left off, which could be at the
          * beginning or somewhere in the message
          */
         if (PMIX_SUCCESS == (rc = read_bytes(peer->sd, &msg->rdptr, &msg->rdbytes))) {
             /* we recvd all of the message */
-            pmix_output_verbose(2, pmix_globals.debug_output,
+          //  pmix_output_verbose(2, pmix_globals.debug_output,
+            pmix_output(0,
                                 "RECVD COMPLETE MESSAGE FROM SERVER OF %d BYTES FOR TAG %d ON PEER SOCKET %d",
                                 (int)peer->recv_msg->hdr.nbytes,
                                 peer->recv_msg->hdr.tag, peer->sd);
@@ -402,12 +455,14 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
         } else if (PMIX_ERR_RESOURCE_BUSY == rc ||
                    PMIX_ERR_WOULD_BLOCK == rc) {
             /* exit this event and let the event lib progress */
+            pmix_output(0, "RECV BUSY");
             return;
         } else {
             /* the remote peer closed the connection - report that condition
              * and let the caller know
              */
-            pmix_output_verbose(2, pmix_globals.debug_output,
+           // pmix_output_verbose(2, pmix_globals.debug_output,
+            pmix_output(0,
                                 "ptl:base:msg_recv: peer closed connection");
             goto err_close;
         }
@@ -447,27 +502,7 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
         return;
     }
 
-    snd = PMIX_NEW(pmix_ptl_send_t);
-    snd->hdr.pindex = htonl(pmix_globals.pindex);
-    snd->hdr.tag = htonl(queue->tag);
-    snd->hdr.nbytes = htonl((queue->buf)->bytes_used);
-    snd->data = (queue->buf);
-    /* always start with the header */
-    snd->sdptr = (char*)&snd->hdr;
-    snd->sdbytes = sizeof(pmix_ptl_hdr_t);
-
-    /* if there is no message on-deck, put this one there */
-    if (NULL == (queue->peer)->send_msg) {
-        (queue->peer)->send_msg = snd;
-    } else {
-        /* add it to the queue */
-        pmix_list_append(&(queue->peer)->send_queue, &snd->super);
-    }
-    /* ensure the send event is active */
-    if (!(queue->peer)->send_ev_active) {
-        event_add(&(queue->peer)->send_event, 0);
-        (queue->peer)->send_ev_active = true;
-    }
+    PMIX_PTL_SEND(queue->peer, queue->tag, queue->buf);
     PMIX_RELEASE(queue);
 }
 
@@ -508,27 +543,8 @@ void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "QUEIENG MSG TO SERVER OF SIZE %d",
                         (int)ms->bfr->bytes_used);
-    snd = PMIX_NEW(pmix_ptl_send_t);
-    snd->hdr.pindex = htonl(pmix_globals.pindex);
-    snd->hdr.tag = htonl(tag);
-    snd->hdr.nbytes = htonl(ms->bfr->bytes_used);
-    snd->data = ms->bfr;
-    /* always start with the header */
-    snd->sdptr = (char*)&snd->hdr;
-    snd->sdbytes = sizeof(pmix_ptl_hdr_t);
 
-    /* if there is no message on-deck, put this one there */
-    if (NULL == ms->peer->send_msg) {
-        ms->peer->send_msg = snd;
-    } else {
-        /* add it to the queue */
-        pmix_list_append(&ms->peer->send_queue, &snd->super);
-    }
-    /* ensure the send event is active */
-    if (!ms->peer->send_ev_active) {
-        event_add(&ms->peer->send_event, 0);
-        ms->peer->send_ev_active = true;
-    }
+    PMIX_PTL_SEND(ms->peer, tag, ms->bfr);
     /* cleanup */
     PMIX_RELEASE(ms);
 }

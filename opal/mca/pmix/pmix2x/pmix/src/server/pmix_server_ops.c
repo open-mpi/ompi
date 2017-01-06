@@ -1200,7 +1200,7 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
             }
            /* all matches - notify */
             PMIX_RETAIN(cd->buf);
-            PMIX_SERVER_QUEUE_REPLY(peer, 0, cd->buf);
+            PMIX_PTL_SEND(peer, 0, cd->buf);
         }
     }
     if (!enviro_events) {

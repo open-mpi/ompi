@@ -66,7 +66,6 @@ typedef uint32_t pmix_ptl_tag_t;
 
 /* header for messages */
 typedef struct {
-    int32_t pindex;
     pmix_ptl_tag_t tag;
     size_t nbytes;
 } pmix_ptl_hdr_t;
@@ -88,11 +87,13 @@ typedef void (*pmix_ptl_pending_cbfunc_t)(int sd, short args, void *cbdata);
 typedef struct {
     pmix_list_item_t super;
     pmix_event_t ev;
-    pmix_ptl_hdr_t hdr;
     pmix_buffer_t *data;
-    bool hdr_sent;
-    char *sdptr;
-    size_t sdbytes;
+    pmix_ptl_hdr_t hdr;
+    struct iovec iov[2];
+    struct iovec *iov_ptr;
+    size_t iov_cnt;
+    size_t iov_idx;
+    size_t size;
 } pmix_ptl_send_t;
 PMIX_CLASS_DECLARATION(pmix_ptl_send_t);
 
@@ -206,28 +207,28 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
         (c)->snd = (s);                                                 \
     } while (0)
 
-/* queue a message to be sent to one of our procs - must
+/* queue a message to be sent a peer - must
  * provide the following params:
  * p - pmix_peer_t of target recipient
  * t - tag to be sent to
  * b - buffer to be sent
  */
-#define PMIX_SERVER_QUEUE_REPLY(p, t, b)                                                \
+#define PMIX_PTL_SEND(p, t, b)                                                          \
     do {                                                                                \
         pmix_ptl_send_t *snd;                                                           \
         pmix_output_verbose(5, pmix_globals.debug_output,                               \
-                            "[%s:%d] queue callback called: reply to %s:%d on tag %d size %d",  \
+                            "[%s:%d] send to %s:%d on tag %d size %d",                  \
                             __FILE__, __LINE__,                                         \
                             (p)->info->nptr->nspace,                                    \
                             (p)->info->rank, (t), (int)(b)->bytes_used);                \
         snd = PMIX_NEW(pmix_ptl_send_t);                                                \
-        snd->hdr.pindex = htonl(pmix_globals.pindex);                                   \
         snd->hdr.tag = htonl(t);                                                        \
         snd->hdr.nbytes = htonl((b)->bytes_used);                                       \
         snd->data = (b);                                                                \
-        /* always start with the header */                                              \
-        snd->sdptr = (char*)&snd->hdr;                                                  \
-        snd->sdbytes = sizeof(pmix_ptl_hdr_t);                                          \
+        snd->iov[0].iov_base = (IOVBASE_TYPE*)&snd->hdr;                                \
+        snd->iov[0].iov_len = sizeof(snd->hdr);                                         \
+        snd->iov[1].iov_base = (IOVBASE_TYPE*)(b)->base_ptr;                            \
+        snd->iov[1].iov_len = (b)->bytes_used;                                          \
         /* if there is no message on-deck, put this one there */                        \
         if (NULL == (p)->send_msg) {                                                    \
             (p)->send_msg = snd;                                                        \
@@ -241,6 +242,7 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
             (p)->send_ev_active = true;                                                 \
         }                                                                               \
     } while (0)
+
 
 #define CLOSE_THE_SOCKET(socket)                \
     do {                                        \
