@@ -516,5 +516,6 @@ static void barrier_release(int status, orte_process_name_t* sender,
     }
     opal_list_remove_item(&orte_grpcomm_base.ongoing, &coll->super);
     OBJ_RELEASE(coll);
+    OBJ_RELEASE(sig);
 }
 
