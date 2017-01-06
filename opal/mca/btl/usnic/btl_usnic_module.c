@@ -1693,10 +1693,6 @@ static int create_ep(opal_btl_usnic_module_t* module,
                         inet_ntoa(sin->sin_addr),
                         ntohs(sin->sin_port));
 
-    /* actual sizes */
-    channel->chan_rd_num = channel->info->rx_attr->size;
-    channel->chan_sd_num = channel->info->tx_attr->size;
-
     return OPAL_SUCCESS;
 }
 
@@ -1739,7 +1735,8 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
                             int index,
                             int max_msg_size,
                             int rd_num,
-                            int sd_num)
+                            int sd_num,
+                            int cq_num)
 {
     int i;
     int rc;
@@ -1769,7 +1766,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
     memset(&cq_attr, 0, sizeof(cq_attr));
     cq_attr.format = FI_CQ_FORMAT_CONTEXT;
     cq_attr.wait_obj = FI_WAIT_NONE;
-    cq_attr.size = module->cq_num;
+    cq_attr.size = cq_num;
     rc = fi_cq_open(module->domain, &cq_attr, &channel->cq, NULL);
     if (0 != rc) {
         opal_show_help("help-mpi-btl-usnic.txt",
@@ -1967,6 +1964,11 @@ static void init_find_transport_header_len(opal_btl_usnic_module_t *module)
  */
 static void init_queue_lengths(opal_btl_usnic_module_t *module)
 {
+    bool cq_is_sum = false;
+    if (-1 == mca_btl_usnic_component.cq_num) {
+        cq_is_sum = true;
+    }
+
     if (-1 == mca_btl_usnic_component.sd_num) {
         module->sd_num = module->fabric_info->tx_attr->size;
     } else {
@@ -1977,7 +1979,7 @@ static void init_queue_lengths(opal_btl_usnic_module_t *module)
     } else {
         module->rd_num = mca_btl_usnic_component.rd_num;
     }
-    if (-1 == mca_btl_usnic_component.cq_num) {
+    if (cq_is_sum) {
         module->cq_num = module->rd_num + module->sd_num;
     } else {
         module->cq_num = mca_btl_usnic_component.cq_num;
@@ -2011,6 +2013,11 @@ static void init_queue_lengths(opal_btl_usnic_module_t *module)
         (unsigned) module->prio_rd_num >
          module->fabric_info->rx_attr->size) {
         module->prio_rd_num = module->fabric_info->rx_attr->size;
+    }
+    if (cq_is_sum) {
+        module->prio_cq_num = module->prio_rd_num + module->prio_sd_num;
+    } else {
+        module->prio_cq_num = module->cq_num;
     }
 }
 
@@ -2217,14 +2224,14 @@ static int init_channels(opal_btl_usnic_module_t *module)
     rc = init_one_channel(module,
             USNIC_PRIORITY_CHANNEL,
             module->max_tiny_msg_size,
-            module->prio_rd_num, module->prio_sd_num);
+            module->prio_rd_num, module->prio_sd_num, module->prio_cq_num);
     if (rc != OPAL_SUCCESS) {
         goto destroy;
     }
     rc = init_one_channel(module,
             USNIC_DATA_CHANNEL,
             module->fabric_info->ep_attr->max_msg_size,
-            module->rd_num, module->sd_num);
+            module->rd_num, module->sd_num, module->cq_num);
     if (rc != OPAL_SUCCESS) {
         goto destroy;
     }
