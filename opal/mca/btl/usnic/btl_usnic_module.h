@@ -11,7 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -134,6 +136,7 @@ typedef struct opal_btl_usnic_module_t {
     int av_eq_num;
     int prio_sd_num;
     int prio_rd_num;
+    int prio_cq_num;
 
     /*
      * Fragments larger than max_frag_payload will be broken up into
