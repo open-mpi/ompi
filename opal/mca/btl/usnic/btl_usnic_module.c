@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
@@ -1611,6 +1611,31 @@ static int create_ep(opal_btl_usnic_module_t* module,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
+    /* Check to ensure that the RX/TX queue lengths are at least as
+       long as we asked for */
+    if ((int) channel->info->rx_attr->size < channel->chan_rd_num) {
+        rc = FI_ETOOSMALL;
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "internal error during init",
+                       true,
+                       opal_process_info.nodename,
+                       module->linux_device_name,
+                       "endpoint RX queue length is too short", __FILE__, __LINE__,
+                       rc, fi_strerror(rc));
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    if ((int) channel->info->tx_attr->size < channel->chan_sd_num) {
+        rc = FI_ETOOSMALL;
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "internal error during init",
+                       true,
+                       opal_process_info.nodename,
+                       module->linux_device_name,
+                       "endpoint TX queue length is too short", __FILE__, __LINE__,
+                       rc, fi_strerror(rc));
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
     /* attach CQ to EP */
     rc = fi_ep_bind(channel->ep, &channel->cq->fid, FI_SEND);
     if (0 != rc) {
@@ -1780,6 +1805,20 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
                        opal_process_info.nodename,
                        module->linux_device_name,
                        "failed to create CQ", __FILE__, __LINE__);
+        goto error;
+    }
+
+    /* Ensure that we got a CQ that is at least as long as we asked
+       for */
+    if ((int) cq_attr.size < cq_num) {
+        rc = FI_ETOOSMALL;
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "internal error during init",
+                       true,
+                       opal_process_info.nodename,
+                       module->linux_device_name,
+                       "created CQ is too small", __FILE__, __LINE__,
+                       rc, fi_strerror(rc));
         goto error;
     }
 
