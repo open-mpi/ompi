@@ -17,7 +17,7 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -879,6 +879,7 @@ int orte_daemon(int argc, char *argv[])
 
     /* cleanup and leave */
     orte_finalize();
+    opal_finalize_util();
 
     if (orte_debug_flag) {
         fprintf(stderr, "exiting with status %d\n", orte_exit_status);
