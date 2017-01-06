@@ -13,6 +13,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -135,6 +137,13 @@ OPAL_DECLSPEC int mca_base_var_group_add_var (const int group_index, const int p
  * Add a performance variable to a group
  */
 OPAL_DECLSPEC int mca_base_var_group_add_pvar (const int group_index, const int param_index);
+
+/**
+ * \internal
+ *
+ * Add an enum to a group
+ */
+OPAL_DECLSPEC int mca_base_var_group_add_enum (const int group_index, const void *storage);
 
 /**
  * \internal

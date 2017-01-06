@@ -25,6 +25,7 @@
 #include "opal_config.h"
 
 #include "opal/mca/base/mca_base_var_enum.h"
+#include "opal/mca/base/mca_base_vari.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
 
@@ -632,4 +633,29 @@ static void mca_base_var_enum_flag_destructor (mca_base_var_enum_flag_t *enumera
     if (NULL != enumerator->super.enum_name) {
         free (enumerator->super.enum_name);
     }
+}
+
+int mca_base_var_enum_register(const char *project_name, const char *framework_name,
+                               const char *component_name, const char *enum_name,
+                               void *storage)
+{
+    int group_index;
+
+    /* Developer error. Storage can not be NULL */
+    assert (NULL != storage);
+
+    /* Create a new parameter entry */
+    group_index = mca_base_var_group_register (project_name, framework_name, component_name,
+                                               NULL);
+    if (-1 > group_index) {
+        return group_index;
+    }
+
+    if (0 <= group_index) {
+        mca_base_var_group_add_enum (group_index, storage);
+    }
+
+    return OPAL_SUCCESS;
+
+    /* All done */
 }
