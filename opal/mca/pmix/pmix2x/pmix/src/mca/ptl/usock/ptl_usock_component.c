@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,7 +90,7 @@ PMIX_EXPORT pmix_ptl_usock_component_t mca_ptl_usock_component = {
             .pmix_mca_close_component = component_close,
             .pmix_mca_query_component = component_query
         },
-        .priority = 5,
+        .priority = 15,
         .uri = NULL,
         .setup_listener = setup_listener
     },
