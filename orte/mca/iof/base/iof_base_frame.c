@@ -12,7 +12,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -89,6 +89,12 @@ static int orte_iof_base_close(void)
         orte_iof.finalize();
     }
 
+    if (!ORTE_PROC_IS_DAEMON) {
+        OBJ_RELEASE(orte_iof_base.iof_write_stdout);
+        if (!orte_xml_output) {
+            OBJ_RELEASE(orte_iof_base.iof_write_stderr);
+        }
+    }
     return mca_base_framework_components_close(&orte_iof_base_framework, NULL);
 }
 
