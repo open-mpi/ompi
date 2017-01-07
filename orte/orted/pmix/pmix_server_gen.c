@@ -544,12 +544,11 @@ static void _query(int sd, short args, void *cbdata)
                 }
 
                 /* scan the qualifiers */
+                local_only = false;
                 OPAL_LIST_FOREACH(kv, &q->qualifiers, opal_value_t) {
                     if (0 == strcmp(kv->key, OPAL_PMIX_QUERY_LOCAL_ONLY)) {
                         if (OPAL_UNDEF == kv->type || kv->data.flag) {
                             local_only = true;
-                        } else {
-                            local_only = false;
                         }
                     } else if (0 == strcmp(kv->key, OPAL_PMIX_PROCID)) {
                         /* save this directive on our list of targets */

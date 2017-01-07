@@ -945,7 +945,13 @@ int pmix2x_value_unload(opal_value_t *kv,
             if (PMIX_INFO == v->data.darray->type) {
                 pmix_info_t *iptr = (pmix_info_t*)v->data.darray->array;
                 ival->key = strdup(iptr[n].key);
-                pmix2x_value_unload(ival, &iptr[n].value);
+                rc = pmix2x_value_unload(ival, &iptr[n].value);
+                if (OPAL_SUCCESS != rc) {
+                    OPAL_LIST_RELEASE(lt);
+                    kv->type = OPAL_UNDEF;
+                    kv->data.ptr = NULL;
+                    break;
+                }
             }
         }
         break;
