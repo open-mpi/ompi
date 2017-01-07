@@ -61,16 +61,18 @@ opal_sys_timer_get_cycles(void)
 
 static inline bool opal_sys_timer_is_monotonic (void)
 {
-    int32_t cpuid1, cpuid2, tmp;
+    int64_t tmp;
+    int32_t cpuid1, cpuid2;
     const int32_t level = 0x80000007;
+
     /* cpuid clobbers ebx but it must be restored for -fPIC so save
      * then restore ebx */
-    __asm__ volatile ("xchgl %%ebx, %2\n"
+    __asm__ volatile ("xchg %%rbx, %2\n"
                       "cpuid\n"
-                      "xchgl %%ebx, %2\n":
+                      "xchg %%rbx, %2\n":
                       "=a" (cpuid1), "=d" (cpuid2), "=r" (tmp) :
                       "a" (level) :
-                      "ecx");
+                      "ecx", "ebx");
     /* bit 8 of edx contains the invariant tsc flag */
     return !!(cpuid2 & (1 << 8));
 }
