@@ -163,10 +163,6 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
             break;
         }
 
-        if(NULL == mca_btl_tcp_component.tcp_local && (proc == opal_proc_local_get())) {
-            mca_btl_tcp_component.tcp_local = btl_proc;
-        }
-
         /* convert the OPAL addr_family field to OS constants,
          * so we can check for AF_INET (or AF_INET6) and don't have
          * to deal with byte ordering anymore.
@@ -745,8 +741,8 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
         mca_btl_base_endpoint_t *endpoint;
         opal_proc_t *opal_proc;
 
-        BTL_VERBOSE(("adding tcp proc for unknown peer {.jobid = 0x%x, .vpid = 0x%x}",
-                     name->jobid, name->vpid));
+        BTL_VERBOSE(("adding tcp proc for unknown peer {%s}",
+                     OPAL_NAME_PRINT(*name)));
 
         opal_proc = opal_proc_for_name (*name);
         if (NULL == opal_proc) {
@@ -761,6 +757,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
             if (NULL != endpoint && NULL == proc) {
                 /* get the proc and continue on (could probably just break here) */
                 proc = endpoint->endpoint_proc;
+                break;
             }
         }
     }
@@ -808,6 +805,9 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
         return;
     }
     OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+    opal_output(0, "btl: tcp: Incoming connection from %s does not match known addresses for peer %s. Drop !\n",
+                opal_net_get_hostname((struct sockaddr*)addr),
+                OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name));
     /* No further use of this socket. Close it */
     CLOSE_THE_SOCKET(sd);
 }
