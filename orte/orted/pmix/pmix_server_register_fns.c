@@ -332,7 +332,9 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
 
             /* location, for local procs */
             if (node == mynode) {
-                if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
+                tmp = NULL;
+                if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING) &&
+                    NULL != tmp) {
                     kv = OBJ_NEW(opal_value_t);
                     kv->key = strdup(OPAL_PMIX_LOCALITY_STRING);
                     kv->type = OPAL_STRING;
