@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "tm_verbose.h"
 #include "tm_malloc.h"
+#include "opal/util/alfg.h"
 
 #define EXTRA_BYTE 100
 
@@ -67,15 +68,16 @@ void my_mem_check(void){
 
 void init_extra_data(void){
   static int done = 0;
+  opal_rng_buff_t rng;
   int i;
 
   if(done)
     return;
 
-  srandom(0);
+  opal_srand(&rng,0);
 
   for( i = 0 ; i < EXTRA_BYTE; i++)
-    extra_data[i] = (char) random() % 256;
+    extra_data[i] = (char) opal_rand(&rng) % 256;
 
   done = 1;
 }
