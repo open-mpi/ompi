@@ -1495,7 +1495,7 @@ static void _spcb(int sd, short args, void *cbdata)
     /* the function that created the server_caddy did a
      * retain on the peer, so we don't have to worry about
      * it still being present - tell the originator the result */
-    PMIX_SERVER_QUEUE_REPLY(cd->cd->peer, cd->cd->hdr.tag, reply);
+    PMIX_PTL_SEND(cd->cd->peer, cd->cd->hdr.tag, reply);
     /* cleanup */
     PMIX_RELEASE(cd->cd);
     cd->active = false;
@@ -1549,7 +1549,7 @@ static void lookup_cbfunc(pmix_status_t status, pmix_pdata_t pdata[], size_t nda
     /* the function that created the server_caddy did a
      * retain on the peer, so we don't have to worry about
      * it still being present - tell the originator the result */
-    PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+    PMIX_PTL_SEND(cd->peer, cd->hdr.tag, reply);
     /* cleanup */
     PMIX_RELEASE(cd);
 }
@@ -1710,7 +1710,7 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "server:modex_cbfunc reply being sent to %s:%d",
                             cd->peer->info->nptr->nspace, cd->peer->info->rank);
-        PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+        PMIX_PTL_SEND(cd->peer, cd->hdr.tag, reply);
     }
 
   cleanup:
@@ -1803,7 +1803,7 @@ static void get_cbfunc(pmix_status_t status, const char *data, size_t ndata, voi
     pmix_output_hexdump(5, pmix_globals.debug_output,
             reply->base_ptr, (reply->bytes_used < 256 ? reply->bytes_used : 256));
 
-    PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+    PMIX_PTL_SEND(cd->peer, cd->hdr.tag, reply);
 
  cleanup:
     /* if someone wants a release, give it to them */
@@ -1862,7 +1862,7 @@ static void _cnct(int sd, short args, void *cbdata)
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "server:cnct_cbfunc reply being sent to %s:%d",
                             cd->peer->info->nptr->nspace, cd->peer->info->rank);
-        PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+        PMIX_PTL_SEND(cd->peer, cd->hdr.tag, reply);
     }
 
   cleanup:
@@ -1908,7 +1908,7 @@ static void regevents_cbfunc(pmix_status_t status, void *cbdata)
         PMIX_ERROR_LOG(rc);
     }
     // send reply
-    PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+    PMIX_PTL_SEND(cd->peer, cd->hdr.tag, reply);
     PMIX_RELEASE(cd);
 }
 
@@ -1925,7 +1925,7 @@ static void notifyerror_cbfunc (pmix_status_t status, void *cbdata)
         PMIX_ERROR_LOG(rc);
     }
     // send reply
-    PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+    PMIX_PTL_SEND(cd->peer, cd->hdr.tag, reply);
     PMIX_RELEASE(cd);
 }
 
@@ -1961,7 +1961,7 @@ static void query_cbfunc(pmix_status_t status,
 
   complete:
     // send reply
-    PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+    PMIX_PTL_SEND(cd->peer, cd->hdr.tag, reply);
     // cleanup
     PMIX_QUERY_FREE(qcd->queries, qcd->nqueries);
     PMIX_RELEASE(qcd);
@@ -2020,7 +2020,7 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
         pmix_bfrop.copy_payload(reply, &(peer->info->nptr->server->job_info));
         pmix_bfrop.copy_payload(reply, &(pmix_server_globals.gdata));
 #endif
-        PMIX_SERVER_QUEUE_REPLY(peer, tag, reply);
+        PMIX_PTL_SEND(peer, tag, reply);
         return PMIX_SUCCESS; // don't reply twice
     }
 
@@ -2036,7 +2036,7 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
         rc = pmix_server_commit(peer, buf);
         reply = PMIX_NEW(pmix_buffer_t);
         pmix_bfrop.pack(reply, &rc, 1, PMIX_STATUS);
-        PMIX_SERVER_QUEUE_REPLY(peer, tag, reply);
+        PMIX_PTL_SEND(peer, tag, reply);
         return PMIX_SUCCESS; // don't reply twice
     }
 
@@ -2199,7 +2199,7 @@ static void server_message_handler(struct pmix_peer_t *pr,
     if (PMIX_SUCCESS != rc) {
         reply = PMIX_NEW(pmix_buffer_t);
         pmix_bfrop.pack(reply, &rc, 1, PMIX_STATUS);
-        PMIX_SERVER_QUEUE_REPLY(peer, hdr->tag, reply);
+        PMIX_PTL_SEND(peer, hdr->tag, reply);
     }
 }
 

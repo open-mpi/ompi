@@ -375,7 +375,6 @@ static pmix_status_t send_connect_ack(int sd)
 
     /* setup the header */
     memset(&hdr, 0, sizeof(pmix_ptl_hdr_t));
-    hdr.pindex = -1;
     hdr.tag = UINT32_MAX;
 
     /* a security module was assigned to us during rte_init based
@@ -544,14 +543,6 @@ static pmix_status_t recv_connect_ack(int sd)
         }
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: RECV CONNECT CONFIRMATION");
-
-        /* receive our index into the server's client array */
-        rc = pmix_ptl_base_recv_blocking(sd, (char*)&u32, sizeof(uint32_t));
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            return rc;
-        }
-        pmix_globals.pindex = ntohl(u32);
     } else {
         /* recv our nspace */
         rc = pmix_ptl_base_recv_blocking(sd, (char*)&pmix_globals.myid.nspace, PMIX_MAX_NSLEN+1);

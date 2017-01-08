@@ -31,13 +31,13 @@ int main(int argc, char **argv)
     for (iter = 0; iter < itermax; ++iter) {
         MPI_Comm_spawn(EXE_TEST, NULL, 1, MPI_INFO_NULL,
                        0, MPI_COMM_WORLD, &comm, &err);
-        printf("parent: MPI_Comm_spawn #%d return : %d\n", iter, err);
+        if (0 != err || (0 == iter % 50)) {
+            printf("parent: MPI_Comm_spawn #%d return : %d\n", iter, err);
+        }
 
         MPI_Intercomm_merge(comm, 0, &merged);
         MPI_Comm_rank(merged, &rank);
         MPI_Comm_size(merged, &size);
-        printf("parent: MPI_Comm_spawn #%d rank %d, size %d\n",
-               iter, rank, size);
         MPI_Comm_free(&merged);
         MPI_Comm_disconnect(&comm);
     }

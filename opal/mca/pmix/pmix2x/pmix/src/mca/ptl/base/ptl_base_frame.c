@@ -115,13 +115,13 @@ PMIX_CLASS_INSTANCE(pmix_ptl_base_active_t,
 
 static void scon(pmix_ptl_send_t *p)
 {
-    memset(&p->hdr, 0, sizeof(pmix_ptl_hdr_t));
     p->hdr.tag = UINT32_MAX;
     p->hdr.nbytes = 0;
     p->data = NULL;
-    p->hdr_sent = false;
-    p->sdptr = NULL;
-    p->sdbytes = 0;
+    p->iov_ptr = NULL;
+    p->iov_cnt = 0;
+    p->iov_idx = 0;
+    p->size = 0;
 }
 static void sdes(pmix_ptl_send_t *p)
 {
@@ -135,7 +135,6 @@ PMIX_CLASS_INSTANCE(pmix_ptl_send_t,
 
 static void rcon(pmix_ptl_recv_t *p)
 {
-    memset(&p->hdr, 0, sizeof(pmix_ptl_hdr_t));
     p->hdr.tag = UINT32_MAX;
     p->hdr.nbytes = 0;
     p->data = NULL;
