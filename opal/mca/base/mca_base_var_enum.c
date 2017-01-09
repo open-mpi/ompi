@@ -171,7 +171,9 @@ static int mca_base_var_enum_verbose_sfv (mca_base_var_enum_t *self, const int v
 
     for (int i = 0 ; verbose_values[i].string ; ++i) {
         if (verbose_values[i].value == value) {
-            *string_value = strdup (verbose_values[i].string);
+            if (string_value) {
+                *string_value = strdup (verbose_values[i].string);
+            }
             return OPAL_SUCCESS;
         }
     }
