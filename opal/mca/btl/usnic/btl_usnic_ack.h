@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +67,7 @@ void opal_btl_usnic_ack_complete(opal_btl_usnic_module_t *module,
 /*
  * Send an ACK
  */
-void opal_btl_usnic_ack_send(opal_btl_usnic_module_t *module,
+int opal_btl_usnic_ack_send(opal_btl_usnic_module_t *module,
                                opal_btl_usnic_endpoint_t *endpoint);
 
 /*
