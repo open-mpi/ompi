@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +55,12 @@ typedef struct opal_btl_usnic_module_stats_t {
 
     uint64_t pml_module_sends;
     uint64_t pml_send_callbacks;
+
+    uint64_t num_seg_total_completions;
+    uint64_t num_seg_ack_completions;
+    uint64_t num_seg_frag_completions;
+    uint64_t num_seg_chunk_completions;
+    uint64_t num_seg_recv_completions;
 
     opal_event_t timer_event;
     struct timeval timeout;

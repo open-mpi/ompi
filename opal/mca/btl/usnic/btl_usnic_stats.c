@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,6 +60,12 @@ static inline void usnic_stats_reset(opal_btl_usnic_module_t *module)
         module->stats.pml_module_sends =
         module->stats.pml_send_callbacks =
 
+        module->stats.num_seg_total_completions =
+        module->stats.num_seg_ack_completions =
+        module->stats.num_seg_frag_completions =
+        module->stats.num_seg_chunk_completions =
+        module->stats.num_seg_recv_completions =
+
         0;
 
     for (i=0; i<USNIC_NUM_CHANNELS; ++i) {
@@ -82,7 +88,7 @@ void opal_btl_usnic_print_stats(
     char tmp[128], str[2048];
 
     /* The usuals */
-    snprintf(str, sizeof(str), "%s:MCW:%3u, %s, ST(P+D)/F/C/R(T+F)/A:%8lu(%8u+%8u)/%8lu/%8lu/%4lu(%4lu+%4lu)/%8lu, RcvTot/Chk/F/C/L/H/D/BF/A:%8lu/%c%c/%8lu/%8lu/%4lu+%2lu/%4lu/%4lu/%6lu OA/DA %4lu/%4lu CRC:%4lu ",
+    snprintf(str, sizeof(str), "%s:MCW:%3u, %s, ST(P+D)/F/C/R(T+F)/A:%8lu(%8u+%8u)/%8lu/%8lu/%4lu(%4lu+%4lu)/%8lu, RcvTot/Chk/F/C/L/H/D/BF/A:%8lu/%c%c/%8lu/%8lu/%4lu+%2lu/%4lu/%4lu/%6lu Comp:T(A/F/C/R) %8lu(%8lu/%8lu/%8lu/%8lu), OA/DA %4lu/%4lu CRC:%4lu ",
              prefix,
              opal_proc_local_get()->proc_name.vpid,
 
@@ -117,6 +123,12 @@ void opal_btl_usnic_print_stats(
              module->stats.num_dup_recvs,
              module->stats.num_badfrag_recvs,
              module->stats.num_ack_recvs,
+
+	     module->stats.num_seg_total_completions,
+	     module->stats.num_seg_ack_completions,
+	     module->stats.num_seg_frag_completions,
+	     module->stats.num_seg_chunk_completions,
+	     module->stats.num_seg_recv_completions,
 
              module->stats.num_old_dup_acks,
              module->stats.num_dup_acks,

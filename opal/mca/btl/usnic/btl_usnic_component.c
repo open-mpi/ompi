@@ -1159,6 +1159,8 @@ static int usnic_component_progress(void)
                 if (OPAL_LIKELY(OPAL_BTL_USNIC_SEG_RECV ==
                             rseg->rs_base.us_type)) {
                     opal_btl_usnic_recv_fast(module, rseg, channel);
+                    ++module->stats.num_seg_total_completions;
+                    ++module->stats.num_seg_recv_completions;
                     fastpath_ok = false;    /* prevent starvation */
                     return 1;
                 } else {
@@ -1188,6 +1190,8 @@ static int usnic_handle_completion(
     seg = (opal_btl_usnic_segment_t*)completion->op_context;
     rseg = (opal_btl_usnic_recv_segment_t*)seg;
 
+    ++module->stats.num_seg_total_completions;
+
     /* Make the completion be Valgrind-defined */
     opal_memchecker_base_mem_defined(seg, sizeof(*seg));
 
@@ -1198,6 +1202,7 @@ static int usnic_handle_completion(
 
     /**** Send ACK completions ****/
     case OPAL_BTL_USNIC_SEG_ACK:
+        ++module->stats.num_seg_ack_completions;
         opal_btl_usnic_ack_complete(module,
                 (opal_btl_usnic_ack_segment_t *)seg);
         break;
@@ -1205,6 +1210,7 @@ static int usnic_handle_completion(
     /**** Send of frag segment completion (i.e., the MPI message's
           one-and-only segment has completed sending) ****/
     case OPAL_BTL_USNIC_SEG_FRAG:
+        ++module->stats.num_seg_frag_completions;
         opal_btl_usnic_frag_send_complete(module,
                 (opal_btl_usnic_frag_segment_t*)seg);
         break;
@@ -1212,12 +1218,14 @@ static int usnic_handle_completion(
     /**** Send of chunk segment completion (i.e., part of a large MPI
           message is done sending) ****/
     case OPAL_BTL_USNIC_SEG_CHUNK:
+        ++module->stats.num_seg_chunk_completions;
         opal_btl_usnic_chunk_send_complete(module,
                 (opal_btl_usnic_chunk_segment_t*)seg);
         break;
 
     /**** Receive completions ****/
     case OPAL_BTL_USNIC_SEG_RECV:
+        ++module->stats.num_seg_recv_completions;
         opal_btl_usnic_recv(module, rseg, channel);
         break;
 
