@@ -1237,8 +1237,13 @@ opal_btl_usnic_module_progress_sends(
         /* Is it time to send ACK? */
         if (endpoint->endpoint_acktime == 0 ||
             endpoint->endpoint_acktime <= get_nsec()) {
-            opal_btl_usnic_ack_send(module, endpoint);
-            opal_btl_usnic_remove_from_endpoints_needing_ack(endpoint);
+            if (OPAL_LIKELY(opal_btl_usnic_ack_send(module, endpoint) == OPAL_SUCCESS)) {
+                opal_btl_usnic_remove_from_endpoints_needing_ack(endpoint);
+            } else {
+                // If we fail, it means we're out of send credits on
+                // the ACK channel
+                break;
+            }
         }
 
         endpoint = next_endpoint;
