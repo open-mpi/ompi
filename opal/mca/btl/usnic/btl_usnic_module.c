@@ -1318,8 +1318,8 @@ usnic_send(
     if (frag->sf_base.uf_type == OPAL_BTL_USNIC_FRAG_SMALL_SEND &&
             frag->sf_ack_bytes_left < module->max_tiny_payload &&
             WINDOW_OPEN(endpoint) &&
-            (get_send_credits(&module->mod_channels[USNIC_PRIORITY_CHANNEL]) >=
-             module->mod_channels[USNIC_PRIORITY_CHANNEL].fastsend_wqe_thresh)) {
+            (get_send_credits(&module->mod_channels[USNIC_DATA_CHANNEL]) >=
+             module->mod_channels[USNIC_DATA_CHANNEL].fastsend_wqe_thresh)) {
         size_t payload_len;
 
         sfrag = (opal_btl_usnic_small_send_frag_t *)frag;
