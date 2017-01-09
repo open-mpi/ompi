@@ -128,6 +128,8 @@ General notes
     Intel, and Portland (*)
   - OS X (10.8, 10.9, 10.10, 10.11), 32 and 64 bit (x86_64), with
     XCode and Absoft compilers (*)
+  - OpenBSD.  Requires configure option --enable-mca-no-build=patcher
+    with this release.
 
   (*) Be sure to read the Compiler Notes, below.
 
