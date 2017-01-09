@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -198,18 +198,26 @@ opal_btl_usnic_handle_ack(
 /*
  * Send an ACK
  */
-void
+int
 opal_btl_usnic_ack_send(
     opal_btl_usnic_module_t *module,
     opal_btl_usnic_endpoint_t *endpoint)
 {
     opal_btl_usnic_ack_segment_t *ack;
 
+    /* If we don't have any send credits in the priority channel,
+       don't send it */
+    if (module->mod_channels[USNIC_PRIORITY_CHANNEL].credits < 1) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
     /* Get an ACK frag.  If we don't get one, just discard this ACK. */
     ack = opal_btl_usnic_ack_segment_alloc(module);
     if (OPAL_UNLIKELY(NULL == ack)) {
-        return;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
+
+    --module->mod_channels[USNIC_PRIORITY_CHANNEL].credits;
 
     /* send the seq of the lowest item in the window that
        we've received */
@@ -246,7 +254,7 @@ opal_btl_usnic_ack_send(
     /* Stats */
     ++module->stats.num_ack_sends;
 
-    return;
+    return OPAL_SUCCESS;
 }
 
 /*
@@ -256,6 +264,7 @@ void
 opal_btl_usnic_ack_complete(opal_btl_usnic_module_t *module,
                                    opal_btl_usnic_ack_segment_t *ack)
 {
+    ++module->mod_channels[USNIC_PRIORITY_CHANNEL].credits;
     opal_btl_usnic_ack_segment_return(module, ack);
     ++module->mod_channels[ack->ss_channel].credits;
 }
