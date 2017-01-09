@@ -80,6 +80,7 @@ opal_btl_usnic_post_segment(
 #endif
 
     assert(channel_id == USNIC_DATA_CHANNEL);
+    assert(channel->credits > 1);
 
     /* Send the segment */
     ret = fi_send(channel->ep,
@@ -135,6 +136,7 @@ opal_btl_usnic_post_ack(
 #endif
 
     assert(channel_id == USNIC_PRIORITY_CHANNEL);
+    assert(channel->credits > 1);
 
     ret = fi_send(channel->ep,
             sseg->ss_ptr,
@@ -241,6 +243,7 @@ opal_btl_usnic_endpoint_send_segment(
        receives its ACK.  To find a unique slot in this array, use
        (seq % WINDOW_SIZE). */
     sfi = WINDOW_SIZE_MOD(sseg->ss_base.us_btl_header->pkt_seq);
+    assert(NULL == endpoint->endpoint_sent_segs[sfi]);
     endpoint->endpoint_sent_segs[sfi] = sseg;
     sseg->ss_ack_pending = true;
 
