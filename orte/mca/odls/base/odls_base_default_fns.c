@@ -17,6 +17,7 @@
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1200,6 +1201,9 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
                              ORTE_NAME_PRINT(&proc->name),proc->exit_code));
         if (WIFEXITED(proc->exit_code)) {
             proc->exit_code = WEXITSTATUS(proc->exit_code);
+            if (0 != proc->exit_code) {
+                state = ORTE_PROC_STATE_TERM_NON_ZERO;
+            }
         } else {
             if (WIFSIGNALED(proc->exit_code)) {
                 state = ORTE_PROC_STATE_ABORTED_BY_SIG;
