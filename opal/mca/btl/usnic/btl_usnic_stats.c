@@ -123,6 +123,11 @@ void opal_btl_usnic_print_stats(
 
              module->stats.num_crc_errors);
 
+    // Shouldn't happen, but just in case the string ever grows long
+    // enough to someday potentially get truncated by snprintf, ensure
+    // that the string is terminated.
+    str[sizeof(str) - 1] = '\0';
+
     /* If our PML calls were 0, then show send and receive window
        extents instead */
     if (module->stats.pml_module_sends +
