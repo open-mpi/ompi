@@ -1736,7 +1736,8 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
                        true,
                        opal_process_info.nodename,
                        module->fabric_info->fabric_attr->name,
-                       "failed to create CQ", __FILE__, __LINE__);
+                       "failed to create CQ", __FILE__, __LINE__,
+                       rc, fi_strerror(-rc));
         goto error;
     }
 
