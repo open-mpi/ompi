@@ -1831,6 +1831,15 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
     assert(channel->info->ep_attr->msg_prefix_size ==
            (uint32_t) mca_btl_usnic_component.transport_header_len);
 
+    opal_output_verbose(15, USNIC_OUT,
+                        "btl:usnic:init_one_channel:%s: channel %s, rx queue size=%" PRIsize_t ", tx queue size=%" PRIsize_t ", cq size=%" PRIsize_t ", send credits=%d",
+                        module->linux_device_name,
+                        (index == USNIC_PRIORITY_CHANNEL) ? "priority" : "data",
+                        channel->info->rx_attr->size,
+                        channel->info->tx_attr->size,
+                        cq_attr.size,
+                        channel->credits);
+
     /*
      * Initialize pool of receive segments.  Round MTU up to cache
      * line size so that each segment is guaranteed to start on a
