@@ -108,6 +108,8 @@ extern sshmem_mkey_t *mca_spml_ucx_register(void* addr,
                                                 int *count);
 extern int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys);
 
+extern void mca_spml_ucx_memuse_hook(void *addr, size_t length);
+
 extern void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id);
 extern void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey);
 

@@ -43,7 +43,6 @@
 #define SPML_UCX_PUT_DEBUG    0
 #endif
 
-
 mca_spml_ucx_t mca_spml_ucx = {
     {
         /* Init mca_spml_base_module_t */
@@ -65,6 +64,7 @@ mca_spml_ucx_t mca_spml_ucx = {
                                every spml */
         mca_spml_ucx_rmkey_unpack,
         mca_spml_ucx_rmkey_free,
+        mca_spml_ucx_memuse_hook,
         (void*)&mca_spml_ucx
     },
 
@@ -383,6 +383,34 @@ void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int 
 error_fatal:
     oshmem_shmem_abort(-1);
     return;
+}
+
+void mca_spml_ucx_memuse_hook(void *addr, size_t length)
+{
+    int my_pe = oshmem_my_proc_id();
+    spml_ucx_mkey_t   *ucx_mkey;
+    ucp_mem_advise_params_t params;
+    ucs_status_t status;
+
+    if (!(mca_spml_ucx.heap_reg_nb && memheap_is_va_in_segment(addr, HEAP_SEG_INDEX))) {
+        return;
+    }
+
+    ucx_mkey = &mca_spml_ucx.ucp_peers[my_pe].mkeys[HEAP_SEG_INDEX].key;
+
+    params.field_mask = UCP_MEM_ADVISE_PARAM_FIELD_ADDRESS |
+                        UCP_MEM_ADVISE_PARAM_FIELD_LENGTH |
+                        UCP_MEM_ADVISE_PARAM_FIELD_ADVICE;
+
+    params.address = addr;
+    params.length  = length;
+    params.advice  = UCP_MADV_WILLNEED;
+
+    status = ucp_mem_advise(mca_spml_ucx.ucp_context, ucx_mkey->mem_h, &params);
+    if (UCS_OK != status) {
+        SPML_ERROR("ucp_mem_advise failed addr %p len %llu",
+                   addr, (unsigned long long)length);
+    }
 }
 
 sshmem_mkey_t *mca_spml_ucx_register(void* addr,
