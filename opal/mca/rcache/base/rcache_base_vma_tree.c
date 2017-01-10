@@ -16,7 +16,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -241,6 +241,7 @@ int mca_rcache_base_vma_tree_init (mca_rcache_base_vma_module_t *vma_module)
 {
     OBJ_CONSTRUCT(&vma_module->rb_tree, opal_rb_tree_t);
     OBJ_CONSTRUCT(&vma_module->vma_list, opal_list_t);
+    OBJ_CONSTRUCT(&vma_module->vma_gc_list, opal_list_t);
     vma_module->reg_cur_cache_size = 0;
     return opal_rb_tree_init (&vma_module->rb_tree, mca_rcache_base_vma_tree_node_compare);
 }
@@ -249,6 +250,7 @@ void mca_rcache_base_vma_tree_finalize (mca_rcache_base_vma_module_t *vma_module
 {
     opal_rb_tree_init(&vma_module->rb_tree,  mca_rcache_base_vma_tree_node_compare);
     OBJ_DESTRUCT(&vma_module->vma_list);
+    OBJ_DESTRUCT(&vma_module->vma_gc_list);
     OBJ_DESTRUCT(&vma_module->rb_tree);
 }
 
@@ -412,6 +414,20 @@ static inline int mca_rcache_base_vma_can_insert (mca_rcache_base_vma_module_t *
     return (0 == limit || vma_module->reg_cur_cache_size + nbytes <= limit);
 }
 
+/**
+ * Free deleted vmas. This can not be done when they are deleted without running
+ * into deadlock problems with some libc versions. The caller MUST hold the vma_lock
+ * when calling this function.
+ */
+static void mca_rcache_base_vma_cleanup (mca_rcache_base_vma_module_t *vma_module)
+{
+    opal_list_item_t *item;
+
+    while (NULL != (item = opal_list_remove_first (&vma_module->vma_gc_list))) {
+        OBJ_RELEASE(item);
+    }
+}
+
 int mca_rcache_base_vma_tree_insert (mca_rcache_base_vma_module_t *vma_module,
                                      mca_rcache_base_registration_t *reg, size_t limit)
 {
@@ -419,6 +435,8 @@ int mca_rcache_base_vma_tree_insert (mca_rcache_base_vma_module_t *vma_module,
     uintptr_t begin = (uintptr_t)reg->base, end = (uintptr_t)reg->bound;
 
     opal_mutex_lock (&vma_module->vma_lock);
+
+    mca_rcache_base_vma_cleanup (vma_module);
 
     i = (mca_rcache_base_vma_item_t *) opal_rb_tree_find_with (&vma_module->rb_tree,
             (void *) begin, mca_rcache_base_vma_tree_node_compare_closest);
@@ -529,7 +547,6 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
                                      mca_rcache_base_registration_t *reg)
 {
     mca_rcache_base_vma_item_t *vma;
-    opal_list_t deleted_vmas;
 
     opal_mutex_lock (&vma_module->vma_lock);
 
@@ -542,8 +559,6 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
         return OPAL_ERROR;
     }
 
-    OBJ_CONSTRUCT(&deleted_vmas, opal_list_t);
-
     while (vma != (mca_rcache_base_vma_item_t *) opal_list_get_end (&vma_module->vma_list)
            && vma->start <= (uintptr_t) reg->bound) {
         mca_rcache_base_vma_remove_reg(vma, reg);
@@ -555,7 +570,7 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
             mca_rcache_base_vma_update_byte_count (vma_module,
                                                    vma->start - vma->end - 1);
             opal_list_remove_item (&vma_module->vma_list, &vma->super);
-            opal_list_append (&deleted_vmas, &vma->super);
+            opal_list_append (&vma_module->vma_gc_list, &vma->super);
             vma = next;
         } else {
             int merged;
@@ -573,7 +588,7 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
                     prev->end = vma->end;
                     opal_list_remove_item(&vma_module->vma_list, &vma->super);
                     opal_rb_tree_delete(&vma_module->rb_tree, vma);
-                    opal_list_append (&deleted_vmas, &vma->super);
+                    opal_list_append (&vma_module->vma_gc_list, &vma->super);
                     vma = prev;
                     merged = 1;
                 }
@@ -587,7 +602,7 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
                     vma->end = next->end;
                     opal_list_remove_item(&vma_module->vma_list, &next->super);
                     opal_rb_tree_delete(&vma_module->rb_tree, next);
-                    opal_list_append (&deleted_vmas, &next->super);
+                    opal_list_append (&vma_module->vma_gc_list, &next->super);
                     merged = 1;
                 }
             } while (merged);
@@ -597,9 +612,6 @@ int mca_rcache_base_vma_tree_delete (mca_rcache_base_vma_module_t *vma_module,
     }
 
     opal_mutex_unlock (&vma_module->vma_lock);
-
-    /* actually free vmas now that the lock has been dropped */
-    OPAL_LIST_DESTRUCT(&deleted_vmas);
 
     return 0;
 }
