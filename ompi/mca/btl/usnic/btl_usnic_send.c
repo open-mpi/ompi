@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -43,8 +43,9 @@
 
 
 /*
- * This function is called when a send of a full-fragment segment completes
- * Return the WQE and also return the segment if no ACK pending
+ * This function is called when a send of a segment completes that is
+ * the one-and-only segment of an MPI message.  Return the WQE and
+ * also return the segment if no ACK pending.
  */
 void
 opal_btl_usnic_frag_send_complete(opal_btl_usnic_module_t *module,
@@ -71,8 +72,10 @@ opal_btl_usnic_frag_send_complete(opal_btl_usnic_module_t *module,
 }
 
 /*
- * This function is called when a send segment completes
- * Return the WQE and also return the segment if no ACK pending
+ * This function is called when a send segment completes that is part
+ * of a larger MPI message (ie., there may still be other chunk
+ * segments that have not yet completed sending).  Return the WQE and
+ * also return the segment if no ACK pending.
  */
 void
 opal_btl_usnic_chunk_send_complete(opal_btl_usnic_module_t *module,
