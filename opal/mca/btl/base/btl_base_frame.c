@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -147,7 +147,11 @@ static int mca_btl_base_register(mca_base_register_flag_t flags)
                                  &mca_btl_base_warn_component_unused);
 
     (void) mca_base_var_enum_create_flag ("btl_flags", mca_btl_base_flag_enum_flags, &mca_btl_base_flag_enum);
+    (void) mca_base_var_enum_register("opal", "btl", "base", "btl_flags",
+                                 &mca_btl_base_flag_enum);
     (void) mca_base_var_enum_create_flag ("btl_atomic_flags", mca_btl_base_atomic_enum_flags, &mca_btl_base_atomic_enum);
+    (void) mca_base_var_enum_register("opal", "btl", "base", "btl_atomic_flags",
+                                 &mca_btl_base_atomic_enum);
 
     return OPAL_SUCCESS;
 }
@@ -203,14 +207,6 @@ static int mca_btl_base_close(void)
     (void) mca_base_framework_components_close(&opal_btl_base_framework, NULL);
 
     OBJ_DESTRUCT(&mca_btl_base_modules_initialized);
-
-    if (mca_btl_base_flag_enum) {
-        OBJ_RELEASE(mca_btl_base_flag_enum);
-    }
-
-    if (mca_btl_base_atomic_enum) {
-        OBJ_RELEASE(mca_btl_base_atomic_enum);
-    }
 
 #if 0
     /* restore event processing */

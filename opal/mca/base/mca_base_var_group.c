@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -330,6 +332,7 @@ int mca_base_var_group_deregister (int group_index)
     mca_base_var_group_t *group;
     int size, ret;
     int *params, *subgroups;
+    opal_object_t ** enums;
 
     ret = mca_base_var_group_get_internal (group_index, &group, false);
     if (OPAL_SUCCESS != ret) {
@@ -366,6 +369,12 @@ int mca_base_var_group_deregister (int group_index)
         }
 
         (void) mca_base_pvar_mark_invalid (params[i]);
+    }
+
+    size = opal_value_array_get_size(&group->group_enums);
+    enums = OPAL_VALUE_ARRAY_GET_BASE(&group->group_enums, opal_object_t *);
+    for (int i = 0 ; i < size ; ++i) {
+        OBJ_RELEASE (enums[i]);
     }
 
     size = opal_value_array_get_size(&group->group_subgroups);
@@ -453,6 +462,34 @@ int mca_base_var_group_add_pvar (const int group_index, const int param_index)
     return (int) opal_value_array_get_size (&group->group_pvars) - 1;
 }
 
+int mca_base_var_group_add_enum (const int group_index, const void * storage)
+{
+    mca_base_var_group_t *group;
+    int size, i, ret;
+    void **params;
+
+    ret = mca_base_var_group_get_internal (group_index, &group, false);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    size = opal_value_array_get_size(&group->group_enums);
+    params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_enums, void *);
+    for (i = 0 ; i < size ; ++i) {
+        if (params[i] == storage) {
+            return i;
+        }
+    }
+
+    if (OPAL_SUCCESS !=
+        (ret = opal_value_array_append_item (&group->group_enums, storage))) {
+        return ret;
+    }
+
+    /* return the group index */
+    return (int) opal_value_array_get_size (&group->group_enums) - 1;
+}
+
 int mca_base_var_group_get (const int group_index, const mca_base_var_group_t **group)
 {
     return mca_base_var_group_get_internal (group_index, (mca_base_var_group_t **) group, false);
@@ -495,6 +532,9 @@ static void mca_base_var_group_constructor (mca_base_var_group_t *group)
 
     OBJ_CONSTRUCT(&group->group_pvars, opal_value_array_t);
     opal_value_array_init (&group->group_pvars, sizeof (int));
+
+    OBJ_CONSTRUCT(&group->group_enums, opal_value_array_t);
+    opal_value_array_init (&group->group_enums, sizeof(void *));
 }
 
 static void mca_base_var_group_destructor (mca_base_var_group_t *group)
@@ -517,6 +557,7 @@ static void mca_base_var_group_destructor (mca_base_var_group_t *group)
     OBJ_DESTRUCT(&group->group_subgroups);
     OBJ_DESTRUCT(&group->group_vars);
     OBJ_DESTRUCT(&group->group_pvars);
+    OBJ_DESTRUCT(&group->group_enums);
 }
 
 int mca_base_var_group_get_count (void)

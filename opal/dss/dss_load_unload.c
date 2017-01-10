@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -289,7 +289,7 @@ int opal_value_unload(opal_value_t *kv,
         return OPAL_ERR_TYPE_MISMATCH;
     }
     if (NULL == data ||
-        (NULL == *data && OPAL_STRING != type && OPAL_BYTE_OBJECT != type)) {
+        (OPAL_STRING != type && OPAL_BYTE_OBJECT != type && NULL == *data)) {
         OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
         return OPAL_ERR_BAD_PARAM;
     }

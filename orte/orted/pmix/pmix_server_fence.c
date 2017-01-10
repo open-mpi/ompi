@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -116,8 +116,10 @@ int pmix_server_fencenb_fn(opal_list_t *procs, opal_list_t *info,
     /* pass along any data that was collected locally */
     if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(cd->sig, buf, pmix_server_release, cd))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         return rc;
     }
+    OBJ_RELEASE(buf);
     return ORTE_SUCCESS;
 }
 

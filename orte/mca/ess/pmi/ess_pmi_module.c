@@ -13,7 +13,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -345,6 +345,7 @@ static int rte_init(void)
                                                &pname, &val, OPAL_STRING);
                 if (OPAL_SUCCESS == ret && NULL != val) {
                     u16 = opal_hwloc_compute_relative_locality(mycpuset, val);
+                    free(val);
                 } else {
                     /* all we can say is that it shares our node */
                     u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;

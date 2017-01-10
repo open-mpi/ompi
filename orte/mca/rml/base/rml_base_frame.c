@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -289,9 +289,13 @@ static void send_req_cons(orte_rml_send_request_t *ptr)
 {
     OBJ_CONSTRUCT(&ptr->send, orte_rml_send_t);
 }
+static void send_req_des(orte_rml_send_request_t *ptr)
+{
+    OBJ_DESTRUCT(&ptr->send);
+}
 OBJ_CLASS_INSTANCE(orte_rml_send_request_t,
                    opal_object_t,
-                   send_req_cons, NULL);
+                   send_req_cons, send_req_des);
 
 static void recv_cons(orte_rml_recv_t *ptr)
 {

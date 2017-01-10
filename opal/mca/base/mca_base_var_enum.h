@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -227,6 +229,9 @@ OPAL_DECLSPEC int mca_base_var_enum_create (const char *name, const mca_base_var
 OPAL_DECLSPEC int mca_base_var_enum_create_flag (const char *name, const mca_base_var_enum_value_flag_t flags[],
                                                  mca_base_var_enum_flag_t **enumerator);
 
+OPAL_DECLSPEC int mca_base_var_enum_register(const char *project_name, const char *framework_name,
+                                             const char *component_name, const char *enum_name,
+                                             void *storage);
 /* standard enumerators. it is invalid to call OBJ_RELEASE on any of these enumerators */
 /**
  * Boolean enumerator

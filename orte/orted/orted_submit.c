@@ -15,7 +15,7 @@
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -55,6 +55,7 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#include <poll.h>
 
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
@@ -589,8 +590,6 @@ void orte_submit_finalize(void)
     trackr_t *trk;
     int i;
 
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_LAUNCH_RESP);
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFY_COMPLETE);
     for (i=0; i < tool_jobs.size; i++) {
         if (NULL != (trk = (trackr_t*)opal_pointer_array_get_item(&tool_jobs, i))) {
             OBJ_RELEASE(trk);
@@ -611,6 +610,10 @@ void orte_submit_finalize(void)
         }
         close(orte_debugger_attach_fd);
         unlink(MPIR_attach_fifo);
+    }
+
+    if (NULL != orte_cmd_options.prefix) {
+        free(orte_cmd_options.prefix);
     }
 }
 
@@ -703,6 +706,9 @@ int orte_submit_job(char *argv[], int *index,
 
     /* reset the globals every time thru as the argv
      * will modify them */
+    if (NULL != orte_cmd_options.prefix) {
+        free(orte_cmd_options.prefix);
+    }
     memset(&orte_cmd_options, 0, sizeof(orte_cmd_options));
     argc = opal_argv_count(argv);
 
@@ -1282,12 +1288,18 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
              * region.
              * So we make a copy of the variable.
              */
-            char *s = strdup(env[j]);
+            char *value, *s = strdup(env[j]);
 
             if (NULL == s) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
-            putenv(s);
+
+            value = strchr(s, '=');
+            if (NULL != value) {
+                value++;
+            }
+            opal_setenv(s, value, true, &environ);
+            free(s);
         }
     }
 

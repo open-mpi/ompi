@@ -13,7 +13,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -55,6 +55,7 @@
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
+#include "opal/threads/tsd.h"
 
 extern int opal_initialized;
 extern int opal_util_initialized;
@@ -159,6 +160,9 @@ opal_finalize(void)
 
     /* close the sec framework */
     (void) mca_base_framework_close(&opal_sec_base_framework);
+
+    /* cleanup the main thread specific stuff */
+    opal_tsd_keys_destruct();
 
     /* finalize util code */
     opal_finalize_util();

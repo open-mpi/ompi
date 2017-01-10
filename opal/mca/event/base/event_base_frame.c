@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,13 +56,6 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, event, NULL, NULL, opal_event_base_open,
 			   opal_event_base_close, mca_event_base_static_components,
 			   0);
 
-static int opal_event_base_close(void)
-{
-    /* cleanup components even though they are statically opened */
-    return mca_base_framework_components_close (&opal_event_base_framework,
-						NULL);
-}
-
 /*
  * Globals
  */
@@ -95,3 +90,21 @@ static int opal_event_base_open(mca_base_open_flag_t flags)
 
     return rc;
 }
+
+static int opal_event_base_close(void)
+{
+    int rc;
+    
+    /* cleanup components even though they are statically opened */
+    if (OPAL_SUCCESS != (rc =mca_base_framework_components_close (&opal_event_base_framework,
+						                  NULL))) {
+        return rc;
+    }
+
+    opal_event_base_free(opal_sync_event_base);
+
+    /* finalize the lib */
+    return opal_event_finalize();
+
+}
+

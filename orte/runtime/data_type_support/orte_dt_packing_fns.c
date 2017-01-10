@@ -846,11 +846,6 @@ int orte_dt_pack_sig(opal_buffer_t *buffer, const void *src, int32_t num_vals,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* pack the sequence number */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &ptr[i]->seq_num, 1, OPAL_UINT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
         if (0 < ptr[i]->sz) {
             /* pack the array */
             if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, ptr[i]->signature, ptr[i]->sz, ORTE_NAME))) {

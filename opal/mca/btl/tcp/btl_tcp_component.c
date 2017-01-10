@@ -17,7 +17,7 @@
  *                         reserved.
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -441,6 +441,11 @@ static int mca_btl_tcp_component_close(void)
     OPAL_LIST_FOREACH_SAFE(event, next, &mca_btl_tcp_component.tcp_events, mca_btl_tcp_event_t) {
         opal_event_del(&event->event);
         OBJ_RELEASE(event);
+    }
+
+    if (NULL != mca_btl_tcp_component.tcp_local) {
+        opal_proc_table_remove_value(&mca_btl_tcp_component.tcp_procs, opal_proc_local_get()->proc_name);
+        OBJ_RELEASE(mca_btl_tcp_component.tcp_local);
     }
 
     /* release resources */

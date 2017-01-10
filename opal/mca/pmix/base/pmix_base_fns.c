@@ -3,11 +3,11 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,6 +108,9 @@ static void lookup_cbfunc(int status, opal_list_t *data, void *cbdata)
         if (NULL != p) {
             cd->pdat->proc = p->proc;
             if (p->value.type == cd->pdat->value.type) {
+                if (NULL != cd->pdat->value.key) {
+                    free(cd->pdat->value.key);
+                }
                 (void)opal_value_xfer(&cd->pdat->value, &p->value);
             }
         }
@@ -149,11 +152,9 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     * of lookup isn't available, then we use the blocking
     * form and trust that the underlying system will WAIT
     * until the other side publishes its data */
-    OBJ_CONSTRUCT(&ilist, opal_list_t);
     pdat = OBJ_NEW(opal_pmix_pdata_t);
     pdat->value.key = strdup(outdat->value.key);
     pdat->value.type = outdat->value.type;
-    opal_list_append(&ilist, &pdat->super);
     /* setup the constraints */
     OBJ_CONSTRUCT(&mlist, opal_list_t);
     /* tell it to wait for the data to arrive */
@@ -174,11 +175,13 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     /* if a non-blocking version of lookup isn't
      * available, then use the blocking version */
     if (NULL == opal_pmix.lookup_nb) {
+        OBJ_CONSTRUCT(&ilist, opal_list_t);
+        opal_list_append(&ilist, &pdat->super);
         rc = opal_pmix.lookup(&ilist, &mlist);
         OPAL_LIST_DESTRUCT(&mlist);
+        OPAL_LIST_DESTRUCT(&ilist);
         if (OPAL_SUCCESS != rc) {
             OPAL_ERROR_LOG(rc);
-            OPAL_LIST_DESTRUCT(&ilist);
             return rc;
         }
     } else {
@@ -189,7 +192,6 @@ int opal_pmix_base_exchange(opal_value_t *indat,
         rc = opal_pmix.lookup_nb(keys, &mlist, lookup_cbfunc, &caddy);
         if (OPAL_SUCCESS != rc) {
             OPAL_ERROR_LOG(rc);
-            OPAL_LIST_DESTRUCT(&ilist);
             OPAL_LIST_DESTRUCT(&mlist);
             opal_argv_free(keys);
             return rc;
@@ -201,15 +203,15 @@ int opal_pmix_base_exchange(opal_value_t *indat,
         OPAL_LIST_DESTRUCT(&mlist);
         if (OPAL_SUCCESS != caddy.status) {
             OPAL_ERROR_LOG(caddy.status);
-            OPAL_LIST_DESTRUCT(&ilist);
             return caddy.status;
         }
     }
 
     /* pass back the result */
     outdat->proc = pdat->proc;
+    free(outdat->value.key);
     rc = opal_value_xfer(&outdat->value, &pdat->value);
-    OPAL_LIST_DESTRUCT(&ilist);
+    OBJ_RELEASE(pdat);
     return rc;
 }
 

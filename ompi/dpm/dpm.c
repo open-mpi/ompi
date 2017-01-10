@@ -16,7 +16,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -1182,8 +1182,8 @@ static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
     for (i=0; i< count; i++ ) {
         if (NULL != objs[i]->reqs ) {
             free(objs[i]->reqs );
-            free(objs[i]);
         }
+        free(objs[i]);
     }
 
     free(reqs);

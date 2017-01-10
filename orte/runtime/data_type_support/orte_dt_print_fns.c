@@ -853,13 +853,13 @@ int orte_dt_print_sig(char **output, char *prefix, orte_grpcomm_signature_t *src
     }
 
     if (NULL == src->signature) {
-        asprintf(output, "%sORTE_SIG  SeqNumber:%d  Procs: NULL", prefx, src->seq_num);
+        asprintf(output, "%sORTE_SIG  Procs: NULL", prefx);
         free(prefx);
         return ORTE_SUCCESS;
     }
 
     /* there must be at least one proc in the signature */
-    asprintf(&tmp, "%sORTE_SIG  SeqNumber:%d  Procs: ", prefx, src->seq_num);
+    asprintf(&tmp, "%sORTE_SIG  Procs: ", prefx);
 
     for (i=0; i < src->sz; i++) {
         asprintf(&tmp2, "%s%s", tmp, ORTE_NAME_PRINT(&src->signature[i]));

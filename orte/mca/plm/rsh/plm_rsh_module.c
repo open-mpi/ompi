@@ -15,7 +15,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -1343,6 +1343,10 @@ static int rsh_finalize(void)
             }
         }
     }
+    free(mca_plm_rsh_component.agent_path);
+    free(rsh_agent_path);
+    opal_argv_free(mca_plm_rsh_component.agent_argv);
+    opal_argv_free(rsh_agent_argv);
 
     return rc;
 }

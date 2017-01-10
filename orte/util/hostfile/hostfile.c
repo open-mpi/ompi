@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -515,6 +515,7 @@ static int hostfile_parse(const char *hostfile, opal_list_t* updates,
     }
     fclose(orte_util_hostfile_in);
     orte_util_hostfile_in = NULL;
+    orte_util_hostfile_lex_destroy();
 
 unlock:
     cur_hostfile_name = NULL;
