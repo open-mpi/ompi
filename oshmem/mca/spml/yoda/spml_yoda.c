@@ -65,6 +65,7 @@ mca_spml_yoda_module_t mca_spml_yoda = {
         mca_spml_yoda_fence,
         mca_spml_base_rmkey_unpack,
         mca_spml_base_rmkey_free,
+        mca_spml_base_memuse_hook,
 
         (void *)&mca_spml_yoda
     }

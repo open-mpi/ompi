@@ -84,6 +84,7 @@ OSHMEM_DECLSPEC int mca_spml_base_get_nb(void *dst_addr,
                                          int src,
                                          void **handle);
 
+OSHMEM_DECLSPEC void mca_spml_base_memuse_hook(void *addr, size_t length);
 /*
  * MCA framework
  */

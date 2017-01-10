@@ -469,7 +469,7 @@ static int _do_alloc(uint32_t order,
     }
 
     *p_buff = (void*) addr;
-    /* no barrier because it is not required by spec! */
+    MCA_SPML_CALL(memuse_hook(addr, 1<<order));
     return OSHMEM_SUCCESS;
 
     alloc_error: _buddy_free(&memheap_buddy, offset, order, heap);

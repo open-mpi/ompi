@@ -278,6 +278,15 @@ typedef int (*mca_spml_base_module_fence_fn_t)(void);
 typedef int (*mca_spml_base_module_wait_nb_fn_t)(void *);
 
 /**
+ * Called by memheap when memory is allocated by shmalloc(),
+ * shcalloc(), shmemalign() or shrealloc()
+ *
+ * @param addr   base address of the registered buffer.
+ * @param size   the size of the buffer to be registered.
+ */
+typedef void (*mca_spml_base_module_memuse_hook_fn_t)(void *, size_t);
+
+/**
  *  SPML instance.
  */
 struct mca_spml_base_module_1_0_0_t {
@@ -304,6 +313,8 @@ struct mca_spml_base_module_1_0_0_t {
 
     mca_spml_base_module_mkey_unpack_fn_t spml_rmkey_unpack;
     mca_spml_base_module_mkey_free_fn_t   spml_rmkey_free;
+
+    mca_spml_base_module_memuse_hook_fn_t spml_memuse_hook;
     void *self;
 };
 

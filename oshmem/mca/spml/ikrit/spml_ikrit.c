@@ -171,6 +171,7 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_ikrit_fence,
         mca_spml_ikrit_cache_mkeys,
         mca_spml_base_rmkey_free,
+        mca_spml_base_memuse_hook,
 
         (void*)&mca_spml_ikrit
     }
