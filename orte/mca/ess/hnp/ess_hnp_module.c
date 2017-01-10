@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -854,7 +854,9 @@ static int rte_finalize(void)
 
     /* release the job hash table */
     OPAL_HASH_TABLE_FOREACH(key, uint32, jdata, orte_job_data) {
-        OBJ_RELEASE(jdata);
+        if (NULL != jdata) {
+            OBJ_RELEASE(jdata);
+        }
     }
     OBJ_RELEASE(orte_job_data);
 
