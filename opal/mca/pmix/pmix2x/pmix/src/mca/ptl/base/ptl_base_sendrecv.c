@@ -200,7 +200,15 @@ retry:
             /* header was fully written, but only a part of the msg data was written */
             msg->hdr_sent = true;
             rc -= msg->sdbytes;
-            msg->sdptr = (char *)msg->data->base_ptr + rc;
+            if (NULL != msg->data) {
+                /* technically, this should never happen as iov_count
+                 * would be 1 for a zero-byte message, and so we cannot
+                 * have a case where we write the header and part of the
+                 * msg. However, code checkers don't know that and are
+                 * fooled by our earlier check for NULL, and so
+                 * we silence their warnings by using this check */
+                msg->sdptr = (char *)msg->data->base_ptr + rc;
+            }
             msg->sdbytes = ntohl(msg->hdr.nbytes) - rc;
         }
         return PMIX_ERR_RESOURCE_BUSY;
