@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
@@ -118,10 +119,7 @@ static bool forcibly_die=false;
 static opal_event_t term_handler;
 static opal_event_t epipe_handler;
 static int term_pipe[2];
-static opal_event_t sigusr1_handler;
-static opal_event_t sigusr2_handler;
-static opal_event_t sigtstp_handler;
-static opal_event_t sigcont_handler;
+static opal_event_t forward_signals_events[ORTE_ESS_HNP_MAX_FORWARD_SIGNALS];
 
 static void abort_signal_callback(int signal);
 static void clean_abort(int fd, short flags, void *arg);
@@ -194,10 +192,10 @@ static int rte_init(void)
     signal(SIGHUP, abort_signal_callback);
 
     /** setup callbacks for signals we should foward */
-    setup_sighandler(SIGUSR1, &sigusr1_handler, signal_forward_callback);
-    setup_sighandler(SIGUSR2, &sigusr2_handler, signal_forward_callback);
-    setup_sighandler(SIGTSTP, &sigtstp_handler, signal_forward_callback);
-    setup_sighandler(SIGCONT, &sigcont_handler, signal_forward_callback);
+
+    for (unsigned int i = 0 ; i < orte_ess_hnp_forward_signals_count ; ++i) {
+      setup_sighandler (orte_ess_hnp_forward_signals[i], forward_signals_events + i, signal_forward_callback);
+    }
     signals_set = true;
 
     /* get the local topology */
@@ -789,10 +787,9 @@ static int rte_finalize(void)
         /* remove the term handler */
         opal_event_del(&term_handler);
         /** Remove the USR signal handlers */
-        opal_event_signal_del(&sigusr1_handler);
-        opal_event_signal_del(&sigusr2_handler);
-        opal_event_signal_del(&sigtstp_handler);
-        opal_event_signal_del(&sigcont_handler);
+        for (unsigned int i = 0 ; i < orte_ess_hnp_forward_signals_count ; ++i) {
+            opal_event_signal_del(forward_signals_events + i);
+        }
         signals_set = false;
     }
 
