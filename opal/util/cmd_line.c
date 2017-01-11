@@ -13,7 +13,7 @@
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -35,6 +35,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_environ.h"
 
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/constants.h"
@@ -1158,7 +1159,6 @@ static int set_dest(cmd_line_option_t *option, char *sval)
 {
     int ival = atol(sval);
     long lval = strtoul(sval, NULL, 10);
-    char *str = NULL;
     size_t i;
 
     /* Set MCA param.  We do this in the environment because the MCA
@@ -1176,16 +1176,13 @@ static int set_dest(cmd_line_option_t *option, char *sval)
         case OPAL_CMD_LINE_TYPE_STRING:
         case OPAL_CMD_LINE_TYPE_INT:
         case OPAL_CMD_LINE_TYPE_SIZE_T:
-            asprintf(&str, "%s=%s", option->clo_mca_param_env_var, sval);
+            opal_setenv(option->clo_mca_param_env_var, sval, true, &environ);
             break;
         case OPAL_CMD_LINE_TYPE_BOOL:
-            asprintf(&str, "%s=1", option->clo_mca_param_env_var);
+            opal_setenv(option->clo_mca_param_env_var, "1", true, &environ);
             break;
         default:
             break;
-        }
-        if (NULL != str) {
-            putenv(str);
         }
     }
 
