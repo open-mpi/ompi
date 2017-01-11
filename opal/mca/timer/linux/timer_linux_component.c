@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016 Broadcom Limited. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +32,7 @@
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/timer/linux/timer_linux.h"
 #include "opal/constants.h"
+#include "opal/util/show_help.h"
 
 static opal_timer_t opal_timer_base_get_cycles_sys_timer(void);
 static opal_timer_t opal_timer_base_get_usec_sys_timer(void);
