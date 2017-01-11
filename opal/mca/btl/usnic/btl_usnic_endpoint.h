@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -160,6 +160,8 @@ typedef struct mca_btl_base_endpoint_t {
     opal_btl_usnic_seq_t endpoint_next_seq_to_send; /* n_t */
     opal_btl_usnic_seq_t endpoint_ack_seq_rcvd; /* n_a */
 
+    /* Table where sent segments sit while waiting for their ACKs.
+       When a segment is ACKed, it is removed from this table. */
     struct opal_btl_usnic_send_segment_t *endpoint_sent_segs[WINDOW_SIZE];
 
     /* Values for the current proc to receive from this endpoint on
