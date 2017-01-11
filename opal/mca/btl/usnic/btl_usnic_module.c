@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
@@ -987,7 +987,7 @@ usnic_do_resends(
             /* resends are always standard segments */
             sseg->ss_channel = USNIC_DATA_CHANNEL;
 
-            /* re-send the segment */
+            /* re-send the segment (we have a send credit available) */
             opal_btl_usnic_post_segment(module, endpoint, sseg);
 
             /* consume a send credit for this endpoint.  May send us
@@ -1017,6 +1017,9 @@ usnic_do_resends(
  * endpoint_send_segment() it.  Takes care of subsequent frag
  * cleanup/bookkeeping (dequeue, descriptor callback, etc.) if this frag was
  * completed by this segment.
+ *
+ * ASSUMES THAT THE CALLER HAS ALREADY CHECKED TO SEE IF WE HAVE
+ * A SEND CREDIT!
  */
 static void
 usnic_handle_large_send(
@@ -1070,7 +1073,8 @@ usnic_handle_large_send(
     /* payload length into the header*/
     sseg->ss_base.us_btl_header->payload_len = payload_len;
 
-    /* do the send */
+    // We assume that the caller has checked to see that we have a
+    // send credit, so do the send.
     opal_btl_usnic_endpoint_send_segment(module, sseg);
 
     /* do fragment bookkeeping */
@@ -1182,7 +1186,7 @@ opal_btl_usnic_module_progress_sends(
                     sseg->ss_base.us_btl_header->tag);
 #endif
 
-            /* post the send */
+            /* post the send (we have a send credit available) */
             opal_btl_usnic_endpoint_send_segment(module, sseg);
 
             /* don't do callback yet if this is a put */
@@ -1233,8 +1237,13 @@ opal_btl_usnic_module_progress_sends(
         /* Is it time to send ACK? */
         if (endpoint->endpoint_acktime == 0 ||
             endpoint->endpoint_acktime <= get_nsec()) {
-            opal_btl_usnic_ack_send(module, endpoint);
-            opal_btl_usnic_remove_from_endpoints_needing_ack(endpoint);
+            if (OPAL_LIKELY(opal_btl_usnic_ack_send(module, endpoint) == OPAL_SUCCESS)) {
+                opal_btl_usnic_remove_from_endpoints_needing_ack(endpoint);
+            } else {
+                // If we fail, it means we're out of send credits on
+                // the ACK channel
+                break;
+            }
         }
 
         endpoint = next_endpoint;
@@ -1309,8 +1318,8 @@ usnic_send(
     if (frag->sf_base.uf_type == OPAL_BTL_USNIC_FRAG_SMALL_SEND &&
             frag->sf_ack_bytes_left < module->max_tiny_payload &&
             WINDOW_OPEN(endpoint) &&
-            (get_send_credits(&module->mod_channels[USNIC_PRIORITY_CHANNEL]) >=
-             module->mod_channels[USNIC_PRIORITY_CHANNEL].fastsend_wqe_thresh)) {
+            (get_send_credits(&module->mod_channels[USNIC_DATA_CHANNEL]) >=
+             module->mod_channels[USNIC_DATA_CHANNEL].fastsend_wqe_thresh)) {
         size_t payload_len;
 
         sfrag = (opal_btl_usnic_small_send_frag_t *)frag;
@@ -1342,7 +1351,7 @@ usnic_send(
         opal_output(0, "INLINE send, sseg=%p", (void *)sseg);
 #endif
 
-        /* post the segment now */
+        /* post the segment now (we have a send credit available) */
         opal_btl_usnic_endpoint_send_segment(module, sseg);
 
         /* If we own the frag and callback was requested, callback now,
@@ -1602,6 +1611,31 @@ static int create_ep(opal_btl_usnic_module_t* module,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
+    /* Check to ensure that the RX/TX queue lengths are at least as
+       long as we asked for */
+    if ((int) channel->info->rx_attr->size < channel->chan_rd_num) {
+        rc = FI_ETOOSMALL;
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "internal error during init",
+                       true,
+                       opal_process_info.nodename,
+                       module->linux_device_name,
+                       "endpoint RX queue length is too short", __FILE__, __LINE__,
+                       rc, fi_strerror(rc));
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    if ((int) channel->info->tx_attr->size < channel->chan_sd_num) {
+        rc = FI_ETOOSMALL;
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "internal error during init",
+                       true,
+                       opal_process_info.nodename,
+                       module->linux_device_name,
+                       "endpoint TX queue length is too short", __FILE__, __LINE__,
+                       rc, fi_strerror(rc));
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
     /* attach CQ to EP */
     rc = fi_ep_bind(channel->ep, &channel->cq->fid, FI_SEND);
     if (0 != rc) {
@@ -1689,10 +1723,6 @@ static int create_ep(opal_btl_usnic_module_t* module,
                         inet_ntoa(sin->sin_addr),
                         ntohs(sin->sin_port));
 
-    /* actual sizes */
-    channel->chan_rd_num = channel->info->rx_attr->size;
-    channel->chan_sd_num = channel->info->tx_attr->size;
-
     return OPAL_SUCCESS;
 }
 
@@ -1735,7 +1765,8 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
                             int index,
                             int max_msg_size,
                             int rd_num,
-                            int sd_num)
+                            int sd_num,
+                            int cq_num)
 {
     int i;
     int rc;
@@ -1765,7 +1796,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
     memset(&cq_attr, 0, sizeof(cq_attr));
     cq_attr.format = FI_CQ_FORMAT_CONTEXT;
     cq_attr.wait_obj = FI_WAIT_NONE;
-    cq_attr.size = module->cq_num;
+    cq_attr.size = cq_num;
     rc = fi_cq_open(module->domain, &cq_attr, &channel->cq, NULL);
     if (0 != rc) {
         opal_show_help("help-mpi-btl-usnic.txt",
@@ -1773,7 +1804,22 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
                        true,
                        opal_process_info.nodename,
                        module->linux_device_name,
-                       "failed to create CQ", __FILE__, __LINE__);
+                       "failed to create CQ", __FILE__, __LINE__,
+                       rc, fi_strerror(-rc));
+        goto error;
+    }
+
+    /* Ensure that we got a CQ that is at least as long as we asked
+       for */
+    if ((int) cq_attr.size < cq_num) {
+        rc = FI_ETOOSMALL;
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "internal error during init",
+                       true,
+                       opal_process_info.nodename,
+                       module->linux_device_name,
+                       "created CQ is too small", __FILE__, __LINE__,
+                       rc, fi_strerror(rc));
         goto error;
     }
 
@@ -1785,6 +1831,15 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
 
     assert(channel->info->ep_attr->msg_prefix_size ==
            (uint32_t) mca_btl_usnic_component.transport_header_len);
+
+    opal_output_verbose(15, USNIC_OUT,
+                        "btl:usnic:init_one_channel:%s: channel %s, rx queue size=%" PRIsize_t ", tx queue size=%" PRIsize_t ", cq size=%" PRIsize_t ", send credits=%d",
+                        module->linux_device_name,
+                        (index == USNIC_PRIORITY_CHANNEL) ? "priority" : "data",
+                        channel->info->rx_attr->size,
+                        channel->info->tx_attr->size,
+                        cq_attr.size,
+                        channel->credits);
 
     /*
      * Initialize pool of receive segments.  Round MTU up to cache
@@ -1963,6 +2018,11 @@ static void init_find_transport_header_len(opal_btl_usnic_module_t *module)
  */
 static void init_queue_lengths(opal_btl_usnic_module_t *module)
 {
+    bool cq_is_sum = false;
+    if (-1 == mca_btl_usnic_component.cq_num) {
+        cq_is_sum = true;
+    }
+
     if (-1 == mca_btl_usnic_component.sd_num) {
         module->sd_num = module->fabric_info->tx_attr->size;
     } else {
@@ -1973,7 +2033,7 @@ static void init_queue_lengths(opal_btl_usnic_module_t *module)
     } else {
         module->rd_num = mca_btl_usnic_component.rd_num;
     }
-    if (-1 == mca_btl_usnic_component.cq_num) {
+    if (cq_is_sum) {
         module->cq_num = module->rd_num + module->sd_num;
     } else {
         module->cq_num = mca_btl_usnic_component.cq_num;
@@ -2007,6 +2067,11 @@ static void init_queue_lengths(opal_btl_usnic_module_t *module)
         (unsigned) module->prio_rd_num >
          module->fabric_info->rx_attr->size) {
         module->prio_rd_num = module->fabric_info->rx_attr->size;
+    }
+    if (cq_is_sum) {
+        module->prio_cq_num = module->prio_rd_num + module->prio_sd_num;
+    } else {
+        module->prio_cq_num = module->cq_num;
     }
 }
 
@@ -2213,14 +2278,14 @@ static int init_channels(opal_btl_usnic_module_t *module)
     rc = init_one_channel(module,
             USNIC_PRIORITY_CHANNEL,
             module->max_tiny_msg_size,
-            module->prio_rd_num, module->prio_sd_num);
+            module->prio_rd_num, module->prio_sd_num, module->prio_cq_num);
     if (rc != OPAL_SUCCESS) {
         goto destroy;
     }
     rc = init_one_channel(module,
             USNIC_DATA_CHANNEL,
             module->fabric_info->ep_attr->max_msg_size,
-            module->rd_num, module->sd_num);
+            module->rd_num, module->sd_num, module->cq_num);
     if (rc != OPAL_SUCCESS) {
         goto destroy;
     }

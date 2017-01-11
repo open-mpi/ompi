@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -1202,13 +1202,15 @@ static int usnic_handle_completion(
                 (opal_btl_usnic_ack_segment_t *)seg);
         break;
 
-    /**** Send of frag segment completion ****/
+    /**** Send of frag segment completion (i.e., the MPI message's
+          one-and-only segment has completed sending) ****/
     case OPAL_BTL_USNIC_SEG_FRAG:
         opal_btl_usnic_frag_send_complete(module,
                 (opal_btl_usnic_frag_segment_t*)seg);
         break;
 
-    /**** Send of chunk segment completion ****/
+    /**** Send of chunk segment completion (i.e., part of a large MPI
+          message is done sending) ****/
     case OPAL_BTL_USNIC_SEG_CHUNK:
         opal_btl_usnic_chunk_send_complete(module,
                 (opal_btl_usnic_chunk_segment_t*)seg);
