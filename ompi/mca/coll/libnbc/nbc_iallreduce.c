@@ -7,7 +7,7 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -82,6 +82,19 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
     return res;
   }
 
+  if (1 == p) {
+    if (!inplace) {
+      /* for a single node - copy data to receivebuf */
+      res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle (handle);
+        return res;
+      }
+    }
+    *request = &ompi_request_empty;
+    return OMPI_SUCCESS;
+  }
+
   res = NBC_Init_handle (comm, &handle, libnbc_module);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
@@ -92,15 +105,6 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
   if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
     NBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;
-  }
-
-  if ((p == 1) && !inplace) {
-    /* for a single node - copy data to receivebuf */
-    res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      NBC_Return_handle (handle);
-      return res;
-    }
   }
 
   /* algorithm selection */

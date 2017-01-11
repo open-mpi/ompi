@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -73,6 +73,10 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
+  }
+  if (1 == p) {
+    *request = &ompi_request_empty;
+    return OMPI_SUCCESS;
   }
 
 #ifdef NBC_CACHE_SCHEDULE

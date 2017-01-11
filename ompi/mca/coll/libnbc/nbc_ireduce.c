@@ -7,7 +7,7 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -80,12 +80,13 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
   }
 
   /* only one node -> copy data */
-  if ((p == 1) && !inplace) {
-    res = NBC_Copy (sendbuf, count, datatype, recvbuf, count, datatype, comm);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
+  if (p == 1) {
+    if (!inplace) {
+      res = NBC_Copy (sendbuf, count, datatype, recvbuf, count, datatype, comm);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+      }
     }
-
     *request = &ompi_request_empty;
     return OMPI_SUCCESS;
   }
