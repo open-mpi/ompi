@@ -801,6 +801,22 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             else
                 ompi_cv_asm_arch="AMD64"
             fi
+
+           # Check for RDTSCP support
+           result=0
+            AC_MSG_CHECKING([for RDTSCP assembly support])
+           AC_RUN_IFELSE([AC_LANG_PROGRAM([], [
+  unsigned int rax, rdx;
+  __asm__ __volatile__ ("rdtscp\n": "=a" (rax), "=d" (rdx)::);
+])],
+               [result=1
+                   AC_MSG_RESULT([yes])],
+               [AC_MSG_RESULT([no])],
+               [#cross compile not supported
+                   AC_MSG_RESULT(["no (cross compiling)"])])
+           AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_SUPPORTS_RDTSCP], [$result],
+                [Whether we have support for RDTSCP instruction])
+
             OPAL_ASM_SUPPORT_64BIT=1
             OMPI_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
             ;;
