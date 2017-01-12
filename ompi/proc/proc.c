@@ -400,9 +400,6 @@ int ompi_proc_finalize (void)
      * without walking through the entire list/destructor sequence.
      */
     while ((ompi_proc_t *)opal_list_get_end(&ompi_proc_list) != (proc = (ompi_proc_t *)opal_list_get_first(&ompi_proc_list))) {
-        if (NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-            MCA_PML_CALL(del_procs(&proc, 1));
-        }
         OBJ_RELEASE(proc);
     }
     /* now destruct the list and thread lock */
