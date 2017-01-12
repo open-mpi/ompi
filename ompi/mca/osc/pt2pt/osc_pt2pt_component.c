@@ -314,12 +314,13 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
            sizeof(ompi_osc_base_module_t));
 
     /* initialize the objects, so that always free in cleanup */
-    OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&module->lock, opal_recursive_mutex_t);
     OBJ_CONSTRUCT(&module->cond, opal_condition_t);
     OBJ_CONSTRUCT(&module->locks_pending, opal_list_t);
     OBJ_CONSTRUCT(&module->locks_pending_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
     OBJ_CONSTRUCT(&module->pending_acc, opal_list_t);
+    OBJ_CONSTRUCT(&module->pending_acc_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->buffer_gc, opal_list_t);
     OBJ_CONSTRUCT(&module->gc_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->all_sync, ompi_osc_pt2pt_sync_t);

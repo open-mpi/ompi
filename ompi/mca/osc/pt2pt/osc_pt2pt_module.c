@@ -77,6 +77,7 @@ int ompi_osc_pt2pt_free(ompi_win_t *win)
     /* it is erroneous to close a window with active operations on it so we should
      * probably produce an error here instead of cleaning up */
     OPAL_LIST_DESTRUCT(&module->pending_acc);
+    OBJ_DESTRUCT(&module->pending_acc_lock);
 
     osc_pt2pt_gc_clean (module);
     OPAL_LIST_DESTRUCT(&module->buffer_gc);

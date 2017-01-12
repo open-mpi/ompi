@@ -501,6 +501,9 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
 
         is_long_msg = true;
         tag = get_tag (module);
+    } else {
+        /* still need to set the tag for the active/passive logic on the target */
+        tag = !!(module->passive_target_access_epoch);
     }
 
     if (is_long_msg) {
@@ -523,6 +526,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
     header->count = target_count;
     header->displacement = target_disp;
     header->op = op->o_f_to_c_index;
+    header->tag = tag;
     ptr += sizeof (*header);
 
     do {
@@ -565,7 +569,6 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
             }
         } else {
             header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG;
-            header->tag = tag;
             osc_pt2pt_hton(header, proc);
 
             OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
