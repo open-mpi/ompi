@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -632,13 +632,9 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         if (pdata->state < ORTE_PROC_STATE_TERMINATED) {
             pdata->state = state;
         }
-        /* Release only the stdin IOF file descriptor for this child, if one
-         * was defined. File descriptors for the other IOF channels - stdout,
-         * stderr, and stddiag - were released when their associated pipes
-         * were cleared and closed due to termination of the process
-         */
+        /* Release the IOF file descriptors */
         if (NULL != orte_iof.close) {
-            orte_iof.close(proc, ORTE_IOF_STDIN);
+            orte_iof.close(proc, ORTE_IOF_STDALL);
         }
         ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_IOF_COMPLETE);
         if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_WAITPID)) {
