@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,89 +36,147 @@
 #include "orte/runtime/orte_globals.h"
 
 extern orte_ess_base_module_t orte_ess_hnp_module;
-static int orte_ess_hnp_component_register (void);
+static int hnp_component_register (void);
+static int hnp_component_open(void);
+static int hnp_component_close(void);
+static int hnp_component_query(mca_base_module_t **module, int *priority);
 
-int orte_ess_hnp_forward_signals[ORTE_ESS_HNP_MAX_FORWARD_SIGNALS] = {SIGUSR1, SIGUSR2, SIGTSTP, SIGCONT};
-unsigned int orte_ess_hnp_forward_signals_count = 4;
-static char *orte_ess_hnp_forward_additional_signals;
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-orte_ess_base_component_t mca_ess_hnp_component = {
-    .base_version = {
-        ORTE_ESS_BASE_VERSION_3_0_0,
+orte_ess_hnp_component_t mca_ess_hnp_component = {
+    .base = {
+        .base_version = {
+            ORTE_ESS_BASE_VERSION_3_0_0,
 
-        /* Component name and version */
-        .mca_component_name = "hnp",
-        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
-                              ORTE_RELEASE_VERSION),
+            /* Component name and version */
+            .mca_component_name = "hnp",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
 
-        /* Component open and close functions */
-        .mca_open_component = orte_ess_hnp_component_open,
-        .mca_close_component = orte_ess_hnp_component_close,
-        .mca_query_component = orte_ess_hnp_component_query,
-        .mca_register_component_params = orte_ess_hnp_component_register,
-    },
-    .base_data = {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+            /* Component open and close functions */
+            .mca_open_component = hnp_component_open,
+            .mca_close_component = hnp_component_close,
+            .mca_query_component = hnp_component_query,
+            .mca_register_component_params = hnp_component_register,
+        },
+        .base_data = {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        }
+    }
 };
 
-static int orte_ess_hnp_component_register (void)
+static char *additional_signals;
+
+static int hnp_component_register (void)
 {
-    orte_ess_hnp_forward_additional_signals = NULL;
-    (void) mca_base_component_var_register (&mca_ess_hnp_component.base_version,
+    additional_signals = NULL;
+    (void) mca_base_component_var_register (&mca_ess_hnp_component.base.base_version,
                                             "forward_signals", "Comma-delimited list "
-                                            "of additional signals (integers) to forward to "
-                                            "application processes", MCA_BASE_VAR_TYPE_STRING,
+                                            "of additional signals (names or integers) to forward to "
+                                            "application processes [\"none\" => forward nothing]", MCA_BASE_VAR_TYPE_STRING,
                                             NULL, 0, 0, OPAL_INFO_LVL_4, MCA_BASE_VAR_SCOPE_READONLY,
-                                            &orte_ess_hnp_forward_additional_signals);
+                                            &additional_signals);
 
     return ORTE_SUCCESS;
 }
 
-int
-orte_ess_hnp_component_open(void)
+#define ESS_ADDSIGNAL(x, s)                                                 \
+    do {                                                                    \
+        ess_hnp_signal_t *_sig;                                             \
+        _sig = OBJ_NEW(ess_hnp_signal_t);                                   \
+        _sig->signal = (x);                                                 \
+        _sig->signame = strdup((s));                                        \
+        opal_list_append(&mca_ess_hnp_component.signals, &_sig->super);     \
+    } while(0)
+
+static int hnp_component_open(void)
 {
-    /* reset the signal count to the original value */
-    orte_ess_hnp_forward_signals_count = 4;
+    int i, sval;
+    char **signals;
+    ess_hnp_signal_t *sig;
+    bool ignore;
 
-    if (NULL != orte_ess_hnp_forward_additional_signals && 0 != strlen (orte_ess_hnp_forward_additional_signals)) {
-        char **signals = opal_argv_split (orte_ess_hnp_forward_additional_signals, ',');
-        int forward_signal;
-        char *tmp = NULL;
+    OBJ_CONSTRUCT(&mca_ess_hnp_component.signals, opal_list_t);
 
-        for (int i = 0 ; signals[i] ; ++i) {
-            if (orte_ess_hnp_forward_signals_count == ORTE_ESS_HNP_MAX_FORWARD_SIGNALS) {
-                /* print out an error here */
-                break;
-            }
+    /* we know that some signals are (nearly) always defined, regardless
+     * of environment, so add them here */
+    ESS_ADDSIGNAL(SIGTERM, "SIGTERM");
+    ESS_ADDSIGNAL(SIGTSTP, "SIGTSTP");
+    ESS_ADDSIGNAL(SIGUSR1, "SIGUSR1");
+    ESS_ADDSIGNAL(SIGUSR2, "SIGUSR2");
+    ESS_ADDSIGNAL(SIGABRT, "SIGABRT");
+    ESS_ADDSIGNAL(SIGALRM, "SIGALRM");
+    ESS_ADDSIGNAL(SIGCONT, "SIGCONT");
+#ifdef SIGURG
+    ESS_ADDSIGNAL(SIGURG, "SIGURG");
+#endif
 
-            errno = 0;
-            forward_signal = (int) strtol (signals[i], &tmp, 0);
-            if (0 == errno && '\0' == *tmp) {
-                bool duplicate_signal = false;
-                for (int j = 0 ; j < orte_ess_hnp_forward_signals_count ; ++j) {
-                    if (orte_ess_hnp_forward_signals[j] == forward_signal) {
-                        /* duplicate signal */
-                        duplicate_signal = true;
+    /* see if they asked for anything beyond those - note that they may
+     * have asked for some we already cover, and so we ignore any duplicates */
+    if (NULL != additional_signals) {
+        /* if they told us "none", then dump the list */
+        if (0 == strcmp(additional_signals, "none")) {
+            OPAL_LIST_DESTRUCT(&mca_ess_hnp_component.signals);
+            /* need to reconstruct it for when we close */
+            OBJ_CONSTRUCT(&mca_ess_hnp_component.signals, opal_list_t);
+            return ORTE_SUCCESS;
+        }
+        signals = opal_argv_split(additional_signals, ',');
+        for (i=0; NULL != signals[i]; i++) {
+            /* see if they gave us a signal name */
+            if (0 == strcasecmp(signals[i], "SIGHUP")) {
+                ESS_ADDSIGNAL(SIGHUP, "SIGHUP");
+#ifdef SIGSYS
+            } else if (0 == strcasecmp(signals[i], "SIGSYS")) {
+                ESS_ADDSIGNAL(SIGSYS, "SIGSYS");
+#endif
+#ifdef SIGXCPU
+            } else if (0 == strcasecmp(signals[i], "SIGXCPU")) {
+                ESS_ADDSIGNAL(SIGXCPU, "SIGXCPU");
+#endif
+            } else if (0 == strcasecmp(signals[i], "SIGXFSZ")) {
+                ESS_ADDSIGNAL(SIGXFSZ, "SIGXFSZ");
+#ifdef SIGVTALRM
+            } else if (0 == strcasecmp(signals[i], "SIGVTALRM")) {
+                ESS_ADDSIGNAL(SIGVTALRM, "SIGVTALRM");
+#endif
+#ifdef SIGPROF
+            } else if (0 == strcasecmp(signals[i], "SIGPROF")) {
+                ESS_ADDSIGNAL(SIGPROF, "SIGPROF");
+#endif
+#ifdef SIGINFO
+            } else if (0 == strcasecmp(signals[i], "SIGINFO")) {
+                ESS_ADDSIGNAL(SIGINFO, "SIGINFO");
+#endif
+#ifdef SIGPWR
+            } else if (0 == strcasecmp(signals[i], "SIGPWR")) {
+                ESS_ADDSIGNAL(SIGPWR, "SIGPWR");
+#endif
+            } else if (0 == strncmp(signals[i], "SIG", 3)) {
+                /* see if it is one we already covered */
+                ignore = false;
+                OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
+                    if (0 == strcasecmp(signals[i], sig->signame)) {
+                        /* got it - we will ignore */
+                        ignore = true;
                         break;
                     }
                 }
-
-                if (!duplicate_signal) {
-                    orte_ess_hnp_forward_signals[orte_ess_hnp_forward_signals_count++] = forward_signal;
-                } else {
-                    opal_show_help ("help-ess-hnp.txt", "duplicate_signal", true, signals[i]);
+                if (!ignore) {
+                    opal_output(0, "UNSUPPORTED SIGNAL: %s", signals[i]);
+                    opal_argv_free(signals);
+                    return OPAL_ERROR;
                 }
             } else {
-                opal_show_help ("help-ess-hnp.txt", "invalid_signal", true, signals[i]);
+                /* treat it like a number */
+                sval = strtoul(signals[i], NULL, 10);
+                ESS_ADDSIGNAL(sval, signals[i]);
             }
         }
-
         opal_argv_free (signals);
     }
 
@@ -125,7 +184,7 @@ orte_ess_hnp_component_open(void)
 }
 
 
-int orte_ess_hnp_component_query(mca_base_module_t **module, int *priority)
+static int hnp_component_query(mca_base_module_t **module, int *priority)
 {
 
     /* we are the hnp module - we need to be selected
@@ -144,9 +203,22 @@ int orte_ess_hnp_component_query(mca_base_module_t **module, int *priority)
 }
 
 
-int
-orte_ess_hnp_component_close(void)
+static int hnp_component_close(void)
 {
     return ORTE_SUCCESS;
 }
 
+/* instantiate the class */
+static void scon(ess_hnp_signal_t *t)
+{
+    t->signame = NULL;
+}
+static void sdes(ess_hnp_signal_t *t)
+{
+    if (NULL != t->signame) {
+        free(t->signame);
+    }
+}
+OBJ_CLASS_INSTANCE(ess_hnp_signal_t,
+                   opal_list_item_t,
+                   scon, sdes);

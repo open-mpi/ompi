@@ -119,7 +119,7 @@ static bool forcibly_die=false;
 static opal_event_t term_handler;
 static opal_event_t epipe_handler;
 static int term_pipe[2];
-static opal_event_t forward_signals_events[ORTE_ESS_HNP_MAX_FORWARD_SIGNALS];
+static opal_event_t *forward_signals_events = NULL;
 
 static void abort_signal_callback(int signal);
 static void clean_abort(int fd, short flags, void *arg);
@@ -149,6 +149,7 @@ static int rte_init(void)
     int idx;
     orte_topology_t *t;
     opal_list_t transports;
+    ess_hnp_signal_t *sig;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -191,12 +192,21 @@ static int rte_init(void)
     signal(SIGINT, abort_signal_callback);
     signal(SIGHUP, abort_signal_callback);
 
-    /** setup callbacks for signals we should foward */
-
-    for (unsigned int i = 0 ; i < orte_ess_hnp_forward_signals_count ; ++i) {
-      setup_sighandler (orte_ess_hnp_forward_signals[i], forward_signals_events + i, signal_forward_callback);
+    /** setup callbacks for signals we should forward */
+    if (0 < (idx = opal_list_get_size(&mca_ess_hnp_component.signals))) {
+        forward_signals_events = (opal_event_t*)malloc(sizeof(opal_event_t) * idx);
+        if (NULL == forward_signals_events) {
+            ret = ORTE_ERR_OUT_OF_RESOURCE;
+            error = "unable to malloc";
+            goto error;
+        }
+        idx = 0;
+        OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
+            setup_sighandler(sig->signal, forward_signals_events + idx, signal_forward_callback);
+            ++idx;
+        }
+        signals_set = true;
     }
-    signals_set = true;
 
     /* get the local topology */
     if (NULL == opal_hwloc_topology) {
@@ -780,6 +790,8 @@ static int rte_finalize(void)
     char *contact_path;
     orte_job_t *jdata;
     uint32_t key;
+    ess_hnp_signal_t *sig;
+    unsigned int i;
 
     if (signals_set) {
         /* Remove the epipe handler */
@@ -787,9 +799,13 @@ static int rte_finalize(void)
         /* remove the term handler */
         opal_event_del(&term_handler);
         /** Remove the USR signal handlers */
-        for (unsigned int i = 0 ; i < orte_ess_hnp_forward_signals_count ; ++i) {
+        i = 0;
+        OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
             opal_event_signal_del(forward_signals_events + i);
+            ++i;
         }
+        free (forward_signals_events);
+        forward_signals_events = NULL;
         signals_set = false;
     }
 

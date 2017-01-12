@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,16 +28,19 @@ BEGIN_C_DECLS
 /*
  * Module open / close
  */
-int orte_ess_hnp_component_open(void);
-int orte_ess_hnp_component_close(void);
-int orte_ess_hnp_component_query(mca_base_module_t **module, int *priority);
+typedef struct {
+    opal_list_item_t super;
+    char *signame;
+    int signal;
+} ess_hnp_signal_t;
+OBJ_CLASS_DECLARATION(ess_hnp_signal_t);
 
-#define ORTE_ESS_HNP_MAX_FORWARD_SIGNALS 32
+typedef struct {
+    orte_ess_base_component_t base;
+    opal_list_t signals;
+} orte_ess_hnp_component_t;
 
-extern int orte_ess_hnp_forward_signals[ORTE_ESS_HNP_MAX_FORWARD_SIGNALS];
-extern unsigned int orte_ess_hnp_forward_signals_count;
-
-ORTE_MODULE_DECLSPEC extern orte_ess_base_component_t mca_ess_hnp_component;
+ORTE_MODULE_DECLSPEC extern orte_ess_hnp_component_t mca_ess_hnp_component;
 
 END_C_DECLS
 
