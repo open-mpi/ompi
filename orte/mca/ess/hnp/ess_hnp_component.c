@@ -41,6 +41,41 @@ static int hnp_component_open(void);
 static int hnp_component_close(void);
 static int hnp_component_query(mca_base_module_t **module, int *priority);
 
+struct known_signal {
+    /** signal number */
+    int signal;
+    /** signal name */
+    char *signame;
+    /** can this signal be forwarded */
+    bool can_forward;
+};
+
+static struct known_signal known_signals[] = {
+    {SIGTERM, "SIGTERM", false},
+    {SIGHUP, "SIGHUP", false},
+    {SIGINT, "SIGINT", false},
+    {SIGKILL, "SIGKILL", false},
+#ifdef SIGSYS
+    {SIGSYS, "SIGSYS", true},
+#endif
+#ifdef SIGXCPU
+    {SIGXCPU, "SIGXCPU", true},
+#endif
+    {SIGXFSZ, "SIGXFSZ", true},
+#ifdef SIGVTALRM
+    {SIGVTALRM, "SIGVTALRM", true},
+#endif
+#ifdef SIGPROF
+    {SIGPROF, "SIGPROF", true},
+#endif
+#ifdef SIGINFO
+    {SIGINFO, "SIGINFO", true},
+#endif
+#ifdef SIGPWR
+    {SIGPWR, "SIGPWR", true},
+#endif
+    {0, NULL},
+};
 
 /*
  * Instantiate the public struct with all of our public information
@@ -96,15 +131,14 @@ static int hnp_component_register (void)
 static int hnp_component_open(void)
 {
     int i, sval;
-    char **signals;
+    char **signals, *tmp;
     ess_hnp_signal_t *sig;
-    bool ignore;
+    bool ignore, found;
 
     OBJ_CONSTRUCT(&mca_ess_hnp_component.signals, opal_list_t);
 
     /* we know that some signals are (nearly) always defined, regardless
      * of environment, so add them here */
-    ESS_ADDSIGNAL(SIGTERM, "SIGTERM");
     ESS_ADDSIGNAL(SIGTSTP, "SIGTSTP");
     ESS_ADDSIGNAL(SIGUSR1, "SIGUSR1");
     ESS_ADDSIGNAL(SIGUSR2, "SIGUSR2");
@@ -127,53 +161,54 @@ static int hnp_component_open(void)
         }
         signals = opal_argv_split(additional_signals, ',');
         for (i=0; NULL != signals[i]; i++) {
-            /* see if they gave us a signal name */
-            if (0 == strcasecmp(signals[i], "SIGHUP")) {
-                ESS_ADDSIGNAL(SIGHUP, "SIGHUP");
-#ifdef SIGSYS
-            } else if (0 == strcasecmp(signals[i], "SIGSYS")) {
-                ESS_ADDSIGNAL(SIGSYS, "SIGSYS");
-#endif
-#ifdef SIGXCPU
-            } else if (0 == strcasecmp(signals[i], "SIGXCPU")) {
-                ESS_ADDSIGNAL(SIGXCPU, "SIGXCPU");
-#endif
-            } else if (0 == strcasecmp(signals[i], "SIGXFSZ")) {
-                ESS_ADDSIGNAL(SIGXFSZ, "SIGXFSZ");
-#ifdef SIGVTALRM
-            } else if (0 == strcasecmp(signals[i], "SIGVTALRM")) {
-                ESS_ADDSIGNAL(SIGVTALRM, "SIGVTALRM");
-#endif
-#ifdef SIGPROF
-            } else if (0 == strcasecmp(signals[i], "SIGPROF")) {
-                ESS_ADDSIGNAL(SIGPROF, "SIGPROF");
-#endif
-#ifdef SIGINFO
-            } else if (0 == strcasecmp(signals[i], "SIGINFO")) {
-                ESS_ADDSIGNAL(SIGINFO, "SIGINFO");
-#endif
-#ifdef SIGPWR
-            } else if (0 == strcasecmp(signals[i], "SIGPWR")) {
-                ESS_ADDSIGNAL(SIGPWR, "SIGPWR");
-#endif
-            } else if (0 == strncmp(signals[i], "SIG", 3)) {
-                /* see if it is one we already covered */
-                ignore = false;
-                OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
-                    if (0 == strcasecmp(signals[i], sig->signame)) {
-                        /* got it - we will ignore */
-                        ignore = true;
-                        break;
-                    }
+            sval = 0;
+            if (0 != strncmp(signals[i], "SIG", 3)) {
+                /* treat it like a number */
+                errno = 0;
+                sval = strtoul(signals[i], &tmp, 10);
+                if (0 != errno || '\0' != *tmp) {
+                    opal_output(0, "INVALID SIGNAL: %s", signals[i]);
+                    opal_argv_free(signals);
+                    return OPAL_ERROR;
                 }
-                if (!ignore) {
+            }
+
+            /* see if it is one we already covered */
+            ignore = false;
+            OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
+                if (0 == strcasecmp(signals[i], sig->signame) || sval == sig->signal) {
+                    /* got it - we will ignore */
+                    ignore = true;
+                    break;
+                }
+            }
+
+            if (ignore) {
+                continue;
+            }
+
+            /* see if they gave us a signal name */
+            found = false;
+            for (int j = 0 ; known_signals[j].signame ; ++j) {
+                if (0 == strcasecmp (signals[i], known_signals[j].signame) || sval == known_signals[j].signal) {
+                    if (!known_signals[j].can_forward) {
+                        opal_output(0, "CAN NOT FORWARD SIGNAL: %s", signals[i]);
+                        opal_argv_free(signals);
+                        return OPAL_ERROR;
+                    }
+                    found = true;
+                    ESS_ADDSIGNAL(known_signals[j].signal, known_signals[j].signame);
+                    break;
+                }
+            }
+
+            if (!found) {
+                if (0 == strncmp(signals[i], "SIG", 3)) {
                     opal_output(0, "UNSUPPORTED SIGNAL: %s", signals[i]);
                     opal_argv_free(signals);
                     return OPAL_ERROR;
                 }
-            } else {
-                /* treat it like a number */
-                sval = strtoul(signals[i], NULL, 10);
+
                 ESS_ADDSIGNAL(sval, signals[i]);
             }
         }

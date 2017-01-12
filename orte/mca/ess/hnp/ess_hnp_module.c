@@ -205,8 +205,8 @@ static int rte_init(void)
             setup_sighandler(sig->signal, forward_signals_events + idx, signal_forward_callback);
             ++idx;
         }
-        signals_set = true;
     }
+    signals_set = true;
 
     /* get the local topology */
     if (NULL == opal_hwloc_topology) {
