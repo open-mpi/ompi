@@ -230,6 +230,7 @@ static inline int32_t opal_atomic_swap_32(volatile int32_t *addr, int32_t newval
 #if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
 
 #if  OPAL_GCC_INLINE_ASSEMBLY
+
 static inline int64_t opal_atomic_add_64 (volatile int64_t* v, int64_t inc)
 {
    int64_t t;
@@ -239,7 +240,7 @@ static inline int64_t opal_atomic_add_64 (volatile int64_t* v, int64_t inc)
                         "     stdcx.  %0, 0, %3    \n\t"
                         "     bne-    1b           \n\t"
                         : "=&r" (t), "=m" (*v)
-                        : "r" (OPAL_ASM_VALUE64(inc)), "r" OPAL_ASM_ADDR(v)
+                        : "r" (OPAL_ASM_VALUE64(inc)), "r" OPAL_ASM_ADDR(v), "m" (*v)
                         : "cc");
 
    return t;
@@ -256,7 +257,7 @@ static inline int64_t opal_atomic_sub_64 (volatile int64_t* v, int64_t dec)
                         "     stdcx.  %0,0,%3      \n\t"
                         "     bne-    1b           \n\t"
                         : "=&r" (t), "=m" (*v)
-                        : "r" (OPAL_ASM_VALUE64(dec)), "r" OPAL_ASM_ADDR(v)
+                        : "r" (OPAL_ASM_VALUE64(dec)), "r" OPAL_ASM_ADDR(v), "m" (*v)
                         : "cc");
 
    return t;
@@ -275,7 +276,7 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                          "   bne-    1b         \n\t"
                          "2:"
                          : "=&r" (ret), "=m" (*addr)
-                         : "r" (addr), "r" (OPAL_ASM_VALUE64(oldval)), "r" (OPAL_ASM_VALUE64(newval))
+                         : "r" (addr), "r" (OPAL_ASM_VALUE64(oldval)), "r" (OPAL_ASM_VALUE64(newval)), "m" (*addr)
                          : "cc", "memory");
 
    return (ret == oldval);
