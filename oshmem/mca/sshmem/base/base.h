@@ -33,10 +33,6 @@ mca_sshmem_segment_create(map_segment_t *ds_buf,
                           const char *file_name,
                           size_t size);
 
-OSHMEM_DECLSPEC int
-mca_sshmem_ds_copy(const map_segment_t *from,
-                   map_segment_t *to);
-
 OSHMEM_DECLSPEC void *
 mca_sshmem_segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey);
 
@@ -148,23 +144,12 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_sshmem_base_framework;
         "Warning %s:%d - %s()", __SSHMEM_FILE__, __LINE__, __func__, __VA_ARGS__)
 
 
+OSHMEM_DECLSPEC extern void shmem_ds_reset(map_segment_t *ds_buf);
+
 /*
  * Get unique file name
  */
-static inline char * oshmem_get_unique_file_name(uint64_t pe)
-{
-    char *file_name = NULL;
-
-    assert(mca_sshmem_base_backing_file_dir);
-
-    if (NULL == (file_name = calloc(OPAL_PATH_MAX, sizeof(char)))) {
-        return NULL;
-    }
-
-    snprintf(file_name, OPAL_PATH_MAX, "%s/shmem_job_%u_pe_%llu", mca_sshmem_base_backing_file_dir, ORTE_PROC_MY_NAME->jobid, (unsigned long long)pe);
-
-    return file_name;
-}
+OSHMEM_DECLSPEC extern char * oshmem_get_unique_file_name(uint64_t pe);
 
 END_C_DECLS
 

@@ -72,6 +72,7 @@ typedef enum {
     MAP_SEGMENT_ALLOC_SHM,
     MAP_SEGMENT_ALLOC_IBV,
     MAP_SEGMENT_ALLOC_IBV_NOSHMR,
+    MAP_SEGMENT_ALLOC_UCX,
     MAP_SEGMENT_UNKNOWN
 } segment_type_t;
 
@@ -112,9 +113,10 @@ typedef struct map_segment {
     sshmem_mkey_t       *mkeys;          /* includes local segment bases in va_base */
     segment_flag_t       flags;          /* enable/disable flag */
     int                  seg_id;
-    char                 seg_name[OPAL_PATH_MAX];
     size_t               seg_size;       /* length of the segment */
     segment_type_t       type;           /* type of the segment */
+    void                *context;        /* allocator can use this field to store
+                                            its own private data */
 } map_segment_t;
 
 END_C_DECLS
