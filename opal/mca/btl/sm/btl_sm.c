@@ -17,7 +17,7 @@
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -238,7 +238,8 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
                                    &wildcard_rank, &loc, OPAL_STRING);
     if (OPAL_SUCCESS == rc) {
         /* the number of NUMA nodes is right at the front */
-        mca_btl_sm_component.num_mem_nodes = num_mem_nodes = strtoul(loc, NULL, 10);
+        num_mem_nodes = strtoul(loc, NULL, 10);
+
         free(loc);
     } else {
         /* If we have hwloc support, then get accurate information */
@@ -253,9 +254,15 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
                the previous carto-based implementation), but it really
                should be improved to be how many NUMA nodes are being
                used *in this job*. */
-            mca_btl_sm_component.num_mem_nodes = num_mem_nodes = i;
+            num_mem_nodes = i;
         }
     }
+    if (0 == num_mem_nodes) {
+        /* the topology might not contain a NUMA object with hwloc < v2
+         * if the node is not NUMA, so force it to one in this case */
+        num_mem_nodes = 1;
+    }
+    mca_btl_sm_component.num_mem_nodes = num_mem_nodes;
     /* see if we were given our location */
     loc = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCALITY_STRING,
