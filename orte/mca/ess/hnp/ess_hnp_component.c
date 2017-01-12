@@ -30,6 +30,7 @@
 #include "orte/constants.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/hnp/ess_hnp.h"
@@ -167,9 +168,10 @@ static int hnp_component_open(void)
                 errno = 0;
                 sval = strtoul(signals[i], &tmp, 10);
                 if (0 != errno || '\0' != *tmp) {
-                    opal_output(0, "INVALID SIGNAL: %s", signals[i]);
+                    orte_show_help("help-ess-hnp.txt", "ess-hnp:unknown-signal",
+                                   true, signals[i], additional_signals);
                     opal_argv_free(signals);
-                    return OPAL_ERROR;
+                    return OPAL_ERR_SILENT;
                 }
             }
 
@@ -192,9 +194,10 @@ static int hnp_component_open(void)
             for (int j = 0 ; known_signals[j].signame ; ++j) {
                 if (0 == strcasecmp (signals[i], known_signals[j].signame) || sval == known_signals[j].signal) {
                     if (!known_signals[j].can_forward) {
-                        opal_output(0, "CAN NOT FORWARD SIGNAL: %s", signals[i]);
+                        orte_show_help("help-ess-hnp.txt", "ess-hnp:cannot-forward",
+                                       true, known_signals[j].signame, additional_signals);
                         opal_argv_free(signals);
-                        return OPAL_ERROR;
+                        return OPAL_ERR_SILENT;
                     }
                     found = true;
                     ESS_ADDSIGNAL(known_signals[j].signal, known_signals[j].signame);
@@ -204,9 +207,10 @@ static int hnp_component_open(void)
 
             if (!found) {
                 if (0 == strncmp(signals[i], "SIG", 3)) {
-                    opal_output(0, "UNSUPPORTED SIGNAL: %s", signals[i]);
+                    orte_show_help("help-ess-hnp.txt", "ess-hnp:unknown-signal",
+                                   true, signals[i], additional_signals);
                     opal_argv_free(signals);
-                    return OPAL_ERROR;
+                    return OPAL_ERR_SILENT;
                 }
 
                 ESS_ADDSIGNAL(sval, signals[i]);
