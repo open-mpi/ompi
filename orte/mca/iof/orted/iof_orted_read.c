@@ -167,9 +167,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
         NULL == proct->revstderr &&
         NULL == proct->revstddiag) {
         /* this proc's iof is complete */
-        opal_list_remove_item(&mca_iof_orted_component.procs, &proct->super);
         ORTE_ACTIVATE_PROC_STATE(&proct->name, ORTE_PROC_STATE_IOF_COMPLETE);
-        OBJ_RELEASE(proct);
     }
     if (NULL != buf) {
         OBJ_RELEASE(buf);
