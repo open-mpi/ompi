@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,9 +12,11 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,10 +113,7 @@ static bool forcibly_die=false;
 static opal_event_t term_handler;
 static opal_event_t epipe_handler;
 static int term_pipe[2];
-static opal_event_t sigusr1_handler;
-static opal_event_t sigusr2_handler;
-static opal_event_t sigtstp_handler;
-static opal_event_t sigcont_handler;
+static opal_event_t *forward_signals_events = NULL;
 
 static void abort_signal_callback(int signal);
 static void clean_abort(int fd, short flags, void *arg);
@@ -142,6 +142,7 @@ static int rte_init(void)
     uint32_t h;
     int idx;
     orte_topology_t *t;
+    ess_hnp_signal_t *sig;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -184,11 +185,20 @@ static int rte_init(void)
     signal(SIGINT, abort_signal_callback);
     signal(SIGHUP, abort_signal_callback);
 
-    /** setup callbacks for signals we should foward */
-    setup_sighandler(SIGUSR1, &sigusr1_handler, signal_forward_callback);
-    setup_sighandler(SIGUSR2, &sigusr2_handler, signal_forward_callback);
-    setup_sighandler(SIGTSTP, &sigtstp_handler, signal_forward_callback);
-    setup_sighandler(SIGCONT, &sigcont_handler, signal_forward_callback);
+    /** setup callbacks for signals we should forward */
+    if (0 < (idx = opal_list_get_size(&mca_ess_hnp_component.signals))) {
+        forward_signals_events = (opal_event_t*)malloc(sizeof(opal_event_t) * idx);
+        if (NULL == forward_signals_events) {
+            ret = ORTE_ERR_OUT_OF_RESOURCE;
+            error = "unable to malloc";
+            goto error;
+        }
+        idx = 0;
+        OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
+            setup_sighandler(sig->signal, forward_signals_events + idx, signal_forward_callback);
+            ++idx;
+        }
+    }
     signals_set = true;
 
     /* get the local topology */
@@ -752,6 +762,8 @@ static int rte_finalize(void)
 {
     char *contact_path;
     char *jobfam_dir;
+    ess_hnp_signal_t *sig;
+    unsigned int i;
 
     if (signals_set) {
         /* Remove the epipe handler */
@@ -759,12 +771,13 @@ static int rte_finalize(void)
         /* remove the term handler */
         opal_event_del(&term_handler);
         /** Remove the USR signal handlers */
-        opal_event_signal_del(&sigusr1_handler);
-        opal_event_signal_del(&sigusr2_handler);
-        if (orte_forward_job_control) {
-            opal_event_signal_del(&sigtstp_handler);
-            opal_event_signal_del(&sigcont_handler);
+        i = 0;
+        OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
+            opal_event_signal_del(forward_signals_events + i);
+            ++i;
         }
+        free (forward_signals_events);
+        forward_signals_events = NULL;
         signals_set = false;
     }
 
