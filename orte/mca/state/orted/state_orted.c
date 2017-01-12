@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -333,7 +333,7 @@ static void track_procs(int fd, short argc, void *cbdata)
          * to check to see if all procs from the job are actually terminated
          */
         if (NULL != orte_iof.close) {
-            orte_iof.close(proc, ORTE_IOF_STDIN);
+            orte_iof.close(proc, ORTE_IOF_STDALL);
         }
         if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_WAITPID) &&
             !ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_RECORDED)) {
