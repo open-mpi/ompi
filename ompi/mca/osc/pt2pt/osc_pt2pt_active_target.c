@@ -168,7 +168,6 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
                                                           MPI_SUM, module->comm,
                                                           module->comm->c_coll.coll_reduce_scatter_block_module);
     if (OMPI_SUCCESS != ret) {
-        OPAL_THREAD_UNLOCK(&module->lock);
         return ret;
     }
 
@@ -181,11 +180,10 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
                          incoming_reqs));
 
     /* set our complete condition for incoming requests */
-    module->active_incoming_frag_signal_count += incoming_reqs;
+    OPAL_THREAD_ADD32(&module->active_incoming_frag_count, -incoming_reqs);
 
     /* wait for completion */
-    while (module->outgoing_frag_count != module->outgoing_frag_signal_count ||
-           module->active_incoming_frag_count < module->active_incoming_frag_signal_count) {
+    while (module->outgoing_frag_count < 0 || module->active_incoming_frag_count < 0) {
         opal_condition_wait(&module->cond, &module->lock);
     }
 
@@ -196,9 +194,9 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
     }
 
     module->all_sync.epoch_active = false;
-
-    opal_condition_broadcast (&module->cond);
     OPAL_THREAD_UNLOCK(&module->lock);
+
+    module->comm->c_coll.coll_barrier (module->comm, module->comm->c_coll.coll_barrier_module);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: fence end: %d", ret));
@@ -212,11 +210,11 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
     ompi_osc_pt2pt_sync_t *sync = &module->all_sync;
 
-    OPAL_THREAD_LOCK(&module->lock);
+    OPAL_THREAD_LOCK(&sync->lock);
 
     /* check if we are already in an access epoch */
     if (ompi_osc_pt2pt_access_epoch_active (module)) {
-        OPAL_THREAD_UNLOCK(&module->lock);
+        OPAL_THREAD_UNLOCK(&sync->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -249,7 +247,7 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     if (0 == ompi_group_size (group)) {
         /* nothing more to do. this is an empty start epoch */
         sync->eager_send_active = true;
-        OPAL_THREAD_UNLOCK(&module->lock);
+        OPAL_THREAD_UNLOCK(&sync->lock);
         return OMPI_SUCCESS;
     }
 
@@ -258,12 +256,11 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     /* translate the group ranks into the communicator */
     sync->peer_list.peers = ompi_osc_pt2pt_get_peers (module, group);
     if (NULL == sync->peer_list.peers) {
-        OPAL_THREAD_UNLOCK(&module->lock);
+        OPAL_THREAD_UNLOCK(&sync->lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     if (!(assert & MPI_MODE_NOCHECK)) {
-        OPAL_THREAD_LOCK(&sync->lock);
         for (int i = 0 ; i < sync->num_peers ; ++i) {
             ompi_osc_pt2pt_peer_t *peer = sync->peer_list.peers[i];
 
@@ -276,7 +273,6 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
                 ompi_osc_pt2pt_peer_set_unex (peer, false);
             }
         }
-        OPAL_THREAD_UNLOCK(&sync->lock);
     } else {
         sync->sync_expected = 0;
     }
@@ -295,7 +291,7 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
                          "ompi_osc_pt2pt_start complete. eager sends active: %d",
                          sync->eager_send_active));
 
-    OPAL_THREAD_UNLOCK(&module->lock);
+    OPAL_THREAD_UNLOCK(&sync->lock);
     return OMPI_SUCCESS;
 }
 
@@ -313,14 +309,14 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_complete entering..."));
 
-    OPAL_THREAD_LOCK(&module->lock);
+    OPAL_THREAD_LOCK(&sync->lock);
     if (OMPI_OSC_PT2PT_SYNC_TYPE_PSCW != sync->type) {
-        OPAL_THREAD_UNLOCK(&module->lock);
+        OPAL_THREAD_UNLOCK(&sync->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
     /* wait for all the post messages */
-    ompi_osc_pt2pt_sync_wait (sync);
+    ompi_osc_pt2pt_sync_wait_nolock (sync);
 
     /* phase 1 cleanup sync object */
     group = sync->sync.pscw.group;
@@ -330,8 +326,7 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
 
     /* need to reset the sync here to avoid processing incorrect post messages */
     ompi_osc_pt2pt_sync_reset (sync);
-
-    OPAL_THREAD_UNLOCK(&module->lock);
+    OPAL_THREAD_UNLOCK(&sync->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_complete all posts received. sending complete messages..."));
@@ -403,7 +398,7 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
     OPAL_THREAD_LOCK(&module->lock);
     /* wait for outgoing requests to complete.  Don't wait for incoming, as
        we're only completing the access epoch, not the exposure epoch */
-    while (module->outgoing_frag_count != module->outgoing_frag_signal_count) {
+    while (module->outgoing_frag_count < 0) {
         opal_condition_wait(&module->cond, &module->lock);
     }
 
@@ -513,15 +508,13 @@ int ompi_osc_pt2pt_wait (ompi_win_t *win)
     }
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_pt2pt_wait entering..."));
+                         "ompi_osc_pt2pt_wait entering... module %p", (void *) module));
 
     OPAL_THREAD_LOCK(&module->lock);
-    while (0 != module->num_complete_msgs ||
-             module->active_incoming_frag_count != module->active_incoming_frag_signal_count) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "num_complete_msgs = %d, "
-                             "active_incoming_frag_count = %d, active_incoming_frag_signal_count = %d",
-                             module->num_complete_msgs, module->active_incoming_frag_count,
-                             module->active_incoming_frag_signal_count));
+    while (0 != module->num_complete_msgs || module->active_incoming_frag_count < 0) {
+        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "module %p, num_complete_msgs = %d, "
+                             "active_incoming_frag_count = %d", (void *) module, module->num_complete_msgs,
+                             module->active_incoming_frag_count));
         opal_condition_wait(&module->cond, &module->lock);
     }
 
@@ -554,21 +547,15 @@ int ompi_osc_pt2pt_test (ompi_win_t *win, int *flag)
 
     OPAL_THREAD_LOCK(&(module->lock));
 
-    if (0 != module->num_complete_msgs ||
-           module->active_incoming_frag_count != module->active_incoming_frag_signal_count) {
+    if (0 != module->num_complete_msgs || module->active_incoming_frag_count < 0) {
         *flag = 0;
-        ret = OMPI_SUCCESS;
     } else {
         *flag = 1;
 
         group = module->pw_group;
         module->pw_group = NULL;
 
-        OPAL_THREAD_UNLOCK(&(module->lock));
-
         OBJ_RELEASE(group);
-
-        return OMPI_SUCCESS;
     }
 
     OPAL_THREAD_UNLOCK(&(module->lock));
@@ -580,15 +567,19 @@ void osc_pt2pt_incoming_complete (ompi_osc_pt2pt_module_t *module, int source, i
 {
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc pt2pt:  process_complete got complete message from %d. expected fragment count %d. "
-                         "current signal count %d. current incomming count: %d. expected complete msgs: %d",
-                         source, frag_count, module->active_incoming_frag_signal_count,
-                         module->active_incoming_frag_count, module->num_complete_msgs));
+                         "current incomming count: %d. expected complete msgs: %d", source,
+                         frag_count, module->active_incoming_frag_count, module->num_complete_msgs));
 
     /* the current fragment is not part of the frag_count so we need to add it here */
-    OPAL_THREAD_ADD32((int32_t *) &module->active_incoming_frag_signal_count, frag_count);
+    OPAL_THREAD_ADD32(&module->active_incoming_frag_count, -frag_count);
 
-    if (0 == OPAL_THREAD_ADD32((int32_t *) &module->num_complete_msgs, 1)) {
+    /* make sure the signal count is written before changing the complete message count */
+    opal_atomic_wmb ();
+
+    if (0 == OPAL_THREAD_ADD32(&module->num_complete_msgs, 1)) {
+        OPAL_THREAD_LOCK(&module->lock);
         opal_condition_broadcast (&module->cond);
+        OPAL_THREAD_UNLOCK(&module->lock);
     }
 }
 
