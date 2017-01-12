@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,12 +28,19 @@ BEGIN_C_DECLS
 /*
  * Module open / close
  */
-int orte_ess_hnp_component_open(void);
-int orte_ess_hnp_component_close(void);
-int orte_ess_hnp_component_query(mca_base_module_t **module, int *priority);
+typedef struct {
+    opal_list_item_t super;
+    char *signame;
+    int signal;
+} ess_hnp_signal_t;
+OBJ_CLASS_DECLARATION(ess_hnp_signal_t);
 
+typedef struct {
+    orte_ess_base_component_t base;
+    opal_list_t signals;
+} orte_ess_hnp_component_t;
 
-ORTE_MODULE_DECLSPEC extern orte_ess_base_component_t mca_ess_hnp_component;
+ORTE_MODULE_DECLSPEC extern orte_ess_hnp_component_t mca_ess_hnp_component;
 
 END_C_DECLS
 
