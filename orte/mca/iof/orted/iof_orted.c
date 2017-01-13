@@ -73,6 +73,8 @@ static int orted_output(const orte_process_name_t* peer,
                         orte_iof_tag_t source_tag,
                         const char *msg);
 
+static void orted_complete(const orte_job_t *jdata);
+
 static int finalize(void);
 
 static int orted_ft_event(int state);
@@ -91,6 +93,7 @@ orte_iof_base_module_t orte_iof_orted_module = {
     .pull = orted_pull,
     .close = orted_close,
     .output = orted_output,
+    .complete = orted_complete,
     .finalize = finalize,
     .ft_event = orted_ft_event
 };
@@ -126,7 +129,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     orte_job_t *jobdat=NULL;
     orte_ns_cmp_bitmask_t mask;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+   OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:orted pushing fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
@@ -164,7 +167,8 @@ SETUP:
         return ORTE_ERR_NOT_FOUND;
     }
     /* setup any requested output files */
-    if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jobdat, proct, &stdoutsink, &stderrsink, &stddiagsink))) {
+    if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jobdat, proct,
+                                                               &stdoutsink, &stderrsink, &stddiagsink))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -310,6 +314,19 @@ static int orted_close(const orte_process_name_t* peer,
     }
 
     return ORTE_SUCCESS;
+}
+
+static void orted_complete(const orte_job_t *jdata)
+{
+    orte_iof_proc_t *proct, *next;
+
+    /* cleanout any lingering sinks */
+    OPAL_LIST_FOREACH_SAFE(proct, next, &mca_iof_orted_component.procs, orte_iof_proc_t) {
+        if (jdata->jobid == proct->name.jobid) {
+            opal_list_remove_item(&mca_iof_orted_component.procs, &proct->super);
+            OBJ_RELEASE(proct);
+        }
+    }
 }
 
 static int finalize(void)

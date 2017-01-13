@@ -72,6 +72,8 @@ static int hnp_output(const orte_process_name_t* peer,
                       orte_iof_tag_t source_tag,
                       const char *msg);
 
+static void hnp_complete(const orte_job_t *jdata);
+
 static int finalize(void);
 
 static int hnp_ft_event(int state);
@@ -88,6 +90,7 @@ orte_iof_base_module_t orte_iof_hnp_module = {
     .pull = hnp_pull,
     .close = hnp_close,
     .output = hnp_output,
+    .complete = hnp_complete,
     .finalize = finalize,
     .ft_event = hnp_ft_event
 };
@@ -176,7 +179,8 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             return ORTE_ERR_NOT_FOUND;
         }
         /* setup any requested output files */
-        if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jdata, proct, &stdoutsink, &stderrsink, &stddiagsink))) {
+        if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jdata, proct,
+                                                                   &stdoutsink, &stderrsink, &stddiagsink))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -420,6 +424,19 @@ static int hnp_close(const orte_process_name_t* peer,
         }
     }
     return ORTE_SUCCESS;
+}
+
+static void hnp_complete(const orte_job_t *jdata)
+{
+    orte_iof_proc_t *proct, *next;
+
+    /* cleanout any lingering sinks */
+    OPAL_LIST_FOREACH_SAFE(proct, next, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
+        if (jdata->jobid == proct->name.jobid) {
+            opal_list_remove_item(&mca_iof_hnp_component.procs, &proct->super);
+            OBJ_RELEASE(proct);
+        }
+    }
 }
 
 static int finalize(void)

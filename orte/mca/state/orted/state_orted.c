@@ -19,6 +19,7 @@
 
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/base/base.h"
@@ -440,11 +441,23 @@ static void track_procs(int fd, short argc, void *cbdata)
                     OBJ_RELEASE(pptr);  // maintain accounting
                 }
             }
+            /* tell the IOF that the job is complete */
+            if (NULL != orte_iof.complete) {
+                orte_iof.complete(jdata);
+            }
 
+            /* tell the PMIx subsystem the job is complete */
+            if (NULL != opal_pmix.server_deregister_nspace) {
+                opal_pmix.server_deregister_nspace(jdata->jobid, NULL, NULL);
+            }
+
+            /* cleanup the job info */
+            opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
+            OBJ_RELEASE(jdata);
         }
     }
 
- cleanup:
+  cleanup:
     OBJ_RELEASE(caddy);
 }
 
