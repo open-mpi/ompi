@@ -13,7 +13,7 @@
  *
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -40,6 +40,7 @@ struct mca_rcache_vma_module_t {
     mca_rcache_base_module_t base;
     opal_rb_tree_t rb_tree;
     opal_list_t vma_list;
+    opal_list_t vma_gc_list;
     size_t reg_cur_cache_size;
 };
 typedef struct mca_rcache_vma_module_t mca_rcache_vma_module_t;
