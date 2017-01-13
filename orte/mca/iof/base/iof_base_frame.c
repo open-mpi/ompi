@@ -239,9 +239,9 @@ static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
 {
     OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
-                         "%s iof: closing sink for process %s",
+                         "%s iof: closing sink for process %s on fd %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&ptr->name)));
+                         ORTE_NAME_PRINT(&ptr->name), ptr->wev->fd));
     if (NULL != ptr->wev && 0 <= ptr->wev->fd) {
         OBJ_RELEASE(ptr->wev);
     }
@@ -303,7 +303,6 @@ static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
             return;
         }
     }
-
     if (2 < wev->fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                              "%s iof: closing fd %d for write event",
