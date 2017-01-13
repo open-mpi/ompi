@@ -1,0 +1,27 @@
+# -*- text -*-
+#
+# Copyright (c) 2017      Intel, Inc.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for the SDS base.
+#
+[ess-hnp:cannot-forward]
+The system does not support trapping and forwarding of the
+specified signal:
+
+  signal: %s
+  param:  %s
+
+Please remove that signal from the ess_hnp_forward_signals MCA parameter.
+[ess-hnp:unknown-signal]
+The following signal was included in the ess_hnp_forward_signals
+MCA parameter:
+
+  signal: %s
+  param:  %s
+
+This is not a recognized signal value. Please fix or remove it.
