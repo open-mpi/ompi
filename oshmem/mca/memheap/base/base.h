@@ -31,7 +31,6 @@ OSHMEM_DECLSPEC int mca_memheap_base_select(void);
 /*
  * Globals
  */
-OSHMEM_DECLSPEC extern struct mca_memheap_base_module_t* mca_memheap_base_module_initialized;
 
 /* only used within base -- no need to DECLSPEC */
 #define MEMHEAP_BASE_MIN_ORDER         3                                /* forces 64 bit alignment */
@@ -39,8 +38,6 @@ OSHMEM_DECLSPEC extern struct mca_memheap_base_module_t* mca_memheap_base_module
 #define MEMHEAP_BASE_PRIVATE_SIZE      (1ULL << MEMHEAP_BASE_PAGE_ORDER) /* should be at least the same as a huge page size */
 #define MEMHEAP_BASE_MIN_SIZE          (1ULL << MEMHEAP_BASE_PAGE_ORDER)    /* must fit into at least one huge page */
 
-extern char* mca_memheap_base_include;
-extern char* mca_memheap_base_exclude;
 extern int mca_memheap_base_already_opened;
 extern int mca_memheap_base_key_exchange;
 
