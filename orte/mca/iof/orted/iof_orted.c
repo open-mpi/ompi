@@ -120,11 +120,11 @@ static int init(void)
  * to the HNP
  */
 
-static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd)
+static int orted_push(const orte_process_name_t* dst_name,
+                      orte_iof_tag_t src_tag, int fd)
 {
     int flags;
     orte_iof_proc_t *proct;
-    orte_iof_sink_t *stdoutsink=NULL, *stderrsink=NULL, *stddiagsink=NULL;
     int rc;
     orte_job_t *jobdat=NULL;
     orte_ns_cmp_bitmask_t mask;
@@ -166,25 +166,21 @@ SETUP:
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    /* setup any requested output files */
-    if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jobdat, proct,
-                                                               &stdoutsink, &stderrsink, &stddiagsink))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
     /* define a read event and activate it */
     if (src_tag & ORTE_IOF_STDOUT) {
         ORTE_IOF_READ_EVENT(&proct->revstdout, proct, fd, ORTE_IOF_STDOUT,
                             orte_iof_orted_read_handler, false);
-        proct->revstdout->sink = stdoutsink;
     } else if (src_tag & ORTE_IOF_STDERR) {
         ORTE_IOF_READ_EVENT(&proct->revstderr, proct, fd, ORTE_IOF_STDERR,
                             orte_iof_orted_read_handler, false);
-        proct->revstderr->sink = stderrsink;
     } else if (src_tag & ORTE_IOF_STDDIAG) {
         ORTE_IOF_READ_EVENT(&proct->revstddiag, proct, fd, ORTE_IOF_STDDIAG,
                             orte_iof_orted_read_handler, false);
-        proct->revstddiag->sink = stddiagsink;
+    }
+    /* setup any requested output files */
+    if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jobdat, proct))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
     /* if -all- of the readevents for this proc have been defined, then

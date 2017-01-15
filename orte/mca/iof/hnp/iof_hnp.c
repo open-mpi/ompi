@@ -136,7 +136,6 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     orte_iof_proc_t *proct, *pptr;
     int flags, rc;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
-    orte_iof_sink_t *stdoutsink=NULL, *stderrsink=NULL, *stddiagsink=NULL;
 
     /* don't do this if the dst vpid is invalid or the fd is negative! */
     if (ORTE_VPID_INVALID == dst_name->vpid || fd < 0) {
@@ -178,27 +177,23 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        /* setup any requested output files */
-        if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jdata, proct,
-                                                                   &stdoutsink, &stderrsink, &stddiagsink))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* define a read event and activate it */
         if (src_tag & ORTE_IOF_STDOUT) {
             ORTE_IOF_READ_EVENT(&proct->revstdout, proct, fd, ORTE_IOF_STDOUT,
                                 orte_iof_hnp_read_local_handler, false);
-            proct->revstdout->sink = stdoutsink;
         } else if (src_tag & ORTE_IOF_STDERR) {
             ORTE_IOF_READ_EVENT(&proct->revstderr, proct, fd, ORTE_IOF_STDERR,
                                 orte_iof_hnp_read_local_handler, false);
-            proct->revstderr->sink = stderrsink;
         } else if (src_tag & ORTE_IOF_STDDIAG) {
             ORTE_IOF_READ_EVENT(&proct->revstddiag, proct, fd, ORTE_IOF_STDDIAG,
                                 orte_iof_hnp_read_local_handler, false);
-            proct->revstddiag->sink = stddiagsink;
         }
+        /* setup any requested output files */
+        if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jdata, proct))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* if -all- of the readevents for this proc have been defined, then
          * activate them. Otherwise, we can think that the proc is complete
          * because one of the readevents fires -prior- to all of them having
