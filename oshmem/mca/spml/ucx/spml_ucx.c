@@ -425,7 +425,8 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     size_t len;
     int my_pe = oshmem_my_proc_id();
     ucp_mem_map_params_t mem_map_params;
-    int seg;
+    int segno;
+    map_segment_t *mem_seg;
     unsigned flags;
 
     *count = 0;
@@ -434,26 +435,32 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
         return NULL;
     }
 
-    seg = memheap_find_segnum(addr);
+    segno   = memheap_find_segnum(addr);
+    mem_seg = memheap_find_seg(segno);
 
-    ucx_mkey = &mca_spml_ucx.ucp_peers[my_pe].mkeys[seg].key;
+    ucx_mkey = &mca_spml_ucx.ucp_peers[my_pe].mkeys[segno].key;
     mkeys[0].spml_context = ucx_mkey;
 
-    flags = 0;
-    if (mca_spml_ucx.heap_reg_nb && memheap_is_va_in_segment(addr, HEAP_SEG_INDEX)) {
-        flags = UCP_MEM_MAP_NONBLOCK;
-    }
+    /* if possible use mem handle already created by ucx allocator */
+    if (MAP_SEGMENT_ALLOC_UCX != mem_seg->type) {
+        flags = 0;
+        if (mca_spml_ucx.heap_reg_nb && memheap_is_va_in_segment(addr, HEAP_SEG_INDEX)) {
+            flags = UCP_MEM_MAP_NONBLOCK;
+        }
 
-    mem_map_params.field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
-                                UCP_MEM_MAP_PARAM_FIELD_LENGTH |
-                                UCP_MEM_MAP_PARAM_FIELD_FLAGS;
-    mem_map_params.address    = addr;
-    mem_map_params.length     = size;
-    mem_map_params.flags      = flags;
+        mem_map_params.field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
+                                    UCP_MEM_MAP_PARAM_FIELD_LENGTH |
+                                    UCP_MEM_MAP_PARAM_FIELD_FLAGS;
+        mem_map_params.address    = addr;
+        mem_map_params.length     = size;
+        mem_map_params.flags      = flags;
 
-    err = ucp_mem_map(mca_spml_ucx.ucp_context, &mem_map_params, &ucx_mkey->mem_h);
-    if (UCS_OK != err) {
-        goto error_out;
+        err = ucp_mem_map(mca_spml_ucx.ucp_context, &mem_map_params, &ucx_mkey->mem_h);
+        if (UCS_OK != err) {
+            goto error_out;
+        }
+    } else {
+        ucx_mkey->mem_h = (ucp_mem_h)mem_seg->context;
     }
 
     err = ucp_rkey_pack(mca_spml_ucx.ucp_context, ucx_mkey->mem_h, 
@@ -477,9 +484,9 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     }
 
     mkeys[0].len     = len;
-    mkeys[0].va_base = mem_map_params.address;
+    mkeys[0].va_base = addr;
     *count = 1;
-    mca_spml_ucx_cache_mkey(&mkeys[0], seg, my_pe);
+    mca_spml_ucx_cache_mkey(&mkeys[0], segno, my_pe);
     return mkeys;
 
 error_unmap:
@@ -493,6 +500,7 @@ error_out:
 int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
 {
     spml_ucx_mkey_t   *ucx_mkey;
+    map_segment_t *mem_seg;
 
     MCA_SPML_CALL(fence());
     if (!mkeys)
@@ -501,8 +509,12 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
     if (!mkeys[0].spml_context) 
         return OSHMEM_SUCCESS;
 
-    ucx_mkey = (spml_ucx_mkey_t *)mkeys[0].spml_context;
-    ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);
+    mem_seg = memheap_find_va(mkeys[0].va_base);
+    
+    if (MAP_SEGMENT_ALLOC_UCX != mem_seg->type) {
+        ucx_mkey = (spml_ucx_mkey_t *)mkeys[0].spml_context;
+        ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);
+    }
 
     if (0 < mkeys[0].len) {
         ucp_rkey_buffer_release(mkeys[0].u.data);
