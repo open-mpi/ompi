@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,9 +57,6 @@ ORTE_DECLSPEC int orte_iof_base_setup_parent(const orte_process_name_t* name,
 /* setup output files */
 ORTE_DECLSPEC int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
                                                    orte_job_t *jobdat,
-                                                   orte_iof_proc_t *proct,
-                                                   orte_iof_sink_t **stdoutsink,
-                                                   orte_iof_sink_t **stderrsink,
-                                                   orte_iof_sink_t **stddiagsink);
+                                                   orte_iof_proc_t *proct);
 
 #endif
