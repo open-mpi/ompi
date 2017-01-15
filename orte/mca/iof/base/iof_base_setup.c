@@ -305,7 +305,7 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
             }
             /* define a sink to that file descriptor */
             ORTE_IOF_SINK_DEFINE(&proct->revstdout->sink, dst_name,
-                                 proct->revstdout->fd, ORTE_IOF_STDOUT,
+                                 fdout, ORTE_IOF_STDOUT,
                                  orte_iof_base_write_handler);
         }
 
@@ -329,7 +329,7 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
                 }
                 /* define a sink to that file descriptor */
                 ORTE_IOF_SINK_DEFINE(&proct->revstderr->sink, dst_name,
-                                     proct->revstderr->fd, ORTE_IOF_STDERR,
+                                     fdout, ORTE_IOF_STDERR,
                                      orte_iof_base_write_handler);
             }
         }
