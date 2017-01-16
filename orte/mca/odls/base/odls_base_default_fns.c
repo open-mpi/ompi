@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
@@ -1379,6 +1379,8 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
     }
 
  MOVEON:
+    /* cancel the wait as this proc has already terminated */
+    orte_wait_cb_cancel(proc);
     ORTE_ACTIVATE_PROC_STATE(&proc->name, state);
 }
 
