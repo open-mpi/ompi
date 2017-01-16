@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,6 +67,7 @@ int MPI_Start(MPI_Request *request)
 
     switch((*request)->req_type) {
     case OMPI_REQUEST_PML:
+    case OMPI_REQUEST_COLL:
         OPAL_CR_ENTER_LIBRARY();
 
         ret = (*request)->req_start(1, request);
