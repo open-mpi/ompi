@@ -44,11 +44,11 @@ static const char FUNC_NAME[] = "MPI_Startall";
 
 int MPI_Startall(int count, MPI_Request requests[])
 {
-    int i;
+    int i, j;
     int ret = OMPI_SUCCESS;
+    ompi_request_start_fn_t start_fn = NULL;
 
     MEMCHECKER(
-        int j;
         for (j = 0; j < count; j++){
             memchecker_request(&requests[j]);
         }
@@ -76,7 +76,7 @@ int MPI_Startall(int count, MPI_Request requests[])
 
     OPAL_CR_ENTER_LIBRARY();
 
-    for (i = 0; i < count; ++i) {
+    for (i = 0, j = -1; i < count; ++i) {
         /* Per MPI it is invalid to start an active request */
         if (OMPI_REQUEST_INACTIVE != requests[i]->req_state) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
@@ -91,9 +91,21 @@ int MPI_Startall(int count, MPI_Request requests[])
              */
             requests[i]->req_state = OMPI_REQUEST_ACTIVE;
         }
+
+        /* Call a req_start callback function per requests which have the
+         * same req_start value. */
+        if (requests[i]->req_start != start_fn) {
+            if (NULL != start_fn && i != 0) {
+                start_fn(i - j, requests + j);
+            }
+            start_fn = requests[i]->req_start;
+            j = i;
+        }
     }
 
-    ret = MCA_PML_CALL(start(count, requests));
+    if (NULL != start_fn) {
+        start_fn(i - j, requests + j);
+    }
 
     OPAL_CR_EXIT_LIBRARY();
     return ret;

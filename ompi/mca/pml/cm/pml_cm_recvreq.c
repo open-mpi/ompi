@@ -56,6 +56,7 @@ void mca_pml_cm_recv_request_completion(struct mca_mtl_request_t *mtl_request)
 static void
 mca_pml_cm_recv_request_construct(mca_pml_cm_thin_recv_request_t* recvreq)
 {
+    recvreq->req_base.req_ompi.req_start = mca_pml_cm_start;
     recvreq->req_base.req_ompi.req_free = mca_pml_cm_recv_request_free;
     recvreq->req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
     OBJ_CONSTRUCT( &(recvreq->req_base.req_convertor), opal_convertor_t );

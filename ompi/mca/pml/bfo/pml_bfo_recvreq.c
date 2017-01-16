@@ -154,6 +154,7 @@ static int mca_pml_bfo_recv_request_cancel(struct ompi_request_t* ompi_request, 
 static void mca_pml_bfo_recv_request_construct(mca_pml_bfo_recv_request_t* request)
 {
     request->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
+    request->req_recv.req_base.req_ompi.req_start = mca_pml_bfo_start;
     request->req_recv.req_base.req_ompi.req_free = mca_pml_bfo_recv_request_free;
     request->req_recv.req_base.req_ompi.req_cancel = mca_pml_bfo_recv_request_cancel;
     request->req_rdma_cnt = 0;
