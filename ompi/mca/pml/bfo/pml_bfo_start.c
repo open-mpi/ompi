@@ -20,13 +20,13 @@
 
 #include "ompi_config.h"
 
-#include "pml_ob1.h"
-#include "pml_ob1_recvreq.h"
-#include "pml_ob1_sendreq.h"
+#include "pml_bfo.h"
+#include "pml_bfo_recvreq.h"
+#include "pml_bfo_sendreq.h"
 #include "ompi/memchecker.h"
 
 
-int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
+int mca_pml_bfo_start(size_t count, ompi_request_t** requests)
 {
     int rc;
     size_t i;
