@@ -1,6 +1,10 @@
 #!/bin/bash
 
 exe=test_overhead
+if [ $# -ge 1 ]
+then
+    mfile="-machinefile $1"
+fi
 # dir
 resdir=res
 tmpdir=$resdir/.tmp
@@ -15,12 +19,12 @@ ops=(send a2a bcast)
 
 # no_monitoring(nb_nodes, exe_name, output_filename)
 function no_monitoring() {
-    mpiexec -n $1 --bind-to core --mca pml ^monitoring --mca osc ^monitoring $2 2> /dev/null > $3
+    mpiexec -n $1 $mfile --bind-to core --mca pml ^monitoring --mca osc ^monitoring --mca coll ^monitoring $2 2> /dev/null > $3
 }
 
 # monitoring(nb_nodes, exe_name, output_filename)
 function monitoring() {
-    mpiexec -n $1 --bind-to core --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename "prof/toto" $2 2> /dev/null > $3
+    mpiexec -n $1 $mfile --bind-to core --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename "prof/toto" $2 2> /dev/null > $3
 }
 
 # filter_output(filenames_list)
@@ -75,7 +79,7 @@ do
     echo "$nbprocs procs..."
     output_nomon="$base_nomon.$nbprocs.dat"
     output_mon="$base_mon.$nbprocs.dat"
-    # actually to the benchmarks
+    # actually do the benchmarks
     no_monitoring $nbprocs $exe $output_nomon
     monitoring $nbprocs $exe $output_mon
     # prepare data to insert them more easily into database
