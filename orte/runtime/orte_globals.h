@@ -475,6 +475,7 @@ ORTE_DECLSPEC extern int orted_debug_failure_delay;
 /* homegeneity flags */
 ORTE_DECLSPEC extern bool orte_hetero_apps;
 ORTE_DECLSPEC extern bool orte_hetero_nodes;
+ORTE_DECLSPEC extern bool orte_hnp_on_smgmt_node;
 
 ORTE_DECLSPEC extern bool orte_never_launched;
 ORTE_DECLSPEC extern bool orte_devel_level_output;

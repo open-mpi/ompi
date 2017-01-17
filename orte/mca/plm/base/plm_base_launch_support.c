@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -1338,6 +1338,12 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (orte_hetero_nodes) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "orte_hetero_nodes");
+        opal_argv_append(argc, argv, "1");
+    }
+
+    if (orte_hnp_on_smgmt_node) {
+        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+        opal_argv_append(argc, argv, "orte_hnp_on_smgmt_node");
         opal_argv_append(argc, argv, "1");
     }
 
