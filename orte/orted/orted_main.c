@@ -16,7 +16,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -129,6 +129,7 @@ static struct {
     bool tree_spawn;
     char *hnp_topo_sig;
     bool test_suicide;
+    bool hnp_on_smgmt_node;
 } orted_globals;
 
 /*
@@ -215,6 +216,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, '\0', NULL, "hnp-topo-sig", 1,
       &orted_globals.hnp_topo_sig, OPAL_CMD_LINE_TYPE_STRING,
       "Topology signature of HNP" },
+
+    { "orte_hnp_on_smgmt_node", '\0', NULL, "hnp-on-smgmt-node", 0,
+      &orted_globals.hnp_on_smgmt_node, OPAL_CMD_LINE_TYPE_BOOL,
+      "Mpirun is executing on a system mgmt node whose topology is different from the compute nodes [Default = false]" },
 
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
@@ -767,7 +772,7 @@ int orte_daemon(int argc, char *argv[])
         /* add the local topology, if different from the HNP's or user directed us to,
          * but always if we are the first daemon to ensure we get a compute node */
         if (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes ||
-            0 != strcmp(orte_topo_signature, orted_globals.hnp_topo_sig)) {
+            (!orted_globals.hnp_on_smgmt_node && 0 != strcmp(orte_topo_signature, orted_globals.hnp_topo_sig))) {
             tflag = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &tflag, 1, OPAL_UINT8))) {
                 ORTE_ERROR_LOG(ret);

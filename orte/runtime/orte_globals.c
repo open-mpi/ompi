@@ -92,6 +92,7 @@ int orted_debug_failure = -1;
 int orted_debug_failure_delay = -1;
 bool orte_hetero_apps = false;
 bool orte_hetero_nodes = false;
+bool orte_hnp_on_smgmt_node = false;
 bool orte_never_launched = false;
 bool orte_devel_level_output = false;
 bool orte_display_topo_with_map = false;
