@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -149,6 +149,10 @@ static int opal_timer_linux_find_freq(void)
 
     fclose(fp);
 
+    /* convert the timer frequency to MHz to avoid an extra operation when
+     * converting from cycles to usec */
+    opal_timer_linux_freq /= 1000000;
+
     return OPAL_SUCCESS;
 }
 
@@ -160,7 +164,7 @@ int opal_timer_linux_open(void)
 #if OPAL_HAVE_CLOCK_GETTIME && (0 == OPAL_TIMER_MONOTONIC)
         struct timespec res;
         if( 0 == clock_getres(CLOCK_MONOTONIC, &res)) {
-            opal_timer_linux_freq = 1.e9;
+            opal_timer_linux_freq = 1.e3;
             opal_timer_base_get_cycles = opal_timer_base_get_cycles_clock_gettime;
             opal_timer_base_get_usec = opal_timer_base_get_usec_clock_gettime;
             return ret;
@@ -209,8 +213,8 @@ opal_timer_t opal_timer_base_get_cycles_sys_timer(void)
 opal_timer_t opal_timer_base_get_usec_sys_timer(void)
 {
 #if OPAL_HAVE_SYS_TIMER_GET_CYCLES
-    /* freq is in Hz, so this gives usec */
-    return opal_sys_timer_get_cycles() * 1000000  / opal_timer_linux_freq;
+    /* freq is in MHz, so this gives usec */
+    return opal_sys_timer_get_cycles()  / opal_timer_linux_freq;
 #else
     return 0;
 #endif
@@ -218,7 +222,7 @@ opal_timer_t opal_timer_base_get_usec_sys_timer(void)
 
 opal_timer_t opal_timer_base_get_freq(void)
 {
-    return opal_timer_linux_freq;
+    return opal_timer_linux_freq * 1000000;
 }
 
 
