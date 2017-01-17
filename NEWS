@@ -53,11 +53,25 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-2.0.2 -- 23 December 2016
+2.0.2 -- 18 January 2017
 -------------------------
 
 Bug fixes/minor improvements:
 
+- Fix a typo in the MPI_WIN_GET_NAME man page.  Thanks to Nicolas Joly
+  for reporting.
+- Fix a race condition with ORTE's session directory setup.  Thanks to
+  @tbj900 for reporting this issue.
+- Fix a deadlock issue arising from Open MPI's approach to catching calls to
+  munmap. Thanks to Paul Hargrove for reporting and helping to analyze this
+  problem.
+- Fix a problem with PPC atomics which caused make check to fail unless builtin
+  atomics configure option was enabled.  Thanks to Orion Poplawski for reporting.
+- Fix a problem with use of x86_64 cpuid instruction which led to segmentation
+  faults when Open MPI was configured with -O3 optimization.  Thanks to Mark
+  Santcroos for reporting this problem.
+- Fix a problem when using built in atomics configure options on PPC platforms
+  when building 32 bit applications.  Thanks to Paul Hargrove for reporting.
 - Fix a problem with building Open MPI against an external hwloc installation.
   Thanks to Orion Poplawski for reporting this issue.
 - Remove use of DATE in the message queue version string reported to debuggers to
