@@ -20,7 +20,7 @@ Contact the authors for questions.
 
 To be run as (without using MPI_Tool):
 
-mpirun -np 4 --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename prof/output ./monitoring_test
+mpirun -np 4 --mca pml_monitoring_enable 2 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename prof/output ./monitoring_test
 
 Then, the output should be:
 
@@ -51,7 +51,7 @@ E       3       2       20 bytes        4 msgs sent
 
 or as
 
-mpirun -np 4 --mca pml_monitoring_enable 2 --mca pml_monitoring_enable_output 2 ./monitoring_test
+mpirun -np 4 --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 2 ./monitoring_test
 
 for an output as:
 

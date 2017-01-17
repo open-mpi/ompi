@@ -94,14 +94,14 @@ static inline int mca_common_monitoring_get_world_rank(int dst, struct ompi_comm
     return ret;
 }
 
-/* Return the current status of the monitoring system 0 if off, 1 if the
- * seperation between internal tags and external tags is enabled. Any other
- * positive value if the segregation between point-to-point and collective is
- * disabled.
+/* Return the current status of the monitoring system 0 if off or the
+ * seperation between internal tags and external tags is disabled. Any
+ * other positive value if the segregation between point-to-point and
+ * collective is enabled.
  */
 static inline int mca_common_monitoring_filter( void )
 {
-    return 1 > mca_common_monitoring_current_state;
+    return 1 < mca_common_monitoring_current_state;
 }
 
 /* Collective operation monitoring */
