@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -174,13 +174,6 @@ int orte_rml_ofi_send_buffer_nb(struct orte_rml_base_module_t *mod,
                                 orte_rml_tag_t tag,
                                 orte_rml_buffer_callback_fn_t cbfunc,
                                 void* cbdata);
-int orte_rml_ofi_send_nb(struct orte_rml_base_module_t *mod,
-                         orte_process_name_t* peer,
-                         struct iovec* iov,
-                         int count,
-                         orte_rml_tag_t tag,
-                         orte_rml_callback_fn_t cbfunc,
-                         void* cbdata);
 
 /****************** INTERNAL OFI Functions*************/
 void free_ofi_prov_resources( int ofi_prov_id);

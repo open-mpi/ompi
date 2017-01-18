@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,7 +73,6 @@ orte_rml_ofi_module_t orte_rml_ofi = {
     .api = {
     .component = (struct orte_rml_component_t*)&mca_rml_ofi_component,
     .ping = NULL,
-    .send_nb = orte_rml_ofi_send_nb,
     .send_buffer_nb = orte_rml_ofi_send_buffer_nb,
     .purge = NULL
     }

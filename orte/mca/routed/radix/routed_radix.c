@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,9 +80,9 @@ orte_routed_module_t orte_routed_radix_module = {
 /* local globals */
 static orte_process_name_t      *lifeline=NULL;
 static orte_process_name_t      local_lifeline;
+static orte_process_name_t      route_to_hnp;
 static int                      num_children;
 static opal_list_t              my_children;
-static bool                     hnp_direct=true;
 
 static int init(void)
 {
@@ -92,9 +92,11 @@ static int init(void)
         /* if we are using static ports, set my lifeline to point at my parent */
         if (orte_static_ports) {
             lifeline = ORTE_PROC_MY_PARENT;
+            route_to_hnp = *ORTE_PROC_MY_PARENT;
         } else {
             /* set our lifeline to the HNP - we will abort if that connection is lost */
             lifeline = ORTE_PROC_MY_HNP;
+            route_to_hnp = *ORTE_PROC_MY_HNP;
         }
         ORTE_PROC_MY_PARENT->jobid = ORTE_PROC_MY_NAME->jobid;
     } else if (ORTE_PROC_IS_APP) {
@@ -182,14 +184,10 @@ static int update_route(orte_process_name_t *target,
                          ORTE_NAME_PRINT(route)));
 
 
-    /* if I am a daemon and the target is my HNP, then check
-     * the route - if it isn't direct, then we just flag that
-     * we have a route to the HNP
-     */
-    if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target) &&
-        OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, route)) {
-        hnp_direct = false;
-        return ORTE_SUCCESS;
+    /* if I am a daemon and the target is my HNP, then record
+     * the route */
+    if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target)) {
+        route_to_hnp = *route;
     }
 
     return ORTE_SUCCESS;
@@ -248,23 +246,15 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      * how to get there - otherwise, send it via the tree
      */
     if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target)) {
-        if (!hnp_direct || orte_static_ports) {
-            OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
-                                 "%s routing to the HNP through my parent %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_PARENT)));
-            ret = ORTE_PROC_MY_PARENT;
-            goto found;
-        } else {
-            OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
-                                 "%s routing direct to the HNP",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            ret = ORTE_PROC_MY_HNP;
-            goto found;
-        }
+        ret = &route_to_hnp;
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
+                             "%s routing to the HNP through %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ret)));
+        goto found;
     }
 
-    /* if the jobid is different than our own, then this the target
+    /* if the jobid is different than our own, then the target
      * is a tool and we should go direct */
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
         ret = target;
@@ -538,4 +528,3 @@ static int radix_ft_event(int state)
     return exit_status;
 }
 #endif
-

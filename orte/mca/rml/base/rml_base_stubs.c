@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -186,33 +186,6 @@ int orte_rml_API_ping(orte_rml_conduit_t conduit_id,
 }
 
 
-/** Send non-blocking iovec message through a specific conduit*/
-int orte_rml_API_send_nb(orte_rml_conduit_t conduit_id,
-                         orte_process_name_t* peer,
-                         struct iovec* msg,
-                         int count,
-                         orte_rml_tag_t tag,
-                         orte_rml_callback_fn_t cbfunc,
-                         void* cbdata)
-{
-    int rc = ORTE_ERR_UNREACH;
-    orte_rml_base_module_t *mod;
-
-    opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                         "%s rml:base:send_nb() to peer %s through conduit %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer),conduit_id);
-    /* get the module */
-    if (NULL == (mod = (orte_rml_base_module_t*)opal_pointer_array_get_item(&orte_rml_base.conduits, conduit_id))) {
-        return rc;
-    }
-    if (NULL == mod->send_nb) {
-        return rc;
-    }
-    rc = mod->send_nb((struct orte_rml_base_module_t*)mod, peer, msg, count, tag, cbfunc, cbdata);
-    return rc;
-}
-
 /** Send non-blocking buffer message */
 int orte_rml_API_send_buffer_nb(orte_rml_conduit_t conduit_id,
                                 orte_process_name_t* peer,
@@ -240,38 +213,6 @@ int orte_rml_API_send_buffer_nb(orte_rml_conduit_t conduit_id,
     return rc;
 }
 
-/** post a receive for an IOV message - this is done
- * strictly in the base, and so it does not go to a module */
-void orte_rml_API_recv_nb(orte_process_name_t* peer,
-                          orte_rml_tag_t tag,
-                          bool persistent,
-                          orte_rml_callback_fn_t cbfunc,
-                          void* cbdata)
-{
-    orte_rml_recv_request_t *req;
-
-    opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                         "%s rml_recv_nb for peer %s tag %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer), tag);
-
-    /* push the request into the event base so we can add
-     * the receive to our list of posted recvs */
-    req = OBJ_NEW(orte_rml_recv_request_t);
-    req->post->buffer_data = false;
-    req->post->peer.jobid = peer->jobid;
-    req->post->peer.vpid = peer->vpid;
-    req->post->tag = tag;
-    req->post->persistent = persistent;
-    req->post->cbfunc.iov = cbfunc;
-    req->post->cbdata = cbdata;
-    opal_event_set(orte_event_base, &req->ev, -1,
-                   OPAL_EV_WRITE,
-                   orte_rml_base_post_recv, req);
-    opal_event_set_priority(&req->ev, ORTE_MSG_PRI);
-    opal_event_active(&req->ev, OPAL_EV_WRITE, 1);
-}
-
 /** Receive non-blocking buffer message */
 void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
                                  orte_rml_tag_t tag,
@@ -289,12 +230,11 @@ void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
     /* push the request into the event base so we can add
      * the receive to our list of posted recvs */
     req = OBJ_NEW(orte_rml_recv_request_t);
-    req->post->buffer_data = true;
     req->post->peer.jobid = peer->jobid;
     req->post->peer.vpid = peer->vpid;
     req->post->tag = tag;
     req->post->persistent = persistent;
-    req->post->cbfunc.buffer = cbfunc;
+    req->post->cbfunc = cbfunc;
     req->post->cbdata = cbdata;
     opal_event_set(orte_event_base, &req->ev, -1,
                    OPAL_EV_WRITE,

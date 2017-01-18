@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -43,9 +43,7 @@ orte_rml_base_API_t orte_rml = {
     .get_contact_info       = orte_rml_API_get_contact_info,
     .set_contact_info       = orte_rml_API_set_contact_info,
     .ping                   = orte_rml_API_ping,
-    .send_nb                = orte_rml_API_send_nb,
     .send_buffer_nb         = orte_rml_API_send_buffer_nb,
-    .recv_nb                = orte_rml_API_recv_nb,
     .recv_buffer_nb         = orte_rml_API_recv_buffer_nb,
     .recv_cancel            = orte_rml_API_recv_cancel,
     .purge                  = orte_rml_API_purge,
@@ -254,10 +252,8 @@ void orte_rml_recv_callback(int status, orte_process_name_t* sender,
 /***   RML CLASS INSTANCES   ***/
 static void xfer_cons(orte_self_send_xfer_t *xfer)
 {
-    xfer->iov = NULL;
-    xfer->cbfunc.iov = NULL;
     xfer->buffer = NULL;
-    xfer->cbfunc.buffer = NULL;
+    xfer->cbfunc = NULL;
     xfer->cbdata = NULL;
 }
 OBJ_CLASS_INSTANCE(orte_self_send_xfer_t,
@@ -268,9 +264,9 @@ static void send_cons(orte_rml_send_t *ptr)
 {
     ptr->retries = 0;
     ptr->cbdata = NULL;
-    ptr->iov = NULL;
     ptr->buffer = NULL;
     ptr->data = NULL;
+    ptr->count = 0;
     ptr->seq_num = 0xFFFFFFFF;
     ptr->routed = NULL;
 }

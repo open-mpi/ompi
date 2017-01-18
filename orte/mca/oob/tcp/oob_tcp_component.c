@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -1135,7 +1135,6 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     snd->seq_num = mop->snd->hdr.seq_num;
     snd->data = mop->snd->data;
     snd->count = mop->snd->hdr.nbytes;
-    snd->cbfunc.iov = NULL;
     snd->cbdata = NULL;
     snd->routed = strdup(mop->snd->hdr.routed);
     /* activate the OOB send state */

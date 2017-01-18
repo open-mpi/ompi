@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014 Mellanox Technologies, Inc.
  *                    All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,17 +18,7 @@
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
 
-#define MCA_OOB_UD_IOV_SIZE(msg, size)                                  \
-    do {                                                                \
-        if (msg->iov != NULL) {                                         \
-            int i;                                                      \
-            for (i = 0, (size) = 0 ; i < (msg->count) ; ++i) {          \
-                (size) += (msg->iov)[i].iov_len;                        \
-            }                                                           \
-        } else {                                                        \
-            (size) = msg->buffer->bytes_used;                           \
-        }                                                               \
-    } while (0);
+#define MCA_OOB_UD_IOV_SIZE(msg, size) (size) = msg->buffer->bytes_used
 
 /* State machine for processing message */
 typedef struct {

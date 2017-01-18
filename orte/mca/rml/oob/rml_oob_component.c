@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -96,7 +96,6 @@ static orte_rml_pathway_t pathway;
 static orte_rml_base_module_t base_module = {
     .component = (struct orte_rml_component_t*)&mca_rml_oob_component,
     .ping = NULL,
-    .send_nb = orte_rml_oob_send_nb,
     .send_buffer_nb = orte_rml_oob_send_buffer_nb,
     .purge = NULL
 };

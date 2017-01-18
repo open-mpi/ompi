@@ -4,7 +4,7 @@
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -334,7 +334,6 @@ void mca_oob_ud_req_complete (mca_oob_ud_req_t *req, int rc)
                 snd->data = data;
                 snd->count = req->req_data.buf.size;
             }
-            snd->cbfunc.iov = NULL;
             snd->cbdata = NULL;
             /* activate the OOB send state */
             ORTE_OOB_SEND(snd);
