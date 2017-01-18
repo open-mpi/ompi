@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,7 +93,7 @@ static int rank_span(orte_job_t *jdata,
              item = opal_list_get_next(item)) {
             node = (orte_node_t*)item;
             /* get the number of objects - only consider those we can actually use */
-            num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target,
+            num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target,
                                                           cache_level, OPAL_HWLOC_AVAILABLE);
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:rank_span: found %d objects on node %s with %d procs",
@@ -104,7 +104,7 @@ static int rank_span(orte_job_t *jdata,
 
             /* for each object */
             for (i=0; i < num_objs && cnt < app->num_procs; i++) {
-                obj = opal_hwloc_base_get_obj_by_type(node->topology, target,
+                obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, target,
                                                       cache_level, i, OPAL_HWLOC_AVAILABLE);
 
                 opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -206,7 +206,7 @@ static int rank_fill(orte_job_t *jdata,
          item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
         /* get the number of objects - only consider those we can actually use */
-        num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target,
+        num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target,
                                                       cache_level, OPAL_HWLOC_AVAILABLE);
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rank_fill: found %d objects on node %s with %d procs",
@@ -217,7 +217,7 @@ static int rank_fill(orte_job_t *jdata,
 
         /* for each object */
         for (i=0; i < num_objs && cnt < app->num_procs; i++) {
-            obj = opal_hwloc_base_get_obj_by_type(node->topology, target,
+            obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, target,
                                                   cache_level, i, OPAL_HWLOC_AVAILABLE);
 
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -327,7 +327,7 @@ static int rank_by(orte_job_t *jdata,
          item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
         /* get the number of objects - only consider those we can actually use */
-        num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target,
+        num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target,
                                                       cache_level, OPAL_HWLOC_AVAILABLE);
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rank_by: found %d objects on node %s with %d procs",
@@ -337,7 +337,7 @@ static int rank_by(orte_job_t *jdata,
         }
         /* collect all the objects */
         for (i=0; i < num_objs; i++) {
-            obj = opal_hwloc_base_get_obj_by_type(node->topology, target,
+            obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, target,
                                                   cache_level, i, OPAL_HWLOC_AVAILABLE);
             opal_pointer_array_set_item(&objs, i, obj);
         }

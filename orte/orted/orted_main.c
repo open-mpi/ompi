@@ -127,9 +127,7 @@ static struct {
     int singleton_died_pipe;
     bool abort;
     bool tree_spawn;
-    char *hnp_topo_sig;
     bool test_suicide;
-    bool hnp_on_smgmt_node;
 } orted_globals;
 
 /*
@@ -209,18 +207,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Regular expression defining nodes in system" },
 
-    { "orte_hetero_nodes", '\0', NULL, "hetero-nodes", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
-
-    { NULL, '\0', NULL, "hnp-topo-sig", 1,
-      &orted_globals.hnp_topo_sig, OPAL_CMD_LINE_TYPE_STRING,
-      "Topology signature of HNP" },
-
-    { "orte_hnp_on_smgmt_node", '\0', NULL, "hnp-on-smgmt-node", 0,
-      &orted_globals.hnp_on_smgmt_node, OPAL_CMD_LINE_TYPE_BOOL,
-      "Mpirun is executing on a system mgmt node whose topology is different from the compute nodes [Default = false]" },
-
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -237,8 +223,6 @@ int orte_daemon(int argc, char *argv[])
 #if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var = NULL;
 #endif
-    char *coprocessors;
-    uint8_t tflag;
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
@@ -769,38 +753,10 @@ int orte_daemon(int argc, char *argv[])
             opal_argv_free(aliases);
         }
 
-        /* add the local topology, if different from the HNP's or user directed us to,
-         * but always if we are the first daemon to ensure we get a compute node */
-        if (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes ||
-            (!orted_globals.hnp_on_smgmt_node && 0 != strcmp(orte_topo_signature, orted_globals.hnp_topo_sig))) {
-            tflag = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &tflag, 1, OPAL_UINT8))) {
-                ORTE_ERROR_LOG(ret);
-            }
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_topo_signature, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(ret);
-            }
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
-                ORTE_ERROR_LOG(ret);
-            }
-        } else {
-            tflag = 0;
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &tflag, 1, OPAL_UINT8))) {
-                ORTE_ERROR_LOG(ret);
-            }
-        }
-        /* detect and add any coprocessors */
-        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
+        /* always send back our topology signature - this is a small string
+         * and won't hurt anything */
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_topo_signature, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
-        }
-        /* see if I am on a coprocessor */
-        coprocessors = opal_hwloc_base_check_on_coprocessor();
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(ret);
-        }
-        if (NULL!= coprocessors) {
-            free(coprocessors);
         }
 
         /* send to the HNP's callback - will be routed if routes are available */

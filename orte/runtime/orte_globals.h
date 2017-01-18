@@ -215,6 +215,15 @@ struct orte_proc_t;
 struct orte_job_map_t;
 /************/
 
+/* define an object for storing node topologies */
+typedef struct {
+    opal_object_t super;
+    hwloc_topology_t topo;
+    char *sig;
+} orte_topology_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_topology_t);
+
+
 /**
 * Information about a specific application to be launched in the RTE.
  */
@@ -292,7 +301,7 @@ typedef struct {
         may want to allow up to four processes but no more. */
     orte_std_cntr_t slots_max;
     /* system topology for this node */
-    hwloc_topology_t topology;
+    orte_topology_t *topology;
     /* flags */
     orte_node_flags_t flags;
     /* list of orte_attribute_t */
@@ -405,14 +414,6 @@ struct orte_proc_t {
 typedef struct orte_proc_t orte_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
 
-/* define an object for storing node topologies */
-typedef struct {
-    opal_object_t super;
-    hwloc_topology_t topo;
-    char *sig;
-} orte_topology_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_topology_t);
-
 /**
  * Get a job data object
  * We cannot just reference a job data object with its jobid as
@@ -471,11 +472,6 @@ ORTE_DECLSPEC extern int orte_hostname_cutoff;
 /* debug flags */
 ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;
-
-/* homegeneity flags */
-ORTE_DECLSPEC extern bool orte_hetero_apps;
-ORTE_DECLSPEC extern bool orte_hetero_nodes;
-ORTE_DECLSPEC extern bool orte_hnp_on_smgmt_node;
 
 ORTE_DECLSPEC extern bool orte_never_launched;
 ORTE_DECLSPEC extern bool orte_devel_level_output;

@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -121,6 +121,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     float pss;
     opal_pstats_t pstat;
     char *rtmod;
+    char *coprocessors;
 
     /* unpack the command */
     n = 1;
@@ -545,6 +546,47 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         if (ORTE_SUCCESS != (ret = orte_plm.terminate_job(job))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
+        }
+        break;
+
+        /****     REPORT TOPOLOGY COMMAND    ****/
+    case ORTE_DAEMON_REPORT_TOPOLOGY_CMD:
+        answer = OBJ_NEW(opal_buffer_t);
+        /* pack the topology signature */
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &orte_topo_signature, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(answer);
+            goto CLEANUP;
+        }
+        /* pack the topology */
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(answer);
+            goto CLEANUP;
+        }
+
+        /* detect and add any coprocessors */
+        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &coprocessors, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+        }
+        if (NULL != coprocessors) {
+            free(coprocessors);
+        }
+        /* see if I am on a coprocessor */
+        coprocessors = opal_hwloc_base_check_on_coprocessor();
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &coprocessors, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+        }
+        if (NULL!= coprocessors) {
+            free(coprocessors);
+        }
+        /* send the data */
+        if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                               sender, answer, ORTE_RML_TAG_TOPOLOGY_REPORT,
+                                               orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(answer);
         }
         break;
 

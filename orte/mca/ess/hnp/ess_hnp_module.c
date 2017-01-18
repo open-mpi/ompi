@@ -215,14 +215,6 @@ static int rte_init(void)
             goto error;
         }
     }
-    /* generate the signature */
-    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
-
-    if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
-        opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
-    }
-
 
     /* if we are using xml for output, put an mpirun start tag */
     if (orte_xml_output) {
@@ -437,12 +429,6 @@ static int rte_init(void)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
 
-    /* add it to the array of known topologies */
-    t = OBJ_NEW(orte_topology_t);
-    t->topo = opal_hwloc_topology;
-    t->sig = strdup(orte_topo_signature);
-    opal_pointer_array_add(orte_node_topologies, t);
-
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -521,7 +507,19 @@ static int rte_init(void)
      * will have reset our topology. Ensure we always get the right
      * one by setting our node topology afterwards
      */
-    node->topology = opal_hwloc_topology;
+    /* add it to the array of known topologies */
+    t = OBJ_NEW(orte_topology_t);
+    t->topo = opal_hwloc_topology;
+    /* generate the signature */
+    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+    t->sig = strdup(orte_topo_signature);
+    opal_pointer_array_add(orte_node_topologies, t);
+    node->topology = t;
+    if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+        opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+    }
+
 
     /* init the hash table, if necessary */
     if (NULL == orte_coprocessors) {
