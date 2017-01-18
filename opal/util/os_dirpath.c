@@ -113,10 +113,11 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
         }
 
         /* Now that we have the name, try to create it */
-        ret = mkdir(tmp, mode);
+        mkdir(tmp, mode);
+        ret = errno;  // save the errno for an error msg, if needed
         if (0 != stat(tmp, &buf)) {
             opal_show_help("help-opal-util.txt", "mkdir-failed", true,
-                        tmp, strerror(errno));
+                        tmp, strerror(ret));
             opal_argv_free(parts);
             free(tmp);
             return OPAL_ERROR;
