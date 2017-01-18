@@ -1,6 +1,7 @@
 # -*- text -*-
 #
 # Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -93,3 +94,23 @@ resource:
   Limit:     %s
 
 Please correct the request and try again.
+#
+[dir-mode]
+While working through a directory tree, we were unable to set
+a directory to the desired mode:
+
+  Directory:  %s
+  Mode:       %0x
+  Error:      %s
+
+Please check to ensure you have adequate permissions to perform
+the desired operation.
+#
+[mkdir-failed]
+A call to mkdir was unable to create the desired directory:
+
+  Directory: %s
+  Error:     %s
+
+Please check to ensure you have adequate permissions to perform
+the desired operation.
