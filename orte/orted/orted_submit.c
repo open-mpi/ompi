@@ -706,10 +706,8 @@ int orte_submit_job(char *argv[], int *index,
 
     /* reset the globals every time thru as the argv
      * will modify them */
-    if (NULL != orte_cmd_options.prefix) {
-        free(orte_cmd_options.prefix);
-    }
-    memset(&orte_cmd_options, 0, sizeof(orte_cmd_options));
+    init_globals();
+
     argc = opal_argv_count(argv);
 
     /* parse the cmd line - do this every time thru so we can
@@ -1099,20 +1097,60 @@ static int init_globals(void)
     orte_cmd_options.num_procs =  0;
     if (NULL != orte_cmd_options.appfile) {
         free(orte_cmd_options.appfile);
+        orte_cmd_options.appfile = NULL;
     }
-    orte_cmd_options.appfile = NULL;
     if (NULL != orte_cmd_options.wdir) {
         free(orte_cmd_options.wdir);
+        orte_cmd_options.wdir = NULL;
     }
     orte_cmd_options.set_cwd_to_session_dir = false;
-    orte_cmd_options.wdir = NULL;
     if (NULL != orte_cmd_options.path) {
         free(orte_cmd_options.path);
+        orte_cmd_options.path = NULL;
     }
-    orte_cmd_options.path = NULL;
+    if (NULL != orte_cmd_options.hnp) {
+        free(orte_cmd_options.hnp);
+        orte_cmd_options.hnp = NULL;
+    }
+    if (NULL != orte_cmd_options.stdin_target) {
+        free(orte_cmd_options.stdin_target);
+        orte_cmd_options.stdin_target = NULL ;
+    }
+    if (NULL != orte_cmd_options.output_filename) {
+        free(orte_cmd_options.output_filename);
+        orte_cmd_options.output_filename = NULL ;
+    }
+    if (NULL != orte_cmd_options.binding_policy) {
+        free(orte_cmd_options.binding_policy);
+        orte_cmd_options.binding_policy = NULL;
+    }
+    if (NULL != orte_cmd_options.mapping_policy) {
+        free(orte_cmd_options.mapping_policy);
+        orte_cmd_options.mapping_policy = NULL;
+    }
+    if (NULL != orte_cmd_options.ranking_policy) {
+        free(orte_cmd_options.ranking_policy);
+        orte_cmd_options.ranking_policy = NULL;
+    }
 
+    if (NULL != orte_cmd_options.report_pid) {
+        free(orte_cmd_options.report_pid);
+        orte_cmd_options.report_pid = NULL;
+    }
+    if (NULL != orte_cmd_options.report_uri) {
+        free(orte_cmd_options.report_uri);
+        orte_cmd_options.report_uri = NULL;
+    }
+    if (NULL != orte_cmd_options.slot_list) {
+        free(orte_cmd_options.slot_list);
+        orte_cmd_options.slot_list= NULL;
+    } 
     orte_cmd_options.preload_binaries = false;
-    orte_cmd_options.preload_files  = NULL;
+    if (NULL != orte_cmd_options.preload_files) {
+        free(orte_cmd_options.preload_files);
+        orte_cmd_options.preload_files  = NULL;
+    }
+
 
     /* All done */
     return ORTE_SUCCESS;
