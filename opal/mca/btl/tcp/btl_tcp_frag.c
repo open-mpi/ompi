@@ -112,7 +112,7 @@ size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, siz
 
 bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
 {
-    int cnt=-1;
+    ssize_t cnt = -1;
     size_t i, num_vecs;
 
     /* non-blocking write, but continue if interrupted */
@@ -145,7 +145,7 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
     /* if the write didn't complete - update the iovec state */
     num_vecs = frag->iov_cnt;
     for(i=0; i<num_vecs; i++) {
-        if(cnt >= (int)frag->iov_ptr->iov_len) {
+        if(cnt >= (ssize_t)frag->iov_ptr->iov_len) {
             cnt -= frag->iov_ptr->iov_len;
             frag->iov_ptr++;
             frag->iov_idx++;
@@ -155,7 +155,7 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
                 (((unsigned char*)frag->iov_ptr->iov_base) + cnt);
             frag->iov_ptr->iov_len -= cnt;
             OPAL_OUTPUT_VERBOSE((100, opal_btl_base_framework.framework_output,
-                                 "%s:%d write %d bytes on socket %d\n",
+                                 "%s:%d write %ld bytes on socket %d\n",
                                  __FILE__, __LINE__, cnt, sd));
             break;
         }
@@ -211,18 +211,18 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     cnt = -1;
     while( cnt < 0 ) {
         cnt = readv(sd, frag->iov_ptr, num_vecs);
-	if( 0 < cnt ) goto advance_iov_position;
-	if( cnt == 0 ) {
+        if( 0 < cnt ) goto advance_iov_position;
+        if( cnt == 0 ) {
             btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
-	    mca_btl_tcp_endpoint_close(btl_endpoint);
-	    return false;
-	}
-	switch(opal_socket_errno) {
-	case EINTR:
-	    continue;
-	case EWOULDBLOCK:
-	    return false;
-	case EFAULT:
+            mca_btl_tcp_endpoint_close(btl_endpoint);
+            return false;
+        }
+        switch(opal_socket_errno) {
+        case EINTR:
+            continue;
+        case EWOULDBLOCK:
+            return false;
+        case EFAULT:
             BTL_ERROR(("mca_btl_tcp_frag_recv: readv error (%p, %lu)\n\t%s(%lu)\n",
                        frag->iov_ptr[0].iov_base, (unsigned long) frag->iov_ptr[0].iov_len,
                        strerror(opal_socket_errno), (unsigned long) frag->iov_cnt));
@@ -253,17 +253,17 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     /* if the read didn't complete - update the iovec state */
     num_vecs = frag->iov_cnt;
     for( i = 0; i < num_vecs; i++ ) {
-        if( cnt < (int)frag->iov_ptr->iov_len ) {
+        if( cnt < (ssize_t)frag->iov_ptr->iov_len ) {
             frag->iov_ptr->iov_base = (opal_iov_base_ptr_t)
                 (((unsigned char*)frag->iov_ptr->iov_base) + cnt);
             frag->iov_ptr->iov_len -= cnt;
             cnt = 0;
             break;
-    }
-    cnt -= frag->iov_ptr->iov_len;
-    frag->iov_idx++;
-    frag->iov_ptr++;
-    frag->iov_cnt--;
+        }
+        cnt -= frag->iov_ptr->iov_len;
+        frag->iov_idx++;
+        frag->iov_ptr++;
+        frag->iov_cnt--;
     }
 #if MCA_BTL_TCP_ENDPOINT_CACHE
     btl_endpoint->endpoint_cache_length = cnt;
