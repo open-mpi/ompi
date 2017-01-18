@@ -504,6 +504,8 @@ void mca_common_monitoring_record_pml(int world_rank, size_t data_size, int tag)
         opal_atomic_add_64(&size_histogram[world_rank * max_size_histogram], 1);
     } else {
         int log2_size = log10(data_size)/log10_2;
+        if(log2_size > max_size_histogram - 2) /* Avoid out-of-bound write */
+            log2_size = max_size_histogram - 2;
         opal_atomic_add_64(&size_histogram[world_rank * max_size_histogram + log2_size + 1], 1);
     }
         
