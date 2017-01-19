@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -84,38 +84,6 @@ ORTE_DECLSPEC void orte_rml_recv_callback(int status, orte_process_name_t* sende
 /*                     RML CALLBACK FUNCTION DEFINITIONS                */
 
 /**
- * Funtion prototype for callback from non-blocking iovec send and recv
- *
- * Funtion prototype for callback from non-blocking iovec send and recv.
- * On send, the iovec pointer will be the same pointer passed to
- * send_nb and count will equal the count given to send.
- *
- * On recv, the iovec pointer will be the address of a single iovec
- * allocated and owned by the RML, not the process receiving the
- * callback. Ownership of the data block can be transferred by setting
- * a user variable to point to the data block, and setting the
- * iovec->iov_base pointer to NULL.
- *
- * @note The parameter in/out parameters are relative to the user's callback
- * function.
- *
- * @param[in] status  Completion status
- * @param[in] peer    Opaque name of peer process
- * @param[in] msg     Pointer to the array of iovec that was sent
- *                    or to a single iovec that has been recvd
- * @param[in] count   Number of iovecs in the array
- * @param[in] tag     User defined tag for matching send/recv
- * @param[in] cbdata  User data passed to send_nb()
- */
-typedef void (*orte_rml_callback_fn_t)(int status,
-                                       orte_process_name_t* peer,
-                                       struct iovec* msg,
-                                       int count,
-                                       orte_rml_tag_t tag,
-                                       void* cbdata);
-
-
-/**
  * Funtion prototype for callback from non-blocking buffer send and receive
  *
  * Function prototype for callback from non-blocking buffer send and
@@ -179,38 +147,6 @@ typedef int (*orte_rml_module_ping_fn_t)(struct orte_rml_base_module_t *mod,
 
 
 /**
- * Send an iovec non-blocking message
- *
- * Send an array of iovecs to the specified peer.  The call
- * will return immediately, although the iovecs may not be modified
- * until the completion callback is triggered.  The iovecs *may* be
- * passed to another call to send_nb before the completion callback is
- * triggered.  The callback being triggered does not give any
- * indication of remote completion.
- *
- * @param[in] peer   Name of receiving process
- * @param[in] msg    Pointer to an array of iovecs to be sent
- * @param[in] count  Number of iovecs in array
- * @param[in] tag    User defined tag for matching send/recv
- * @param[in] cbfunc Callback function on message comlpetion
- * @param[in] cbdata User data to provide during completion callback
- *
- * @retval ORTE_SUCCESS The message was successfully started
- * @retval ORTE_ERR_BAD_PARAM One of the parameters was invalid
- * @retval ORTE_ERR_ADDRESSEE_UNKNOWN Contact information for the
- *                    receiving process is not available
- * @retval ORTE_ERROR  An unspecified error occurred
- */
-typedef int (*orte_rml_module_send_nb_fn_t)(struct orte_rml_base_module_t *mod,
-                                            orte_process_name_t* peer,
-                                            struct iovec* msg,
-                                            int count,
-                                            orte_rml_tag_t tag,
-                                            orte_rml_callback_fn_t cbfunc,
-                                            void* cbdata);
-
-
-/**
  * Send a buffer non-blocking message
  *
  * Send a buffer to the specified peer.  The call
@@ -258,9 +194,6 @@ typedef struct orte_rml_base_module_t {
     char                                        *routed;
     /** Ping process for connectivity check */
     orte_rml_module_ping_fn_t                    ping;
-
-    /** Send non-blocking iovec message */
-    orte_rml_module_send_nb_fn_t                 send_nb;
 
     /** Send non-blocking buffer message */
     orte_rml_module_send_buffer_nb_fn_t          send_buffer_nb;
@@ -356,38 +289,6 @@ typedef int (*orte_rml_API_ping_fn_t)(orte_rml_conduit_t conduit_id,
 
 
 /**
- * Send an iovec non-blocking message
- *
- * Send an array of iovecs to the specified peer.  The call
- * will return immediately, although the iovecs may not be modified
- * until the completion callback is triggered.  The iovecs *may* be
- * passed to another call to send_nb before the completion callback is
- * triggered.  The callback being triggered does not give any
- * indication of remote completion.
- *
- * @param[in] peer   Name of receiving process
- * @param[in] msg    Pointer to an array of iovecs to be sent
- * @param[in] count  Number of iovecs in array
- * @param[in] tag    User defined tag for matching send/recv
- * @param[in] cbfunc Callback function on message comlpetion
- * @param[in] cbdata User data to provide during completion callback
- *
- * @retval ORTE_SUCCESS The message was successfully started
- * @retval ORTE_ERR_BAD_PARAM One of the parameters was invalid
- * @retval ORTE_ERR_ADDRESSEE_UNKNOWN Contact information for the
- *                    receiving process is not available
- * @retval ORTE_ERROR  An unspecified error occurred
- */
-typedef int (*orte_rml_API_send_nb_fn_t)(orte_rml_conduit_t conduit_id,
-                                         orte_process_name_t* peer,
-                                         struct iovec* msg,
-                                         int count,
-                                         orte_rml_tag_t tag,
-                                         orte_rml_callback_fn_t cbfunc,
-                                         void* cbdata);
-
-
-/**
  * Send a buffer non-blocking message
  *
  * Send a buffer to the specified peer.  The call
@@ -422,22 +323,6 @@ typedef int (*orte_rml_API_send_buffer_nb_fn_t)(orte_rml_conduit_t conduit_id,
  * and is to be restarted
  */
 typedef void (*orte_rml_API_purge_fn_t)(orte_process_name_t *peer);
-
-/**
- * Receive an iovec non-blocking message
- *
- * @param[in]  peer    Peer process or ORTE_NAME_WILDCARD for wildcard receive
- * @param[in]  tag     User defined tag for matching send/recv
- * @param[in] persistent Boolean flag indicating whether or not this is a one-time recv
- * @param[in] cbfunc   Callback function on message comlpetion
- * @param[in] cbdata   User data to provide during completion callback
- */
-typedef void (*orte_rml_API_recv_nb_fn_t)(orte_process_name_t* peer,
-                                          orte_rml_tag_t tag,
-                                          bool persistent,
-                                          orte_rml_callback_fn_t cbfunc,
-                                          void* cbdata);
-
 
 /**
  * Receive a buffer non-blocking message
@@ -485,14 +370,9 @@ typedef struct {
     /** Ping process for connectivity check */
     orte_rml_API_ping_fn_t                      ping;
 
-    /** Send non-blocking iovec message */
-    orte_rml_API_send_nb_fn_t           send_nb;
 
     /** Send non-blocking buffer message */
     orte_rml_API_send_buffer_nb_fn_t    send_buffer_nb;
-
-    /** Receive non-blocking iovec message */
-    orte_rml_API_recv_nb_fn_t                   recv_nb;
 
     /** Receive non-blocking buffer message */
     orte_rml_API_recv_buffer_nb_fn_t            recv_buffer_nb;

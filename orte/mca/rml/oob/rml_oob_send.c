@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,21 +46,10 @@ static void send_self_exe(int fd, short args, void* data)
     /* execute the send callback function - note that
      * send-to-self always returns a SUCCESS status
      */
-    if (NULL != xfer->iov) {
-        if (NULL != xfer->cbfunc.iov) {
-            /* non-blocking iovec send */
-            xfer->cbfunc.iov(ORTE_SUCCESS, ORTE_PROC_MY_NAME, xfer->iov, xfer->count,
-                             xfer->tag, xfer->cbdata);
-        }
-    } else if (NULL != xfer->buffer) {
-        if (NULL != xfer->cbfunc.buffer) {
-            /* non-blocking buffer send */
-            xfer->cbfunc.buffer(ORTE_SUCCESS, ORTE_PROC_MY_NAME, xfer->buffer,
-                                xfer->tag, xfer->cbdata);
-        }
-    } else {
-        /* should never happen */
-        abort();
+    if (NULL != xfer->cbfunc) {
+        /* non-blocking buffer send */
+        xfer->cbfunc(ORTE_SUCCESS, ORTE_PROC_MY_NAME, xfer->buffer,
+                     xfer->tag, xfer->cbdata);
     }
 
     /* cleanup the memory */
@@ -74,10 +63,7 @@ static void send_msg(int fd, short args, void *cbdata)
     orte_rml_tag_t tag = req->send.tag;
     orte_rml_recv_t *rcv;
     orte_rml_send_t *snd;
-    int bytes;
     orte_self_send_xfer_t *xfer;
-    int i;
-    char* ptr;
 
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                          "%s rml_send_msg to peer %s at tag %d",
@@ -110,14 +96,8 @@ static void send_msg(int fd, short args, void *cbdata)
 
         /* setup the send callback */
         xfer = OBJ_NEW(orte_self_send_xfer_t);
-        if (NULL != req->send.iov) {
-            xfer->iov = req->send.iov;
-            xfer->count = req->send.count;
-            xfer->cbfunc.iov = req->send.cbfunc.iov;
-        } else {
-            xfer->buffer = req->send.buffer;
-            xfer->cbfunc.buffer = req->send.cbfunc.buffer;
-        }
+        xfer->buffer = req->send.buffer;
+        xfer->cbfunc = req->send.cbfunc;
         xfer->tag = tag;
         xfer->cbdata = req->send.cbdata;
         /* setup the event for the send callback */
@@ -129,24 +109,7 @@ static void send_msg(int fd, short args, void *cbdata)
         rcv = OBJ_NEW(orte_rml_recv_t);
         rcv->sender = *peer;
         rcv->tag = tag;
-        if (NULL != req->send.iov) {
-            /* get the total number of bytes in the iovec array */
-            bytes = 0;
-            for (i = 0 ; i < req->send.count ; ++i) {
-                bytes += req->send.iov[i].iov_len;
-            }
-            /* get the required memory allocation */
-            if (0 < bytes) {
-                rcv->iov.iov_base = (IOVBASE_TYPE*)malloc(bytes);
-                rcv->iov.iov_len = bytes;
-                /* transfer the bytes */
-                ptr =  (char*)rcv->iov.iov_base;
-                for (i = 0 ; i < req->send.count ; ++i) {
-                    memcpy(ptr, req->send.iov[i].iov_base, req->send.iov[i].iov_len);
-                    ptr += req->send.iov[i].iov_len;
-                }
-            }
-        } else if (0 < req->send.buffer->bytes_used) {
+        if (0 < req->send.buffer->bytes_used) {
             rcv->iov.iov_base = (IOVBASE_TYPE*)malloc(req->send.buffer->bytes_used);
             memcpy(rcv->iov.iov_base, req->send.buffer->base_ptr, req->send.buffer->bytes_used);
             rcv->iov.iov_len = req->send.buffer->bytes_used;
@@ -163,14 +126,8 @@ static void send_msg(int fd, short args, void *cbdata)
     snd->dst = *peer;
     snd->origin = *ORTE_PROC_MY_NAME;
     snd->tag = tag;
-    if (NULL != req->send.iov) {
-        snd->iov = req->send.iov;
-        snd->count = req->send.count;
-        snd->cbfunc.iov = req->send.cbfunc.iov;
-    } else {
-        snd->buffer = req->send.buffer;
-        snd->cbfunc.buffer = req->send.cbfunc.buffer;
-    }
+    snd->buffer = req->send.buffer;
+    snd->cbfunc = req->send.cbfunc;
     snd->cbdata = req->send.cbdata;
     snd->routed = strdup(req->send.routed);
 
@@ -178,51 +135,6 @@ static void send_msg(int fd, short args, void *cbdata)
     ORTE_OOB_SEND(snd);
 
     OBJ_RELEASE(req);
-}
-
-int orte_rml_oob_send_nb(struct orte_rml_base_module_t *mod,
-                         orte_process_name_t* peer,
-                         struct iovec* iov,
-                         int count,
-                         orte_rml_tag_t tag,
-                         orte_rml_callback_fn_t cbfunc,
-                         void* cbdata)
-{
-    orte_rml_send_request_t *req;
-
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
-                         "%s rml_send to peer %s at tag %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer), tag));
-
-    if (ORTE_RML_TAG_INVALID == tag) {
-        /* cannot send to an invalid tag */
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
-    }
-    if (NULL == peer ||
-        OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, peer)) {
-        /* cannot send to an invalid peer */
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
-    }
-    /* get ourselves into an event to protect against
-     * race conditions and threads
-     */
-    req = OBJ_NEW(orte_rml_send_request_t);
-    req->send.dst = *peer;
-    req->send.iov = iov;
-    req->send.count = count;
-    req->send.tag = tag;
-    req->send.cbfunc.iov = cbfunc;
-    req->send.cbdata = cbdata;
-    req->send.routed = strdup(mod->routed);
-    /* setup the event for the send callback */
-    opal_event_set(orte_event_base, &req->ev, -1, OPAL_EV_WRITE, send_msg, req);
-    opal_event_set_priority(&req->ev, ORTE_MSG_PRI);
-    opal_event_active(&req->ev, OPAL_EV_WRITE, 1);
-
-    return ORTE_SUCCESS;
 }
 
 int orte_rml_oob_send_buffer_nb(struct orte_rml_base_module_t *mod,
@@ -257,7 +169,7 @@ int orte_rml_oob_send_buffer_nb(struct orte_rml_base_module_t *mod,
     req->send.dst = *peer;
     req->send.buffer = buffer;
     req->send.tag = tag;
-    req->send.cbfunc.buffer = cbfunc;
+    req->send.cbfunc = cbfunc;
     req->send.cbdata = cbdata;
     req->send.routed = strdup(mod->routed);
     /* setup the event for the send callback */

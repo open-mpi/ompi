@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -120,15 +120,9 @@ typedef struct {
     int retries;                 // #times we have tried to send it
 
     /* user's send callback functions and data */
-    union {
-        orte_rml_callback_fn_t        iov;
-        orte_rml_buffer_callback_fn_t buffer;
-    } cbfunc;
+    orte_rml_buffer_callback_fn_t cbfunc;
     void *cbdata;
 
-    /* pointer to the user's iovec array */
-    struct iovec *iov;
-    int count;
     /* pointer to the user's buffer */
     opal_buffer_t *buffer;
     /* msg seq number */
@@ -137,6 +131,7 @@ typedef struct {
      * transfers
      */
     char *data;
+    uint32_t count;
     /* routed module to be used */
     char *routed;
 } orte_rml_send_t;
@@ -163,14 +158,10 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_t);
 
 typedef struct {
     opal_list_item_t super;
-    bool buffer_data;
     orte_process_name_t peer;
     orte_rml_tag_t tag;
     bool persistent;
-    union {
-        orte_rml_callback_fn_t        iov;
-        orte_rml_buffer_callback_fn_t buffer;
-    } cbfunc;
+    orte_rml_buffer_callback_fn_t cbfunc;
     void *cbdata;
 } orte_rml_posted_recv_t;
 OBJ_CLASS_DECLARATION(orte_rml_posted_recv_t);
@@ -189,13 +180,8 @@ typedef struct {
     opal_object_t object;
     opal_event_t ev;
     orte_rml_tag_t tag;
-    struct iovec* iov;
-    int count;
     opal_buffer_t *buffer;
-    union {
-        orte_rml_callback_fn_t        iov;
-        orte_rml_buffer_callback_fn_t buffer;
-    } cbfunc;
+    orte_rml_buffer_callback_fn_t cbfunc;
     void *cbdata;
 } orte_self_send_xfer_t;
 OBJ_CLASS_DECLARATION(orte_self_send_xfer_t);
@@ -239,16 +225,9 @@ OBJ_CLASS_DECLARATION(orte_self_send_xfer_t);
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             ORTE_NAME_PRINT(&((m)->dst)),               \
                             __FILE__, __LINE__);                        \
-        if (NULL != (m)->iov) {                                         \
-            if (NULL != (m)->cbfunc.iov) {                              \
-                (m)->cbfunc.iov((m)->status,                            \
-                            &((m)->dst),                                \
-                            (m)->iov, (m)->count,                       \
-                            (m)->tag, (m)->cbdata);                     \
-            }                                                           \
-         } else if (NULL != (m)->cbfunc.buffer) {                       \
+        if (NULL != (m)->cbfunc) {                                      \
             /* non-blocking buffer send */                              \
-            (m)->cbfunc.buffer((m)->status, &((m)->origin),             \
+            (m)->cbfunc((m)->status, &((m)->origin),                    \
                            (m)->buffer,                                 \
                            (m)->tag, (m)->cbdata);                      \
          }                                                              \
@@ -270,11 +249,6 @@ int orte_rml_API_ping(orte_rml_conduit_t conduit_id,
                       const char* contact_info,
                       const struct timeval* tv);
 
-int orte_rml_API_send_nb(orte_rml_conduit_t conduit_id,
-                         orte_process_name_t* peer, struct iovec* msg,
-                         int count, orte_rml_tag_t tag,
-                         orte_rml_callback_fn_t cbfunc, void* cbdata);
-
 int orte_rml_API_send_buffer_nb(orte_rml_conduit_t conduit_id,
                                 orte_process_name_t* peer,
                                 struct opal_buffer_t* buffer,
@@ -282,11 +256,6 @@ int orte_rml_API_send_buffer_nb(orte_rml_conduit_t conduit_id,
                                 orte_rml_buffer_callback_fn_t cbfunc,
                                 void* cbdata);
 
-void orte_rml_API_recv_nb(orte_process_name_t* peer,
-                          orte_rml_tag_t tag,
-                          bool persistent,
-                          orte_rml_callback_fn_t cbfunc,
-                          void* cbdata);
 void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
                                  orte_rml_tag_t tag,
                                  bool persistent,

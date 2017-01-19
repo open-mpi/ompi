@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -105,7 +105,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
 #define MCA_OOB_TCP_QUEUE_SEND(m, p)                                    \
     do {                                                                \
         mca_oob_tcp_send_t *msg;                                        \
-        int i;                                                          \
         opal_output_verbose(5, orte_oob_base_framework.framework_output, \
                             "%s:[%s:%d] queue send to %s",              \
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),        \
@@ -127,11 +126,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         /* set the total number of bytes to be sent */                  \
         if (NULL != (m)->buffer) {                                      \
             msg->hdr.nbytes = (m)->buffer->bytes_used;                  \
-        } else if (NULL != (m)->iov) {                                  \
-            msg->hdr.nbytes = 0;                                        \
-            for (i=0; i < (m)->count; i++) {                            \
-                msg->hdr.nbytes += (m)->iov[i].iov_len;                 \
-            }                                                           \
         } else {                                                        \
             msg->hdr.nbytes = (m)->count;                               \
         }                                                               \
@@ -153,7 +147,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
 #define MCA_OOB_TCP_QUEUE_PENDING(m, p)                                 \
     do {                                                                \
         mca_oob_tcp_send_t *msg;                                        \
-        int i;                                                          \
         opal_output_verbose(5, orte_oob_base_framework.framework_output, \
                             "%s:[%s:%d] queue pending to %s",           \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
@@ -175,11 +168,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         /* set the total number of bytes to be sent */                  \
         if (NULL != (m)->buffer) {                                      \
             msg->hdr.nbytes = (m)->buffer->bytes_used;                  \
-        } else if (NULL != (m)->iov) {                                  \
-            msg->hdr.nbytes = 0;                                        \
-            for (i=0; i < (m)->count; i++) {                            \
-                msg->hdr.nbytes += (m)->iov[i].iov_len;                 \
-            }                                                           \
         } else {                                                        \
             msg->hdr.nbytes = (m)->count;                               \
         }                                                               \

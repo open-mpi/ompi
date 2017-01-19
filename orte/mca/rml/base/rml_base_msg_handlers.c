@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,30 +131,20 @@ void orte_rml_base_complete_recv_msg (orte_rml_recv_t **recv_msg)
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &msg->sender, &post->peer) &&
             msg->tag == post->tag) {
             /* deliver the data to this location */
-            if (post->buffer_data) {
-                /* deliver it in a buffer */
-                OBJ_CONSTRUCT(&buf, opal_buffer_t);
-                opal_dss.load(&buf, msg->iov.iov_base, msg->iov.iov_len);
-                /* xfer ownership of the malloc'd data to the buffer */
-                msg->iov.iov_base = NULL;
-                post->cbfunc.buffer(ORTE_SUCCESS, &msg->sender, &buf, msg->tag, post->cbdata);
-                /* the user must have unloaded the buffer if they wanted
-                 * to retain ownership of it, so release whatever remains
-                 */
-                OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                                     "%s message received  bytes from %s for tag %d called callback",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&msg->sender),
-                                     msg->tag));
-                OBJ_DESTRUCT(&buf);
-            } else {
-                /* deliver as an iovec */
-                post->cbfunc.iov(ORTE_SUCCESS, &msg->sender, &msg->iov, 1, msg->tag, post->cbdata);
-                /* the user should have shifted the data to
-                 * a local variable and NULL'd the iov_base
-                 * if they wanted ownership of the data
-                 */
-            }
+            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            opal_dss.load(&buf, msg->iov.iov_base, msg->iov.iov_len);
+            /* xfer ownership of the malloc'd data to the buffer */
+            msg->iov.iov_base = NULL;
+            post->cbfunc(ORTE_SUCCESS, &msg->sender, &buf, msg->tag, post->cbdata);
+            /* the user must have unloaded the buffer if they wanted
+             * to retain ownership of it, so release whatever remains
+             */
+            OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
+                                 "%s message received  bytes from %s for tag %d called callback",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&msg->sender),
+                                 msg->tag));
+            OBJ_DESTRUCT(&buf);
             /* release the message */
             OBJ_RELEASE(msg);
             OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,

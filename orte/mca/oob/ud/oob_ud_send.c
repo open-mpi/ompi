@@ -4,7 +4,7 @@
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,9 +22,7 @@ static void mca_oob_ud_send_cb (mca_oob_ud_msg_t *msg, int rc)
 
 static int mca_oob_ud_send_self (orte_rml_send_t *msg)
 {
-    unsigned int srco, dsto;
     mca_oob_ud_req_t *req;
-    int srci, dsti;
     int rc, size;
 
     MCA_OOB_UD_IOV_SIZE(msg, size);
@@ -33,7 +31,7 @@ static int mca_oob_ud_send_self (orte_rml_send_t *msg)
                          "%s mca_oob_ud_send_self: sending %d bytes to myself",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), size);
 
-    rc = mca_oob_ud_get_recv_req (*ORTE_PROC_MY_NAME, msg->tag, &req, (msg->iov != NULL) ? true : false);
+    rc = mca_oob_ud_get_recv_req (*ORTE_PROC_MY_NAME, msg->tag, &req, false);
     if (ORTE_SUCCESS != rc) {
         return rc;
     }
@@ -51,50 +49,24 @@ static int mca_oob_ud_send_self (orte_rml_send_t *msg)
         return rc;
     }
 
-    srci = dsti = 0;
-    srco = dsto = 0;
+    req->req_data_type = MCA_OOB_UD_REQ_BUF;
 
-    if (msg->iov != NULL) {
-        do {
-            req->req_data_type = MCA_OOB_UD_REQ_IOV;
-            size_t copy = min(msg->iov[srci].iov_len - srco,
-                              req->req_data.iov.uiov[dsti].iov_len - dsto);
+    opal_buffer_t *buffer;
+    buffer = OBJ_NEW(opal_buffer_t);
 
-            memmove ((unsigned char *) req->req_data.iov.uiov[dsti].iov_base + dsto,
-                     (unsigned char *) msg->iov[srci].iov_base + srco, copy);
-
-            srco += copy;
-            if (srco == msg->iov[srci].iov_len) {
-                srci++;
-                srco = 0;
-            }
-
-            dsto += copy;
-            if (dsto == req->req_data.iov.uiov[dsti].iov_len) {
-                dsti++;
-                dsto = 0;
-            }
-        } while (srci < req->req_data.iov.count && dsti < msg->count);
-    } else {
-        req->req_data_type = MCA_OOB_UD_REQ_BUF;
-
-        opal_buffer_t *buffer;
-        buffer = OBJ_NEW(opal_buffer_t);
-
-        if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(buffer, msg->buffer))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
-            return rc;
-        }
-        if (OPAL_SUCCESS != (rc = opal_dss.unload(buffer, (void **)&req->req_data.buf.p, &req->req_data.buf.size)))
-        {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
-            free(req->req_data.buf.p);
-            return rc;
-        }
+    if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(buffer, msg->buffer))) {
+        ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
+        return rc;
     }
+    if (OPAL_SUCCESS != (rc = opal_dss.unload(buffer, (void **)&req->req_data.buf.p, &req->req_data.buf.size)))
+    {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buffer);
+        free(req->req_data.buf.p);
+        return rc;
+    }
+    OBJ_RELEASE(buffer);
 
     req->state = MCA_OOB_UD_REQ_COMPLETE;
 
@@ -121,7 +93,7 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
     mca_oob_ud_req_t  *send_req;
     bool send_eager = false;
     char *pack_ptr;
-    int rc, size, i;
+    int rc, size;
 
     if (OPAL_EQUAL == orte_util_compare_name_fields
         (ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &op->msg->dst)) {
@@ -172,32 +144,25 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
         send_req->req_data.buf.size = op->msg->count;
     } else {
         MCA_OOB_UD_IOV_SIZE(op->msg, size);
+        send_req->req_data_type = MCA_OOB_UD_REQ_BUF;
 
-        if (op->msg->iov != NULL) {
-            send_req->req_data_type = MCA_OOB_UD_REQ_IOV;
-            send_req->req_data.iov.uiov   = op->msg->iov;
-            send_req->req_data.iov.count  = op->msg->count;
-        } else {
-            send_req->req_data_type = MCA_OOB_UD_REQ_BUF;
+        opal_buffer_t *buffer;
+        buffer = OBJ_NEW(opal_buffer_t);
 
-            opal_buffer_t *buffer;
-            buffer = OBJ_NEW(opal_buffer_t);
-
-            if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(buffer, op->msg->buffer))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buffer);
-                return rc;
-            }
-
-            if (OPAL_SUCCESS != (rc = opal_dss.unload(buffer, (void **)&send_req->req_data.buf.p, &send_req->req_data.buf.size)))
-            {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buffer);
-                free(send_req->req_data.buf.p);
-                return rc;
-            }
+        if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(buffer, op->msg->buffer))) {
+            ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buffer);
+            return rc;
         }
+
+        if (OPAL_SUCCESS != (rc = opal_dss.unload(buffer, (void **)&send_req->req_data.buf.p, &send_req->req_data.buf.size)))
+        {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buffer);
+            free(send_req->req_data.buf.p);
+            return rc;
+        }
+        OBJ_RELEASE(buffer);
     }
     send_req->rml_msg = op->msg;
     send_req->req_cbdata = op->msg->cbdata;
@@ -263,14 +228,7 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
 
     pack_ptr = (char *)(req_msg->hdr + 1);
 
-    if (op->msg->iov != NULL) {
-        for (i = 0 ; i < op->msg->count ; ++i) {
-            memcpy (pack_ptr, op->msg->iov[i].iov_base, op->msg->iov[i].iov_len);
-            pack_ptr += op->msg->iov[i].iov_len;
-        }
-    } else {
-        memcpy(pack_ptr, send_req->req_data.buf.p, send_req->req_data.buf.size);
-    }
+    memcpy(pack_ptr, send_req->req_data.buf.p, send_req->req_data.buf.size);
 
     send_req->req_list = NULL;
 
