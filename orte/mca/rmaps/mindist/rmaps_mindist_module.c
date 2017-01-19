@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -196,7 +196,7 @@ static int mindist_map(orte_job_t *jdata)
                 item = opal_list_get_next(item)) {
             node = (orte_node_t*)item;
 
-            if (NULL == node->topology) {
+            if (NULL == node->topology || NULL == node->topology->topo) {
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-topology",
                         true, node->name);
                 rc = ORTE_ERR_SILENT;
@@ -205,7 +205,7 @@ static int mindist_map(orte_job_t *jdata)
             /* get the root object as we are not assigning
              * locale except at the node level
              */
-            obj = hwloc_get_root_obj(node->topology);
+            obj = hwloc_get_root_obj(node->topology->topo);
             if (NULL == obj) {
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-topology",
                         true, node->name);
@@ -215,9 +215,9 @@ static int mindist_map(orte_job_t *jdata)
 
             /* get the number of available pus */
             if (opal_hwloc_use_hwthreads_as_cpus) {
-                total_npus = opal_hwloc_base_get_nbobjs_by_type(node->topology, HWLOC_OBJ_PU, 0, OPAL_HWLOC_AVAILABLE);
+                total_npus = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_PU, 0, OPAL_HWLOC_AVAILABLE);
             } else {
-                total_npus = opal_hwloc_base_get_nbobjs_by_type(node->topology, HWLOC_OBJ_CORE, 0, OPAL_HWLOC_AVAILABLE);
+                total_npus = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_CORE, 0, OPAL_HWLOC_AVAILABLE);
             }
             if (bynode) {
                 if (total_npus < num_procs_to_assign) {
@@ -236,9 +236,9 @@ static int mindist_map(orte_job_t *jdata)
             }
             /* first we need to fill summary object for root with information about nodes
              * so we call opal_hwloc_base_get_nbobjs_by_type */
-            opal_hwloc_base_get_nbobjs_by_type(node->topology, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
+            opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
             OBJ_CONSTRUCT(&numa_list, opal_list_t);
-            ret = opal_hwloc_get_sorted_numa_list(node->topology, orte_rmaps_base.device, &numa_list);
+            ret = opal_hwloc_get_sorted_numa_list(node->topology->topo, orte_rmaps_base.device, &numa_list);
             if (ret > 1) {
                 orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:several-devices",
                                true, orte_rmaps_base.device, ret, node->name);
@@ -257,11 +257,11 @@ static int mindist_map(orte_job_t *jdata)
                 required = 0;
                 OPAL_LIST_FOREACH(numa, &numa_list, opal_rmaps_numa_node_t) {
                     /* get the hwloc object for this numa */
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology, HWLOC_OBJ_NODE, 0, numa->index, OPAL_HWLOC_AVAILABLE))) {
+                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, HWLOC_OBJ_NODE, 0, numa->index, OPAL_HWLOC_AVAILABLE))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return ORTE_ERR_NOT_FOUND;
                     }
-                    npus = opal_hwloc_base_get_npus(node->topology, obj);
+                    npus = opal_hwloc_base_get_npus(node->topology->topo, obj);
                     if (bynode) {
                         required = ((num_procs_to_assign-j) > npus) ? (npus) : (num_procs_to_assign-j);
                     } else {
@@ -296,7 +296,7 @@ static int mindist_map(orte_job_t *jdata)
                             j, node->name);
                 }
             } else {
-                if (hwloc_get_nbobjs_by_type(node->topology, HWLOC_OBJ_SOCKET) > 1) {
+                if (hwloc_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_SOCKET) > 1) {
                     /* don't have info about pci locality */
                     orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:no-pci-locality-info",
                             true, node->name);
@@ -355,12 +355,12 @@ static int mindist_map(orte_job_t *jdata)
                         "mca:rmaps:mindist: second pass assigning %d extra procs to node %s",
                         (int)num_procs_to_assign, node->name);
                 OBJ_CONSTRUCT(&numa_list, opal_list_t);
-                opal_hwloc_get_sorted_numa_list(node->topology, orte_rmaps_base.device, &numa_list);
+                opal_hwloc_get_sorted_numa_list(node->topology->topo, orte_rmaps_base.device, &numa_list);
                 if (opal_list_get_size(&numa_list) > 0) {
                     numa_item = opal_list_get_first(&numa_list);
                     k = 0;
-                    obj = hwloc_get_obj_by_type(node->topology, HWLOC_OBJ_NODE,((opal_rmaps_numa_node_t*)numa_item)->index);
-                    npus = opal_hwloc_base_get_npus(node->topology, obj);
+                    obj = hwloc_get_obj_by_type(node->topology->topo, HWLOC_OBJ_NODE,((opal_rmaps_numa_node_t*)numa_item)->index);
+                    npus = opal_hwloc_base_get_npus(node->topology->topo, obj);
                     for (j = 0; j < (int)num_procs_to_assign && nprocs_mapped < (int)app->num_procs; j++) {
                         if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, i))) {
                             rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -374,8 +374,8 @@ static int mindist_map(orte_job_t *jdata)
                             if (numa_item == opal_list_get_end(&numa_list)) {
                                 numa_item = opal_list_get_first(&numa_list);
                             }
-                            obj = hwloc_get_obj_by_type(node->topology, HWLOC_OBJ_NODE,((opal_rmaps_numa_node_t*)numa_item)->index);
-                            npus = opal_hwloc_base_get_npus(node->topology, obj);
+                            obj = hwloc_get_obj_by_type(node->topology->topo, HWLOC_OBJ_NODE,((opal_rmaps_numa_node_t*)numa_item)->index);
+                            npus = opal_hwloc_base_get_npus(node->topology->topo, obj);
                             k = 0;
                         }
                     }

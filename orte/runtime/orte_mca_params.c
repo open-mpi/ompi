@@ -510,21 +510,6 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_show_resolved_nodenames);
 
-#if 0
-    /* XXX -- option doesn't appear to do anything */
-    mca_base_param_reg_int_name("orte", "hetero_apps",
-                                "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries (default: false)",
-                                false, false, (int) false, &value);
-    orte_hetero_apps = OPAL_INT_TO_BOOL(value);
-#endif
-
-    orte_hetero_nodes = false;
-    (void) mca_base_var_register ("orte", "orte", NULL, "hetero_nodes",
-                                  "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_hetero_nodes);
-
     /* allow specification of the launch agent */
     orte_launch_agent = "orted";
     (void) mca_base_var_register ("orte", "orte", NULL, "launch_agent",
@@ -766,14 +751,6 @@ int orte_register_params(void)
                                  "Comma-separated list of transports to use for ORTE management messages",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &orte_mgmt_transport);
-
-    orte_hnp_on_smgmt_node = false;
-    (void) mca_base_var_register ("orte", "orte", NULL, "hnp_on_smgmt_node",
-                                  "Mpirun is executing on a system mgmt node whose topology is different from the compute nodes [Default = false]",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_hnp_on_smgmt_node);
-
 
     return ORTE_SUCCESS;
 }

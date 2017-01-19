@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -222,7 +222,7 @@ static void allocation_complete(int fd, short args, void *cbdata)
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             continue;
         }
-        node->topology = t->topo;
+        node->topology = t;
     }
 
     /* move to the map stage */

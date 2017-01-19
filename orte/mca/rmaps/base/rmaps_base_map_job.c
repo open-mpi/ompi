@@ -324,7 +324,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      */
     if (orte_do_not_launch) {
         orte_node_t *node;
-        hwloc_topology_t t0;
+        orte_topology_t *t0;
         int i;
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -472,7 +472,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     if (NULL == bd) {
                         (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
                     } else {
-                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology, bd->cpuset)) {
+                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
                             (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
                         }
                     }
@@ -497,7 +497,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 }
                 procbitmap = NULL;
                 orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
-                locality = opal_hwloc_base_get_relative_locality(node->topology,
+                locality = opal_hwloc_base_get_relative_locality(node->topology->topo,
                                                                  p0bitmap,
                                                                  procbitmap);
                 opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",

@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -113,11 +113,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "hnp", "hnp", 1,
       &orte_cmd_options.hnp, OPAL_CMD_LINE_TYPE_STRING,
       "Specify the URI of the HNP, or the name of the file (specified as file:filename) that contains that info" },
-
-    /* hetero apps */
-    { "orte_hetero_apps", '\0', NULL, "hetero-apps", 0,
-        NULL, OPAL_CMD_LINE_TYPE_BOOL,
-    "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries" },
 
     /* select XML output */
     { "orte_xml_output", '\0', "xml", "xml", 0,
@@ -421,10 +416,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "continuous", "continuous", 0,
       &orte_cmd_options.continuous, OPAL_CMD_LINE_TYPE_BOOL,
       "Job is to run until explicitly terminated" },
-
-    { "orte_hetero_nodes", '\0', NULL, "hetero-nodes", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
 
 #if OPAL_ENABLE_CRDEBUG == 1
     { "opal_cr_enable_crdebug", '\0', "crdebug", "crdebug", 0,

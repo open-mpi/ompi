@@ -14,7 +14,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -335,7 +335,11 @@ int orte_ess_base_orted_setup(char **hosts)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
     /* point our topology to the one detected locally */
-    node->topology = opal_hwloc_topology;
+    node->topology = OBJ_NEW(orte_topology_t);
+    node->topology->sig = strdup(orte_topo_signature);
+    node->topology->topo = opal_hwloc_topology;
+    /* add it to the array of known ones */
+    opal_pointer_array_add(orte_node_topologies, node->topology);
 
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
