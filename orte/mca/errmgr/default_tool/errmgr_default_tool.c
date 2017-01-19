@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,8 +103,14 @@ static void proc_errors(int fd, short args, void *cbdata)
         return;
     }
 
-    /* all errors require abort */
-    orte_errmgr_base_abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
+    /* if we lost our lifeline, then just stop the event loop
+     * so the main program can cleanly terminate */
+    if (ORTE_PROC_STATE_LIFELINE_LOST == caddy->proc_state) {
+        orte_event_base_active = false;
+    } else {
+        /* all other errors require abort */
+        orte_errmgr_base_abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
+    }
 
     OBJ_RELEASE(caddy);
 }
