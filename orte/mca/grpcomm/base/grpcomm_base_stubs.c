@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -33,6 +33,7 @@
 
 #include "opal/dss/dss.h"
 
+#include "orte/util/compress.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -465,28 +466,85 @@ static int pack_xcast(orte_grpcomm_signature_t *sig,
                       orte_rml_tag_t tag)
 {
     int rc;
+    opal_buffer_t data;
+    int8_t flag;
+    uint8_t *cmpdata;
+    size_t cmplen;
+
+    /* setup an intermediate buffer */
+    OBJ_CONSTRUCT(&data, opal_buffer_t);
 
     /* pass along the signature */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &sig, 1, ORTE_SIGNATURE))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&data, &sig, 1, ORTE_SIGNATURE))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        OBJ_DESTRUCT(&data);
+        return rc;
     }
     /* pass the final tag */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tag, 1, ORTE_RML_TAG))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&data, &tag, 1, ORTE_RML_TAG))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        OBJ_DESTRUCT(&data);
+        return rc;
     }
 
     /* copy the payload into the new buffer - this is non-destructive, so our
      * caller is still responsible for releasing any memory in the buffer they
      * gave to us
      */
-    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(buffer, message))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&data, message))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        OBJ_DESTRUCT(&data);
+        return rc;
     }
 
-CLEANUP:
+    /* see if we want to compress this message */
+    if (orte_util_compress_block((uint8_t*)data.base_ptr, data.bytes_used,
+                                 &cmpdata, &cmplen)) {
+        /* the data was compressed - mark that we compressed it */
+        flag = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            free(cmpdata);
+            OBJ_DESTRUCT(&data);
+            return rc;
+        }
+        /* pack the compressed length */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &cmplen, 1, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            free(cmpdata);
+            OBJ_DESTRUCT(&data);
+            return rc;
+        }
+        /* pack the uncompressed length */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &data.bytes_used, 1, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            free(cmpdata);
+            OBJ_DESTRUCT(&data);
+            return rc;
+        }
+        /* pack the compressed info */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, cmpdata, cmplen, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            free(cmpdata);
+            OBJ_DESTRUCT(&data);
+            return rc;
+        }
+        OBJ_DESTRUCT(&data);
+        free(cmpdata);
+    } else {
+        /* mark that it was not compressed */
+        flag = 0;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&data);
+            free(cmpdata);
+            return rc;
+        }
+        /* transfer the payload across */
+        opal_dss.copy_payload(buffer, &data);
+        OBJ_DESTRUCT(&data);
+    }
+
     return ORTE_SUCCESS;
 }
 

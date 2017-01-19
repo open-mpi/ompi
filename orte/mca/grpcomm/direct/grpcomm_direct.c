@@ -29,6 +29,7 @@
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/state/state.h"
+#include "orte/util/compress.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
@@ -261,7 +262,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     int ret, cnt;
     opal_buffer_t *relay, *rly;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_NULL_CMD;
-    opal_buffer_t wireup;
+    opal_buffer_t wireup, datbuf, *data;
     opal_byte_object_t *bo;
     int8_t flag;
     orte_job_t *jdata;
@@ -270,20 +271,71 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     orte_grpcomm_signature_t *sig;
     orte_rml_tag_t tag;
     char *rtmod;
+    size_t inlen, cmplen;
+    uint8_t *packed_data, *cmpdata;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:direct:xcast:recv: with %d bytes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (int)buffer->bytes_used));
 
-    /* we need a passthru buffer to send to our children */
+    /* we need a passthru buffer to send to our children - we leave it
+     * as compressed data */
     rly = OBJ_NEW(opal_buffer_t);
     opal_dss.copy_payload(rly, buffer);
+    OBJ_CONSTRUCT(&datbuf, opal_buffer_t);
+
+    /* unpack the flag to see if this payload is compressed */
+    cnt=1;
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &flag, &cnt, OPAL_INT8))) {
+        ORTE_ERROR_LOG(ret);
+        ORTE_FORCED_TERMINATE(ret);
+        return;
+    }
+    if (flag) {
+        /* unpack the data size */
+        cnt=1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &inlen, &cnt, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(ret);
+            ORTE_FORCED_TERMINATE(ret);
+            return;
+        }
+        /* unpack the unpacked data size */
+        cnt=1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &cmplen, &cnt, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(ret);
+            ORTE_FORCED_TERMINATE(ret);
+            return;
+        }
+        /* allocate the space */
+        packed_data = (uint8_t*)malloc(inlen);
+        /* unpack the data blob */
+        cnt = inlen;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, packed_data, &cnt, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(ret);
+            free(packed_data);
+            ORTE_FORCED_TERMINATE(ret);
+            return;
+        }
+        /* decompress the data */
+        if (orte_util_uncompress_block(&cmpdata, cmplen,
+                                       packed_data, inlen)) {
+            /* the data has been uncompressed */
+            opal_dss.load(&datbuf, cmpdata, cmplen);
+            data = &datbuf;
+        } else {
+            data = buffer;
+        }
+        free(packed_data);
+    } else {
+        data = buffer;
+    }
 
     /* get the signature that we do not need */
     cnt=1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &sig, &cnt, ORTE_SIGNATURE))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(data, &sig, &cnt, ORTE_SIGNATURE))) {
         ORTE_ERROR_LOG(ret);
+        OBJ_DESTRUCT(&datbuf);
         ORTE_FORCED_TERMINATE(ret);
         return;
     }
@@ -291,8 +343,9 @@ static void xcast_recv(int status, orte_process_name_t* sender,
 
     /* get the target tag */
     cnt=1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &tag, &cnt, ORTE_RML_TAG))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(data, &tag, &cnt, ORTE_RML_TAG))) {
         ORTE_ERROR_LOG(ret);
+        OBJ_DESTRUCT(&datbuf);
         ORTE_FORCED_TERMINATE(ret);
         return;
     }
@@ -300,7 +353,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     /* setup a buffer we can pass to ourselves - this just contains
      * the initial message, minus the headers inserted by xcast itself */
     relay = OBJ_NEW(opal_buffer_t);
-    opal_dss.copy_payload(relay, buffer);
+    opal_dss.copy_payload(relay, data);
     /* setup the relay list */
     OBJ_CONSTRUCT(&coll, opal_list_t);
 
@@ -313,13 +366,13 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     if (ORTE_RML_TAG_DAEMON == tag) {
         /* peek at the command */
         cnt=1;
-        if (ORTE_SUCCESS == (ret = opal_dss.unpack(buffer, &command, &cnt, ORTE_DAEMON_CMD))) {
+        if (ORTE_SUCCESS == (ret = opal_dss.unpack(data, &command, &cnt, ORTE_DAEMON_CMD))) {
             /* if it is add_procs, then... */
             if (ORTE_DAEMON_ADD_LOCAL_PROCS == command ||
                 ORTE_DAEMON_DVM_NIDMAP_CMD == command) {
                 /* extract the byte object holding the daemonmap */
                 cnt=1;
-                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &bo, &cnt, OPAL_BYTE_OBJECT))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
                     ORTE_ERROR_LOG(ret);
                     goto relay;
                 }
@@ -351,7 +404,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
 
                 /* see if we have wiring info as well */
                 cnt=1;
-                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &flag, &cnt, OPAL_INT8))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
                     ORTE_ERROR_LOG(ret);
                     goto relay;
                 }
@@ -366,7 +419,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     }
                     if (0 == flag) {
                         /* copy the remainder of the payload */
-                        opal_dss.copy_payload(relay, buffer);
+                        opal_dss.copy_payload(relay, data);
                         /* no - just return */
                         goto relay;
                     }
@@ -374,7 +427,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
 
                 /* unpack the byte object */
                 cnt=1;
-                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &bo, &cnt, OPAL_BYTE_OBJECT))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
                     ORTE_ERROR_LOG(ret);
                     goto relay;
                 }
@@ -394,7 +447,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                 free(bo);
                 if (ORTE_DAEMON_ADD_LOCAL_PROCS == command) {
                     /* copy the remainder of the payload */
-                    opal_dss.copy_payload(relay, buffer);
+                    opal_dss.copy_payload(relay, data);
                 }
             }
         } else {
@@ -472,6 +525,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         relay->bytes_used = 0;
     }
     OBJ_RELEASE(relay);
+    OBJ_DESTRUCT(&datbuf);
 }
 
 static void barrier_release(int status, orte_process_name_t* sender,
