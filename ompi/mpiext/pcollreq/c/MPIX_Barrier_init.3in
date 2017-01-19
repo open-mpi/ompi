@@ -1,0 +1,157 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+.\" $COPYRIGHT$
+.TH MPIX_Barrier_init 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPIX_Allgather_init, MPIX_Allgatherv_init, MPIX_Allreduce_init, MPIX_Alltoall_init, MPIX_Alltoallv_init, MPIX_Alltoallw_init, MPIX_Barrier_init, MPIX_Bcast_init, MPIX_Exscan_init, MPIX_Gather_init, MPIX_Gatherv_init, MPIX_Reduce_init, MPIX_Reduce_scatter_init, MPIX_Reduce_scatter_block_init, MPIX_Scan_init, MPIX_Scatter_init, MPIX_Scatterv_init, MPIX_Neighbor_allgather_init, MPIX_Neighbor_allgatherv_init, MPIX_Neighbor_alltoall_init, MPIX_Neighbor_alltoallv_init, MPIX_Neighbor_alltoallw_init\fP \- Builds a handle for a collective communication or neighborhood collective communication
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+#include <mpi-ext.h>
+int MPIX_Allgather_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Allgatherv_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[],
+	const int \fIdispls\fP[], MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Allreduce_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Alltoall_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Alltoallv_init(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
+	const int \fIsdispls\fP[], MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP,
+	const int \fIrecvcounts\fP[], const int \fIrdispls\fP[], MPI_Datatype \fIrecvtype\fP,
+	MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Alltoallw_init(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
+	const int \fIsdispls\fP[], const MPI_Datatype \fIsendtypes\fP[], void *\fIrecvbuf\fP,
+	const int \fIrecvcounts\fP[], const int \fIrdispls\fP[],
+	const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Barrier_init(MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Bcast_init(void *\fIbuffer\fP, int \fIcount\fP, MPI_Datatype \fIdatatype\fP,
+	int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Exscan_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Gather_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Gatherv_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[],
+	const int \fIdispls\fP[], MPI_Datatype \fIrecvtype\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Reduce_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Reduce_scatter_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP,
+	const int \fIrecvcounts\fP[], MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP,
+	MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Reduce_scatter_block_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP,
+	int \fIrecvcount\fP, MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Scan_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Scatter_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Scatterv_init(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
+	const int \fIdispls\fP[], MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP,
+	int \fIrecvcount\fP, MPI_Datatype \fIrecvtype\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_allgather_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_allgatherv_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[],
+	const int \fIdispls\fP[], MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_alltoall_init(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_alltoallv_init(const void *\fIsendbuf\fP,
+	const int \fIsendcounts\fP[], const int \fIsdispls\fP[], MPI_Datatype \fIsendtype\fP,
+	void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[], const int \fIrdispls\fP[],
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+int MPIX_Neighbor_alltoallw_init(const void *\fIsendbuf\fP,
+	const int \fIsendcounts\fP[], const MPI_Aint \fIsdispls\fP[],
+	const MPI_Datatype \fIsendtypes\fP[], void *\fIrecvbuf\fP,
+	const int \fIrecvcounts\fP[], const MPI_Aint \fIrdispls\fP[],
+	const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP,
+	MPI_Request *\fIrequest\fP)
+
+.fi
+
+.SH DESCRIPTION
+.ft R
+Creates a persistent communication request for a collective operation or neighborhood collective operation.
+
+As of June 2018, the feature of persistent collective communication operations and persistent collective neighborhood communication operations is proposed in the MPI Forum.
+.nf
+
+    https://github.com/mpi-forum/mpi-issues/issues/25
+.fi
+
+Open MPI implements its draft version shown in the following URL.
+.nf
+
+    https://github.com/mpi-forum/mpi-issues/files/2078076/mpi32-report-ticket25-austin-vote-june2018.pdf
+.fi
+
+Because it is still in a draft stage, the interface may change in the standard. Therefore the prefix \fIMPIX_\fP is used instead of \fIMPI_\fP for these request creation functions. To start, complete, and free the created request, usual MPI functions (\fIMPI_Start\fP etc.) can be used. Only C bindings are available currently.
+
+Future versions of Open MPI will switch to the \fIMPI_\fP prefix and will not require the header file \fImpi-ext.h\fP once the MPI Standard which includes this feature is published.
+
+.SH EXAMPLE
+.nf
+
+    MPI_Request req;
+    MPIX_Barrier_init(MPI_COMM_WORLD, MPI_INFO_NULL, &req);
+    MPI_Start(&req);
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+    MPI_Request_free(&req);
+.fi
+
+.SH SEE ALSO
+.ft R
+.sp
+MPI_Start
+.br
+MPI_Startall
+.br
+MPI_Request_free
