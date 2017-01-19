@@ -197,8 +197,8 @@ static int update_route(orte_process_name_t *target,
 static orte_process_name_t get_route(orte_process_name_t *target)
 {
     orte_process_name_t *ret, daemon;
-    opal_list_item_t *item;
     orte_routed_tree_t *child;
+    orte_vpid_t idx, curnt, uplvl, span, mylevel;
 
     if (!orte_routing_is_enabled) {
         ret = target;
@@ -273,35 +273,58 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
         ret = target;
         goto found;
-    } else {
-        /* search routing tree for next step to that daemon */
-        for (item = opal_list_get_first(&my_children);
-             item != opal_list_get_end(&my_children);
-             item = opal_list_get_next(item)) {
-            child = (orte_routed_tree_t*)item;
-            if (child->vpid == daemon.vpid) {
-                /* the child is hosting the proc - just send it there */
-                ret = &daemon;
-                goto found;
-            }
-            /* otherwise, see if the daemon we need is below the child */
-            if (opal_bitmap_is_set_bit(&child->relatives, daemon.vpid)) {
-                /* yep - we need to step through this child */
-                daemon.vpid = child->vpid;
-                ret = &daemon;
-                goto found;
-            }
+    }
+
+    ret = &daemon;
+    /* if it is one of my direct children, then send
+     * it to them */
+    OPAL_LIST_FOREACH(child, &my_children, orte_routed_tree_t) {
+        if (child->vpid == target->vpid) {
+            daemon.vpid = target->vpid;
+            goto found;
         }
     }
 
-    /* if we get here, then the target daemon is not beneath
-     * any of our children, so we have to step up through our parent
-     */
-    daemon.vpid = ORTE_PROC_MY_PARENT->vpid;
+    /* if the target daemon is a lower vpid than me, we have to climb */
+    if (daemon.vpid < ORTE_PROC_MY_NAME->vpid) {
+        daemon.vpid = ORTE_PROC_MY_PARENT->vpid;
+        goto found;
+    }
+    /* find out how deep the target daemon is in the tree */
+    uplvl = 1;
+    curnt = 1;
+    span = mca_routed_radix_component.radix;
+    while (curnt <= daemon.vpid) {
+        /* since the target daemon is greater than us, we always
+         * will find our own level */
+        if (ORTE_PROC_MY_NAME->vpid < curnt) {
+            mylevel = curnt;
+        }
+        uplvl = curnt;
+        curnt += span;
+        span *= mca_routed_radix_component.radix;
+    }
+    /* we know that the target daemon is in the curnt level, but
+     * we still need to calculate which immediate child will
+     * lead us to them */
+    idx = ((curnt - uplvl) % mylevel) - 1;
+    /* if the idx is greater than the radix, then the target
+     * is under one of my cousins - so climb */
+    if (mca_routed_radix_component.radix < idx) {
+       daemon.vpid = ORTE_PROC_MY_PARENT->vpid;
+       goto found;
+    }
+    /* otherwise, the idx is the number of the child we want
+     * to travel down, so find it */
+    OPAL_LIST_FOREACH(child, &my_children, orte_routed_tree_t) {
+        if (0 == idx) {
+            daemon.vpid = child->vpid;
+            break;
+        }
+        --idx;
+    }
 
-    ret = &daemon;
-
-found:
+  found:
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                          "%s routed_radix_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -379,59 +402,12 @@ static int set_lifeline(orte_process_name_t *proc)
     return ORTE_SUCCESS;
 }
 
-static void radix_tree(int rank, int *num_children,
-                       opal_list_t *children, opal_bitmap_t *relatives)
-{
-    int i, peer, Sum, NInLevel;
-    orte_routed_tree_t *child;
-    opal_bitmap_t *relations;
-
-    /* compute how many procs are at my level */
-    Sum=1;
-    NInLevel=1;
-
-    while ( Sum < (rank+1) ) {
-        NInLevel *= mca_routed_radix_component.radix;
-        Sum += NInLevel;
-    }
-
-    /* our children start at our rank + num_in_level */
-    peer = rank + NInLevel;
-    for (i = 0; i < mca_routed_radix_component.radix; i++) {
-        if (peer < (int)orte_process_info.num_procs) {
-            child = OBJ_NEW(orte_routed_tree_t);
-            child->vpid = peer;
-            if (NULL != children) {
-                /* this is a direct child - add it to my list */
-                opal_list_append(children, &child->super);
-                (*num_children)++;
-                /* setup the relatives bitmap */
-                opal_bitmap_init(&child->relatives, orte_process_info.num_procs);
-                /* point to the relatives */
-                relations = &child->relatives;
-            } else {
-                /* we are recording someone's relatives - set the bit */
-                if (OPAL_SUCCESS != opal_bitmap_set_bit(relatives, peer)) {
-                    opal_output(0, "%s Error: could not set relations bit!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                }
-                /* point to this relations */
-                relations = relatives;
-                OBJ_RELEASE(child);
-            }
-            /* search for this child's relatives */
-            radix_tree(peer, NULL, NULL, relations);
-        }
-        peer += NInLevel;
-    }
-}
-
 static void update_routing_plan(void)
 {
     orte_routed_tree_t *child;
-    int j;
+    orte_vpid_t j;
+    orte_vpid_t curnt, span, cvpid;
     opal_list_item_t *item;
-    int Level,Sum,NInLevel,Ii;
-    int NInPrevLevel;
 
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
@@ -446,32 +422,26 @@ static void update_routing_plan(void)
     }
     num_children = 0;
 
-    /* compute my parent */
-    Ii =  ORTE_PROC_MY_NAME->vpid;
-    Level=0;
-    Sum=1;
-    NInLevel=1;
-
-    while ( Sum < (Ii+1) ) {
-        Level++;
-        NInLevel *= mca_routed_radix_component.radix;
-        Sum += NInLevel;
+    /* find my depth */
+    curnt = 0;
+    span = 1;
+    while (curnt <= ORTE_PROC_MY_NAME->vpid) {
+        curnt += span;
+        span *= mca_routed_radix_component.radix;
     }
-    Sum -= NInLevel;
+    span /= mca_routed_radix_component.radix;
 
-    NInPrevLevel = NInLevel/mca_routed_radix_component.radix;
-
-    if( 0 == Ii ) {
-        ORTE_PROC_MY_PARENT->vpid = -1;
-    }  else {
-        ORTE_PROC_MY_PARENT->vpid = (Ii-Sum) % NInPrevLevel;
-        ORTE_PROC_MY_PARENT->vpid += (Sum - NInPrevLevel);
+    cvpid = ORTE_PROC_MY_NAME->vpid + span;
+    for (j=0; j < mca_routed_radix_component.radix; j++) {
+        if (orte_process_info.num_procs <= cvpid) {
+            break;
+        }
+        child = OBJ_NEW(orte_routed_tree_t);
+        child->vpid = cvpid;
+        opal_list_append(&my_children, &child->super);
+        cvpid += span;
     }
-
-    /* compute my direct children and the bitmap that shows which vpids
-     * lie underneath their branch
-     */
-    radix_tree(Ii, &num_children, &my_children, NULL);
+    num_children = opal_list_get_size(&my_children);
 
     if (0 < opal_output_get_verbosity(orte_routed_base_framework.framework_output)) {
         opal_output(0, "%s: parent %d num_children %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_PROC_MY_PARENT->vpid, num_children);
@@ -480,11 +450,6 @@ static void update_routing_plan(void)
              item = opal_list_get_next(item)) {
             child = (orte_routed_tree_t*)item;
             opal_output(0, "%s: \tchild %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), child->vpid);
-            for (j=0; j < (int)orte_process_info.num_procs; j++) {
-                if (opal_bitmap_is_set_bit(&child->relatives, j)) {
-                    opal_output(0, "%s: \t\trelation %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
-                }
-            }
         }
     }
 }
