@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -121,6 +121,12 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
             opal_argv_free(parts);
             free(tmp);
             return OPAL_ERROR;
+        } else if (i == (len-1) && (mode != (mode & buf.st_mode)) && (0 > chmod(tmp, (buf.st_mode | mode)))) {
+            opal_show_help("help-opal-util.txt", "dir-mode", true,
+                           tmp, mode, strerror(errno));
+            opal_argv_free(parts);
+            free(tmp);
+            return(OPAL_ERR_PERM); /* can't set correct mode */
         }
     }
 
