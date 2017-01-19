@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name = "orte-cffi",
-    version = "0.4.0",
+    version = "0.4.2",
     author = "Mark Santcroos",
     author_email = "mark.santcroos@rutgers.edu",
     description = "CFFI-based Python wrapper for Open RTE",
