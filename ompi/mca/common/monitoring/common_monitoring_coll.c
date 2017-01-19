@@ -45,22 +45,23 @@ static opal_hash_table_t *comm_data = NULL;
 static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*data)
 {
     int world_rank;
+    if( NULL == data->comm_name && 0 < strlen(data->p_comm->c_name) ) {
+	data->comm_name = strdup(data->p_comm->c_name);
+    }
     if( -1 == data->world_rank ) {
         /* Get current process world_rank */
         mca_common_monitoring_get_world_rank(ompi_comm_rank(data->p_comm), data->p_comm,
                                              &data->world_rank);
     }
-    if( NULL == data->comm_name && 0 < strlen(data->p_comm->c_name) ) {
-	data->comm_name = strdup(data->p_comm->c_name);
-    }
-    if( NULL == data->procs || 0 == strlen(data->procs) ) {
-        int i, pos = 0, size, world_size;
-        size = ompi_comm_size(data->p_comm);
-        world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world) - 1;
+    /* Only list procs if the hashtable is already initialized, ie if the previous call worked */
+    if( (-1 != data->world_rank) && (NULL == data->procs || 0 == strlen(data->procs)) ) {
+	int i, pos = 0, size, world_size = -1;
         char*tmp_procs;
+	size = ompi_comm_size(data->p_comm);
+        world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world) - 1;
         assert( 0 < size );
-        /* Allocate enough space for list */
-        tmp_procs = malloc((2 + log10((double)world_size)) * size * sizeof(char));
+        /* Allocate enough space for list (add 1 to keep the fianl '\0' if already exact size) */
+        tmp_procs = malloc((1 + (2 + (int)log10((double)world_size)) * size) * sizeof(char));
         if( NULL == tmp_procs ) {
             OPAL_MONITORING_PRINT_ERR("%s: Cannot allocate memory for caching proc list.");
         } else {
@@ -71,7 +72,7 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
                 pos += sprintf(&tmp_procs[pos], "%d,", world_rank);
             }
             tmp_procs[pos - 1] = '\0'; /* Remove final coma */
-            data->procs = realloc(tmp_procs, pos * sizeof(char)); /* Adjust size required */
+            data->procs = realloc(tmp_procs, pos * sizeof(char)); /* Adjust to size required */
         }
     }
 }
