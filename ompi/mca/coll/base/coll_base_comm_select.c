@@ -274,10 +274,24 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, iscan)) ||
         CHECK_NULL(which_func, comm, iscatter) ||
         CHECK_NULL(which_func, comm, iscatterv) ||
+        CHECK_NULL(which_func, comm, allgather_init) ||
+        CHECK_NULL(which_func, comm, allgatherv_init) ||
+        CHECK_NULL(which_func, comm, allreduce_init) ||
+        CHECK_NULL(which_func, comm, alltoall_init) ||
+        CHECK_NULL(which_func, comm, alltoallv_init) ||
+        CHECK_NULL(which_func, comm, alltoallw_init) ||
+        CHECK_NULL(which_func, comm, barrier_init) ||
+        CHECK_NULL(which_func, comm, bcast_init) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, exscan_init)) ||
+        CHECK_NULL(which_func, comm, gather_init) ||
+        CHECK_NULL(which_func, comm, gatherv_init) ||
+        CHECK_NULL(which_func, comm, reduce_init) ||
+        CHECK_NULL(which_func, comm, reduce_scatter_block_init) ||
+        CHECK_NULL(which_func, comm, reduce_scatter_init) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, scan_init)) ||
+        CHECK_NULL(which_func, comm, scatter_init) ||
+        CHECK_NULL(which_func, comm, scatterv_init) ||
         CHECK_NULL(which_func, comm, reduce_local) ) {
-        /* TODO -- Once the persistent collective communication request
-         * function is implemented then check if persistent collectives have
-         * been set. */
         /* TODO -- Once the topology flags are set before coll_select then
          * check if neighborhood collectives have been set. */
 
