@@ -9,8 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +40,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/os_path.h"
 #include "opal/constants.h"
@@ -63,11 +65,9 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
         if (0 == (ret = chmod(path, (buf.st_mode | mode)))) { /* successfully change mode */
             return(OPAL_SUCCESS);
         }
-        opal_output(0,
-                    "opal_os_dirpath_create: "
-                    "Error: Unable to create directory (%s), unable to set the correct mode [%d]\n",
-                    path, ret);
-        return(OPAL_ERROR); /* can't set correct mode */
+        opal_show_help("help-opal-util.txt", "dir-mode", true,
+                    path, mode, strerror(errno));
+        return(OPAL_ERR_PERM); /* can't set correct mode */
     }
 
     /* quick -- try to make directory */
@@ -112,17 +112,21 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
             strcat(tmp, parts[i]);
         }
 
-        /* Now that we finally have the name to check, check it.
-           Create it if it doesn't exist. */
-        ret = mkdir(tmp, mode);
-        if ((0 > ret && EEXIST != errno) || 0 != stat(tmp, &buf)) {
-            opal_output(0,
-                        "opal_os_dirpath_create: "
-                        "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d]\n",
-                        tmp, path, ret);
+        /* Now that we have the name, try to create it */
+        mkdir(tmp, mode);
+        ret = errno;  // save the errno for an error msg, if needed
+        if (0 != stat(tmp, &buf)) {
+            opal_show_help("help-opal-util.txt", "mkdir-failed", true,
+                        tmp, strerror(ret));
             opal_argv_free(parts);
             free(tmp);
             return OPAL_ERROR;
+        } else if (i == (len-1) && (mode != (mode & buf.st_mode)) && (0 > chmod(tmp, (buf.st_mode | mode)))) {
+            opal_show_help("help-opal-util.txt", "dir-mode", true,
+                           tmp, mode, strerror(errno));
+            opal_argv_free(parts);
+            free(tmp);
+            return(OPAL_ERR_PERM); /* can't set correct mode */
         }
     }
 
@@ -263,19 +267,19 @@ bool opal_os_dirpath_is_empty(const char *path ) {
     struct dirent *ep;
 
     if (NULL != path) {  /* protect against error */
-    	dp = opendir(path);
-    	if (NULL != dp) {
-    	    while ((ep = readdir(dp))) {
-        		if ((0 != strcmp(ep->d_name, ".")) &&
-        		    (0 != strcmp(ep->d_name, ".."))) {
+        dp = opendir(path);
+        if (NULL != dp) {
+            while ((ep = readdir(dp))) {
+                        if ((0 != strcmp(ep->d_name, ".")) &&
+                            (0 != strcmp(ep->d_name, ".."))) {
                             closedir(dp);
-        		    return false;
-        		}
-    	    }
-    	    closedir(dp);
-    	    return true;
-    	}
-    	return false;
+                            return false;
+                        }
+            }
+            closedir(dp);
+            return true;
+        }
+        return false;
     }
 
     return true;
@@ -306,4 +310,3 @@ int opal_os_dirpath_access(const char *path, const mode_t in_mode ) {
         return( OPAL_ERR_NOT_FOUND );
     }
 }
-
