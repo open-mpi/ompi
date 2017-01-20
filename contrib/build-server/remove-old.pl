@@ -1,6 +1,8 @@
 #!/usr/bin/env perl
 
 use strict;
+use warnings;
+
 use POSIX qw(strftime);
 
 my $happy = 1;
@@ -22,22 +24,27 @@ closedir(DIR);
 
 # How many days to keep?
 my $t = time() - ($savedays * 60 * 60 * 24);
-print "Deleting anything before: " . strftime("%D", localtime($t)) . "\n";
-my $to_delete;
+print "Deleting anything in $dir before: " . strftime("%D", localtime($t)) . "\n";
+my $to_delete = "";
 
 # Check everything in the dir; if is a dir, is not . or .., and is
 # older than the save date, keep it for deleting later.
-foreach my $file (@files) {
-  if (-f "$dir/$file" && $file ne "index.php" && $file ne "md5sums.txt" && $file ne "sha1sums.txt" && $file ne "latest_snapshot.txt" && $file ne "." && $file ne "..") {
-    my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
-        $atime,$mtime,$ctime,$blksize,$blocks) = stat("$dir/$file");
-    my $str = "SAVE";
-    if ($mtime < $t) {
-      $to_delete = "$to_delete $dir/$file";
-      $str = "DELETE";
+foreach my $file (sort(@files)) {
+    if ($file ne "index.php" &&
+	$file ne "md5sums.txt" &&
+	$file ne "sha1sums.txt" &&
+	$file ne "latest_snapshot.txt" &&
+	$file ne "." &&
+	$file ne "..") {
+	my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+	    $atime,$mtime,$ctime,$blksize,$blocks) = stat("$dir/$file");
+	my $str = "SAVE";
+	if ($mtime < $t) {
+	    $to_delete = "$to_delete $dir/$file";
+	    $str = "DELETE";
+	}
+	print "Found $file: $str (mtime: " . strftime("%D", localtime($mtime)) . ")\n";
     }
-    print "Found dir ($str): $file (mtime: " . strftime("%D", localtime($mtime)) . ")\n";
-  }
 }
 
 # If we found anything to delete, do so.
