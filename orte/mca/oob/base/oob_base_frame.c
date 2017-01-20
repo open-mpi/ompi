@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +55,11 @@ OPAL_TIMING_DECLARE(tm_oob)
 
 static int orte_oob_base_register(mca_base_register_flag_t flags)
 {
+    if (ORTE_PROC_IS_APP || ORTE_PROC_IS_TOOL) {
+        orte_oob_base.use_module_threads = false;
+    } else {
+        orte_oob_base.use_module_threads = true;
+    }
     (void)mca_base_var_register("orte", "oob", "base", "enable_module_progress_threads",
                                 "Whether to independently progress OOB messages for each interface",
                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
@@ -155,4 +161,3 @@ static void pr_des(orte_oob_base_peer_t *ptr)
 OBJ_CLASS_INSTANCE(orte_oob_base_peer_t,
                    opal_object_t,
                    pr_cons, pr_des);
-
