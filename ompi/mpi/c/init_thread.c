@@ -31,6 +31,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
+#include "ompi/mca/hook/base/base.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -46,6 +47,8 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
                     int *provided)
 {
     int err;
+
+    ompi_hook_base_mpi_init_thread_top(argc, argv, required, provided);
 
     if ( MPI_PARAM_CHECK ) {
         if (required < MPI_THREAD_SINGLE || required > MPI_THREAD_MULTIPLE) {
@@ -77,6 +80,8 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
     }
 
     OPAL_CR_INIT_LIBRARY();
+
+    ompi_hook_base_mpi_init_thread_bottom(argc, argv, required, provided);
 
     return MPI_SUCCESS;
 }

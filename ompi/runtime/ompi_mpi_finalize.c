@@ -82,6 +82,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/dpm/dpm.h"
 #include "ompi/mpiext/mpiext.h"
+#include "ompi/mca/hook/base/base.h"
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -109,6 +110,8 @@ int ompi_mpi_finalize(void)
     ompi_datatype_t * datatype;
     OPAL_TIMING_DECLARE(tm);
     OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
+
+    ompi_hook_base_mpi_finalize_top();
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
@@ -487,6 +490,12 @@ int ompi_mpi_finalize(void)
         goto done;
     }
 
+    /* Now close the hook framework */
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_hook_base_framework) ) ) {
+        OMPI_ERROR_LOG(ret);
+        goto done;
+    }
+
     if (OPAL_SUCCESS != (ret = opal_finalize_util())) {
         goto done;
     }
@@ -506,6 +515,7 @@ int ompi_mpi_finalize(void)
 
  done:
     opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+    ompi_hook_base_mpi_finalize_bottom();
 
     return ret;
 }

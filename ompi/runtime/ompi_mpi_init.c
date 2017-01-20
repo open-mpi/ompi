@@ -92,6 +92,7 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/dpm/dpm.h"
 #include "ompi/mpiext/mpiext.h"
+#include "ompi/mca/hook/base/base.h"
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -388,6 +389,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * for the modex in order to work in heterogeneous environments. */
     uint8_t threadlevel_bf;
 
+    ompi_hook_base_mpi_init_top(argc, argv, requested, provided);
+
     /* Ensure that we were not already initialized or finalized.
 
        This lock is held for the duration of ompi_mpi_init() and
@@ -473,6 +476,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
            side-effects with launching RTE tools... */
         mca_base_var_set_value(ret, allvalue, 4, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
     }
+
+    /* open the ompi hook framework */
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_hook_base_framework, 0))) {
+        error = "ompi_hook_base_open() failed";
+        goto error;
+    }
+
+    ompi_hook_base_mpi_init_top_post_opal(argc, argv, requested, provided);
+
 
     OPAL_TIMING_MSTART((&tm,"time from start to completion of rte_init"));
 
@@ -939,6 +951,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                            "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         }
         opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+        ompi_hook_base_mpi_init_error(argc, argv, requested, provided);
         return ret;
     }
 
@@ -969,5 +982,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     OPAL_TIMING_RELEASE(&tm);
 
     opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+
+    ompi_hook_base_mpi_init_bottom(argc, argv, requested, provided);
+
     return MPI_SUCCESS;
 }

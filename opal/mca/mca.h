@@ -11,8 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -257,6 +258,19 @@ typedef int (*mca_base_register_component_params_2_0_0_fn_t)(void);
 #define MCA_BASE_MAX_COMPONENT_NAME_LEN 63
 
 /**
+ * Component flags (mca_component_flags field)
+ */
+enum {
+    /** Always consider this component for selection. For this flag to
+     * work properly the component must always be built statically.
+     *
+     * Enforecement of this flag is left to the individual frameworks
+     * so as to limit its use. See discussion from the Open MPI
+     * face-to-face meeting Jan. 2017 */
+    MCA_BASE_COMPONENT_FLAG_REQUIRED = 1,
+};
+
+/**
  * Common type for all MCA components.
  *
  * An instance of this type is always the first element in MCA
@@ -315,9 +329,12 @@ struct mca_base_component_2_1_0_t {
   mca_base_register_component_params_2_0_0_fn_t mca_register_component_params;
   /**< Method for registering the component's MCA parameters */
 
+  int32_t mca_component_flags;
+  /**< flags for this component */
+
   /** Extra space to allow for expansion in the future without
       breaking older components. */
-  char reserved[32];
+  char reserved[28];
 };
 /** Unversioned convenience typedef; use this name in
     frameworks/components to stay forward source-compatible */
