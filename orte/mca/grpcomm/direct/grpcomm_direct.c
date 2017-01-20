@@ -5,7 +5,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -25,7 +25,7 @@
 #include "opal/class/opal_list.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/state/state.h"
@@ -461,15 +461,17 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     /* cleanup */
     OBJ_DESTRUCT(&coll);
 
-    /* now send the relay buffer to myself for processing */
+    /* now pass the relay buffer to myself for processing - don't
+     * inject it into the RML system via send as that will compete
+     * with the relay messages down in the OOB. Instead, pass it
+     * directly to the orted command processor */
     if (ORTE_DAEMON_DVM_NIDMAP_CMD != command) {
-        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
-                                                           ORTE_PROC_MY_NAME, relay, tag,
-                                                           orte_rml_send_callback, NULL))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(relay);
-        }
+        ORTE_RML_POST_MESSAGE(ORTE_PROC_MY_NAME, tag, 1,
+                              relay->base_ptr, relay->bytes_used);
+        relay->base_ptr = NULL;
+        relay->bytes_used = 0;
     }
+    OBJ_RELEASE(relay);
 }
 
 static void barrier_release(int status, orte_process_name_t* sender,
@@ -515,4 +517,3 @@ static void barrier_release(int status, orte_process_name_t* sender,
     OBJ_RELEASE(coll);
     OBJ_RELEASE(sig);
 }
-
