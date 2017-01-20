@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -195,7 +195,7 @@ if test -f "$destdir/latest_snapshot.txt"; then
     # Snip the timestamp out of the versions and compare just
     # ${BRANCHNAME}-${SHORTHASH}.
     compare_version="$gitbranch-$githash"
-    compare_snapshot_version=`echo $snapshot_version | perl -pi -e 's/^([a-z]+)-(\d+)-(.*+)$/$1-$3/'`
+    compare_snapshot_version=`echo $snapshot_version | perl -p -e 's/^(.+?)-(\d+)-(.*+)$/$1-$3/'`
     if test "$compare_version" = "$compare_snapshot_version"; then
 	if test -n "$debug"; then
 	    echo "*** Our branch/git hash is the same as the last snapshot -- not doing anything"
