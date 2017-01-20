@@ -99,7 +99,7 @@
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
 */
-int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
+int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
                                               orte_jobid_t job)
 {
     int rc;
@@ -127,12 +127,12 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
      * info as we don't need it - just pack the job itself */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FIXED_DVM, NULL, OPAL_BOOL)) {
         numjobs = 0;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numjobs, 1, OPAL_INT32))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &numjobs, 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         /* pack the job struct */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata, 1, ORTE_JOB))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &jdata, 1, ORTE_JOB))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
@@ -146,7 +146,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 
     /* store it */
     boptr = &bo;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &boptr, 1, OPAL_BYTE_OBJECT))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -157,7 +157,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     if (!orte_static_ports) {
         /* pack a flag indicating wiring info is provided */
         flag = 1;
-        opal_dss.pack(data, &flag, 1, OPAL_INT8);
+        opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
         /* get wireup info for daemons per the selected routing module */
         wireup = OBJ_NEW(opal_buffer_t);
         if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
@@ -170,7 +170,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         /* pack the byte object - zero-byte objects are fine */
         bo.size = numbytes;
         boptr = &bo;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &boptr, 1, OPAL_BYTE_OBJECT))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(wireup);
             return rc;
@@ -183,7 +183,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     } else {
         /* pack a flag indicating no wireup data is provided */
         flag = 0;
-        opal_dss.pack(data, &flag, 1, OPAL_INT8);
+        opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
     }
 
     /* check if this job caused daemons to be spawned - if it did,
@@ -203,6 +203,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
                 /* pack the job struct */
                 if (ORTE_SUCCESS != (rc = opal_dss.pack(&jobdata, &jptr, 1, ORTE_JOB))) {
                     ORTE_ERROR_LOG(rc);
+                    OBJ_DESTRUCT(&jobdata);
                     return rc;
                 }
                 ++numjobs;
@@ -210,14 +211,15 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
             rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jptr, nptr, &nptr);
         }
         /* pack the number of jobs */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numjobs, 1, OPAL_INT32))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &numjobs, 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&jobdata);
             return rc;
         }
         if (0 < numjobs) {
             /* pack the jobdata buffer */
             wireup = &jobdata;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &wireup, 1, OPAL_BUFFER))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &wireup, 1, OPAL_BUFFER))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&jobdata);
                 return rc;
@@ -226,7 +228,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         }
     } else {
         numjobs = 0;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numjobs, 1, OPAL_INT32))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &numjobs, 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -234,7 +236,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 
 
     /* pack the job struct */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata, 1, ORTE_JOB))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &jdata, 1, ORTE_JOB))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -249,7 +251,7 @@ static void fm_release(void *cbdata)
     OBJ_RELEASE(bptr);
 }
 
-int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
+int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                                                 orte_jobid_t *job)
 {
     int rc;
@@ -271,7 +273,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 
     /* unpack the flag to see if additional jobs are included in the data */
     cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &n, &cnt, OPAL_INT32))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &n, &cnt, OPAL_INT32))) {
         *job = ORTE_JOBID_INVALID;
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
@@ -283,7 +285,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     if (0 < n) {
         /* unpack the buffer containing the info */
         cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bptr, &cnt, OPAL_BUFFER))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &bptr, &cnt, OPAL_BUFFER))) {
             *job = ORTE_JOBID_INVALID;
             ORTE_ERROR_LOG(rc);
             goto REPORT_ERROR;
@@ -307,7 +309,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                     }
                     if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, pptr->parent))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                        return ORTE_ERR_NOT_FOUND;
+                        rc = ORTE_ERR_NOT_FOUND;
+                        goto REPORT_ERROR;
                     }
                     OBJ_RETAIN(dmn->node);
                     pptr->node = dmn->node;
@@ -329,7 +332,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 
     /* unpack the job we are to launch */
     cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jdata, &cnt, ORTE_JOB))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &jdata, &cnt, ORTE_JOB))) {
         *job = ORTE_JOBID_INVALID;
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
@@ -433,13 +436,14 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                             ORTE_VPID_PRINT(pptr->parent));
         if (ORTE_VPID_INVALID == pptr->parent) {
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            ORTE_FORCED_TERMINATE(ORTE_ERR_BAD_PARAM);
-            return ORTE_ERR_BAD_PARAM;
+            rc = ORTE_ERR_BAD_PARAM;
+            goto REPORT_ERROR;
         }
         /* connect the proc to its node object */
         if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, pptr->parent))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
+            rc = ORTE_ERR_NOT_FOUND;
+            goto REPORT_ERROR;
         }
         OBJ_RETAIN(dmn->node);
         pptr->node = dmn->node;
@@ -502,7 +506,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
-
     return ORTE_SUCCESS;
 
  REPORT_ERROR:
@@ -513,7 +516,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
      * deal with the hang!
      */
     ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_NEVER_LAUNCHED);
-
     return rc;
 }
 

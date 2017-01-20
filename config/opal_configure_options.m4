@@ -17,7 +17,7 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
-dnl Copyright (c) 2013      Intel, Inc. All rights reserved
+dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
@@ -507,5 +507,9 @@ dnl some point, this should die.
 AC_DEFINE([OPAL_ENABLE_PROGRESS_THREADS],
           [0],
           [Whether we want BTL progress threads enabled])
+
+dnl Check for zlib support
+OPAL_ZLIB_CONFIG
+
 
 ])dnl
