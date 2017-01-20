@@ -479,3 +479,42 @@ int opal_progress_unregister (opal_progress_callback_t cb)
 
     return ret;
 }
+
+struct opal_progress_event_t {
+    opal_event_t super;
+    void *(*fn)(void *);
+    void *arg;
+    opal_event_t *event;
+};
+
+typedef struct opal_progress_event_t opal_progress_event_t;
+
+static void *opal_progress_run_once_cb (int fd, int flags, void *context)
+{
+    opal_progress_event_t *event = (opal_progress_event_t *) context;
+    void *ret;
+
+    ret = event->fn (event->arg);
+    opal_event_del (&event->super);
+    free (event);
+    return ret;
+}
+
+int opal_progress_run_once (void *(*fn)(void *), void *arg)
+{
+    opal_progress_event_t *event = malloc (sizeof (opal_progress_event_t));
+
+    if (OPAL_UNLIKELY(NULL == event)) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    event->fn = fn;
+    event->arg = arg;
+
+    opal_event_set (opal_sync_event_base, &event->super, -1, OPAL_EV_READ,
+                    opal_progress_run_once_cb, event);
+
+    opal_event_active (&event->super, OPAL_EV_READ, 1);
+
+    return OPAL_SUCCESS;
+}
