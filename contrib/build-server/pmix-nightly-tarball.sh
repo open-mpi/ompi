@@ -147,7 +147,7 @@ for branch in $branches; do
     # in here and clean up the old failed builds, we can accumulate
     # many over time.  So remove any old failed bbuilds that are over
     # 4 weeks old.
-    ${script_dir}/remove-old.pl 28 $build_root/$branch
+    ${script_dir}/remove-old.pl 7 $build_root/$branch
 done
 
 # If we had any new snapshots to send to coverity, process them now
