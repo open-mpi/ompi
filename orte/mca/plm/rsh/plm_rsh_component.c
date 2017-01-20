@@ -17,7 +17,7 @@
  *                         reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -288,8 +288,6 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
             }
             mca_plm_rsh_component.agent = tmp;
             mca_plm_rsh_component.using_qrsh = true;
-            /* no tree spawn allowed under qrsh */
-            mca_plm_rsh_component.no_tree_spawn = true;
             goto success;
         } else if (!mca_plm_rsh_component.disable_llspawn &&
                    NULL != getenv("LOADL_STEP_ID")) {
@@ -448,4 +446,3 @@ static int rsh_launch_agent_lookup(const char *agent_list, char *path)
     }
     return ORTE_SUCCESS;
 }
-
