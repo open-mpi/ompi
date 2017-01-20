@@ -4,6 +4,7 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -82,6 +83,13 @@ extern "C" {
 #define SHMEM_VENDOR_STRING             "http://www.open-mpi.org/"
 #define SHMEM_MAX_NAME_LEN              256
 
+/*
+ * Deprecated (but still valid) names
+ */
+#define _SHMEM_MAJOR_VERSION            SHMEM_MAJOR_VERSION
+#define _SHMEM_MINOR_VERSION            SHMEM_MINOR_VERSION
+#define _SHMEM_MAX_NAME_LEN             SHMEM_MAX_NAME_LEN
+
 #ifndef OSHMEM_SPEC_VERSION
 #define OSHMEM_SPEC_VERSION (SHMEM_MAJOR_VERSION * 10000 + SHMEM_MINOR_VERSION * 100)
 #endif
@@ -94,6 +102,16 @@ enum shmem_wait_ops {
     SHMEM_CMP_LT,
     SHMEM_CMP_GE
 };
+
+/*
+ * Deprecated (but still valid) names
+ */
+#define _SHMEM_CMP_EQ                   SHMEM_CMP_EQ
+#define _SHMEM_CMP_NE                   SHMEM_CMP_NE
+#define _SHMEM_CMP_GT                   SHMEM_CMP_GT
+#define _SHMEM_CMP_LE                   SHMEM_CMP_LE
+#define _SHMEM_CMP_LT                   SHMEM_CMP_LT
+#define _SHMEM_CMP_GE                   SHMEM_CMP_GE
 
 #define _SHMEM_BARRIER_SYNC_SIZE        (1)
 #define _SHMEM_BCAST_SYNC_SIZE          (1 + _SHMEM_BARRIER_SYNC_SIZE)
