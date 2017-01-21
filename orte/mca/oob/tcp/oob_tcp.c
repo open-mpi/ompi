@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -46,6 +46,7 @@
 #endif
 #include <ctype.h>
 
+#include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
@@ -69,118 +70,27 @@
 #include "orte/mca/oob/tcp/oob_tcp_peer.h"
 #include "orte/mca/oob/tcp/oob_tcp_common.h"
 #include "orte/mca/oob/tcp/oob_tcp_connection.h"
-#include "orte/mca/oob/tcp/oob_tcp_ping.h"
+#include "orte/mca/oob/tcp/oob_tcp_sendrecv.h"
 
-static void tcp_init(void);
-static void tcp_fini(void);
 static void accept_connection(const int accepted_fd,
                               const struct sockaddr *addr);
-static void set_peer(const orte_process_name_t* name,
-                     const uint16_t af_family,
-                     const char *net, const char *ports);
 static void ping(const orte_process_name_t *proc);
 static void send_nb(orte_rml_send_t *msg);
 static void resend(struct mca_oob_tcp_msg_error_t *mop);
 static void ft_event(int state);
 
 mca_oob_tcp_module_t mca_oob_tcp_module = {
-    {
-        tcp_init,
-        tcp_fini,
-        accept_connection,
-        set_peer,
-        ping,
-        send_nb,
-        resend,
-        ft_event
-    }
+    .accept_connection = accept_connection,
+    .ping = ping,
+    .send_nb = send_nb,
+    .resend = resend,
+    .ft_event = ft_event
 };
 
 /*
  * Local utility functions
  */
 static void recv_handler(int sd, short flags, void* user);
-static void* progress_thread_engine(opal_object_t *obj)
-{
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s TCP OOB PROGRESS THREAD RUNNING",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    while (mca_oob_tcp_module.ev_active) {
-        opal_event_loop(mca_oob_tcp_module.ev_base, OPAL_EVLOOP_ONCE);
-    }
-    return OPAL_THREAD_CANCELLED;
-}
-
-
-/*
- * Initialize global variables used w/in this module.
- */
-static void tcp_init(void)
-{
-    /* setup the module's state variables */
-    OBJ_CONSTRUCT(&mca_oob_tcp_module.peers, opal_hash_table_t);
-    opal_hash_table_init(&mca_oob_tcp_module.peers, 32);
-    mca_oob_tcp_module.ev_active = false;
-
-    if (orte_oob_base.use_module_threads) {
-        /* if we are to use independent progress threads at
-         * the module level, start it now
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s STARTING TCP PROGRESS THREAD",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        mca_oob_tcp_module.ev_base = opal_event_base_create();
-        /* construct the thread object */
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.progress_thread, opal_thread_t);
-        /* fork off a thread to progress it */
-        mca_oob_tcp_module.progress_thread.t_run = progress_thread_engine;
-        mca_oob_tcp_module.ev_active = true;
-        if (OPAL_SUCCESS != opal_thread_start(&mca_oob_tcp_module.progress_thread)) {
-            opal_output(0, "%s progress thread failed to start",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
-    }
-}
-
-/*
- * Module cleanup.
- */
-static void tcp_fini(void)
-{
-    uint64_t ui64;
-    mca_oob_tcp_peer_t *peer;
-
-    /* cleanup all peers */
-    OPAL_HASH_TABLE_FOREACH(ui64, uint64, peer, &mca_oob_tcp_module.peers) {
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s RELEASING PEER OBJ %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
-        if (NULL != peer) {
-            OBJ_RELEASE(peer);
-        }
-    }
-    OBJ_DESTRUCT(&mca_oob_tcp_module.peers);
-
-    if (mca_oob_tcp_module.ev_active) {
-        /* if we used an independent progress thread at
-         * the module level, stop it now
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s STOPPING TCP PROGRESS THREAD",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        /* stop the progress thread */
-        mca_oob_tcp_module.ev_active = false;
-        /* break the event loop */
-        opal_event_base_loopexit(mca_oob_tcp_module.ev_base);
-        /* wait for thread to exit */
-        opal_thread_join(&mca_oob_tcp_module.progress_thread, NULL);
-        OBJ_DESTRUCT(&mca_oob_tcp_module.progress_thread);
-        /* release the event base */
-        opal_event_base_free(mca_oob_tcp_module.ev_base);
-    }
-}
 
 /* Called by mca_oob_tcp_accept() and connection_handler() on
  * a socket that has been accepted.  This call finishes processing the
@@ -206,133 +116,19 @@ static void accept_connection(const int accepted_fd,
     ORTE_ACTIVATE_TCP_ACCEPT_STATE(accepted_fd, addr, recv_handler);
 }
 
-/* the host in this case is always in "dot" notation, and
- * thus we do not need to do a DNS lookup to convert it */
-static int parse_uri(const uint16_t af_family,
-                     const char* host,
-                     const char *port,
-                     struct sockaddr_storage* inaddr)
-{
-    struct sockaddr_in *in;
-
-    if (AF_INET == af_family) {
-        memset(inaddr, 0, sizeof(struct sockaddr_in));
-        in = (struct sockaddr_in*) inaddr;
-        in->sin_family = AF_INET;
-        in->sin_addr.s_addr = inet_addr(host);
-        if (in->sin_addr.s_addr == INADDR_NONE) {
-            return ORTE_ERR_BAD_PARAM;
-        }
-        ((struct sockaddr_in*) inaddr)->sin_port = htons(atoi(port));
-    }
-#if OPAL_ENABLE_IPV6
-    else if (AF_INET6 == af_family) {
-        struct sockaddr_in6 *in6;
-        memset(inaddr, 0, sizeof(struct sockaddr_in6));
-        in6 = (struct sockaddr_in6*) inaddr;
-
-        if (0 == inet_pton(AF_INET6, host, (void*)&in6->sin6_addr)) {
-            opal_output (0, "oob_tcp_parse_uri: Could not convert %s\n", host);
-            return ORTE_ERR_BAD_PARAM;
-        }
-    }
-#endif
-    else {
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
-    return ORTE_SUCCESS;
-}
-
-/*
- * Record listening address for this peer - the connection
- * is created on first-send
- */
-static void process_set_peer(int fd, short args, void *cbdata)
-{
-    mca_oob_tcp_peer_op_t *pop = (mca_oob_tcp_peer_op_t*)cbdata;
-    mca_oob_tcp_peer_t *peer;
-    int rc=ORTE_SUCCESS;
-    uint64_t *ui64 = (uint64_t*)(&pop->peer);
-    mca_oob_tcp_addr_t *maddr;
-
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s:tcp:processing set_peer cmd",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    if (AF_INET != pop->af_family) {
-            opal_output_verbose(20, orte_oob_base_framework.framework_output,
-                            "%s NOT AF_INET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        goto cleanup;
-    }
-
-    if (NULL == (peer = mca_oob_tcp_peer_lookup(&pop->peer))) {
-        peer = OBJ_NEW(mca_oob_tcp_peer_t);
-        peer->name.jobid = pop->peer.jobid;
-        peer->name.vpid = pop->peer.vpid;
-        opal_output_verbose(20, orte_oob_base_framework.framework_output,
-                            "%s SET_PEER ADDING PEER %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&pop->peer));
-        if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mca_oob_tcp_module.peers, (*ui64), peer)) {
-            OBJ_RELEASE(peer);
-            return;
-        }
-        if (ORTE_PROC_IS_APP) {
-            /* we have to initiate the connection because otherwise the
-             * daemon has no way to communicate to us via this component
-             * as the app doesn't have a listening port */
-            peer->state = MCA_OOB_TCP_CONNECTING;
-            ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
-        }
-    }
-
-    maddr = OBJ_NEW(mca_oob_tcp_addr_t);
-    if (ORTE_SUCCESS != (rc = parse_uri(pop->af_family, pop->net, pop->port, (struct sockaddr_storage*) &(maddr->addr)))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(maddr);
-        goto cleanup;
-    }
-
-    opal_output_verbose(20, orte_oob_base_framework.framework_output,
-                        "%s set_peer: peer %s is listening on net %s port %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&pop->peer),
-                        (NULL == pop->net) ? "NULL" : pop->net,
-                        (NULL == pop->port) ? "NULL" : pop->port);
-    opal_list_append(&peer->addrs, &maddr->super);
-
-  cleanup:
-    OBJ_RELEASE(pop);
-}
-
-static void set_peer(const orte_process_name_t *name,
-                     const uint16_t af_family,
-                     const char *net, const char *ports)
-{
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:tcp set addr for peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(name));
-
-    /* have to push this into our event base for processing */
-    ORTE_ACTIVATE_TCP_PEER_OP(name, af_family, net, ports, process_set_peer);
-}
-
-
 /* API functions */
-static void process_ping(int fd, short args, void *cbdata)
+static void ping(const orte_process_name_t *proc)
 {
-    mca_oob_tcp_ping_t *op = (mca_oob_tcp_ping_t*)cbdata;
     mca_oob_tcp_peer_t *peer;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s:[%s:%d] processing ping to peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->peer));
+                        ORTE_NAME_PRINT(proc));
 
     /* do we know this peer? */
-    if (NULL == (peer = mca_oob_tcp_peer_lookup(&op->peer))) {
+    if (NULL == (peer = mca_oob_tcp_peer_lookup(proc))) {
         /* push this back to the component so it can try
          * another module within this transport. If no
          * module can be found, the component can push back
@@ -342,9 +138,15 @@ static void process_ping(int fd, short args, void *cbdata)
                             "%s:[%s:%d] hop %s unknown",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&op->peer));
-        ORTE_ACTIVATE_TCP_MSG_ERROR(NULL, NULL, &op->peer, mca_oob_tcp_component_hop_unknown);
-        goto cleanup;
+                            ORTE_NAME_PRINT(proc));
+        ORTE_ACTIVATE_TCP_MSG_ERROR(NULL, NULL, proc, mca_oob_tcp_component_hop_unknown);
+        return;
+    }
+
+    /* has this peer had a progress thread assigned yet? */
+    if (NULL == peer->ev_base) {
+        /* nope - assign one */
+        ORTE_OOB_TCP_NEXT_BASE(peer);
     }
 
     /* if we are already connected, there is nothing to do */
@@ -353,8 +155,8 @@ static void process_ping(int fd, short args, void *cbdata)
                             "%s:[%s:%d] already connected to peer %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&op->peer));
-        goto cleanup;
+                            ORTE_NAME_PRINT(proc));
+        return;
     }
 
     /* if we are already connecting, there is nothing to do */
@@ -364,39 +166,23 @@ static void process_ping(int fd, short args, void *cbdata)
                             "%s:[%s:%d] already connecting to peer %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&op->peer));
-        goto cleanup;
+                            ORTE_NAME_PRINT(proc));
+        return;
     }
 
     /* attempt the connection */
     peer->state = MCA_OOB_TCP_CONNECTING;
     ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
-
- cleanup:
-    OBJ_RELEASE(op);
 }
 
-static void ping(const orte_process_name_t *proc)
+static void send_nb(orte_rml_send_t *msg)
 {
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] pinging peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(proc));
-
-    /* push this into our event base for processing */
-    ORTE_ACTIVATE_TCP_PING(proc, process_ping);
-}
-
-static void process_send(int fd, short args, void *cbdata)
-{
-    mca_oob_tcp_msg_op_t *op = (mca_oob_tcp_msg_op_t*)cbdata;
     mca_oob_tcp_peer_t *peer;
     orte_process_name_t hop;
 
 
     /* do we have a route to this peer (could be direct)? */
-    hop = orte_routed.get_route(op->msg->routed, &op->msg->dst);
+    hop = orte_routed.get_route(msg->routed, &msg->dst);
     /* do we know this hop? */
     if (NULL == (peer = mca_oob_tcp_peer_lookup(&hop))) {
         /* push this back to the component so it can try
@@ -408,32 +194,37 @@ static void process_send(int fd, short args, void *cbdata)
                             "%s:[%s:%d] processing send to peer %s:%d seq_num = %d hop %s unknown",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->seq_num,
+                            ORTE_NAME_PRINT(&msg->dst), msg->tag, msg->seq_num,
                             ORTE_NAME_PRINT(&hop));
-        ORTE_ACTIVATE_TCP_NO_ROUTE(op->msg, &hop, mca_oob_tcp_component_no_route);
-        goto cleanup;
+        ORTE_ACTIVATE_TCP_NO_ROUTE(msg, &hop, mca_oob_tcp_component_no_route);
+        return;
     }
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s:[%s:%d] processing send to peer %s:%d seq_num = %d via %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->seq_num,
+                        ORTE_NAME_PRINT(&msg->dst), msg->tag, msg->seq_num,
                         ORTE_NAME_PRINT(&peer->name));
+    /* has this peer had a progress thread assigned yet? */
+    if (NULL == peer->ev_base) {
+        /* nope - assign one */
+        ORTE_OOB_TCP_NEXT_BASE(peer);
+    }
     /* add the msg to the hop's send queue */
     if (MCA_OOB_TCP_CONNECTED == peer->state) {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
                             "%s tcp:send_nb: already connected to %s - queueing for send",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&peer->name));
-        MCA_OOB_TCP_QUEUE_SEND(op->msg, peer);
-        goto cleanup;
+        MCA_OOB_TCP_QUEUE_SEND(msg, peer);
+        return;
     }
 
     /* add the message to the queue for sending after the
      * connection is formed
      */
-    MCA_OOB_TCP_QUEUE_PENDING(op->msg, peer);
+    MCA_OOB_TCP_QUEUE_PENDING(msg, peer);
 
     if (MCA_OOB_TCP_CONNECTING != peer->state &&
         MCA_OOB_TCP_CONNECT_ACK != peer->state) {
@@ -449,34 +240,20 @@ static void process_send(int fd, short args, void *cbdata)
         peer->state = MCA_OOB_TCP_CONNECTING;
         ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
     }
-
- cleanup:
-    OBJ_RELEASE(op);
 }
 
-static void send_nb(orte_rml_send_t *msg)
+static void resend(struct mca_oob_tcp_msg_error_t *mpi)
 {
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s tcp:send_nb to peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst));
-
-    /* push this into our event base for processing */
-    ORTE_ACTIVATE_TCP_POST_SEND(msg, process_send);
-}
-
-static void process_resend(int fd, short args, void *cbdata)
-{
-    mca_oob_tcp_msg_error_t *op = (mca_oob_tcp_msg_error_t*)cbdata;
+    mca_oob_tcp_msg_error_t *mp = (mca_oob_tcp_msg_error_t*)mpi;
     mca_oob_tcp_peer_t *peer;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s:tcp processing resend to peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&op->hop));
+                        ORTE_NAME_PRINT(&mp->hop));
 
     /* do we know this peer? */
-    if (NULL == (peer = mca_oob_tcp_peer_lookup(&op->hop))) {
+    if (NULL == (peer = mca_oob_tcp_peer_lookup(&mp->hop))) {
         /* push this back to the component so it can try
          * another module within this transport. If no
          * module can be found, the component can push back
@@ -486,9 +263,15 @@ static void process_resend(int fd, short args, void *cbdata)
                             "%s:[%s:%d] peer %s unknown",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&op->hop));
-        ORTE_ACTIVATE_TCP_MSG_ERROR(op->snd, NULL, &op->hop, mca_oob_tcp_component_hop_unknown);
-        goto cleanup;
+                            ORTE_NAME_PRINT(&mp->hop));
+        ORTE_ACTIVATE_TCP_MSG_ERROR(mp->snd, NULL, &mp->hop, mca_oob_tcp_component_hop_unknown);
+        return;
+    }
+
+    /* should be impossible, but...has this peer had a progress thread assigned yet? */
+    if (NULL == peer->ev_base) {
+        /* nope - assign one */
+        ORTE_OOB_TCP_NEXT_BASE(peer);
     }
 
     /* add the msg to this peer's send queue */
@@ -497,8 +280,8 @@ static void process_resend(int fd, short args, void *cbdata)
                             "%s tcp:resend: already connected to %s - queueing for send",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&peer->name));
-        MCA_OOB_TCP_QUEUE_MSG(peer, op->snd, true);
-        goto cleanup;
+        MCA_OOB_TCP_QUEUE_MSG(peer, mp->snd, true);
+        return;
     }
 
     if (MCA_OOB_TCP_CONNECTING != peer->state &&
@@ -506,7 +289,7 @@ static void process_resend(int fd, short args, void *cbdata)
         /* add the message to the queue for sending after the
          * connection is formed
          */
-        MCA_OOB_TCP_QUEUE_MSG(peer, op->snd, false);
+        MCA_OOB_TCP_QUEUE_MSG(peer, mp->snd, false);
         /* we have to initiate the connection - again, we do not
          * want to block while the connection is created.
          * So throw us into an event that will create
@@ -519,22 +302,6 @@ static void process_resend(int fd, short args, void *cbdata)
         peer->state = MCA_OOB_TCP_CONNECTING;
         ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
     }
-
- cleanup:
-    OBJ_RELEASE(op);
-}
-
-static void resend(struct mca_oob_tcp_msg_error_t *mp)
-{
-    mca_oob_tcp_msg_error_t *mop = (mca_oob_tcp_msg_error_t*)mp;
-
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s tcp:resend to peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&mop->hop));
-
-    /* push this into our event base for processing */
-    ORTE_ACTIVATE_TCP_POST_RESEND(mop, process_resend);
 }
 
 /*
@@ -548,7 +315,6 @@ static void recv_handler(int sd, short flg, void *cbdata)
 {
     mca_oob_tcp_conn_op_t *op = (mca_oob_tcp_conn_op_t*)cbdata;
     int flags;
-    uint64_t *ui64;
     mca_oob_tcp_hdr_t hdr;
     mca_oob_tcp_peer_t *peer;
 
@@ -591,9 +357,6 @@ static void recv_handler(int sd, short flg, void *cbdata)
                             peer->state);
             }
             CLOSE_THE_SOCKET(sd);
-            ui64 = (uint64_t*)(&peer->name);
-            (void)opal_hash_table_set_value_uint64(&mca_oob_tcp_module.peers, (*ui64), NULL);
-            OBJ_RELEASE(peer);
         }
     }
 

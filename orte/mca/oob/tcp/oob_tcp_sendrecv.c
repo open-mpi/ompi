@@ -75,6 +75,33 @@
 #include "orte/mca/oob/tcp/oob_tcp_common.h"
 #include "orte/mca/oob/tcp/oob_tcp_connection.h"
 
+void mca_oob_tcp_queue_msg(int sd, short args, void *cbdata)
+{
+    mca_oob_tcp_send_t *snd = (mca_oob_tcp_send_t*)cbdata;
+    mca_oob_tcp_peer_t *peer = (mca_oob_tcp_peer_t*)snd->peer;
+
+    /* if there is no message on-deck, put this one there */
+    if (NULL == peer->send_msg) {
+        peer->send_msg = snd;
+    } else {
+        /* add it to the queue */
+        opal_list_append(&peer->send_queue, &snd->super);
+    }
+    if (snd->activate) {
+        /* if we aren't connected, then start connecting */
+        if (MCA_OOB_TCP_CONNECTED != peer->state) {
+            peer->state = MCA_OOB_TCP_CONNECTING;
+            ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
+        } else {
+            /* ensure the send event is active */
+            if (!peer->send_ev_active) {
+                opal_event_add(&peer->send_event, 0);
+                peer->send_ev_active = true;
+            }
+        }
+    }
+}
+
 static int send_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_send_t* msg)
 {
     struct iovec iov[2];

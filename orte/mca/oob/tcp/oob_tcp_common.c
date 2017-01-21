@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -194,7 +194,7 @@ mca_oob_tcp_peer_t* mca_oob_tcp_peer_lookup(const orte_process_name_t *name)
     uint64_t ui64;
 
     memcpy(&ui64, (char*)name, sizeof(uint64_t));
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_module.peers, ui64, (void**)&peer)) {
+    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers, ui64, (void**)&peer)) {
         return NULL;
     }
     return peer;
@@ -221,4 +221,3 @@ char* mca_oob_tcp_state_print(mca_oob_tcp_state_t state)
         return "UNKNOWN";
     }
 }
-

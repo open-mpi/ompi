@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -156,7 +156,7 @@ int orte_oob_tcp_start_listening(void)
     /* otherwise, setup to listen via the event lib */
     OPAL_LIST_FOREACH(listener, &mca_oob_tcp_component.listeners, mca_oob_tcp_listener_t) {
         listener->ev_active = true;
-        opal_event_set(orte_event_base, &listener->event,
+        opal_event_set(orte_oob_base.ev_base, &listener->event,
                        listener->sd,
                        OPAL_EV_READ|OPAL_EV_PERSIST,
                        connection_event_handler,
@@ -736,7 +736,7 @@ static void* listen_thread(opal_object_t *obj)
                  * OS might start rejecting connections due to timeout.
                  */
                 pending_connection = OBJ_NEW(mca_oob_tcp_pending_connection_t);
-                opal_event_set(orte_event_base, &pending_connection->ev, -1,
+                opal_event_set(orte_oob_base.ev_base, &pending_connection->ev, -1,
                                OPAL_EV_WRITE, connection_handler, pending_connection);
                 opal_event_set_priority(&pending_connection->ev, ORTE_MSG_PRI);
                 pending_connection->fd = accept(sd,
@@ -863,8 +863,8 @@ static void connection_handler(int sd, short flags, void* cbdata)
                         opal_net_get_port((struct sockaddr*) &new_connection->addr));
 
     /* process the connection */
-    mca_oob_tcp_module.api.accept_connection(new_connection->fd,
-                                             (struct sockaddr*) &(new_connection->addr));
+    mca_oob_tcp_module.accept_connection(new_connection->fd,
+                                         (struct sockaddr*) &(new_connection->addr));
     /* cleanup */
     OBJ_RELEASE(new_connection);
 }
@@ -927,7 +927,7 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
     }
 
     /* process the connection */
-    mca_oob_tcp_module.api.accept_connection(sd, &addr);
+    mca_oob_tcp_module.accept_connection(sd, &addr);
 }
 
 
