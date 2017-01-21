@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,13 +55,14 @@ OPAL_TIMING_DECLARE_EXT(ORTE_DECLSPEC, tm_oob)
  * Convenience Typedef
  */
 typedef struct {
+    opal_event_base_t *ev_base;
     char *include;
     char *exclude;
     opal_list_t components;
     opal_list_t actives;
     int max_uri_length;
     opal_hash_table_t peers;
-    bool use_module_threads;
+    int num_threads;
 #if OPAL_ENABLE_TIMING
     bool timing;
 #endif
@@ -119,7 +121,7 @@ ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata);
                             __FILE__, __LINE__);                        \
         cd = OBJ_NEW(orte_oob_send_t);                                  \
         cd->msg = (m);                                                  \
-        opal_event_set(orte_event_base, &cd->ev, -1,                    \
+        opal_event_set(orte_oob_base.ev_base, &cd->ev, -1,              \
                        OPAL_EV_WRITE,                                   \
                        orte_oob_base_send_nb, cd);                      \
         opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);                 \
@@ -173,7 +175,7 @@ OBJ_CLASS_DECLARATION(mca_oob_uri_req_t);
         mca_oob_uri_req_t *rq;                                  \
         rq = OBJ_NEW(mca_oob_uri_req_t);                        \
         rq->uri = strdup((u));                                  \
-        opal_event_set(orte_event_base, &(rq)->ev, -1,          \
+        opal_event_set(orte_oob_base.ev_base, &(rq)->ev, -1,    \
                        OPAL_EV_WRITE,                           \
                        orte_oob_base_set_addr, (rq));           \
         opal_event_set_priority(&(rq)->ev, ORTE_MSG_PRI);       \
@@ -193,4 +195,3 @@ ORTE_DECLSPEC void orte_oob_base_ft_event(int fd, short args, void *cbdata);
 
 END_C_DECLS
 #endif
-

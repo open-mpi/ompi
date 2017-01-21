@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,8 @@
 #define _MCA_OOB_TCP_PEER_H_
 
 #include "orte_config.h"
+
+#include "opal/mca/event/event.h"
 
 #include "oob_tcp.h"
 #include "oob_tcp_sendrecv.h"
@@ -49,6 +51,7 @@ typedef struct {
     mca_oob_tcp_addr_t *active_addr;
     mca_oob_tcp_state_t state;
     int num_retries;
+    opal_event_base_t *ev_base; // progress thread this peer is assigned to
     opal_event_t send_event;    /**< registration with event thread for send events */
     bool send_ev_active;
     opal_event_t recv_event;    /**< registration with event thread for recv events */
@@ -86,7 +89,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
         if (NULL != (pts)) {                                            \
             pop->port = strdup((pts));                                  \
         }                                                               \
-        opal_event_set(mca_oob_tcp_module.ev_base, &pop->ev, -1,        \
+        opal_event_set((p)->ev_base, &pop->ev, -1,                      \
                        OPAL_EV_WRITE, (cbfunc), pop);                   \
         opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);                \
         opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);                  \
@@ -97,13 +100,13 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
         mca_oob_tcp_peer_op_t *pop;                                     \
         char *proxy;                                                    \
         pop = OBJ_NEW(mca_oob_tcp_peer_op_t);                           \
-        pop->peer.jobid = (p)->jobid;                                   \
-        pop->peer.vpid = (p)->vpid;                                     \
+        pop->peer.jobid = (p)->name.jobid;                              \
+        pop->peer.vpid = (p)->name.vpid;                                \
         proxy = (r);                                                    \
         if (NULL != proxy) {                                            \
             pop->rtmod = strdup(proxy);                                 \
         }                                                               \
-        opal_event_set(mca_oob_tcp_module.ev_base, &pop->ev, -1,        \
+        opal_event_set((p)->ev_base, &pop->ev, -1,                      \
                        OPAL_EV_WRITE, (cbfunc), pop);                   \
         opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);                \
         opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);                  \

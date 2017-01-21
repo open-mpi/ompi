@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
@@ -312,7 +312,7 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
          * an event in the component event base, and so it will fire async
          * from us if we are in our own progress thread
          */
-        ORTE_ACTIVATE_TCP_CMP_OP(&peer->name, NULL, mca_oob_tcp_component_failed_to_connect);
+        ORTE_ACTIVATE_TCP_CMP_OP(peer, NULL, mca_oob_tcp_component_failed_to_connect);
         /* FIXME: post any messages in the send queue back to the OOB
          * level for reassignment
          */
@@ -501,7 +501,7 @@ static void tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
 {
     if (peer->sd >= 0) {
         assert(!peer->send_ev_active && !peer->recv_ev_active);
-        opal_event_set(mca_oob_tcp_module.ev_base,
+        opal_event_set(peer->ev_base,
                        &peer->recv_event,
                        peer->sd,
                        OPAL_EV_READ|OPAL_EV_PERSIST,
@@ -513,7 +513,7 @@ static void tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
             peer->recv_ev_active = false;
         }
 
-        opal_event_set(mca_oob_tcp_module.ev_base,
+        opal_event_set(peer->ev_base,
                        &peer->send_event,
                        peer->sd,
                        OPAL_EV_WRITE|OPAL_EV_PERSIST,
@@ -792,9 +792,10 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             peer = OBJ_NEW(mca_oob_tcp_peer_t);
             peer->name = hdr.origin;
+            ORTE_OOB_TCP_NEXT_BASE(peer);  // assign it an event base
             peer->state = MCA_OOB_TCP_ACCEPTING;
             ui64 = (uint64_t*)(&peer->name);
-            if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mca_oob_tcp_module.peers, (*ui64), peer)) {
+            if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers, (*ui64), peer)) {
                 OBJ_RELEASE(peer);
                 CLOSE_THE_SOCKET(sd);
                 return ORTE_ERR_OUT_OF_RESOURCE;
@@ -941,7 +942,7 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
     /* set the peer into the component and OOB-level peer tables to indicate
      * that we know this peer and we will be handling him
      */
-    ORTE_ACTIVATE_TCP_CMP_OP(&peer->name, NULL, mca_oob_tcp_component_set_module);
+    ORTE_ACTIVATE_TCP_CMP_OP(peer, NULL, mca_oob_tcp_component_set_module);
 
     /* connected */
     tcp_peer_connected(peer);
@@ -1030,7 +1031,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t *peer)
     /* inform the component-level that we have lost a connection so
      * it can decide what to do about it.
      */
-    ORTE_ACTIVATE_TCP_CMP_OP(&peer->name, NULL, mca_oob_tcp_component_lost_connection);
+    ORTE_ACTIVATE_TCP_CMP_OP(peer, NULL, mca_oob_tcp_component_lost_connection);
 
     if (orte_orteds_term_ordered || orte_finalizing || orte_abnormal_term_ordered) {
         /* nothing more to do */
@@ -1241,7 +1242,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer)
         /* set the peer into the component and OOB-level peer tables to indicate
          * that we know this peer and we will be handling him
          */
-        ORTE_ACTIVATE_TCP_CMP_OP(&peer->name, NULL, mca_oob_tcp_component_set_module);
+        ORTE_ACTIVATE_TCP_CMP_OP(peer, NULL, mca_oob_tcp_component_set_module);
 
         tcp_peer_connected(peer);
         if (!peer->recv_ev_active) {
