@@ -261,7 +261,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     orte_proc_t *pptr, *dmn;
     opal_buffer_t *bptr;
     orte_app_context_t *app;
-    bool found;
     orte_node_t *node;
     bool newmap = false;
 
@@ -409,6 +408,13 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     if (NULL == jdata->map) {
         jdata->map = OBJ_NEW(orte_job_map_t);
         newmap = true;
+    } else if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_MAP_INITIALIZED)) {
+        /* zero all the node map flags */
+        for (n=0; n < jdata->map->nodes->size; n++) {
+            if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
+                ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+            }
+        }
     }
 
     /* if we have a file map, then we need to load it */
@@ -454,17 +460,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         opal_pointer_array_add(dmn->node->procs, pptr);
 
         /* add the node to the map, if not already there */
-        found = false;
-        for (k=0; k < jdata->map->nodes->size; k++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, k))) {
-                continue;
-            }
-            if (node->daemon == dmn) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
+        if (!ORTE_FLAG_TEST(dmn->node, ORTE_NODE_FLAG_MAPPED)) {
             OBJ_RETAIN(dmn->node);
             opal_pointer_array_add(jdata->map->nodes, dmn->node);
             if (newmap) {
@@ -497,6 +493,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
             app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
             ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
         }
+        ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_MAP_INITIALIZED);
     }
 
  COMPLETE:

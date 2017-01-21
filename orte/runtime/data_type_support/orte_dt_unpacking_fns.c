@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,9 +168,9 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             return rc;
         }
 
-        /* if the map is NULL, then we din't pack it as there was
+        /* if the map is NULL, then we didn't pack it as there was
          * nothing to pack. Instead, we packed a flag to indicate whether or not
-         * the map is included         */
+         * the map is included */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
                                             &j, &n, ORTE_STD_CNTR))) {
@@ -204,6 +204,8 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* mark the map as uninitialized as we don't pack the node map */
+        ORTE_FLAG_UNSET(jobs[i], ORTE_JOB_FLAG_MAP_INITIALIZED);
 
         /* unpack the attributes */
         n=1;

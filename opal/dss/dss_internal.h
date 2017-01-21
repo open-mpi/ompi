@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
@@ -47,12 +47,12 @@ BEGIN_C_DECLS
 /*
  * The default starting chunk size
  */
-#define OPAL_DSS_DEFAULT_INITIAL_SIZE  128
+#define OPAL_DSS_DEFAULT_INITIAL_SIZE  2048
 /*
  * The default threshold size when we switch from doubling the
  * buffer size to addatively increasing it
  */
-#define OPAL_DSS_DEFAULT_THRESHOLD_SIZE 1024
+#define OPAL_DSS_DEFAULT_THRESHOLD_SIZE 4096
 
 /*
  * Internal type corresponding to size_t.  Do not use this in

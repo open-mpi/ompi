@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +36,7 @@ char* opal_dss_buffer_extend(opal_buffer_t *buffer, size_t bytes_to_add)
 {
     size_t required, to_alloc;
     size_t pack_offset, unpack_offset;
+    char *tmp;
 
     /* Check to see if we have enough space already */
 
@@ -43,34 +45,19 @@ char* opal_dss_buffer_extend(opal_buffer_t *buffer, size_t bytes_to_add)
     }
 
     required = buffer->bytes_used + bytes_to_add;
-    if(required >= (size_t)opal_dss_threshold_size) {
-        to_alloc = ((required + opal_dss_threshold_size - 1)
-                    / opal_dss_threshold_size) * opal_dss_threshold_size;
+    if (required >= (size_t)opal_dss_threshold_size) {
+        to_alloc = (required + opal_dss_threshold_size - 1) & ~(opal_dss_threshold_size - 1);
     } else {
-        to_alloc = buffer->bytes_allocated;
-        if(0 == to_alloc) {
-            to_alloc = opal_dss_initial_size;
-        }
-        while(to_alloc < required) {
-            to_alloc <<= 1;
-        }
+        to_alloc = buffer->bytes_allocated ? buffer->bytes_allocated : (size_t)opal_dss_initial_size;
     }
 
-    if (NULL != buffer->base_ptr) {
-        pack_offset = ((char*) buffer->pack_ptr) - ((char*) buffer->base_ptr);
-        unpack_offset = ((char*) buffer->unpack_ptr) -
-            ((char*) buffer->base_ptr);
-        buffer->base_ptr = (char*)realloc(buffer->base_ptr, to_alloc);
-    } else {
-        pack_offset = 0;
-        unpack_offset = 0;
-        buffer->bytes_used = 0;
-        buffer->base_ptr = (char*)malloc(to_alloc);
-    }
-
-    if (NULL == buffer->base_ptr) {
+    pack_offset = ((char*) buffer->pack_ptr) - ((char*) buffer->base_ptr);
+    unpack_offset = ((char*) buffer->unpack_ptr) - ((char*) buffer->base_ptr);
+    tmp = (char*)realloc(buffer->base_ptr, to_alloc);
+    if (NULL == tmp) {
         return NULL;
     }
+    buffer->base_ptr = tmp;
     buffer->pack_ptr = ((char*) buffer->base_ptr) + pack_offset;
     buffer->unpack_ptr = ((char*) buffer->base_ptr) + unpack_offset;
     buffer->bytes_allocated = to_alloc;
