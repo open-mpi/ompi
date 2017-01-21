@@ -18,8 +18,8 @@
 #include "memheap_ptmalloc_component.h"
 
 static int mca_memheap_ptmalloc_component_close(void);
-static mca_memheap_base_module_t* mca_memheap_ptmalloc_component_init(memheap_context_t *,
-                                                                      int *);
+static int mca_memheap_ptmalloc_component_query(mca_base_module_t **module, 
+                                                int *priority);
 
 static int _basic_open(void);
 
@@ -33,12 +33,13 @@ mca_memheap_base_component_t mca_memheap_ptmalloc_component = {
 
         .mca_open_component = _basic_open,
         .mca_close_component = mca_memheap_ptmalloc_component_close,
+        .mca_query_component = mca_memheap_ptmalloc_component_query,
     },
     .memheap_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    .memheap_init = mca_memheap_ptmalloc_component_init,
+    .memheap_init = mca_memheap_ptmalloc_module_init,
 };
 
 /* Open component */
@@ -47,19 +48,13 @@ static int _basic_open(void)
     return OSHMEM_SUCCESS;
 }
 
-/* Initialize component */
-mca_memheap_base_module_t* mca_memheap_ptmalloc_component_init(memheap_context_t *context,
-                                                               int *priority)
+/* query component */
+static int
+mca_memheap_ptmalloc_component_query(mca_base_module_t **module, int *priority)
 {
-    int rc;
-
     *priority = memheap_ptmalloc.priority;
-    rc = mca_memheap_ptmalloc_module_init(context);
-    if (OSHMEM_SUCCESS != rc) {
-        return NULL ;
-    }
-
-    return &(memheap_ptmalloc.super);
+    *module = (mca_base_module_t *)&memheap_ptmalloc.super;
+    return OSHMEM_SUCCESS;
 }
 
 /*
