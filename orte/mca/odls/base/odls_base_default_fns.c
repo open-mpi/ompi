@@ -462,6 +462,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         /* add the node to the map, if not already there */
         if (!ORTE_FLAG_TEST(dmn->node, ORTE_NODE_FLAG_MAPPED)) {
             OBJ_RETAIN(dmn->node);
+            ORTE_FLAG_SET(dmn->node, ORTE_NODE_FLAG_MAPPED);
             opal_pointer_array_add(jdata->map->nodes, dmn->node);
             if (newmap) {
                 jdata->map->num_nodes++;
