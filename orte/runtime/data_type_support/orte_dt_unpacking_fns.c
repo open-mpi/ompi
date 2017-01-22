@@ -204,8 +204,6 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* mark the map as uninitialized as we don't pack the node map */
-        ORTE_FLAG_UNSET(jobs[i], ORTE_JOB_FLAG_MAP_INITIALIZED);
 
         /* unpack the attributes */
         n=1;
