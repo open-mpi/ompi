@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -64,7 +64,7 @@ static int orte_oob_base_register(mca_base_register_flag_t flags)
     }
     (void)mca_base_var_register("orte", "oob", "base", "num_progress_threads",
                                 "Number of independent progress OOB messages for each interface",
-                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                 OPAL_INFO_LVL_9,
                                 MCA_BASE_VAR_SCOPE_READONLY,
                                 &orte_oob_base.num_threads);
