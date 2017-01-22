@@ -17,6 +17,7 @@
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,7 +30,7 @@ AC_DEFUN([OMPI_FIND_MPI_AINT_COUNT_OFFSET],[
     _OMPI_FIND_MPI_COUNT_TYPE
     _OMPI_FIND_MPI_OFFSET_TYPE
 
-    if test "$ompi_fortran_happy" == "1" && \
+    if test "$ompi_fortran_happy" = "1" && \
        test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS"; then
         _OMPI_FIND_MPI_INTEGER_KIND
         _OMPI_FIND_MPI_ADDRESS_KIND

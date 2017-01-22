@@ -55,6 +55,7 @@
 #include "src/sec/pmix_sec.h"
 
 #include "pmix_client_ops.h"
+#include "src/include/pmix_jobdata.h"
 
 /* callback for wait completion */
 static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
@@ -314,7 +315,9 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
             continue;
         }
         /* extract and process any proc-related info for this nspace */
-        pmix_client_process_nspace_blob(nspace, bptr);
+#if !(defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1))
+        pmix_job_data_htable_store(nspace, bptr);
+#endif
         PMIX_RELEASE(bptr);
     }
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {

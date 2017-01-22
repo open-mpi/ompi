@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -46,9 +46,6 @@
 #ifndef PMIx_COMMON_H
 #define PMIx_COMMON_H
 
-#include <pmix/autogen/config.h>
-#include <pmix/rename.h>
-
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -56,8 +53,11 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h> /* for struct timeval */
 #endif
+#include <pmix_version.h>
 
-BEGIN_C_DECLS
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /****  PMIX CONSTANTS    ****/
 
@@ -92,6 +92,7 @@ BEGIN_C_DECLS
 /* identification attributes */
 #define PMIX_USERID                "pmix.euid"              // (uint32_t) effective user id
 #define PMIX_GRPID                 "pmix.egid"              // (uint32_t) effective group id
+#define PMIX_DSTPATH               "pmix.dstpath"           // (char*) path to dstore files
 
 /* attributes for the rendezvous socket  */
 #define PMIX_SOCKET_MODE           "pmix.sockmode"          // (uint32_t) POSIX mode_t (9 bits valid)
@@ -118,7 +119,7 @@ BEGIN_C_DECLS
 #define PMIX_NPROC_OFFSET          "pmix.offset"            // (uint32_t) starting global rank of this job
 #define PMIX_LOCAL_RANK            "pmix.lrank"             // (uint16_t) rank on this node within this job
 #define PMIX_NODE_RANK             "pmix.nrank"             // (uint16_t) rank on this node spanning all jobs
-#define PMIX_LOCALLDR              "pmix.lldr"              // (uint64_t) opal_identifier of lowest rank on this node within this job
+#define PMIX_LOCALLDR              "pmix.lldr"              // (uint32_t) opal_identifier of lowest rank on this node within this job
 #define PMIX_APPLDR                "pmix.aldr"              // (uint32_t) lowest rank in this app within this job
 
 /* proc location-related info */
@@ -983,5 +984,8 @@ pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
 #define PMIX_VAL_FREE(_v) \
      PMIx_free_value_data(_v)
 
-END_C_DECLS
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
 #endif

@@ -17,8 +17,9 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
-dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -85,7 +86,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_MSG_RESULT([$PMIX_VERSION])
 
     # Save the breakdown the version information
-    AC_MSG_CHECKING([for pmix major version])
     PMIX_MAJOR_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --major`"
     if test "$?" != "0"; then
         AC_MSG_ERROR([Cannot continue])
@@ -94,7 +94,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_DEFINE_UNQUOTED([PMIX_MAJOR_VERSION], ["$PMIX_MAJOR_VERSION"],
                        [The library major version is always available, contrary to VERSION])
 
-    AC_MSG_CHECKING([for pmix minor version])
     PMIX_MINOR_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --minor`"
     if test "$?" != "0"; then
         AC_MSG_ERROR([Cannot continue])
@@ -103,7 +102,12 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_DEFINE_UNQUOTED([PMIX_MINOR_VERSION], ["$PMIX_MINOR_VERSION"],
                        [The library minor version is always available, contrary to VERSION])
 
-    AC_MSG_CHECKING([for pmix release version])
+    pmixmajor=${PMIX_MAJOR_VERSION}L
+    pmixminor=${PMIX_MINOR_VERSION}L
+    AC_SUBST(pmixmajor)
+    AC_SUBST(pmixminor)
+    AC_CONFIG_FILES(pmix_config_prefix[include/pmix_version.h])
+
     PMIX_RELEASE_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --release`"
     if test "$?" != "0"; then
         AC_MSG_ERROR([Cannot continue])
@@ -318,7 +322,8 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                       time.h unistd.h \
                       crt_externs.h signal.h \
                       ioLib.h sockLib.h hostLib.h limits.h \
-                      ucred.h])
+                      sys/statfs.h sys/statvfs.h \
+                      netdb.h ucred.h])
 
     # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
     # have both Portland and GNU installed; using pgcc will find GNU's
@@ -495,7 +500,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
     PMIX_SEARCH_LIBS_CORE([ceil], [m])
 
-    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep getpeereid getpeerucred strnlen])
+    AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strsignal socketpair strncpy_s usleep statfs statvfs getpeereid getpeerucred strnlen])
 
     # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
     # confused.  On others, it's in the standard library, but stubbed with
@@ -754,6 +759,26 @@ AC_DEFINE_UNQUOTED([PMIX_WANT_PRETTY_PRINT_STACKTRACE],
                    [if want pretty-print stack trace feature])
 
 #
+# Do we want the shared memory datastore usage?
+#
+
+AC_MSG_CHECKING([if want shared memory datastore])
+AC_ARG_ENABLE([dstore],
+              [AC_HELP_STRING([--disable-dstore],
+                              [Using shared memory datastore (default: enabled)])])
+if test "$enable_dstore" == "no" ; then
+    AC_MSG_RESULT([no])
+    WANT_DSTORE=0
+else
+    AC_MSG_RESULT([yes])
+    WANT_DSTORE=1
+fi
+AC_DEFINE_UNQUOTED([PMIX_ENABLE_DSTORE],
+                   [$WANT_DSTORE],
+                   [if want shared memory dstore feature])
+AM_CONDITIONAL([WANT_DSTORE],[test "x$enable_dstore" != "xno"])
+
+#
 # Ident string
 #
 AC_MSG_CHECKING([if want ident string])
@@ -810,6 +835,7 @@ AC_DEFUN([PMIX_DO_AM_CONDITIONALS],[
         AM_CONDITIONAL([PMIX_COMPILE_TIMING], [test "$WANT_TIMING" = "1"])
         AM_CONDITIONAL([PMIX_WANT_MUNGE], [test "$pmix_munge_support" = "1"])
         AM_CONDITIONAL([PMIX_WANT_SASL], [test "$pmix_sasl_support" = "1"])
+        AM_CONDITIONAL([WANT_DSTORE],[test "x$enable_dstore" != "xno"])
     ])
     pmix_did_am_conditionals=yes
 ])dnl

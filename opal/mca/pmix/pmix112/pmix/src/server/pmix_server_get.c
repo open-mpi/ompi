@@ -55,6 +55,10 @@
 #include "src/usock/usock.h"
 #include "src/sec/pmix_sec.h"
 
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+#include "src/dstore/pmix_dstore.h"
+#endif /* PMIX_ENABLE_DSTORE */
+
 #include "pmix_server_ops.h"
 
 extern pmix_server_module_t pmix_host_server;
@@ -361,7 +365,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, int rank,
     size_t sz;
     int cur_rank;
     int found = 0;
-    pmix_buffer_t xfer, pbkt, *xptr;
+    pmix_buffer_t pbkt;
     void *last;
     pmix_hash_table_t *hts[3];
     pmix_hash_table_t **htptr;
@@ -410,6 +414,21 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, int rank,
         }
         while (PMIX_SUCCESS == rc) {
             if (NULL != val) {
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+            pmix_kval_t *kv;
+
+            /* setup to xfer the data */
+            kv = PMIX_NEW(pmix_kval_t);
+            kv->key = strdup("modex");
+            kv->value = (pmix_value_t *)malloc(sizeof(pmix_value_t));
+            rc = pmix_value_xfer(kv->value, val);
+            if (PMIX_SUCCESS != (rc = pmix_dstore_store(nptr->nspace, cur_rank, kv))) {
+                    PMIX_ERROR_LOG(rc);
+            }
+            PMIX_RELEASE(kv);
+#else
+                pmix_buffer_t xfer, *xptr;
+
                 pmix_bfrop.pack(&pbkt, &cur_rank, 1, PMIX_INT);
                 /* the client is expecting this to arrive as a byte object
                  * containing a buffer, so package it accordingly */
@@ -420,6 +439,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, int rank,
                 xfer.base_ptr = NULL; // protect the passed data
                 xfer.bytes_used = 0;
                 PMIX_DESTRUCT(&xfer);
+#endif /* PMIX_ENABLE_DSTORE */
                 PMIX_VALUE_RELEASE(val);
                 found++;
             }

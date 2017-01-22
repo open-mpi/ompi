@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -33,6 +33,7 @@ EXTRA_DIST =
 dist_pmixdata_DATA =
 if ! PMIX_EMBEDDED_MODE
 dist_pmixdata_DATA += contrib/pmix-valgrind.supp
+
 
 man_MANS = \
         man/man3/pmix_init.3 \
@@ -58,6 +59,11 @@ include src/client/Makefile.am
 include src/server/Makefile.am
 include src/sec/Makefile.am
 include src/common/Makefile.am
+
+if WANT_DSTORE
+include src/sm/Makefile.am
+include src/dstore/Makefile.am
+endif
 
 if PMIX_EMBEDDED_MODE
 noinst_LTLIBRARIES = libpmix.la

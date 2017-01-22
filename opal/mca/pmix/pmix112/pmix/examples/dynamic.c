@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/param.h>
 
 #include <pmix.h>
 
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
     uint32_t nprocs;
     char nsp2[PMIX_MAX_NSLEN+1];
     pmix_app_t *app;
-    char hostname[PMIX_MAXHOSTNAMELEN], dir[1024];
+    char hostname[MAXHOSTNAMELEN], dir[1024];
     pmix_proc_t *peers;
     size_t npeers, ntmp=0;
     char *nodelist;

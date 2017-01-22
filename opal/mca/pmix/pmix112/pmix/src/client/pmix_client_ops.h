@@ -26,8 +26,6 @@ typedef struct {
 
 extern pmix_client_globals_t pmix_client_globals;
 
-void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr);
-
 void pmix_client_register_errhandler(pmix_info_t info[], size_t ninfo,
                                      pmix_notification_fn_t errhandler,
                                      pmix_errhandler_reg_cbfunc_t cbfunc,

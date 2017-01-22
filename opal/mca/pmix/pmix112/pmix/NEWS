@@ -1,4 +1,5 @@
 Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+Copyright (c) 2016      IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -20,8 +21,27 @@ example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
 
 
-Master (not on release branches yet)
-------------------------------------
+1.2.0
+-----
+- Add shared memory data storage (dstore) option. Default: enabled
+  Configure option: --disable-dstore
+- PMIx_Commit performance improvements
+- Disable errhandler support
+- Keep job info in the shared memory dstore
+- PMIx_Get performance and memory improvements
+
+
+
+1.1.5
+-----
+- Add pmix_version.h to support direct detection of PMIx library version
+- Fix support for Solaris 10 by using abstract version of strnlen
+- Fix native security module for Solaris by using getpeerucred in
+  that environment
+- Ensure man pages don't get installed in embedded builds
+- Pass temporary directory locations in info keys instead of
+  the environment
+
 
 1.1.4
 -----

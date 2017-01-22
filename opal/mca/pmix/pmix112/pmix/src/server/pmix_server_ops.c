@@ -57,6 +57,11 @@
 
 #include "pmix_server_ops.h"
 
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+#include "src/dstore/pmix_dstore.h"
+#endif /* PMIX_ENABLE_DSTORE */
+
+
 pmix_server_module_t pmix_host_server = {0};
 
 pmix_status_t pmix_server_abort(pmix_peer_t *peer, pmix_buffer_t *buf,
@@ -169,13 +174,32 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
             PMIX_ERROR_LOG(rc);
             return rc;
         }
-        /* see if we already have info for this proc */
-        if (PMIX_SUCCESS == pmix_hash_fetch(ht, info->rank, "modex", &val) && NULL != val) {
-            /* create the new data storage */
+        
+        /* create the new data storage */
+        kp = PMIX_NEW(pmix_kval_t);
+        kp->key = strdup("modex");
+        PMIX_VALUE_CREATE(kp->value, 1);
+        kp->value->type = PMIX_BYTE_OBJECT;
+
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+        /* The local buffer must go directly the dstore */
+        if( PMIX_LOCAL == scope ){
+            /* need to deposit this in the dstore now */
+            PMIX_UNLOAD_BUFFER(b2, kp->value->data.bo.bytes, kp->value->data.bo.size);
+            if (PMIX_SUCCESS != (rc = pmix_dstore_store(nptr->nspace, info->rank, kp))) {
+                PMIX_ERROR_LOG(rc);
+            }
+            PMIX_RELEASE(kp);
+
             kp = PMIX_NEW(pmix_kval_t);
             kp->key = strdup("modex");
             PMIX_VALUE_CREATE(kp->value, 1);
             kp->value->type = PMIX_BYTE_OBJECT;
+        }
+#endif /* PMIX_ENABLE_DSTORE */
+
+        /* see if we already have info for this proc */
+        if (PMIX_SUCCESS == pmix_hash_fetch(ht, info->rank, "modex", &val) && NULL != val) {
             /* get space for the new new data blob */
             kp->value->data.bo.bytes = (char*)malloc(b2->bytes_used + val->data.bo.size);
             memcpy(kp->value->data.bo.bytes, val->data.bo.bytes, val->data.bo.size);
@@ -183,25 +207,18 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
             kp->value->data.bo.size = val->data.bo.size + b2->bytes_used;
             /* release the storage */
             PMIX_VALUE_FREE(val, 1);
-            /* store it in the appropriate hash */
-            if (PMIX_SUCCESS != (rc = pmix_hash_store(ht, info->rank, kp))) {
-                PMIX_ERROR_LOG(rc);
-            }
-            PMIX_RELEASE(kp);  // maintain acctg
         } else {
-            /* create a new kval to hold this data */
-            kp = PMIX_NEW(pmix_kval_t);
-            kp->key = strdup("modex");
-            PMIX_VALUE_CREATE(kp->value, 1);
-            kp->value->type = PMIX_BYTE_OBJECT;
             PMIX_UNLOAD_BUFFER(b2, kp->value->data.bo.bytes, kp->value->data.bo.size);
-            PMIX_RELEASE(b2);
-            /* store it in the appropriate hash */
-            if (PMIX_SUCCESS != (rc = pmix_hash_store(ht, info->rank, kp))) {
-                PMIX_ERROR_LOG(rc);
-            }
-            PMIX_RELEASE(kp);  // maintain acctg
         }
+
+        /* store it in the appropriate hash */
+        if (PMIX_SUCCESS != (rc = pmix_hash_store(ht, info->rank, kp))) {
+            PMIX_ERROR_LOG(rc);
+        }
+        /* maintain the accounting */
+        PMIX_RELEASE(kp);
+        PMIX_RELEASE(b2);
+
         cnt = 1;
     }
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {

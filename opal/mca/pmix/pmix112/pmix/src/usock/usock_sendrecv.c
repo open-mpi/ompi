@@ -53,7 +53,6 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
     pmix_server_trkr_t *trk;
     pmix_rank_info_t *rinfo, *rnext;
     pmix_trkr_caddy_t *tcd;
-    pmix_regevents_info_t *reginfoptr, *regnext;
 
     /* stop all events */
     if (peer->recv_ev_active) {
@@ -108,15 +107,7 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
          /* do some cleanup as the client has left us */
          pmix_pointer_array_set_item(&pmix_server_globals.clients,
                                      peer->index, NULL);
-        /* remove all registered event handlers so libevent doesn't complain */
-        PMIX_LIST_FOREACH_SAFE(reginfoptr, regnext, &pmix_server_globals.client_eventregs, pmix_regevents_info_t) {
-            if (reginfoptr->peer == peer) {
-                pmix_list_remove_item(&pmix_server_globals.client_eventregs, &reginfoptr->super);
-                PMIX_RELEASE(reginfoptr);
-                break;
-            }
-        }
-        PMIX_RELEASE(peer);
+         PMIX_RELEASE(peer);
      } else {
         /* if I am a client, there is only
          * one connection we can have */

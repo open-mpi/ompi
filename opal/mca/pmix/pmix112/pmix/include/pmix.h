@@ -46,16 +46,13 @@
 #ifndef PMIx_H
 #define PMIx_H
 
-#include <pmix/autogen/config.h>
-
-/* Symbol transforms */
-#include <pmix/rename.h>
-
 /* Structure and constant definitions */
 #include <pmix/pmix_common.h>
 
 
-BEGIN_C_DECLS
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /****    PMIX API    ****/
 
@@ -391,5 +388,8 @@ pmix_status_t PMIx_Resolve_peers(const char *nodename, const char *nspace,
  * when done with it */
 pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist);
 
-END_C_DECLS
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
 #endif
