@@ -76,25 +76,6 @@ typedef struct {
 } mca_oob_tcp_peer_op_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
 
-#define ORTE_ACTIVATE_TCP_PEER_OP(p, a, n, pts, cbfunc)                 \
-    do {                                                                \
-        mca_oob_tcp_peer_op_t *pop;                                     \
-        pop = OBJ_NEW(mca_oob_tcp_peer_op_t);                           \
-        pop->peer.jobid = (p)->jobid;                                   \
-        pop->peer.vpid = (p)->vpid;                                     \
-        pop->af_family = (a);                                           \
-        if (NULL != (n)) {                                              \
-            pop->net = strdup((n));                                     \
-        }                                                               \
-        if (NULL != (pts)) {                                            \
-            pop->port = strdup((pts));                                  \
-        }                                                               \
-        opal_event_set((p)->ev_base, &pop->ev, -1,                      \
-                       OPAL_EV_WRITE, (cbfunc), pop);                   \
-        opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);                \
-        opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);                  \
-    } while(0);
-
 #define ORTE_ACTIVATE_TCP_CMP_OP(p, r, cbfunc)                          \
     do {                                                                \
         mca_oob_tcp_peer_op_t *pop;                                     \
@@ -106,7 +87,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
         if (NULL != proxy) {                                            \
             pop->rtmod = strdup(proxy);                                 \
         }                                                               \
-        opal_event_set((p)->ev_base, &pop->ev, -1,                      \
+        opal_event_set(orte_oob_base.ev_base, &pop->ev, -1,             \
                        OPAL_EV_WRITE, (cbfunc), pop);                   \
         opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);                \
         opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);                  \
