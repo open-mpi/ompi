@@ -401,10 +401,10 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                 *dmns = NULL;
                 return ORTE_ERR_NOT_FOUND;
             }
-            opal_output_verbose(5, orte_grpcomm_base_framework.framework_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                 "%s sign: GETTING PROC OBJECT FOR %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&sig->signature[n]));
+                                ORTE_NAME_PRINT(&sig->signature[n])));
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, sig->signature[n].vpid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 OPAL_LIST_DESTRUCT(&ds);
