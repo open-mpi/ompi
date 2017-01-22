@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,7 +69,7 @@ static int orte_routed_radix_component_query(mca_base_module_t **module, int *pr
         return ORTE_ERR_BAD_PARAM;
     }
 
-    *priority = 70;
+    *priority = 50;
     *module = (mca_base_module_t *) &orte_routed_radix_module;
     return ORTE_SUCCESS;
 }
