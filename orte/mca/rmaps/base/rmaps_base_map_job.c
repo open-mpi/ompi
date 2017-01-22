@@ -389,8 +389,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    /* mark that nodes were assigned to this job */
-    ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_MAP_INITIALIZED);
 
     /* if any node is oversubscribed, then check to see if a binding
      * directive was given - if not, then we want to clear the default
