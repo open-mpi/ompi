@@ -35,8 +35,7 @@ typedef struct memheap_context
 /**
  * Component initialize
  */
-typedef struct mca_memheap_base_module_t* (*mca_memheap_base_component_init_fn_t)(memheap_context_t *,
-                                                                                  int *priority);
+typedef int (*mca_memheap_base_component_init_fn_t)(memheap_context_t *);
 
 /*
  * Symmetric heap allocation. Malloc like interface
