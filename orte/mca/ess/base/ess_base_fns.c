@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -76,6 +76,9 @@ int orte_ess_base_proc_binding(void)
         /* we were not bound at launch */
         if (NULL == opal_hwloc_topology) {
             /* there is nothing we can do, so just return */
+            OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
+                                 "%s NULL topology - Binding not supported",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             return ORTE_SUCCESS;
         }
         support = (struct hwloc_topology_support*)hwloc_topology_get_support(opal_hwloc_topology);
@@ -115,6 +118,9 @@ int orte_ess_base_proc_binding(void)
             /* the system is capable of doing processor affinity, but it
              * has not yet been set - see if a slot_list was given
              */
+            OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
+                                 "%s Binding available - computing",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             hwloc_bitmap_zero(cpus);
             if (OPAL_BIND_TO_CPUSET == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                 if (OPAL_SUCCESS != (ret = opal_hwloc_base_slot_list_parse(opal_hwloc_base_slot_list,
@@ -269,7 +275,7 @@ int orte_ess_base_proc_binding(void)
             orte_process_info.cpuset = NULL;
         }
         if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
-            opal_output(0, "MCW rank %d is not bound",
+            opal_output(0, "MCW rank %d is not bound - get_cpubind returned negative",
                         ORTE_PROC_MY_NAME->vpid);
         }
     } else {

@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,7 @@
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/schizo/schizo.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/singleton/ess_singleton.h"
@@ -97,7 +99,7 @@ orte_ess_singleton_component_open(void)
 
 int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority)
 {
-    int ret;
+    orte_schizo_launch_environ_t ret;
 
     /* if we are an HNP, daemon, or tool, then we
      * are definitely not a singleton!
@@ -109,45 +111,18 @@ int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority
         return ORTE_ERROR;
     }
 
-    /* okay, we still could be a singleton or
-     * an application process. If we have been
-     * given an HNP URI, then we are definitely
-     * not a singleton
-     */
-    if (NULL != orte_process_info.my_hnp_uri) {
+    /* find out what our environment looks like */
+    ret = orte_schizo.check_launch_environment();
+    if (ORTE_SCHIZO_UNMANAGED_SINGLETON != ret &&
+        ORTE_SCHIZO_MANAGED_SINGLETON != ret) {
+        /* not us */
         *module = NULL;
+        *priority = 0;
         return ORTE_ERROR;
     }
 
-    /* open and setup pmix */
-    if (NULL == opal_pmix.initialized) {
-        if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-            /* if PMIx is not available, then we are indeed a singleton */
-            goto single;
-        }
-        if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-            /* if PMIx is not available, then we are indeed a singleton */
-            (void) mca_base_framework_close(&opal_pmix_base_framework);
-            goto single;
-        }
-    }
-    if (opal_pmix.initialized()) {
-        /* we are in a PMI environment and are therefore
-         * not a singleton */
-        *priority = -1;
-        *module = NULL;
-        return ORTE_ERROR;
-    }
-
-  single:
-    /* okay, we could still be an application process,
-     * but launched in "standalone" mode - i.e., directly
-     * launched by an environment instead of via mpirun.
-     * We need to set our priority low so that any enviro
-     * component will override us. If they don't, then we
-     * want to be selected as we must be a singleton
-     */
-    *priority = 25;
+    /* okay, we want to be selected as we must be a singleton */
+    *priority = 100;
     *module = (mca_base_module_t *)&orte_ess_singleton_module;
     return ORTE_SUCCESS;
 }
