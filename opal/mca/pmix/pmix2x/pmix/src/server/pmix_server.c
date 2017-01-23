@@ -59,6 +59,7 @@
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/pinstalldirs/base/base.h"
+#include "src/mca/pnet/pnet.h"
 #include "src/runtime/pmix_progress_threads.h"
 #include "src/runtime/pmix_rte.h"
 #include "src/mca/ptl/base/base.h"
@@ -286,8 +287,8 @@ static void _register_nspace(int sd, short args, void *cbdata)
     pmix_info_t *iptr;
     pmix_value_t val;
     char *msg;
-    bool nodata = false;
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    bool nodata = false;
     pmix_buffer_t *jobdata = PMIX_NEW(pmix_buffer_t);
     char *nspace = NULL;
     int32_t cnt;
@@ -337,8 +338,10 @@ static void _register_nspace(int sd, short args, void *cbdata)
                             cd->info[i].key);
 
         if (0 == strcmp(cd->info[i].key, PMIX_REGISTER_NODATA)) {
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
             /* we don't want to save any job data for this nspace */
             nodata = true;
+#endif
             /* free anything that was previously stored */
             PMIX_DESTRUCT(&nptr->server->job_info);
             PMIX_CONSTRUCT(&nptr->server->job_info, pmix_buffer_t);
@@ -531,6 +534,10 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
     rc = pmix_dstore_nspace_del(cd->proc.nspace);
 #endif
 
+    /* release any job-level resources */
+    pmix_pnet.local_app_finalized(cd->proc.nspace);
+
+    /* release the caller */
     if (NULL != cd->opcbfunc) {
         cd->opcbfunc(rc, cd->cbdata);
     }
@@ -843,9 +850,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char *
 {
     char rankstr[128];
     pmix_listener_t *lt;
-#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
     pmix_status_t rc;
-#endif
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server setup_fork for nspace %s rank %d",
@@ -874,6 +879,12 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char *
         return rc;
     }
 #endif
+
+    /* get any network contribution */
+    if (PMIX_SUCCESS != (rc = pmix_pnet.setup_fork(proc, env))) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
 
     return PMIX_SUCCESS;
 }
@@ -1418,6 +1429,139 @@ PMIX_EXPORT pmix_status_t PMIx_generate_ppn(const char *input, char **regexp)
     PMIX_LIST_DESTRUCT(&nodes);
     return PMIX_SUCCESS;
 }
+
+static void _setup_op(pmix_status_t rc, void *cbdata)
+{
+    pmix_setup_caddy_t *fcd = (pmix_setup_caddy_t*)cbdata;
+
+    if (NULL != fcd->info) {
+        PMIX_INFO_FREE(fcd->info, fcd->ninfo);
+    }
+    PMIX_RELEASE(fcd);
+}
+
+static void _setup_app(int sd, short args, void *cbdata)
+{
+    pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+    pmix_setup_caddy_t *fcd = NULL;
+    pmix_status_t rc;
+    pmix_list_t ilist;
+    pmix_kval_t *kv;
+    size_t n;
+
+    PMIX_CONSTRUCT(&ilist, pmix_list_t);
+
+    /* pass to the network libraries */
+    if (PMIX_SUCCESS != (rc = pmix_pnet.setup_app(cd->nspace, &ilist))) {
+        goto depart;
+    }
+
+    /* setup the return callback */
+    fcd = PMIX_NEW(pmix_setup_caddy_t);
+    if (NULL == fcd) {
+        rc = PMIX_ERR_NOMEM;
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        goto depart;
+    }
+
+    /* if anything came back, construct the info array */
+    if (0 < (fcd->ninfo = pmix_list_get_size(&ilist))) {
+        PMIX_INFO_CREATE(fcd->info, fcd->ninfo);
+        n = 0;
+        PMIX_LIST_FOREACH(kv, &ilist, pmix_kval_t) {
+            (void)strncpy(fcd->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+            if (PMIX_SUCCESS != (rc = pmix_value_xfer(&fcd->info[n].value, kv->value))) {
+                PMIX_INFO_FREE(fcd->info, fcd->ninfo);
+                PMIX_RELEASE(fcd);
+                fcd = NULL;
+                goto depart;
+            }
+        }
+    }
+
+  depart:
+    /* always execute the callback to avoid hanging */
+    if (NULL != cd->setupcbfunc) {
+        if (NULL == fcd) {
+            cd->setupcbfunc(rc, NULL, 0, cd->cbdata, NULL, NULL);
+        } else {
+            cd->setupcbfunc(rc, fcd->info, fcd->ninfo, cd->cbdata, _setup_op, fcd);
+        }
+    }
+
+    /* cleanup memory */
+    PMIX_LIST_DESTRUCT(&ilist);
+    if (NULL != cd->nspace) {
+        free(cd->nspace);
+    }
+    PMIX_RELEASE(cd);
+}
+
+pmix_status_t PMIx_server_setup_application(const char nspace[],
+                                            pmix_info_t info[], size_t ninfo,
+                                            pmix_setup_application_cbfunc_t cbfunc, void *cbdata)
+{
+    pmix_setup_caddy_t *cd;
+
+    /* need to threadshift this request */
+    cd = PMIX_NEW(pmix_setup_caddy_t);
+    if (NULL == cd) {
+        return PMIX_ERR_NOMEM;
+    }
+    if (NULL != nspace) {
+        cd->nspace = strdup(nspace);
+    }
+    cd->info = info;
+    cd->ninfo = ninfo;
+    cd->setupcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    PMIX_THREADSHIFT(cd, _setup_app);
+
+    return PMIX_SUCCESS;
+}
+
+static void _setup_local_support(int sd, short args, void *cbdata)
+{
+    pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+    pmix_status_t rc;
+
+    /* pass to the network libraries */
+    rc = pmix_pnet.setup_local_network(cd->nspace, cd->info, cd->ninfo);
+
+    /* pass the info back */
+    if (NULL != cd->opcbfunc) {
+        cd->opcbfunc(rc, cd->cbdata);
+    }
+    /* cleanup memory */
+    if (NULL != cd->nspace) {
+        free(cd->nspace);
+    }
+    PMIX_RELEASE(cd);
+}
+
+pmix_status_t PMIx_server_setup_local_support(const char nspace[],
+                                              pmix_info_t info[], size_t ninfo,
+                                              pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    pmix_setup_caddy_t *cd;
+
+    /* need to threadshift this request */
+    cd = PMIX_NEW(pmix_setup_caddy_t);
+    if (NULL == cd) {
+        return PMIX_ERR_NOMEM;
+    }
+    if (NULL != nspace) {
+        cd->nspace = strdup(nspace);
+    }
+    cd->info = info;
+    cd->ninfo = ninfo;
+    cd->opcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    PMIX_THREADSHIFT(cd, _setup_local_support);
+
+    return PMIX_SUCCESS;
+}
+
 
 /****    THE FOLLOWING CALLBACK FUNCTIONS ARE USED BY THE HOST SERVER    ****
  ****    THEY THEREFORE CAN OCCUR IN EITHER THE HOST SERVER'S THREAD     ****
@@ -2091,6 +2235,8 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
             event_del(&peer->recv_event);
             peer->recv_ev_active = false;
         }
+        /* let the network libraries cleanup */
+        pmix_pnet.child_finalized(peer);
         return rc;
     }
 

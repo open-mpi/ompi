@@ -575,6 +575,8 @@ static void _putfn(int sd, short args, void *cbdata)
             if (NULL == tmp) {
                 PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
                 rc = PMIX_ERR_NOMEM;
+                PMIX_ERROR_LOG(rc);
+                goto done;
             }
             kv->value->type = PMIX_COMPRESSED_STRING;
             kv->value->data.bo.bytes = (char*)tmp;

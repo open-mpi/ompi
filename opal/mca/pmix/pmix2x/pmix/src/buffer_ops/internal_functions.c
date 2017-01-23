@@ -9,8 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +40,7 @@ char* pmix_bfrop_buffer_extend(pmix_buffer_t *buffer, size_t bytes_to_add)
 {
     size_t required, to_alloc;
     size_t pack_offset, unpack_offset;
+    char *tmp;
 
     /* Check to see if we have enough space already */
 
@@ -47,35 +50,27 @@ char* pmix_bfrop_buffer_extend(pmix_buffer_t *buffer, size_t bytes_to_add)
 
     required = buffer->bytes_used + bytes_to_add;
     if (required >= pmix_bfrop_threshold_size) {
-        to_alloc = ((required + pmix_bfrop_threshold_size - 1)
-                    / pmix_bfrop_threshold_size) * pmix_bfrop_threshold_size;
+        to_alloc = (required + pmix_bfrop_threshold_size - 1) & ~(pmix_bfrop_threshold_size - 1);
     } else {
-        to_alloc = buffer->bytes_allocated;
-        if(0 == to_alloc) {
-            to_alloc = pmix_bfrop_initial_size;
-        }
+        to_alloc = buffer->bytes_allocated ? buffer->bytes_allocated : pmix_bfrop_initial_size;
         while(to_alloc < required) {
             to_alloc <<= 1;
         }
     }
 
-    if (NULL != buffer->base_ptr) {
-        pack_offset = ((char*) buffer->pack_ptr) - ((char*) buffer->base_ptr);
-        unpack_offset = ((char*) buffer->unpack_ptr) -
-            ((char*) buffer->base_ptr);
-        buffer->base_ptr = (char*)realloc(buffer->base_ptr, to_alloc);
-        memset(buffer->base_ptr + pack_offset, 0, to_alloc - buffer->bytes_allocated);
-    } else {
-        pack_offset = 0;
-        unpack_offset = 0;
-        buffer->bytes_used = 0;
-        buffer->base_ptr = (char*)malloc(to_alloc);
-        memset(buffer->base_ptr, 0, to_alloc);
-    }
-
-    if (NULL == buffer->base_ptr) {
+    pack_offset = ((char*) buffer->pack_ptr) - ((char*) buffer->base_ptr);
+    unpack_offset = ((char*) buffer->unpack_ptr) - ((char*) buffer->base_ptr);
+    tmp = (char*)realloc(buffer->base_ptr, to_alloc);
+    if (NULL == tmp) {
         return NULL;
     }
+
+    buffer->base_ptr = tmp;
+
+    /* This memset is meant to keep valgrind happy. If possible it should be removed
+     * in the future. */
+    memset(buffer->base_ptr + pack_offset, 0, to_alloc - buffer->bytes_allocated);
+
     buffer->pack_ptr = ((char*) buffer->base_ptr) + pack_offset;
     buffer->unpack_ptr = ((char*) buffer->base_ptr) + unpack_offset;
     buffer->bytes_allocated = to_alloc;
@@ -117,6 +112,5 @@ pmix_status_t pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t
 
 pmix_status_t pmix_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type)
 {
-    int32_t n=1;
-    return pmix_bfrop_unpack_datatype(buffer, type, &n, PMIX_DATA_TYPE);
+    return pmix_bfrop_unpack_datatype(buffer, type, &(int32_t){1}, PMIX_DATA_TYPE);
 }

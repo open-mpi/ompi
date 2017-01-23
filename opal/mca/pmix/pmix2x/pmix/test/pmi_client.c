@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -31,7 +31,8 @@ static void log_fatal(const char *format, ...)
 
     va_start(arglist, format);
     if (_verbose > 0) {
-        if (0 > vasprintf(output, format, arglist)) {
+        if (0 > vasprintf(output, format, arglist) ||
+            NULL == *output) {
             return;
         }
         fprintf(stderr, "FATAL: %s", *output);
@@ -47,13 +48,15 @@ static void log_error(const char *format, ...)
 
     va_start(arglist, format);
     if (_verbose > 0) {
-        if (0 > vasprintf(output, format, arglist)) {
+        if (0 > vasprintf(output, format, arglist) ||
+            NULL == *output) {
+            va_end(arglist);
             return;
         }
         fprintf(stderr, "ERROR: %s", *output);
-        va_end(arglist);
         free(*output);
     }
+    va_end(arglist);
 }
 
 static void log_info(const char *format, ...)
@@ -63,13 +66,15 @@ static void log_info(const char *format, ...)
 
     va_start(arglist, format);
     if (_verbose > 0) {
-        if (0 > vasprintf(output, format, arglist)) {
+        if (0 > vasprintf(output, format, arglist) ||
+            NULL == *output) {
+            va_end(arglist);
             return;
         }
         fprintf(stderr, "INFO: %s", *output);
-        va_end(arglist);
         free(*output);
     }
+    va_end(arglist);
 }
 
 #define log_assert(e, msg) \

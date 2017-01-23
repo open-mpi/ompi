@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Voltaire All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

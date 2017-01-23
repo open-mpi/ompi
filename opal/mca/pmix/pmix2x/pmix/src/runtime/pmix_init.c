@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -43,6 +43,7 @@
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
+#include "src/mca/pnet/base/base.h"
 #include "src/mca/psec/base/base.h"
 #include "src/mca/ptl/base/base.h"
 
@@ -212,6 +213,16 @@ int pmix_rte_init(pmix_proc_type_t type,
     if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_pif_base_framework, 0))) {
         error = "pmix_pif_base_open";
         return ret;
+    }
+
+    /* open the pnet and select the active modules for this environment */
+    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_pnet_base_framework, 0))) {
+        error = "pmix_pnet_base_open";
+        goto return_error;
+    }
+    if (PMIX_SUCCESS != (ret = pmix_pnet_base_select())) {
+        error = "pmix_pnet_base_select";
+        goto return_error;
     }
 
     /* tell libevent that we need thread support */

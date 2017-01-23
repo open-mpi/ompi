@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,8 +100,8 @@ PMIX_EXPORT bool pmix_net_islocalhost(const struct sockaddr *addr);
  *                          same net, false otherwise.
  */
 PMIX_EXPORT bool pmix_net_samenetwork(const struct sockaddr *addr1,
-                                        const struct sockaddr *addr2,
-                                        uint32_t prefixlen);
+                                      const struct sockaddr *addr2,
+                                      uint32_t prefixlen);
 
 
 /**
