@@ -367,9 +367,13 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         /* peek at the command */
         cnt=1;
         if (ORTE_SUCCESS == (ret = opal_dss.unpack(data, &command, &cnt, ORTE_DAEMON_CMD))) {
-            /* if it is add_procs, then... */
-            if (ORTE_DAEMON_ADD_LOCAL_PROCS == command ||
-                ORTE_DAEMON_DVM_NIDMAP_CMD == command) {
+            /* if it is an exit cmd, then flag that we are quitting so we will properly
+             * handle connection losses from our downstream peers */
+            if (ORTE_DAEMON_EXIT_CMD == command ||
+                ORTE_DAEMON_HALT_VM_CMD == command) {
+                orte_orteds_term_ordered = true;
+            } else if (ORTE_DAEMON_ADD_LOCAL_PROCS == command ||
+                       ORTE_DAEMON_DVM_NIDMAP_CMD == command) {
                 /* extract the byte object holding the daemonmap */
                 cnt=1;
                 if (ORTE_SUCCESS != (ret = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
