@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -184,134 +184,508 @@ int orte_util_build_daemon_nidmap(char **nodes)
     return rc;
 }
 
-int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
+int orte_util_encode_nodemap(opal_buffer_t *buffer)
 {
-    orte_node_t *node;
-    int32_t i;
+    char *node;
+    char prefix[ORTE_MAX_NODE_PREFIX];
+    int i, j, n, len, startnum, nodenum, numdigits;
+    bool found, fullname;
+    char *suffix, *sfx;
+    orte_regex_node_t *ndreg;
+    orte_regex_range_t *range, *rng, *idrng;
+    opal_list_t nodeids, nodenms, dvpids;
+    opal_list_item_t *item, *itm2;
+    char **regexargs = NULL, *tmp, *tmp2;
+    orte_node_t *nptr;
     int rc;
-    opal_buffer_t buf;
-    orte_job_t *daemons;
-    orte_proc_t *dmn;
 
-    /* if the daemon job has not been updated, then there is
-     * nothing to send
-     */
-    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    if (update && !ORTE_FLAG_TEST(daemons, ORTE_JOB_FLAG_UPDATED)) {
-        boptr->bytes = NULL;
-        boptr->size = 0;
-        return ORTE_SUCCESS;
-    }
+    /* setup the list of results */
+    OBJ_CONSTRUCT(&nodeids, opal_list_t);
+    OBJ_CONSTRUCT(&nodenms, opal_list_t);
+    OBJ_CONSTRUCT(&dvpids, opal_list_t);
 
-    /* setup a buffer for tmp use */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-
-    /* send the number of nodes */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &daemons->num_procs, 1, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    for (i=0; i < daemons->procs->size; i++) {
-        if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, i))) {
+    rng = NULL;
+    idrng = NULL;
+    for (n=0; n < orte_node_pool->size; n++) {
+        if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n))) {
             continue;
         }
-        /* if the daemon doesn't have a node, that's an error */
-        if (NULL == (node = dmn->node)) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
+        /* if no daemon has been assigned, then this node is not being used */
+        if (NULL == nptr->daemon) {
+            continue;
         }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &dmn->name.vpid, 1, ORTE_VPID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+        /* deal with the nodeids - these are just the index into
+         * the node array. We pass these to ensure coherence across
+         * the virtual machine */
+        if (NULL == idrng) {
+            /* just starting */
+            idrng = OBJ_NEW(orte_regex_range_t);
+            idrng->start = n;
+            idrng->cnt = 1;
+            opal_list_append(&nodeids, &idrng->super);
+        } else {
+            /* is this the next in line */
+            if (n == (idrng->start + idrng->cnt)) {
+                idrng->cnt++;
+            } else {
+                /* need to start another range */
+                idrng = OBJ_NEW(orte_regex_range_t);
+                idrng->start = n;
+                opal_list_append(&nodeids, &idrng->super);
+            }
         }
-        /* pack the node */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node, 1, ORTE_NODE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+        /* deal with the daemon vpid - see if it is next in the
+         * current range */
+        if (NULL == rng) {
+            /* just starting */
+            rng = OBJ_NEW(orte_regex_range_t);
+            rng->start = nptr->daemon->name.vpid;
+            rng->cnt = 1;
+            opal_list_append(&dvpids, &rng->super);
+        } else {
+            /* is this the next in line */
+            if (nptr->daemon->name.vpid == (orte_vpid_t)(rng->start + rng->cnt)) {
+                rng->cnt++;
+            } else {
+                /* need to start another range */
+            rng = OBJ_NEW(orte_regex_range_t);
+            rng->start = nptr->daemon->name.vpid;
+            opal_list_append(&dvpids, &rng->super);
+            }
+        }
+        node = nptr->name;
+        /* determine this node's prefix by looking for first non-alpha char */
+        fullname = false;
+        len = strlen(node);
+        startnum = -1;
+        memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
+        numdigits = 0;
+        for (i=0, j=0; i < len; i++) {
+            if (!isalpha(node[i])) {
+                /* found a non-alpha char */
+                if (!isdigit(node[i])) {
+                    /* if it is anything but a digit, we just use
+                     * the entire name
+                     */
+                    fullname = true;
+                    break;
+                }
+                /* count the size of the numeric field - but don't
+                 * add the digits to the prefix
+                 */
+                numdigits++;
+                if (startnum < 0) {
+                    /* okay, this defines end of the prefix */
+                    startnum = i;
+                }
+                continue;
+            }
+            if (startnum < 0) {
+                prefix[j++] = node[i];
+            }
+        }
+        if (fullname || startnum < 0) {
+            /* can't compress this name - just add it to the list */
+            ndreg = OBJ_NEW(orte_regex_node_t);
+            ndreg->prefix = strdup(node);
+            opal_list_append(&nodenms, &ndreg->super);
+            continue;
+        }
+        /* convert the digits and get any suffix */
+        nodenum = strtol(&node[startnum], &sfx, 10);
+        if (NULL != sfx) {
+            suffix = strdup(sfx);
+        } else {
+            suffix = NULL;
+        }
+        /* is this node name already on our list? */
+        found = false;
+        for (item = opal_list_get_first(&nodenms);
+             !found && item != opal_list_get_end(&nodenms);
+             item = opal_list_get_next(item)) {
+            ndreg = (orte_regex_node_t*)item;
+            if (0 < strlen(prefix) && NULL == ndreg->prefix) {
+                continue;
+            }
+            if (0 == strlen(prefix) && NULL != ndreg->prefix) {
+                continue;
+            }
+            if (0 < strlen(prefix) && NULL != ndreg->prefix
+                && 0 != strcmp(prefix, ndreg->prefix)) {
+                continue;
+            }
+            if (NULL == suffix && NULL != ndreg->suffix) {
+                continue;
+            }
+            if (NULL != suffix && NULL == ndreg->suffix) {
+                continue;
+            }
+            if (NULL != suffix && NULL != ndreg->suffix &&
+                0 != strcmp(suffix, ndreg->suffix)) {
+                continue;
+            }
+            if (numdigits != ndreg->num_digits) {
+                continue;
+            }
+            /* found a match - flag it */
+            found = true;
+            /* get the last range on this nodeid - we do this
+             * to preserve order
+             */
+            range = (orte_regex_range_t*)opal_list_get_last(&ndreg->ranges);
+            if (NULL == range) {
+                /* first range for this nodeid */
+                range = OBJ_NEW(orte_regex_range_t);
+                range->start = nodenum;
+                range->cnt = 1;
+                opal_list_append(&ndreg->ranges, &range->super);
+                break;
+            }
+            /* see if the node number is out of sequence */
+            if (nodenum != (range->start + range->cnt)) {
+                /* start a new range */
+                range = OBJ_NEW(orte_regex_range_t);
+                range->start = nodenum;
+                range->cnt = 1;
+                opal_list_append(&ndreg->ranges, &range->super);
+                break;
+            }
+            /* everything matches - just increment the cnt */
+            range->cnt++;
+            break;
+        }
+        if (!found) {
+            /* need to add it */
+            ndreg = OBJ_NEW(orte_regex_node_t);
+            if (0 < strlen(prefix)) {
+                ndreg->prefix = strdup(prefix);
+            }
+            if (NULL != suffix) {
+                ndreg->suffix = strdup(suffix);
+            }
+            ndreg->num_digits = numdigits;
+            opal_list_append(&nodenms, &ndreg->super);
+            /* record the first range for this nodeid - we took
+             * care of names we can't compress above
+             */
+            range = OBJ_NEW(orte_regex_range_t);
+            range->start = nodenum;
+            range->cnt = 1;
+            opal_list_append(&ndreg->ranges, &range->super);
+        }
+        if (NULL != suffix) {
+            free(suffix);
         }
     }
 
-    /* transfer the payload to the byte object */
-    opal_dss.unload(&buf, (void**)&boptr->bytes, &boptr->size);
-    OBJ_DESTRUCT(&buf);
+    /* begin constructing the regular expression */
+    while (NULL != (item = opal_list_remove_first(&nodenms))) {
+        ndreg = (orte_regex_node_t*)item;
+
+        /* if no ranges, then just add the name */
+        if (0 == opal_list_get_size(&ndreg->ranges)) {
+            if (NULL != ndreg->prefix) {
+                /* solitary node */
+                asprintf(&tmp, "%s", ndreg->prefix);
+                opal_argv_append_nosize(&regexargs, tmp);
+                free(tmp);
+            }
+            OBJ_RELEASE(ndreg);
+            continue;
+        }
+        /* start the regex for this nodeid with the prefix */
+        if (NULL != ndreg->prefix) {
+            asprintf(&tmp, "%s[%d:", ndreg->prefix, ndreg->num_digits);
+        } else {
+            asprintf(&tmp, "[%d:", ndreg->num_digits);
+        }
+        /* add the ranges */
+        while (NULL != (itm2 = opal_list_remove_first(&ndreg->ranges))) {
+            range = (orte_regex_range_t*)itm2;
+            if (1 == range->cnt) {
+                asprintf(&tmp2, "%s%d,", tmp, range->start);
+            } else {
+                asprintf(&tmp2, "%s%d-%d,", tmp, range->start, range->start + range->cnt - 1);
+            }
+            free(tmp);
+            tmp = tmp2;
+            OBJ_RELEASE(range);
+        }
+        /* replace the final comma */
+        tmp[strlen(tmp)-1] = ']';
+        if (NULL != ndreg->suffix) {
+            /* add in the suffix, if provided */
+            asprintf(&tmp2, "%s%s", tmp, ndreg->suffix);
+            free(tmp);
+            tmp = tmp2;
+        }
+        opal_argv_append_nosize(&regexargs, tmp);
+        free(tmp);
+        OBJ_RELEASE(ndreg);
+    }
+
+    /* assemble final result */
+    tmp = opal_argv_join(regexargs, ',');
+    /* cleanup */
+    opal_argv_free(regexargs);
+    OBJ_DESTRUCT(&nodenms);
+
+    /* pack the string */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        OPAL_LIST_DESTRUCT(&dvpids);
+        return rc;
+    }
+    if (NULL != tmp) {
+        free(tmp);
+    }
+
+    /* do the same for the indices */
+    tmp = NULL;
+    while (NULL != (item = opal_list_remove_first(&nodeids))) {
+        rng = (orte_regex_range_t*)item;
+        if (1 < rng->cnt) {
+            if (NULL == tmp) {
+                asprintf(&tmp, "%d-%d", rng->start, rng->start + rng->cnt - 1);
+            } else {
+                asprintf(&tmp2, "%s,%d-%d", tmp, rng->start, rng->start + rng->cnt - 1);
+                free(tmp);
+                tmp = tmp2;
+            }
+        } else {
+            if (NULL == tmp) {
+                asprintf(&tmp, "%d", rng->start);
+            } else {
+                asprintf(&tmp2, "%s,%d", tmp, rng->start);
+                free(tmp);
+                tmp = tmp2;
+            }
+        }
+        OBJ_RELEASE(rng);
+    }
+    OPAL_LIST_DESTRUCT(&nodeids);
+
+    /* pack the string */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        OPAL_LIST_DESTRUCT(&dvpids);
+        return rc;
+    }
+    if (NULL != tmp) {
+        free(tmp);
+    }
+
+    /* do the same for the vpids */
+    tmp = NULL;
+    while (NULL != (item = opal_list_remove_first(&dvpids))) {
+        rng = (orte_regex_range_t*)item;
+        if (1 < rng->cnt) {
+            if (NULL == tmp) {
+                asprintf(&tmp, "%d-%d", rng->start, rng->start + rng->cnt - 1);
+            } else {
+                asprintf(&tmp2, "%s,%d-%d", tmp, rng->start, rng->start + rng->cnt - 1);
+                free(tmp);
+                tmp = tmp2;
+            }
+        } else {
+            if (NULL == tmp) {
+                asprintf(&tmp, "%d", rng->start);
+            } else {
+                asprintf(&tmp2, "%s,%d", tmp, rng->start);
+                free(tmp);
+                tmp = tmp2;
+            }
+        }
+        OBJ_RELEASE(rng);
+    }
+    OPAL_LIST_DESTRUCT(&dvpids);
+
+    /* pack the string */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        OPAL_LIST_DESTRUCT(&dvpids);
+        return rc;
+    }
+    if (NULL != tmp) {
+        free(tmp);
+    }
 
     return ORTE_SUCCESS;
 }
 
 /* decode a nodemap for a daemon */
-int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
+int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
 {
-    int n;
-    orte_vpid_t vpid;
-    orte_node_t *node, *nptr;
-    opal_buffer_t buf;
-    int rc=ORTE_SUCCESS;
+    int k, m, n, rc, start, endpt;
+    orte_node_t *node;
+    size_t num_nodes;
     orte_job_t *daemons;
     orte_proc_t *dptr;
-    orte_vpid_t num_daemons;
+    char **nodes, *indices, *dvpids;
+    char *ndnames, *rmndr, **tmp;
+    int *nodeids, *dids;
 
-    if (NULL == bo->bytes || 0 == bo->size) {
-        /* nothing to unpack */
+    /* unpack the node regex */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ndnames, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* it is okay for this to be NULL */
+    if (NULL == ndnames) {
         return ORTE_SUCCESS;
     }
 
-    /* xfer the byte object to a buffer for unpacking */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    opal_dss.load(&buf, bo->bytes, bo->size);
-
-    /* unpack the number of procs */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &num_daemons, &n, ORTE_VPID))) {
+    /* unpack the index regex */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &indices, &n, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
+        free(ndnames);
         return rc;
     }
+    /* this is not allowed to be NULL */
+    if (NULL == indices) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        free(ndnames);
+        return ORTE_ERR_BAD_PARAM;
+    }
 
-    /* transfer the data to the nodes */
-    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    daemons->num_procs = num_daemons;
-    n=1;
-    while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &vpid, &n, ORTE_VPID))) {
-        /* unpack and store the node */
-        n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &node, &n, ORTE_NODE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+    /* unpack the daemon vpid regex */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &dvpids, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        free(ndnames);
+        free(indices);
+        return rc;
+    }
+    /* this is not allowed to be NULL */
+    if (NULL == dvpids) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        free(ndnames);
+        free(indices);
+        return ORTE_ERR_BAD_PARAM;
+    }
+
+    /* if we are the HNP, then we just discard these strings as we already
+     * have a complete picture - but we needed to unpack them in order to
+     * maintain sync in the unpacking order */
+    if (ORTE_PROC_IS_HNP) {
+        free(ndnames);
+        free(indices);
+        free(dvpids);
+        return ORTE_SUCCESS;
+    }
+
+    /* decompress the regex */
+    nodes = NULL;
+    if (ORTE_SUCCESS != (rc = orte_regex_extract_node_names(ndnames, &nodes))) {
+        free(ndnames);
+        free(indices);
+        free(dvpids);
+        return rc;
+    }
+    free(ndnames);
+
+    if (NULL == nodes) {
+        /* should not happen */
+        free(indices);
+        free(dvpids);
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    /* decompress the index ranges */
+    num_nodes = opal_argv_count(nodes);
+    nodeids = (int*)malloc(num_nodes * sizeof(int));
+    tmp = opal_argv_split(indices, ',');
+    k = 0;
+    for (n=0; NULL != tmp[n]; n++) {
+        /* convert the number - since it might be a range,
+         * save the remainder pointer */
+        nodeids[k] = strtoul(tmp[n], &rmndr, 10);
+        if (NULL != rmndr) {
+            /* it must be a range - find the endpoint */
+            ++rmndr;
+            endpt = strtoul(rmndr, NULL, 10);
+            start = nodeids[k] + 1;
+            for (m=0; m < endpt; m++) {
+                ++k;
+                nodeids[k] = start + m;
+            }
         }
-        /* set the nodeid */
-        node->index = vpid;
-        /* do we already have this node? */
-        nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, vpid);
-        /* set the new node object into the array */
-        opal_pointer_array_set_item(orte_node_pool, vpid, node);
-        if (NULL == (dptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, vpid))) {
+        ++k;
+    }
+    opal_argv_free(tmp);
+    free(indices);
+
+    /* decompress the vpids */
+    dids = (int*)malloc(num_nodes * sizeof(int));
+    tmp = opal_argv_split(dvpids, ',');
+    k = 0;
+    for (n=0; NULL != tmp[n]; n++) {
+        /* convert the number - since it might be a range,
+         * save the remainder pointer */
+        dids[k] = strtoul(tmp[n], &rmndr, 10);
+        if (NULL != rmndr) {
+            /* it must be a range - find the endpoint */
+            ++rmndr;
+            endpt = strtoul(rmndr, NULL, 10);
+            start = dids[k] + 1;
+            for (m=0; m < endpt; m++) {
+                ++k;
+                dids[k] = start + m;
+            }
+        }
+        ++k;
+    }
+    opal_argv_free(tmp);
+    free(dvpids);
+
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    /* since this is a complete picture of all the nodes, reset the
+     * counters and regenerate them */
+    orte_process_info.num_daemons = 0;
+    orte_process_info.num_nodes = 0;
+    daemons->num_procs = 0;
+
+    /* update the node array */
+    for (n=0; NULL != nodes[n]; n++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nodeids[n]))) {
+            node = OBJ_NEW(orte_node_t);
+            node->name = nodes[n];
+            node->index = nodeids[n];
+            opal_pointer_array_set_item(orte_node_pool, node->index, node);
+        } else if (NULL != node->daemon) {
+            OBJ_RELEASE(node->daemon);
+            node->daemon = NULL;
+        }
+        ++orte_process_info.num_nodes;
+        if (NULL == (dptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, dids[n]))) {
+            /* create a daemon object for this node */
             dptr = OBJ_NEW(orte_proc_t);
             dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
-            dptr->name.vpid = vpid;
+            dptr->name.vpid = dids[n];
             ORTE_FLAG_SET(dptr, ORTE_PROC_FLAG_ALIVE);  // assume the daemon is alive until discovered otherwise
-            opal_pointer_array_set_item(daemons->procs, vpid, dptr);
+            opal_pointer_array_set_item(daemons->procs, dids[n], dptr);
+        } else if (NULL != dptr->node) {
+            OBJ_RELEASE(dptr->node);
+            dptr->node = NULL;
         }
-        if (NULL != node->daemon) {
-            OBJ_RELEASE(node->daemon);
-        }
+        ++daemons->num_procs;
+        /* link the node to the daemon */
         OBJ_RETAIN(dptr);
         node->daemon = dptr;
-        if (NULL != dptr->node) {
-            OBJ_RELEASE(dptr->node);
-        }
+        /* link the node to the daemon */
         OBJ_RETAIN(node);
-        if (NULL != nptr) {
-            OBJ_RELEASE(nptr);
-        }
         dptr->node = node;
     }
-    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
-        return rc;
-    }
-    rc = ORTE_SUCCESS;
+    /* we cannot use opal_argv_free here as this would release
+     * all the node names themselves. Instead, we just free the
+     * array of string pointers, leaving the strings alone */
+    free(nodes);
+    free(nodeids);
+    free(dids);
 
+    /* unpdate num procs */
     orte_process_info.num_procs = daemons->num_procs;
 
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
@@ -334,6 +708,5 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
         }
     }
 
-    OBJ_DESTRUCT(&buf);
-    return rc;
+    return ORTE_SUCCESS;
 }

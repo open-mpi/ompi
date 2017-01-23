@@ -374,33 +374,16 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                 orte_orteds_term_ordered = true;
             } else if (ORTE_DAEMON_ADD_LOCAL_PROCS == command ||
                        ORTE_DAEMON_DVM_NIDMAP_CMD == command) {
-                /* extract the byte object holding the daemonmap */
-                cnt=1;
-                if (ORTE_SUCCESS != (ret = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
+                /* update our local nidmap, if required - the decode function
+                 * knows what to do
+                 */
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                                     "%s grpcomm:direct:xcast updating daemon nidmap",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+                if (ORTE_SUCCESS != (ret = orte_util_decode_daemon_nodemap(data))) {
                     ORTE_ERROR_LOG(ret);
                     goto relay;
-                }
-
-                /* update our local nidmap, if required - the decode function
-                 * knows what to do - it will also free the bytes in the byte object
-                 */
-                if (ORTE_PROC_IS_HNP) {
-                    /* no need - already have the info */
-                    if (NULL != bo) {
-                        if (NULL != bo->bytes) {
-                            free(bo->bytes);
-                        }
-                        free(bo);
-                    }
-                } else {
-                    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                         "%s grpcomm:direct:xcast updating daemon nidmap",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-                    if (ORTE_SUCCESS != (ret = orte_util_decode_daemon_nodemap(bo))) {
-                        ORTE_ERROR_LOG(ret);
-                        goto relay;
-                    }
                 }
 
                 /* update the routing plan */

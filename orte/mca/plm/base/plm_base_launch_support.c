@@ -1059,41 +1059,12 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                  "%s plm:base:orted_report_launch attempting to assign daemon %s to node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&dname), nodename));
-            for (idx=0; idx < orte_node_pool->size; idx++) {
-                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, idx))) {
-                    continue;
-                }
-                if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_LOC_VERIFIED)) {
-                    /* already assigned */
-                    continue;
-                }
-                if (0 == strcmp(nodename, node->name)) {
-                    /* flag that we verified the location */
-                    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_LOC_VERIFIED);
-                    if (node == daemon->node) {
-                        /* it wound up right where it should */
-                        break;
-                    }
-                    /* remove the prior association */
-                    if (NULL != daemon->node) {
-                        OBJ_RELEASE(daemon->node);
-                    }
-                    if (NULL != node->daemon) {
-                        OBJ_RELEASE(node->daemon);
-                    }
-                    /* associate this daemon with the node */
-                    node->daemon = daemon;
-                    OBJ_RETAIN(daemon);
-                    /* associate this node with the daemon */
-                    daemon->node = node;
-                    OBJ_RETAIN(node);
-                    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                         "%s plm:base:orted_report_launch assigning daemon %s to node %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&daemon->name), node->name));
-                    break;
-                }
-            }
+            /* to "relocate" the daemon, we just update the name of
+             * the node object pointed to by this daemon */
+            free(daemon->node->name);
+            daemon->node->name = strdup(nodename);
+            /* mark that it was verified */
+            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_LOC_VERIFIED);
         }
 
         node = daemon->node;
