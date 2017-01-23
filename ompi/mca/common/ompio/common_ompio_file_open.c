@@ -150,16 +150,10 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
 	    */
 	}
 
-	/* open the file once more for the shared file pointer if required.
-	** Per default, the shared file pointer specific actions are however
-	** only performed on first access of the shared file pointer, except
-	** for the addproc sharedfp component.
-	**
-	** Lazy open does not work for the addproc sharedfp
-	** component since it starts by spawning a process using MPI_Comm_spawn.
-	** For this, the first operation has to be collective which we can
-	** not guarantuee outside of the MPI_File_open operation.
-	*/
+	/* open the file once more for the shared file pointer if required.           
+        ** Can be disabled by the user if no shared file pointer operations
+        ** are used by his application.	
+        */
 	if ( NULL != ompio_fh->f_sharedfp &&
 	     true == use_sharedfp &&
 	     (!mca_io_ompio_sharedfp_lazy_open ||
