@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -174,7 +174,7 @@ pmix_status_t pmix_bfrop_open(void)
     }
     pmix_bfrop_num_reg_types = PMIX_UNDEF;
     pmix_bfrop_threshold_size = PMIX_BFROP_DEFAULT_THRESHOLD_SIZE;
-    pmix_bfrop_initial_size = 1;
+    pmix_bfrop_initial_size = PMIX_BFROP_DEFAULT_INITIAL_SIZE;
 
     /* Register all the supported types */
     PMIX_REGISTER_TYPE("PMIX_BOOL", PMIX_BOOL,

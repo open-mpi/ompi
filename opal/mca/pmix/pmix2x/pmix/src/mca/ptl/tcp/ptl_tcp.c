@@ -222,15 +222,23 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (0 == strncmp(mca_ptl_tcp_component.super.uri, "tcp4", 4)) {
         /* separate the IP address from the port */
         p = strdup(mca_ptl_tcp_component.super.uri);
+        if (NULL == p) {
+            return PMIX_ERR_NOMEM;
+        }
         p2 = strchr(&p[7], ':');
+        if (NULL == p2) {
+            free(p);
+            return PMIX_ERR_BAD_PARAM;
+        }
         *p2 = '\0';
         ++p2;
-        host = strdup(&p[7]);
+        host = &p[7];
         /* load the address */
         in = (struct sockaddr_in*)&mca_ptl_tcp_component.connection;
         in->sin_family = AF_INET;
         in->sin_addr.s_addr = inet_addr(host);
         if (in->sin_addr.s_addr == INADDR_NONE) {
+            free(p);
             return PMIX_ERR_BAD_PARAM;
         }
         in->sin_port = htons(atoi(p2));
@@ -238,26 +246,35 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     } else {
         /* separate the IP address from the port */
         p = strdup(mca_ptl_tcp_component.super.uri);
+        if (NULL == p) {
+            return PMIX_ERR_NOMEM;
+        }
         p2 = strchr(&p[7], ':');
+        if (NULL == p2) {
+            free(p);
+            return PMIX_ERR_BAD_PARAM;
+        }
         *p2 = '\0';
         if (']' == p[strlen(p)-1]) {
             p[strlen(p)-1] = '\0';
         }
         if ('[' == p[7]) {
-            host = strdup(&p[8]);
+            host = &p[8];
         } else {
-            host = strdup(&p[7]);
+            host = &p[7];
         }
         /* load the address */
         in6 = (struct sockaddr_in6*)&mca_ptl_tcp_component.connection;
         in6->sin6_family = AF_INET6;
         if (0 == inet_pton(AF_INET6, host, (void*)&in6->sin6_addr)) {
             pmix_output (0, "ptl_tcp_parse_uri: Could not convert %s\n", host);
+            free(p);
             return PMIX_ERR_BAD_PARAM;
         }
         in6->sin6_port = htons(atoi(p2));
         len = sizeof(struct sockaddr_in6);
     }
+    free(p);
 
     /* establish the connection */
     if (PMIX_SUCCESS != (rc = pmix_ptl_base_connect(&mca_ptl_tcp_component.connection, len, &sd))) {
@@ -270,7 +287,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (PMIX_SUCCESS != (rc = send_connect_ack(sd))) {
         PMIX_ERROR_LOG(rc);
         CLOSE_THE_SOCKET(sd);
-        pmix_client_globals.myserver.sd = -1;
         return rc;
     }
 
@@ -278,7 +294,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (PMIX_SUCCESS != (rc = recv_connect_ack(sd))) {
         PMIX_ERROR_LOG(rc);
         CLOSE_THE_SOCKET(sd);
-        pmix_client_globals.myserver.sd = -1;
         return rc;
     }
 

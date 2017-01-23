@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -169,6 +169,10 @@ static pmix_status_t validate_cred(pmix_peer_t *peer,
     if (PMIX_PROTOCOL_V2 == protocol) {
         /* this is a tcp protocol, so the cred is actually the uid/gid
          * passed upwards from the client */
+        if (NULL == cred) {
+            /* not allowed */
+            return PMIX_ERR_INVALID_CRED;
+        }
         ln = len;
         euid = 0;
         gid = 0;

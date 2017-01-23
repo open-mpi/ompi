@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -482,6 +482,34 @@ typedef void (*pmix_dmodex_response_fn_t)(pmix_status_t status,
 pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
                                          pmix_dmodex_response_fn_t cbfunc,
                                          void *cbdata);
+
+/* define a callback function for the setup_application API. The returned info
+ * array is owned by the PMIx server library and will be free'd when the
+ * provided cbfunc is called. */
+typedef void (*pmix_setup_application_cbfunc_t)(pmix_status_t status,
+                                                pmix_info_t info[], size_t ninfo,
+                                                void *provided_cbdata,
+                                                pmix_op_cbfunc_t cbfunc, void *cbdata);
+
+/* Provide a function by which the resource manager can request
+ * any application-specific environmental variables prior to
+ * launch of an application. For example, network libraries may
+ * opt to provide security credentials for the application. This
+ * is defined as a non-blocking operation in case network
+ * libraries need to perform some action before responding. The
+ * returned env will be distributed along with the application */
+pmix_status_t PMIx_server_setup_application(const char nspace[],
+                                            pmix_info_t info[], size_t ninfo,
+                                            pmix_setup_application_cbfunc_t cbfunc, void *cbdata);
+
+/* Provide a function by which the local PMIx server can perform
+ * any application-specific operations prior to spawning local
+ * clients of a given application. For example, a network library
+ * might need to setup the local driver for "instant on" addressing.
+ */
+pmix_status_t PMIx_server_setup_local_support(const char nspace[],
+                                              pmix_info_t info[], size_t ninfo,
+                                              pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

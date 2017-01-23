@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -438,15 +438,6 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     return;
 }
 
-/* just a simple tracker so we know who we notified */
-typedef struct pmix_event_trkr_t {
-    pmix_list_item_t super;
-    pmix_peer_t *peer;
-} pmix_event_trkr_t;
-static PMIX_CLASS_INSTANCE(pmix_event_trkr_t,
-                           pmix_list_item_t,
-                           NULL, NULL);
-
 
 static void _notify_client_event(int sd, short args, void *cbdata)
 {
@@ -455,9 +446,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     pmix_regevents_info_t *reginfoptr;
     pmix_peer_events_info_t *pr;
     size_t n;
-    bool matched, notify;;
-    pmix_list_t recips;
-    pmix_event_trkr_t *trkr;
+    bool matched;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix_server: _notify_error notifying clients of error %s",
@@ -477,7 +466,6 @@ static void _notify_client_event(int sd, short args, void *cbdata)
 
     /* cycle across our registered events and send the message to
      * any client who registered for it */
-    PMIX_CONSTRUCT(&recips, pmix_list_t);
     PMIX_LIST_FOREACH(reginfoptr, &pmix_server_globals.events, pmix_regevents_info_t) {
         if ((PMIX_MAX_ERR_CONSTANT == reginfoptr->code && !cd->nondefault) ||
             cd->status == reginfoptr->code) {
@@ -506,30 +494,14 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                         continue;
                     }
                 }
-                /* if we have already notified this client, then don't do it again */
-                notify = true;
-                PMIX_LIST_FOREACH(trkr, &recips, pmix_event_trkr_t) {
-                    if (trkr->peer == pr->peer) {
-                        notify = false;
-                        break;
-                    }
-                }
-                if (!notify) {
-                    continue;
-                }
-                /* add this peer to the list of prior recipients */
-                trkr = PMIX_NEW(pmix_event_trkr_t);
-                trkr->peer = pr->peer;
-                pmix_list_append(&recips, &trkr->super);
                 pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "pmix_server: notifying client %s:%d of code %d",
-                                    pr->peer->info->nptr->nspace, pr->peer->info->rank, cd->status);
+                                    "pmix_server: notifying client %s:%d",
+                                    pr->peer->info->nptr->nspace, pr->peer->info->rank);
                 PMIX_RETAIN(cd->buf);
                 PMIX_SERVER_QUEUE_REPLY(pr->peer, 0, cd->buf);
             }
         }
     }
-    PMIX_LIST_DESTRUCT(&recips);
 
     /* notify the caller */
     if (NULL != cd->cbfunc) {
@@ -558,8 +530,8 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
     size_t n;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix_server: notify client of event %s with %lu ninfos",
-                        PMIx_Error_string(status), ninfo);
+                        "pmix_server: notify client of event %s",
+                        PMIx_Error_string(status));
 
     cd = PMIX_NEW(pmix_notify_caddy_t);
     cd->status = status;

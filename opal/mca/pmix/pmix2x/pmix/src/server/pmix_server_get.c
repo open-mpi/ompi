@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -198,6 +198,11 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
          * give the host server a chance to tell us about it */
         rc = create_local_tracker(nspace, rank, info, ninfo,
                                   cbfunc, cbdata, &lcd);
+        if (PMIX_ERR_NOMEM == rc) {
+            PMIX_INFO_FREE(info, ninfo);
+            return rc;
+        }
+
         /*
          * Its possible there are no local processes on this
          * host, so lets ask for this explicitly.  There can
@@ -237,6 +242,9 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
          * for now */
         rc = create_local_tracker(nspace, rank, info, ninfo,
                                   cbfunc, cbdata, &lcd);
+        if (PMIX_ERR_NOMEM == rc) {
+            PMIX_INFO_FREE(info, ninfo);
+        }
         return rc;
     }
 
@@ -265,8 +273,9 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
        return PMIX_SUCCESS;
     }
     if (PMIX_ERR_NOT_FOUND != rc || NULL == lcd) {
-       /* we have a problem - e.g., out of memory */
-       return rc;
+        /* we have a problem - e.g., out of memory */
+        PMIX_INFO_FREE(info, ninfo);
+        return rc;
     }
 
     /* Getting here means that we didn't already have a request for
@@ -330,7 +339,6 @@ static pmix_status_t create_local_tracker(char nspace[], pmix_rank_t rank,
      * one and add it to our list */
     lcd = PMIX_NEW(pmix_dmdx_local_t);
     if (NULL == lcd){
-        PMIX_INFO_FREE(info, ninfo);
         return PMIX_ERR_NOMEM;
     }
     strncpy(lcd->proc.nspace, nspace, PMIX_MAX_NSLEN);
@@ -422,6 +430,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
         hts[0] = &nptr->server->remote;
         hts[1] = &nptr->server->mylocal;
     } else if (PMIX_RANK_WILDCARD == rank) {
+        local = true;
         hts[0] = NULL;
     } else {
         local = false;

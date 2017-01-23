@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -677,7 +677,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_peer_t *peer;
     pmix_rank_t rank;
     pmix_status_t rc;
-    char *msg, *mg, *sec, *cred = NULL;
+    char *msg, *mg, *sec;
     char *nspace;
     uint32_t len, u32;
     size_t cnt, msglen, n;
@@ -733,7 +733,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     /* extract the name of the sec module they used */
     PMIX_STRNLEN(msglen, mg, cnt);
     if (msglen < cnt) {
-        sec = msg;
+        sec = mg;
         mg += strlen(sec) + 1;
         cnt -= strlen(sec) + 1;
     } else {
@@ -758,21 +758,21 @@ static void connection_handler(int sd, short args, void *cbdata)
         goto error;
     }
     /* convert it to host byte order */
-    len = ntohl(len);
+    pnd->len = ntohl(len);
     /* if a credential is present, then create space and
      * extract it for processing */
-    if (0 < len) {
-        cred = (char*)malloc(len);
-        if (NULL == cred) {
+    if (0 < pnd->len) {
+        pnd->cred = (char*)malloc(pnd->len);
+        if (NULL == pnd->cred) {
             /* probably cannot send an error reply if we are out of memory */
             free(msg);
             CLOSE_THE_SOCKET(pnd->sd);
             PMIX_RELEASE(pnd);
             return;
         }
-        memcpy(cred, mg, len);
-        mg += len;
-        cnt -= len;
+        memcpy(pnd->cred, mg, pnd->len);
+        mg += pnd->len;
+        cnt -= pnd->len;
     }
 
     /* get the request type */
@@ -845,14 +845,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         ++n;
         /* pass along the bfrop, buffer_type, and sec fields so
          * we can assign them once we create a peer object */
-        if (NULL != sec) {
-            pnd->psec = strdup(sec);
-        }
-        /* pass along the credential for later */
-        if (NULL != cred) {
-            pnd->cred = cred;
-            pnd->len = len;
-        }
+        pnd->psec = strdup(sec);
         /* release the msg */
         free(msg);
         /* request an nspace for this requestor - it will
@@ -963,7 +956,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* validate the connection */
     if (PMIX_SUCCESS != (rc = pmix_psec.validate_connection((struct pmix_peer_t*)peer,
-                                                            PMIX_PROTOCOL_V2, cred, len))) {
+                                                            PMIX_PROTOCOL_V2, pnd->cred, pnd->len))) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of client connection failed");
         info->proc_cnt--;

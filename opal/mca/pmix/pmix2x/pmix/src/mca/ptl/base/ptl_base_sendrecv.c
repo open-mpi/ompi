@@ -144,7 +144,6 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
 
 static pmix_status_t send_msg(int sd, pmix_ptl_send_t *msg)
 {
-    pmix_status_t ret = PMIX_SUCCESS;
     struct iovec iov[2];
     int iov_count;
     ssize_t remain = msg->sdbytes, rc;

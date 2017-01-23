@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -309,7 +309,9 @@ char *pmix_show_help_vstring(const char *filename, const char *topic,
 
     if (PMIX_SUCCESS == rc) {
         /* Apply the formatting to make the final output string */
-        vasprintf(&output, single_string, arglist);
+        if (0 > vasprintf(&output, single_string, arglist)) {
+            output = NULL;
+        }
         free(single_string);
     }
 

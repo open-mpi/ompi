@@ -1555,11 +1555,14 @@ static void scadcon(pmix_setup_caddy_t *p)
 {
     memset(&p->proc, 0, sizeof(pmix_proc_t));
     p->active = true;
+    p->nspace = NULL;
     p->server_object = NULL;
     p->nlocalprocs = 0;
     p->info = NULL;
     p->ninfo = 0;
     p->cbfunc = NULL;
+    p->opcbfunc = NULL;
+    p->setupcbfunc = NULL;
     p->cbdata = NULL;
 }
 static void scaddes(pmix_setup_caddy_t *p)
