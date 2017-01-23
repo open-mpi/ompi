@@ -36,7 +36,7 @@ int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_num_aggregators = -1;
 int mca_io_ompio_record_offset_info = 0;
 int mca_io_ompio_coll_timing_info = 0;
-int mca_io_ompio_sharedfp_lazy_open = 1;
+int mca_io_ompio_sharedfp_lazy_open = 0;
 
 int mca_io_ompio_grouping_option=5;
 
@@ -193,7 +193,7 @@ static int register_component(void)
                                            &mca_io_ompio_num_aggregators);
 
 
-    mca_io_ompio_sharedfp_lazy_open = 1;
+    mca_io_ompio_sharedfp_lazy_open = 0;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "sharedfp_lazy_open",
                                            "lazy allocation of internal shared file pointer structures",
