@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -204,10 +204,28 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
        file pointer of OMPIO to the very end of the file. */
     if ( ompio_fh->f_amode & MPI_MODE_APPEND ) {
         OMPI_MPI_OFFSET_TYPE current_size;
+        mca_sharedfp_base_module_t * shared_fp_base_module;
 
         ompio_fh->f_fs->fs_file_get_size( ompio_fh,
                                           &current_size);
         mca_common_ompio_set_explicit_offset (ompio_fh, current_size);
+        if ( true == use_sharedfp ) {
+            if ( NULL != ompio_fh->f_sharedfp &&
+                 (!mca_io_ompio_sharedfp_lazy_open ||
+                  !strcmp (ompio_fh->f_sharedfp_component->mca_component_name,
+                           "addproc")               )) {
+                
+                shared_fp_base_module = ompio_fh->f_sharedfp;
+                ret = shared_fp_base_module->sharedfp_seek(ompio_fh,current_size, MPI_SEEK_SET);
+            }
+            else {
+                opal_output(1, "mca_common_ompio_file_open: Could not adjust position of "
+                            "shared file pointer whith MPI_MODE_APPEND\n");
+                ret = MPI_ERR_OTHER;
+                goto fn_fail;
+            }
+        }
+
     }
 
 
