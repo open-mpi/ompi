@@ -610,8 +610,6 @@ if test "$enable_epoll" != "no" ; then
 AC_INCLUDES_DEFAULT
 #include <sys/epoll.h>
 ],[[
-int main(int argc, char **argv)
-{
     struct epoll_event epevin;
     struct epoll_event epevout;
     int res;
@@ -639,7 +637,6 @@ int main(int argc, char **argv)
         }
     }
     /* SUCCESS */
-}
 ]])],
         [haveepoll=yes
         # OMPI: Don't use AC_LIBOBJ
