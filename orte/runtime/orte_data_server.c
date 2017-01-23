@@ -493,6 +493,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
                 OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                      "%s data server:lookup: pushing request to wait",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                OBJ_RELEASE(answer);
                 req = OBJ_NEW(orte_data_req_t);
                 req->room_number = room_number;
                 req->requestor = *sender;
