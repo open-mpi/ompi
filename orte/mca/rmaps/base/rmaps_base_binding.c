@@ -585,7 +585,7 @@ static int bind_in_place(orte_job_t *jdata,
 
 static int bind_to_cpuset(orte_job_t *jdata)
 {
-    /* bind each process to opal_hwloc_base_cpu_set */
+    /* bind each process to opal_hwloc_base_cpu_list */
     int i, j;
     orte_job_map_t *map;
     orte_node_t *node;
@@ -596,9 +596,9 @@ static int bind_to_cpuset(orte_job_t *jdata)
     char *cpu_bitmap;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                        "mca:rmaps: bind job %s to cpuset %s",
+                        "mca:rmaps: bind job %s to cpus %s",
                         ORTE_JOBID_PRINT(jdata->jobid),
-                        opal_hwloc_base_cpu_set);
+                        opal_hwloc_base_cpu_list);
     /* initialize */
     map = jdata->map;
 

@@ -460,7 +460,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                     /* setup the bitmap */
                     bitmap = hwloc_bitmap_alloc();
                     /* parse the slot_list to find the socket and core */
-                    if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(sq->cpuset, node->topology->topo, rtype, bitmap))) {
+                    if (ORTE_SUCCESS != (rc = opal_hwloc_base_cpu_list_parse(sq->cpuset, node->topology->topo, rtype, bitmap))) {
                         ORTE_ERROR_LOG(rc);
                         hwloc_bitmap_free(bitmap);
                         goto error;

@@ -677,7 +677,7 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
                  orte_rmaps_base_print_mapping(src->mapping),
                  orte_rmaps_base_print_ranking(src->ranking),
                  pfx2, opal_hwloc_base_print_binding(src->binding),
-                 (NULL == opal_hwloc_base_cpu_set) ? "NULL" : opal_hwloc_base_cpu_set,
+                 (NULL == opal_hwloc_base_cpu_list) ? "NULL" : opal_hwloc_base_cpu_list,
                  (NULL == src->ppr) ? "NULL" : src->ppr,
                  (int)src->cpus_per_rank);
 

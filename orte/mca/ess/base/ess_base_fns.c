@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -149,7 +149,7 @@ int orte_ess_base_proc_binding(void)
              */
             hwloc_bitmap_zero(cpus);
             if (OPAL_BIND_TO_CPUSET == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
-                if (OPAL_SUCCESS != (ret = opal_hwloc_base_slot_list_parse(opal_hwloc_base_slot_list,
+                if (OPAL_SUCCESS != (ret = opal_hwloc_base_cpu_list_parse(opal_hwloc_base_cpu_list,
                                                                            opal_hwloc_topology,
                                                                            OPAL_HWLOC_LOGICAL, cpus))) {
                     error = "Setting processor affinity failed";

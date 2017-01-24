@@ -199,8 +199,8 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             /* get the rankfile entry for this rank */
             if (NULL == (rfmap = (orte_rmaps_rank_file_map_t*)opal_pointer_array_get_item(&rankmap, rank))) {
                 /* if we were give a default slot-list, then use it */
-                if (NULL != opal_hwloc_base_slot_list) {
-                    slots = opal_hwloc_base_slot_list;
+                if (NULL != opal_hwloc_base_cpu_list) {
+                    slots = opal_hwloc_base_cpu_list;
                     /* take the next node off of the available list */
                     node = NULL;
                     OPAL_LIST_FOREACH(nd, &node_list, orte_node_t) {
@@ -318,7 +318,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 }
                 bitmap = hwloc_bitmap_alloc();
                 /* parse the slot_list to find the socket and core */
-                if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(slots, node->topology->topo, rtype, bitmap))) {
+                if (ORTE_SUCCESS != (rc = opal_hwloc_base_cpu_list_parse(slots, node->topology->topo, rtype, bitmap))) {
                     ORTE_ERROR_LOG(rc);
                     hwloc_bitmap_free(bitmap);
                     goto error;
