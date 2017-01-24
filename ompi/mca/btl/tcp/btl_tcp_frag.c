@@ -5,13 +5,14 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or all its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,62 +42,62 @@
 
 #include "opal/opal_socket_errno.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
-#include "btl_tcp_frag.h" 
+#include "btl_tcp_frag.h"
 #include "btl_tcp_endpoint.h"
 
-static void mca_btl_tcp_frag_common_constructor(mca_btl_tcp_frag_t* frag) 
-{ 
+static void mca_btl_tcp_frag_common_constructor(mca_btl_tcp_frag_t* frag)
+{
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
 }
 
-static void mca_btl_tcp_frag_eager_constructor(mca_btl_tcp_frag_t* frag) 
-{ 
-    frag->size = mca_btl_tcp_module.super.btl_eager_limit;   
+static void mca_btl_tcp_frag_eager_constructor(mca_btl_tcp_frag_t* frag)
+{
+    frag->size = mca_btl_tcp_module.super.btl_eager_limit;
     frag->my_list = &mca_btl_tcp_component.tcp_frag_eager;
-    mca_btl_tcp_frag_common_constructor(frag); 
+    mca_btl_tcp_frag_common_constructor(frag);
 }
 
-static void mca_btl_tcp_frag_max_constructor(mca_btl_tcp_frag_t* frag) 
-{ 
-    frag->size = mca_btl_tcp_module.super.btl_max_send_size; 
+static void mca_btl_tcp_frag_max_constructor(mca_btl_tcp_frag_t* frag)
+{
+    frag->size = mca_btl_tcp_module.super.btl_max_send_size;
     frag->my_list = &mca_btl_tcp_component.tcp_frag_max;
-    mca_btl_tcp_frag_common_constructor(frag); 
+    mca_btl_tcp_frag_common_constructor(frag);
 }
 
-static void mca_btl_tcp_frag_user_constructor(mca_btl_tcp_frag_t* frag) 
-{ 
-    frag->size = 0; 
+static void mca_btl_tcp_frag_user_constructor(mca_btl_tcp_frag_t* frag)
+{
+    frag->size = 0;
     frag->my_list = &mca_btl_tcp_component.tcp_frag_user;
-    mca_btl_tcp_frag_common_constructor(frag); 
+    mca_btl_tcp_frag_common_constructor(frag);
 }
 
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_tcp_frag_t, 
-    mca_btl_base_descriptor_t, 
-    NULL, 
-    NULL); 
+    mca_btl_tcp_frag_t,
+    mca_btl_base_descriptor_t,
+    NULL,
+    NULL);
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_tcp_frag_eager_t, 
-    mca_btl_base_descriptor_t, 
-    mca_btl_tcp_frag_eager_constructor, 
-    NULL); 
+    mca_btl_tcp_frag_eager_t,
+    mca_btl_base_descriptor_t,
+    mca_btl_tcp_frag_eager_constructor,
+    NULL);
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_tcp_frag_max_t, 
-    mca_btl_base_descriptor_t, 
-    mca_btl_tcp_frag_max_constructor, 
-    NULL); 
+    mca_btl_tcp_frag_max_t,
+    mca_btl_base_descriptor_t,
+    mca_btl_tcp_frag_max_constructor,
+    NULL);
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_tcp_frag_user_t, 
-    mca_btl_base_descriptor_t, 
-    mca_btl_tcp_frag_user_constructor, 
-    NULL); 
+    mca_btl_tcp_frag_user_t,
+    mca_btl_base_descriptor_t,
+    mca_btl_tcp_frag_user_constructor,
+    NULL);
 
 
 size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, size_t length)
@@ -117,7 +118,7 @@ size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, siz
 
 bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
 {
-    int cnt=-1;
+    ssize_t cnt=-1;
     size_t i, num_vecs;
 
     /* non-blocking write, but continue if interrupted */
@@ -150,7 +151,7 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
     /* if the write didn't complete - update the iovec state */
     num_vecs = frag->iov_cnt;
     for(i=0; i<num_vecs; i++) {
-        if(cnt >= (int)frag->iov_ptr->iov_len) {
+        if(cnt >= (ssize_t)frag->iov_ptr->iov_len) {
             cnt -= frag->iov_ptr->iov_len;
             frag->iov_ptr++;
             frag->iov_idx++;
@@ -232,7 +233,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 	    mca_btl_tcp_endpoint_close(btl_endpoint);
 	    return false;
 	default:
-            BTL_ERROR(("mca_btl_tcp_frag_recv: readv failed: %s (%d)", 
+            BTL_ERROR(("mca_btl_tcp_frag_recv: readv failed: %s (%d)",
                        strerror(opal_socket_errno),
                        opal_socket_errno));
             btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
@@ -245,7 +246,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     /* if the read didn't complete - update the iovec state */
     num_vecs = frag->iov_cnt;
     for( i = 0; i < num_vecs; i++ ) {
-        if( cnt < (int)frag->iov_ptr->iov_len ) {
+        if( cnt < (ssize_t)frag->iov_ptr->iov_len ) {
             frag->iov_ptr->iov_base = (ompi_iov_base_ptr_t)
                 (((unsigned char*)frag->iov_ptr->iov_base) + cnt);
             frag->iov_ptr->iov_len -= cnt;
