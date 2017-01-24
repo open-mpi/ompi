@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2017 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -307,6 +307,10 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
         ompio_fh->f_io_array = NULL;
     }
 
+    if (NULL != ompio_fh->f_init_aggr_list) {
+        free (ompio_fh->f_init_aggr_list);
+        ompio_fh->f_init_aggr_list = NULL;
+    }
     if (NULL != ompio_fh->f_init_procs_in_group) {
         free (ompio_fh->f_init_procs_in_group);
         ompio_fh->f_init_procs_in_group = NULL;
@@ -358,7 +362,7 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     }
 
 
-    if (MPI_COMM_NULL != ompio_fh->f_comm && (ompio_fh->f_flags & OMPIO_SHAREDFP_IS_SET) )  {
+    if (MPI_COMM_NULL != ompio_fh->f_comm)  {
         ompi_comm_free (&ompio_fh->f_comm);
     }
 
