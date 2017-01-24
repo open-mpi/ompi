@@ -670,9 +670,6 @@ AC_INCLUDES_DEFAULT
 #include <sys/syscall.h>
 #include <sys/epoll.h>
 ],[[
-int
-main(int argc, char **argv)
-{
     struct epoll_event epevin;
     struct epoll_event epevout;
     int res;
@@ -701,7 +698,6 @@ main(int argc, char **argv)
         }
     }
     /* SUCCESS */
-}
 ]])],
         [haveepollsyscall=yes
         # OMPI: don't use AC_LIBOBJ
