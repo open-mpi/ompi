@@ -128,6 +128,11 @@ int mca_pml_ucx_open(void)
         return OMPI_ERROR;
     }
 
+    params.field_mask      = UCP_PARAM_FIELD_FEATURES |
+                             UCP_PARAM_FIELD_REQUEST_SIZE |
+                             UCP_PARAM_FIELD_REQUEST_INIT |
+                             UCP_PARAM_FIELD_REQUEST_CLEANUP |
+                             UCP_PARAM_FIELD_TAG_SENDER_MASK;
     params.features        = UCP_FEATURE_TAG;
     params.request_size    = sizeof(ompi_request_t);
     params.request_init    = mca_pml_ucx_request_init;

@@ -118,8 +118,8 @@ static int mca_spml_ucx_component_open(void)
     }
 
     memset(&params, 0, sizeof(params));
-    params.features = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64;
-
+    params.field_mask = UCP_PARAM_FIELD_FEATURES;
+    params.features   = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64;
     err = ucp_init(&params, ucp_config, &mca_spml_ucx.ucp_context);
     ucp_config_release(ucp_config);
     if (UCS_OK != err) {
