@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -780,7 +780,6 @@ static int remote_spawn(opal_buffer_t *launch)
     int rc=ORTE_SUCCESS;
     bool failed_launch = true;
     orte_std_cntr_t n;
-    opal_byte_object_t *bo;
     orte_process_name_t target;
     orte_plm_rsh_caddy_t *caddy;
     orte_job_t *daemons;
@@ -802,23 +801,8 @@ static int remote_spawn(opal_buffer_t *launch)
         goto cleanup;
     }
 
-    /* extract the byte object holding the nidmap */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &bo, &n, OPAL_BYTE_OBJECT))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    /* update our nidmap - this will free data in the byte object */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_daemon_nodemap(bo))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* ensure the routing plan is updated */
-    rtmod = orte_rml.get_routed(orte_coll_conduit);
-    orte_routed.update_routing_plan(rtmod);
-
     /* get the updated routing list */
+    rtmod = orte_rml.get_routed(orte_coll_conduit);
     OBJ_CONSTRUCT(&coll, opal_list_t);
     orte_routed.get_routing_list(rtmod, &coll);
 
@@ -1124,7 +1108,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* if we are tree launching, find our children and create the launch cmd */
     if (!mca_plm_rsh_component.no_tree_spawn) {
         orte_daemon_cmd_flag_t command = ORTE_DAEMON_TREE_SPAWN;
-        opal_byte_object_t bo, *boptr;
         orte_job_t *jdatorted;
 
         /* get the tree spawn buffer */
@@ -1142,21 +1125,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
             goto cleanup;
         }
         /* construct a nodemap of all daemons we know about */
-        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo, false))) {
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(orte_tree_launch_cmd))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(orte_tree_launch_cmd);
             goto cleanup;
         }
-        /* store it */
-        boptr = &bo;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(orte_tree_launch_cmd, &boptr, 1, OPAL_BYTE_OBJECT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(orte_tree_launch_cmd);
-            free(bo.bytes);
-            goto cleanup;
-        }
-        /* release the data since it has now been copied into our buffer */
-        free(bo.bytes);
+
         /* get the orted job data object */
         if (NULL == (jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -260,21 +260,11 @@ static void vm_ready(int fd, short args, void *cbdata)
             return;
         }
         /* construct a nodemap with everything in it */
-        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo, false))) {
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buf))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
             return;
         }
-
-        /* store it */
-        boptr = &bo;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buf);
-            return;
-        }
-        /* release the data since it has now been copied into our buffer */
-        free(bo.bytes);
 
         /* pack a flag indicating wiring info is provided */
         flag = 1;
