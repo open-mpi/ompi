@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -315,6 +315,9 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
     int y = 0;
 
     fh->f_init_num_aggrs = num_groups;
+    if (NULL != fh->f_init_aggr_list) {
+        free(fh->f_init_aggr_list);
+    }
     fh->f_init_aggr_list = (int*)malloc (fh->f_init_num_aggrs * sizeof(int));
     if (NULL == fh->f_init_aggr_list) {
         opal_output (1, "OUT OF MEMORY\n");
@@ -325,6 +328,9 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
         for( y = 0; y < contg_groups[z].procs_per_contg_group; y++){
             if ( fh->f_rank == contg_groups[z].procs_in_contg_group[y] ) {
                 fh->f_init_procs_per_group = contg_groups[z].procs_per_contg_group;
+                if (NULL != fh->f_init_procs_in_group) {
+                    free(fh->f_init_procs_in_group);
+                }
                 fh->f_init_procs_in_group = (int*)malloc (fh->f_init_procs_per_group * sizeof(int));
                 if (NULL == fh->f_init_procs_in_group) {
                     opal_output (1, "OUT OF MEMORY\n");

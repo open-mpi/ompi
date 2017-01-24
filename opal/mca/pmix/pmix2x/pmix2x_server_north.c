@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -433,6 +433,7 @@ static void opal_lkupcbfunc(int status,
             }
         }
         opalcaddy->lkupcbfunc(rc, d, nd, opalcaddy->cbdata);
+        PMIX_PDATA_FREE(d, nd);
     }
     OBJ_RELEASE(opalcaddy);
 }
