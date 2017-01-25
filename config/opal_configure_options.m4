@@ -297,11 +297,12 @@ AC_ARG_ENABLE([heterogeneous],
                      platform support (default: disabled)])])
 if test "$enable_heterogeneous" = "yes" ; then
      AC_MSG_RESULT([yes])
-     opal_want_heterogeneous=1
-else
-     AC_MSG_RESULT([no])
-     opal_want_heterogeneous=0
+     AC_MSG_WARN([Heterogeneous support is not currently supported in Open MPI])
+     AC_MSG_ERROR([cannot continue])
 fi
+
+opal_want_heterogeneous=0
+
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_HETEROGENEOUS_SUPPORT],
                    [$opal_want_heterogeneous],
                    [Enable features required for heterogeneous support])
