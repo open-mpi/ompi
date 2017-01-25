@@ -596,15 +596,15 @@ void orte_rmaps_base_display_map(orte_job_t *jdata)
                                 ORTE_VPID_PRINT(p0->name.vpid),
                                 ORTE_VPID_PRINT(proc->name.vpid),
                                 opal_hwloc_base_print_locality(locality));
+                    if (NULL != procbitmap) {
+                       free(procbitmap);
+                    }
                 }
             }
             opal_output(orte_clean_output, "\t</locality>\n</map>");
             fflush(stderr);
             if (NULL != p0bitmap) {
                 free(p0bitmap);
-            }
-            if (NULL != procbitmap) {
-                free(procbitmap);
             }
         }
     } else {
