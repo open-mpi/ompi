@@ -2872,11 +2872,6 @@ btl_openib_component_init(int *num_btl_modules,
         mca_btl_openib_component.if_exclude_list = NULL;
     }
 
-    /* If we are using ptmalloc2 and there are no posix threads
-       available, this will cause memory corruption.  Refuse to run.
-       Right now, ptmalloc2 is the only memory manager that we have on
-       OS's that support OpenFabrics that provide both FREE and MUNMAP
-       support, so the following test is [currently] good enough... */
     value = opal_mem_hooks_support_level();
 
 #if OPAL_CUDA_SUPPORT
