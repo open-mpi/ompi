@@ -14,7 +14,7 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -744,7 +744,6 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
     if (OPAL_UNLIKELY(NULL == proc)) {
         mca_btl_base_endpoint_t *endpoint;
         opal_proc_t *opal_proc;
-        int rc;
 
         BTL_VERBOSE(("adding tcp proc for unknown peer {.jobid = 0x%x, .vpid = 0x%x}",
                      name->jobid, name->vpid));
