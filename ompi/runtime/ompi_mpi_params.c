@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -37,6 +37,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/mca/rte/rte.h"
 
+#include "opal/mca/pmix/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -286,7 +287,11 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_dynamics_enabled);
 
-    ompi_async_mpi_init = false;
+    if (opal_pmix_base_async_modex) {
+        ompi_async_mpi_init = true;
+    } else {
+        ompi_async_mpi_init = false;
+    }
     (void) mca_base_var_register("ompi", "async", "mpi", "init",
                                  "Do not perform a barrier at the end of MPI_Init",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
