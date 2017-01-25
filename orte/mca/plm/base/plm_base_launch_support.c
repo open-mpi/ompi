@@ -991,6 +991,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     opal_buffer_t *relay;
     char *sig;
     orte_topology_t *t;
+    hwloc_topology_t topo;
     int i;
     bool found;
     orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_REPORT_TOPOLOGY_CMD;
@@ -1126,6 +1127,18 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s RECEIVED TOPOLOGY SIG %s FROM NODE %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), sig, nodename));
+
+        /* rank=1 always sends its topology back */
+        topo = NULL;
+        if (1 == sender->vpid) {
+            idx=1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO))) {
+                ORTE_ERROR_LOG(rc);
+                orted_failed_launch = true;
+                goto CLEANUP;
+            }
+        }
+
         /* do we already have this topology from some other node? */
         found = false;
         for (i=0; i < orte_node_topologies->size; i++) {
@@ -1139,6 +1152,9 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 found = true;
                 node->topology = t;
+                if (NULL != topo) {
+                    hwloc_topology_destroy(topo);
+                }
                 free(sig);
                 break;
             }
@@ -1152,27 +1168,31 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             t->sig = sig;
             opal_pointer_array_add(orte_node_topologies, t);
             node->topology = t;
-            /* construct the request */
-            relay = OBJ_NEW(opal_buffer_t);
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &cmd, 1, ORTE_DAEMON_CMD))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(relay);
-                orted_failed_launch = true;
-                goto CLEANUP;
+            if (NULL != topo) {
+                t->topo = topo;
+            } else {
+                /* construct the request */
+                relay = OBJ_NEW(opal_buffer_t);
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &cmd, 1, ORTE_DAEMON_CMD))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(relay);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
+                }
+                /* send it */
+                orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                        sender, relay,
+                                        ORTE_RML_TAG_DAEMON,
+                                        orte_rml_send_callback, NULL);
+                /* we will count this node as completed
+                 * when we get the full topology back */
+                if (NULL != nodename) {
+                    free(nodename);
+                    nodename = NULL;
+                }
+                idx = 1;
+                continue;
             }
-            /* send it */
-            orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                    sender, relay,
-                                    ORTE_RML_TAG_DAEMON,
-                                    orte_rml_send_callback, NULL);
-            /* we will count this node as completed
-             * when we get the full topology back */
-            if (NULL != nodename) {
-                free(nodename);
-                nodename = NULL;
-            }
-            idx = 1;
-            continue;
         }
 
       CLEANUP:
