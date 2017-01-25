@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -490,6 +490,7 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the data from the modex db */
+    hostname = NULL;
     OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_HOSTNAME,
                           (opal_process_name_t*)proc,
                           &hostname, OPAL_STRING);
@@ -514,6 +515,7 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the value from the modex db */
+    noderank = NULL;
     OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_NODE_RANK,
                           (opal_process_name_t*)proc,
                           &noderank, ORTE_NODE_RANK);
@@ -792,7 +794,9 @@ static void orte_node_destruct(orte_node_t* node)
     }
     OBJ_RELEASE(node->procs);
 
-    /* do NOT destroy the topology */
+    if (NULL != node->topology) {
+        OBJ_RELEASE(node->topology);
+    }
 
     /* release the attributes */
     OPAL_LIST_DESTRUCT(&node->attributes);
@@ -920,7 +924,7 @@ static void tcon(orte_topology_t *t)
 }
 static void tdes(orte_topology_t *t)
 {
-    if (NULL != t->topo) {
+    if (NULL != t->topo && opal_hwloc_topology != t->topo) {
         hwloc_topology_destroy(t->topo);
     }
     if (NULL != t->sig) {
