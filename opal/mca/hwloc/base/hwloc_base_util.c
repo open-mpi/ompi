@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -85,7 +85,7 @@ hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "physical cpu %d %s found in cpuset %s",
                              lid, (NULL == obj) ? "not" : "is",
-                             (NULL == opal_hwloc_base_cpu_set) ? "None" : opal_hwloc_base_cpu_set));
+                             (NULL == opal_hwloc_base_cpu_list) ? "None" : opal_hwloc_base_cpu_list));
         /* we now need to shift upward to the core including this PU */
         if (NULL != obj && HWLOC_OBJ_CORE == obj_type) {
             obj = obj->parent;
@@ -101,7 +101,7 @@ hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "logical cpu %d %s found in cpuset %s",
                          lid, (NULL == obj) ? "not" : "is",
-                         (NULL == opal_hwloc_base_cpu_set) ? "None" : opal_hwloc_base_cpu_set));
+                         (NULL == opal_hwloc_base_cpu_list) ? "None" : opal_hwloc_base_cpu_list));
 
     /* Found the right core (or PU). Return the object */
     return obj;
@@ -132,7 +132,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
     }
 
     /* process any specified default cpu set against this topology */
-    if (NULL == opal_hwloc_base_cpu_set) {
+    if (NULL == opal_hwloc_base_cpu_list) {
         /* get the root available cpuset */
         avail = hwloc_bitmap_alloc();
         hwloc_bitmap_and(avail, root->online_cpuset, root->allowed_cpuset);
@@ -142,7 +142,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base: filtering cpuset"));
         /* find the specified logical cpus */
-        ranges = opal_argv_split(opal_hwloc_base_cpu_set, ',');
+        ranges = opal_argv_split(opal_hwloc_base_cpu_list, ',');
         avail = hwloc_bitmap_alloc();
         hwloc_bitmap_zero(avail);
         res = hwloc_bitmap_alloc();
@@ -550,7 +550,7 @@ static void df_search_cores(hwloc_obj_t obj, unsigned int *cnt)
             data = OBJ_NEW(opal_hwloc_obj_data_t);
             obj->userdata = (void*)data;
         }
-        if (NULL == opal_hwloc_base_cpu_set) {
+        if (NULL == opal_hwloc_base_cpu_list) {
             if (!hwloc_bitmap_intersects(obj->cpuset, obj->allowed_cpuset)) {
                 /*
                  * do not count not allowed cores (e.g. cores with zero allowed PU)
@@ -1250,7 +1250,7 @@ static int socket_core_to_cpu_set(char *socket_core_list,
     return rc;
 }
 
-int opal_hwloc_base_slot_list_parse(const char *slot_str,
+int opal_hwloc_base_cpu_list_parse(const char *slot_str,
                                     hwloc_topology_t topo,
                                     opal_hwloc_resource_type_t rtype,
                                     hwloc_cpuset_t cpumask)

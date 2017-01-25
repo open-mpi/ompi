@@ -317,8 +317,8 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Whether to report process bindings to stderr" },
 
     /* slot list option */
-    { "hwloc_base_slot_list", '\0', "slot-list", "slot-list", 1,
-      &orte_cmd_options.slot_list, OPAL_CMD_LINE_TYPE_STRING,
+    { "hwloc_base_cpu_list", '\0', "cpu-list", "cpu-list", 1,
+      &orte_cmd_options.cpu_list, OPAL_CMD_LINE_TYPE_STRING,
       "List of processor IDs to bind processes to [default=NULL]"},
 
     /* generalized pattern mapping option */

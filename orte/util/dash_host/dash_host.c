@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -194,12 +194,14 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
         if (NULL != (cptr = strchr(mini_map[i], ':'))) {
             *cptr = '\0';
             ++cptr;
-            if ('*' == *cptr) {
-                slots = 0;
+            if ('*' == *cptr || 0 == strcmp(cptr, "auto")) {
+                /* auto-detect #slots */
+                slots = -1;
+                slots_given = false;
             } else {
                 slots = strtol(cptr, NULL, 10);
+                slots_given = true;
             }
-            slots_given = true;
         }
 
         /* check for local name */
@@ -257,8 +259,12 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                 if (0 < slots) {
                     ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
                 }
+            } else if (slots < 0) {
+                node->slots = 0;
+                ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
             } else {
                 node->slots = 1;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
             }
             opal_list_append(&adds, &node->super);
         }

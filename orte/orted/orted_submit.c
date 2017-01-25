@@ -880,8 +880,8 @@ int orte_submit_job(char *argv[], int *index,
     if (orte_cmd_options.report_bindings) {
         orte_set_attribute(&jdata->attributes, ORTE_JOB_REPORT_BINDINGS, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
-    if (orte_cmd_options.slot_list) {
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_SLOT_LIST, ORTE_ATTR_GLOBAL, orte_cmd_options.slot_list, OPAL_STRING);
+    if (orte_cmd_options.cpu_list) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_CPU_LIST, ORTE_ATTR_GLOBAL, orte_cmd_options.cpu_list, OPAL_STRING);
     }
 
     /* if recovery was enabled on the cmd line, do so */
@@ -1158,10 +1158,10 @@ static int init_globals(void)
         free(orte_cmd_options.report_uri);
         orte_cmd_options.report_uri = NULL;
     }
-    if (NULL != orte_cmd_options.slot_list) {
-        free(orte_cmd_options.slot_list);
-        orte_cmd_options.slot_list= NULL;
-    } 
+    if (NULL != orte_cmd_options.cpu_list) {
+        free(orte_cmd_options.cpu_list);
+        orte_cmd_options.cpu_list= NULL;
+    }
     orte_cmd_options.preload_binaries = false;
     if (NULL != orte_cmd_options.preload_files) {
         free(orte_cmd_options.preload_files);

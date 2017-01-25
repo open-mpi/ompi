@@ -84,7 +84,7 @@ struct orte_cmd_options_t {
     char *ranking_policy;
     char *binding_policy;
     bool report_bindings;
-    char *slot_list;
+    char *cpu_list;
     bool debug;
     bool tag_output;
     bool timestamp_output;

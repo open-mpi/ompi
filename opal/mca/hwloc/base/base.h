@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,8 +57,7 @@ opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void);
 extern char* opal_hwloc_print_null;
 OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality);
 
-OPAL_DECLSPEC extern char *opal_hwloc_base_slot_list;
-OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_set;
+OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_list;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
 OPAL_DECLSPEC extern char *opal_hwloc_base_topo_file;
 
@@ -192,7 +191,7 @@ OPAL_DECLSPEC bool opal_hwloc_base_single_cpu(hwloc_cpuset_t cpuset);
  * Provide a utility to parse a slot list against the local
  * cpus of given type, and produce a cpuset for the described binding
  */
-OPAL_DECLSPEC int opal_hwloc_base_slot_list_parse(const char *slot_str,
+OPAL_DECLSPEC int opal_hwloc_base_cpu_list_parse(const char *slot_str,
                                                   hwloc_topology_t topo,
                                                   opal_hwloc_resource_type_t rtype,
                                                   hwloc_cpuset_t cpumask);
