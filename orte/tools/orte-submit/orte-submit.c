@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -392,7 +392,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         exit(1);
     }
- 
+
      /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
@@ -608,7 +608,23 @@ int main(int argc, char *argv[])
             ORTE_ERROR_LOG(rc);
             exit(rc);
         }
+    } else if (myglobals.pernode) {
+        ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_PPR);
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
+        /* define the ppr */
+        jdata->map->ppr = strdup("1:node");
+    } else if (0 < myglobals.npernode) {
+        ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_PPR);
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
+        /* define the ppr */
+        (void)asprintf(&jdata->map->ppr, "%d:node", myglobals.npernode);
+    } else if (0 < myglobals.npersocket) {
+        ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_PPR);
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
+        /* define the ppr */
+        (void)asprintf(&jdata->map->ppr, "%d:socket", myglobals.npersocket);
     }
+
     if (NULL != myglobals.ranking_policy) {
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_ranking_policy(&jdata->map->ranking,
                                                                      jdata->map->mapping,
@@ -704,7 +720,7 @@ int main(int argc, char *argv[])
     while (mywait) {
       opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
- 
+
  DONE:
     /* cleanup and leave */
     orte_finalize();
