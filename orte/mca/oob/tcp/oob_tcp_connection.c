@@ -501,6 +501,9 @@ static void tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
 {
     if (peer->sd >= 0) {
         assert(!peer->send_ev_active && !peer->recv_ev_active);
+        if (NULL == peer->ev_base) {
+            ORTE_OOB_TCP_NEXT_BASE(peer);
+        }
         opal_event_set(peer->ev_base,
                        &peer->recv_event,
                        peer->sd,
