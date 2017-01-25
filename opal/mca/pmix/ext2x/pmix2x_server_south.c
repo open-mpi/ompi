@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
@@ -239,6 +239,7 @@ static void _reg_nspace(int sd, short args, void *cbdata)
                     pmix2x_value_load(&pmap[m].value, k2);
                     ++m;
                 }
+                OPAL_LIST_RELEASE(pmapinfo);
             } else {
                 pmix2x_value_load(&pinfo[n].value, kv);
             }
