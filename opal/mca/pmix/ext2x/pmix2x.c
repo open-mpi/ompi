@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -294,7 +294,6 @@ static void _event_hdlr(int sd, short args, void *cbdata)
         if (sing->code == chain->status) {
             /* found it - invoke the handler, pointing its
              * callback function to our progression function */
-            OBJ_RETAIN(chain);
             chain->sing = sing;
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s _EVENT_HDLR CALLING SINGLE EVHDLR",
@@ -313,7 +312,6 @@ static void _event_hdlr(int sd, short args, void *cbdata)
             if (multi->codes[n] == chain->status) {
                 /* found it - invoke the handler, pointing its
                  * callback function to our progression function */
-                OBJ_RETAIN(chain);
                 chain->multi = multi;
                 opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                     "%s _EVENT_HDLR CALLING MULTI EVHDLR",
@@ -340,7 +338,6 @@ static void _event_hdlr(int sd, short args, void *cbdata)
     /* finally, pass it to any default handlers */
     if (0 < opal_list_get_size(&mca_pmix_ext2x_component.default_events)) {
         def = (opal_pmix2x_default_event_t*)opal_list_get_first(&mca_pmix_ext2x_component.default_events);
-        OBJ_RETAIN(chain);
         chain->def = def;
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                             "%s _EVENT_HDLR CALLING DEFAULT EVHDLR",
@@ -355,6 +352,9 @@ static void _event_hdlr(int sd, short args, void *cbdata)
     if (NULL != chain->final_cbfunc) {
         chain->final_cbfunc(PMIX_SUCCESS, chain->final_cbdata);
     }
+    
+    OBJ_RELEASE(chain);
+
     return;
 }
 
@@ -1438,6 +1438,9 @@ static void chcon(opal_pmix2x_event_chain_t *p)
 static void chdes(opal_pmix2x_event_chain_t *p)
 {
     OPAL_LIST_DESTRUCT(&p->results);
+    if (NULL != p->info) {
+        OPAL_LIST_RELEASE(p->info);
+    }
 }
 OBJ_CLASS_INSTANCE(opal_pmix2x_event_chain_t,
                    opal_list_item_t,
