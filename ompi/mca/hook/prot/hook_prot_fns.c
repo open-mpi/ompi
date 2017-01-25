@@ -268,7 +268,8 @@ ompi_report_prots(int mode) // 1 = from init, 2 = from finalize
 {
     int numhosts, i, j, k;
     char *p;
-    int max2Dprottable = 16;
+    int max2Dprottable = 12;
+    int max2D1Cprottable = 36;
     int hostidprotbrief = 0;
     char * max2Dprotptr = NULL;
     char * hostidprotptr = NULL;
@@ -290,7 +291,10 @@ ompi_report_prots(int mode) // 1 = from init, 2 = from finalize
 
     if (hpmp_myrank == 0) {
         max2Dprotptr = getenv("MPI_PROT_MAX");
-        if (max2Dprotptr) { max2Dprottable = atoi(max2Dprotptr); }
+        if (max2Dprotptr) {
+            max2Dprottable = atoi(max2Dprotptr);
+            max2D1Cprottable = 3 * max2Dprottable;
+        }
 
         hostidprotptr = getenv("MPI_PROT_BRIEF");
         if (hostidprotptr) { hostidprotbrief = atoi(hostidprotptr); }
@@ -551,6 +555,94 @@ ompi_report_prots(int mode) // 1 = from init, 2 = from finalize
             }
             printf("\n");
             free(str);
+        }
+        else if (nleaderranks <= max2D1Cprottable) {
+            char *str, *p;
+            int tmp, per, done;
+            char char_code[COMM_METHOD_MAX + 1], next_char;
+            int method_count[COMM_METHOD_MAX + 1];
+
+            // characters for the number column in the 2d table,
+            // must be large enough for the digits needed for host numbers
+            per = 2;
+            tmp = nleaderranks;
+            while (tmp >= 10) { ++per; tmp /= 10; }
+
+            // pick a character code for each comm method based on
+            // how many times it's in the table, use 'A' for the least common
+            for (i=0; i<=COMM_METHOD_MAX; ++i) {
+                char_code[i] = 0;
+                method_count[i] = 0;
+            }
+            for (i=0; i<nleaderranks; ++i) {
+                for (k=0; k<nleaderranks; ++k) {
+                    tmp = method[i * nleaderranks + k];
+                    ++method_count[tmp];
+                }
+            }
+            next_char = 'A';
+            done = 0;
+            while (!done) {
+                int next_idx = -1;
+                done = 1;
+                for (i=0; i<=COMM_METHOD_MAX; ++i) {
+                    if (!char_code[i] && method_count[i]) {
+                        done = 0;
+                        if ( (next_idx == -1) ||
+                             (method_count[i] < method_count[next_idx]))
+                        {
+                            next_idx = i;
+                        }
+                    }
+                }
+                if (next_idx != -1) {
+                    char_code[next_idx] = next_char;
+                    ++next_char;
+                }
+            }
+
+            str = malloc(per + 32 + nleaderranks * 2 + 1);
+            p = str;
+            sprintf(p, "0 1 2 3 ", i);
+            p += 8;
+            for (i=4; i<nleaderranks; i+=4) {
+                sprintf(p, "%d", i);
+                for (j=(int)strlen(p); j<8; ++j) {
+                    p[j] = ' ';
+                }
+                p[j] = 0;
+                p += j;
+            }
+            --p;
+            while (p>=str && ((*p)==' ')) { *(p--)=0; }
+            tmp = (int)strlen(str) + 2;
+            printf(" host | %s\n", str);
+            memset(str, (int)'=', tmp);
+            printf("======|=%s\n", str);
+
+            for (i=0; i<nleaderranks; ++i) {
+                str[0] = 0;
+                p = str;
+                for (k=0; k<nleaderranks; ++k) {
+                    p[0] = char_code[method[i * nleaderranks + k]];
+                    p[1] = ' ';
+                    p[2] = 0;
+                    p += 2;
+                }
+                --p;
+                while (p>str && *p==' ') { *(p--)=0; }
+                printf("%5d : %s\n", i, str);
+            }
+            free(str);
+            for (i=0; i<=COMM_METHOD_MAX; ++i) {
+                for (k=0; k<=COMM_METHOD_MAX; ++k) {
+                    if (char_code[k] == 'A' + i) {
+                        printf("key: %c == %s\n", char_code[k],
+                            comm_method_string(k));
+                    }
+                }
+            }
+            printf("\n");
         }
 // 3: abbreviated summary of interconnect and outliers
 // - check diagonal for uniformity + self, save majority method
