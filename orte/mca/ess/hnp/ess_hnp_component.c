@@ -13,6 +13,8 @@
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +27,8 @@
  * prevents utility programs such as "ompi_info" from having to import
  * entire components just to query their version and parameters.
  */
+
+#include "opal/util/argv.h"
 
 #include "orte_config.h"
 #include "orte/constants.h"
