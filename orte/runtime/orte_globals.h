@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -253,6 +253,13 @@ typedef struct {
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
 
+/* define an object for storing node topologies */
+typedef struct {
+    opal_object_t super;
+    hwloc_topology_t topo;
+    char *sig;
+} orte_topology_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_topology_t);
 
 typedef struct {
     /** Base object so this can be put on a list */
@@ -291,7 +298,7 @@ typedef struct {
         may want to allow up to four processes but no more. */
     orte_std_cntr_t slots_max;
     /* system topology for this node */
-    hwloc_topology_t topology;
+    orte_topology_t *topology;
     /* flags */
     orte_node_flags_t flags;
     /* list of orte_attribute_t */
@@ -403,14 +410,6 @@ struct orte_proc_t {
 };
 typedef struct orte_proc_t orte_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
-
-/* define an object for storing node topologies */
-typedef struct {
-    opal_object_t super;
-    hwloc_topology_t topo;
-    char *sig;
-} orte_topology_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_topology_t);
 
 /**
  * Get a job data object

@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,6 +80,9 @@ ORTE_DECLSPEC void orte_plm_base_daemon_callback(int status, orte_process_name_t
 ORTE_DECLSPEC void orte_plm_base_daemon_failed(int status, orte_process_name_t* sender,
                                                opal_buffer_t *buffer,
                                                orte_rml_tag_t tag, void *cbdata);
+ORTE_DECLSPEC void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
+                                                 opal_buffer_t *buffer,
+                                                 orte_rml_tag_t tag, void *cbdata);
 
 ORTE_DECLSPEC int orte_plm_base_create_jobid(orte_job_t *jdata);
 ORTE_DECLSPEC int orte_plm_base_set_hnp_name(void);

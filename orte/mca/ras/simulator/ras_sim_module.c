@@ -3,7 +3,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -266,7 +266,8 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
                 obj = hwloc_get_root_obj(topo);
                 node->slots = opal_hwloc_base_get_npus(topo, obj);
             }
-            node->topology = topo;
+            node->topology = OBJ_NEW(orte_topology_t);
+            node->topology->topo = topo;
             opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                 "Created Node <%10s> [%3d : %3d]",
                                 node->name, node->slots, node->slots_max);

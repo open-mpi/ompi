@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,6 +76,9 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 
 /* new daemon collective id */
 #define ORTE_DAEMON_NEW_COLL_ID             (orte_daemon_cmd_flag_t) 29
+
+/* request full topology string */
+#define ORTE_DAEMON_REPORT_TOPOLOGY_CMD     (orte_daemon_cmd_flag_t) 33
 
 
 /* for debug purposes, get stack traces from all application procs */

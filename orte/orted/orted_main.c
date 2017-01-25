@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -230,10 +230,7 @@ int orte_daemon(int argc, char *argv[])
     char *rml_uri;
     int i;
     opal_buffer_t *buffer;
-
     char hostname[OPAL_MAXHOSTNAMELEN];
-    char *coprocessors;
-    uint8_t tflag;
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
@@ -743,38 +740,10 @@ int orte_daemon(int argc, char *argv[])
             opal_argv_free(aliases);
         }
 
-        /* add the local topology, if different from the HNP's or user directed us to,
-         * but always if we are the first daemon to ensure we get a compute node */
-        if (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes ||
-            0 != strcmp(orte_topo_signature, orted_globals.hnp_topo_sig)) {
-            tflag = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &tflag, 1, OPAL_UINT8))) {
-                ORTE_ERROR_LOG(ret);
-            }
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_topo_signature, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(ret);
-            }
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
-                ORTE_ERROR_LOG(ret);
-            }
-        } else {
-            tflag = 0;
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &tflag, 1, OPAL_UINT8))) {
-                ORTE_ERROR_LOG(ret);
-            }
-        }
-        /* detect and add any coprocessors */
-        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
+        /* always send back our topology signature - this is a small string
+         * and won't hurt anything */
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_topo_signature, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
-        }
-        /* see if I am on a coprocessor */
-        coprocessors = opal_hwloc_base_check_on_coprocessor();
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(ret);
-        }
-        if (NULL!= coprocessors) {
-            free(coprocessors);
         }
 
         /* send to the HNP's callback - will be routed if routes are available */

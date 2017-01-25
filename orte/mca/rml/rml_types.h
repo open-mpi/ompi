@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -167,6 +167,9 @@ BEGIN_C_DECLS
 
 /* stacktrace for debug */
 #define ORTE_RML_TAG_STACK_TRACE            60
+
+/* topology report */
+#define ORTE_RML_TAG_TOPOLOGY_REPORT        62
 
 #define ORTE_RML_TAG_MAX                   100
 
