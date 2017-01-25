@@ -117,6 +117,7 @@ int opal_tsd_keys_destruct()
         if(OPAL_SUCCESS == opal_tsd_getspecific(opal_tsd_key_values[i].key, &ptr)) {
             if (NULL != opal_tsd_key_values[i].destructor) {
                 opal_tsd_key_values[i].destructor(ptr);
+                opal_tsd_setspecific(opal_tsd_key_values[i].key, NULL);
             }
         }
     }
