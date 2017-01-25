@@ -18,6 +18,7 @@
  *                         reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -984,3 +985,23 @@ int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2)
     return 0;
 }
 
+// Find the first btl_send function for the incoming comm,rank
+void
+mca_pml_ob1__lookup_btl_fns(ompi_communicator_t* comm, int rank,
+  void **sendfn, void **putfn)
+{
+    *sendfn = NULL;
+    *putfn = NULL;
+
+    mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup(comm, rank);
+    ompi_proc_t *dst_proc = ob1_proc->ompi_proc;
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(dst_proc);
+    if (endpoint &&
+        endpoint->btl_send.bml_btls &&
+        endpoint->btl_send.bml_btls[0].btl)
+    {
+        *sendfn = (void*) (endpoint->btl_send.bml_btls[0].btl->btl_send);
+        *putfn  = (void*) (endpoint->btl_send.bml_btls[0].btl->btl_put);
+    }
+    return;
+}

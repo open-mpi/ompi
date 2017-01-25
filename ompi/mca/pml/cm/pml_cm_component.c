@@ -12,6 +12,7 @@
  * Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,3 +169,10 @@ mca_pml_cm_component_fini(void)
     return OMPI_SUCCESS;
 }
 
+// return the mtl's mtl_finalize function pointer in fp
+void
+mca_pml_cm__lookup_mtl_fns(void **fp)
+{
+    *fp = (void*) ompi_mtl->mtl_finalize;
+    return;
+}
