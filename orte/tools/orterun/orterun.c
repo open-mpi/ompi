@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -2174,6 +2174,7 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
         exit(1);
     }
 
+    tmp = NULL;
     ret = mca_base_var_get_value (id, &tmp, NULL, NULL);
     if (OPAL_SUCCESS != ret || NULL == tmp || NULL == tmp[0]) {
         orte_show_help("help-orterun.txt", "debugger-orte_base_user_debugger-empty",
