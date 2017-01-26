@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -578,6 +578,9 @@ int pmix2x_publish(opal_list_t *info)
     }
 
     ret = PMIx_Publish(pinfo, sz);
+    if (0 < sz) {
+        PMIX_INFO_FREE(pinfo, sz);
+    }
 
     return pmix2x_convert_rc(ret);
 }
@@ -614,6 +617,9 @@ int pmix2x_publishnb(opal_list_t *info,
     }
 
     ret = PMIx_Publish_nb(op->info, op->sz, opcbfunc, op);
+    if (0 < op->sz) {
+        PMIX_INFO_FREE(op->info, op->sz);
+    }
 
     return pmix2x_convert_rc(ret);
 }
@@ -923,6 +929,9 @@ int pmix2x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
         (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
         job->jobid = *jobid;
         opal_list_append(&mca_pmix_ext2x_component.jobids, &job->super);
+    }
+    if (0 < ninfo) {
+        PMIX_INFO_FREE(pinfo, ninfo);
     }
     PMIX_APP_FREE(papps, napps);
 
