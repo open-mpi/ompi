@@ -835,7 +835,7 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
     orte_job_t *jdata;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                         "%s plm:base:daemon_topology for daemon %s",
+                         "%s plm:base:daemon_topology recvd for daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
 
@@ -938,7 +938,7 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
 
   CLEANUP:
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                         "%s plm:base:orted_report_launch %s for daemon %s",
+                         "%s plm:base:orted:report_topo launch %s for daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orted_failed_launch ? "failed" : "completed",
                          ORTE_NAME_PRINT(sender)));
@@ -985,7 +985,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     char *rml_uri = NULL, *ptr;
     int rc, idx;
     orte_proc_t *daemon=NULL;
-    orte_node_t *node;
     orte_job_t *jdata;
     orte_process_name_t dname;
     opal_buffer_t *relay;
@@ -994,7 +993,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     hwloc_topology_t topo;
     int i;
     bool found;
-    orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_REPORT_TOPOLOGY_CMD;
+    orte_daemon_cmd_flag_t cmd;
 
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
@@ -1054,8 +1053,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&daemon->name), nodename));
 
-        node = daemon->node;
-
         /* look this node up, if necessary */
         if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
             OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
@@ -1067,21 +1064,11 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             free(daemon->node->name);
             daemon->node->name = strdup(nodename);
             /* mark that it was verified */
-            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_LOC_VERIFIED);
-        }
-
-        if (NULL == node) {
-            /* this shouldn't happen - it indicates an error in the
-             * prior node matching logic, so report it and error out
-             */
-            orte_show_help("help-plm-base.txt", "daemon-no-assigned-node", true,
-                           ORTE_NAME_PRINT(&daemon->name), nodename);
-            orted_failed_launch = true;
-            goto CLEANUP;
+            ORTE_FLAG_SET(daemon->node, ORTE_NODE_FLAG_LOC_VERIFIED);
         }
 
         /* mark the daemon as launched */
-        ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
+        ORTE_FLAG_SET(daemon->node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
 
         if (orte_retain_aliases) {
             char *alias, **atmp=NULL;
@@ -1113,7 +1100,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             }
             alias = opal_argv_join(atmp, ',');
             opal_argv_free(atmp);
-            orte_set_attribute(&node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, alias, OPAL_STRING);
+            orte_set_attribute(&daemon->node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, alias, OPAL_STRING);
             free(alias);
         }
 
@@ -1130,7 +1117,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
 
         /* rank=1 always sends its topology back */
         topo = NULL;
-        if (1 == sender->vpid) {
+        if (1 == dname.vpid) {
             idx=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO))) {
                 ORTE_ERROR_LOG(rc);
@@ -1151,7 +1138,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                      "%s TOPOLOGY ALREADY RECORDED",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 found = true;
-                node->topology = t;
+                daemon->node->topology = t;
                 if (NULL != topo) {
                     hwloc_topology_destroy(topo);
                 }
@@ -1167,12 +1154,18 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             t = OBJ_NEW(orte_topology_t);
             t->sig = sig;
             opal_pointer_array_add(orte_node_topologies, t);
-            node->topology = t;
+            daemon->node->topology = t;
             if (NULL != topo) {
                 t->topo = topo;
             } else {
+                /* nope - save the signature and request the complete topology from that node */
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                     "%s REQUESTING TOPOLOGY FROM %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&dname)));
                 /* construct the request */
                 relay = OBJ_NEW(opal_buffer_t);
+                cmd = ORTE_DAEMON_REPORT_TOPOLOGY_CMD;
                 if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &cmd, 1, ORTE_DAEMON_CMD))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_RELEASE(relay);
@@ -1181,7 +1174,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 }
                 /* send it */
                 orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                        sender, relay,
+                                        &dname, relay,
                                         ORTE_RML_TAG_DAEMON,
                                         orte_rml_send_callback, NULL);
                 /* we will count this node as completed

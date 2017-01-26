@@ -516,9 +516,9 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
 /* decode a nodemap for a daemon */
 int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
 {
-    int k, m, n, rc, start, endpt;
+    int m, n, rc;
     orte_node_t *node;
-    size_t num_nodes;
+    size_t k, num_nodes, endpt;
     orte_job_t *daemons;
     orte_proc_t *dptr;
     char **nodes, *indices, *dvpids;
@@ -601,16 +601,16 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
     for (n=0; NULL != tmp[n]; n++) {
         /* convert the number - since it might be a range,
          * save the remainder pointer */
-        nodeids[k] = strtoul(tmp[n], &rmndr, 10);
+        nodeids[k++] = strtoul(tmp[n], &rmndr, 10);
         if (NULL != rmndr) {
             /* it must be a range - find the endpoint */
             ++rmndr;
+            m = nodeids[k-1] + 1;
             endpt = strtoul(rmndr, NULL, 10);
-            start = nodeids[k] + 1;
-            for (m=0; m < endpt; m++) {
-                ++k;
-                nodeids[k] = start + m;
+            while (k <= endpt && k < num_nodes) {
+                nodeids[k++] = m++;
             }
+            --k;  // step back to compensate for later increment
         }
         ++k;
     }
@@ -624,16 +624,16 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
     for (n=0; NULL != tmp[n]; n++) {
         /* convert the number - since it might be a range,
          * save the remainder pointer */
-        dids[k] = strtoul(tmp[n], &rmndr, 10);
+        dids[k++] = strtoul(tmp[n], &rmndr, 10);
         if (NULL != rmndr) {
             /* it must be a range - find the endpoint */
             ++rmndr;
             endpt = strtoul(rmndr, NULL, 10);
-            start = dids[k] + 1;
-            for (m=0; m < endpt; m++) {
-                ++k;
-                dids[k] = start + m;
+            m = dids[k-1] + 1;
+            while (k <= endpt && k < num_nodes) {
+                dids[k++] = m++;
             }
+            --k;  // step back to compensate for later increment
         }
         ++k;
     }
