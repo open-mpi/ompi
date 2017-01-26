@@ -9,6 +9,7 @@
  *                         reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -427,9 +428,29 @@ static inline int red_sched_chain (int rank, int p, int root, const void *sendbu
     /* last node does not recv */
     if (vrank != p-1) {
       if (vrank == 0) {
-        res = NBC_Sched_recv ((char *)recvbuf+offset, false, thiscount, datatype, rpeer, schedule, true);
+        if (sendbuf != recvbuf) {
+          // for regular src, recv into recvbuf
+          res = NBC_Sched_recv ((char *)recvbuf+offset, false, thiscount, datatype, rpeer, schedule, true);
+        } else {
+          // but for any-src, recv into tmpbuf
+          // because for any-src if we recved into recvbuf here we'd be
+          // overwriting our sendbuf, and we use it in the operation
+          // that happens further down
+          res = NBC_Sched_recv ((char *)offset, true, thiscount, datatype, rpeer, schedule, true);
+        }
       } else {
-        res = NBC_Sched_recv ((char *) offset, true, thiscount, datatype, rpeer, schedule, true);
+        if (sendbuf != recvbuf) {
+          // for regular src, add sendbuf into recvbuf
+          // (here recvbuf holds the reduction from 1..n-1)
+          res = NBC_Sched_op ((char *) sendbuf + offset, false, (char *) recvbuf + offset, false,
+                             thiscount, datatype, op, schedule, true);
+        } else {
+          // for any-src, add tmpbuf into recvbuf
+          // (here tmpbuf holds the reduction from 1..n-1) and
+          // recvbuf is our sendbuf
+          res = NBC_Sched_op ((char *) offset, true, (char *) recvbuf + offset, false,
+                             thiscount, datatype, op, schedule, true);
+        }
       }
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
