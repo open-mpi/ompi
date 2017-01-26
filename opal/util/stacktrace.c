@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -343,6 +344,14 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     } else {
         write(fileno(stderr), unable_to_print_msg, strlen(unable_to_print_msg));
     }
+
+    /* Raise the signal again, so we don't accidentally mask critical signals.
+     * For critical signals, it is preferred that we call 'raise' instead of
+     * 'exit' or 'abort' so that the return status is set properly for this
+     * process.
+     */
+    signal(signo, SIG_DFL);
+    raise(signo);
 }
 
 #endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE */
