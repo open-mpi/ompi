@@ -41,13 +41,8 @@ BEGIN_C_DECLS
 #define ORTE_CONTIG_NODE_CMD        0x01
 #define ORTE_NON_CONTIG_NODE_CMD    0x02
 
-/* create a regular expression describing the nodes in the
- * allocation */
-ORTE_DECLSPEC int orte_util_encode_nodemap(opal_buffer_t *buffer);
-
-/* decode a regular expression created by the encode function
- * into the orte_node_pool array */
-ORTE_DECLSPEC int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer);
+ORTE_DECLSPEC int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update);
+ORTE_DECLSPEC int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo);
 
 ORTE_DECLSPEC int orte_util_build_daemon_nidmap(char **nodes);
 

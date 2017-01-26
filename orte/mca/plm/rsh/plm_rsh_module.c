@@ -1108,6 +1108,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* if we are tree launching, find our children and create the launch cmd */
     if (!mca_plm_rsh_component.no_tree_spawn) {
         orte_daemon_cmd_flag_t command = ORTE_DAEMON_TREE_SPAWN;
+        opal_byte_object_t bo, *boptr;
         orte_job_t *jdatorted;
 
         /* get the tree spawn buffer */
@@ -1125,9 +1126,17 @@ static void launch_daemons(int fd, short args, void *cbdata)
             goto cleanup;
         }
         /* construct a nodemap of all daemons we know about */
-        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(orte_tree_launch_cmd))) {
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo, false))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(orte_tree_launch_cmd);
+            goto cleanup;
+        }
+        /* store it */
+        boptr = &bo;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(orte_tree_launch_cmd, &boptr, 1, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(orte_tree_launch_cmd);
+            free(bo.bytes);
             goto cleanup;
         }
 

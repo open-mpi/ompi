@@ -259,10 +259,18 @@ static void vm_ready(int fd, short args, void *cbdata)
             OBJ_RELEASE(buf);
             return;
         }
-        /* construct a nodemap with everything in it */
-        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buf))) {
+        /* construct a nodemap of all daemons we know about */
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo, false))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
+            return;
+        }
+        /* store it */
+        boptr = &bo;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            free(bo.bytes);
             return;
         }
 

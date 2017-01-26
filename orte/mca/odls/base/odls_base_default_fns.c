@@ -137,11 +137,20 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
         return rc;
     }
 
-    /* construct a nodemap of the daemons */
-    if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buffer))) {
+    /* construct a nodemap - only want updated items */
+    if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo, true))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+    /* store it */
+    boptr = &bo;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* release the data since it has now been copied into our buffer */
+    free(bo.bytes);
 
     /* if we are not using static ports, we need to send the wireup info */
     if (!orte_static_ports) {
