@@ -761,8 +761,10 @@ int orte_daemon(int argc, char *argv[])
 
         /* if we are rank=1, then send our topology back - otherwise, mpirun
          * will request it if necessary */
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
-            ORTE_ERROR_LOG(ret);
+        if (1 == ORTE_PROC_MY_NAME->vpid) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+                ORTE_ERROR_LOG(ret);
+            }
         }
 
         /* send to the HNP's callback - will be routed if routes are available */

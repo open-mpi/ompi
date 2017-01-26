@@ -109,12 +109,6 @@ static int orte_oob_base_close(void)
 
     OBJ_DESTRUCT(&orte_oob_base.peers);
 
-    if (ORTE_PROC_IS_APP || ORTE_PROC_IS_TOOL) {
-        opal_progress_thread_finalize(NULL);
-    } else {
-        opal_progress_thread_finalize("OOB-BASE");
-    }
-
     OPAL_TIMING_EVENT((&tm_oob, "Finish"));
     OPAL_TIMING_REPORT(orte_oob_base.timing, &tm_oob);
 
@@ -133,11 +127,7 @@ static int orte_oob_base_open(mca_base_open_flag_t flags)
     opal_hash_table_init(&orte_oob_base.peers, 128);
     OBJ_CONSTRUCT(&orte_oob_base.actives, opal_list_t);
 
-    if (ORTE_PROC_IS_APP || ORTE_PROC_IS_TOOL) {
-        orte_oob_base.ev_base = opal_progress_thread_init(NULL);
-    } else {
-        orte_oob_base.ev_base = opal_progress_thread_init("OOB-BASE");
-    }
+    orte_oob_base.ev_base = orte_event_base;
 
 
 #if OPAL_ENABLE_FT_CR == 1

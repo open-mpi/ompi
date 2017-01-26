@@ -126,7 +126,7 @@ ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata);
                        orte_oob_base_send_nb, cd);                      \
         opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);                 \
         opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);                   \
-    }while(0);
+    }while(0)
 
 /* Our contact info is actually subject to change as transports
  * can fail at any time. So a request to obtain our URI requires
@@ -175,12 +175,9 @@ OBJ_CLASS_DECLARATION(mca_oob_uri_req_t);
         mca_oob_uri_req_t *rq;                                  \
         rq = OBJ_NEW(mca_oob_uri_req_t);                        \
         rq->uri = strdup((u));                                  \
-        opal_event_set(orte_oob_base.ev_base, &(rq)->ev, -1,    \
-                       OPAL_EV_WRITE,                           \
-                       orte_oob_base_set_addr, (rq));           \
-        opal_event_set_priority(&(rq)->ev, ORTE_MSG_PRI);       \
-        opal_event_active(&(rq)->ev, OPAL_EV_WRITE, 1);         \
-    }while(0);
+        orte_oob_base_set_addr(0, 0, (void*)rq);    \
+    }while(0)
+
 ORTE_DECLSPEC void orte_oob_base_set_addr(int fd, short args, void *cbdata);
 
 
