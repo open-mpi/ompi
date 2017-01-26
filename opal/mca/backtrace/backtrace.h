@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/stacktrace.h"
 
 BEGIN_C_DECLS
 
@@ -39,6 +41,8 @@ BEGIN_C_DECLS
 /*
  * Print back trace to FILE file with a prefix for each line.
  * First strip lines are not printed.
+ * If 'file' is NULL then the component should try to use the file descriptor
+ * saved in opal_stacktrace_output_fileno
  *
  * \note some attempts made to be signal safe.
  */
