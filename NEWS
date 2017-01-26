@@ -53,11 +53,14 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-2.0.2 -- 18 January 2017
+2.0.2 -- 26 January 2017
 -------------------------
 
 Bug fixes/minor improvements:
 
+- Fix a problem with MPI_FILE_WRITE_SHARED when using MPI_MODE_APPEND and
+  Open MPI's native MPI-IO implementation.  Thanks to Nicolas Joly for
+  reporting.
 - Fix a typo in the MPI_WIN_GET_NAME man page.  Thanks to Nicolas Joly
   for reporting.
 - Fix a race condition with ORTE's session directory setup.  Thanks to
