@@ -16,6 +16,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -544,6 +545,18 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_map_stddiag_to_stderr);
+
+    /* whether or not to map stddiag to stderr */
+    orte_map_stddiag_to_stdout = false;
+    (void) mca_base_var_register ("orte", "orte", NULL, "map_stddiag_to_stdout",
+                                  "Map output from opal_output to stdout of the local process [default: no]",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_map_stddiag_to_stdout);
+    if( orte_map_stddiag_to_stderr && orte_map_stddiag_to_stdout ) {
+        opal_output(0, "The options \"orte_map_stddiag_to_stderr\" and \"orte_map_stddiag_to_stdout\" are mutually exclusive. They cannot both be set to true.");
+        return ORTE_ERROR;
+    }
 
     /* generate new terminal windows to display output from specified ranks */
     orte_xterm = NULL;
