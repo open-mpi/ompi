@@ -433,7 +433,7 @@ static inline int red_sched_chain (int rank, int p, int root, const void *sendbu
           res = NBC_Sched_recv ((char *)recvbuf+offset, false, thiscount, datatype, rpeer, schedule, true);
         } else {
           // but for any-src, recv into tmpbuf
-          // because for any-src if we recved into recvbuf here we'd be
+          // because for MPI_IN_PLACE if we recved into recvbuf here we'd be
           // overwriting our sendbuf, and we use it in the operation
           // that happens further down
           res = NBC_Sched_recv ((char *)offset, true, thiscount, datatype, rpeer, schedule, true);
@@ -445,7 +445,7 @@ static inline int red_sched_chain (int rank, int p, int root, const void *sendbu
           res = NBC_Sched_op ((char *) sendbuf + offset, false, (char *) recvbuf + offset, false,
                              thiscount, datatype, op, schedule, true);
         } else {
-          // for any-src, add tmpbuf into recvbuf
+          // for MPI_IN_PLACE, add tmpbuf into recvbuf
           // (here tmpbuf holds the reduction from 1..n-1) and
           // recvbuf is our sendbuf
           res = NBC_Sched_op ((char *) offset, true, (char *) recvbuf + offset, false,
