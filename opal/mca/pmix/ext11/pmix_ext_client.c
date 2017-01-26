@@ -924,7 +924,7 @@ int pmix1_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
     n=0;
     OPAL_LIST_FOREACH(app, apps, opal_pmix_app_t) {
         papps[n].cmd = strdup(app->cmd);
-        papps[n].argc = app->argc;
+        papps[n].argc = opal_argv_count(app->argv);
         papps[n].argv = opal_argv_copy(app->argv);
         papps[n].env = opal_argv_copy(app->env);
         papps[n].maxprocs = app->maxprocs;
@@ -1021,7 +1021,7 @@ int pmix1_spawnnb(opal_list_t *job_info, opal_list_t *apps,
     n=0;
     OPAL_LIST_FOREACH(app, apps, opal_pmix_app_t) {
         op->apps[n].cmd = strdup(app->cmd);
-        op->apps[n].argc = app->argc;
+        op->apps[n].argc = opal_argv_count(app->argv);
         op->apps[n].argv = opal_argv_copy(app->argv);
         op->apps[n].env = opal_argv_copy(app->env);
         op->apps[n].maxprocs = app->maxprocs;
