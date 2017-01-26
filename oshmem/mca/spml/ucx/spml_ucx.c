@@ -420,14 +420,14 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
                                          int *count)
 {
     sshmem_mkey_t *mkeys;
-    ucs_status_t err;
+    ucs_status_t status;
     spml_ucx_mkey_t   *ucx_mkey;
     size_t len;
-    int my_pe = oshmem_my_proc_id();
     ucp_mem_map_params_t mem_map_params;
     int segno;
     map_segment_t *mem_seg;
     unsigned flags;
+    int my_pe = oshmem_my_proc_id();
 
     *count = 0;
     mkeys = (sshmem_mkey_t *) calloc(1, sizeof(*mkeys));
@@ -455,17 +455,18 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
         mem_map_params.length     = size;
         mem_map_params.flags      = flags;
 
-        err = ucp_mem_map(mca_spml_ucx.ucp_context, &mem_map_params, &ucx_mkey->mem_h);
-        if (UCS_OK != err) {
+        status = ucp_mem_map(mca_spml_ucx.ucp_context, &mem_map_params, &ucx_mkey->mem_h);
+        if (UCS_OK != status) {
             goto error_out;
         }
+
     } else {
         ucx_mkey->mem_h = (ucp_mem_h)mem_seg->context;
     }
 
-    err = ucp_rkey_pack(mca_spml_ucx.ucp_context, ucx_mkey->mem_h, 
-            &mkeys[0].u.data, &len); 
-    if (UCS_OK != err) {
+    status = ucp_rkey_pack(mca_spml_ucx.ucp_context, ucx_mkey->mem_h, 
+                           &mkeys[0].u.data, &len); 
+    if (UCS_OK != status) {
         goto error_unmap;
     }
     if (len >= 0xffff) {
@@ -475,10 +476,10 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
         oshmem_shmem_abort(-1);
     }
 
-    err = ucp_ep_rkey_unpack(mca_spml_ucx.ucp_peers[oshmem_group_self->my_pe].ucp_conn,
-                             mkeys[0].u.data,
-                             &ucx_mkey->rkey);
-    if (UCS_OK != err) {
+    status = ucp_ep_rkey_unpack(mca_spml_ucx.ucp_peers[oshmem_group_self->my_pe].ucp_conn,
+                                mkeys[0].u.data,
+                                &ucx_mkey->rkey);
+    if (UCS_OK != status) {
         SPML_ERROR("failed to unpack rkey");
         goto error_unmap;
     }

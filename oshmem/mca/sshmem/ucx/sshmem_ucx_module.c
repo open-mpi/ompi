@@ -118,8 +118,6 @@ segment_create(map_segment_t *ds_buf,
     ds_buf->context       = mem_h;
     ds_buf->type          = MAP_SEGMENT_ALLOC_UCX;
 
-    /* TODO: ucp_mem_advise when UCX has it */
-
 out:
     OPAL_OUTPUT_VERBOSE(
           (70, oshmem_sshmem_base_framework.framework_output,
