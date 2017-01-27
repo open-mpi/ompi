@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -98,9 +98,9 @@ int MPI_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount,
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    err = comm->c_coll.coll_ireduce_scatter_block(sendbuf, recvbuf, recvcount,
+    err = comm->c_coll->coll_ireduce_scatter_block(sendbuf, recvbuf, recvcount,
                                                   datatype, op, comm, request,
-                                                  comm->c_coll.coll_ireduce_scatter_block_module);
+                                                  comm->c_coll->coll_ireduce_scatter_block_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

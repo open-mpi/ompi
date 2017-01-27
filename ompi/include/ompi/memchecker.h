@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2010-2013 The University of Tennessee and The University
+ * Copyright (c) 2010-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -224,24 +224,24 @@ static inline int memchecker_comm(MPI_Comm comm)
     opal_memchecker_base_isdefined (&comm->errhandler_type, sizeof(ompi_errhandler_type_t));
     opal_memchecker_base_isdefined (&comm->c_pml_comm, sizeof(struct mca_pml_comm_t *));
     /* c_coll */
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_module_init, sizeof(mca_coll_base_module_init_1_0_0_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_module_finalize, sizeof(mca_coll_base_module_finalize_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_allgather, sizeof(mca_coll_base_module_allgather_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_allgatherv, sizeof(mca_coll_base_module_allgatherv_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_allreduce, sizeof(mca_coll_base_module_allreduce_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_alltoall, sizeof(mca_coll_base_module_alltoall_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_alltoallv, sizeof(mca_coll_base_module_alltoallv_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_alltoallw, sizeof(mca_coll_base_module_alltoallw_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_barrier, sizeof(mca_coll_base_module_barrier_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_bcast, sizeof(mca_coll_base_module_bcast_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_exscan, sizeof(mca_coll_base_module_exscan_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_gather, sizeof(mca_coll_base_module_gather_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_gatherv, sizeof(mca_coll_base_module_gatherv_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_reduce, sizeof(mca_coll_base_module_reduce_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_reduce_scatter, sizeof(mca_coll_base_module_reduce_scatter_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_scan, sizeof(mca_coll_base_module_scan_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_scatter, sizeof(mca_coll_base_module_scatter_fn_t));
-    opal_memchecker_base_isdefined (&comm->c_coll.coll_scatterv, sizeof(mca_coll_base_module_scatterv_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_module_init, sizeof(mca_coll_base_module_init_1_0_0_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_module_finalize, sizeof(mca_coll_base_module_finalize_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_allgather, sizeof(mca_coll_base_module_allgather_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_allgatherv, sizeof(mca_coll_base_module_allgatherv_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_allreduce, sizeof(mca_coll_base_module_allreduce_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_alltoall, sizeof(mca_coll_base_module_alltoall_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_alltoallv, sizeof(mca_coll_base_module_alltoallv_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_alltoallw, sizeof(mca_coll_base_module_alltoallw_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_barrier, sizeof(mca_coll_base_module_barrier_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_bcast, sizeof(mca_coll_base_module_bcast_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_exscan, sizeof(mca_coll_base_module_exscan_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_gather, sizeof(mca_coll_base_module_gather_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_gatherv, sizeof(mca_coll_base_module_gatherv_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_reduce, sizeof(mca_coll_base_module_reduce_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_reduce_scatter, sizeof(mca_coll_base_module_reduce_scatter_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_scan, sizeof(mca_coll_base_module_scan_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_scatter, sizeof(mca_coll_base_module_scatter_fn_t));
+    opal_memchecker_base_isdefined (&comm->c_coll->coll_scatterv, sizeof(mca_coll_base_module_scatterv_fn_t));
 
     opal_memchecker_base_isdefined (&comm->c_coll_selected_component, sizeof(const mca_coll_base_component_2_0_0_t *));
     opal_memchecker_base_isdefined (&comm->c_coll_selected_module, sizeof(const mca_coll_base_module_1_0_0_t *));

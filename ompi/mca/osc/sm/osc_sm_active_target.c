@@ -3,7 +3,7 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      The University of Tennessee and The University
+ * Copyright (c) 2014-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -101,8 +101,8 @@ ompi_osc_sm_fence(int assert, struct ompi_win_t *win)
     opal_atomic_mb();
 
     if (module->global_state->use_barrier_for_fence) {
-        return module->comm->c_coll.coll_barrier(module->comm,
-                                                 module->comm->c_coll.coll_barrier_module);
+        return module->comm->c_coll->coll_barrier(module->comm,
+                                                 module->comm->c_coll->coll_barrier_module);
     } else {
         module->my_sense = !module->my_sense;
         pthread_mutex_lock(&module->global_state->mtx);

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -353,6 +353,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->error_handler  = NULL;
     comm->c_pml_comm     = NULL;
     comm->c_topo         = NULL;
+    comm->c_coll         = NULL;
 
     /* A keyhash will be created if/when an attribute is cached on
        this communicator */
@@ -362,12 +363,6 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
 #ifdef OMPI_WANT_PERUSE
     comm->c_peruse_handles = NULL;
 #endif
-
-    /* Need to zero out the collectives module because we sometimes
-       call coll_unselect without a matching call to coll_select, and
-       we need an easy way for the coll base code to realize we've
-       done this. */
-    memset(&comm->c_coll, 0, sizeof(mca_coll_base_comm_coll_t));
 }
 
 static void ompi_comm_destruct(ompi_communicator_t* comm)
@@ -379,7 +374,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     /* Release the collective module */
 
-    if ( MPI_COMM_NULL != comm ) {
+    if ( NULL != comm->c_coll ) {
         mca_coll_base_comm_unselect(comm);
     }
 

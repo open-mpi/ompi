@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -63,10 +63,10 @@ mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
     }
     pml_buffer = tmpbuf - gap;
 
-    err = comm->c_local_comm->c_coll.coll_reduce(sbuf, pml_buffer, count,
+    err = comm->c_local_comm->c_coll->coll_reduce(sbuf, pml_buffer, count,
 						 dtype, op, root,
 						 comm->c_local_comm,
-                                                 comm->c_local_comm->c_coll.coll_reduce_module);
+                                                 comm->c_local_comm->c_coll->coll_reduce_module);
     if (OMPI_SUCCESS != err) {
 	goto exit;
     }
@@ -95,9 +95,9 @@ mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
     }
 
     /* bcast the message to all the local processes */
-    err = comm->c_local_comm->c_coll.coll_bcast(rbuf, count, dtype,
+    err = comm->c_local_comm->c_coll->coll_bcast(rbuf, count, dtype,
 						root, comm->c_local_comm,
-                                                comm->c_local_comm->c_coll.coll_bcast_module);
+                                                comm->c_local_comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != err) {
             goto exit;
     }

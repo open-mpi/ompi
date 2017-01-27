@@ -2,6 +2,9 @@
  * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,8 +121,8 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
     }
 
     /* Get all rank info sizes using MPI_Gather */
-    rc = comm->c_coll.coll_gather(&info_size, 1, MPI_INT, rcounts, 1, MPI_INT, 0,
-                                  comm, comm->c_coll.coll_gather_module);
+    rc = comm->c_coll->coll_gather(&info_size, 1, MPI_INT, rcounts, 1, MPI_INT, 0,
+                                  comm, comm->c_coll->coll_gather_module);
     if (rc != OMPI_SUCCESS)
         return rc;
 
@@ -144,9 +147,9 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
     }
 
     /* Send all node managers information to rank0 using MPI_Gatherv */
-    rc = comm->c_coll.coll_gatherv(my_info, info_size, MPI_BYTE,
+    rc = comm->c_coll->coll_gatherv(my_info, info_size, MPI_BYTE,
                                    all_info, rcounts, displs, MPI_BYTE, 0,
-                                   comm, comm->c_coll.coll_gather_module);
+                                   comm, comm->c_coll->coll_gather_module);
     if (rc != OMPI_SUCCESS) {
         FCA_ERROR("Failed to gather rank information to rank0: %d", rc);
         return rc;
@@ -284,7 +287,7 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
                 }
 
                 part_of_hash_index = modular_pow(cm->fca_primes[grank % cm->fca_number_of_primes], grank, cm->fca_hash_size);
-                rc = comm->c_coll.coll_allreduce(&part_of_hash_index, &hash_index, 1, MPI_INT, MPI_SUM, comm, comm->c_coll.coll_allreduce_module);
+                rc = comm->c_coll->coll_allreduce(&part_of_hash_index, &hash_index, 1, MPI_INT, MPI_SUM, comm, comm->c_coll->coll_allreduce_module);
                 if (rc != OMPI_SUCCESS) {
                     FCA_ERROR("Failed to reduce hash_index: %d", rc);
                     return rc;
@@ -448,9 +451,9 @@ static void __destroy_fca_comm(mca_coll_fca_module_t *fca_module)
 }
 
 #define FCA_SAVE_PREV_COLL_API(__api) do {\
-    fca_module->previous_ ## __api            = comm->c_coll.coll_ ## __api;\
-    fca_module->previous_ ## __api ## _module = comm->c_coll.coll_ ## __api ## _module;\
-    if (!comm->c_coll.coll_ ## __api || !comm->c_coll.coll_ ## __api ## _module) {\
+    fca_module->previous_ ## __api            = comm->c_coll->coll_ ## __api;\
+    fca_module->previous_ ## __api ## _module = comm->c_coll->coll_ ## __api ## _module;\
+    if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) {\
         FCA_VERBOSE(1, "(%d/%s): no underlying " # __api"; disqualifying myself",\
                     comm->c_contextid, comm->c_name);\
         return OMPI_ERROR;\

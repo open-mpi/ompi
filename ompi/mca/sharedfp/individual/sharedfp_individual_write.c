@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -152,9 +152,9 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
     }
 
     /*collect the total bytes to be written*/
-    sh->comm->c_coll.coll_gather ( &totalbytes, 1, OMPI_OFFSET_DATATYPE,
+    sh->comm->c_coll->coll_gather ( &totalbytes, 1, OMPI_OFFSET_DATATYPE,
 				   offbuff, 1, OMPI_OFFSET_DATATYPE, 0,
-				   sh->comm, sh->comm->c_coll.coll_gather_module );
+				   sh->comm, sh->comm->c_coll->coll_gather_module );
 
     if ( 0 == rank ) {
         prev_offset = offbuff[0];
@@ -173,16 +173,16 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
 
 
     /* Scatter the results to the other processes */
-    ret = sh->comm->c_coll.coll_scatter ( offbuff, 1, OMPI_OFFSET_DATATYPE,
+    ret = sh->comm->c_coll->coll_scatter ( offbuff, 1, OMPI_OFFSET_DATATYPE,
 					  &offset, 1, OMPI_OFFSET_DATATYPE, 0,
-					  sh->comm, sh->comm->c_coll.coll_scatter_module );
+					  sh->comm, sh->comm->c_coll->coll_scatter_module );
     if ( OMPI_SUCCESS != ret )  {
 	opal_output(0,"sharedfp_individual_write_ordered: Error in scattering offsets \n");
 	goto exit;
     }
 
-    ret = sh->comm->c_coll.coll_bcast ( &global_offset, 1, OMPI_OFFSET_DATATYPE,
-				  0, sh->comm, sh->comm->c_coll.coll_bcast_module );
+    ret = sh->comm->c_coll->coll_bcast ( &global_offset, 1, OMPI_OFFSET_DATATYPE,
+				  0, sh->comm, sh->comm->c_coll->coll_bcast_module );
     if ( OMPI_SUCCESS != ret )  {
 	opal_output(0,"sharedfp_individual_write_ordered: Error while bcasting global offset \n");
 	goto exit;

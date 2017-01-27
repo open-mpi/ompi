@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,8 +33,8 @@ ompi_osc_portals4_fence(int assert, struct ompi_win_t *win)
 
     comm_ret = ompi_osc_portals4_complete_all(module);
 
-    ret = module->comm->c_coll.coll_barrier(module->comm,
-                                            module->comm->c_coll.coll_barrier_module);
+    ret = module->comm->c_coll->coll_barrier(module->comm,
+                                            module->comm->c_coll->coll_barrier_module);
 
     return (OMPI_SUCCESS == comm_ret) ? ret : comm_ret;
 }

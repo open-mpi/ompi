@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -66,10 +66,10 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
 	}
         ptmp = ptmp_free - gap;
 
-	err = comm->c_local_comm->c_coll.coll_gather(sbuf, scount, sdtype,
+	err = comm->c_local_comm->c_coll->coll_gather(sbuf, scount, sdtype,
 						     ptmp, scount, sdtype,
 						     0, comm->c_local_comm,
-						     comm->c_local_comm->c_coll.coll_gather_module);
+						     comm->c_local_comm->c_coll->coll_gather_module);
 	if (OMPI_SUCCESS != err) {
 	    goto exit;
 	}
@@ -99,9 +99,9 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
     }
     /* bcast the message to all the local processes */
     if ( rcount > 0 ) {
-	err = comm->c_local_comm->c_coll.coll_bcast(rbuf, rcount*rsize, rdtype,
+	err = comm->c_local_comm->c_coll->coll_bcast(rbuf, rcount*rsize, rdtype,
 						    root, comm->c_local_comm,
-						    comm->c_local_comm->c_coll.coll_bcast_module);
+						    comm->c_local_comm->c_coll->coll_bcast_module);
 	if (OMPI_SUCCESS != err) {
 	    goto exit;
 	}

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -70,10 +70,10 @@ mca_coll_inter_gather_inter(const void *sbuf, int scount,
         }
         ptmp = ptmp_free - gap;
 
-	err = comm->c_local_comm->c_coll.coll_gather(sbuf, scount, sdtype,
+	err = comm->c_local_comm->c_coll->coll_gather(sbuf, scount, sdtype,
 						     ptmp, scount, sdtype,
 						     0, comm->c_local_comm,
-                                                     comm->c_local_comm->c_coll.coll_gather_module);
+                                                     comm->c_local_comm->c_coll->coll_gather_module);
 	if (0 == rank) {
 	    /* First process sends data to the root */
 	    err = MCA_PML_CALL(send(ptmp, scount*size_local, sdtype, root,

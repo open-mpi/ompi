@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -127,6 +127,6 @@ mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm,
     int result;
 
     rank = ompi_comm_rank(comm);
-    return comm->c_coll.coll_allreduce(&rank, &result, 1, MPI_INT, MPI_MAX,
-                                       comm, comm->c_coll.coll_allreduce_module);
+    return comm->c_coll->coll_allreduce(&rank, &result, 1, MPI_INT, MPI_MAX,
+                                       comm, comm->c_coll->coll_allreduce_module);
 }

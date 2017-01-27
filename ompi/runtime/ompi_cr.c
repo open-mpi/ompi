@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -99,7 +99,7 @@ int ompi_cr_verbosity = 0;
         bool found = false;                                     \
         int k;                                                  \
         mca_coll_base_module_t *my_module =                     \
-            comm->c_coll.coll_ ## func ## _module;              \
+            comm->c_coll->coll_ ## func ## _module;             \
         if (NULL != my_module) {                                \
             for (k = 0 ; k < highest_module ; ++k) {            \
                 if (my_module == modules[k]) found = true;      \

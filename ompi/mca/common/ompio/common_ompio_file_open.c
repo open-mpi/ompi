@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -236,7 +236,7 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     int delete_flag = 0;
     char name[256];
 
-    ret = ompio_fh->f_comm->c_coll.coll_barrier ( ompio_fh->f_comm, ompio_fh->f_comm->c_coll.coll_barrier_module);
+    ret = ompio_fh->f_comm->c_coll->coll_barrier ( ompio_fh->f_comm, ompio_fh->f_comm->c_coll->coll_barrier_module);
     if ( OMPI_SUCCESS != ret ) {
         /* Not sure what to do */
         opal_output (1,"mca_common_ompio_file_close: error in Barrier \n");

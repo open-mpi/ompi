@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The University of Tennessee and The University
+ * Copyright (c) 2014-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
@@ -35,7 +35,6 @@ int mca_coll_cuda_scan(const void *sbuf, void *rbuf, int count,
     mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
     ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
-    const char *sbuf2;
     size_t bufsize;
     int rc;
 
@@ -47,7 +46,6 @@ int mca_coll_cuda_scan(const void *sbuf, void *rbuf, int count,
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         opal_cuda_memcpy_sync(sbuf1, sbuf, bufsize);
-        sbuf2 = sbuf; /* save away original buffer */
         sbuf = sbuf1 - gap;
     }
 

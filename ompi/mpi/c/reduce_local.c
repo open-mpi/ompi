@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -82,8 +82,8 @@ int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
     // Since there is no 'comm' parameter to this interface use 'self' since
     // this is a local operation to this process.
     ompi_communicator_t *comm = &ompi_mpi_comm_self.comm;
-    err = comm->c_coll.coll_reduce_local(inbuf, inoutbuf, count, datatype, op,
-                                         comm->c_coll.coll_reduce_local_module);
+    err = comm->c_coll->coll_reduce_local(inbuf, inoutbuf, count, datatype, op,
+                                         comm->c_coll->coll_reduce_local_module);
     OBJ_RELEASE(datatype);
     OBJ_RELEASE(op);
 

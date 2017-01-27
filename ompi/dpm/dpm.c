@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -229,8 +229,8 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
      * side's participants */
 
     /* bcast the list-length to all processes in the local comm */
-    rc = comm->c_coll.coll_bcast(&rportlen, 1, MPI_INT, root, comm,
-                                 comm->c_coll.coll_bcast_module);
+    rc = comm->c_coll->coll_bcast(&rportlen, 1, MPI_INT, root, comm,
+                                 comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != rc) {
         free(rport);
         goto exit;
@@ -245,8 +245,8 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         }
     }
     /* now share the list of remote participants */
-    rc = comm->c_coll.coll_bcast(rport, rportlen, MPI_BYTE, root, comm,
-                                 comm->c_coll.coll_bcast_module);
+    rc = comm->c_coll->coll_bcast(rport, rportlen, MPI_BYTE, root, comm,
+                                 comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != rc) {
         free(rport);
         goto exit;

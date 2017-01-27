@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -66,11 +66,11 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *r
     if (MPI_IN_PLACE == sbuf) {
         /* rbuf on root (0) is big enough to hold whole data */
         if (root == rank) {
-            err = comm->c_coll.coll_reduce (MPI_IN_PLACE, tmprbuf, total_count,
-                                            dtype, op, root, comm, comm->c_coll.coll_reduce_module);
+            err = comm->c_coll->coll_reduce (MPI_IN_PLACE, tmprbuf, total_count,
+                                            dtype, op, root, comm, comm->c_coll->coll_reduce_module);
         } else {
-            err = comm->c_coll.coll_reduce(tmprbuf, NULL, total_count,
-                                           dtype, op, root, comm, comm->c_coll.coll_reduce_module);
+            err = comm->c_coll->coll_reduce(tmprbuf, NULL, total_count,
+                                           dtype, op, root, comm, comm->c_coll->coll_reduce_module);
         }
     } else {
         if (root == rank) {
@@ -82,8 +82,8 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *r
             tmprbuf_free = (char*) malloc(dsize);
             tmprbuf = tmprbuf_free - gap;
         }
-        err = comm->c_coll.coll_reduce (sbuf, tmprbuf, total_count,
-                                        dtype, op, root, comm, comm->c_coll.coll_reduce_module);
+        err = comm->c_coll->coll_reduce (sbuf, tmprbuf, total_count,
+                                        dtype, op, root, comm, comm->c_coll->coll_reduce_module);
     }
     if (MPI_SUCCESS != err) {
         if (NULL != tmprbuf_free) free(tmprbuf_free);
@@ -96,13 +96,13 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *r
         displs[i] = displs[i-1] + rcounts[i-1];
     }
     if (MPI_IN_PLACE == sbuf && root == rank) {
-        err =  comm->c_coll.coll_scatterv (tmprbuf, rcounts, displs, dtype,
+        err =  comm->c_coll->coll_scatterv (tmprbuf, rcounts, displs, dtype,
                                            MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
-                                           root, comm, comm->c_coll.coll_scatterv_module);
+                                           root, comm, comm->c_coll->coll_scatterv_module);
     } else {
-        err =  comm->c_coll.coll_scatterv (tmprbuf, rcounts, displs, dtype,
+        err =  comm->c_coll->coll_scatterv (tmprbuf, rcounts, displs, dtype,
                                            rbuf, rcounts[rank], dtype,
-                                           root, comm, comm->c_coll.coll_scatterv_module);
+                                           root, comm, comm->c_coll->coll_scatterv_module);
     }
     free(displs);
     if (NULL != tmprbuf_free) free(tmprbuf_free);

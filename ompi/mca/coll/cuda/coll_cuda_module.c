@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      The University of Tennessee and The University
+ * Copyright (c) 2014-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
@@ -122,14 +122,14 @@ int mca_coll_cuda_module_enable(mca_coll_base_module_t *module,
     char *msg = NULL;
     mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
 
-#define CHECK_AND_RETAIN(src, dst, name)               \
-    if (NULL == (src)->c_coll.coll_ ## name ## _module) {   \
-        good = false; \
-        msg = #name; \
-    } else if (good) { \
-        (dst)->c_coll.coll_ ## name ## _module = (src)->c_coll.coll_ ## name ## _module;\
-        (dst)->c_coll.coll_ ## name = (src)->c_coll.coll_ ## name ; \
-        OBJ_RETAIN((src)->c_coll.coll_ ## name ## _module); \
+#define CHECK_AND_RETAIN(src, dst, name)                                                   \
+    if (NULL == (src)->c_coll->coll_ ## name ## _module) {                                 \
+        good = false;                                                                      \
+        msg = #name;                                                                       \
+    } else if (good) {                                                                     \
+        (dst)->c_coll.coll_ ## name ## _module = (src)->c_coll->coll_ ## name ## _module;  \
+        (dst)->c_coll.coll_ ## name = (src)->c_coll->coll_ ## name;                        \
+        OBJ_RETAIN((src)->c_coll->coll_ ## name ## _module);                               \
     }
 
     CHECK_AND_RETAIN(comm, s, allreduce);
@@ -145,11 +145,10 @@ int mca_coll_cuda_module_enable(mca_coll_base_module_t *module,
     /* All done */
     if (good) {
         return OMPI_SUCCESS;
-    } else {
-        orte_show_help("help-mpi-coll-cuda.txt", "missing collective", true,
-                       orte_process_info.nodename,
-                       mca_coll_cuda_component.priority, msg);
-        return OMPI_ERR_NOT_FOUND;
     }
+    orte_show_help("help-mpi-coll-cuda.txt", "missing collective", true,
+                   orte_process_info.nodename,
+                   mca_coll_cuda_component.priority, msg);
+    return OMPI_ERR_NOT_FOUND;
 }
 

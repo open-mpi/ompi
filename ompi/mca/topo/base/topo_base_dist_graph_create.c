@@ -3,7 +3,7 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 The University of Tennessee and The University
+ * Copyright (c) 2011-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
@@ -114,9 +114,9 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
         }
     }
 
-    err = comm->c_coll.coll_reduce_scatter_block( MPI_IN_PLACE, idx, 2,
+    err = comm->c_coll->coll_reduce_scatter_block( MPI_IN_PLACE, idx, 2,
                                                   (ompi_datatype_t*)&ompi_mpi_int, MPI_SUM, comm,
-                                                  comm->c_coll.coll_reduce_scatter_block_module);
+                                                  comm->c_coll->coll_reduce_scatter_block_module);
     /**
      * At this point in the indexes array we have:
      * - idx[0].in  total number of IN  edges

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -142,7 +142,7 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
             return OMPI_ERR_OUT_OF_RESOURCE;
 	}
 
-        fh->f_comm->c_coll.coll_gather (&k,
+        fh->f_comm->c_coll->coll_gather (&k,
                                         1,
                                         MPI_INT,
                                         recvcounts,
@@ -150,7 +150,7 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 					MPI_INT,
                                         OMPIO_ROOT,
                                         fh->f_comm,
-                                        fh->f_comm->c_coll.coll_gather_module);
+                                        fh->f_comm->c_coll->coll_gather_module);
 
         per_process = (mca_io_ompio_offlen_array_t *)
 	    malloc (k * sizeof(mca_io_ompio_offlen_array_t));
@@ -248,7 +248,7 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
                 }
             }
 	}
-	fh->f_comm->c_coll.coll_gatherv (per_process,
+	fh->f_comm->c_coll->coll_gatherv (per_process,
 					 k,
 					 io_array_type,
 					 all_process,
@@ -257,7 +257,7 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 					 io_array_type,
 					 OMPIO_ROOT,
 					 fh->f_comm,
-					 fh->f_comm->c_coll.coll_gatherv_module);
+					 fh->f_comm->c_coll->coll_gatherv_module);
 
 	ompi_datatype_destroy(&io_array_type);
 

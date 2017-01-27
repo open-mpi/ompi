@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -85,17 +85,17 @@ static OBJ_CLASS_INSTANCE(avail_coll_t, opal_list_item_t, NULL, NULL);
 #define COPY(module, comm, func)                                        \
     do {                                                                \
         if (NULL != module->coll_ ## func) {                            \
-            if (NULL != comm->c_coll.coll_ ## func ## _module) {        \
-                OBJ_RELEASE(comm->c_coll.coll_ ## func ## _module);     \
+            if (NULL != comm->c_coll->coll_ ## func ## _module) {       \
+                OBJ_RELEASE(comm->c_coll->coll_ ## func ## _module);    \
             }                                                           \
-            comm->c_coll.coll_ ## func = module->coll_ ## func;         \
-            comm->c_coll.coll_ ## func ## _module = module;             \
+            comm->c_coll->coll_ ## func = module->coll_ ## func;        \
+            comm->c_coll->coll_ ## func ## _module = module;            \
             OBJ_RETAIN(module);                                         \
         }                                                               \
     } while (0)
 
 #define CHECK_NULL(what, comm, func)                                    \
-  ( (what) = # func , NULL == (comm)->c_coll.coll_ ## func)
+  ( (what) = # func , NULL == (comm)->c_coll->coll_ ## func)
 
 /*
  * This function is called at the initialization time of every
@@ -118,7 +118,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
 
     /* Initialize all the relevant pointers, since they're used as
      * sentinel values */
-    memset(&comm->c_coll, 0, sizeof(mca_coll_base_comm_coll_t));
+    comm->c_coll = (mca_coll_base_comm_coll_t*)calloc(1, sizeof(mca_coll_base_comm_coll_t));
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:base:comm_select: Checking all available modules");

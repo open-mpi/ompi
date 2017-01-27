@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -238,13 +238,13 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
     avg[1] = (OMPI_MPI_OFFSET_TYPE) fh->f_iov_count;
     avg[2] = (OMPI_MPI_OFFSET_TYPE) uniform;
 
-    fh->f_comm->c_coll.coll_allreduce (avg,
+    fh->f_comm->c_coll->coll_allreduce (avg,
                                        global_avg,
                                        3,
                                        OMPI_OFFSET_DATATYPE,
                                        MPI_SUM,
                                        fh->f_comm,
-                                       fh->f_comm->c_coll.coll_allreduce_module);
+                                       fh->f_comm->c_coll->coll_allreduce_module);
     global_avg[0] = global_avg[0]/fh->f_size;
     global_avg[1] = global_avg[1]/fh->f_size;
 
@@ -265,13 +265,13 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
     /* second confirmation round to see whether all processes agree
     ** on having a uniform file view or not
     */
-    fh->f_comm->c_coll.coll_allreduce (&uniform,
+    fh->f_comm->c_coll->coll_allreduce (&uniform,
 				       &global_uniform,
 				       1,
 				       MPI_INT,
 				       MPI_MAX,
 				       fh->f_comm,
-				       fh->f_comm->c_coll.coll_allreduce_module);
+				       fh->f_comm->c_coll->coll_allreduce_module);
 
     if ( 0 == global_uniform  ){
 	/* yes, everybody agrees on having a uniform file view */

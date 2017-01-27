@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -521,8 +521,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         temp[local_rank].size = size;
 
         /* gather the local sizes and ranks */
-        ret = shared_comm->c_coll.coll_allgather (MPI_IN_PLACE, sizeof (*temp), MPI_BYTE, temp, sizeof (*temp),
-                                                  MPI_BYTE, shared_comm, shared_comm->c_coll.coll_allgather_module);
+        ret = shared_comm->c_coll->coll_allgather (MPI_IN_PLACE, sizeof (*temp), MPI_BYTE, temp, sizeof (*temp),
+                                                  MPI_BYTE, shared_comm, shared_comm->c_coll->coll_allgather_module);
         if (OMPI_SUCCESS != ret) {
             break;
         }
@@ -557,8 +557,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             }
         }
 
-        ret = module->comm->c_coll.coll_bcast (&module->seg_ds, sizeof (module->seg_ds), MPI_BYTE, 0,
-                                               shared_comm, shared_comm->c_coll.coll_bcast_module);
+        ret = module->comm->c_coll->coll_bcast (&module->seg_ds, sizeof (module->seg_ds), MPI_BYTE, 0,
+                                               shared_comm, shared_comm->c_coll->coll_bcast_module);
         if (OMPI_SUCCESS != ret) {
             break;
         }
@@ -607,7 +607,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         }
 
         /* barrier to make sure all ranks have attached */
-        shared_comm->c_coll.coll_barrier(shared_comm, shared_comm->c_coll.coll_barrier_module);
+        shared_comm->c_coll->coll_barrier(shared_comm, shared_comm->c_coll->coll_barrier_module);
 
         /* unlink the shared memory backing file */
         if (0 == local_rank) {
@@ -626,7 +626,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         }
 
         /* barrier to make sure all ranks have attached */
-        shared_comm->c_coll.coll_barrier(shared_comm, shared_comm->c_coll.coll_barrier_module);
+        shared_comm->c_coll->coll_barrier(shared_comm, shared_comm->c_coll->coll_barrier_module);
 
         offset = data_base;
         for (int i = 0 ; i < local_size ; ++i) {
@@ -858,8 +858,8 @@ static int ompi_osc_rdma_share_data (ompi_osc_rdma_module_t *module)
         temp[my_rank].node_id = module->node_id;
         temp[my_rank].rank = ompi_comm_rank (module->shared_comm);
 
-        ret = module->comm->c_coll.coll_allgather (MPI_IN_PLACE, 1, MPI_2INT, temp, 1, MPI_2INT,
-                                                   module->comm, module->comm->c_coll.coll_allgather_module);
+        ret = module->comm->c_coll->coll_allgather (MPI_IN_PLACE, 1, MPI_2INT, temp, 1, MPI_2INT,
+                                                   module->comm, module->comm->c_coll->coll_allgather_module);
         if (OMPI_SUCCESS != ret) {
             break;
         }
@@ -879,9 +879,9 @@ static int ompi_osc_rdma_share_data (ompi_osc_rdma_module_t *module)
 
             /* gather state data at each node leader */
             if (ompi_comm_size (module->local_leaders) > 1) {
-                ret = module->local_leaders->c_coll.coll_allgather (MPI_IN_PLACE, module->region_size, MPI_BYTE, module->node_comm_info,
+                ret = module->local_leaders->c_coll->coll_allgather (MPI_IN_PLACE, module->region_size, MPI_BYTE, module->node_comm_info,
                                                                     module->region_size, MPI_BYTE, module->local_leaders,
-                                                                    module->local_leaders->c_coll.coll_gather_module);
+                                                                    module->local_leaders->c_coll->coll_gather_module);
                 if (OMPI_SUCCESS != ret) {
                     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "leader allgather failed with ompi error code %d", ret);
                     break;
@@ -905,8 +905,8 @@ static int ompi_osc_rdma_share_data (ompi_osc_rdma_module_t *module)
     } while (0);
 
 
-    ret = module->comm->c_coll.coll_allreduce (&ret, &global_result, 1, MPI_INT, MPI_MIN, module->comm,
-                                               module->comm->c_coll.coll_allreduce_module);
+    ret = module->comm->c_coll->coll_allreduce (&ret, &global_result, 1, MPI_INT, MPI_MIN, module->comm,
+                                               module->comm->c_coll->coll_allreduce_module);
 
     if (OMPI_SUCCESS != ret) {
         global_result = ret;
@@ -953,8 +953,8 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
     }
 
     if (ompi_comm_size (module->shared_comm) > 1) {
-        ret = module->shared_comm->c_coll.coll_bcast (values, 2, MPI_INT, 0, module->shared_comm,
-                                                      module->shared_comm->c_coll.coll_bcast_module);
+        ret = module->shared_comm->c_coll->coll_bcast (values, 2, MPI_INT, 0, module->shared_comm,
+                                                      module->shared_comm->c_coll->coll_bcast_module);
         if (OMPI_SUCCESS != ret) {
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to broadcast local data. error code %d", ret);
             return ret;
@@ -993,8 +993,8 @@ static int ompi_osc_rdma_check_parameters (ompi_osc_rdma_module_t *module, int d
     values[2] = size;
     values[3] = -(ssize_t) size;
 
-    ret = module->comm->c_coll.coll_allreduce (MPI_IN_PLACE, values, 4, MPI_LONG, MPI_MIN, module->comm,
-                                               module->comm->c_coll.coll_allreduce_module);
+    ret = module->comm->c_coll->coll_allreduce (MPI_IN_PLACE, values, 4, MPI_LONG, MPI_MIN, module->comm,
+                                               module->comm->c_coll->coll_allreduce_module);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
@@ -1230,8 +1230,8 @@ static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct ompi_info_t *i
     }
 
     /* enforce collectiveness... */
-    return module->comm->c_coll.coll_barrier(module->comm,
-                                             module->comm->c_coll.coll_barrier_module);
+    return module->comm->c_coll->coll_barrier(module->comm,
+                                             module->comm->c_coll->coll_barrier_module);
 }
 
 

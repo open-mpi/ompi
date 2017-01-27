@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -146,14 +146,14 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
     mca_coll_sync_module_t *s = (mca_coll_sync_module_t*) module;
 
     /* Save the prior layer of coll functions */
-    s->c_coll = comm->c_coll;
+    s->c_coll = *comm->c_coll;
 
-#define CHECK_AND_RETAIN(name) \
-    if (NULL == s->c_coll.coll_ ## name ## _module) { \
-        good = false; \
-        msg = #name; \
-    } else if (good) { \
-        OBJ_RETAIN(s->c_coll.coll_ ## name ## _module); \
+#define CHECK_AND_RETAIN(name)                           \
+    if (NULL == s->c_coll.coll_ ## name ## _module) {    \
+        good = false;                                    \
+        msg = #name;                                     \
+    } else if (good) {                                   \
+        OBJ_RETAIN(s->c_coll.coll_ ## name ## _module);  \
     }
 
     CHECK_AND_RETAIN(bcast);
@@ -172,12 +172,11 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
     /* All done */
     if (good) {
         return OMPI_SUCCESS;
-    } else {
-        orte_show_help("help-coll-sync.txt", "missing collective", true,
-                       orte_process_info.nodename,
-                       mca_coll_sync_component.priority, msg);
-        return OMPI_ERR_NOT_FOUND;
     }
+    orte_show_help("help-coll-sync.txt", "missing collective", true,
+                   orte_process_info.nodename,
+                   mca_coll_sync_component.priority, msg);
+    return OMPI_ERR_NOT_FOUND;
 }
 
 

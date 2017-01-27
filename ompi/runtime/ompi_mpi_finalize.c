@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -268,7 +268,7 @@ int ompi_mpi_finalize(void)
              * reasons cited above), followed by a blocking PMIx fence
              * (which does not call opal_progress()). */
             ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
-            comm->c_coll.coll_barrier(comm, comm->c_coll.coll_barrier_module);
+            comm->c_coll->coll_barrier(comm, comm->c_coll->coll_barrier_module);
 
             opal_pmix.fence(NULL, 0);
         }

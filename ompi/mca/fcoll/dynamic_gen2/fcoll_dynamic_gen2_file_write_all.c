@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -264,14 +264,14 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     start_comm_time = MPI_Wtime();
 #endif
     if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
-        ret = fh->f_comm->c_coll.coll_allgather (broken_total_lengths,
+        ret = fh->f_comm->c_coll->coll_allgather (broken_total_lengths,
                                                  dynamic_gen2_num_io_procs,
                                                  MPI_LONG,
                                                  total_bytes_per_process,
                                                  dynamic_gen2_num_io_procs,
                                                  MPI_LONG,
                                                  fh->f_comm,
-                                                 fh->f_comm->c_coll.coll_allgather_module);
+                                                 fh->f_comm->c_coll->coll_allgather_module);
     }
     else {
         ret = fcoll_base_coll_allgather_array (broken_total_lengths,
@@ -323,14 +323,14 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     start_comm_time = MPI_Wtime();
 #endif
     if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
-        ret = fh->f_comm->c_coll.coll_allgather(broken_counts,
+        ret = fh->f_comm->c_coll->coll_allgather(broken_counts,
                                                 dynamic_gen2_num_io_procs,
                                                 MPI_INT,
                                                 result_counts,
                                                 dynamic_gen2_num_io_procs,
                                                 MPI_INT,
                                                 fh->f_comm,
-                                                fh->f_comm->c_coll.coll_allgather_module);            
+                                                fh->f_comm->c_coll->coll_allgather_module);            
     }
     else {
         ret = fcoll_base_coll_allgather_array (broken_counts,
@@ -409,7 +409,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
         start_comm_time = MPI_Wtime();
 #endif
         if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
-            ret = fh->f_comm->c_coll.coll_allgatherv (broken_iov_arrays[i],
+            ret = fh->f_comm->c_coll->coll_allgatherv (broken_iov_arrays[i],
                                                       broken_counts[i],
                                                       fh->f_iov_type,
                                                       aggr_data[i]->global_iov_array,
@@ -417,7 +417,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                                                       displs,
                                                       fh->f_iov_type,
                                                       fh->f_comm,
-                                                      fh->f_comm->c_coll.coll_allgatherv_module );
+                                                      fh->f_comm->c_coll->coll_allgatherv_module );
         }
         else {
             ret = fcoll_base_coll_allgatherv_array (broken_iov_arrays[i],

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -133,14 +133,14 @@ int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
     }
     
     //Allgather start offsets across processes in a group on aggregator
-    ret = fh->f_comm->c_coll.coll_allgather (start_offset_len,
+    ret = fh->f_comm->c_coll->coll_allgather (start_offset_len,
                                              3,
                                              OMPI_OFFSET_DATATYPE,
                                              start_offsets_lens,
                                              3,
                                              OMPI_OFFSET_DATATYPE,
                                              fh->f_comm,
-                                             fh->f_comm->c_coll.coll_allgather_module);
+                                             fh->f_comm->c_coll->coll_allgather_module);
     if ( OMPI_SUCCESS != ret ) {
         goto exit;
     }
@@ -493,13 +493,13 @@ int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
     if(fh->f_rank == fh->f_procs_in_group[fh->f_aggregator_index]){
 	   final_aggr = 1;
     }
-    ret = fh->f_comm->c_coll.coll_allreduce (&final_aggr,
+    ret = fh->f_comm->c_coll->coll_allreduce (&final_aggr,
                                              &final_num_aggrs,
                                              1,
                                              MPI_INT,
                                              MPI_SUM,
                                              fh->f_comm,
-                                             fh->f_comm->c_coll.coll_allreduce_module);
+                                             fh->f_comm->c_coll->coll_allreduce_module);
     if ( OMPI_SUCCESS != ret ) {
         opal_output (1, "mca_io_ompio_create_groups: error in allreduce\n");
     }

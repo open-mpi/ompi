@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -143,9 +143,9 @@ int mca_sharedfp_sm_read_ordered_begin(mca_io_ompio_file_t *fh,
             return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    ret = sh->comm->c_coll.coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE,
+    ret = sh->comm->c_coll->coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE,
 					 buff, recvcnt, OMPI_OFFSET_DATATYPE, 0,
-					 sh->comm, sh->comm->c_coll.coll_gather_module );
+					 sh->comm, sh->comm->c_coll->coll_gather_module );
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }
@@ -185,9 +185,9 @@ int mca_sharedfp_sm_read_ordered_begin(mca_io_ompio_file_t *fh,
     }
 
     /* Scatter the results to the other processes*/
-    ret = sh->comm->c_coll.coll_scatter ( buff, sendcnt, OMPI_OFFSET_DATATYPE,
+    ret = sh->comm->c_coll->coll_scatter ( buff, sendcnt, OMPI_OFFSET_DATATYPE,
 					  &offsetBuff, recvcnt, OMPI_OFFSET_DATATYPE, 0,
-					  sh->comm, sh->comm->c_coll.coll_scatter_module );
+					  sh->comm, sh->comm->c_coll->coll_scatter_module );
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }

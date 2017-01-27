@@ -14,6 +14,9 @@
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -147,7 +150,7 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
 
     /* short-circuit the noprecede case */
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
-        module->comm->c_coll.coll_barrier (module->comm,  module->comm->c_coll.coll_barrier_module);
+        module->comm->c_coll->coll_barrier (module->comm,  module->comm->c_coll->coll_barrier_module);
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "osc pt2pt: fence end (short circuit)"));
         return ret;
@@ -163,10 +166,10 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
                          "osc pt2pt: fence done sending"));
 
     /* find out how much data everyone is going to send us.  */
-    ret = module->comm->c_coll.coll_reduce_scatter_block (module->epoch_outgoing_frag_count,
+    ret = module->comm->c_coll->coll_reduce_scatter_block (module->epoch_outgoing_frag_count,
                                                           &incoming_reqs, 1, MPI_UINT32_T,
                                                           MPI_SUM, module->comm,
-                                                          module->comm->c_coll.coll_reduce_scatter_block_module);
+                                                          module->comm->c_coll->coll_reduce_scatter_block_module);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
@@ -196,7 +199,7 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
     module->all_sync.epoch_active = false;
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    module->comm->c_coll.coll_barrier (module->comm, module->comm->c_coll.coll_barrier_module);
+    module->comm->c_coll->coll_barrier (module->comm, module->comm->c_coll->coll_barrier_module);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: fence end: %d", ret));

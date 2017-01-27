@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -224,8 +224,8 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
 static int sm_module_enable(mca_coll_base_module_t *module,
                             struct ompi_communicator_t *comm)
 {
-    if (NULL == comm->c_coll.coll_reduce ||
-        NULL == comm->c_coll.coll_reduce_module) {
+    if (NULL == comm->c_coll->coll_reduce ||
+        NULL == comm->c_coll->coll_reduce_module) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable (%d/%s): no underlying reduce; disqualifying myself",
                             comm->c_contextid, comm->c_name);
@@ -458,8 +458,8 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     }
 
     /* Save previous component's reduce information */
-    sm_module->previous_reduce = comm->c_coll.coll_reduce;
-    sm_module->previous_reduce_module = comm->c_coll.coll_reduce_module;
+    sm_module->previous_reduce = comm->c_coll->coll_reduce;
+    sm_module->previous_reduce_module = comm->c_coll->coll_reduce_module;
     OBJ_RETAIN(sm_module->previous_reduce_module);
 
     /* Indicate that we have successfully attached and setup */

@@ -1,7 +1,10 @@
 /*
- * Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
+ * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,8 +80,8 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
 
     /* Invoke the coll component to perform the back-end operation */
 
-    err = comm->c_coll.coll_ibcast(buffer, count, datatype, root, comm,
+    err = comm->c_coll->coll_ibcast(buffer, count, datatype, root, comm,
                                   request,
-                                  comm->c_coll.coll_ibcast_module);
+                                  comm->c_coll->coll_ibcast_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

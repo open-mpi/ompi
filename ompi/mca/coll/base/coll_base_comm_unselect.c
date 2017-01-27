@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -34,19 +34,17 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/base.h"
 
-#define CLOSE(comm, func)                                       \
-    do {                                                        \
-        if (NULL != comm->c_coll.coll_ ## func ## _module) {    \
-            if (NULL != comm->c_coll.coll_ ## func ## _module-> \
-                coll_module_disable) {                          \
-                comm->c_coll.coll_ ## func ## _module->         \
-                coll_module_disable(                            \
-                comm->c_coll.coll_ ## func ## _module, comm);   \
-            }                                                   \
-            OBJ_RELEASE(comm->c_coll.coll_ ## func ## _module); \
-            comm->c_coll.coll_## func = NULL;                   \
-            comm->c_coll.coll_## func ## _module = NULL;        \
-        }                                                       \
+#define CLOSE(comm, func)                                        \
+    do {                                                         \
+        if (NULL != comm->c_coll->coll_ ## func ## _module) {    \
+            if (NULL != comm->c_coll->coll_ ## func ## _module->coll_module_disable) { \
+                comm->c_coll->coll_ ## func ## _module->coll_module_disable(           \
+                              comm->c_coll->coll_ ## func ## _module, comm);           \
+            }                                                    \
+            OBJ_RELEASE(comm->c_coll->coll_ ## func ## _module); \
+            comm->c_coll->coll_## func = NULL;                   \
+            comm->c_coll->coll_## func ## _module = NULL;        \
+        }                                                        \
     } while (0)
 
 int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
@@ -101,6 +99,10 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
 
     CLOSE(comm, reduce_local);
 
+    free(comm->c_coll);
+    comm->c_coll = NULL;
+
     /* All done */
     return OMPI_SUCCESS;
 }
+

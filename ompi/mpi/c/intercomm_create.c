@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -130,9 +130,9 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
 
     /* bcast size and list of remote processes to all processes in local_comm */
-    rc = local_comm->c_coll.coll_bcast ( &rsize, 1, MPI_INT, lleader,
+    rc = local_comm->c_coll->coll_bcast ( &rsize, 1, MPI_INT, lleader,
                                          local_comm,
-                                         local_comm->c_coll.coll_bcast_module);
+                                         local_comm->c_coll->coll_bcast_module);
     if ( rc != MPI_SUCCESS ) {
         goto err_exit;
     }
