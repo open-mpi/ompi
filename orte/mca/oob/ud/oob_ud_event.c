@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -53,9 +53,6 @@ static bool event_completed_set = false;
 void mca_oob_ud_event_start_monitor (mca_oob_ud_device_t *device)
 {
     if (!event_started) {
-#if !OPAL_ENABLE_PROGRESS_THREADS
-        opal_progress_event_users_increment ();
-#endif
         opal_event_set (orte_event_base, &device->event, device->ib_channel->fd,
                         OPAL_EV_READ, mca_oob_ud_event_dispatch, (void *) device);
         opal_event_add (&device->event, NULL);
@@ -66,9 +63,6 @@ void mca_oob_ud_event_start_monitor (mca_oob_ud_device_t *device)
 void mca_oob_ud_event_stop_monitor (mca_oob_ud_device_t *device)
 {
     if (event_started) {
-#if !OPAL_ENABLE_PROGRESS_THREADS
-        opal_progress_event_users_decrement ();
-#endif
         opal_event_del (&device->event);
         mca_oob_ud_stop_events (device);
         event_started = false;
