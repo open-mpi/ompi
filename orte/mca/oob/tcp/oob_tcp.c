@@ -76,14 +76,12 @@ static void accept_connection(const int accepted_fd,
                               const struct sockaddr *addr);
 static void ping(const orte_process_name_t *proc);
 static void send_nb(orte_rml_send_t *msg);
-static void resend(struct mca_oob_tcp_msg_error_t *mop);
 static void ft_event(int state);
 
 mca_oob_tcp_module_t mca_oob_tcp_module = {
     .accept_connection = accept_connection,
     .ping = ping,
     .send_nb = send_nb,
-    .resend = resend,
     .ft_event = ft_event
 };
 
@@ -228,68 +226,6 @@ static void send_nb(orte_rml_send_t *msg)
 
     if (MCA_OOB_TCP_CONNECTING != peer->state &&
         MCA_OOB_TCP_CONNECT_ACK != peer->state) {
-        /* we have to initiate the connection - again, we do not
-         * want to block while the connection is created.
-         * So throw us into an event that will create
-         * the connection via a mini-state-machine :-)
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s tcp:send_nb: initiating connection to %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        peer->state = MCA_OOB_TCP_CONNECTING;
-        ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
-    }
-}
-
-static void resend(struct mca_oob_tcp_msg_error_t *mpi)
-{
-    mca_oob_tcp_msg_error_t *mp = (mca_oob_tcp_msg_error_t*)mpi;
-    mca_oob_tcp_peer_t *peer;
-
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:tcp processing resend to peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&mp->hop));
-
-    /* do we know this peer? */
-    if (NULL == (peer = mca_oob_tcp_peer_lookup(&mp->hop))) {
-        /* push this back to the component so it can try
-         * another module within this transport. If no
-         * module can be found, the component can push back
-         * to the framework so another component can try
-         */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s:[%s:%d] peer %s unknown",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            __FILE__, __LINE__,
-                            ORTE_NAME_PRINT(&mp->hop));
-        ORTE_ACTIVATE_TCP_MSG_ERROR(mp->snd, NULL, &mp->hop, mca_oob_tcp_component_hop_unknown);
-        return;
-    }
-
-    /* should be impossible, but...has this peer had a progress thread assigned yet? */
-    if (NULL == peer->ev_base) {
-        /* nope - assign one */
-        ORTE_OOB_TCP_NEXT_BASE(peer);
-    }
-
-    /* add the msg to this peer's send queue */
-    if (MCA_OOB_TCP_CONNECTED == peer->state) {
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s tcp:resend: already connected to %s - queueing for send",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        MCA_OOB_TCP_QUEUE_MSG(peer, mp->snd, true);
-        return;
-    }
-
-    if (MCA_OOB_TCP_CONNECTING != peer->state &&
-        MCA_OOB_TCP_CONNECT_ACK != peer->state) {
-        /* add the message to the queue for sending after the
-         * connection is formed
-         */
-        MCA_OOB_TCP_QUEUE_MSG(peer, mp->snd, false);
         /* we have to initiate the connection - again, we do not
          * want to block while the connection is created.
          * So throw us into an event that will create

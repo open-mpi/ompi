@@ -806,6 +806,12 @@ static int remote_spawn(opal_buffer_t *launch)
     OBJ_CONSTRUCT(&coll, opal_list_t);
     orte_routed.get_routing_list(rtmod, &coll);
 
+    /* extract and update the daemon map */
+    if (ORTE_SUCCESS != (rc = orte_util_decode_daemon_nodemap(launch))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
     /* if I have no children, just return */
     if (0 == opal_list_get_size(&coll)) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,

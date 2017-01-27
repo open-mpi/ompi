@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,9 +46,18 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     OBJ_RELEASE(cd);
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:base:send to target %s",
+                        "%s oob:base:send to target %s - %u attempt",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst));
+                        ORTE_NAME_PRINT(&msg->dst), msg->retries);
+
+    /* don't try forever - if we have exceeded the number of retries,
+     * then report this message as undeliverable even if someone continues
+     * to think they could reach it */
+    if (orte_rml_base.max_retries <= msg->retries) {
+        msg->status = ORTE_ERR_NO_PATH_TO_TARGET;
+        ORTE_RML_SEND_COMPLETE(msg);
+        return;
+    }
 
     /* check if we have this peer in our hash table */
     memcpy(&ui64, (char*)&msg->dst, sizeof(uint64_t));

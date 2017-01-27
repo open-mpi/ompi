@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -231,7 +231,13 @@ void orte_rml_send_callback(int status, orte_process_name_t *peer,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(peer), tag,
                             ORTE_ERROR_NAME(status));
-        ORTE_ACTIVATE_PROC_STATE(peer, ORTE_PROC_STATE_UNABLE_TO_SEND_MSG);
+        if (ORTE_ERR_NO_PATH_TO_TARGET == status) {
+            ORTE_ACTIVATE_PROC_STATE(peer, ORTE_PROC_STATE_NO_PATH_TO_TARGET);
+        } else if (ORTE_ERR_ADDRESSEE_UNKNOWN == status) {
+            ORTE_ACTIVATE_PROC_STATE(peer, ORTE_PROC_STATE_PEER_UNKNOWN);
+        } else {
+            ORTE_ACTIVATE_PROC_STATE(peer, ORTE_PROC_STATE_UNABLE_TO_SEND_MSG);
+        }
     }
 }
 

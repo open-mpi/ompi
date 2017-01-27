@@ -59,14 +59,12 @@ typedef void (*mca_oob_tcp_module_accept_connection_fn_t)(const int accepted_fd,
                                                           const struct sockaddr *addr);
 typedef void (*mca_oob_tcp_module_ping_fn_t)(const orte_process_name_t *proc);
 typedef void (*mca_oob_tcp_module_send_nb_fn_t)(orte_rml_send_t *msg);
-typedef void (*mca_oob_tcp_module_resend_nb_fn_t)(struct mca_oob_tcp_msg_error_t *mop);
 typedef void (*mca_oob_tcp_module_ft_event_fn_t)(int state);
 
 typedef struct {
     mca_oob_tcp_module_accept_connection_fn_t  accept_connection;
     mca_oob_tcp_module_ping_fn_t               ping;
     mca_oob_tcp_module_send_nb_fn_t            send_nb;
-    mca_oob_tcp_module_resend_nb_fn_t          resend;
     mca_oob_tcp_module_ft_event_fn_t           ft_event;
 } mca_oob_tcp_module_t;
 ORTE_MODULE_DECLSPEC extern mca_oob_tcp_module_t mca_oob_tcp_module;

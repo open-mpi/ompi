@@ -1149,14 +1149,9 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
     /* report the error back to the OOB and let it try other components
      * or declare a problem
      */
-    if (!orte_finalizing && !orte_abnormal_term_ordered) {
-        /* if this was a lifeline, then alert */
-        if (ORTE_SUCCESS != orte_routed.route_lost(mop->rmsg->routed, &mop->hop)) {
-            ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_LIFELINE_LOST);
-        } else {
-            ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
-        }
-    }
+    mop->rmsg->retries++;
+    /* activate the OOB send state */
+    ORTE_OOB_SEND(mop->rmsg);
 
     OBJ_RELEASE(mop);
 }
@@ -1219,6 +1214,7 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
      */
     MCA_OOB_TCP_HDR_NTOH(&mop->snd->hdr);
     snd = OBJ_NEW(orte_rml_send_t);
+    snd->retries = mop->rmsg->retries + 1;
     snd->dst = mop->snd->hdr.dst;
     snd->origin = mop->snd->hdr.origin;
     snd->tag = mop->snd->hdr.tag;
@@ -1257,12 +1253,7 @@ void mca_oob_tcp_component_failed_to_connect(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer));
 
-    /* if this was a lifeline, then alert */
-    if (ORTE_SUCCESS != orte_routed.route_lost(pop->rtmod, &pop->peer)) {
-        ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
-    } else {
-        ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_COMM_FAILED);
-    }
+    ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_FAILED_TO_CONNECT);
     OBJ_RELEASE(pop);
 }
 
