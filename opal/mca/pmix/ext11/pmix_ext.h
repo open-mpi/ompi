@@ -2,7 +2,7 @@
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -62,6 +62,7 @@ typedef struct {
     size_t ninfo;
     pmix_app_t *apps;
     size_t sz;
+    volatile bool active;
     opal_pmix_op_cbfunc_t opcbfunc;
     opal_pmix_modex_cbfunc_t mdxcbfunc;
     opal_pmix_value_cbfunc_t valcbfunc;

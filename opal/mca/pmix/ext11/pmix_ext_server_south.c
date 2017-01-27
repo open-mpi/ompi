@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
@@ -193,7 +193,11 @@ static void opcbfunc(pmix_status_t status, void *cbdata)
     if (NULL != op->opcbfunc) {
         op->opcbfunc(pmix1_convert_rc(status), op->cbdata);
     }
-    OBJ_RELEASE(op);
+    if (op->active) {
+        op->active = false;
+    } else {
+        OBJ_RELEASE(op);
+    }
 }
 
 int pmix1_server_register_nspace(opal_jobid_t jobid,
@@ -207,7 +211,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     size_t sz, szmap, m, n;
     char nspace[PMIX_MAX_NSLEN];
     pmix_status_t rc;
-    pmix1_opcaddy_t *op;
+    pmix1_opcaddy_t op;
     opal_list_t *pmapinfo;
     opal_pmix1_jobid_trkr_t *job;
 
@@ -253,15 +257,16 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     }
 
     /* setup the caddy */
-    op = OBJ_NEW(pmix1_opcaddy_t);
-    op->info = pinfo;
-    op->sz = sz;
-    op->opcbfunc = cbfunc;
-    op->cbdata = cbdata;
+    OBJ_CONSTRUCT(&op, pmix1_opcaddy_t);
+    op.info = pinfo;
+    op.sz = sz;
+    op.opcbfunc = cbfunc;
+    op.cbdata = cbdata;
+    op.active = true;
     rc = PMIx_server_register_nspace(nspace, nlocalprocs, pinfo, sz,
-                                     opcbfunc, op);
-    if (PMIX_SUCCESS != rc) {
-        OBJ_RELEASE(op);
+                                     opcbfunc, &op);
+    if (PMIX_SUCCESS == rc) {
+        PMIX_WAIT_FOR_COMPLETION(op.active);
     }
     return pmix1_convert_rc(rc);
 }
