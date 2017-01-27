@@ -1193,17 +1193,17 @@ AC_MSG_ERROR([Can not continue.])
 
     # Check for RDTSCP support
     result=0
-    AS_IF([test "$opal_cv_asm_arch" = "OPAL_AMD64" || test "$opal_cv_asm_arch" = "OPAL_IA32"],
+    AS_IF([test "$opal_cv_asm_arch" = "AMD64" || test "$opal_cv_asm_arch" = "IA32"],
           [AC_MSG_CHECKING([for RDTSCP assembly support])
            AC_LANG_PUSH([C])
-           AC_TRY_RUN([[
+           AC_TRY_RUN([
 int main(int argc, char* argv[])
 {
   unsigned int rax, rdx;
-  __asm__ __volatile__ ("rdtscp\n": "=a" (rax), "=d" (rdx):: "%rax", "%rdx");
+  __asm__ __volatile__ ("rdtscp\n": "=a" (rax), "=d" (rdx):: "%rcx");
   return 0;
 }
-           ]],
+           ],
            [result=1
             AC_MSG_RESULT([yes])],
            [AC_MSG_RESULT([no])],
