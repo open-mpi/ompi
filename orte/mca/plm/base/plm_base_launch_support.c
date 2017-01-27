@@ -410,15 +410,6 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
         return;
     }
 
-    orte_process_info.num_procs = jdatorted->num_procs;
-
-    if (orte_process_info.max_procs < orte_process_info.num_procs) {
-        orte_process_info.max_procs = orte_process_info.num_procs;
-    }
-
-    /* ensure all routing plans are up-to-date */
-    orte_routed.update_routing_plan(NULL);
-
     /* If this job is being started by me, then there is nothing
      * further we need to do as any user directives (e.g., to tie
      * off IO to /dev/null) will have been included in the launch
@@ -2158,7 +2149,8 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             orte_process_info.max_procs = orte_process_info.num_procs;
         }
 
-        /* ensure all routing plans are up-to-date */
+        /* ensure all routing plans are up-to-date - we need this
+         * so we know how to tree-spawn and/or xcast info */
         orte_routed.update_routing_plan(NULL);
     }
 

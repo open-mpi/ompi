@@ -62,6 +62,7 @@
 #include "orte/mca/dfs/dfs.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/base/odls_private.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -686,7 +687,11 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
     free(dids);
 
     /* unpdate num procs */
-    orte_process_info.num_procs = daemons->num_procs;
+    if (orte_process_info.num_procs != daemons->num_procs) {
+        orte_process_info.num_procs = daemons->num_procs;
+        /* need to update the routing plan */
+        orte_routed.update_routing_plan(NULL);
+    }
 
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
         orte_process_info.max_procs = orte_process_info.num_procs;

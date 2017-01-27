@@ -344,6 +344,7 @@ int orte_daemon(int argc, char *argv[])
             return ret;
         }
     }
+
     /* finalize the OPAL utils. As they are opened again from orte_init->opal_init
      * we continue to have a reference count on them. So we have to finalize them twice...
      */
@@ -647,7 +648,6 @@ int orte_daemon(int argc, char *argv[])
     /* If I have a parent, then save his contact info so
      * any messages we send can flow thru him.
      */
-
     orte_parent_uri = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "parent_uri",
                                   "URI for the parent if tree launch is enabled.",

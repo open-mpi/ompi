@@ -27,7 +27,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
-#include "orte/mca/routed/routed.h"
+#include "orte/mca/routed/base/base.h"
 #include "orte/mca/state/state.h"
 #include "orte/util/compress.h"
 #include "orte/util/name_fns.h"
@@ -386,8 +386,14 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     goto relay;
                 }
 
-                /* update the routing plan */
-                orte_routed.update_routing_plan(rtmod);
+                if (!ORTE_PROC_IS_HNP) {
+                    /* update the routing plan - the HNP already did
+                     * it when it computed the VM, so don't waste time
+                     * re-doing it here */
+                    orte_routed.update_routing_plan(rtmod);
+                }
+                /* routing is now possible */
+                orte_routed_base.routing_enabled = true;
 
                 /* see if we have wiring info as well */
                 cnt=1;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +41,7 @@ OBJ_CLASS_DECLARATION(orte_routed_base_active_t);
 
 typedef struct {
     opal_list_t actives;
+    bool routing_enabled;
 } orte_routed_base_t;
 ORTE_DECLSPEC extern orte_routed_base_t orte_routed_base;
 

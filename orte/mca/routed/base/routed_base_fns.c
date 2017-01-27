@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,7 +110,7 @@ orte_process_name_t orte_routed_base_get_route(char *module, orte_process_name_t
     orte_routed_base_active_t *active;
 
     /* a NULL module corresponds to direct */
-    if (NULL == module) {
+    if (!orte_routed_base.routing_enabled || NULL == module) {
         return *target;
     }
 
@@ -178,6 +178,7 @@ void orte_routed_base_update_routing_plan(char *module)
             }
         }
     }
+
     return;
 }
 
