@@ -17,7 +17,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
@@ -640,10 +640,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * if data exchange is required. The modex occurs solely across procs
      * in our job. If a barrier is required, the "modex" function will
      * perform it internally */
-    active = true;
     opal_pmix.commit();
     if (!opal_pmix_base_async_modex) {
         if (NULL != opal_pmix.fence_nb) {
+            active = true;
             opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
                                fence_release, (void*)&active);
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
