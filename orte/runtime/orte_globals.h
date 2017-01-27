@@ -14,6 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -575,6 +576,9 @@ ORTE_DECLSPEC extern char *orte_base_user_debugger;
  * to certain cores
  */
 ORTE_DECLSPEC extern char *orte_daemon_cores;
+
+/* Max time to wait for stack straces to return */
+ORTE_DECLSPEC extern int orte_stack_trace_wait_timeout;
 
 END_C_DECLS
 

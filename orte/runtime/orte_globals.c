@@ -16,6 +16,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,6 +132,8 @@ float orte_max_timeout = -1.0;
 orte_timer_t *orte_mpiexec_timeout = NULL;
 
 opal_buffer_t *orte_tree_launch_cmd = NULL;
+
+int orte_stack_trace_wait_timeout = 30;
 
 /* global arrays for data storage */
 opal_hash_table_t *orte_job_data = NULL;
