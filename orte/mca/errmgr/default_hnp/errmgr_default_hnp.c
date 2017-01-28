@@ -9,7 +9,7 @@
  * Copyright (c) 2011      Oracle and/or all its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -650,6 +650,48 @@ static void proc_errors(int fd, short args, void *cbdata)
                              "%s errmgr:hnp: unable to send message to proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
+        /* if this proc is one of my daemons, then we are truly
+         * hosed - so just exit out
+         */
+        if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+            break;
+        }
+        if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
+            /* abnormal termination - abort, but only do it once
+             * to avoid creating a lot of confusion */
+            default_hnp_abort(jdata);
+        }
+        break;
+
+    case ORTE_PROC_STATE_NO_PATH_TO_TARGET:
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
+                             "%s errmgr:hnp: no message path to proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
+        orte_show_help("help-errmgr-base.txt", "no-path", true,
+                       orte_process_info.nodename, pptr->node->name);
+        /* if this proc is one of my daemons, then we are truly
+         * hosed - so just exit out
+         */
+        if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+            break;
+        }
+        if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
+            /* abnormal termination - abort, but only do it once
+             * to avoid creating a lot of confusion */
+            default_hnp_abort(jdata);
+        }
+        break;
+
+    case ORTE_PROC_STATE_FAILED_TO_CONNECT:
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
+                             "%s errmgr:hnp: cannot connect to proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
+        orte_show_help("help-errmgr-base.txt", "no-connect", true,
+                       orte_process_info.nodename, pptr->node->name);
         /* if this proc is one of my daemons, then we are truly
          * hosed - so just exit out
          */

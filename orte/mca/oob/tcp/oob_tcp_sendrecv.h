@@ -291,23 +291,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
         opal_event_active(&mop->ev, OPAL_EV_WRITE, 1);                  \
     } while(0);
 
-#define ORTE_ACTIVATE_TCP_POST_RESEND(mop, cbfunc)                      \
-    do {                                                                \
-        mca_oob_tcp_msg_error_t *mp;                                    \
-        opal_output_verbose(5, orte_oob_base_framework.framework_output, \
-                            "%s:[%s:%d] post resend to %s",             \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&((mop)->hop)));            \
-        mp = OBJ_NEW(mca_oob_tcp_msg_error_t);                          \
-        mp->snd = (mop)->snd;                                           \
-        mp->hop = (mop)->hop;                                           \
-        opal_event_set(op->snd->peer->ev_base, &mp->ev, -1,             \
-                       OPAL_EV_WRITE, (cbfunc), mp);                    \
-        opal_event_set_priority(&mp->ev, ORTE_MSG_PRI);                 \
-        opal_event_active(&mp->ev, OPAL_EV_WRITE, 1);                   \
-    } while(0);
-
 #define ORTE_ACTIVATE_TCP_NO_ROUTE(r, h, c)                             \
     do {                                                                \
         mca_oob_tcp_msg_error_t *mop;                                   \
@@ -320,8 +303,9 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
         mop->rmsg = (r);                                                \
         mop->hop.jobid = (h)->jobid;                                    \
         mop->hop.vpid = (h)->vpid;                                      \
-        /* this goes to the OOB framework, so use that event base */    \
-        opal_event_set(orte_oob_base.ev_base, &mop->ev, -1,                   \
+        /* this goes to the component, so use the framework             \
+         * event base */                                                \
+        opal_event_set(orte_oob_base.ev_base, &mop->ev, -1,             \
                        OPAL_EV_WRITE, (c), mop);                        \
         opal_event_set_priority(&mop->ev, ORTE_MSG_PRI);                \
         opal_event_active(&mop->ev, OPAL_EV_WRITE, 1);                  \

@@ -497,12 +497,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
 
-    /* be sure to update the routing tree so the initial "phone home"
-     * to mpirun goes through the tree if static ports were enabled - still
-     * need to do it anyway just to initialize things
-     */
-    orte_routed.update_routing_plan(NULL);
-
     /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly
      * without requiring a wireup stage. This must be done
@@ -519,6 +513,12 @@ int orte_ess_base_orted_setup(char **hosts)
             error = "construct daemon map from static ports";
             goto error;
         }
+        /* be sure to update the routing tree so the initial "phone home"
+         * to mpirun goes through the tree if static ports were enabled
+         */
+        orte_routed.update_routing_plan(NULL);
+        /* routing can be enabled */
+        orte_routed_base.routing_enabled = true;
     }
 
     /* Now provide a chance for the PLM

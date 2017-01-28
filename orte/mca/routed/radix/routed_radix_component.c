@@ -69,7 +69,7 @@ static int orte_routed_radix_component_query(mca_base_module_t **module, int *pr
         return ORTE_ERR_BAD_PARAM;
     }
 
-    *priority = 50;
+    *priority = 70;
     *module = (mca_base_module_t *) &orte_routed_radix_module;
     return ORTE_SUCCESS;
 }

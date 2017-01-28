@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -538,4 +538,3 @@ static int radix_ft_event(int state)
     return exit_status;
 }
 #endif
-

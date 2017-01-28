@@ -801,6 +801,15 @@ static int remote_spawn(opal_buffer_t *launch)
         goto cleanup;
     }
 
+    /* extract and update the daemon map */
+    if (ORTE_SUCCESS != (rc = orte_util_decode_daemon_nodemap(launch))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
+    /* since we are tree-spawning, we need to update the routing plan */
+    orte_routed.update_routing_plan(NULL);
+
     /* get the updated routing list */
     rtmod = orte_rml.get_routed(orte_coll_conduit);
     OBJ_CONSTRUCT(&coll, opal_list_t);

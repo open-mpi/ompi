@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,7 +81,10 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_TERM_NON_ZERO           (ORTE_PROC_STATE_ERROR + 12)  /* process exited with a non-zero status, indicating abnormal */
 #define ORTE_PROC_STATE_FAILED_TO_LAUNCH        (ORTE_PROC_STATE_ERROR + 13)  /* unable to launch process */
 #define ORTE_PROC_STATE_UNABLE_TO_SEND_MSG      (ORTE_PROC_STATE_ERROR + 14)  /* unable to send a message */
-#define ORTE_PROC_STATE_LIFELINE_LOST           (ORTE_PROC_STATE_ERROR + 15)  /* unable to send a message */
+#define ORTE_PROC_STATE_LIFELINE_LOST           (ORTE_PROC_STATE_ERROR + 15)  /* connection to lifeline lost */
+#define ORTE_PROC_STATE_NO_PATH_TO_TARGET       (ORTE_PROC_STATE_ERROR + 16)  /* no path for communicating to target peer */
+#define ORTE_PROC_STATE_FAILED_TO_CONNECT       (ORTE_PROC_STATE_ERROR + 17)  /* unable to connect to target peer */
+#define ORTE_PROC_STATE_PEER_UNKNOWN            (ORTE_PROC_STATE_ERROR + 18)  /* unknown peer */
 
 /* Define a boundary so that external developers
  * have a starting point for defining their own

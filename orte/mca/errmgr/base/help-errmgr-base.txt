@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -69,3 +69,30 @@ This is usually due to either a failure of the TCP network
 connection to the node, or possibly an internal failure of
 the daemon itself. We cannot recover from this failure, and
 therefore will terminate the job.
+#
+[no-path]
+ORTE does not know how to route a message to the specified daemon
+located on the indicated node:
+
+  my node:   %s
+  target node:  %s
+
+This is usually an internal programming error that should be
+reported to the developers. In the meantime, a workaround may
+be to set the MCA param routed=direct on the command line or
+in your environment. We apologize for the problem.
+#
+[no-connect]
+ORTE is unable to establish a communication connection to the
+specified daemon located on the indicated node:
+
+  my node:   %s
+  target node:  %s
+
+This is usually due to a lack of common network interfaces and/or
+no route found between them. Please check network connectivity (including
+firewalls and network routing requirements). If these look okay,
+then it could be an internal programming error that should be
+reported to the developers. In the meantime, a workaround may
+be to set the MCA param routed=direct on the command line or
+in your environment.

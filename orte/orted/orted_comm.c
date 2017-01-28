@@ -317,7 +317,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         }
 
         /*
-         * Send the request to termiante
+         * Send the request to terminate
          */
         if( num_new_procs > 0 ) {
             OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
