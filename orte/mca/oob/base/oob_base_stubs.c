@@ -46,7 +46,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     OBJ_RELEASE(cd);
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:base:send to target %s - %u attempt",
+                        "%s oob:base:send to target %s - attempt %u",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&msg->dst), msg->retries);
 

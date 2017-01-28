@@ -273,6 +273,8 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
             if (mca_oob_tcp_component.max_recon_attempts < 0 ||
                 peer->num_retries < mca_oob_tcp_component.max_recon_attempts) {
                 struct timeval tv;
+                /* close the current socket */
+                CLOSE_THE_SOCKET(peer->sd);
                 /* reset the addr states */
                 OPAL_LIST_FOREACH(addr, &peer->addrs, mca_oob_tcp_addr_t) {
                     addr->state = MCA_OOB_TCP_UNCONNECTED;
@@ -306,6 +308,8 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
                     "------------------------------------------------------------",
                     orte_process_info.nodename,
                     (NULL == host) ? "<unknown>" : host);
+        /* close the socket */
+        CLOSE_THE_SOCKET(peer->sd);
         /* let the TCP component know that this module failed to make
          * the connection so it can do some bookkeeping and fail back
          * to the OOB level so another component can try. This will activate
@@ -350,6 +354,8 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
         } else {
             peer->state = MCA_OOB_TCP_UNCONNECTED;
         }
+        /* close the socket */
+        CLOSE_THE_SOCKET(peer->sd);
         return;
     } else {
         opal_output(0,
@@ -361,6 +367,8 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
                     opal_net_get_port((struct sockaddr*)&addr->addr),
                     opal_strerror(rc),
                     rc);
+        /* close the socket */
+        CLOSE_THE_SOCKET(peer->sd);
         ORTE_FORCED_TERMINATE(1);
     }
 

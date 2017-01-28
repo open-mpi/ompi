@@ -105,25 +105,12 @@ int orte_util_build_daemon_nidmap(char **nodes)
     }
     OBJ_DESTRUCT(&kv);
 
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_PMIX_HOSTNAME);
-    kv.data.string = strdup("HNP");
-    kv.type = OPAL_STRING;
-    if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&proc, &kv))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&kv);
-        return rc;
-    }
-    OBJ_DESTRUCT(&kv);
-
     /* the daemon vpids will be assigned in order,
-     * starting with vpid=1 for the first node in
-     * the list
-     */
+     * starting with vpid=0 for the HNP */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     for (i=0; i < num_nodes; i++) {
         /* define the vpid for this daemon */
-        proc.vpid = i+1;
+        proc.vpid = i;
         /* store the hostname for the proc */
         OBJ_CONSTRUCT(&kv, opal_value_t);
         kv.key = strdup(OPAL_PMIX_HOSTNAME);

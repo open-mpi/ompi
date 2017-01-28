@@ -248,7 +248,7 @@ OBJ_CLASS_DECLARATION(orte_self_send_xfer_t);
             }                                                           \
          } else if (NULL != (m)->cbfunc.buffer) {                       \
             /* non-blocking buffer send */                              \
-            (m)->cbfunc.buffer((m)->status, &((m)->origin),             \
+            (m)->cbfunc.buffer((m)->status, &((m)->dst),                \
                            (m)->buffer,                                 \
                            (m)->tag, (m)->cbdata);                      \
          }                                                              \
