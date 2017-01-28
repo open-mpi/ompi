@@ -297,7 +297,6 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         cbfunc(PMIX_ERR_NOT_FOUND, NULL, 0, cbdata, NULL, NULL);
         PMIX_INFO_FREE(info, ninfo);
         pmix_list_remove_item(&pmix_server_globals.local_reqs, &lcd->super);
-        PMIX_LIST_DESTRUCT(&lcd->loc_reqs);
         PMIX_RELEASE(lcd);
         rc = PMIX_ERR_NOT_FOUND;
     }
@@ -542,46 +541,51 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
 pmix_status_t pmix_pending_resolve(pmix_nspace_t *nptr, pmix_rank_t rank,
                                    pmix_status_t status, pmix_dmdx_local_t *lcd)
 {
-    pmix_dmdx_local_t *cd;
+    pmix_dmdx_local_t *cd, *ptr;
+    pmix_dmdx_request_t *req;
 
     /* find corresponding request (if exists) */
-    if (NULL == lcd && NULL != nptr) {
-        PMIX_LIST_FOREACH(cd, &pmix_server_globals.local_reqs, pmix_dmdx_local_t) {
-            if (0 != strncmp(nptr->nspace, cd->proc.nspace, PMIX_MAX_NSLEN) ||
-                    rank != cd->proc.rank) {
-                continue;
-            }
-            lcd = cd;
-            break;
-        }
-    }
-
-    /* If somebody was interested in this rank */
-    if (NULL != lcd) {
-        pmix_dmdx_request_t *req;
-
-        if (PMIX_SUCCESS != status){
-            /* if we've got an error for this request - just forward it*/
-            PMIX_LIST_FOREACH(req, &lcd->loc_reqs, pmix_dmdx_request_t) {
-                /* if we can't satisfy this request - respond with error */
-                req->cbfunc(status, NULL, 0, req->cbdata, NULL, NULL);
-            }
-        } else if (NULL != nptr) {
-            /* if we've got the blob - try to satisfy requests */
-            /* run through all the requests to this rank */
-            PMIX_LIST_FOREACH(req, &lcd->loc_reqs, pmix_dmdx_request_t) {
-                pmix_status_t rc;
-                rc = _satisfy_request(nptr, rank, NULL, req->cbfunc, req->cbdata, NULL);
-                if( PMIX_SUCCESS != rc ){
-                    /* if we can't satisfy this particular request (missing key?) */
-                    req->cbfunc(rc, NULL, 0, req->cbdata, NULL, NULL);
+    if (NULL == lcd) {
+        ptr = NULL;
+        if (NULL != nptr) {
+            PMIX_LIST_FOREACH(cd, &pmix_server_globals.local_reqs, pmix_dmdx_local_t) {
+                if (0 != strncmp(nptr->nspace, cd->proc.nspace, PMIX_MAX_NSLEN) ||
+                        rank != cd->proc.rank) {
+                    continue;
                 }
+                ptr = cd;
+                break;
             }
         }
-        /* remove all requests to this rank and cleanup the corresponding structure */
-        pmix_list_remove_item(&pmix_server_globals.local_reqs, (pmix_list_item_t*)lcd);
-        PMIX_RELEASE(lcd);
+        if (NULL == ptr) {
+            return PMIX_SUCCESS;
+        }
+    } else {
+        ptr = lcd;
     }
+
+    /* somebody was interested in this rank */
+    if (PMIX_SUCCESS != status){
+        /* if we've got an error for this request - just forward it*/
+        PMIX_LIST_FOREACH(req, &ptr->loc_reqs, pmix_dmdx_request_t) {
+            req->cbfunc(status, NULL, 0, req->cbdata, NULL, NULL);
+        }
+    } else if (NULL != nptr) {
+        /* if we've got the blob - try to satisfy requests */
+        /* run through all the requests to this rank */
+        PMIX_LIST_FOREACH(req, &ptr->loc_reqs, pmix_dmdx_request_t) {
+            pmix_status_t rc;
+            rc = _satisfy_request(nptr, rank, NULL, req->cbfunc, req->cbdata, NULL);
+            if( PMIX_SUCCESS != rc ){
+                /* if we can't satisfy this particular request (missing key?) */
+                req->cbfunc(rc, NULL, 0, req->cbdata, NULL, NULL);
+            }
+        }
+    }
+    /* remove all requests to this rank and cleanup the corresponding structure */
+    pmix_list_remove_item(&pmix_server_globals.local_reqs, (pmix_list_item_t*)ptr);
+    PMIX_RELEASE(ptr);
+
     return PMIX_SUCCESS;
 }
 
