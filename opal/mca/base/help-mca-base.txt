@@ -34,7 +34,7 @@ Component: %s
 No components were able to be opened in the %s framework.
 
 This typically means that either no components of this type were
-installed, or none of the installed componnets can be loaded.
+installed, or none of the installed components can be loaded.
 Sometimes this means that shared libraries required by these
 components are unable to be found/loaded.
 
