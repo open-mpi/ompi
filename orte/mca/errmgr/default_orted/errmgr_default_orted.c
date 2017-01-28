@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -245,9 +245,12 @@ static void proc_errors(int fd, short args, void *cbdata)
      * lifeline
      */
     if (ORTE_PROC_STATE_LIFELINE_LOST == state ||
-        ORTE_PROC_STATE_UNABLE_TO_SEND_MSG == state) {
+        ORTE_PROC_STATE_UNABLE_TO_SEND_MSG == state ||
+        ORTE_PROC_STATE_NO_PATH_TO_TARGET == state ||
+        ORTE_PROC_STATE_PEER_UNKNOWN == state ||
+        ORTE_PROC_STATE_FAILED_TO_CONNECT == state) {
         OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
-                             "%s errmgr:orted lifeline lost - exiting",
+                             "%s errmgr:orted lifeline lost or unable to communicate - exiting",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* set our exit status */
         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);

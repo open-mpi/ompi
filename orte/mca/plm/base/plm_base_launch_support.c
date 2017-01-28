@@ -84,27 +84,35 @@
 void orte_plm_base_set_slots(orte_node_t *node)
 {
     if (0 == strncmp(orte_set_slots, "cores", strlen(orte_set_slots))) {
-        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                         HWLOC_OBJ_CORE, 0,
-                                                         OPAL_HWLOC_LOGICAL);
+        if (NULL != node->topology && NULL != node->topology->topo) {
+            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+                                                             HWLOC_OBJ_CORE, 0,
+                                                             OPAL_HWLOC_LOGICAL);
+        }
     } else if (0 == strncmp(orte_set_slots, "sockets", strlen(orte_set_slots))) {
-        if (0 == (node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                                   HWLOC_OBJ_SOCKET, 0,
-                                                                   OPAL_HWLOC_LOGICAL))) {
-            /* some systems don't report sockets - in this case,
-             * use numanodes */
+        if (NULL != node->topology && NULL != node->topology->topo) {
+            if (0 == (node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+                                                                       HWLOC_OBJ_SOCKET, 0,
+                                                                       OPAL_HWLOC_LOGICAL))) {
+                /* some systems don't report sockets - in this case,
+                 * use numanodes */
+                node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+                                                                 HWLOC_OBJ_NODE, 0,
+                                                                 OPAL_HWLOC_LOGICAL);
+            }
+        }
+    } else if (0 == strncmp(orte_set_slots, "numas", strlen(orte_set_slots))) {
+        if (NULL != node->topology && NULL != node->topology->topo) {
             node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
                                                              HWLOC_OBJ_NODE, 0,
                                                              OPAL_HWLOC_LOGICAL);
         }
-    } else if (0 == strncmp(orte_set_slots, "numas", strlen(orte_set_slots))) {
-        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                         HWLOC_OBJ_NODE, 0,
-                                                         OPAL_HWLOC_LOGICAL);
     } else if (0 == strncmp(orte_set_slots, "hwthreads", strlen(orte_set_slots))) {
-        node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                         HWLOC_OBJ_PU, 0,
-                                                         OPAL_HWLOC_LOGICAL);
+        if (NULL != node->topology && NULL != node->topology->topo) {
+            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+                                                             HWLOC_OBJ_PU, 0,
+                                                             OPAL_HWLOC_LOGICAL);
+        }
     } else {
         /* must be a number */
         node->slots = strtol(orte_set_slots, NULL, 10);
@@ -1436,16 +1444,23 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     free(rml_uri);
 
     /* if we have static ports, pass the node list */
-    if (orte_static_ports && NULL != nodes) {
-        /* convert the nodes to a regex */
-        if (ORTE_SUCCESS != (rc = orte_regex_create(nodes, &param))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+    if (orte_static_ports) {
+        param = NULL;
+        if (NULL != nodes) {
+            /* convert the nodes to a regex */
+            if (ORTE_SUCCESS != (rc = orte_regex_create(nodes, &param))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else if (NULL != orte_node_regex) {
+            param = strdup(orte_node_regex);
         }
-        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "orte_node_regex");
-        opal_argv_append(argc, argv, param);
-        free(param);
+        if (NULL != param) {
+            opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+            opal_argv_append(argc, argv, "orte_node_regex");
+            opal_argv_append(argc, argv, param);
+            free(param);
+        }
     }
 
     /* if output-filename was specified, pass that along */

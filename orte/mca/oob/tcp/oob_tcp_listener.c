@@ -385,6 +385,10 @@ static int create_listen(void)
         conn = OBJ_NEW(mca_oob_tcp_listener_t);
         conn->sd = sd;
         conn->port = ntohs(((struct sockaddr_in*) &inaddr)->sin_port);
+        if (orte_static_ports && 0 == orte_process_info.my_port) {
+            /* save the first one */
+            orte_process_info.my_port = conn->port;
+        }
         opal_list_append(&mca_oob_tcp_component.listeners, &conn->item);
         /* and to our ports */
         asprintf(&tconn, "%d", ntohs(((struct sockaddr_in*) &inaddr)->sin_port));

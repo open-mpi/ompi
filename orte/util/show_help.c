@@ -696,10 +696,9 @@ int orte_show_help_norender(const char *filename, const char *topic,
                                                               ORTE_PROC_MY_HNP, buf,
                                                               ORTE_RML_TAG_SHOW_HELP,
                                                               orte_rml_send_callback, NULL))) {
-                ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
-                /* okay, that didn't work, just process locally error, just ignore return  */
-                show_help(filename, topic, NULL, ORTE_PROC_MY_NAME);
+                /* okay, that didn't work, output locally  */
+                opal_output(orte_help_output, "%s", output);
             } else {
                 rc = ORTE_SUCCESS;
             }

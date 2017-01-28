@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2008      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
- * Copyright (c) 2014      Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -257,6 +257,17 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
+
+    /* if we have static ports, we need to ensure that mpirun is
+     * on the list. Since lsf won't be launching a daemon on it,
+     * it won't have been placed on the list, so create a new
+     * version here that includes it */
+    if (orte_static_ports) {
+        char *ltmp;
+        asprintf(&ltmp, "%s,%s", orte_process_info.nodename, nodelist);
+        free(nodelist);
+        nodelist = ltmp;
+    }
 
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
