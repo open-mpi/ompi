@@ -289,7 +289,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
                             &ep_params,
                             &mca_spml_ucx.ucp_peers[i].ucp_conn);
         if (UCS_OK != err) {
-            SPML_ERROR("ucp_ep_create failed!!!\n");
+            SPML_ERROR("ucp_ep_create failed: %s\n", ucs_status_string(err));
             goto error2;
         }
         OSHMEM_PROC_DATA(procs[i])->num_transports = 1;
@@ -372,7 +372,7 @@ void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int 
             mkey->u.data, 
             &ucx_mkey->rkey); 
     if (UCS_OK != err) {
-        SPML_ERROR("failed to unpack rkey");
+        SPML_ERROR("failed to unpack rkey: %s", ucs_status_string(err));
         goto error_fatal;
     }
 
@@ -408,8 +408,8 @@ void mca_spml_ucx_memuse_hook(void *addr, size_t length)
 
     status = ucp_mem_advise(mca_spml_ucx.ucp_context, ucx_mkey->mem_h, &params);
     if (UCS_OK != status) {
-        SPML_ERROR("ucp_mem_advise failed addr %p len %llu",
-                   addr, (unsigned long long)length);
+        SPML_ERROR("ucp_mem_advise failed addr %p len %llu : %s",
+                   addr, (unsigned long long)length, ucs_status_string(status));
     }
 }
 
@@ -568,7 +568,7 @@ int mca_spml_ucx_fence(void)
 
     err = ucp_worker_flush(mca_spml_ucx.ucp_worker);
     if (UCS_OK != err) {
-        SPML_ERROR("fence failed");
+        SPML_ERROR("fence failed: %s", ucs_status_string(err));
          oshmem_shmem_abort(-1);
          return OSHMEM_ERROR;
     }
@@ -581,7 +581,7 @@ int mca_spml_ucx_quiet(void)
 
     err = ucp_worker_flush(mca_spml_ucx.ucp_worker);
     if (UCS_OK != err) {
-        SPML_ERROR("fence failed");
+        SPML_ERROR("fence failed: %s", ucs_status_string(err));
          oshmem_shmem_abort(-1);
          return OSHMEM_ERROR;
     }
