@@ -288,7 +288,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t **procs, size_t nprocs)
                             &ep_params,
                             &mca_spml_ucx.ucp_peers[i].ucp_conn);
         if (UCS_OK != err) {
-            SPML_ERROR("ucp_ep_create failed: %s\n", ucs_status_string(err));
+            SPML_ERROR("ucp_ep_create failed: %s", ucs_status_string(err));
             goto error2;
         }
         OSHMEM_PROC_DATA(procs[i])->num_transports = 1;
@@ -386,8 +386,8 @@ error_fatal:
 
 void mca_spml_ucx_memuse_hook(void *addr, size_t length)
 {
-    int my_pe = oshmem_my_proc_id();
-    spml_ucx_mkey_t   *ucx_mkey;
+    int my_pe;
+    spml_ucx_mkey_t *ucx_mkey;
     ucp_mem_advise_params_t params;
     ucs_status_t status;
 
@@ -395,6 +395,7 @@ void mca_spml_ucx_memuse_hook(void *addr, size_t length)
         return;
     }
 
+    my_pe    = oshmem_my_proc_id();
     ucx_mkey = &mca_spml_ucx.ucp_peers[my_pe].mkeys[HEAP_SEG_INDEX].key;
 
     params.field_mask = UCP_MEM_ADVISE_PARAM_FIELD_ADDRESS |
@@ -567,7 +568,7 @@ int mca_spml_ucx_fence(void)
 
     err = ucp_worker_flush(mca_spml_ucx.ucp_worker);
     if (UCS_OK != err) {
-        SPML_ERROR("fence failed: %s", ucs_status_string(err));
+         SPML_ERROR("fence failed: %s", ucs_status_string(err));
          oshmem_shmem_abort(-1);
          return OSHMEM_ERROR;
     }
@@ -580,7 +581,7 @@ int mca_spml_ucx_quiet(void)
 
     err = ucp_worker_flush(mca_spml_ucx.ucp_worker);
     if (UCS_OK != err) {
-        SPML_ERROR("fence failed: %s", ucs_status_string(err));
+         SPML_ERROR("fence failed: %s", ucs_status_string(err));
          oshmem_shmem_abort(-1);
          return OSHMEM_ERROR;
     }
