@@ -122,7 +122,7 @@ void mca_pml_yalla_init_reqs(void);
 
 #define PML_YALLA_FREE_BLOCKING_MXM_REQ(_req) \
     { \
-        if ((_req)->completed_cb != NULL) { \
+        if ((_req)->data_type == MXM_REQ_DATA_STREAM) { \
             mca_pml_yalla_convertor_free((mca_pml_yalla_convertor_t*)((_req)->context)); \
         } \
     }
