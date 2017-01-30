@@ -7,7 +7,7 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -425,10 +425,10 @@ static inline int red_sched_chain (int rank, int p, int root, const void *sendbu
 
     /* last node does not recv */
     if (vrank != p-1) {
-      if (vrank == 0) {
+      if (vrank == 0 && sendbuf != recvbuf) {
         res = NBC_Sched_recv ((char *)recvbuf+offset, false, thiscount, datatype, rpeer, schedule, true);
       } else {
-        res = NBC_Sched_recv ((char *) offset, true, thiscount, datatype, rpeer, schedule, true);
+        res = NBC_Sched_recv ((char *)offset, true, thiscount, datatype, rpeer, schedule, true);
       }
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
@@ -436,8 +436,13 @@ static inline int red_sched_chain (int rank, int p, int root, const void *sendbu
 
       /* root reduces into receivebuf */
       if(vrank == 0) {
-        res = NBC_Sched_op ((char *) sendbuf + offset, false, (char *) recvbuf + offset, false,
-                             thiscount, datatype, op, schedule, true);
+        if (sendbuf != recvbuf) {
+            res = NBC_Sched_op ((char *) sendbuf + offset, false, (char *) recvbuf + offset, false,
+                                 thiscount, datatype, op, schedule, true);
+        } else {
+            res = NBC_Sched_op ((char *)offset, true, (char *) recvbuf + offset, false,
+                                 thiscount, datatype, op, schedule, true);
+        }
       } else {
         res = NBC_Sched_op ((char *) sendbuf + offset, false, (char *) offset, true, thiscount,
                              datatype, op, schedule, true);
