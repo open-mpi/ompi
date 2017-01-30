@@ -15,7 +15,7 @@
 
 major=1
 minor=10
-release=5
+release=6
 
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not
@@ -82,14 +82,14 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=12:5:0
+libmpi_so_version=12:6:0
 libmpi_cxx_so_version=2:3:1
 libmpi_mpifh_so_version=12:1:0
 libmpi_usempi_tkr_so_version=6:0:1
 libmpi_usempi_ignore_tkr_so_version=8:0:2
 libmpi_usempif08_so_version=12:1:1
-libopen_rte_so_version=12:3:0
-libopen_pal_so_version=13:3:0
+libopen_rte_so_version=12:4:0
+libopen_pal_so_version=13:4:0
 libmpi_java_so_version=3:0:2
 liboshmem_so_version=9:2:1
 
