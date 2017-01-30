@@ -177,7 +177,3 @@ int mca_spml_base_get_nb(void *dst_addr, size_t size,
 {
     return OSHMEM_ERROR;
 }
-
-void mca_spml_base_memuse_hook(void *addr, size_t length)
-{
-}
