@@ -246,6 +246,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
                     pmix1_value_load(&pmap[m].value, k2);
                     ++m;
                 }
+                OPAL_LIST_RELEASE(pmapinfo);
             } else {
                 pmix1_value_load(&pinfo[n].value, kv);
             }
@@ -268,6 +269,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     if (PMIX_SUCCESS == rc) {
         PMIX_WAIT_FOR_COMPLETION(op.active);
     }
+    PMIX_INFO_FREE(pinfo, sz);
     return pmix1_convert_rc(rc);
 }
 
