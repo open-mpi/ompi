@@ -608,6 +608,9 @@ int pmix1_publish(opal_list_t *info)
     }
 
     ret = PMIx_Publish(pinfo, sz);
+    if (0 < sz) {
+        PMIX_INFO_FREE(pinfo, sz);
+    }
 
     return pmix1_convert_rc(ret);
 }
@@ -644,6 +647,9 @@ int pmix1_publishnb(opal_list_t *info,
     }
 
     ret = PMIx_Publish_nb(op->info, op->sz, opcbfunc, op);
+    if (0 < op->sz) {
+        PMIX_INFO_FREE(op->info, op->sz);
+    }
 
     return pmix1_convert_rc(ret);
 }
@@ -956,6 +962,9 @@ int pmix1_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
         (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
         job->jobid = *jobid;
         opal_list_append(&mca_pmix_ext1x_component.jobids, &job->super);
+    }
+    if (0 < ninfo) {
+        PMIX_INFO_FREE(pinfo, ninfo);
     }
     PMIX_APP_FREE(papps, napps);
 
