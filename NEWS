@@ -19,7 +19,7 @@ Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -52,6 +52,19 @@ included in the vX.Y.Z section and be denoted as:
 
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
+
+1.10.6 - TBD
+------
+- Fix bug in timer code that caused problems at optimization settings
+  greater than 2
+- OSHMEM: make mmap allocator the default instead of sysv or verbs
+- Support MPI_Dims_create with dimension zero
+- Update USNIC support
+- Prevent 64-bit overflow on timer counter
+- Add support for forwarding signals
+- Fix bug that caused truncated messages on large sends over TCP BTL
+- Fix potential infinite loop when printing a stacktrace
+
 
 1.10.5 - 19 Dec 2016
 ------
