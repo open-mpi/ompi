@@ -36,7 +36,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/pmix/base/base.h"
-#include "pmix_ext.h"
+#include "pmix1x.h"
 
 #include "pmix.h"
 #include "pmix_server.h"
@@ -222,7 +222,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
     (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
     job->jobid = jobid;
-    opal_list_append(&mca_pmix_ext11_component.jobids, &job->super);
+    opal_list_append(&mca_pmix_ext1x_component.jobids, &job->super);
 
     /* convert the list to an array of pmix_info_t */
     if (NULL != info) {
@@ -278,12 +278,12 @@ void pmix1_server_deregister_nspace(opal_jobid_t jobid,
     opal_pmix1_jobid_trkr_t *jptr;
 
     /* if we don't already have it, we can ignore this */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext11_component.jobids, opal_pmix1_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext1x_component.jobids, opal_pmix1_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             /* found it - tell the server to deregister */
             PMIx_server_deregister_nspace(jptr->nspace);
             /* now get rid of it from our list */
-            opal_list_remove_item(&mca_pmix_ext11_component.jobids, &jptr->super);
+            opal_list_remove_item(&mca_pmix_ext1x_component.jobids, &jptr->super);
             OBJ_RELEASE(jptr);
             return;
         }
@@ -324,7 +324,7 @@ void pmix1_server_deregister_client(const opal_process_name_t *proc,
     pmix_proc_t p;
 
     /* if we don't already have it, we can ignore this */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext11_component.jobids, opal_pmix1_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext1x_component.jobids, opal_pmix1_jobid_trkr_t) {
         if (jptr->jobid == proc->jobid) {
             /* found it - tell the server to deregister */
             (void)strncpy(p.nspace, jptr->nspace, PMIX_MAX_NSLEN);

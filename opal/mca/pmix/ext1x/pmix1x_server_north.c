@@ -35,7 +35,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/pmix/base/base.h"
-#include "pmix_ext.h"
+#include "pmix1x.h"
 
 #include "pmix.h"
 #include "pmix_server.h"

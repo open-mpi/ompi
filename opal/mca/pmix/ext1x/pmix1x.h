@@ -37,11 +37,11 @@ typedef struct {
   opal_pmix_base_component_t super;
   opal_list_t jobids;
   bool native_launch;
-} mca_pmix_ext11_component_t;
+} mca_pmix_ext1x_component_t;
 
-OPAL_DECLSPEC extern mca_pmix_ext11_component_t mca_pmix_ext11_component;
+OPAL_DECLSPEC extern mca_pmix_ext1x_component_t mca_pmix_ext1x_component;
 
-OPAL_DECLSPEC extern const opal_pmix_base_module_t opal_pmix_ext11_module;
+OPAL_DECLSPEC extern const opal_pmix_base_module_t opal_pmix_ext1x_module;
 
 /****  INTERNAL OBJECTS  ****/
 typedef struct {

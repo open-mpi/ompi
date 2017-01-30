@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -22,12 +22,12 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
 #include "opal/mca/pmix/pmix.h"
-#include "pmix_ext.h"
+#include "pmix1x.h"
 
 /*
- * Public string showing the pmix ext11 component version number
+ * Public string showing the pmix ext1x component version number
  */
-const char *opal_pmix_ext11_component_version_string =
+const char *opal_pmix_ext1x_component_version_string =
     "OPAL external pmix1.1.4 MCA component version " OPAL_VERSION;
 
 /*
@@ -43,7 +43,7 @@ static int external_component_query(mca_base_module_t **module, int *priority);
  * and pointers to our public functions in it
  */
 
-mca_pmix_ext11_component_t mca_pmix_ext11_component = {
+mca_pmix_ext1x_component_t mca_pmix_ext1x_component = {
     {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -56,7 +56,7 @@ mca_pmix_ext11_component_t mca_pmix_ext11_component = {
 
 	/* Component name and version */
 
-	    .mca_component_name = "ext11",
+	    .mca_component_name = "ext1x",
 	    MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
 				  OPAL_RELEASE_VERSION),
 
@@ -77,13 +77,13 @@ mca_pmix_ext11_component_t mca_pmix_ext11_component = {
 
 static int external_open(void)
 {
-    OBJ_CONSTRUCT(&mca_pmix_ext11_component.jobids, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext1x_component.jobids, opal_list_t);
     return OPAL_SUCCESS;
 }
 
 static int external_close(void)
 {
-    OPAL_LIST_DESTRUCT(&mca_pmix_ext11_component.jobids);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext1x_component.jobids);
     return OPAL_SUCCESS;
 }
 
@@ -101,6 +101,6 @@ static int external_component_query(mca_base_module_t **module, int *priority)
 	/* we could be a server, so we still need to be considered */
 	*priority = 5;
     }
-    *module = (mca_base_module_t *)&opal_pmix_ext11_module;
+    *module = (mca_base_module_t *)&opal_pmix_ext1x_module;
     return OPAL_SUCCESS;
 }
