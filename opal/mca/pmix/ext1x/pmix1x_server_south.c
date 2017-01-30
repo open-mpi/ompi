@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
@@ -36,7 +36,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/pmix/base/base.h"
-#include "pmix_ext.h"
+#include "pmix1x.h"
 
 #include "pmix.h"
 #include "pmix_server.h"
@@ -193,7 +193,11 @@ static void opcbfunc(pmix_status_t status, void *cbdata)
     if (NULL != op->opcbfunc) {
         op->opcbfunc(pmix1_convert_rc(status), op->cbdata);
     }
-    OBJ_RELEASE(op);
+    if (op->active) {
+        op->active = false;
+    } else {
+        OBJ_RELEASE(op);
+    }
 }
 
 int pmix1_server_register_nspace(opal_jobid_t jobid,
@@ -207,7 +211,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     size_t sz, szmap, m, n;
     char nspace[PMIX_MAX_NSLEN];
     pmix_status_t rc;
-    pmix1_opcaddy_t *op;
+    pmix1_opcaddy_t op;
     opal_list_t *pmapinfo;
     opal_pmix1_jobid_trkr_t *job;
 
@@ -218,7 +222,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
     (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
     job->jobid = jobid;
-    opal_list_append(&mca_pmix_ext11_component.jobids, &job->super);
+    opal_list_append(&mca_pmix_ext1x_component.jobids, &job->super);
 
     /* convert the list to an array of pmix_info_t */
     if (NULL != info) {
@@ -242,6 +246,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
                     pmix1_value_load(&pmap[m].value, k2);
                     ++m;
                 }
+                OPAL_LIST_RELEASE(pmapinfo);
             } else {
                 pmix1_value_load(&pinfo[n].value, kv);
             }
@@ -253,16 +258,18 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     }
 
     /* setup the caddy */
-    op = OBJ_NEW(pmix1_opcaddy_t);
-    op->info = pinfo;
-    op->sz = sz;
-    op->opcbfunc = cbfunc;
-    op->cbdata = cbdata;
+    OBJ_CONSTRUCT(&op, pmix1_opcaddy_t);
+    op.info = pinfo;
+    op.sz = sz;
+    op.opcbfunc = cbfunc;
+    op.cbdata = cbdata;
+    op.active = true;
     rc = PMIx_server_register_nspace(nspace, nlocalprocs, pinfo, sz,
-                                     opcbfunc, op);
-    if (PMIX_SUCCESS != rc) {
-        OBJ_RELEASE(op);
+                                     opcbfunc, &op);
+    if (PMIX_SUCCESS == rc) {
+        PMIX_WAIT_FOR_COMPLETION(op.active);
     }
+    PMIX_INFO_FREE(pinfo, sz);
     return pmix1_convert_rc(rc);
 }
 
@@ -273,12 +280,12 @@ void pmix1_server_deregister_nspace(opal_jobid_t jobid,
     opal_pmix1_jobid_trkr_t *jptr;
 
     /* if we don't already have it, we can ignore this */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext11_component.jobids, opal_pmix1_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext1x_component.jobids, opal_pmix1_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             /* found it - tell the server to deregister */
             PMIx_server_deregister_nspace(jptr->nspace);
             /* now get rid of it from our list */
-            opal_list_remove_item(&mca_pmix_ext11_component.jobids, &jptr->super);
+            opal_list_remove_item(&mca_pmix_ext1x_component.jobids, &jptr->super);
             OBJ_RELEASE(jptr);
             return;
         }
@@ -319,7 +326,7 @@ void pmix1_server_deregister_client(const opal_process_name_t *proc,
     pmix_proc_t p;
 
     /* if we don't already have it, we can ignore this */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext11_component.jobids, opal_pmix1_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_ext1x_component.jobids, opal_pmix1_jobid_trkr_t) {
         if (jptr->jobid == proc->jobid) {
             /* found it - tell the server to deregister */
             (void)strncpy(p.nspace, jptr->nspace, PMIX_MAX_NSLEN);

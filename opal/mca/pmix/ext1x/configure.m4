@@ -14,7 +14,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2014-2015 Mellanox Technologies, Inc.
 #                         All rights reserved.
@@ -25,10 +25,10 @@
 # $HEADER$
 #
 
-# MCA_pmix_ext11_CONFIG([action-if-found], [action-if-not-found])
+# MCA_pmix_ext1x_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_opal_pmix_ext11_CONFIG],[
-    AC_CONFIG_FILES([opal/mca/pmix/ext11/Makefile])
+AC_DEFUN([MCA_opal_pmix_ext1x_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/pmix/ext1x/Makefile])
 
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
           [AS_IF([test "$opal_event_external_support" != "yes"],
@@ -42,29 +42,30 @@ AC_DEFUN([MCA_opal_pmix_ext11_CONFIG],[
                   AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
                   AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
 
-           # check for the 1.1.4 version
-           AC_MSG_CHECKING([if external component is version 1.1.4])
+           # check for the 1.x version ( >= 1.1.4 ?)
+           AC_MSG_CHECKING([if external component is version 1.x])
            AS_IF([test "$opal_external_pmix_version" = "11" ||
+                  test "$opal_external_pmix_version" = "12" ||
                   test "$opal_external_pmix_version" = "1x"],
                  [AC_MSG_RESULT([yes])
-                  opal_pmix_external_11_happy=yes],
+                  opal_pmix_external_1x_happy=yes],
                  [AC_MSG_RESULT([no])
-                  opal_pmix_external_11_happy=no])
+                  opal_pmix_external_1x_happy=no])
 
-           AS_IF([test "$opal_pmix_external_11_happy" = "yes"],
+           AS_IF([test "$opal_pmix_external_1x_happy" = "yes"],
                  [$1
                   # need to set the wrapper flags for static builds
-                  pmix_ext11_WRAPPER_EXTRA_LDFLAGS=$opal_external_pmix_LDFLAGS
-                  pmix_ext11_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS],
+                  pmix_ext1x_WRAPPER_EXTRA_LDFLAGS=$opal_external_pmix_LDFLAGS
+                  pmix_ext1x_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS],
                  [$2])],
           [$2])
 
-    opal_pmix_ext11_CPPFLAGS=$opal_external_pmix_CPPFLAGS
-    opal_pmix_ext11_LDFLAGS=$opal_external_pmix_LDFLAGS
-    opal_pmix_ext11_LIBS=$opal_external_pmix_LIBS
+    opal_pmix_ext1x_CPPFLAGS=$opal_external_pmix_CPPFLAGS
+    opal_pmix_ext1x_LDFLAGS=$opal_external_pmix_LDFLAGS
+    opal_pmix_ext1x_LIBS=$opal_external_pmix_LIBS
 
-    AC_SUBST([opal_pmix_ext11_CPPFLAGS])
-    AC_SUBST([opal_pmix_ext11_LDFLAGS])
-    AC_SUBST([opal_pmix_ext11_LIBS])
+    AC_SUBST([opal_pmix_ext1x_CPPFLAGS])
+    AC_SUBST([opal_pmix_ext1x_LDFLAGS])
+    AC_SUBST([opal_pmix_ext1x_LIBS])
 
 ])dnl

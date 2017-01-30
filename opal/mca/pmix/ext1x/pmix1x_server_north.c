@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -35,7 +35,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/pmix/base/base.h"
-#include "pmix_ext.h"
+#include "pmix1x.h"
 
 #include "pmix.h"
 #include "pmix_server.h"
@@ -424,6 +424,7 @@ static void opal_lkupcbfunc(int status,
             }
         }
         opalcaddy->lkupcbfunc(rc, d, nd, opalcaddy->cbdata);
+        PMIX_PDATA_FREE(d, nd);
     }
     OBJ_RELEASE(opalcaddy);
 }
@@ -591,7 +592,6 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
         if (NULL != apps[n].cmd) {
             app->cmd = strdup(apps[n].cmd);
         }
-        app->argc = apps[n].argc;
         if (NULL != apps[n].argv) {
             app->argv = opal_argv_copy(apps[n].argv);
         }
