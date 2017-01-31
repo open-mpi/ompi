@@ -85,6 +85,7 @@ int mca_memheap_ptmalloc_alloc(size_t size, void** p_buff)
     if (NULL == *p_buff)
         return OSHMEM_ERROR;
 
+    MCA_SPML_CALL(memuse_hook(*p_buff, size));
     return OSHMEM_SUCCESS;
 }
 
@@ -113,6 +114,7 @@ int mca_memheap_ptmalloc_align(size_t align, size_t size, void **p_buff)
     if (NULL == *p_buff)
         return OSHMEM_ERROR;
 
+    MCA_SPML_CALL(memuse_hook(*p_buff, size));
     return OSHMEM_SUCCESS;
 }
 
@@ -132,6 +134,7 @@ int mca_memheap_ptmalloc_realloc(size_t new_size,
     if (!*p_new_buff)
         return OSHMEM_ERR_OUT_OF_RESOURCE;
 
+    MCA_SPML_CALL(memuse_hook(*p_new_buff, new_size));
     return OSHMEM_SUCCESS;
 }
 
