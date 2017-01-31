@@ -142,7 +142,11 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
         /* set the server nspace */
         p = uri[0];
-        p2 = strchr(p, '.');
+        if (NULL == (p2 = strchr(p, '.'))) {
+            PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+            pmix_argv_free(uri);
+            return PMIX_ERR_NOT_SUPPORTED;
+        }
         *p2 = '\0';
         ++p2;
         pmix_client_globals.myserver.info = PMIX_NEW(pmix_rank_info_t);
@@ -542,11 +546,6 @@ static pmix_status_t recv_connect_ack(int sd)
         return rc;
     }
     reply = ntohl(u32);
-    /* if the status indicates an error, then we are done */
-    if (PMIX_SUCCESS != reply) {
-        PMIX_ERROR_LOG(reply);
-        return reply;
-    }
 
     if (PMIX_PROC_IS_CLIENT) {
         /* see if they want us to do the handshake */
@@ -568,6 +567,11 @@ static pmix_status_t recv_connect_ack(int sd)
         }
         pmix_globals.pindex = ntohl(u32);
     } else {
+        /* if the status indicates an error, then we are done */
+        if (PMIX_SUCCESS != reply) {
+            PMIX_ERROR_LOG(reply);
+            return reply;
+        }
         /* recv our nspace */
         rc = pmix_ptl_base_recv_blocking(sd, (char*)&pmix_globals.myid.nspace, PMIX_MAX_NSLEN+1);
         if (PMIX_SUCCESS != rc) {

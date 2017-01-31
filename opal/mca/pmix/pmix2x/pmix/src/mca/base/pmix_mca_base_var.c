@@ -563,7 +563,7 @@ int pmix_mca_base_var_cache_files(bool rel_path_search)
 /*
  * Look up an integer MCA parameter.
  */
-int pmix_mca_base_var_get_value (int vari, const void *value,
+int pmix_mca_base_var_get_value (int vari, void *value,
                             pmix_mca_base_var_source_t *source,
                             const char **source_file)
 {

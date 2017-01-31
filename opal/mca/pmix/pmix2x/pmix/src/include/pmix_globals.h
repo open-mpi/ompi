@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -368,7 +368,7 @@ typedef struct {
 } pmix_globals_t;
 
 
-extern pmix_globals_t pmix_globals;
+PMIX_EXPORT extern pmix_globals_t pmix_globals;
 
 END_C_DECLS
 

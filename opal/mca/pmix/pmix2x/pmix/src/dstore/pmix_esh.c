@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <sys/file.h>
 #include <dirent.h>
 #include <errno.h>
@@ -36,6 +35,14 @@
 
 #include "pmix_dstore.h"
 #include "pmix_esh.h"
+
+#ifdef ESH_FCNTL_LOCK
+#include <fcntl.h>
+#endif
+
+#ifdef ESH_PTHREAD_LOCK
+#include <pthread.h>
+#endif
 
 static int _esh_init(pmix_info_t info[], size_t ninfo);
 static int _esh_finalize(void);
@@ -122,6 +129,43 @@ __extension__ ({                                            \
             buffer, size);                                  \
 })
 
+#ifdef ESH_PTHREAD_LOCK
+#define _ESH_LOCK(rwlock, operation)                        \
+__extension__ ({                                            \
+    pmix_status_t ret = PMIX_SUCCESS;                       \
+    int rc;                                                 \
+    switch (operation) {                                    \
+        case F_WRLCK:                                       \
+            rc = pthread_rwlock_wrlock(rwlock);             \
+            break;                                          \
+        case F_RDLCK:                                       \
+            rc = pthread_rwlock_rdlock(rwlock);             \
+            break;                                          \
+        case F_UNLCK:                                       \
+            rc = pthread_rwlock_unlock(rwlock);             \
+            break;                                          \
+        default:                                            \
+            rc = PMIX_ERR_BAD_PARAM;                        \
+    }                                                       \
+    if (0 != rc) {                                          \
+        switch (errno) {                                    \
+            case EINVAL:                                    \
+                ret = PMIX_ERR_INIT;                        \
+                break;                                      \
+            case EPERM:                                     \
+                ret = PMIX_ERR_NO_PERMISSIONS;              \
+                break;                                      \
+        }                                                   \
+    }                                                       \
+    if (ret) {                                              \
+        pmix_output(0, "%s %d:%s lock failed: %s",          \
+            __FILE__, __LINE__, __func__, strerror(errno)); \
+    }                                                       \
+    ret;                                                    \
+})
+#endif
+
+#ifdef ESH_FCNTL_LOCK
 #define _ESH_LOCK(lockfd, operation)                        \
 __extension__ ({                                            \
     pmix_status_t ret = PMIX_SUCCESS;                       \
@@ -159,10 +203,11 @@ __extension__ ({                                            \
     }                                                       \
     ret;                                                    \
 })
+#endif
 
-#define _ESH_WRLOCK(lockfd) _ESH_LOCK(lockfd, F_WRLCK)
-#define _ESH_RDLOCK(lockfd) _ESH_LOCK(lockfd, F_RDLCK)
-#define _ESH_UNLOCK(lockfd) _ESH_LOCK(lockfd, F_UNLCK)
+#define _ESH_WRLOCK(lock) _ESH_LOCK(lock, F_WRLCK)
+#define _ESH_RDLOCK(lock) _ESH_LOCK(lock, F_RDLCK)
+#define _ESH_UNLOCK(lock) _ESH_LOCK(lock, F_UNLCK)
 
 #define ESH_INIT_SESSION_TBL_SIZE 2
 #define ESH_INIT_NS_MAP_TBL_SIZE  2
@@ -201,6 +246,7 @@ static size_t _max_ns_num;
 static size_t _meta_segment_size = 0;
 static size_t _max_meta_elems;
 static size_t _data_segment_size = 0;
+static size_t _lock_segment_size = 0;
 static uid_t _jobuid;
 static char _setjobuid = 0;
 
@@ -213,10 +259,20 @@ ns_map_data_t * (*_esh_session_map_search)(const char *nspace) = NULL;
 #define _ESH_SESSION_path(tbl_idx)         (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].nspace_path)
 #define _ESH_SESSION_lockfile(tbl_idx)     (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].lockfile)
 #define _ESH_SESSION_jobuid(tbl_idx)       (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].jobuid)
-#define _ESH_SESSION_lockfd(tbl_idx)       (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].lockfd)
 #define _ESH_SESSION_sm_seg_first(tbl_idx) (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].sm_seg_first)
 #define _ESH_SESSION_sm_seg_last(tbl_idx)  (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].sm_seg_last)
 #define _ESH_SESSION_ns_info(tbl_idx)      (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].ns_info)
+
+#ifdef ESH_PTHREAD_LOCK
+#define _ESH_SESSION_pthread_rwlock(tbl_idx) (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].rwlock)
+#define _ESH_SESSION_pthread_seg(tbl_idx)   (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].rwlock_seg)
+#define _ESH_SESSION_lock(tbl_idx)         _ESH_SESSION_pthread_rwlock(tbl_idx)
+#endif
+
+#ifdef ESH_FCNTL_LOCK
+#define _ESH_SESSION_lockfd(tbl_idx)       (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].lockfd)
+#define _ESH_SESSION_lock(tbl_idx)         _ESH_SESSION_lockfd(tbl_idx)
+#endif
 
 /* If _direct_mode is set, it means that we use linear search
  * along the array of rank meta info objects inside a meta segment
@@ -249,6 +305,93 @@ static inline void _esh_session_map_clean(ns_map_t *m) {
     memset(m, 0, sizeof(*m));
     m->data.track_idx = -1;
 }
+
+#ifdef ESH_PTHREAD_LOCK
+static inline int _rwlock_init(size_t idx, char *lockfile) {
+    pmix_status_t rc = PMIX_SUCCESS;
+    size_t size = _lock_segment_size;
+    pthread_rwlockattr_t attr;
+
+    if ((NULL != _ESH_SESSION_pthread_seg(idx)) || (NULL != _ESH_SESSION_pthread_rwlock(idx))) {
+        rc = PMIX_ERR_INIT;
+        return rc;
+    }
+    _ESH_SESSION_pthread_seg(idx) = (pmix_sm_seg_t *)malloc(sizeof(pmix_sm_seg_t));
+    if (NULL == _ESH_SESSION_pthread_seg(idx)) {
+        rc = PMIX_ERR_OUT_OF_RESOURCE;
+        return rc;
+    }
+
+    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+        if (PMIX_SUCCESS != (rc = pmix_sm_segment_create(_ESH_SESSION_pthread_seg(idx), lockfile, size))) {
+            return rc;
+        }
+        memset(_ESH_SESSION_pthread_seg(idx)->seg_base_addr, 0, size);
+        _ESH_SESSION_pthread_rwlock(idx) = (pthread_rwlock_t *)_ESH_SESSION_pthread_seg(idx)->seg_base_addr;
+
+        if (0 != pthread_rwlockattr_init(&attr)) {
+            rc = PMIX_ERR_INIT;
+            pmix_sm_segment_detach(_ESH_SESSION_pthread_seg(idx));
+            return rc;
+        }
+        if (0 != pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED)) {
+            rc = PMIX_ERR_INIT;
+            pmix_sm_segment_detach(_ESH_SESSION_pthread_seg(idx));
+            pthread_rwlockattr_destroy(&attr);
+            return rc;
+        }
+#ifdef HAVE_PTHREAD_SETKIND
+        if (0 != pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)) {
+            rc = PMIX_ERR_INIT;
+            pmix_sm_segment_detach(_ESH_SESSION_pthread_seg(idx));
+            pthread_rwlockattr_destroy(&attr);
+            return rc;
+        }
+#endif
+        if (0 != pthread_rwlock_init(_ESH_SESSION_pthread_rwlock(idx), &attr)) {
+            rc = PMIX_ERR_INIT;
+            pmix_sm_segment_detach(_ESH_SESSION_pthread_seg(idx));
+            pthread_rwlockattr_destroy(&attr);
+            return rc;
+        }
+        if (0 != pthread_rwlockattr_destroy(&attr)) {
+            rc = PMIX_ERR_INIT;
+            return rc;
+        }
+
+    }
+    else {
+        _ESH_SESSION_pthread_seg(idx)->seg_size = size;
+        snprintf(_ESH_SESSION_pthread_seg(idx)->seg_name, PMIX_PATH_MAX, "%s", lockfile);
+        if (PMIX_SUCCESS != (rc = pmix_sm_segment_attach(_ESH_SESSION_pthread_seg(idx), PMIX_SM_RW))) {
+            return rc;
+        }
+        _ESH_SESSION_pthread_rwlock(idx) = (pthread_rwlock_t *)_ESH_SESSION_pthread_seg(idx)->seg_base_addr;
+    }
+
+    return rc;
+}
+
+static inline void _rwlock_release(session_t *s) {
+    pmix_status_t rc;
+
+    if (0 != pthread_rwlock_destroy(s->rwlock)) {
+        rc = PMIX_ERROR;
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+
+    /* detach & unlink from current desc */
+    if (s->rwlock_seg->seg_cpid == getpid()) {
+        pmix_sm_segment_unlink(s->rwlock_seg);
+    }
+    pmix_sm_segment_detach(s->rwlock_seg);
+
+    free(s->rwlock_seg);
+    s->rwlock_seg = NULL;
+    s->rwlock = NULL;
+}
+#endif
 
 static inline const char *_unique_id(void)
 {
@@ -574,12 +717,6 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
     session_t *s = &(PMIX_VALUE_ARRAY_GET_ITEM(_session_array, session_t, idx));
     pmix_status_t rc = PMIX_SUCCESS;
 
-    if (NULL == s) {
-        rc = PMIX_ERR_BAD_PARAM;
-        PMIX_ERROR_LOG(rc);
-        return rc;
-    }
-
     s->jobuid = jobuid;
     s->nspace_path = strdup(_base_path);
 
@@ -654,6 +791,12 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
         }
     }
 
+#ifdef ESH_PTHREAD_LOCK
+    if ( PMIX_SUCCESS != (rc = _rwlock_init(m->tbl_idx, s->lockfile))) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+#endif
     s->sm_seg_first = seg;
     s->sm_seg_last = s->sm_seg_first;
     return PMIX_SUCCESS;
@@ -680,6 +823,9 @@ static inline void _esh_session_release(session_t *s)
         }
         free(s->nspace_path);
     }
+#ifdef ESH_PTHREAD_LOCK
+    _rwlock_release(s);
+#endif
     memset ((char *) s, 0, sizeof(*s));
 }
 
@@ -866,7 +1012,7 @@ int _esh_store(const char *nspace, pmix_rank_t rank, pmix_kval_t *kv)
 {
     pmix_status_t rc = PMIX_SUCCESS, tmp_rc;
     ns_track_elem_t *elem;
-    pmix_buffer_t pbkt, xfer;
+    pmix_buffer_t xfer;
     ns_seg_info_t ns_info;
     ns_map_data_t *ns_map = NULL;
 
@@ -885,7 +1031,7 @@ int _esh_store(const char *nspace, pmix_rank_t rank, pmix_kval_t *kv)
     }
 
     /* set exclusive lock */
-    if (PMIX_SUCCESS != (rc = _ESH_WRLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (rc = _ESH_WRLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
@@ -935,17 +1081,14 @@ int _esh_store(const char *nspace, pmix_rank_t rank, pmix_kval_t *kv)
 
     /* Now we know info about meta segment for this namespace. If meta segment
      * is not empty, then we look for data for the target rank. If they present, replace it. */
-    PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
     PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
     PMIX_LOAD_BUFFER(&xfer, kv->value->data.bo.bytes, kv->value->data.bo.size);
-    pmix_buffer_t *pxfer = &xfer;
-    pmix_bfrop.pack(&pbkt, &pxfer, 1, PMIX_BUFFER);
+
+    rc = _store_data_for_rank(elem, rank, &xfer);
+
     xfer.base_ptr = NULL;
     xfer.bytes_used = 0;
-
-    rc = _store_data_for_rank(elem, rank, &pbkt);
     PMIX_DESTRUCT(&xfer);
-    PMIX_DESTRUCT(&pbkt);
 
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -953,14 +1096,14 @@ int _esh_store(const char *nspace, pmix_rank_t rank, pmix_kval_t *kv)
     }
 
     /* unset lock */
-    if (PMIX_SUCCESS != (rc = _ESH_UNLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (rc = _ESH_UNLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         PMIX_ERROR_LOG(rc);
     }
     return rc;
 
 err_exit:
     /* unset lock */
-    if (PMIX_SUCCESS != (tmp_rc = _ESH_UNLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (tmp_rc = _ESH_UNLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         PMIX_ERROR_LOG(tmp_rc);
     }
     return rc;
@@ -1021,7 +1164,7 @@ int _esh_fetch(const char *nspace, pmix_rank_t rank, const char *key, pmix_value
     }
 
     /* grab shared lock */
-    if (PMIX_SUCCESS != (lock_rc = _ESH_RDLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (lock_rc = _ESH_RDLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         /* Something wrong with the lock. The error is fatal */
         rc = PMIX_ERR_FATAL;
         PMIX_ERROR_LOG(lock_rc);
@@ -1180,7 +1323,7 @@ int _esh_fetch(const char *nspace, pmix_rank_t rank, const char *key, pmix_value
 
 done:
     /* unset lock */
-    if (PMIX_SUCCESS != (lock_rc = _ESH_UNLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (lock_rc = _ESH_UNLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         PMIX_ERROR_LOG(lock_rc);
     }
 
@@ -1379,6 +1522,7 @@ static void _set_constants_from_env()
         }
     }
 
+    _lock_segment_size = page_size;
     _max_ns_num = (_initial_segment_size - sizeof(size_t) * 2) / sizeof(ns_seg_info_t);
     _max_meta_elems = (_meta_segment_size - sizeof(size_t)) / sizeof(rank_meta_info);
 
@@ -2208,9 +2352,7 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix_kval_t
 static int _store_data_for_rank(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix_buffer_t *buf)
 {
     pmix_status_t rc;
-    int32_t cnt;
 
-    pmix_buffer_t *bptr;
     pmix_kval_t *kp;
     seg_desc_t *metadesc, *datadesc;
 
@@ -2245,30 +2387,23 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix
      * so unpack these buffers, and then unpack kvals from each modex buffer,
      * storing them in the shared memory dstore.
      */
-    cnt = 1;
     free_offset = get_free_offset(datadesc);
-    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, &bptr, &cnt, PMIX_BUFFER))) {
-        cnt = 1;
-        kp = PMIX_NEW(pmix_kval_t);
-        while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(bptr, kp, &cnt, PMIX_KVAL))) {
-            pmix_output_verbose(2, pmix_globals.debug_output,
-                                "pmix: unpacked key %s", kp->key);
-            if (PMIX_SUCCESS != (rc = pmix_sm_store(ns_info, rank, kp, &rinfo, data_exist))) {
-                PMIX_ERROR_LOG(rc);
-                return rc;
-            }
-            PMIX_RELEASE(kp); // maintain acctg - hash_store does a retain
-            cnt = 1;
-            kp = PMIX_NEW(pmix_kval_t);
-        }
-        cnt = 1;
-        PMIX_RELEASE(kp);
-        PMIX_RELEASE(bptr);  // free's the data region
-        if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+    kp = PMIX_NEW(pmix_kval_t);
+    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, kp, &(int){1}, PMIX_KVAL))) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmix: unpacked key %s", kp->key);
+        if (PMIX_SUCCESS != (rc = pmix_sm_store(ns_info, rank, kp, &rinfo, data_exist))) {
             PMIX_ERROR_LOG(rc);
-            break;
+            if (NULL != rinfo) {
+                free(rinfo);
+            }
+            return rc;
         }
+        PMIX_RELEASE(kp); // maintain acctg - hash_store does a retain
+        kp = PMIX_NEW(pmix_kval_t);
     }
+    PMIX_RELEASE(kp);
+
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         PMIX_ERROR_LOG(rc);
         /* TODO: should we error-exit here? */
