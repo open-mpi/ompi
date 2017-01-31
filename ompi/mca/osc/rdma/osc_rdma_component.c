@@ -16,7 +16,7 @@
  * Copyright (c) 2012-2015 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1239,7 +1239,7 @@ static char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, char *ke
         module->no_locks = false;
     }
     /* enforce collectiveness... */
-    module->comm->c_coll.coll_barrier(module->comm, module->comm->c_coll.coll_barrier_module);
+    module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
 /* 
  * Accept any value
  */

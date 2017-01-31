@@ -11,7 +11,7 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

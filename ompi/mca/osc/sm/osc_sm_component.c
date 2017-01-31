@@ -10,7 +10,7 @@
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,8 +39,8 @@ static int component_query(struct ompi_win_t *win, void **base, size_t size, int
 static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                             struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
-static char* component_set_blocking_fence_info(void *obj, char *key, char *val);
-static char* component_set_alloc_shared_noncontig_info(void *obj, char *key, char *val);
+static char* component_set_blocking_fence_info(opal_infosubscriber_t *obj, char *key, char *val);
+static char* component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, char *key, char *val);
 
 
 ompi_osc_sm_component_t mca_osc_sm_component = {
@@ -182,14 +182,14 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
 
-    ret = opal_infosubscribe_subscribe(win, "blocking_fence", "false", 
+    ret = opal_infosubscribe_subscribe(&(win->super), "blocking_fence", "false", 
         component_set_blocking_fence_info);
 
     module->global_state->use_barrier_for_fence = 1;
 
     if (OPAL_SUCCESS != ret) goto error;
 
-    ret = opal_infosubscribe_subscribe(win, "alloc_shared_contig", "false", component_set_alloc_shared_noncontig_info);
+    ret = opal_infosubscribe_subscribe(&(win->super), "alloc_shared_contig", "false", component_set_alloc_shared_noncontig_info);
 
     if (OPAL_SUCCESS != ret) goto error;
 
@@ -521,7 +521,7 @@ ompi_osc_sm_set_info(struct ompi_win_t *win, struct opal_info_t *info)
 
 
 static char*
-component_set_blocking_fence_info(void *obj, char *key, char *val)
+component_set_blocking_fence_info(opal_infosubscriber_t *obj, char *key, char *val)
 {
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
 /*
@@ -532,7 +532,7 @@ component_set_blocking_fence_info(void *obj, char *key, char *val)
 
 
 static char*
-component_set_alloc_shared_noncontig_info(void *obj, char *key, char *val)
+component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, char *key, char *val)
 {
 
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;

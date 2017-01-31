@@ -3,7 +3,7 @@
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,7 +50,7 @@ int MPI_Comm_set_info(MPI_Comm comm, MPI_Info info)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    opal_infosubscribe_change_info(comm, info);
+    opal_infosubscribe_change_info(&(comm->super), &(info->super));
 
     return MPI_SUCCESS;
 }

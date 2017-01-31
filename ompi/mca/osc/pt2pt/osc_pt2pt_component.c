@@ -16,7 +16,7 @@
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,9 +104,6 @@ ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_template = {
         ompi_osc_pt2pt_flush_all,
         ompi_osc_pt2pt_flush_local,
         ompi_osc_pt2pt_flush_local_all,
-
-        ompi_osc_pt2pt_set_info,
-        ompi_osc_pt2pt_get_info
     }
 };
 

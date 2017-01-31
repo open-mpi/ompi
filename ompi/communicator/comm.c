@@ -22,7 +22,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -158,6 +158,7 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
 
     /* ompi_comm_allocate */
     newcomm = OBJ_NEW(ompi_communicator_t);
+    newcomm->super.s_info = NULL;
     /* fill in the inscribing hyper-cube dimensions */
     newcomm->c_cube_dim = opal_cube_dim(local_size);
     newcomm->c_id_available   = MPI_UNDEFINED;
@@ -918,6 +919,12 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
             break;
         }
 
+        // Copy info if there is one.
+        newcomp->super.s_info = OBJ_NEW(opal_info_t);
+        if (info) {
+            opal_info_dup(info, &(newcomp->super.s_info));
+        }
+
         /* Activate the communicator and init coll-component */
         rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
@@ -1015,6 +1022,12 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
     snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d DUP FROM %d",
              newcomp->c_contextid, comm->c_contextid );
 
+    // Copy info if there is one.
+    newcomp->super.s_info = OBJ_NEW(opal_info_t);
+    if (info) {
+        opal_info_dup(info, &(newcomp->super.s_info));
+    }
+
     /* activate communicator and init coll-module */
     rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
     if ( OMPI_SUCCESS != rc ) {
@@ -1093,6 +1106,15 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     if (NULL == context->newcomp) {
         ompi_comm_request_return (request);
         return rc;
+    }
+
+    // Copy info if there is one.
+    {
+        ompi_communicator_t *newcomp = context->newcomp;
+        newcomp->super.s_info = OBJ_NEW(opal_info_t);
+        if (info) {
+            opal_info_dup(info, &(newcomp->super.s_info));
+        }
     }
 
     ompi_comm_request_schedule_append (request, ompi_comm_idup_getcid, subreq, subreq[0] ? 1 : 0);
@@ -1470,6 +1492,10 @@ int ompi_comm_free( ompi_communicator_t **comm )
 
     if (*comm == ompi_mpi_comm_parent && comm != &ompi_mpi_comm_parent) {
         ompi_mpi_comm_parent = &ompi_mpi_comm_null.comm;
+    }
+
+    if (NULL != ((*comm)->super.s_info)) {
+        OBJ_RELEASE((*comm)->super.s_info);
     }
 
     /* Release the communicator */

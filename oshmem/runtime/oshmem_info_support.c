@@ -2,7 +2,7 @@
  *  Copyright (c) 2013      Mellanox Technologies, Inc.
  *                          All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

@@ -10,7 +10,7 @@
  * Copyright (c) 2011-2013 Université Bordeaux 1
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  */
 
 #include "ompi_config.h"
@@ -294,6 +294,14 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
                                                 newcomm)) ) {
         OBJ_RELEASE(module);
         return err;
+    }
+    // But if there is an info object, the above call didn't make use
+    // of it, so we'll do a dup-with-info to get the final comm and
+    // free the above intermediate newcomm:
+    if (info && info != &(MPI_INFO_NULL->super)) {
+        ompi_communicator_t *intermediate_comm = *newcomm;
+        ompi_comm_dup_with_info (intermediate_comm, info, newcomm);
+        ompi_comm_free(&intermediate_comm);
     }
 
     assert(NULL == (*newcomm)->c_topo);

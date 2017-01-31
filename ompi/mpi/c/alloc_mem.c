@@ -76,7 +76,7 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 
     if (MPI_INFO_NULL != info) {
         int flag;
-        (void) opal_info_get (info, "mpool_hints", MPI_MAX_INFO_VAL, info_value, &flag);
+        (void) ompi_info_get (info, "mpool_hints", MPI_MAX_INFO_VAL, info_value, &flag);
         if (flag) {
             mpool_hints = info_value;
         }

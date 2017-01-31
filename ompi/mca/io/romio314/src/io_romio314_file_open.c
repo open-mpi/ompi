@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,12 +38,22 @@ mca_io_romio314_file_open (ompi_communicator_t *comm,
     int ret;
     mca_io_romio314_data_t *data;
 
+// An opal_info_t isn't a full ompi_info_t. so if we're using an MPI call
+// below with an MPI_Info, we need to create an equivalent MPI_Info. This
+// isn't ideal but it only happens a few places.
+    ompi_info_t *ompi_info;
+    ompi_info = OBJ_NEW(ompi_info_t);
+    if (!ompi_info) { return(MPI_ERR_NO_MEM); }
+    opal_info_t *opal_info = &(ompi_info->super);
+    opal_info_dup (info, &opal_info);
+
     data = (mca_io_romio314_data_t *) fh->f_io_selected_data;
 //    OPAL_THREAD_LOCK (&mca_io_romio314_mutex);
-    ret = ROMIO_PREFIX(MPI_File_open)(comm, filename, amode, info,
+    ret = ROMIO_PREFIX(MPI_File_open)(comm, filename, amode, ompi_info,
                                       &data->romio_fh);
 //    OPAL_THREAD_UNLOCK (&mca_io_romio314_mutex);
 
+    ompi_info_free(&ompi_info);
     return ret;
 }
 
@@ -155,11 +165,21 @@ mca_io_romio314_file_set_info (ompi_file_t *fh,
     int ret;
     mca_io_romio314_data_t *data;
 
+// An opal_info_t isn't a full ompi_info_t. so if we're using an MPI call
+// below with an MPI_Info, we need to create an equivalent MPI_Info. This
+// isn't ideal but it only happens a few places.
+    ompi_info_t *ompi_info;
+    ompi_info = OBJ_NEW(ompi_info_t);
+    if (!ompi_info) { return(MPI_ERR_NO_MEM); }
+    opal_info_t *opal_info = &(ompi_info->super);
+    opal_info_dup (info, &opal_info);
+
     data = (mca_io_romio314_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio314_mutex);
-    ret = ROMIO_PREFIX(MPI_File_set_info) (data->romio_fh, info);
+    ret = ROMIO_PREFIX(MPI_File_set_info) (data->romio_fh, ompi_info);
     OPAL_THREAD_UNLOCK (&mca_io_romio314_mutex);
 
+    ompi_info_free(&ompi_info);
     return ret;
 }
 
@@ -171,11 +191,20 @@ mca_io_romio314_file_get_info (ompi_file_t *fh,
     int ret;
     mca_io_romio314_data_t *data;
 
+// An opal_info_t isn't a full ompi_info_t. so if we're using an MPI call
+// below with an MPI_Info, we need to create an equivalent MPI_Info. This
+// isn't ideal but it only happens a few places.
+    ompi_info_t *ompi_info;
+    ompi_info = OBJ_NEW(ompi_info_t);
+    if (!ompi_info) { return(MPI_ERR_NO_MEM); }
+
     data = (mca_io_romio314_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio314_mutex);
-    ret = ROMIO_PREFIX(MPI_File_get_info) (data->romio_fh, info_used);
+    ret = ROMIO_PREFIX(MPI_File_get_info) (data->romio_fh, &ompi_info);
     OPAL_THREAD_UNLOCK (&mca_io_romio314_mutex);
 
+    opal_info_dup (&(ompi_info->super), info_used);
+    ompi_info_free(&ompi_info);
     return ret;
 }
 
@@ -191,13 +220,23 @@ mca_io_romio314_file_set_view (ompi_file_t *fh,
     int ret;
     mca_io_romio314_data_t *data;
 
+// An opal_info_t isn't a full ompi_info_t. so if we're using an MPI call
+// below with an MPI_Info, we need to create an equivalent MPI_Info. This
+// isn't ideal but it only happens a few places.
+    ompi_info_t *ompi_info;
+    ompi_info = OBJ_NEW(ompi_info_t);
+    if (!ompi_info) { return(MPI_ERR_NO_MEM); }
+    opal_info_t *opal_info = &(ompi_info->super);
+    opal_info_dup (info, &opal_info);
+
     data = (mca_io_romio314_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio314_mutex);
     ret =
         ROMIO_PREFIX(MPI_File_set_view) (data->romio_fh, disp, etype, filetype,
-                                        datarep, info);
+                                        datarep, ompi_info);
     OPAL_THREAD_UNLOCK (&mca_io_romio314_mutex);
 
+    ompi_info_free(&ompi_info);
     return ret;
 }
 

@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,7 +62,7 @@ int MPI_File_set_info(MPI_File fh, MPI_Info info)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    ret = opal_infosubscribe_change_info(fh, &info->super);
+    ret = opal_infosubscribe_change_info(&fh->super, &info->super);
 
     OMPI_ERRHANDLER_RETURN(ret, fh, ret, FUNC_NAME);
 }

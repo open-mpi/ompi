@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,7 +74,7 @@ int MPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win)
     OPAL_CR_ENTER_LIBRARY();
 
     /* create_dynamic window and return */
-    ret = ompi_win_create_dynamic(info, comm, win);
+    ret = ompi_win_create_dynamic(&(info->super), comm, win);
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;
         OPAL_CR_EXIT_LIBRARY();

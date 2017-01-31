@@ -21,7 +21,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -221,6 +221,7 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
 
     /* create new communicator element */
     new_comm = OBJ_NEW(ompi_communicator_t);
+    new_comm->super.s_info = NULL;
     new_comm->c_local_group = ompi_group_allocate ( local_size );
     if ( 0 < remote_size ) {
         new_comm->c_remote_group = ompi_group_allocate (remote_size);

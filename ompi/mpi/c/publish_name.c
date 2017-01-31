@@ -16,7 +16,6 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,7 +88,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     /* OMPI supports info keys to pass the range and persistence to
      * be used for the given key */
     if (MPI_INFO_NULL != info) {
-        opal_info_get (info, "range", sizeof(range) - 1, range, &flag);
+        ompi_info_get (info, "range", sizeof(range) - 1, range, &flag);
         if (flag) {
             if (0 == strcmp(range, "nspace")) {
                 rng = OBJ_NEW(opal_value_t);
@@ -111,7 +110,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
                                             FUNC_NAME);
             }
         }
-        opal_info_get (info, "persistence", sizeof(range) - 1, range, &flag);
+        ompi_info_get (info, "persistence", sizeof(range) - 1, range, &flag);
         if (flag) {
             if (0 == strcmp(range, "indef")) {
                 rng = OBJ_NEW(opal_value_t);

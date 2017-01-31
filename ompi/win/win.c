@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -178,6 +178,12 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
     group = comm->c_local_group;
     OBJ_RETAIN(group);
     win->w_group = group;
+
+    /* Copy the info for the info layer */
+    win->super.s_info = OBJ_NEW(opal_info_t);
+    if (info) {
+        opal_info_dup(info, &(win->super.s_info));
+    }
 
     *win_out = win;
 
@@ -359,6 +365,10 @@ ompi_win_free(ompi_win_t *win)
         opal_pointer_array_set_item(&ompi_mpi_windows,
                                     win->w_f_to_c_index,
                                     NULL);
+    }
+
+    if (NULL != (win->super.s_info)) {
+        OBJ_RELEASE(win->super.s_info);
     }
 
     if (OMPI_SUCCESS == ret) {

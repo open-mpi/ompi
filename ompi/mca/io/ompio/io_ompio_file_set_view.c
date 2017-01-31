@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- *  Copyright (c) 2016 IBM Corp.  All rights reserved.
+ *  Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow

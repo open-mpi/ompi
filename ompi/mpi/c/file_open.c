@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -105,7 +106,7 @@ int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
     /* Create an empty MPI_File handle */
 
     *fh = MPI_FILE_NULL;
-    rc = ompi_file_open(comm, filename, amode, info, fh);
+    rc = ompi_file_open(comm, filename, amode, &(info->super), fh);
 
     /* Creating the file handle also selects a component to use,
        creates a module, and calls file_open() on the module.  So

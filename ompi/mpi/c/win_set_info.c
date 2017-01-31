@@ -2,7 +2,7 @@
  * Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +48,7 @@ int MPI_Win_set_info(MPI_Win win, MPI_Info info)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    ret = opal_infosubscribe_change_info(win, info);
+    ret = opal_infosubscribe_change_info(&(win->super), &(info->super));
 
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

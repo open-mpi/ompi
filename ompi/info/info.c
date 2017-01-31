@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,9 +53,9 @@
 /*
  * Global variables
  */
-ompi_predefined_info_t ompi_mpi_info_null;
+ompi_predefined_info_t ompi_mpi_info_null = {{{{{0}}}}};
 ompi_predefined_info_t *ompi_mpi_info_null_addr = &ompi_mpi_info_null;
-ompi_predefined_info_t ompi_mpi_info_env;
+ompi_predefined_info_t ompi_mpi_info_env = {{{{{0}}}}};
 
 /*
  * Local functions
@@ -194,6 +194,57 @@ int ompi_mpiinfo_init(void)
     /* All done */
 
     return OMPI_SUCCESS;
+}
+
+// Generally ompi_info_t processing is handled by opal_info_t now.
+// But to avoid compiler warnings and to avoid having to constantly
+// change code to mpiinfo->super to make MPI code use the opal_info_t
+// it's convenient to have ompi_info_t wrappers for some of the opal_info_t
+// related calls:
+
+int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo) {
+    return opal_info_dup (&(info->super), (opal_info_t **)newinfo);
+}
+int ompi_info_dup_mpistandard (ompi_info_t *info, ompi_info_t **newinfo) {
+    return opal_info_dup_mpistandard (&(info->super), (opal_info_t **)newinfo);
+}
+int ompi_info_set (ompi_info_t *info, const char *key, const char *value) {
+    return opal_info_set (&(info->super), key, value);
+}
+int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
+                              mca_base_var_enum_t *var_enum)
+{
+    return opal_info_set_value_enum (&(info->super), key, value, var_enum);
+}
+int ompi_info_get (ompi_info_t *info, const char *key, int valuelen,
+                   char *value, int *flag)
+{
+    return opal_info_get (&(info->super), key, valuelen, value, flag);
+}
+int ompi_info_get_value_enum (ompi_info_t *info, const char *key, int *value,
+                              int default_value, mca_base_var_enum_t *var_enum,
+                              int *flag)
+{
+    return opal_info_get_value_enum (&(info->super), key, value,
+                              default_value, var_enum, flag);
+}
+int ompi_info_get_bool(ompi_info_t *info, char *key, bool *value, int *flag) {
+    return opal_info_get_bool(&(info->super), key, value, flag);
+}
+int ompi_info_delete (ompi_info_t *info, const char *key) {
+    return opal_info_delete (&(info->super), key);
+}
+int ompi_info_get_valuelen (ompi_info_t *info, const char *key, int *valuelen,
+                            int *flag)
+{
+    return opal_info_get_valuelen (&(info->super), key, valuelen, flag);
+}
+int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key) {
+    return opal_info_get_nthkey (&(info->super), n, key);
+}
+int ompi_info_get_nkeys(ompi_info_t *info, int *nkeys)
+{
+    return opal_info_get_nkeys (&(info->super), nkeys);
 }
 
 

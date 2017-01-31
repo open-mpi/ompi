@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 University of Houston. All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,7 +73,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
     int amode;
     bool wronly_flag=false;
     bool relaxed_order_flag=false;
-    MPI_Info info;
+    opal_info_t *info;
     int flag;
     int valuelen;
     char value[MPI_MAX_INFO_VAL+1];
@@ -102,7 +102,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
     /*---------------------------------------------------------*/
     /* 2. Did the user specify MPI_INFO relaxed ordering flag? */
     info = fh->f_info;
-    if ( info != MPI_INFO_NULL ){
+    if ( info != &(MPI_INFO_NULL->super) ){
         valuelen = MPI_MAX_INFO_VAL;
         opal_info_get ( info,"OMPIO_SHAREDFP_RELAXED_ORDERING", valuelen, value, &flag);
         if ( flag ) {

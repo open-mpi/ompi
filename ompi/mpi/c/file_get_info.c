@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +57,7 @@ int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
 /*
  * Setup any defaults if MPI_Win_set_info was never called
  */
-        opal_infosubscribe_change_info(fh, &MPI_INFO_NULL->super);
+        opal_infosubscribe_change_info(&fh->super, &MPI_INFO_NULL->super);
     }
 
 
@@ -65,8 +65,9 @@ int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
     if (NULL == (*info_used)) {
        return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_NO_MEM, FUNC_NAME);
     }
+    opal_info_t *opal_info_used = &(*info_used)->super;
 
-    opal_info_dup(fh->super.s_info, &(*info_used)->super);
+    opal_info_dup_mpistandard(fh->super.s_info, &opal_info_used);
 
     return OMPI_SUCCESS;
 }

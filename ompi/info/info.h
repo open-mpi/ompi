@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016 IBM Corp.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,6 +98,61 @@ int ompi_info_free (ompi_info_t **info);
  * down MPI_Info handling.
  */
 int ompi_mpiinfo_finalize(void);
+
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_dup_mpistandard (ompi_info_t *info, ompi_info_t **newinfo);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_set (ompi_info_t *info, const char *key, const char *value);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
+                                            mca_base_var_enum_t *var_enum);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_get_bool (ompi_info_t *info, char *key, bool *value, int *flag);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_get_value_enum (ompi_info_t *info, const char *key,
+                                            int *value, int default_value,
+                                            mca_base_var_enum_t *var_enum, int *flag);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_get (ompi_info_t *info, const char *key, int valuelen,
+                                 char *value, int *flag);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_delete (ompi_info_t *info, const char *key);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_get_valuelen (ompi_info_t *info, const char *key, int *valuelen,
+                                          int *flag);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_value_to_bool(char *value, bool *interp);
+/**
+ * ompi_info_foo() wrapper around various opal_info_foo() calls
+ */
+OMPI_DECLSPEC int ompi_info_get_nkeys(ompi_info_t *info, int *nkeys);
+
 
 END_C_DECLS
 

@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,6 +101,124 @@ int opal_info_dup (opal_info_t *info, opal_info_t **newinfo)
      return MPI_SUCCESS;
 }
 
+/*
+ * An object's info can be set, but those settings can be modified by
+ * system callbacks. When those callbacks happen, we save a "__IN_<key>"/"val"
+ * copy of changed or erased values.
+ *
+ * extra options for how to dup:
+ *   include_system_extras (default 1)
+ *   omit_ignored          (default 1)
+ *   show_modifications    (default 0)
+ */
+static
+int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
+    int include_system_extras,  // (k/v with no corresponding __IN_k)
+    int omit_ignored,           // (__IN_k with no k/v)
+    int show_modifications)     // (pick v from k/v or __IN_k/v)
+{
+    int err, flag;
+    opal_list_item_t *item;
+    opal_info_entry_t *iterator;
+    char savedkey[MPI_MAX_INFO_KEY];
+    char savedval[MPI_MAX_INFO_VAL];
+    char *valptr, *pkey;
+    int is_IN_key;
+    int exists_IN_key, exists_reg_key;
+
+    OPAL_THREAD_LOCK(info->i_lock);
+    for (item = opal_list_get_first(&(info->super));
+         item != opal_list_get_end(&(info->super));
+         item = opal_list_get_next(iterator)) {
+         iterator = (opal_info_entry_t *) item;
+
+// If we see an __IN_<key> key but no <key>, decide what to do based on mode.
+// If we see an __IN_<key> and a <key>, skip since it'll be handled when
+// we process <key>.
+         is_IN_key = 0;
+         exists_IN_key = 0;
+         exists_reg_key = 0;
+         pkey = iterator->ie_key;
+         if (0 == strncmp(iterator->ie_key, "__IN_", 5)) {
+             pkey += 5;
+
+             is_IN_key = 1;
+             exists_IN_key = 1;
+             opal_info_get (info, pkey, 0, NULL, &flag);
+             if (flag) {
+                 exists_reg_key = 1;
+             }
+         } else {
+             is_IN_key = 0;
+             exists_reg_key = 1;
+
+// see if there is an __IN_<key> for the current <key>
+             if (strlen(iterator->ie_key) + 5 < MPI_MAX_INFO_KEY) {
+                 sprintf(savedkey, "__IN_%s", iterator->ie_key);
+                 err = opal_info_get (info, savedkey, MPI_MAX_INFO_VAL,
+                     savedval, &flag);
+             } else {
+                 flag = 0;
+             }
+             if (flag) {
+                 exists_IN_key = 1;
+             }
+         }
+
+         if (is_IN_key) {
+             if (exists_reg_key) {
+// we're processing __IN_<key> and there exists a <key> so we'll handle it then
+                 continue;
+             } else {
+// we're processing __IN_<key> and no <key> exists
+// this would mean <key> was set by the user but ignored by the system
+// so base our behavior on the omit_ignored
+                 if (!omit_ignored) {
+                     err = opal_info_set(*newinfo, pkey, iterator->ie_value);
+                     if (MPI_SUCCESS != err) {
+                         OPAL_THREAD_UNLOCK(info->i_lock);
+                         return err;
+                     }
+                 }
+             }
+         } else {
+             valptr = 0;
+             if (!exists_IN_key) {
+// we're processing <key> and no __IN_<key> <key> exists
+// this would mean it's a system setting, not something that came from the user
+                 if (include_system_extras) {
+                     valptr = iterator->ie_value;
+                 }
+             } else {
+// we're processing <key> and __IN_<key> also exists
+// pick which value to use
+                 if (!show_modifications) {
+                     valptr = savedval;
+                 } else {
+                     valptr = iterator->ie_value;
+                 }
+             }
+             if (valptr) {
+                 err = opal_info_set(*newinfo, pkey, valptr);
+                 if (MPI_SUCCESS != err) {
+                     OPAL_THREAD_UNLOCK(info->i_lock);
+                     return err;
+                 }
+             }
+         }
+     }
+     OPAL_THREAD_UNLOCK(info->i_lock);
+     return MPI_SUCCESS;
+}
+
+/*
+ * Implement opal_info_dup_mpistandard by using whatever mode
+ * settings represent our interpretation of the standard
+ */
+int opal_info_dup_mpistandard (opal_info_t *info, opal_info_t **newinfo)
+{
+    return opal_info_dup_mode (info, newinfo, 1, 1, 0);
+}
 
 /*
  * Set a value on the info
@@ -167,7 +286,7 @@ int opal_info_get (opal_info_t *info, const char *key, int valuelen,
     search = info_find_key (info, key);
     if (NULL == search){
         *flag = 0;
-    } else {
+    } else if (value && valuelen) {
         /*
          * We have found the element, so we can return the value
          * Set the flag, value_length and value
