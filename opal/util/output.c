@@ -689,6 +689,18 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         info[i].ldi_file_num_lines_lost = 0;
     }
 
+    /* Special case: output_id == 0 == verbose_stream
+     * This is the verbose stream, so update the internal 'verbose_stream'
+     * to match the parameters set in the info[i]
+     */
+    if( verbose_stream == i ) {
+        verbose.lds_want_syslog     = info[i].ldi_syslog;
+        verbose.lds_syslog_priority = info[i].ldi_syslog_priority;
+        verbose.lds_syslog_ident    = info[i].ldi_syslog_ident;
+        verbose.lds_want_stdout     = info[i].ldi_stdout;
+        verbose.lds_want_stderr     = info[i].ldi_stderr;
+    }
+
     /* Don't open a file in the session directory now -- do that lazily
      * so that if there's no output, we don't have an empty file */
 
