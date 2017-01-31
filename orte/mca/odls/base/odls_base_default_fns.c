@@ -1947,7 +1947,12 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                  "%s SENDING SIGKILL TO %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&cd->child->name)));
-            kill_local(cd->child->pid, SIGKILL);
+            /* Send signal to the negative of the PID to send the signal to all
+             * of the children of that PID - the process group under it.
+             * Otherwise it is delivered to only that PID.
+             */
+            kill_local(cd->child->pid * -1, SIGKILL);
+
             /* indicate the waitpid fired as this is effectively what
              * has happened
              */
