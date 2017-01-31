@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -512,7 +512,7 @@ int pmix_mca_base_var_deregister(int vari);
  * Note: The value can be changed by the registering code without using
  * the pmix_mca_base_var_* interface so the source may be incorrect.
  */
-int pmix_mca_base_var_get_value (int vari, const void *value,
+int pmix_mca_base_var_get_value (int vari, void *value,
                                  pmix_mca_base_var_source_t *source,
                                  const char **source_file);
 

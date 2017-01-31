@@ -172,6 +172,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_LOCALLDR                       "pmix.lldr"             // (pmix_rank_t) lowest rank on this node within this job
 #define PMIX_APPLDR                         "pmix.aldr"             // (pmix_rank_t) lowest rank in this app within this job
 #define PMIX_PROC_PID                       "pmix.ppid"             // (pid_t) pid of specified proc
+#define PMIX_SESSION_ID                     "pmix.session.id"       // (uint32_t) session identifier
 
 #define PMIX_NODE_LIST                      "pmix.nlist"            // (char*) comma-delimited list of nodes running procs for the specified nspace
 #define PMIX_ALLOCATED_NODELIST             "pmix.alist"            // (char*) comma-delimited list of all nodes in this allocation regardless of

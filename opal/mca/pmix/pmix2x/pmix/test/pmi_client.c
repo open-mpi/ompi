@@ -32,13 +32,14 @@ static void log_fatal(const char *format, ...)
     va_start(arglist, format);
     if (_verbose > 0) {
         if (0 > vasprintf(output, format, arglist) ||
-            NULL == *output) {
+            NULL == output || NULL == *output) {
+            va_end(arglist);
             return;
         }
         fprintf(stderr, "FATAL: %s", *output);
-        va_end(arglist);
         free(*output);
     }
+    va_end(arglist);
 }
 
 static void log_error(const char *format, ...)
@@ -49,7 +50,7 @@ static void log_error(const char *format, ...)
     va_start(arglist, format);
     if (_verbose > 0) {
         if (0 > vasprintf(output, format, arglist) ||
-            NULL == *output) {
+            NULL == output || NULL == *output) {
             va_end(arglist);
             return;
         }
@@ -67,7 +68,7 @@ static void log_info(const char *format, ...)
     va_start(arglist, format);
     if (_verbose > 0) {
         if (0 > vasprintf(output, format, arglist) ||
-            NULL == *output) {
+            NULL == output || NULL == *output) {
             va_end(arglist);
             return;
         }

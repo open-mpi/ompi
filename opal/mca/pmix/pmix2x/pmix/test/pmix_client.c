@@ -13,8 +13,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +39,8 @@
 #include "test_cd.h"
 #include "test_resolve_peers.h"
 #include "test_error.h"
-
+#include "test_replace.h"
+#include "test_internal.h"
 
 static void errhandler(size_t evhdlr_registration_id,
                        pmix_status_t status,
@@ -190,6 +191,24 @@ int main(int argc, char **argv)
         if (PMIX_SUCCESS != rc) {
             FREE_TEST_PARAMS(params);
             TEST_ERROR(("%s:%d error registration and event handling test failed: %d", myproc.nspace, myproc.rank, rc));
+            exit(0);
+        }
+    }
+
+    if (NULL != params.key_replace) {
+        rc = test_replace(myproc.nspace, myproc.rank, params);
+        if (PMIX_SUCCESS != rc) {
+            FREE_TEST_PARAMS(params);
+            TEST_ERROR(("%s:%d error key replace test failed: %d", myproc.nspace, myproc.rank, rc));
+            exit(0);
+        }
+    }
+
+    if (params.test_internal) {
+        rc = test_internal(myproc.nspace, myproc.rank, params);
+        if (PMIX_SUCCESS != rc) {
+            FREE_TEST_PARAMS(params);
+            TEST_ERROR(("%s:%d error key store internal test failed: %d", myproc.nspace, myproc.rank, rc));
             exit(0);
         }
     }
