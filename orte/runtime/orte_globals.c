@@ -133,6 +133,8 @@ orte_timer_t *orte_mpiexec_timeout = NULL;
 
 opal_buffer_t *orte_tree_launch_cmd = NULL;
 
+int orte_stack_trace_wait_timeout = 30;
+
 /* global arrays for data storage */
 opal_hash_table_t *orte_job_data = NULL;
 opal_pointer_array_t *orte_node_pool = NULL;

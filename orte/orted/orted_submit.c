@@ -17,6 +17,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -3071,8 +3072,10 @@ static void stack_trace_recv(int status, orte_process_name_t* sender,
     }
     ++ntraces;
     if (orte_process_info.num_procs == ntraces) {
-        /* cancel the timeout */
-        OBJ_DESTRUCT(&stack_trace_timer);
+        if( orte_stack_trace_wait_timeout > 0 ) {
+            /* cancel the timeout */
+            OBJ_DESTRUCT(&stack_trace_timer);
+        }
         /* abort the job */
         ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
         /* set the global abnormal exit flag  */
@@ -3173,12 +3176,14 @@ void orte_timeout_wakeup(int sd, short args, void *cbdata)
         OBJ_RELEASE(sig);
         /* we will terminate after we get the stack_traces, but set a timeout
          * just in case we never hear back from everyone */
-        OBJ_CONSTRUCT(&stack_trace_timer, orte_timer_t);
-        opal_event_evtimer_set(orte_event_base,
-                               stack_trace_timer.ev, stack_trace_timeout, NULL);
-        opal_event_set_priority(stack_trace_timer.ev, ORTE_ERROR_PRI);
-        stack_trace_timer.tv.tv_sec = 30;
-        opal_event_evtimer_add(stack_trace_timer.ev, &stack_trace_timer.tv);
+        if( orte_stack_trace_wait_timeout > 0 ) {
+            OBJ_CONSTRUCT(&stack_trace_timer, orte_timer_t);
+            opal_event_evtimer_set(orte_event_base,
+                                   stack_trace_timer.ev, stack_trace_timeout, NULL);
+            opal_event_set_priority(stack_trace_timer.ev, ORTE_ERROR_PRI);
+            stack_trace_timer.tv.tv_sec = orte_stack_trace_wait_timeout;
+            opal_event_evtimer_add(stack_trace_timer.ev, &stack_trace_timer.tv);
+        }
         return;
     }
   giveup:
