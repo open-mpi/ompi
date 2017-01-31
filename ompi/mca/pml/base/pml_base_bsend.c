@@ -15,6 +15,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,9 +44,9 @@ static opal_condition_t mca_pml_bsend_condition;  /* condition variable to block
 static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;
 static mca_allocator_base_module_t* mca_pml_bsend_allocator;  /* sub-allocator to manage users buffer */
 static size_t           mca_pml_bsend_usersize;   /* user provided buffer size */
-static unsigned char   *mca_pml_bsend_userbase;   /* user provided buffer base */
-static unsigned char   *mca_pml_bsend_base;       /* adjusted base of user buffer */
-static unsigned char   *mca_pml_bsend_addr;       /* current offset into user buffer */
+unsigned char          *mca_pml_bsend_userbase;   /* user provided buffer base */
+unsigned char          *mca_pml_bsend_base;       /* adjusted base of user buffer */
+unsigned char          *mca_pml_bsend_addr;       /* current offset into user buffer */
 static size_t           mca_pml_bsend_size;       /* adjusted size of user buffer */
 static size_t           mca_pml_bsend_count;      /* number of outstanding requests */
 static size_t           mca_pml_bsend_pagesz;     /* mmap page size */
