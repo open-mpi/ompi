@@ -68,6 +68,7 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
 #include "orte/runtime/orte_quit.h"
+#include "orte/util/compress.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/pre_condition_transports.h"
@@ -374,14 +375,6 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_JOBID_PRINT(caddy->jdata->jobid));
 
-    /* if we don't want to launch the apps, now is the time to leave */
-    if (orte_do_not_launch) {
-        orte_never_launched = true;
-        ORTE_FORCED_TERMINATE(0);
-        OBJ_RELEASE(caddy);
-        return;
-    }
-
     /* bozo check */
     if (ORTE_JOB_STATE_SYSTEM_PREP != caddy->job_state) {
         ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -557,6 +550,27 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     if (ORTE_SUCCESS != (rc = orte_odls.get_add_procs_data(buffer, jdata->jobid))) {
         ORTE_ERROR_LOG(rc);
         ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
+    /* if we don't want to launch the apps, now is the time to leave */
+    if (orte_do_not_launch) {
+        bool compressed;
+        uint8_t *cmpdata;
+        size_t cmplen;
+        /* report the size of the launch message */
+        compressed = orte_util_compress_block((uint8_t*)buffer->base_ptr, buffer->bytes_used,
+                                              &cmpdata, &cmplen);
+        if (compressed) {
+            opal_output(0, "LAUNCH MSG RAW SIZE: %d COMPRESSED SIZE: %d",
+                        (int)buffer->bytes_used, (int)cmplen);
+            free(cmpdata);
+        } else {
+            opal_output(0, "LAUNCH MSG RAW SIZE: %d", (int)buffer->bytes_used);
+        }
+        orte_never_launched = true;
+        ORTE_FORCED_TERMINATE(0);
         OBJ_RELEASE(caddy);
         return;
     }

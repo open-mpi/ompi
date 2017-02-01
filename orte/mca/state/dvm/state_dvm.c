@@ -259,6 +259,9 @@ static void vm_ready(int fd, short args, void *cbdata)
             OBJ_RELEASE(buf);
             return;
         }
+        /* flag that daemons were launchd so we will update the nidmap */
+        flag = 1;
+        opal_dss.pack(buf, &flag, 1, OPAL_INT8);
         /* construct a nodemap with everything in it */
         if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buf))) {
             ORTE_ERROR_LOG(rc);

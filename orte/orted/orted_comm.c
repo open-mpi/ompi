@@ -356,6 +356,10 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             opal_output(0, "%s orted_cmd: received exit cmd",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
+        if (orte_do_not_launch) {
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+            return;
+        }
         /* kill the local procs */
         orte_odls.kill_local_procs(NULL);
         /* flag that orteds were ordered to terminate */
@@ -393,6 +397,10 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         if (orte_debug_daemons_flag) {
             opal_output(0, "%s orted_cmd: received halt_vm cmd",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
+        if (orte_do_not_launch) {
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+            return;
         }
         /* kill the local procs */
         orte_odls.kill_local_procs(NULL);
