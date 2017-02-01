@@ -27,11 +27,13 @@
 #define NB_ITER 1000
 #define FULL_NB_ITER (size_world * NB_ITER)
 #define MAX_SIZE (1024 * 1024 * 1.4)
+#define NB_OPS 5
 
 static int rank_world = -1;
 static int size_world = 0;
 static int to = -1;
 static int from = -1;
+static MPI_Win win = MPI_WIN_NULL;
 
 /* Sorting results */
 static int comp_double(const void*_a, const void*_b)
@@ -116,15 +118,53 @@ static inline void op_a2a(double*res, void*sbuf, int size, int tagno, void*rbuf)
     *res = timing_delay(&start, &end);
 }
 
+static inline void op_put(double*res, void*sbuf, int size, int tagno, void*rbuf) {
+    struct timespec start, end;
+
+    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, to, 0, win);
+
+    /* do monitored operation */
+    get_tick(&start);
+    MPI_Put(sbuf, size, MPI_BYTE, to, 0, size, MPI_BYTE, win);
+    MPI_Win_unlock(to, win);
+    get_tick(&end);
+
+    *res = timing_delay(&start, &end);
+}
+
+static inline void op_get(double*res, void*rbuf, int size, int tagno, void*sbuf) {
+    struct timespec start, end;
+
+    MPI_Win_lock(MPI_LOCK_SHARED, to, 0, win);
+
+    /* do monitored operation */
+    get_tick(&start);
+    MPI_Get(rbuf, size, MPI_BYTE, to, 0, size, MPI_BYTE, win);
+    MPI_Win_unlock(to, win);
+    get_tick(&end);
+
+    *res = timing_delay(&start, &end);
+}
+
 static inline void do_bench(int size, void*sbuf, double*results,
                             void(*op)(double*, void*, int, int, void*)) {
     int iter;
     int tagno = 201;
-    void*rbuf = sbuf ? sbuf + size : NULL;
+    void* rbuf = sbuf ? (void*)(((char*)sbuf) + size) : NULL;
+
+    if(op == op_put || op == op_get){
+	win = MPI_WIN_NULL;
+	MPI_Win_create(rbuf, size, 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    }
     
     for( iter = 0; iter < NB_ITER; ++iter ) {
         op(&results[iter], sbuf, size, tagno, rbuf);
         MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    if(op == op_put || op == op_get){
+	MPI_Win_free(&win);
+	win = MPI_WIN_NULL;
     }
 }
 
@@ -143,7 +183,7 @@ int main(int argc, char* argv[])
 
     double full_res[FULL_NB_ITER];
     
-    for( nop = 0; nop < 3; ++nop) {
+    for( nop = 0; nop < NB_OPS; ++nop ) {
         switch(nop) {
         case 0:
             op = op_send;
@@ -156,6 +196,14 @@ int main(int argc, char* argv[])
         case 2:
             op = op_a2a;
             sprintf(name, "MPI_Alltoall");
+            break;
+        case 3:
+            op = op_put;
+            sprintf(name, "MPI_Put");
+            break;
+        case 4:
+            op = op_get;
+            sprintf(name, "MPI_Get");
             break;
         }
         

@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <inttypes.h>
 
 #define PVAR_GENERATE_VARIABLES(pvar_prefix, pvar_name, pvar_class)     \
     /* Variables */                                                     \
@@ -114,20 +115,20 @@
     static inline int pvar_ ## prefix ## _init(MPI_T_pvar_session session) \
     {                                                                   \
         prefix ## _count_init(session);                                 \
-	    prefix ## _size_init(session);				\
+	    return prefix ## _size_init(session);                           \
     }                                                                   \
     static inline int pvar_ ## prefix ## _finalize(MPI_T_pvar_session session) \
     {                                                                   \
         prefix ## _count_finalize(session);                             \
-	    prefix ## _size_finalize(session);				\
+	    return prefix ## _size_finalize(session);                       \
     }                                                                   \
     static inline void pvar_ ## prefix ## _read(MPI_T_pvar_session session, \
                                                 uint64_t*cvalues, uint64_t*svalues) \
     {                                                                   \
         /* Read count values */                                         \
         prefix ## _count_read(session, cvalues);                        \
-	    /* Read size values */					\
-	    prefix ## _size_read(session, svalues);			\
+	    /* Read size values */                                          \
+	    prefix ## _size_read(session, svalues);                         \
     }
 
 GENERATE_CS(pml, "pml_monitoring_messages", MPI_T_PVAR_CLASS_SIZE, MPI_T_PVAR_CLASS_SIZE)
@@ -194,22 +195,22 @@ static inline int pvar_pml_check(MPI_T_pvar_session session, int world_size, int
     for( i = 0; i < world_size && MPI_SUCCESS == ret; ++i ) {
         /* Check count values */
         if( i == world_rank && (cvalues[i] - old_cvalues[i]) != 0 ) {
-            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be equal to %d.\n",
-                    __FUNCTION__, i, cvalues[i] - old_cvalues[i], 0);
+            fprintf(stderr, "Error in %s: count_values[%d]=%" PRIu64 ", and should be equal to %d.\n",
+                    __func__, i, cvalues[i] - old_cvalues[i], 0);
             ret = -1;
         } else if ( i != world_rank && (cvalues[i] - old_cvalues[i]) < (uint64_t) world_size ) {
-            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be >= %d.\n",
-                    __FUNCTION__, i, cvalues[i] - old_cvalues[i], world_size);
+            fprintf(stderr, "Error in %s: count_values[%d]=%" PRIu64 ", and should be >= %d.\n",
+                    __func__, i, cvalues[i] - old_cvalues[i], world_size);
             ret = -1;
         }
         /* Check size values */
         if( i == world_rank && (svalues[i] - old_svalues[i]) != 0 ) {
-            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be equal to %lu.\n",
-                    __FUNCTION__, i, svalues[i] - old_svalues[i], (uint64_t) 0);
+            fprintf(stderr, "Error in %s: size_values[%d]=%" PRIu64 ", and should be equal to %" PRIu64 ".\n",
+                    __func__, i, svalues[i] - old_svalues[i], (uint64_t) 0);
             ret = -1;
         } else if ( i != world_rank && (svalues[i] - old_svalues[i]) < (uint64_t) (world_size * 13 * sizeof(char)) ) {
-            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, i, svalues[i] - old_svalues[i], (uint64_t) (world_size * 13));
+            fprintf(stderr, "Error in %s: size_values[%d]=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                    __func__, i, svalues[i] - old_svalues[i], (uint64_t) (world_size * 13));
             ret = -1;
         }
     }
@@ -238,14 +239,14 @@ static inline int pvar_osc_check(MPI_T_pvar_session session, int world_size, int
     for( i = 0; i < world_size && MPI_SUCCESS == ret; ++i ) {
         /* Check count values */
         if( cvalues[i] < (uint64_t) world_size ) {
-            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be >= %d.\n",
-                    __FUNCTION__, i, cvalues[i], world_size);
+            fprintf(stderr, "Error in %s: count_values[%d]=%" PRIu64 ", and should be >= %d.\n",
+                    __func__, i, cvalues[i], world_size);
             ret = -1;
         }
         /* Check size values */
         if( svalues[i] < (uint64_t) (world_size * 13 * sizeof(char)) ) {
-            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, i, svalues[i], (uint64_t) (world_size * 13));
+            fprintf(stderr, "Error in %s: size_values[%d]=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                    __func__, i, svalues[i], (uint64_t) (world_size * 13));
             ret = -1;
         }
     }
@@ -254,14 +255,14 @@ static inline int pvar_osc_check(MPI_T_pvar_session session, int world_size, int
     for( i = 0; i < world_size && MPI_SUCCESS == ret; ++i ) {
         /* Check count values */
         if( cvalues[i] < (uint64_t) world_size ) {
-            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be >= %d.\n",
-                    __FUNCTION__, i, cvalues[i], world_size);
+            fprintf(stderr, "Error in %s: count_values[%d]=%" PRIu64 ", and should be >= %d.\n",
+                    __func__, i, cvalues[i], world_size);
             ret = -1;
         }
         /* Check size values */
         if( svalues[i] < (uint64_t) (world_size * 13 * sizeof(char)) ) {
-            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, i, svalues[i], (uint64_t) (world_size * 13 * sizeof(char)));
+            fprintf(stderr, "Error in %s: size_values[%d]=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                    __func__, i, svalues[i], (uint64_t) (world_size * 13 * sizeof(char)));
             ret = -1;
         }
     }
@@ -288,62 +289,62 @@ static inline int pvar_coll_check(MPI_T_pvar_session session, int world_size, in
     for( i = 0; i < world_size && MPI_SUCCESS == ret; ++i ) {
         /* Check count values */
         if( i == world_rank && cvalues[i] != 0 ) {
-            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be equal to %d.\n",
-                    __FUNCTION__, i, cvalues[i], 0);
+            fprintf(stderr, "Error in %s: count_values[%d]=%" PRIu64 ", and should be equal to %d.\n",
+                    __func__, i, cvalues[i], 0);
             ret = -1;
         } else if ( i != world_rank && cvalues[i] < (uint64_t) (world_size + 1) * 4 ) {
-            fprintf(stderr, "Error in %s: count_values[%d]=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, i, cvalues[i], (uint64_t) (world_size + 1) * 4);
+            fprintf(stderr, "Error in %s: count_values[%d]=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                    __func__, i, cvalues[i], (uint64_t) (world_size + 1) * 4);
             ret = -1;
         }
         /* Check size values */
         if( i == world_rank && svalues[i] != 0 ) {
-            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be equal to %lu.\n",
-                    __FUNCTION__, i, svalues[i], (uint64_t) 0);
+            fprintf(stderr, "Error in %s: size_values[%d]=%" PRIu64 ", and should be equal to %" PRIu64 ".\n",
+                    __func__, i, svalues[i], (uint64_t) 0);
             ret = -1;
         } else if ( i != world_rank && svalues[i] < (uint64_t) ((world_size * (world_size - 1) * 2 * 13 * sizeof(char)) + 3 * 13 * sizeof(char) + sizeof(int)) ) {
-            fprintf(stderr, "Error in %s: size_values[%d]=%lu, and should be >= %lu.\n",
-                    __FUNCTION__, i, svalues[i], (uint64_t) ((world_size * (world_size - 1) * 2 * 13 * sizeof(char)) + 3 * 13 * sizeof(char) + sizeof(int)));
+            fprintf(stderr, "Error in %s: size_values[%d]=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                    __func__, i, svalues[i], (uint64_t) ((world_size * (world_size - 1) * 2 * 13 * sizeof(char)) + 3 * 13 * sizeof(char) + sizeof(int)));
             ret = -1;
         }
     }
     /* Check One-to-all COLL values */
     pvar_o2a_read(session, &count, &size);
     if( count < (uint64_t) 2 ) {
-        fprintf(stderr, "Error in %s: count_o2a=%lu, and should be >= %lu.\n",
-		__FUNCTION__, count, (uint64_t) 2);
+        fprintf(stderr, "Error in %s: count_o2a=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                __func__, count, (uint64_t) 2);
         ret = -1;
     }
     if( size < (uint64_t) ((world_size - 1) * 13 * 2 * sizeof(char)) ) {
-        fprintf(stderr, "Error in %s: size_o2a=%lu, and should be >= %lu.\n",
-                __FUNCTION__, size, (uint64_t) ((world_size - 1) * 13 * 2 * sizeof(char)));
+        fprintf(stderr, "Error in %s: size_o2a=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                __func__, size, (uint64_t) ((world_size - 1) * 13 * 2 * sizeof(char)));
         ret = -1;
     }
     /* Check All-to-one COLL values */
     pvar_a2o_read(session, &count, &size);
     if( count < (uint64_t) 2 ) {
-        fprintf(stderr, "Error in %s: count_a2o=%lu, and should be >= %lu.\n",
-                __FUNCTION__, count, (uint64_t) 2);
+        fprintf(stderr, "Error in %s: count_a2o=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                __func__, count, (uint64_t) 2);
         ret = -1;
     }
     if( size < (uint64_t) ((world_size - 1) * (13 * sizeof(char) + sizeof(int))) ) {
-        fprintf(stderr, "Error in %s: size_a2o=%lu, and should be >= %lu.\n",
-                __FUNCTION__, size,
+        fprintf(stderr, "Error in %s: size_a2o=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                __func__, size,
                 (uint64_t) ((world_size - 1) * (13 * sizeof(char) + sizeof(int))));
         ret = -1;
     }
     /* Check All-to-all COLL values */
     pvar_a2a_read(session, &count, &size);
     if( count < (uint64_t) (world_size * 4) ) {
-        fprintf(stderr, "Error in %s: count_a2a=%lu, and should be >= %lu.\n",
-		__FUNCTION__, count, (uint64_t) (world_size * 4));
+        fprintf(stderr, "Error in %s: count_a2a=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                __func__, count, (uint64_t) (world_size * 4));
         ret = -1;
     }
     if( size < (uint64_t) (world_size * (world_size - 1) * (2 * 13 * sizeof(char) + sizeof(int))) ) {
-	fprintf(stderr, "Error in %s: size_a2a=%lu, and should be >= %lu.\n",
-		__FUNCTION__, size,
-		(uint64_t) (world_size * (world_size - 1) * (2 * 13 * sizeof(char) + sizeof(int))));
-	ret = -1;
+        fprintf(stderr, "Error in %s: size_a2a=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
+                __func__, size,
+                (uint64_t) (world_size * (world_size - 1) * (2 * 13 * sizeof(char) + sizeof(int))));
+        ret = -1;
     }
     if( MPI_SUCCESS == ret ) {
         fprintf(stdout, "Check COLL...[ OK ]\n");
@@ -360,7 +361,6 @@ static inline int pvar_coll_check(MPI_T_pvar_session session, int world_size, in
 int main(int argc, char* argv[])
 {
     int size, i, n, to, from, world_rank;
-    uint64_t*svalues, *cvalues;
     MPI_T_pvar_session session;
     MPI_Status status;
     char s1[20], s2[20];

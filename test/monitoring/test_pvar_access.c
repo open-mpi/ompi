@@ -49,11 +49,12 @@ static MPI_T_pvar_handle count_handle;
 static MPI_T_pvar_handle msize_handle;
 static const char count_pvar_name[] = "pml_monitoring_messages_count";
 static const char msize_pvar_name[] = "pml_monitoring_messages_size";
-static const void*nullbuf = NULL;
 static int count_pvar_idx, msize_pvar_idx;
 static int world_rank, world_size;
 
-void print_vars(int rank, int size, unsigned long int*msg_count, unsigned long int*msg_size) {
+static void print_vars(int rank, int size, unsigned long int* msg_count,
+                       unsigned long int*msg_size)
+{
     int i;
     for(i = 0; i < size; ++i) {
         if(0 != msg_size[i])

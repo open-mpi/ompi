@@ -376,7 +376,9 @@ int write_mat(char * filename, uint64_t * mat, unsigned int dim)
  * MPI binding for fortran
  */
 
+#include <stdbool.h>
 #include "ompi_config.h"
+#include "opal/threads/thread_usage.h"
 #define OMPI_F77_PROTOTYPES_MPI_H
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #undef OMPI_F77_PROTOTYPES_MPI_H

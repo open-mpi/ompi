@@ -72,9 +72,6 @@ static int nprocs_world = 0;
 
 opal_hash_table_t *common_monitoring_translation_ht = NULL;
 
-/* Release static structures from common_monitoring_coll.c */
-extern void mca_common_monitoring_coll_finalize( void );
-
 /* Reset all the monitoring arrays */
 static void mca_common_monitoring_reset( void );
 
@@ -134,11 +131,6 @@ static int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
                                               mca_base_pvar_event_t event,
                                               void *obj, int *count);
 
-inline opal_hash_table_t*mca_common_monitoring_get_common_monitoring_translation_ht()
-{
-    return common_monitoring_translation_ht;
-}
-
 static int mca_common_monitoring_set_flush(struct mca_base_pvar_t *pvar,
                                            const void *value, void *obj)
 {
@@ -165,8 +157,6 @@ static int mca_common_monitoring_notify_flush(struct mca_base_pvar_t *pvar,
                                               mca_base_pvar_event_t event,
                                               void *obj, int *count)
 {
-    int rank, size;
-
     switch (event) {
     case MCA_BASE_PVAR_HANDLE_BIND:
         mca_common_monitoring_reset();
