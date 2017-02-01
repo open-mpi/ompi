@@ -596,7 +596,7 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
                                               struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
 {
-    int i, size, rank, err;
+    int size, rank, err;
     MPI_Aint extent, lb;
     char *send_buf = NULL;
     struct ompi_datatype_t *newtype, *send_type;
