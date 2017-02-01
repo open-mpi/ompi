@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -61,7 +61,7 @@ int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_CONSTANT,
-                                           &cnt);
+                                           &ompi_coll_tuned_forced_max_algorithms[ALLTOALLV]);
 
     /* MPI_T: This variable should eventually be bound to a communicator */
     coll_tuned_alltoallv_forced_algorithm = 0;
@@ -72,10 +72,11 @@ int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm
                                         "Which alltoallv algorithm is used. "
                                         "Can be locked down to choice of: 0 ignore, "
                                         "1 basic linear, 2 pairwise.",
-                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
-                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        MCA_BASE_VAR_SCOPE_ALL,
                                         &coll_tuned_alltoallv_forced_algorithm);
+
     OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
