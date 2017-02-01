@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Inria.  All rights reserved.
+ * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -46,7 +46,7 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
 {
     int world_rank;
     if( NULL == data->comm_name && 0 < strlen(data->p_comm->c_name) ) {
-	data->comm_name = strdup(data->p_comm->c_name);
+        data->comm_name = strdup(data->p_comm->c_name);
     }
     if( -1 == data->world_rank ) {
         /* Get current process world_rank */
@@ -55,15 +55,15 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
     }
     /* Only list procs if the hashtable is already initialized, ie if the previous call worked */
     if( (-1 != data->world_rank) && (NULL == data->procs || 0 == strlen(data->procs)) ) {
-	int i, pos = 0, size, world_size = -1;
+        int i, pos = 0, size, world_size = -1;
         char*tmp_procs;
-	size = ompi_comm_size(data->p_comm);
+        size = ompi_comm_size(data->p_comm);
         world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world) - 1;
         assert( 0 < size );
         /* Allocate enough space for list (add 1 to keep the fianl '\0' if already exact size) */
         tmp_procs = malloc((1 + (2 + (int)log10((double)world_size)) * size) * sizeof(char));
         if( NULL == tmp_procs ) {
-            OPAL_MONITORING_PRINT_ERR("%s: Cannot allocate memory for caching proc list.");
+            OPAL_MONITORING_PRINT_ERR("Cannot allocate memory for caching proc list.");
         } else {
             tmp_procs[0] = '\0';
             /* Build procs list */

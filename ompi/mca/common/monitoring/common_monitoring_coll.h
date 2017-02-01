@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2016 Inria.  All rights reserved.
+ * Copyright (c) 2017 The University of Tennessee and The University
+ *                    of Tennessee Research Foundation.  All rights
+ *                    reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +51,7 @@ OMPI_DECLSPEC int mca_common_monitoring_coll_get_a2a_size(const struct mca_base_
                                                           void *value,
                                                           void *obj_handle);
 
+OMPI_DECLSPEC void mca_common_monitoring_coll_finalize( void );
 END_C_DECLS
 
 #endif  /* MCA_COMMON_MONITORING_COLL_H */

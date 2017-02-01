@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The University of Tennessee and The University
+ * Copyright (c) 2013-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013-2016 Inria.  All rights reserved.
@@ -383,7 +383,9 @@ int write_mat(char * filename, uint64_t * mat, unsigned int dim)
  * MPI binding for fortran
  */
 
+#include <stdbool.h>
 #include "ompi_config.h"
+#include "opal/threads/thread_usage.h"
 #define OMPI_F77_PROTOTYPES_MPI_H
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #undef OMPI_F77_PROTOTYPES_MPI_H
