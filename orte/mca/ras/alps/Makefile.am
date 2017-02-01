@@ -24,7 +24,7 @@ dist_ortedata_DATA = help-ras-alps.txt \
 		  ras-alps-command.sh
 
 install-data-hook:
-	chmod +x $(DESTDIR)$(pkgdatadir)/ras-alps-command.sh
+	chmod +x $(ortedatadir)/ras-alps-command.sh
 
 sources = \
         ras_alps.h \
