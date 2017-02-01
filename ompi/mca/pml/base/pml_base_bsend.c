@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -44,9 +44,9 @@ static opal_condition_t mca_pml_bsend_condition;  /* condition variable to block
 static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;
 static mca_allocator_base_module_t* mca_pml_bsend_allocator;  /* sub-allocator to manage users buffer */
 static size_t           mca_pml_bsend_usersize;   /* user provided buffer size */
-unsigned char          *mca_pml_bsend_userbase;   /* user provided buffer base */
-unsigned char          *mca_pml_bsend_base;       /* adjusted base of user buffer */
-unsigned char          *mca_pml_bsend_addr;       /* current offset into user buffer */
+unsigned char          *mca_pml_bsend_userbase=NULL;/* user provided buffer base */
+unsigned char          *mca_pml_bsend_base = NULL;/* adjusted base of user buffer */
+unsigned char          *mca_pml_bsend_addr = NULL;/* current offset into user buffer */
 static size_t           mca_pml_bsend_size;       /* adjusted size of user buffer */
 static size_t           mca_pml_bsend_count;      /* number of outstanding requests */
 static size_t           mca_pml_bsend_pagesz;     /* mmap page size */
