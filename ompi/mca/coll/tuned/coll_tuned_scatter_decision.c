@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -66,7 +66,7 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_CONSTANT,
-                                           &cnt);
+                                           &ompi_coll_tuned_forced_max_algorithms[SCATTER]);
 
     /* MPI_T: This variable should eventually be bound to a communicator */
     coll_tuned_scatter_forced_algorithm = 0;
@@ -75,9 +75,9 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "scatter_algorithm",
                                         "Which scatter algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 binomial.",
-                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
-                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        MCA_BASE_VAR_SCOPE_ALL,
                                         &coll_tuned_scatter_forced_algorithm);
     OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
@@ -89,9 +89,9 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "scatter_algorithm_segmentsize",
                                         "Segment size in bytes used by default for scatter algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation. Currently, available algorithms do not support segmentation.",
-                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
-                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        MCA_BASE_VAR_SCOPE_ALL,
                                         &coll_tuned_scatter_segment_size);
 
     coll_tuned_scatter_tree_fanout = ompi_coll_tuned_init_tree_fanout; /* get system wide default */
@@ -99,9 +99,9 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "scatter_algorithm_tree_fanout",
                                         "Fanout for n-tree used for scatter algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation. Currently, available algorithms do not support n-tree topologies.",
-                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
-                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        MCA_BASE_VAR_SCOPE_ALL,
                                         &coll_tuned_scatter_tree_fanout);
 
     coll_tuned_scatter_chain_fanout = ompi_coll_tuned_init_chain_fanout; /* get system wide default */
@@ -109,9 +109,9 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
       mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                       "scatter_algorithm_chain_fanout",
                                       "Fanout for chains used for scatter algorithms. Only has meaning if algorithm is forced and supports chain topo based operation. Currently, available algorithms do not support chain topologies.",
-                                      MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                      MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                       OPAL_INFO_LVL_5,
-                                      MCA_BASE_VAR_SCOPE_READONLY,
+                                      MCA_BASE_VAR_SCOPE_ALL,
                                       &coll_tuned_scatter_chain_fanout);
 
     return (MPI_SUCCESS);
