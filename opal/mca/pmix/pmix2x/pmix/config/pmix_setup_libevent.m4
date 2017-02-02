@@ -40,6 +40,7 @@ AC_DEFUN([PMIX_LIBEVENT_CONFIG],[
 ])
 
 AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
+    PMIX_VAR_SCOPE_PUSH([using_libev])
     AC_MSG_CHECKING([for libevent])
     AC_MSG_RESULT([assumed available (embedded mode)])
 
@@ -49,10 +50,13 @@ AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
     PMIX_EVENT_LIB=
     PMIX_EVENT_LDFLAGS=
 
+    AC_CHECK_DECLS([ev_run], [using_libev=1], [using_libev=0], [[#include $PMIX_EVENT_HEADER]])
+    AC_DEFINE_UNQUOTED([USING_LIBEV], [$using_libev], [Whether event library is libev])
+    PMIX_VAR_SCOPE_POP
  ])
 
 AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
-    PMIX_VAR_SCOPE_PUSH([pmix_event_dir pmix_event_libdir])
+    PMIX_VAR_SCOPE_PUSH([pmix_event_dir pmix_event_libdir using_libev])
 
     AC_ARG_WITH([libevent],
                 [AC_HELP_STRING([--with-libevent=DIR],
@@ -104,23 +108,34 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
     # Ensure that this libevent has the symbol
     # "evthread_set_lock_callbacks", which will only exist if
     # libevent was configured with thread support.
-    AC_CHECK_LIB([event], [evthread_set_lock_callbacks],
-                 [],
-                 [AC_MSG_WARN([External libevent does not have thread support])
-                  AC_MSG_WARN([PMIx requires libevent to be compiled with])
-                  AC_MSG_WARN([thread support enabled])
-                  AC_MSG_ERROR([Cannot continue])])
-    AC_CHECK_LIB([event_pthreads], [evthread_use_pthreads],
-                 [],
-                 [AC_MSG_WARN([External libevent does not have thread support])
-                  AC_MSG_WARN([PMIx requires libevent to be compiled with])
-                  AC_MSG_WARN([thread support enabled])
-                  AC_MSG_ERROR([Cannot continue])])
+    AC_CHECK_LIB([ev], [ev_run], [using_libev=1],[using_libev=0])
+    if test $using_libev = 0 ; then
+        AC_CHECK_LIB([event], [evthread_set_lock_callbacks],
+                     [],
+                     [AC_MSG_WARN([External libevent does not have thread support])
+                      AC_MSG_WARN([PMIx requires libevent to be compiled with])
+                      AC_MSG_WARN([thread support enabled])
+                      AC_MSG_ERROR([Cannot continue])])
+        AC_CHECK_LIB([event_pthreads], [evthread_use_pthreads],
+                     [],
+                     [AC_MSG_WARN([External libevent does not have thread support])
+                      AC_MSG_WARN([PMIx requires libevent to be compiled with])
+                      AC_MSG_WARN([thread support enabled])
+                      AC_MSG_ERROR([Cannot continue])])
+        PMIX_EVENT2_THREAD_HEADER="<event2/thread.h>"
+        PMIX_EVENT_LIB="-levent -levent_pthreads"
+    else
+        PMIX_EVENT2_THREAD_HEADER="<event.h>"
+        PMIX_EVENT_LIB="-levent"
+    fi
+
+    AC_DEFINE_UNQUOTED([USING_LIBEV], [$using_libev], [Whether event library is libev])
+
+    AC_CHECK_FUNCS([evthread_use_pthreads event_assign])
 
     # Set output variables
     PMIX_EVENT_HEADER="<event.h>"
-    PMIX_EVENT2_THREAD_HEADER="<event2/thread.h>"
-    PMIX_EVENT_LIB="-levent -levent_pthreads"
+
     AS_IF([test "$pmix_event_dir" != ""],
         [PMIX_EVENT_CPPFLAGS="-I$pmix_event_dir/include"])
     AS_IF([test "$pmix_event_libdir" != ""],

@@ -228,8 +228,120 @@ static inline uint64_t pmix_swap_bytes8(uint64_t val)
 #define PMIX_EVLOOP_ONCE     EVLOOP_ONCE        /**< Block at most once. */
 #define PMIX_EVLOOP_NONBLOCK EVLOOP_NONBLOCK    /**< Do not block. */
 
+#if USING_LIBEV
+
+typedef struct pmix_event_base_t {
+    /** event loop for this base */
+    struct event_base *base;
+    /** used to wake up the event base */
+    ev_async async;
+} pmix_event_base_t;
+
+typedef struct pmix_event_t {
+    struct event event;
+    pmix_event_base_t *base;
+} pmix_event_t;
+
+#define pmix_event_del(ev) event_del(&(ev)->event)
+
+static inline pmix_event_t *pmix_event_new (pmix_event_base_t *base, int fd, short events, event_callback_fn cb, void *arg)
+{
+    pmix_event_t *new_event = calloc (1, sizeof (*new_event));
+    if (NULL == new_event) {
+        return NULL;
+    }
+
+    event_set (&new_event->event, fd, events, cb, arg);
+    event_base_set (base->base, &new_event->event);
+    new_event->base = base;
+
+    return new_event;
+}
+
+static inline void pmix_event_assign (pmix_event_t *event, pmix_event_base_t *base, int fd, short events, event_callback_fn cb, void *arg)
+{
+    event_set (&event->event, fd, events, cb, arg);
+    event_base_set (base->base, &event->event);
+    event->base = base;
+}
+
+static inline void pmix_event_active (pmix_event_t *event, int res, short ncalls)
+{
+    event_active (&event->event, res, ncalls);
+    /* wake up the event loop */
+    ev_async_send ((struct ev_loop *) event->base->base, &event->base->async);
+}
+
+static inline void pmix_event_free (pmix_event_t *event)
+{
+    pmix_event_del (event);
+    free (event);
+}
+
+static inline void dummy_cb (EV_P_ ev_async *w, int revents)
+{
+}
+
+static inline pmix_event_base_t *pmix_event_base_create (void)
+{
+    pmix_event_base_t *base = malloc (sizeof (*base));
+
+    if (NULL == base) {
+        /* OOM */
+        return NULL;
+    }
+
+    base->base = event_base_new ();
+    if (NULL == base->base) {
+        /* there is no backend method that does what we want */
+        pmix_output(0, "No event method available");
+    }
+
+    /* add async event to the loop */
+    ev_async_init (&base->async, dummy_cb);
+    ev_async_start ((struct ev_loop *) base->base, &base->async);
+
+    return base;
+}
+
+static inline void pmix_event_base_free (pmix_event_base_t *base)
+{
+    ev_async_stop ((struct ev_loop *) base->base, &base->async);
+    event_base_free (base->base);
+    free (base);
+}
+
+static inline void pmix_event_base_loopexit (pmix_event_base_t *base)
+{
+    event_base_loopexit (base->base, NULL);
+    /* wake up the event loop */
+    ev_async_send ((struct ev_loop *) base->base, &base->async);
+}
+
+/* libev does not have loopbreak but we can get the same effect using loopexit */
+#define pmix_event_base_loopbreak pmix_event_base_loopexit
+
+/* this function is only necessary for libevent2 */
+#define pmix_event_use_threads()
+
+/* Basic event APIs */
+#define pmix_event_enable_debug_mode() event_enable_debug_mode()
+
+#define pmix_event_set(b, x, fd, fg, cb, arg) pmix_event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+
+#define pmix_event_add(ev, tv) event_add(&(ev)->event, (tv))
+
+#define pmix_event_del(ev) event_del(&(ev)->event)
+
+#define pmix_event_loop(b, fg) event_base_loop((b)->base, (fg))
+
+#define pmix_event_priority_set(x, p) event_priority_set (&(x)->event, p)
+
+#else
+
 typedef struct event_base pmix_event_base_t;
 typedef struct event pmix_event_t;
+
 
 #define pmix_event_base_create() event_base_new()
 
@@ -240,7 +352,7 @@ typedef struct event pmix_event_t;
 #define pmix_event_base_loopexit(b) event_base_loopexit(b, NULL)
 
 /* thread support APIs */
-#define pmix_event_use_threads() evthread_use_pthreads()
+#define pmix_event_use_threads()
 
 /* Basic event APIs */
 #define pmix_event_enable_debug_mode() event_enable_debug_mode()
