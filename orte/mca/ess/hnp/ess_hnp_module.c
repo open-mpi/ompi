@@ -874,6 +874,9 @@ static int rte_finalize(void)
     if (NULL != orte_process_info.super.proc_hostname) {
         free(orte_process_info.super.proc_hostname);
     }
+    if (orte_do_not_launch) {
+        exit(0);
+    }
     return ORTE_SUCCESS;
 }
 

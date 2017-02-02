@@ -108,6 +108,8 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     opal_byte_object_t bo, *boptr;
     int32_t numbytes, numjobs;
     int8_t flag;
+    void *nptr;
+    uint32_t key;
 
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
@@ -122,72 +124,60 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
         return ORTE_SUCCESS;
     }
 
-    /* if this is a DVM-based launch, then don't pack all the wireup
-     * info as we don't need it - just pack the job itself */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FIXED_DVM, NULL, OPAL_BOOL)) {
-        numjobs = 0;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &numjobs, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* pack the job struct */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &jdata, 1, ORTE_JOB))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-
-    /* construct a nodemap of the daemons */
-    if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buffer))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* if we are not using static ports, we need to send the wireup info */
-    if (!orte_static_ports) {
-        /* pack a flag indicating wiring info is provided */
+    /* if we launched new daemons... */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL)) {
+        /* flag that we did */
         flag = 1;
         opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
-        /* get wireup info for daemons per the selected routing module */
-        wireup = OBJ_NEW(opal_buffer_t);
-        if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(wireup);
-            return rc;
-        }
-        /* put it in a byte object for xmission */
-        opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
-        /* pack the byte object - zero-byte objects are fine */
-        bo.size = numbytes;
-        boptr = &bo;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(wireup);
-            return rc;
-        }
-        /* release the data since it has now been copied into our buffer */
-        if (NULL != bo.bytes) {
-            free(bo.bytes);
-        }
-        OBJ_RELEASE(wireup);
-    } else {
-        /* pack a flag indicating no wireup data is provided */
-        flag = 0;
-        opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
-    }
 
-    /* check if this job caused daemons to be spawned - if it did,
-     * then we need to ensure that those daemons get a complete
-     * copy of all active jobs so the grpcomm collectives can
-     * properly work should a proc from one of the other jobs
-     * interact with this one */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL)) {
-        void *nptr;
-        uint32_t key;
+        /* include a nodemap of the daemons */
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buffer))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* if we are not using static ports, we need to send the wireup info */
+        if (!orte_static_ports) {
+            /* pack a flag indicating wiring info is provided */
+            flag = 1;
+            opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
+            /* get wireup info for daemons per the selected routing module */
+            wireup = OBJ_NEW(opal_buffer_t);
+            if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(wireup);
+                return rc;
+            }
+            /* put it in a byte object for xmission */
+            opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
+            /* pack the byte object - zero-byte objects are fine */
+            bo.size = numbytes;
+            boptr = &bo;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(wireup);
+                return rc;
+            }
+            /* release the data since it has now been copied into our buffer */
+            if (NULL != bo.bytes) {
+                free(bo.bytes);
+            }
+            OBJ_RELEASE(wireup);
+        } else {
+            /* pack a flag indicating no wireup data is provided */
+            flag = 0;
+            opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
+        }
+
+        /* we need to ensure that any new daemons get a complete
+         * copy of all active jobs so the grpcomm collectives can
+         * properly work should a proc from one of the other jobs
+         * interact with this one */
         OBJ_CONSTRUCT(&jobdata, opal_buffer_t);
         numjobs = 0;
         rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jptr, &nptr);
         while (OPAL_SUCCESS == rc) {
+            /* skip the one we are launching now */
             if (NULL != jptr && jptr != jdata &&
                 ORTE_PROC_MY_NAME->jobid != jptr->jobid) {
                 /* pack the job struct */
@@ -217,13 +207,10 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
             OBJ_DESTRUCT(&jobdata);
         }
     } else {
-        numjobs = 0;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &numjobs, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+        /* include a sentinel */
+        flag = 0;
+        opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
     }
-
 
     /* pack the job struct */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &jdata, 1, ORTE_JOB))) {
@@ -253,70 +240,79 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     orte_app_context_t *app;
     orte_node_t *node;
     bool newmap = false;
+    int8_t flag;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                          "%s odls:constructing child list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     *job = ORTE_JOBID_INVALID;
+    /* get the daemon job object */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
 
-    /* unpack the flag to see if additional jobs are included in the data */
+    /* unpack the flag to see if new daemons were launched */
     cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &n, &cnt, OPAL_INT32))) {
-        *job = ORTE_JOBID_INVALID;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &flag, &cnt, OPAL_INT8))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
 
-    /* get the daemon job object */
-    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-
-    if (0 < n) {
-        /* unpack the buffer containing the info */
+    if (0 != flag) {
+        /* see if additional jobs are included in the data */
         cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &bptr, &cnt, OPAL_BUFFER))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &n, &cnt, OPAL_INT32))) {
             *job = ORTE_JOBID_INVALID;
             ORTE_ERROR_LOG(rc);
             goto REPORT_ERROR;
         }
-        for (k=0; k < n; k++) {
-            /* unpack each job and add it to the local orte_job_data array */
+
+        if (0 < n) {
+            /* unpack the buffer containing the info */
             cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(bptr, &jdata, &cnt, ORTE_JOB))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &bptr, &cnt, OPAL_BUFFER))) {
                 *job = ORTE_JOBID_INVALID;
                 ORTE_ERROR_LOG(rc);
                 goto REPORT_ERROR;
             }
-            /* check to see if we already have this one */
-            if (NULL == orte_get_job_data_object(jdata->jobid)) {
-                /* nope - add it */
-                opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
-                /* connect each proc to its node object */
-                for (j=0; j < jdata->procs->size; j++) {
-                    if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
-                        continue;
-                    }
-                    if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, pptr->parent))) {
-                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                        rc = ORTE_ERR_NOT_FOUND;
-                        goto REPORT_ERROR;
-                    }
-                    OBJ_RETAIN(dmn->node);
-                    pptr->node = dmn->node;
-                    /* add proc to node - note that num_procs for the
-                     * node was already correctly unpacked, so don't
-                     * increment it here */
-                    OBJ_RETAIN(pptr);
-                    opal_pointer_array_add(dmn->node->procs, pptr);
+            for (k=0; k < n; k++) {
+                /* unpack each job and add it to the local orte_job_data array */
+                cnt=1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(bptr, &jdata, &cnt, ORTE_JOB))) {
+                    *job = ORTE_JOBID_INVALID;
+                    ORTE_ERROR_LOG(rc);
+                    goto REPORT_ERROR;
                 }
-            } else {
-                /* yep - so we can drop this copy */
-                jdata->jobid = ORTE_JOBID_INVALID;
-                OBJ_RELEASE(jdata);
+                /* check to see if we already have this one */
+                if (NULL == orte_get_job_data_object(jdata->jobid)) {
+                    /* nope - add it */
+                    opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
+                    /* connect each proc to its node object */
+                    for (j=0; j < jdata->procs->size; j++) {
+                        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
+                            continue;
+                        }
+                        if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, pptr->parent))) {
+                            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                            rc = ORTE_ERR_NOT_FOUND;
+                            goto REPORT_ERROR;
+                        }
+                        OBJ_RETAIN(dmn->node);
+                        pptr->node = dmn->node;
+                        /* add proc to node - note that num_procs for the
+                         * node was already correctly unpacked, so don't
+                         * increment it here */
+                        OBJ_RETAIN(pptr);
+                        opal_pointer_array_add(dmn->node->procs, pptr);
+                    }
+                } else {
+                    /* yep - so we can drop this copy */
+                    jdata->jobid = ORTE_JOBID_INVALID;
+                    OBJ_RELEASE(jdata);
+                }
             }
+            /* release the buffer */
+            OBJ_RELEASE(bptr);
         }
-        /* release the buffer */
-        OBJ_RELEASE(bptr);
     }
 
     /* unpack the job we are to launch */
