@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
@@ -167,7 +167,8 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
      * copy of all active jobs so the grpcomm collectives can
      * properly work should a proc from one of the other jobs
      * interact with this one */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL)) {
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL) ||
+        ORTE_JOBID_INVALID != jdata->originator.jobid) {
         OBJ_CONSTRUCT(&jobdata, opal_buffer_t);
         numjobs = 0;
         for (i=0; i < orte_job_data->size; i++) {

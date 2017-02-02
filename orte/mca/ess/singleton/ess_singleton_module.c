@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -86,7 +86,7 @@ static int rte_init(void)
     char *error = NULL;
     uint64_t unique_key[2];
     char *string_key;
-    char *ev1, *ev2;
+    char *envar;
     opal_value_t *kv;
     char *val;
     int u32, *u32ptr;
