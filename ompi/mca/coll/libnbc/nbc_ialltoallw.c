@@ -7,7 +7,7 @@
  *                         rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -218,6 +218,7 @@ static inline int a2aw_sched_linear(int rank, int p, NBC_Schedule *schedule,
   return OMPI_SUCCESS;
 }
 
+__opal_attribute_unused__
 static inline int a2aw_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
                                       const void *sendbuf, const int *sendcounts, const int *sdispls,
                                       struct ompi_datatype_t * const * sendtypes,

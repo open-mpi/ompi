@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      University of Houston. All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
+ * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All Rights
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -596,7 +596,7 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
                                               struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
 {
-    int i, size, rank, err;
+    int size, rank, err;
     MPI_Aint extent, lb;
     char *send_buf = NULL;
     struct ompi_datatype_t *newtype, *send_type;
