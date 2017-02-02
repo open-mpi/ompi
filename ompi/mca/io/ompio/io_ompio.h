@@ -72,6 +72,7 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
  * General values
  */
 #define OMPIO_PREALLOC_MAX_BUF_SIZE   33554432
+#define OMPIO_DEFAULT_CYCLE_BUF_SIZE  536870912
 #define OMPIO_PERM_NULL               -1
 #define OMPIO_IOVEC_INITIAL_SIZE      100
 #define OMPIO_ROOT                    0

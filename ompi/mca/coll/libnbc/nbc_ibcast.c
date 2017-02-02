@@ -5,10 +5,11 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -57,6 +58,11 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
+  if (1 == p) {
+    *request = &ompi_request_empty;
+    return OMPI_SUCCESS;
+  }
+
   res = ompi_datatype_type_size(datatype, &size);
   if (MPI_SUCCESS != res) {
     NBC_Error("MPI Error in ompi_datatype_type_size() (%i)", res);
@@ -65,16 +71,26 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
 
   segsize = 16384;
   /* algorithm selection */
-  if (p <= 4) {
-    alg = NBC_BCAST_LINEAR;
-  } else if (size * count < 65536) {
-    alg = NBC_BCAST_BINOMIAL;
-  } else if (size * count < 524288) {
-    alg = NBC_BCAST_CHAIN;
-    segsize = 8192;
-  } else {
-    alg = NBC_BCAST_CHAIN;
-    segsize = 32768;
+  if( libnbc_ibcast_skip_dt_decision ) {
+    if (p <= 4) {
+      alg = NBC_BCAST_LINEAR;
+    }
+    else {
+      alg = NBC_BCAST_BINOMIAL;
+    }
+  }
+  else {
+    if (p <= 4) {
+      alg = NBC_BCAST_LINEAR;
+    } else if (size * count < 65536) {
+      alg = NBC_BCAST_BINOMIAL;
+    } else if (size * count < 524288) {
+      alg = NBC_BCAST_CHAIN;
+      segsize = 8192;
+    } else {
+      alg = NBC_BCAST_CHAIN;
+      segsize = 32768;
+    }
   }
 
 #ifdef NBC_CACHE_SCHEDULE

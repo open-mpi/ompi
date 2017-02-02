@@ -1,6 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Copyright (c) 2017      Intel, Inc.  All rights reserved.
 .\" $COPYRIGHT$
 .\"
 .\" Man page for ORTE's orterun command
@@ -766,10 +767,14 @@ Here, we list both the host names (aa, bb, and cc) but also how many "slots"
 there are for each.  Slots indicate how many processes can potentially execute
 on a node.  For best performance, the number of slots may be chosen to be the
 number of cores on the node or the number of processor sockets.  If the hostfile
-does not provide slots information, a default of 1 is assumed.
-When running under resource managers (e.g., SLURM, Torque, etc.),
-Open MPI will obtain both the hostnames and the number of slots directly
-from the resource manger.
+does not provide slots information, Open MPI will attempt to discover the number
+of cores (or hwthreads, if the use-hwthreads-as-cpus option is set) and set the
+number of slots to that value. This default behavior also occurs when specifying
+the \fI-host\fP option with a single hostname. Thus, the command
+.
+.TP 4
+mpirun -H aa ./a.out
+launches a number of processes equal to the number of cores on node aa.
 .
 .PP
 .
@@ -785,6 +790,11 @@ will launch two processes, both on node aa.
 mpirun -hostfile myhostfile -host dd ./a.out
 will find no hosts to run on and abort with an error.
 That is, the specified host dd is not in the specified hostfile.
+.
+.PP
+When running under resource managers (e.g., SLURM, Torque, etc.),
+Open MPI will obtain both the hostnames and the number of slots directly
+from the resource manger.
 .
 .SS Specifying Number of Processes
 .

@@ -13,9 +13,9 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +68,12 @@ static int hnp_pull(const orte_process_name_t* src_name,
 static int hnp_close(const orte_process_name_t* peer,
                  orte_iof_tag_t source_tag);
 
+static int hnp_output(const orte_process_name_t* peer,
+                      orte_iof_tag_t source_tag,
+                      const char *msg);
+
+static void hnp_complete(const orte_job_t *jdata);
+
 static int finalize(void);
 
 static int hnp_ft_event(int state);
@@ -79,13 +85,14 @@ static int hnp_ft_event(int state);
  */
 
 orte_iof_base_module_t orte_iof_hnp_module = {
-    init,
-    hnp_push,
-    hnp_pull,
-    hnp_close,
-    NULL,
-    finalize,
-    hnp_ft_event
+    .init = init,
+    .push = hnp_push,
+    .pull = hnp_pull,
+    .close = hnp_close,
+    .output = hnp_output,
+    .complete = hnp_complete,
+    .finalize = finalize,
+    .ft_event = hnp_ft_event
 };
 
 /* Initialize the module */
@@ -129,7 +136,6 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     orte_iof_proc_t *proct, *pptr;
     int flags, rc;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
-    orte_iof_sink_t *stdoutsink=NULL, *stderrsink=NULL, *stddiagsink=NULL;
 
     /* don't do this if the dst vpid is invalid or the fd is negative! */
     if (ORTE_VPID_INVALID == dst_name->vpid || fd < 0) {
@@ -171,26 +177,23 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        /* setup any requested output files */
-        if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jdata, proct, &stdoutsink, &stderrsink, &stddiagsink))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* define a read event and activate it */
         if (src_tag & ORTE_IOF_STDOUT) {
             ORTE_IOF_READ_EVENT(&proct->revstdout, proct, fd, ORTE_IOF_STDOUT,
                                 orte_iof_hnp_read_local_handler, false);
-            proct->revstdout->sink = stdoutsink;
         } else if (src_tag & ORTE_IOF_STDERR) {
             ORTE_IOF_READ_EVENT(&proct->revstderr, proct, fd, ORTE_IOF_STDERR,
                                 orte_iof_hnp_read_local_handler, false);
-            proct->revstderr->sink = stderrsink;
         } else if (src_tag & ORTE_IOF_STDDIAG) {
             ORTE_IOF_READ_EVENT(&proct->revstddiag, proct, fd, ORTE_IOF_STDDIAG,
                                 orte_iof_hnp_read_local_handler, false);
-            proct->revstddiag->sink = stddiagsink;
         }
+        /* setup any requested output files */
+        if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jdata, proct))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* if -all- of the readevents for this proc have been defined, then
          * activate them. Otherwise, we can think that the proc is complete
          * because one of the readevents fires -prior- to all of them having
@@ -418,6 +421,19 @@ static int hnp_close(const orte_process_name_t* peer,
     return ORTE_SUCCESS;
 }
 
+static void hnp_complete(const orte_job_t *jdata)
+{
+    orte_iof_proc_t *proct, *next;
+
+    /* cleanout any lingering sinks */
+    OPAL_LIST_FOREACH_SAFE(proct, next, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
+        if (jdata->jobid == proct->name.jobid) {
+            opal_list_remove_item(&mca_iof_hnp_component.procs, &proct->super);
+            OBJ_RELEASE(proct);
+        }
+    }
+}
+
 static int finalize(void)
 {
     orte_iof_write_event_t *wev;
@@ -476,7 +492,6 @@ static int finalize(void)
         OBJ_RELEASE(proct);
     }
     OBJ_DESTRUCT(&mca_iof_hnp_component.procs);
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
 
     return ORTE_SUCCESS;
 }
@@ -598,4 +613,18 @@ CHECK:
             opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
         }
     }
+}
+
+static int hnp_output(const orte_process_name_t* peer,
+                      orte_iof_tag_t source_tag,
+                      const char *msg)
+{
+    /* output this to our local output */
+    if (ORTE_IOF_STDOUT & source_tag || orte_xml_output) {
+        orte_iof_base_write_output(peer, source_tag, (const unsigned char*)msg, strlen(msg), orte_iof_base.iof_write_stdout->wev);
+    } else {
+        orte_iof_base_write_output(peer, source_tag, (const unsigned char*)msg, strlen(msg), orte_iof_base.iof_write_stderr->wev);
+    }
+
+    return ORTE_SUCCESS;
 }

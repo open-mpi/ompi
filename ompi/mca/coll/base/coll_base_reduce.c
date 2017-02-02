@@ -99,7 +99,8 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
 
         /* If this is a non-commutative operation we must copy
            sendbuf to the accumbuf, in order to simplfy the loops */
-        if (!ompi_op_is_commute(op)) {
+        
+        if (!ompi_op_is_commute(op) && MPI_IN_PLACE != sendbuf) {
             ompi_datatype_copy_content_same_ddt(datatype, original_count,
                                                 (char*)accumbuf,
                                                 (char*)sendtmpbuf);
@@ -168,8 +169,8 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
                    if there are no requests reqs[inbi ^1] will be
                    MPI_REQUEST_NULL. */
                 /* wait on data from last child for previous segment */
-                ret = ompi_request_wait_all( 1, &reqs[inbi ^ 1],
-                                             MPI_STATUSES_IGNORE );
+                ret = ompi_request_wait(&reqs[inbi ^ 1],
+                                        MPI_STATUSES_IGNORE );
                 if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                 local_op_buffer = inbuf[inbi ^ 1];
                 if( i > 0 ) {

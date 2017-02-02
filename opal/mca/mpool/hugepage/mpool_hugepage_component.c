@@ -190,6 +190,7 @@ static int mca_mpool_hugepage_close (void)
     return OPAL_SUCCESS;
 }
 
+#ifdef HAVE_MNTENT_H
 static int page_compare (opal_list_item_t **a, opal_list_item_t **b) {
     mca_mpool_hugepage_hugepage_t *pagea = (mca_mpool_hugepage_hugepage_t *) *a;
     mca_mpool_hugepage_hugepage_t *pageb = (mca_mpool_hugepage_hugepage_t *) *b;
@@ -201,6 +202,7 @@ static int page_compare (opal_list_item_t **a, opal_list_item_t **b) {
 
     return 0;
 }
+#endif
 
 static void mca_mpool_hugepage_find_hugepages (void) {
 #ifdef HAVE_MNTENT_H

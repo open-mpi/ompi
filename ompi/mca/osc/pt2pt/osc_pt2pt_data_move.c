@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -102,6 +102,7 @@ struct osc_pt2pt_pending_acc_t {
     void *data;
     size_t data_len;
     ompi_datatype_t *datatype;
+    bool active_target;
 };
 typedef struct osc_pt2pt_pending_acc_t osc_pt2pt_pending_acc_t;
 
@@ -666,8 +667,6 @@ static int accumulate_cb (ompi_request_t *request)
         rank = acc_data->peer;
     }
 
-    mark_incoming_completion (module, rank);
-
     if (0 == OPAL_THREAD_ADD32(&acc_data->request_count, -1)) {
         /* no more requests needed before the buffer can be accumulated */
 
@@ -693,13 +692,15 @@ static int accumulate_cb (ompi_request_t *request)
         osc_pt2pt_gc_add_buffer (module, &acc_data->super);
     }
 
+    mark_incoming_completion (module, rank);
+
     ompi_request_free (&request);
     return ret;
 }
 
 
 static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_header_t *header, int source,
-                                       char *data, size_t data_len, ompi_datatype_t *datatype)
+                                        char *data, size_t data_len, ompi_datatype_t *datatype, bool active_target)
 {
     ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, source);
     osc_pt2pt_pending_acc_t *pending_acc;
@@ -714,8 +715,13 @@ static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_os
 
     /* NTH: ensure we don't leave wait/process_flush/etc until this
      * accumulate operation is complete. */
-    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
+    if (active_target) {
+        OPAL_THREAD_ADD32(&module->active_incoming_frag_count, -1);
+    } else {
+        OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
+    }
 
+    pending_acc->active_target = active_target;
     pending_acc->source = source;
 
     /* save any inline data (eager acc, gacc only) */
@@ -747,7 +753,7 @@ static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_os
     }
 
     /* add to the pending acc queue */
-    OPAL_THREAD_SCOPED_LOCK(&module->lock, opal_list_append (&module->pending_acc, &pending_acc->super));
+    OPAL_THREAD_SCOPED_LOCK(&module->pending_acc_lock, opal_list_append (&module->pending_acc, &pending_acc->super));
 
     return OMPI_SUCCESS;
 }
@@ -1090,7 +1096,9 @@ int ompi_osc_pt2pt_progress_pending_acc (ompi_osc_pt2pt_module_t *module)
         return OMPI_SUCCESS;
     }
 
+    OPAL_THREAD_LOCK(&module->pending_acc_lock);
     pending_acc = (osc_pt2pt_pending_acc_t *) opal_list_remove_first (&module->pending_acc);
+    OPAL_THREAD_UNLOCK(&module->pending_acc_lock);
     if (OPAL_UNLIKELY(NULL == pending_acc)) {
         /* called without any pending accumulation operations */
         ompi_osc_pt2pt_accumulate_unlock (module);
@@ -1127,7 +1135,7 @@ int ompi_osc_pt2pt_progress_pending_acc (ompi_osc_pt2pt_module_t *module)
     }
 
     /* signal that an operation is complete */
-    mark_incoming_completion (module, pending_acc->source);
+    mark_incoming_completion (module, pending_acc->active_target ? MPI_PROC_NULL : pending_acc->source);
 
     pending_acc->data = NULL;
     OBJ_RELEASE(pending_acc);
@@ -1138,6 +1146,7 @@ int ompi_osc_pt2pt_progress_pending_acc (ompi_osc_pt2pt_module_t *module)
 static inline int process_acc (ompi_osc_pt2pt_module_t *module, int source,
                                ompi_osc_pt2pt_header_acc_t *acc_header)
 {
+    bool active_target = !(acc_header->tag & 0x1);
     char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
     uint64_t data_len;
@@ -1162,7 +1171,7 @@ static inline int process_acc (ompi_osc_pt2pt_module_t *module, int source,
     } else {
         /* couldn't aquire the accumulate lock so queue up the accumulate operation */
         ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) acc_header,
-                                          source, data, data_len, datatype);
+                                           source, data, data_len, datatype, active_target);
     }
 
     /* Release datatype & op */
@@ -1174,6 +1183,7 @@ static inline int process_acc (ompi_osc_pt2pt_module_t *module, int source,
 static inline int process_acc_long (ompi_osc_pt2pt_module_t* module, int source,
                                     ompi_osc_pt2pt_header_acc_t* acc_header)
 {
+    bool active_target = !(acc_header->tag & 0x1);
     char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
     int ret;
@@ -1193,7 +1203,7 @@ static inline int process_acc_long (ompi_osc_pt2pt_module_t* module, int source,
     } else {
         /* queue the operation */
         ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) acc_header, source,
-                                          NULL, 0, datatype);
+                                           NULL, 0, datatype, active_target);
     }
 
     /* Release datatype & op */
@@ -1205,6 +1215,7 @@ static inline int process_acc_long (ompi_osc_pt2pt_module_t* module, int source,
 static inline int process_get_acc(ompi_osc_pt2pt_module_t *module, int source,
                                   ompi_osc_pt2pt_header_acc_t *acc_header)
 {
+    bool active_target = !(acc_header->tag & 0x1);
     char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
     void *buffer = NULL;
@@ -1246,7 +1257,7 @@ static inline int process_get_acc(ompi_osc_pt2pt_module_t *module, int source,
     } else {
         /* queue the operation */
         ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) acc_header,
-                                          source, data, data_len, datatype);
+                                           source, data, data_len, datatype, active_target);
     }
 
     /* Release datatype & op */
@@ -1258,6 +1269,7 @@ static inline int process_get_acc(ompi_osc_pt2pt_module_t *module, int source,
 static inline int process_get_acc_long(ompi_osc_pt2pt_module_t *module, int source,
                                        ompi_osc_pt2pt_header_acc_t *acc_header)
 {
+    bool active_target = !(acc_header->tag & 0x1);
     char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
     int ret;
@@ -1277,7 +1289,7 @@ static inline int process_get_acc_long(ompi_osc_pt2pt_module_t *module, int sour
     } else {
         /* queue the operation */
         ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) acc_header,
-                                          source, NULL, 0, datatype);
+                                           source, NULL, 0, datatype, active_target);
     }
 
     /* Release datatype & op */
@@ -1290,6 +1302,7 @@ static inline int process_get_acc_long(ompi_osc_pt2pt_module_t *module, int sour
 static inline int process_cswap (ompi_osc_pt2pt_module_t *module, int source,
                                  ompi_osc_pt2pt_header_cswap_t *cswap_header)
 {
+    bool active_target = !(cswap_header->tag & 0x1);
     char *data = (char*) (cswap_header + 1);
     struct ompi_datatype_t *datatype;
     int ret;
@@ -1309,7 +1322,7 @@ static inline int process_cswap (ompi_osc_pt2pt_module_t *module, int source,
     } else {
         /* queue the operation */
         ret = ompi_osc_pt2pt_acc_op_queue (module, (ompi_osc_pt2pt_header_t *) cswap_header, source,
-                                          data, 2 * datatype->super.size, datatype);
+                                           data, 2 * datatype->super.size, datatype, active_target);
     }
 
     /* Release datatype */
@@ -1392,7 +1405,7 @@ static inline int process_unlock (ompi_osc_pt2pt_module_t *module, int source,
         osc_pt2pt_add_pending (pending);
     }
 
-    /* signal incomming will increment this counter */
+    /* signal incoming will increment this counter */
     OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
 
     return sizeof (*unlock_header);

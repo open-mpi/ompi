@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -113,11 +113,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "hnp", "hnp", 1,
       &orte_cmd_options.hnp, OPAL_CMD_LINE_TYPE_STRING,
       "Specify the URI of the HNP, or the name of the file (specified as file:filename) that contains that info" },
-
-    /* hetero apps */
-    { "orte_hetero_apps", '\0', NULL, "hetero-apps", 0,
-        NULL, OPAL_CMD_LINE_TYPE_BOOL,
-    "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries" },
 
     /* select XML output */
     { "orte_xml_output", '\0', "xml", "xml", 0,
@@ -322,8 +317,8 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Whether to report process bindings to stderr" },
 
     /* slot list option */
-    { "hwloc_base_slot_list", '\0', "slot-list", "slot-list", 1,
-      &orte_cmd_options.slot_list, OPAL_CMD_LINE_TYPE_STRING,
+    { "hwloc_base_cpu_list", '\0', "cpu-list", "cpu-list", 1,
+      &orte_cmd_options.cpu_list, OPAL_CMD_LINE_TYPE_STRING,
       "List of processor IDs to bind processes to [default=NULL]"},
 
     /* generalized pattern mapping option */
@@ -421,10 +416,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "continuous", "continuous", 0,
       &orte_cmd_options.continuous, OPAL_CMD_LINE_TYPE_BOOL,
       "Job is to run until explicitly terminated" },
-
-    { "orte_hetero_nodes", '\0', NULL, "hetero-nodes", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
 
 #if OPAL_ENABLE_CRDEBUG == 1
     { "opal_cr_enable_crdebug", '\0', "crdebug", "crdebug", 0,
@@ -751,6 +742,11 @@ static int setup_fork(orte_job_t *jdata,
                         "%s schizo:ompi: setup_fork",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
+    /* if no personality was specified, then nothing to do */
+    if (NULL == jdata->personality) {
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
     if (NULL != orte_schizo_base.personalities) {
     /* see if we are included */
         for (i=0; NULL != jdata->personality[i]; i++) {
@@ -992,6 +988,11 @@ static int setup_child(orte_job_t *jdata,
                         "%s schizo:ompi: setup_child",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
+    /* if no personality was specified, then nothing to do */
+    if (NULL == jdata->personality) {
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
     if (NULL != orte_schizo_base.personalities) {
         /* see if we are included */
         for (i=0; NULL != jdata->personality[i]; i++) {
@@ -1089,11 +1090,6 @@ static int setup_child(orte_job_t *jdata,
     if (orte_get_attribute(&child->attributes, ORTE_PROC_NOBARRIER, NULL, OPAL_BOOL)
         || 0 < nrestarts) {
         opal_setenv("OMPI_MCA_orte_do_not_barrier", "1", true, &app->env);
-    }
-
-    /* if we are using staged execution, tell it */
-    if (orte_staged_execution) {
-        opal_setenv("OMPI_MCA_orte_staged_execution", "1", true, &app->env);
     }
 
     /* if the proc isn't going to forward IO, then we need to flag that

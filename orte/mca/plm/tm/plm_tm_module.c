@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -277,6 +277,17 @@ static void launch_daemons(int fd, short args, void *cbdata)
     }
     nodelist = opal_argv_join(nodeargv, ',');
     opal_argv_free(nodeargv);
+
+    /* if we have static ports, we need to ensure that mpirun is
+     * on the list. Since Torque won't be launching a daemon on it,
+     * it won't have been placed on the list, so create a new
+     * version here that includes it */
+    if (orte_static_ports) {
+        char *ltmp;
+        asprintf(&ltmp, "%s,%s", orte_process_info.nodename, nodelist);
+        free(nodelist);
+        nodelist = ltmp;
+    }
 
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "tm",

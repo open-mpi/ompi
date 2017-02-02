@@ -18,6 +18,9 @@ master_raw_uri=https://raw.github.com/open-mpi/ompi
 # adjusted to match your site!
 outputroot=$HOME/openmpi/nightly
 
+# Target where to scp the final tarballs
+output_ssh_target=ompiteam@192.185.39.252
+
 # where to find the build script
 script_uri=contrib/nightly/create_tarball.sh
 
@@ -116,13 +119,23 @@ for branch in $branches; do
         fi
         echo "=== Posting tarball to open-mpi.org"
         # tell the web server to cleanup old nightly tarballs
-        ssh -p 2222 ompiteam@192.185.39.252 "git/ompi/contrib/build-server/remove-old.pl 7 public_html/nightly/$branch"
+        ssh -p 2222 \
+	    $output_ssh_target \
+	    "git/ompi/contrib/build-server/remove-old.pl 7 public_html/nightly/$branch"
         # upload the new ones
-        scp -P 2222 $outputroot/$branch/openmpi-$latest_snapshot.tar.* ompiteam@192.185.39.252:public_html/nightly/$branch/
-        scp -P 2222 $outputroot/$branch/latest_snapshot.txt ompiteam@192.185.39.252:public_html/nightly/$branch/
+        scp -P 2222 \
+	    $outputroot/$branch/openmpi-$latest_snapshot.tar.* \
+	    $output_ssh_target:public_html/nightly/$branch/
+        scp -P 2222 \
+	    $outputroot/$branch/latest_snapshot.txt \
+	    $output_ssh_target:public_html/nightly/$branch/
         # direct the web server to regenerate the checksums
-        ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/nightly/$branch && md5sum openmpi* > md5sums.txt"
-        ssh -p 2222 ompiteam@192.185.39.252 "cd public_html/nightly/$branch && sha1sum openmpi* > sha1sums.txt"
+        ssh -p 2222 \
+	    $output_ssh_target \
+	    "cd public_html/nightly/$branch && md5sum openmpi* > md5sums.txt"
+        ssh -p 2222 \
+	    $output_ssh_target \
+	    "cd public_html/nightly/$branch && sha1sum openmpi* > sha1sums.txt"
     fi
 
     # Failed builds are not removed.  But if a human forgets to come

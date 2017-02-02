@@ -16,7 +16,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -377,7 +377,7 @@ static void mca_btl_vader_check_single_copy (void)
 
         /* check system setting for current ptrace scope */
         fd = open ("/proc/sys/kernel/yama/ptrace_scope", O_RDONLY);
-        if (0 < fd) {
+        if (0 <= fd) {
             read (fd, &buffer, 1);
             close (fd);
         }

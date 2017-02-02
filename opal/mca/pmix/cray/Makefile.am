@@ -1,11 +1,15 @@
 #
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
+# Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
+
+dist_opaldata_DATA = help-pmix-cray.txt
 
 sources = \
         pmix_cray.h \
@@ -29,12 +33,12 @@ endif
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pmix_cray_la_SOURCES = $(sources)
-mca_pmix_cray_la_CPPFLAGS = $(pmix_cray_CPPFLAGS)
-mca_pmix_cray_la_LDFLAGS = -module -avoid-version $(pmix_cray_LDFLAGS)
-mca_pmix_cray_la_LIBADD = $(pmix_cray_LIBS)
+mca_pmix_cray_la_CPPFLAGS = $(pmix_cray_CPPFLAGS) $(pmix_alps_CPPFLAGS)
+mca_pmix_cray_la_LDFLAGS = -module -avoid-version $(pmix_cray_LDFLAGS) $(pmix_alps_LDFLAGS)
+mca_pmix_cray_la_LIBADD = $(pmix_cray_LIBS) $(pmix_alps_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pmix_cray_la_SOURCES =$(sources)
-libmca_pmix_cray_la_CPPFLAGS = $(pmix_cray_CPPFLAGS)
-libmca_pmix_cray_la_LDFLAGS = -module -avoid-version $(pmix_cray_LDFLAGS)
-libmca_pmix_cray_la_LIBADD = $(pmix_cray_LIBS)
+libmca_pmix_cray_la_CPPFLAGS = $(pmix_cray_CPPFLAGS) $(pmix_alps_CPPFLAGS)
+libmca_pmix_cray_la_LDFLAGS = -module -avoid-version $(pmix_cray_LDFLAGS) $(pmix_alps_LDFLAGS)
+libmca_pmix_cray_la_LIBADD = $(pmix_cray_LIBS) $(pmix_alps_LIBS)

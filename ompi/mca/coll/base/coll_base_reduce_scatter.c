@@ -14,7 +14,7 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -95,9 +95,15 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *r
     for (i = 1; i < size; i++) {
         displs[i] = displs[i-1] + rcounts[i-1];
     }
-    err =  comm->c_coll.coll_scatterv (tmprbuf, rcounts, displs, dtype,
-                                       rbuf, rcounts[rank], dtype,
-                                       root, comm, comm->c_coll.coll_scatterv_module);
+    if (MPI_IN_PLACE == sbuf && root == rank) {
+        err =  comm->c_coll.coll_scatterv (tmprbuf, rcounts, displs, dtype,
+                                           MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+                                           root, comm, comm->c_coll.coll_scatterv_module);
+    } else {
+        err =  comm->c_coll.coll_scatterv (tmprbuf, rcounts, displs, dtype,
+                                           rbuf, rcounts[rank], dtype,
+                                           root, comm, comm->c_coll.coll_scatterv_module);
+    }
     free(displs);
     if (NULL != tmprbuf_free) free(tmprbuf_free);
 

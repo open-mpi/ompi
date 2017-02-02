@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -33,12 +33,9 @@
 
 int mca_memheap_base_output = -1;
 int mca_memheap_base_key_exchange = 1;
-char* mca_memheap_base_include = NULL;
-char* mca_memheap_base_exclude = NULL;
 opal_list_t mca_memheap_base_components_opened = {{0}};
-struct mca_memheap_base_module_t* mca_memheap_base_module_initialized = NULL;
 int mca_memheap_base_already_opened = 0;
-mca_memheap_map_t mca_memheap_base_map = {{{0}}};
+mca_memheap_map_t mca_memheap_base_map = {{{{0}}}};
 
 static int mca_memheap_base_register(mca_base_register_flag_t flags)
 {
@@ -55,39 +52,6 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_key_exchange);
 
-    (void) mca_base_var_register("oshmem",
-                                 "memheap",
-                                 "base",
-                                 "include",
-                                 "Specify a specific MEMHEAP implementation to use",
-                                 MCA_BASE_VAR_TYPE_STRING,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_memheap_base_include);
-
-    if (NULL == mca_memheap_base_include) {
-        mca_memheap_base_include = getenv(SHMEM_HEAP_TYPE);
-        if (NULL == mca_memheap_base_include)
-            mca_memheap_base_include = strdup("");
-        else
-            mca_memheap_base_include = strdup(mca_memheap_base_include);
-    }
-
-    (void) mca_base_var_register("oshmem",
-                                 "memheap",
-                                 "base",
-                                 "exclude",
-                                 "Specify excluded MEMHEAP implementations",
-                                 MCA_BASE_VAR_TYPE_STRING,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_memheap_base_exclude);
 
     return OSHMEM_SUCCESS;
 }

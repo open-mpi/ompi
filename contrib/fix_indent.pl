@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2016      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -17,6 +18,8 @@
 # $HEADER$
 #
 #To keep brian happy
+
+use Text::Tabs;
 
 if (scalar(@ARGV) != 1) {
     print "We need a source tree path\n";
@@ -31,12 +34,11 @@ while(<HEADERS>) {
     $file_name = $_;
     print $file_name;
     open(FILE, "$file_name");
-    while(<FILE>) {
-        s/^(#)([\s|\t]*)(\w)/$1$3/;
-        print TEMP;
-    }
-    close(TEMP);
+    my @lines_with_tabs = <FILE>;
     close(FILE);
+    my @expanded_lines = expand(@lines_with_tabs);
+    print TEMP join("\n",@expanded_lines),"\n";
+    close(TEMP);
     system("mv temp.txt $file_name");
 }
 close(HEADERS);
@@ -47,12 +49,11 @@ while(<SOURCES>) {
     $file_name = $_;
     print $file_name;
     open(FILE, "$file_name");
-    while(<FILE>) {
-        s/^(#)([\s|\t]*)(\w)/$1$3/;
-        print TEMP;
-    }
-    close(TEMP);
+    my @lines_with_tabs = <FILE>;
     close(FILE);
+    my @expanded_lines = expand(@lines_with_tabs);
+    print TEMP join("\n",@expanded_lines),"\n";
+    close(TEMP);
     system("mv temp.txt $file_name");
 }
 close(SOURCES);

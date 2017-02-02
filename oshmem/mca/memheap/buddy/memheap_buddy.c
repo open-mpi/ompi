@@ -34,7 +34,6 @@ mca_memheap_buddy_module_t memheap_buddy = {
         mca_memheap_buddy_private_free,
 
         mca_memheap_base_get_mkey,
-        mca_memheap_base_find_offset,
         mca_memheap_base_is_symmetric_addr,
         mca_memheap_modex_recv_all,
 
@@ -470,7 +469,7 @@ static int _do_alloc(uint32_t order,
     }
 
     *p_buff = (void*) addr;
-    /* no barrier because it is not required by spec! */
+    MCA_SPML_CALL(memuse_hook(*p_buff, 1ULL<<order));
     return OSHMEM_SUCCESS;
 
     alloc_error: _buddy_free(&memheap_buddy, offset, order, heap);

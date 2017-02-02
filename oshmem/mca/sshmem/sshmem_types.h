@@ -96,16 +96,25 @@ typedef struct sshmem_mkey {
     void *spml_context;       /* spml module can attach internal structures here */
 } sshmem_mkey_t;
 
-typedef struct map_segment_t {
-    sshmem_mkey_t  **mkeys_cache;    /* includes remote segment bases in va_base */
-    sshmem_mkey_t   *mkeys;          /* includes local segment bases in va_base */
-    segment_flag_t   flags;          /* enable/disable flag */
-    int              seg_id;
-    void*            seg_base_addr;  /* base address of the segment */
-    void*            end;            /* final address of the segment */
-    char             seg_name[OPAL_PATH_MAX];
-    size_t           seg_size;       /* length of the segment */
-    segment_type_t   type;           /* type of the segment */
+typedef struct map_base_segment {
+    void    *va_base;       /* base address of the segment */
+    void    *va_end;        /* final address of the segment */
+} map_base_segment_t;
+
+typedef struct mkey_segment {
+    map_base_segment_t  super;
+    void               *rva_base;     /* base va on remote pe */
+} mkey_segment_t;
+
+typedef struct map_segment {
+    map_base_segment_t   super;
+    sshmem_mkey_t      **mkeys_cache;    /* includes remote segment bases in va_base */
+    sshmem_mkey_t       *mkeys;          /* includes local segment bases in va_base */
+    segment_flag_t       flags;          /* enable/disable flag */
+    int                  seg_id;
+    char                 seg_name[OPAL_PATH_MAX];
+    size_t               seg_size;       /* length of the segment */
+    segment_type_t       type;           /* type of the segment */
 } map_segment_t;
 
 END_C_DECLS

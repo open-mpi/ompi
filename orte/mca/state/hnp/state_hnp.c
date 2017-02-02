@@ -1,7 +1,9 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -187,13 +189,10 @@ static int init(void)
 
 static int finalize(void)
 {
-    opal_list_item_t *item;
-
     /* cleanup the proc state machine */
-    while (NULL != (item = opal_list_remove_first(&orte_proc_states))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_proc_states);
+    OPAL_LIST_DESTRUCT(&orte_proc_states);
+    /* cleanup the job state machine */
+    OPAL_LIST_DESTRUCT(&orte_job_states);
 
     return ORTE_SUCCESS;
 }

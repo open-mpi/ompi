@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,6 +54,9 @@ struct mca_base_var_group_t {
 
     /** Integer array of group performance variables */
     opal_value_array_t group_pvars;
+
+    /** Pointer array of group enums */
+    opal_value_array_t group_enums;
 };
 
 typedef struct mca_base_var_group_t mca_base_var_group_t;

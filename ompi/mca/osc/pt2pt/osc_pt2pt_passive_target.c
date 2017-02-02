@@ -10,7 +10,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2016 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
@@ -50,7 +50,7 @@ typedef struct ompi_osc_pt2pt_pending_lock_t ompi_osc_pt2pt_pending_lock_t;
 OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_pending_lock_t, opal_list_item_t,
                    NULL, NULL);
 
-static int ompi_osc_activate_next_lock (ompi_osc_pt2pt_module_t *module);
+static int ompi_osc_pt2pt_activate_next_lock (ompi_osc_pt2pt_module_t *module);
 static inline int queue_lock (ompi_osc_pt2pt_module_t *module, int requestor, int lock_type, uint64_t lock_ptr);
 static int ompi_osc_pt2pt_flush_lock (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_sync_t *lock,
                                       int target);
@@ -100,9 +100,9 @@ static inline void ompi_osc_pt2pt_unlock_self (ompi_osc_pt2pt_module_t *module, 
 
     if (MPI_LOCK_EXCLUSIVE == lock_type) {
         OPAL_THREAD_ADD32(&module->lock_status, 1);
-        ompi_osc_activate_next_lock (module);
+        ompi_osc_pt2pt_activate_next_lock (module);
     } else if (0 == OPAL_THREAD_ADD32(&module->lock_status, -1)) {
-        ompi_osc_activate_next_lock (module);
+        ompi_osc_pt2pt_activate_next_lock (module);
     }
 
     /* need to ensure we make progress */
@@ -385,10 +385,10 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_unlock_internal: lock acks still expected: %d",
                          lock->sync_expected));
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     /* wait until ack has arrived from target */
     ompi_osc_pt2pt_sync_wait_expected (lock);
-    OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_unlock_internal: all lock acks received"));
@@ -420,6 +420,16 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
 
             /* wait for unlock acks. this signals remote completion of fragments */
             ompi_osc_pt2pt_sync_wait_expected (lock);
+
+            /* It is possible for the unlock to finish too early before the data
+             * is actually present in the recv buffer (for non-contiguous datatypes)
+             * So make sure to wait for all of the fragments to arrive.
+             */
+            OPAL_THREAD_LOCK(&module->lock);
+            while (module->outgoing_frag_count < 0) {
+                opal_condition_wait(&module->cond, &module->lock);
+            }
+            OPAL_THREAD_UNLOCK(&module->lock);
 
             OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                                  "ompi_osc_pt2pt_unlock: unlock of %d complete", target));
@@ -618,7 +628,7 @@ int ompi_osc_pt2pt_flush_local (int target, struct ompi_win_t *win)
 
     /* wait for all the requests */
     OPAL_THREAD_LOCK(&module->lock);
-    while (module->outgoing_frag_count != module->outgoing_frag_signal_count) {
+    while (module->outgoing_frag_count < 0) {
         opal_condition_wait(&module->cond, &module->lock);
     }
     OPAL_THREAD_UNLOCK(&module->lock);
@@ -644,7 +654,7 @@ int ompi_osc_pt2pt_flush_local_all (struct ompi_win_t *win)
 
     /* wait for all the requests */
     OPAL_THREAD_LOCK(&module->lock);
-    while (module->outgoing_frag_count != module->outgoing_frag_signal_count) {
+    while (module->outgoing_frag_count < 0) {
         opal_condition_wait(&module->cond, &module->lock);
     }
     OPAL_THREAD_UNLOCK(&module->lock);
@@ -748,7 +758,7 @@ static bool ompi_osc_pt2pt_lock_try_acquire (ompi_osc_pt2pt_module_t* module, in
     return true;
 }
 
-static int ompi_osc_activate_next_lock (ompi_osc_pt2pt_module_t *module) {
+static int ompi_osc_pt2pt_activate_next_lock (ompi_osc_pt2pt_module_t *module) {
     /* release any other pending locks we can */
     ompi_osc_pt2pt_pending_lock_t *pending_lock, *next;
     int ret = OMPI_SUCCESS;
@@ -893,9 +903,9 @@ int ompi_osc_pt2pt_process_unlock (ompi_osc_pt2pt_module_t *module, int source,
 
     if (-1 == module->lock_status) {
         OPAL_THREAD_ADD32(&module->lock_status, 1);
-        ompi_osc_activate_next_lock (module);
+        ompi_osc_pt2pt_activate_next_lock (module);
     } else if (0 == OPAL_THREAD_ADD32(&module->lock_status, -1)) {
-        ompi_osc_activate_next_lock (module);
+        ompi_osc_pt2pt_activate_next_lock (module);
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,

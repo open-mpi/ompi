@@ -12,7 +12,7 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.
 #                         All rights reserved
-# Copyright (c) 2014      Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,7 +32,6 @@ sources = \
           oob_tcp_sendrecv.h \
           oob_tcp_hdr.h \
           oob_tcp_peer.h \
-          oob_tcp_ping.h \
           oob_tcp.c \
           oob_tcp_listener.c \
           oob_tcp_common.c \
@@ -59,4 +58,3 @@ mca_oob_tcp_la_LDFLAGS = -module -avoid-version
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_oob_tcp_la_SOURCES = $(sources)
 libmca_oob_tcp_la_LDFLAGS = -module -avoid-version
-

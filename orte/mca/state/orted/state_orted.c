@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +19,7 @@
 
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/base/base.h"
@@ -252,7 +253,7 @@ static void track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata, *pptr;
     opal_buffer_t *alert;
-    int rc, i;
+    int rc, i, j;
     orte_plm_cmd_flag_t cmd;
     char *rtmod;
 
@@ -333,7 +334,7 @@ static void track_procs(int fd, short argc, void *cbdata)
          * to check to see if all procs from the job are actually terminated
          */
         if (NULL != orte_iof.close) {
-            orte_iof.close(proc, ORTE_IOF_STDIN);
+            orte_iof.close(proc, ORTE_IOF_STDALL);
         }
         if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_WAITPID) &&
             !ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_RECORDED)) {
@@ -416,10 +417,47 @@ static void track_procs(int fd, short argc, void *cbdata)
             }
             /* mark that we sent it so we ensure we don't do it again */
             orte_set_attribute(&jdata->attributes, ORTE_JOB_TERM_NOTIFIED, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+            /* cleanup the procs as these are gone */
+            for (i=0; i < orte_local_children->size; i++) {
+                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                    continue;
+                }
+                /* if this child is part of the job... */
+                if (pptr->name.jobid == jdata->jobid) {
+                    /* clear the entry in the local children */
+                    opal_pointer_array_set_item(orte_local_children, i, NULL);
+                    /* find it in the node->procs array */
+                    for (j=0; j < pptr->node->procs->size; j++) {
+                        if (NULL == (pdata = (orte_proc_t*)opal_pointer_array_get_item(pptr->node->procs, j))) {
+                            continue;
+                        }
+                        if (pdata == pptr) {
+                            /* remove it */
+                            opal_pointer_array_set_item(pptr->node->procs, j, NULL);
+                            OBJ_RELEASE(pdata);  // maintain accounting
+                            break;
+                        }
+                    }
+                    OBJ_RELEASE(pptr);  // maintain accounting
+                }
+            }
+            /* tell the IOF that the job is complete */
+            if (NULL != orte_iof.complete) {
+                orte_iof.complete(jdata);
+            }
+
+            /* tell the PMIx subsystem the job is complete */
+            if (NULL != opal_pmix.server_deregister_nspace) {
+                opal_pmix.server_deregister_nspace(jdata->jobid, NULL, NULL);
+            }
+
+            /* cleanup the job info */
+            opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
+            OBJ_RELEASE(jdata);
         }
     }
 
- cleanup:
+  cleanup:
     OBJ_RELEASE(caddy);
 }
 

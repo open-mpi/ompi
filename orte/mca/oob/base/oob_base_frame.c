@@ -11,10 +11,11 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 
 #include "opal/class/opal_bitmap.h"
 #include "orte/mca/mca.h"
+#include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
@@ -52,14 +54,20 @@
 orte_oob_base_t orte_oob_base = {0};
 OPAL_TIMING_DECLARE(tm_oob)
 
+
 static int orte_oob_base_register(mca_base_register_flag_t flags)
 {
-    (void)mca_base_var_register("orte", "oob", "base", "enable_module_progress_threads",
-                                "Whether to independently progress OOB messages for each interface",
-                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+    if (ORTE_PROC_IS_APP || ORTE_PROC_IS_TOOL) {
+        orte_oob_base.num_threads = 0;
+    } else {
+        orte_oob_base.num_threads = 8;
+    }
+    (void)mca_base_var_register("orte", "oob", "base", "num_progress_threads",
+                                "Number of independent progress OOB messages for each interface",
+                                MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                 OPAL_INFO_LVL_9,
                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                &orte_oob_base.use_module_threads);
+                                &orte_oob_base.num_threads);
 
 #if OPAL_ENABLE_TIMING
     /* Detailed timing setup */
@@ -101,7 +109,6 @@ static int orte_oob_base_close(void)
 
     OBJ_DESTRUCT(&orte_oob_base.peers);
 
-
     OPAL_TIMING_EVENT((&tm_oob, "Finish"));
     OPAL_TIMING_REPORT(orte_oob_base.timing, &tm_oob);
 
@@ -119,6 +126,9 @@ static int orte_oob_base_open(mca_base_open_flag_t flags)
     OBJ_CONSTRUCT(&orte_oob_base.peers, opal_hash_table_t);
     opal_hash_table_init(&orte_oob_base.peers, 128);
     OBJ_CONSTRUCT(&orte_oob_base.actives, opal_list_t);
+
+    orte_oob_base.ev_base = orte_event_base;
+
 
 #if OPAL_ENABLE_FT_CR == 1
     /* register the FT events callback */
@@ -155,4 +165,3 @@ static void pr_des(orte_oob_base_peer_t *ptr)
 OBJ_CLASS_INSTANCE(orte_oob_base_peer_t,
                    opal_object_t,
                    pr_cons, pr_des);
-

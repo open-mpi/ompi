@@ -20,6 +20,7 @@
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -210,6 +211,7 @@ static ompi_comm_cid_context_t *mca_comm_cid_context_alloc (ompi_communicator_t 
 
     context->send_first = send_first;
     context->iter = 0;
+    context->ok = 1;
 
     return context;
 }
@@ -840,12 +842,15 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
     opal_pmix_pdata_t pdat;
     opal_buffer_t sbuf;
     int rc;
+    int bytes_written;
+    const int output_id = 0;
+    const int verbosity_level = 1;
 
     OBJ_CONSTRUCT(&sbuf, opal_buffer_t);
 
     if (OPAL_SUCCESS != (rc = opal_dss.pack(&sbuf, context->tmpbuf, (int32_t)context->count, OPAL_INT))) {
         OBJ_DESTRUCT(&sbuf);
-        fprintf (stderr, "pack failed. rc  %d\n", rc);
+        opal_output_verbose (verbosity_level, output_id, "pack failed. rc  %d\n", rc);
         return rc;
     }
 
@@ -858,16 +863,36 @@ static int ompi_comm_allreduce_pmix_reduce_complete (ompi_comm_request_t *reques
     opal_dss.unload(&sbuf, (void**)&info.data.bo.bytes, &info.data.bo.size);
     OBJ_DESTRUCT(&sbuf);
 
-    if (cid_context->send_first) {
-        (void)asprintf(&info.key, "%s:%s:send:%d", cid_context->port_string, cid_context->pmix_tag,
-                       cid_context->iter);
-        (void)asprintf(&pdat.value.key, "%s:%s:recv:%d", cid_context->port_string, cid_context->pmix_tag,
-                       cid_context->iter);
+    bytes_written = asprintf(&info.key,
+                             cid_context->send_first ? "%s:%s:send:%d"
+                                                     : "%s:%s:recv:%d",
+                             cid_context->port_string,
+                             cid_context->pmix_tag,
+                             cid_context->iter);
+
+    if (bytes_written == -1) {
+        opal_output_verbose (verbosity_level, output_id, "writing info.key failed\n");
     } else {
-        (void)asprintf(&info.key, "%s:%s:recv:%d", cid_context->port_string, cid_context->pmix_tag,
-                       cid_context->iter);
-        (void)asprintf(&pdat.value.key, "%s:%s:send:%d", cid_context->port_string, cid_context->pmix_tag,
-                       cid_context->iter);
+        bytes_written = asprintf(&pdat.value.key,
+                                 cid_context->send_first ? "%s:%s:recv:%d"
+                                                         : "%s:%s:send:%d",
+                                 cid_context->port_string,
+                                 cid_context->pmix_tag,
+                                 cid_context->iter);
+
+        if (bytes_written == -1) {
+            opal_output_verbose (verbosity_level, output_id, "writing pdat.value.key failed\n");
+        }
+    }
+
+    if (bytes_written == -1) {
+        // write with separate calls,
+        // just in case the args are the cause of failure
+        opal_output_verbose (verbosity_level, output_id, "send first: %d\n", cid_context->send_first);
+        opal_output_verbose (verbosity_level, output_id, "port string: %s\n", cid_context->port_string);
+        opal_output_verbose (verbosity_level, output_id, "pmix tag: %s\n", cid_context->pmix_tag);
+        opal_output_verbose (verbosity_level, output_id, "iter: %d\n", cid_context->iter);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* this macro is not actually non-blocking. if a non-blocking version becomes available this function

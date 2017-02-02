@@ -9,9 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +40,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/os_path.h"
 #include "opal/constants.h"
@@ -64,10 +65,8 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
         if (0 == (ret = chmod(path, (buf.st_mode | mode)))) { /* successfully change mode */
             return(OPAL_SUCCESS);
         }
-        opal_output(0,
-                    "opal_os_dirpath_create: "
-                    "Error: Unable to create directory (%s), unable to set the correct mode [%d] (%s)\n",
-                    path, errno, strerror(errno));
+        opal_show_help("help-opal-util.txt", "dir-mode", true,
+                    path, mode, strerror(errno));
         return(OPAL_ERR_PERM); /* can't set correct mode */
     }
 
@@ -113,22 +112,21 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
             strcat(tmp, parts[i]);
         }
 
-        /* Now that we finally have the name to check, check it.
-           Create it if it doesn't exist. */
-        ret = mkdir(tmp, mode);
-        if ((0 > ret && EEXIST != errno) || 0 != stat(tmp, &buf)) {
-            if (0 > ret && EEXIST != errno) {
-                opal_output(0, "opal_os_dirpath_create: "
-                               "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d] (%s)]\n",
-                        tmp, path, errno, strerror(errno));
-            } else {
-                opal_output(0, "opal_os_dirpath_create: "
-                               "Error: Unable to stat the sub-directory (%s) of (%s), mkdir failed [%d] (%s)]\n",
-                        tmp, path, errno, strerror(errno));
-            }
+        /* Now that we have the name, try to create it */
+        mkdir(tmp, mode);
+        ret = errno;  // save the errno for an error msg, if needed
+        if (0 != stat(tmp, &buf)) {
+            opal_show_help("help-opal-util.txt", "mkdir-failed", true,
+                        tmp, strerror(ret));
             opal_argv_free(parts);
             free(tmp);
             return OPAL_ERROR;
+        } else if (i == (len-1) && (mode != (mode & buf.st_mode)) && (0 > chmod(tmp, (buf.st_mode | mode)))) {
+            opal_show_help("help-opal-util.txt", "dir-mode", true,
+                           tmp, mode, strerror(errno));
+            opal_argv_free(parts);
+            free(tmp);
+            return(OPAL_ERR_PERM); /* can't set correct mode */
         }
     }
 
@@ -195,6 +193,15 @@ int opal_os_dirpath_destroy(const char *path,
         filenm = opal_os_path(false, path, ep->d_name, NULL);
 
         rc = stat(filenm, &buf);
+        if (0 > rc) {
+            /* Handle a race condition. filenm might have been deleted by an
+             * other process running on the same node. That typically occurs
+             * when one task is removing the job_session_dir and an other task
+             * is still removing its proc_session_dir.
+             */
+            free(filenm);
+            continue;
+        }
         if (S_ISDIR(buf.st_mode)) {
             is_dir = true;
         }
@@ -261,19 +268,19 @@ bool opal_os_dirpath_is_empty(const char *path ) {
     struct dirent *ep;
 
     if (NULL != path) {  /* protect against error */
-    	dp = opendir(path);
-    	if (NULL != dp) {
-    	    while ((ep = readdir(dp))) {
-        		if ((0 != strcmp(ep->d_name, ".")) &&
-        		    (0 != strcmp(ep->d_name, ".."))) {
+        dp = opendir(path);
+        if (NULL != dp) {
+            while ((ep = readdir(dp))) {
+                        if ((0 != strcmp(ep->d_name, ".")) &&
+                            (0 != strcmp(ep->d_name, ".."))) {
                             closedir(dp);
-        		    return false;
-        		}
-    	    }
-    	    closedir(dp);
-    	    return true;
-    	}
-    	return false;
+                            return false;
+                        }
+            }
+            closedir(dp);
+            return true;
+        }
+        return false;
     }
 
     return true;
@@ -302,4 +309,3 @@ int opal_os_dirpath_access(const char *path, const mode_t in_mode ) {
         return( OPAL_ERR_NOT_FOUND );
     }
 }
-

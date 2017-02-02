@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -191,6 +191,13 @@ typedef int (*orte_iof_base_pull_fn_t)(const orte_process_name_t* peer,
 typedef int (*orte_iof_base_close_fn_t)(const orte_process_name_t* peer,
                                         orte_iof_tag_t source_tag);
 
+/**
+ * Output something via the IOF subsystem
+ */
+typedef int (*orte_iof_base_output_fn_t)(const orte_process_name_t* peer,
+                                         orte_iof_tag_t source_tag,
+                                         const char *msg);
+
 /* Flag that a job is complete */
 typedef void (*orte_iof_base_complete_fn_t)(const orte_job_t *jdata);
 
@@ -210,6 +217,7 @@ struct orte_iof_base_module_2_0_0_t {
     orte_iof_base_push_fn_t     push;
     orte_iof_base_pull_fn_t     pull;
     orte_iof_base_close_fn_t    close;
+    orte_iof_base_output_fn_t   output;
     orte_iof_base_complete_fn_t complete;
     orte_iof_base_finalize_fn_t finalize;
     orte_iof_base_ft_event_fn_t ft_event;

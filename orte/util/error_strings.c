@@ -12,7 +12,7 @@
  * Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -354,6 +354,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "FAULT TOLERANCE RESTART";
     case ORTE_JOB_STATE_ANY:
         return "ANY";
+    case ORTE_JOB_STATE_DEBUGGER_DETACH:
+        return "DEBUGGER DETACH";
     default:
         return "UNKNOWN STATE!";
     }
@@ -432,6 +434,12 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
         return "UNABLE TO SEND MSG";
     case ORTE_PROC_STATE_LIFELINE_LOST:
         return "LIFELINE LOST";
+    case ORTE_PROC_STATE_NO_PATH_TO_TARGET:
+        return "NO PATH TO TARGET";
+    case ORTE_PROC_STATE_FAILED_TO_CONNECT:
+        return "FAILED TO CONNECT";
+    case ORTE_PROC_STATE_PEER_UNKNOWN:
+        return "PEER UNKNOWN";
     case ORTE_PROC_STATE_ANY:
         return "ANY";
     default:

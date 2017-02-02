@@ -2,7 +2,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -265,7 +265,7 @@ static int ppr_mapper(orte_job_t *jdata)
              item = opal_list_get_next(item)) {
             node = (orte_node_t*)item;
             /* bozo check */
-            if (NULL == node->topology) {
+            if (NULL == node->topology || NULL == node->topology->topo) {
                 orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
                                true, node->name);
                 rc = ORTE_ERR_SILENT;
@@ -285,7 +285,7 @@ static int ppr_mapper(orte_job_t *jdata)
              * that many procs on this node
              */
             if (OPAL_HWLOC_NODE_LEVEL == start) {
-                obj = hwloc_get_root_obj(node->topology);
+                obj = hwloc_get_root_obj(node->topology->topo);
                 for (j=0; j < ppr[start] && nprocs_mapped < total_procs; j++) {
                     if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, idx))) {
                         rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -296,7 +296,7 @@ static int ppr_mapper(orte_job_t *jdata)
                 }
             } else {
                 /* get the number of lowest resources on this node */
-                nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
                                                            lowest, cache_level,
                                                            OPAL_HWLOC_AVAILABLE);
 
@@ -304,7 +304,7 @@ static int ppr_mapper(orte_job_t *jdata)
                  * recording the locale of each proc so we know its cpuset
                  */
                 for (i=0; i < nobjs; i++) {
-                    obj = opal_hwloc_base_get_obj_by_type(node->topology,
+                    obj = opal_hwloc_base_get_obj_by_type(node->topology->topo,
                                                           lowest, cache_level,
                                                           i, OPAL_HWLOC_AVAILABLE);
                     for (j=0; j < ppr[start] && nprocs_mapped < total_procs; j++) {
@@ -351,6 +351,7 @@ static int ppr_mapper(orte_job_t *jdata)
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
                 /* check for permission */
                 if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                     /* if we weren't given a directive either way, then we will error out
@@ -485,7 +486,7 @@ static void prune(orte_jobid_t jobid,
     }
 
     /* get the number of resources at this level on this node */
-    nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+    nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
                                                lvl, cache_level,
                                                OPAL_HWLOC_AVAILABLE);
 
@@ -493,11 +494,11 @@ static void prune(orte_jobid_t jobid,
      * underneath it and check against the limit
      */
     for (i=0; i < nobjs; i++) {
-        obj = opal_hwloc_base_get_obj_by_type(node->topology,
+        obj = opal_hwloc_base_get_obj_by_type(node->topology->topo,
                                               lvl, cache_level,
                                               i, OPAL_HWLOC_AVAILABLE);
         /* get the available cpuset */
-        avail = opal_hwloc_base_get_available_cpus(node->topology, obj);
+        avail = opal_hwloc_base_get_available_cpus(node->topology->topo, obj);
 
         /* look at the intersection of this object's cpuset and that
          * of each proc in the job/app - if they intersect, then count this proc
@@ -517,7 +518,7 @@ static void prune(orte_jobid_t jobid,
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 return;
             }
-            cpus = opal_hwloc_base_get_available_cpus(node->topology, locale);
+            cpus = opal_hwloc_base_get_available_cpus(node->topology->topo, locale);
             if (hwloc_bitmap_intersects(avail, cpus)) {
                 nprocs++;
             }
@@ -543,7 +544,7 @@ static void prune(orte_jobid_t jobid,
              * have only one child, then return this
              * object
              */
-            top = find_split(node->topology, obj);
+            top = find_split(node->topology->topo, obj);
             hwloc_obj_type_snprintf(dang, 64, top, 1);
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:ppr: SPLIT AT LEVEL %s", dang);
@@ -555,7 +556,7 @@ static void prune(orte_jobid_t jobid,
             /* find the child with the most procs underneath it */
             for (k=0; k < top->arity && limit < nprocs; k++) {
                 /* get this object's available cpuset */
-                childcpus = opal_hwloc_base_get_available_cpus(node->topology, top->children[k]);
+                childcpus = opal_hwloc_base_get_available_cpus(node->topology->topo, top->children[k]);
                 nunder = 0;
                 pptr = NULL;
                 for (n=0; n < node->procs->size; n++) {
@@ -571,7 +572,7 @@ static void prune(orte_jobid_t jobid,
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return;
                     }
-                    cpus = opal_hwloc_base_get_available_cpus(node->topology, locale);
+                    cpus = opal_hwloc_base_get_available_cpus(node->topology->topo, locale);
                     if (hwloc_bitmap_intersects(childcpus, cpus)) {
                         nunder++;
                         if (NULL == pptr) {

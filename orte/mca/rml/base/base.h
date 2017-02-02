@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -102,6 +102,7 @@ typedef struct {
     opal_pointer_array_t conduits;  /* array to hold the open conduits */
     opal_list_t posted_recvs;
     opal_list_t unmatched_msgs;
+    int max_retries;
 #if OPAL_ENABLE_TIMING
     bool timing;
 #endif
@@ -116,6 +117,7 @@ typedef struct {
     orte_process_name_t origin;
     int status;                  // returned status on send
     orte_rml_tag_t tag;          // targeted tag
+    int retries;                 // #times we have tried to send it
 
     /* user's send callback functions and data */
     union {
@@ -182,6 +184,22 @@ typedef struct {
 } orte_rml_recv_request_t;
 OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
 
+/* define a structure for sending a message to myself */
+typedef struct {
+    opal_object_t object;
+    opal_event_t ev;
+    orte_rml_tag_t tag;
+    struct iovec* iov;
+    int count;
+    opal_buffer_t *buffer;
+    union {
+        orte_rml_callback_fn_t        iov;
+        orte_rml_buffer_callback_fn_t buffer;
+    } cbfunc;
+    void *cbdata;
+} orte_self_send_xfer_t;
+OBJ_CLASS_DECLARATION(orte_self_send_xfer_t);
+
 #define ORTE_RML_POST_MESSAGE(p, t, s, b, l)                            \
     do {                                                                \
         orte_rml_recv_t *msg;                                           \
@@ -230,7 +248,7 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
             }                                                           \
          } else if (NULL != (m)->cbfunc.buffer) {                       \
             /* non-blocking buffer send */                              \
-            (m)->cbfunc.buffer((m)->status, &((m)->origin),             \
+            (m)->cbfunc.buffer((m)->status, &((m)->dst),                \
                            (m)->buffer,                                 \
                            (m)->tag, (m)->cbdata);                      \
          }                                                              \
@@ -241,7 +259,6 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
 /* common implementations */
 ORTE_DECLSPEC void orte_rml_base_post_recv(int sd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_process_msg(int fd, short flags, void *cbdata);
-ORTE_DECLSPEC void orte_rml_base_complete_recv_msg (orte_rml_recv_t **recv_msg);
 
 
 /* Stub API interfaces to cycle through active plugins */

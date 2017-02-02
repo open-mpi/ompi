@@ -14,7 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -199,8 +199,8 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             /* get the rankfile entry for this rank */
             if (NULL == (rfmap = (orte_rmaps_rank_file_map_t*)opal_pointer_array_get_item(&rankmap, rank))) {
                 /* if we were give a default slot-list, then use it */
-                if (NULL != opal_hwloc_base_slot_list) {
-                    slots = opal_hwloc_base_slot_list;
+                if (NULL != opal_hwloc_base_cpu_list) {
+                    slots = opal_hwloc_base_cpu_list;
                     /* take the next node off of the available list */
                     node = NULL;
                     OPAL_LIST_FOREACH(nd, &node_list, orte_node_t) {
@@ -299,6 +299,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
             }
             /* set the vpid */
             proc->name.vpid = rank;
@@ -307,7 +308,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 /* setup the bitmap */
                 hwloc_cpuset_t bitmap;
                 char *cpu_bitmap;
-                if (NULL == node->topology) {
+                if (NULL == node->topology || NULL == node->topology->topo) {
                     /* not allowed - for rank-file, we must have
                      * the topology info
                      */
@@ -317,7 +318,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 }
                 bitmap = hwloc_bitmap_alloc();
                 /* parse the slot_list to find the socket and core */
-                if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(slots, node->topology, rtype, bitmap))) {
+                if (ORTE_SUCCESS != (rc = opal_hwloc_base_cpu_list_parse(slots, node->topology->topo, rtype, bitmap))) {
                     ORTE_ERROR_LOG(rc);
                     hwloc_bitmap_free(bitmap);
                     goto error;

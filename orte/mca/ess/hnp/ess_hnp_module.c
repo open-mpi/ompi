@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,9 +12,11 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -116,10 +119,7 @@ static bool forcibly_die=false;
 static opal_event_t term_handler;
 static opal_event_t epipe_handler;
 static int term_pipe[2];
-static opal_event_t sigusr1_handler;
-static opal_event_t sigusr2_handler;
-static opal_event_t sigtstp_handler;
-static opal_event_t sigcont_handler;
+static opal_event_t *forward_signals_events = NULL;
 
 static void abort_signal_callback(int signal);
 static void clean_abort(int fd, short flags, void *arg);
@@ -149,6 +149,7 @@ static int rte_init(void)
     int idx;
     orte_topology_t *t;
     opal_list_t transports;
+    ess_hnp_signal_t *sig;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -191,11 +192,20 @@ static int rte_init(void)
     signal(SIGINT, abort_signal_callback);
     signal(SIGHUP, abort_signal_callback);
 
-    /** setup callbacks for signals we should foward */
-    setup_sighandler(SIGUSR1, &sigusr1_handler, signal_forward_callback);
-    setup_sighandler(SIGUSR2, &sigusr2_handler, signal_forward_callback);
-    setup_sighandler(SIGTSTP, &sigtstp_handler, signal_forward_callback);
-    setup_sighandler(SIGCONT, &sigcont_handler, signal_forward_callback);
+    /** setup callbacks for signals we should forward */
+    if (0 < (idx = opal_list_get_size(&mca_ess_hnp_component.signals))) {
+        forward_signals_events = (opal_event_t*)malloc(sizeof(opal_event_t) * idx);
+        if (NULL == forward_signals_events) {
+            ret = ORTE_ERR_OUT_OF_RESOURCE;
+            error = "unable to malloc";
+            goto error;
+        }
+        idx = 0;
+        OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
+            setup_sighandler(sig->signal, forward_signals_events + idx, signal_forward_callback);
+            ++idx;
+        }
+    }
     signals_set = true;
 
     /* get the local topology */
@@ -205,14 +215,6 @@ static int rte_init(void)
             goto error;
         }
     }
-    /* generate the signature */
-    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
-
-    if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
-        opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
-    }
-
 
     /* if we are using xml for output, put an mpirun start tag */
     if (orte_xml_output) {
@@ -427,12 +429,6 @@ static int rte_init(void)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
 
-    /* add it to the array of known topologies */
-    t = OBJ_NEW(orte_topology_t);
-    t->topo = opal_hwloc_topology;
-    t->sig = strdup(orte_topo_signature);
-    opal_pointer_array_add(orte_node_topologies, t);
-
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -511,7 +507,19 @@ static int rte_init(void)
      * will have reset our topology. Ensure we always get the right
      * one by setting our node topology afterwards
      */
-    node->topology = opal_hwloc_topology;
+    /* add it to the array of known topologies */
+    t = OBJ_NEW(orte_topology_t);
+    t->topo = opal_hwloc_topology;
+    /* generate the signature */
+    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+    t->sig = strdup(orte_topo_signature);
+    opal_pointer_array_add(orte_node_topologies, t);
+    node->topology = t;
+    if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+        opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+    }
+
 
     /* init the hash table, if necessary */
     if (NULL == orte_coprocessors) {
@@ -572,6 +580,9 @@ static int rte_init(void)
 
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
+    if (NULL != proc->rml_uri) {
+        free(proc->rml_uri);
+    }
     proc->rml_uri = strdup(orte_process_info.my_hnp_uri);
 
     /* we are also officially a daemon, so better update that field too */
@@ -775,6 +786,10 @@ static int rte_init(void)
 static int rte_finalize(void)
 {
     char *contact_path;
+    orte_job_t *jdata;
+    uint32_t key;
+    ess_hnp_signal_t *sig;
+    unsigned int i;
 
     if (signals_set) {
         /* Remove the epipe handler */
@@ -782,10 +797,13 @@ static int rte_finalize(void)
         /* remove the term handler */
         opal_event_del(&term_handler);
         /** Remove the USR signal handlers */
-        opal_event_signal_del(&sigusr1_handler);
-        opal_event_signal_del(&sigusr2_handler);
-        opal_event_signal_del(&sigtstp_handler);
-        opal_event_signal_del(&sigcont_handler);
+        i = 0;
+        OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
+            opal_event_signal_del(forward_signals_events + i);
+            ++i;
+        }
+        free (forward_signals_events);
+        forward_signals_events = NULL;
         signals_set = false;
     }
 
@@ -846,7 +864,19 @@ static int rte_finalize(void)
     }
 
     /* release the job hash table */
+    OPAL_HASH_TABLE_FOREACH(key, uint32, jdata, orte_job_data) {
+        if (NULL != jdata) {
+            OBJ_RELEASE(jdata);
+        }
+    }
     OBJ_RELEASE(orte_job_data);
+
+    if (NULL != orte_process_info.super.proc_hostname) {
+        free(orte_process_info.super.proc_hostname);
+    }
+    if (orte_do_not_launch) {
+        exit(0);
+    }
     return ORTE_SUCCESS;
 }
 

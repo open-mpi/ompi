@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
@@ -641,10 +641,6 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
 
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
     endpoint->endpoint_btl->device->non_eager_rdma_endpoints++;
-
-    /* The connection is correctly setup. Now we can decrease the
-       event trigger. */
-    opal_progress_event_users_decrement();
 
     if(MCA_BTL_XRC_ENABLED) {
         if (master) {

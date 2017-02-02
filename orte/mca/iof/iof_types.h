@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +40,7 @@ typedef uint16_t orte_iof_tag_t;
 #define ORTE_IOF_STDMERGE   0x0006
 #define ORTE_IOF_STDDIAG    0x0008
 #define ORTE_IOF_STDOUTALL  0x000e
+#define ORTE_IOF_STDALL     0x000f
 #define ORTE_IOF_EXCLUSIVE  0x0100
 
 /* flow control flags */

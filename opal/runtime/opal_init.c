@@ -16,7 +16,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -52,6 +52,7 @@
 #include "opal/mca/sec/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
+#include "opal/mca/if/base/base.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/shmem/base/base.h"
 #if OPAL_ENABLE_FT_CR    == 1
@@ -343,6 +344,8 @@ opal_init_util(int* pargc, char*** pargv)
         return OPAL_SUCCESS;
     }
 
+    opal_thread_set_main();
+
     opal_init_called = true;
 
     /* set the nodename right away so anyone who needs it has it. Note
@@ -448,6 +451,13 @@ opal_init_util(int* pargc, char*** pargv)
     if (OPAL_SUCCESS != (ret = mca_base_open())) {
         error = "mca_base_open";
         goto return_error;
+    }
+
+    /* initialize if framework */
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_if_base_framework, 0))) {
+        fprintf(stderr, "opal_if_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_SUCCESS)\n",
+                __FILE__, __LINE__, ret);
+        return ret;
     }
 
     return OPAL_SUCCESS;

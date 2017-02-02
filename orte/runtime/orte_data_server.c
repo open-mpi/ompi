@@ -13,6 +13,8 @@
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -148,8 +150,6 @@ void orte_data_server_finalize(void)
         return;
     }
     initialized = false;
-
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_SERVER);
 
     for (i=0; i < orte_data_server_store.size; i++) {
         if (NULL != (data = (orte_data_object_t*)opal_pointer_array_get_item(&orte_data_server_store, i))) {
@@ -493,6 +493,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
                 OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                      "%s data server:lookup: pushing request to wait",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                OBJ_RELEASE(answer);
                 req = OBJ_NEW(orte_data_req_t);
                 req->room_number = room_number;
                 req->requestor = *sender;

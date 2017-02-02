@@ -8,6 +8,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -186,11 +188,16 @@ int mqs_version_compatibility (void)
     return MQS_INTERFACE_COMPATIBILITY;
 } /* mqs_version_compatibility */
 
+static char mqs_version_str[OMPI_MAX_VER_SIZE];
+
 /* This one can say what you like */
 char *mqs_version_string (void)
 {
-    return "Open MPI message queue support for parallel"
-           " debuggers compiled on " __DATE__;
+    int offset;
+    offset = snprintf(mqs_version_str, OMPI_MAX_VER_SIZE-1,  
+                      "Open MPI message queue support for parallel debuggers ");
+    ompi_get_lib_version(mqs_version_str+offset, OMPI_MAX_VER_SIZE-offset);
+    return mqs_version_str;
 } /* mqs_version_string */
 
 /* So the debugger can tell what interface width the library was compiled with */
@@ -1058,10 +1065,6 @@ static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
         printf( "|    extra[4] = %s\n", res->extra_text[4] );
     printf( "+===============================================+\n\n" );
 }
-
-/**
- * TODO: ompi_request_completed can be used to detect any changes in the request handles.
- */
 
 /**
  * Handle the send queue as well as the receive queue. The unexpected queue

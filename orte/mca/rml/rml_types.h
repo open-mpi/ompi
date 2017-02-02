@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -169,6 +169,9 @@ BEGIN_C_DECLS
 /* memory profile */
 #define ORTE_RML_TAG_MEMPROFILE             61
 
+/* topology report */
+#define ORTE_RML_TAG_TOPOLOGY_REPORT        62
+
 #define ORTE_RML_TAG_MAX                   100
 
 
@@ -178,7 +181,7 @@ BEGIN_C_DECLS
 /*** length of the tag. change this when type of orte_rml_tag_t is changed ***/
 /*** max valu in unit32_t is 0xFFFF_FFFF when converted to char this is 8  **
 #define ORTE_RML_TAG_T_CHAR_LEN   8
-#define ORTE_RML_TAG_T_SPRINT	 "%8x" */
+#define ORTE_RML_TAG_T_SPRINT    "%8x" */
 
 /**
  * Message matching tag

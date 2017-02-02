@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,8 +44,8 @@
 
 #include "orte/mca/iof/base/base.h"
 
-int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
-                                unsigned char *data, int numbytes,
+int orte_iof_base_write_output(const orte_process_name_t *name, orte_iof_tag_t stream,
+                               const unsigned char *data, int numbytes,
                                orte_iof_write_event_t *channel)
 {
     char starttag[ORTE_IOF_BASE_TAG_MAX], endtag[ORTE_IOF_BASE_TAG_MAX], *suffix;

@@ -10,7 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,6 +68,7 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
 
 int
@@ -152,11 +154,19 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         }
         ret = dup2(opts->p_stdout[1], fileno(stdout));
         if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        if( orte_iof_base.redirect_app_stderr_to_stdout ) {
+            ret = dup2(opts->p_stdout[1], fileno(stderr));
+            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        }
         close(opts->p_stdout[1]);
     } else {
         if(opts->p_stdout[1] != fileno(stdout)) {
             ret = dup2(opts->p_stdout[1], fileno(stdout));
             if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            if( orte_iof_base.redirect_app_stderr_to_stdout ) {
+                ret = dup2(opts->p_stdout[1], fileno(stderr));
+                if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            }
             close(opts->p_stdout[1]);
         }
     }
@@ -177,13 +187,16 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
             close(fd);
         }
     }
+
     if(opts->p_stderr[1] != fileno(stderr)) {
-        ret = dup2(opts->p_stderr[1], fileno(stderr));
-        if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+            ret = dup2(opts->p_stderr[1], fileno(stderr));
+            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        }
         close(opts->p_stderr[1]);
     }
 
-    if (!orte_map_stddiag_to_stderr) {
+    if (!orte_map_stddiag_to_stderr && !orte_map_stddiag_to_stdout ) {
         /* Set an environment variable that the new child process can use
            to get the fd of the pipe connected to the INTERNAL IOF tag. */
         asprintf(&str, "%d", opts->p_internal[1]);
@@ -191,6 +204,9 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
             opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
             free(str);
         }
+    }
+    else if( orte_map_stddiag_to_stdout ) {
+        opal_setenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT", "1", true, env);
     }
 
     return ORTE_SUCCESS;
@@ -244,10 +260,7 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
 
 int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
                                      orte_job_t *jobdat,
-                                     orte_iof_proc_t *proct,
-                                     orte_iof_sink_t **stdoutsink,
-                                     orte_iof_sink_t **stderrsink,
-                                     orte_iof_sink_t **stddiagsink)
+                                     orte_iof_proc_t *proct)
 {
     int rc;
     char *dirname, *outdir, *outfile;
@@ -289,7 +302,6 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
         } else {
             asprintf(&outdir, "%s/rank.%0*lu", dirname,
                      numdigs, (unsigned long)proct->name.vpid);
-
         }
         /* ensure the directory exists */
         if (OPAL_SUCCESS != (rc = opal_os_dirpath_create(outdir, S_IRWXU|S_IRGRP|S_IXGRP))) {
@@ -297,11 +309,8 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
             free(outdir);
             return rc;
         }
-        /* if they asked for stderr to be combined with stdout, then we
-         * only create one file and tell the IOF to put both streams
-         * into it. Otherwise, we create separate files for each stream */
-        if (orte_get_attribute(&jobdat->attributes, ORTE_JOB_MERGE_STDERR_STDOUT, NULL, OPAL_BOOL)) {
-            /* create the output file */
+        if (NULL != proct->revstdout && NULL == proct->revstdout->sink) {
+            /* setup the stdout sink */
             asprintf(&outfile, "%s/stdout", outdir);
             fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
             free(outfile);
@@ -311,40 +320,42 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
                 return ORTE_ERR_FILE_OPEN_FAILURE;
             }
             /* define a sink to that file descriptor */
-            ORTE_IOF_SINK_DEFINE(stdoutsink, dst_name, fdout, ORTE_IOF_STDMERGE,
-                                 orte_iof_base_write_handler);
-            /* point the stderr read event to it as well */
-            OBJ_RETAIN(*stdoutsink);
-            *stderrsink = *stdoutsink;
-        } else {
-            /* create separate files for stderr and stdout */
-            asprintf(&outfile, "%s/stdout", outdir);
-            fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
-            free(outfile);
-            if (fdout < 0) {
-                /* couldn't be opened */
-                ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
-                return ORTE_ERR_FILE_OPEN_FAILURE;
-            }
-            /* define a sink to that file descriptor */
-            ORTE_IOF_SINK_DEFINE(stdoutsink, dst_name, fdout, ORTE_IOF_STDOUT,
-                                 orte_iof_base_write_handler);
-
-            asprintf(&outfile, "%s/stderr", outdir);
-            fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
-            free(outfile);
-            if (fdout < 0) {
-                /* couldn't be opened */
-                ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
-                return ORTE_ERR_FILE_OPEN_FAILURE;
-            }
-            /* define a sink to that file descriptor */
-            ORTE_IOF_SINK_DEFINE(stderrsink, dst_name, fdout, ORTE_IOF_STDERR,
+            ORTE_IOF_SINK_DEFINE(&proct->revstdout->sink, dst_name,
+                                 fdout, ORTE_IOF_STDOUT,
                                  orte_iof_base_write_handler);
         }
-        /* always tie the sink for stddiag to stderr */
-        OBJ_RETAIN(*stderrsink);
-        *stddiagsink = *stderrsink;
+
+        if (NULL != proct->revstderr && NULL == proct->revstderr->sink) {
+            /* if they asked for stderr to be combined with stdout, then we
+             * only create one file and tell the IOF to put both streams
+             * into it. Otherwise, we create separate files for each stream */
+            if (orte_get_attribute(&jobdat->attributes, ORTE_JOB_MERGE_STDERR_STDOUT, NULL, OPAL_BOOL)) {
+                /* just use the stdout sink */
+                OBJ_RETAIN(proct->revstdout->sink);
+                proct->revstdout->sink->tag = ORTE_IOF_STDMERGE;  // show that it is merged
+                proct->revstderr->sink = proct->revstdout->sink;
+            } else {
+                asprintf(&outfile, "%s/stderr", outdir);
+                fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
+                free(outfile);
+                if (fdout < 0) {
+                    /* couldn't be opened */
+                    ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+                    return ORTE_ERR_FILE_OPEN_FAILURE;
+                }
+                /* define a sink to that file descriptor */
+                ORTE_IOF_SINK_DEFINE(&proct->revstderr->sink, dst_name,
+                                     fdout, ORTE_IOF_STDERR,
+                                     orte_iof_base_write_handler);
+            }
+        }
+
+        if (NULL != proct->revstddiag && NULL == proct->revstddiag->sink) {
+            /* always tie the sink for stddiag to stderr */
+            OBJ_RETAIN(proct->revstderr->sink);
+            proct->revstddiag->sink = proct->revstderr->sink;
+        }
     }
+
     return ORTE_SUCCESS;
 }

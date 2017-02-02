@@ -15,8 +15,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -675,7 +675,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
         /* copy over the name of the executable */
         app->cmd = strdup(array_of_commands[i]);
-        opal_argv_append(&app->argc, &app->argv, app->cmd);
+        opal_argv_append_nosize(&app->argv, app->cmd);
 
         /* record the number of procs to be generated */
         app->maxprocs = array_of_maxprocs[i];
@@ -684,7 +684,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
         if (MPI_ARGVS_NULL != array_of_argv &&
             MPI_ARGV_NULL != array_of_argv[i]) {
             for (j=0; NULL != array_of_argv[i][j]; j++) {
-                opal_argv_append(&app->argc, &app->argv, array_of_argv[i][j]);
+                opal_argv_append_nosize(&app->argv, array_of_argv[i][j]);
             }
         }
 
@@ -1182,8 +1182,8 @@ static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
     for (i=0; i< count; i++ ) {
         if (NULL != objs[i]->reqs ) {
             free(objs[i]->reqs );
-            free(objs[i]);
         }
+        free(objs[i]);
     }
 
     free(reqs);

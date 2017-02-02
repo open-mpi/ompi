@@ -12,7 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +33,7 @@
 
 #include "opal/dss/dss.h"
 
+#include "orte/util/compress.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -69,9 +72,15 @@ static void gccon(orte_grpcomm_caddy_t *p)
     p->cbfunc = NULL;
     p->cbdata = NULL;
 }
+static void gcdes(orte_grpcomm_caddy_t *p)
+{
+    if (NULL != p->buf) {
+        OBJ_RELEASE(p->buf);
+    }
+}
 static OBJ_CLASS_INSTANCE(orte_grpcomm_caddy_t,
                           opal_object_t,
-                          gccon, NULL);
+                          gccon, gcdes);
 
 int orte_grpcomm_API_xcast(orte_grpcomm_signature_t *sig,
                            orte_rml_tag_t tag,
@@ -133,7 +142,7 @@ static void allgather_stub(int fd, short args, void *cbdata)
     int rc;
     orte_grpcomm_base_active_t *active;
     orte_grpcomm_coll_t *coll;
-    void *seq_number;
+    uint32_t *seq_number;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:allgather stub",
@@ -142,11 +151,12 @@ static void allgather_stub(int fd, short args, void *cbdata)
     /* retrieve an existing tracker, create it if not
      * already found. The allgather module is responsible
      * for releasing it upon completion of the collective */
-    ret = opal_hash_table_get_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), &seq_number);
+    ret = opal_hash_table_get_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), (void **)&seq_number);
     if (OPAL_ERR_NOT_FOUND == ret) {
-        cd->sig->seq_num = 0;
+        seq_number = (uint32_t *)malloc(sizeof(uint32_t));
+        *seq_number = 0;
     } else if (OPAL_SUCCESS == ret) {
-        cd->sig->seq_num = *((uint32_t *)(seq_number)) + 1;
+        *seq_number = *seq_number + 1;
     } else {
         OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
                      "%s rpcomm:base:allgather cannot get signature from hash table",
@@ -155,7 +165,7 @@ static void allgather_stub(int fd, short args, void *cbdata)
         OBJ_RELEASE(cd);
         return;
     }
-    ret = opal_hash_table_set_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), (void *)&cd->sig->seq_num);
+    ret = opal_hash_table_set_value_ptr(&orte_grpcomm_base.sig_table, (void *)cd->sig->signature, cd->sig->sz * sizeof(orte_process_name_t), (void *)seq_number);
     if (OPAL_SUCCESS != ret) {
         OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
                      "%s rpcomm:base:allgather cannot add new signature to hash table",
@@ -165,6 +175,7 @@ static void allgather_stub(int fd, short args, void *cbdata)
         return;
     }
     coll = orte_grpcomm_base_get_tracker(cd->sig, true);
+    OBJ_RELEASE(cd->sig);
     coll->cbfunc = cd->cbfunc;
     coll->cbdata = cd->cbdata;
 
@@ -317,8 +328,9 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == sig->signature) ? "NULL" : "NON-NULL"));
 
-    /* if NULL == procs, then all daemons are participating */
-    if (NULL == sig->signature) {
+    /* if NULL == procs, or the target jobid is our own,
+     * then all daemons are participating */
+    if (NULL == sig->signature || ORTE_PROC_MY_NAME->jobid == sig->signature[0].jobid) {
         *ndmns = orte_process_info.num_procs;
         *dmns = NULL;
         return ORTE_SUCCESS;
@@ -348,6 +360,7 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                 *dmns = dns;
                 return ORTE_SUCCESS;
             }
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
             *ndmns = 0;
             *dmns = NULL;
@@ -388,10 +401,10 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
                 *dmns = NULL;
                 return ORTE_ERR_NOT_FOUND;
             }
-            opal_output_verbose(5, orte_grpcomm_base_framework.framework_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                 "%s sign: GETTING PROC OBJECT FOR %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&sig->signature[n]));
+                                ORTE_NAME_PRINT(&sig->signature[n])));
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, sig->signature[n].vpid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 OPAL_LIST_DESTRUCT(&ds);
@@ -453,28 +466,85 @@ static int pack_xcast(orte_grpcomm_signature_t *sig,
                       orte_rml_tag_t tag)
 {
     int rc;
+    opal_buffer_t data;
+    int8_t flag;
+    uint8_t *cmpdata;
+    size_t cmplen;
+
+    /* setup an intermediate buffer */
+    OBJ_CONSTRUCT(&data, opal_buffer_t);
 
     /* pass along the signature */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &sig, 1, ORTE_SIGNATURE))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&data, &sig, 1, ORTE_SIGNATURE))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        OBJ_DESTRUCT(&data);
+        return rc;
     }
     /* pass the final tag */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tag, 1, ORTE_RML_TAG))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&data, &tag, 1, ORTE_RML_TAG))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        OBJ_DESTRUCT(&data);
+        return rc;
     }
 
     /* copy the payload into the new buffer - this is non-destructive, so our
      * caller is still responsible for releasing any memory in the buffer they
      * gave to us
      */
-    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(buffer, message))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&data, message))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        OBJ_DESTRUCT(&data);
+        return rc;
     }
 
-CLEANUP:
+    /* see if we want to compress this message */
+    if (orte_util_compress_block((uint8_t*)data.base_ptr, data.bytes_used,
+                                 &cmpdata, &cmplen)) {
+        /* the data was compressed - mark that we compressed it */
+        flag = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            free(cmpdata);
+            OBJ_DESTRUCT(&data);
+            return rc;
+        }
+        /* pack the compressed length */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &cmplen, 1, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            free(cmpdata);
+            OBJ_DESTRUCT(&data);
+            return rc;
+        }
+        /* pack the uncompressed length */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &data.bytes_used, 1, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            free(cmpdata);
+            OBJ_DESTRUCT(&data);
+            return rc;
+        }
+        /* pack the compressed info */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, cmpdata, cmplen, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            free(cmpdata);
+            OBJ_DESTRUCT(&data);
+            return rc;
+        }
+        OBJ_DESTRUCT(&data);
+        free(cmpdata);
+    } else {
+        /* mark that it was not compressed */
+        flag = 0;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&data);
+            free(cmpdata);
+            return rc;
+        }
+        /* transfer the payload across */
+        opal_dss.copy_payload(buffer, &data);
+        OBJ_DESTRUCT(&data);
+    }
+
     return ORTE_SUCCESS;
 }
 

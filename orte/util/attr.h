@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -88,7 +88,7 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_FLAG_RECOVERABLE        0x0100   // job is recoverable
 #define ORTE_JOB_FLAG_RESTART            0x0200   //
 #define ORTE_JOB_FLAG_PROCS_MIGRATING    0x0400   // some procs in job are migrating from one node to another
-
+#define ORTE_JOB_FLAG_OVERSUBSCRIBED     0x0800   // at least one node in the job is oversubscribed
 
 /***   JOB ATTRIBUTE KEYS   ***/
 #define ORTE_JOB_START_KEY   ORTE_NODE_MAX_KEY
@@ -128,7 +128,7 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_PHYSICAL_CPUIDS        (ORTE_JOB_START_KEY + 34)    // bool - Hostfile contains physical jobids in cpuset
 #define ORTE_JOB_LAUNCHED_DAEMONS       (ORTE_JOB_START_KEY + 35)    // bool - Job caused new daemons to be spawned
 #define ORTE_JOB_REPORT_BINDINGS        (ORTE_JOB_START_KEY + 36)    // bool - Report process bindings
-#define ORTE_JOB_SLOT_LIST              (ORTE_JOB_START_KEY + 37)    // string - constraints on cores to use
+#define ORTE_JOB_CPU_LIST               (ORTE_JOB_START_KEY + 37)    // string - cpus to which procs are to be bound
 #define ORTE_JOB_NOTIFICATIONS          (ORTE_JOB_START_KEY + 38)    // string - comma-separated list of desired notifications+methods
 #define ORTE_JOB_ROOM_NUM               (ORTE_JOB_START_KEY + 39)    // int - number of remote request's hotel room
 #define ORTE_JOB_LAUNCH_PROXY           (ORTE_JOB_START_KEY + 40)    // opal_process_name_t - name of spawn requestor
@@ -143,6 +143,7 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_MULTI_DAEMON_SIM       (ORTE_JOB_START_KEY + 49)    // bool - multiple daemons/node to simulate large cluster
 #define ORTE_JOB_NOTIFY_COMPLETION      (ORTE_JOB_START_KEY + 50)    // bool - notify parent proc when spawned job terminates
 #define ORTE_JOB_TRANSPORT_KEY          (ORTE_JOB_START_KEY + 51)    // string - transport keys assigned to this job
+#define ORTE_JOB_INFO_CACHE             (ORTE_JOB_START_KEY + 52)    // opal_list_t - list of opal_value_t to be included in job_info
 
 #define ORTE_JOB_MAX_KEY   300
 

@@ -167,6 +167,22 @@ orte_odls_base_module_t orte_odls_default_module = {
 /* deliver a signal to a specified pid. */
 static int odls_default_kill_local(pid_t pid, int signum)
 {
+    pid_t pgrp;
+
+#if HAVE_SETPGID
+    pgrp = getpgid(pid);
+    if (-1 != pgrp) {
+        /* target the lead process of the process
+         * group so we ensure that the signal is
+         * seen by all members of that group. This
+         * ensures that the signal is seen by any
+         * child processes our child may have
+         * started
+         */
+        pid = pgrp;
+    }
+#endif
+
     if (0 != kill(pid, signum)) {
         if (ESRCH != errno) {
             OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
@@ -312,6 +328,12 @@ static int do_child(orte_app_context_t* context,
     sigset_t sigs;
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
     char *param, *msg;
+
+#if HAVE_SETPGID
+    /* Set a new process group for this child, so that any
+     * signals we send to it will reach any children it spawns */
+    setpgid(0, 0);
+#endif
 
     /* Setup the pipe to be close-on-exec */
     opal_fd_set_cloexec(write_fd);
@@ -717,4 +739,3 @@ static int orte_odls_default_restart_proc(orte_proc_t *child)
     }
     return rc;
 }
-

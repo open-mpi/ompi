@@ -11,9 +11,10 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,6 +80,15 @@ static int orte_iof_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &orte_iof_base.input_files);
 
+    /* Redirect application stderr to stdout (at source) */
+    orte_iof_base.redirect_app_stderr_to_stdout = false;
+    (void) mca_base_var_register("orte", "iof","base", "redirect_app_stderr_to_stdout",
+                                 "Redirect application stderr to stdout at source (default: false)",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_iof_base.redirect_app_stderr_to_stdout);
+
     return ORTE_SUCCESS;
 }
 
@@ -89,6 +99,14 @@ static int orte_iof_base_close(void)
         orte_iof.finalize();
     }
 
+    if (!ORTE_PROC_IS_DAEMON) {
+        if (NULL != orte_iof_base.iof_write_stdout) {
+            OBJ_RELEASE(orte_iof_base.iof_write_stdout);
+        }
+        if (!orte_xml_output && NULL != orte_iof_base.iof_write_stderr) {
+            OBJ_RELEASE(orte_iof_base.iof_write_stderr);
+        }
+    }
     return mca_base_framework_components_close(&orte_iof_base_framework, NULL);
 }
 
@@ -230,11 +248,11 @@ static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
 {
-    OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
-                         "%s iof: closing sink for process %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&ptr->name)));
     if (NULL != ptr->wev && 0 <= ptr->wev->fd) {
+        OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
+                             "%s iof: closing sink for process %s on fd %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&ptr->name), ptr->wev->fd));
         OBJ_RELEASE(ptr->wev);
     }
 }
@@ -295,7 +313,6 @@ static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
             return;
         }
     }
-
     if (2 < wev->fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                              "%s iof: closing fd %d for write event",

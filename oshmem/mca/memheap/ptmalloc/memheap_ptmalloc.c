@@ -32,7 +32,6 @@ mca_memheap_ptmalloc_module_t memheap_ptmalloc = {
         mca_memheap_ptmalloc_free,
 
         mca_memheap_base_get_mkey,
-        mca_memheap_base_find_offset,
         mca_memheap_base_is_symmetric_addr,
         mca_memheap_modex_recv_all,
 
@@ -86,6 +85,7 @@ int mca_memheap_ptmalloc_alloc(size_t size, void** p_buff)
     if (NULL == *p_buff)
         return OSHMEM_ERROR;
 
+    MCA_SPML_CALL(memuse_hook(*p_buff, size));
     return OSHMEM_SUCCESS;
 }
 
@@ -114,6 +114,7 @@ int mca_memheap_ptmalloc_align(size_t align, size_t size, void **p_buff)
     if (NULL == *p_buff)
         return OSHMEM_ERROR;
 
+    MCA_SPML_CALL(memuse_hook(*p_buff, size));
     return OSHMEM_SUCCESS;
 }
 
@@ -133,6 +134,7 @@ int mca_memheap_ptmalloc_realloc(size_t new_size,
     if (!*p_new_buff)
         return OSHMEM_ERR_OUT_OF_RESOURCE;
 
+    MCA_SPML_CALL(memuse_hook(*p_new_buff, new_size));
     return OSHMEM_SUCCESS;
 }
 

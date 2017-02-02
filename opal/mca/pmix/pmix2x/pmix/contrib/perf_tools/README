@@ -1,0 +1,35 @@
+Building instructions:
+
+* Open the Makefile and fix the following variables:
+  * PMIX_BASE should point to the directory where PMIx is installed.
+    If you don't want to test PMIx - remove pmix from the list of "all" targets.
+  * PMI2_BASE should point to the directory where SLURM is installed.
+    If you don't want to test PMI2 - remove pmi2 from the list of "all" targets.
+* run `make`.
+
+The follwoing files (or one of them) will be built as the result:
+* pmix_intra_perf - that is for testing pmix performance
+- pmi2_intra_perf - for testing pmi2 performance
+
+Running instructions:
+
+The following options are supported by both of the binaries:
+  -s, --key-size=<size>     size of the key's submitted (default is 100 * sizeof(int) bytes)
+  -c, --key-count=<size>    number of keys submitted to local and remote parts (default is 10)
+  -d, --direct-modex        use direct modex if available
+  --debug                   force all processes to print out the timings themself
+
+You can run it directly with your favorite launcher (mpirun/srun), just
+make sure that both MPI and PMIx libraries are visible for the loader.
+
+For PMIx testing "convenience" there is a `run.sh` script that can be used to
+ensure that environment is set properly (not a production grade so may not work
+for all environments). To use it open it and fix:
+- OMPI_BASE to point to your MPI installation
+- PMIX_LIB to point to your PMIx installation
+
+If you are running inside the supported batch system you shoud be fine to
+just run fixed `run.sh` with the first argument defining how many processes
+needs to be launched and all other parameters will be passed to the performance
+tool. For example:
+$ ./run.sh 10 -d

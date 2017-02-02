@@ -15,6 +15,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -336,7 +337,16 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
 
     if (is_long_msg) {
         /* wait for eager sends to be active before starting a long put */
-        ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
+        if (pt2pt_sync->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK) {
+            OPAL_THREAD_LOCK(&pt2pt_sync->lock);
+            ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
+            while (!(peer->flags & OMPI_OSC_PT2PT_PEER_FLAG_EAGER)) {
+                opal_condition_wait(&pt2pt_sync->cond, &pt2pt_sync->lock);
+            }
+            OPAL_THREAD_UNLOCK(&pt2pt_sync->lock);
+        } else {
+            ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
+        }
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -491,11 +501,23 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
 
         is_long_msg = true;
         tag = get_tag (module);
+    } else {
+        /* still need to set the tag for the active/passive logic on the target */
+        tag = !!(module->passive_target_access_epoch);
     }
 
     if (is_long_msg) {
         /* wait for synchronization before posting a long message */
-        ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
+        if (pt2pt_sync->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK) {
+            OPAL_THREAD_LOCK(&pt2pt_sync->lock);
+            ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
+            while (!(peer->flags & OMPI_OSC_PT2PT_PEER_FLAG_EAGER)) {
+                opal_condition_wait(&pt2pt_sync->cond, &pt2pt_sync->lock);
+            }
+            OPAL_THREAD_UNLOCK(&pt2pt_sync->lock);
+        } else {
+            ompi_osc_pt2pt_sync_wait_expected (pt2pt_sync);
+        }
     }
 
     header = (ompi_osc_pt2pt_header_acc_t*) ptr;
@@ -504,6 +526,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
     header->count = target_count;
     header->displacement = target_disp;
     header->op = op->o_f_to_c_index;
+    header->tag = tag;
     ptr += sizeof (*header);
 
     do {
@@ -546,7 +569,6 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
             }
         } else {
             header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_ACC_LONG;
-            header->tag = tag;
             osc_pt2pt_hton(header, proc);
 
             OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,

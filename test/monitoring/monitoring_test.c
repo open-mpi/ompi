@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2013-2015 Inria.  All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,7 +79,6 @@ I	3	2	860 bytes	24 msgs sent
 
 static MPI_T_pvar_handle flush_handle;
 static const char flush_pvar_name[] = "pml_monitoring_flush";
-static const char flush_cvar_name[] = "pml_monitoring_enable";
 static int flush_pvar_idx;
 
 int main(int argc, char* argv[])
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
                flush_pvar_name);
         MPI_Abort(MPI_COMM_WORLD, MPIT_result);
     }
-    
+
     if (rank == 0) {
         n = 25;
         MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD,&request);
@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
     if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, NULL) ) {
         fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
     }
-    
+
     /*
       Second phase. Work with different communicators.
       even ranls will circulate a token

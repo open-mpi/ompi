@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,15 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_FCNTL_H
+#include <fcntl.h>
+#endif
 
 #include <string.h>
 #include <signal.h>
@@ -34,6 +44,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
+#include "opal/util/proc.h"
 #include "opal/runtime/opal_params.h"
 
 #ifndef _NSIG
@@ -42,8 +53,34 @@
 
 #define HOSTFORMAT "[%s:%05d] "
 
+int    opal_stacktrace_output_fileno = -1;
+static char  *opal_stacktrace_output_filename_base = NULL;
+static size_t opal_stacktrace_output_filename_max_len = 0;
 static char stacktrace_hostname[OPAL_MAXHOSTNAMELEN];
 static char *unable_to_print_msg = "Unable to print stack trace!\n";
+
+/*
+ * Set the stacktrace filename:
+ * stacktrace.PID
+ * -or, if VPID is available-
+ * stacktrace.VPID.PID
+ */
+static void set_stacktrace_filename(void) {
+    opal_proc_t *my_proc = opal_proc_local_get();
+
+    if( NULL == my_proc ) {
+        snprintf(opal_stacktrace_output_filename, opal_stacktrace_output_filename_max_len,
+                 "%s.%lu",
+                 opal_stacktrace_output_filename_base, (unsigned long)getpid());
+    }
+    else {
+        snprintf(opal_stacktrace_output_filename, opal_stacktrace_output_filename_max_len,
+                 "%s.%lu.%lu",
+                 opal_stacktrace_output_filename_base, (unsigned long)my_proc->proc_name.vpid, (unsigned long)getpid());
+    }
+
+    return;
+}
 
 /**
  * This function is being called as a signal-handler in response
@@ -68,12 +105,37 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     int ret;
     char *si_code_str = "";
 
+    /* Do not print the stack trace */
+    if( 0 > opal_stacktrace_output_fileno && 0 == opal_stacktrace_output_filename_max_len ) {
+        /* Raise the signal again, so we don't accidentally mask critical signals.
+         * For critical signals, it is preferred that we call 'raise' instead of
+         * 'exit' or 'abort' so that the return status is set properly for this
+         * process.
+         */
+        signal(signo, SIG_DFL);
+        raise(signo);
+
+        return;
+    }
+
+    /* Update the file name with the RANK, if available */
+    if( 0 < opal_stacktrace_output_filename_max_len ) {
+        set_stacktrace_filename();
+        opal_stacktrace_output_fileno = open(opal_stacktrace_output_filename,
+                                             O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR);
+        if( 0 > opal_stacktrace_output_fileno ) {
+            opal_output(0, "Error: Failed to open the stacktrace output file. Default: stderr\n\tFilename: %s\n\tErrno: %s",
+                        opal_stacktrace_output_filename, strerror(errno));
+            opal_stacktrace_output_fileno = fileno(stderr);
+        }
+    }
+
     /* write out the footer information */
     memset (print_buffer, 0, sizeof (print_buffer));
     ret = snprintf(print_buffer, sizeof(print_buffer),
                    HOSTFORMAT "*** Process received signal ***\n",
                    stacktrace_hostname, getpid());
-    write(fileno(stderr), print_buffer, ret);
+    write(opal_stacktrace_output_fileno, print_buffer, ret);
 
 
     memset (print_buffer, 0, sizeof (print_buffer));
@@ -323,14 +385,14 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     }
 
     /* write out the signal information generated above */
-    write(fileno(stderr), print_buffer, sizeof(print_buffer)-size);
+    write(opal_stacktrace_output_fileno, print_buffer, sizeof(print_buffer)-size);
 
     /* print out the stack trace */
     snprintf(print_buffer, sizeof(print_buffer), HOSTFORMAT,
              stacktrace_hostname, getpid());
-    ret = opal_backtrace_print(stderr, print_buffer, 2);
+    ret = opal_backtrace_print(NULL, print_buffer, 2);
     if (OPAL_SUCCESS != ret) {
-        write(fileno(stderr), unable_to_print_msg, strlen(unable_to_print_msg));
+        write(opal_stacktrace_output_fileno, unable_to_print_msg, strlen(unable_to_print_msg));
     }
 
     /* write out the footer information */
@@ -339,10 +401,24 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
                    HOSTFORMAT "*** End of error message ***\n",
                    stacktrace_hostname, getpid());
     if (ret > 0) {
-        write(fileno(stderr), print_buffer, ret);
+        write(opal_stacktrace_output_fileno, print_buffer, ret);
     } else {
-        write(fileno(stderr), unable_to_print_msg, strlen(unable_to_print_msg));
+        write(opal_stacktrace_output_fileno, unable_to_print_msg, strlen(unable_to_print_msg));
     }
+
+    if( fileno(stdout) != opal_stacktrace_output_fileno &&
+        fileno(stderr) != opal_stacktrace_output_fileno ) {
+        close(opal_stacktrace_output_fileno);
+        opal_stacktrace_output_fileno = -1;
+    }
+
+    /* Raise the signal again, so we don't accidentally mask critical signals.
+     * For critical signals, it is preferred that we call 'raise' instead of
+     * 'exit' or 'abort' so that the return status is set properly for this
+     * process.
+     */
+    signal(signo, SIG_DFL);
+    raise(signo);
 }
 
 #endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE */
@@ -364,7 +440,30 @@ void opal_stackframe_output(int stream)
             opal_output(stream, "%s", traces[i]);
         }
     } else {
-        opal_backtrace_print(stderr, NULL, 2);
+        /* Do not print the stack trace */
+        if( 0 > opal_stacktrace_output_fileno && 0 == opal_stacktrace_output_filename_max_len ) {
+            return;
+        }
+
+        /* Update the file name with the RANK, if available */
+        if( 0 < opal_stacktrace_output_filename_max_len ) {
+            set_stacktrace_filename();
+            opal_stacktrace_output_fileno = open(opal_stacktrace_output_filename,
+                                                 O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR);
+            if( 0 > opal_stacktrace_output_fileno ) {
+                opal_output(0, "Error: Failed to open the stacktrace output file. Default: stderr\n\tFilename: %s\n\tErrno: %s",
+                            opal_stacktrace_output_filename, strerror(errno));
+                opal_stacktrace_output_fileno = fileno(stderr);
+            }
+        }
+
+        opal_backtrace_print(NULL, NULL, 2);
+
+        if( fileno(stdout) != opal_stacktrace_output_fileno &&
+            fileno(stderr) != opal_stacktrace_output_fileno ) {
+            close(opal_stacktrace_output_fileno);
+            opal_stacktrace_output_fileno = -1;
+        }
     }
 }
 
@@ -435,6 +534,50 @@ int opal_util_register_stackhandlers (void)
         }
     }
 
+    /* Setup the output stream to use */
+    if( NULL == opal_stacktrace_output_filename ||
+        0 == strcasecmp(opal_stacktrace_output_filename, "none") ) {
+        opal_stacktrace_output_fileno = -1;
+    }
+    else if( 0 == strcasecmp(opal_stacktrace_output_filename, "stdout") ) {
+        opal_stacktrace_output_fileno = fileno(stdout);
+    }
+    else if( 0 == strcasecmp(opal_stacktrace_output_filename, "stderr") ) {
+        opal_stacktrace_output_fileno = fileno(stdout);
+    }
+    else if( 0 == strcasecmp(opal_stacktrace_output_filename, "file" ) ||
+             0 == strcasecmp(opal_stacktrace_output_filename, "file:") ) {
+        opal_stacktrace_output_filename_base = strdup("stacktrace");
+
+        free(opal_stacktrace_output_filename);
+        // Magic number: 8 = space for .PID and .RANK (allow 7 digits each)
+        opal_stacktrace_output_filename_max_len = strlen("stacktrace") + 8 + 8;
+        opal_stacktrace_output_filename = (char*)malloc(sizeof(char) * opal_stacktrace_output_filename_max_len);
+        set_stacktrace_filename();
+        opal_stacktrace_output_fileno = -1;
+    }
+    else if( 0 == strncasecmp(opal_stacktrace_output_filename, "file:", 5) ) {
+        char *filename_cpy = NULL;
+        next = strchr(opal_stacktrace_output_filename, ':');
+        next++; // move past the ':' to the filename specified
+
+        opal_stacktrace_output_filename_base = strdup(next);
+
+        free(opal_stacktrace_output_filename);
+        // Magic number: 8 = space for .PID and .RANK (allow 7 digits each)
+        opal_stacktrace_output_filename_max_len = strlen(opal_stacktrace_output_filename_base) + 8 + 8;
+        opal_stacktrace_output_filename = (char*)malloc(sizeof(char) * opal_stacktrace_output_filename_max_len);
+        set_stacktrace_filename();
+        opal_stacktrace_output_fileno = -1;
+
+        free(filename_cpy);
+    }
+    else {
+        opal_stacktrace_output_fileno = fileno(stderr);
+    }
+
+
+    /* Setup the signals to catch */
     memset(&act, 0, sizeof(act));
     act.sa_sigaction = show_stackframe;
     act.sa_flags = SA_SIGINFO;

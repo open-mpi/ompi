@@ -840,6 +840,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
                  * properly set
                  */
                 ORTE_FLAG_SET(nd, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
             }
 
             /* track number of procs mapped */

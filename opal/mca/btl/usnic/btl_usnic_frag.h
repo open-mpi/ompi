@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -370,6 +370,7 @@ opal_btl_usnic_small_send_frag_alloc(opal_btl_usnic_module_t *module)
 
     /* this belongs in constructor... */
     frag->ssf_base.sf_base.uf_freelist = &(module->small_send_frags);
+    frag->ssf_segment.ss_send_posted = 0;
 
     assert(frag);
     assert(OPAL_BTL_USNIC_FRAG_SMALL_SEND == frag->ssf_base.sf_base.uf_type);
@@ -478,6 +479,14 @@ opal_btl_usnic_frag_return(
             NULL == lfrag->lsf_des_src[1].seg_addr.pval) {
             opal_convertor_cleanup(&lfrag->lsf_base.sf_convertor);
         }
+    }
+
+    /* Reset the "send_posted" flag on the embedded segment for small
+       fragments */
+    else if (frag->uf_type == OPAL_BTL_USNIC_FRAG_SMALL_SEND) {
+        opal_btl_usnic_small_send_frag_t *sfrag;
+        sfrag = (opal_btl_usnic_small_send_frag_t *) frag;
+        sfrag->ssf_segment.ss_send_posted = 0;
     }
 
     USNIC_COMPAT_FREE_LIST_RETURN(frag->uf_freelist, &(frag->uf_base.super));

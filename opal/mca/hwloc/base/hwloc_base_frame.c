@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,8 +44,7 @@ hwloc_cpuset_t opal_hwloc_base_given_cpus=NULL;
 opal_hwloc_base_map_t opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
 opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_WARN;
 opal_binding_policy_t opal_hwloc_binding_policy=0;
-char *opal_hwloc_base_slot_list=NULL;
-char *opal_hwloc_base_cpu_set=NULL;
+char *opal_hwloc_base_cpu_list=NULL;
 bool opal_hwloc_report_bindings=false;
 hwloc_obj_type_t opal_hwloc_levels[] = {
     HWLOC_OBJ_MACHINE,
@@ -85,7 +86,7 @@ static bool opal_hwloc_base_bind_to_socket = false;
 static int opal_hwloc_base_register(mca_base_register_flag_t flags)
 {
     mca_base_var_enum_t *new_enum;
-    int ret;
+    int ret, varid;
 
     /* hwloc_base_mbind_policy */
 
@@ -140,17 +141,13 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_report_bindings);
 
-    opal_hwloc_base_slot_list = NULL;
-    (void) mca_base_var_register("opal", "hwloc", "base", "slot_list",
-                                 "List of processor IDs to bind processes to [default=NULL]",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_slot_list);
-
-    opal_hwloc_base_cpu_set = NULL;
-    (void) mca_base_var_register("opal", "hwloc", "base", "cpu_set",
-                                 "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_cpu_set);
+    opal_hwloc_base_cpu_list = NULL;
+    varid = mca_base_var_register("opal", "hwloc", "base", "cpu_list",
+                                  "Comma-separated list of ranges specifying logical cpus to be used by these processes [default: none]",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_cpu_list);
+    mca_base_var_register_synonym (varid, "opal", "hwloc", "base", "slot_list", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    mca_base_var_register_synonym (varid, "opal", "hwloc", "base", "cpu_set", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     /* declare hwthreads as independent cpus */
     opal_hwloc_use_hwthreads_as_cpus = false;
@@ -215,25 +212,12 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
     }
 
     /* did the user provide a slot list? */
-    if (NULL != opal_hwloc_base_slot_list) {
-        /* if we already were given a policy, then this is an error */
-        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
-            opal_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
-                           "socket", opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
-            return OPAL_ERR_SILENT;
-        }
+    if (NULL != opal_hwloc_base_cpu_list) {
+        /* it is okay if a binding policy was already given - just ensure that
+         * we do bind to the given cpus if provided, otherwise this would be
+         * ignored if someone didn't also specify a binding policy
+         */
         OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
-    }
-
-    /* cpu allocation specification */
-    if (NULL != opal_hwloc_base_cpu_set) {
-        if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
-            /* it is okay if a binding policy was already given - just ensure that
-             * we do bind to the given cpus if provided, otherwise this would be
-             * ignored if someone didn't also specify a binding policy
-             */
-            OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
-        }
     }
 
     /* if we are binding to hwthreads, then we must use hwthreads as cpus */
@@ -311,6 +295,7 @@ static void buffer_cleanup(void *value)
         for (i=0; i < OPAL_HWLOC_PRINT_NUM_BUFS; i++) {
             free(ptr->buffers[i]);
         }
+        free(ptr);
     }
 }
 

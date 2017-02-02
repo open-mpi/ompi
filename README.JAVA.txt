@@ -24,8 +24,8 @@ as in mpiJava [2]; in fact, mpiJava was taken as a starting point
 for Open MPI Java bindings, but they were later totally rewritten.
 
  [1] O. Vega-Gisbert, J. E. Roman, and J. M. Squyres. "Design and
-     implementation of Java bindings in Open MPI". In preparation
-     (2013).
+     implementation of Java bindings in Open MPI". Parallel Comput.
+     59: 1-20 (2016).
 
  [2] M. Baker et al. "mpiJava: An object-oriented Java interface to
      MPI". In Parallel and Distributed Processing, LNCS vol. 1586,

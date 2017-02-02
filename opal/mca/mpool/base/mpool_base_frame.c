@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -128,6 +128,8 @@ static int mca_mpool_base_close(void)
   /* Close all remaining available components (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is opal_info) */
   (void) mca_base_framework_components_close(&opal_mpool_base_framework, NULL);
+
+  mca_mpool_base_tree_fini();
 
   return OPAL_SUCCESS;
 }

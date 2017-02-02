@@ -38,7 +38,6 @@ nodist_liboshmem_fortran_pshmem_la_SOURCES = \
 	pshmem_ptr_f.c \
 	pshmem_pe_accessible_f.c \
 	pshmem_addr_accessible_f.c \
-	pshmem_put_f.c \
 	pshmem_character_put_f.c \
 	pshmem_double_put_f.c \
 	pshmem_complex_put_f.c \

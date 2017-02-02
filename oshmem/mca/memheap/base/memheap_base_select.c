@@ -45,133 +45,43 @@ static memheap_context_t* _memheap_create(void);
  */
 int mca_memheap_base_select()
 {
-    int priority = 0;
-    int max_priority = 0;
-    mca_base_component_list_item_t *cli, *next;
-    mca_memheap_base_component_t *component = NULL;
-    mca_memheap_base_component_t *max_priority_component = NULL;
-    mca_memheap_base_module_t *module = NULL;
-    memheap_context_t *context = NULL;
+    int best_priority;
+    memheap_context_t *context;
+    mca_memheap_base_component_t *best_component = NULL;
+    mca_memheap_base_module_t *best_module = NULL;
 
-    char** include = opal_argv_split(mca_memheap_base_include, ',');
-    char** exclude = opal_argv_split(mca_memheap_base_exclude, ',');
+    if( OPAL_SUCCESS != mca_base_select("memheap", oshmem_memheap_base_framework.framework_output,
+                                        &oshmem_memheap_base_framework.framework_components,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component,
+                                        &best_priority) ) {
+        return OSHMEM_ERROR;
+    }
 
     context = _memheap_create();
-    if (!context) {
-        opal_argv_free(include);
-        opal_argv_free(exclude);
+    if (NULL == context) {
         return OSHMEM_ERROR;
     }
 
-    OPAL_LIST_FOREACH_SAFE(cli, next, &oshmem_memheap_base_framework.framework_components, mca_base_component_list_item_t) {
-        component = (mca_memheap_base_component_t *) cli->cli_component;
-
-        /* Verify if the component is in the include or the exclude list. */
-        /* If there is an include list - item must be in the list to be included */
-        if (NULL != include) {
-            char** argv = include;
-            bool found = false;
-            while (argv && *argv) {
-                if (strcmp(component->memheap_version.mca_component_name, *argv)
-                        == 0) {
-                    found = true;
-                    break;
-                }
-                argv++;
-            }
-            /* If not in the list do not choose this component */
-            if (found == false) {
-                continue;
-            }
-
-            /* Otherwise - check the exclude list to see if this item has been specifically excluded */
-        } else if (NULL != exclude) {
-            char** argv = exclude;
-            bool found = false;
-            while (argv && *argv) {
-                if (strcmp(component->memheap_version.mca_component_name, *argv)
-                        == 0) {
-                    found = true;
-                    break;
-                }
-                argv++;
-            }
-            if (found == true) {
-                continue;
-            }
-        }
-
-        /* Verify that the component has an init function */
-        if (NULL == component->memheap_init) {
-            MEMHEAP_VERBOSE(10,
-                            "select: no init function; for component %s. No component selected",
-                            component->memheap_version.mca_component_name);
-        } else {
-
-            MEMHEAP_VERBOSE(5,
-                            "select: component %s size : user %d private: %d",
-                            component->memheap_version.mca_component_name, (int)context->user_size, (int)context->private_size);
-
-            /* Init the component in order to get its priority */
-            module = component->memheap_init(context, &priority);
-
-            /* If the component didn't initialize, remove it from the opened                                                                                                list, remove it from the component repository and return an error */
-            if (NULL == module) {
-                MEMHEAP_VERBOSE(10,
-                                "select: init of component %s returned failure",
-                                component->memheap_version.mca_component_name);
-
-                opal_list_remove_item(&oshmem_memheap_base_framework.framework_components, &cli->super);
-                mca_base_component_close((mca_base_component_t *) component,
-                                         oshmem_memheap_base_framework.framework_output);
-            } else {
-                /* Calculate memheap size in case it was not set during component initialization */
-                module->memheap_size = context->user_size;
-            }
-        }
-
-        /* Init max priority component */
-        if (NULL == max_priority_component) {
-            max_priority_component = component;
-            mca_memheap_base_module_initialized = module;
-            max_priority = priority;
-        }
-
-        /* Update max priority component if current component has greater priority */
-        if (priority > max_priority) {
-            max_priority = priority;
-            max_priority_component = component;
-            mca_memheap_base_module_initialized = module;
-        }
-    }
-
-    opal_argv_free(include);
-    opal_argv_free(exclude);
-
-    /* Verify that a component was selected */
-    if (NULL == max_priority_component) {
-        MEMHEAP_VERBOSE(10, "select: no component selected");
-        return OSHMEM_ERROR;
-    }
-
-    /* Verify that some module was initialized */
-    if (NULL == mca_memheap_base_module_initialized) {
+    if (OSHMEM_SUCCESS != best_component->memheap_init(context)) {
         opal_show_help("help-oshmem-memheap.txt",
                        "find-available:none-found",
                        true,
                        "memheap");
-        orte_errmgr.abort(1, NULL );
+        return OSHMEM_ERROR;
     }
+
+    /* Calculate memheap size in case it was not set during component initialization */
+    best_module->memheap_size = context->user_size;
+    setenv(SHMEM_HEAP_TYPE,
+           best_component->memheap_version.mca_component_name, 1);
+
+    mca_memheap = *best_module;
 
     MEMHEAP_VERBOSE(10,
                     "SELECTED %s component %s",
-                    max_priority_component->memheap_version.mca_type_name, max_priority_component->memheap_version.mca_component_name);
-
-    setenv(SHMEM_HEAP_TYPE,
-           max_priority_component->memheap_version.mca_component_name,
-           1);
-
-    mca_memheap = *mca_memheap_base_module_initialized;
+                    best_component->memheap_version.mca_type_name, 
+                    best_component->memheap_version.mca_component_name);
 
     return OSHMEM_SUCCESS;
 }
@@ -218,10 +128,10 @@ static memheap_context_t* _memheap_create(void)
         context.user_size = user_size;
         context.private_size = MEMHEAP_BASE_PRIVATE_SIZE;
         context.user_base_addr =
-                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].seg_base_addr
+                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].super.va_base
                         + 0);
         context.private_base_addr =
-                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].seg_base_addr
+                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].super.va_base
                         + context.user_size);
     }
 

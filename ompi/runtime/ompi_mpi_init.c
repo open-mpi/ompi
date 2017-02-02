@@ -17,9 +17,10 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -33,9 +34,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
-#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -281,7 +280,6 @@ opal_list_t ompi_registered_datareps = {{0}};
 
 bool ompi_enable_timing = false, ompi_enable_timing_ext = false;
 extern bool ompi_mpi_yield_when_idle;
-extern bool ompi_mpi_lazy_wait_in_init;
 extern int ompi_mpi_event_tick_rate;
 
 /**
@@ -510,16 +508,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* check for timing request - get stop time and report elapsed time if so */
     OPAL_TIMING_MNEXT((&tm,"time from completion of rte_init to modex"));
 
-    /* if hwloc is available but didn't get setup for some
-     * reason, do so now
-     */
-    if (NULL == opal_hwloc_topology) {
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
-            error = "Topology init";
-            goto error;
-        }
-    }
-
     /* Register the default errhandler callback  */
     errtrk.status = OPAL_ERROR;
     errtrk.active = true;
@@ -531,11 +519,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_pmix.register_evhandler(NULL, &info, ompi_errhandler_callback,
                                  ompi_errhandler_registration_callback,
                                  (void*)&errtrk);
-    if( ompi_mpi_lazy_wait_in_init ){
-        OMPI_LAZY_WAIT_FOR_COMPLETION(errtrk.active);
-    } else {
-        OMPI_WAIT_FOR_COMPLETION(errtrk.active);
-    }
+    OMPI_LAZY_WAIT_FOR_COMPLETION(errtrk.active);
 
     OPAL_LIST_DESTRUCT(&info);
     if (OPAL_SUCCESS != errtrk.status) {
@@ -656,17 +640,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * if data exchange is required. The modex occurs solely across procs
      * in our job. If a barrier is required, the "modex" function will
      * perform it internally */
-    active = true;
     opal_pmix.commit();
     if (!opal_pmix_base_async_modex) {
         if (NULL != opal_pmix.fence_nb) {
+            active = true;
             opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
                                fence_release, (void*)&active);
-            if( ompi_mpi_lazy_wait_in_init ){
-                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-            } else {
-                OMPI_WAIT_FOR_COMPLETION(active);
-            }
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
             opal_pmix.fence(NULL, opal_pmix_collect_all_data);
         }
@@ -841,15 +821,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (!ompi_async_mpi_init) {
         active = true;
         if (NULL != opal_pmix.fence_nb) {
-            opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
+            opal_pmix.fence_nb(NULL, false,
                                fence_release, (void*)&active);
-            if( ompi_mpi_lazy_wait_in_init ){
-                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-            } else {
-                OMPI_WAIT_FOR_COMPLETION(active);
-            }
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
-            opal_pmix.fence(NULL, opal_pmix_collect_all_data);
+            opal_pmix.fence(NULL, false);
         }
     }
 

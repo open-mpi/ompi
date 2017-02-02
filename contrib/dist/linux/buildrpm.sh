@@ -1,9 +1,65 @@
-#!/bin/sh -f
+#!/bin/bash -f
 #
 # Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+#
+
+#
+# External script parameters
+# The folowing parameters could be used to affect script behaviour.
+# Please, do NOT set the same settings with parameters and config vars.
+#
+# -b
+#    If you specify this option, only the all-in-one binary RPM will
+#    be built. By default, only the source RPM (SRPM) is built. Other
+#    parameters that affect the all-in-one binary RPM will be ignored
+#    unless this option is specified.
+#
+# -n name
+#    This option will change the name of the produced RPM to the "name".
+#    It is useful to use with "-o" and "-m" options if you want to have
+#    multiple Open MPI versions installed simultaneously in the same
+#    enviroment. Requires use of option "-b".
+#
+# -o
+#    With this option the install path of the binary RPM will be changed
+#    to /opt/_NAME_/_VERSION_. Requires use of option "-b".
+#
+# -m
+#    This option causes the RPM to also install modulefiles
+#    to the location specified in the specfile. Requires use of option "-b".
+#
+# -i
+#    Also build a debuginfo RPM. By default, the debuginfo RPM is not built.
+#    Requires use of option "-b".
+#
+# -f lf_location
+#    Include support for Libfabric. "lf_location" is Libfabric install
+#    path. Requires use of option "-b".
+#
+# -t tm_location
+#    Include support for Torque/PBS Pro. "tm_location" is path of the
+#    Torque/PBS Pro header files. Requires use of option "-b".
+#
+# -d
+#    Build with debugging support. By default,
+#    the RPM is built without debugging support.
+#
+# -c parameter
+#    Add custom configure parameter.
+#
+# -r parameter
+#    Add custom RPM build parameter.
+#
+# -s
+#    If specified, the script will try to unpack the openmpi.spec
+#    file from the tarball specified on the command line. By default,
+#    the script will look for the specfile in the current directory.
+#
+# -h
+#    Prints script usage information.
 #
 
 #
@@ -11,12 +67,11 @@
 # The following vars can be set from outside and will affect script behave:
 # prefix,rpmbuild_options,configure_options,build_srpm,build_single,build_multiple,rpmtopdir
 #
-
-
 specfile="openmpi.spec"
 prefix=${prefix:-"/opt/openmpi"}
 rpmbuild_options=${rpmbuild_options:-"--define 'mflags -j4' --define '_source_filedigest_algorithm md5'  --define '_binary_filedigest_algorithm md5'"}
 configure_options=${configure_options:-""}
+unpack_spec=0
 
 # Helpful when debugging
 #rpmbuild_options="--define 'mflags -j4' --define 'install_in_opt 1' --define 'cflags -g' --define 'install_modulefile 1' --define 'modules_rpm_name dhcp'"
@@ -45,12 +100,102 @@ build_multiple=${build_multiple:-"no"}
 #########################################################################
 
 #
+# save original parameters
+#
+orig_param="$@"
+
+#
+# usage information
+#
+usage="Usage: $0 [-b][-o][-m][-d][-u][-s][-h] [-n name][-f lf_location][-t tm_location] tarball
+
+  -b
+             build all-in-one binary RPM only (required for all other flags to work)
+             {default: build only SRPM}
+
+  -n name
+             name of the resulting RPM package set to name. Requires -b flag.
+             {default: openmpi}
+
+  -o         install in /opt/_NAME_/_VERSION_. Requires -b flag.
+             {default: install in /usr}
+
+  -m         install modulefiles during RPM installation. Requires -b flag.
+             {default: modulefiles will NOT be installed}
+
+  -i         build debuginfo RPM. Requires -b flag.
+             {default: do NOT build debuginfo RPM}
+
+  -f lf_location
+             include Libfabric support from <lf_location>. Requires -b flag.
+             {default: try to build with Libfabric support}
+
+  -t tm_location
+             include Torque/PBS Pro support from tm_location. Requires -b flag.
+             {default: try to build with Torque/PBS Pro}
+
+  -d         build with Debugging support
+             {default: without debugging support}
+
+  -s         try to unpack openmpi.spec file from tarball
+             {default: search for openmpi.spec in current directory}
+
+  -c parameter
+             add custom configure parameter
+
+  -r parameter
+             add custom RPM build parameter
+
+  -h         print this message and exit
+
+  tarball    path to Open MPI source tarball
+  "
+
+#
+# parse args
+#
+libfabric_path=""
+
+while getopts bn:omif:t:dc:r:sh flag; do
+    case "$flag" in
+      b) build_srpm="no"
+         build_single="yes"
+         ;;
+      n) rpmbuild_options="$rpmbuild_options --define '_name $OPTARG'"
+         ;;
+      o) rpmbuild_options="$rpmbuild_options --define 'install_in_opt 1'"
+         configure_options="$configure_options --enable-mpirun-prefix-by-default"
+         ;;
+      m) rpmbuild_options="$rpmbuild_options --define 'install_modulefile 1'"
+         ;;
+      i) rpmbuild_options="$rpmbuild_options --define 'build_debuginfo_rpm 1'"
+         ;;
+      f) libfabric_path="$OPTARG"
+         ;;
+      t) configure_options="$configure_options --with-tm=$OPTARG"
+         ;;
+      d) configure_options="$configure_options --enable-debug"
+         ;;
+      c) configure_options="$configure_options $OPTARG"
+         ;;
+      r) configure_options="$rpmbuild_options $OPTARG"
+         ;;
+      s) unpack_spec="1"
+         ;;
+      h) echo "$usage" 1>&2
+         exit 0
+         ;;
+    esac
+done
+shift $(( OPTIND - 1 ));
+
+#
 # get the tarball name
 #
 
 tarball="$1"
 if test "$tarball" = ""; then
-    echo "Usage: buildrpm.sh <tarball>"
+    echo "$usage"
     exit 1
 fi
 if test ! -f $tarball; then
@@ -80,20 +225,53 @@ unset first
 echo "--> Found Open MPI version: $version"
 
 #
+# Try to unpack spec file from tarball
+#
+
+if test $unpack_spec -eq 1; then
+    tar -xf $tarball --wildcards --no-anchored 'openmpi.spec' --strip=4
+fi
+
+#
 # do we have the spec files?
 #
 
-if test ! -f $specfile; then
+if test ! -r $specfile; then
     echo "can't find $specfile"
     exit 1
 fi
 echo "--> Found specfile: $specfile"
 
 #
+# try to find Libfabric lib subir
+#
+if test -n $libfabric_path; then
+    # does lib64 exist?
+    if test -d $libfabric_path/lib64; then
+        # yes, so I will use lib64 as include dir
+        configure_options="$configure_options --with-libfabric=$libfabric_path \"LDFLAGS=-Wl,--build-id -Wl,-rpath -Wl,$libfabric_path/lib64 -Wl,--enable-new-dtags\""
+        echo "--> Found Libfabric lib dir: $libfabric_path/lib64"
+    # does lib exist?
+    elif test -d $libfabric_path/lib; then
+        # yes, so I will use lib as include dir
+        configure_options="$configure_options --with-libfabric=$libfabric_path \"LDFLAGS=-Wl,--build-id -Wl,-rpath -Wl,$libfabric_path/lib -Wl,--enable-new-dtags\""
+        echo "--> Found Libfabric lib dir: $libfabric_path/lib"
+    else
+        # I give up, there is no lib64 or lib subdir
+        echo "ERROR: Can't find Libfabric lib64/lib dir in $libfabric_path"
+        exit 1
+    fi
+fi
+
+#
 # Find where the top RPM-building directory is
 #
 
-rpmtopdir=${rpmtopdir:-"`grep %_topdir $HOME/.rpmmacros | awk '{ print $2 }'`"}
+rpmtopdir=
+file=~/.rpmmacros
+if test -r $file; then
+    rpmtopdir=${rpmtopdir:-"`grep %_topdir $file | awk '{ print $2 }'`"}
+fi
 if test "$rpmtopdir" != ""; then
 	rpmbuild_options="$rpmbuild_options --define '_topdir $rpmtopdir'"
     if test ! -d "$rpmtopdir"; then
@@ -127,9 +305,9 @@ echo "--> Found RPM top dir: $rpmtopdir"
 #
 
 if test "$need_root" = "1" -a "`whoami`" != "root"; then
-    echo "--> Trying to sudo: \"$0 $*\""
+    echo "--> Trying to sudo: \"$0 $orig_param\""
     echo "------------------------------------------------------------"
-    sudo -u root sh -c "$0 $tarball"
+    sudo -u root sh -c "$0 $orig_param"
     echo "------------------------------------------------------------"
     echo "--> sudo finished"
     exit 0

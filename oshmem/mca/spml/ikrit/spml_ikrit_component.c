@@ -233,17 +233,11 @@ static int mca_spml_ikrit_component_register(void)
                                          &mca_spml_ikrit.mxm_tls);
 
      mca_spml_ikrit_param_register_int("np",
-#if MXM_API <= MXM_VERSION(2,0)
-                                           128,
-#else
-                                           0,
-#endif
-                                           "[integer] Minimal allowed job's NP to activate ikrit", &mca_spml_ikrit.np);
-#if MXM_API >= MXM_VERSION(2,0)
+                                       0,
+                                       "[integer] Minimal allowed job's NP to activate ikrit", &mca_spml_ikrit.np);
     mca_spml_ikrit_param_register_int("unsync_conn_max", 8,
                                       "[integer] Max number of connections that do not require notification of PUT operation remote completion. Increasing this number improves efficiency of p2p communication but increases overhead of shmem_fence/shmem_quiet/shmem_barrier",
                                       &mca_spml_ikrit.unsync_conn_max);
-#endif
 
     mca_spml_ikrit_param_register_size_t("put_zcopy_threshold", 16384ULL,
                                          "[size_t] Use zero copy put if message size is greater than the threshold",
@@ -312,10 +306,6 @@ static int mca_spml_ikrit_component_open(void)
         return OSHMEM_ERROR;
     }
 
-#if MXM_API < MXM_VERSION(2,0)
-    mca_spml_ikrit.ud_only = 1;
-    mca_spml_ikrit.mxm_ctx_opts->ptl_bitmap = (MXM_BIT(MXM_PTL_SELF) | MXM_BIT(MXM_PTL_RDMA));
-#endif
     SPML_VERBOSE(5, "UD only mode is %s",
                  mca_spml_ikrit.ud_only ? "enabled" : "disabled");
 
@@ -354,15 +344,10 @@ static int mca_spml_ikrit_component_close(void)
     }
     if (mca_spml_ikrit.mxm_context) {
         mxm_cleanup(mca_spml_ikrit.mxm_context);
-#if MXM_API < MXM_VERSION(2,0)
-        mxm_config_free(mca_spml_ikrit.mxm_ep_opts);
-        mxm_config_free(mca_spml_ikrit.mxm_ctx_opts);
-#else
         mxm_config_free_ep_opts(mca_spml_ikrit.mxm_ep_opts);
         mxm_config_free_context_opts(mca_spml_ikrit.mxm_ctx_opts);
         if (mca_spml_ikrit.hw_rdma_channel)
             mxm_config_free_ep_opts(mca_spml_ikrit.mxm_ep_hw_rdma_opts);
-#endif
     }
     mca_spml_ikrit.mxm_mq = NULL;
     mca_spml_ikrit.mxm_context = NULL;
@@ -372,14 +357,6 @@ static int mca_spml_ikrit_component_close(void)
 static int spml_ikrit_mxm_init(void)
 {
     mxm_error_t err;
-
-#if MXM_API < MXM_VERSION(2,0)
-    /* Only relevant for SHM PTL - ignore */
-    mca_spml_ikrit.mxm_ep_opts->job_id = 0;
-    mca_spml_ikrit.mxm_ep_opts->local_rank = 0;
-    mca_spml_ikrit.mxm_ep_opts->num_local_procs = 0;
-    mca_spml_ikrit.mxm_ep_opts->rdma.drain_cq = 1;
-#endif
 
     /* Open MXM endpoint */
     err = mxm_ep_create(mca_spml_ikrit.mxm_context,

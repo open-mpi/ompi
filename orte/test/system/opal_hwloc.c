@@ -22,7 +22,7 @@ static void fill_cache_line_size(void)
     /* Look for the smallest L2 cache size */
     size = 4096;
     while (1) {
-        obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
+        obj = opal_hwloc_base_get_obj_by_type(my_topology,
                                               HWLOC_OBJ_CACHE, 2,
                                               i, OPAL_HWLOC_LOGICAL);
         if (NULL == obj) {

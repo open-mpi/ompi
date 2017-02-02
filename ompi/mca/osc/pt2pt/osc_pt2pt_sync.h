@@ -127,18 +127,23 @@ bool ompi_osc_pt2pt_sync_pscw_peer (struct ompi_osc_pt2pt_module_t *module, int 
 /**
  * Wait for all remote peers in the synchronization to respond
  */
-static inline void ompi_osc_pt2pt_sync_wait (ompi_osc_pt2pt_sync_t *sync)
+static inline void ompi_osc_pt2pt_sync_wait_nolock (ompi_osc_pt2pt_sync_t *sync)
 {
-    OPAL_THREAD_LOCK(&sync->lock);
     while (!sync->eager_send_active) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "waiting for access epoch to start"));
         opal_condition_wait(&sync->cond, &sync->lock);
     }
-    OPAL_THREAD_UNLOCK(&sync->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "access epoch ready"));
+}
+
+static inline void ompi_osc_pt2pt_sync_wait (ompi_osc_pt2pt_sync_t *sync)
+{
+    OPAL_THREAD_LOCK(&sync->lock);
+    ompi_osc_pt2pt_sync_wait_nolock (sync);
+    OPAL_THREAD_UNLOCK(&sync->lock);
 }
 
 /**

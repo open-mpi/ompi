@@ -3,7 +3,7 @@
  *                         All rights reserved
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -145,7 +145,6 @@ static int raw_finalize(void)
 {
     opal_list_item_t *item;
 
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FILEM_BASE);
     while (NULL != (item = opal_list_remove_first(&incoming_files))) {
         OBJ_RELEASE(item);
     }
@@ -160,7 +159,6 @@ static int raw_finalize(void)
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&positioned_files);
-        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FILEM_BASE_RESP);
     }
 
     return ORTE_SUCCESS;

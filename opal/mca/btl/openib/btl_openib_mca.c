@@ -641,6 +641,9 @@ int btl_openib_register_mca_params(void)
         /* Don't try to recover from this */
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
+    if (NULL != mca_btl_openib_component.default_recv_qps) {
+        free(mca_btl_openib_component.default_recv_qps);
+    }
     mca_btl_openib_component.default_recv_qps = default_qps;
     CHECK(reg_string("receive_queues", NULL,
                      "Colon-delimited, comma-delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",

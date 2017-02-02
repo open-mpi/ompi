@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +25,7 @@
 #include "opal_config.h"
 
 #include "opal/mca/base/mca_base_var_enum.h"
+#include "opal/mca/base/mca_base_vari.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
 
@@ -171,7 +174,9 @@ static int mca_base_var_enum_verbose_sfv (mca_base_var_enum_t *self, const int v
 
     for (int i = 0 ; verbose_values[i].string ; ++i) {
         if (verbose_values[i].value == value) {
-            *string_value = strdup (verbose_values[i].string);
+            if (string_value) {
+                *string_value = strdup (verbose_values[i].string);
+            }
             return OPAL_SUCCESS;
         }
     }
@@ -615,6 +620,7 @@ static void mca_base_var_enum_flag_constructor (mca_base_var_enum_flag_t *enumer
     enumerator->super.string_from_value = enum_string_from_value_flag;
     enumerator->super.dump = enum_dump_flag;
     enumerator->super.enum_is_static = false;
+    enumerator->super.enum_name = NULL;
 }
 
 static void mca_base_var_enum_flag_destructor (mca_base_var_enum_flag_t *enumerator)
@@ -626,4 +632,32 @@ static void mca_base_var_enum_flag_destructor (mca_base_var_enum_flag_t *enumera
         }
         free (enumerator->enum_flags);
     }
+    if (NULL != enumerator->super.enum_name) {
+        free (enumerator->super.enum_name);
+    }
+}
+
+int mca_base_var_enum_register(const char *project_name, const char *framework_name,
+                               const char *component_name, const char *enum_name,
+                               void *storage)
+{
+    int group_index;
+
+    /* Developer error. Storage can not be NULL */
+    assert (NULL != storage);
+
+    /* Create a new parameter entry */
+    group_index = mca_base_var_group_register (project_name, framework_name, component_name,
+                                               NULL);
+    if (-1 > group_index) {
+        return group_index;
+    }
+
+    if (0 <= group_index) {
+        mca_base_var_group_add_enum (group_index, storage);
+    }
+
+    return OPAL_SUCCESS;
+
+    /* All done */
 }

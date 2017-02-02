@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -22,11 +22,22 @@
 #include "opal_config.h"
 
 #include "opal/threads/threads.h"
+#include "opal/threads/tsd.h"
 #include "opal/constants.h"
 
 bool opal_debug_threads = false;
 
 static void opal_thread_construct(opal_thread_t *t);
+
+static pthread_t opal_main_thread;
+
+struct opal_tsd_key_value {
+    opal_tsd_key_t key;
+    opal_tsd_destructor_t destructor;
+};
+
+static struct opal_tsd_key_value *opal_tsd_key_values = NULL;
+static int opal_tsd_key_values_count = 0;
 
 OBJ_CLASS_INSTANCE(opal_thread_t,
                    opal_object_t,
@@ -82,4 +93,41 @@ opal_thread_t *opal_thread_get_self(void)
 void opal_thread_kill(opal_thread_t *t, int sig)
 {
     pthread_kill(t->t_handle, sig);
+}
+
+int opal_tsd_key_create(opal_tsd_key_t *key,
+                    opal_tsd_destructor_t destructor)
+{
+    int rc;
+    rc = pthread_key_create(key, destructor);
+    if ((0 == rc) && (pthread_self() == opal_main_thread)) {
+        opal_tsd_key_values = (struct opal_tsd_key_value *)realloc(opal_tsd_key_values, (opal_tsd_key_values_count+1) * sizeof(struct opal_tsd_key_value));
+        opal_tsd_key_values[opal_tsd_key_values_count].key = *key;
+        opal_tsd_key_values[opal_tsd_key_values_count].destructor = destructor;
+        opal_tsd_key_values_count ++;
+    }
+    return rc;
+}
+
+int opal_tsd_keys_destruct()
+{
+    int i;
+    void * ptr;
+    for (i=0; i<opal_tsd_key_values_count; i++) {
+        if(OPAL_SUCCESS == opal_tsd_getspecific(opal_tsd_key_values[i].key, &ptr)) {
+            if (NULL != opal_tsd_key_values[i].destructor) {
+                opal_tsd_key_values[i].destructor(ptr);
+                opal_tsd_setspecific(opal_tsd_key_values[i].key, NULL);
+            }
+        }
+    }
+    if (0 < opal_tsd_key_values_count) {
+        free(opal_tsd_key_values);
+        opal_tsd_key_values_count = 0;
+    }
+    return OPAL_SUCCESS;
+}
+
+void opal_thread_set_main() {
+    opal_main_thread = pthread_self();
 }

@@ -10,7 +10,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,6 +58,8 @@ static int orte_routed_base_open(mca_base_open_flag_t flags)
 {
     /* setup our list of actives */
     OBJ_CONSTRUCT(&orte_routed_base.actives, opal_list_t);
+    /* start with routing DISABLED */
+    orte_routed_base.routing_enabled = false;
 
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_routed_base_framework, flags);

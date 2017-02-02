@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,12 +12,21 @@
 #ifndef MCA_PMIX_CRAY_H
 #define MCA_PMIX_CRAY_H
 
+#include <pmi.h>
+#include <pmi2.h>
+
 #include "opal_config.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/mca/pmix/base/pmix_base_fns.h"
 #include "opal/util/proc.h"
+
+#include "alps/alps.h"
+#include "alps/alps_toolAssist.h"
+#include "alps/libalpsutil.h"
+#include "alps/libalpslli.h"
+
 #include "pmix_cray_pmap_parser.h"
 
 BEGIN_C_DECLS

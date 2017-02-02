@@ -41,7 +41,8 @@ static int setup_fork(orte_job_t *jdata, orte_app_context_t *app)
     bool takeus = false;
     char *t2, *pth, *newenv;
 
-    if (NULL != orte_schizo_base.personalities) {
+    if (NULL != orte_schizo_base.personalities &&
+        NULL != jdata->personality) {
         /* see if we are included */
         for (i=0; NULL != jdata->personality[i]; i++) {
             if (0 == strcmp(jdata->personality[i], "singularity")) {
@@ -106,4 +107,3 @@ static int setup_fork(orte_job_t *jdata, orte_app_context_t *app)
 
     return ORTE_SUCCESS;
 }
-

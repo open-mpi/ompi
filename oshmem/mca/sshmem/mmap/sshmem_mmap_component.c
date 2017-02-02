@@ -94,10 +94,10 @@ mmap_register(void)
 {
     /* ////////////////////////////////////////////////////////////////////// */
     /* (default) priority - set high to make mmap the default */
-    mca_sshmem_mmap_component.priority = 20;
+    mca_sshmem_mmap_component.priority = 40;
     mca_base_component_var_register (&mca_sshmem_mmap_component.super.base_version,
                                      "priority", "Priority for sshmem mmap "
-                                     "component (default: 20)", MCA_BASE_VAR_TYPE_INT,
+                                     "component (default: 40)", MCA_BASE_VAR_TYPE_INT,
                                      NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                      OPAL_INFO_LVL_3,
                                      MCA_BASE_VAR_SCOPE_ALL_EQ,

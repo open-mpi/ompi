@@ -65,6 +65,7 @@ mca_spml_yoda_module_t mca_spml_yoda = {
         mca_spml_yoda_fence,
         mca_spml_base_rmkey_unpack,
         mca_spml_base_rmkey_free,
+        mca_spml_base_memuse_hook,
 
         (void *)&mca_spml_yoda
     }
@@ -1166,6 +1167,9 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
                 }
 
                 frag->local_handle = local_handle;
+            } else if (NULL == l_mkey) {
+                local_handle = NULL;
+                frag->local_handle = NULL;
             } else {
                 local_handle = ((mca_spml_yoda_context_t*)l_mkey->spml_context)->registration;
                 frag->local_handle = NULL;

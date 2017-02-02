@@ -13,9 +13,10 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,11 +87,10 @@ bool orte_have_fqdn_allocation = false;
 bool orte_show_resolved_nodenames = false;
 bool orte_retain_aliases = false;
 int orte_use_hostname_alias = -1;
+int orte_hostname_cutoff = 1000;
 
 int orted_debug_failure = -1;
 int orted_debug_failure_delay = -1;
-bool orte_hetero_apps = false;
-bool orte_hetero_nodes = false;
 bool orte_never_launched = false;
 bool orte_devel_level_output = false;
 bool orte_display_topo_with_map = false;
@@ -132,6 +132,8 @@ float orte_max_timeout = -1.0;
 orte_timer_t *orte_mpiexec_timeout = NULL;
 
 opal_buffer_t *orte_tree_launch_cmd = NULL;
+
+int orte_stack_trace_wait_timeout = 30;
 
 /* global arrays for data storage */
 opal_hash_table_t *orte_job_data = NULL;
@@ -183,21 +185,15 @@ int orte_stat_history_size = -1;
 /* envars to forward */
 char **orte_forwarded_envars = NULL;
 
-/* map-reduce mode */
-bool orte_map_reduce = false;
-bool orte_staged_execution = false;
-
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 bool orte_map_stddiag_to_stderr = false;
+bool orte_map_stddiag_to_stdout = false;
 
 /* maximum size of virtual machine - used to subdivide allocation */
 int orte_max_vm_size = -1;
 
 /* user debugger */
 char *orte_base_user_debugger = NULL;
-
-/* modex cutoff */
-uint32_t orte_direct_modex_cutoff = UINT32_MAX;
 
 int orte_debug_output = -1;
 bool orte_debug_daemons_flag = false;
@@ -907,7 +903,7 @@ static void tcon(orte_topology_t *t)
 static void tdes(orte_topology_t *t)
 {
     if (NULL != t->topo) {
-        hwloc_topology_destroy(t->topo);
+        opal_hwloc_base_free_topology(t->topo);
     }
     if (NULL != t->sig) {
         free(t->sig);

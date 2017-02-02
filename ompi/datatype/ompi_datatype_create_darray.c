@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -169,6 +171,7 @@ int32_t ompi_datatype_create_darray(int size,
     ptrdiff_t orig_extent, *st_offsets = NULL;
     int i, start_loop, end_loop, step;
     int *coords = NULL, rc = OMPI_SUCCESS;
+    ptrdiff_t displs[2], tmp_size = 1;
 
     /* speedy corner case */
     if (ndims < 1) {
@@ -187,10 +190,13 @@ int32_t ompi_datatype_create_darray(int size,
         int tmp_rank = rank, procs = size;
 
         coords = (int *) malloc(ndims * sizeof(int));
+        displs[1] = orig_extent;
         for (i = 0 ; i < ndims ; i++) {
             procs = procs / psize_array[i];
             coords[i] = tmp_rank / procs;
             tmp_rank = tmp_rank % procs;
+            /* compute the upper bound of the datatype, including all dimensions */
+            displs[1] *= gsize_array[i];
         }
     }
 
@@ -246,7 +252,6 @@ int32_t ompi_datatype_create_darray(int size,
         lastType = *newtype;
     }
 
-
     /**
      * We need to shift the content (useful data) of the datatype, so
      * we need to force the displacement to be moved. Therefore, we
@@ -255,29 +260,26 @@ int32_t ompi_datatype_create_darray(int size,
      * new data, and insert the last_Type with the correct
      * displacement.
      */
-    {
-        ptrdiff_t displs[2], tmp_size = 1;
+    displs[0] = st_offsets[start_loop];
+    for (i = start_loop + step; i != end_loop; i += step) {
+        tmp_size *= gsize_array[i - step];
+        displs[0] += tmp_size * st_offsets[i];
+    }
+    displs[0] *= orig_extent;
 
-        displs[0] = st_offsets[start_loop];
-        displs[1] = orig_extent;
-        for (i = start_loop + step; i != end_loop; i += step) {
-            tmp_size *= gsize_array[i - step];
-            displs[0] += tmp_size * st_offsets[i];
-            displs[1] *= gsize_array[i];
-        }
-        displs[0] *= orig_extent;
-
-        *newtype = ompi_datatype_create(lastType->super.desc.used);
-        rc = ompi_datatype_add(*newtype, lastType, 1, displs[0], displs[1]);
-        ompi_datatype_destroy(&lastType);
-        opal_datatype_resize( &(*newtype)->super, 0, displs[1] );
-        /* need to destroy the old type even in error condition, so
-           don't check return code from above until after cleanup. */
-        if (MPI_SUCCESS != rc) newtype = NULL;
+    *newtype = ompi_datatype_create(lastType->super.desc.used);
+    rc = ompi_datatype_add(*newtype, lastType, 1, displs[0], displs[1]);
+    ompi_datatype_destroy(&lastType);
+    /* need to destroy the old type even in error condition, so
+       don't check return code from above until after cleanup. */
+    if (MPI_SUCCESS != rc) {
+        ompi_datatype_destroy (newtype);
+    } else {
+        (void) opal_datatype_resize( &(*newtype)->super, 0, displs[1]);
     }
 
  cleanup:
-    if (NULL != st_offsets) free(st_offsets);
-    if (NULL != coords) free(coords);
-    return OMPI_SUCCESS;
+    free(st_offsets);
+    free(coords);
+    return rc;
 }

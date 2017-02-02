@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -595,7 +596,7 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
                                               struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
 {
-    int i, size, rank, err;
+    int size, rank, err;
     MPI_Aint extent, lb;
     char *send_buf = NULL;
     struct ompi_datatype_t *newtype, *send_type;
@@ -615,9 +616,7 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
         ompi_datatype_get_extent(rdtype, &lb, &extent);
         send_type = rdtype;
         send_buf = (char*)rbuf;
-        for (i = 0; i < rank; ++i) {
-            send_buf += ((ptrdiff_t)rcounts[i] * extent);
-        }
+        send_buf += ((ptrdiff_t)disps[rank] * extent);
         scount = rcounts[rank];
     } else {
         send_buf = (char*)sbuf;

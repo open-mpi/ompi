@@ -14,8 +14,8 @@
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -328,7 +328,8 @@ static void rsh_wait_daemon(orte_proc_t *daemon, void* cbdata)
 static int setup_launch(int *argcptr, char ***argvptr,
                         char *nodename,
                         int *node_name_index1,
-                        int *proc_vpid_index, char *prefix_dir)
+                        int *proc_vpid_index, char *prefix_dir,
+                        char *nodelist)
 {
     int argc;
     char **argv;
@@ -613,7 +614,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
                                           proc_vpid_index,
-                                          NULL);
+                                          nodelist);
 
     /* ensure that only the ssh plm is selected on the remote daemon */
     opal_argv_append_nosize(&argv, "-"OPAL_MCA_CMD_LINE_ID);
@@ -780,7 +781,6 @@ static int remote_spawn(opal_buffer_t *launch)
     int rc=ORTE_SUCCESS;
     bool failed_launch = true;
     orte_std_cntr_t n;
-    opal_byte_object_t *bo;
     orte_process_name_t target;
     orte_plm_rsh_caddy_t *caddy;
     orte_job_t *daemons;
@@ -802,23 +802,17 @@ static int remote_spawn(opal_buffer_t *launch)
         goto cleanup;
     }
 
-    /* extract the byte object holding the nidmap */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &bo, &n, OPAL_BYTE_OBJECT))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    /* update our nidmap - this will free data in the byte object */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_daemon_nodemap(bo))) {
+    /* extract and update the daemon map */
+    if (ORTE_SUCCESS != (rc = orte_util_decode_daemon_nodemap(launch))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
-    /* ensure the routing plan is updated */
-    rtmod = orte_rml.get_routed(orte_coll_conduit);
-    orte_routed.update_routing_plan(rtmod);
+    /* since we are tree-spawning, we need to update the routing plan */
+    orte_routed.update_routing_plan(NULL);
 
     /* get the updated routing list */
+    rtmod = orte_rml.get_routed(orte_coll_conduit);
     OBJ_CONSTRUCT(&coll, opal_list_t);
     orte_routed.get_routing_list(rtmod, &coll);
 
@@ -835,7 +829,7 @@ static int remote_spawn(opal_buffer_t *launch)
 
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1,
-                                           &proc_vpid_index, prefix))) {
+                                           &proc_vpid_index, prefix, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&coll);
         goto cleanup;
@@ -1000,6 +994,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     int port, *portptr;
     orte_namelist_t *child;
     char *rtmod;
+    char *nlistflat;
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
@@ -1124,7 +1119,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* if we are tree launching, find our children and create the launch cmd */
     if (!mca_plm_rsh_component.no_tree_spawn) {
         orte_daemon_cmd_flag_t command = ORTE_DAEMON_TREE_SPAWN;
-        opal_byte_object_t bo, *boptr;
         orte_job_t *jdatorted;
 
         /* get the tree spawn buffer */
@@ -1142,21 +1136,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
             goto cleanup;
         }
         /* construct a nodemap of all daemons we know about */
-        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo, false))) {
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(orte_tree_launch_cmd))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(orte_tree_launch_cmd);
             goto cleanup;
         }
-        /* store it */
-        boptr = &bo;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(orte_tree_launch_cmd, &boptr, 1, OPAL_BYTE_OBJECT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(orte_tree_launch_cmd);
-            free(bo.bytes);
-            goto cleanup;
-        }
-        /* release the data since it has now been copied into our buffer */
-        free(bo.bytes);
+
         /* get the orted job data object */
         if (NULL == (jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -1170,11 +1155,36 @@ static void launch_daemons(int fd, short args, void *cbdata)
         orte_routed.get_routing_list(rtmod, &coll);
     }
 
+    if (orte_static_ports) {
+        /* create a list of all nodes involved so we can pass it along */
+        char **nodelist = NULL;
+        orte_node_t *n2;
+        for (nnode=0; nnode < map->nodes->size; nnode++) {
+            if (NULL != (n2 = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+                opal_argv_append_nosize(&nodelist, n2->name);
+            }
+        }
+        /* we need mpirun to be the first node on this list */
+        if (0 != strcmp(nodelist[0], orte_process_info.nodename)) {
+            opal_argv_prepend_nosize(&nodelist, orte_process_info.nodename);
+        }
+        nlistflat = opal_argv_join(nodelist, ',');
+        opal_argv_free(nodelist);
+    } else {
+        nlistflat = NULL;
+    }
+
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, node->name, &node_name_index1,
-                                           &proc_vpid_index, prefix_dir))) {
+                                           &proc_vpid_index, prefix_dir, nlistflat))) {
         ORTE_ERROR_LOG(rc);
+        if (NULL != nlistflat) {
+            free(nlistflat);
+        }
         goto cleanup;
+    }
+    if (NULL != nlistflat) {
+        free(nlistflat);
     }
 
     /*
@@ -1343,6 +1353,10 @@ static int rsh_finalize(void)
             }
         }
     }
+    free(mca_plm_rsh_component.agent_path);
+    free(rsh_agent_path);
+    opal_argv_free(mca_plm_rsh_component.agent_argv);
+    opal_argv_free(rsh_agent_argv);
 
     return rc;
 }

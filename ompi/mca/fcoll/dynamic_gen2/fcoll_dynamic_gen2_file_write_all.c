@@ -810,13 +810,18 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
     /**************************************************************************
      ***  7b. Determine the number of bytes to be actually written in this cycle
      **************************************************************************/
-    if (cycles-1 == index) {
-        data->bytes_to_write_in_cycle = data->total_bytes - data->bytes_per_cycle*index;
-    }
-    else {
+    int local_cycles= ceil((double)data->total_bytes / data->bytes_per_cycle);
+    if ( index  < (local_cycles -1) ) {
         data->bytes_to_write_in_cycle = data->bytes_per_cycle;
     }
+    else if ( index == (local_cycles -1)) {
+        data->bytes_to_write_in_cycle = data->total_bytes - data->bytes_per_cycle*index ;
+    }
+    else {
+        data->bytes_to_write_in_cycle = 0;
+    }
     data->bytes_to_write = data->bytes_to_write_in_cycle;
+
 #if DEBUG_ON
     if (aggregator == rank) {
         printf ("****%d: CYCLE %d   Bytes %lld**********\n",

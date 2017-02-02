@@ -17,7 +17,7 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
-dnl Copyright (c) 2013      Intel, Inc. All rights reserved
+dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
@@ -484,11 +484,6 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name,      1024, 255, 2048)
 # Min length accroding to MPI-2.1, p. 418
 OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string,  128,  64,  256)
 
-# How to build libltdl
-AC_ARG_WITH([libltdl],
-    [AC_HELP_STRING([--with-libltdl(=DIR)],
-         [Where to find libltdl (this option is ignored if --disable-dlopen is used).  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of libltdl.  "external" forces Open MPI to use an external installation of libltdl.  Supplying a valid directory name also forces Open MPI to use an external installation of libltdl, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries.])])
-
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [0],
     [Whether we want checkpoint/restart enabled debugging functionality or not])
 
@@ -512,5 +507,9 @@ dnl some point, this should die.
 AC_DEFINE([OPAL_ENABLE_PROGRESS_THREADS],
           [0],
           [Whether we want BTL progress threads enabled])
+
+dnl Check for zlib support
+OPAL_ZLIB_CONFIG
+
 
 ])dnl

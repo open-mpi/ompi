@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -56,7 +56,8 @@ int orte_ess_base_proc_binding(void)
     char *error=NULL;
     hwloc_cpuset_t mycpus;
 
-    /* Determine if we were pre-bound or not */
+    /* Determine if we were pre-bound or not - this also indicates
+     * that we were launched via mpirun, bound or not */
     if (NULL != getenv(OPAL_MCA_PREFIX"orte_bound_at_launch")) {
         orte_proc_is_bound = true;
         if (NULL != (map = getenv(OPAL_MCA_PREFIX"orte_base_applied_binding"))) {
@@ -66,9 +67,42 @@ int orte_ess_base_proc_binding(void)
                 goto error;
             }
         }
+        if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+            /* print out a shorthand notation to avoid pulling in the entire topology tree */
+            map = NULL;
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+                                           ORTE_PROC_MY_NAME, &map, OPAL_STRING);
+            if (OPAL_SUCCESS == ret && NULL != map) {
+                opal_output(0, "MCW rank %s bound to %s",
+                            ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), map);
+                free(map);
+            } else {
+                opal_output(0, "MCW rank %s not bound", ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid));
+            }
+        }
+        return ORTE_SUCCESS;
     } else if (NULL != getenv(OPAL_MCA_PREFIX"orte_externally_bound")) {
         orte_proc_is_bound = true;
+        /* see if we were launched by a PMIx-enabled system */
+        map = NULL;
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY_STRING,
+                                       ORTE_PROC_MY_NAME, &map, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != map) {
+            /* we were - no need to pull in the topology */
+            if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+                opal_output(0, "MCW rank %s bound to %s",
+                            ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), map);
+            }
+            free(map);
+            return ORTE_SUCCESS;
+        }
         /* the topology system will pickup the binding pattern */
+    }
+
+    /* load the topology as we will likely need it */
+    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+        /* there is nothing we can do, so just return */
+        return ORTE_SUCCESS;
     }
 
     /* see if we were bound when launched */
@@ -76,11 +110,6 @@ int orte_ess_base_proc_binding(void)
         OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                              "%s Not bound at launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        /* we were not bound at launch */
-        if (NULL == opal_hwloc_topology) {
-            /* there is nothing we can do, so just return */
-            return ORTE_SUCCESS;
-        }
         support = (struct hwloc_topology_support*)hwloc_topology_get_support(opal_hwloc_topology);
         /* get our node object */
         node = hwloc_get_root_obj(opal_hwloc_topology);
@@ -120,7 +149,7 @@ int orte_ess_base_proc_binding(void)
              */
             hwloc_bitmap_zero(cpus);
             if (OPAL_BIND_TO_CPUSET == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
-                if (OPAL_SUCCESS != (ret = opal_hwloc_base_slot_list_parse(opal_hwloc_base_slot_list,
+                if (OPAL_SUCCESS != (ret = opal_hwloc_base_cpu_list_parse(opal_hwloc_base_cpu_list,
                                                                            opal_hwloc_topology,
                                                                            OPAL_HWLOC_LOGICAL, cpus))) {
                     error = "Setting processor affinity failed";
@@ -257,11 +286,6 @@ int orte_ess_base_proc_binding(void)
     }
 
  MOVEON:
-    /* get or update our local cpuset - it will get used multiple
-     * times, so it's more efficient to keep a global copy
-     */
-    opal_hwloc_base_get_local_cpuset();
-
     /* get the cpus we are bound to */
     mycpus = hwloc_bitmap_alloc();
     if (hwloc_get_cpubind(opal_hwloc_topology,

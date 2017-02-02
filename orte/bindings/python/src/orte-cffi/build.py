@@ -8,15 +8,18 @@ import os
 
 
 #
-#
 # Get a path value from ompi_info based on key
 #
 def ompi_info_path(key):
 
     cmd = ['ompi_info', '--path', key, '--parseable']
 
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr= p.communicate()
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError:
+        raise Exception('ompi_info not found, check your path')
+
+    stdout, stderr = p.communicate()
 
     if p.returncode != 0:
         raise Exception(stderr)
@@ -129,6 +132,7 @@ int orte_submit_job(char *cmd[], int *index,
 void orte_submit_finalize(void);
 int orte_submit_cancel(int index);
 int orte_submit_halt(void);
+bool opal_set_using_threads(bool have);
 
 /* Callbacks */
 extern "Python" void launch_cb(int, orte_job_t *, int, void *);

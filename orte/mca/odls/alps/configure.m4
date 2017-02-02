@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011-2014 Los Alamos National Security, LLC.
+# Copyright (c) 2011-2016 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -25,7 +25,7 @@
 AC_DEFUN([MCA_orte_odls_alps_CONFIG],[
     AC_CONFIG_FILES([orte/mca/odls/alps/Makefile])
 
-    ORTE_CHECK_ALPS([odls_alps], [odls_alps_happy="yes"], [odls_alps_happy="no"])
+    OPAL_CHECK_ALPS([odls_alps], [odls_alps_happy="yes"], [odls_alps_happy="no"])
 
     AS_IF([test "$odls_alps_happy" = "yes"],
           [$1

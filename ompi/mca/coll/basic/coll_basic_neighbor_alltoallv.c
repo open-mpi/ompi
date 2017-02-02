@@ -47,6 +47,8 @@ mca_coll_basic_neighbor_alltoallv_cart(const void *sbuf, const int scounts[], co
     ptrdiff_t lb, rdextent, sdextent;
     ompi_request_t **reqs, **preqs;
 
+    if( 0 == cart->ndims ) return OMPI_SUCCESS;
+
     ompi_datatype_get_extent(rdtype, &lb, &rdextent);
     ompi_datatype_get_extent(sdtype, &lb, &sdextent);
     reqs = preqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims );
@@ -133,6 +135,7 @@ mca_coll_basic_neighbor_alltoallv_graph(const void *sbuf, const int scounts[], c
     const int *edges;
 
     mca_topo_base_graph_neighbors_count (comm, rank, &degree);
+    if( 0 == degree ) return OMPI_SUCCESS;
 
     edges = graph->edges;
     if (rank > 0) {
@@ -191,6 +194,7 @@ mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, const int scounts
 
     indegree = dist_graph->indegree;
     outdegree = dist_graph->outdegree;
+    if( 0 == (indegree + outdegree) ) return OMPI_SUCCESS;
 
     inedges = dist_graph->in;
     outedges = dist_graph->out;

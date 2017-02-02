@@ -39,6 +39,7 @@ const char *mca_coll_libnbc_component_version_string =
 
 
 static int libnbc_priority = 10;
+bool libnbc_ibcast_skip_dt_decision = true;
 
 
 static int libnbc_open(void);
@@ -90,6 +91,7 @@ libnbc_open(void)
 
     OBJ_CONSTRUCT(&mca_coll_libnbc_component.requests, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_coll_libnbc_component.active_requests, opal_list_t);
+    OBJ_CONSTRUCT(&mca_coll_libnbc_component.lock, opal_mutex_t);
     ret = opal_free_list_init (&mca_coll_libnbc_component.requests,
                                sizeof(ompi_coll_libnbc_request_t), 8,
                                OBJ_CLASS(ompi_coll_libnbc_request_t),
@@ -114,6 +116,7 @@ libnbc_close(void)
 
     OBJ_DESTRUCT(&mca_coll_libnbc_component.requests);
     OBJ_DESTRUCT(&mca_coll_libnbc_component.active_requests);
+    OBJ_DESTRUCT(&mca_coll_libnbc_component.lock);
 
     return OMPI_SUCCESS;
 }
@@ -130,6 +133,27 @@ libnbc_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &libnbc_priority);
+
+    /* ibcast decision function can make the wrong decision if a legal
+     * non-uniform data type signature is used. This has resulted in the
+     * collective operation failing, and possibly producing wrong answers.
+     * We are investigating a fix for this problem, but it is taking a while.
+     *   https://github.com/open-mpi/ompi/issues/2256
+     *   https://github.com/open-mpi/ompi/issues/1763
+     * As a result we are adding an MCA parameter to make a conservative
+     * decision to avoid this issue. If the user knows that their application
+     * does not use data types in this way, then they can set this parameter
+     * to get the old behavior. Once the issue is truely fixed, then this
+     * parameter can be removed.
+     */
+    libnbc_ibcast_skip_dt_decision = true;
+    (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                           "ibcast_skip_dt_decision",
+                                           "In ibcast only use size of communicator to choose algorithm, exclude data type signature. Set to 'false' to use data type signature in decision. WARNING: If you set this to 'false' then your application should not use non-uniform data type signatures in calls to ibcast.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &libnbc_ibcast_skip_dt_decision);
 
     return OMPI_SUCCESS;
 }
@@ -239,15 +263,22 @@ ompi_coll_libnbc_progress(void)
     ompi_coll_libnbc_request_t* request, *next;
     int res;
 
+    /* return if invoked recursively */
     if (opal_atomic_trylock(&mca_coll_libnbc_component.progress_lock)) return 0;
 
+    /* process active requests, and use mca_coll_libnbc_component.lock to access the
+     * mca_coll_libnbc_component.active_requests list */
+    OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
     OPAL_LIST_FOREACH_SAFE(request, next, &mca_coll_libnbc_component.active_requests,
                            ompi_coll_libnbc_request_t) {
+        OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
         res = NBC_Progress(request);
         if( NBC_CONTINUE != res ) {
             /* done, remove and complete */
+            OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
             opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
                                   &request->super.super.super);
+            OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
 
             if( OMPI_SUCCESS == res || NBC_OK == res || NBC_SUCCESS == res ) {
                 request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
@@ -255,11 +286,11 @@ ompi_coll_libnbc_progress(void)
             else {
                 request->super.req_status.MPI_ERROR = res;
             }
-            OPAL_THREAD_LOCK(&ompi_request_lock);
             ompi_request_complete(&request->super, true);
-            OPAL_THREAD_UNLOCK(&ompi_request_lock);
         }
+        OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
     }
+    OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
 
     opal_atomic_unlock(&mca_coll_libnbc_component.progress_lock);
 

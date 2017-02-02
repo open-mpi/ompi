@@ -69,6 +69,8 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
     orte_app_context_t *app;
     orte_proc_t *proc;
     orte_attribute_t *kv;
+    opal_list_t *cache;
+    opal_value_t *val;
 
     /* array of pointers to orte_job_t objects - need to pack the objects a set of fields at a time */
     jobs = (orte_job_t**) src;
@@ -213,6 +215,33 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
+            }
+        }
+        /* check for job info attribute */
+        cache = NULL;
+        if (orte_get_attribute(&jobs[i]->attributes, ORTE_JOB_INFO_CACHE, (void**)&cache, OPAL_PTR) &&
+            NULL != cache) {
+            /* we need to pack these as well, but they are composed
+             * of opal_value_t's on a list. So first pack the number
+             * of list elements */
+            count = opal_list_get_size(cache);
+            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* now pack each element on the list */
+            OPAL_LIST_FOREACH(val, cache, opal_value_t) {
+                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)&val, 1, OPAL_VALUE))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        } else {
+            /* pack a zero to indicate no job info is being passed */
+            count = 0;
+            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
             }
         }
     }
@@ -814,11 +843,6 @@ int orte_dt_pack_sig(opal_buffer_t *buffer, const void *src, int32_t num_vals,
     for (i = 0; i < num_vals; ++i) {
         /* pack the #procs */
         if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &ptr[i]->sz, 1, OPAL_SIZE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* pack the sequence number */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &ptr[i]->seq_num, 1, OPAL_UINT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

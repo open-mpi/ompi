@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -174,7 +175,13 @@ bool opal_output_init(void)
         verbose.lds_want_stderr = false;
         verbose.lds_want_stdout = false;
     } else {
-        verbose.lds_want_stderr = true;
+        str = getenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT");
+        if (NULL != str && str[0] == '1') {
+            verbose.lds_want_stdout = true;
+        }
+        else {
+            verbose.lds_want_stderr = true;
+        }
     }
     gethostname(hostname, sizeof(hostname));
     asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
@@ -680,6 +687,18 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         }
         info[i].ldi_file_want_append = lds->lds_want_file_append;
         info[i].ldi_file_num_lines_lost = 0;
+    }
+
+    /* Special case: output_id == 0 == verbose_stream
+     * This is the verbose stream, so update the internal 'verbose_stream'
+     * to match the parameters set in the info[i]
+     */
+    if( verbose_stream == i ) {
+        verbose.lds_want_syslog     = info[i].ldi_syslog;
+        verbose.lds_syslog_priority = info[i].ldi_syslog_priority;
+        verbose.lds_syslog_ident    = info[i].ldi_syslog_ident;
+        verbose.lds_want_stdout     = info[i].ldi_stdout;
+        verbose.lds_want_stderr     = info[i].ldi_stderr;
     }
 
     /* Don't open a file in the session directory now -- do that lazily

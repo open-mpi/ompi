@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -336,13 +336,6 @@ static int rte_init(void)
         return rc;
     }
 
-    /* push our hostname so others can find us, if they need to */
-    OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_HOSTNAME, orte_process_info.nodename, OPAL_STRING);
-    if (ORTE_SUCCESS != ret) {
-        error = "db store hostname";
-        goto error;
-    }
-
     return ORTE_SUCCESS;
 
  error:
@@ -633,7 +626,7 @@ static int fork_hnp(void)
         orte_process_info.my_hnp_uri = orted_uri;
 
         /* split the pmix_uri into its parts */
-        argv = opal_argv_split(cptr, ',');
+        argv = opal_argv_split(cptr, '*');
         count = opal_argv_count(argv);
         /* push each piece into the environment */
         for (i=0; i < count; i++) {

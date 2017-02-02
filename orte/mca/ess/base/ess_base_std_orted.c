@@ -14,7 +14,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -335,7 +335,11 @@ int orte_ess_base_orted_setup(char **hosts)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
     /* point our topology to the one detected locally */
-    node->topology = opal_hwloc_topology;
+    node->topology = OBJ_NEW(orte_topology_t);
+    node->topology->sig = strdup(orte_topo_signature);
+    node->topology->topo = opal_hwloc_topology;
+    /* add it to the array of known ones */
+    opal_pointer_array_add(orte_node_topologies, node->topology);
 
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -493,7 +497,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
 
-#if ORTE_ENABLE_STATIC_PORTS
     /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly
      * without requiring a wireup stage. This must be done
@@ -501,25 +504,22 @@ int orte_ess_base_orted_setup(char **hosts)
      * own port, which we need in order to construct the nidmap
      */
     if (orte_static_ports) {
-        /* define the routing tree so we know the pattern
-         * if we are trying to setup common or static ports
-         */
-        orte_routed.update_routing_plan(NULL);
         /* extract the node info from the environment and
-         * build a nidmap from it
+         * build a nidmap from it - this will update the
+         * routing plan as well
          */
         if (ORTE_SUCCESS != (ret = orte_util_build_daemon_nidmap(hosts))) {
             ORTE_ERROR_LOG(ret);
             error = "construct daemon map from static ports";
             goto error;
         }
+        /* be sure to update the routing tree so the initial "phone home"
+         * to mpirun goes through the tree if static ports were enabled
+         */
+        orte_routed.update_routing_plan(NULL);
+        /* routing can be enabled */
+        orte_routed_base.routing_enabled = true;
     }
-#endif
-    /* be sure to update the routing tree so the initial "phone home"
-     * to mpirun goes through the tree if static ports were enabled - still
-     * need to do it anyway just to initialize things
-     */
-    orte_routed.update_routing_plan(NULL);
 
     /* Now provide a chance for the PLM
      * to perform any module-specific init functions. This

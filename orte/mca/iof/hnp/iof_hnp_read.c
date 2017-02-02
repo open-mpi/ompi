@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -262,9 +262,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             NULL == proct->revstderr &&
             NULL == proct->revstddiag) {
             /* this proc's iof is complete */
-            opal_list_remove_item(&mca_iof_hnp_component.procs, &proct->super);
             ORTE_ACTIVATE_PROC_STATE(&proct->name, ORTE_PROC_STATE_IOF_COMPLETE);
-            OBJ_RELEASE(proct);
         }
         return;
     }

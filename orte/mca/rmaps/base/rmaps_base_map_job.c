@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -149,9 +149,21 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYCORE);
                 }
             } else {
-                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                    "mca:rmaps[%d] mapping not set by user - using bysocket", __LINE__);
-                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
+                /* if NUMA is available, map by that */
+                if (NULL != hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE, 0)) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] mapping not set by user - using bynuma", __LINE__);
+                    ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYNUMA);
+                } else if (NULL != hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_SOCKET, 0)) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] mapping not set by user and no NUMA - using bysocket", __LINE__);
+                    ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
+                } else {
+                    /* if we have neither, then just do by slot */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] mapping not given and no NUMA or sockets - using byslot", __LINE__);
+                    ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                }
             }
         }
     }
@@ -190,63 +202,114 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             /* if the user specified a default binding policy via
              * MCA param, then we use it - this can include a directive
              * to overload */
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps[%d] binding policy given", __LINE__);
             jdata->map->binding = opal_hwloc_binding_policy;
+        } else if (1 < jdata->map->cpus_per_rank) {
+            /* bind to cpus */
+            if (opal_hwloc_use_hwthreads_as_cpus) {
+                /* if we are using hwthread cpus, then bind to those */
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps[%d] binding not given - using byhwthread", __LINE__);
+                OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
+            } else {
+                /* bind to core */
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps[%d] binding not given - using bycore", __LINE__);
+                OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+            }
         } else {
             /* if the user explicitly mapped-by some object, then we default
              * to binding to that object */
             orte_mapping_policy_t mpol;
-            mpol = ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping);
-            if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping) &&
-                ORTE_MAPPING_BYBOARD < mpol && mpol < ORTE_MAPPING_BYSLOT) {
+            mpol = ORTE_GET_MAPPING_POLICY(jdata->map->mapping);
+            if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                 if (ORTE_MAPPING_BYHWTHREAD == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps[%d] binding not given - using byhwthread", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
                 } else if (ORTE_MAPPING_BYCORE == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps[%d] binding not given - using bycore", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
                 } else if (ORTE_MAPPING_BYL1CACHE == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps[%d] binding not given - using byL1", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L1CACHE);
                 } else if (ORTE_MAPPING_BYL2CACHE == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps[%d] binding not given - using byL2", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L2CACHE);
                 } else if (ORTE_MAPPING_BYL3CACHE == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps[%d] binding not given - using byL3", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L3CACHE);
                 } else if (ORTE_MAPPING_BYSOCKET == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps[%d] binding not given - using bysocket", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
                 } else if (ORTE_MAPPING_BYNUMA == mpol) {
-                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
-                }
-            } else if (nprocs <= 2) {
-                /* if nothing was specified, then we default to a policy
-                 * based on number of procs and cpus_per_rank */
-                if (1 < orte_rmaps_base.cpus_per_rank) {
-                    /* assigning multiple cpus to a rank implies threading,
-                     * so we only bind to the NUMA level */
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
+                                    "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 } else {
-                    if (opal_hwloc_use_hwthreads_as_cpus) {
-                        /* if we are using hwthread cpus, then bind to those */
-                        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps[%d] binding not given - using byhwthread", __LINE__);
-                        OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
+                    /* we are mapping by node or some other non-object method */
+                    if (nprocs <= 2) {
+                        if (opal_hwloc_use_hwthreads_as_cpus) {
+                            /* if we are using hwthread cpus, then bind to those */
+                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                            "mca:rmaps[%d] binding not given - using byhwthread", __LINE__);
+                            OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
+                        } else {
+                            /* for performance, bind to core */
+                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                            "mca:rmaps[%d] binding not given - using bycore", __LINE__);
+                            OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                        }
                     } else {
-                        /* for performance, bind to core */
-                        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps[%d] binding not given - using bycore", __LINE__);
-                        OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                        if (NULL != hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE, 0)) {
+                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                                "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
+                            OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
+                        } else if (NULL != hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_SOCKET, 0)) {
+                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                                "mca:rmaps[%d] binding not given and no NUMA - using bysocket", __LINE__);
+                            OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
+                        } else {
+                            /* if we have neither, then just don't bind */
+                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                                "mca:rmaps[%d] binding not given and no NUMA or sockets - not binding", __LINE__);
+                            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+                        }
                     }
                 }
+            } else if (nprocs <= 2) {
+                if (opal_hwloc_use_hwthreads_as_cpus) {
+                    /* if we are using hwthread cpus, then bind to those */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps[%d] binding not given - using byhwthread", __LINE__);
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
+                } else {
+                    /* for performance, bind to core */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps[%d] binding not given - using bycore", __LINE__);
+                    OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
+                }
             } else {
-                if (1 < orte_rmaps_base.cpus_per_rank) {
-                    /* assigning multiple cpus to a rank implies threading,
-                     * so we only bind to the NUMA level */
+                /* for performance, bind to NUMA, if available */
+                if (NULL != hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE, 0)) {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
-                } else {
-                    /* for performance, bind to socket */
+                } else if (NULL != hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_SOCKET, 0)) {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps[%d] binding not given - using bysocket", __LINE__);
+                                        "mca:rmaps[%d] binding not given and no NUMA - using bysocket", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
+                } else {
+                    /* if we have neither, then just don't bind */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given and no NUMA or sockets - not binding", __LINE__);
+                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
                 }
             }
             if (OPAL_BIND_OVERLOAD_ALLOWED(opal_hwloc_binding_policy)) {
@@ -261,7 +324,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      */
     if (orte_do_not_launch) {
         orte_node_t *node;
-        hwloc_topology_t t0;
+        orte_topology_t *t0;
         int i;
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -325,6 +388,16 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
         OBJ_RELEASE(caddy);
         return;
+    }
+
+    /* if any node is oversubscribed, then check to see if a binding
+     * directive was given - if not, then we want to clear the default
+     * binding policy so we don't attempt to bind */
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED)) {
+        if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+            /* clear any default binding policy we might have set */
+            OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        }
     }
 
     /* compute and save local ranks */
@@ -399,7 +472,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     if (NULL == bd) {
                         (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
                     } else {
-                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology, bd->cpuset)) {
+                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
                             (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
                         }
                     }
@@ -424,7 +497,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 }
                 procbitmap = NULL;
                 orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
-                locality = opal_hwloc_base_get_relative_locality(node->topology,
+                locality = opal_hwloc_base_get_relative_locality(node->topology->topo,
                                                                  p0bitmap,
                                                                  procbitmap);
                 opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",

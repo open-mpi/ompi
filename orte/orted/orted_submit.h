@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +53,6 @@ struct orte_cmd_options_t {
     bool terminate;
     bool debugger;
     int num_procs;
-    char *env_val;
     char *appfile;
     char *wdir;
     bool set_cwd_to_session_dir;
@@ -69,7 +70,6 @@ struct orte_cmd_options_t {
     bool index_argv;
     bool run_as_root;
     char *personality;
-    char **personalities;
     bool create_dvm;
     bool terminate_dvm;
     bool nolocal;
@@ -84,7 +84,7 @@ struct orte_cmd_options_t {
     char *ranking_policy;
     char *binding_policy;
     bool report_bindings;
-    char *slot_list;
+    char *cpu_list;
     bool debug;
     bool tag_output;
     bool timestamp_output;

@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,6 +69,12 @@ static int orted_pull(const orte_process_name_t* src_name,
 static int orted_close(const orte_process_name_t* peer,
                        orte_iof_tag_t source_tag);
 
+static int orted_output(const orte_process_name_t* peer,
+                        orte_iof_tag_t source_tag,
+                        const char *msg);
+
+static void orted_complete(const orte_job_t *jdata);
+
 static int finalize(void);
 
 static int orted_ft_event(int state);
@@ -82,13 +88,14 @@ static int orted_ft_event(int state);
  */
 
 orte_iof_base_module_t orte_iof_orted_module = {
-    init,
-    orted_push,
-    orted_pull,
-    orted_close,
-    NULL,
-    finalize,
-    orted_ft_event
+    .init = init,
+    .push = orted_push,
+    .pull = orted_pull,
+    .close = orted_close,
+    .output = orted_output,
+    .complete = orted_complete,
+    .finalize = finalize,
+    .ft_event = orted_ft_event
 };
 
 static int init(void)
@@ -113,16 +120,16 @@ static int init(void)
  * to the HNP
  */
 
-static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd)
+static int orted_push(const orte_process_name_t* dst_name,
+                      orte_iof_tag_t src_tag, int fd)
 {
     int flags;
     orte_iof_proc_t *proct;
-    orte_iof_sink_t *stdoutsink=NULL, *stderrsink=NULL, *stddiagsink=NULL;
     int rc;
     orte_job_t *jobdat=NULL;
     orte_ns_cmp_bitmask_t mask;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+   OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:orted pushing fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
@@ -152,31 +159,28 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     proct->name.jobid = dst_name->jobid;
     proct->name.vpid = dst_name->vpid;
     opal_list_append(&mca_iof_orted_component.procs, &proct->super);
+
+SETUP:
     /* get the local jobdata for this proc */
     if (NULL == (jobdat = orte_get_job_data_object(proct->name.jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    /* setup any requested output files */
-    if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jobdat, proct, &stdoutsink, &stderrsink, &stddiagsink))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-SETUP:
     /* define a read event and activate it */
     if (src_tag & ORTE_IOF_STDOUT) {
         ORTE_IOF_READ_EVENT(&proct->revstdout, proct, fd, ORTE_IOF_STDOUT,
                             orte_iof_orted_read_handler, false);
-        proct->revstdout->sink = stdoutsink;
     } else if (src_tag & ORTE_IOF_STDERR) {
         ORTE_IOF_READ_EVENT(&proct->revstderr, proct, fd, ORTE_IOF_STDERR,
                             orte_iof_orted_read_handler, false);
-        proct->revstderr->sink = stderrsink;
     } else if (src_tag & ORTE_IOF_STDDIAG) {
         ORTE_IOF_READ_EVENT(&proct->revstddiag, proct, fd, ORTE_IOF_STDDIAG,
                             orte_iof_orted_read_handler, false);
-        proct->revstddiag->sink = stddiagsink;
+    }
+    /* setup any requested output files */
+    if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jobdat, proct))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
     /* if -all- of the readevents for this proc have been defined, then
@@ -308,6 +312,19 @@ static int orted_close(const orte_process_name_t* peer,
     return ORTE_SUCCESS;
 }
 
+static void orted_complete(const orte_job_t *jdata)
+{
+    orte_iof_proc_t *proct, *next;
+
+    /* cleanout any lingering sinks */
+    OPAL_LIST_FOREACH_SAFE(proct, next, &mca_iof_orted_component.procs, orte_iof_proc_t) {
+        if (jdata->jobid == proct->name.jobid) {
+            opal_list_remove_item(&mca_iof_orted_component.procs, &proct->super);
+            OBJ_RELEASE(proct);
+        }
+    }
+}
+
 static int finalize(void)
 {
     orte_iof_proc_t *proct;
@@ -436,4 +453,47 @@ CHECK:
             orte_iof_orted_send_xonxoff(ORTE_IOF_XON);
         }
     }
+}
+
+static int orted_output(const orte_process_name_t* peer,
+                        orte_iof_tag_t source_tag,
+                        const char *msg)
+{
+    opal_buffer_t *buf;
+    int rc;
+
+    /* prep the buffer */
+    buf = OBJ_NEW(opal_buffer_t);
+
+    /* pack the stream first - we do this so that flow control messages can
+     * consist solely of the tag
+     */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &source_tag, 1, ORTE_IOF_TAG))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* pack name of process that gave us this data */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, peer, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* pack the data - for compatibility, we have to pack this as OPAL_BYTE,
+     * so ensure we include the NULL string terminator */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, msg, strlen(msg)+1, OPAL_BYTE))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* start non-blocking RML call to forward received data */
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+                         "%s iof:orted:output sending %d bytes to HNP",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)strlen(msg)+1));
+
+    orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                            ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
+                            orte_rml_send_callback, NULL);
+
+    return ORTE_SUCCESS;
 }

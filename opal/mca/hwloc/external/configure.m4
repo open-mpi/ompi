@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
@@ -61,12 +61,17 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
            # OPAL_HWLOC_WANT_VERBS_HELPER is set, that file will
            # include the external hwloc/openfabrics-verbs.h file (via
            # the MCA_hwloc_external_openfabrics_helper define).
+           AS_IF([test "$opal_hwloc_dir" != ""],
+                 [opal_hwloc_include="$opal_hwloc_dir/include/hwloc.h"
+                  opal_hwloc_openfabrics_include="$opal_hwloc_dir/include/hwloc/openfabrics-verbs.h"],
+                 [opal_hwloc_include="hwloc.h"
+                  opal_hwloc_openfabrics_include="hwloc/openfabrics-verbs.h"])
            AC_DEFINE_UNQUOTED(MCA_hwloc_external_header,
-                  ["$opal_hwloc_dir/include/hwloc.h"],
+                  ["$opal_hwloc_include"],
                   [Location of external hwloc header])
            AC_DEFINE_UNQUOTED(MCA_hwloc_external_openfabrics_header,
-                  ["$opal_hwloc_dir/include/hwloc/openfabrics-verbs.h"],
-                  [Location of external hwloc header])
+                  ["$opal_hwloc_openfabrics_include"],
+                  [Location of external hwloc OpenFabrics header])
           ])
     OPAL_VAR_SCOPE_POP
 ])dnl

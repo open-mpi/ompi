@@ -281,7 +281,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                                                       #endif
                                                       ], [])],
                                     [AC_MSG_RESULT([found])
-                                     opal_external_pmix_version=3X
+                                     opal_external_pmix_version=3x
                                      opal_external_pmix_version_found=1],
                                     [AC_MSG_RESULT([not found])])])
 
@@ -294,7 +294,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                                                       #endif
                                                       ], [])],
                                     [AC_MSG_RESULT([found])
-                                     opal_external_pmix_version=2X
+                                     opal_external_pmix_version=2x
                                      opal_external_pmix_version_found=1],
                                     [AC_MSG_RESULT([not found])])])
 
@@ -307,7 +307,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                                                       #endif
                                                       ], [])],
                                     [AC_MSG_RESULT([found])
-                                     opal_external_pmix_version=1X
+                                     opal_external_pmix_version=1x
                                      opal_external_pmix_version_found=1],
                                     [AC_MSG_RESULT([not found])])])
 

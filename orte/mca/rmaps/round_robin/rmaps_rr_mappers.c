@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -76,8 +76,8 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         /* get the root object as we are not assigning
          * locale here except at the node level
          */
-        if (NULL != node->topology) {
-            obj = hwloc_get_root_obj(node->topology);
+        if (NULL != node->topology && NULL != node->topology->topo) {
+            obj = hwloc_get_root_obj(node->topology->topo);
         }
         if (node->slots <= node->slots_inuse) {
             opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
@@ -143,8 +143,8 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         /* get the root object as we are not assigning
          * locale except at the node level
          */
-        if (NULL != node->topology) {
-            obj = hwloc_get_root_obj(node->topology);
+        if (NULL != node->topology && NULL != node->topology->topo) {
+            obj = hwloc_get_root_obj(node->topology->topo);
         }
 
         /* add this node to the map - do it only once */
@@ -184,6 +184,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
              * properly set
              */
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+            ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
             /* check for permission */
             if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                 /* if we weren't given a directive either way, then we will error out
@@ -287,8 +288,8 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             /* get the root object as we are not assigning
              * locale except at the node level
              */
-            if (NULL != node->topology) {
-                obj = hwloc_get_root_obj(node->topology);
+            if (NULL != node->topology && NULL != node->topology->topo) {
+                obj = hwloc_get_root_obj(node->topology->topo);
             }
             /* add this node to the map, but only do so once */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
@@ -368,6 +369,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
                 /* check for permission */
                 if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                     /* if we weren't given a directive either way, then we will error out
@@ -400,8 +402,8 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             /* get the root object as we are not assigning
              * locale except at the node level
              */
-            if (NULL != node->topology) {
-                obj = hwloc_get_root_obj(node->topology);
+            if (NULL != node->topology && NULL != node->topology->topo) {
+                obj = hwloc_get_root_obj(node->topology->topo);
             }
 
            OPAL_OUTPUT_VERBOSE((20, orte_rmaps_base_framework.framework_output,
@@ -420,6 +422,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
             }
             if (nprocs_mapped == app->num_procs) {
                 /* we are done */
@@ -504,14 +507,14 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
     do {
         add_one = false;
         OPAL_LIST_FOREACH(node, node_list, orte_node_t) {
-            if (NULL == node->topology) {
+            if (NULL == node->topology || NULL == node->topology->topo) {
                 orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
                                true, node->name);
                 return ORTE_ERR_SILENT;
             }
             start = 0;
             /* get the number of objects of this type on this node */
-            nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
+            nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
             if (0 == nobjs) {
                 continue;
             }
@@ -561,13 +564,13 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                     opal_output_verbose(20, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps:rr: assigning proc to object %d", (i+start) % nobjs);
                     /* get the hwloc object */
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology, target, cache_level, (i+start) % nobjs, OPAL_HWLOC_AVAILABLE))) {
+                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, target, cache_level, (i+start) % nobjs, OPAL_HWLOC_AVAILABLE))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return ORTE_ERR_NOT_FOUND;
                     }
-                    if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_base_get_npus(node->topology, obj)) {
+                    if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_base_get_npus(node->topology->topo, obj)) {
                         orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
-                                       orte_rmaps_base.cpus_per_rank, opal_hwloc_base_get_npus(node->topology, obj),
+                                       orte_rmaps_base.cpus_per_rank, opal_hwloc_base_get_npus(node->topology->topo, obj),
                                        orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
                         return ORTE_ERR_SILENT;
                     }
@@ -588,6 +591,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
                 /* check for permission */
                 if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                     /* if we weren't given a directive either way, then we will error out
@@ -659,13 +663,13 @@ static int byobj_span(orte_job_t *jdata,
      */
     nobjs = 0;
     OPAL_LIST_FOREACH(node, node_list, orte_node_t) {
-        if (NULL == node->topology) {
+        if (NULL == node->topology || NULL == node->topology->topo) {
             orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
                            true, node->name);
             return ORTE_ERR_SILENT;
         }
         /* get the number of objects of this type on this node */
-        nobjs += opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
+        nobjs += opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
     }
 
     if (0 == nobjs) {
@@ -704,19 +708,19 @@ static int byobj_span(orte_job_t *jdata,
             ++(jdata->map->num_nodes);
         }
         /* get the number of objects of this type on this node */
-        nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
+        nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:byobj: found %d objs on node %s", nobjs, node->name);
         /* loop through the number of objects */
         for (i=0; i < (int)nobjs && nprocs_mapped < (int)app->num_procs; i++) {
             /* get the hwloc object */
-            if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology, target, cache_level, i, OPAL_HWLOC_AVAILABLE))) {
+            if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, target, cache_level, i, OPAL_HWLOC_AVAILABLE))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 return ORTE_ERR_NOT_FOUND;
             }
-            if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_base_get_npus(node->topology, obj)) {
+            if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_base_get_npus(node->topology->topo, obj)) {
                 orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
-                               orte_rmaps_base.cpus_per_rank, opal_hwloc_base_get_npus(node->topology, obj),
+                               orte_rmaps_base.cpus_per_rank, opal_hwloc_base_get_npus(node->topology->topo, obj),
                                orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
                 return ORTE_ERR_SILENT;
             }
@@ -745,6 +749,7 @@ static int byobj_span(orte_job_t *jdata,
              * properly set
              */
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+            ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
         }
         if (nprocs_mapped == app->num_procs) {
             /* we are done */
@@ -754,4 +759,3 @@ static int byobj_span(orte_job_t *jdata,
 
     return ORTE_SUCCESS;
 }
-
