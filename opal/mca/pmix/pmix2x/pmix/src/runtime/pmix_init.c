@@ -13,8 +13,8 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2010-2017 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -33,7 +33,6 @@
 #include <unistd.h>
 #endif
 #include PMIX_EVENT_HEADER
-#include "event2/thread.h"
 
 #include <pmix_rename.h>
 

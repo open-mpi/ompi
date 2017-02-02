@@ -8,6 +8,8 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +46,6 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include PMIX_EVENT_HEADER
 
 #include "src/class/pmix_list.h"
 #include "src/buffer_ops/buffer_ops.h"
@@ -705,8 +706,8 @@ static void dmdx_cbfunc(pmix_status_t status,
                         "[%s:%d] queue dmdx reply for %s:%u",
                         __FILE__, __LINE__,
                         caddy->lcd->proc.nspace, caddy->lcd->proc.rank);
-    event_assign(&caddy->ev, pmix_globals.evbase, -1, EV_WRITE,
+    pmix_event_assign(&caddy->ev, pmix_globals.evbase, -1, EV_WRITE,
                  _process_dmdx_reply, caddy);
-    event_priority_set(&caddy->ev, 0);
-    event_active(&caddy->ev, EV_WRITE, 1);
+    pmix_event_priority_set(&caddy->ev, 0);
+    pmix_event_active(&caddy->ev, EV_WRITE, 1);
 }

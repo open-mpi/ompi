@@ -8,6 +8,8 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2232,7 +2234,7 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
         /* turn off the recv event - we shouldn't hear anything
          * more from this proc */
         if (peer->recv_ev_active) {
-            event_del(&peer->recv_event);
+            pmix_event_del(&peer->recv_event);
             peer->recv_ev_active = false;
         }
         /* let the network libraries cleanup */

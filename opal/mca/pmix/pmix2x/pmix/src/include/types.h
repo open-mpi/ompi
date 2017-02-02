@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -244,6 +247,8 @@ typedef struct event pmix_event_t;
 
 #define pmix_event_set(b, x, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
+#define pmix_event_assign(x, b, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+
 #define pmix_event_add(ev, tv) event_add((ev), (tv))
 
 #define pmix_event_del(ev) event_del((ev))
@@ -253,5 +258,9 @@ typedef struct event pmix_event_t;
 #define pmix_event_new(b, fd, fg, cb, arg) event_new((b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
 #define pmix_event_loop(b, fg) event_base_loop((b), (fg))
+
+#define pmix_event_priority_set(x, p) event_priority_set (x, p)
+
+#endif
 
 #endif /* PMIX_TYPES_H */

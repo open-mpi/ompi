@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -7,6 +8,8 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,11 +67,11 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
 
     /* stop all events */
     if (peer->recv_ev_active) {
-        event_del(&peer->recv_event);
+        pmix_event_del(&peer->recv_event);
         peer->recv_ev_active = false;
     }
     if (peer->send_ev_active) {
-        event_del(&peer->send_event);
+        pmix_event_del(&peer->send_event);
         peer->send_ev_active = false;
     }
     if (NULL != peer->recv_msg) {
@@ -299,7 +302,7 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
             return;
         } else {
             // report the error
-            event_del(&peer->send_event);
+            pmix_event_del(&peer->send_event);
             peer->send_ev_active = false;
             PMIX_RELEASE(msg);
             peer->send_msg = NULL;
@@ -319,7 +322,7 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
 
     /* if nothing else to do unregister for send event notifications */
     if (NULL == peer->send_msg && peer->send_ev_active) {
-        event_del(&peer->send_event);
+        pmix_event_del(&peer->send_event);
         peer->send_ev_active = false;
     }
 }
@@ -447,11 +450,11 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
  err_close:
     /* stop all events */
     if (peer->recv_ev_active) {
-        event_del(&peer->recv_event);
+        pmix_event_del(&peer->recv_event);
         peer->recv_ev_active = false;
     }
     if (peer->send_ev_active) {
-        event_del(&peer->send_event);
+        pmix_event_del(&peer->send_event);
         peer->send_ev_active = false;
     }
     if (NULL != peer->recv_msg) {
@@ -495,7 +498,7 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
     }
     /* ensure the send event is active */
     if (!(queue->peer)->send_ev_active) {
-        event_add(&(queue->peer)->send_event, 0);
+        pmix_event_add(&(queue->peer)->send_event, 0);
         (queue->peer)->send_ev_active = true;
     }
     PMIX_RELEASE(queue);
@@ -556,7 +559,7 @@ void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
     }
     /* ensure the send event is active */
     if (!ms->peer->send_ev_active) {
-        event_add(&ms->peer->send_event, 0);
+        pmix_event_add(&ms->peer->send_event, 0);
         ms->peer->send_ev_active = true;
     }
     /* cleanup */
