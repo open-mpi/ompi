@@ -12,6 +12,7 @@
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +62,7 @@ BEGIN_C_DECLS
 
 /* mapping event - the event one activates to schedule mapping
  * of procs to nodes for pending jobs
-  */
+ */
 ORTE_DECLSPEC extern opal_event_t orte_mapping_event;
 
 /**
@@ -71,16 +72,16 @@ ORTE_DECLSPEC extern opal_event_t orte_mapping_event;
 typedef int (*orte_rmaps_base_module_map_fn_t)(orte_job_t *jdata);
 
 /*
- * rmaps module version 1.3.0
+ * rmaps module version 3.0.0
  */
-struct orte_rmaps_base_module_1_3_0_t {
+struct orte_rmaps_base_module_3_0_0_t {
     /** Mapping function pointer */
-    orte_rmaps_base_module_map_fn_t         	map_job;
+    orte_rmaps_base_module_map_fn_t         map_job;
 };
 /** Convenience typedef */
-typedef struct orte_rmaps_base_module_1_3_0_t orte_rmaps_base_module_1_3_0_t;
+typedef struct orte_rmaps_base_module_3_0_0_t orte_rmaps_base_module_3_0_0_t;
 /** Convenience typedef */
-typedef orte_rmaps_base_module_1_3_0_t orte_rmaps_base_module_t;
+typedef orte_rmaps_base_module_3_0_0_t orte_rmaps_base_module_t;
 
 
 /*
@@ -88,18 +89,18 @@ typedef orte_rmaps_base_module_1_3_0_t orte_rmaps_base_module_t;
  */
 
 /**
- * rmaps component version 1.3.0
+ * rmaps component version 3.0.0
  */
-struct orte_rmaps_base_component_2_0_0_t {
+struct orte_rmaps_base_component_3_0_0_t {
     /** Base MCA structure */
     mca_base_component_t base_version;
     /** Base MCA data */
     mca_base_component_data_t base_data;
 };
 /** Convenience typedef */
-typedef struct orte_rmaps_base_component_2_0_0_t orte_rmaps_base_component_2_0_0_t;
+typedef struct orte_rmaps_base_component_3_0_0_t orte_rmaps_base_component_3_0_0_t;
 /** Convenience typedef */
-typedef orte_rmaps_base_component_2_0_0_t orte_rmaps_base_component_t;
+typedef orte_rmaps_base_component_3_0_0_t orte_rmaps_base_component_t;
 
 
 END_C_DECLS

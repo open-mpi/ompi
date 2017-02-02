@@ -51,6 +51,10 @@ ORTE_DECLSPEC int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer);
 
 ORTE_DECLSPEC int orte_util_build_daemon_nidmap(char **nodes);
 
+ORTE_DECLSPEC int orte_util_encode_topologies(opal_buffer_t *buffer);
+
+ORTE_DECLSPEC int orte_util_decode_topologies(opal_buffer_t *buffer);
+
 END_C_DECLS
 
 #endif

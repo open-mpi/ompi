@@ -428,7 +428,6 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
     return ret;
 }
 
-
 /*
  * Parse one or more ranges in a set
  *
@@ -589,148 +588,7 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
     return ORTE_SUCCESS;
 }
 
-/* Compute the #procs on each node given a regex of form
- * "#procs(x#nodes),#procs(x#nodes). In other words, an
- * expression of "4(x30) will be interpreted to mean four
- * procs on each of the next 30 nodes.
- */
-int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
-{
-    int *tmp;
-    char *begptr, *endptr, *orig;
-    int i, j, count, reps;
-
-    /* init null answer */
-    *ppn = NULL;
-
-    tmp = (int *) malloc(sizeof(int) * num_nodes);
-    if (NULL == tmp) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    memset(tmp, 0, sizeof(int) * num_nodes);
-
-    orig = begptr = strdup(regexp);
-    if (NULL == begptr) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        free(tmp);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    j = 0;
-    while (begptr) {
-        count = strtol(begptr, &endptr, 10);
-        if ((endptr[0] == '(') && (endptr[1] == 'x')) {
-            reps = strtol((endptr+2), &endptr, 10);
-            if (endptr[0] == ')') {
-                endptr++;
-            }
-        } else {
-            reps = 1;
-        }
-
-        for (i = 0; i < reps && j < num_nodes; i++) {
-            tmp[j++] = count;
-        }
-
-        if (*endptr == ',') {
-            begptr = endptr + 1;
-        } else if (*endptr == '\0' || j >= num_nodes) {
-            break;
-        } else {
-            orte_show_help("help-regex.txt", "regex:bad-ppn", true, regexp);
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            free(tmp);
-            free(orig);
-            return ORTE_ERR_BAD_PARAM;
-        }
-    }
-
-    free(orig);
-
-    /* return values */
-    *ppn = tmp;
-
-    return ORTE_SUCCESS;
-}
-
-int orte_regex_extract_name_range(char *regexp, char ***names)
-{
-    char *tmp, *b, *b2, **rngs, *t, *pre, *post;
-    int i;
-    char c;
-
-    /* protect input */
-    tmp = strdup(regexp);
-    /* look for bracket */
-    if (NULL == (b = strchr(tmp, '['))) {
-        /* just one value */
-        opal_argv_append_nosize(names, regexp);
-        free(tmp);
-        return ORTE_SUCCESS;
-    }
-    if (b == tmp) {
-        /* bracket at very beginning */
-        pre = NULL;
-    } else {
-        *b = '\0';
-        pre = tmp;
-    }
-    /* step over the bracket */
-    b++;
-    /* look for closing bracket */
-    if (NULL == (b2 = strrchr(tmp, ']'))) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        free(tmp);
-        return ORTE_ERR_BAD_PARAM;
-    }
-    *b2 = '\0';
-    b2++;
-    if ('\0' == *b2) {
-        /* bracket was at end */
-        post = NULL;
-    } else {
-        post = b2;
-    }
-
-    /* split on commas */
-    rngs = opal_argv_split(b, ',');
-    for (i=0; NULL != rngs[i]; i++) {
-        /* look for a range */
-        if (NULL == strchr(rngs[i], '-')) {
-            /* just one value */
-            if (NULL == pre && NULL == post) {
-                t = strdup(rngs[i]);
-            } else if (NULL == pre) {
-                asprintf(&t, "%s%s", rngs[i], post);
-            } else if (NULL == post) {
-                asprintf(&t, "%s%s", pre, rngs[i]);
-            } else {
-                asprintf(&t, "%s%s%s", pre, rngs[i], post);
-            }
-            opal_argv_append_nosize(names, t);
-            free(t);
-        } else {
-            /* has to be <char>-<char> */
-            for (c=rngs[i][0]; c <= rngs[i][2]; c++) {
-                if (NULL == pre && NULL == post) {
-                    asprintf(&t, "%c", c);
-                } else if (NULL == pre) {
-                    asprintf(&t, "%c%s", c, post);
-                } else if (NULL == post) {
-                    asprintf(&t, "%s%c", pre, c);
-                } else {
-                    asprintf(&t, "%s%c%s", pre, c, post);
-                }
-                opal_argv_append_nosize(names, t);
-                free(t);
-            }
-        }
-    }
-    opal_argv_free(rngs);
-    free(tmp);
-    return ORTE_SUCCESS;
-}
+/*****  CLASS INSTANTIATIONS   ****/
 
 static void range_construct(orte_regex_range_t *ptr)
 {
@@ -768,4 +626,3 @@ OBJ_CLASS_INSTANCE(orte_regex_node_t,
                    opal_list_item_t,
                    orte_regex_node_construct,
                    orte_regex_node_destruct);
-

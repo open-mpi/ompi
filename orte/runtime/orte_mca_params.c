@@ -689,6 +689,15 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_stat_history_size);
 
+    orte_no_vm = false;
+    id = mca_base_var_register ("orte", "orte", NULL, "no_vm",
+                                "Do not build the VM at start to detect topologies",
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                &orte_no_vm);
+    /* register a synonym for old name */
+    mca_base_var_register_synonym (id, "orte", "state", "novm", "select", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
     orte_max_vm_size = -1;
     (void) mca_base_var_register ("orte", "orte", NULL, "max_vm_size",
                                   "Maximum size of virtual machine - used to subdivide allocation",
@@ -772,6 +781,12 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_stack_trace_wait_timeout);
+
+    (void) mca_base_var_register ("orte", "orte", NULL, "fwd_mpirun_port",
+                                  "Forward the port used by mpirun so all daemons will use it",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_fwd_mpirun_port);
 
     return ORTE_SUCCESS;
 }

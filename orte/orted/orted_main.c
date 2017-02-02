@@ -111,6 +111,11 @@
 static opal_event_t *pipe_handler;
 static void shutdown_callback(int fd, short flags, void *arg);
 static void pipe_closed(int fd, short flags, void *arg);
+static void rollup(int status, orte_process_name_t* sender,
+                   opal_buffer_t *buffer,
+                   orte_rml_tag_t tag, void *cbdata);
+static opal_buffer_t *bucket;
+static int ncollected = 0;
 
 static char *orte_parent_uri;
 
@@ -228,6 +233,7 @@ int orte_daemon(int argc, char *argv[])
     memset(&orted_globals, 0, sizeof(orted_globals));
     /* initialize the singleton died pipe to an illegal value so we can detect it was set */
     orted_globals.singleton_died_pipe = -1;
+    bucket = OBJ_NEW(opal_buffer_t);
 
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
@@ -694,6 +700,31 @@ int orte_daemon(int argc, char *argv[])
      * for it
      */
     if (!ORTE_PROC_IS_HNP) {
+        orte_process_name_t target;
+        target.jobid = ORTE_PROC_MY_NAME->jobid;
+
+        if (orte_fwd_mpirun_port) {
+            /* setup the rollup callback */
+            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
+                                    ORTE_RML_PERSISTENT, rollup, NULL);
+            target.vpid = ORTE_PROC_MY_NAME->vpid;
+            /* since we will be waiting for any children to send us
+             * their rollup info before sending to our parent, save
+             * a little time in the launch phase by "warming up" the
+             * connection to our parent while we wait for our children */
+            buffer = OBJ_NEW(opal_buffer_t);  // zero-byte message
+            if (0 > (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
+                                                   ORTE_PROC_MY_PARENT, buffer,
+                                                   ORTE_RML_TAG_WARMUP_CONNECTION,
+                                                   orte_rml_send_callback, NULL))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }
+        } else {
+            target.vpid = 0;
+        }
+
         /* send the information to the orted report-back point - this function
          * will process the data, but also counts the number of
          * orteds that reported back so the launch procedure can continue.
@@ -767,9 +798,9 @@ int orte_daemon(int argc, char *argv[])
             }
         }
 
-        /* send to the HNP's callback - will be routed if routes are available */
+        /* send it to the designated target */
         if (0 > (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
-                                               ORTE_PROC_MY_HNP, buffer,
+                                               &target, buffer,
                                                ORTE_RML_TAG_ORTED_CALLBACK,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
@@ -897,4 +928,31 @@ static void shutdown_callback(int fd, short flags, void *arg)
     orte_odls.kill_local_procs(NULL);
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
+}
+
+static void rollup(int status, orte_process_name_t* sender,
+                   opal_buffer_t *buffer,
+                   orte_rml_tag_t tag, void *cbdata)
+{
+    int nreqd;
+    char *rtmod;
+    int ret;
+
+    /* xfer the contents of the rollup to our bucket */
+    opal_dss.copy_payload(bucket, buffer);
+    ncollected++;
+
+    /* get the number of children, and include ourselves */
+    rtmod = orte_rml.get_routed(orte_mgmt_conduit);
+    nreqd = orte_routed.num_routes(rtmod) + 1;
+    if (nreqd == ncollected) {
+        /* relay this on to our parent */
+        if (0 > (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
+                                               ORTE_PROC_MY_PARENT, bucket,
+                                               ORTE_RML_TAG_ORTED_CALLBACK,
+                                               orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(bucket);
+        }
+    }
 }

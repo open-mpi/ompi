@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,7 +99,7 @@ OBJ_CLASS_DECLARATION(orte_rmaps_base_selected_module_t);
 /*
  * Map a job
  */
-ORTE_DECLSPEC void orte_rmaps_base_map_job(int fd, short args, void *cbdata);
+ORTE_DECLSPEC int orte_rmaps_base_map_job(orte_job_t *jdata);
 
 /**
  * Utility routines to get/set vpid mapping for the job
@@ -125,6 +125,8 @@ ORTE_DECLSPEC int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *poli
 ORTE_DECLSPEC int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
                                                      orte_mapping_policy_t mapping,
                                                      char *spec);
+
+ORTE_DECLSPEC void orte_rmaps_base_display_map(orte_job_t *jdata);
 
 END_C_DECLS
 

@@ -428,7 +428,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orte_cmd_options.disable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
       "Disable recovery (resets all recovery options to off)" },
 
-    { "state_novm_select", '\0', "novm", "novm", 0,
+    { "orte_no_vm", '\0', "novm", "novm", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)" },
 
@@ -448,6 +448,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "terminate", "terminate", 0,
       &orte_cmd_options.terminate_dvm, OPAL_CMD_LINE_TYPE_BOOL,
       "Terminate the DVM" },
+
+    /* fwd mpirun port */
+    { "orte_fwd_mpirun_port", '\0', "fwd-mpirun-port", "fwd-mpirun-port", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Forward mpirun port to compute node daemons so all will use it" },
 
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,

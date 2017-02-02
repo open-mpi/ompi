@@ -58,6 +58,7 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/sstore/base/base.h"
@@ -116,6 +117,7 @@ int orte_ess_base_orted_setup(char **hosts)
     char *param;
     hwloc_obj_t obj;
     unsigned i, j;
+    orte_topology_t *t;
     opal_list_t transports;
 
     /* my name is set, xfer it to the OPAL layer */
@@ -333,13 +335,8 @@ int orte_ess_base_orted_setup(char **hosts)
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
-    node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
-    /* point our topology to the one detected locally */
-    node->topology = OBJ_NEW(orte_topology_t);
-    node->topology->sig = strdup(orte_topo_signature);
-    node->topology->topo = opal_hwloc_topology;
-    /* add it to the array of known ones */
-    opal_pointer_array_add(orte_node_topologies, node->topology);
+    node->index = ORTE_PROC_MY_NAME->vpid;
+    opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
 
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -496,14 +493,40 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rtc_base_select";
         goto error;
     }
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rmaps_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmaps_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmaps_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmaps_base_find_available";
+        goto error;
+    }
 
-    /* if we are using static ports, then we need to setup
+    /* if a topology file was given, then the rmaps framework open
+     * will have reset our topology. Ensure we always get the right
+     * one by setting our node topology afterwards
+     */
+    t = OBJ_NEW(orte_topology_t);
+    t->topo = opal_hwloc_topology;
+    /* generate the signature */
+    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+    t->sig = strdup(orte_topo_signature);
+    opal_pointer_array_add(orte_node_topologies, t);
+    node->topology = t;
+    if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+        opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+    }
+
+    /* if we were given the host list, then we need to setup
      * the daemon info so the RML can function properly
      * without requiring a wireup stage. This must be done
      * after we enable_comm as that function determines our
      * own port, which we need in order to construct the nidmap
      */
-    if (orte_static_ports) {
+    if (NULL != hosts) {
         /* extract the node info from the environment and
          * build a nidmap from it - this will update the
          * routing plan as well

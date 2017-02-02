@@ -42,30 +42,17 @@
 #include "orte/mca/rmaps/base/rmaps_private.h"
 
 
-/*
- * Function for selecting one component from all those that are
- * available.
- */
-void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
+int orte_rmaps_base_map_job(orte_job_t *jdata)
 {
-    orte_job_t *jdata;
     orte_node_t *node;
     int rc, i, ppx;
     bool did_map, given, pernode;
     orte_rmaps_base_selected_module_t *mod;
     orte_job_t *parent;
-    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_vpid_t nprocs;
     orte_app_context_t *app;
 
-    /* convenience */
-    jdata = caddy->jdata;
     jdata->state = ORTE_JOB_STATE_MAP;
-
-    /* NOTE: NO PROXY COMPONENT REQUIRED - REMOTE PROCS ARE NOT
-     * ALLOWED TO CALL RMAPS INDEPENDENTLY. ONLY THE PLM CAN
-     * DO SO, AND ALL PLM COMMANDS ARE RELAYED TO HNP
-     */
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: mapping job %s",
@@ -128,10 +115,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                              orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING))) {
                             /* inform the user of the error */
                             orte_show_help("help-orte-rmaps-base.txt", "num-procs-not-specified", true);
-                            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-                            OBJ_RELEASE(caddy);
                             OPAL_LIST_DESTRUCT(&nodes);
-                            return;
+                            return ORTE_ERR_BAD_PARAM;
                         }
                     }
                     nprocs += slots;
@@ -350,9 +335,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         int i;
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            OBJ_RELEASE(caddy);
-            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-            return;
+            return ORTE_ERR_NOT_FOUND;
         }
         t0 = node->topology;
         for (i=1; i < orte_node_pool->size; i++) {
@@ -385,9 +368,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
          */
         if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
             ORTE_ERROR_LOG(rc);
-            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-            OBJ_RELEASE(caddy);
-            return;
+            return rc;
         }
     }
     if (did_map && ORTE_ERR_RESOURCE_BUSY == rc) {
@@ -395,9 +376,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
          * for launch as all the resources were busy
          */
         orte_show_help("help-orte-rmaps-base.txt", "cannot-launch", true);
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_CANNOT_LAUNCH);
-        OBJ_RELEASE(caddy);
-        return;
+        return rc;
     }
 
     /* if we get here without doing the map, or with zero procs in
@@ -407,9 +386,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         orte_show_help("help-orte-rmaps-base.txt", "failed-map", true,
                        did_map ? "mapped" : "unmapped",
                        jdata->num_procs, jdata->map->num_nodes);
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-        OBJ_RELEASE(caddy);
-        return;
+        return ORTE_ERR_INVALID_NUM_PROCS;
     }
 
     /* if any node is oversubscribed, then check to see if a binding
@@ -425,17 +402,15 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     /* compute and save local ranks */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
         ORTE_ERROR_LOG(rc);
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-        OBJ_RELEASE(caddy);
-        return;
+        return rc;
     }
 
-    /* compute and save bindings */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-        OBJ_RELEASE(caddy);
-        return;
+    if (orte_no_vm) {
+        /* compute and save bindings */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     /* set the offset so shared memory components can potentially
@@ -452,104 +427,100 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
     }
 
-    /* if we wanted to display the map, now is the time to do it - ignore
-     * daemon job
-     */
-    if (jdata->map->display_map) {
-        char *output=NULL;
-        int i, j, cnt;
-        orte_node_t *node;
-        orte_proc_t *proc;
-        char tmp1[1024];
-        hwloc_obj_t bd=NULL;;
-        opal_hwloc_locality_t locality;
-        orte_proc_t *p0;
-        char *p0bitmap, *procbitmap;
+    return ORTE_SUCCESS;
+}
 
-        if (orte_display_diffable_output) {
-            /* intended solely to test mapping methods, this output
-             * can become quite long when testing at scale. Rather
-             * than enduring all the malloc/free's required to
-             * create an arbitrary-length string, custom-generate
-             * the output a line at a time here
-             */
-            /* display just the procs in a diffable format */
-            opal_output(orte_clean_output, "<map>\n");
-            fflush(stderr);
-            /* loop through nodes */
-            cnt = 0;
-            for (i=0; i < jdata->map->nodes->size; i++) {
-                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
-                    continue;
-                }
-                opal_output(orte_clean_output, "\t<host num=%d>", cnt);
-                fflush(stderr);
-                cnt++;
-                for (j=0; j < node->procs->size; j++) {
-                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
-                        continue;
-                    }
-                    memset(tmp1, 0, 1024);
-                    orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR);
-                    if (NULL == bd) {
-                        (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
-                    } else {
-                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
-                            (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
-                        }
-                    }
-                    opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu binding=%s>",
-                                ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,
-                                (unsigned long)proc->local_rank,
-                                (unsigned long)proc->node_rank, tmp1);
-                }
-                opal_output(orte_clean_output, "\t</host>");
-                fflush(stderr);
+void orte_rmaps_base_display_map(orte_job_t *jdata)
+{
+    /* ignore daemon job */
+    char *output=NULL;
+    int i, j, cnt;
+    orte_node_t *node;
+    orte_proc_t *proc;
+    char tmp1[1024];
+    hwloc_obj_t bd=NULL;;
+    opal_hwloc_locality_t locality;
+    orte_proc_t *p0;
+    char *p0bitmap, *procbitmap;
+
+    if (orte_display_diffable_output) {
+        /* intended solely to test mapping methods, this output
+         * can become quite long when testing at scale. Rather
+         * than enduring all the malloc/free's required to
+         * create an arbitrary-length string, custom-generate
+         * the output a line at a time here
+         */
+        /* display just the procs in a diffable format */
+        opal_output(orte_clean_output, "<map>\n");
+        fflush(stderr);
+        /* loop through nodes */
+        cnt = 0;
+        for (i=0; i < jdata->map->nodes->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
+                continue;
             }
-
-             /* test locality - for the first node, print the locality of each proc relative to the first one */
-            node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, 0);
-            p0 = (orte_proc_t*)opal_pointer_array_get_item(node->procs, 0);
-            p0bitmap = NULL;
-            orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&p0bitmap, OPAL_STRING);
-            opal_output(orte_clean_output, "\t<locality>");
-            for (j=1; j < node->procs->size; j++) {
+            opal_output(orte_clean_output, "\t<host num=%d>", cnt);
+            fflush(stderr);
+            cnt++;
+            for (j=0; j < node->procs->size; j++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
                 }
-                procbitmap = NULL;
-                orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
-                locality = opal_hwloc_base_get_relative_locality(node->topology->topo,
-                                                                 p0bitmap,
-                                                                 procbitmap);
-                opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",
-                            ORTE_VPID_PRINT(p0->name.vpid),
-                            ORTE_VPID_PRINT(proc->name.vpid),
-                            opal_hwloc_base_print_locality(locality));
+                memset(tmp1, 0, 1024);
+                orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR);
+                if (NULL == bd) {
+                    (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                } else {
+                    if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
+                        (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                    }
+                }
+                opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu binding=%s>",
+                            ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,
+                            (unsigned long)proc->local_rank,
+                            (unsigned long)proc->node_rank, tmp1);
             }
-            opal_output(orte_clean_output, "\t</locality>\n</map>");
+            opal_output(orte_clean_output, "\t</host>");
             fflush(stderr);
-            if (NULL != p0bitmap) {
-                free(p0bitmap);
-            }
-            if (NULL != procbitmap) {
-                free(procbitmap);
-            }
-        } else {
-            opal_output(orte_clean_output, " Data for JOB %s offset %s", ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(jdata->offset));
-            opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "%s\n", output);
-                fflush(orte_xml_fp);
-            } else {
-                opal_output(orte_clean_output, "%s", output);
-            }
-            free(output);
         }
-    }
-    /* set the job state to the next position */
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_COMPLETE);
 
-    /* cleanup */
-    OBJ_RELEASE(caddy);
+         /* test locality - for the first node, print the locality of each proc relative to the first one */
+        node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, 0);
+        p0 = (orte_proc_t*)opal_pointer_array_get_item(node->procs, 0);
+        p0bitmap = NULL;
+        orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&p0bitmap, OPAL_STRING);
+        opal_output(orte_clean_output, "\t<locality>");
+        for (j=1; j < node->procs->size; j++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                continue;
+            }
+            procbitmap = NULL;
+            orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
+            locality = opal_hwloc_base_get_relative_locality(node->topology->topo,
+                                                             p0bitmap,
+                                                             procbitmap);
+            opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",
+                        ORTE_VPID_PRINT(p0->name.vpid),
+                        ORTE_VPID_PRINT(proc->name.vpid),
+                        opal_hwloc_base_print_locality(locality));
+        }
+        opal_output(orte_clean_output, "\t</locality>\n</map>");
+        fflush(stderr);
+        if (NULL != p0bitmap) {
+            free(p0bitmap);
+        }
+        if (NULL != procbitmap) {
+            free(procbitmap);
+        }
+    } else {
+        opal_output(orte_clean_output, " Data for JOB %s offset %s", ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(jdata->offset));
+        opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
+        if (orte_xml_output) {
+            fprintf(orte_xml_fp, "%s\n", output);
+            fflush(orte_xml_fp);
+        } else {
+            opal_output(orte_clean_output, "%s", output);
+        }
+        free(output);
+    }
 }

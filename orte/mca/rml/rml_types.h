@@ -172,6 +172,9 @@ BEGIN_C_DECLS
 /* topology report */
 #define ORTE_RML_TAG_TOPOLOGY_REPORT        62
 
+/* warmup connection - simply establishes the connection */
+#define ORTE_RML_TAG_WARMUP_CONNECTION      63
+
 #define ORTE_RML_TAG_MAX                   100
 
 

@@ -325,13 +325,12 @@ static int tcp_component_register(void)
     } else {
         mca_oob_tcp_component.tcp6_static_ports = NULL;
     }
-    if (NULL == mca_oob_tcp_component.tcp_static_ports &&
-        NULL == mca_oob_tcp_component.tcp6_static_ports) {
-        orte_static_ports = false;
-    } else {
+#endif // OPAL_ENABLE_IPV6
+
+    if (NULL != mca_oob_tcp_component.tcp_static_ports ||
+        NULL != mca_oob_tcp_component.tcp6_static_ports) {
         orte_static_ports = true;
     }
-#endif // OPAL_ENABLE_IPV6
 
     dyn_port_string = NULL;
     (void)mca_base_component_var_register(component, "dynamic_ipv4_ports",

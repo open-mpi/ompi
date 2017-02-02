@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +14,7 @@
 #include "orte_config.h"
 #include "opal/util/output.h"
 
+#include "orte/runtime/orte_globals.h"
 #include "orte/mca/state/state.h"
 #include "orte/mca/state/base/base.h"
 #include "state_novm.h"
@@ -26,7 +28,6 @@ const char *orte_state_novm_component_version_string =
 /*
  * Local functionality
  */
-static int state_novm_register (void);
 static int state_novm_open(void);
 static int state_novm_close(void);
 static int state_novm_component_query(mca_base_module_t **module, int *priority);
@@ -50,31 +51,13 @@ orte_state_base_component_t mca_state_novm_component =
         /* Component open and close functions */
         .mca_open_component = state_novm_open,
         .mca_close_component = state_novm_close,
-        .mca_query_component = state_novm_component_query,
-        .mca_register_component_params = state_novm_register
+        .mca_query_component = state_novm_component_query
     },
     .base_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 };
-
-static bool select_me = false;
-
-static int state_novm_register (void)
-{
-    int ret;
-
-    select_me = false;
-    ret = mca_base_component_var_register (&mca_state_novm_component.base_version,
-                                           "select", "Use this component",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL,
-                                           0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
-                                           &select_me);
-    return (0 > ret) ? ret : ORTE_SUCCESS;
-}
 
 static int state_novm_open(void)
 {
@@ -88,7 +71,7 @@ static int state_novm_close(void)
 
 static int state_novm_component_query(mca_base_module_t **module, int *priority)
 {
-    if (ORTE_PROC_IS_HNP && select_me) {
+    if (ORTE_PROC_IS_HNP && orte_no_vm) {
         /* set our priority high so we'll be selected if user desires */
         *priority = 1000;
         *module = (mca_base_module_t *)&orte_state_novm_module;

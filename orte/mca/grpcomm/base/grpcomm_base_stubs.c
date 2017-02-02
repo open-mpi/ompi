@@ -545,6 +545,8 @@ static int pack_xcast(orte_grpcomm_signature_t *sig,
         OBJ_DESTRUCT(&data);
     }
 
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "MSG SIZE: %lu", buffer->bytes_used));
     return ORTE_SUCCESS;
 }
 

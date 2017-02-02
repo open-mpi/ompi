@@ -187,13 +187,12 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
     }
 
     tmp2 = opal_argv_join(src->personality, ',');
-    asprintf(&tmp, "\n%sData for job: %s\tPersonality: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tMPI allowed: %s\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
+    asprintf(&tmp, "\n%sData for job: %s\tPersonality: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
              ORTE_JOBID_PRINT(src->jobid), tmp2,
              (ORTE_FLAG_TEST(src, ORTE_JOB_FLAG_RECOVERABLE)) ? "ENABLED" : "DISABLED",
              (orte_get_attribute(&src->attributes, ORTE_JOB_RECOVER_DEFINED, NULL, OPAL_BOOL)) ? "DEFINED" : "DEFAULT",
              pfx2,
-             (long)src->num_apps,
-             (ORTE_FLAG_TEST(src, ORTE_JOB_FLAG_GANG_LAUNCHED)) ? "YES" : "NO", ORTE_VPID_PRINT(src->stdin_target),
+             (long)src->num_apps, ORTE_VPID_PRINT(src->stdin_target),
               orte_job_state_to_str(src->state), (ORTE_FLAG_TEST(src, ORTE_JOB_FLAG_ABORTED)) ? "True" : "False");
     free(tmp2);
     asprintf(&pfx, "%s\t", pfx2);

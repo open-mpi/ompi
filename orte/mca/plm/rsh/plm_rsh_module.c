@@ -1191,25 +1191,20 @@ static void launch_daemons(int fd, short args, void *cbdata)
         orte_routed.get_routing_list(rtmod, &coll);
     }
 
-    if (orte_static_ports) {
-        /* create a list of all nodes involved so we can pass it along */
-        char **nodelist = NULL;
-        orte_node_t *n2;
-        for (nnode=0; nnode < map->nodes->size; nnode++) {
-            if (NULL != (n2 = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
-                opal_argv_append_nosize(&nodelist, n2->name);
-            }
+    /* create a list of all nodes involved so we can pass it along */
+    char **nodelist = NULL;
+    orte_node_t *n2;
+    for (nnode=0; nnode < map->nodes->size; nnode++) {
+        if (NULL != (n2 = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+            opal_argv_append_nosize(&nodelist, n2->name);
         }
-        /* we need mpirun to be the first node on this list */
-        if (NULL == nodelist ||
-            0 != strcmp(nodelist[0], orte_process_info.nodename)) {
-            opal_argv_prepend_nosize(&nodelist, orte_process_info.nodename);
-        }
-        nlistflat = opal_argv_join(nodelist, ',');
-        opal_argv_free(nodelist);
-    } else {
-        nlistflat = NULL;
     }
+    /* we need mpirun to be the first node on this list */
+    if (0 != strcmp(nodelist[0], orte_process_info.nodename)) {
+        opal_argv_prepend_nosize(&nodelist, orte_process_info.nodename);
+    }
+    nlistflat = opal_argv_join(nodelist, ',');
+    opal_argv_free(nodelist);
 
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, node->name, &node_name_index1,

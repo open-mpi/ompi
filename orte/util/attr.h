@@ -78,7 +78,6 @@ typedef uint8_t orte_node_flags_t;
 typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_FLAGS_T  OPAL_UINT16
 #define ORTE_JOB_FLAG_UPDATED            0x0001   // job has been updated and needs to be included in the pidmap message
-#define ORTE_JOB_FLAG_GANG_LAUNCHED      0x0002   // MPI is allowed on this job - i.e., all members of the job were simultaneously launched
 #define ORTE_JOB_FLAG_RESTARTED          0x0004   // some procs in this job are being restarted
 #define ORTE_JOB_FLAG_ABORTED            0x0008   // did this job abort?
 #define ORTE_JOB_FLAG_DEBUGGER_DAEMON    0x0010   // job is launching debugger daemons

@@ -24,7 +24,7 @@ my $ppn = 1;
 my @csvrow;
 
 my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
-my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
+my @options = ("", "", "", "--fwd-mpirun-port -mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "--fwd-mpirun-port -mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
 my @starterlist = qw(mpirun orterun srun aprun);
 my @starteroptionlist = ("--novm",
                          "--hnp file:dvm_uri",
