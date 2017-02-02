@@ -75,6 +75,8 @@
 #include "orte/mca/oob/tcp/oob_tcp_common.h"
 #include "orte/mca/oob/tcp/oob_tcp_connection.h"
 
+#define OOB_SEND_MAX_RETRIES 3
+
 void mca_oob_tcp_queue_msg(int sd, short args, void *cbdata)
 {
     mca_oob_tcp_send_t *snd = (mca_oob_tcp_send_t*)cbdata;
@@ -105,7 +107,7 @@ void mca_oob_tcp_queue_msg(int sd, short args, void *cbdata)
 static int send_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_send_t* msg)
 {
     struct iovec iov[2];
-    int iov_count;
+    int iov_count, retries = 0;
     ssize_t remain = msg->sdbytes, rc;
 
     OPAL_TIMING_EVENT((&tm_oob, "to %s %d bytes",
@@ -146,12 +148,20 @@ static int send_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_send_t* msg)
              * but let the event lib cycle so other messages
              * can progress while this socket is busy
              */
+            ++retries;
+            if (retries < OOB_SEND_MAX_RETRIES) {
+                goto retry;
+            }
             return ORTE_ERR_RESOURCE_BUSY;
         } else if (opal_socket_errno == EWOULDBLOCK) {
             /* tell the caller to keep this message on active,
              * but let the event lib cycle so other messages
              * can progress while this socket is busy
              */
+            ++retries;
+            if (retries < OOB_SEND_MAX_RETRIES) {
+                goto retry;
+            }
             return ORTE_ERR_WOULD_BLOCK;
         } else {
             /* we hit an error and cannot progress this message */
