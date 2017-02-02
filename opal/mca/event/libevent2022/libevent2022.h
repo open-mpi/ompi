@@ -110,6 +110,8 @@ OPAL_DECLSPEC int opal_event_finalize(void);
 
 #define opal_event_set(b, x, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
+#define opal_event_assign(x, b, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+
 #define opal_event_add(ev, tv) event_add((ev), (tv))
 
 #define opal_event_del(ev) event_del((ev))
