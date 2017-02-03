@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2006-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -182,22 +182,9 @@ static int tcp_component_open(void)
  */
 static int tcp_component_close(void)
 {
-    mca_oob_tcp_peer_t *peer;
-    uint64_t ui64;
-
     /* cleanup listen event list */
     OBJ_DESTRUCT(&mca_oob_tcp_component.listeners);
 
-    /* cleanup all peers */
-    OPAL_HASH_TABLE_FOREACH(ui64, uint64, peer, &mca_oob_tcp_component.peers) {
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s RELEASING PEER OBJ %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
-        if (NULL != peer) {
-            OBJ_RELEASE(peer);
-        }
-    }
     OBJ_DESTRUCT(&mca_oob_tcp_component.peers);
 
     if (NULL != mca_oob_tcp_component.ipv4conns) {
@@ -722,12 +709,25 @@ static void cleanup(int sd, short args, void *cbdata)
 
 static void component_shutdown(void)
 {
+    mca_oob_tcp_peer_t *peer;
+    uint64_t ui64;
     int i = 0;
     bool active;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP SHUTDOWN",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    /* cleanup all peers */
+    OPAL_HASH_TABLE_FOREACH(ui64, uint64, peer, &mca_oob_tcp_component.peers) {
+        opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                            "%s RELEASING PEER OBJ %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
+        if (NULL != peer) {
+            OBJ_RELEASE(peer);
+        }
+    }
 
     if (0 < orte_oob_base.num_threads) {
         for (i=0; i < orte_oob_base.num_threads; i++) {
