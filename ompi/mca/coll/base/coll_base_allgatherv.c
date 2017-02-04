@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      University of Houston. All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
+ * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All Rights
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
