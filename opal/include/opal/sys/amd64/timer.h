@@ -31,31 +31,14 @@ typedef uint64_t opal_timer_t;
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-/**
- * http://www.intel.com/content/www/us/en/intelligent-systems/embedded-systems-training/ia-32-ia-64-benchmark-code-execution-paper.html
- */
+/* TODO: add AMD mfence version and dispatch at init */
 static inline opal_timer_t
 opal_sys_timer_get_cycles(void)
 {
-     unsigned l, h;
-#if !OPAL_ASSEMBLY_SUPPORTS_RDTSCP
-     __asm__ __volatile__ ("cpuid\n\t"
+     uint32_t l, h;
+     __asm__ __volatile__ ("lfence\n\t"
                            "rdtsc\n\t"
-                           : "=a" (l), "=d" (h)
-                           :: "rbx", "rcx");
-#else
-     /* If we need higher accuracy we should implement the algorithm proposed
-      * on the Intel document referenced above. However, in the context of MPI
-      * this function will be used as the backend for MPI_Wtime and as such
-      * can afford a small inaccuracy.
-      */
-     __asm__ __volatile__ ("rdtscp\n\t"
-                           "mov %%edx, %0\n\t"
-                           "mov %%eax, %1\n\t"
-                           "cpuid\n\t"
-                           : "=r" (h), "=r" (l)
-                           :: "rax", "rbx", "rcx", "rdx");
-#endif
+                           : "=a" (l), "=d" (h));
      return ((opal_timer_t)l) | (((opal_timer_t)h) << 32);
 }
 
