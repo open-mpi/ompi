@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -490,6 +490,7 @@ static void opcon(pmix1_opcaddy_t *p)
     p->ninfo = 0;
     p->apps = NULL;
     p->sz = 0;
+    p->active = false;
     p->opcbfunc = NULL;
     p->mdxcbfunc = NULL;
     p->valcbfunc = NULL;
