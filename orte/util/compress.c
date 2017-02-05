@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,7 @@
 #include "opal/util/output.h"
 #include "compress.h"
 
-#ifdef OPAL_HAVE_ZLIB
+#if OPAL_HAVE_ZLIB
 bool orte_util_compress_block(uint8_t *inbytes,
                               size_t inlen,
                               uint8_t **outbytes,
