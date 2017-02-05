@@ -7,6 +7,7 @@
  * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -259,6 +260,7 @@ void ompi_comm_request_return (ompi_comm_request_t *request)
 {
     if (request->context) {
         OBJ_RELEASE (request->context);
+        request->context = NULL;
     }
 
     OMPI_REQUEST_FINI(&request->super);
