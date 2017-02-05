@@ -12,9 +12,11 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,7 +76,6 @@ static bool added_transport_keys=false;
 static bool added_num_procs = false;
 static bool added_app_ctx = false;
 static bool added_pmix_envs = false;
-static char *pmixenvars[4];
 static bool progress_thread_running = false;
 
 static int fork_hnp(void);
@@ -83,9 +84,9 @@ static int rte_init(void)
 {
     int rc, ret;
     char *error = NULL;
-    char *envar, *ev1, *ev2;
     uint64_t unique_key[2];
     char *string_key;
+    char *envar;
     opal_value_t *kv;
     char *val;
     int u32, *u32ptr;
@@ -225,13 +226,17 @@ static int rte_init(void)
      * MPI-3 required info key
      */
     if (NULL == getenv(OPAL_MCA_PREFIX"orte_ess_num_procs")) {
-        asprintf(&ev1, OPAL_MCA_PREFIX"orte_ess_num_procs=%d", orte_process_info.num_procs);
-        putenv(ev1);
+        char * num_procs;
+        asprintf(&num_procs, "%d", orte_process_info.num_procs);
+        opal_setenv(OPAL_MCA_PREFIX"orte_ess_num_procs", num_procs, true, &environ);
+        free(num_procs);
         added_num_procs = true;
     }
     if (NULL == getenv("OMPI_APP_CTX_NUM_PROCS")) {
-        asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", orte_process_info.num_procs);
-        putenv(ev2);
+        char * num_procs;
+        asprintf(&num_procs, "%d", orte_process_info.num_procs);
+        opal_setenv("OMPI_APP_CTX_NUM_PROCS", num_procs, true, &environ);
+        free(num_procs);
         added_app_ctx = true;
     }
 
@@ -546,6 +551,8 @@ static int fork_hnp(void)
         exit(1);
 
     } else {
+        int count;
+
         free(cmd);
         /* I am the parent - wait to hear something back and
          * report results
@@ -612,14 +619,13 @@ static int fork_hnp(void)
 
         /* split the pmix_uri into its parts */
         argv = opal_argv_split(cptr, ',');
-        if (4 != opal_argv_count(argv)) {
-            opal_argv_free(argv);
-            return ORTE_ERR_BAD_PARAM;
-        }
+        count = opal_argv_count(argv);
         /* push each piece into the environment */
-        for (i=0; i < 4; i++) {
-            pmixenvars[i] = strdup(argv[i]);
-            putenv(pmixenvars[i]);
+        for (i=0; i < count; i++) {
+            char *c = strchr(argv[i], '=');
+            assert(NULL != c);
+            *c++ = '\0';
+            opal_setenv(argv[i], c, true, &environ);
         }
         opal_argv_free(argv);
         added_pmix_envs = true;
