@@ -313,7 +313,7 @@ int ompi_osc_rdma_lock_all_atomic (int assert, struct ompi_win_t *win)
      * at the expense of memory usage. Ex. if a window has 1M peers then 8MB per process would
      * be needed for this array. */
 
-    if (0 != (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (assert & MPI_MODE_NOCHECK)) {
         /* increment the global shared lock */
         ret = ompi_osc_rdma_lock_acquire_shared (module, module->leader, 0x0000000100000000UL,
                                                  offsetof(ompi_osc_rdma_state_t, global_lock),
@@ -356,7 +356,7 @@ int ompi_osc_rdma_unlock_all_atomic (struct ompi_win_t *win)
     /* finish all outstanding fragments */
     ompi_osc_rdma_sync_rdma_complete (lock);
 
-    if (0 != (lock->sync.lock.assert & MPI_MODE_NOCHECK)) {
+    if (0 == (lock->sync.lock.assert & MPI_MODE_NOCHECK)) {
         /* decrement the master lock shared count */
         (void) ompi_osc_rdma_lock_release_shared (module, module->leader, -0x0000000100000000UL, offsetof (ompi_osc_rdma_state_t, global_lock));
     }
