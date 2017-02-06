@@ -18,6 +18,7 @@
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #define OPAL_PARAMS_H
 
 extern char *opal_signal_string;
+extern char *opal_stacktrace_output_filename;
 extern char *opal_net_private_ipv4;
 extern char *opal_set_max_sys_limits;
 

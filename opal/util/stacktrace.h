@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,12 @@
 #define OPAL_STACKTRACE_H
 
 #include "opal_config.h"
+
+/*
+ * File descriptor to be used by the backtrace framework if opal_backtrace_print
+ * is passed NULL for it's FILE file pointer.
+ */
+extern int opal_stacktrace_output_fileno;
 
 /**
  * Output the current stack trace (not including the call to this

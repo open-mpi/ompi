@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +28,13 @@
 int
 opal_backtrace_print(FILE *file, char *prefix, int strip)
 {
-    printstack(fileno(file));
+    int fd = opal_stacktrace_output_fileno;
+
+    if( NULL != file ) {
+        fd = fileno(file);
+    }
+
+    printstack(fd);
 
     return OPAL_SUCCESS;
 }

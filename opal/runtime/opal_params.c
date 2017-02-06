@@ -21,6 +21,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +49,7 @@
 #include "opal/util/bit_ops.h"
 
 char *opal_signal_string = NULL;
+char *opal_stacktrace_output_filename = NULL;
 char *opal_net_private_ipv4 = NULL;
 char *opal_set_max_sys_limits = NULL;
 
@@ -74,6 +76,7 @@ static bool opal_register_done = false;
 int opal_register_params(void)
 {
     int ret;
+    char *string = NULL;
 
     if (opal_register_done) {
         return OPAL_SUCCESS;
@@ -85,7 +88,6 @@ int opal_register_params(void)
      * This string is going to be used in opal/util/stacktrace.c
      */
     {
-        char *string = NULL;
         int j;
         int signals[] = {
 #ifdef SIGABRT
@@ -124,6 +126,28 @@ int opal_register_params(void)
             return ret;
         }
     }
+
+    /*
+     * Where should the stack trace output be directed
+     * This string is going to be used in opal/util/stacktrace.c
+     */
+    string = strdup("stderr");
+    opal_stacktrace_output_filename = string;
+    ret = mca_base_var_register ("opal", "opal", NULL, "stacktrace_output",
+                                 "Specifies where the stack trace output stream goes.  "
+                                 "Accepts one of the following: none (disabled), stderr (default), stdout, file[:filename].   "
+                                 "If 'filename' is not specified, a default filename of 'stacktrace' is used.  "
+                                 "The 'filename' is appended with either '.PID' or '.RANK.PID', if RANK is available.  "
+                                 "The 'filename' can be an absolute path or a relative path to the current working directory.",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &opal_stacktrace_output_filename);
+    free (string);
+    if (0 > ret) {
+        return ret;
+    }
+
 
 #if defined(HAVE_SCHED_YIELD)
     opal_progress_yield_when_idle = false;
