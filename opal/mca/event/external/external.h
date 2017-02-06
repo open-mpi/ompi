@@ -4,6 +4,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -45,7 +46,7 @@ OPAL_DECLSPEC extern opal_event_base_t *opal_sync_event_base;
 #define OPAL_EVLOOP_NONBLOCK EVLOOP_NONBLOCK    /**< Do not block. */
 
 /* Global function to create and release an event base */
-#define opal_event_base_create() event_base_new()
+OPAL_DECLSPEC opal_event_base_t* opal_event_base_create(void);
 
 #define opal_event_base_free(x) event_base_free(x)
 
