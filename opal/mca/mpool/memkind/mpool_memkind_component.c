@@ -15,6 +15,8 @@
  * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +35,7 @@
 #include <memkind.h>
 #include "opal/mca/base/base.h"
 #include "opal/mca/allocator/base/base.h"
+#include "opal/util/argv.h"
 #include "mpool_memkind.h"
 
 
