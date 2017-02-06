@@ -111,16 +111,5 @@ int  mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t*, mca_btl_base_endpoint_t*);
 void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t*, struct sockaddr*, int);
 bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t*, struct sockaddr_storage*);
 
-/**
- * Inlined function to return local TCP proc instance.
- */
-
-static inline mca_btl_tcp_proc_t* mca_btl_tcp_proc_local(void)
-{
-    if(NULL == mca_btl_tcp_component.tcp_local)
-        mca_btl_tcp_component.tcp_local = mca_btl_tcp_proc_create(opal_proc_local_get());
-    return mca_btl_tcp_component.tcp_local;
-}
-
 END_C_DECLS
 #endif
