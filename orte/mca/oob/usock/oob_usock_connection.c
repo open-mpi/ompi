@@ -16,6 +16,7 @@
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ *  Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -758,6 +759,10 @@ static void usock_peer_connected(mca_oob_usock_peer_t* peer)
 void mca_oob_usock_peer_close(mca_oob_usock_peer_t *peer)
 {
     mca_oob_usock_send_t *snd;
+
+    if( NULL == peer ) {
+        return;
+    }
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s usock_peer_close for %s sd %d state %s",
