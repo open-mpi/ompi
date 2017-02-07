@@ -9,6 +9,10 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -39,7 +43,7 @@ static inline int a2av_sched_inplace(int rank, int p, NBC_Schedule *schedule,
 int ompi_coll_libnbc_ialltoallv(const void* sendbuf, const int *sendcounts, const int *sdispls,
                                 MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                struct mca_coll_base_module_2_1_0_t *module)
+                                struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res;
   MPI_Aint sndext, rcvext;
@@ -141,7 +145,7 @@ int ompi_coll_libnbc_ialltoallv(const void* sendbuf, const int *sendcounts, cons
 int ompi_coll_libnbc_ialltoallv_inter (const void* sendbuf, const int *sendcounts, const int *sdispls,
 				       MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
 				       MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				       struct mca_coll_base_module_2_1_0_t *module)
+				       struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;
   MPI_Aint sndext, rcvext;

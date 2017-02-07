@@ -9,6 +9,10 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -41,7 +45,7 @@ int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, voi
  * each node receives from it's left (modulo p) neighbor */
 int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                struct mca_coll_base_module_2_1_0_t *module)
+                                struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res;
   MPI_Aint rcvext;
@@ -170,7 +174,7 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
 
 int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
 				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				      struct mca_coll_base_module_2_1_0_t *module)
+				      struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;
   MPI_Aint rcvext;

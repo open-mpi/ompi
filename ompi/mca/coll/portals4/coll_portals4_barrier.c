@@ -3,6 +3,7 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -268,7 +269,7 @@ ompi_coll_portals4_barrier_intra(struct ompi_communicator_t *comm,
 int
 ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
         ompi_request_t **ompi_req,
-        struct mca_coll_base_module_2_1_0_t *module)
+        struct mca_coll_base_module_2_2_0_t *module)
 {
     int ret;
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;

@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,6 +132,8 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
     basic_module->super.coll_neighbor_alltoall = mca_coll_basic_neighbor_alltoall;
     basic_module->super.coll_neighbor_alltoallv = mca_coll_basic_neighbor_alltoallv;
     basic_module->super.coll_neighbor_alltoallw = mca_coll_basic_neighbor_alltoallw;
+
+    basic_module->super.coll_reduce_local = mca_coll_base_reduce_local;
 
     return &(basic_module->super);
 }

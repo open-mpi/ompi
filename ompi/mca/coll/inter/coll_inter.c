@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 
 #include "ompi/mca/bml/base/base.h"
@@ -133,6 +135,7 @@ mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority)
     inter_module->super.coll_scan       = NULL;
     inter_module->super.coll_scatter    = mca_coll_inter_scatter_inter;
     inter_module->super.coll_scatterv   = mca_coll_inter_scatterv_inter;
+    inter_module->super.coll_reduce_local = mca_coll_base_reduce_local;
 
     return &(inter_module->super);
 }

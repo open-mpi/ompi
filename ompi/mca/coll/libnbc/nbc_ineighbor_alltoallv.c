@@ -9,6 +9,10 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -42,7 +46,7 @@ int NBC_Ineighbor_alltoallv_args_compare(NBC_Ineighbor_alltoallv_args *a, NBC_In
 int ompi_coll_libnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
                                          void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                         struct mca_coll_base_module_2_1_0_t *module) {
+                                         struct mca_coll_base_module_2_2_0_t *module) {
   int res, indegree, outdegree, *srcs, *dsts;
   MPI_Aint sndext, rcvext;
   NBC_Handle *handle;

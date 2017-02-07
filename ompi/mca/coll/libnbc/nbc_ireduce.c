@@ -10,6 +10,9 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -51,7 +54,7 @@ int NBC_Reduce_args_compare(NBC_Reduce_args *a, NBC_Reduce_args *b, void *param)
 /* the non-blocking reduce */
 int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
                              MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                             struct mca_coll_base_module_2_1_0_t *module) {
+                             struct mca_coll_base_module_2_2_0_t *module) {
   int rank, p, res, segsize;
   size_t size;
   MPI_Aint ext;
@@ -211,7 +214,7 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
 
 int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
 				   MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				   struct mca_coll_base_module_2_1_0_t *module) {
+				   struct mca_coll_base_module_2_2_0_t *module) {
   int rank, res, rsize;
   NBC_Schedule *schedule;
   NBC_Handle *handle;

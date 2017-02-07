@@ -3,6 +3,7 @@
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -359,7 +360,7 @@ allreduce_kary_tree_bottom(ompi_coll_portals4_request_t *request)
 int ompi_coll_portals4_allreduce_intra(const void* sendbuf, void* recvbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_2_1_0_t *module)
+        struct mca_coll_base_module_2_2_0_t *module)
 {
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;
     ompi_coll_portals4_request_t *request;
@@ -389,7 +390,7 @@ int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, int 
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         ompi_request_t ** ompi_request,
-        struct mca_coll_base_module_2_1_0_t *module)
+        struct mca_coll_base_module_2_2_0_t *module)
 {
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;
     ompi_coll_portals4_request_t *request;

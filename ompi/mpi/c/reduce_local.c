@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,13 +46,15 @@ static const char FUNC_NAME[] = "MPI_Reduce_local";
 int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
                      MPI_Datatype datatype, MPI_Op op)
 {
+    int err;
+
     MEMCHECKER(
         memchecker_datatype(datatype);
     );
 
     if (MPI_PARAM_CHECK) {
         char *msg;
-        int err = MPI_SUCCESS;
+        err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (MPI_OP_NULL == op || NULL == op) {
@@ -75,9 +78,14 @@ int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
 
     /* Invoke the op component to perform the back-end operation */
     OBJ_RETAIN(op);
-    /* XXX -- CONST -- do not cast away const -- update mca/coll */
-    ompi_op_reduce(op,(void *) inbuf, inoutbuf, count, datatype);
+    OBJ_RETAIN(datatype);
+    // Since there is no 'comm' parameter to this interface use 'self' since
+    // this is a local operation to this process.
+    ompi_communicator_t *comm = &ompi_mpi_comm_self.comm;
+    err = comm->c_coll.coll_reduce_local(inbuf, inoutbuf, count, datatype, op,
+                                         comm->c_coll.coll_reduce_local_module);
+    OBJ_RELEASE(datatype);
     OBJ_RELEASE(op);
 
-    return MPI_SUCCESS;
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

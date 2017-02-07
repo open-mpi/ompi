@@ -14,6 +14,7 @@
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,6 +98,8 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, ineighbor_alltoall);
     CLOSE(comm, ineighbor_alltoallv);
     CLOSE(comm, ineighbor_alltoallw);
+
+    CLOSE(comm, reduce_local);
 
     /* All done */
     return OMPI_SUCCESS;
