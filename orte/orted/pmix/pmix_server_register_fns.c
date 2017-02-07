@@ -74,11 +74,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_JOBID_PRINT(jdata->jobid));
 
-    /* if this job has no local procs, then no need to register them */
-    if (0 == jdata->num_local_procs) {
-        return ORTE_SUCCESS;
-    }
-
     /* setup the info list */
     info = OBJ_NEW(opal_list_t);
     uid = geteuid();
