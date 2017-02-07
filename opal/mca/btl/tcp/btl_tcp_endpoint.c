@@ -150,6 +150,7 @@ mca_btl_tcp_endpoint_dump(int level,
     opal_socklen_t obtlen;
     opal_socklen_t addrlen = sizeof(inaddr);
     mca_btl_tcp_frag_t* item;
+    mca_btl_tcp_proc_t* this_proc = mca_btl_tcp_proc_local();
 
     used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "%s: ", msg);
     if (used >= DEBUG_LENGTH) goto out;
@@ -279,7 +280,7 @@ out:
     opal_output_verbose(level, opal_btl_base_framework.framework_output,
                         "[%s:%d:%s][%s -> %s] %s",
                         fname, lineno, funcname,
-                        OPAL_NAME_PRINT(opal_proc_local_get()->proc_name),
+                        (NULL != this_proc ? OPAL_NAME_PRINT(mca_btl_tcp_proc_local()->proc_opal->proc_name) : "unknown"),
                         (NULL != btl_endpoint->endpoint_proc ? OPAL_NAME_PRINT(btl_endpoint->endpoint_proc->proc_opal->proc_name) : "unknown remote"),
                         outmsg);
 }
@@ -407,7 +408,8 @@ mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpoint,
 static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_endpoint)
 {
     /* send process identifier to remote endpoint */
-    opal_process_name_t guid = opal_proc_local_get()->proc_name;
+    mca_btl_tcp_proc_t* btl_proc = mca_btl_tcp_proc_local();
+    opal_process_name_t guid = btl_proc->proc_opal->proc_name;
 
     OPAL_PROCESS_NAME_HTON(guid);
     if(mca_btl_tcp_endpoint_send_blocking(btl_endpoint, &guid, sizeof(guid)) !=
@@ -420,6 +422,7 @@ static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_en
 static void *mca_btl_tcp_endpoint_complete_accept(int fd, int flags, void *context)
 {
     mca_btl_base_endpoint_t* btl_endpoint = (mca_btl_base_endpoint_t*)context;
+    mca_btl_tcp_proc_t* this_proc = mca_btl_tcp_proc_local();
     struct timeval now = {0, 0};
     int cmpval;
 
@@ -448,7 +451,7 @@ static void *mca_btl_tcp_endpoint_complete_accept(int fd, int flags, void *conte
     }
 
     cmpval = opal_compare_proc(btl_endpoint->endpoint_proc->proc_opal->proc_name,
-                               opal_proc_local_get()->proc_name);
+                               this_proc->proc_opal->proc_name);
     if((btl_endpoint->endpoint_sd < 0) ||
        (btl_endpoint->endpoint_state != MCA_BTL_TCP_CONNECTED &&
         cmpval < 0)) {

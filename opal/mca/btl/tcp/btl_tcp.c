@@ -156,8 +156,10 @@ int mca_btl_tcp_del_procs(struct mca_btl_base_module_t* btl,
     OPAL_THREAD_LOCK(&tcp_btl->tcp_endpoints_mutex);
     for( i = 0; i < nprocs; i++ ) {
         mca_btl_tcp_endpoint_t* tcp_endpoint = endpoints[i];
-        opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t*)tcp_endpoint);
-        OBJ_RELEASE(tcp_endpoint);
+        if(tcp_endpoint->endpoint_proc != mca_btl_tcp_proc_local()) {
+            opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t*)tcp_endpoint);
+            OBJ_RELEASE(tcp_endpoint);
+        }
         opal_progress_event_users_decrement();
     }
     OPAL_THREAD_UNLOCK(&tcp_btl->tcp_endpoints_mutex);
