@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +22,7 @@
 #include "src/include/pmix_globals.h"
 #include "src/util/compress.h"
 
-#ifdef HAVE_ZLIB_H
+#if PMIX_HAVE_ZLIB
 bool pmix_util_compress_string(char *instring,
                                uint8_t **outbytes,
                                size_t *nbytes)
