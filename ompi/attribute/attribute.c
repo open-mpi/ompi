@@ -12,6 +12,8 @@
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,12 +32,13 @@
  * There are several places in the standard that should be read about
  * attributes:
  *
- * MPI-1: Section 5.7 (pp 167-173)
- * MPI-1: Section 7.1 (pp 191-192) predefined attributes in MPI-1
- * MPI-2: Section 4.12.7 (pp 57-59) interlanguage attribute
- *        clarifications
- * MPI-2: Section 6.2.2 (pp 112) window predefined attributes
- * MPI-2: Section 8.8 (pp 198-208) new attribute caching functions
+ * MPI-1:   Section 5.7 (pp 167-173)
+ * MPI-1:   Section 7.1 (pp 191-192) predefined attributes in MPI-1
+ * MPI-2:   Section 4.12.7 (pp 57-59) interlanguage attribute
+ *          clarifications
+ * MPI-2:   Section 6.2.2 (pp 112) window predefined attributes
+ * MPI-2:   Section 8.8 (pp 198-208) new attribute caching functions
+ * MPI-3.1: Section 11.2.6 (pp 414-415) window attributes
  *
  * After reading all of this, note the following:
  *
@@ -50,6 +53,8 @@
  *   means writing a pointer to an instance of something; changing the
  *   value of that instance will make it visible to anyone who reads
  *   that attribute value).
+ * - C also internally store some int attributes of a MPI_Win by value,
+ *   and these attributes are read-only (i.e. set once for all)
  * - Fortran functions store values by value (i.e., writing an
  *   attribute value means that anyone who reads that attribute value
  *   will not be able to affect the value read by anyone else).
@@ -60,10 +65,10 @@
  * - MPI-2 4.12.7:Example 4.13 (p58) is wrong.  The C->Fortran example
  *   should have the Fortran "val" variable equal to &I.
  *
- * By the first two of these, there are 9 possible use cases -- 3
+ * By the first two of these, there are 12 possible use cases -- 4
  * possibilities for writing an attribute value, each of which has 3
  * possibilities for reading that value back.  The following lists
- * each of the 9 cases, and what happens in each.
+ * each of the 12 cases, and what happens in each.
  *
  * Cases where C writes an attribute value:
  * ----------------------------------------
@@ -109,22 +114,20 @@
  *            CALL MPI_COMM_GET_ATTR(..., ret, ierr)
  *            --> ret will equal &bar
  *
- * Cases where Fortran MPI-1 writes an attribute value:
+ * Cases where C writes an int attribute:
  * ----------------------------------------------------
  *
- * In all of these cases, an INTEGER is written by Fortran.
+ * In all of these cases, an int is written by C.
+ * This is done internally when writing the attributes of a MPI_Win
  *
- * Example: INTEGER FOO = 7
- *          CALL MPI_ATTR_PUT(..., foo, ierr)
+ * Example: int foo = 7;
+ *          ompi_set_attr_int(..., foo, ...)
  *
  * 4. C reads the attribute value.  The value returned is a pointer
- *    that points to an INTEGER (i.e., an MPI_Fint) that has a value
+ *    that points to an int that has a value
  *    of 7.
- *    --> NOTE: The external MPI interface does not distinguish between
- *        this case and case 7.  It is the programer's responsibility
- *        to code accordingly.
  *
- * Example: MPI_Fint *ret;
+ * Example: int *ret;
  *          MPI_Attr_get(..., &ret);
  *          -> *ret will equal 7.
  *
@@ -136,6 +139,40 @@
  *          --> ret will equal 7
  *
  * 6. Fortran MPI-2 reads the attribute value.  The same value is
+ *    returned, but potentially sign-extended if sizeof(INTEGER) <
+ *    sizeof(INTEGER(KIND=MPI_ADDRESS_KIND)).
+ *
+ * Example: INTEGER(KIND=MPI_ADDRESS_KIND) ret
+ *          CALL MPI_COMM_GET_ATTR(..., ret, ierr)
+ *          --> ret will equal 7
+ *
+ * Cases where Fortran MPI-1 writes an attribute value:
+ * ----------------------------------------------------
+ *
+ * In all of these cases, an INTEGER is written by Fortran.
+ *
+ * Example: INTEGER FOO = 7
+ *          CALL MPI_ATTR_PUT(..., foo, ierr)
+ *
+ * 7. C reads the attribute value.  The value returned is a pointer
+ *    that points to an INTEGER (i.e., an MPI_Fint) that has a value
+ *    of 7.
+ *    --> NOTE: The external MPI interface does not distinguish between
+ *        this case and case 7.  It is the programer's responsibility
+ *        to code accordingly.
+ *
+ * Example: MPI_Fint *ret;
+ *          MPI_Attr_get(..., &ret);
+ *          -> *ret will equal 7.
+ *
+ * 8. Fortran MPI-1 reads the attribute value.  This is the unity
+ *    case; the same value is returned.
+ *
+ * Example: INTEGER ret
+ *          CALL MPI_ATTR_GET(..., ret, ierr)
+ *          --> ret will equal 7
+ *
+ * 9. Fortran MPI-2 reads the attribute value.  The same value is
  *    returned, but potentially sign-extended if sizeof(INTEGER) <
  *    sizeof(INTEGER(KIND=MPI_ADDRESS_KIND)).
  *
@@ -156,7 +193,7 @@
  *            INTEGER(KIND=MPI_ADDRESS_KIND) FOO = pow(2, 40)
  *            CALL MPI_COMM_PUT_ATTR(..., foo, ierr)
  *
- * 7. C reads the attribute value.  The value returned is a pointer
+ * 10. C reads the attribute value.  The value returned is a pointer
  *    that points to an INTEGER(KIND=MPI_ADDRESS_KIND) (i.e., a void*)
  *    that has a value of 12.
  *    --> NOTE: The external MPI interface does not distinguish between
@@ -170,7 +207,7 @@
  *            MPI_Attr_get(..., &ret);
  *            -> *ret will equal 2^40
  *
- * 8. Fortran MPI-1 reads the attribute value.  The same value is
+ * 11. Fortran MPI-1 reads the attribute value.  The same value is
  *    returned, but potentially truncated if sizeof(INTEGER) <
  *    sizeof(INTEGER(KIND=MPI_ADDRESS_KIND)).
  *
@@ -181,7 +218,7 @@
  *            CALL MPI_ATTR_GET(..., ret, ierr)
  *            --> ret will equal 0
  *
- * 9. Fortran MPI-2 reads the attribute value.  This is the unity
+ * 12. Fortran MPI-2 reads the attribute value.  This is the unity
  *    case; the same value is returned.
  *
  * Example A: INTEGER(KIND=MPI_ADDRESS_KIND) ret
@@ -235,10 +272,10 @@
 
    1. MPI-1 Fortran-style: attribute and extra state arguments are of
       type (INTEGER).  This is used if both the OMPI_KEYVAL_F77 and
-      OMPI_KEYVAL_F77_MPI1 flags are set.
+      OMPI_KEYVAL_F77_INT flags are set.
    2. MPI-2 Fortran-style: attribute and extra state arguments are of
       type (INTEGER(KIND=MPI_ADDRESS_KIND)).  This is used if the
-      OMPI_KEYVAL_F77 flag is set and the OMPI_KEYVAL_F77_MPI1 flag is
+      OMPI_KEYVAL_F77 flag is set and the OMPI_KEYVAL_F77_INT flag is
       *not* set.
    3. C-style: attribute arguments are of type (void*).  This is used
       if OMPI_KEYVAL_F77 is not set.
@@ -252,11 +289,13 @@ do { \
     if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
         MPI_Fint f_key = OMPI_INT_2_FINT(key); \
         MPI_Fint f_err; \
+        MPI_Fint attr_##type##_f;                \
+        attr_##type##_f = OMPI_INT_2_FINT(((ompi_##type##_t *)keyval_obj)->attr_##type##_f); \
         /* MPI-1 Fortran-style */ \
-        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_MPI1)) { \
-            MPI_Fint attr_val = translate_to_fortran_mpi1(attribute); \
-            (*((keyval_obj->delete_attr_fn).attr_mpi1_fortran_delete_fn)) \
-                (&(((ompi_##type##_t *)object)->attr_##type##_f), \
+        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_INT)) { \
+            MPI_Fint attr_val = translate_to_fint(attribute); \
+            (*((keyval_obj->delete_attr_fn).attr_fint_delete_fn)) \
+                (&attr_##type##_f,                                        \
                  &f_key, &attr_val, &keyval_obj->extra_state.f_integer, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 err = OMPI_FINT_2_INT(f_err);           \
@@ -264,9 +303,9 @@ do { \
         } \
         /* MPI-2 Fortran-style */ \
         else { \
-            MPI_Aint attr_val = translate_to_fortran_mpi2(attribute); \
-            (*((keyval_obj->delete_attr_fn).attr_mpi2_fortran_delete_fn)) \
-                (&(((ompi_##type##_t *)object)->attr_##type##_f), \
+            MPI_Aint attr_val = translate_to_aint(attribute); \
+            (*((keyval_obj->delete_attr_fn).attr_aint_delete_fn)) \
+                (&attr_##type##_f,                                        \
                  &f_key, (int*)&attr_val, &keyval_obj->extra_state.f_address, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 err = OMPI_FINT_2_INT(f_err); \
@@ -295,27 +334,31 @@ do { \
         MPI_Fint f_err; \
         ompi_fortran_logical_t f_flag; \
         /* MPI-1 Fortran-style */ \
-        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_MPI1)) { \
-            MPI_Fint in, out;                                      \
-            in = translate_to_fortran_mpi1(in_attr); \
-            (*((keyval_obj->copy_attr_fn).attr_mpi1_fortran_copy_fn)) \
-                (&(((ompi_##type##_t *)old_object)->attr_##type##_f), \
+        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_INT)) { \
+            MPI_Fint in, out;                        \
+            MPI_Fint attr_##type##_f;                \
+            in = translate_to_fint(in_attr); \
+            attr_##type##_f = OMPI_INT_2_FINT(((ompi_##type##_t *)old_object)->attr_##type##_f); \
+            (*((keyval_obj->copy_attr_fn).attr_fint_copy_fn)) \
+                (&attr_##type##_f, \
                  &f_key, &keyval_obj->extra_state.f_integer, \
                  &in, &out, &f_flag, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 err = OMPI_FINT_2_INT(f_err);           \
             } else {                                    \
                 out_attr->av_value = (void*) 0;         \
-                *out_attr->av_integer_pointer = out;    \
+                *out_attr->av_fint_pointer = out;    \
                 flag = OMPI_LOGICAL_2_INT(f_flag);      \
             }                                           \
         } \
         /* MPI-2 Fortran-style */ \
         else { \
             MPI_Aint in, out;                        \
-            in = translate_to_fortran_mpi2(in_attr); \
-            (*((keyval_obj->copy_attr_fn).attr_mpi2_fortran_copy_fn)) \
-                (&(((ompi_##type##_t *)old_object)->attr_##type##_f), \
+            MPI_Fint attr_##type##_f;                \
+            in = translate_to_aint(in_attr); \
+            attr_##type##_f = OMPI_INT_2_FINT(((ompi_##type##_t *)old_object)->attr_##type##_f); \
+            (*((keyval_obj->copy_attr_fn).attr_aint_copy_fn)) \
+                (&attr_##type##_f, \
                  &f_key, &keyval_obj->extra_state.f_address, &in, &out, \
                  &f_flag, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
@@ -339,16 +382,15 @@ do { \
     OPAL_THREAD_LOCK(&attribute_lock); \
 } while (0)
 
-
 /*
  * Cases for attribute values
  */
 typedef enum ompi_attribute_translate_t {
     OMPI_ATTRIBUTE_C,
-    OMPI_ATTRIBUTE_FORTRAN_MPI1,
-    OMPI_ATTRIBUTE_FORTRAN_MPI2
+    OMPI_ATTRIBUTE_INT,
+    OMPI_ATTRIBUTE_FINT,
+    OMPI_ATTRIBUTE_AINT
 } ompi_attribute_translate_t;
-
 
 /*
  * struct to hold attribute values on each MPI object
@@ -357,8 +399,9 @@ typedef struct attribute_value_t {
     opal_object_t super;
     int av_key;
     void *av_value;
-    MPI_Aint *av_address_kind_pointer;
-    MPI_Fint *av_integer_pointer;
+    int *av_int_pointer;
+    MPI_Fint *av_fint_pointer;
+    MPI_Aint *av_aint_pointer;
     int av_set_from;
     int av_sequence;
 } attribute_value_t;
@@ -377,8 +420,9 @@ static int set_value(ompi_attribute_type_t type, void *object,
 static int get_value(opal_hash_table_t *attr_hash, int key,
                      attribute_value_t **attribute, int *flag);
 static void *translate_to_c(attribute_value_t *val);
-static MPI_Fint translate_to_fortran_mpi1(attribute_value_t *val);
-static MPI_Aint translate_to_fortran_mpi2(attribute_value_t *val);
+static MPI_Fint translate_to_fint(attribute_value_t *val);
+static MPI_Aint translate_to_aint(attribute_value_t *val);
+
 static int compare_attr_sequence(const void *attr1, const void *attr2);
 
 
@@ -408,6 +452,7 @@ static opal_hash_table_t *keyval_hash;
 static opal_bitmap_t *key_bitmap;
 static int attr_sequence;
 static unsigned int int_pos = 12345;
+static unsigned int integer_pos = 12345;
 
 /*
  * MPI attributes are *not* high performance, so just use a One Big Lock
@@ -423,8 +468,9 @@ static opal_mutex_t attribute_lock;
 static void attribute_value_construct(attribute_value_t *item)
 {
     item->av_key = MPI_KEYVAL_INVALID;
-    item->av_address_kind_pointer = (MPI_Aint*) &item->av_value;
-    item->av_integer_pointer = &(((MPI_Fint*) &item->av_value)[int_pos]);
+    item->av_aint_pointer = (MPI_Aint*) &item->av_value;
+    item->av_int_pointer = (int *)&item->av_value + int_pos;
+    item->av_fint_pointer = (MPI_Fint *)&item->av_value + integer_pos;
     item->av_set_from = 0;
     item->av_sequence = -1;
 }
@@ -475,7 +521,7 @@ int ompi_attr_init(void)
 {
     int ret;
     void *bogus = (void*) 1;
-    MPI_Fint *p = (MPI_Fint*) &bogus;
+    int *p = (int *) &bogus;
 
     keyval_hash = OBJ_NEW(opal_hash_table_t);
     if (NULL == keyval_hash) {
@@ -490,9 +536,16 @@ int ompi_attr_init(void)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for (int_pos = 0; int_pos < (sizeof(void*) / sizeof(MPI_Fint));
+    for (int_pos = 0; int_pos < (sizeof(void*) / sizeof(int));
          ++int_pos) {
         if (p[int_pos] == 1) {
+            break;
+        }
+    }
+
+    for (integer_pos = 0; integer_pos < (sizeof(void*) / sizeof(MPI_Fint));
+         ++integer_pos) {
+        if (p[integer_pos] == 1) {
             break;
         }
     }
@@ -600,6 +653,9 @@ int ompi_attr_create_keyval_fint(ompi_attribute_type_t type,
     ompi_attribute_fortran_ptr_t es_tmp;
 
     es_tmp.f_integer = extra_state;
+#if SIZEOF_INT == OMPI_SIZEOF_FORTRAN_INTEGER
+    flags |= OMPI_KEYVAL_F77_INT;
+#endif
     return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
                                         key, &es_tmp, flags,
                                         bindings_extra_state);
@@ -687,13 +743,12 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
 
 
 /*
- * Front-end function called by the Fortran MPI-1 API functions to set
- * an attribute.
+ * Front-end function internally called by the C API functions to set an
+ * int attribute.
  */
-int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
-                               opal_hash_table_t **attr_hash,
-                               int key, MPI_Fint attribute,
-                               bool predefined)
+int ompi_attr_set_int(ompi_attribute_type_t type, void *object,
+                      opal_hash_table_t **attr_hash,
+                      int key, int attribute, bool predefined)
 {
     int ret;
     attribute_value_t *new_attr = OBJ_NEW(attribute_value_t);
@@ -704,8 +759,40 @@ int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
     OPAL_THREAD_LOCK(&attribute_lock);
 
     new_attr->av_value = (void *) 0;
-    *new_attr->av_integer_pointer = attribute;
-    new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI1;
+    *new_attr->av_int_pointer = attribute;
+    new_attr->av_set_from = OMPI_ATTRIBUTE_INT;
+    ret = set_value(type, object, attr_hash, key, new_attr, predefined);
+    if (OMPI_SUCCESS != ret) {
+        OBJ_RELEASE(new_attr);
+    }
+
+    opal_atomic_wmb();
+    OPAL_THREAD_UNLOCK(&attribute_lock);
+
+    return ret;
+}
+
+
+/*
+ * Front-end function called by the Fortran MPI-1 API functions to set
+ * an attribute.
+ */
+int ompi_attr_set_fint(ompi_attribute_type_t type, void *object,
+                       opal_hash_table_t **attr_hash,
+                       int key, MPI_Fint attribute,
+                       bool predefined)
+{
+    int ret;
+    attribute_value_t *new_attr = OBJ_NEW(attribute_value_t);
+    if (NULL == new_attr) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    OPAL_THREAD_LOCK(&attribute_lock);
+
+    new_attr->av_value = (void *) 0;
+    *new_attr->av_fint_pointer = attribute;
+    new_attr->av_set_from = OMPI_ATTRIBUTE_FINT;
     ret = set_value(type, object, attr_hash, key, new_attr, predefined);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(new_attr);
@@ -722,10 +809,10 @@ int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
  * Front-end function called by the Fortran MPI-2 API functions to set
  * an attribute.
  */
-int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object,
-                               opal_hash_table_t **attr_hash,
-                               int key, MPI_Aint attribute,
-                               bool predefined)
+int ompi_attr_set_aint(ompi_attribute_type_t type, void *object,
+                       opal_hash_table_t **attr_hash,
+                       int key, MPI_Aint attribute,
+                       bool predefined)
 {
     int ret;
     attribute_value_t *new_attr = OBJ_NEW(attribute_value_t);
@@ -736,7 +823,7 @@ int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object,
     OPAL_THREAD_LOCK(&attribute_lock);
 
     new_attr->av_value = (void *) attribute;
-    new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI2;
+    new_attr->av_set_from = OMPI_ATTRIBUTE_AINT;
     ret = set_value(type, object, attr_hash, key, new_attr, predefined);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(new_attr);
@@ -777,8 +864,8 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
  * Front-end function called by the Fortran MPI-1 API functions to get
  * attributes.
  */
-int ompi_attr_get_fortran_mpi1(opal_hash_table_t *attr_hash, int key,
-                               MPI_Fint *attribute, int *flag)
+int ompi_attr_get_fint(opal_hash_table_t *attr_hash, int key,
+                       MPI_Fint *attribute, int *flag)
 {
     attribute_value_t *val = NULL;
     int ret;
@@ -787,7 +874,7 @@ int ompi_attr_get_fortran_mpi1(opal_hash_table_t *attr_hash, int key,
 
     ret = get_value(attr_hash, key, &val, flag);
     if (MPI_SUCCESS == ret && 1 == *flag) {
-        *attribute = translate_to_fortran_mpi1(val);
+        *attribute = translate_to_fint(val);
     }
 
     opal_atomic_wmb();
@@ -800,8 +887,8 @@ int ompi_attr_get_fortran_mpi1(opal_hash_table_t *attr_hash, int key,
  * Front-end function called by the Fortran MPI-2 API functions to get
  * attributes.
  */
-int ompi_attr_get_fortran_mpi2(opal_hash_table_t *attr_hash, int key,
-                               MPI_Aint *attribute, int *flag)
+int ompi_attr_get_aint(opal_hash_table_t *attr_hash, int key,
+                       MPI_Aint *attribute, int *flag)
 {
     attribute_value_t *val = NULL;
     int ret;
@@ -810,7 +897,7 @@ int ompi_attr_get_fortran_mpi2(opal_hash_table_t *attr_hash, int key,
 
     ret = get_value(attr_hash, key, &val, flag);
     if (MPI_SUCCESS == ret && 1 == *flag) {
-        *attribute = translate_to_fortran_mpi2(val);
+        *attribute = translate_to_aint(val);
     }
 
     opal_atomic_wmb();
@@ -903,10 +990,10 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
            -- not .TRUE. */
         if (1 == flag) {
             if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77)) {
-                if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77_MPI1)) {
-                    new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI1;
+                if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77_INT)) {
+                    new_attr->av_set_from = OMPI_ATTRIBUTE_FINT;
                 } else {
-                    new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI2;
+                    new_attr->av_set_from = OMPI_ATTRIBUTE_AINT;
                 }
             } else {
                 new_attr->av_set_from = OMPI_ATTRIBUTE_C;
@@ -1234,19 +1321,21 @@ static void *translate_to_c(attribute_value_t *val)
 {
     switch (val->av_set_from) {
     case OMPI_ATTRIBUTE_C:
-        /* Case 1: written in C, read in C (unity) */
+        /* Case 1: wrote a C pointer, read a C pointer
+           (unity) */
         return val->av_value;
-        break;
 
-    case OMPI_ATTRIBUTE_FORTRAN_MPI1:
-        /* Case 4: written in Fortran MPI-1, read in C */
-        return (void *) val->av_integer_pointer;
-        break;
+    case OMPI_ATTRIBUTE_INT:
+        /* Case 4: wrote an int, read a C pointer */
+        return (void *) val->av_int_pointer;
 
-    case OMPI_ATTRIBUTE_FORTRAN_MPI2:
-        /* Case 7: written in Fortran MPI-2, read in C */
-        return (void *) val->av_address_kind_pointer;
-        break;
+    case OMPI_ATTRIBUTE_FINT:
+        /* Case 7: wrote a MPI_Fint, read a C pointer */
+        return (void *) val->av_fint_pointer;
+
+    case OMPI_ATTRIBUTE_AINT:
+        /* Case 10: wrote a MPI_Aint, read a C pointer */
+        return (void *) val->av_aint_pointer;
 
     default:
         /* Should never reach here */
@@ -1262,24 +1351,25 @@ static void *translate_to_c(attribute_value_t *val)
  * This function does not fail -- it is only invoked in "safe"
  * situations.
  */
-static MPI_Fint translate_to_fortran_mpi1(attribute_value_t *val)
+static MPI_Fint translate_to_fint(attribute_value_t *val)
 {
     switch (val->av_set_from) {
     case OMPI_ATTRIBUTE_C:
-        /* Case 2: written in C, read in Fortran MPI-1 */
-        return *val->av_integer_pointer;
-        break;
+        /* Case 2: wrote a C pointer, read a MPI_Fint */
+        return (MPI_Fint)*val->av_int_pointer;
 
-    case OMPI_ATTRIBUTE_FORTRAN_MPI1:
-        /* Case 5: written in Fortran MPI-1, read in Fortran MPI-1
+    case OMPI_ATTRIBUTE_INT:
+        /* Case 5: wrote an int, read a MPI_Fint */
+        return (MPI_Fint)*val->av_int_pointer;
+
+    case OMPI_ATTRIBUTE_FINT:
+        /* Case 8: wrote a MPI_Fint, read a MPI_Fint
            (unity) */
-        return *val->av_integer_pointer;
-        break;
+        return *val->av_fint_pointer;
 
-    case OMPI_ATTRIBUTE_FORTRAN_MPI2:
-        /* Case 8: written in Fortran MPI-2, read in Fortran MPI-1 */
-        return *val->av_integer_pointer;
-        break;
+    case OMPI_ATTRIBUTE_AINT:
+        /* Case 11: wrote a MPI_Aint, read a MPI_Fint */
+        return (MPI_Fint)*val->av_fint_pointer;
 
     default:
         /* Should never reach here */
@@ -1295,24 +1385,25 @@ static MPI_Fint translate_to_fortran_mpi1(attribute_value_t *val)
  * This function does not fail -- it is only invoked in "safe"
  * situations.
  */
-static MPI_Aint translate_to_fortran_mpi2(attribute_value_t *val)
+static MPI_Aint translate_to_aint(attribute_value_t *val)
 {
     switch (val->av_set_from) {
     case OMPI_ATTRIBUTE_C:
-        /* Case 3: written in C, read in Fortran MPI-2 */
+       /* Case 3: wrote a C pointer, read a MPI_Aint */
         return (MPI_Aint) val->av_value;
-        break;
 
-    case OMPI_ATTRIBUTE_FORTRAN_MPI1:
-        /* Case 6: written in Fortran MPI-1, read in Fortran MPI-2 */
-        return (MPI_Aint) *val->av_integer_pointer;
-        break;
+    case OMPI_ATTRIBUTE_INT:
+        /* Case 6: wrote an int, read a MPI_Aint */
+        return (MPI_Aint) *val->av_int_pointer;
 
-    case OMPI_ATTRIBUTE_FORTRAN_MPI2:
-        /* Case 9: written in Fortran MPI-2, read in Fortran MPI-2
+    case OMPI_ATTRIBUTE_FINT:
+        /* Case 9: wrote a MPI_Fint, read a MPI_Aint */
+        return (MPI_Aint) *val->av_fint_pointer;
+
+    case OMPI_ATTRIBUTE_AINT:
+        /* Case 12: wrote a MPI_Aint, read a MPI_Aint
            (unity) */
         return (MPI_Aint) val->av_value;
-        break;
 
     default:
         /* Should never reach here */
