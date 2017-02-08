@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,3 +92,4 @@ int test_connect_disconnect(char *my_nspace, int my_rank)
     TEST_VERBOSE(("%s:%d: Disconnect non-blocking test succeded.", my_nspace, my_rank));
     return PMIX_SUCCESS;
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,3 +28,4 @@ pmix_status_t pmix_util_getid(int sd, uid_t *uid, gid_t *gid);
 END_C_DECLS
 
 #endif /* PMIX_PRINTF_H */
+

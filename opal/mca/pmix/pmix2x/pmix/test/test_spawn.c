@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -84,3 +84,4 @@ int test_spawn(char *my_nspace, int my_rank)
     TEST_VERBOSE(("%s:%d: Spawn non-blocking test succeded.", my_nspace, my_rank));
     return PMIX_SUCCESS;
 }
+

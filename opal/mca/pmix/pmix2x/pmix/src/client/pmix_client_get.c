@@ -596,8 +596,16 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         return;
     }
 
+    /* should be in the internal hash table. */
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    rc = pmix_hash_fetch(&nptr->internal, cb->rank, cb->key, &val);
+    if (PMIX_SUCCESS != rc) {
+        rc = pmix_dstore_fetch(cb->nspace, cb->rank, cb->key, &val);
+    }
+    if (PMIX_SUCCESS == rc) {
+#else
     if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->internal, cb->rank, cb->key, &val))) {
+#endif
         /* if this is a compressed string, then uncompress it */
         if (PMIX_COMPRESSED_STRING == val->type) {
             pmix_util_uncompress_string(&tmp, (uint8_t*)val->data.bo.bytes, val->data.bo.size);
@@ -621,40 +629,10 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         PMIX_RELEASE(cb);
         return;
     }
-#endif
 
     /* if the key is in the PMIx namespace, then they are looking for data
      * that was provided at startup */
     if (0 == strncmp(cb->key, "pmix", 4)) {
-        /* should be in the internal hash table. */
-#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-        if (PMIX_SUCCESS == (rc = pmix_dstore_fetch(cb->nspace, cb->rank, cb->key, &val))) {
-#else
-        if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->internal, cb->rank, cb->key, &val))) {
-#endif
-            /* if this is a compressed string, then uncompress it */
-            if (PMIX_COMPRESSED_STRING == val->type) {
-                pmix_util_uncompress_string(&tmp, (uint8_t*)val->data.bo.bytes, val->data.bo.size);
-                if (NULL == tmp) {
-                    PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
-                    rc = PMIX_ERR_NOMEM;
-                    PMIX_VALUE_RELEASE(val);
-                    val = NULL;
-                } else {
-                    PMIX_VALUE_DESTRUCT(val);
-                    PMIX_VAL_ASSIGN(val, string, tmp);
-                }
-            }
-            /* found it - we are in an event, so we can
-             * just execute the callback */
-            cb->value_cbfunc(rc, val, cb->cbdata);
-            /* cleanup */
-            if (NULL != val) {
-                PMIX_VALUE_RELEASE(val);
-            }
-            PMIX_RELEASE(cb);
-            return;
-        }
         /* if we don't have it, go request it */
         goto request;
     }

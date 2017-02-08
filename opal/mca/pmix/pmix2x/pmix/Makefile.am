@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -61,3 +61,4 @@ nroff:
 
 dist-hook:
 	env LS_COLORS= sh "$(top_srcdir)/config/distscript.sh" "$(top_srcdir)" "$(distdir)" "$(PMIX_VERSION)" "$(PMIX_REPO_REV)"
+

@@ -96,19 +96,19 @@ echo "--> Found specfile: $specfile"
 
 rpmtopdir=${rpmtopdir:-"`grep %_topdir $HOME/.rpmmacros | awk '{ print $2 }'`"}
 if test "$rpmtopdir" != ""; then
-        rpmbuild_options="$rpmbuild_options --define '_topdir $rpmtopdir'"
+	rpmbuild_options="$rpmbuild_options --define '_topdir $rpmtopdir'"
     if test ! -d "$rpmtopdir"; then
-        mkdir -p "$rpmtopdir"
-        mkdir -p "$rpmtopdir/BUILD"
-        mkdir -p "$rpmtopdir/RPMS"
-        mkdir -p "$rpmtopdir/RPMS/i386"
-        mkdir -p "$rpmtopdir/RPMS/i586"
-        mkdir -p "$rpmtopdir/RPMS/i686"
-        mkdir -p "$rpmtopdir/RPMS/noarch"
-        mkdir -p "$rpmtopdir/RPMS/athlon"
-        mkdir -p "$rpmtopdir/SOURCES"
-        mkdir -p "$rpmtopdir/SPECS"
-        mkdir -p "$rpmtopdir/SRPMS"
+	mkdir -p "$rpmtopdir"
+	mkdir -p "$rpmtopdir/BUILD"
+	mkdir -p "$rpmtopdir/RPMS"
+	mkdir -p "$rpmtopdir/RPMS/i386"
+	mkdir -p "$rpmtopdir/RPMS/i586"
+	mkdir -p "$rpmtopdir/RPMS/i686"
+	mkdir -p "$rpmtopdir/RPMS/noarch"
+	mkdir -p "$rpmtopdir/RPMS/athlon"
+	mkdir -p "$rpmtopdir/SOURCES"
+	mkdir -p "$rpmtopdir/SPECS"
+	mkdir -p "$rpmtopdir/SRPMS"
     fi
     need_root=0
 elif test -d /usr/src/RPM; then
