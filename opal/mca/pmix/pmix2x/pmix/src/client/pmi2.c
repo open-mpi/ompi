@@ -36,6 +36,7 @@
 #include "src/util/output.h"
 #include "src/include/pmix_globals.h"
 
+#define ANL_MAPPING "PMI_process_mapping"
 
 #define PMI2_CHECK() \
     do {                     \
@@ -504,6 +505,33 @@ PMIX_EXPORT int PMI2_Info_GetJobAttr(const char name[], char value[], int valuel
      */
     PMIX_INFO_CONSTRUCT(&info[0]);
     PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
+
+    /* PMI-2 expects resource manager to set
+     * process mapping in ANL notation. */
+    if (!strcmp(name, ANL_MAPPING)) {
+        /* we are looking in the job-data. If there is nothing there
+         * we don't want to look in rank's data, thus set rank to widcard */
+        proc = myproc;
+        proc.rank = PMIX_RANK_WILDCARD;
+        if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_ANL_MAP, NULL, 0, &val) &&
+               (NULL != val) && (PMIX_STRING == val->type)) {
+            strncpy(value, val->data.string, valuelen);
+            PMIX_VALUE_FREE(val, 1);
+            *found = 1;
+            return PMI2_SUCCESS;
+        } else {
+            /* artpol:
+             * Some RM's (i.e. SLURM) already have ANL precomputed. The export it
+             * through PMIX_ANL_MAP variable.
+             * If we haven't found it we want to have our own packing functionality
+             * since it's common.
+             * Somebody else has to write it since I've already done that for
+             * GPL'ed SLURM :) */
+            *found = 1;
+            return PMI2_FAIL;
+        }
+    }
+
 
     *found = 0;
     rc = PMIx_Get(&proc, name, info, 1, &val);

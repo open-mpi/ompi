@@ -2,7 +2,7 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2017      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
-dnl Copyright (c) 2017      Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2017      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -24,7 +24,7 @@ AC_DEFUN([PMIX_CHECK_DSTOR_LOCK],[
         _x_ac_fcntl_lock_found="1"
     ], [], [#include <fcntl.h>])
 
-    if test "$ESH_PTHREAD_LOCK" == "1"; then
+    if test "$DSTORE_PTHREAD_LOCK" == "1"; then
         AC_CHECK_FUNC([pthread_rwlockattr_setkind_np],
             [AC_EGREP_HEADER([PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP],
                     [pthread.h],[

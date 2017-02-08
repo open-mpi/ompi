@@ -30,7 +30,7 @@ greek=a1
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=git972f79a
+repo_rev=git6ed27be
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -44,7 +44,7 @@ tarball_version=
 
 # The date when this release was created
 
-date="Jan 31, 2017"
+date="Feb 08, 2017"
 
 # The shared library version of each of PMIx's public libraries.
 # These versions are maintained in accordance with the "Library

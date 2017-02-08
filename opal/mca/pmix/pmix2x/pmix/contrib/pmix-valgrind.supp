@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+# Copyright (c) 2015      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -44,3 +44,5 @@
    fun:PMIx_init
    fun:main
 }
+
+

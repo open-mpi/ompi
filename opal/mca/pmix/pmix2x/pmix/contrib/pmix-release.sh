@@ -36,16 +36,16 @@ for branch in $branches; do
     module load libevent/pmix-$branch
 
     ./$script $@ >dist.out 2>&1
-        if test "$?" != "0"; then
-                cat <<EOF
+	if test "$?" != "0"; then
+		cat <<EOF
 =============================================================================
 == Dist failure
 == Last few lines of output (full results in dist.out file):
 =============================================================================
 EOF
-                tail -n 20 dist.out
-                exit 1
-        fi
+		tail -n 20 dist.out
+		exit 1
+	fi
 
     module unload libevent
     module unload autotools

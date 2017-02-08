@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -555,7 +555,6 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
 
     /* add this contributor to the tracker so they get
      * notified when we are done */
-    PMIX_RETAIN(cd);
     pmix_list_append(&trk->local_cbs, &cd->super);
     /* if all local contributions have been received,
      * let the local host's server know that we are at the
@@ -991,6 +990,7 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
  cleanup:
     PMIX_PROC_FREE(procs, nprocs);
     PMIX_INFO_FREE(info, ninfo);
+    PMIX_RELEASE(cd);
     return rc;
 }
 

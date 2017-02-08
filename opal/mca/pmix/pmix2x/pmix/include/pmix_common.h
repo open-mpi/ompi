@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -759,6 +759,7 @@ typedef struct pmix_value {
             if (NULL != (m)->data.darray->array) {                              \
                 free((m)->data.darray->array);                                  \
             }                                                                   \
+            free((m)->data.darray);                                             \
         /**** DEPRECATED ****/                                                  \
         } else if (PMIX_INFO_ARRAY == (m)->type) {                              \
             pmix_info_t *_p = (pmix_info_t*)((m)->data.array->array);           \

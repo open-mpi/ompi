@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -434,3 +434,4 @@ int test_job_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
     }
     return PMIX_SUCCESS;
 }
+
