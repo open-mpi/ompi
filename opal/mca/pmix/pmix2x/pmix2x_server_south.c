@@ -7,6 +7,8 @@
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -294,9 +296,9 @@ int pmix2x_server_register_nspace(opal_jobid_t jobid,
     if (NULL == cbfunc) {
         _reg_nspace(0, 0, cd);
     } else {
-        event_assign(&cd->ev, opal_pmix_base.evbase,
-                     -1, EV_WRITE, _reg_nspace, cd);
-        event_active(&cd->ev, EV_WRITE, 1);
+        opal_event_assign(&cd->ev, opal_pmix_base.evbase,
+                          -1, EV_WRITE, _reg_nspace, cd);
+        opal_event_active(&cd->ev, EV_WRITE, 1);
     }
 
     return OPAL_SUCCESS;
@@ -354,9 +356,9 @@ void pmix2x_server_deregister_nspace(opal_jobid_t jobid,
     if (NULL == cbfunc) {
         _dereg_nspace(0, 0, cd);
     } else {
-        event_assign(&cd->ev, opal_pmix_base.evbase,
+        opal_event_assign(&cd->ev, opal_pmix_base.evbase,
                      -1, EV_WRITE, _dereg_nspace, cd);
-        event_active(&cd->ev, EV_WRITE, 1);
+        opal_event_active(&cd->ev, EV_WRITE, 1);
     }
 }
 
@@ -424,9 +426,9 @@ void pmix2x_server_deregister_client(const opal_process_name_t *proc,
     if (NULL == cbfunc) {
         _dereg_client(0, 0, cd);
     } else {
-        event_assign(&cd->ev, opal_pmix_base.evbase,
+        opal_event_assign(&cd->ev, opal_pmix_base.evbase,
                      -1, EV_WRITE, _dereg_client, cd);
-        event_active(&cd->ev, EV_WRITE, 1);
+        opal_event_active(&cd->ev, EV_WRITE, 1);
     }
 }
 

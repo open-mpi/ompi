@@ -8,6 +8,8 @@
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  */
 
@@ -132,9 +134,9 @@ typedef struct {
 #define PMIX_EXECUTE_COLLECTIVE(c, t, f)                        \
     do {                                                        \
         PMIX_SETUP_COLLECTIVE(c, t);                            \
-        event_assign(&((c)->ev), pmix_globals.evbase, -1,       \
+        pmix_event_assign(&((c)->ev), pmix_globals.evbase, -1,  \
                      EV_WRITE, (f), (c));                       \
-        event_active(&((c)->ev), EV_WRITE, 1);                  \
+        pmix_event_active(&((c)->ev), EV_WRITE, 1);           \
     } while (0)
 
 

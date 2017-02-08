@@ -1,6 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
+ *                         reserved
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -201,8 +203,8 @@ static inline int pmix_hotel_checkin(pmix_hotel_t *hotel,
 
     /* Assign the event and make it pending */
     if (NULL != hotel->evbase) {
-        event_add(&(room->eviction_timer_event),
-                  &(hotel->eviction_timeout));
+        pmix_event_add(&(room->eviction_timer_event),
+                       &(hotel->eviction_timeout));
     }
 
     return PMIX_SUCCESS;
@@ -226,8 +228,8 @@ static inline void pmix_hotel_checkin_with_res(pmix_hotel_t *hotel,
 
     /* Assign the event and make it pending */
     if (NULL != hotel->evbase) {
-        event_add(&(room->eviction_timer_event),
-                  &(hotel->eviction_timeout));
+        pmix_event_add(&(room->eviction_timer_event),
+                       &(hotel->eviction_timeout));
     }
 }
 
@@ -257,7 +259,7 @@ static inline void pmix_hotel_checkout(pmix_hotel_t *hotel, int room_num)
            pmix_hotel.c:local_eviction_callback(). */
         room->occupant = NULL;
         if (NULL != hotel->evbase) {
-            event_del(&(room->eviction_timer_event));
+            pmix_event_del(&(room->eviction_timer_event));
         }
         hotel->last_unoccupied_room++;
         assert(hotel->last_unoccupied_room < hotel->num_rooms);
@@ -297,7 +299,7 @@ static inline void pmix_hotel_checkout_and_return_occupant(pmix_hotel_t *hotel, 
         *occupant = room->occupant;
         room->occupant = NULL;
         if (NULL != hotel->evbase) {
-            event_del(&(room->eviction_timer_event));
+            pmix_event_del(&(room->eviction_timer_event));
         }
         hotel->last_unoccupied_room++;
         assert(hotel->last_unoccupied_room < hotel->num_rooms);

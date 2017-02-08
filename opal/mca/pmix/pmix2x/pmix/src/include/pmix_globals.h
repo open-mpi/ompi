@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -331,9 +334,9 @@ PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
 #define PMIX_THREADSHIFT(r, c)                       \
  do {                                                 \
     (r)->active = true;                               \
-    event_assign(&((r)->ev), pmix_globals.evbase,     \
+    pmix_event_assign(&((r)->ev), pmix_globals.evbase,     \
                  -1, EV_WRITE, (c), (r));             \
-    event_active(&((r)->ev), EV_WRITE, 1);            \
+    pmix_event_active(&((r)->ev), EV_WRITE, 1);            \
 } while (0)
 
 

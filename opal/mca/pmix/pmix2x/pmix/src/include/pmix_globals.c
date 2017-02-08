@@ -6,6 +6,8 @@
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,10 +90,10 @@ static void pdes(pmix_peer_t *p)
         CLOSE_THE_SOCKET(p->sd);
     }
     if (p->send_ev_active) {
-        event_del(&p->send_event);
+        pmix_event_del(&p->send_event);
     }
     if (p->recv_ev_active) {
-        event_del(&p->recv_event);
+        pmix_event_del(&p->recv_event);
     }
 
     if (NULL != p->info) {

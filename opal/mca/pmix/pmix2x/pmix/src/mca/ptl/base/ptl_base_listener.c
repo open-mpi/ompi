@@ -8,6 +8,8 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -252,7 +254,7 @@ static void* listen_thread(void *obj)
                 pending_connection = PMIX_NEW(pmix_pending_connection_t);
                 pending_connection->protocol = lt->protocol;
                 pending_connection->ptl = lt->ptl;
-                event_assign(&pending_connection->ev, pmix_globals.evbase, -1,
+                pmix_event_assign(&pending_connection->ev, pmix_globals.evbase, -1,
                              EV_WRITE, lt->cbfunc, pending_connection);
                 pending_connection->sd = accept(lt->socket,
                                                 (struct sockaddr*)&(pending_connection->addr),
@@ -285,7 +287,7 @@ static void* listen_thread(void *obj)
                                     "listen_thread: new connection: (%d, %d)",
                                     pending_connection->sd, pmix_socket_errno);
                 /* activate the event */
-                event_active(&pending_connection->ev, EV_WRITE, 1);
+                pmix_event_active(&pending_connection->ev, EV_WRITE, 1);
                 accepted_connections++;
             }
         } while (accepted_connections > 0);
