@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -270,8 +272,8 @@ static int free_win(int keyval)
 
 static int set_f(int keyval, MPI_Fint value)
 {
-    return ompi_attr_set_fortran_mpi1(COMM_ATTR, MPI_COMM_WORLD,
-                                      &MPI_COMM_WORLD->c_keyhash,
-                                      keyval, value,
-                                      true);
+    return ompi_attr_set_fint(COMM_ATTR, MPI_COMM_WORLD,
+                              &MPI_COMM_WORLD->c_keyhash,
+                              keyval, value,
+                              true);
 }
