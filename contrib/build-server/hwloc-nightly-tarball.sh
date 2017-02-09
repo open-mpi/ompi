@@ -68,6 +68,8 @@ for branch in $branches; do
     echo "=== Branch: $branch"
     # Get the last tarball version that was made
     prev_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
+    prev_snapshot_hash=`echo $prev_snapshot | cut -d- -f3`
+    echo "=== Previous snapshot: $prev_snapshot (hash: $prev_snapshot_hash)"
 
     # Form a URL-specific script name
     script=$branch-`basename $script_uri`
@@ -100,12 +102,19 @@ for branch in $branches; do
     module unload autotools
     echo "=== Done running script"
 
-    # Did the script generate a new tarball?  If so, save it so that we can
-    # spawn the coverity checker on it afterwards.  Only for this for the
-    # master (for now).
+    # Did the script generate a new tarball?  Ensure to compare the
+    # only the hash of the previous tarball and the hash of the new
+    # tarball (the filename also contains the date/timestamp, which
+    # will always be different).
+
+    # If so, save it so that we can spawn the coverity checker on it
+    # afterwards.  Only for this for the master (for now).
     latest_snapshot=`cat $outputroot/$branch/latest_snapshot.txt`
-    echo "=== Latest snapshot: $latest_snapshot"
-    if test "$prev_snapshot" != "$latest_snapshot"; then
+    latest_snapshot_hash=`echo $latest_snapshot | cut -d- -f3`
+    echo "=== Latest snapshot: $latest_snapshot (hash: $latest_snapshot_hash)"
+    if test "$prev_snapshot_hash" = "$latest_snapshot_hash"; then
+        echo "=== Hash has not changed; no need to upload/save the new tarball"
+    else
         if test "$branch" = "master"; then
             echo "=== Saving output for a Coverity run"
             echo "$outputroot/$branch/hwloc-$latest_snapshot.tar.bz2" >> $pending_coverity
