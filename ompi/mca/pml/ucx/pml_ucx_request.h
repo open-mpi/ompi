@@ -99,7 +99,10 @@ struct pml_ucx_persistent_request {
     unsigned                          flags;
     void                              *buffer;
     size_t                            count;
-    ucp_datatype_t                    datatype;
+    union {
+        ucp_datatype_t                datatype;
+        ompi_datatype_t              *ompi_datatype;
+    };
     ucp_tag_t                         tag;
     struct {
         mca_pml_base_send_mode_t      mode;
@@ -117,6 +120,8 @@ void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
                                  ucp_tag_recv_info_t *info);
 
 void mca_pml_ucx_psend_completion(void *request, ucs_status_t status);
+
+void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status);
 
 void mca_pml_ucx_precv_completion(void *request, ucs_status_t status,
                                   ucp_tag_recv_info_t *info);

@@ -24,7 +24,7 @@ static int mca_pml_ucx_request_free(ompi_request_t **rptr)
 
     *rptr = MPI_REQUEST_NULL;
     mca_pml_ucx_request_reset(req);
-    ucp_request_release(req);
+    ucp_request_free(req);
     return OMPI_SUCCESS;
 }
 
@@ -44,6 +44,18 @@ void mca_pml_ucx_send_completion(void *request, ucs_status_t status)
     mca_pml_ucx_set_send_status(&req->req_status, status);
     PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
     ompi_request_complete(req, true);
+}
+
+void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status)
+{
+    ompi_request_t *req = request;
+
+    PML_UCX_VERBOSE(8, "bsend request %p buffer %p completed with status %s", (void*)req,
+                    req->req_complete_cb_data, ucs_status_string(status));
+    mca_pml_base_bsend_request_free(req->req_complete_cb_data);
+    mca_pml_ucx_set_send_status(&req->req_status, status);
+    PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
+    mca_pml_ucx_request_free(&req);
 }
 
 void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
@@ -75,7 +87,7 @@ mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *preq,
     ompi_request_complete(&preq->ompi, true);
     mca_pml_ucx_persistent_request_detach(preq, tmp_req);
     mca_pml_ucx_request_reset(tmp_req);
-    ucp_request_release(tmp_req);
+    ucp_request_free(tmp_req);
 }
 
 static inline void mca_pml_ucx_preq_completion(ompi_request_t *tmp_req)
@@ -152,7 +164,10 @@ static int mca_pml_ucx_persistent_request_free(ompi_request_t **rptr)
     preq->ompi.req_state = OMPI_REQUEST_INVALID;
     if (tmp_req != NULL) {
         mca_pml_ucx_persistent_request_detach(preq, tmp_req);
-        ucp_request_release(tmp_req);
+        ucp_request_free(tmp_req);
+    }
+    if (MCA_PML_BASE_SEND_BUFFERED == preq->send.mode) {
+        OBJ_RELEASE(preq->ompi_datatype);
     }
     PML_UCX_FREELIST_RETURN(&ompi_pml_ucx.persistent_reqs, &preq->ompi.super);
     *rptr = MPI_REQUEST_NULL;
