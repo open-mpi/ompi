@@ -153,6 +153,11 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
 
         /****    KILL_LOCAL_PROCS   ****/
     case ORTE_DAEMON_KILL_LOCAL_PROCS:
+        if (orte_debug_daemons_flag) {
+            opal_output(0, "%s orted_cmd: received kill cmd",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
+
         num_replies = 0;
 
         /* construct the pointer array */
