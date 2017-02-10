@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/runtime/opal.h"
 
 #include "ompi/communicator/communicator.h"

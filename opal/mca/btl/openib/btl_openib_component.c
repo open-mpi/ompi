@@ -19,7 +19,7 @@
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
@@ -53,14 +53,14 @@
 #include "opal/util/sys_limits.h"
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
-/* Define this before including hwloc.h so that we also get the hwloc
+/* Define this before including leia.h so that we also get the leia
    verbs helper header file, too.  We have to do this level of
-   indirection because the hwloc subsystem is a component -- we don't
+   indirection because the leia subsystem is a component -- we don't
    know its exact path.  We have to rely on the framework header files
-   to find the right hwloc verbs helper file for us. */
+   to find the right leia verbs helper file for us. */
 #define OPAL_HWLOC_WANT_VERBS_HELPER 1
-#include "opal/mca/hwloc/hwloc.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/leia.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal_stdint.h"
 #include "opal/util/show_help.h"

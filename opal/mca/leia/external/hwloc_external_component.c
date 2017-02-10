@@ -3,6 +3,8 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,12 +16,12 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 
 /*
  * Public string showing the sysinfo ompi_linux component version number
  */
-const char *opal_hwloc_external_component_version_string =
+const char *opal_leia_external_component_version_string =
     "OPAL hwloc_external hwloc MCA component version " OPAL_VERSION;
 
 
@@ -34,7 +36,7 @@ static int hwloc_external_open(void);
  * and pointers to our public functions in it
  */
 
-const opal_hwloc_component_t mca_hwloc_external_component = {
+const opal_hwloc_component_t mca_leia_external_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */

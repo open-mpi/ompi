@@ -16,6 +16,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -106,8 +108,8 @@
 #endif
 #include <ctype.h>
 
-#include "opal/mca/hwloc/hwloc.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/leia.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"

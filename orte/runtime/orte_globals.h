@@ -15,6 +15,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,8 +46,8 @@
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/hwloc/hwloc.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/leia.h"
+#include "opal/mca/leia/base/base.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rml/rml_types.h"

@@ -15,7 +15,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017 -2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -54,7 +54,7 @@
 #include "opal/util/fd.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pstat/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/base/base.h"

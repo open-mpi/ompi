@@ -4,7 +4,8 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- *
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,21 +22,21 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 #include "hwloc1113.h"
 
 /*
  * Public string showing the sysinfo ompi_linux component version number
  */
-const char *opal_hwloc_hwloc1113_component_version_string =
-    "OPAL hwloc1113 hwloc MCA component version " OPAL_VERSION;
+const char *opal_leia_hwloc1113_component_version_string =
+    "OPAL hwloc1113 leia MCA component version " OPAL_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
 
-const opal_hwloc_component_t mca_hwloc_hwloc1113_component = {
+const opal_hwloc_component_t mca_leia_hwloc1113_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */

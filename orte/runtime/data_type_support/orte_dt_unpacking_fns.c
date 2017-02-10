@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +29,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/dss/dss_internal.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 #include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"

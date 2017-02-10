@@ -6,7 +6,9 @@
 # Copyright (c) 2011-2015 INRIA.  All rights reserved.
 # Copyright (c) 2011-2015 Universite Bordeaux 1
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015       Intel, Inc. All rights reserved.
+# Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,7 +20,7 @@
 #                                [action-if-cant-compile])
 # -------------------------------------------
 AC_DEFUN([MCA_ompi_topo_treematch_CONFIG], [
-    AC_REQUIRE([MCA_opal_hwloc_CONFIG_REQUIRE])
+    AC_REQUIRE([MCA_opal_leia_CONFIG_REQUIRE])
 
     AC_ARG_WITH([treematch],
           [AC_HELP_STRING([--with-treematch(=DIR)],

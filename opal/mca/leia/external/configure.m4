@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014-2016 Research Organization for Information Science
+# Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
@@ -14,21 +14,21 @@
 #
 # Priority
 #
-AC_DEFUN([MCA_opal_hwloc_external_PRIORITY], [90])
+AC_DEFUN([MCA_opal_leia_external_PRIORITY], [90])
 
 #
 # Force this component to compile in static-only mode
 #
-AC_DEFUN([MCA_opal_hwloc_external_COMPILE_MODE], [
+AC_DEFUN([MCA_opal_leia_external_COMPILE_MODE], [
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
     $4="static"
     AC_MSG_RESULT([$$4])
 ])
 
 
-# MCA_hwloc_external_POST_CONFIG()
+# MCA_leia_external_POST_CONFIG()
 # ---------------------------------
-AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
+AC_DEFUN([MCA_opal_leia_external_POST_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([opal_hwloc_external_basedir])
 
     # If we won, then do all the rest of the setup
@@ -39,7 +39,7 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
 
            # Set this variable so that the framework m4 knows what
            # file to include in opal/mca/hwloc/hwloc.h
-           opal_hwloc_external_basedir=opal/mca/hwloc/external
+           opal_hwloc_external_basedir=opal/mca/leia/external
            opal_hwloc_base_include="$opal_hwloc_external_basedir/external.h"
 
            # Add some stuff to CPPFLAGS so that the rest of the source
@@ -56,8 +56,7 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
            # OPAL_HWLOC_WANT_VERBS_HELPER to work.  First, the
            # opal_hwloc_external_include file (set above), points to a
            # file here in this component. That file will include the
-           # actual external hwloc.h file (via the
-           # MCA_hwloc_external_header define).  And if
+           # actual external hwloc.h file.  And if
            # OPAL_HWLOC_WANT_VERBS_HELPER is set, that file will
            # include the external hwloc/openfabrics-verbs.h file (via
            # the MCA_hwloc_external_openfabrics_helper define).
@@ -66,9 +65,6 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
                   opal_hwloc_openfabrics_include="$opal_hwloc_dir/include/hwloc/openfabrics-verbs.h"],
                  [opal_hwloc_include="hwloc.h"
                   opal_hwloc_openfabrics_include="hwloc/openfabrics-verbs.h"])
-           AC_DEFINE_UNQUOTED(MCA_hwloc_external_header,
-                  ["$opal_hwloc_include"],
-                  [Location of external hwloc header])
            AC_DEFINE_UNQUOTED(MCA_hwloc_external_openfabrics_header,
                   ["$opal_hwloc_openfabrics_include"],
                   [Location of external hwloc OpenFabrics header])
@@ -77,10 +73,10 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
 ])dnl
 
 
-# MCA_hwloc_external_CONFIG([action-if-found], [action-if-not-found])
+# MCA_leia_external_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
-AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
-    AC_CONFIG_FILES([opal/mca/hwloc/external/Makefile])
+AC_DEFUN([MCA_opal_leia_external_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/leia/external/Makefile])
 
     OPAL_VAR_SCOPE_PUSH([opal_hwloc_external_CPPFLAGS_save opal_hwloc_external_CFLAGS_save opal_hwloc_external_LDFLAGS_save opal_hwloc_external_LIBS_save opal_hwloc_external_want opal_hwloc_external_tmp opal_hwloc_external_lstopo])
 
@@ -200,15 +196,15 @@ Cannot continue])])
            # Finally, add some flags to the wrapper compiler if we're
            # building with developer headers so that our headers can
            # be found.
-           hwloc_external_WRAPPER_EXTRA_CPPFLAGS=$opal_hwloc_external_CPPFLAGS
-           hwloc_external_WRAPPER_EXTRA_LDFLAGS=$opal_hwloc_external_LDFLAGS
-           hwloc_external_WRAPPER_EXTRA_LIBS=$opal_hwloc_external_LIBS
+           leia_external_WRAPPER_EXTRA_CPPFLAGS=$opal_hwloc_external_CPPFLAGS
+           leia_external_WRAPPER_EXTRA_LDFLAGS=$opal_hwloc_external_LDFLAGS
+           leia_external_WRAPPER_EXTRA_LIBS=$opal_hwloc_external_LIBS
 
            $1],
           [$2])
 
-    AC_SUBST(opal_hwloc_external_LDFLAGS)
-    AC_SUBST(opal_hwloc_external_LIBS)
+    AC_SUBST(opal_leia_external_LDFLAGS)
+    AC_SUBST(opal_leia_external_LIBS)
 
     OPAL_VAR_SCOPE_POP
 ])dnl

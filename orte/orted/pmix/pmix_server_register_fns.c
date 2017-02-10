@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -38,7 +38,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/name_fns.h"

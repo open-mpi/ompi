@@ -3,6 +3,8 @@
 # Copyright (c) 2014-2015 Intel, Inc. All right reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,12 +34,12 @@ headers = hwloc1113.h
 sources = hwloc1113_component.c
 
 # We only ever build this component statically
-noinst_LTLIBRARIES = libmca_hwloc_hwloc1113.la
-libmca_hwloc_hwloc1113_la_SOURCES = $(headers) $(sources)
-nodist_libmca_hwloc_hwloc1113_la_SOURCES = $(nodist_headers)
-libmca_hwloc_hwloc1113_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc1113_LDFLAGS)
-libmca_hwloc_hwloc1113_la_LIBADD = $(opal_hwloc_hwloc1113_LIBS)
-libmca_hwloc_hwloc1113_la_DEPENDENCIES = \
+noinst_LTLIBRARIES = libmca_leia_hwloc1113.la
+libmca_leia_hwloc1113_la_SOURCES = $(headers) $(sources)
+nodist_libmca_leia_hwloc1113_la_SOURCES = $(nodist_headers)
+libmca_leia_hwloc1113_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc1113_LDFLAGS)
+libmca_leia_hwloc1113_la_LIBADD = $(opal_leia_hwloc1113_LIBS)
+libmca_leia_hwloc1113_la_DEPENDENCIES = \
     $(HWLOC_top_builddir)/src/libhwloc_embedded.la
 
 # Since the rest of the code base includes the underlying hwloc.h, we

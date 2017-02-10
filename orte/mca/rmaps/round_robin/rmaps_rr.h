@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,7 @@
 
 #include "orte_config.h"
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 #include "opal/class/opal_list.h"
 
 #include "orte/mca/rmaps/rmaps.h"

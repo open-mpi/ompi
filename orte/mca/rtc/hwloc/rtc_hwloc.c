@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +19,7 @@
 #endif  /* HAVE_UNISTD_H */
 #include <string.h>
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 

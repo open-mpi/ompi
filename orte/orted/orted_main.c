@@ -65,7 +65,7 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 #include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/show_help.h"

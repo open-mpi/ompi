@@ -15,7 +15,7 @@
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015 -2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -58,7 +58,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/installdirs/installdirs.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"

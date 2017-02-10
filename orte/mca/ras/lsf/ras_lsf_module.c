@@ -12,6 +12,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +34,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/errmgr/errmgr.h"

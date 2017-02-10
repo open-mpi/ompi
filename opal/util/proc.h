@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -18,7 +18,7 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 #include "opal/types.h"
 #include "opal/dss/dss.h"
 

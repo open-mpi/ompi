@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sched.h>
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "mpi.h"
 
 #include "orte/util/proc_info.h"

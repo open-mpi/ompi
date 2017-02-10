@@ -51,7 +51,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
