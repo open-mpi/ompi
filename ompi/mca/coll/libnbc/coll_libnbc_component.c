@@ -286,9 +286,7 @@ ompi_coll_libnbc_progress(void)
             else {
                 request->super.req_status.MPI_ERROR = res;
             }
-            OPAL_THREAD_LOCK(&ompi_request_lock);
             ompi_request_complete(&request->super, true);
-            OPAL_THREAD_UNLOCK(&ompi_request_lock);
         }
         OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
     }
