@@ -6,7 +6,7 @@
  */
 
 #include <stdio.h>
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 #include "mpi.h"
 
 #include "orte/util/proc_info.h"

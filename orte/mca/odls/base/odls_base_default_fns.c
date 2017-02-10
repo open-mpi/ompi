@@ -13,7 +13,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -52,7 +52,7 @@
 #include "opal/util/path.h"
 #include "opal/util/sys_limits.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/pstat/pstat.h"
 #include "opal/mca/pmix/pmix.h"

@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -13,7 +13,7 @@ dnl
 # their priorities in their configure.m4 files.  They must also set
 # the shell variable $opal_hwloc_base_include to a header file
 # name (relative to the top OMPI source directory) that will be
-# included in opal/mca/hwloc/hwloc.h.
+# included in opal/mca/hwloc/hwloc-internal.h.
 
 dnl We only want one winning component (vs. STOP_AT_FIRST_PRIORITY,
 dnl which will allow all components of the same priority who succeed to

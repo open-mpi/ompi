@@ -11,7 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +34,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/dss/dss_types.h"
 #include "orte/mca/mca.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 
 #include "orte/mca/odls/odls_types.h"
 
