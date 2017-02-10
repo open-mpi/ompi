@@ -941,9 +941,7 @@ ompi_coll_portals4_ibcast_intra_fini(ompi_coll_portals4_request_t *request)
 
     post_bcast_data(request);
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_complete(&request->super, true);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "ibcast_intra_fini");
     return (OMPI_SUCCESS);
