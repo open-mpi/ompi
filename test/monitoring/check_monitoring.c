@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2016 Inria.  All rights reserved.
+ * Copyright (c) 2017 The University of Tennessee and The University
+ *                    of Tennessee Research Foundation.  All rights
+ *                    reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

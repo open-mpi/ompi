@@ -1,10 +1,14 @@
 #!/bin/bash
 
 exe=test_overhead
+
+# add common options
 if [ $# -ge 1 ]
 then
     mfile="-machinefile $1"
 fi
+common_opt="$mfile --bind-to core"
+
 # dir
 resdir=res
 tmpdir=$resdir/.tmp
@@ -15,16 +19,16 @@ dbfile=$tmpdir/base.db
 dbscript=$tmpdir/overhead.sql
 plotfile=$tmpdir/plot.gp
 # operations
-ops=(send a2a bcast)
+ops=(send a2a bcast put get sendpp)
 
-# no_monitoring(nb_nodes, exe_name, output_filename)
+# no_monitoring(nb_nodes, exe_name, output_filename, error_filename)
 function no_monitoring() {
-    mpiexec -n $1 $mfile --bind-to core --mca pml ^monitoring --mca osc ^monitoring --mca coll ^monitoring $2 2> /dev/null > $3
+    mpiexec -n $1 $common_opt --mca pml ^monitoring --mca osc ^monitoring --mca coll ^monitoring $2 2> $4 > $3
 }
 
-# monitoring(nb_nodes, exe_name, output_filename)
+# monitoring(nb_nodes, exe_name, output_filename, error_filename)
 function monitoring() {
-    mpiexec -n $1 $mfile --bind-to core --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename "prof/toto" $2 2> /dev/null > $3
+    mpiexec -n $1 $common_opt --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename "prof/toto" $2 2> $4 > $3
 }
 
 # filter_output(filenames_list)
@@ -36,10 +40,13 @@ function filter_output() {
         # create all sub files as $tmpdir/$filename
         file=$(sed -e "s|$resdir/|$tmpdir/|" -e "s/\.dat/.csv/" <<< $filename)
         # split in file, one per kind of operation monitored
-        awk "/^# MPI_Send/     {out=\"$(sed "s/\.$nbprocs/.send&/"  <<< $file)\"}; \
-             /^# MPI_Bcast/    {out=\"$(sed "s/\.$nbprocs/.bcast&/" <<< $file)\"}; \
-             /^# MPI_Alltoall/ {out=\"$(sed "s/\.$nbprocs/.a2a&/"   <<< $file)\"}; \
-             /^#/ { } ; !/^#/ {\$0=\"$nbprocs \"\$0; print > out};"                \
+        awk "/^# MPI_Send/     {out=\"$(sed "s/\.$nbprocs/.send&/"   <<< $file)\"}; \
+             /^# MPI_Bcast/    {out=\"$(sed "s/\.$nbprocs/.bcast&/"  <<< $file)\"}; \
+             /^# MPI_Alltoall/ {out=\"$(sed "s/\.$nbprocs/.a2a&/"    <<< $file)\"}; \
+             /^# MPI_Put/      {out=\"$(sed "s/\.$nbprocs/.put&/"    <<< $file)\"}; \
+             /^# MPI_Get/      {out=\"$(sed "s/\.$nbprocs/.get&/"    <<< $file)\"}; \
+             /^# MPI_Send_pp/  {out=\"$(sed "s/\.$nbprocs/.sendpp&/" <<< $file)\"}; \
+            /^#/ { } ; !/^#/ {\$0=\"$nbprocs \"\$0; print > out};"                  \
             out=$tmpdir/tmp $filename
     done
     # trim spaces and replace them with comma in each file generated with awk
@@ -78,10 +85,12 @@ for nbprocs in 2 4 8 12 16 20 24
 do
     echo "$nbprocs procs..."
     output_nomon="$base_nomon.$nbprocs.dat"
+    error_nomon="$base_nomon.$nbprocs.err"
     output_mon="$base_mon.$nbprocs.dat"
+    error_mon="$base_mon.$nbprocs.err"
     # actually do the benchmarks
-    no_monitoring $nbprocs $exe $output_nomon
-    monitoring $nbprocs $exe $output_mon
+    no_monitoring $nbprocs $exe $output_nomon $error_nomon
+    monitoring $nbprocs $exe $output_mon $error_mon
     # prepare data to insert them more easily into database
     filter_output $output_nomon $output_mon
     # insert into database
