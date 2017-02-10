@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2011-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -963,9 +963,45 @@ static void process_launch_list(int fd, short args, void *cbdata)
 
         /* child */
         if (pid == 0) {
+            /*
+             * When the user presses CTRL-C, SIGINT is sent to the whole process
+             * group which terminates the rsh/ssh command. This can cause the
+             * remote daemon to crash with a SIGPIPE when it tried to print out
+             * status information. This has two concequences:
+             * 1) The remote node is not cleaned up as it should. The local
+             *    processes will notice that the orted failed and cleanup their
+             *    part of the session directory, but the job level part will
+             *    remain littered.
+             * 2) Any debugging information we expected to see from the orted
+             *    during shutdown is lost.
+             *
+             * The solution here is to put the child processes in a separate
+             * process group from the HNP. So when the user presses CTRL-C
+             * then only the HNP receives the signal, and not the rsh/ssh
+             * child processes.
+             */
+#if HAVE_SETPGID
+            if( 0 != setpgid(0, 0) ) {
+                opal_output(0, "plm:rsh: Error: setpgid(0,0) failed in child with errno=%s(%d)\n",
+                            strerror(errno), errno);
+                exit(-1);
+            }
+#endif
+
             /* do the ssh launch - this will exit if it fails */
             ssh_child(caddy->argc, caddy->argv);
         } else { /* father */
+            // Put the child in a separate progress group
+            // - see comment in child section.
+#if HAVE_SETPGID
+            if( 0 != setpgid(pid, pid) ) {
+                opal_output(0, "plm:rsh: Warning: setpgid(%ld,%ld) failed in parent with errno=%s(%d)\n",
+                            (long)pid, (long)pid, strerror(errno), errno);
+                // Ignore this error since the child is off and running.
+                // We still need to track it.
+            }
+#endif
+
             /* indicate this daemon has been launched */
             caddy->daemon->state = ORTE_PROC_STATE_RUNNING;
             /* record the pid of the ssh fork */
