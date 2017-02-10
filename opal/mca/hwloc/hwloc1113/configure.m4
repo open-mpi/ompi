@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
 # Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -45,7 +45,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1113_POST_CONFIG],[
     AS_IF([test "$1" = "1" && test "$opal_hwloc_hwloc1113_support" = "yes"],
           [
            # Set this variable so that the framework m4 knows what
-           # file to include in opal/mca/hwloc/hwloc.h
+           # file to include in opal/mca/hwloc/hwloc-internal.h
            opal_hwloc_hwloc1113_basedir=opal/mca/hwloc/hwloc1113
            opal_hwloc_base_include="$opal_hwloc_hwloc1113_basedir/hwloc1113.h"
 

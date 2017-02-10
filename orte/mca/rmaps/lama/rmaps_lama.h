@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +34,7 @@ extern orte_rmaps_base_module_t orte_rmaps_lama_module;
  *********************************/
 /*
  * JJH: Can we reuse the opal_hwloc_level_t data structure in
- *      opal/mca/hwloc/hwloc.h
+ *      opal/mca/hwloc/hwloc-internal.h
  */
 typedef enum {
     LAMA_LEVEL_MACHINE  =  0,

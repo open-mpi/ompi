@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
- * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -22,7 +22,7 @@
 #endif  /* HAVE_UNISTD_H */
 #include <string.h>
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 
 #include "opal/util/argv.h"
 #include "opal/class/opal_tree.h"

@@ -1,4 +1,4 @@
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 #include "tm_tree.h"
 
 void hwloc_topology_tag(hwloc_topology_t topology);
