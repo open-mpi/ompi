@@ -2,7 +2,7 @@
 #define THREAD_POOL_H
 
 #include <pthread.h>
-#include <hwloc.h>
+#include "opal/mca/hwloc/hwloc.h"
 
 
 typedef struct _work_t{

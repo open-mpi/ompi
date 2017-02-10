@@ -1,5 +1,4 @@
-#include <hwloc.h>
-#include <hwloc/helper.h>
+#include "opal/mca/hwloc/hwloc.h"
 #include "tm_tree.h"
 #include "tm_mapping.h"
 #include <ctype.h>

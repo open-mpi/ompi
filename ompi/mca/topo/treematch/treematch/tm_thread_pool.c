@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include "tm_thread_pool.h"
 #include "tm_verbose.h"
-#include <hwloc.h>
+#include "opal/mca/hwloc/hwloc.h"
 #include "tm_verbose.h"
 #include "tm_tree.h"
 #include <errno.h>
