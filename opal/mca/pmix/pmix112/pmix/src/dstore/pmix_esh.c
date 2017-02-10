@@ -1,8 +1,11 @@
 /*
- * Copyright (c) 2015-2016 Mellanox Technologies, Inc.
+ * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,7 +17,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <sys/file.h>
 #include <dirent.h>
 #include <errno.h>
@@ -34,6 +36,14 @@
 
 #include "pmix_dstore.h"
 #include "pmix_esh.h"
+
+#ifdef ESH_FCNTL_LOCK
+#include <fcntl.h>
+#endif
+
+#ifdef ESH_PTHREAD_LOCK
+#include <pthread.h>
+#endif
 
 static int _esh_init(pmix_info_t info[], size_t ninfo);
 static int _esh_finalize(void);
@@ -61,9 +71,107 @@ pmix_dstore_base_module_t pmix_dstore_esh_module = {
 #define ESH_ENV_NS_DATA_SEG_SIZE    "NS_DATA_SEG_SIZE"
 #define ESH_ENV_LINEAR              "SM_USE_LINEAR_SEARCH"
 
-#define EXT_SLOT_SIZE(key) (strlen(key) + 1 + 2*sizeof(size_t)) /* in ext slot new offset will be stored in case if new data were added for the same process during next commit */
-#define KVAL_SIZE(key, size) (strlen(key) + 1 + sizeof(size_t) + size)
+#define ESH_KEY_SIZE(key, size)                             \
+__extension__ ({                                            \
+    size_t len = strlen(key) + 1 + sizeof(size_t) + size;   \
+    len;                                                    \
+})
 
+/* in ext slot new offset will be stored in case if
+ * new data were added for the same process during
+ * next commit
+ */
+#define EXT_SLOT_SIZE()                                     \
+    (ESH_KEY_SIZE(ESH_REGION_EXTENSION, sizeof(size_t)))
+
+
+#define ESH_KV_SIZE(addr)                                   \
+__extension__ ({                                            \
+    size_t sz;                                              \
+    memcpy(&sz, addr + ESH_KNAME_LEN(ESH_KNAME_PTR(addr)),  \
+        sizeof(size_t));                                    \
+    sz += ESH_KNAME_LEN(ESH_KNAME_PTR(addr)) +              \
+        sizeof(size_t);                                     \
+    sz;                                                     \
+})
+
+#define ESH_KNAME_PTR(addr)                                 \
+__extension__ ({                                            \
+    char *name_ptr = (char *)addr;                          \
+    name_ptr;                                               \
+})
+
+#define ESH_KNAME_LEN(key)                                  \
+__extension__ ({                                            \
+    size_t len = strlen((char*)key) + 1;                    \
+    len;                                                    \
+})
+
+#define ESH_DATA_PTR(addr)                                  \
+__extension__ ({                                            \
+    uint8_t *data_ptr =                                     \
+        addr +                                              \
+        sizeof(size_t) +                                    \
+        ESH_KNAME_LEN(ESH_KNAME_PTR(addr));                 \
+    data_ptr;                                               \
+})
+
+#define ESH_DATA_SIZE(addr)                       \
+__extension__ ({                                            \
+    size_t data_size;                                       \
+    memcpy(&data_size,                                      \
+        addr + ESH_KNAME_LEN(ESH_KNAME_PTR(addr)),          \
+        sizeof(size_t));                                    \
+    data_size;                                              \
+})
+
+#define ESH_PUT_KEY(addr, key, buffer, size)                \
+__extension__ ({                                            \
+    size_t sz = size;                                       \
+    memset(addr, 0, ESH_KNAME_LEN(key));                    \
+    strncpy((char *)addr, key, ESH_KNAME_LEN(key));         \
+    memcpy(addr + ESH_KNAME_LEN(key), &sz, sizeof(size_t)); \
+    memcpy(addr + ESH_KNAME_LEN(key) + sizeof(size_t),      \
+            buffer, size);                                  \
+})
+
+#ifdef ESH_PTHREAD_LOCK
+#define _ESH_LOCK(rwlock, operation)                        \
+__extension__ ({                                            \
+    pmix_status_t ret = PMIX_SUCCESS;                       \
+    int rc;                                                 \
+    switch (operation) {                                    \
+        case F_WRLCK:                                       \
+            rc = pthread_rwlock_wrlock(rwlock);             \
+            break;                                          \
+        case F_RDLCK:                                       \
+            rc = pthread_rwlock_rdlock(rwlock);             \
+            break;                                          \
+        case F_UNLCK:                                       \
+            rc = pthread_rwlock_unlock(rwlock);             \
+            break;                                          \
+        default:                                            \
+            rc = PMIX_ERR_BAD_PARAM;                        \
+    }                                                       \
+    if (0 != rc) {                                          \
+        switch (errno) {                                    \
+            case EINVAL:                                    \
+                ret = PMIX_ERR_INIT;                        \
+                break;                                      \
+            case EPERM:                                     \
+                ret = PMIX_ERR_NO_PERMISSIONS;              \
+                break;                                      \
+        }                                                   \
+    }                                                       \
+    if (ret) {                                              \
+        pmix_output(0, "%s %d:%s lock failed: %s",          \
+            __FILE__, __LINE__, __func__, strerror(errno)); \
+    }                                                       \
+    ret;                                                    \
+})
+#endif
+
+#ifdef ESH_FCNTL_LOCK
 #define _ESH_LOCK(lockfd, operation)                        \
 __extension__ ({                                            \
     pmix_status_t ret = PMIX_SUCCESS;                       \
@@ -101,10 +209,11 @@ __extension__ ({                                            \
     }                                                       \
     ret;                                                    \
 })
+#endif
 
-#define _ESH_WRLOCK(lockfd) _ESH_LOCK(lockfd, F_WRLCK)
-#define _ESH_RDLOCK(lockfd) _ESH_LOCK(lockfd, F_RDLCK)
-#define _ESH_UNLOCK(lockfd) _ESH_LOCK(lockfd, F_UNLCK)
+#define _ESH_WRLOCK(lock) _ESH_LOCK(lock, F_WRLCK)
+#define _ESH_RDLOCK(lock) _ESH_LOCK(lock, F_RDLCK)
+#define _ESH_UNLOCK(lock) _ESH_LOCK(lock, F_UNLCK)
 
 #define ESH_INIT_SESSION_TBL_SIZE 2
 #define ESH_INIT_NS_MAP_TBL_SIZE  2
@@ -122,7 +231,7 @@ static void _update_initial_segment_info(const ns_map_data_t *ns_map);
 static void _set_constants_from_env(void);
 static void _delete_sm_desc(seg_desc_t *desc);
 static int _pmix_getpagesize(void);
-static inline uint32_t _get_univ_size(const char *nspace);
+static inline ssize_t _get_univ_size(const char *nspace);
 
 static inline ns_map_data_t * _esh_session_map_search_server(const char *nspace);
 static inline ns_map_data_t * _esh_session_map_search_client(const char *nspace);
@@ -143,6 +252,7 @@ static size_t _max_ns_num;
 static size_t _meta_segment_size = 0;
 static size_t _max_meta_elems;
 static size_t _data_segment_size = 0;
+static size_t _lock_segment_size = 0;
 static uid_t _jobuid;
 static char _setjobuid = 0;
 
@@ -151,14 +261,26 @@ static pmix_value_array_t *_ns_map_array = NULL;
 static pmix_value_array_t *_ns_track_array = NULL;
 
 ns_map_data_t * (*_esh_session_map_search)(const char *nspace) = NULL;
+int (*_esh_lock_init)(size_t idx) = NULL;
 
 #define _ESH_SESSION_path(tbl_idx)         (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].nspace_path)
 #define _ESH_SESSION_lockfile(tbl_idx)     (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].lockfile)
+#define _ESH_SESSION_setjobuid(tbl_idx)    (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].setjobuid)
 #define _ESH_SESSION_jobuid(tbl_idx)       (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].jobuid)
-#define _ESH_SESSION_lockfd(tbl_idx)       (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].lockfd)
 #define _ESH_SESSION_sm_seg_first(tbl_idx) (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].sm_seg_first)
 #define _ESH_SESSION_sm_seg_last(tbl_idx)  (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].sm_seg_last)
 #define _ESH_SESSION_ns_info(tbl_idx)      (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].ns_info)
+
+#ifdef ESH_PTHREAD_LOCK
+#define _ESH_SESSION_pthread_rwlock(tbl_idx) (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].rwlock)
+#define _ESH_SESSION_pthread_seg(tbl_idx)   (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].rwlock_seg)
+#define _ESH_SESSION_lock(tbl_idx)         _ESH_SESSION_pthread_rwlock(tbl_idx)
+#endif
+
+#ifdef ESH_FCNTL_LOCK
+#define _ESH_SESSION_lockfd(tbl_idx)       (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].lockfd)
+#define _ESH_SESSION_lock(tbl_idx)         _ESH_SESSION_lockfd(tbl_idx)
+#endif
 
 /* If _direct_mode is set, it means that we use linear search
  * along the array of rank meta info objects inside a meta segment
@@ -196,6 +318,149 @@ static inline void _esh_session_map_clean(ns_map_t *m) {
     memset(m, 0, sizeof(*m));
     m->data.track_idx = -1;
 }
+
+#ifdef ESH_FCNTL_LOCK
+static inline int _flock_init(size_t idx) {
+    pmix_status_t rc = PMIX_SUCCESS;
+
+    if ( _is_server() ) {
+        _ESH_SESSION_lock(idx) = open(_ESH_SESSION_lockfile(idx), O_CREAT | O_RDWR | O_EXCL, 0600);
+
+        /* if previous launch was crashed, the lockfile might not be deleted and unlocked,
+         * so we delete it and create a new one. */
+        if (_ESH_SESSION_lock(idx) < 0) {
+            unlink(_ESH_SESSION_lockfile(idx));
+            _ESH_SESSION_lock(idx) = open(_ESH_SESSION_lockfile(idx), O_CREAT | O_RDWR, 0600);
+            if (_ESH_SESSION_lock(idx) < 0) {
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+        if (_ESH_SESSION_setjobuid(idx) > 0) {
+            if (0 > chown(_ESH_SESSION_lockfile(idx), (uid_t) _ESH_SESSION_jobuid(idx), (gid_t) -1)) {
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+            if (0 > chmod(_ESH_SESSION_lockfile(idx), S_IRUSR | S_IWGRP | S_IRGRP)) {
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    else {
+        _ESH_SESSION_lock(idx) = open(_ESH_SESSION_lockfile(idx), O_RDONLY);
+        if (-1 == _ESH_SESSION_lock(idx)) {
+            rc = PMIX_ERROR;
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    return rc;
+}
+#endif
+
+#ifdef ESH_PTHREAD_LOCK
+static inline int _rwlock_init(size_t idx) {
+    pmix_status_t rc = PMIX_SUCCESS;
+    size_t size = _lock_segment_size;
+    pthread_rwlockattr_t attr;
+
+    if ((NULL != _ESH_SESSION_pthread_seg(idx)) || (NULL != _ESH_SESSION_pthread_rwlock(idx))) {
+        rc = PMIX_ERR_INIT;
+        return rc;
+    }
+    _ESH_SESSION_pthread_seg(idx) = (pmix_sm_seg_t *)malloc(sizeof(pmix_sm_seg_t));
+    if (NULL == _ESH_SESSION_pthread_seg(idx)) {
+        rc = PMIX_ERR_OUT_OF_RESOURCE;
+        return rc;
+    }
+
+    if (_is_server()) {
+        if (PMIX_SUCCESS != (rc = pmix_sm_segment_create(_ESH_SESSION_pthread_seg(idx), _ESH_SESSION_lockfile(idx), size))) {
+            return rc;
+        }
+        memset(_ESH_SESSION_pthread_seg(idx)->seg_base_addr, 0, size);
+        if (_ESH_SESSION_setjobuid(idx) > 0) {
+            if (0 > chown(_ESH_SESSION_lockfile(idx), (uid_t) _ESH_SESSION_jobuid(idx), (gid_t) -1)){
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+            /* set the mode as required */
+            if (0 > chmod(_ESH_SESSION_lockfile(idx), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP )) {
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+        _ESH_SESSION_pthread_rwlock(idx) = (pthread_rwlock_t *)_ESH_SESSION_pthread_seg(idx)->seg_base_addr;
+
+        if (0 != pthread_rwlockattr_init(&attr)) {
+            rc = PMIX_ERR_INIT;
+            pmix_sm_segment_detach(_ESH_SESSION_pthread_seg(idx));
+            return rc;
+        }
+        if (0 != pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED)) {
+            rc = PMIX_ERR_INIT;
+            pmix_sm_segment_detach(_ESH_SESSION_pthread_seg(idx));
+            pthread_rwlockattr_destroy(&attr);
+            return rc;
+        }
+#ifdef HAVE_PTHREAD_SETKIND
+        if (0 != pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)) {
+            rc = PMIX_ERR_INIT;
+            pmix_sm_segment_detach(_ESH_SESSION_pthread_seg(idx));
+            pthread_rwlockattr_destroy(&attr);
+            return rc;
+        }
+#endif
+        if (0 != pthread_rwlock_init(_ESH_SESSION_pthread_rwlock(idx), &attr)) {
+            rc = PMIX_ERR_INIT;
+            pmix_sm_segment_detach(_ESH_SESSION_pthread_seg(idx));
+            pthread_rwlockattr_destroy(&attr);
+            return rc;
+        }
+        if (0 != pthread_rwlockattr_destroy(&attr)) {
+            rc = PMIX_ERR_INIT;
+            return rc;
+        }
+
+    }
+    else {
+        _ESH_SESSION_pthread_seg(idx)->seg_size = size;
+        snprintf(_ESH_SESSION_pthread_seg(idx)->seg_name, PMIX_PATH_MAX, "%s", _ESH_SESSION_lockfile(idx));
+        if (PMIX_SUCCESS != (rc = pmix_sm_segment_attach(_ESH_SESSION_pthread_seg(idx), PMIX_SM_RW))) {
+            return rc;
+        }
+        _ESH_SESSION_pthread_rwlock(idx) = (pthread_rwlock_t *)_ESH_SESSION_pthread_seg(idx)->seg_base_addr;
+    }
+
+    return rc;
+}
+
+static inline void _rwlock_release(session_t *s) {
+    pmix_status_t rc;
+
+    if (0 != pthread_rwlock_destroy(s->rwlock)) {
+        rc = PMIX_ERROR;
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+
+    /* detach & unlink from current desc */
+    if (s->rwlock_seg->seg_cpid == getpid()) {
+        pmix_sm_segment_unlink(s->rwlock_seg);
+    }
+    pmix_sm_segment_detach(s->rwlock_seg);
+
+    free(s->rwlock_seg);
+    s->rwlock_seg = NULL;
+    s->rwlock = NULL;
+}
+#endif
 
 static inline const char *_unique_id(void)
 {
@@ -527,6 +792,7 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
         return rc;
     }
 
+    s->setjobuid = setjobuid;
     s->jobuid = jobuid;
     s->nspace_path = strdup(_base_path);
 
@@ -549,31 +815,8 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
                 return rc;
             }
         }
-        s->lockfd = open(s->lockfile, O_CREAT | O_RDWR | O_EXCL, 0600);
-
-        /* if previous launch was crashed, the lockfile might not be deleted and unlocked,
-         * so we delete it and create a new one. */
-        if (s->lockfd < 0) {
-            unlink(s->lockfile);
-            s->lockfd = open(s->lockfile, O_CREAT | O_RDWR, 0600);
-            if (s->lockfd < 0) {
-                rc = PMIX_ERROR;
-                PMIX_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        if (setjobuid > 0){
-            if (0 > chown(s->nspace_path, (uid_t) jobuid, (gid_t) -1)){
-                rc = PMIX_ERROR;
-                PMIX_ERROR_LOG(rc);
-                return rc;
-            }
-            if (0 > chown(s->lockfile, (uid_t) jobuid, (gid_t) -1)) {
-                rc = PMIX_ERROR;
-                PMIX_ERROR_LOG(rc);
-                return rc;
-            }
-            if (0 > chmod(s->lockfile, S_IRUSR | S_IWGRP | S_IRGRP)) {
+        if (s->setjobuid > 0){
+            if (0 > chown(s->nspace_path, (uid_t) s->jobuid, (gid_t) -1)){
                 rc = PMIX_ERROR;
                 PMIX_ERROR_LOG(rc);
                 return rc;
@@ -587,18 +830,22 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
         }
     }
     else {
-        s->lockfd = open(s->lockfile, O_RDONLY);
-        if (-1 == s->lockfd) {
-            rc = PMIX_ERROR;
-            PMIX_ERROR_LOG(rc);
-            return rc;
-        }
         seg = _attach_new_segment(INITIAL_SEGMENT, m, 0);
         if( NULL == seg ){
             rc = PMIX_ERR_OUT_OF_RESOURCE;
             PMIX_ERROR_LOG(rc);
             return rc;
         }
+    }
+
+    if (NULL == _esh_lock_init) {
+        rc = PMIX_ERR_INIT;
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    if ( PMIX_SUCCESS != (rc = _esh_lock_init(m->tbl_idx))) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
     }
 
     s->sm_seg_first = seg;
@@ -627,6 +874,9 @@ static inline void _esh_session_release(session_t *s)
         }
         free(s->nspace_path);
     }
+#ifdef ESH_PTHREAD_LOCK
+    _rwlock_release(s);
+#endif
     memset ((char *) s, 0, sizeof(*s));
 }
 
@@ -644,6 +894,13 @@ int _esh_init(pmix_info_t info[], size_t ninfo)
 
     _jobuid = getuid();
     _setjobuid = 0;
+
+#ifdef ESH_PTHREAD_LOCK
+    _esh_lock_init = _rwlock_init;
+#endif
+#ifdef ESH_FCNTL_LOCK
+    _esh_lock_init = _flock_init;
+#endif
 
     if (PMIX_SUCCESS != (rc = _esh_tbls_init())) {
         PMIX_ERROR_LOG(rc);
@@ -830,7 +1087,7 @@ int _esh_store(const char *nspace, int rank, pmix_kval_t *kv)
     }
 
     /* set exclusive lock */
-    if (PMIX_SUCCESS != (rc = _ESH_WRLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (rc = _ESH_WRLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
@@ -880,17 +1137,14 @@ int _esh_store(const char *nspace, int rank, pmix_kval_t *kv)
 
     /* Now we know info about meta segment for this namespace. If meta segment
      * is not empty, then we look for data for the target rank. If they present, replace it. */
-    PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
     PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
     PMIX_LOAD_BUFFER(&xfer, kv->value->data.bo.bytes, kv->value->data.bo.size);
-    pmix_buffer_t *pxfer = &xfer;
-    pmix_bfrop.pack(&pbkt, &pxfer, 1, PMIX_BUFFER);
+
+    rc = _store_data_for_rank(elem, rank, &xfer);
+
     xfer.base_ptr = NULL;
     xfer.bytes_used = 0;
-
-    rc = _store_data_for_rank(elem, rank, &pbkt);
     PMIX_DESTRUCT(&xfer);
-    PMIX_DESTRUCT(&pbkt);
 
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -898,14 +1152,14 @@ int _esh_store(const char *nspace, int rank, pmix_kval_t *kv)
     }
 
     /* unset lock */
-    if (PMIX_SUCCESS != (rc = _ESH_UNLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (rc = _ESH_UNLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         PMIX_ERROR_LOG(rc);
     }
     return rc;
 
 err_exit:
     /* unset lock */
-    if (PMIX_SUCCESS != (tmp_rc = _ESH_UNLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (tmp_rc = _ESH_UNLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         PMIX_ERROR_LOG(tmp_rc);
     }
     return rc;
@@ -926,7 +1180,7 @@ int _esh_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs
     uint8_t *addr;
     pmix_buffer_t buffer;
     pmix_value_t val;
-    uint32_t nprocs;
+    size_t nprocs;
     int cur_rank;
     ns_map_data_t *ns_map = NULL;
     bool all_ranks_found = true;
@@ -958,7 +1212,12 @@ int _esh_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs
     }
 
     if (PMIX_RANK_UNDEF == rank) {
-        nprocs = _get_univ_size(ns_map->name);
+        ssize_t _nprocs = _get_univ_size(ns_map->name);
+        if( 0 > _nprocs ){
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+        nprocs = (size_t) _nprocs;
         cur_rank = -1;
     } else {
         nprocs = 1;
@@ -966,7 +1225,7 @@ int _esh_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs
     }
 
     /* grab shared lock */
-    if (PMIX_SUCCESS != (lock_rc = _ESH_RDLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (lock_rc = _ESH_RDLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         /* Something wrong with the lock. The error is fatal */
         rc = PMIX_ERROR;
         PMIX_ERROR_LOG(lock_rc);
@@ -1046,8 +1305,8 @@ int _esh_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs
         while (0 < kval_cnt) {
             /* data is stored in the following format:
              * key_val_pair {
-             *     char key[PMIX_MAX_KEYLEN+1];
              *     size_t size;
+             *     char key[KNAME_LEN(addr)];
              *     byte_t byte[size]; // should be loaded to pmix_buffer_t and unpacked.
              * };
              * segment_format {
@@ -1057,18 +1316,16 @@ int _esh_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs
              * EXTENSION slot which has key = EXTENSION_SLOT and a size_t value for offset 
              * to next data address for this process.
              */
-            if (0 == strncmp((const char *)addr, ESH_REGION_INVALIDATED, strlen(ESH_REGION_INVALIDATED)+1)) {
+            if (0 == strncmp(ESH_KNAME_PTR(addr), ESH_REGION_INVALIDATED, ESH_KNAME_LEN(ESH_REGION_INVALIDATED))) {
                 PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
                             "%s:%d:%s: for rank %s:%d, skip %s region",
                             __FILE__, __LINE__, __func__, nspace, cur_rank, ESH_REGION_INVALIDATED));
-                /*skip it */
-                size_t size;
-                memcpy(&size, addr + strlen(ESH_REGION_INVALIDATED) + 1, sizeof(size_t));
-                /* go to next item, updating address */
-                addr += KVAL_SIZE(ESH_REGION_INVALIDATED, size);
-            } else if (0 == strncmp((const char *)addr, ESH_REGION_EXTENSION, strlen(ESH_REGION_EXTENSION)+1)) {
+                /* skip it
+                 * go to next item, updating address */
+                addr += ESH_KV_SIZE(addr);
+            } else if (0 == strncmp(ESH_KNAME_PTR(addr), ESH_REGION_EXTENSION, ESH_KNAME_LEN(ESH_REGION_EXTENSION))) {
                 size_t offset;
-                memcpy(&offset, addr + strlen(ESH_REGION_EXTENSION) + 1 + sizeof(size_t), sizeof(size_t));
+                memcpy(&offset, ESH_DATA_PTR(addr), sizeof(size_t));
                 PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
                             "%s:%d:%s: for rank %s:%d, reached %s with %lu value",
                             __FILE__, __LINE__, __func__, nspace, cur_rank, ESH_REGION_EXTENSION, offset));
@@ -1088,16 +1345,15 @@ int _esh_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs
                                 __FILE__, __LINE__, __func__, cur_rank, key));
                     break;
                 }
-            } else if (0 == strncmp((const char *)addr, key, strlen(key)+1)) {
+            } else if (0 == strncmp(ESH_KNAME_PTR(addr), key, ESH_KNAME_LEN(key))) {
                 PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
                             "%s:%d:%s: for rank %s:%d, found target key %s",
                             __FILE__, __LINE__, __func__, nspace, cur_rank, key));
                 /* target key is found, get value */
-                size_t size;
-                memcpy(&size, addr + strlen(key) + 1, sizeof(size_t));
-                addr += strlen(key) + 1 + sizeof(size_t);
+                uint8_t *data_ptr = ESH_DATA_PTR(addr);
+                size_t data_size = ESH_DATA_SIZE(addr);
                 PMIX_CONSTRUCT(&buffer, pmix_buffer_t);
-                PMIX_LOAD_BUFFER(&buffer, addr, size);
+                PMIX_LOAD_BUFFER(&buffer, data_ptr, data_size);
                 int cnt = 1;
                 /* unpack value for this key from the buffer. */
                 PMIX_VALUE_CONSTRUCT(&val);
@@ -1116,14 +1372,11 @@ int _esh_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs
                 key_found = true;
                 goto done;
             } else {
-                char ckey[PMIX_MAX_KEYLEN+1] = {0};
-                strncpy(ckey, (const char *)addr, strlen((const char *)addr)+1);
-                size_t size;
-                memcpy(&size, addr + strlen(ckey) + 1, sizeof(size_t));
                 PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
-                            "%s:%d:%s: for rank %s:%d, skip key %s look for key %s", __FILE__, __LINE__, __func__, nspace, cur_rank, ckey, key));
+                            "%s:%d:%s: for rank %s:%u, skip key %s look for key %s",
+                            __FILE__, __LINE__, __func__, nspace, cur_rank, ESH_KNAME_PTR(addr), key));
                 /* go to next item, updating address */
-                addr += KVAL_SIZE(ckey, size);
+                addr += ESH_KV_SIZE(addr);
                 kval_cnt--;
             }
         }
@@ -1131,7 +1384,7 @@ int _esh_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs
 
 done:
     /* unset lock */
-    if (PMIX_SUCCESS != (lock_rc = _ESH_UNLOCK(_ESH_SESSION_lockfd(ns_map->tbl_idx)))) {
+    if (PMIX_SUCCESS != (lock_rc = _ESH_UNLOCK(_ESH_SESSION_lock(ns_map->tbl_idx)))) {
         PMIX_ERROR_LOG(lock_rc);
     }
 
@@ -1331,6 +1584,7 @@ static void _set_constants_from_env()
         }
     }
 
+    _lock_segment_size = page_size;
     _max_ns_num = (_initial_segment_size - sizeof(size_t) * 2) / sizeof(ns_seg_info_t);
     _max_meta_elems = (_meta_segment_size - sizeof(size_t)) / sizeof(rank_meta_info);
 
@@ -1407,9 +1661,9 @@ static seg_desc_t *_create_new_segment(segment_type type, const ns_map_data_t *n
         }
         memset(new_seg->seg_info.seg_base_addr, 0, size);
 
-        if (_setjobuid > 0){
+        if (_ESH_SESSION_setjobuid(ns_map->tbl_idx) > 0){
             rc = PMIX_ERR_NO_PERMISSIONS;
-            if (0 > chown(file_name, (uid_t) _jobuid, (gid_t) -1)){
+            if (0 > chown(file_name, (uid_t) _ESH_SESSION_jobuid(ns_map->tbl_idx), (gid_t) -1)){
                 PMIX_ERROR_LOG(rc);
                 goto err_exit;
             }
@@ -1897,23 +2151,19 @@ static size_t get_free_offset(seg_desc_t *data_seg)
 
 static int put_empty_ext_slot(seg_desc_t *dataseg)
 {
-    size_t global_offset, rel_offset, data_ended, sz, val;
+    size_t global_offset, rel_offset, data_ended, val = 0;
     uint8_t *addr;
     global_offset = get_free_offset(dataseg);
     rel_offset = global_offset % _data_segment_size;
-    if (rel_offset + EXT_SLOT_SIZE(ESH_REGION_EXTENSION) > _data_segment_size) {
+    if (rel_offset + EXT_SLOT_SIZE() > _data_segment_size) {
         PMIX_ERROR_LOG(PMIX_ERROR);
         return PMIX_ERROR;
     }
     addr = _get_data_region_by_offset(dataseg, global_offset);
-    strncpy((char *)addr, ESH_REGION_EXTENSION, strlen(ESH_REGION_EXTENSION)+1);
-    val = 0;
-    sz = sizeof(size_t);
-    memcpy(addr + strlen(ESH_REGION_EXTENSION) + 1, &sz, sz);
-    memcpy(addr + strlen(ESH_REGION_EXTENSION) + 1 + sizeof(size_t), &val, sz);
+    ESH_PUT_KEY(addr, ESH_REGION_EXTENSION, (void*)&val, sizeof(size_t));
 
     /* update offset at the beginning of current segment */
-    data_ended = rel_offset + EXT_SLOT_SIZE(ESH_REGION_EXTENSION);
+    data_ended = rel_offset + EXT_SLOT_SIZE();
     addr = (uint8_t*)(addr - rel_offset);
     memcpy(addr, &data_ended, sizeof(size_t));
     return PMIX_SUCCESS;
@@ -1921,12 +2171,10 @@ static int put_empty_ext_slot(seg_desc_t *dataseg)
 
 static size_t put_data_to_the_end(ns_track_elem_t *ns_info, seg_desc_t *dataseg, char *key, void *buffer, size_t size)
 {
-    size_t offset;
+    size_t offset, id = 0;
     seg_desc_t *tmp;
-    int id = 0;
     size_t global_offset, data_ended;
     uint8_t *addr;
-    size_t sz;
 
     PMIX_OUTPUT_VERBOSE((2, pmix_globals.debug_output,
                          "%s:%d:%s: key %s",
@@ -1940,16 +2188,25 @@ static size_t put_data_to_the_end(ns_track_elem_t *ns_info, seg_desc_t *dataseg,
     global_offset = get_free_offset(dataseg);
     offset = global_offset % _data_segment_size;
 
-    /* We should provide additional space at the end of segment to place EXTENSION_SLOT to have an ability to enlarge data for this rank.*/
-    if (sizeof(size_t) + KVAL_SIZE(key, size) + EXT_SLOT_SIZE(key) > _data_segment_size) {
+    /* We should provide additional space at the end of segment to
+     * place EXTENSION_SLOT to have an ability to enlarge data for this rank.*/
+    if ((sizeof(size_t) + ESH_KEY_SIZE(key, size) + EXT_SLOT_SIZE()) > _data_segment_size) {
         /* this is an error case: segment is so small that cannot place evem a single key-value pair.
          * warn a user about it and fail. */
         offset = 0; /* offset cannot be 0 in normal case, so we use this value to indicate a problem. */
         pmix_output(0, "PLEASE set NS_DATA_SEG_SIZE to value which is larger when %lu.",
-                sizeof(size_t) + strlen(key) + 1 + sizeof(size_t) + size + EXT_SLOT_SIZE(key));
+                    sizeof(size_t) + strlen(key) + 1 + sizeof(size_t) + size + EXT_SLOT_SIZE());
         return offset;
     }
-    if (offset + KVAL_SIZE(key, size) + EXT_SLOT_SIZE(key) > _data_segment_size)  {
+
+    /* check the corner case that was observed at large scales:
+     * https://github.com/pmix/master/pull/282#issuecomment-277454198
+     *
+     * if last time we stopped exactly on the border of the segment
+     * new segment wasn't allocated to us but (global_offset % _data_segment_size) == 0
+     * so if offset is 0 here - we need to allocate the segment as well
+     */
+    if ( (0 == offset) || ( (offset + ESH_KEY_SIZE(key, size) + EXT_SLOT_SIZE()) > _data_segment_size) ) {
         id++;
         /* create a new data segment. */
         tmp = extend_segment(tmp, &ns_info->ns_map);
@@ -1971,16 +2228,13 @@ static size_t put_data_to_the_end(ns_track_elem_t *ns_info, seg_desc_t *dataseg,
     }
     global_offset = offset + id * _data_segment_size;
     addr = (uint8_t*)(tmp->seg_info.seg_base_addr)+offset;
-    strncpy((char *)addr, key, strlen(key)+1);
-    sz = size;
-    memcpy(addr + strlen(key) + 1, &sz, sizeof(size_t));
-    memcpy(addr + strlen(key) + 1 + sizeof(size_t), buffer, size);
+    ESH_PUT_KEY(addr, key, buffer, size);
 
     /* update offset at the beginning of current segment */
-    data_ended = offset + KVAL_SIZE(key, size);
+    data_ended = offset + ESH_KEY_SIZE(key, size);
     addr = (uint8_t*)(tmp->seg_info.seg_base_addr);
     memcpy(addr, &data_ended, sizeof(size_t));
-    PMIX_OUTPUT_VERBOSE((2, pmix_globals.debug_output,
+    PMIX_OUTPUT_VERBOSE((1, pmix_globals.debug_output,
                          "%s:%d:%s: key %s, rel start offset %lu, rel end offset %lu, abs shift %lu size %lu",
                          __FILE__, __LINE__, __func__, key, offset, data_ended, id * _data_segment_size, size));
     return global_offset;
@@ -2029,11 +2283,8 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, int rank, pmix_kval_t *kval, 
              * It should be equal in the normal case. It it's not true, then it means that
              * segment was extended, and we put data to the next segment, so we now need to
              * put extension slot at the end of previous segment with a "reference" to a new_offset */
-            size_t sz = sizeof(size_t);
             addr = _get_data_region_by_offset(datadesc, free_offset);
-            strncpy((char *)addr, ESH_REGION_EXTENSION, strlen(ESH_REGION_EXTENSION)+1);
-            memcpy(addr + strlen(ESH_REGION_EXTENSION) + 1, &sz, sizeof(size_t));
-            memcpy(addr + strlen(ESH_REGION_EXTENSION) + 1 + sizeof(size_t), &offset, sizeof(size_t));
+            ESH_PUT_KEY(addr, ESH_REGION_EXTENSION, (void*)&offset, sizeof(size_t));
         }
         if (NULL == *rinfo) {
             *rinfo = (rank_meta_info*)malloc(sizeof(rank_meta_info));
@@ -2059,15 +2310,15 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, int rank, pmix_kval_t *kval, 
         int add_to_the_end = 1;
         while (0 < kval_cnt) {
             /* data is stored in the following format:
-             * key[PMIX_MAX_KEYLEN+1]
              * size_t size
+             * key[ESH_KNAME_LEN(addr)]
              * byte buffer containing pmix_value, should be loaded to pmix_buffer_t and unpacked.
              * next kval pair
              * .....
              * extension slot which has key = EXTENSION_SLOT and a size_t value for offset to next data address for this process.
              */
-            if (0 == strncmp((const char *)addr, ESH_REGION_EXTENSION, strlen(ESH_REGION_EXTENSION)+1)) {
-                memcpy(&offset, addr + strlen(ESH_REGION_EXTENSION) + 1 + sizeof(size_t), sizeof(size_t));
+            if (0 == strncmp(ESH_KNAME_PTR(addr), ESH_REGION_EXTENSION, ESH_KNAME_LEN(ESH_REGION_EXTENSION))) {
+                memcpy(&offset, ESH_DATA_PTR(addr), sizeof(size_t));
                 if (0 < offset) {
                     PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
                                 "%s:%d:%s: for rank %d, replace flag %d %s is filled with %lu value",
@@ -2082,22 +2333,24 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, int rank, pmix_kval_t *kval, 
                 } else {
                     /* should not be, we should be out of cycle when this happens */
                 }
-            } else if (0 == strncmp((const char *)addr, kval->key, strlen(kval->key)+1)) {
+            } else if (0 == strncmp(ESH_KNAME_PTR(addr), kval->key, ESH_KNAME_LEN(kval->key))) {
                 PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
                             "%s:%d:%s: for rank %d, replace flag %d found target key %s",
                             __FILE__, __LINE__, __func__, rank, data_exist, kval->key));
                 /* target key is found, compare value sizes */
-                size_t cur_size;
-                memcpy(&cur_size, addr + strlen(kval->key) + 1, sizeof(size_t));
-                if (cur_size != size) {
-                //if (1) { /* if we want to test replacing values for existing keys. */
+                if (ESH_DATA_SIZE(addr) != size) {
+                    /* changing current key name to INVALIDATED, changing the size of data to retain the offset. */
+                    size_t old_data_size = ESH_DATA_SIZE(addr);
+                    int diff_size = ESH_KNAME_LEN(addr) - ESH_KNAME_LEN(ESH_REGION_INVALIDATED);
+                    size_t new_size = old_data_size + diff_size;
+
                     /* invalidate current value and store another one at the end of data region. */
-                    strncpy((char *)addr, ESH_REGION_INVALIDATED, strlen(ESH_REGION_INVALIDATED)+1);
+                    ESH_PUT_KEY(addr, ESH_REGION_INVALIDATED, addr, new_size);
                     /* decrementing count, it will be incremented back when we add a new value for this key at the end of region. */
                     (*rinfo)->count--;
                     kval_cnt--;
                     /* go to next item, updating address */
-                    addr += KVAL_SIZE(ESH_REGION_INVALIDATED, cur_size);
+                    addr += ESH_KV_SIZE(addr);
                     PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
                                 "%s:%d:%s: for rank %d, replace flag %d mark key %s regions as invalidated. put new data at the end.",
                                 __FILE__, __LINE__, __func__, rank, data_exist, kval->key));
@@ -2106,38 +2359,31 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, int rank, pmix_kval_t *kval, 
                                 "%s:%d:%s: for rank %d, replace flag %d replace data for key %s type %d in place",
                                 __FILE__, __LINE__, __func__, rank, data_exist, kval->key, kval->value->type));
                     /* replace old data with new one. */
-                    addr += strlen(kval->key) + 1;
-                    memcpy(addr, &size, sizeof(size_t));
-                    addr += sizeof(size_t);
-                    memset(addr, 0, cur_size);
-                    memcpy(addr, buffer->base_ptr, size);
-                    addr += cur_size;
+                    memset(ESH_DATA_PTR(addr), 0, ESH_DATA_SIZE(addr));
+                    memcpy(ESH_DATA_PTR(addr), buffer->base_ptr, size);
+                    addr += ESH_KV_SIZE(addr);
                     add_to_the_end = 0;
                     break;
                 }
             } else {
-                char ckey[PMIX_MAX_KEYLEN+1] = {0};
-                strncpy(ckey, (const char *)addr, strlen(addr)+1);
                 PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
-                            "%s:%d:%s: for rank %d, replace flag %d skip %s key, look for %s key",
-                            __FILE__, __LINE__, __func__, rank, data_exist, ckey, kval->key));
+                            "%s:%d:%s: for rank %u, replace flag %d skip %s key, look for %s key",
+                            __FILE__, __LINE__, __func__, rank, data_exist, ESH_KNAME_PTR(addr), kval->key));
                 /* Skip it: key is "INVALIDATED" or key is valid but different from target one. */
-                if (0 != strncmp(ESH_REGION_INVALIDATED, ckey, strlen(ckey)+1)) {
+                if (0 != strncmp(ESH_REGION_INVALIDATED, ESH_KNAME_PTR(addr), ESH_KNAME_LEN(ESH_KNAME_PTR(addr)))) {
                     /* count only valid items */
                     kval_cnt--;
                 }
-                size_t size;
-                memcpy(&size, addr + strlen(ckey) + 1, sizeof(size_t));
                 /* go to next item, updating address */
-                addr += KVAL_SIZE(ckey, size);
+                addr += ESH_KV_SIZE(addr);
             }
         }
         if (1 == add_to_the_end) {
             /* if we get here, it means that we want to add a new item for the target rank, or
              * we mark existing item with the same key as "invalidated" and want to add new item
              * for the same key. */
-            (*rinfo)->count++;
             size_t free_offset;
+            (*rinfo)->count++;
             free_offset = get_free_offset(datadesc);
             /* add to the end */
             offset = put_data_to_the_end(ns_info, datadesc, kval->key, buffer->base_ptr, size);
@@ -2151,11 +2397,11 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, int rank, pmix_kval_t *kval, 
              * data for different ranks, and that's why next element is EXTENSION_SLOT.
              * We put new data to the end of data region and just update EXTENSION_SLOT value by new offset.
              */
-            if (0 == strncmp((const char *)addr, ESH_REGION_EXTENSION, strlen(ESH_REGION_EXTENSION)+1)) {
+            if (0 == strncmp(ESH_KNAME_PTR(addr), ESH_REGION_EXTENSION, ESH_KNAME_LEN(ESH_REGION_EXTENSION))) {
                 PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
                             "%s:%d:%s: for rank %d, replace flag %d %s should be filled with offset %lu value",
                             __FILE__, __LINE__, __func__, rank, data_exist, ESH_REGION_EXTENSION, offset));
-                memcpy(addr + strlen(ESH_REGION_EXTENSION) + 1 + sizeof(size_t), &offset, sizeof(size_t));
+                memcpy(ESH_DATA_PTR(addr), &offset, sizeof(size_t));
             } else {
                 /* (2) - we point to the first free offset, no more data is stored further in this segment.
                  * There is no EXTENSION_SLOT by this addr since we continue pushing data for the same rank,
@@ -2165,11 +2411,7 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, int rank, pmix_kval_t *kval, 
                  * forcibly and store new offset in its value. */
                 if (free_offset != offset) {
                     /* segment was extended, need to put extension slot by free_offset indicating new_offset */
-                    size_t sz = sizeof(size_t);
-                    size_t length = strlen(ESH_REGION_EXTENSION);
-                    strncpy((char *)addr, ESH_REGION_EXTENSION, length + 1);
-                    memcpy(addr + length + 1, &sz, sz);
-                    memcpy(addr + length + 1 + sizeof(size_t), &offset, sz);
+                    ESH_PUT_KEY(addr, ESH_REGION_EXTENSION, (void*)&offset, sizeof(size_t));
                 }
             }
             PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
@@ -2186,9 +2428,7 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, int rank, pmix_kval_t *kval, 
 static int _store_data_for_rank(ns_track_elem_t *ns_info, int rank, pmix_buffer_t *buf)
 {
     pmix_status_t rc;
-    int32_t cnt;
 
-    pmix_buffer_t *bptr;
     pmix_kval_t *kp;
     seg_desc_t *metadesc, *datadesc;
 
@@ -2223,30 +2463,20 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, int rank, pmix_buffer_
      * so unpack these buffers, and then unpack kvals from each modex buffer,
      * storing them in the shared memory dstore.
      */
-    cnt = 1;
     free_offset = get_free_offset(datadesc);
-    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, &bptr, &cnt, PMIX_BUFFER))) {
-        cnt = 1;
-        kp = PMIX_NEW(pmix_kval_t);
-        while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(bptr, kp, &cnt, PMIX_KVAL))) {
-            pmix_output_verbose(2, pmix_globals.debug_output,
-                                "pmix: unpacked key %s", kp->key);
-            if (PMIX_SUCCESS != (rc = pmix_sm_store(ns_info, rank, kp, &rinfo, data_exist))) {
-                PMIX_ERROR_LOG(rc);
-                return rc;
-            }
-            PMIX_RELEASE(kp); // maintain acctg - hash_store does a retain
-            cnt = 1;
-            kp = PMIX_NEW(pmix_kval_t);
-        }
-        cnt = 1;
-        PMIX_RELEASE(kp);
-        PMIX_RELEASE(bptr);  // free's the data region
-        if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+    kp = PMIX_NEW(pmix_kval_t);
+    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, kp, &(int){1}, PMIX_KVAL))) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmix: unpacked key %s", kp->key);
+        if (PMIX_SUCCESS != (rc = pmix_sm_store(ns_info, rank, kp, &rinfo, data_exist))) {
             PMIX_ERROR_LOG(rc);
-            break;
+            return rc;
         }
+        PMIX_RELEASE(kp); // maintain acctg - hash_store does a retain
+        kp = PMIX_NEW(pmix_kval_t);
     }
+    PMIX_RELEASE(kp);
+
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         PMIX_ERROR_LOG(rc);
         /* TODO: should we error-exit here? */
@@ -2269,7 +2499,7 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, int rank, pmix_buffer_
          * */
         rc = put_empty_ext_slot(ns_info->data_seg);
         if (PMIX_SUCCESS != rc) {
-            if (NULL != rinfo) {
+            if ((0 == data_exist) && NULL != rinfo) {
                 free(rinfo);
             }
             PMIX_ERROR_LOG(rc);
@@ -2289,26 +2519,23 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, int rank, pmix_buffer_
     return rc;
 }
 
-static inline uint32_t _get_univ_size(const char *nspace)
+static inline ssize_t _get_univ_size(const char *nspace)
 {
-    pmix_value_t *val = NULL;
-    uint32_t nprocs = 0;
-    pmix_nspace_t *ns, *nptr;
+    ssize_t nprocs = 0;
+    pmix_value_t *val;
+    int rc;
 
-    nptr = NULL;
-    PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_nspace_t) {
-        if (0 == strcmp(nspace, ns->nspace)) {
-            nptr = ns;
-            break;
-        }
+    rc = _esh_fetch(nspace, PMIX_RANK_WILDCARD, PMIX_UNIV_SIZE, &val);
+    if( PMIX_SUCCESS != rc ) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
     }
-
-    if (nptr && (PMIX_SUCCESS == pmix_hash_fetch(&nptr->internal, PMIX_RANK_WILDCARD, PMIX_UNIV_SIZE, &val))) {
-        if (val->type == PMIX_UINT32) {
-            nprocs = val->data.uint32;
-        }
-        PMIX_VALUE_RELEASE(val);
+    if( val->type != PMIX_UINT32 ){
+        rc = PMIX_ERR_BAD_PARAM;
+        PMIX_ERROR_LOG(rc);
+        return rc;
     }
-
+    nprocs = (ssize_t)val->data.uint32;
+    PMIX_VALUE_RELEASE(val);
     return nprocs;
 }

@@ -40,6 +40,7 @@ EXTRA_DIST += \
 	config/pmix_check_sasl.m4 \
 	config/pmix_check_vendor.m4 \
 	config/pmix_check_visibility.m4 \
+	config/pmix_check_lock.m4 \
 	config/pmix_ensure_contains_optflags.m4 \
 	config/pmix_functions.m4 \
 	config/pmix.m4 \
@@ -47,7 +48,6 @@ EXTRA_DIST += \
 	config/pmix_setup_cc.m4 \
 	config/pmix_setup_hwloc.m4 \
 	config/pmix_setup_libevent.m4
-
 
 maintainer-clean-local:
 	rm -f config/pmix_get_version.sh
