@@ -10,6 +10,10 @@
 results_addr=testing@lists.open-mpi.org
 #results_addr=rhc@open-mpi.org
 
+# Set this to any value for additional output; typically only when
+# debugging
+: ${debug:=}
+
 # svn repository uri
 master_code_uri=https://github.com/open-mpi/ompi.git
 master_raw_uri=https://raw.github.com/open-mpi/ompi
@@ -51,6 +55,26 @@ export LD_LIBRARY_PATH=$HOME_PREFIX/lib:$LD_LIBRARY_PATH
 #
 #####
 
+debug() {
+    if test -n "$debug"; then
+	echo "=== DEBUG: $*"
+    fi
+}
+
+run_command() {
+    debug "Running command: $*"
+    debug "Running in pwd: `pwd`"
+    if test -n "$debug"; then
+	eval $*
+    else
+	eval $* > /dev/null 2>&1
+    fi
+
+    if test $? -ne 0; then
+	echo "=== Command failed: $*"
+    fi
+}
+
 # load the modules configuration
 . $MODULE_INIT
 module use $AUTOTOOL_MODULE
@@ -79,7 +103,7 @@ for branch in $branches; do
     script=$branch-`basename $script_uri`
 
     echo "=== Getting script from: $raw_uri"
-    wget --quiet --no-check-certificate --tries=10 $raw_uri/$branch/$script_uri -O $script
+    run_command wget --quiet --no-check-certificate --tries=10 $raw_uri/$branch/$script_uri -O $script
     if test ! $? -eq 0 ; then
         echo "wget of OMPI nightly tarball create script failed."
         if test -f $script ; then
@@ -94,13 +118,12 @@ for branch in $branches; do
     module load "autotools/ompi-$branch"
 
     echo "=== Running script..."
-    ./$script \
+    run_command eval ./$script \
         $build_root/$branch \
         $results_addr \
         $outputroot/$branch \
         $code_uri \
-        $branch \
-        >/dev/null 2>&1
+        $branch
 
     module unload autotools
     echo "=== Done running script"
@@ -126,21 +149,21 @@ for branch in $branches; do
         fi
         echo "=== Posting tarball to open-mpi.org"
         # tell the web server to cleanup old nightly tarballs
-        ssh -p 2222 \
+        run_command ssh -p 2222 \
 	    $output_ssh_target \
 	    "git/ompi/contrib/build-server/remove-old.pl 7 public_html/nightly/$branch"
         # upload the new ones
-        scp -P 2222 \
+        run_command scp -P 2222 \
 	    $outputroot/$branch/openmpi-$latest_snapshot.tar.* \
 	    $output_ssh_target:public_html/nightly/$branch/
-        scp -P 2222 \
+        run_command scp -P 2222 \
 	    $outputroot/$branch/latest_snapshot.txt \
 	    $output_ssh_target:public_html/nightly/$branch/
         # direct the web server to regenerate the checksums
-        ssh -p 2222 \
+        run_command ssh -p 2222 \
 	    $output_ssh_target \
 	    "cd public_html/nightly/$branch && md5sum openmpi* > md5sums.txt"
-        ssh -p 2222 \
+        run_command ssh -p 2222 \
 	    $output_ssh_target \
 	    "cd public_html/nightly/$branch && sha1sum openmpi* > sha1sums.txt"
     fi
@@ -149,7 +172,7 @@ for branch in $branches; do
     # in here and clean up the old failed builds, we can accumulate
     # many over time.  So remove any old failed builds that are over
     # 4 weeks old.
-    ${script_dir}/remove-old.pl 7 $build_root/$branch
+    run_command ${script_dir}/remove-old.pl 7 $build_root/$branch
 
 done
 
@@ -158,7 +181,7 @@ done
 
 for tarball in `cat $pending_coverity`; do
     echo "=== Submitting $tarball to Coverity..."
-    ${script_dir}/openmpi-nightly-coverity.pl \
+    run_command ${script_dir}/openmpi-nightly-coverity.pl \
         --filename=$tarball \
         --coverity-token=$coverity_token \
         --verbose \
