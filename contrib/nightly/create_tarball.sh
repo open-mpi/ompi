@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -34,7 +34,7 @@ gitbranch=$5
 
 # Set this to any value for additional output; typically only when
 # debugging
-debug=1
+: ${debug:=}
 
 # do you want a success mail?
 want_success_mail=1
