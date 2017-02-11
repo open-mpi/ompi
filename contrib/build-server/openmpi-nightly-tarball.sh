@@ -56,7 +56,6 @@ export LD_LIBRARY_PATH=$HOME_PREFIX/lib:$LD_LIBRARY_PATH
 module use $AUTOTOOL_MODULE
 
 # get our nightly build script
-echo "MKDIR"
 mkdir -p $build_root
 cd $build_root
 
