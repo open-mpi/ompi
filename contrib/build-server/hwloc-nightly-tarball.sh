@@ -148,7 +148,7 @@ for branch in $branches; do
         # tell the web server to cleanup old nightly tarballs
         run_command ssh -p 2222 \
 	    $output_ssh_target \
-	    "git/ompi/contrib/build-server/remove-old.pl 7 public_html/software/hwloc/nightly/$branch"
+	    \"git/ompi/contrib/build-server/remove-old.pl 7 public_html/software/hwloc/nightly/$branch\"
         # upload the new ones
         run_command scp -P 2222 \
 	    $outputroot/$branch/hwloc-$latest_snapshot.tar.* \
@@ -159,10 +159,10 @@ for branch in $branches; do
         # direct the web server to regenerate the checksums
         run_command ssh -p 2222 \
 	    $output_ssh_target \
-	    "cd public_html/software/hwloc/nightly/$branch && md5sum hwloc* > md5sums.txt"
+	    \"cd public_html/software/hwloc/nightly/$branch \&\& md5sum hwloc\* \> md5sums.txt\"
         run_command ssh -p 2222 \
 	    $output_ssh_target \
-	    "cd public_html/software/hwloc/nightly/$branch && sha1sum hwloc* > sha1sums.txt"
+	    \"cd public_html/software/hwloc/nightly/$branch \&\& sha1sum hwloc\* \> sha1sums.txt\"
     fi
 
     # Failed builds are not removed.  But if a human forgets to come
