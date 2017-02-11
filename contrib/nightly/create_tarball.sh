@@ -195,7 +195,7 @@ if test -f "$destdir/latest_snapshot.txt"; then
     # Snip the timestamp out of the versions and compare just
     # ${BRANCHNAME}-${SHORTHASH}.
     compare_version="$gitbranch-$githash"
-    compare_snapshot_version=`echo $snapshot_version | perl -pi -e 's/^([a-z]+)-(\d+)-(.*+)$/$1-$3/'`
+    compare_snapshot_version=`echo $snapshot_version | perl -p -e 's/^(.+?)-(\d+)-(.*+)$/$1-$3/'`
     if test "$compare_version" = "$compare_snapshot_version"; then
 	if test -n "$debug"; then
 	    echo "*** Our branch/git hash is the same as the last snapshot -- not doing anything"
