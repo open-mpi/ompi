@@ -181,6 +181,6 @@ for tarball in `cat $pending_coverity`; do
         --coverity-token=$coverity_token \
         --verbose \
         --logfile-dir=$HOME/coverity \
-        --make-args="-j8"
+        --make-args=\"-j8\"
 done
 rm -f $pending_coverity

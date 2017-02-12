@@ -187,6 +187,6 @@ for tarball in `cat $pending_coverity`; do
         --verbose \
         --logfile-dir=$HOME/coverity \
         --make-args=-j4 \
-        --configure-args="$coverity_configure_args"
+        --configure-args=\"$coverity_configure_args\"
 done
 rm -f $pending_coverity
