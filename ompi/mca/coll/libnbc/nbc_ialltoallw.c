@@ -193,12 +193,14 @@ static inline int a2aw_sched_linear(int rank, int p, NBC_Schedule *schedule,
   int res;
 
   for (int i = 0; i < p; i++) {
+    ptrdiff_t gap, span;
     if (i == rank) {
       continue;
     }
 
     /* post send */
-    if (sendcounts[i] != 0) {
+    span = opal_datatype_span(&sendtypes[i]->super, sendcounts[i], &gap);
+    if (OPAL_LIKELY(0 < span)) {
       char *sbuf = (char *) sendbuf + sdispls[i];
       res = NBC_Sched_send (sbuf, false, sendcounts[i], sendtypes[i], i, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -206,7 +208,8 @@ static inline int a2aw_sched_linear(int rank, int p, NBC_Schedule *schedule,
       }
     }
     /* post receive */
-    if (recvcounts[i] != 0) {
+    span = opal_datatype_span(&recvtypes[i]->super, recvcounts[i], &gap);
+    if (OPAL_LIKELY(0 < span)) {
       char *rbuf = (char *) recvbuf + rdispls[i];
       res = NBC_Sched_recv (rbuf, false, recvcounts[i], recvtypes[i], i, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
