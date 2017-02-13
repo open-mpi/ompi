@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -74,6 +74,11 @@ int ompi_coll_libnbc_ialltoallv(const void* sendbuf, const int *sendcounts, cons
       }
     }
     span = opal_datatype_span(&recvtype->super, count, &gap);
+    if (OPAL_UNLIKELY(0 == span)) {
+      *request = &ompi_request_empty;
+      NBC_Return_handle (handle);
+      return MPI_SUCCESS;
+    }
     handle->tmpbuf = malloc(span);
     if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
       NBC_Return_handle (handle);
@@ -85,6 +90,7 @@ int ompi_coll_libnbc_ialltoallv(const void* sendbuf, const int *sendcounts, cons
     res = ompi_datatype_type_extent (sendtype, &sndext);
     if (MPI_SUCCESS != res) {
       NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
+      NBC_Return_handle (handle);
       return res;
     }
     if (sendcounts[rank] != 0) {
@@ -338,13 +344,15 @@ static inline int a2av_sched_inplace(int rank, int p, NBC_Schedule *schedule,
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
-    res = NBC_Sched_send ((void *)(-gap), true , counts[peer], type, peer, schedule, false);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
-    }
-    res = NBC_Sched_recv (tbuf, false , counts[peer], type, peer, schedule, true);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
+    if (0 != counts[peer]) {
+      res = NBC_Sched_send ((void *)(-gap), true , counts[peer], type, peer, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+      }
+      res = NBC_Sched_recv (tbuf, false , counts[peer], type, peer, schedule, true);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+      }
     }
   }
 

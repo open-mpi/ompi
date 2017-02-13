@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -67,6 +67,11 @@ int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, cons
         span = lspan;
       }
     }
+    if (OPAL_UNLIKELY(0 == span)) {
+      *request = &ompi_request_empty;
+      NBC_Return_handle (handle);
+      return OMPI_SUCCESS;
+    }
     handle->tmpbuf = malloc(span);
     if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
       NBC_Return_handle (handle);
@@ -80,6 +85,7 @@ int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, cons
     sbuf = (char *) sendbuf + sdispls[rank];
     res = NBC_Copy(sbuf, sendcounts[rank], sendtypes[rank], rbuf, recvcounts[rank], recvtypes[rank], comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      NBC_Return_handle (handle);
       return res;
     }
   }
