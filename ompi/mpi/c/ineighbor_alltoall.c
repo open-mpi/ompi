@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +33,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/mca/topo/base/base.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -86,6 +89,28 @@ int MPI_Ineighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype send
             ompi_datatype_type_size(recvtype, &recvtype_size);
             if ((sendtype_size*sendcount) != (recvtype_size*recvcount)) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
+            }
+        }
+
+        if( OMPI_COMM_IS_CART(comm) ) {
+            const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
+            if( 0 > cart->ndims ) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            }
+        }
+        else if( OMPI_COMM_IS_GRAPH(comm) ) {
+            int degree;
+            mca_topo_base_graph_neighbors_count(comm, ompi_comm_rank(comm), &degree);
+            if( 0 > degree ) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            }
+        }
+        else if( OMPI_COMM_IS_DIST_GRAPH(comm) ) {
+            const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
+            int indegree  = dist_graph->indegree;
+            int outdegree = dist_graph->outdegree;
+            if( indegree <  0 || outdegree <  0 ) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
         }
     }
