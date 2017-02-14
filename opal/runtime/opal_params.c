@@ -248,10 +248,9 @@ int opal_register_params(void)
     /* Leave pinned parameter */
     opal_leave_pinned = -1;
     ret = mca_base_var_register("ompi", "mpi", NULL, "leave_pinned",
-                                "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks (0 = do not use \"leave pinned\" protocol, 1 = use \"leave pinned\" protocol, -1 = allow network to choose at runtime).",
-                                MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                OPAL_INFO_LVL_9,
-                                MCA_BASE_VAR_SCOPE_READONLY,
+                                "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks (false = do not use \"leave pinned\" protocol, true = use \"leave pinned\" protocol, auto = allow network to choose at runtime).",
+                                MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_auto_bool, 0, 0,
+                                OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                 &opal_leave_pinned);
     mca_base_var_register_synonym(ret, "opal", "opal", NULL, "leave_pinned",
                                   MCA_BASE_VAR_SYN_FLAG_DEPRECATED);

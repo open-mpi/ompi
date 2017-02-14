@@ -243,6 +243,16 @@ OPAL_DECLSPEC int mca_base_var_enum_register(const char *project_name, const cha
 extern mca_base_var_enum_t mca_base_var_enum_bool;
 
 /**
+ * Extended boolean enumerator
+ *
+ * This enumerator maps:
+ *   positive integer, true, yes, enabled, t -> 1
+ *   0, false, no, disabled, f -> 0
+ *   auto -> -1
+ */
+extern mca_base_var_enum_t mca_base_var_enum_auto_bool;
+
+/**
  * Verbosity level enumerator
  */
 extern mca_base_var_enum_t mca_base_var_enum_verbose;
