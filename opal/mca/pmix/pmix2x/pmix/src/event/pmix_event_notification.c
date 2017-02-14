@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -245,7 +247,6 @@ static void progress_local_event_hdlr(pmix_status_t status,
         while (pmix_list_get_end(&pmix_globals.events.single_events) != (nxt = pmix_list_get_next(&chain->sing->super))) {
             sing = (pmix_single_event_t*)nxt;
             if (sing->code == chain->status) {
-                PMIX_RETAIN(chain);
                 chain->sing = sing;
                 /* add any cbobject - the info struct for it is at the end */
                 chain->info[chain->ninfo-1].value.data.ptr = sing->cbobject;
@@ -272,7 +273,6 @@ static void progress_local_event_hdlr(pmix_status_t status,
                 if (multi->codes[n] == chain->status) {
                     /* found it - invoke the handler, pointing its
                      * callback function to our progression function */
-                    PMIX_RETAIN(chain);
                     chain->multi = multi;
                     /* add any cbobject - the info struct for it is at the end */
                     chain->info[chain->ninfo-1].value.data.ptr = multi->cbobject;
@@ -300,7 +300,6 @@ static void progress_local_event_hdlr(pmix_status_t status,
     if (NULL != chain->def) {
         if (pmix_list_get_end(&pmix_globals.events.default_events) != (nxt = pmix_list_get_next(&chain->def->super))) {
             def = (pmix_default_event_t*)nxt;
-            PMIX_RETAIN(chain);
             chain->def = def;
             /* add any cbobject - the info struct for it is at the end */
             chain->info[chain->ninfo-1].value.data.ptr = def->cbobject;
@@ -369,7 +368,6 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
         if (sing->code == chain->status) {
             /* found it - invoke the handler, pointing its
              * callback function to our progression function */
-            PMIX_RETAIN(chain);
             chain->sing = sing;
             /* add any cbobject - the info struct for it is at the end */
             chain->info[chain->ninfo-1].value.data.ptr = sing->cbobject;
@@ -392,7 +390,6 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
             if (multi->codes[i] == chain->status) {
                 /* found it - invoke the handler, pointing its
                  * callback function to our progression function */
-                PMIX_RETAIN(chain);
                 chain->multi = multi;
                 /* add any cbobject - the info struct for it is at the end */
                 chain->info[chain->ninfo-1].value.data.ptr = multi->cbobject;
@@ -416,7 +413,6 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
 
     /* finally, pass it to any default handlers */
     PMIX_LIST_FOREACH(def, &pmix_globals.events.default_events, pmix_default_event_t) {
-        PMIX_RETAIN(chain);
         chain->def = def;
         /* add any cbobject - the info struct for it is at the end */
         chain->info[chain->ninfo-1].value.data.ptr = def->cbobject;

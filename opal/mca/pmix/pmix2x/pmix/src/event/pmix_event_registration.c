@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -260,18 +262,20 @@ static pmix_status_t _add_hdlr(pmix_list_t *list, pmix_list_item_t *item,
 
     if (PMIX_PROC_SERVER == pmix_globals.proc_type && cd->enviro &&
         NULL != pmix_host_server.register_events) {
-            pmix_output_verbose(2, pmix_globals.debug_output,
-                                "pmix: _add_hdlr registering with server");
-            if (PMIX_SUCCESS != (rc = pmix_host_server.register_events(cd->codes, cd->ncodes,
-                                                                       cd2->info, cd2->ninfo,
-                                                                       reg_cbfunc, cd2))) {
-                PMIX_RELEASE(cd2);
-                pmix_list_remove_item(list, item);
-                PMIX_RELEASE(item);
-                return rc;
-            }
-            return PMIX_ERR_WOULD_BLOCK;
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmix: _add_hdlr registering with server");
+        if (PMIX_SUCCESS != (rc = pmix_host_server.register_events(cd->codes, cd->ncodes,
+                                                                   cd2->info, cd2->ninfo,
+                                                                   reg_cbfunc, cd2))) {
+            PMIX_RELEASE(cd2);
+            pmix_list_remove_item(list, item);
+            PMIX_RELEASE(item);
+            return rc;
         }
+        return PMIX_ERR_WOULD_BLOCK;
+    } else {
+        PMIX_RELEASE(cd2);
+    }
 
     return PMIX_SUCCESS;
 }

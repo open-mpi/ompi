@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -225,6 +225,8 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
     if (NULL != cb->spawn_cbfunc) {
         cb->spawn_cbfunc(ret, nspace, cb->cbdata);
     }
+    cb->cbdata = NULL;
+    PMIX_RELEASE(cb);
 }
 
 static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata)

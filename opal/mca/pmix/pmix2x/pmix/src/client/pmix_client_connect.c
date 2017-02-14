@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -325,6 +325,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
 #if !(defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1))
         pmix_job_data_htable_store(nspace, bptr);
 #endif
+        free(nspace);
         PMIX_RELEASE(bptr);
     }
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
@@ -335,6 +336,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
     if (NULL != cb->op_cbfunc) {
         cb->op_cbfunc(ret, cb->cbdata);
     }
+    PMIX_RELEASE(cb);
 }
 
 static void op_cbfunc(pmix_status_t status, void *cbdata)

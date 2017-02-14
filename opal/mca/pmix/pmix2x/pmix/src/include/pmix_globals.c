@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -179,9 +179,17 @@ static void sncon(pmix_server_nspace_t *p)
 }
 static void sndes(pmix_server_nspace_t *p)
 {
+    uint64_t key;
+    pmix_peer_t * peer;
     PMIX_DESTRUCT(&p->job_info);
     PMIX_LIST_DESTRUCT(&p->ranks);
+    PMIX_HASH_TABLE_FOREACH(key, uint64, peer, &p->mylocal) {
+        PMIX_RELEASE(peer);
+    }
     PMIX_DESTRUCT(&p->mylocal);
+    PMIX_HASH_TABLE_FOREACH(key, uint64, peer, &p->myremote) {
+        PMIX_RELEASE(peer);
+    }
     PMIX_DESTRUCT(&p->myremote);
     PMIX_DESTRUCT(&p->remote);
 }

@@ -91,7 +91,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             .pmix_mca_register_component_params = component_register,
             .pmix_mca_query_component = component_query
         },
-        .priority = 10,
+        .priority = 30,
         .uri = NULL,
         .setup_listener = setup_listener
     },

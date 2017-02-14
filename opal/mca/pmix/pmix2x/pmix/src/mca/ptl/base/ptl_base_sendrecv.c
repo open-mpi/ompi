@@ -61,6 +61,7 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
     pmix_trkr_caddy_t *tcd;
     pmix_regevents_info_t *reginfoptr, *regnext;
     pmix_peer_events_info_t *pr, *pnext;
+    pmix_rank_info_t *info, *pinfo;
 
     /* stop all events */
     if (peer->recv_ev_active) {
@@ -108,8 +109,12 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
                 }
             }
         }
-        /* remove this proc from the list of ranks for this nspace */
-        pmix_list_remove_item(&(peer->info->nptr->server->ranks), &(peer->info->super));
+        /* remove this proc from the list of ranks for this nspace if it is still there */
+        PMIX_LIST_FOREACH_SAFE(info, pinfo, &(peer->info->nptr->server->ranks), pmix_rank_info_t) {
+            if (info == peer->info) {
+                pmix_list_remove_item(&(peer->info->nptr->server->ranks), &(peer->info->super));
+            }
+        }
         /* reduce the number of local procs */
         --peer->info->nptr->server->nlocalprocs;
         /* now decrease the refcount - might actually free the object */
