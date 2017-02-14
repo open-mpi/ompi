@@ -13,6 +13,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -502,6 +504,7 @@ static void connection_handler(int sd, short args, void *cbdata)
      * Create the tracker for this peer */
     psave = PMIX_NEW(pmix_peer_t);
     if (NULL == psave) {
+        free(msg);
         rc = PMIX_ERR_NOMEM;
         goto error;
     }
@@ -522,6 +525,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* get the appropriate compatibility modules */
     if (PMIX_SUCCESS != pmix_psec.assign_module((struct pmix_peer_t*)psave, sec_mode)) {
+        free(msg);
         info->proc_cnt--;
         PMIX_RELEASE(info);
         PMIX_RELEASE(psave);
@@ -545,6 +549,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of client credentials failed: %s",
                             PMIx_Error_string(rc));
+        free(msg);
         info->proc_cnt--;
         PMIX_RELEASE(info);
         PMIX_RELEASE(psave);
@@ -552,6 +557,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         /* send an error reply to the client */
         goto error;
     }
+    free(msg);
 
     /* send them success */
     rc = PMIX_SUCCESS;

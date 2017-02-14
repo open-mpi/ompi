@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 2015-2016 Mellanox Technologies, Inc.
+ * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,18 +72,7 @@ pmix_dstore_base_module_t pmix_dstore_esh_module = {
 #define ESH_ENV_NS_DATA_SEG_SIZE    "NS_DATA_SEG_SIZE"
 #define ESH_ENV_LINEAR              "SM_USE_LINEAR_SEARCH"
 
-#define ESH_MIN_KEY_LEN             (sizeof(ESH_REGION_INVALIDATED) + 1)
-
-#define EXT_SLOT_SIZE(key) (strlen(key) + 1 + 2*sizeof(size_t)) /* in ext slot new offset will be stored in case if new data were added for the same process during next commit */
-
-#define ESH_KEY_SIZE(key, size)                             \
-__extension__ ({                                            \
-    size_t len = sizeof(size_t) + size;                     \
-    size_t kname_len = strlen(key) + 1;                     \
-    len += (kname_len < ESH_MIN_KEY_LEN) ?                  \
-        ESH_MIN_KEY_LEN : kname_len;                        \
-    len;                                                    \
-})
+#define ESH_MIN_KEY_LEN             (sizeof(ESH_REGION_INVALIDATED))
 
 #define ESH_KV_SIZE(addr)                                   \
 __extension__ ({                                            \
@@ -117,6 +108,20 @@ __extension__ ({                                            \
     size_t data_size = sz - (data_ptr - addr);              \
     data_size;                                              \
 })
+
+#define ESH_KEY_SIZE(key, size)                             \
+__extension__ ({                                            \
+    size_t len = sizeof(size_t) + ESH_KNAME_LEN(key) + size;\
+    len;                                                    \
+})
+
+/* in ext slot new offset will be stored in case if
+ * new data were added for the same process during
+ * next commit
+ */
+#define EXT_SLOT_SIZE()                                     \
+    (ESH_KEY_SIZE(ESH_REGION_EXTENSION, sizeof(size_t)))
+
 
 #define ESH_PUT_KEY(addr, key, buffer, size)                \
 __extension__ ({                                            \
@@ -255,9 +260,11 @@ static pmix_value_array_t *_ns_map_array = NULL;
 static pmix_value_array_t *_ns_track_array = NULL;
 
 ns_map_data_t * (*_esh_session_map_search)(const char *nspace) = NULL;
+int (*_esh_lock_init)(size_t idx) = NULL;
 
 #define _ESH_SESSION_path(tbl_idx)         (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].nspace_path)
 #define _ESH_SESSION_lockfile(tbl_idx)     (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].lockfile)
+#define _ESH_SESSION_setjobuid(tbl_idx)    (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].setjobuid)
 #define _ESH_SESSION_jobuid(tbl_idx)       (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].jobuid)
 #define _ESH_SESSION_sm_seg_first(tbl_idx) (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].sm_seg_first)
 #define _ESH_SESSION_sm_seg_last(tbl_idx)  (PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t)[tbl_idx].sm_seg_last)
@@ -308,8 +315,51 @@ static inline void _esh_session_map_clean(ns_map_t *m) {
     m->data.track_idx = -1;
 }
 
+#ifdef ESH_FCNTL_LOCK
+static inline int _flock_init(size_t idx) {
+    pmix_status_t rc = PMIX_SUCCESS;
+
+    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+        _ESH_SESSION_lock(idx) = open(_ESH_SESSION_lockfile(idx), O_CREAT | O_RDWR | O_EXCL, 0600);
+
+        /* if previous launch was crashed, the lockfile might not be deleted and unlocked,
+         * so we delete it and create a new one. */
+        if (_ESH_SESSION_lock(idx) < 0) {
+            unlink(_ESH_SESSION_lockfile(idx));
+            _ESH_SESSION_lock(idx) = open(_ESH_SESSION_lockfile(idx), O_CREAT | O_RDWR, 0600);
+            if (_ESH_SESSION_lock(idx) < 0) {
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+        if (_ESH_SESSION_setjobuid(idx) > 0) {
+            if (0 > chown(_ESH_SESSION_lockfile(idx), (uid_t) _ESH_SESSION_jobuid(idx), (gid_t) -1)) {
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+            if (0 > chmod(_ESH_SESSION_lockfile(idx), S_IRUSR | S_IWGRP | S_IRGRP)) {
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    else {
+        _ESH_SESSION_lock(idx) = open(_ESH_SESSION_lockfile(idx), O_RDONLY);
+        if (-1 == _ESH_SESSION_lock(idx)) {
+            rc = PMIX_ERROR;
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    return rc;
+}
+#endif
+
 #ifdef ESH_PTHREAD_LOCK
-static inline int _rwlock_init(size_t idx, char *lockfile) {
+static inline int _rwlock_init(size_t idx) {
     pmix_status_t rc = PMIX_SUCCESS;
     size_t size = _lock_segment_size;
     pthread_rwlockattr_t attr;
@@ -325,10 +375,23 @@ static inline int _rwlock_init(size_t idx, char *lockfile) {
     }
 
     if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
-        if (PMIX_SUCCESS != (rc = pmix_sm_segment_create(_ESH_SESSION_pthread_seg(idx), lockfile, size))) {
+        if (PMIX_SUCCESS != (rc = pmix_sm_segment_create(_ESH_SESSION_pthread_seg(idx), _ESH_SESSION_lockfile(idx), size))) {
             return rc;
         }
         memset(_ESH_SESSION_pthread_seg(idx)->seg_base_addr, 0, size);
+        if (_ESH_SESSION_setjobuid(idx) > 0) {
+            if (0 > chown(_ESH_SESSION_lockfile(idx), (uid_t) _ESH_SESSION_jobuid(idx), (gid_t) -1)){
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+            /* set the mode as required */
+            if (0 > chmod(_ESH_SESSION_lockfile(idx), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP )) {
+                rc = PMIX_ERROR;
+                PMIX_ERROR_LOG(rc);
+                return rc;
+            }
+        }
         _ESH_SESSION_pthread_rwlock(idx) = (pthread_rwlock_t *)_ESH_SESSION_pthread_seg(idx)->seg_base_addr;
 
         if (0 != pthread_rwlockattr_init(&attr)) {
@@ -364,7 +427,7 @@ static inline int _rwlock_init(size_t idx, char *lockfile) {
     }
     else {
         _ESH_SESSION_pthread_seg(idx)->seg_size = size;
-        snprintf(_ESH_SESSION_pthread_seg(idx)->seg_name, PMIX_PATH_MAX, "%s", lockfile);
+        snprintf(_ESH_SESSION_pthread_seg(idx)->seg_name, PMIX_PATH_MAX, "%s", _ESH_SESSION_lockfile(idx));
         if (PMIX_SUCCESS != (rc = pmix_sm_segment_attach(_ESH_SESSION_pthread_seg(idx), PMIX_SM_RW))) {
             return rc;
         }
@@ -732,6 +795,7 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
     session_t *s = &(PMIX_VALUE_ARRAY_GET_ITEM(_session_array, session_t, idx));
     pmix_status_t rc = PMIX_SUCCESS;
 
+    s->setjobuid = setjobuid;
     s->jobuid = jobuid;
     s->nspace_path = strdup(_base_path);
 
@@ -754,31 +818,8 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
                 return rc;
             }
         }
-        s->lockfd = open(s->lockfile, O_CREAT | O_RDWR | O_EXCL, 0600);
-
-        /* if previous launch was crashed, the lockfile might not be deleted and unlocked,
-         * so we delete it and create a new one. */
-        if (s->lockfd < 0) {
-            unlink(s->lockfile);
-            s->lockfd = open(s->lockfile, O_CREAT | O_RDWR, 0600);
-            if (s->lockfd < 0) {
-                rc = PMIX_ERROR;
-                PMIX_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        if (setjobuid > 0){
-            if (0 > chown(s->nspace_path, (uid_t) jobuid, (gid_t) -1)){
-                rc = PMIX_ERROR;
-                PMIX_ERROR_LOG(rc);
-                return rc;
-            }
-            if (0 > chown(s->lockfile, (uid_t) jobuid, (gid_t) -1)) {
-                rc = PMIX_ERROR;
-                PMIX_ERROR_LOG(rc);
-                return rc;
-            }
-            if (0 > chmod(s->lockfile, S_IRUSR | S_IWGRP | S_IRGRP)) {
+        if (s->setjobuid > 0){
+            if (0 > chown(s->nspace_path, (uid_t) s->jobuid, (gid_t) -1)){
                 rc = PMIX_ERROR;
                 PMIX_ERROR_LOG(rc);
                 return rc;
@@ -792,12 +833,6 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
         }
     }
     else {
-        s->lockfd = open(s->lockfile, O_RDONLY);
-        if (-1 == s->lockfd) {
-            rc = PMIX_ERROR;
-            PMIX_ERROR_LOG(rc);
-            return rc;
-        }
         seg = _attach_new_segment(INITIAL_SEGMENT, m, 0);
         if( NULL == seg ){
             rc = PMIX_ERR_OUT_OF_RESOURCE;
@@ -806,12 +841,16 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
         }
     }
 
-#ifdef ESH_PTHREAD_LOCK
-    if ( PMIX_SUCCESS != (rc = _rwlock_init(m->tbl_idx, s->lockfile))) {
+    if (NULL == _esh_lock_init) {
+        rc = PMIX_ERR_INIT;
         PMIX_ERROR_LOG(rc);
         return rc;
     }
-#endif
+    if ( PMIX_SUCCESS != (rc = _esh_lock_init(m->tbl_idx))) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+
     s->sm_seg_first = seg;
     s->sm_seg_last = s->sm_seg_first;
     return PMIX_SUCCESS;
@@ -858,6 +897,13 @@ int _esh_init(pmix_info_t info[], size_t ninfo)
 
     _jobuid = getuid();
     _setjobuid = 0;
+
+#ifdef ESH_PTHREAD_LOCK
+    _esh_lock_init = _rwlock_init;
+#endif
+#ifdef ESH_FCNTL_LOCK
+    _esh_lock_init = _flock_init;
+#endif
 
     if (PMIX_SUCCESS != (rc = _esh_tbls_init())) {
         PMIX_ERROR_LOG(rc);
@@ -1618,9 +1664,10 @@ static seg_desc_t *_create_new_segment(segment_type type, const ns_map_data_t *n
         }
         memset(new_seg->seg_info.seg_base_addr, 0, size);
 
-        if (_setjobuid > 0){
+
+        if (_ESH_SESSION_setjobuid(ns_map->tbl_idx) > 0){
             rc = PMIX_ERR_PERM;
-            if (0 > chown(file_name, (uid_t) _jobuid, (gid_t) -1)){
+            if (0 > chown(file_name, (uid_t) _ESH_SESSION_jobuid(ns_map->tbl_idx), (gid_t) -1)){
                 PMIX_ERROR_LOG(rc);
                 goto err_exit;
             }
@@ -2110,7 +2157,7 @@ static int put_empty_ext_slot(seg_desc_t *dataseg)
     uint8_t *addr;
     global_offset = get_free_offset(dataseg);
     rel_offset = global_offset % _data_segment_size;
-    if (rel_offset + EXT_SLOT_SIZE(ESH_REGION_EXTENSION) > _data_segment_size) {
+    if (rel_offset + EXT_SLOT_SIZE() > _data_segment_size) {
         PMIX_ERROR_LOG(PMIX_ERROR);
         return PMIX_ERROR;
     }
@@ -2118,7 +2165,7 @@ static int put_empty_ext_slot(seg_desc_t *dataseg)
     ESH_PUT_KEY(addr, ESH_REGION_EXTENSION, (void*)&val, sizeof(size_t));
 
     /* update offset at the beginning of current segment */
-    data_ended = rel_offset + EXT_SLOT_SIZE(ESH_REGION_EXTENSION);
+    data_ended = rel_offset + EXT_SLOT_SIZE();
     addr = (uint8_t*)(addr - rel_offset);
     memcpy(addr, &data_ended, sizeof(size_t));
     return PMIX_SUCCESS;
@@ -2126,9 +2173,8 @@ static int put_empty_ext_slot(seg_desc_t *dataseg)
 
 static size_t put_data_to_the_end(ns_track_elem_t *ns_info, seg_desc_t *dataseg, char *key, void *buffer, size_t size)
 {
-    size_t offset;
+    size_t offset, id = 0;
     seg_desc_t *tmp;
-    int id = 0;
     size_t global_offset, data_ended;
     uint8_t *addr;
 
@@ -2144,21 +2190,30 @@ static size_t put_data_to_the_end(ns_track_elem_t *ns_info, seg_desc_t *dataseg,
     global_offset = get_free_offset(dataseg);
     offset = global_offset % _data_segment_size;
 
-    /* We should provide additional space at the end of segment to place EXTENSION_SLOT to have an ability to enlarge data for this rank.*/
-    if (sizeof(size_t) + ESH_KEY_SIZE(key, size) + EXT_SLOT_SIZE(key) > _data_segment_size) {
+    /* We should provide additional space at the end of segment to
+     * place EXTENSION_SLOT to have an ability to enlarge data for this rank.*/
+    if ((sizeof(size_t) + ESH_KEY_SIZE(key, size) + EXT_SLOT_SIZE()) > _data_segment_size) {
         /* this is an error case: segment is so small that cannot place evem a single key-value pair.
          * warn a user about it and fail. */
         offset = 0; /* offset cannot be 0 in normal case, so we use this value to indicate a problem. */
         pmix_output(0, "PLEASE set NS_DATA_SEG_SIZE to value which is larger when %lu.",
-                sizeof(size_t) + strlen(key) + 1 + sizeof(size_t) + size + EXT_SLOT_SIZE(key));
+                    sizeof(size_t) + strlen(key) + 1 + sizeof(size_t) + size + EXT_SLOT_SIZE());
         return offset;
     }
-    if (offset + ESH_KEY_SIZE(key, size) + EXT_SLOT_SIZE(key) > _data_segment_size)  {
+
+    /* check the corner case that was observed at large scales:
+     * https://github.com/pmix/master/pull/282#issuecomment-277454198
+     *
+     * if last time we stopped exactly on the border of the segment
+     * new segment wasn't allocated to us but (global_offset % _data_segment_size) == 0
+     * so if offset is 0 here - we need to allocate the segment as well
+     */
+    if ( (0 == offset) || ( (offset + ESH_KEY_SIZE(key, size) + EXT_SLOT_SIZE()) > _data_segment_size) ) {
         id++;
         /* create a new data segment. */
         tmp = extend_segment(tmp, &ns_info->ns_map);
         if (NULL == tmp) {
-            PMIX_ERROR_LOG(PMIX_ERROR);
+            PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
             offset = 0; /* offset cannot be 0 in normal case, so we use this value to indicate a problem. */
             return offset;
         }
@@ -2166,11 +2221,11 @@ static size_t put_data_to_the_end(ns_track_elem_t *ns_info, seg_desc_t *dataseg,
         /* update_ns_info_in_initial_segment */
         ns_seg_info_t *elem = _get_ns_info_from_initial_segment(&ns_info->ns_map);
         if (NULL == elem) {
-            PMIX_ERROR_LOG(PMIX_ERROR);
-            return PMIX_ERROR;
+            PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+            offset = 0; /* offset cannot be 0 in normal case, so we use this value to indicate a problem. */
+            return offset;
         }
         elem->num_data_seg++;
-
         offset = sizeof(size_t);
     }
     global_offset = offset + id * _data_segment_size;
@@ -2443,7 +2498,7 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix
          * */
         rc = put_empty_ext_slot(ns_info->data_seg);
         if (PMIX_SUCCESS != rc) {
-            if (NULL != rinfo) {
+            if ((0 == data_exist) && NULL != rinfo) {
                 free(rinfo);
             }
             PMIX_ERROR_LOG(rc);

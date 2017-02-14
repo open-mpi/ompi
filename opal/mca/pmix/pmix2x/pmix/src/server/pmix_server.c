@@ -2290,17 +2290,15 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
 
     if (PMIX_CONNECTNB_CMD == cmd) {
         PMIX_PEER_CADDY(cd, peer, tag);
-        if (PMIX_SUCCESS != (rc = pmix_server_connect(cd, buf, false, cnct_cbfunc))) {
-            PMIX_RELEASE(cd);
-        }
+        rc = pmix_server_connect(cd, buf, false, cnct_cbfunc);
+        PMIX_RELEASE(cd);
         return rc;
     }
 
     if (PMIX_DISCONNECTNB_CMD == cmd) {
         PMIX_PEER_CADDY(cd, peer, tag);
-        if (PMIX_SUCCESS != (rc = pmix_server_connect(cd, buf, true, cnct_cbfunc))) {
-            PMIX_RELEASE(cd);
-        }
+        rc = pmix_server_connect(cd, buf, true, cnct_cbfunc);
+        PMIX_RELEASE(cd);
         return rc;
     }
 

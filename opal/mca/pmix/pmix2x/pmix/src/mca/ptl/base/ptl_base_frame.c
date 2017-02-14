@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -83,7 +83,7 @@ static pmix_status_t pmix_ptl_close(void)
     }
 
     /* the components will cleanup when closed */
-    PMIX_DESTRUCT(&pmix_ptl_globals.actives);
+    PMIX_LIST_DESTRUCT(&pmix_ptl_globals.actives);
     PMIX_LIST_DESTRUCT(&pmix_ptl_globals.posted_recvs);
     PMIX_LIST_DESTRUCT(&pmix_ptl_globals.listeners);
 

@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -271,6 +273,9 @@ int pmix_progress_thread_stop(const char *name)
             if (trk->ev_active) {
                 stop_progress_engine(trk);
             }
+            pmix_list_remove_item(&tracking, &trk->super);
+            PMIX_RELEASE(trk);
+            return PMIX_SUCCESS;
         }
     }
 

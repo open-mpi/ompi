@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2016      Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -381,6 +381,12 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
 exit:
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
     if (NULL != cb->bufs) {
+        size_t size = pmix_value_array_get_size(cb->bufs);
+        size_t i;
+        for (i = 0; i < size; i++) {
+            pmix_buffer_t *tmp = &(PMIX_VALUE_ARRAY_GET_ITEM(cb->bufs, pmix_buffer_t, i));
+            PMIX_DESTRUCT(tmp);
+        }
         PMIX_RELEASE(cb->bufs);
     }
 #endif

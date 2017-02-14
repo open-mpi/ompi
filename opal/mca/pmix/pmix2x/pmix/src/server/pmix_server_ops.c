@@ -5,7 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
- * Copyright (c) 2016      Mellanox Technologies, Inc.
+ * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -189,12 +189,11 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
             if (PMIX_SUCCESS != (rc = pmix_dstore_store(nptr->nspace, info->rank, kp))) {
                 PMIX_ERROR_LOG(rc);
             }
-            PMIX_RELEASE(kp);
 
-            kp = PMIX_NEW(pmix_kval_t);
-            kp->key = strdup("modex");
-            PMIX_VALUE_CREATE(kp->value, 1);
-            kp->value->type = PMIX_BYTE_OBJECT;
+            /* restore the buffer for subsequent processing */
+            PMIX_LOAD_BUFFER(b2, kp->value->data.bo.bytes, kp->value->data.bo.size);
+            kp->value->data.bo.bytes = NULL;
+            kp->value->data.bo.size = 0;
         }
 #endif /* PMIX_ENABLE_DSTORE */
 
@@ -896,7 +895,7 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
 {
     int32_t cnt;
     pmix_status_t rc;
-    pmix_proc_t *procs;
+    pmix_proc_t *procs = NULL;
     size_t nprocs;
     pmix_server_trkr_t *trk;
     pmix_info_t *info = NULL;
@@ -916,7 +915,7 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
     cnt = 1;
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &nprocs, &cnt, PMIX_SIZE))) {
         PMIX_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
     /* there must be at least one proc - we do not allow the client
      * to send us NULL proc as the server has no idea what to do
@@ -925,7 +924,8 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
      * spans all procs in that namespace */
     if (nprocs < 1) {
         PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-        return PMIX_ERR_BAD_PARAM;
+        rc = PMIX_ERR_BAD_PARAM;
+        goto cleanup;
     }
 
     /* unpack the procs */
@@ -933,7 +933,7 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
     cnt = nprocs;
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, procs, &cnt, PMIX_PROC))) {
         PMIX_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
 
     /* unpack the number of provided info structs */
@@ -970,7 +970,7 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
 
     /* add this contributor to the tracker so they get
      * notified when we are done */
-    PMIX_RETAIN(cd);
+    PMIX_RETAIN(cd);  // prevent the caddy from being released when we return
     pmix_list_append(&trk->local_cbs, &cd->super);
     /* if all local contributions have been received,
      * let the local host's server know that we are at the
@@ -987,10 +987,13 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
         rc = PMIX_SUCCESS;
     }
 
- cleanup:
-    PMIX_PROC_FREE(procs, nprocs);
-    PMIX_INFO_FREE(info, ninfo);
-    PMIX_RELEASE(cd);
+  cleanup:
+    if (NULL != procs) {
+        PMIX_PROC_FREE(procs, nprocs);
+    }
+    if (NULL != info) {
+        PMIX_INFO_FREE(info, ninfo);
+    }
     return rc;
 }
 
