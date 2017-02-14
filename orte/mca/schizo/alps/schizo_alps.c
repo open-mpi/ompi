@@ -61,6 +61,10 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
         myenv = ORTE_SCHIZO_NATIVE_LAUNCHED;
         opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"ess");
         opal_argv_append_nosize(&pushed_vals, "pmi");
+        /* do not try to bind when launched with aprun. there is a significant
+         * launch performance penalty for hwloc at high ppn on knl */
+        opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX "orte_bound_at_launch");
+        opal_argv_append_nosize(&pushed_vals, "true");
         goto setup;
     }
 
