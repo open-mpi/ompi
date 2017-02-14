@@ -270,47 +270,54 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
         return ret;
     }
     if (MCA_BASE_VAR_SOURCE_DEFAULT != source) {
-        if (!mca_plm_rsh_component.disable_qrsh &&
-            NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
-            NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
-            /* setup the search path for qrsh */
-            asprintf(&tmp, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
-            /* see if the agent is available */
-            if (ORTE_SUCCESS != rsh_launch_agent_lookup("qrsh", tmp)) {
-                /* can't be SGE */
-                 opal_output_verbose(1, orte_plm_base_framework.framework_output,
-                                    "%s plm:rsh: unable to be used: SGE indicated but cannot find path "
-                                    "or execution permissions not set for launching agent qrsh",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                 free(tmp);
-                 *module = NULL;
-                 return ORTE_ERROR;
-            }
-            mca_plm_rsh_component.agent = tmp;
-            mca_plm_rsh_component.using_qrsh = true;
-            goto success;
-        } else if (!mca_plm_rsh_component.disable_llspawn &&
-                   NULL != getenv("LOADL_STEP_ID")) {
-            /* We are running  as a LOADLEVELER job.
-             * Search for llspawn in the users PATH */
-            if (ORTE_SUCCESS != rsh_launch_agent_lookup("llspawn", NULL)) {
-                 opal_output_verbose(1, orte_plm_base_framework.framework_output,
-                                    "%s plm:rsh: unable to be used: LoadLeveler "
-                                    "indicated but cannot find path or execution "
-                                    "permissions not set for launching agent llspawn",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                *module = NULL;
-                return ORTE_ERROR;
-            }
-            mca_plm_rsh_component.agent = strdup("llspawn");
-            mca_plm_rsh_component.using_llspawn = true;
-            goto success;
+        /* if the user specified a launch agent, then
+         * respect that request */
+        goto lookup;
+    }
+
+    /* check for SGE */
+    if (!mca_plm_rsh_component.disable_qrsh &&
+        NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
+        NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
+        /* setup the search path for qrsh */
+        asprintf(&tmp, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
+        /* see if the agent is available */
+        if (ORTE_SUCCESS != rsh_launch_agent_lookup("qrsh", tmp)) {
+            /* can't be SGE */
+             opal_output_verbose(1, orte_plm_base_framework.framework_output,
+                                "%s plm:rsh: unable to be used: SGE indicated but cannot find path "
+                                "or execution permissions not set for launching agent qrsh",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+             free(tmp);
+             *module = NULL;
+             return ORTE_ERROR;
         }
+        mca_plm_rsh_component.agent = tmp;
+        mca_plm_rsh_component.using_qrsh = true;
+        goto success;
+    }
+
+    /* otherwise, check for LoadLeveler */
+    if (!mca_plm_rsh_component.disable_llspawn &&
+        NULL != getenv("LOADL_STEP_ID")) {
+        /* Search for llspawn in the users PATH */
+        if (ORTE_SUCCESS != rsh_launch_agent_lookup("llspawn", NULL)) {
+             opal_output_verbose(1, orte_plm_base_framework.framework_output,
+                                "%s plm:rsh: unable to be used: LoadLeveler "
+                                "indicated but cannot find path or execution "
+                                "permissions not set for launching agent llspawn",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            *module = NULL;
+            return ORTE_ERROR;
+        }
+        mca_plm_rsh_component.agent = strdup("llspawn");
+        mca_plm_rsh_component.using_llspawn = true;
+        goto success;
     }
 
     /* if this isn't an Grid Engine or LoadLeveler environment, or
      * if the user specified a launch agent, look for it */
-
+  lookup:
     if (ORTE_SUCCESS != rsh_launch_agent_lookup(NULL, NULL)) {
         /* if the user specified an agent and we couldn't find it,
          * then we want to error out and not continue */
@@ -329,7 +336,8 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
         *module = NULL;
         return ORTE_ERROR;
     }
-success:
+
+  success:
     /* we are good - make ourselves available */
     *priority = mca_plm_rsh_component.priority;
     *module = (mca_base_module_t *) &orte_plm_rsh_module;
