@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +66,7 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
 
 int
@@ -150,11 +152,19 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         }
         ret = dup2(opts->p_stdout[1], fileno(stdout));
         if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        if( orte_iof_base.redirect_app_stderr_to_stdout ) {
+            ret = dup2(opts->p_stdout[1], fileno(stderr));
+            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        }
         close(opts->p_stdout[1]);
     } else {
         if(opts->p_stdout[1] != fileno(stdout)) {
             ret = dup2(opts->p_stdout[1], fileno(stdout));
             if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            if( orte_iof_base.redirect_app_stderr_to_stdout ) {
+                ret = dup2(opts->p_stdout[1], fileno(stderr));
+                if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            }
             close(opts->p_stdout[1]);
         }
     }
@@ -175,13 +185,16 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
             close(fd);
         }
     }
+
     if(opts->p_stderr[1] != fileno(stderr)) {
-        ret = dup2(opts->p_stderr[1], fileno(stderr));
-        if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+            ret = dup2(opts->p_stderr[1], fileno(stderr));
+            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        }
         close(opts->p_stderr[1]);
     }
 
-    if (!orte_map_stddiag_to_stderr) {
+    if (!orte_map_stddiag_to_stderr && !orte_map_stddiag_to_stdout ) {
         /* Set an environment variable that the new child process can use
            to get the fd of the pipe connected to the INTERNAL IOF tag. */
         asprintf(&str, "%d", opts->p_internal[1]);
@@ -189,6 +202,9 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
             opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
             free(str);
         }
+    }
+    else if( orte_map_stddiag_to_stdout ) {
+        opal_setenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT", "1", true, env);
     }
 
     return ORTE_SUCCESS;

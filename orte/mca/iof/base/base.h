@@ -131,6 +131,7 @@ struct orte_iof_base_t {
     char                    *input_files;
     orte_iof_sink_t         *iof_write_stdout;
     orte_iof_sink_t         *iof_write_stderr;
+    bool                    redirect_app_stderr_to_stdout;
 };
 typedef struct orte_iof_base_t orte_iof_base_t;
 

@@ -14,6 +14,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -203,6 +204,15 @@ static int orte_iof_base_register(mca_base_register_flag_t flags)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &orte_iof_base.input_files);
+
+    /* Redirect application stderr to stdout (at source) */
+    orte_iof_base.redirect_app_stderr_to_stdout = false;
+    (void) mca_base_var_register("orte", "iof","base", "redirect_app_stderr_to_stdout",
+                                 "Redirect application stderr to stdout at source (default: false)",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_iof_base.redirect_app_stderr_to_stdout);
 
     return ORTE_SUCCESS;
 }

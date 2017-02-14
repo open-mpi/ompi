@@ -191,6 +191,7 @@ bool orte_staged_execution = false;
 
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 bool orte_map_stddiag_to_stderr = false;
+bool orte_map_stddiag_to_stdout = false;
 
 /* maximum size of virtual machine - used to subdivide allocation */
 int orte_max_vm_size = -1;
