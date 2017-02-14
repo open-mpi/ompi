@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -516,6 +516,11 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
     PMIX_WAIT_FOR_COMPLETION(active);
     pmix_output_verbose(2, pmix_globals.debug_output,
                          "pmix:tool finalize sync received");
+
+    if (!pmix_globals.external_evbase) {
+        /* stop the progress thread */
+        (void)pmix_progress_thread_stop(NULL);
+    }
 
     /* shutdown services */
     pmix_rte_finalize();

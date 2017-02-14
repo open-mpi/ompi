@@ -236,21 +236,6 @@ static void evhandler_reg_callbk(pmix_status_t status,
     *active = status;
 }
 
-static void _destruct_my_server_fn(int sd, short args, void *cbdata)
-{
-    pmix_cb_t *cb= (pmix_cb_t *)cbdata;
-    PMIX_DESTRUCT(&pmix_client_globals.myserver);
-    cb->active = false;
-}
-
-
-static void pmix_destruct_my_server(void)
-{
-    pmix_cb_t cb;
-    PMIX_THREADSHIFT(&cb, _destruct_my_server_fn);
-    PMIX_WAIT_FOR_COMPLETION(cb.active);
-}
-
 PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
                                     pmix_info_t info[], size_t ninfo)
 {
@@ -473,7 +458,12 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
                              "pmix:client finalize sync received");
     }
 
-    pmix_destruct_my_server();
+    if (!pmix_globals.external_evbase) {
+        /* stop the progress thread */
+        (void)pmix_progress_thread_stop(NULL);
+    }
+
+    PMIX_DESTRUCT(&pmix_client_globals.myserver);
 
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
     if (0 > (rc = pmix_dstore_nspace_del(pmix_globals.myid.nspace))) {

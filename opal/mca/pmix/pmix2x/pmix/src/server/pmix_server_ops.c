@@ -1636,7 +1636,9 @@ static void lmcon(pmix_dmdx_local_t *p)
 }
 static void lmdes(pmix_dmdx_local_t *p)
 {
-    PMIX_INFO_FREE(p->info, p->ninfo);
+    if (NULL != p->info) {
+        PMIX_INFO_FREE(p->info, p->ninfo);
+    }
     PMIX_LIST_DESTRUCT(&p->loc_reqs);
 }
 PMIX_CLASS_INSTANCE(pmix_dmdx_local_t,
