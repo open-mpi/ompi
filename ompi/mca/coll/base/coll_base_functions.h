@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,6 +169,11 @@ int ompi_coll_base_scatter_intra_basic_linear(SCATTER_ARGS);
 int ompi_coll_base_scatter_intra_binomial(SCATTER_ARGS);
 
 /* ScatterV */
+
+/* Reduce_local */
+int mca_coll_base_reduce_local(const void *inbuf, void *inoutbuf, int count,
+                               struct ompi_datatype_t * dtype, struct ompi_op_t * op,
+                               mca_coll_base_module_t *module);
 
 END_C_DECLS
 

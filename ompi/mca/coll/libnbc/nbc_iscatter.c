@@ -12,6 +12,10 @@
  *                         reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -43,7 +47,7 @@ int NBC_Scatter_args_compare(NBC_Scatter_args *a, NBC_Scatter_args *b, void *par
 int ompi_coll_libnbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                struct ompi_communicator_t *comm, ompi_request_t ** request,
-                               struct mca_coll_base_module_2_1_0_t *module) {
+                               struct mca_coll_base_module_2_2_0_t *module) {
   int rank, p, res;
   MPI_Aint sndext = 0;
   NBC_Schedule *schedule;
@@ -174,7 +178,7 @@ int ompi_coll_libnbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype 
 int ompi_coll_libnbc_iscatter_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                      void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                      struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                     struct mca_coll_base_module_2_1_0_t *module) {
+                                     struct mca_coll_base_module_2_2_0_t *module) {
     int res, rsize;
     MPI_Aint sndext;
     NBC_Schedule *schedule;

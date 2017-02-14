@@ -10,6 +10,10 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -18,7 +22,7 @@
 
 /* Dissemination implementation of MPI_Ibarrier */
 int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                              struct mca_coll_base_module_2_1_0_t *module)
+                              struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, maxround, res, recvpeer, sendpeer;
   NBC_Schedule *schedule;
@@ -110,7 +114,7 @@ int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t *
 }
 
 int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                    struct mca_coll_base_module_2_1_0_t *module)
+                                    struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, res, rsize;
   NBC_Schedule *schedule;

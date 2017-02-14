@@ -10,6 +10,10 @@
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -51,7 +55,7 @@ int NBC_Alltoall_args_compare(NBC_Alltoall_args *a, NBC_Alltoall_args *b, void *
 /* simple linear MPI_Ialltoall the (simple) algorithm just sends to all nodes */
 int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                               struct mca_coll_base_module_2_1_0_t *module)
+                               struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res, datasize;
   size_t a2asize, sndsize;
@@ -282,7 +286,7 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
 
 int ompi_coll_libnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
 				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				      struct mca_coll_base_module_2_1_0_t *module)
+				      struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;
   MPI_Aint sndext, rcvext;

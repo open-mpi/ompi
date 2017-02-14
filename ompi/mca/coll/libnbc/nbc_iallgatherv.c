@@ -13,6 +13,10 @@
  *                         reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  */
 #include "nbc_internal.h"
@@ -31,7 +35,7 @@
  *   each node receives from node (rank-2)%p recvcounts[(rank+2)%p] elements */
 int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
                                  MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                 struct mca_coll_base_module_2_1_0_t *module)
+                                 struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res, speer, rpeer;
   MPI_Aint rcvext;
@@ -115,7 +119,7 @@ int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatyp
 
 int ompi_coll_libnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
 				       MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				       struct mca_coll_base_module_2_1_0_t *module)
+				       struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;
   MPI_Aint rcvext;

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_self.h"
 
 
@@ -78,6 +80,8 @@ mca_coll_self_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_scan       = mca_coll_self_scan_intra;
         module->super.coll_scatter    = mca_coll_self_scatter_intra;
         module->super.coll_scatterv   = mca_coll_self_scatterv_intra;
+
+        module->super.coll_reduce_local = mca_coll_base_reduce_local;
 
         return &(module->super);
     }
