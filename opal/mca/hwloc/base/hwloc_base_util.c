@@ -2232,6 +2232,9 @@ char* opal_hwloc_base_get_locality_string(hwloc_topology_t topo,
 
         /* get the width of the topology at this depth */
         width = hwloc_get_nbobjs_by_depth(topo, d);
+        if (0 == width) {
+            continue;
+        }
 
         /* scan all objects at this depth to see if
          * the location overlaps with them

@@ -746,20 +746,11 @@ AC_DEFUN([PMIX_DEFINE_ARGS],[
                 [Using --enable-embedded-mode causes PMIx to skip a few configure checks and install nothing.  It should only be used when building PMIx within the scope of a larger package.])])
     AS_IF([test ! -z "$enable_embedded_mode" && test "$enable_embedded_mode" = "yes"],
           [pmix_mode=embedded
+           pmix_install_primary_headers=no
            AC_MSG_RESULT([yes])],
           [pmix_mode=standalone
+           pmix_install_primary_headers=yes
            AC_MSG_RESULT([no])])
-
-    # Install tests and examples?
-    AC_MSG_CHECKING([if tests and examples are to be installed])
-    AC_ARG_WITH([tests-examples],
-        [AC_HELP_STRING([--with-tests-examples],
-                [Whether or not to install the tests and example programs.])])
-    AS_IF([test ! -z "$with_tests_examples" && test "$with_tests_examples" = "no"],
-          [pmix_tests=no
-           AC_MSG_RESULT([no])],
-          [pmix_tests=yes
-           AC_MSG_RESULT([yes])])
 
 #
 # Is this a developer copy?
@@ -836,11 +827,31 @@ AC_ARG_WITH(devel-headers,
 if test "$with_devel_headers" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_INSTALL_HEADERS=1
+    pmix_install_primary_headers=yes
 else
     AC_MSG_RESULT([no])
     WANT_INSTALL_HEADERS=0
 fi
-AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
+
+# Install tests and examples?
+AC_MSG_CHECKING([if tests and examples are to be installed])
+AC_ARG_WITH([tests-examples],
+    [AC_HELP_STRING([--with-tests-examples],
+            [Whether or not to install the tests and example programs.])])
+AS_IF([test "$pmix_install_primary_headers" = "no"],
+      [AS_IF([test -z "$with_tests_examples" || test "$with_tests_examples" = "no"],
+             [pmix_tests=no
+              AC_MSG_RESULT([no])],
+             [AC_MSG_RESULT([no])
+              AC_MSG_WARN([Cannot install tests/examples without installing primary headers.])
+              AC_MSG_WARN([This situation arises when configured in embedded mode])
+              AC_MSG_WARN([and without devel headers.])
+              AC_MSG_ERROR([Please correct the configure line and retry])])],
+      [AS_IF([test ! -z "$with_tests_examples" && test "$with_tests_examples" = "no"],
+             [pmix_tests=no
+              AC_MSG_RESULT([no])],
+             [pmix_tests=yes
+              AC_MSG_RESULT([yes])])])
 
 #
 # Support per-user config files?
@@ -979,7 +990,9 @@ AC_DEFUN([PMIX_DO_AM_CONDITIONALS],[
         AM_CONDITIONAL([PMIX_COMPILE_TIMING], [test "$WANT_TIMING" = "1"])
         AM_CONDITIONAL([PMIX_WANT_MUNGE], [test "$pmix_munge_support" = "1"])
         AM_CONDITIONAL([PMIX_WANT_SASL], [test "$pmix_sasl_support" = "1"])
-        AM_CONDITIONAL([WANT_DSTORE],[test "x$enable_dstore" != "xno"])
+        AM_CONDITIONAL([WANT_DSTORE], [test "x$enable_dstore" != "xno"])
+        AM_CONDITIONAL([WANT_PRIMARY_HEADERS], [test "x$pmix_install_primary_headers" = "xyes"])
+        AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
     ])
     pmix_did_am_conditionals=yes
 ])dnl

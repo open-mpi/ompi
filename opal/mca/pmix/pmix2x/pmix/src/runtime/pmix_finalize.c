@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -66,11 +66,6 @@ void pmix_rte_finalize(void)
             return;
         }
         return;
-    }
-
-    if (!pmix_globals.external_evbase) {
-        /* stop the progress thread */
-        (void)pmix_progress_thread_stop(NULL);
     }
 
     /* cleanup communications */

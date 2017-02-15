@@ -268,6 +268,11 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server finalize called");
 
+    if (!pmix_globals.external_evbase) {
+        /* stop the progress thread */
+        (void)pmix_progress_thread_stop(NULL);
+    }
+
     pmix_ptl_base_stop_listening();
 
     cleanup_server_state();

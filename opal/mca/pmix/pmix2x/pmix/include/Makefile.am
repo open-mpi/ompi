@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -10,7 +10,7 @@
 
 # Only install the headers if we're in standalone mode
 
-if ! PMIX_EMBEDDED_MODE
+if WANT_PRIMARY_HEADERS
 include_HEADERS = \
         pmix.h \
         pmix_common.h \
@@ -23,4 +23,4 @@ nodist_include_HEADERS = \
     pmix_version.h \
     pmix_rename.h
 
-endif ! PMIX_EMBEDDED_MODE
+endif
