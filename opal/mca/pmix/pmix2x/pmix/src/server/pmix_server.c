@@ -227,10 +227,29 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     return PMIX_SUCCESS;
 }
 
-static void cleanup_server_state(void)
+PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
 {
     int i;
     pmix_peer_t *peer;
+
+    if (1 != pmix_globals.init_cntr) {
+        --pmix_globals.init_cntr;
+        return PMIX_SUCCESS;
+    }
+    pmix_globals.init_cntr = 0;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:server finalize called");
+
+    if (!pmix_globals.external_evbase) {
+        /* stop the progress thread, but leave the event base
+         * still constructed. This will allow us to safely
+         * tear down the infrastructure, including removal
+         * of any events objects may be holding */
+        (void)pmix_progress_thread_pause(NULL);
+    }
+
+    pmix_ptl_base_stop_listening();
 
     for (i=0; i < pmix_server_globals.clients.size; i++) {
         if (NULL != (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, i))) {
@@ -255,32 +274,9 @@ static void cleanup_server_state(void)
 
     pmix_bfrop_close();
     pmix_rte_finalize();
-}
 
-PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
-{
-    if (1 != pmix_globals.init_cntr) {
-        --pmix_globals.init_cntr;
-        return PMIX_SUCCESS;
-    }
-    pmix_globals.init_cntr = 0;
-
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix:server finalize called");
-
-    if (!pmix_globals.external_evbase) {
-        /* stop the progress thread */
-        (void)pmix_progress_thread_stop(NULL);
-    }
-
-    pmix_ptl_base_stop_listening();
-
-    cleanup_server_state();
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server finalize complete");
-
-    /* finalize the class/object system */
-    pmix_class_finalize();
 
     return PMIX_SUCCESS;
 }

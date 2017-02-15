@@ -459,8 +459,11 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
     }
 
     if (!pmix_globals.external_evbase) {
-        /* stop the progress thread */
-        (void)pmix_progress_thread_stop(NULL);
+        /* stop the progress thread, but leave the event base
+         * still constructed. This will allow us to safely
+         * tear down the infrastructure, including removal
+         * of any events objects may be holding */
+        (void)pmix_progress_thread_pause(NULL);
     }
 
     PMIX_DESTRUCT(&pmix_client_globals.myserver);
@@ -472,17 +475,13 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
     }
 #endif
 
-    pmix_rte_finalize();
-
     PMIX_LIST_DESTRUCT(&pmix_client_globals.pending_requests);
 
     if (0 <= pmix_client_globals.myserver.sd) {
         CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
     }
 
-    pmix_bfrop_close();
-
-    pmix_class_finalize();
+    pmix_rte_finalize();
 
     return PMIX_SUCCESS;
 }

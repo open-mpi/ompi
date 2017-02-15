@@ -518,17 +518,18 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
                          "pmix:tool finalize sync received");
 
     if (!pmix_globals.external_evbase) {
-        /* stop the progress thread */
-        (void)pmix_progress_thread_stop(NULL);
+        /* stop the progress thread, but leave the event base
+         * still constructed. This will allow us to safely
+         * tear down the infrastructure, including removal
+         * of any events objects may be holding */
+        (void)pmix_progress_thread_pause(NULL);
     }
-
-    /* shutdown services */
-    pmix_rte_finalize();
 
     PMIX_DESTRUCT(&pmix_client_globals.myserver);
     PMIX_LIST_DESTRUCT(&pmix_client_globals.pending_requests);
 
-    pmix_class_finalize();
+    /* shutdown services */
+    pmix_rte_finalize();
 
     return PMIX_SUCCESS;
 }
