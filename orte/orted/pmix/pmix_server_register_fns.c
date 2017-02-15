@@ -51,7 +51,7 @@
 #include "pmix_server.h"
 
 /* stuff proc attributes for sending back to a proc */
-int orte_pmix_server_register_nspace(orte_job_t *jdata)
+int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
 {
     int rc;
     orte_proc_t *pptr;
@@ -73,6 +73,12 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
                         "%s register nspace for %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_JOBID_PRINT(jdata->jobid));
+
+    /* if this job has no local procs, then no need to register
+     * it unless the job info is needed by connecting jobs */
+    if (!force && 0 == jdata->num_local_procs) {
+        return ORTE_SUCCESS;
+    }
 
     /* setup the info list */
     info = OBJ_NEW(opal_list_t);

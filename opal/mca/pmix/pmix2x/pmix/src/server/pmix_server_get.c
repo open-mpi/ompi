@@ -612,10 +612,10 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
     }
 
     if (NULL == nptr) {
-/*
- * We may not have this namespace because someone asked about this namespace
- * but there are not processses from it running on this host
- */
+        /*
+         * We may not have this namespace because someone asked about this namespace
+         * but there are not processses from it running on this host
+         */
         nptr = PMIX_NEW(pmix_nspace_t);
         (void)strncpy(nptr->nspace, caddy->lcd->proc.nspace, PMIX_MAX_NSLEN);
         nptr->server = PMIX_NEW(pmix_server_nspace_t);
