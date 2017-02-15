@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -377,7 +377,7 @@ static void _cnlk(int status, opal_list_t *data, void *cbdata)
         goto release;
     }
     OBJ_DESTRUCT(&buf);
-    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata))) {
+    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata, true))) {
         OBJ_RELEASE(jdata);
         goto release;
     }
@@ -441,7 +441,7 @@ static void _cnct(int sd, short args, void *cbdata)
          * registered with the local PMIx server */
         if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_NSPACE_REGISTERED, NULL, OPAL_BOOL)) {
             /* it hasn't been registered yet, so register it now */
-            if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata))) {
+            if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata, true))) {
                 goto release;
             }
         }

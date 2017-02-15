@@ -481,16 +481,16 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         }
     }
 
- COMPLETE:
+  COMPLETE:
     /* register this job with the PMIx server - need to wait until after we
      * have computed the #local_procs before calling the function */
-    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata))) {
+    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata, false))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
     return ORTE_SUCCESS;
 
- REPORT_ERROR:
+  REPORT_ERROR:
     /* we have to report an error back to the HNP so we don't just
      * hang. Although there shouldn't be any errors once this is
      * all debugged, it is still good practice to have a way
