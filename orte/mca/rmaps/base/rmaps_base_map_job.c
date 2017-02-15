@@ -50,8 +50,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 {
     orte_job_t *jdata;
     orte_node_t *node;
-    int rc, i;
-    bool did_map, given;
+    int rc, i, ppx;
+    bool did_map, given, pernode;
     orte_rmaps_base_selected_module_t *mod;
     orte_job_t *parent;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -71,6 +71,22 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         "mca:rmaps: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
 
+    if (NULL == jdata->map->ppr && NULL != orte_rmaps_base.ppr) {
+        jdata->map->ppr = strdup(orte_rmaps_base.ppr);
+    }
+    if (NULL != jdata->map->ppr) {
+        /* get the procs/object */
+        ppx = strtoul(jdata->map->ppr, NULL, 10);
+        if (NULL != strstr(jdata->map->ppr, "node")) {
+            pernode = true;
+        } else {
+            pernode = false;
+        }
+    }
+    if (0 == jdata->map->cpus_per_rank) {
+        jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
+    }
+
     /* compute the number of procs and check validity */
     nprocs = 0;
     for (i=0; i < jdata->apps->size; i++) {
@@ -80,34 +96,47 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 orte_std_cntr_t slots;
                 OBJ_CONSTRUCT(&nodes, opal_list_t);
                 orte_rmaps_base_get_target_nodes(&nodes, &slots, app, ORTE_MAPPING_BYNODE, true, true);
-                /* if we are in a managed allocation, then all is good - otherwise,
-                 * we have to do a little more checking */
-                if (!orte_managed_allocation) {
-                    /* if all the nodes have their slots given, then we are okay */
-                    given = true;
-                    OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
-                        if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
-                            given = false;
-                            break;
+                if (NULL != jdata->map->ppr) {
+                    if (pernode) {
+                        nprocs += ppx * opal_list_get_size(&nodes);
+                    } else {
+                        /* must be procs/socket, so add in #sockets for each node */
+                        slots = 0;
+                        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
+                            slots += ppx * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+                                                                              HWLOC_OBJ_SOCKET, 0,
+                                                                              OPAL_HWLOC_AVAILABLE);
+                        }
+                        nprocs += slots;
+                    }
+                } else {
+                    /* if we are in a managed allocation, then all is good - otherwise,
+                     * we have to do a little more checking */
+                    if (!orte_managed_allocation) {
+                        /* if all the nodes have their slots given, then we are okay */
+                        given = true;
+                        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
+                            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                                given = false;
+                                break;
+                            }
+                        }
+                        /* if -host or -hostfile was given, and the slots were not,
+                         * then this is no longer allowed */
+                        if (!given &&
+                            (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, NULL, OPAL_STRING) ||
+                             orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING))) {
+                            /* inform the user of the error */
+                            orte_show_help("help-orte-rmaps-base.txt", "num-procs-not-specified", true);
+                            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+                            OBJ_RELEASE(caddy);
+                            OPAL_LIST_DESTRUCT(&nodes);
+                            return;
                         }
                     }
-                    /* if -host or -hostfile was given, and the slots were not,
-                     * then this is no longer allowed */
-                    if (!given &&
-                        (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, NULL, OPAL_STRING) ||
-                         orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING))) {
-                        /* inform the user of the error */
-                        orte_show_help("help-orte-rmaps-base.txt", "num-procs-not-specified", true);
-                        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-                        OBJ_RELEASE(caddy);
-                        OPAL_LIST_DESTRUCT(&nodes);
-                        return;
-                    }
-                }
-                OPAL_LIST_DESTRUCT(&nodes);
-                if (ORTE_MAPPING_PPR != ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
                     nprocs += slots;
                 }
+                OPAL_LIST_DESTRUCT(&nodes);
             } else {
                 nprocs += app->num_procs;
             }
@@ -116,8 +145,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                        "mca:rmaps: setting mapping policies for job %s",
-                        ORTE_JOBID_PRINT(jdata->jobid));
+                        "mca:rmaps: setting mapping policies for job %s nprocs %d",
+                        ORTE_JOBID_PRINT(jdata->jobid), (int)nprocs);
 
     if (!jdata->map->display_map) {
         jdata->map->display_map = orte_rmaps_base.display_map;
@@ -185,13 +214,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     /* ditto for rank policy */
     if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
         jdata->map->ranking = orte_rmaps_base.ranking;
-    }
-
-    if (NULL == jdata->map->ppr && NULL != orte_rmaps_base.ppr) {
-        jdata->map->ppr = strdup(orte_rmaps_base.ppr);
-    }
-    if (0 == jdata->map->cpus_per_rank) {
-        jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
     }
 
     /* define the binding policy for this job - if the user specified one
