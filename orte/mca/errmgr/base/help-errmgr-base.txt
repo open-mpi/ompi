@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -61,9 +62,10 @@ route found between them. Please check network connectivity
 (including firewalls and network routing requirements).
 #
 [node-died]
-ORTE has lost communication with its daemon located on node:
+ORTE has lost communication with a remote daemon.
 
-  hostname:  %s
+  HNP daemon   : %s on node %s
+  Remote daemon: %s on node %s
 
 This is usually due to either a failure of the TCP network
 connection to the node, or possibly an internal failure of
