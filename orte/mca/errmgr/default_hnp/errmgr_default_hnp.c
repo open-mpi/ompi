@@ -10,6 +10,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -369,7 +370,11 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* record the first one to fail */
         if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
             /* output an error message so the user knows what happened */
-            orte_show_help("help-errmgr-base.txt", "node-died", true, pptr->node->name);
+            orte_show_help("help-errmgr-base.txt", "node-died", true,
+                           ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                           orte_process_info.nodename,
+                           ORTE_NAME_PRINT(proc),
+                           pptr->node->name);
             /* mark the daemon job as failed */
             jdata->state = ORTE_JOB_STATE_COMM_FAILED;
             /* point to the lowest rank to cause the problem */
