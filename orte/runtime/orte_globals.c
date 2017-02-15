@@ -833,7 +833,7 @@ static void orte_job_map_construct(orte_job_map_t* map)
     map->ranking = 0;
     map->binding = 0;
     map->ppr = NULL;
-    map->cpus_per_rank = 1;
+    map->cpus_per_rank = 0;
     map->display_map = false;
     map->num_new_daemons = 0;
     map->daemon_vpid_start = ORTE_VPID_INVALID;

@@ -205,7 +205,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps[%d] binding policy given", __LINE__);
             jdata->map->binding = opal_hwloc_binding_policy;
-        } else if (1 < jdata->map->cpus_per_rank) {
+        } else if (0 < jdata->map->cpus_per_rank) {
             /* bind to cpus */
             if (opal_hwloc_use_hwthreads_as_cpus) {
                 /* if we are using hwthread cpus, then bind to those */
