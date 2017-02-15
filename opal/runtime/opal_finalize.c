@@ -45,7 +45,7 @@
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/sec/base/base.h"
 #include "opal/mca/timer/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/mca/event/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/shmem/base/base.h"
@@ -152,8 +152,8 @@ opal_finalize(void)
     /* finalize the memory manager / tracker */
     opal_mem_hooks_finalize();
 
-    /* close the hwloc framework */
-    (void) mca_base_framework_close(&opal_hwloc_base_framework);
+    /* close the leia framework */
+    (void) mca_base_framework_close(&opal_leia_base_framework);
 
     /* close the shmem framework */
     (void) mca_base_framework_close(&opal_shmem_base_framework);

@@ -14,6 +14,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +37,7 @@
 #include "opal/util/output.h"
 #include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/threads/tsd.h"
 
 #include "orte/types.h"

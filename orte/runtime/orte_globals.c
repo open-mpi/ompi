@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -32,7 +32,7 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"

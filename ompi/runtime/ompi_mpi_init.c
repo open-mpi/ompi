@@ -18,7 +18,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
  *
@@ -42,7 +42,7 @@
 #include "mpi.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/threads/threads.h"
 #include "opal/util/arch.h"

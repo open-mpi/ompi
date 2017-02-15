@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +32,7 @@
 #include "opal/util/output.h"
 #include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/threads/tsd.h"
 
 #include "orte/types.h"

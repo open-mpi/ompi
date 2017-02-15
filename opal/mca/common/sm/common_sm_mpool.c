@@ -14,6 +14,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +32,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
 #include "orte/mca/sstore/sstore.h"

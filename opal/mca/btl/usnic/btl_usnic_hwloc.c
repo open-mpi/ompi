@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,7 +12,7 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/constants.h"
 
 #if BTL_IN_OPAL

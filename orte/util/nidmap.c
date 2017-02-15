@@ -13,7 +13,7 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014 -2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -53,7 +53,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/pmix/pmix.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"

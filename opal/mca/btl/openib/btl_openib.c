@@ -19,7 +19,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved
  * $COPYRIGHT$
@@ -84,7 +84,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))

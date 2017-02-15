@@ -1,6 +1,8 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2017      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -10,15 +12,12 @@ dnl
 
 # There will only be one component used in this framework, and it will
 # be selected at configure time by priority.  Components must set
-# their priorities in their configure.m4 files.  They must also set
-# the shell variable $opal_hwloc_base_include to a header file
-# name (relative to the top OMPI source directory) that will be
-# included in opal/mca/hwloc/hwloc.h.
+# their priorities in their configure.m4 files.
 
 dnl We only want one winning component (vs. STOP_AT_FIRST_PRIORITY,
 dnl which will allow all components of the same priority who succeed to
 dnl win)
-m4_define(MCA_opal_hwloc_CONFIGURE_MODE, STOP_AT_FIRST)
+m4_define(MCA_opal_leia_CONFIGURE_MODE, STOP_AT_FIRST)
 
 # Other components may depend on at least 1 hwloc component being
 # available.  As such, we may need to artificially force this
@@ -26,16 +25,16 @@ m4_define(MCA_opal_hwloc_CONFIGURE_MODE, STOP_AT_FIRST)
 # the hwloc framework's m4 to a separate macro and AC REQUIRE it.
 # Other components can do this as well.
 
-AC_DEFUN([MCA_opal_hwloc_CONFIG],[
+AC_DEFUN([MCA_opal_leia_CONFIG],[
     # Use a crude shell variable to know whether this component is
     # being required "early".  See below.
     opal_hwloc_its_time_to_configure=1
-    AC_REQUIRE([MCA_opal_hwloc_CONFIG_REQUIRE])
+    AC_REQUIRE([MCA_opal_leia_CONFIG_REQUIRE])
 ])
 
 # See comments above for why this is a separate macro.
 
-AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
+AC_DEFUN([MCA_opal_leia_CONFIG_REQUIRE],[
     opal_hwloc_base_include=
 
    # If this shell variable is not 1, then this m4 is being invoked
@@ -83,7 +82,7 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
     # the traditional $1 and $2 as the first arguments, we hard-code
     # "opal" and "hwloc", because this macro is invoked via AC
     # REQUIRE.
-    MCA_CONFIGURE_FRAMEWORK([opal], [hwloc], 1)
+    MCA_CONFIGURE_FRAMEWORK([opal], [leia], 1)
 
     # Restore the --enable-pci flag
     enable_pci=$opal_hwloc_hwloc132_save_enable_pci
@@ -96,13 +95,13 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
     AS_IF([test "$with_hwloc" = ""], [],
        [ # STOP_AT_FIRST_PRIORITY will guarantee that we find at most
         # one.  We need to check here that we found *at least* one.
-        AS_IF([test "$MCA_opal_hwloc_STATIC_COMPONENTS" = ""],
+        AS_IF([test "$MCA_opal_leia_STATIC_COMPONENTS" = ""],
               [AC_MSG_WARN([Did not find a suitable static opal hwloc component])
                AC_MSG_ERROR([Cannot continue])])
    ])
 
    # If we have a winning component, do some more logic
-   AS_IF([test "$MCA_opal_hwloc_STATIC_COMPONENTS" != ""],
+   AS_IF([test "$MCA_opal_leia_STATIC_COMPONENTS" != ""],
        [ # We had a winner -- w00t!
         # The winning component will have told us where their header file
         # is located

@@ -4,6 +4,8 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/argv.h"

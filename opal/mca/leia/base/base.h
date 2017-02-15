@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,7 +17,7 @@
 
 #include "opal/dss/dss_types.h"
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 
 /*
  * Global functions for MCA overall hwloc open and close
@@ -44,7 +46,7 @@ BEGIN_C_DECLS
 OPAL_DECLSPEC extern bool opal_hwloc_base_inited;
 OPAL_DECLSPEC extern bool opal_hwloc_topology_inited;
 
-OPAL_DECLSPEC extern mca_base_framework_t opal_hwloc_base_framework;
+OPAL_DECLSPEC extern mca_base_framework_t opal_leia_base_framework;
 
 /* we always must have some minimal locality support */
 #define OPAL_HWLOC_PRINT_MAX_SIZE   50

@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2016      Research Organization for Information Science
+# Copyright (c) 2016 -2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -9,18 +9,13 @@
 # $HEADER$
 #
 
-# We do not want -I$(srcdir) in AM_CPPFLAGS, or there can be a
-# conflict between system hwloc.h and opal/mca/hwloc/hwloc.h.  So just
-# set only what we need to AM_CPPFLAGS.
-AM_CPPFLAGS = -I$(top_builddir)/opal/include
-
 # main library setup
-noinst_LTLIBRARIES = libmca_hwloc.la
-libmca_hwloc_la_SOURCES =
+noinst_LTLIBRARIES = libmca_leia.la
+libmca_leia_la_SOURCES =
 
 # local files
-headers = hwloc.h
-libmca_hwloc_la_SOURCES += $(headers)
+headers = leia.h
+libmca_leia_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS

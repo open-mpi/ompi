@@ -48,7 +48,7 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/patcher/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/mca/sec/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
@@ -493,8 +493,8 @@ opal_init(int* pargc, char*** pargv)
     /* open hwloc - since this is a static framework, no
      * select is required
      */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_hwloc_base_framework, 0))) {
-        error = "opal_hwloc_base_open";
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_leia_base_framework, 0))) {
+        error = "opal_leia_base_open";
         goto return_error;
     }
 

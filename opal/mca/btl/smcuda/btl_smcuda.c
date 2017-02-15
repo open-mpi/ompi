@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014 -2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -47,7 +47,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/base/base.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"

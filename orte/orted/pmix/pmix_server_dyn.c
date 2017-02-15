@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -38,7 +38,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/base/base.h"

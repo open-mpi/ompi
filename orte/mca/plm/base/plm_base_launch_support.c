@@ -14,7 +14,7 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -40,7 +40,7 @@
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/util/session_dir.h"

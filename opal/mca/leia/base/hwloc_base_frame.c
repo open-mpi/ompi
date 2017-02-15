@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016 -2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -22,8 +22,8 @@
 #include "opal/mca/base/base.h"
 #include "opal/threads/tsd.h"
 
-#include "opal/mca/hwloc/hwloc.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/leia/leia.h"
+#include "opal/mca/leia/base/base.h"
 
 
 /*
@@ -31,7 +31,7 @@
  * statements and the definition of an array of pointers to each
  * component's public mca_base_component_t struct.
  */
-#include "opal/mca/hwloc/base/static-components.h"
+#include "opal/mca/leia/base/static-components.h"
 
 
 /*
@@ -76,8 +76,8 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags);
 static int opal_hwloc_base_open(mca_base_open_flag_t flags);
 static int opal_hwloc_base_close(void);
 
-MCA_BASE_FRAMEWORK_DECLARE(opal, hwloc, NULL, opal_hwloc_base_register, opal_hwloc_base_open, opal_hwloc_base_close,
-                           mca_hwloc_base_static_components, 0);
+MCA_BASE_FRAMEWORK_DECLARE(opal, leia, NULL, opal_hwloc_base_register, opal_hwloc_base_open, opal_hwloc_base_close,
+                           mca_leia_base_static_components, 0);
 
 static char *opal_hwloc_base_binding_policy = NULL;
 static bool opal_hwloc_base_bind_to_core = false;
@@ -229,7 +229,7 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
      * to a list
      */
     if (OPAL_SUCCESS !=
-        mca_base_framework_components_open(&opal_hwloc_base_framework, flags)) {
+        mca_base_framework_components_open(&opal_leia_base_framework, flags)) {
         return OPAL_ERROR;
     }
 
@@ -258,7 +258,7 @@ static int opal_hwloc_base_close(void)
     /* no need to close the component as it was statically opened */
 
     /* for support of tools such as ompi_info */
-    ret = mca_base_framework_components_close (&opal_hwloc_base_framework, NULL);
+    ret = mca_base_framework_components_close (&opal_leia_base_framework, NULL);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016 -2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -21,7 +21,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
 #include "opal/dss/dss_types.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/leia/leia.h"
 
 #include "orte/types.h"
 #include "orte/runtime/orte_globals.h"
