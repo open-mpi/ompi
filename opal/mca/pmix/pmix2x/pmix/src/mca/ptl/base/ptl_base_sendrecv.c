@@ -470,17 +470,19 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
 {
     pmix_ptl_queue_t *queue = (pmix_ptl_queue_t*)cbdata;
     pmix_ptl_send_t *snd;
+
+    if (NULL == queue->peer || queue->peer->sd < 0 ||
+        NULL == queue->peer->info || NULL == queue->peer->info->nptr) {
+        /* this peer has lost connection */
+        PMIX_RELEASE(queue);
+        return;
+    }
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "[%s:%d] send to %s:%d on tag %d",
                         __FILE__, __LINE__,
                         (queue->peer)->info->nptr->nspace,
                         (queue->peer)->info->rank, (queue->tag));
-
-    if (queue->peer->sd < 0) {
-        /* this peer's socket has been closed */
-        PMIX_RELEASE(queue);
-        return;
-    }
 
     snd = PMIX_NEW(pmix_ptl_send_t);
     snd->hdr.pindex = htonl(pmix_globals.pindex);

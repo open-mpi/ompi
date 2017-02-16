@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -189,9 +189,11 @@ static pmix_status_t send_recv(struct pmix_peer_t *peer,
                                void *cbdata)
 {
     pmix_ptl_sr_t *ms;
+
     pmix_output_verbose(5, pmix_globals.debug_output,
                         "[%s:%d] post send to server",
                         __FILE__, __LINE__);
+
     ms = PMIX_NEW(pmix_ptl_sr_t);
     ms->peer = peer;
     ms->bfr = bfr;
@@ -208,11 +210,13 @@ static pmix_status_t send_oneway(struct pmix_peer_t *peer,
                                  pmix_ptl_tag_t tag)
 {
     pmix_ptl_queue_t *q;
+    pmix_peer_t *pr = (pmix_peer_t*)peer;
 
     /* we have to transfer this to an event for thread
      * safety as we need to post this message on the
      * peer's send queue */
     q = PMIX_NEW(pmix_ptl_queue_t);
+    OBJ_RETAIN(pr);
     q->peer = peer;
     q->buf = bfr;
     q->tag = tag;
