@@ -78,21 +78,20 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
-    /* TODO: Remove the following check when ompi adds support */
+    /* TODO: Remove the following check when support is added.
+     * See the following issue for the current state:
+     *   https://github.com/open-mpi/ompi/issues/1666
+     */
     if(MPI_MINLOC == op || MPI_MAXLOC == op) {
         if(MPI_SHORT_INT == datatype ||
            MPI_DOUBLE_INT == datatype ||
            MPI_LONG_INT == datatype ||
            MPI_LONG_DOUBLE_INT == datatype) {
            ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
-           opal_output(0, "Error: %s datatype is currently "
-                       "unsupported for MPI_MINLOC/MPI_MAXLOC "
-                       "operation\n", datatype->name);
-           opal_show_help("help-mpi-api.txt", "mpi-abort", true,
-                          comm->c_my_rank,
-                          ('\0' != comm->c_name[0]) ? comm->c_name : "<Unknown>",
-                          -1);
-
+           opal_show_help("help-mca-osc-base.txt", "unsupported-dt", true,
+                          datatype->name,
+                          op->o_name,
+                          comm->c_my_rank);
            ompi_mpi_abort(comm, -1);
         }
     }

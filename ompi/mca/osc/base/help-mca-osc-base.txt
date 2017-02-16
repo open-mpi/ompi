@@ -1,0 +1,18 @@
+# -*- text -*-
+#
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for Open MPI MCA osc-specific
+# error messages.
+#
+[unsupported-dt]
+Unsupported datatype and op combination used in a one-sided operation.
+
+ Datatype : %s
+ Operation: %s
+ Rank     : %d
