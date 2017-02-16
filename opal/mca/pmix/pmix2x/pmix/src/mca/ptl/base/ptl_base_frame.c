@@ -222,6 +222,16 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_listener_t,
                                 pmix_list_item_t,
                                 lcon, ldes);
 
+static void qcon(pmix_ptl_queue_t *p)
+{
+    p->peer = NULL;
+}
+static void qdes(pmix_ptl_queue_t *p)
+{
+    if (NULL != p->peer) {
+        PMIX_RELEASE(p->peer);
+    }
+}
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_queue_t,
                                 pmix_object_t,
-                                NULL, NULL);
+                                qcon, qdes);
