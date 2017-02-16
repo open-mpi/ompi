@@ -3,7 +3,7 @@
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -784,18 +784,16 @@ static void fencenb(int sd, short args, void *cbdata)
         }
 
         /* unpack and stuff in to the dstore */
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(buf, &kp, &(int){1}, OPAL_VALUE))) {
+            OPAL_OUTPUT_VERBOSE((20, opal_pmix_base_framework.framework_output,
+                                 "%s pmix:cray unpacked kp with key %s type(%d) for id  %s",
+                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key, kp->type, OPAL_NAME_PRINT(id)));
 
-        cnt = 1;
-        while (OPAL_SUCCESS == (rc = opal_dss.unpack(buf, &kp, &cnt, OPAL_VALUE))) {
-            opal_output_verbose(20, opal_pmix_base_framework.framework_output,
-                        "%s pmix:cray unpacked kp with key %s type(%d) for id  %s",
-                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key, kp->type, OPAL_NAME_PRINT(id));
             if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&id, kp))) {
                 OPAL_ERROR_LOG(rc);
                 goto fn_exit;
             }
-             OBJ_RELEASE(kp);
-             cnt = 1;
+            OBJ_RELEASE(kp);
         }
 
         cptr += r_bytes_and_ranks[i].nbytes;
@@ -831,18 +829,18 @@ static void fencenb(int sd, short args, void *cbdata)
     for (i=0; i < pmix_nlranks; i++) {
         id.vpid = pmix_lranks[i];
         id.jobid = pmix_jobid;
-        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "%s checking out if %s is local to me",
-                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                OPAL_NAME_PRINT(id));
+        OPAL_OUTPUT_VERBOSE((2, opal_pmix_base_framework.framework_output,
+                             "%s checking out if %s is local to me",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                             OPAL_NAME_PRINT(id)));
         /* fetch cpuset for this vpid */
         OBJ_CONSTRUCT(&vals, opal_list_t);
         if (OPAL_SUCCESS != (rc = opal_pmix_base_fetch(&id,
                                                     OPAL_PMIX_CPUSET, &vals))) {
-            opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "%s cpuset for local proc %s not found",
-                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                OPAL_NAME_PRINT(id));
+            OPAL_OUTPUT_VERBOSE((2, opal_pmix_base_framework.framework_output,
+                                 "%s cpuset for local proc %s not found",
+                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                                 OPAL_NAME_PRINT(id)));
             OPAL_LIST_DESTRUCT(&vals);
             /* even though the cpuset wasn't found, we at least know it is
              * on the same node with us */
@@ -917,10 +915,10 @@ static int cray_get(const opal_process_name_t *id, const char *key, opal_list_t 
     int rc;
     opal_list_t vals;
 
-    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "%s pmix:cray getting value for proc %s key %s",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                        OPAL_NAME_PRINT(*id), key);
+    OPAL_OUTPUT_VERBOSE((2, opal_pmix_base_framework.framework_output,
+                         "%s pmix:cray getting value for proc %s key %s",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                         OPAL_NAME_PRINT(*id), key));
 
     OBJ_CONSTRUCT(&vals, opal_list_t);
     rc = opal_pmix_base_fetch(id, key, &vals);
@@ -928,9 +926,9 @@ static int cray_get(const opal_process_name_t *id, const char *key, opal_list_t 
         *kv = (opal_value_t*)opal_list_remove_first(&vals);
         return OPAL_SUCCESS;
     } else {
-        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                "%s pmix:cray fetch from dstore failed: %d",
-                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), rc);
+        OPAL_OUTPUT_VERBOSE((2, opal_pmix_base_framework.framework_output,
+                             "%s pmix:cray fetch from dstore failed: %d",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), rc));
     }
     OPAL_LIST_DESTRUCT(&vals);
 
