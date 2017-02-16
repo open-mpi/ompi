@@ -14,7 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -308,7 +308,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 /* setup the bitmap */
                 hwloc_cpuset_t bitmap;
                 char *cpu_bitmap;
-                if (NULL == node->topology) {
+                if (NULL == node->topology || NULL == node->topology->topo) {
                     /* not allowed - for rank-file, we must have
                      * the topology info
                      */
@@ -318,7 +318,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 }
                 bitmap = hwloc_bitmap_alloc();
                 /* parse the slot_list to find the socket and core */
-                if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(slots, node->topology, rtype, bitmap))) {
+                if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(slots, node->topology->topo, rtype, bitmap))) {
                     ORTE_ERROR_LOG(rc);
                     hwloc_bitmap_free(bitmap);
                     goto error;

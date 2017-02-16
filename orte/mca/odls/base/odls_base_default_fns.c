@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
@@ -239,7 +239,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_proc_t *pptr, *dmn;
     opal_buffer_t *bptr;
     orte_app_context_t *app;
-    bool found;
     orte_node_t *node;
     bool newmap = false;
 
@@ -436,18 +435,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         opal_pointer_array_add(dmn->node->procs, pptr);
 
         /* add the node to the map, if not already there */
-        found = false;
-        for (k=0; k < jdata->map->nodes->size; k++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, k))) {
-                continue;
-            }
-            if (node->daemon == dmn) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
+        if (!ORTE_FLAG_TEST(dmn->node, ORTE_NODE_FLAG_MAPPED)) {
             OBJ_RETAIN(dmn->node);
+            ORTE_FLAG_SET(dmn->node, ORTE_NODE_FLAG_MAPPED);
             opal_pointer_array_add(jdata->map->nodes, dmn->node);
             if (newmap) {
                 jdata->map->num_nodes++;
@@ -478,6 +468,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             /* mark that this app_context is being used on this node */
             app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
             ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
+        }
+    }
+    /* reset the node map flags we used so the next job will start clean */
+    for (n=0; n < jdata->map->nodes->size; n++) {
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
+            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
         }
     }
 
