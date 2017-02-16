@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2011-2017 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -506,6 +506,11 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         goto error;
     }
 
+    module->origin_iovec_list = NULL;
+    module->origin_iovec_md_h = PTL_INVALID_HANDLE;
+    module->result_iovec_list = NULL;
+    module->result_iovec_md_h = PTL_INVALID_HANDLE;
+
     if (MPI_WIN_FLAVOR_DYNAMIC == flavor) {
         me.start = 0;
         me.length = PTL_SIZE_MAX;
@@ -650,6 +655,14 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
     PtlMEUnlink(module->control_me_h);
     PtlMEUnlink(module->data_me_h);
     PtlMDRelease(module->md_h);
+    if (module->origin_iovec_md_h != PTL_INVALID_HANDLE) {
+        PtlMDRelease(module->origin_iovec_md_h);
+        free(module->origin_iovec_list);
+    }
+    if (module->result_iovec_md_h != PTL_INVALID_HANDLE) {
+        PtlMDRelease(module->result_iovec_md_h);
+        free(module->result_iovec_list);
+    }
     PtlMDRelease(module->req_md_h);
     PtlCTFree(module->ct_h);
     if (NULL != module->disp_units) free(module->disp_units);
