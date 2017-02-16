@@ -1,7 +1,7 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2013      Intel, Inc. All rights reserved
+dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -35,7 +35,6 @@ AC_DEFUN([PMIX_CHECK_COMPILER], [
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>
-#include "pmix_portable_platform.h"
 
 int main (int argc, char * argv[])
 {
@@ -68,7 +67,6 @@ AC_DEFUN([PMIX_CHECK_COMPILER_STRINGIFY], [
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>
-#include "pmix_portable_platform.h"
 
 int main (int argc, char * argv[])
 {
