@@ -3,7 +3,7 @@
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -255,6 +255,7 @@ int pmix_ext_server_register_nspace(opal_jobid_t jobid,
     op.sz = sz;
     op.opcbfunc = cbfunc;
     op.cbdata = cbdata;
+    op.active = true;
     rc = PMIx_server_register_nspace(nspace, nlocalprocs, pinfo, sz,
                                      opcbfunc, &op);
     if (PMIX_SUCCESS == rc) {
