@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -149,7 +149,7 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_bynode);
 
     /* #cpus/rank to use */
-    orte_rmaps_base.cpus_per_rank = 1;
+    orte_rmaps_base.cpus_per_rank = 0;
     var_id = mca_base_var_register("orte", "rmaps", "base", "cpus_per_proc",
                                    "Number of cpus to use for each rank [1-2**15 (default=1)]",
                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -280,7 +280,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             return ORTE_ERR_SILENT;
         }
     }
-    if (1 < orte_rmaps_base.cpus_per_rank) {
+    if (0 < orte_rmaps_base.cpus_per_rank) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
                        "--cpus-per-proc, -cpus-per-proc, --cpus-per-rank, -cpus-per-rank",
                        "--map-by <obj>:PE=N, default <obj>=NUMA",
@@ -376,8 +376,8 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         ORTE_SET_RANKING_DIRECTIVE(orte_rmaps_base.ranking, ORTE_RANKING_GIVEN);
     }
 
-    if (1 < orte_rmaps_base.cpus_per_rank) {
-        /* if we were asked for multiple cpus/proc, then we have to
+    if (0 < orte_rmaps_base.cpus_per_rank) {
+        /* if we were asked for cpus/proc, then we have to
          * bind to those cpus - any other binding policy is an
          * error
          */
@@ -403,24 +403,27 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             if (opal_hwloc_use_hwthreads_as_cpus) {
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
             } else {
+                opal_output(0, "SETTING BINDING TO CORE");
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
             }
         }
-        /* we also need to ensure we are mapping to a high-enough level to have
-         * multiple cpus beneath it - by default, we'll go to the NUMA level */
-        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-            if (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYHWTHREAD ||
-              (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYCORE &&
-              !opal_hwloc_use_hwthreads_as_cpus)) {
-                orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low-init", true);
-                return ORTE_ERR_SILENT;
+        if (1 < orte_rmaps_base.cpus_per_rank) {
+            /* we need to ensure we are mapping to a high-enough level to have
+             * multiple cpus beneath it - by default, we'll go to the NUMA level */
+            if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+                if (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYHWTHREAD ||
+                  (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYCORE &&
+                  !opal_hwloc_use_hwthreads_as_cpus)) {
+                    orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low-init", true);
+                    return ORTE_ERR_SILENT;
+                }
+            } else {
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "%s rmaps:base pe/rank set - setting mapping to BYNUMA",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYNUMA);
+                ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
             }
-        } else {
-            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                "%s rmaps:base pe/rank set - setting mapping to BYNUMA",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYNUMA);
-            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
         }
     }
 

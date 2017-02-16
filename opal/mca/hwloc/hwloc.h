@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
@@ -191,7 +191,7 @@ typedef uint16_t opal_binding_policy_t;
 #define OPAL_GET_BINDING_POLICY(pol) \
     ((pol) & 0x0fff)
 #define OPAL_SET_BINDING_POLICY(target, pol) \
-    (target) = (pol) | (((target) & 0xf000) | OPAL_BIND_GIVEN)
+    (target) = (pol) | (((target) & 0x2000) | OPAL_BIND_GIVEN)
 #define OPAL_SET_DEFAULT_BINDING_POLICY(target, pol)            \
     do {                                                        \
         if (!OPAL_BINDING_POLICY_IS_SET((target))) {            \
