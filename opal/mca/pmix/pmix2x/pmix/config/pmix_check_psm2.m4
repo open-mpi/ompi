@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      QLogic Corp. All rights reserved.
 # Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2016      Intel Corporation. All rights reserved.
+# Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -53,7 +53,7 @@ AC_DEFUN([PMIX_CHECK_PSM2],[
                PMIX_CHECK_PACKAGE([pmix_check_psm2],
 				  [psm2.h],
 				  [psm2],
-				  [psm_mq_irecv],
+				  [psm2_mq_irecv2],
 				  [],
 				  [$pmix_check_psm2_dir],
 				  [$pmix_check_psm2_libdir],
