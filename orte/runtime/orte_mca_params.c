@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -762,6 +762,14 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                   OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL,
                                   &orte_data_server_uri);
+
+    /* Split CUDA_VISIBLE_DEVICES between ranks */
+    orte_ncuda_per_rank = "all";
+    (void) mca_base_var_register ("orte", NULL, NULL, "ncuda_per_rank",
+                                  "Number of GPUs to assign to each rank from CUDA_VISIBLE_DEVICES",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_ncuda_per_rank);
 
     return ORTE_SUCCESS;
 }

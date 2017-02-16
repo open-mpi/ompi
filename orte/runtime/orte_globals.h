@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2019 IBM Corporation. All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
@@ -580,6 +580,8 @@ ORTE_DECLSPEC extern char *orte_daemon_cores;
 
 /* Max time to wait for stack straces to return */
 ORTE_DECLSPEC extern int orte_stack_trace_wait_timeout;
+/* Split CUDA_VISIBLE_DEVICES between ranks */
+ORTE_DECLSPEC extern char * orte_ncuda_per_rank;
 
 END_C_DECLS
 

@@ -17,7 +17,7 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2018      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018-2019 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +51,8 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/schizo/base/base.h"
+#include "orte/mca/schizo/schizo.h"
+#include "orte/mca/schizo/ompi/schizo_ompi.h"
 
 static int define_cli(opal_cmd_line_t *cli);
 static int parse_cli(int argc, int start, char **argv);
@@ -1182,6 +1184,9 @@ static int setup_fork(orte_job_t *jdata,
 }
 
 
+static int parse_rank_specific_launcher_settings(int mylrank, int mynlranks,
+    orte_app_context_t *app, char ***env);
+
 static int setup_child(orte_job_t *jdata,
                        orte_proc_t *child,
                        orte_app_context_t *app,
@@ -1346,5 +1351,182 @@ static int setup_child(orte_job_t *jdata,
             return ORTE_ERROR;
         }
     }
+
+    // LSF (and maybe other launchers) can provide a setting for
+    // OMP_PLACES%d that we need to choose from, and possibly a
+    // CUDA_VISIBLE_DEVICES%d too. If there's just a plain
+    // CUDA_VISIBLE_DEVICES though, we need to partition it between the ranks.
+    parse_rank_specific_launcher_settings(child->local_rank,
+        jdata->num_local_procs, app, env);
+
     return ORTE_SUCCESS;
+}
+
+// parse a string like x,y,z into an array of char*
+// result is produced as one char** parray to be freed by the caller
+// We stop the parsing at the first negative integer though, believing
+// those to be invalid devices. Ignoring all the items after the first
+// invalid device seems like an odd decision, but all the documentation
+// of CUDA_VISIBLE_DEVICES says that's how that var is used.
+static int
+parse_cuda_visible_devices(char *str, char ***parray, int *pnarray)
+{
+    char *p;
+    char **array, narray, maxarray;
+
+// Initial values in case of early return
+    if (!str) {
+        *parray = NULL;
+        *pnarray = 0;
+    }
+
+// Get upper bound on narray by number of commas + 1
+    maxarray = 1;
+    p = str;
+    while (p && *p) {
+        if (*p == ',') { ++maxarray; }
+        ++p;
+    }
+
+    array = malloc(maxarray * sizeof(char*) + strlen(str) + 1);
+    if (!array) { return -1; }
+    p = (char*) &array[maxarray];
+    strncpy(p, str, strlen(str)+1);
+
+    while (*p == ',') { ++p; }
+    narray = 0;
+    while (*p) {
+        int use_this_device;
+        char *p2 = p;
+        // Detect -1, -2 etc by first supposing the string is one of those vals
+        // (use_this_device = 0) then changing our mind if anything in the
+        // string contradicts that.
+        // (fwiw this also rejects "-" and "-0")
+        use_this_device = 0;
+        if (*p2 != '-') { use_this_device = 1; } else { ++p2; }
+        while (!use_this_device && *p2 && *p2 != ',') {
+            if (*p2 < '0' || *p2 > '9') { use_this_device = 1; }
+            ++p2;
+        }
+
+        if (use_this_device) {
+            array[narray++] = p;
+            while (*p && *p != ',') { ++p; }
+            if (*p == ',') { *p = NULL; ++p; }
+            while (*p == ',') { ++p; }
+        } else {
+            while (*p) { ++p; }
+        }
+    }
+
+    *parray = array;
+    *pnarray = narray;
+    return 0;
+}
+
+static int
+parse_rank_specific_launcher_settings(int mylrank, int mynlranks,
+    orte_app_context_t *app, char ***env)
+{
+    char *str, *p;
+
+    str = malloc(256);
+    if (!str) { return -1; }
+
+    /*
+     * LSF indexes from 1 not 0. So, for example,:
+     *   OMP_PLACES1 - is for rank 0
+     *   CUDA_VISIBLE_DEVICES4 - is for rank 3
+     */
+    mylrank += 1;
+
+    sprintf(str, "OMP_PLACES%d", mylrank);
+    p = getenv(str);
+    if (p) {
+        opal_setenv("OMP_PLACES", p, true, env);
+    } else {
+        /* Check to see if there was a default OMP_PLACES set in the environment
+         * If so then use it, otherwise clear this environment variable as it
+         * is from a previous rank which did have a value.
+         */
+        p = getenv("OMP_PLACES");
+        if (p) {
+            opal_setenv("OMP_PLACES", p, true, env);
+        } else {
+            opal_unsetenv("OMP_PLACES", env);
+        }
+    }
+
+    /* LSF supports multiple MPS daemon on each host and introducing
+     * CUDA_MPS_PIPE_DIRECTORY1/2/3...
+     * we will translate them to a CUDA_MPS_PIPE_DIRECTORY environment
+     */   
+    sprintf(str, "CUDA_MPS_PIPE_DIRECTORY%d", mylrank);
+    p = getenv(str);
+    if (p) {
+        opal_setenv("CUDA_MPS_PIPE_DIRECTORY", p, true, env);
+    } else {
+        p = getenv("CUDA_MPS_PIPE_DIRECTORY");
+        if (p) {
+            opal_setenv("CUDA_MPS_PIPE_DIRECTORY", p, true, env);
+        } else {
+            opal_unsetenv("CUDA_MPS_PIPE_DIRECTORY", env);
+        }
+    }
+
+    sprintf(str, "CUDA_VISIBLE_DEVICES%d", mylrank);
+    p = getenv(str);
+    if (p) {
+        opal_setenv("CUDA_VISIBLE_DEVICES", p, true, env);
+    } else {
+        p = getenv("CUDA_VISIBLE_DEVICES");
+        if (p) {
+// make str longer just in case since those GPU strings can be fairly arbitrary:
+            free(str);
+            str = malloc(256 + strlen(p));
+            if (!str) { return -1; }
+
+// round robin assign OMPI_NCUDA_PER_RANK to each rank.
+            char **visible_devices;
+            int nvisible_devices, nper, startidx, i;
+            parse_cuda_visible_devices(p, &visible_devices, &nvisible_devices);
+
+            if (nvisible_devices > 0) {
+                nper = nvisible_devices; // default
+                // orte_ncuda_per_rank should be a number or "all"
+                p = orte_ncuda_per_rank;
+                if (0 == strncmp(p, "all", 3)) {
+                    nper = nvisible_devices;
+                } else {
+                    nper = atoi(p);
+                    if (nper > nvisible_devices) {
+                        nper = nvisible_devices;
+                    }
+                }
+                // if nper >= nvisible_devices (or was "all") then
+                // don't set CUDA_VISIBLE_DEVICES (just inherit the original)
+                if (nper < nvisible_devices) {
+                    // start with -1, which will stay in place if nper is <= 0
+                    // else a real setting will overwrite this -1
+                    sprintf(str, "%s", "-1");
+                    startidx = (mylrank * nper) % nvisible_devices;
+                    for (i=0; i<nper; ++i) {
+                        p = visible_devices[(startidx + i)%nvisible_devices];
+                        if (i == 0) {
+                            sprintf(str, "%s", p);
+                        } else {
+                            sprintf(&str[strlen(str)], ",%s", p);
+                        }
+                    }
+                    opal_setenv("CUDA_VISIBLE_DEVICES", str, true, env);
+                }
+                // (else inherit the original CUDA_VISIBLE_DEVICES value)
+            }
+
+            if (visible_devices) { free(visible_devices); }
+        }
+    }
+
+    free(str);
+    return 0;
 }
