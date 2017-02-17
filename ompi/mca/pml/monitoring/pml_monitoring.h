@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Inria.  All rights reserved.
+ * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -28,7 +28,7 @@ typedef mca_pml_base_module_t mca_pml_monitoring_module_t;
 
 extern mca_pml_base_component_t pml_selected_component;
 extern mca_pml_base_module_t pml_selected_module;
-extern mca_pml_monitoring_module_t mca_pml_monitoring;
+extern mca_pml_monitoring_module_t mca_pml_monitoring_module;
 OMPI_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_monitoring_component;
 
 /*
