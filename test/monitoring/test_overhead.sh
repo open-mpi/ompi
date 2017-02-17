@@ -1,5 +1,36 @@
 #!/bin/bash
 
+#
+# Copyright (c) 2016-2017 Inria.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+#
+# Author Clément Foyer <clement.foyer@inria.fr>
+#
+# This script launches the test_overhead test case for 2, 4, 8, 12,
+# 16, 20 and 24 processes, once with the monitoring component enabled,
+# and once without any monitoring. It then parses and aggregates the
+# results in order to create heatmaps. To work properly, this scripts
+# needs sqlite3, sed, awk and gnuplot. It also needs the rights to
+# write/create directories in the working path. Temporary files can be
+# found in $resdir/.tmp. They are cleaned between two executions fo
+# this script.
+#
+# This file create as an output one heatmap per operation
+# tested. Currently, tested operations are :
+#   - MPI_Send (software overhead)
+#   - MPI_Send (ping-pong, to measure theoverhead with the communciation time)
+#   - MPI_Bcast
+#   - MPI_Alltoall
+#   - MPI_Put
+#   - MPI_Get
+#
+
 exe=test_overhead
 
 # add common options
@@ -108,13 +139,39 @@ do
     cat >> $dbscript <<EOF
 -- set file output
 .output $tmpdir/${op}.dat
--- do query
-select mon.nbprocs as nbprocs, mon.datasize as datasize, mon.media/nomon.media-1
-from ${op}_mon mon inner join ${op}_nomon nomon  on (mon.nbprocs==nomon.nbprocs and mon.datasize==nomon.datasize)
+-- do query for overheads
+select ${op}_mon.nbprocs as nbprocs, ${op}_mon.datasize as datasize, ${op}_mon.media/${op}_nomon.media-1
+from ${op}_mon inner join ${op}_nomon on (${op}_mon.nbprocs==${op}_nomon.nbprocs and ${op}_mon.datasize==${op}_nomon.datasize)
 order by nbprocs, datasize;
+
 EOF
 done
-echo -e "\n-- End of the script\n.quit" >> $dbscript
+cat >> $dbscript <<EOF
+-- create view for all overheads
+create temporary view medians as
+select NULL as ovh
+EOF
+for op in ${ops[*]}
+do
+    cat >> $dbscript <<EOF
+union all select all ${op}_mon.media / ${op}_nomon.media - 1 as ovh from ${op}_mon inner join ${op}_nomon on (${op}_mon.nbprocs == ${op}_nomon.nbprocs and ${op}_mon.datasize == ${op}_nomon.datasize)
+EOF
+done
+cat >> $dbscript <<EOF
+;
+
+select '# average of overheads: ', avg(ovh) from medians where ovh is not null;
+select '# median of overheads: ', avg(ovh) from (
+        select ovh from medians
+        where ovh is not null
+        order by ovh
+        limit 2 - (select count(*) from medians where ovh is not null) % 2
+        offset(select (count(*) - 1) / 2 from medians where ovh is not null)
+);
+
+-- End of the script
+.quit
+EOF
 
 # data post processing + create output files
 sqlite3 $dbfile < $dbscript

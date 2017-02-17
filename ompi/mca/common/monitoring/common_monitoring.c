@@ -114,7 +114,7 @@ static int mca_common_monitoring_get_coll_size (const struct mca_base_pvar_t *pv
 static int mca_common_monitoring_set_flush(struct mca_base_pvar_t *pvar,
                                            const void *value, void *obj);
 
-/* Does nothing, as the pml_monitoring_flush pvar as no point to be read */
+/* Does nothing, as the pml_monitoring_flush pvar has no point to be read */
 static int mca_common_monitoring_get_flush(const struct mca_base_pvar_t *pvar,
                                            void *value, void *obj);
 

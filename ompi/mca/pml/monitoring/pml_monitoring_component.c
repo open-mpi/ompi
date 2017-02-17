@@ -25,7 +25,7 @@ static int mca_pml_monitoring_active = 0;
 mca_pml_base_component_t pml_selected_component = {{0}};
 mca_pml_base_module_t pml_selected_module = {0};
 
-mca_pml_monitoring_module_t mca_pml_monitoring = {
+mca_pml_monitoring_module_t mca_pml_monitoring_module = {
     mca_pml_monitoring_add_procs,
     mca_pml_monitoring_del_procs,
     mca_pml_monitoring_enable,
@@ -87,6 +87,7 @@ int mca_pml_monitoring_enable(bool enable)
 
 static int mca_pml_monitoring_component_open(void)
 {
+    /* CF: What if we are the only PML available ?? */
     if( mca_common_monitoring_enabled ) {
         opal_pointer_array_add(&mca_pml_base_pml,
                                strdup(mca_pml_monitoring_component.pmlm_version.mca_component_name));
@@ -125,8 +126,8 @@ static int mca_pml_monitoring_component_close(void)
     pml_selected_module = mca_pml;
     /* Install our interception layer */
     mca_pml_base_selected_component = mca_pml_monitoring_component;
-    mca_pml = mca_pml_monitoring;
-    /* Restore some of the original valued: progress, flags, tags and context id */
+    mca_pml = mca_pml_monitoring_module;
+    /* Restore some of the original values: progress, flags, tags and context id */
     mca_pml.pml_progress = pml_selected_module.pml_progress;
     mca_pml.pml_max_contextid = pml_selected_module.pml_max_contextid;
     mca_pml.pml_max_tag = pml_selected_module.pml_max_tag;
@@ -145,7 +146,7 @@ mca_pml_monitoring_component_init(int* priority,
     mca_common_monitoring_init();
     if( mca_common_monitoring_enabled ) {
         *priority = 0;  /* I'm up but don't select me */
-        return &mca_pml_monitoring;
+        return &mca_pml_monitoring_module;
     }
     return NULL;
 }
