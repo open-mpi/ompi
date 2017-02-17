@@ -53,7 +53,7 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-1.10.6 - TBD
+1.10.6 - 17 Feb 2017
 ------
 - Fix bug in timer code that caused problems at optimization settings
   greater than 2
