@@ -18,6 +18,7 @@
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -417,8 +418,8 @@ static int tcp_component_register(void)
                                           &mca_oob_tcp_component.disable_ipv6_family);
 #endif // OPAL_ENABLE_IPV6
 
-    // Default to keepalives every 60 seconds
-    mca_oob_tcp_component.keepalive_time = 60;
+    // Wait for this amount of time before sending the first keepalive probe
+    mca_oob_tcp_component.keepalive_time = 300;
     (void)mca_base_component_var_register(component, "keepalive_time",
                                           "Idle time in seconds before starting to send keepalives (keepalive_time <= 0 disables keepalive functionality)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -426,8 +427,8 @@ static int tcp_component_register(void)
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_time);
 
-    // Default to keepalive retry interval time of 5 seconds
-    mca_oob_tcp_component.keepalive_intvl = 5;
+    // Resend keepalive probe every INT seconds
+    mca_oob_tcp_component.keepalive_intvl = 20;
     (void)mca_base_component_var_register(component, "keepalive_intvl",
                                           "Time between successive keepalive pings when peer has not responded, in seconds (ignored if keepalive_time <= 0)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -435,9 +436,8 @@ static int tcp_component_register(void)
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_intvl);
 
-    // Default to retrying a keepalive 3 times before declaring the
-    // peer kaput
-    mca_oob_tcp_component.keepalive_probes = 3;
+    // After sending PR probes every INT seconds consider the connection dead
+    mca_oob_tcp_component.keepalive_probes = 9;
     (void)mca_base_component_var_register(component, "keepalive_probes",
                                           "Number of keepalives that can be missed before declaring error (ignored if keepalive_time <= 0)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
