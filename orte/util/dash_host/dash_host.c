@@ -58,7 +58,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
     bool found;
     int slots=0;
     bool slots_given;
-    char *cptr;
+    char *cptr, *ptr;
 
     OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                          "%s dashhost: parsing args %s",
@@ -213,12 +213,14 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
 
         // Strip off the FQDN if present, ignore IP addresses
         if( !orte_keep_fqdn_hostnames && !opal_net_isaddr(ndname) ) {
-            char *ptr;
             if (NULL != (ptr = strchr(ndname, '.'))) {
                 *ptr = '\0';
             }
         }
-
+        /* remove any modifier */
+        if (NULL != (ptr = strchr(ndname, ':'))) {
+            *ptr = '\0';
+        }
         /* see if the node is already on the list */
         found = false;
         OPAL_LIST_FOREACH(node, &adds, orte_node_t) {
@@ -422,13 +424,14 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
     opal_list_item_t* item;
     opal_list_item_t *next;
     orte_std_cntr_t i, j, len_mapped_node=0;
-    int rc;
+    int rc, test;
     char **mapped_nodes = NULL;
     orte_node_t *node;
     int num_empty=0;
     opal_list_t keep;
     bool want_all_empty=false;
     char *cptr;
+    size_t lst, lmn;
 
     /* if the incoming node list is empty, then there
      * is nothing to filter!
@@ -505,19 +508,36 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                 item = next;
             }
         } else {
+            /* remove any modifier */
+            if (NULL != (cptr = strchr(mapped_nodes[i], ':'))) {
+                *cptr = '\0';
+            }
             /* we are looking for a specific node on the list. The
              * parser will have substituted our local name for any
-             * alias, so we only have to do a strcmp here */
+             * alias, so we only have to do a strcmp here. */
+            lmn = strtol(mapped_nodes[i], &cptr, 10);
+            if (orte_managed_allocation && NULL != cptr) {
+                /* if we are only given a number, then we only test the
+                 * number of matching characters starting from the rear
+                 * of the mapped_nodes entry. This allows support for
+                 * launch_id-based environments. For example, a hostname
+                 * of "nid0015" can be referenced by "--host 15" */
+                lmn = strlen(mapped_nodes[i]);
+            } else {
+                lmn = 0;
+            }
             item = opal_list_get_first(nodes);
             while (item != opal_list_get_end(nodes)) {
                 next = opal_list_get_next(item);  /* save this position */
                 node = (orte_node_t*)item;
-                /* remove any modifier */
-                if (NULL != (cptr = strchr(mapped_nodes[i], ':'))) {
-                    *cptr = '\0';
-                }
                 /* search -host list to see if this one is found */
-                if (0 == strcmp(node->name, mapped_nodes[i])) {
+                if (0 < lmn) {
+                    lst = strlen(node->name);
+                    test = strncmp(node->name + lst - lmn, mapped_nodes[i], lmn);
+                } else {
+                    test = strcmp(node->name, mapped_nodes[i]);
+                }
+                if (0 == test) {
                     if (remove) {
                         /* remove item from list */
                         opal_list_remove_item(nodes, item);
