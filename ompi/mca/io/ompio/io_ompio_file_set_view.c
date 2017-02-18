@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *  $COPYRIGHT$
@@ -98,8 +98,12 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     }
 
     /* Reset the flags first */
-    fh->f_flags = 0;
-
+    if ( fh->f_flags & OMPIO_CONTIGUOUS_FVIEW ) {
+        fh->f_flags &= ~OMPIO_CONTIGUOUS_FVIEW;
+    }
+    if ( fh->f_flags & OMPIO_UNIFORM_FVIEW ) {
+        fh->f_flags &= ~OMPIO_UNIFORM_FVIEW;
+    }
     fh->f_flags |= OMPIO_FILE_VIEW_IS_SET;
     fh->f_datarep = strdup (datarep);
     datatype_duplicate (filetype, &fh->f_orig_filetype );
