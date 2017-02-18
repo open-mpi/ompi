@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2016      Intel, Inc. All rights reserved.
+# Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 
@@ -66,6 +66,14 @@ my $HELP = 0;
 # Defaults
 my $my_search_name = "Cisco";
 my $my_formal_name = "Cisco Systems, Inc.  All rights reserved.";
+
+# Protected directories
+my @protected = qw(
+    opal\\/mca\\/pmi\\/pmix.+?\\/pmix\\/
+    opal\\/mca\\/hwloc\\/hwloc.+?\\/hwloc\\/
+    opal\\/mca\\/libevent\\/libevent.+?\\/libevent\\/
+    contrib\\/update-my-copyright.pl
+);
 
 # Override the defaults if some values are set in the environment
 $my_search_name = $ENV{OMPI_COPYRIGHT_SEARCH_NAME}
@@ -145,6 +153,22 @@ if ($#files < 0) {
 
 # Examine each of the files and see if they need an updated copyright
 foreach my $f (@files) {
+
+    # ignore embedded copies of external codes as we shouldn't
+    # be overwriting their copyrights - if someone actually
+    # modified any of those files, they can manually update
+    # the copyright
+    my $ignore = 0;
+    foreach my $p (@protected) {
+        if (eval("\$f =~ /$p/")) {
+            quiet_print "Ignoring protected file $f\n";
+            $ignore = 1;
+            last;
+        }
+    }
+    if (1 == $ignore) {
+        next;
+    }
     quiet_print "Processing added/changed file: $f\n";
     open(FILE, $f) || die "Can't open file: $f";
 
