@@ -68,7 +68,12 @@ my $my_search_name = "Cisco";
 my $my_formal_name = "Cisco Systems, Inc.  All rights reserved.";
 
 # Protected directories
-my @protected = qw(pmi2x/pmix/ hwloc1113/hwloc/ libevent2022/libevent/);
+my @protected = qw(
+    opal\\/mca\\/pmi\\/pmix.+?\\/pmix\\/
+    opal\\/mca\\/hwloc\\/hwloc.+?\\/hwloc\\/
+    opal\\/mca\\/libevent\\/libevent.+?\\/libevent\\/
+    contrib\\/update-my-copyright.pl
+);
 
 # Override the defaults if some values are set in the environment
 $my_search_name = $ENV{OMPI_COPYRIGHT_SEARCH_NAME}
@@ -155,7 +160,7 @@ foreach my $f (@files) {
     # the copyright
     my $ignore = 0;
     foreach my $p (@protected) {
-        if (index($f, $p) != -1) {
+        if (eval("\$f =~ /$p/")) {
             quiet_print "Ignoring protected file $f\n";
             $ignore = 1;
             last;
