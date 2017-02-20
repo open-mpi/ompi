@@ -24,6 +24,7 @@
 #include "orte_config.h"
 
 #include <string.h>
+#include <ctype.h>
 
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -515,25 +516,31 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
             /* we are looking for a specific node on the list. The
              * parser will have substituted our local name for any
              * alias, so we only have to do a strcmp here. */
-            lmn = strtol(mapped_nodes[i], &cptr, 10);
-            if (orte_managed_allocation && NULL != cptr) {
-                /* if we are only given a number, then we only test the
-                 * number of matching characters starting from the rear
-                 * of the mapped_nodes entry. This allows support for
-                 * launch_id-based environments. For example, a hostname
-                 * of "nid0015" can be referenced by "--host 15" */
-                lmn = strlen(mapped_nodes[i]);
-            } else {
-                lmn = 0;
-            }
+            cptr = NULL;
+            lmn = strtoul(mapped_nodes[i], &cptr, 10);
             item = opal_list_get_first(nodes);
             while (item != opal_list_get_end(nodes)) {
                 next = opal_list_get_next(item);  /* save this position */
                 node = (orte_node_t*)item;
                 /* search -host list to see if this one is found */
-                if (0 < lmn) {
-                    lst = strlen(node->name);
-                    test = strncmp(node->name + lst - lmn, mapped_nodes[i], lmn);
+                if (orte_managed_allocation &&
+                    (NULL == cptr || 0 == strlen(cptr))) {
+                    /* if we are only given a number, then we test the
+                     * value against the number in the node name. This allows support for
+                     * launch_id-based environments. For example, a hostname
+                     * of "nid0015" can be referenced by "--host 15" */
+                    for (j=strlen(node->name)-1; 0 < j; j--) {
+                        if (!isdigit(node->name[j])) {
+                            j++;
+                            break;
+                        }
+                    }
+                    if (j >= (int)(strlen(node->name) - 1)) {
+                        test = 0;
+                    } else {
+                        lst = strtoul(&node->name[j], NULL, 10);
+                        test = (lmn == lst) ? 0 : 1;
+                    }
                 } else {
                     test = strcmp(node->name, mapped_nodes[i]);
                 }

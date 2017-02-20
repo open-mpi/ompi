@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -266,6 +266,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             return;
         }
     }
+
     if (NULL != orte_rankfile) {
         OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                              "%s ras:base:allocate parsing rankfile %s",
@@ -386,7 +387,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                          "%s ras:base:allocate nothing found in rankfile - inserting current node",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
- addlocal:
+  addlocal:
     /* if nothing was found by any of the above methods, then we have no
      * earthly idea what to do - so just add the local host
      */
@@ -420,13 +421,13 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     }
     OBJ_DESTRUCT(&nodes);
 
- DISPLAY:
+  DISPLAY:
     /* shall we display the results? */
     if (4 < opal_output_get_verbosity(orte_ras_base_framework.framework_output)) {
         orte_ras_base_display_alloc();
     }
 
- next_state:
+  next_state:
     /* are we to report this event? */
     if (orte_report_events) {
         if (ORTE_SUCCESS != (rc = orte_util_comm_report_event(ORTE_COMM_EVENT_ALLOCATE))) {
