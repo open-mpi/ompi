@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -51,4 +53,4 @@ mca_pnet_opa_la_LDFLAGS = -module -avoid-version $(pnet_opa_LDFLAGS)
 noinst_LTLIBRARIES = $(lib)
 libmca_pnet_opa_la_SOURCES = $(lib_sources)
 libmca_pnet_opa_la_LIBADD = $(pnet_opa_LIBS)
-libmca_pnet_opa_la_LDFLAGS = -module -avoid-version $(pnet_opa_LDFLAGS
+libmca_pnet_opa_la_LDFLAGS = -module -avoid-version $(pnet_opa_LDFLAGS)

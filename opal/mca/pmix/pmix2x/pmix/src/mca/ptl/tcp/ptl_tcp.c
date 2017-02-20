@@ -362,7 +362,7 @@ static pmix_status_t send_oneway(struct pmix_peer_t *peer,
      * safety as we need to post this message on the
      * peer's send queue */
     q = PMIX_NEW(pmix_ptl_queue_t);
-    OBJ_RETAIN(pr);
+    PMIX_RETAIN(pr);
     q->peer = peer;
     q->buf = bfr;
     q->tag = tag;
