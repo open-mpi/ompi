@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -278,27 +278,14 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
      */
     if( (pdtAdd->flags & (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA)) == (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA) ) {
         pdtBase->btypes[pdtAdd->id] += count;
+        pLast->elem.common.type      = pdtAdd->id;
+        pLast->elem.count            = count;
+        pLast->elem.disp             = disp;
+        pLast->elem.extent           = extent;
+        pdtBase->desc.used++;
+        pLast->elem.common.flags     = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED);
         if( (extent != (OPAL_PTRDIFF_TYPE)pdtAdd->size) && (count > 1) ) {  /* gaps around the datatype */
-            localFlags = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED | OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS);
-            CREATE_LOOP_START( pLast, count, 2, extent, localFlags );
-            pLast++;
-            pLast->elem.common.type  = pdtAdd->id;
-            pLast->elem.count        = 1;
-            pLast->elem.disp         = disp;
-            pLast->elem.extent       = pdtAdd->size;
-            pLast->elem.common.flags = localFlags | OPAL_DATATYPE_FLAG_CONTIGUOUS;
-            pLast++;
-            CREATE_LOOP_END( pLast, 2, disp, pdtAdd->size, localFlags );
-            pdtBase->desc.used += 3;
-            pdtBase->btypes[OPAL_DATATYPE_LOOP]     = 1;
-            pdtBase->btypes[OPAL_DATATYPE_END_LOOP] = 1;
-        } else {
-            pLast->elem.common.type = pdtAdd->id;
-            pLast->elem.count       = count;
-            pLast->elem.disp        = disp;
-            pLast->elem.extent      = extent;
-            pdtBase->desc.used++;
-            pLast->elem.common.flags  = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED);
+            pLast->elem.common.flags &= ~(OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS);
         }
     } else {
         /* keep trace of the total number of basic datatypes in the datatype definition */

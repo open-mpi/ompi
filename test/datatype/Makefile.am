@@ -14,7 +14,7 @@
 #
 
 if PROJECT_OMPI
-    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw unpack_ooo ddt_pack
+    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw unpack_ooo ddt_pack external32
     MPI_CHECKS = to_self
 endif
 TESTS = opal_datatype_test $(MPI_TESTS)
@@ -71,3 +71,12 @@ opal_datatype_test_SOURCES = opal_datatype_test.c opal_ddt_lib.c opal_ddt_lib.h
 opal_datatype_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 opal_datatype_test_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+
+external32_SOURCES = external32.c
+external32_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+external32_LDADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+
+distclean:
+	rm -rf *.dSYM .deps .libs *.log *.o *.trs $(check_PROGRAMS) Makefile
