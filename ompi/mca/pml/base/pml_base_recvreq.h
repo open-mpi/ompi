@@ -67,7 +67,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
 {                                                                        \
     /* increment reference count on communicator */                      \
     OBJ_RETAIN(comm);                                                    \
-    OBJ_RETAIN(datatype);                                                \
+    OMPI_DATATYPE_RETAIN(datatype);                                      \
                                                                          \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);        \
     (request)->req_base.req_ompi.req_mpi_object.comm = comm;             \
@@ -117,7 +117,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
     do {                                                                \
         OMPI_REQUEST_FINI(&(request)->req_base.req_ompi);               \
         OBJ_RELEASE( (request)->req_base.req_comm);                     \
-        OBJ_RELEASE( (request)->req_base.req_datatype );                \
+        OMPI_DATATYPE_RELEASE( (request)->req_base.req_datatype );      \
         opal_convertor_cleanup( &((request)->req_base.req_convertor) ); \
     } while (0)
 

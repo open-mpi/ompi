@@ -98,7 +98,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
                                                                           \
       /* initialize datatype convertor for this request */                \
       if( count > 0 ) {                                                   \
-          OBJ_RETAIN(datatype);                                           \
+          OMPI_DATATYPE_RETAIN(datatype);                                 \
          /* We will create a convertor specialized for the        */      \
          /* remote architecture and prepared with the datatype.   */      \
          opal_convertor_copy_and_prepare_for_send(                        \
@@ -145,7 +145,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
         OMPI_REQUEST_FINI(&(request)->req_base.req_ompi);                 \
         OBJ_RELEASE((request)->req_base.req_comm);                        \
         if( 0 != (request)->req_base.req_count )                          \
-            OBJ_RELEASE((request)->req_base.req_datatype);                \
+            OMPI_DATATYPE_RELEASE((request)->req_base.req_datatype);      \
         opal_convertor_cleanup( &((request)->req_base.req_convertor) );   \
     } while (0)
 

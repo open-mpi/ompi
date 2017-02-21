@@ -22,7 +22,7 @@ static void* pml_ucx_generic_datatype_start_pack(void *context, const void *buff
 
     convertor = (mca_pml_ucx_convertor_t *)PML_UCX_FREELIST_GET(&ompi_pml_ucx.convs);
 
-    OBJ_RETAIN(datatype);
+    OMPI_DATATYPE_RETAIN(datatype);
     convertor->datatype = datatype;
     opal_convertor_copy_and_prepare_for_send(ompi_proc_local_proc->super.proc_convertor,
                                              &datatype->super, count, buffer, 0,
@@ -38,7 +38,7 @@ static void* pml_ucx_generic_datatype_start_unpack(void *context, void *buffer,
 
     convertor = (mca_pml_ucx_convertor_t *)PML_UCX_FREELIST_GET(&ompi_pml_ucx.convs);
 
-    OBJ_RETAIN(datatype);
+    OMPI_DATATYPE_RETAIN(datatype);
     convertor->datatype = datatype;
     opal_convertor_copy_and_prepare_for_recv(ompi_proc_local_proc->super.proc_convertor,
                                              &datatype->super, count, buffer, 0,
@@ -95,7 +95,7 @@ static void pml_ucx_generic_datatype_finish(void *state)
     mca_pml_ucx_convertor_t *convertor = state;
 
     opal_convertor_cleanup(&convertor->opal_conv);
-    OBJ_RELEASE(convertor->datatype);
+    OMPI_DATATYPE_RELEASE(convertor->datatype);
     PML_UCX_FREELIST_RETURN(&ompi_pml_ucx.convs, &convertor->super);
 }
 

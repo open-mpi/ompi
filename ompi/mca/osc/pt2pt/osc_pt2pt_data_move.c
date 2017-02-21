@@ -75,7 +75,7 @@ static void osc_pt2pt_accumulate_data_destructor (osc_pt2pt_accumulate_data_t *a
     }
 
     if (acc_data->datatype) {
-        OBJ_RELEASE(acc_data->datatype);
+        OMPI_DATATYPE_RELEASE(acc_data->datatype);
     }
 }
 
@@ -119,7 +119,7 @@ static void osc_pt2pt_pending_acc_destructor (osc_pt2pt_pending_acc_t *pending)
     }
 
     if (NULL != pending->datatype) {
-        OBJ_RELEASE(pending->datatype);
+        OMPI_DATATYPE_RELEASE(pending->datatype);
     }
 }
 
@@ -371,7 +371,7 @@ static inline int process_put(ompi_osc_pt2pt_module_t* module, int source,
 
     osc_pt2pt_copy_on_recv (target, data, data_len, proc, put_header->count, datatype);
 
-    OBJ_RELEASE(datatype);
+    OMPI_DATATYPE_RELEASE(datatype);
 
     return put_header->len;
 }
@@ -408,7 +408,7 @@ static inline int process_put_long(ompi_osc_pt2pt_module_t* module, int source,
         return OMPI_ERROR;
     }
 
-    OBJ_RELEASE(datatype);
+    OMPI_DATATYPE_RELEASE(datatype);
 
     return put_header->len;
 }
@@ -533,7 +533,7 @@ static inline int process_get (ompi_osc_pt2pt_module_t* module, int target,
     ret = osc_pt2pt_get_post_send (module, source, get_header->count, datatype,
                                   target, tag_to_origin(get_header->tag));
 
-    OBJ_RELEASE(datatype);
+    OMPI_DATATYPE_RELEASE(datatype);
 
     return OMPI_SUCCESS == ret ? (int) get_header->len : ret;
 }
@@ -635,7 +635,7 @@ static int osc_pt2pt_accumulate_allocate (ompi_osc_pt2pt_module_t *module, int p
     acc_data->proc = proc;
     acc_data->count = count;
     acc_data->datatype = datatype;
-    OBJ_RETAIN(datatype);
+    OMPI_DATATYPE_RETAIN(datatype);
     acc_data->op = op;
     acc_data->request_count = request_count;
 
@@ -734,7 +734,7 @@ static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_os
 
     /* save the datatype */
     pending_acc->datatype = datatype;
-    OBJ_RETAIN(datatype);
+    OMPI_DATATYPE_RETAIN(datatype);
 
     /* save the header */
     switch (header->base.type) {
@@ -1175,7 +1175,7 @@ static inline int process_acc (ompi_osc_pt2pt_module_t *module, int source,
     }
 
     /* Release datatype & op */
-    OBJ_RELEASE(datatype);
+    OMPI_DATATYPE_RELEASE(datatype);
 
     return (OMPI_SUCCESS == ret) ? (int) acc_header->len : ret;
 }
@@ -1207,7 +1207,7 @@ static inline int process_acc_long (ompi_osc_pt2pt_module_t* module, int source,
     }
 
     /* Release datatype & op */
-    OBJ_RELEASE(datatype);
+    OMPI_DATATYPE_RELEASE(datatype);
 
     return (OMPI_SUCCESS == ret) ? (int) acc_header->len : ret;
 }
@@ -1242,7 +1242,7 @@ static inline int process_get_acc(ompi_osc_pt2pt_module_t *module, int source,
             uint32_t primitive_count;
             buffer = malloc (data_len);
             if (OPAL_UNLIKELY(NULL == buffer)) {
-                OBJ_RELEASE(datatype);
+                OMPI_DATATYPE_RELEASE(datatype);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -1261,7 +1261,7 @@ static inline int process_get_acc(ompi_osc_pt2pt_module_t *module, int source,
     }
 
     /* Release datatype & op */
-    OBJ_RELEASE(datatype);
+    OMPI_DATATYPE_RELEASE(datatype);
 
     return (OMPI_SUCCESS == ret) ? (int) acc_header->len : ret;
 }
@@ -1293,7 +1293,7 @@ static inline int process_get_acc_long(ompi_osc_pt2pt_module_t *module, int sour
     }
 
     /* Release datatype & op */
-    OBJ_RELEASE(datatype);
+    OMPI_DATATYPE_RELEASE(datatype);
 
     return OMPI_SUCCESS == ret ? (int) acc_header->len : ret;
 }
@@ -1326,7 +1326,7 @@ static inline int process_cswap (ompi_osc_pt2pt_module_t *module, int source,
     }
 
     /* Release datatype */
-    OBJ_RELEASE(datatype);
+    OMPI_DATATYPE_RELEASE(datatype);
 
     return (OMPI_SUCCESS == ret) ? (int) cswap_header->len : ret;
 }

@@ -26,8 +26,41 @@
 #include "opal/mca/common/cuda/common_cuda.h"
 #include "pml_ob1_recvreq.h"
 #include "opal/runtime/opal_params.h"
-static void mca_pml_ob1_process_pending_cuda_async_copies(void);
+
+/**
+ * Return the number of completed events allowing the upper level
+ * to know when no pending events are expected so that it can
+ * unregister the progress function.
+ */
+static inline int mca_pml_ob1_process_pending_cuda_async_copies(void)
+{
+    mca_btl_base_descriptor_t *frag;
+    int progress, count = 0;
+
+    do {
+        progress = progress_one_cuda_htod_event(&frag);
+        if (1 == progress) {
+            /* Call the finish function to make progress. */
+            mca_pml_ob1_recv_request_frag_copy_finished(NULL, NULL, frag, 0);
+            count++;
+        }
+    } while (progress > 0);
+    /* Consider progressing dtoh events here in future */
+
+    return count;
+}
 #endif /* OPAL_CUDA_SUPPORT */
+
+static int mca_pml_ob1_progress_needed = 0;
+int mca_pml_ob1_enable_progress(int32_t count)
+{
+    int32_t old = OPAL_ATOMIC_ADD32(&mca_pml_ob1_progress_needed, count);
+    if( 0 != old )
+        return 0;  /* progress was already on */
+
+    opal_progress_register(mca_pml_ob1_progress);
+    return 1;
+}
 
 int mca_pml_ob1_progress(void)
 {
@@ -36,11 +69,9 @@ int mca_pml_ob1_progress(void)
     bool send_succedded;
 
 #if OPAL_CUDA_SUPPORT
-    mca_pml_ob1_process_pending_cuda_async_copies();
+    if (opal_cuda_support)
+        completed_requests += mca_pml_ob1_process_pending_cuda_async_copies();
 #endif /* OPAL_CUDA_SUPPORT */
-
-    if( OPAL_LIKELY(0 == queue_length) )
-        return 0;
 
     for( i = 0; i < queue_length; i++ ) {
         mca_pml_ob1_send_pending_t pending_type = MCA_PML_OB1_SEND_PENDING_NONE;
@@ -84,26 +115,13 @@ int mca_pml_ob1_progress(void)
             }
         }
     }
+
+    if( 0 != completed_requests ) {
+        j = OPAL_ATOMIC_ADD32(&mca_pml_ob1_progress_needed, -completed_requests);
+        if( j == completed_requests ) {
+            opal_progress_unregister(mca_pml_ob1_progress);
+        }
+    }
+
     return completed_requests;
 }
-
-#if OPAL_CUDA_SUPPORT
-static void mca_pml_ob1_process_pending_cuda_async_copies(void)
-{
-    mca_btl_base_descriptor_t *frag;
-    int progress;
-
-    if (!opal_cuda_support)
-        return;
-
-    do {
-        progress = progress_one_cuda_htod_event(&frag);
-        if (1 == progress) {
-            /* Call the finish function to make progress. */
-            mca_pml_ob1_recv_request_frag_copy_finished(NULL, NULL, frag, 0);
-        }
-    } while (progress > 0);
-    /* Consider progressing dtoh events here in future */
-
-}
-#endif /* OPAL_CUDA_SUPPORT */

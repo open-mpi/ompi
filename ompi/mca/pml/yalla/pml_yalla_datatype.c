@@ -20,7 +20,7 @@ static mca_pml_yalla_convertor_t *mca_pml_yalla_get_send_convertor(void *buf, si
     mca_pml_yalla_convertor_t *convertor = (mca_pml_yalla_convertor_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.convs);
 
     convertor->datatype = datatype;
-    OBJ_RETAIN(datatype);
+    OMPI_DATATYPE_RETAIN(datatype);
     opal_convertor_copy_and_prepare_for_send(ompi_proc_local_proc->super.proc_convertor,
                                              &datatype->super, count, buf, 0,
                                              &convertor->convertor);
@@ -33,7 +33,7 @@ static mca_pml_yalla_convertor_t *mca_pml_yalla_get_recv_convertor(void *buf, si
     mca_pml_yalla_convertor_t *convertor = (mca_pml_yalla_convertor_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.convs);
 
     convertor->datatype = datatype;
-    OBJ_RETAIN(datatype);
+    OMPI_DATATYPE_RETAIN(datatype);
     opal_convertor_copy_and_prepare_for_recv(ompi_proc_local_proc->super.proc_convertor,
                                              &datatype->super, count, buf, 0,
                                              &convertor->convertor);

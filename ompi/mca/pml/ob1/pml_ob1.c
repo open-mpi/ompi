@@ -58,7 +58,7 @@ mca_pml_ob1_t mca_pml_ob1 = {
         mca_pml_ob1_add_procs,
         mca_pml_ob1_del_procs,
         mca_pml_ob1_enable,
-        mca_pml_ob1_progress,
+        NULL,  /* mca_pml_ob1_progress, */
         mca_pml_ob1_add_comm,
         mca_pml_ob1_del_comm,
         mca_pml_ob1_irecv_init,

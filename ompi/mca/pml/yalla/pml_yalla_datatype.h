@@ -53,7 +53,7 @@ OBJ_CLASS_DECLARATION(mca_pml_yalla_convertor_t);
 static inline void mca_pml_yalla_convertor_free(mca_pml_yalla_convertor_t *convertor)
 {
     opal_convertor_cleanup(&convertor->convertor);
-    OBJ_RELEASE(convertor->datatype);
+    OMPI_DATATYPE_RELEASE(convertor->datatype);
     PML_YALLA_FREELIST_RETURN(&ompi_pml_yalla.convs, &convertor->super);
 }
 

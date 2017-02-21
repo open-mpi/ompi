@@ -92,7 +92,7 @@ static int ompi_osc_pt2pt_dt_send_complete (ompi_request_t *request)
     ompi_datatype_t *datatype = (ompi_datatype_t *) request->req_complete_cb_data;
     ompi_osc_pt2pt_module_t *module = NULL;
 
-    OBJ_RELEASE(datatype);
+    OMPI_DATATYPE_RELEASE(datatype);
 
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
     (void) opal_hash_table_get_value_uint32(&mca_osc_pt2pt_component.modules,
@@ -370,7 +370,7 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
             /* the datatype does not fit in an eager message. send it seperately */
             header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_LARGE_DATATYPE;
 
-            OBJ_RETAIN(target_dt);
+            OMPI_DATATYPE_RETAIN(target_dt);
 
             ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE,
                                             target, tag_to_target(tag), module->comm,
@@ -539,7 +539,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
             /* the datatype does not fit in an eager message. send it seperately */
             header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_LARGE_DATATYPE;
 
-            OBJ_RETAIN(target_dt);
+            OMPI_DATATYPE_RETAIN(target_dt);
 
             ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE,
                                             target, tag_to_target(tag), module->comm,
@@ -642,7 +642,7 @@ int ompi_osc_pt2pt_compare_and_swap (const void *origin_addr, const void *compar
     request->type = OMPI_OSC_PT2PT_HDR_TYPE_CSWAP;
     request->origin_addr = origin_addr;
     request->internal = true;
-    OBJ_RETAIN(dt);
+    OMPI_DATATYPE_RETAIN(dt);
     request->origin_dt = dt;
 
     /* Compute datatype and payload lengths.  Note that the datatype description
@@ -797,7 +797,7 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
     pt2pt_request->type = OMPI_OSC_PT2PT_HDR_TYPE_GET;
     pt2pt_request->origin_addr = origin_addr;
     pt2pt_request->origin_count = origin_count;
-    OBJ_RETAIN(origin_dt);
+    OMPI_DATATYPE_RETAIN(origin_dt);
     pt2pt_request->origin_dt = origin_dt;
 
     /* Compute datatype length.  Note that the datatype description
@@ -847,7 +847,7 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
             /* the datatype does not fit in an eager message. send it seperately */
             header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_LARGE_DATATYPE;
 
-            OBJ_RETAIN(target_dt);
+            OMPI_DATATYPE_RETAIN(target_dt);
 
             ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE,
                                             target, tag_to_target(tag), module->comm,
@@ -1005,7 +1005,7 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
     pt2pt_request->type = OMPI_OSC_PT2PT_HDR_TYPE_GET_ACC;
     pt2pt_request->origin_addr = origin_addr;
     pt2pt_request->origin_count = origin_count;
-    OBJ_RETAIN(origin_datatype);
+    OMPI_DATATYPE_RETAIN(origin_datatype);
     pt2pt_request->origin_dt = origin_datatype;
 
     /* Compute datatype and payload lengths.  Note that the datatype description
@@ -1066,7 +1066,7 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
             /* the datatype does not fit in an eager message. send it seperately */
             header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_LARGE_DATATYPE;
 
-            OBJ_RETAIN(target_datatype);
+            OMPI_DATATYPE_RETAIN(target_datatype);
 
             ret = ompi_osc_pt2pt_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE,
                                             target_rank, tag_to_target(tag), module->comm,
