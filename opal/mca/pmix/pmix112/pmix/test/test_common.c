@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
- * Copyright (c) 2015      Mellanox Technologies, Inc.
+ * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -18,6 +18,7 @@
 #include "test_common.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <ctype.h>
 
 int pmix_test_verbose = 0;
 
@@ -76,7 +77,9 @@ void parse_cmd(int argc, char **argv, test_params *params)
             fprintf(stderr, "\t--test-spawn       test spawn api.\n");
             fprintf(stderr, "\t--test-connect     test connect/disconnect api.\n");
             fprintf(stderr, "\t--test-resolve-peers    test resolve_peers api.\n");
-            fprintf(stderr, "t--test-error test error handling api.\n");
+            fprintf(stderr, "\t--test-error test error handling api.\n");
+            fprintf(stderr, "\t--test-replace N:k0,k1,...,k(N-1)   test key replace for N keys, k0,k1,k(N-1) - key indexes to replace  \n");
+            fprintf(stderr, "\t--test-internal N  test store internal key, N - number of internal keys\n");
             exit(0);
         } else if (0 == strcmp(argv[i], "--exec") || 0 == strcmp(argv[i], "-e")) {
             i++;
@@ -169,6 +172,24 @@ void parse_cmd(int argc, char **argv, test_params *params)
             params->test_resolve_peers = 1;
         } else if( 0 == strcmp(argv[i], "--test-error") ){
             params->test_error = 1;
+        } else if(0 == strcmp(argv[i], "--test-replace") ) {
+            i++;
+            if (NULL != argv[i] && (*argv[i] != '-')) {
+                params->key_replace = strdup(argv[i]);
+                if (0 != parse_replace(params->key_replace, 0, NULL)) {
+                    fprintf(stderr, "Incorrect --test-replace option format: %s\n", params->key_replace);
+                    exit(1);
+                }
+            } else {
+                params->key_replace = strdup(TEST_REPLACE_DEFAULT);
+            }
+        } else if(0 == strcmp(argv[i], "--test-internal")) {
+            i++;
+            if ((NULL != argv[i]) && (*argv[i] != '-')) {
+                params->test_internal = strtol(argv[i], NULL, 10);
+            } else {
+                params->test_internal = 1;
+            }
         }
 
         else {
@@ -252,11 +273,16 @@ PMIX_CLASS_INSTANCE(participant_t,
                     pmix_list_item_t,
                     NULL, NULL);
 
+PMIX_CLASS_INSTANCE(key_replace_t,
+                    pmix_list_item_t,
+                    NULL, NULL);
+
 static int ns_id = -1;
 static fence_desc_t *fdesc = NULL;
 pmix_list_t *participants = NULL;
 pmix_list_t test_fences;
 pmix_list_t *noise_range = NULL;
+pmix_list_t key_replace;
 
 #define CHECK_STRTOL_VAL(val, str, store) do {                  \
     if (0 == val) {                                             \
@@ -475,6 +501,67 @@ int parse_noise(char *noise_param, int store)
             }
         } else {
             ret = 1;
+        }
+    }
+    free(tmp);
+    return ret;
+}
+
+static int is_digit(const char *str)
+{
+    if (NULL == str)
+        return 0;
+
+    while (0 != *str) {
+        if (!isdigit(*str)) {
+        return 0;
+        }
+        else {
+            str++;
+        }
+    }
+    return 1;
+}
+
+int parse_replace(char *replace_param, int store, int *key_num) {
+    int ret = 0;
+    char *tmp = strdup(replace_param);
+    char tmp_str[32];
+    char * pch, *ech;
+    key_replace_t *item;
+    int cnt = 0;
+
+    if (NULL == replace_param) {
+        free(tmp);
+        return 1;
+    }
+
+    pch = strchr(tmp, ':');
+    snprintf(tmp_str, pch - tmp + 1, "%s", tmp);
+    cnt = atol(tmp_str);
+
+    if (NULL != key_num) {
+        *key_num = cnt;
+    }
+
+    while(NULL != pch) {
+        pch++;
+        ech = strchr(pch, ',');
+        if (NULL != ech || (strlen(pch) > 0)) {
+            snprintf(tmp_str, ech - pch + 1, "%s", pch);
+            if ((0 == is_digit(tmp_str)) || ((atoi(tmp_str) + 1) > cnt)) {
+                ret = 1;
+                break;
+            }
+            pch = ech;
+            if (store) {
+                item = PMIX_NEW(key_replace_t);
+                item->key_idx = atoi(tmp_str);
+                pmix_list_append(&key_replace, &item->super);
+            }
+        } else {
+            ret = 1;
+            break;
         }
     }
     free(tmp);

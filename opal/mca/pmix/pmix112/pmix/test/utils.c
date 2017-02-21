@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Mellanox Technologies, Inc.
+ * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -152,6 +152,16 @@ void set_client_argv(test_params *params, char ***argv)
     }
     if (params->test_error) {
         pmix_argv_append_nosize(argv, "--test-error");
+    }
+    if (params->key_replace) {
+        pmix_argv_append_nosize(argv, "--test-replace");
+        pmix_argv_append_nosize(argv, params->key_replace);
+    }
+    if (params->test_internal) {
+        char tmp[32];
+        sprintf(tmp, "%d", params->test_internal);
+        pmix_argv_append_nosize(argv, "--test-internal");
+        pmix_argv_append_nosize(argv, tmp);
     }
 }
 

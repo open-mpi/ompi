@@ -329,12 +329,9 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
 
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
     if (NULL != cb->dstore_fn) {
-        uint32_t size = (uint32_t)pmix_value_array_get_size(cb->bufs);
-        for (i = 0; i < size; i++) {
-            if (PMIX_SUCCESS != (rc = _rank_key_dstore_store(cbdata))) {
-                PMIX_ERROR_LOG(rc);
-                goto exit;
-            }
+        if (PMIX_SUCCESS != (rc = _rank_key_dstore_store(cbdata))) {
+            PMIX_ERROR_LOG(rc);
+            goto exit;
         }
     }
 #endif

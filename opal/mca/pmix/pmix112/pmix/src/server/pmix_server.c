@@ -233,7 +233,14 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     // may provide the user with a proper help... *Cough*, *Cough* OSX...
     if ((strlen(tdir) + strlen(pmix_pid) + 1) > sizeof(myaddress.sun_path)-1) {
         free(pmix_pid);
-        return PMIX_ERR_INVALID_LENGTH;
+        /* we don't have show-help in this version, so pretty-print something
+         * the hard way */
+        fprintf(stderr, "PMIx has detected a temporary directory name that results\n");
+        fprintf(stderr, "in a path that is too long for the Unix domain socket:\n\n");
+        fprintf(stderr, "    Temp dir: %s\n\n", tdir);
+        fprintf(stderr, "Try setting your TMPDIR environmental variable to point to\n");
+        fprintf(stderr, "something shorter in length\n");
+        return PMIX_ERR_SILENT; // return a silent error so our host knows we printed a message
     }
     snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/%s", tdir, pmix_pid);
     free(pmix_pid);
