@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,6 +15,7 @@
 #include "osc_rdma_accumulate.h"
 #include "osc_rdma_request.h"
 #include "osc_rdma_comm.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 
@@ -1024,6 +1026,46 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_osc_rdma_sync_t *sync, const vo
         }
 
         return OMPI_SUCCESS;
+    }
+
+    /* TODO: Remove the following check when support is added.
+     * See the following issue for the current state:
+     *   https://github.com/open-mpi/ompi/issues/1666
+     */
+    if(MPI_MINLOC == op || MPI_MAXLOC == op) {
+        if(MPI_SHORT_INT == origin_datatype ||
+           MPI_DOUBLE_INT == origin_datatype ||
+           MPI_LONG_INT == origin_datatype ||
+           MPI_LONG_DOUBLE_INT == origin_datatype) {
+           ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
+           opal_show_help("help-mca-osc-base.txt", "unsupported-dt", true,
+                          origin_datatype->name,
+                          op->o_name,
+                          comm->c_my_rank);
+           ompi_mpi_abort(comm, -1);
+        }
+        if(MPI_SHORT_INT == result_datatype ||
+           MPI_DOUBLE_INT == result_datatype ||
+           MPI_LONG_INT == result_datatype ||
+           MPI_LONG_DOUBLE_INT == result_datatype) {
+           ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
+           opal_show_help("help-mca-osc-base.txt", "unsupported-dt", true,
+                          result_datatype->name,
+                          op->o_name,
+                          comm->c_my_rank);
+           ompi_mpi_abort(comm, -1);
+        }
+        if(MPI_SHORT_INT == target_datatype ||
+           MPI_DOUBLE_INT == target_datatype ||
+           MPI_LONG_INT == target_datatype ||
+           MPI_LONG_DOUBLE_INT == target_datatype) {
+           ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
+           opal_show_help("help-mca-osc-base.txt", "unsupported-dt", true,
+                          target_datatype->name,
+                          op->o_name,
+                          comm->c_my_rank);
+           ompi_mpi_abort(comm, -1);
+        }
     }
 
     (void) ompi_datatype_get_extent (origin_datatype, &lb, &extent);
