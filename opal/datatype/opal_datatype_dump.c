@@ -89,8 +89,8 @@ int opal_datatype_dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr,
                            (int)pDesc->end_loop.items, (long)pDesc->end_loop.first_elem_disp,
                            (int)pDesc->end_loop.size );
         else
-            index += snprintf( ptr + index, length - index, "count %d disp 0x%lx (%ld) extent %d (size %ld)\n",
-                               (int)pDesc->elem.count, (long)pDesc->elem.disp, (long)pDesc->elem.disp,
+            index += snprintf( ptr + index, length - index, "count %d disp 0x%lx (%ld) blen %d extent %d (size %ld)\n",
+                               (int)pDesc->elem.count, (long)pDesc->elem.disp, (long)pDesc->elem.disp, (int)pDesc->elem.blocklen,
                                (int)pDesc->elem.extent, (long)(pDesc->elem.count * opal_datatype_basicDatatypes[pDesc->elem.common.type]->size) );
         pDesc++;
 
