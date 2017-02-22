@@ -120,18 +120,18 @@ my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime;
 $year += 1900;
 quiet_print "==> This year: $year\n";
 
-# Find the top-level OMPI source tree dir
+# Find the top-level source tree dir in a git repo
 my $start = cwd();
 my $top = $start;
-while (! -f "$top/Makefile.ompi-rules") {
+while (! -d "$top/.git") {
     chdir("..");
     $top = cwd();
-    die "Can't find top-level Open MPI directory"
+    die "Can't find top-level repository directory"
         if ($top eq "/");
 }
 chdir($start);
 
-quiet_print "==> Top-level Open MPI dir: $top\n";
+quiet_print "==> Top-level repository dir: $top\n";
 quiet_print "==> Current directory: $start\n";
 
 # Select VCS used to obtain modification info.  Choose in increasing priority
