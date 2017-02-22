@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2015-2017 Mellanox Technologies. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -38,6 +38,7 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/argv.h"
 
 #include "ompi/proc/proc.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -342,29 +343,24 @@ int ompi_proc_complete_init(void)
     opal_mutex_unlock (&ompi_proc_lock);
 
     if (ompi_process_info.num_procs >= ompi_add_procs_cutoff) {
-        uint16_t u16, *u16ptr;
+        char *val;
+        /* retrieve the local peers */
+        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
+                              ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+        if (OPAL_SUCCESS == ret && NULL != val) {
+            char **peers = opal_argv_split(val, ',');
+            int i;
+            free(val);
+            for (i=0; NULL != peers[i]; i++) {
+                ompi_vpid_t local_rank = strtoul(peers[i], NULL, 10);
+                opal_process_name_t proc_name = {.vpid = local_rank, .jobid = OMPI_PROC_MY_NAME->jobid};
 
-        u16ptr = &u16;
-
-        /* find and add all local processes */
-        for (ompi_vpid_t i = 0 ; i < ompi_process_info.num_procs ; ++i ) {
-            opal_process_name_t proc_name = {.vpid = i, .jobid = OMPI_PROC_MY_NAME->jobid};
-            uint16_t locality = OPAL_PROC_NON_LOCAL;
-
-            if (OMPI_PROC_MY_NAME->vpid == i) {
-                continue;
+                if (OMPI_PROC_MY_NAME->vpid == local_rank) {
+                    continue;
+                }
+                (void) ompi_proc_for_name (proc_name);
             }
-
-            /* the runtime is required to fill in locality for all local processes by this
-             * point. only local processes will have locality set */
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY, &proc_name, &u16ptr, OPAL_UINT16);
-            if (OPAL_SUCCESS == ret) {
-                locality = u16;
-            }
-
-            if (OPAL_PROC_NON_LOCAL != locality) {
-	      (void) ompi_proc_for_name (proc_name);
-            }
+            opal_argv_free(peers);
         }
     }
 
