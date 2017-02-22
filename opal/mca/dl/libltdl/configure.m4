@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 #
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,7 +21,7 @@ AC_DEFUN([MCA_opal_dl_libltdl_COMPILE_MODE], [
     AC_MSG_RESULT([$$4])
 ])
 
-# MCA_event_external_POST_CONFIG()
+# MCA_opal_dl_libltdl_POST_CONFIG()
 # ---------------------------------
 AC_DEFUN([MCA_opal_dl_libltdl_POST_CONFIG],[
     # If we won, then do all the rest of the setup
