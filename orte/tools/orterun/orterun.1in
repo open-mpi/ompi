@@ -197,13 +197,6 @@ daemons on nodes hosting application procs).
 .
 .
 .
-.TP
-.B -hnp\fR,\fP --hnp \fR<arg0>\fP
-Specify the URI of the Head Node Process (HNP), or the name of the file (specified as 
-file:filename) that contains that info.
-.
-.
-.
 .P
 Use one of the following options to specify which hosts (nodes) of the cluster to run on. Note
 that as of the start of the v1.8 release, mpirun will launch a daemon onto each host in the
@@ -339,10 +332,6 @@ Launch processes one per node, cycling by node in a round-robin
 fashion.  This spreads processes evenly among nodes and assigns
 MPI_COMM_WORLD ranks in a round-robin, "by node" manner.
 .
-.TP
-.B -cpu-list\fR,\fP --cpu-list \fR<cpus>\fP
-List of processor IDs to bind processes to [default=NULL].
-.
 .
 .
 .
@@ -423,11 +412,6 @@ The MPI_COMM_WORLD rank of the process that is to receive stdin. The
 default is to forward stdin to MPI_COMM_WORLD rank 0, but this option
 can be used to forward stdin to any process. It is also acceptable to
 specify \fInone\fP, indicating that no processes are to receive stdin.
-.
-.
-.TP
-.B -merge-stderr-to-stdout\fR,\fP --merge-stderr-to-stdout
-Merge stderr to stdout for each process.
 .
 .
 .TP
@@ -568,12 +552,6 @@ Send arguments to various MCA modules.  See the "MCA" section, below.
 Aggregate MCA parameter set file list.
 .
 .
-.TP
-.B -tune\fR,\fP --tune \fR<tune_file>\fP
-Specify a tune file to set arguments for various MCA modules and environment variables.
-See the "Setting MCA parameters and environment variables from file" section, below.
-.
-.
 .
 .
 .P
@@ -633,11 +611,6 @@ Provide an appfile, ignoring all other command line options.
 .TP
 .B -cf\fR,\fP --cartofile \fR<cartofile>\fP
 Provide a cartography file.
-.
-.
-.TP
-.B -continuous\fR,\fP --continuous
-Job is to run until explicitly terminated.
 .
 .
 .TP
@@ -725,11 +698,6 @@ Output a brief periodic report on launch progress.
 .
 .
 .TP
-.B -terminate\fR,\fP --terminate
-Terminate the DVM.
-.
-.
-.TP
 .B -use-hwthread-cpus\fR,\fP --use-hwthread-cpus
 Use hardware threads as independent cpus.
 .
@@ -797,7 +765,6 @@ When paired with the
 .B --timeout
 command line option, report the run-time subsystem state of each
 process when the timeout expires.
->>>>>>> f9c05bd... Update the mpirun man page
 .
 .
 .P
