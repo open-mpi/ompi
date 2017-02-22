@@ -44,7 +44,7 @@ struct mca_rcache_base_vma_module_t {
     opal_object_t super;
     opal_rb_tree_t rb_tree;
     opal_list_t vma_list;
-    opal_list_t vma_gc_list;
+    opal_lifo_t vma_gc_lifo;
     size_t reg_cur_cache_size;
     opal_mutex_t vma_lock;
 };
