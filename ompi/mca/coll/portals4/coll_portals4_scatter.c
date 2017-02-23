@@ -637,9 +637,7 @@ ompi_coll_portals4_scatter_intra_linear_bottom(struct ompi_communicator_t *comm,
 
     request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_complete(&request->super, true);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:scatter_intra_linear_bottom exit rank %d", request->u.scatter.my_rank));

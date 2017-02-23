@@ -28,7 +28,6 @@ mca_pml_cm_recv_request_free(struct ompi_request_t** request)
 
     assert( false == recvreq->req_free_called );
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_free_called = true;
     if( true == recvreq->req_pml_complete ) {
         if( MCA_PML_CM_REQUEST_RECV_THIN == recvreq->req_pml_type ) {
@@ -37,8 +36,6 @@ mca_pml_cm_recv_request_free(struct ompi_request_t** request)
             MCA_PML_CM_HVY_RECV_REQUEST_RETURN((mca_pml_cm_hvy_recv_request_t*)recvreq );
         }
     }
-
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;

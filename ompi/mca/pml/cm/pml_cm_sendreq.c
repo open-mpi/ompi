@@ -35,7 +35,6 @@ mca_pml_cm_send_request_free(struct ompi_request_t** request)
     mca_pml_cm_send_request_t* sendreq = *(mca_pml_cm_send_request_t**)request;
     assert( false == sendreq->req_base.req_free_called );
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     sendreq->req_base.req_free_called = true;
     if( true == sendreq->req_base.req_pml_complete ) {
         if( MCA_PML_CM_REQUEST_SEND_THIN == sendreq->req_base.req_pml_type ) {
@@ -44,8 +43,6 @@ mca_pml_cm_send_request_free(struct ompi_request_t** request)
             MCA_PML_CM_HVY_SEND_REQUEST_RETURN( ((mca_pml_cm_hvy_send_request_t*)  sendreq) );
         }
     }
-
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;

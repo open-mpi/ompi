@@ -1067,10 +1067,6 @@ static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
 }
 
 /**
- * TODO: ompi_request_completed can be used to detect any changes in the request handles.
- */
-
-/**
  * Handle the send queue as well as the receive queue. The unexpected queue
  * is a whole different story ...
  */

@@ -229,9 +229,7 @@ process:
             opal_atomic_add_size_t(&req->super.req_status._ucount, ev.mlength);
             ops = opal_atomic_add_32(&req->ops_committed, 1);
             if (ops == req->ops_expected) {
-                OPAL_THREAD_LOCK(&ompi_request_lock);
                 ompi_request_complete(&req->super, true);
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);
             }
         }
     }

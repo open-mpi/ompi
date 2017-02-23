@@ -441,9 +441,7 @@ ompi_coll_portals4_ireduce_intra_fini(ompi_coll_portals4_request_t *request)
     if (OMPI_SUCCESS != ret)
         return ret;
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_complete(&request->super, true);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     return (OMPI_SUCCESS);
 }
