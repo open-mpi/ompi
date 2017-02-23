@@ -1,6 +1,9 @@
 .\" -*- nroff -*-
 .\" Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Copyright (c) 2017      Intel, Inc.  All rights reserved.
+.\" Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+.\"                         reserved.
 .\" $COPYRIGHT$
 .\"
 .\" Man page for ORTE's orterun command
@@ -81,7 +84,7 @@ copies on the localhost), scheduling (by default) in a round-robin fashion by
 CPU slot.  See the rest of this page for more details.
 .P
 Please note that mpirun automatically binds processes as of the start of the
-v1.8 series. Two binding patterns are used in the absence of any further directives:
+v1.8 series. Three binding patterns are used in the absence of any further directives:
 .TP 18
 .B Bind to core:
 when the number of processes is <= 2
@@ -90,6 +93,11 @@ when the number of processes is <= 2
 .TP
 .B Bind to socket:
 when the number of processes is > 2
+.
+.
+.TP
+.B Bind to none:
+when oversubscribed
 .
 .
 .P
@@ -145,6 +153,11 @@ Print version number.  If no other arguments are given, this will also
 cause orterun to exit.
 .
 .
+.TP
+.B -N \fR<num>\fP
+.br
+Launch num processes per node on all allocated nodes (synonym for npernode).
+.
 .
 .
 .TP
@@ -154,14 +167,33 @@ Display a table showing the mapped location of each process prior to launch.
 .
 .
 .TP
-.B -display-devel-map\fR,\fP --display-devel-map
-Display a more detailed table showing the mapped location of each process prior to launch (usually of interest to developers).
+.B -display-allocation\fR,\fP --display-allocation
+Display the detected resource allocation.
 .
 .
 .
 .TP
-.B -display-allocation\fR,\fP --display-allocation
-Display the detected resource allocation.
+.B -output-proctable\fR,\fP --output-proctable
+Output the debugger proctable after launch.
+.
+.
+.
+.TP
+.B -dvm\fR,\fP --dvm
+Create a persistent distributed virtual machine (DVM).
+.
+.
+.
+.TP
+.B -max-vm-size\fR,\fP --max-vm-size \fR<size>\fP
+Number of processes to run.
+.
+.
+.
+.TP
+.B -novm\fR,\fP --novm
+Execute without creating an allocation-spanning virtual machine (only start 
+daemons on nodes hosting application procs).
 .
 .
 .
@@ -182,10 +214,14 @@ List of hosts on which to invoke processes.
 .
 .
 .TP
-.B
--hostfile\fR,\fP --hostfile \fR<hostfile>\fP
+.B -hostfile\fR,\fP --hostfile \fR<hostfile>\fP
 Provide a hostfile to use.
 .\" JJH - Should have man page for how to format a hostfile properly.
+.
+.
+.TP
+.B -default-hostfile\fR,\fP --default-hostfile \fR<hostfile>\fP
+Provide a default hostfile.
 .
 .
 .TP
@@ -196,10 +232,10 @@ Synonym for \fI-hostfile\fP.
 .
 .
 .TP
-.B -cpu-set\fR,\fP --cpu-set
-Restrict launched processes to the specified logical cpus on each node. Note that the
-binding options will still apply within the specified envelope - e.g., you can elect
-to bind each process to only one cpu within the specified cpu set.
+.B -cpu-set\fR,\fP --cpu-set \fR<list>\fP
+Restrict launched processes to the specified logical cpus on each node (comma-separated
+list). Note that the binding options will still apply within the specified envelope - e.g.,
+you can elect to bind each process to only one cpu within the specified cpu set.
 .
 .
 .
@@ -227,7 +263,7 @@ Launch N times the number of objects of the specified type on each node.
 .
 .
 .TP
-.B -npersocket\fR,\fP --npersocket <#persocket>
+.B -npersocket\fR,\fP --npersocket \fR<#persocket>\fP
 On each node, launch this many processes times the number of processor
 sockets on the node.
 The \fI-npersocket\fP option also turns on the \fI-bind-to-socket\fP option.
@@ -235,7 +271,7 @@ The \fI-npersocket\fP option also turns on the \fI-bind-to-socket\fP option.
 .
 .
 .TP
-.B -npernode\fR,\fP --npernode <#pernode>
+.B -npernode\fR,\fP --npernode \fR<#pernode>\fP
 On each node, launch this many processes.
 (deprecated in favor of --map-by ppr:n:node)
 .
@@ -253,7 +289,7 @@ To map processes:
 .
 .
 .TP
-.B --map-by <foo>
+.B --map-by \fR<foo>\fP
 Map to the specified object, defaults to \fIsocket\fP. Supported options
 include slot, hwthread, core, L1cache, L2cache, L3cache, socket, numa,
 board, node, sequential, distance, and ppr. Any object can include
@@ -269,8 +305,8 @@ to separate it from the modifiers.
 Map processes by core (deprecated in favor of --map-by core)
 .
 .TP
-.B -bysocket\fR,\fP --bysocket
-Map processes by socket (deprecated in favor of --map-by socket)
+.B -byslot\fR,\fP --byslot
+Map and rank processes round-robin by slot.
 .
 .TP
 .B -nolocal\fR,\fP --nolocal
@@ -283,7 +319,12 @@ with \fB--host\fR or any other host-specifying mechanism.
 Do not oversubscribe any nodes; error (without starting any processes)
 if the requested number of processes would cause oversubscription.
 This option implicitly sets "max_slots" equal to the "slots" value for
-each node.
+each node. (Enabled by default).
+.
+.TP
+.B -oversubscribe\fR,\fP --oversubscribe
+Nodes are allowed to be oversubscribed, even on a managed system, and 
+overloading of processing elements.
 .
 .TP
 .B -bynode\fR,\fP --bynode
@@ -299,7 +340,7 @@ To order processes' ranks in MPI_COMM_WORLD:
 .
 .
 .TP
-.B --rank-by <foo>
+.B --rank-by \fR<foo>\fP
 Rank in round-robin fashion according to the specified object,
 defaults to \fIslot\fP. Supported options
 include slot, hwthread, core, L1cache, L2cache, L3cache,
@@ -312,17 +353,17 @@ socket, numa, board, and node.
 For process binding:
 .
 .TP
-.B --bind-to <foo>
+.B --bind-to \fR<foo>\fP
 Bind processes to the specified object, defaults to \fIcore\fP. Supported options
 include slot, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board, and none.
 .
 .TP
-.B -cpus-per-proc\fR,\fP --cpus-per-proc <#perproc>
+.B -cpus-per-proc\fR,\fP --cpus-per-proc \fR<#perproc>\fP
 Bind each process to the specified number of cpus.
 (deprecated in favor of --map-by <obj>:PE=n)
 .
 .TP
-.B -cpus-per-rank\fR,\fP --cpus-per-rank <#perrank>
+.B -cpus-per-rank\fR,\fP --cpus-per-rank \fR<#perrank>\fP
 Alias for \fI-cpus-per-proc\fP.
 (deprecated in favor of --map-by <obj>:PE=n)
 .
@@ -335,17 +376,8 @@ Bind processes to cores (deprecated in favor of --bind-to core)
 Bind processes to processor sockets  (deprecated in favor of --bind-to socket)
 .
 .TP
-.B -bind-to-none\fR,\fP --bind-to-none
-Do not bind processes  (deprecated in favor of --bind-to none)
-.
-.TP
 .B -report-bindings\fR,\fP --report-bindings
 Report any bindings for launched processes.
-.
-.TP
-.B -slot-list\fR,\fP --slot-list <slots>
-List of processor IDs to be used for binding MPI processes. The specified bindings will
-be applied to all MPI processes. See explanation below for syntax.
 .
 .
 .
@@ -355,7 +387,7 @@ For rankfiles:
 .
 .
 .TP
-.B -rf\fR,\fP --rankfile <rankfile>
+.B -rf\fR,\fP --rankfile \fR<rankfile>\fP
 Provide a rankfile file.
 .
 .
@@ -375,7 +407,7 @@ zero's for correct ordering in listings.
 .
 .
 .TP
-.B -stdin\fR,\fP --stdin <rank>
+.B -stdin\fR,\fP --stdin\fR <rank> \fP
 The MPI_COMM_WORLD rank of the process that is to receive stdin. The
 default is to forward stdin to MPI_COMM_WORLD rank 0, but this option
 can be used to forward stdin to any process. It is also acceptable to
@@ -384,8 +416,9 @@ specify \fInone\fP, indicating that no processes are to receive stdin.
 .
 .TP
 .B -tag-output\fR,\fP --tag-output
-Tag each line of output to stdout, stderr, and stddiag with \fB[jobid, MCW_rank]<stdxxx>\fP indicating the process jobid
-and MPI_COMM_WORLD rank of the process that generated the output, and the channel which generated it.
+Tag each line of output to stdout, stderr, and stddiag with \fB[jobid, MCW_rank]<stdxxx>\fP
+indicating the process jobid and MPI_COMM_WORLD rank of the process that generated the output,
+and the channel which generated it.
 .
 .
 .TP
@@ -396,6 +429,11 @@ Timestamp each line of output to stdout, stderr, and stddiag.
 .TP
 .B -xml\fR,\fP --xml
 Provide all output to stdout, stderr, and stddiag in an xml format.
+.
+.
+.TP
+.B -xml-file\fR,\fP --xml-file \fR<filename>\fP
+Provide all output in XML format to the specified file.
 .
 .
 .TP
@@ -439,27 +477,26 @@ the target process.  See the "Remote Execution" section, below.
 .
 .
 .TP
-.B --preload-binary
+.B --noprefix
+Disable the automatic --prefix behavior
+.
+.
+.TP
+.B -s\fR,\fP --preload-binary
 Copy the specified executable(s) to remote machines prior to starting remote processes. The
 executables will be copied to the Open MPI session directory and will be deleted upon
 completion of the job.
 .
 .
 .TP
-.B --preload-files <files>
+.B --preload-files \fR<files>\fP
 Preload the comma separated list of files to the current working directory of the remote
 machines where processes will be launched prior to starting those processes.
 .
 .
 .TP
-.B --preload-files-dest-dir <path>
-The destination directory to be used for preload-files, if other than the current working
-directory. By default, the absolute and relative paths provided by --preload-files are used.
-.
-.
-.TP
-.B --tmpdir \fR<dir>\fP
-Set the root for the session directory tree for mpirun only.
+.B -set-cwd-to-session-dir\fR,\fP --set-cwd-to-session-dir
+Set the working directory of the started processes to their session directory.
 .
 .
 .TP
@@ -506,14 +543,13 @@ the parameter name; \fI<value>\fP is the parameter value.
 .
 .
 .TP
-.B -mca\fR,\fP --mca <key> <value>
+.B -mca\fR,\fP --mca \fR<key> <value>\fP
 Send arguments to various MCA modules.  See the "MCA" section, below.
 .
 .
 .TP
-.B -tune\fR,\fP --tune <tune_file>
-Specify a tune file to set arguments for various MCA modules and environment variables.
-See the "Setting MCA parameters and environment variables from file" section, below.
+.B -am \fR<arg0>\fP
+Aggregate MCA parameter set file list.
 .
 .
 .
@@ -529,7 +565,19 @@ MCA parameter.
 .
 .
 .TP
-.B -debugger\fR,\fP --debugger
+.B --get-stack-traces
+When paired with the
+.B --timeout
+option,
+.I mpirun
+will obtain and print out stack traces from all launched processes
+that are still alive when the timeout expires.  Note that obtaining
+stack traces can take a little time and produce a lot of output,
+especially for large process-count jobs.
+.
+.
+.TP
+.B -debugger\fR,\fP --debugger \fR<args>\fP
 Sequence of debuggers to search for when \fI--debug\fP is used (i.e.
 a synonym for \fIorte_base_user_debugger\fP MCA parameter).
 .
@@ -556,11 +604,6 @@ defaults to aborting when launched as the root user).
 .
 .
 .TP
-.B -aborted\fR,\fP --aborted \fR<#>\fP
-Set the maximum number of aborted processes to display.
-.
-.
-.TP
 .B --app \fR<appfile>\fP
 Provide an appfile, ignoring all other command line options.
 .
@@ -571,8 +614,28 @@ Provide a cartography file.
 .
 .
 .TP
-.B --hetero
-Indicates that multiple app_contexts are being provided that are a mix of 32/64-bit binaries.
+.B -disable-recovery\fR,\fP --disable-recovery
+Disable recovery (resets all recovery options to off).
+.
+.
+.TP
+.B -do-not-launch\fR,\fP --do-not-launch
+Perform all necessary operations to prepare to launch the application, but do not actually launch it.
+.
+.
+.TP
+.B -do-not-resolve\fR,\fP --do-not-resolve
+Do not attempt to resolve interfaces.
+.
+.
+.TP
+.B -enable-recovery\fR,\fP --enable-recovery
+Enable recovery from process failure [Default = disabled].
+.
+.
+.TP
+.B -index-argv-by-rank\fR,\fP --index-argv-by-rank
+Uniquely index argv[0] for each process using its rank.
 .
 .
 .TP
@@ -582,46 +645,66 @@ as well as the underlying environment (e.g., when failing to launch a daemon) to
 .
 .
 .TP
-.B -ompi-server\fR,\fP --ompi-server <uri or file>
-Specify the URI of the Open MPI server (or the mpirun to be used as the server)
-, the name
-of the file (specified as file:filename) that
-contains that info, or the PID (specified as pid:#) of the mpirun to be used as
- the server.
+.B -max-restarts\fR,\fP --max-restarts \fR<num>\fP
+Max number of times to restart a failed process.
+.
+.
+.TP
+.B -ompi-server\fR,\fP --ompi-server \fR<uri or file>\fP
+Specify the URI of the Open MPI server (or the mpirun to be used as the server),
+the name of the file (specified as file:filename) that contains that info, or
+the PID (specified as pid:#) of the mpirun to be used as the server.
 The Open MPI server is used to support multi-application data exchange via
 the MPI-2 MPI_Publish_name and MPI_Lookup_name functions.
 .
 .
 .TP
-.B -report-pid\fR,\fP --report-pid <channel>
-Print out mpirun's PID during startup. The channel must be either a '-' to indi
-cate that
-the pid is to be output to stdout, a '+' to indicate that the pid is to be outp
-ut to stderr,
-or a filename to which the pid is to be written.
+.B -personality\fR,\fP --personality \fR<list>\fP
+Comma-separated list of programming model, languages, and containers being used (default="ompi").
 .
 .
 .TP
-.B -report-uri\fR,\fP --report-uri <channel>
-Print out mpirun's URI during startup. The channel must be either a '-' to indi
-cate that
-the URI is to be output to stdout, a '+' to indicate that the URI is to be outp
-ut to stderr,
-or a filename to which the URI is to be written.
+.B --ppr \fR<list>\fP
+Comma-separated list of number of processes on a given resource type [default: none].
 .
 .
 .TP
-.B -wait-for-server\fR,\fP --wait-for-server
-Pause mpirun before launching the job until ompi-server is detected. This
-is useful in scripts where ompi-server may be started in the background, followed immediately by
-an \fImpirun\fP command that wishes to connect to it. Mpirun will pause until either the specified
-ompi-server is contacted or the server-wait-time is exceeded.
+.B -report-child-jobs-separately\fR,\fP --report-child-jobs-separately
+Return the exit status of the primary job only.
 .
 .
 .TP
-.B -server-wait-time\fR,\fP --server-wait-time <secs>
-The max amount of time (in seconds) mpirun should wait for the ompi-server to start. The default
-is 10 seconds.
+.B -report-events\fR,\fP --report-events \fR<URI>\fP
+Report events to a tool listening at the specified URI.
+.
+.
+.TP
+.B -report-pid\fR,\fP --report-pid \fR<channel>\fP
+Print out mpirun's PID during startup. The channel must be either a '-' to indicate 
+that the pid is to be output to stdout, a '+' to indicate that the pid is to be 
+output to stderr, or a filename to which the pid is to be written.
+.
+.
+.TP
+.B -report-uri\fR,\fP --report-uri \fR<channel>\fP
+Print out mpirun's URI during startup. The channel must be either a '-' to indicate 
+that the URI is to be output to stdout, a '+' to indicate that the URI is to be 
+output to stderr, or a filename to which the URI is to be written.
+.
+.
+.TP
+.B -show-progress\fR,\fP --show-progress
+Output a brief periodic report on launch progress.
+.
+.
+.TP
+.B -use-hwthread-cpus\fR,\fP --use-hwthread-cpus
+Use hardware threads as independent cpus.
+.
+.
+.TP
+.B -use-regexp\fR,\fP --use-regexp
+Use regular expressions for launch.
 .
 .
 .
@@ -648,6 +731,26 @@ output in files.
 .
 .
 .TP
+.B -display-devel-allocation\fR,\fP --display-devel-allocation
+Display a detailed list of the allocation being used by this job.
+.
+.
+.TP
+.B -display-devel-map\fR,\fP --display-devel-map
+Display a more detailed table showing the mapped location of each process prior to launch.
+.
+.
+.TP
+.B -display-diffable-map\fR,\fP --display-diffable-map
+Display a diffable process map just before launch.
+.
+.
+.TP
+.B -display-topo\fR,\fP --display-topo
+Display the topology as part of the process map just before launch.
+.
+.
+.TP
 .B -launch-agent\fR,\fP --launch-agent
 Name of the executable that is to be used to start processes on the remote nodes. The default
 is "orted". This option can be used to test new daemon concepts, or to pass options back to the
@@ -657,8 +760,11 @@ without clutter from mpirun itself.
 .
 .
 .TP
-.B --noprefix
-Disable the automatic --prefix behavior
+.B --report-state-on-timeout
+When paired with the
+.B --timeout
+command line option, report the run-time subsystem state of each
+process when the timeout expires.
 .
 .
 .P
@@ -1470,8 +1576,8 @@ we return the exit status of the process with the lowest MPI_COMM_WORLD rank to 
 .IP \[bu]
 if all processes in the primary job normally terminate with exit status 0, and one or more
 processes in a secondary job normally terminate with non-zero exit status, we (a) return
-the exit status of the process with the lowest MPI_COMM_WORLD rank in the lowest jobid to have a non-zero status, and (b)
-output a message summarizing the exit status of the primary and all secondary jobs.
+the exit status of the process with the lowest MPI_COMM_WORLD rank in the lowest jobid to have a non-zero 
+status, and (b) output a message summarizing the exit status of the primary and all secondary jobs.
 .IP \[bu]
 if the cmd line option --report-child-jobs-separately is set, we will return -only- the
 exit status of the primary job. Any non-zero exit status in secondary jobs will be
