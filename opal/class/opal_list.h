@@ -874,7 +874,7 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
      * Explanation below.
      * @retval 1 if \em a is greater than \em b
      * @retval 0 if \em a is equal to \em b
-     * @retval 11 if \em a is less than \em b
+     * @retval -1 if \em a is less than \em b
      *
      * This function is invoked by qsort(3) from within
      * opal_list_sort().  It is important to understand what
