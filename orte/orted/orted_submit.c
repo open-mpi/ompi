@@ -248,6 +248,26 @@ int orte_submit_init(int argc, char *argv[],
         }
     }
 
+    /* need to parse mca options *before* opal_init_util() */
+    orte_cmd_line = OBJ_NEW(opal_cmd_line_t);
+    mca_base_cmd_line_setup (orte_cmd_line);
+
+    /* parse the result to get values */
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(orte_cmd_line,
+                                                  true, true, argc, argv)) ) {
+        if (OPAL_ERR_SILENT != rc) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(rc));
+        }
+        return rc;
+    }
+
+    if (OPAL_SUCCESS != (rc = mca_base_cmd_line_process_args(orte_cmd_line, &environ, &environ))) {
+	return rc;
+    }
+
+    OBJ_RELEASE(orte_cmd_line);
+
     /* init only the util portion of OPAL */
     if (OPAL_SUCCESS != (rc = opal_init_util(&argc, &argv))) {
         return rc;
