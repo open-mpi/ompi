@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -53,19 +53,77 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-2.0.2 -- TBD
------------------------
+2.0.2 -- 26 January 2017
+-------------------------
 
-- The following backwards-incompatible changes to the Fortran API were
-  made.  They were made because Open MPI's Fortran bindings for these
-  were incorrect; any MPI applications using them were therefore also
-  erroneous, and not subject to backwards compatibility constraints.
-  - All Fortran bindings:
-    - The type of MPI_DISPLACEMENT_CURRENT was changed from INTEGER to
-      INTEGER(KIND=MPI_OFFSET_KIND)
-  - Fortran "use mpi" module:
-    - MPI_File_wr_at_all_begin -> MPI_File_write_at_all_begin
-    - MPI_File_read_ord_begin -> MPI_File_read_ordered_begin
+Bug fixes/minor improvements:
+
+- Fix a problem with MPI_FILE_WRITE_SHARED when using MPI_MODE_APPEND
+  and Open MPI's native MPI-IO implementation.  Thanks to Nicolas Joly
+  for reporting.
+- Fix a typo in the MPI_WIN_GET_NAME man page.  Thanks to Nicolas Joly
+  for reporting.
+- Fix a race condition with ORTE's session directory setup.  Thanks to
+  @tbj900 for reporting this issue.
+- Fix a deadlock issue arising from Open MPI's approach to catching
+  calls to munmap. Thanks to Paul Hargrove for reporting and helping
+  to analyze this problem.
+- Fix a problem with PPC atomics which caused make check to fail
+  unless builtin atomics configure option was enabled.  Thanks to
+  Orion Poplawski for reporting.
+- Fix a problem with use of x86_64 cpuid instruction which led to
+  segmentation faults when Open MPI was configured with -O3
+  optimization.  Thanks to Mark Santcroos for reporting this problem.
+- Fix a problem when using built in atomics configure options on PPC
+  platforms when building 32 bit applications.  Thanks to Paul
+  Hargrove for reporting.
+- Fix a problem with building Open MPI against an external hwloc
+  installation.  Thanks to Orion Poplawski for reporting this issue.
+- Remove use of DATE in the message queue version string reported to
+  debuggers to insure bit-wise reproducibility of binaries.  Thanks to
+  Alastair McKinstry for help in fixing this problem.
+- Fix a problem with early exit of a MPI process without calling
+  MPI_FINALIZE or MPI_ABORT that could lead to job hangs.  Thanks to
+  Christof Koehler for reporting.
+- Fix a problem with forwarding of SIGTERM signal from mpirun to MPI
+  processes in a job.  Thanks to Noel Rycroft for reporting this
+  problem
+- Plug some memory leaks in MPI_WIN_FREE discovered using Valgrind.
+  Thanks to Joseph Schuchart for reporting.
+- Fix a problems MPI_NEIGHOR_ALLTOALL when using a communicator with
+  an empty topology graph.  Thanks to Daniel Ibanez for reporting.
+- Fix a typo in a PMIx component help file.  Thanks to @njoly for
+  reporting this.
+- Fix a problem with Valgrind false positives when using Open MPI's
+  internal memchecker.  Thanks to Yvan Fournier for reporting.
+- Fix a problem with MPI_FILE_DELETE returning MPI_SUCCESS when
+  deleting a non-existent file. Thanks to Wei-keng Liao for reporting.
+- Fix a problem with MPI_IMPROBE that could lead to hangs in
+  subsequent MPI point to point or collective calls.  Thanks to Chris
+  Pattison for reporting.
+- Fix a problem when configure Open MPI for powerpc with
+  --enable-mpi-cxx enabled.  Thanks to Alastair McKinstry for
+  reporting.
+- Fix a problem using MPI_IALLTOALL with MPI_IN_PLACE argument.
+  Thanks to Chris Ward for reporting.
+- Fix a problem using MPI_RACCUMULATE with the Portals4 transport.
+  Thanks to @PDeveze for reporting.
+- Fix an issue with static linking and duplicate symbols arising from
+  PMIx Slurm components.  Thanks to Limin Gu for reporting.
+- Fix a problem when using MPI dynamic memory windows.  Thanks to
+  Christoph Niethammer for reporting.
+- Fix a problem with Open MPI's pkgconfig files.  Thanks to Alastair
+  McKinstry for reporting.
+- Fix a problem with MPI_IREDUCE when the same buffer is supplied for
+  the send and recv buffer arguments.  Thanks to Valentin Petrov for
+  reporting.
+- Fix a problem with atomic operations on PowerPC.  Thanks to Paul
+  Hargrove for reporting.
+
+Known issues (to be addressed in v2.0.3):
+
+- See the list of fixes slated for v2.0.3 here:
+  https://github.com/open-mpi/ompi/milestone/23
 
 
 2.0.1 -- 2 September 2016
