@@ -12,7 +12,8 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011-2017 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2017      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -478,6 +479,15 @@ static int define_cli(opal_cmd_line_t *cli)
         if (!takeus) {
             return ORTE_ERR_TAKE_NEXT_OPTION;
         }
+    }
+
+    /*
+     * Check if a HNP DVM URI is being passed via environment.
+     * Note: Place before opal_cmd_line_parse() so that
+     * if user passes both envvar & cmdln, the cmdln wins.
+     */
+    if (NULL != getenv("ORTE_HNP_DVM_URI")) {
+        orte_cmd_options.hnp = strdup(getenv("ORTE_HNP_DVM_URI"));
     }
 
     /* just add ours to the end */
