@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Inria.  All rights reserved.
+ * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -131,6 +131,7 @@ static int mca_pml_monitoring_component_close(void)
     mca_pml.pml_progress = pml_selected_module.pml_progress;
     mca_pml.pml_max_contextid = pml_selected_module.pml_max_contextid;
     mca_pml.pml_max_tag = pml_selected_module.pml_max_tag;
+    /* Add MCA_PML_BASE_FLAG_REQUIRE_WORLD flag to ensure the hashtable is properly initialized */
     mca_pml.pml_flags = pml_selected_module.pml_flags | MCA_PML_BASE_FLAG_REQUIRE_WORLD;
 
     mca_pml_monitoring_active = 1;
