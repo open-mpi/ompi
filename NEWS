@@ -53,6 +53,148 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+2.1.0 -- specific date TBD
+-------------------------
+
+Major new features:
+
+- The main focus of the Open MPI v2.1.0 release was to update to PMIx
+  v1.2.1, improving launch time scalability, and greatly decreasing
+  the memory footprint when launching large numbers of MPI / OSHMEM
+  processes.
+- Update OpenSHMEM API conformance to v1.3.
+- The usnic BTL now supports MPI_THREAD_MULTIPLE.
+- General/overall performance improvements to MPI_THREAD_MULTIPLE.
+  ^^^ JMS Is this correct?  I'm referring to George/Arm/Nathan's work
+  here...?
+- Add a summary message at the bottom of configure that tells you many
+  of the configuration options specified and/or discovered by Open
+  MPI.
+
+JMS Any other major new features to list?
+
+Changes in behavior compared to prior versions:
+
+- Should be none.
+  ^^^ JMS Did we change --host or --hostfile behavior?
+
+Removed legacy support:
+
+- The ptmalloc2 hooks have been removed from the Open MPI code base.
+  This is not really a user-noticable change; it is only mentioned
+  here because there was much rejoycing in the Open MPI developer
+  community.
+
+Bug fixes/minor improvements:
+
+- New MCA parameters:
+  - iof_base_redirect_app_stderr_to_stdout: as its name implies, it
+    combines MPI / OpenSHMEM applications' stderr into its stdout
+    stream.
+  - opal_event_include: allow the user to specify which FD selection
+    mechanism is used by the underlying event engine.
+  - opal_stacktrace_output: indicate where stacktraces should be sent
+    upon MPI / OpenSHMEM process crashes ("none", "stdout", "stderr",
+    "file:filename").
+  - orte_timeout_for_stack_trace: number of seconds to wait for stack
+    traces to be reported (or <=0 to wait forever).
+- Various improvements to the Portals 4 MTL, to include adding support
+  for non-contiguous datatypes.
+- Various updates for the UCX PML.
+- Updates to the following man pages:
+  - mpirun(1)
+  - MPI_COMM_CONNECT(3)
+  - MPI_WIN_GET_NAME(3). Thanks to Nicolas Joly for reporting the
+    typo.
+  - MPI_INFO_GET_[NKEYS|NTHKEY](3). Thanks to Nicolas Joly for
+    reporting the typo.
+- Fix external32 support
+  ^^^ JMS probably need to explain this more
+  ^^^ JMS is there a user to cite here?
+- Add note how to disable a warning message about when a high-speed
+  MPI transport is not found.  Thanks to Susan Schwarz for reporting
+  the issue.
+- Ensure that sending SIGINT when using the rsh/ssh launcher does not
+  orphan children nodes in the launch tree.
+- Fix the help message when showing deprecated MCA param names to show
+  the correct (i.e., deprecated) name.
+- Fix a minor error in MPI_AINT_DIFF.
+- Fix bugs with MPI_IN_PLACE handling in:
+  - MPI_ALLGATHER[V]
+  - MPI_IALLTOALL*
+  - MPI_[I][GATHER|SCATTER][V]
+  - MPI_IREDUCE[_SCATTER]
+  - Thanks to all the users who helped diagnose these issues.
+  ^^^ JMS Are there specific users to cite here?
+- Allow qrsh to tree spawn (if the back-end system supports it).
+- Fix MPI_T_PVAR_GET_INDEX to return the correct index.
+  ^^^ JMS is there a user to cite here?
+- Correctly position the shared file pointer in append mode in the
+  OMPIO component.
+  ^^^ JMS is there a user to cite here?
+- ...something about OMPIO SHAREDFP flag set...?
+  ^^^ JMS probably need to explain this more
+- Add some deprecated names into shmem.h for backwards compatibility
+  with legacy codes.
+- Fix MPI_MODE_NOCHECK support.
+  ^^^ JMS is there a user to cite here?
+- Fix a regression in PowerPC atomics support.  Thanks to Orion
+  Poplawski for reporting the issue.
+- Fixes for assembly code with aggressively-optimized compilers on
+  x86_64/AMD64 platforms.
+- Fix one more place where configure was mangling custom CFLAGS.
+  Thanks to Phil Tooley (@Telemin) for reporting the issue.
+- Better handle builds with external installations of hwloc.
+- Fixed a hang with MPI_PUT and MPI_WIN_LOCK_ALL.
+- Fixed a bug when using MPI_GET on non-contiguous datatypes and
+  MPI_LOCK/MPI_UNLOCK.
+- Fixed a bug when using POST/START/COMPLETE/WAIT after a fence.
+- Fix configure portability by cleaning up a few uses of "==" with
+  "test".  Thanks to Kevin Buckley for pointing out the issue.
+- Fix bug when using darrays with lib and extent of darray datatypes.
+- Updates to make Open MPI binary builds more bit-for-bit
+  reproducable.  Thanks to Alastair McKinstry for the suggestion.
+- Fix issues regarding persistent request handling.
+- Ensure that shmemx.h is a standalone OpenSHMEM header file.  Thanks
+  to Nick Park (@nspark) for the report.
+- Ensure that we always send SIGTERM prior to SIGKILL.  Thanks to Noel
+  Rycroft for the report.
+- Added ConnectX-5 and Chelsio T6 device defaults for the openib BTL.
+- OpenSHMEM no longer supports MXM less than v2.0.
+- Plug a memory leak in ompi_osc_sm_free.  Thanks to Joseph Schuchart
+  for the report.
+- The "self" BTL now uses less memory.
+- The vader BTL is now more efficient in terms of memory usage when
+  using XPMEM.
+- Removed the --enable-openib-failover configure option.  This is not
+  considered backwards-incompatible because this option was stale and
+  had long-since stopped working, anyway.
+- Add support for 32-bit and floating point Cray Aries atomic
+  operations.
+- Add support for network AMOs for MPI_ACCUMULATE, MPI_FETCH_AND_OP,
+  and MPI_COMPARE_AND_SWAP if the "ompi_single_intrinsice" info key is
+  set on the window or the "acc_single_interinsic" MCA param is set.
+  ^^^ JMS Is that the right MCA param name?
+- Automatically disqualify RDMA CM support in the openib BTL if
+  MPI_THREAD_MULTIPLE is used.
+- Make configure smarter/better about auto-detecting Linux CMA
+  support.
+- Improve the scalability of MPI_COMM_SPLIT_TYPE.
+- Fix the mixing of C99 and C++ header files with the MPI C++
+  bindings.  Thanks to Alastair McKinstry for the bug report.
+- Add support for ARM v8.
+- Several MCA paramters now directly support MPI_T enumerator
+  semantics (i.e., they accept a limited set of values -- e.g., MCA
+  parameters that accept boolean values).
+- Added --with-libmpi-name=STRING configure option for vendor releases
+  of Open MPI.  See the README for more detail.
+
+Known issues (to be addressed in v2.1.1):
+
+- See the list of fixes slated for v2.1.1 here:
+  https://github.com/open-mpi/ompi/milestone/26
+
+
 2.0.2 -- 26 January 2017
 -------------------------
 
