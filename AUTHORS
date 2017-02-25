@@ -14,6 +14,8 @@ Abhishek Joshi, Broadcom
   abhishek.joshi@broadcom.com
 Abhishek Kulkarni, Indiana University
   adkulkar@cs.indiana.edu
+Aboorva Devarajan, IBM
+  abodevar@in.ibm.com
 Adrian Knoth, Friedrich-Schiller-Universitat Jena
   adi@minet.uni-jena.de
 Adrian Reber, Hochschule Esslingen
@@ -26,7 +28,7 @@ Alex Mikheev, Mellanox
   alexm@mellanox.com
 Alina Sklarevich, Mellanox
   alinas@mellanox.com
-Andreas KnÃ¼pfer, Technische Universitaet Dresden
+Andreas Knüpfer, Technische Universitaet Dresden
   andreas.knuepfer@tu-dresden.de
 Andrew Friedley, Indiana University, Sandia National Laboratory, Intel
   afriedle@osl.iu.edu
@@ -39,7 +41,7 @@ Anya Tatashina, Sun
   anya.tatashina@sun.com
 Artem Polyakov, Individual, Mellanox
   artpol84@gmail.com
-Aurélien Bouteiller, University of Tennessee-Knoxville
+Aur�lien Bouteiller, University of Tennessee-Knoxville
   bouteill@icl.utk.edu
 Avneesh Pant, QLogic
   avneesh.pant@qlogic.com
@@ -96,6 +98,8 @@ Eugene Loh, Sun, Oracle
 Francois WELLENREITER, Individual
   francois.wellenreiter@atos.net
   wellen@free.fr
+Gabriel Pichot, Individual
+  gabriel.pichot@gmail.com
 Galen Shipman, Los Alamos National Laboratory
   gshipman@lanl.gov
 Geoffrey Paulsen, IBM
@@ -126,8 +130,8 @@ Howard Pritchard, Los Alamos National Laboratory
 Iain Bason, Sun, Oracle
   iain.bason@oracle.com
 Igor Ivanov, Mellanox
-  Igor.Ivanov@itseez.com
   igor.ivanov.va@gmail.com
+  igor.ivanov@itseez.com
 Igor Usarov, Mellanox
   igoru@mellanox.com
 Jeff Squyres, University of Indiana, Cisco
@@ -144,7 +148,7 @@ Jose Roman, Universitat Politecnica de Valencia
 Josh Hursey, Indiana University, Oak Ridge National Laboratory, Los Alamos National Laboratory, Lawrence Berkeley National Laboratory, University of Wisconsin-La Crosse, IBM
   jhursey@us.ibm.com
   jjhursey@open-mpi.org
-Joshua Gerrard
+Joshua Gerrard, Individual
   enquiries@joshuagerrard.com
   joshuagerrard+ompi-commit@protonmail.com
 Joshua Ladd, Mellanox
@@ -176,6 +180,8 @@ Mangala Jyothi Bhaskar, University of Houston
   mjbhaskar@uh.edu
 Manjunath Gorentla Venkata, Oak Ridge National Laboratory
   manjugv@ornl.gov
+Mark Allen, IBM
+  markalle@us.ibm.com
 Mark Santcroos, Rutgers University
   mas781@scarletmail.rutgers.edu
 Mark Taylor, Los Alamos National Laboratory
@@ -226,6 +232,8 @@ Pierre Lemarinier, University of Tennessee-Knoxville
   lemarini@icl.utk.edu
 Piotr Lesnicki, Bull
   piotr.lesnicki@ext.bull.net
+Potnuri Bharat Teja, Chelsio
+  bharat@chelsio.com
 Prabhanjan Kambadur, Indiana University
   pkambadu@osl.iu.edu
 Rainer Keller, High Performance Computing Center, Stuttgart, Oak Ridge National Laboratory, Hochschule fuer Technik Stuttgart
@@ -247,6 +255,8 @@ Ron Brightwell, Sandia National Laboratory
 Ryan Grant, Sandia National Laboratory
   regrant233@gmail.com
   regrant@sandia.gov
+Sameh S. Sharkawi, IBM
+  sssharka@us.ibm.com
 Sami Ayyorgun, Los Alamos National Laboratory
   sami@lanl.gov
 Samuel Gutierrez, Los Alamos National Laboratory
