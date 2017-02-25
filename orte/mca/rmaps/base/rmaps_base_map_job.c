@@ -30,7 +30,7 @@
 #include "orte/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -103,9 +103,9 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         /* must be procs/socket, so add in #sockets for each node */
                         slots = 0;
                         OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
-                            slots += ppx * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                                              HWLOC_OBJ_SOCKET, 0,
-                                                                              OPAL_HWLOC_AVAILABLE);
+                            slots += ppx * opal_hwloc_get_nbobjs_by_type(node->topology->topo,
+                                                                         HWLOC_OBJ_SOCKET, 0,
+                                                                         OPAL_HWLOC_AVAILABLE);
                         }
                         nprocs += slots;
                     }
@@ -494,7 +494,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     if (NULL == bd) {
                         (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
                     } else {
-                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
+                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
                             (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
                         }
                     }
@@ -519,13 +519,13 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 }
                 procbitmap = NULL;
                 orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
-                locality = opal_hwloc_base_get_relative_locality(node->topology->topo,
-                                                                 p0bitmap,
-                                                                 procbitmap);
+                locality = opal_hwloc_get_relative_locality(node->topology->topo,
+                                                            p0bitmap,
+                                                            procbitmap);
                 opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",
                             ORTE_VPID_PRINT(p0->name.vpid),
                             ORTE_VPID_PRINT(proc->name.vpid),
-                            opal_hwloc_base_print_locality(locality));
+                            opal_hwloc_print_locality(locality));
             }
             opal_output(orte_clean_output, "\t</locality>\n</map>");
             fflush(stderr);

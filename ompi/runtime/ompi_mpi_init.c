@@ -42,7 +42,6 @@
 #include "mpi.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/threads/threads.h"
 #include "opal/util/arch.h"

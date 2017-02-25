@@ -20,7 +20,7 @@
 #include <ctype.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/hwloc/hwloc.h"
 #include "opal/util/argv.h"
 
 #include "orte/util/show_help.h"
@@ -182,7 +182,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             /* add it to our array */
             t = OBJ_NEW(orte_topology_t);
             t->topo = topo;
-            t->sig = opal_hwloc_base_get_topo_signature(topo);
+            t->sig = opal_hwloc_get_topo_signature(topo);
             opal_pointer_array_add(orte_node_topologies, t);
         } else {
             if (0 != hwloc_topology_init(&topo)) {
@@ -205,10 +205,10 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
                 hwloc_topology_destroy(topo);
                 goto error_silent;
             }
-            if (OPAL_SUCCESS != opal_hwloc_base_filter_cpus(topo)) {
+            if (OPAL_SUCCESS != opal_hwloc_filter_cpus(topo)) {
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc API fail", true,
-                               __FILE__, __LINE__, "opal_hwloc_base_filter_cpus");
+                               __FILE__, __LINE__, "opal_hwloc_filter_cpus");
                 hwloc_topology_destroy(topo);
                 goto error_silent;
             }
@@ -245,7 +245,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             /* add it to our array */
             t = OBJ_NEW(orte_topology_t);
             t->topo = topo;
-            t->sig = opal_hwloc_base_get_topo_signature(topo);
+            t->sig = opal_hwloc_get_topo_signature(topo);
             opal_pointer_array_add(orte_node_topologies, t);
         }
 
@@ -258,13 +258,13 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
                 node->slots_max = 0;
             } else {
                 obj = hwloc_get_root_obj(topo);
-                node->slots_max = opal_hwloc_base_get_npus(topo, obj);
+                node->slots_max = opal_hwloc_get_npus(topo, obj);
             }
             if (NULL == slot_cnt || NULL == slot_cnt[n]) {
                 node->slots = 0;
             } else {
                 obj = hwloc_get_root_obj(topo);
-                node->slots = opal_hwloc_base_get_npus(topo, obj);
+                node->slots = opal_hwloc_get_npus(topo, obj);
             }
             node->topology = OBJ_NEW(orte_topology_t);
             node->topology->topo = topo;

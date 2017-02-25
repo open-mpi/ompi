@@ -309,7 +309,7 @@ static int rte_init(void)
         free(val);
     } else {
         /* it wasn't passed down to us, so go get it */
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
+        if (OPAL_SUCCESS != (ret = opal_hwloc_get_topology())) {
             error = "topology discovery";
             goto error;
         }

@@ -215,9 +215,9 @@ static int mindist_map(orte_job_t *jdata)
 
             /* get the number of available pus */
             if (opal_hwloc_use_hwthreads_as_cpus) {
-                total_npus = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_PU, 0, OPAL_HWLOC_AVAILABLE);
+                total_npus = opal_hwloc_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_PU, 0, OPAL_HWLOC_AVAILABLE);
             } else {
-                total_npus = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_CORE, 0, OPAL_HWLOC_AVAILABLE);
+                total_npus = opal_hwloc_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_CORE, 0, OPAL_HWLOC_AVAILABLE);
             }
             if (bynode) {
                 if (total_npus < num_procs_to_assign) {
@@ -235,8 +235,8 @@ static int mindist_map(orte_job_t *jdata)
                 }
             }
             /* first we need to fill summary object for root with information about nodes
-             * so we call opal_hwloc_base_get_nbobjs_by_type */
-            opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
+             * so we call opal_hwloc_get_nbobjs_by_type */
+            opal_hwloc_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
             OBJ_CONSTRUCT(&numa_list, opal_list_t);
             ret = opal_hwloc_get_sorted_numa_list(node->topology->topo, orte_rmaps_base.device, &numa_list);
             if (ret > 1) {
@@ -257,11 +257,11 @@ static int mindist_map(orte_job_t *jdata)
                 required = 0;
                 OPAL_LIST_FOREACH(numa, &numa_list, opal_rmaps_numa_node_t) {
                     /* get the hwloc object for this numa */
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, HWLOC_OBJ_NODE, 0, numa->index, OPAL_HWLOC_AVAILABLE))) {
+                    if (NULL == (obj = opal_hwloc_get_obj_by_type(node->topology->topo, HWLOC_OBJ_NODE, 0, numa->index, OPAL_HWLOC_AVAILABLE))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return ORTE_ERR_NOT_FOUND;
                     }
-                    npus = opal_hwloc_base_get_npus(node->topology->topo, obj);
+                    npus = opal_hwloc_get_npus(node->topology->topo, obj);
                     if (bynode) {
                         required = ((num_procs_to_assign-j) > npus) ? (npus) : (num_procs_to_assign-j);
                     } else {
@@ -360,7 +360,7 @@ static int mindist_map(orte_job_t *jdata)
                     numa_item = opal_list_get_first(&numa_list);
                     k = 0;
                     obj = hwloc_get_obj_by_type(node->topology->topo, HWLOC_OBJ_NODE,((opal_rmaps_numa_node_t*)numa_item)->index);
-                    npus = opal_hwloc_base_get_npus(node->topology->topo, obj);
+                    npus = opal_hwloc_get_npus(node->topology->topo, obj);
                     for (j = 0; j < (int)num_procs_to_assign && nprocs_mapped < (int)app->num_procs; j++) {
                         if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, i))) {
                             rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -375,7 +375,7 @@ static int mindist_map(orte_job_t *jdata)
                                 numa_item = opal_list_get_first(&numa_list);
                             }
                             obj = hwloc_get_obj_by_type(node->topology->topo, HWLOC_OBJ_NODE,((opal_rmaps_numa_node_t*)numa_item)->index);
-                            npus = opal_hwloc_base_get_npus(node->topology->topo, obj);
+                            npus = opal_hwloc_get_npus(node->topology->topo, obj);
                             k = 0;
                         }
                     }

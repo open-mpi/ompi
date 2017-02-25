@@ -32,7 +32,7 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/hwloc/hwloc.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -903,7 +903,7 @@ static void tcon(orte_topology_t *t)
 static void tdes(orte_topology_t *t)
 {
     if (NULL != t->topo) {
-        opal_hwloc_base_free_topology(t->topo);
+        opal_hwloc_free_topology(t->topo);
     }
     if (NULL != t->sig) {
         free(t->sig);

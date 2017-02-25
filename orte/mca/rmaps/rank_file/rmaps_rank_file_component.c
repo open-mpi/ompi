@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 
 #include "orte/util/show_help.h"
 
@@ -106,7 +106,7 @@ static int orte_rmaps_rank_file_register(void)
 static int orte_rmaps_rank_file_open(void)
 {
     /* ensure we flag mapping by user */
-    if (NULL != opal_hwloc_base_cpu_list || NULL != orte_rankfile) {
+    if (NULL != opal_hwloc_cpu_list || NULL != orte_rankfile) {
         if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
             /* if a non-default mapping is already specified, then we
              * have an error

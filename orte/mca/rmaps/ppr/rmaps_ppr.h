@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,8 +12,6 @@
 #define ORTE_RMAPS_PPR_H
 
 #include "orte_config.h"
-
-#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/rmaps/rmaps.h"
 

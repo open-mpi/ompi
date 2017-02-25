@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -35,7 +35,7 @@
 #include "opal/util/output.h"
 #include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/threads/tsd.h"
 
 #include "orte/types.h"
@@ -416,7 +416,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
             }
             if (NULL == nd || NULL == nd->daemon ||
-		NULL == node->daemon ||
+                NULL == node->daemon ||
                 nd->daemon->name.vpid < node->daemon->name.vpid) {
                 /* just append to end */
                 opal_list_append(allocated_nodes, &node->super);

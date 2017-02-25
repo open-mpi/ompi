@@ -574,7 +574,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         }
 
         /* detect and add any coprocessors */
-        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+        coprocessors = opal_hwloc_find_coprocessors(opal_hwloc_topology);
         if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &coprocessors, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
         }
@@ -582,7 +582,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             free(coprocessors);
         }
         /* see if I am on a coprocessor */
-        coprocessors = opal_hwloc_base_check_on_coprocessor();
+        coprocessors = opal_hwloc_check_on_coprocessor();
         if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &coprocessors, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
         }

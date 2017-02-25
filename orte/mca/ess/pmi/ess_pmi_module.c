@@ -43,7 +43,7 @@
 #include "opal/util/argv.h"
 #include "opal/runtime/opal_progress_threads.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/util/printf.h"
 #include "opal/util/proc.h"
 #include "opal/mca/pmix/pmix.h"
@@ -357,7 +357,7 @@ static int rte_init(void)
             OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                                  "%s ess:pmi:locality: proc %s locality %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&pname), opal_hwloc_base_print_locality(u16)));
+                                 ORTE_NAME_PRINT(&pname), opal_hwloc_print_locality(u16)));
             kv->data.uint16 = u16;
             ret = opal_pmix.store_local(&pname, kv);
             if (OPAL_SUCCESS != ret) {

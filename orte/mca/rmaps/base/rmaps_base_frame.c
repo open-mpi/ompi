@@ -31,6 +31,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
+#include "opal/hwloc/base.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
@@ -261,7 +262,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
      * for mapping purposes
      */
     if (NULL != rmaps_base_topo_file) {
-        if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_topology(rmaps_base_topo_file))) {
+        if (OPAL_SUCCESS != (rc = opal_hwloc_set_topology(rmaps_base_topo_file))) {
             orte_show_help("help-orte-rmaps-base.txt", "topo-file", true, rmaps_base_topo_file);
             return ORTE_ERR_SILENT;
         }
@@ -387,7 +388,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
                     OPAL_BIND_TO_NONE != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                     orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
                                    orte_rmaps_base.cpus_per_rank, "use-hwthreads-as-cpus",
-                                   opal_hwloc_base_print_binding(opal_hwloc_binding_policy),
+                                   opal_hwloc_print_binding(opal_hwloc_binding_policy),
                                    "bind-to hwthread");
                     return ORTE_ERR_SILENT;
                 }
@@ -395,7 +396,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
                        OPAL_BIND_TO_NONE != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                 orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
                                orte_rmaps_base.cpus_per_rank, "cores as cpus",
-                               opal_hwloc_base_print_binding(opal_hwloc_binding_policy),
+                               opal_hwloc_print_binding(opal_hwloc_binding_policy),
                                "bind-to core");
                 return ORTE_ERR_SILENT;
             }

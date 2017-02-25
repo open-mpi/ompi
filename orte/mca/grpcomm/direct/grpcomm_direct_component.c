@@ -3,7 +3,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +16,7 @@
 
 #include "orte/mca/mca.h"
 #include "opal/runtime/opal_params.h"
-
+#include "opal/mca/base/mca_base_var.h"
 #include "orte/util/proc_info.h"
 
 #include "grpcomm_direct.h"
