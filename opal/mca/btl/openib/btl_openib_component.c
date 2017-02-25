@@ -18,7 +18,7 @@
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
@@ -59,8 +59,8 @@
    know its exact path.  We have to rely on the framework header files
    to find the right hwloc verbs helper file for us. */
 #define OPAL_HWLOC_WANT_VERBS_HELPER 1
-#include "opal/mca/hwloc/hwloc.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/hwloc.h"
+#include "opal/hwloc/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal_stdint.h"
 #include "opal/util/show_help.h"
@@ -1519,7 +1519,7 @@ static uint64_t calculate_total_mem (void)
 
     /* if not available, then ensure that the topology has been
      * loaded and try to get it from there */
-    if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
+    if (OPAL_SUCCESS == opal_hwloc_get_topology()) {
         machine = hwloc_get_next_obj_by_type (opal_hwloc_topology, HWLOC_OBJ_MACHINE, NULL);
         if (NULL == machine) {
             return 0;
@@ -2333,7 +2333,7 @@ static float get_ib_dev_distance(struct ibv_device *dev)
 
     /* Override any distance logic so all devices are used */
     if (0 != mca_btl_openib_component.ignore_locality ||
-        OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+        OPAL_SUCCESS != opal_hwloc_get_topology()) {
         return distance;
     }
 

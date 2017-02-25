@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +29,7 @@
 #include "orte/constants.h"
 
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/hwloc/hwloc.h"
 
 #include "orte/runtime/orte_globals.h"
 

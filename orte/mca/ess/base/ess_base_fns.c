@@ -33,7 +33,7 @@
 
 #include "opal/util/output.h"
 #include "opal/mca/pmix/pmix.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -100,7 +100,7 @@ int orte_ess_base_proc_binding(void)
     }
 
     /* load the topology as we will likely need it */
-    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+    if (OPAL_SUCCESS != opal_hwloc_get_topology()) {
         /* there is nothing we can do, so just return */
         return ORTE_SUCCESS;
     }
@@ -113,7 +113,7 @@ int orte_ess_base_proc_binding(void)
         support = (struct hwloc_topology_support*)hwloc_topology_get_support(opal_hwloc_topology);
         /* get our node object */
         node = hwloc_get_root_obj(opal_hwloc_topology);
-        nodeset = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, node);
+        nodeset = opal_hwloc_get_available_cpus(opal_hwloc_topology, node);
         /* get our bindings */
         cpus = hwloc_bitmap_alloc();
         if (hwloc_get_cpubind(opal_hwloc_topology, cpus, HWLOC_CPUBIND_PROCESS) < 0) {
@@ -130,8 +130,8 @@ int orte_ess_base_proc_binding(void)
          * or if there is only ONE cpu available to us
          */
         if (0 != hwloc_bitmap_compare(cpus, nodeset) ||
-            opal_hwloc_base_single_cpu(nodeset) ||
-            opal_hwloc_base_single_cpu(cpus)) {
+            opal_hwloc_single_cpu(nodeset) ||
+            opal_hwloc_single_cpu(cpus)) {
             /* someone external set it - indicate it is set
              * so that we know
              */
@@ -149,9 +149,9 @@ int orte_ess_base_proc_binding(void)
              */
             hwloc_bitmap_zero(cpus);
             if (OPAL_BIND_TO_CPUSET == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
-                if (OPAL_SUCCESS != (ret = opal_hwloc_base_cpu_list_parse(opal_hwloc_base_cpu_list,
-                                                                           opal_hwloc_topology,
-                                                                           OPAL_HWLOC_LOGICAL, cpus))) {
+                if (OPAL_SUCCESS != (ret = opal_hwloc_cpu_list_parse(opal_hwloc_cpu_list,
+                                                                     opal_hwloc_topology,
+                                                                     OPAL_HWLOC_LOGICAL, cpus))) {
                     error = "Setting processor affinity failed";
                     hwloc_bitmap_free(cpus);
                     goto error;
@@ -185,13 +185,13 @@ int orte_ess_base_proc_binding(void)
                  * hwthread on this node
                  */
                 if (OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_PU,
-                                                                       0, orte_process_info.my_node_rank, OPAL_HWLOC_LOGICAL))) {
+                    if (NULL == (obj = opal_hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_PU,
+                                                                  0, orte_process_info.my_node_rank, OPAL_HWLOC_LOGICAL))) {
                         ret = ORTE_ERR_NOT_FOUND;
                         error = "Getting hwthread object";
                         goto error;
                     }
-                    cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
+                    cpus = opal_hwloc_get_available_cpus(opal_hwloc_topology, obj);
                     if (0 > hwloc_set_cpubind(opal_hwloc_topology, cpus, 0)) {
                         ret = ORTE_ERROR;
                         error = "Setting processor affinity failed";
@@ -206,13 +206,13 @@ int orte_ess_base_proc_binding(void)
                     /* if the binding policy is core, then we bind to the nrank-th
                      * core on this node
                      */
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE,
-                                                                       0, orte_process_info.my_node_rank, OPAL_HWLOC_LOGICAL))) {
+                    if (NULL == (obj = opal_hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE,
+                                                                  0, orte_process_info.my_node_rank, OPAL_HWLOC_LOGICAL))) {
                         ret = ORTE_ERR_NOT_FOUND;
                         error = "Getting core object";
                         goto error;
                     }
-                    cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
+                    cpus = opal_hwloc_get_available_cpus(opal_hwloc_topology, obj);
                     if (0 > hwloc_set_cpubind(opal_hwloc_topology, cpus, 0)) {
                         error = "Setting processor affinity failed";
                         ret = ORTE_ERROR;
@@ -226,8 +226,8 @@ int orte_ess_base_proc_binding(void)
                     /* for all higher binding policies, we bind to the specified
                      * object that the nrank-th core belongs to
                      */
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE,
-                                                                       0, orte_process_info.my_node_rank, OPAL_HWLOC_LOGICAL))) {
+                    if (NULL == (obj = opal_hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE,
+                                                                  0, orte_process_info.my_node_rank, OPAL_HWLOC_LOGICAL))) {
                         ret = ORTE_ERR_NOT_FOUND;
                         error = "Getting core object";
                         goto error;
@@ -256,7 +256,7 @@ int orte_ess_base_proc_binding(void)
                                 continue;
                             }
                             /* this is the place! */
-                            cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
+                            cpus = opal_hwloc_get_available_cpus(opal_hwloc_topology, obj);
                             if (0 > hwloc_set_cpubind(opal_hwloc_topology, cpus, 0)) {
                                 ret = ORTE_ERROR;
                                 error = "Setting processor affinity failed";
@@ -309,10 +309,10 @@ int orte_ess_base_proc_binding(void)
         /* report the binding, if requested */
         if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
             char tmp1[1024], tmp2[1024];
-            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
+            if (OPAL_ERR_NOT_BOUND == opal_hwloc_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
                 opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", ORTE_PROC_MY_NAME->vpid);
             } else {
-                opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
+                opal_hwloc_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
                 opal_output(0, "MCW rank %d bound to %s: %s",
                             ORTE_PROC_MY_NAME->vpid, tmp1, tmp2);
             }

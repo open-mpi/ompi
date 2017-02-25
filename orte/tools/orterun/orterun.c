@@ -58,7 +58,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/installdirs/installdirs.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"

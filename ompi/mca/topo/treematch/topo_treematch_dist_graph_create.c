@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
  * Copyright (c) 2012-2015 Bordeaux Poytechnic Institute
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/hwloc/hwloc.h"
 
 #include "ompi/mca/topo/treematch/topo_treematch.h"
 #include "ompi/mca/topo/treematch/treematch/tm_mapping.h"
@@ -256,7 +256,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     /* Then, we need to know if the processes are bound */
     /* We make the hypothesis that all processes are in  */
     /* the same state : all bound or none bound */
-    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+    if (OPAL_SUCCESS != opal_hwloc_get_topology()) {
         goto fallback;
     }
     root_obj = hwloc_get_root_obj(opal_hwloc_topology);
@@ -890,7 +890,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         (void)opal_pmix.store_local((opal_process_name_t*)ORTE_PROC_MY_NAME, &kv);
         OBJ_DESTRUCT(&kv);
 
-        locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+        locality = opal_hwloc_get_relative_locality(opal_hwloc_topology,
                                                          orte_process_info.cpuset,set_as_string);
         OBJ_CONSTRUCT(&kv, opal_value_t);
         kv.key = strdup(OPAL_PMIX_LOCALITY);

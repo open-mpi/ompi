@@ -61,7 +61,7 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/installdirs/installdirs.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/argv.h"
@@ -861,7 +861,7 @@ int orte_submit_job(char *argv[], int *index,
     }
     /* if the user specified a binding policy, then set it */
     if (NULL != orte_cmd_options.binding_policy) {
-        if (ORTE_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&jdata->map->binding,
+        if (ORTE_SUCCESS != (rc = opal_hwloc_set_binding_policy(&jdata->map->binding,
                                                                      orte_cmd_options.binding_policy))) {
             ORTE_ERROR_LOG(rc);
             return rc;

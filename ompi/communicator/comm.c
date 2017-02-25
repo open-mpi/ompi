@@ -20,7 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 #include "ompi/constants.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/pmix/pmix.h"
 
