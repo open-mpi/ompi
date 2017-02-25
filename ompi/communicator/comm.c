@@ -823,7 +823,7 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         ok = (MPI_UNDEFINED == split_type) || global_split_type == split_type;
 
         rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
-                                          comm->c_coll.coll_allgather_module);
+                                          comm->c_coll.coll_allreduce_module);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             return rc;
         }
@@ -831,7 +831,7 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         if (inter) {
             /* need an extra allreduce to ensure that all ranks have the same result */
             rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
-                                              comm->c_coll.coll_allgather_module);
+                                              comm->c_coll.coll_allreduce_module);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
                 return rc;
             }
