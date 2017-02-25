@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -173,7 +173,6 @@ void free_ofi_prov_resources( int ofi_prov_id)
     orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info = NULL;
     orte_rml_ofi.ofi_prov[ofi_prov_id].mr_multi_recv = NULL;
     orte_rml_ofi.ofi_prov[ofi_prov_id].ofi_prov_id = RML_OFI_PROV_ID_INVALID;
-    OPAL_LIST_DESTRUCT(&orte_rml_ofi.recv_msg_queue_list);
 
 
     if( orte_rml_ofi.ofi_prov[ofi_prov_id].progress_ev_active) {
@@ -195,23 +194,24 @@ rml_ofi_component_close(void)
     opal_object_t *value;
     uint64_t key;
     void *node;
+    uint8_t ofi_prov_id;
 
     opal_output_verbose(10,orte_rml_base_framework.framework_output,
                             " %s - rml_ofi_component_close() -begin, total open OFI providers = %d",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),orte_rml_ofi.ofi_prov_open_num);
 
-    if(orte_rml_ofi.fi_info_list) {
-    (void) fi_freeinfo(orte_rml_ofi.fi_info_list);
+    if (orte_rml_ofi.fi_info_list) {
+        (void) fi_freeinfo(orte_rml_ofi.fi_info_list);
     }
 
     /* Close endpoint and all queues */
-    for( uint8_t ofi_prov_id=0;ofi_prov_id<orte_rml_ofi.ofi_prov_open_num;ofi_prov_id++) {
+    for (ofi_prov_id=0; ofi_prov_id < orte_rml_ofi.ofi_prov_open_num; ofi_prov_id++) {
          free_ofi_prov_resources(ofi_prov_id);
     }
 
     /* release all peers from the hash table */
-    rc = opal_hash_table_get_first_key_uint64 (&orte_rml_ofi.peers, &key,
-                                               (void **) &value, &node);
+    rc = opal_hash_table_get_first_key_uint64(&orte_rml_ofi.peers, &key,
+                                              (void **)&value, &node);
     while (OPAL_SUCCESS == rc) {
         if (NULL != value) {
             OBJ_RELEASE(value);
@@ -231,6 +231,7 @@ rml_ofi_component_close(void)
                                                   (void **) &value, node, &node);
     }
     OBJ_DESTRUCT(&orte_rml_ofi.peers);
+    OPAL_LIST_DESTRUCT(&orte_rml_ofi.recv_msg_queue_list);
 
     opal_output_verbose(10,orte_rml_base_framework.framework_output,
                         " %s - rml_ofi_component_close() end",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
