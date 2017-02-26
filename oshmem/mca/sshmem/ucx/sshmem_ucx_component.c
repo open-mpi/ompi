@@ -83,10 +83,6 @@ ucx_runtime_query(mca_base_module_t **module,
     }
 
     *priority = mca_sshmem_ucx_component.priority;
-    /* use lowest priority because UCX does not support
-     * fixed address mapping yet
-     */
-    *priority = 0;
     *module = (mca_base_module_t *)&mca_sshmem_ucx_module.super;
     return OPAL_SUCCESS;
 }

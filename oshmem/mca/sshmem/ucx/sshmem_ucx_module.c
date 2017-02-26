@@ -98,10 +98,11 @@ segment_create(map_segment_t *ds_buf,
     mem_map_params.field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
                                 UCP_MEM_MAP_PARAM_FIELD_LENGTH |
                                 UCP_MEM_MAP_PARAM_FIELD_FLAGS;
-    /* TODO: use default base address */
-    mem_map_params.address    = NULL;
+
+    mem_map_params.address    = (void *)mca_sshmem_base_start_address;
     mem_map_params.length     = size;
-    mem_map_params.flags      = 0;
+    mem_map_params.flags      = UCP_MEM_MAP_ALLOCATE|UCP_MEM_MAP_FIXED;
+
     if (spml->heap_reg_nb) {
         mem_map_params.flags |= UCP_MEM_MAP_NONBLOCK;
     }
