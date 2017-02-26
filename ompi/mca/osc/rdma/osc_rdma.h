@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -510,6 +510,14 @@ static inline void ompi_osc_rdma_aggregation_return (ompi_osc_rdma_aggregation_t
     }
 
     opal_free_list_return(&mca_osc_rdma_component.aggregate, (opal_free_list_item_t *) aggregation);
+}
+
+
+__opal_attribute_always_inline__
+static bool ompi_osc_rdma_oor (int rc)
+{
+    /* check for OPAL_SUCCESS first to short-circuit the statement in the common case */
+    return (OPAL_SUCCESS != rc && (OPAL_ERR_OUT_OF_RESOURCE == rc || OPAL_ERR_TEMP_OUT_OF_RESOURCE == rc));
 }
 
 #endif /* OMPI_OSC_RDMA_H */
