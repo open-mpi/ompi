@@ -22,6 +22,7 @@ my $rawoutput = 0;
 my $myresults = "myresults";
 my $ppn = 1;
 my @csvrow;
+my $timecmd = "time";
 
 my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
 my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
@@ -52,7 +53,12 @@ GetOptions(
     "all" => \$runall,
     "results=s" => \$myresults,
     "rawout" => \$rawoutput,
+<<<<<<< HEAD
+    "timecmd" => \$timecmd,
+||||||| merged common ancestors
+=======
     "ppn=s" => \$ppn,
+>>>>>>> 50ca9fb66b5defd22f0cfa00b9a4592c42072d80
 ) or die "unable to parse options, stopped";
 
 if ($HELP) {
@@ -70,8 +76,15 @@ if ($HELP) {
 --all                Use all available start commands [default]
 --results=file       File where results are to stored in comma-separated value format
 --rawout             Provide raw timing output to the file
+<<<<<<< HEAD
+--timecmd=cmd        Command to use for timing the executions
+EOT
+||||||| merged common ancestors
+EOT
+=======
 --ppn=n              Run n procs/node
 ";
+>>>>>>> 50ca9fb66b5defd22f0cfa00b9a4592c42072d80
     exit(0);
 }
 
@@ -98,12 +111,33 @@ if ($runall) {
     $usedvm = 1;
 }
 
+# if they told us to run everything, or they
+# gave us no directives at all, then run all
+if ($runall ||
+    ((0 == $usempirun) &&
+     (0 == $usesrun) &&
+     (0 == $useaprun) &&
+     (0 == $usedvm))) {
+    $usedvm = 1;
+    $useaprun = 1;
+    $usesrun = 1;
+    $usempirun = 1;
+}
+
 # see which starters are available
 my @path = split(":", $ENV{PATH});
 my $exists = 0;
 my $opt;
 $idx=0;
+<<<<<<< HEAD
+while ($idx <= $#availablestarters) {
+    $starter = $availablestarters[$idx];
+||||||| merged common ancestors
+while ($idx <= $#starters) {
+    $starter = $starters[$idx];
+=======
 foreach $starter (@starterlist) {
+>>>>>>> 50ca9fb66b5defd22f0cfa00b9a4592c42072d80
     $exists = 0;
     foreach my $path (@path) {
         if ( -x "$path/$starter") {
@@ -111,6 +145,121 @@ foreach $starter (@starterlist) {
             last;
         }
     }
+<<<<<<< HEAD
+<<<<<<< HEAD
+    if ($exists) {
+        if ($usedvm && $starter eq "orte-submit") {
+            # push this one to the list
+            push @starters, $starter;
+            push @starteroptions, $options[$idx];
+        } elsif ($usesrun && $starter eq "srun") {
+            # push this one to the list
+            push @starters, $starter;
+            push @starteroptions, $options[$idx];
+        } elsif ($useaprun && $starter eq "aprun") {
+            # push this one to the list
+            push @starters, $starter;
+            push @starteroptions, $options[$idx];
+        } elsif ($usempirun && (($starter eq "mpirun") || ($starter eq "orterun"))) {
+            # push this one to the list
+            push @starters, $starter;
+            push @starteroptions, $options[$idx];
+        }
+||||||| merged common ancestors
+    unless ($exists) {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usedvm && $starter ne "orte-submit") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usesrun && $starter ne "srun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($useaprun && $starter ne "aprun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usempirun && (($starter ne "mpirun") && ($starter ne "orterun"))) {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+=======
+    unless ($exists) {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usedvm && $starter ne "orterun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usesrun && $starter ne "srun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($useaprun && $starter ne "aprun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usempirun && $starter ne "mpirun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+>>>>>>> da0c873e1432e684ffd42a23bbb81d9d47fee2b8
+||||||| merged common ancestors
+    unless ($exists) {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usedvm && $starter ne "orterun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usesrun && $starter ne "srun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($useaprun && $starter ne "aprun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($usempirun && $starter ne "mpirun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+=======
     if ($exists) {
         if ($usedvm && $starter eq "orterun") {
             push @starters, $starter;
@@ -129,6 +278,7 @@ foreach $starter (@starterlist) {
             $opt = $starteroptionlist[$idx] . " " . $ppn;
             push @starteroptions, $opt;
         }
+>>>>>>> 50ca9fb66b5defd22f0cfa00b9a4592c42072d80
     }
     $idx = $idx + 1;
 }
@@ -151,7 +301,14 @@ if ($myresults) {
 
 # determine the number of nodes - doesn't
 # matter which starter we use
+<<<<<<< HEAD
+$cmd = $starters[0] . " " . $starteroptions[0] . " hostname";
+||||||| merged common ancestors
+$cmd = $starters[0] . " " . $starteroptions[0] . " hostname";
+print "CMD: $cmd\n";
+=======
 $cmd = "mpirun --novm --pernode hostname";
+>>>>>>> 50ca9fb66b5defd22f0cfa00b9a4592c42072d80
 $output = `$cmd`;
 @lines = split(/\n/, $output);
 $num_nodes = $#lines + 1;
@@ -161,12 +318,30 @@ my ($sec,$min,$hour,$day,$month,$yr19,@rest) =   localtime(time);
 
 my $pstarts = join(", ", @starters);
 # start by printing out the resulting configuration
+<<<<<<< HEAD
+if (!$QUIET) {
+    print "\n--------------------------------------------------\n";
+    print "\nTest configuration:\n";
+    print "\tDate:\t" . "$day-".++$month. "-".($yr19+1900) . " " . sprintf("%02d",$hour).":".sprintf("%02d",$min).":".sprintf("%02d",$sec) . "\n";;
+    print "\tNum nodes:\t" . $num_nodes . "\n";
+    print "\tStarters:\t" . $mystarters . "\n";
+    print "\n--------------------------------------------------\n";
+}
+||||||| merged common ancestors
+print "\n--------------------------------------------------\n";
+print "\nTest configuration:\n";
+print "\tDate:\t" . "$day-".++$month. "-".($yr19+1900) . " " . sprintf("%02d",$hour).":".sprintf("%02d",$min).":".sprintf("%02d",$sec) . "\n";;
+print "\tNum nodes:\t" . $num_nodes . "\n";
+print "\tStarters:\t" . $mystarters . "\n";
+print "\n--------------------------------------------------\n";
+=======
 print "\n--------------------------------------------------\n";
 print "\nTest configuration:\n";
 print "\tDate:\t" . "$day-".++$month. "-".($yr19+1900) . " " . sprintf("%02d",$hour).":".sprintf("%02d",$min).":".sprintf("%02d",$sec) . "\n";;
 print "\tNum nodes:\t" . $num_nodes . "\n";
 print "\tStarters:\t" . $pstarts . "\n";
 print "\n--------------------------------------------------\n";
+>>>>>>> 50ca9fb66b5defd22f0cfa00b9a4592c42072d80
 
 # and tag the output file as well
 if ($myresults) {
@@ -240,22 +415,18 @@ sub runcmd()
         }
     }
     # we have now completed all the reps, so log the results
+    my $myout;
+    $myout = join(',', @csvrow);
     if ($myresults) {
-        my $myout;
-        my $mycnt=0;
-        while ($mycnt <= $#csvrow) {
-            if (0 == $mycnt) {
-                $myout = $csvrow[$mycnt];
-            } else {
-                $myout = $myout . "," . $csvrow[$mycnt];
-            }
-            $mycnt = $mycnt + 1;
-        }
         print FILE "$myout\n";
-        # clear the output
-        @csvrow = ();
+    } elsif (!$QUIET) {
+        print "$myout\n";
     }
-    print "\n";
+    # clear the output
+    @csvrow = ();
+    if (!$QUIET) {
+        print "\n";
+    }
 }
 
 foreach $starter (@starters) {
@@ -266,10 +437,20 @@ foreach $starter (@starters) {
         if (-e "dvm_uri") {
             system("rm -f dvm_uri");
         }
+<<<<<<< HEAD
+        $cmd = "orte-dvm --report-uri dvm_uri &> /dev/null &";
+        if (!$QUIET) {
+            print $cmd . "\n";
+        }
+||||||| merged common ancestors
+        $cmd = "orte-dvm --report-uri dvm_uri 2>&1 &";
+        print $cmd . "\n";
+=======
         $cmd = "orte-dvm --report-uri dvm_uri 2>&1 &";
         if ($myresults) {
             print FILE "\n\n$cmd\n";
         }
+>>>>>>> 50ca9fb66b5defd22f0cfa00b9a4592c42072d80
         if (!$SHOWME) {
             system($cmd);
             # wait for the rendezvous file to appear
@@ -298,24 +479,36 @@ foreach $starter (@starters) {
             $n = 1;
             while ($n <= $num_nodes) {
                 push @csvrow,$n;
+<<<<<<< HEAD
+                $cmd = $timecmd . " " . $starter . " " . $starteroptions[$index] . " -n $n $option $test 2>&1";
+                if (!$QUIET) {
+                    print $cmd . "\n";
+                }
+||||||| merged common ancestors
+                $cmd = "time " . $starter . " " . $starteroptions[$index] . " -n $n $option $test 2>&1";
+                print $cmd . "\n";
+=======
                 $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option $test 2>&1";
                 print $cmd . "\n";
+>>>>>>> 50ca9fb66b5defd22f0cfa00b9a4592c42072d80
                 if (!$SHOWME) {
                     runcmd();
                 }
                 $n = 2 * $n;
             }
-            if (0 != $num_nodes & $n) {
-                $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option $test 2>&1";
-                print $cmd . "\n";
+            if (0 != $num_nodes % $n) {
+                $cmd = $timecmd . " " . $starter . " " . $starteroptions[$index] . " $option $test 2>&1";
+                if (!$QUIET) {
+                    print $cmd . "\n";
+                }
                 if (!$SHOWME) {
+                    push @csvrow,$num_nodes;
                     runcmd();
                 }
             }
-            print "\n--------------------------------------------------\n";
-        } else {
-            print "Test " . $test . " was not found - test skipped\n";
-            print "\n--------------------------------------------------\n";
+            if (!$QUIET) {
+                print "\n--------------------------------------------------\n";
+            }
         }
         $testnum = $testnum + 1;
     }
