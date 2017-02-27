@@ -1004,7 +1004,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         OPAL_ASM_SUPPORT_64BIT=0
         case "${host}" in
         x86_64-*x32)
-            opal_cv_asm_arch="AMD64"
+            opal_cv_asm_arch="X86_64"
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
             ;;
@@ -1012,7 +1012,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             if test "$ac_cv_sizeof_long" = "4" ; then
                 opal_cv_asm_arch="IA32"
             else
-                opal_cv_asm_arch="AMD64"
+                opal_cv_asm_arch="X86_64"
             fi
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
@@ -1193,7 +1193,7 @@ AC_MSG_ERROR([Can not continue.])
 
     # Check for RDTSCP support
     result=0
-    AS_IF([test "$opal_cv_asm_arch" = "OPAL_AMD64" || test "$opal_cv_asm_arch" = "OPAL_IA32"],
+    AS_IF([test "$opal_cv_asm_arch" = "OPAL_X86_64" || test "$opal_cv_asm_arch" = "OPAL_IA32"],
           [AC_MSG_CHECKING([for RDTSCP assembly support])
            AC_LANG_PUSH([C])
            AC_TRY_RUN([[

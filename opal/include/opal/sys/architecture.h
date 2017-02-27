@@ -13,6 +13,8 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,7 @@
 #define OPAL_UNSUPPORTED    0000
 #define OPAL_IA32           0010
 #define OPAL_IA64           0020
-#define OPAL_AMD64          0030
+#define OPAL_X86_64         0030
 #define OPAL_POWERPC32      0050
 #define OPAL_POWERPC64      0051
 #define OPAL_SPARC          0060
