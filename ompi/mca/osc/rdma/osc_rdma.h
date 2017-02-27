@@ -514,7 +514,7 @@ static inline void ompi_osc_rdma_aggregation_return (ompi_osc_rdma_aggregation_t
 
 
 __opal_attribute_always_inline__
-static bool ompi_osc_rdma_oor (int rc)
+static inline bool ompi_osc_rdma_oor (int rc)
 {
     /* check for OPAL_SUCCESS first to short-circuit the statement in the common case */
     return (OPAL_SUCCESS != rc && (OPAL_ERR_OUT_OF_RESOURCE == rc || OPAL_ERR_TEMP_OUT_OF_RESOURCE == rc));
