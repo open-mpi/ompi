@@ -13,6 +13,8 @@
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,7 +31,7 @@ headers += \
 	opal/sys/timer.h \
         opal/sys/cma.h
 
-include opal/sys/amd64/Makefile.am
+include opal/sys/x86_64/Makefile.am
 include opal/sys/arm/Makefile.am
 include opal/sys/arm64/Makefile.am
 include opal/sys/ia32/Makefile.am

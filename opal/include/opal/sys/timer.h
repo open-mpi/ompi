@@ -84,8 +84,8 @@ BEGIN_C_DECLS
 
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */
-#elif OPAL_ASSEMBLY_ARCH == OPAL_AMD64
-#include "opal/sys/amd64/timer.h"
+#elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+#include "opal/sys/x86_64/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM
 #include "opal/sys/arm/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64

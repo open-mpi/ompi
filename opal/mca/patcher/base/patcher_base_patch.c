@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,7 +102,7 @@ static void flush_and_invalidate_cache (unsigned long a)
         /* does not work with AMD processors */
         __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
     }
-#elif OPAL_ASSEMBLY_ARCH == OPAL_AMD64
+#elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
     __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
     __asm__ volatile ("fc %0;; sync.i;; srlz.i;;" : : "r"(a) : "memory");
