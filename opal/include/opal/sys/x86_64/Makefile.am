@@ -9,6 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -19,5 +21,5 @@
 # This makefile.am does not stand on its own - it is included from opal/include/Makefile.am
 
 headers += \
-	opal/sys/amd64/atomic.h \
-	opal/sys/amd64/timer.h
+	opal/sys/x86_64/atomic.h \
+	opal/sys/x86_64/timer.h

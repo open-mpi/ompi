@@ -3,6 +3,8 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +30,7 @@
 #include <dlfcn.h>
 #include <assert.h>
 
-#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_IA64) || (OPAL_ASSEMBLY_ARCH == OPAL_AMD64)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_IA64) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
 
 #if (OPAL_ASSEMBLY_ARCH == OPAL_IA64)
 
@@ -91,7 +93,7 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
         patch->patch_data_size = 5;
         *(unsigned char *)(patch->patch_data+0) = 0xe9;
         *(unsigned int *) (patch->patch_data+1) = (unsigned int)(func_new_addr - patch->patch_orig - 5);
-#elif (OPAL_ASSEMBLY_ARCH == OPAL_AMD64)
+#elif (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
         patch->patch_data_size = 13;
         *(unsigned short*)(patch->patch_data + 0) = 0xbb49;
         *(unsigned long* )(patch->patch_data + 2) = (unsigned long) func_new_addr;
