@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014-2016 Research Organization for Information Science
+# Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # Copyright (c) 2017      Intel, Inc. All rights reserved.
@@ -118,6 +118,7 @@ AC_DEFUN([OPAL_CHECK_HWLOC],[
                [AC_MSG_RESULT([no])
                 AC_MSG_ERROR([OMPI does not currently support hwloc v2 API
 Cannot continue])])
+           AC_CHECK_DECLS([HWLOC_OBJ_OSDEV_COPROC])
            AS_IF([test "$opal_hwloc_dir" != ""],
                  [CFLAGS=$opal_hwloc_CFLAGS_save])
 

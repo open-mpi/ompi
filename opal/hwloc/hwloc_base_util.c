@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -1526,6 +1526,7 @@ char* opal_hwloc_find_coprocessors(hwloc_topology_t topo)
                              "hwloc:base:find_coprocessors: NONE FOUND IN TOPO"));
         return NULL;
     }
+#if HAVE_DECL_HWLOC_OBJ_OSDEV_COPROC
     /* check the device objects for coprocessors */
     osdev = hwloc_get_obj_by_depth(topo, depth, 0);
     while (NULL != osdev) {
@@ -1549,6 +1550,10 @@ char* opal_hwloc_find_coprocessors(hwloc_topology_t topo)
     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_output,
                          "hwloc:base:find_coprocessors: hosting coprocessors %s",
                          (NULL == cpstring) ? "NONE" : cpstring));
+#else
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_output,
+                         "hwloc:base:find_coprocessors: this hwloc version cannot find any coprocessor"));
+#endif
     return cpstring;
 }
 
