@@ -33,6 +33,7 @@ addons:
             - libnl-route-3-dev
             - libibverbs-dev
             - librdmacm-dev
+            - libhwloc-dev
         sources:
             - ubuntu-toolchain-r-test
 
@@ -57,6 +58,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "6" ]] ; then sudo apt-get --assume-yes install gcc-6 g++-6 gfortran-6; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; brew upgrade automake || true; brew upgrade libtool || true; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap homebrew/science || true; brew install hwloc || true; brew upgrade hwloc || true ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "6" ]] ; then brew install gcc || true; brew upgrade gcc || true ; fi
     - mkdir -p $HOME/bogus/include $HOME/bogus/lib
 
