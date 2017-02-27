@@ -13,6 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2017      UT-Battelle, LLC. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -30,11 +31,11 @@ PS_FLAVOR="unknown"
 ps -A -o fname > /dev/null 2>&1
 
 if test "$?" = "0"; then
-     PS_FLAVOR="ps -A -o fname,pid,user"
+     PS_FLAVOR="ps -A -o fname,pid,uid"
 else
      ps -A -o command > /dev/null 2>&1
      if test "$?" = "0"; then
-         PS_FLAVOR="ps -A -o command,pid,user"
+         PS_FLAVOR="ps -A -o command,pid,uid"
      fi
 fi
 AC_MSG_RESULT([$PS_FLAVOR])

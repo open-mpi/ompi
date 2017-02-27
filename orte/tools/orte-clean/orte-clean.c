@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -275,12 +276,10 @@ void kill_procs(void) {
      * This is the command that is used to get the information about
      * all the processes that are running.  The output looks like the
      * following:
-     * COMMAND    PID     USER
-     * tcsh     12556    rolfv
-     * ps       14424    rolfv
+     * COMMAND    PID     UID
+     * tcsh     12556    1000
+     * ps       14424    1000
      * etc.
-     * Currently, we do not make use of the USER field, but we may later
-     * on so we grab it also.
      */
 
     /*
@@ -301,7 +300,7 @@ void kill_procs(void) {
      */
     ortedpid = getppid();
 
-    /* get the name of the user */
+    /* get the userid of the user */
     uid = getuid();
     asprintf(&this_user, "%d", uid);
 
@@ -322,8 +321,7 @@ void kill_procs(void) {
     psfile = popen(command, "r");
     /*
      * Read the first line of the output.  We just throw it away
-     * as it is the header consisting of the words COMMAND, PID and
-     * USER.
+     * as it is the header consisting of the words COMMAND, PID and UID.
      */
     if (NULL == (inputline = orte_getline(psfile))) {
         free(this_user);
@@ -347,7 +345,7 @@ void kill_procs(void) {
         /* If the user is not us, and the user is not root, then skip
          * further checking.  If the user is root, then continue on as
          * we want root to kill off everybody. */
-        if ((0 != strcmp(user, this_user)) && (0 != strcmp("root", this_user))) {
+        if ((0 != strcmp(user, this_user)) && (0 != strcmp("0", this_user))) {
             /* not us */
             free(inputline);
             continue;
@@ -371,11 +369,13 @@ void kill_procs(void) {
          * proc is sometimes reported that way
          */
         if (0 == strncmp("orted", procname, strlen("orted")) ||
-            0 == strncmp("(orted)", procname, strlen("(orted)"))) {
+            0 == strncmp("(orted)", procname, strlen("(orted)")) ||
+            0 == strncmp("orte-dvm", procname, strlen("orte-dvm")) ||
+            0 == strncmp("(orte-dvm)", procname, strlen("(orte-dvm)"))) {
             if (procpid != ortedpid) {
                 if (orte_clean_globals.verbose) {
                     fprintf(stderr, "orte-clean: found potential rogue orted process"
-                            " (pid=%d,user=%s), sending SIGKILL...\n",
+                            " (pid=%d,uid=%s), sending SIGKILL...\n",
                             procpid, user);
                 }
                 /*
@@ -397,7 +397,7 @@ void kill_procs(void) {
             if (procpid != ortedpid) {
                 if (orte_clean_globals.verbose) {
                     fprintf(stderr, "orte-clean: found potential rogue orterun process"
-                            " (pid=%d,user=%s), sending SIGKILL...\n",
+                            " (pid=%d,uid=%s), sending SIGKILL...\n",
                             procpid, user);
 
                 }
