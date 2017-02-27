@@ -72,6 +72,12 @@ my $fh;
 # Examine each of the files and remove trailing blank lines
 foreach my $f (@files) {
     quiet_print "==> Working file: $f\n";
+    # check file size
+    my $filesize = -s $f;
+    if (0 == $filesize) {
+        next;
+    }
+
     open $fh, "+<$f" or die "$!";
 
     binmode $fh; # Just in case
