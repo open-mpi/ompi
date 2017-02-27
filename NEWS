@@ -12,11 +12,11 @@ Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
-Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
+Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
                         reserved.
 Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
-Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+Copyright (c) 2012-2017 Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
@@ -67,18 +67,13 @@ Major new features:
 - Update OpenSHMEM API conformance to v1.3.
 - The usnic BTL now supports MPI_THREAD_MULTIPLE.
 - General/overall performance improvements to MPI_THREAD_MULTIPLE.
-  ^^^ JMS Is this correct?  I'm referring to George/Arm/Nathan's work
-  here...?
 - Add a summary message at the bottom of configure that tells you many
   of the configuration options specified and/or discovered by Open
   MPI.
 
-JMS Any other major new features to list?
-
 Changes in behavior compared to prior versions:
 
-- Should be none.
-  ^^^ JMS Did we change --host or --hostfile behavior?
+- None.
 
 Removed legacy support:
 
@@ -100,8 +95,12 @@ Bug fixes/minor improvements:
     "file:filename").
   - orte_timeout_for_stack_trace: number of seconds to wait for stack
     traces to be reported (or <=0 to wait forever).
-- Various improvements to the Portals 4 MTL, to include adding support
-  for non-contiguous datatypes.
+  - mtl_ofi_control_prog_type/mtl_ofi_data_prog_type: specify libfabric
+    progress model to be used for control and data.
+- Fix datatype extent/offset errors in MPI_PUT and MPI_RACCUMULATE
+  when using the Portals 4 one-sided component.
+- Add support for non-contiguous datatypes to the Portals 4 one-sided
+  component.
 - Various updates for the UCX PML.
 - Updates to the following man pages:
   - mpirun(1)
@@ -110,9 +109,12 @@ Bug fixes/minor improvements:
     typo.
   - MPI_INFO_GET_[NKEYS|NTHKEY](3). Thanks to Nicolas Joly for
     reporting the typo.
-- Fix external32 support
-  ^^^ JMS probably need to explain this more
-  ^^^ JMS is there a user to cite here?
+- Fixed a problem in the TCP BTL when using MPI_THREAD_MULTIPLE.
+  Thanks to Evgueni Petrov for reporting.
+- Fixed external32 representation in the romio314 module.  Note that
+  for now, external32 representation is not correctly supported by the
+  ompio module.  Thanks to Thomas Gastine for bringing this to our
+  attention.
 - Add note how to disable a warning message about when a high-speed
   MPI transport is not found.  Thanks to Susan Schwarz for reporting
   the issue.
@@ -120,26 +122,21 @@ Bug fixes/minor improvements:
   orphan children nodes in the launch tree.
 - Fix the help message when showing deprecated MCA param names to show
   the correct (i.e., deprecated) name.
+- Enable support for the openib BTL to use multiple different
+  InfiniBand subnets.
 - Fix a minor error in MPI_AINT_DIFF.
 - Fix bugs with MPI_IN_PLACE handling in:
   - MPI_ALLGATHER[V]
-  - MPI_IALLTOALL*
   - MPI_[I][GATHER|SCATTER][V]
   - MPI_IREDUCE[_SCATTER]
   - Thanks to all the users who helped diagnose these issues.
-  ^^^ JMS Are there specific users to cite here?
 - Allow qrsh to tree spawn (if the back-end system supports it).
 - Fix MPI_T_PVAR_GET_INDEX to return the correct index.
-  ^^^ JMS is there a user to cite here?
 - Correctly position the shared file pointer in append mode in the
   OMPIO component.
-  ^^^ JMS is there a user to cite here?
-- ...something about OMPIO SHAREDFP flag set...?
-  ^^^ JMS probably need to explain this more
 - Add some deprecated names into shmem.h for backwards compatibility
   with legacy codes.
 - Fix MPI_MODE_NOCHECK support.
-  ^^^ JMS is there a user to cite here?
 - Fix a regression in PowerPC atomics support.  Thanks to Orion
   Poplawski for reporting the issue.
 - Fixes for assembly code with aggressively-optimized compilers on
@@ -171,12 +168,13 @@ Bug fixes/minor improvements:
 - Removed the --enable-openib-failover configure option.  This is not
   considered backwards-incompatible because this option was stale and
   had long-since stopped working, anyway.
+- Allow jobs launched under Cray aprun to use hyperthreads if
+  opal_hwloc_base_hwthreads_as_cpus MCA parameter is set.
 - Add support for 32-bit and floating point Cray Aries atomic
   operations.
 - Add support for network AMOs for MPI_ACCUMULATE, MPI_FETCH_AND_OP,
-  and MPI_COMPARE_AND_SWAP if the "ompi_single_intrinsice" info key is
-  set on the window or the "acc_single_interinsic" MCA param is set.
-  ^^^ JMS Is that the right MCA param name?
+  and MPI_COMPARE_AND_SWAP if the "ompi_single_intrinsic" info key is
+  set on the window or the "acc_single_intrinsic" MCA param is set.
 - Automatically disqualify RDMA CM support in the openib BTL if
   MPI_THREAD_MULTIPLE is used.
 - Make configure smarter/better about auto-detecting Linux CMA
@@ -185,11 +183,15 @@ Bug fixes/minor improvements:
 - Fix the mixing of C99 and C++ header files with the MPI C++
   bindings.  Thanks to Alastair McKinstry for the bug report.
 - Add support for ARM v8.
-- Several MCA paramters now directly support MPI_T enumerator
+- Several MCA parameters now directly support MPI_T enumerator
   semantics (i.e., they accept a limited set of values -- e.g., MCA
   parameters that accept boolean values).
 - Added --with-libmpi-name=STRING configure option for vendor releases
   of Open MPI.  See the README for more detail.
+- Fix a problem with Open MPI's internal memory checker.  Thanks to Yvan
+  Fournier for reporting.
+- Fix a multi-threaded issue with MPI_WAIT.  Thanks to Pascal Deveze for
+  reporting.
 
 Known issues (to be addressed in v2.1.1):
 
