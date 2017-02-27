@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -1463,6 +1463,20 @@ MPI is used with all instances of the runtime and MPI / OSHMEM
 processes in a single MPI job.  If the versions are not exactly the
 same everywhere, Open MPI is not guaranteed to work properly in any
 scenario.
+
+Backwards compatibility tends to work best when user applications are
+dynamically linked to one version of the Open MPI / OSHMEM libraries,
+and can be updated at run time to link to a new version of the Open
+MPI / OSHMEM libraries.
+
+For example, if an MPI / OSHMEM application links statically against
+the libraries from Open MPI vX, then attempting to launch that
+application with mpirun / oshrun from Open MPI vY is not guaranteed to
+work (because it is mixing vX and vY of Open MPI in a single job).
+
+Similarly, if using a container technology that internally bundles all
+the libraries from Open MPI vX, attempting to launch that container
+with mpirun / oshrun from Open MPI vY is not guaranteed to work.
 
 Software Version Number
 -----------------------
