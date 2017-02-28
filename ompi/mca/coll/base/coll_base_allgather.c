@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -718,20 +718,20 @@ ompi_coll_base_allgather_intra_basic_linear(const void *sbuf, int scount,
 
     /* Gather and broadcast. */
 
-    err = comm->c_coll.coll_gather(sbuf, scount, sdtype,
+    err = comm->c_coll->coll_gather(sbuf, scount, sdtype,
                                    rbuf, rcount, rdtype,
-                                   0, comm, comm->c_coll.coll_gather_module);
+                                   0, comm, comm->c_coll->coll_gather_module);
     if (MPI_SUCCESS == err) {
         size_t length = (ptrdiff_t)rcount * ompi_comm_size(comm);
         if( length < (size_t)INT_MAX ) {
-            err = comm->c_coll.coll_bcast(rbuf, (ptrdiff_t)rcount * ompi_comm_size(comm), rdtype,
-                                          0, comm, comm->c_coll.coll_bcast_module);
+            err = comm->c_coll->coll_bcast(rbuf, (ptrdiff_t)rcount * ompi_comm_size(comm), rdtype,
+                                          0, comm, comm->c_coll->coll_bcast_module);
         } else {
             ompi_datatype_t* temptype;
             ompi_datatype_create_contiguous(ompi_comm_size(comm), rdtype, &temptype);
             ompi_datatype_commit(&temptype);
-            err = comm->c_coll.coll_bcast(rbuf, rcount, temptype,
-                                          0, comm, comm->c_coll.coll_bcast_module);
+            err = comm->c_coll->coll_bcast(rbuf, rcount, temptype,
+                                          0, comm, comm->c_coll->coll_bcast_module);
             ompi_datatype_destroy(&temptype);
         }
     }

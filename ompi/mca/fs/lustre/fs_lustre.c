@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -92,12 +92,12 @@ mca_fs_lustre_component_file_query (mca_io_ompio_file_t *fh, int *priority)
         if (OMPIO_ROOT == fh->f_rank) {
             fh->f_fstype = mca_fs_base_get_fstype ( fh->f_filename );
         }
-	fh->f_comm->c_coll.coll_bcast (&(fh->f_fstype),
+	fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
 				       1,
 				       MPI_INT,
 				       OMPIO_ROOT,
 				       fh->f_comm,
-				       fh->f_comm->c_coll.coll_bcast_module);
+				       fh->f_comm->c_coll->coll_bcast_module);
     }
     else {
 	if (!strncmp(fh->f_filename, "lustre:", 7) ||

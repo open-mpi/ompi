@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -126,9 +126,9 @@ int MPI_Neighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendt
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll.coll_neighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf,
+    err = comm->c_coll->coll_neighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf,
                                               recvcount, recvtype, comm,
-                                              comm->c_coll.coll_neighbor_alltoall_module);
+                                              comm->c_coll->coll_neighbor_alltoall_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

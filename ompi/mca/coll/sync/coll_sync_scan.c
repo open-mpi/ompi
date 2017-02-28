@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -38,9 +38,8 @@ int mca_coll_sync_scan(const void *sbuf, void *rbuf, int count,
 
     if (s->in_operation) {
         return s->c_coll.coll_scan(sbuf, rbuf, count, dtype, op, comm,
-                                  s->c_coll.coll_scan_module);
-    } else {
-        COLL_SYNC(s, s->c_coll.coll_scan(sbuf, rbuf, count, dtype, op, comm,
-                                         s->c_coll.coll_scan_module));
+                                   s->c_coll.coll_scan_module);
     }
+    COLL_SYNC(s, s->c_coll.coll_scan(sbuf, rbuf, count, dtype, op, comm,
+                                     s->c_coll.coll_scan_module));
 }

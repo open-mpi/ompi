@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -92,9 +92,9 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 	goto exit;
     }
 
-    comm->c_coll.coll_allgather ( &nodesoneachprocess, 1, MPI_INT,
+    comm->c_coll->coll_allgather ( &nodesoneachprocess, 1, MPI_INT,
 				  countbuff, 1, MPI_INT, comm,
-				  comm->c_coll.coll_allgather_module );
+				  comm->c_coll->coll_allgather_module );
 
     if ( mca_sharedfp_individual_verbose) {
 	for (i = 0; i < size ; i++) {
@@ -137,16 +137,16 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 	goto exit;
     }
 
-    ret = comm->c_coll.coll_allgatherv ( ind_ts, countbuff[rank], MPI_DOUBLE,
+    ret = comm->c_coll->coll_allgatherv ( ind_ts, countbuff[rank], MPI_DOUBLE,
 					 timestampbuff, countbuff, displ, MPI_DOUBLE,
-					 comm, comm->c_coll.coll_allgatherv_module );
+					 comm, comm->c_coll->coll_allgatherv_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
 
-    ret = comm->c_coll.coll_allgatherv ( ind_recordlength, countbuff[rank], OMPI_OFFSET_DATATYPE,
+    ret = comm->c_coll->coll_allgatherv ( ind_recordlength, countbuff[rank], OMPI_OFFSET_DATATYPE,
 					 offsetbuff, countbuff, displ, OMPI_OFFSET_DATATYPE,
-					 comm, comm->c_coll.coll_allgatherv_module );
+					 comm, comm->c_coll->coll_allgatherv_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }

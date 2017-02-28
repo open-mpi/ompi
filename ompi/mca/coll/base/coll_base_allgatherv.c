@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -623,10 +623,10 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
         send_type = sdtype;
     }
 
-    err = comm->c_coll.coll_gatherv(send_buf,
+    err = comm->c_coll->coll_gatherv(send_buf,
                                     scount, send_type,rbuf,
                                     rcounts, disps, rdtype, 0,
-                                    comm, comm->c_coll.coll_gatherv_module);
+                                    comm, comm->c_coll->coll_gatherv_module);
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -653,8 +653,8 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
         return err;
     }
 
-    comm->c_coll.coll_bcast(rbuf, 1, newtype, 0, comm,
-                            comm->c_coll.coll_bcast_module);
+    comm->c_coll->coll_bcast(rbuf, 1, newtype, 0, comm,
+                            comm->c_coll->coll_bcast_module);
 
     ompi_datatype_destroy (&newtype);
 

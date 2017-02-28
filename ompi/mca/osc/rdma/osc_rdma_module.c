@@ -11,6 +11,9 @@
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,8 +58,8 @@ int ompi_osc_rdma_free(ompi_win_t *win)
 
         /* finish with a barrier */
         if (ompi_group_size(win->w_group) > 1) {
-            (void) module->comm->c_coll.coll_barrier (module->comm,
-                                                      module->comm->c_coll.coll_barrier_module);
+            (void) module->comm->c_coll->coll_barrier (module->comm,
+                                                      module->comm->c_coll->coll_barrier_module);
         }
 
         /* remove from component information */

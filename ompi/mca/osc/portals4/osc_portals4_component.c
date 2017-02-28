@@ -5,6 +5,9 @@
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -443,9 +446,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* share everyone's displacement units. Only do an allgather if
        strictly necessary, since it requires O(p) state. */
     tmp = disp_unit;
-    ret = module->comm->c_coll.coll_bcast(&tmp, 1, MPI_INT, 0,
+    ret = module->comm->c_coll->coll_bcast(&tmp, 1, MPI_INT, 0,
                                           module->comm,
-                                          module->comm->c_coll.coll_bcast_module);
+                                          module->comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: MPI_Bcast failed: %d\n",
@@ -453,8 +456,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         goto error;
     }
     tmp = (tmp == disp_unit) ? 1 : 0;
-    ret = module->comm->c_coll.coll_allreduce(MPI_IN_PLACE, &tmp, 1, MPI_INT, MPI_LAND,
-                                              module->comm, module->comm->c_coll.coll_allreduce_module);
+    ret = module->comm->c_coll->coll_allreduce(MPI_IN_PLACE, &tmp, 1, MPI_INT, MPI_LAND,
+                                              module->comm, module->comm->c_coll->coll_allreduce_module);
     if (OMPI_SUCCESS != ret) goto error;
     if (tmp == 1) {
         module->disp_unit = disp_unit;
@@ -462,10 +465,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     } else {
         module->disp_unit = -1;
         module->disp_units = malloc(sizeof(int) * ompi_comm_size(module->comm));
-        ret = module->comm->c_coll.coll_allgather(&disp_unit, 1, MPI_INT,
+        ret = module->comm->c_coll->coll_allgather(&disp_unit, 1, MPI_INT,
                                                   module->disp_units, 1, MPI_INT,
                                                   module->comm,
-                                                  module->comm->c_coll.coll_allgather_module);
+                                                  module->comm->c_coll->coll_allgather_module);
         if (OMPI_SUCCESS != ret) goto error;
     }
 
@@ -608,8 +611,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     }
     OPAL_THREAD_UNLOCK(&mca_osc_portals4_component.lock);
 
-    module->comm->c_coll.coll_barrier(module->comm,
-                                      module->comm->c_coll.coll_barrier_module);
+    module->comm->c_coll->coll_barrier(module->comm,
+                                      module->comm->c_coll->coll_barrier_module);
 
     return OMPI_SUCCESS;
 
@@ -648,8 +651,8 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
     int ret = OMPI_SUCCESS;
 
     /* synchronize */
-    module->comm->c_coll.coll_barrier(module->comm,
-                                      module->comm->c_coll.coll_barrier_module);
+    module->comm->c_coll->coll_barrier(module->comm,
+                                      module->comm->c_coll->coll_barrier_module);
 
     /* cleanup */
     PtlMEUnlink(module->control_me_h);
@@ -687,8 +690,8 @@ ompi_osc_portals4_set_info(struct ompi_win_t *win, struct ompi_info_t *info)
         (ompi_osc_portals4_module_t*) win->w_osc_module;
 
     /* enforce collectiveness... */
-    return module->comm->c_coll.coll_barrier(module->comm,
-                                             module->comm->c_coll.coll_barrier_module);
+    return module->comm->c_coll->coll_barrier(module->comm,
+                                             module->comm->c_coll->coll_barrier_module);
 }
 
 

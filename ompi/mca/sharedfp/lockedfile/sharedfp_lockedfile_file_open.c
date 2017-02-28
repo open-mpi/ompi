@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -115,7 +115,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 	write ( handle, &position, sizeof(OMPI_MPI_OFFSET_TYPE) );
 	close ( handle );
     }
-    comm->c_coll.coll_barrier ( comm, comm->c_coll.coll_barrier_module );
+    comm->c_coll->coll_barrier ( comm, comm->c_coll->coll_barrier_module );
 
     handle = open ( lockedfilename, O_RDWR, 0644  );
     if ( -1 == handle ) {
@@ -133,7 +133,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     /*remember the shared file handle*/
     fh->f_sharedfp_data = sh;
 
-    comm->c_coll.coll_barrier ( comm, comm->c_coll.coll_barrier_module );
+    comm->c_coll->coll_barrier ( comm, comm->c_coll->coll_barrier_module );
 
     return err;
 }

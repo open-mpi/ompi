@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -61,9 +61,9 @@ mca_coll_basic_allgatherv_inter(const void *sbuf, int scount,
         sdisps[i] = 0;
     }
 
-    err = comm->c_coll.coll_alltoallv(sbuf, scounts, sdisps, sdtype,
+    err = comm->c_coll->coll_alltoallv(sbuf, scounts, sdisps, sdtype,
                                       rbuf, rcounts, disps, rdtype, comm,
-                                      comm->c_coll.coll_alltoallv_module);
+                                      comm->c_coll->coll_alltoallv_module);
 
     if (NULL != scounts) {
         free(scounts);

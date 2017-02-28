@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -123,9 +123,9 @@ ptl_datatype_t ompi_coll_portals4_atomic_datatype [OMPI_DATATYPE_MPI_MAX_PREDEFI
 
 #define PORTALS4_SAVE_PREV_COLL_API(__module, __comm, __api)                                \
     do {                                                                                    \
-        __module->previous_ ## __api            = __comm->c_coll.coll_ ## __api;            \
-        __module->previous_ ## __api ## _module = __comm->c_coll.coll_ ## __api ## _module; \
-        if (!comm->c_coll.coll_ ## __api || !comm->c_coll.coll_ ## __api ## _module) {      \
+        __module->previous_ ## __api            = __comm->c_coll->coll_ ## __api;            \
+        __module->previous_ ## __api ## _module = __comm->c_coll->coll_ ## __api ## _module; \
+        if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) {      \
             opal_output_verbose(1, ompi_coll_base_framework.framework_output,               \
                     "(%d/%s): no underlying " # __api"; disqualifying myself",              \
                     __comm->c_contextid, __comm->c_name);                                   \

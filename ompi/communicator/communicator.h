@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -169,7 +169,7 @@ struct ompi_communicator_t {
     struct mca_pml_comm_t  *c_pml_comm;
 
     /* Collectives module interface and data */
-    mca_coll_base_comm_coll_t c_coll;
+    mca_coll_base_comm_coll_t *c_coll;
 };
 typedef struct ompi_communicator_t ompi_communicator_t;
 
@@ -256,7 +256,7 @@ typedef struct ompi_communicator_t ompi_communicator_t;
  * the PREDEFINED_COMMUNICATOR_PAD macro?
  * A: Most likely not, but it would be good to check.
  */
-#define PREDEFINED_COMMUNICATOR_PAD (sizeof(void*) * 192)
+#define PREDEFINED_COMMUNICATOR_PAD (sizeof(void*) * 64)
 
 struct ompi_predefined_communicator_t {
     struct ompi_communicator_t comm;

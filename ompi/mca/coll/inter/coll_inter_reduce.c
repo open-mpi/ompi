@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -68,9 +68,9 @@ mca_coll_inter_reduce_inter(const void *sbuf, void *rbuf, int count,
 	}
 	pml_buffer = free_buffer - gap;
 
-	err = comm->c_local_comm->c_coll.coll_reduce(sbuf, pml_buffer, count,
+	err = comm->c_local_comm->c_coll->coll_reduce(sbuf, pml_buffer, count,
 						     dtype, op, 0, comm->c_local_comm,
-                                                     comm->c_local_comm->c_coll.coll_reduce_module);
+                                                     comm->c_local_comm->c_coll->coll_reduce_module);
 	if (0 == rank) {
 	    /* First process sends the result to the root */
 	    err = MCA_PML_CALL(send(pml_buffer, count, dtype, root,

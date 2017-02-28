@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -264,13 +264,13 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     }
 
     long_max_data = (long) max_data;
-    ret = fh->f_comm->c_coll.coll_allreduce (&long_max_data,
+    ret = fh->f_comm->c_coll->coll_allreduce (&long_max_data,
 					     &long_total_bytes,
 					     1,
 					     MPI_LONG,
 					     MPI_SUM,
 					     fh->f_comm,
-					     fh->f_comm->c_coll.coll_allreduce_module);
+					     fh->f_comm->c_coll->coll_allreduce_module);
 
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
@@ -392,28 +392,28 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     }
 
 
-    ret = fh->f_comm->c_coll.coll_allgather(&start_offset,
+    ret = fh->f_comm->c_coll->coll_allgather(&start_offset,
 					    1,
 					    OMPI_OFFSET_DATATYPE,
 					    start_offsets,
 					    1,
 					    OMPI_OFFSET_DATATYPE,
 					    fh->f_comm,
-					    fh->f_comm->c_coll.coll_allgather_module);
+					    fh->f_comm->c_coll->coll_allgather_module);
 
     if ( OMPI_SUCCESS != ret ){
 	goto exit;
     }
 
 
-    ret = fh->f_comm->c_coll.coll_allgather(&end_offset,
+    ret = fh->f_comm->c_coll->coll_allgather(&end_offset,
 					    1,
 					    OMPI_OFFSET_DATATYPE,
 					    end_offsets,
 					    1,
 					    OMPI_OFFSET_DATATYPE,
 					    fh->f_comm,
-					    fh->f_comm->c_coll.coll_allgather_module);
+					    fh->f_comm->c_coll->coll_allgather_module);
 
 
     if ( OMPI_SUCCESS != ret ){
@@ -642,13 +642,13 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 	ntimes = 0;
     }
 
-    fh->f_comm->c_coll.coll_allreduce (&ntimes,
+    fh->f_comm->c_coll->coll_allreduce (&ntimes,
 				       &max_ntimes,
 				       1,
 				       MPI_INT,
 				       MPI_MAX,
 				       fh->f_comm,
-				       fh->f_comm->c_coll.coll_allreduce_module);
+				       fh->f_comm->c_coll->coll_allreduce_module);
 
     if (ntimes){
 	write_buf = (char *) malloc (two_phase_cycle_buffer_size);
@@ -945,14 +945,14 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_comm_time = MPI_Wtime();
 #endif
-    ret = fh->f_comm->c_coll.coll_alltoall (recv_size,
+    ret = fh->f_comm->c_coll->coll_alltoall (recv_size,
 					    1,
 					    MPI_INT,
 					    send_size,
 					    1,
 					    MPI_INT,
 					    fh->f_comm,
-					    fh->f_comm->c_coll.coll_alltoall_module);
+					    fh->f_comm->c_coll->coll_alltoall_module);
 
     if ( OMPI_SUCCESS != ret ){
 	return ret;

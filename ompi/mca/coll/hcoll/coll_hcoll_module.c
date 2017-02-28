@@ -1,11 +1,14 @@
 /**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-  Copyright (c) 2016      IBM Corporation.  All rights reserved.
-  $COPYRIGHT$
-
-  Additional copyrights may follow
-
- $HEADER$
+ * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
  */
 
 #include "ompi_config.h"
@@ -149,9 +152,9 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
 }
 
 #define HCOL_SAVE_PREV_COLL_API(__api) do {\
-    hcoll_module->previous_ ## __api            = comm->c_coll.coll_ ## __api;\
-    hcoll_module->previous_ ## __api ## _module = comm->c_coll.coll_ ## __api ## _module;\
-    if (!comm->c_coll.coll_ ## __api || !comm->c_coll.coll_ ## __api ## _module) {\
+    hcoll_module->previous_ ## __api            = comm->c_coll->coll_ ## __api;\
+    hcoll_module->previous_ ## __api ## _module = comm->c_coll->coll_ ## __api ## _module;\
+    if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) {\
         return OMPI_ERROR;\
     }\
     OBJ_RETAIN(hcoll_module->previous_ ## __api ## _module);\

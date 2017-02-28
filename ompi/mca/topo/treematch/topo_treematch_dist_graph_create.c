@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 The University of Tennessee and The University
+ * Copyright (c) 2011-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
@@ -105,9 +105,9 @@ static int check_oversubscribing(int rank,
                 return err;
     }
 
-    if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_bcast(&oversubscribed, 1,
+    if (OMPI_SUCCESS != (err = comm_old->c_coll->coll_bcast(&oversubscribed, 1,
                                                            MPI_INT, 0, comm_old,
-                                                           comm_old->c_coll.coll_bcast_module)))
+                                                           comm_old->c_coll->coll_bcast_module)))
         return err;
 
     return oversubscribed;
@@ -416,10 +416,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     local_pattern[topo->in[i]] += topo->inw[i];
                 for(i = 0; i < topo->outdegree ; i++)
                     local_pattern[topo->out[i]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_gather(MPI_IN_PLACE, size, MPI_DOUBLE,
+                if (OMPI_SUCCESS != (err = comm_old->c_coll->coll_gather(MPI_IN_PLACE, size, MPI_DOUBLE,
                                                                         local_pattern, size, MPI_DOUBLE,
                                                                         0, comm_old,
-                                                                        comm_old->c_coll.coll_gather_module)))
+                                                                        comm_old->c_coll->coll_gather_module)))
                     return err;
             }
         } else {
@@ -429,10 +429,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     local_pattern[topo->in[i]] += topo->inw[i];
                 for(i = 0; i < topo->outdegree ; i++)
                     local_pattern[topo->out[i]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_gather(local_pattern, size, MPI_DOUBLE,
+                if (OMPI_SUCCESS != (err = comm_old->c_coll->coll_gather(local_pattern, size, MPI_DOUBLE,
                                                                         NULL,0,0,
                                                                         0, comm_old,
-                                                                        comm_old->c_coll.coll_gather_module)))
+                                                                        comm_old->c_coll->coll_gather_module)))
                     return err;
             }
         }
@@ -692,9 +692,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
         /* Todo : Bcast + group creation */
         /* scatter the ranks */
-        if (OMPI_SUCCESS != (err = comm_old->c_coll.coll_scatter(k, 1, MPI_INT,
+        if (OMPI_SUCCESS != (err = comm_old->c_coll->coll_scatter(k, 1, MPI_INT,
                                                                  &newrank, 1, MPI_INT,
-                                                                 0, comm_old,comm_old->c_coll.coll_scatter_module)))
+                                                                 0, comm_old,comm_old->c_coll->coll_scatter_module)))
             ERR_EXIT(err);
 
         if ( 0 == rank )
@@ -729,10 +729,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         for(i = 0 ; i < size ; i++)
             grank_to_lrank[i] = -1;
 
-        if (OMPI_SUCCESS != (err = localcomm->c_coll.coll_allgather(&rank,1,MPI_INT,
+        if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_allgather(&rank,1,MPI_INT,
                                                                     lrank_to_grank,1,MPI_INT,
                                                                     localcomm,
-                                                                    localcomm->c_coll.coll_allgather_module)))
+                                                                    localcomm->c_coll->coll_allgather_module)))
             return err;
 
         for(i = 0 ; i < num_procs_in_node ; i++)
@@ -759,10 +759,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 for(i = 0; i < topo->outdegree ; i++)
                     if (grank_to_lrank[topo->out[i]] != -1)
                         local_pattern[grank_to_lrank[topo->out[i]]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = localcomm->c_coll.coll_gather(MPI_IN_PLACE, num_procs_in_node, MPI_DOUBLE,
+                if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_gather(MPI_IN_PLACE, num_procs_in_node, MPI_DOUBLE,
                                                                          local_pattern, num_procs_in_node, MPI_DOUBLE,
                                                                          0,localcomm,
-                                                                         localcomm->c_coll.coll_gather_module)))
+                                                                         localcomm->c_coll->coll_gather_module)))
                     ERR_EXIT(err);
             }
 
@@ -853,17 +853,17 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 for(i = 0; i < topo->outdegree ; i++)
                     if (grank_to_lrank[topo->out[i]] != -1)
                         local_pattern[grank_to_lrank[topo->out[i]]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = localcomm->c_coll.coll_gather(local_pattern, num_procs_in_node, MPI_DOUBLE,
+                if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_gather(local_pattern, num_procs_in_node, MPI_DOUBLE,
                                                                          NULL,0,0,
                                                                          0,localcomm,
-                                                                         localcomm->c_coll.coll_gather_module)))
+                                                                         localcomm->c_coll->coll_gather_module)))
                     ERR_EXIT(err);
             }
         }
 
-        if (OMPI_SUCCESS != (err = localcomm->c_coll.coll_bcast(matching, num_procs_in_node,
+        if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_bcast(matching, num_procs_in_node,
                                                                 MPI_INT,0,localcomm,
-                                                                localcomm->c_coll.coll_bcast_module)))
+                                                                localcomm->c_coll->coll_bcast_module)))
             ERR_EXIT(err);
 
         object = hwloc_get_obj_by_depth(opal_hwloc_topology,

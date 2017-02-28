@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -63,7 +63,7 @@ mca_sharedfp_addproc_seek (mca_io_ompio_file_t *fh,
 	}
 
     }
-    ret = sh->comm->c_coll.coll_barrier(sh->comm, sh->comm->c_coll.coll_barrier_module);
+    ret = sh->comm->c_coll->coll_barrier(sh->comm, sh->comm->c_coll->coll_barrier_module);
 
     return ret;
 }

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -157,7 +157,7 @@ int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
 	}
     }
 
-    ret = fh->f_comm->c_coll.coll_gather(time_details,
+    ret = fh->f_comm->c_coll->coll_gather(time_details,
                                          4,
                                          MPI_DOUBLE,
                                          final_time_details,
@@ -165,7 +165,7 @@ int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
                                          MPI_DOUBLE,
                                          0,
                                          fh->f_comm,
-                                         fh->f_comm->c_coll.coll_gather_module);
+                                         fh->f_comm->c_coll->coll_gather_module);
     
     if ( OMPI_SUCCESS != ret ) {
     }

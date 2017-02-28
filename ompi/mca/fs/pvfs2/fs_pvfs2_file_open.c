@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -153,12 +153,12 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
     ompi_datatype_create_struct (2, lens, offsets, types, &open_status_type);
     ompi_datatype_commit (&open_status_type);
 
-    fh->f_comm->c_coll.coll_bcast (MPI_BOTTOM,
+    fh->f_comm->c_coll->coll_bcast (MPI_BOTTOM,
                                    1,
                                    open_status_type,
                                    OMPIO_ROOT,
                                    fh->f_comm,
-                                   fh->f_comm->c_coll.coll_bcast_module);
+                                   fh->f_comm->c_coll->coll_bcast_module);
 
     ompi_datatype_destroy (&open_status_type);
 

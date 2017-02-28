@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -60,9 +60,9 @@ mca_coll_inter_bcast_inter(void *buff, int count,
                 return err;
             }
 	}
-	err = comm->c_local_comm->c_coll.coll_bcast(buff, count, datatype, 0,
+	err = comm->c_local_comm->c_coll->coll_bcast(buff, count, datatype, 0,
                                                     comm->c_local_comm,
-                                                    comm->c_local_comm->c_coll.coll_bcast_module);
+                                                    comm->c_local_comm->c_coll->coll_bcast_module);
     } else {
         /* root section, send to the first process of the remote group */
 	err = MCA_PML_CALL(send(buff, count, datatype, 0,

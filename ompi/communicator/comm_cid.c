@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -591,8 +591,8 @@ static int ompi_comm_allreduce_intra_nb (int *inbuf, int *outbuf, int count, str
 {
     ompi_communicator_t *comm = context->comm;
 
-    return comm->c_coll.coll_iallreduce (inbuf, outbuf, count, MPI_INT, op, comm,
-                                         req, comm->c_coll.coll_iallreduce_module);
+    return comm->c_coll->coll_iallreduce (inbuf, outbuf, count, MPI_INT, op, comm,
+                                         req, comm->c_coll->coll_iallreduce_module);
 }
 
 /* Non-blocking version of ompi_comm_allreduce_inter */
@@ -641,9 +641,9 @@ static int ompi_comm_allreduce_inter_nb (int *inbuf, int *outbuf,
 
     /* Execute the inter-allreduce: the result from the local will be in the buffer of the remote group
      * and vise-versa. */
-    rc = intercomm->c_local_comm->c_coll.coll_ireduce (inbuf, context->tmpbuf, count, MPI_INT, op, 0,
+    rc = intercomm->c_local_comm->c_coll->coll_ireduce (inbuf, context->tmpbuf, count, MPI_INT, op, 0,
                                                        intercomm->c_local_comm, &subreq,
-                                                       intercomm->c_local_comm->c_coll.coll_ireduce_module);
+                                                       intercomm->c_local_comm->c_coll->coll_ireduce_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         ompi_comm_request_return (request);
         return rc;
@@ -704,8 +704,8 @@ static int ompi_comm_allreduce_inter_bcast (ompi_comm_request_t *request)
     int rc;
 
     /* both roots have the same result. broadcast to the local group */
-    rc = comm->c_coll.coll_ibcast (context->outbuf, context->count, MPI_INT, 0, comm,
-                                   &subreq, comm->c_coll.coll_ibcast_module);
+    rc = comm->c_coll->coll_ibcast (context->outbuf, context->count, MPI_INT, 0, comm,
+                                   &subreq, comm->c_coll->coll_ibcast_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
     }
@@ -720,9 +720,9 @@ static int ompi_comm_allreduce_bridged_schedule_bcast (ompi_comm_request_t *requ
     ompi_request_t *subreq;
     int rc;
 
-    rc = comm->c_coll.coll_ibcast (context->outbuf, context->count, MPI_INT,
+    rc = comm->c_coll->coll_ibcast (context->outbuf, context->count, MPI_INT,
                                    context->cid_context->local_leader, comm,
-                                   &subreq, comm->c_coll.coll_ibcast_module);
+                                   &subreq, comm->c_coll->coll_ibcast_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
     }
@@ -803,9 +803,9 @@ static int ompi_comm_allreduce_intra_bridge_nb (int *inbuf, int *outbuf,
     }
 
     /* step 1: reduce to the local leader */
-    rc = comm->c_coll.coll_ireduce (inbuf, context->tmpbuf, count, MPI_INT, op,
+    rc = comm->c_coll->coll_ireduce (inbuf, context->tmpbuf, count, MPI_INT, op,
                                     cid_context->local_leader, comm, &subreq,
-                                    comm->c_coll.coll_ireduce_module);
+                                    comm->c_coll->coll_ireduce_module);
     if ( OMPI_SUCCESS != rc ) {
         ompi_comm_request_return (request);
         return rc;
@@ -955,9 +955,9 @@ static int ompi_comm_allreduce_intra_pmix_nb (int *inbuf, int *outbuf,
     request->context = &context->super;
 
     /* comm is an intra-communicator */
-    rc = comm->c_coll.coll_ireduce (inbuf, context->tmpbuf, count, MPI_INT, op,
+    rc = comm->c_coll->coll_ireduce (inbuf, context->tmpbuf, count, MPI_INT, op,
                                     cid_context->local_leader, comm,
-                                    &subreq, comm->c_coll.coll_ireduce_module);
+                                    &subreq, comm->c_coll->coll_ireduce_module);
     if ( OMPI_SUCCESS != rc ) {
         ompi_comm_request_return (request);
         return rc;

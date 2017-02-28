@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -292,10 +292,10 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
             goto exit;
         }
 
-        rc = comm->c_coll.coll_allgather ( &(group->grp_my_rank),
+        rc = comm->c_coll->coll_allgather ( &(group->grp_my_rank),
                                            1, MPI_INT, allranks,
                                            1, MPI_INT, comm,
-                                           comm->c_coll.coll_allgather_module);
+                                           comm->c_coll->coll_allgather_module);
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
@@ -434,7 +434,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     if ( inter ) {
         allgatherfct = (ompi_comm_allgatherfct *)ompi_comm_allgather_emulate_intra;
     } else {
-        allgatherfct = (ompi_comm_allgatherfct *)comm->c_coll.coll_allgather;
+        allgatherfct = (ompi_comm_allgatherfct *)comm->c_coll->coll_allgather;
     }
 
     results  = (int*) malloc ( 2 * size * sizeof(int));
@@ -442,7 +442,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    rc = allgatherfct( myinfo, 2, MPI_INT, results, 2, MPI_INT, comm, comm->c_coll.coll_allgather_module );
+    rc = allgatherfct( myinfo, 2, MPI_INT, results, 2, MPI_INT, comm, comm->c_coll->coll_allgather_module );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -503,9 +503,9 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
         }
 
         /* this is an allgather on an inter-communicator */
-        rc = comm->c_coll.coll_allgather( myinfo, 2, MPI_INT, rresults, 2,
+        rc = comm->c_coll->coll_allgather( myinfo, 2, MPI_INT, rresults, 2,
                                           MPI_INT, comm,
-                                          comm->c_coll.coll_allgather_module);
+                                          comm->c_coll->coll_allgather_module);
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
@@ -767,8 +767,8 @@ static int ompi_comm_split_verify (ompi_communicator_t *comm, int split_type, in
     results[rank * 2] = split_type;
     results[rank * 2 + 1] = key;
 
-    rc = comm->c_coll.coll_allgather (MPI_IN_PLACE, 2, MPI_INT, results, 2, MPI_INT, comm,
-                                      comm->c_coll.coll_allgather_module);
+    rc = comm->c_coll->coll_allgather (MPI_IN_PLACE, 2, MPI_INT, results, 2, MPI_INT, comm,
+                                      comm->c_coll->coll_allgather_module);
     if (OMPI_SUCCESS != rc) {
         free (results);
         return rc;
@@ -810,8 +810,8 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     tmp[2] = key;
     tmp[3] = -key;
 
-    rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &tmp, 4, MPI_INT, MPI_MAX, comm,
-                                      comm->c_coll.coll_allreduce_module);
+    rc = comm->c_coll->coll_allreduce (MPI_IN_PLACE, &tmp, 4, MPI_INT, MPI_MAX, comm,
+                                      comm->c_coll->coll_allreduce_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
     }
@@ -822,16 +822,16 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         /* at least one rank supplied a different split type check if our split_type is ok */
         ok = (MPI_UNDEFINED == split_type) || global_split_type == split_type;
 
-        rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
-                                          comm->c_coll.coll_allreduce_module);
+        rc = comm->c_coll->coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
+                                          comm->c_coll->coll_allreduce_module);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             return rc;
         }
 
         if (inter) {
             /* need an extra allreduce to ensure that all ranks have the same result */
-            rc = comm->c_coll.coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
-                                              comm->c_coll.coll_allreduce_module);
+            rc = comm->c_coll->coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
+                                              comm->c_coll->coll_allreduce_module);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
                 return rc;
             }
@@ -1575,9 +1575,9 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     }
 
     /* broadcast buffer length to all processes in local_comm */
-    rc = local_comm->c_coll.coll_bcast( &rlen, 1, MPI_INT,
+    rc = local_comm->c_coll->coll_bcast( &rlen, 1, MPI_INT,
                                         local_leader, local_comm,
-                                        local_comm->c_coll.coll_bcast_module );
+                                        local_comm->c_coll->coll_bcast_module );
     if ( OMPI_SUCCESS != rc ) {
         goto err_exit;
     }
@@ -1607,9 +1607,9 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     }
 
     /* broadcast name list to all proceses in local_comm */
-    rc = local_comm->c_coll.coll_bcast( recvbuf, rlen, MPI_BYTE,
+    rc = local_comm->c_coll->coll_bcast( recvbuf, rlen, MPI_BYTE,
                                         local_leader, local_comm,
-                                        local_comm->c_coll.coll_bcast_module);
+                                        local_comm->c_coll->coll_bcast_module);
     if ( OMPI_SUCCESS != rc ) {
         goto err_exit;
     }
@@ -1741,10 +1741,10 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         scount = 1;
     }
 
-    rc = intercomm->c_coll.coll_allgatherv(&high, scount, MPI_INT,
+    rc = intercomm->c_coll->coll_allgatherv(&high, scount, MPI_INT,
                                            &rhigh, rcounts, rdisps,
                                            MPI_INT, intercomm,
-                                           intercomm->c_coll.coll_allgatherv_module);
+                                           intercomm->c_coll->coll_allgatherv_module);
     if ( NULL != rdisps ) {
         free ( rdisps );
     }

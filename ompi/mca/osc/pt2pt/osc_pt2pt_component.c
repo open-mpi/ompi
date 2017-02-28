@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -414,8 +414,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     /* barrier to prevent arrival of lock requests before we're
        fully created */
-    ret = module->comm->c_coll.coll_barrier(module->comm,
-                                            module->comm->c_coll.coll_barrier_module);
+    ret = module->comm->c_coll->coll_barrier(module->comm,
+                                            module->comm->c_coll->coll_barrier_module);
     if (OMPI_SUCCESS != ret) goto cleanup;
 
     if (!mca_osc_pt2pt_component.progress_enable) {
@@ -448,8 +448,8 @@ ompi_osc_pt2pt_set_info(struct ompi_win_t *win, struct ompi_info_t *info)
         (ompi_osc_pt2pt_module_t*) win->w_osc_module;
 
     /* enforce collectiveness... */
-    return module->comm->c_coll.coll_barrier(module->comm,
-                                             module->comm->c_coll.coll_barrier_module);
+    return module->comm->c_coll->coll_barrier(module->comm,
+                                             module->comm->c_coll->coll_barrier_module);
 }
 
 

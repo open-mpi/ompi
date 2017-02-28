@@ -13,6 +13,9 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -617,7 +620,7 @@ int ompi_osc_rdma_fence_atomic (int assert, ompi_win_t *win)
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "fence complete (short circuit)");
         /* no communication can occur until a peer has entered the same fence epoch. for now
          * a barrier is used to ensure this is the case. */
-        ret = module->comm->c_coll.coll_barrier(module->comm, module->comm->c_coll.coll_barrier_module);
+        ret = module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
         OPAL_THREAD_UNLOCK(&module->lock);
         return ret;
     }
@@ -625,7 +628,7 @@ int ompi_osc_rdma_fence_atomic (int assert, ompi_win_t *win)
     ompi_osc_rdma_sync_rdma_complete (&module->all_sync);
 
     /* ensure all writes to my memory are complete */
-    ret = module->comm->c_coll.coll_barrier(module->comm, module->comm->c_coll.coll_barrier_module);
+    ret = module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
 
     if (assert & MPI_MODE_NOSUCCEED) {
         /* as specified in MPI-3 p 438 3-5 the fence can end an epoch. it isn't explicitly

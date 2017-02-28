@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -81,7 +81,7 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
 	ret = fh->fd;
     }
 
-    comm->c_coll.coll_bcast ( &ret, 1, MPI_INT, 0, comm, comm->c_coll.coll_bcast_module);
+    comm->c_coll->coll_bcast ( &ret, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module);
     if ( -1 == ret ) {
 	fh->fd = ret;
 	return OMPI_ERROR;

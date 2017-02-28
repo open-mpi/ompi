@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -110,8 +110,8 @@ int MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    err = comm->c_coll.coll_iallreduce(sendbuf, recvbuf, count, datatype,
-                                       op, comm, request, comm->c_coll.coll_iallreduce_module);
+    err = comm->c_coll->coll_iallreduce(sendbuf, recvbuf, count, datatype,
+                                       op, comm, request, comm->c_coll->coll_iallreduce_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

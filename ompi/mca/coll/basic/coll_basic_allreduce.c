@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -51,18 +51,18 @@ mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, int count,
 
     if (MPI_IN_PLACE == sbuf) {
         if (0 == ompi_comm_rank(comm)) {
-            err = comm->c_coll.coll_reduce(MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm, comm->c_coll.coll_reduce_module);
+            err = comm->c_coll->coll_reduce(MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm, comm->c_coll->coll_reduce_module);
         } else {
-            err = comm->c_coll.coll_reduce(rbuf, NULL, count, dtype, op, 0, comm, comm->c_coll.coll_reduce_module);
+            err = comm->c_coll->coll_reduce(rbuf, NULL, count, dtype, op, 0, comm, comm->c_coll->coll_reduce_module);
         }
     } else {
-        err = comm->c_coll.coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm, comm->c_coll.coll_reduce_module);
+        err = comm->c_coll->coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm, comm->c_coll->coll_reduce_module);
     }
     if (MPI_SUCCESS != err) {
         return err;
     }
 
-    return comm->c_coll.coll_bcast(rbuf, count, dtype, 0, comm, comm->c_coll.coll_bcast_module);
+    return comm->c_coll->coll_bcast(rbuf, count, dtype, 0, comm, comm->c_coll->coll_bcast_module);
 }
 
 

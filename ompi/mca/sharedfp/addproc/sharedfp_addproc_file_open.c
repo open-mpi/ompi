@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -148,7 +148,7 @@ int mca_sharedfp_addproc_file_close (mca_io_ompio_file_t *fh)
     /* Make sure that all processes are ready to release the
     ** shared file pointer resources
     */
-    sh->comm->c_coll.coll_barrier(sh->comm, sh->comm->c_coll.coll_barrier_module );
+    sh->comm->c_coll->coll_barrier(sh->comm, sh->comm->c_coll->coll_barrier_module );
 
     addproc_data = (struct mca_sharedfp_addproc_data*)(sh->selected_module_data);
 

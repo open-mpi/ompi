@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -161,7 +161,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         memset ( &sm_offset, 0, sizeof (struct mca_sharedfp_sm_offset ));
         write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
     }
-    comm->c_coll.coll_barrier (comm, comm->c_coll.coll_barrier_module );
+    comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
 
     /*the file has been written to, now we can map*/
     sm_offset_ptr = mmap(NULL, sizeof(struct mca_sharedfp_sm_offset), PROT_READ | PROT_WRITE,
@@ -223,7 +223,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         err = OMPI_ERROR;
     }
 
-    comm->c_coll.coll_barrier (comm, comm->c_coll.coll_barrier_module );
+    comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
 
     return err;
 }
@@ -249,7 +249,7 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
      * all processes are ready to release the
      * shared file pointer resources
      */
-    sh->comm->c_coll.coll_barrier (sh->comm, sh->comm->c_coll.coll_barrier_module );
+    sh->comm->c_coll->coll_barrier (sh->comm, sh->comm->c_coll->coll_barrier_module );
 
     file_data = (sm_data*)(sh->selected_module_data);
     if (file_data)  {
