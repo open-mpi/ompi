@@ -27,7 +27,7 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -479,10 +479,10 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
             NULL != src->node->topology && NULL != src->node->topology->topo) {
             mycpus = hwloc_bitmap_alloc();
             hwloc_bitmap_list_sscanf(mycpus, cpu_bitmap);
-            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), src->node->topology->topo, mycpus)) {
+            if (OPAL_ERR_NOT_BOUND == opal_hwloc_cset2str(tmp1, sizeof(tmp1), src->node->topology->topo, mycpus)) {
                 str = strdup("UNBOUND");
             } else {
-                opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), src->node->topology->topo, mycpus);
+                opal_hwloc_cset2mapstr(tmp2, sizeof(tmp2), src->node->topology->topo, mycpus);
                 asprintf(&str, "%s:%s", tmp1, tmp2);
             }
             hwloc_bitmap_free(mycpus);
@@ -517,7 +517,7 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
 
     if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&loc, OPAL_PTR)) {
         if (NULL != loc) {
-            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(locale, sizeof(locale), src->node->topology->topo, loc->cpuset)) {
+            if (OPAL_ERR_NOT_BOUND == opal_hwloc_cset2mapstr(locale, sizeof(locale), src->node->topology->topo, loc->cpuset)) {
                 strcpy(locale, "NODE");
             }
         } else {
@@ -528,7 +528,7 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     }
     if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR)) {
         if (NULL != bd) {
-            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(bind, sizeof(bind), src->node->topology->topo, bd->cpuset)) {
+            if (OPAL_ERR_NOT_BOUND == opal_hwloc_cset2mapstr(bind, sizeof(bind), src->node->topology->topo, bd->cpuset)) {
                 strcpy(bind, "UNBOUND");
             }
         } else {
@@ -676,8 +676,8 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
                  (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
                  orte_rmaps_base_print_mapping(src->mapping),
                  orte_rmaps_base_print_ranking(src->ranking),
-                 pfx2, opal_hwloc_base_print_binding(src->binding),
-                 (NULL == opal_hwloc_base_cpu_list) ? "NULL" : opal_hwloc_base_cpu_list,
+                 pfx2, opal_hwloc_print_binding(src->binding),
+                 (NULL == opal_hwloc_cpu_list) ? "NULL" : opal_hwloc_cpu_list,
                  (NULL == src->ppr) ? "NULL" : src->ppr,
                  (int)src->cpus_per_rank);
 

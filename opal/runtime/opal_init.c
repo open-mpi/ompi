@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -48,7 +48,7 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/patcher/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/mca/sec/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
@@ -490,11 +490,9 @@ opal_init(int* pargc, char*** pargv)
         return ret;
     }
 
-    /* open hwloc - since this is a static framework, no
-     * select is required
-     */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_hwloc_base_framework, 0))) {
-        error = "opal_hwloc_base_open";
+    /* open hwloc */
+    if (OPAL_SUCCESS != (ret = opal_hwloc_open())) {
+        error = "opal_hwloc_open";
         goto return_error;
     }
 

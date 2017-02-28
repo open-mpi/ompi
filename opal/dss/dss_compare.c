@@ -12,7 +12,7 @@
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +27,7 @@
 #include <sys/time.h> /* for struct timeval */
 #endif
 
+#include "opal/util/output.h"
 #include "opal/dss/dss_internal.h"
 
 int opal_dss_compare(const void *value1, const void *value2, opal_data_type_t type)
@@ -457,4 +458,3 @@ int opal_dss_compare_status(int *value1, int *value2, opal_data_type_t type)
 
     return OPAL_EQUAL;
 }
-

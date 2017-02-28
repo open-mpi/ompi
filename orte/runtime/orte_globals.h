@@ -44,8 +44,8 @@
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/hwloc/hwloc.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/hwloc.h"
+#include "opal/hwloc/base.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rml/rml_types.h"

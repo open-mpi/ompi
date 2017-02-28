@@ -65,7 +65,7 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/hwloc/hwloc.h"
 #include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/show_help.h"
@@ -368,7 +368,7 @@ int orte_daemon(int argc, char *argv[])
             res = hwloc_bitmap_alloc();
             for (i=0; NULL != cores[i]; i++) {
                 core = strtoul(cores[i], NULL, 10);
-                if (NULL == (pu = opal_hwloc_base_get_pu(opal_hwloc_topology, core, OPAL_HWLOC_LOGICAL))) {
+                if (NULL == (pu = opal_hwloc_get_pu(opal_hwloc_topology, core, OPAL_HWLOC_LOGICAL))) {
                     /* turn off the show help forwarding as we won't
                      * be able to cycle the event library to send
                      */
@@ -391,7 +391,7 @@ int orte_daemon(int argc, char *argv[])
             if (!hwloc_bitmap_iszero(ours)) {
                 (void)hwloc_set_cpubind(opal_hwloc_topology, ours, 0);
                 if (opal_hwloc_report_bindings) {
-                    opal_hwloc_base_cset2mapstr(tmp, sizeof(tmp), opal_hwloc_topology, ours);
+                    opal_hwloc_cset2mapstr(tmp, sizeof(tmp), opal_hwloc_topology, ours);
                     opal_output(0, "Daemon %s is bound to cores %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
                 }

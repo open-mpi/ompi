@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -45,7 +45,7 @@
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/sec/base/base.h"
 #include "opal/mca/timer/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/mca/event/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/shmem/base/base.h"
@@ -152,8 +152,8 @@ opal_finalize(void)
     /* finalize the memory manager / tracker */
     opal_mem_hooks_finalize();
 
-    /* close the hwloc framework */
-    (void) mca_base_framework_close(&opal_hwloc_base_framework);
+    /* close hwloc */
+    opal_hwloc_close();
 
     /* close the shmem framework */
     (void) mca_base_framework_close(&opal_shmem_base_framework);

@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/runtime/opal.h"
 
 #include "ompi/communicator/communicator.h"
@@ -107,7 +107,7 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     if (NULL == orte_proc_applied_binding) {
         ret = OPAL_ERR_NOT_BOUND;
     } else {
-        ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX,
+        ret = opal_hwloc_cset2str(str, OMPI_AFFINITY_STRING_MAX,
                                        opal_hwloc_topology,
                                        orte_proc_applied_binding);
     }
@@ -131,7 +131,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* get our root object */
     root = hwloc_get_root_obj(opal_hwloc_topology);
-    rootset = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
+    rootset = opal_hwloc_get_available_cpus(opal_hwloc_topology, root);
 
     /* get our bindings */
     boundset = hwloc_bitmap_alloc();
@@ -144,8 +144,8 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
         /* we are bound if the two cpusets are not equal, or if there
            is only ONE PU available to us */
         if (0 != hwloc_bitmap_compare(boundset, rootset) ||
-            opal_hwloc_base_single_cpu(rootset) ||
-            opal_hwloc_base_single_cpu(boundset)) {
+            opal_hwloc_single_cpu(rootset) ||
+            opal_hwloc_single_cpu(boundset)) {
             bound = true;
         }
     }
@@ -158,7 +158,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are bound, print it out */
     else {
-        ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX,
+        ret = opal_hwloc_cset2str(str, OMPI_AFFINITY_STRING_MAX,
                                        opal_hwloc_topology,
                                        boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {
@@ -300,7 +300,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     if (NULL == orte_proc_applied_binding) {
         ret = OPAL_ERR_NOT_BOUND;
     } else {
-        ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
+        ret = opal_hwloc_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
                                           opal_hwloc_topology,
                                           orte_proc_applied_binding);
     }
@@ -324,7 +324,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* get our root object */
     root = hwloc_get_root_obj(opal_hwloc_topology);
-    rootset = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
+    rootset = opal_hwloc_get_available_cpus(opal_hwloc_topology, root);
 
     /* get our bindings */
     boundset = hwloc_bitmap_alloc();
@@ -337,8 +337,8 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
         /* we are bound if the two cpusets are not equal, or if there
            is only ONE PU available to us */
         if (0 != hwloc_bitmap_compare(boundset, rootset) ||
-            opal_hwloc_base_single_cpu(rootset) ||
-            opal_hwloc_base_single_cpu(boundset)) {
+            opal_hwloc_single_cpu(rootset) ||
+            opal_hwloc_single_cpu(boundset)) {
             bound = true;
         }
     }
@@ -351,7 +351,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are bound, print it out */
     else {
-        ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
+        ret = opal_hwloc_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
                                           opal_hwloc_topology,
                                           boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {

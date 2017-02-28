@@ -6,7 +6,7 @@
  */
 
 #include <stdio.h>
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "mpi.h"
 
 #include "orte/util/proc_info.h"

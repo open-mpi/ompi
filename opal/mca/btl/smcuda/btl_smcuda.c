@@ -18,7 +18,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +47,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
@@ -251,10 +251,10 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
         free(loc);
     } else {
         /* If we have hwloc support, then get accurate information */
-        if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
-            i = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology,
-                                                   HWLOC_OBJ_NODE, 0,
-                                                   OPAL_HWLOC_AVAILABLE);
+        if (OPAL_SUCCESS == opal_hwloc_get_topology()) {
+            i = opal_hwloc_get_nbobjs_by_type(opal_hwloc_topology,
+                                              HWLOC_OBJ_NODE, 0,
+                                              OPAL_HWLOC_AVAILABLE);
 
             /* JMS This tells me how many numa nodes are *available*,
                but it's not how many are being used *by this job*.
@@ -273,7 +273,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
             mca_btl_smcuda_component.mem_node = my_mem_node = -1;
         } else {
             /* get our NUMA location */
-            mynuma = opal_hwloc_base_get_location(loc, HWLOC_OBJ_NODE, 0);
+            mynuma = opal_hwloc_get_location(loc, HWLOC_OBJ_NODE, 0);
             if (NULL == mynuma ||
                 NULL != strchr(mynuma, ',') ||
                 NULL != strchr(mynuma, '-')) {
@@ -292,7 +292,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
         }
     } else {
         /* If we have hwloc support, then get accurate information */
-        if (OPAL_SUCCESS == opal_hwloc_base_get_topology() &&
+        if (OPAL_SUCCESS == opal_hwloc_get_topology() &&
             num_mem_nodes > 0 && NULL != opal_process_info.cpuset) {
             int numa=0, w;
             unsigned n_bound=0;
@@ -301,13 +301,13 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
 
             /* count the number of NUMA nodes to which we are bound */
             for (w=0; w < i; w++) {
-                if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
-                                                                   HWLOC_OBJ_NODE, 0, w,
-                                                                   OPAL_HWLOC_AVAILABLE))) {
+                if (NULL == (obj = opal_hwloc_get_obj_by_type(opal_hwloc_topology,
+                                                              HWLOC_OBJ_NODE, 0, w,
+                                                              OPAL_HWLOC_AVAILABLE))) {
                     continue;
                 }
                 /* get that NUMA node's available cpus */
-                avail = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
+                avail = opal_hwloc_get_available_cpus(opal_hwloc_topology, obj);
                 /* see if we intersect */
                 if (hwloc_bitmap_intersects(avail, opal_hwloc_my_cpuset)) {
                     n_bound++;
