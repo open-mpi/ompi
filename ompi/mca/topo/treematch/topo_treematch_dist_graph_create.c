@@ -10,6 +10,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +21,7 @@
 #include "ompi_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 
 #include "ompi/mca/topo/treematch/topo_treematch.h"
 #include "ompi/mca/topo/treematch/treematch/tm_mapping.h"

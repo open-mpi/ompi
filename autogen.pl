@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
@@ -432,11 +432,28 @@ sub mca_process_project {
             next
                 if (! -d "$dir/$d" || $d eq "base" || substr($d, 0, 1) eq ".");
 
-            # If this directory has a $dir.h file and a base/
+            my $framework_header = "$dir/$d/$d.h";
+
+            # If there's a $dir/$d/autogen.options file, read it
+            my $ao_file = "$dir/$d/autogen.options";
+            if (-r $ao_file) {
+                verbose "\n>>> Found $dir/$d/autogen.options file\n";
+                open(IN, $ao_file) ||
+                    die "$ao_file present, but cannot open it";
+                while (<IN>) {
+                    if (m/\s*framework_header\s*=\s*(.+?)\s*$/) {
+                        verbose "    Framework header entry: $1\n";
+                        $framework_header = "$dir/$d/$1";
+                    }
+                }
+                close(IN);
+            }
+
+            # If this directory has a framework header and a base/
             # subdirectory, or its name is "common", then it's a
             # framework.
             if ("common" eq $d || !$project->{need_base} ||
-                (-f "$dir/$d/$d.h" && -d "$dir/$d/base")) {
+                (-f $framework_header && -d "$dir/$d/base")) {
                 verbose "\n=== Found $pname / $d framework\n";
                 mca_process_framework($topdir, $project, $d);
             }

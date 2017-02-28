@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -15,7 +15,7 @@
 
 #include "opal/dss/dss_types.h"
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 
 /*
  * Global functions for MCA overall hwloc open and close
@@ -88,7 +88,7 @@ OPAL_DECLSPEC int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *poli
 
 /**
  * Loads opal_hwloc_my_cpuset (global variable in
- * opal/mca/hwloc/hwloc.h) for this process.  opal_hwloc_my_cpuset
+ * opal/mca/hwloc/hwloc-internal.h) for this process.  opal_hwloc_my_cpuset
  * will be loaded with this process' binding, or, if the process is
  * not bound, use the hwloc root object's (available and online)
  * cpuset.

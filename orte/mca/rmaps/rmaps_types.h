@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
@@ -29,7 +29,7 @@
 #include "orte/constants.h"
 
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -101,7 +101,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
 /* round-robin policies */
 /* start with hardware-based options
  * so the values match the corresponding
- * levels in opal/mca/hwloc/hwloc.h
+ * levels in opal/mca/hwloc/hwloc-internal.h
  */
 #define ORTE_MAPPING_BYNODE            1
 #define ORTE_MAPPING_BYBOARD           2
