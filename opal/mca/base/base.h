@@ -71,6 +71,8 @@ OPAL_DECLSPEC extern bool mca_base_component_show_load_errors;
 OPAL_DECLSPEC extern bool mca_base_component_disable_dlopen;
 OPAL_DECLSPEC extern char *mca_base_system_default_path;
 OPAL_DECLSPEC extern char *mca_base_user_default_path;
+OPAL_DECLSPEC extern char **mca_base_component_enable_list;
+OPAL_DECLSPEC extern char **mca_base_component_disable_list;
 
 /*
  * Standard verbosity levels

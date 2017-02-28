@@ -103,6 +103,10 @@ static opal_thread_t mca_btl_tcp_progress_thread = { { 0 } };
 opal_list_t mca_btl_tcp_ready_frag_pending_queue = { { 0 } };
 opal_mutex_t mca_btl_tcp_ready_frag_mutex = OPAL_MUTEX_STATIC_INIT;
 
+mca_base_component_filter_t mca_btl_tcp_filter = {
+    .mca_filter_include = {"ethernet", NULL},
+};
+
 mca_btl_tcp_component_t mca_btl_tcp_component = {
     .super = {
         /* First, the mca_base_component_t struct containing meta information
@@ -113,6 +117,7 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
             .mca_open_component = mca_btl_tcp_component_open,
             .mca_close_component = mca_btl_tcp_component_close,
             .mca_register_component_params = mca_btl_tcp_component_register,
+            .mca_filter = &mca_btl_tcp_filter,
         },
         .btl_data = {
             /* The component is checkpoint ready */

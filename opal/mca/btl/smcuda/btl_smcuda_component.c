@@ -77,6 +77,10 @@ typedef enum {
     MCA_BTL_SM_RNDV_MOD_MPOOL
 } mca_btl_sm_rndv_module_type_t;
 
+mca_base_component_filter_t mca_btl_smcuda_filter = {
+    .mca_filter_include = {"shared-memory", "sm", "cuda", NULL},
+};
+
 /*
  * Shared Memory (SM) component instance.
  */
@@ -89,6 +93,7 @@ mca_btl_smcuda_component_t mca_btl_smcuda_component = {
             .mca_open_component = mca_btl_smcuda_component_open,
             .mca_close_component = mca_btl_smcuda_component_close,
             .mca_register_component_params = smcuda_register,
+            .mca_filter = &mca_btl_smcuda_filter,
         },
         .btl_data = {
             /* The component is checkpoint ready */

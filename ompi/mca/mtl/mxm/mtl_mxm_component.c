@@ -41,6 +41,10 @@ static mca_mtl_base_module_t
         * ompi_mtl_mxm_component_init(bool enable_progress_threads,
                                       bool enable_mpi_threads);
 
+mca_base_component_filter_t mca_mtl_mxm_filter = {
+    .mca_filter_include = {"infiniband", "mxm", NULL},
+};
+
 mca_mtl_mxm_component_t mca_mtl_mxm_component = {
 {
     /*
@@ -56,6 +60,7 @@ mca_mtl_mxm_component_t mca_mtl_mxm_component = {
         .mca_close_component = ompi_mtl_mxm_component_close,
         .mca_query_component = ompi_mtl_mxm_component_query,
         .mca_register_component_params = ompi_mtl_mxm_component_register,
+        .mca_filter = &mca_mtl_mxm_filter,
     },
     .mtl_data = {
         /* The component is not checkpoint ready */

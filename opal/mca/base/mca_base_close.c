@@ -52,6 +52,16 @@ int mca_base_close(void)
             free(mca_base_user_default_path);
         }
 
+        if (NULL != mca_base_component_enable_list) {
+            opal_argv_free (mca_base_component_enable_list);
+            mca_base_component_enable_list = NULL;
+        }
+
+        if (NULL != mca_base_component_disable_list) {
+            opal_argv_free (mca_base_component_disable_list);
+            mca_base_component_disable_list = NULL;
+        }
+
         /* Close down the component repository */
         mca_base_component_repository_finalize();
 

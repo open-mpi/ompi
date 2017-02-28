@@ -134,6 +134,9 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
                                          const char *name);
 static void free_filter(usnic_if_filter_t *filter);
 
+mca_base_component_filter_t mca_btl_usnic_filter = {
+    .mca_filter_include = {"ethernet", NULL},
+};
 
 opal_btl_usnic_component_t mca_btl_usnic_component = {
     .super = {
@@ -144,6 +147,7 @@ opal_btl_usnic_component_t mca_btl_usnic_component = {
             .mca_open_component = usnic_component_open,
             .mca_close_component = usnic_component_close,
             .mca_register_component_params = opal_btl_usnic_component_register,
+            .mca_filter = &mca_btl_usnic_filter,
         },
         .btl_data = {
             /* The component is not checkpoint ready */
