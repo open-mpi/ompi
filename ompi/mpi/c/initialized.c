@@ -26,6 +26,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mca/hook/base/base.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -40,6 +41,8 @@ static const char FUNC_NAME[] = "MPI_Initialized";
 int MPI_Initialized(int *flag)
 {
     OPAL_CR_NOOP_PROGRESS();
+
+    ompi_hook_base_mpi_initialized_top(flag);
 
     /* We must obtain the lock to guarnatee consistent values of
        ompi_mpi_initialized and ompi_mpi_finalized.  Note, too, that
@@ -73,6 +76,8 @@ int MPI_Initialized(int *flag)
 
     *flag = ompi_mpi_initialized;
     opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+
+    ompi_hook_base_mpi_initialized_bottom(flag);
 
     return MPI_SUCCESS;
 }
