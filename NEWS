@@ -59,9 +59,11 @@ included in the vX.Y.Z section and be denoted as:
 Major new features:
 
 - The main focus of the Open MPI v2.1.0 release was to update to PMIx
-  v1.2.1, improving launch time scalability, and greatly decreasing
-  the memory footprint when launching large numbers of MPI / OSHMEM
-  processes.
+  v1.2.1.  When using PMIx (e.g., via mpirun-based launches, or via
+  direct launches with recent versions of popular resource managers),
+  launch time scalability is improved, and the run time memory
+  footprint is greatly decreased when launching large numbers of MPI /
+  OpenSHMEM processes.
 - Update OpenSHMEM API conformance to v1.3.
 - The usnic BTL now supports MPI_THREAD_MULTIPLE.
 - General/overall performance improvements to MPI_THREAD_MULTIPLE.
