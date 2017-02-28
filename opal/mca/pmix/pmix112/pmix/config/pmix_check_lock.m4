@@ -3,6 +3,8 @@ dnl
 dnl Copyright (c) 2017      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl Copyright (c) 2017      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2017      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -52,7 +54,7 @@ AC_DEFUN([PMIX_CHECK_DSTOR_LOCK],[
         if test "$_x_ac_fcntl_lock_found" == "0"; then
             AC_MSG_ERROR([dstore: no available locking mechanisms was found. Can not continue. Try disabling dstore])
         fi
+        LIBS="$orig_libs"
     fi
 
-    LIBS="$orig_libs"
 ])

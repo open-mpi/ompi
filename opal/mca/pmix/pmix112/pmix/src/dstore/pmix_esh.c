@@ -136,23 +136,11 @@ __extension__ ({                                            \
 })
 
 #ifdef ESH_PTHREAD_LOCK
-#define _ESH_LOCK(rwlock, operation)                        \
+#define _ESH_LOCK(rwlock, func)                             \
 __extension__ ({                                            \
     pmix_status_t ret = PMIX_SUCCESS;                       \
     int rc;                                                 \
-    switch (operation) {                                    \
-        case F_WRLCK:                                       \
-            rc = pthread_rwlock_wrlock(rwlock);             \
-            break;                                          \
-        case F_RDLCK:                                       \
-            rc = pthread_rwlock_rdlock(rwlock);             \
-            break;                                          \
-        case F_UNLCK:                                       \
-            rc = pthread_rwlock_unlock(rwlock);             \
-            break;                                          \
-        default:                                            \
-            rc = PMIX_ERR_BAD_PARAM;                        \
-    }                                                       \
+    rc = pthread_rwlock_##func(rwlock);                     \
     if (0 != rc) {                                          \
         switch (errno) {                                    \
             case EINVAL:                                    \
@@ -169,6 +157,10 @@ __extension__ ({                                            \
     }                                                       \
     ret;                                                    \
 })
+
+#define _ESH_WRLOCK(rwlock) _ESH_LOCK(rwlock, wrlock)
+#define _ESH_RDLOCK(rwlock) _ESH_LOCK(rwlock, rdlock)
+#define _ESH_UNLOCK(rwlock) _ESH_LOCK(rwlock, unlock)
 #endif
 
 #ifdef ESH_FCNTL_LOCK
@@ -209,11 +201,11 @@ __extension__ ({                                            \
     }                                                       \
     ret;                                                    \
 })
-#endif
 
 #define _ESH_WRLOCK(lock) _ESH_LOCK(lock, F_WRLCK)
 #define _ESH_RDLOCK(lock) _ESH_LOCK(lock, F_RDLCK)
 #define _ESH_UNLOCK(lock) _ESH_LOCK(lock, F_UNLCK)
+#endif
 
 #define ESH_INIT_SESSION_TBL_SIZE 2
 #define ESH_INIT_NS_MAP_TBL_SIZE  2
