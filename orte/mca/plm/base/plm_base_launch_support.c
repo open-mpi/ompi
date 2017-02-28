@@ -40,7 +40,7 @@
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/hwloc/hwloc.h"
 
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/util/session_dir.h"
@@ -86,33 +86,33 @@ void orte_plm_base_set_slots(orte_node_t *node)
 {
     if (0 == strncmp(orte_set_slots, "cores", strlen(orte_set_slots))) {
         if (NULL != node->topology && NULL != node->topology->topo) {
-            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                             HWLOC_OBJ_CORE, 0,
-                                                             OPAL_HWLOC_LOGICAL);
+            node->slots = opal_hwloc_get_nbobjs_by_type(node->topology->topo,
+                                                        HWLOC_OBJ_CORE, 0,
+                                                        OPAL_HWLOC_LOGICAL);
         }
     } else if (0 == strncmp(orte_set_slots, "sockets", strlen(orte_set_slots))) {
         if (NULL != node->topology && NULL != node->topology->topo) {
-            if (0 == (node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                                       HWLOC_OBJ_SOCKET, 0,
-                                                                       OPAL_HWLOC_LOGICAL))) {
+            if (0 == (node->slots = opal_hwloc_get_nbobjs_by_type(node->topology->topo,
+                                                                  HWLOC_OBJ_SOCKET, 0,
+                                                                  OPAL_HWLOC_LOGICAL))) {
                 /* some systems don't report sockets - in this case,
                  * use numanodes */
-                node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                                 HWLOC_OBJ_NODE, 0,
-                                                                 OPAL_HWLOC_LOGICAL);
+                node->slots = opal_hwloc_get_nbobjs_by_type(node->topology->topo,
+                                                            HWLOC_OBJ_NODE, 0,
+                                                            OPAL_HWLOC_LOGICAL);
             }
         }
     } else if (0 == strncmp(orte_set_slots, "numas", strlen(orte_set_slots))) {
         if (NULL != node->topology && NULL != node->topology->topo) {
-            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                             HWLOC_OBJ_NODE, 0,
-                                                             OPAL_HWLOC_LOGICAL);
+            node->slots = opal_hwloc_get_nbobjs_by_type(node->topology->topo,
+                                                        HWLOC_OBJ_NODE, 0,
+                                                        OPAL_HWLOC_LOGICAL);
         }
     } else if (0 == strncmp(orte_set_slots, "hwthreads", strlen(orte_set_slots))) {
         if (NULL != node->topology && NULL != node->topology->topo) {
-            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                             HWLOC_OBJ_PU, 0,
-                                                             OPAL_HWLOC_LOGICAL);
+            node->slots = opal_hwloc_get_nbobjs_by_type(node->topology->topo,
+                                                        HWLOC_OBJ_PU, 0,
+                                                        OPAL_HWLOC_LOGICAL);
         }
     } else {
         /* must be a number */
@@ -896,7 +896,7 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
         goto CLEANUP;
     }
     /* filter the topology as we'll need it that way later */
-    opal_hwloc_base_filter_cpus(topo);
+    opal_hwloc_filter_cpus(topo);
     /* record the final topology */
     t->topo = topo;
 

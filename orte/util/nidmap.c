@@ -53,7 +53,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/pmix/pmix.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"

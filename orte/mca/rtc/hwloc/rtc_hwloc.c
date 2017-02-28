@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +17,7 @@
 #endif  /* HAVE_UNISTD_H */
 #include <string.h>
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/hwloc/hwloc.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 
@@ -133,7 +133,7 @@ static void set(orte_job_t *jobdat,
         if (0 == rc && opal_hwloc_report_bindings) {
             opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
             /* avoid reporting it twice */
-            (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
+            (void) mca_base_var_env_name ("hwloc_report_bindings", &param);
             opal_unsetenv(param, environ_copy);
             free(param);
         }
@@ -214,24 +214,24 @@ static void set(orte_job_t *jobdat,
                 opal_output(0, "MCW rank %d is not bound",
                             child->name.vpid);
             } else {
-                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
+                if (OPAL_ERR_NOT_BOUND == opal_hwloc_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
                     opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
                 } else {
-                    opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
+                    opal_hwloc_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
                     opal_output(0, "MCW rank %d bound to %s: %s",
                                 child->name.vpid, tmp1, tmp2);
                 }
             }
             hwloc_bitmap_free(mycpus);
             /* avoid reporting it twice */
-            (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
+            (void) mca_base_var_env_name ("hwloc_report_bindings", &param);
             opal_unsetenv(param, environ_copy);
             free(param);
         }
         /* set memory affinity policy - if we get an error, don't report
          * anything unless the user actually specified the binding policy
          */
-        rc = opal_hwloc_base_set_process_membind_policy();
+        rc = opal_hwloc_set_process_membind_policy();
         if (ORTE_SUCCESS != rc  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
             if (errno == ENOSYS) {
                 msg = "hwloc indicates memory binding not supported";
@@ -240,7 +240,7 @@ static void set(orte_job_t *jobdat,
             } else {
                 msg = "failed to bind memory";
             }
-            if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
+            if (OPAL_HWLOC_MBFA_ERROR == opal_hwloc_mbfa) {
                 /* If binding is required, send an error up the pipe (which exits
                    -- it doesn't return). */
                 orte_rtc_base_send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",

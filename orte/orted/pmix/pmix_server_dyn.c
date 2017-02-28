@@ -38,7 +38,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/hwloc/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -223,10 +223,10 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
                 /* not allowed to provide multiple mapping policies */
                 orte_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
                                info->data.string,
-                               opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
+                               opal_hwloc_print_binding(opal_hwloc_binding_policy));
                 return ORTE_ERR_BAD_PARAM;
             }
-            rc = opal_hwloc_base_set_binding_policy(&jdata->map->binding,
+            rc = opal_hwloc_set_binding_policy(&jdata->map->binding,
                                                     info->data.string);
             if (ORTE_SUCCESS != rc) {
                 return rc;

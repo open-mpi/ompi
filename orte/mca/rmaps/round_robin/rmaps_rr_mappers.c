@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "opal/util/output.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
@@ -514,7 +514,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             }
             start = 0;
             /* get the number of objects of this type on this node */
-            nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
+            nobjs = opal_hwloc_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
             if (0 == nobjs) {
                 continue;
             }
@@ -564,13 +564,13 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                     opal_output_verbose(20, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps:rr: assigning proc to object %d", (i+start) % nobjs);
                     /* get the hwloc object */
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, target, cache_level, (i+start) % nobjs, OPAL_HWLOC_AVAILABLE))) {
+                    if (NULL == (obj = opal_hwloc_get_obj_by_type(node->topology->topo, target, cache_level, (i+start) % nobjs, OPAL_HWLOC_AVAILABLE))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return ORTE_ERR_NOT_FOUND;
                     }
-                    if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_base_get_npus(node->topology->topo, obj)) {
+                    if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_get_npus(node->topology->topo, obj)) {
                         orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
-                                       orte_rmaps_base.cpus_per_rank, opal_hwloc_base_get_npus(node->topology->topo, obj),
+                                       orte_rmaps_base.cpus_per_rank, opal_hwloc_get_npus(node->topology->topo, obj),
                                        orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
                         return ORTE_ERR_SILENT;
                     }
@@ -669,7 +669,7 @@ static int byobj_span(orte_job_t *jdata,
             return ORTE_ERR_SILENT;
         }
         /* get the number of objects of this type on this node */
-        nobjs += opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
+        nobjs += opal_hwloc_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
     }
 
     if (0 == nobjs) {
@@ -708,19 +708,19 @@ static int byobj_span(orte_job_t *jdata,
             ++(jdata->map->num_nodes);
         }
         /* get the number of objects of this type on this node */
-        nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
+        nobjs = opal_hwloc_get_nbobjs_by_type(node->topology->topo, target, cache_level, OPAL_HWLOC_AVAILABLE);
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:byobj: found %d objs on node %s", nobjs, node->name);
         /* loop through the number of objects */
         for (i=0; i < (int)nobjs && nprocs_mapped < (int)app->num_procs; i++) {
             /* get the hwloc object */
-            if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, target, cache_level, i, OPAL_HWLOC_AVAILABLE))) {
+            if (NULL == (obj = opal_hwloc_get_obj_by_type(node->topology->topo, target, cache_level, i, OPAL_HWLOC_AVAILABLE))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 return ORTE_ERR_NOT_FOUND;
             }
-            if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_base_get_npus(node->topology->topo, obj)) {
+            if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_get_npus(node->topology->topo, obj)) {
                 orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
-                               orte_rmaps_base.cpus_per_rank, opal_hwloc_base_get_npus(node->topology->topo, obj),
+                               orte_rmaps_base.cpus_per_rank, opal_hwloc_get_npus(node->topology->topo, obj),
                                orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
                 return ORTE_ERR_SILENT;
             }

@@ -38,7 +38,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/util/arch.h"
@@ -140,13 +140,13 @@ int orte_ess_base_orted_setup(char **hosts)
 
     /* get the local topology */
     if (NULL == opal_hwloc_topology) {
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
+        if (OPAL_SUCCESS != (ret = opal_hwloc_get_topology())) {
             error = "topology discovery";
             goto error;
         }
     }
     /* generate the signature */
-    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+    orte_topo_signature = opal_hwloc_get_topo_signature(opal_hwloc_topology);
     /* remove the hostname from the topology. Unfortunately, hwloc
      * decided to add the source hostname to the "topology", thus
      * rendering it unusable as a pure topological description. So

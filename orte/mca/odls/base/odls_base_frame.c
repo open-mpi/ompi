@@ -15,6 +15,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,7 @@
 #include "opal/class/opal_ring_buffer.h"
 #include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/hwloc/hwloc.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"

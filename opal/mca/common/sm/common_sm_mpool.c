@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +30,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
 #include "orte/mca/sstore/sstore.h"
@@ -164,14 +164,14 @@ static void *mca_common_sm_mpool_alloc (mca_mpool_base_module_t* mpool,
                                         size_t size, size_t align, uint32_t flags)
 {
     mca_common_sm_mpool_module_t* mpool_sm = (mca_common_sm_mpool_module_t*)mpool;
-    opal_hwloc_base_memory_segment_t mseg;
+    opal_hwloc_memory_segment_t mseg;
 
     mseg.mbs_start_addr =
         mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, align);
 
     if (mpool_sm->mem_node >= 0) {
         mseg.mbs_len = size;
-        opal_hwloc_base_membind(&mseg, 1, mpool_sm->mem_node);
+        opal_hwloc_membind(&mseg, 1, mpool_sm->mem_node);
     }
 
     return mseg.mbs_start_addr;

@@ -22,7 +22,7 @@
 #endif  /* HAVE_UNISTD_H */
 #include <string.h>
 
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/util/argv.h"
 
 #include "orte/util/show_help.h"
@@ -296,7 +296,7 @@ static int ppr_mapper(orte_job_t *jdata)
                 }
             } else {
                 /* get the number of lowest resources on this node */
-                nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+                nobjs = opal_hwloc_get_nbobjs_by_type(node->topology->topo,
                                                            lowest, cache_level,
                                                            OPAL_HWLOC_AVAILABLE);
 
@@ -304,7 +304,7 @@ static int ppr_mapper(orte_job_t *jdata)
                  * recording the locale of each proc so we know its cpuset
                  */
                 for (i=0; i < nobjs; i++) {
-                    obj = opal_hwloc_base_get_obj_by_type(node->topology->topo,
+                    obj = opal_hwloc_get_obj_by_type(node->topology->topo,
                                                           lowest, cache_level,
                                                           i, OPAL_HWLOC_AVAILABLE);
                     for (j=0; j < ppr[start] && nprocs_mapped < total_procs; j++) {
@@ -486,7 +486,7 @@ static void prune(orte_jobid_t jobid,
     }
 
     /* get the number of resources at this level on this node */
-    nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+    nobjs = opal_hwloc_get_nbobjs_by_type(node->topology->topo,
                                                lvl, cache_level,
                                                OPAL_HWLOC_AVAILABLE);
 
@@ -494,11 +494,11 @@ static void prune(orte_jobid_t jobid,
      * underneath it and check against the limit
      */
     for (i=0; i < nobjs; i++) {
-        obj = opal_hwloc_base_get_obj_by_type(node->topology->topo,
+        obj = opal_hwloc_get_obj_by_type(node->topology->topo,
                                               lvl, cache_level,
                                               i, OPAL_HWLOC_AVAILABLE);
         /* get the available cpuset */
-        avail = opal_hwloc_base_get_available_cpus(node->topology->topo, obj);
+        avail = opal_hwloc_get_available_cpus(node->topology->topo, obj);
 
         /* look at the intersection of this object's cpuset and that
          * of each proc in the job/app - if they intersect, then count this proc
@@ -518,7 +518,7 @@ static void prune(orte_jobid_t jobid,
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 return;
             }
-            cpus = opal_hwloc_base_get_available_cpus(node->topology->topo, locale);
+            cpus = opal_hwloc_get_available_cpus(node->topology->topo, locale);
             if (hwloc_bitmap_intersects(avail, cpus)) {
                 nprocs++;
             }
@@ -556,7 +556,7 @@ static void prune(orte_jobid_t jobid,
             /* find the child with the most procs underneath it */
             for (k=0; k < top->arity && limit < nprocs; k++) {
                 /* get this object's available cpuset */
-                childcpus = opal_hwloc_base_get_available_cpus(node->topology->topo, top->children[k]);
+                childcpus = opal_hwloc_get_available_cpus(node->topology->topo, top->children[k]);
                 nunder = 0;
                 pptr = NULL;
                 for (n=0; n < node->procs->size; n++) {
@@ -572,7 +572,7 @@ static void prune(orte_jobid_t jobid,
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return;
                     }
-                    cpus = opal_hwloc_base_get_available_cpus(node->topology->topo, locale);
+                    cpus = opal_hwloc_get_available_cpus(node->topology->topo, locale);
                     if (hwloc_bitmap_intersects(childcpus, cpus)) {
                         nunder++;
                         if (NULL == pptr) {

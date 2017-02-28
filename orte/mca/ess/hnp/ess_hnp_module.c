@@ -54,7 +54,7 @@
 #include "opal/util/fd.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pstat/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/base/base.h"
@@ -210,7 +210,7 @@ static int rte_init(void)
 
     /* get the local topology */
     if (NULL == opal_hwloc_topology) {
-        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
+        if (OPAL_SUCCESS != (ret = opal_hwloc_get_topology())) {
             error = "topology discovery";
             goto error;
         }
@@ -511,7 +511,7 @@ static int rte_init(void)
     t = OBJ_NEW(orte_topology_t);
     t->topo = opal_hwloc_topology;
     /* generate the signature */
-    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+    orte_topo_signature = opal_hwloc_get_topo_signature(opal_hwloc_topology);
     t->sig = strdup(orte_topo_signature);
     opal_pointer_array_add(orte_node_topologies, t);
     node->topology = t;
@@ -527,7 +527,7 @@ static int rte_init(void)
         opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
     }
     /* detect and add any coprocessors */
-    coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+    coprocessors = opal_hwloc_find_coprocessors(opal_hwloc_topology);
     if (NULL != coprocessors) {
         /* separate the serial numbers of the coprocessors
          * on this host
@@ -544,7 +544,7 @@ static int rte_init(void)
         orte_coprocessors_detected = true;
     }
     /* see if I am on a coprocessor */
-    coprocessors = opal_hwloc_base_check_on_coprocessor();
+    coprocessors = opal_hwloc_check_on_coprocessor();
     if (NULL != coprocessors) {
         /* compute the hash */
         OPAL_HASH_STR(coprocessors, h);

@@ -38,7 +38,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
-#include "opal/mca/hwloc/base/base.h"
+#include "opal/hwloc/base.h"
 #include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/name_fns.h"
@@ -344,7 +344,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
                     kv = OBJ_NEW(opal_value_t);
                     kv->key = strdup(OPAL_PMIX_LOCALITY_STRING);
                     kv->type = OPAL_STRING;
-                    kv->data.string = opal_hwloc_base_get_locality_string(opal_hwloc_topology, tmp);
+                    kv->data.string = opal_hwloc_get_locality_string(opal_hwloc_topology, tmp);
                     opal_list_append(pmap, &kv->super);
                     free(tmp);
                 } else {
