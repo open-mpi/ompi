@@ -1,0 +1,14 @@
+Copyright (c) 2017      IBM Corporation.  All rights reserved.
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+===========================================================================
+This internal component includes PMIx v1.2.1 plus these two commits
+cherry-picked from the PMIx v1.2 branch (which will be included in the
+eventual PMIx v1.2.2 release).
+
+ * https://github.com/pmix/master/commit/a2d431cbec162b01e15920cc75df1af9ad244f06
+ * https://github.com/pmix/master/commit/8587f278a17301633ccf6f0d7cb086e3be8f4793
