@@ -59,3 +59,9 @@ all components *except* a and b", while "c,d" specifies the inclusive
 behavior and means "use *only* components c and d."
 
 You cannot mix inclusive and exclusive behavior.
+[framework-param:exclude-always-component]
+A request was made to exclude a component from consideration that
+must always be considered.
+
+Framework: %s
+Component: %s
