@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -79,6 +79,7 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
     OPAL_CR_ENTER_LIBRARY();
 
     if( insize > 0 ) {
+        int ret;
         OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
         /* the resulting convertor will be set the the position ZERO */
         opal_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor, &(datatype->super),
@@ -98,17 +99,17 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
 
         /* Do the actual unpacking */
         iov_count = 1;
-        rc = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
+        ret = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
         *position += size;
         OBJ_DESTRUCT( &local_convertor );
-    } else {
-        rc = 1;
+        /* All done.  Note that the convertor returns 1 upon success, not
+           OPAL_SUCCESS. */
+        if (1 != ret) {
+            rc = OMPI_ERROR;
+        }
     }
 
     OPAL_CR_EXIT_LIBRARY();
 
-    /* All done.  Note that the convertor returns 1 upon success, not
-       OMPI_SUCCESS. */
-    OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
-                           comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(rc, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }

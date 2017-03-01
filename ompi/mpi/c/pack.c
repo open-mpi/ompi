@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -45,7 +45,7 @@ static const char FUNC_NAME[] = "MPI_Pack";
 int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
              void *outbuf, int outsize, int *position, MPI_Comm comm)
 {
-    int rc = MPI_SUCCESS;
+    int rc = MPI_SUCCESS, ret;
     opal_convertor_t local_convertor;
     struct iovec invec;
     unsigned int iov_count;
@@ -95,14 +95,16 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
 
     /* Do the actual packing */
     iov_count = 1;
-    rc = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
+    ret = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
     *position += size;
     OBJ_DESTRUCT( &local_convertor );
 
     OPAL_CR_EXIT_LIBRARY();
 
     /* All done.  Note that the convertor returns 1 upon success, not
-       OMPI_SUCCESS. */
-    OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
-                           comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+       OPAL_SUCCESS. */
+    if (1 != ret) {
+        rc = OMPI_ERROR;
+    }
+    OMPI_ERRHANDLER_RETURN(rc, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }

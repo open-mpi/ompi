@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -70,9 +70,7 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
     rc = ompi_datatype_unpack_external(datarep, inbuf, insize,
                                        position, outbuf, outcount,
                                        datatype);
-
     OPAL_CR_EXIT_LIBRARY();
 
-    OMPI_ERRHANDLER_RETURN((OMPI_SUCCESS == rc) ? OMPI_SUCCESS : OMPI_ERROR,
-                           MPI_COMM_WORLD, rc, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
