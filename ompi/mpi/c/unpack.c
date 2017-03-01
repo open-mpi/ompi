@@ -78,6 +78,7 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
 
 
     if( insize > 0 ) {
+        int ret;
         OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
         /* the resulting convertor will be set the the position ZERO */
         opal_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor, &(datatype->super),
@@ -96,15 +97,15 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
 
         /* Do the actual unpacking */
         iov_count = 1;
-        rc = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
+        ret = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
         *position += size;
         OBJ_DESTRUCT( &local_convertor );
-    } else {
-        rc = 1;
+        /* All done.  Note that the convertor returns 1 upon success, not
+           OPAL_SUCCESS. */
+        if (1 != ret) {
+            rc = OMPI_ERROR;
+        }
     }
 
-    /* All done.  Note that the convertor returns 1 upon success, not
-       OMPI_SUCCESS. */
-    OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
-                           comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(rc, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }
