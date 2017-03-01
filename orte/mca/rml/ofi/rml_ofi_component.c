@@ -219,17 +219,6 @@ rml_ofi_component_close(void)
         rc = opal_hash_table_get_next_key_uint64 (&orte_rml_ofi.peers, &key,
                                                   (void **) &value, node, &node);
     }
-
-    /* release all peers from the hash table */
-    rc = opal_hash_table_get_first_key_uint64 (&orte_rml_ofi.peers, &key,
-                                               (void **) &value, &node);
-    while (OPAL_SUCCESS == rc) {
-        if (NULL != value) {
-            OBJ_RELEASE(value);
-        }
-        rc = opal_hash_table_get_next_key_uint64 (&orte_rml_ofi.peers, &key,
-                                                  (void **) &value, node, &node);
-    }
     OBJ_DESTRUCT(&orte_rml_ofi.peers);
     OPAL_LIST_DESTRUCT(&orte_rml_ofi.recv_msg_queue_list);
 
