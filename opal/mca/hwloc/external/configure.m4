@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
-# Copyright (c) 2014-2016 Research Organization for Information Science
+# Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
@@ -136,6 +136,13 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                               [opal_hwloc_external_support=yes],
                               [opal_hwloc_external_support=no])
 
+           AS_IF([test "$opal_hwloc_external_support" = "yes"],
+                 [CPPFLAGS="$CPPFLAGS $opal_hwloc_external_CPPFLAGS"
+                  LDFLAGS="$LDFLAGS $opal_hwloc_external_LDFLAGS"
+                  LIBS="$LIBS $opal_hwloc_external_LIBS"
+                  AC_CHECK_DECLS([HWLOC_OBJ_OSDEV_COPROC], [], [], [#include <hwloc.h>])
+                  AC_CHECK_FUNCS([hwloc_topology_dup])])
+
            CPPFLAGS=$opal_hwloc_external_CPPFLAGS_save
            CFLAGS=$opal_hwloc_external_CFLAGS_save
            LDFLAGS=$opal_hwloc_external_LDFLAGS_save
@@ -162,15 +169,15 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
 
            AC_CHECK_HEADERS([infiniband/verbs.h])
 
-           AC_MSG_CHECKING([if external hwloc version is 1.8 or greater])
+           AC_MSG_CHECKING([if external hwloc version is 1.5 or greater])
            AS_IF([test "$opal_hwloc_dir" != ""],
                  [opal_hwloc_external_CFLAGS_save=$CFLAGS
                   CFLAGS="-I$opal_hwloc_dir/include $opal_hwloc_external_CFLAGS_save"])
            AC_COMPILE_IFELSE(
                [AC_LANG_PROGRAM([[#include <hwloc.h>]],
                    [[
-#if HWLOC_API_VERSION < 0x00010800
-#error "hwloc API version is less than 0x00010800"
+#if HWLOC_API_VERSION < 0x00010500
+#error "hwloc API version is less than 0x00010500"
 #endif
                    ]])],
                [AC_MSG_RESULT([yes])],
