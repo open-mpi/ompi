@@ -21,6 +21,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/opal_environ.h"
+#include "opal/mca/memory/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/message/message.h"
@@ -112,6 +113,8 @@ int mca_pml_yalla_open(void)
 
     PML_YALLA_VERBOSE(1, "mca_pml_yalla_open");
 
+    (void)mca_base_framework_open(&opal_memory_base_framework, 0);
+
     /* Set memory hooks */
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
@@ -156,6 +159,7 @@ int mca_pml_yalla_close(void)
         mxm_cleanup(ompi_pml_yalla.mxm_context);
         ompi_pml_yalla.mxm_context = NULL;
     }
+    mca_base_framework_close(&opal_memory_base_framework);
     return 0;
 }
 

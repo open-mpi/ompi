@@ -251,6 +251,8 @@ static int hcoll_open(void)
 
     cm->libhcoll_initialized = false;
 
+    (void)mca_base_framework_open(&opal_memory_base_framework, 0);
+
     /* Register memory hooks */
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
@@ -293,5 +295,8 @@ static int hcoll_close(void)
         HCOL_VERBOSE(1,"Hcol library finalize failed");
         return OMPI_ERROR;
     }
+
+    mca_base_framework_close(&opal_memory_base_framework);
+
     return OMPI_SUCCESS;
 }
