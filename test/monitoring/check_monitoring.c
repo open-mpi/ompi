@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2016 Inria.  All rights reserved.
- * Copyright (c) 2017 The University of Tennessee and The University
- *                    of Tennessee Research Foundation.  All rights
- *                    reserved.
+ * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -305,9 +305,9 @@ static inline int pvar_coll_check(MPI_T_pvar_session session, int world_size, in
             fprintf(stderr, "Error in %s: size_values[%d]=%" PRIu64 ", and should be equal to %" PRIu64 ".\n",
                     __func__, i, svalues[i], (uint64_t) 0);
             ret = -1;
-        } else if ( i != world_rank && svalues[i] < (uint64_t) ((world_size * (world_size - 1) * 2 * 13 * sizeof(char)) + 3 * 13 * sizeof(char) + sizeof(int)) ) {
+        } else if ( i != world_rank && svalues[i] < (uint64_t) (world_size * (2 * 13 * sizeof(char) + sizeof(int)) + 13 * 3 * sizeof(char) + sizeof(int)) ) {
             fprintf(stderr, "Error in %s: size_values[%d]=%" PRIu64 ", and should be >= %" PRIu64 ".\n",
-                    __func__, i, svalues[i], (uint64_t) ((world_size * (world_size - 1) * 2 * 13 * sizeof(char)) + 3 * 13 * sizeof(char) + sizeof(int)));
+                    __func__, i, svalues[i], (uint64_t) (world_size * (2 * 13 * sizeof(char) + sizeof(int)) + 13 * 3 * sizeof(char) + sizeof(int)));
             ret = -1;
         }
     }

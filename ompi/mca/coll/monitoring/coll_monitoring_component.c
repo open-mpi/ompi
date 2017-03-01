@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Inria.  All rights reserved.
+ * Copyright (c) 2016-2017 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,9 +16,9 @@
 
 #define MONITORING_SAVE_PREV_COLL_API(__module, __comm, __api)          \
     do {                                                                \
-        if( NULL != __comm->c_coll.coll_ ## __api ## _module ) {        \
-            __module->real.coll_ ## __api = __comm->c_coll.coll_ ## __api; \
-            __module->real.coll_ ## __api ## _module = __comm->c_coll.coll_ ## __api ## _module; \
+        if( NULL != __comm->c_coll->coll_ ## __api ## _module ) {        \
+            __module->real.coll_ ## __api = __comm->c_coll->coll_ ## __api; \
+            __module->real.coll_ ## __api ## _module = __comm->c_coll->coll_ ## __api ## _module; \
             OBJ_RETAIN(__module->real.coll_ ## __api ## _module);       \
         } else {                                                        \
             /* If no function previously provided, do not monitor */    \
@@ -26,9 +26,9 @@
             OPAL_MONITORING_PRINT_WARN("COMM \"%s\": No monitoring available for " \
                                        "coll_" # __api, __comm->c_name); \
         }                                                               \
-        if( NULL != __comm->c_coll.coll_i ## __api ## _module ) {       \
-            __module->real.coll_i ## __api = __comm->c_coll.coll_i ## __api; \
-            __module->real.coll_i ## __api ## _module = __comm->c_coll.coll_i ## __api ## _module; \
+        if( NULL != __comm->c_coll->coll_i ## __api ## _module ) {       \
+            __module->real.coll_i ## __api = __comm->c_coll->coll_i ## __api; \
+            __module->real.coll_i ## __api ## _module = __comm->c_coll->coll_i ## __api ## _module; \
             OBJ_RETAIN(__module->real.coll_i ## __api ## _module);      \
         } else {                                                        \
             /* If no function previously provided, do not monitor */    \
