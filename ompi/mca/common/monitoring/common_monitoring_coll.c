@@ -42,11 +42,27 @@ struct mca_monitoring_coll_data_t {
 /* Collectives operation monitoring */
 static opal_hash_table_t *comm_data = NULL;
 
+/* Check whether the communicator's name have been changed. Update the
+ * data->comm_name field if so.
+ */
+static inline void mca_common_monitoring_coll_check_name(mca_monitoring_coll_data_t*data)
+{
+    if( data->comm_name && data->p_comm && (data->p_comm->c_flags & OMPI_COMM_NAMEISSET)
+        && data->p_comm->c_name && 0 <  strlen(data->p_comm->c_name)
+        && 0 != strncmp(data->p_comm->c_name, data->comm_name, OPAL_MAX_OBJECT_NAME - 1) )
+    {
+        free(data->comm_name);
+        data->comm_name = strdup(data->p_comm->c_name);
+    }
+}
+
 static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*data)
 {
     int world_rank;
     if( NULL == data->comm_name && 0 < strlen(data->p_comm->c_name) ) {
         data->comm_name = strdup(data->p_comm->c_name);
+    } else {
+        mca_common_monitoring_coll_check_name(data);
     }
     if( -1 == data->world_rank ) {
         /* Get current process world_rank */
@@ -150,6 +166,9 @@ void mca_common_monitoring_coll_finalize( void )
 
 void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
 {
+    /* Check for any change in the communicator's name */
+    mca_common_monitoring_coll_check_name(data);
+
     /* Flush data */
     fprintf(pf,
             "D\t%s\tprocs: %s\n"

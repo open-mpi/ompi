@@ -73,10 +73,10 @@ static int nprocs_world = 0;
 opal_hash_table_t *common_monitoring_translation_ht = NULL;
 
 /* Reset all the monitoring arrays */
-static void mca_common_monitoring_reset( void );
+static void mca_common_monitoring_reset ( void );
 
 /* Flushes the monitored data and reset the values */
-static int mca_common_monitoring_flush(int fd, char* filename);
+static int mca_common_monitoring_flush (int fd, char* filename);
 
 /* Retreive the PML recorded count of messages sent */
 static int mca_common_monitoring_get_pml_count (const struct mca_base_pvar_t *pvar,
@@ -691,9 +691,6 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
                 fprintf(pf, "%" PRIu64 "%s", size_histogram[i * max_size_histogram + j],
                         j < max_size_histogram - 1 ? "," : "\n");
         }
-        /* reset phase array */
-        pml_data[i] = 0;
-        pml_count[i] = 0;
     }
 
     /* Dump outgoing synchronization/collective messages */
@@ -715,9 +712,6 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
                                 j < max_size_histogram - 1 ? "," : "\n");
                 }
             }
-            /* reset phase array */
-            filtered_pml_data[i] = 0;
-            filtered_pml_count[i] = 0;
         }
     }
 
@@ -732,23 +726,15 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
             fprintf(pf, "R\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, osc_data_r[i], osc_count_r[i]);
         }
-        /* reset phase array */
-        osc_data_s[i]  = 0;
-        osc_count_s[i] = 0;
-        osc_data_r[i]  = 0;
-        osc_count_r[i] = 0;
     }
 
     /* Dump collectives */
     fprintf(pf, "# COLLECTIVES\n");
     for (int i = 0 ; i < nbprocs ; i++) {
         if(coll_count[i] > 0) {
-            fprintf(pf, "C\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\t",
+            fprintf(pf, "C\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, coll_data[i], coll_count[i]);
         }
-        /* reset phase array */
-        coll_data[i] = 0;
-        coll_count[i] = 0;
     }
     mca_common_monitoring_coll_flush_all(pf);
 }
@@ -795,5 +781,7 @@ static int mca_common_monitoring_flush(int fd, char* filename)
 
         fclose(pf);
     }
+    /* Reset to 0 all monitored data */
+    mca_common_monitoring_reset();
     return OMPI_SUCCESS;
 }
