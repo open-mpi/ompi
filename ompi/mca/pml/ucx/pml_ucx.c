@@ -584,7 +584,7 @@ mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count,
     opal_convertor_t opal_conv;
 
     OBJ_CONSTRUCT(&opal_conv, opal_convertor_t);
-    opal_convertor_copy_and_prepare_for_recv(ompi_proc_local_proc->super.proc_convertor,
+    opal_convertor_copy_and_prepare_for_send(ompi_proc_local_proc->super.proc_convertor,
                                              &datatype->super, count, buf, 0,
                                              &opal_conv);
     opal_convertor_get_packed_size(&opal_conv, &packed_length);
@@ -600,7 +600,7 @@ mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count,
     iov.iov_base = packed_data;
     iov.iov_len  = packed_length;
 
-    PML_UCX_VERBOSE(8, "bsend of packed buffer %p len %d\n", packed_data, packed_length);
+    PML_UCX_VERBOSE(8, "bsend of packed buffer %p len %d", packed_data, packed_length);
     offset = 0;
     opal_convertor_set_position(&opal_conv, &offset);
     if (0 > opal_convertor_pack(&opal_conv, &iov, &iov_count, &packed_length)) {
