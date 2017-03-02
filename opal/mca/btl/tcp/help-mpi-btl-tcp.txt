@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2015-2016 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
@@ -85,3 +85,18 @@ or other external events.
   Local PID:  %d
   Peer host:  %s
 #
+[dropped inbound connection]
+Open MPI detected an inbound MPI TCP connection request from a peer
+that appears to be part of this MPI job (i.e., it identified itself as
+part of this Open MPI job), but it is from an IP address that is
+unexpected.  This is highly unusual.
+
+The inbound connection has been dropped, and the peer should simply
+try again with a different IP interface (i.e., the job should
+hopefully be able to continue).
+
+  Local host:          %s
+  Local PID:           %d
+  Peer hostname:       %s (%s)
+  Source IP of socket: %s
+  Known IPs of peer:   %s

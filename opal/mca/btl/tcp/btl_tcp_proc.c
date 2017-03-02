@@ -16,7 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +41,7 @@
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_proc.h"
@@ -846,11 +847,13 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                 len = 1024 - strlen(addr_str);
             }
         }
-        opal_output(0, "btl: tcp: Incoming connection from %s does not match known addresses for peer %s [hostname=%s addr=%s]. Drop !\n",
-                    opal_net_get_hostname((struct sockaddr*)addr),
-                    OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
-                    btl_proc->proc_opal->proc_hostname,
-                    addr_str);
+        opal_show_help("help-mpi-btl-tcp.txt", "dropped inbound connection",
+                       true, opal_process_info.nodename,
+                       getpid(),
+                       btl_proc->proc_opal->proc_hostname,
+                       OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
+                       opal_net_get_hostname((struct sockaddr*)addr),
+                       addr_str);
         free(addr_str);
     }
     OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
