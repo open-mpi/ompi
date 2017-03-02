@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -45,8 +45,7 @@ static const char FUNC_NAME[] = "MPI_Pack_external_size";
 int MPI_Pack_external_size(const char datarep[], int incount,
                            MPI_Datatype datatype, MPI_Aint *size)
 {
-    opal_convertor_t local_convertor;
-    size_t length;
+    int rc = MPI_SUCCESS;
 
     MEMCHECKER(
         memchecker_datatype(datatype);
@@ -62,17 +61,7 @@ int MPI_Pack_external_size(const char datarep[], int incount,
     }
 
 
-    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
-
-    /* the resulting convertor will be set to the position ZERO */
-    opal_convertor_copy_and_prepare_for_recv( ompi_mpi_external32_convertor,
-                                              &(datatype->super), incount, NULL,
-                                              CONVERTOR_SEND_CONVERSION,
-                                              &local_convertor );
-
-    opal_convertor_get_unpacked_size( &local_convertor, &length );
-    *size = (MPI_Aint)length;
-    OBJ_DESTRUCT( &local_convertor );
-
-    return OMPI_SUCCESS;
+    rc = ompi_datatype_pack_external_size(datarep, incount,
+                                          datatype, size);
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
