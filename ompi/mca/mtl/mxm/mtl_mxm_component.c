@@ -16,6 +16,7 @@
 #include "opal/util/show_help.h"
 #include "ompi/proc/proc.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/mca/memory/base/base.h"
 #include "ompi/runtime/mpiruntime.h"
 
 #include "mtl_mxm.h"
@@ -200,6 +201,7 @@ static int ompi_mtl_mxm_component_open(void)
     }
 
 #if MXM_API >= MXM_VERSION(2,0)
+    (void)mca_base_framework_open(&opal_memory_base_framework, 0);
     /* Register memory hooks */
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
@@ -281,6 +283,7 @@ static int ompi_mtl_mxm_component_close(void)
 #if MXM_API >= MXM_VERSION(2,0)
         mxm_config_free_ep_opts(ompi_mtl_mxm.mxm_ep_opts);
         mxm_config_free_context_opts(ompi_mtl_mxm.mxm_ctx_opts);
+        mca_base_framework_close(&opal_memory_base_framework);
 #else
         mxm_config_free(ompi_mtl_mxm.mxm_ep_opts);
         mxm_config_free(ompi_mtl_mxm.mxm_ctx_opts);
