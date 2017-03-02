@@ -16,7 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +41,7 @@
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_proc.h"
@@ -125,16 +126,18 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
         return btl_proc;
     }
 
-    do {
+    do {  /* This loop is only necessary so that we can break out of the serial code */
         btl_proc = OBJ_NEW(mca_btl_tcp_proc_t);
         if(NULL == btl_proc) {
             rc = OPAL_ERR_OUT_OF_RESOURCE;
             break;
         }
 
-        btl_proc->proc_opal = proc;
-
-        OBJ_RETAIN(btl_proc->proc_opal);
+        /* Retain the proc, but don't store the ref into the btl_proc just yet. This
+         * provides a way to release the btl_proc in case of failure without having to
+         * unlock the mutex.
+         */
+        OBJ_RETAIN(proc);
 
         /* lookup tcp parameters exported by this proc */
         OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version,
@@ -184,12 +187,14 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
     } while (0);
 
     if (OPAL_SUCCESS == rc) {
+        btl_proc->proc_opal = proc;  /* link with the proc */
         /* add to hash table of all proc instance. */
         opal_proc_table_set_value(&mca_btl_tcp_component.tcp_procs,
                                   proc->proc_name, btl_proc);
     } else {
         if (btl_proc) {
-            OBJ_RELEASE(btl_proc);
+            OBJ_RELEASE(btl_proc);  /* release the local proc */
+            OBJ_RELEASE(proc);      /* and the ref on the OMPI proc */
             btl_proc = NULL;
         }
     }
@@ -807,9 +812,38 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
         OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
         return;
     }
-    OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
     /* No further use of this socket. Close it */
     CLOSE_THE_SOCKET(sd);
+    {
+        size_t len = 1024;
+        char* addr_str = (char*)malloc(len);
+        if( NULL != addr_str ) {
+            memset(addr_str, 0, len);
+            for (size_t i = 0; i < btl_proc->proc_endpoint_count; i++) {
+                mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
+                if (btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
+                    continue;
+                }
+
+                if (addr_str[0] != '\0') {
+                    strncat(addr_str, ", ", len);
+                    len -= 2;
+                }
+                strncat(addr_str, inet_ntop(AF_INET6, (void*)(struct in6_addr*)&btl_endpoint->endpoint_addr->addr_inet,
+                                            addr_str + 1024 - len, INET6_ADDRSTRLEN), len);
+                len = 1024 - strlen(addr_str);
+            }
+        }
+        opal_show_help("help-mpi-btl-tcp.txt", "dropped inbound connection",
+                       true, opal_process_info.nodename,
+                       getpid(),
+                       btl_proc->proc_opal->proc_hostname,
+                       OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
+                       opal_net_get_hostname((struct sockaddr*)addr),
+                       addr_str);
+        free(addr_str);
+    }
+    OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
 }
 
 /*
