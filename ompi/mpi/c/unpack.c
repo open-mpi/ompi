@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -99,11 +99,10 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
         rc = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
         *position += size;
         OBJ_DESTRUCT( &local_convertor );
-
-        /* All done.  Note that the convertor returns 1 upon success, not
-           OMPI_SUCCESS. */
-        rc = (1 == rc) ? OMPI_SUCCESS : OMPI_ERROR;
     }
 
-    OMPI_ERRHANDLER_RETURN(rc, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    /* All done.  Note that the convertor returns 1 upon success, not
+       OMPI_SUCCESS. */
+    OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
+                           comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }
