@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -29,6 +29,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/io/io.h"
+#include "ompi/mca/fs/base/base.h"
 #include "io_ompio.h"
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_DEFAULT_CYCLE_BUF_SIZE;
@@ -257,8 +258,38 @@ file_query(struct ompi_file_t *file,
            int *priority)
 {
     mca_io_ompio_data_t *data;
+    char *tmp;
+    int rank;
+    int is_lustre=0; //false
 
-    *priority = priority_param;
+    tmp = strchr (file->f_filename, ':');
+    rank = ompi_comm_rank ( file->f_comm);
+    if (!tmp) {
+        if ( 0 == rank) {
+            if (LUSTRE == mca_fs_base_get_fstype(file->f_filename)) {
+                is_lustre = 1; //true
+            }
+        }
+        
+        file->f_comm->c_coll->coll_bcast (&is_lustre,
+                                          1,
+                                          MPI_INT,
+                                          0,
+                                          file->f_comm,
+                                          file->f_comm->c_coll->coll_bcast_module);
+    }
+    else {
+        if (!strncasecmp(file->f_filename, "lustre:", 7) ) {
+            is_lustre = 1;
+        }
+    }
+
+    if (is_lustre) {
+        *priority = 1;
+    }
+    else {
+        *priority = priority_param;
+    }
 
     /* Allocate a space for this module to hang private data (e.g.,
        the OMPIO file handle) */
