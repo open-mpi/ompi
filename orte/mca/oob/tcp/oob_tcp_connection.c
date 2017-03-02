@@ -54,7 +54,6 @@
 #include "opal_stdint.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/base/mca_base_var.h"
-#include "opal/mca/sec/sec.h"
 #include "opal/util/output.h"
 #include "opal/util/net.h"
 #include "opal/util/fd.h"
@@ -385,10 +384,7 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
     char *msg;
     mca_oob_tcp_hdr_t hdr;
     uint16_t ack_flag = htons(1);
-    int rc;
     size_t sdsize, offset = 0;
-    char *cred;
-    size_t credsize;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s SEND CONNECT ACK", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -401,20 +397,8 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
     hdr.seq_num = 0;
     memset(hdr.routed, 0, ORTE_MAX_RTD_SIZE+1);
 
-    /* get our security credential*/
-    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(peer->auth_method,
-                                                         ORTE_PROC_MY_NAME,
-                                                         &cred, &credsize))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s SENDING CREDENTIAL OF SIZE %lu",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        (unsigned long)credsize);
-
     /* payload size */
-    sdsize = sizeof(ack_flag) + strlen(orte_version_string) + 1 + credsize;
+    sdsize = sizeof(ack_flag) + strlen(orte_version_string) + 1;
     hdr.nbytes = sdsize;
     MCA_OOB_TCP_HDR_HTON(&hdr);
 
@@ -432,11 +416,6 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
     offset += sizeof(ack_flag);
     memcpy(msg + offset, orte_version_string, strlen(orte_version_string));
     offset += strlen(orte_version_string)+1;
-    memcpy(msg + offset, cred, credsize);
-    /* clear the memory */
-    if (NULL != cred) {
-        free(cred);
-    }
 
     /* send it */
     if (ORTE_SUCCESS != tcp_peer_send_blocking(peer->sd, msg, sdsize)) {
@@ -720,9 +699,7 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
 {
     char *msg;
     char *version;
-    int rc;
-    char *cred;
-    size_t credsize, offset = 0;
+    size_t offset = 0;
     mca_oob_tcp_hdr_t hdr;
     mca_oob_tcp_peer_t *peer;
     uint64_t *ui64;
@@ -916,30 +893,10 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
         free(msg);
         return ORTE_ERR_CONNECTION_REFUSED;
     }
-
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s connect-ack version from %s matches ours",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&peer->name));
-
-    /* check security token */
-    cred = (char*)((char*)msg + offset);
-    credsize = hdr.nbytes - offset;
-    if (OPAL_SUCCESS != (rc = opal_sec.authenticate(cred, credsize, &peer->auth_method))) {
-        char *hostname;
-        hostname = orte_get_proc_hostname(&peer->name);
-        orte_show_help("help-oob-tcp.txt", "authent-fail", true,
-                       (NULL == hostname) ? "unknown" : hostname,
-                       orte_process_info.nodename);
-        peer->state = MCA_OOB_TCP_FAILED;
-        mca_oob_tcp_peer_close(peer);
-        free(msg);
-        return ORTE_ERR_CONNECTION_REFUSED;
-    }
     free(msg);
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s connect-ack %s authenticated",
+                        "%s connect-ack version from %s matches ours",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer->name));
 

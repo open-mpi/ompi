@@ -55,7 +55,6 @@
 #include "opal/util/net.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/mca/sec/sec.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
