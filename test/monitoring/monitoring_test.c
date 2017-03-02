@@ -22,53 +22,38 @@ To be run as (without using MPI_Tool):
 
 mpirun -np 4 --mca pml_monitoring_enable 2 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename prof/output ./monitoring_test
 
-Then, the output should be:
-
-flushing to ./prof/output.2.prof
-flushing to ./prof/output.0.prof
-flushing to ./prof/output.1.prof
-flushing to ./prof/output.3.prof
-
-with the results being (per file):
-output.0.prof
-I       0       1       108 bytes       27 msgs sent
-E       0       1       20 bytes        4 msgs sent
-E       0       2       20528 bytes     9 msgs sent
+with the results being, as an example:
 output.1.prof
-I       1       2       104 bytes       26 msgs sent
-I       1       3       208 bytes       52 msgs sent
-E       1       0       20 bytes        4 msgs sent
-E       1       3       28 bytes        4 msgs sent
-output.2.prof
-I       2       3       104 bytes       26 msgs sent
-E       2       0       20528 bytes     9 msgs sent
-E       2       3       8 bytes 1 msgs sent
-output.3.prof
-I       3       0       104 bytes       26 msgs sent
-I       3       1       204 bytes       51 msgs sent
-E       3       1       16 bytes        1 msgs sent
-E       3       2       20 bytes        4 msgs sent
-
-or as
-
-mpirun -np 4 --mca pml_monitoring_enable 1 --mca pml_monitoring_enable_output 2 ./monitoring_test
-
-for an output as:
-
-Proc 0 flushing monitoring to stderr
-I       0       1       128 bytes       31 msgs sent
-I       0       2       20528 bytes     9 msgs sent
-Proc 2 flushing monitoring to stderr
-I       2       0       20528 bytes     9 msgs sent
-I       2       3       112 bytes       27 msgs sent
-Proc 1 flushing monitoring to stderr
-I       1       0       20 bytes        4 msgs sent
-I       1       2       104 bytes       26 msgs sent
-I       1       3       236 bytes       56 msgs sent
-Proc 3 flushing monitoring to stderr
-I       3       0       104 bytes       26 msgs sent
-I       3       1       220 bytes       52 msgs sent
-I       3       2       20 bytes        4 msgs sent
+# POINT TO POINT
+E       1       2       104 bytes       26 msgs sent    0,0,0,26,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+E       1       3       208 bytes       52 msgs sent    8,0,0,65,1,5,2,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+I       1       0       140 bytes       27 msgs sent
+I       1       2       2068 bytes      1 msgs sent
+I       1       3       2256 bytes      31 msgs sent
+# OSC
+S       1       0       0 bytes 1 msgs sent
+R       1       0       40960 bytes     1 msgs sent
+S       1       2       40960 bytes     1 msgs sent
+# COLLECTIVES
+C       1       0       140 bytes       27 msgs sent
+C       1       2       140 bytes       27 msgs sent
+C       1       3       140 bytes       27 msgs sent
+D       MPI COMMUNICATOR 4 DUP FROM 0   procs: 0,1,2,3
+O2A     1       0 bytes 0 msgs sent
+A2O     1       0 bytes 0 msgs sent
+A2A     1       276 bytes       15 msgs sent
+D       MPI_COMM_WORLD  procs: 0,1,2,3
+O2A     1       0 bytes 0 msgs sent
+A2O     1       0 bytes 0 msgs sent
+A2A     1       96 bytes        9 msgs sent
+D       MPI COMMUNICATOR 5 SPLIT_TYPE FROM 4    procs: 0,1,2,3
+O2A     1       0 bytes 0 msgs sent
+A2O     1       0 bytes 0 msgs sent
+A2A     1       48 bytes        3 msgs sent
+D       MPI COMMUNICATOR 3 SPLIT FROM 0 procs: 1,3
+O2A     1       0 bytes 0 msgs sent
+A2O     1       0 bytes 0 msgs sent
+A2A     1       0 bytes 0 msgs sent
 
 */
 
@@ -204,7 +189,7 @@ int main(int argc, char* argv[])
     */
     MPI_Comm_split(MPI_COMM_WORLD, rank%2, rank, &newcomm);
 
-    if(rank%2){ /*even ranks (in COMM_WORD) circulate a token*/
+    if(rank%2){ /*odd ranks (in COMM_WORD) circulate a token*/
         MPI_Comm_rank(newcomm, &rank);
         MPI_Comm_size(newcomm, &size);
         if( size > 1 ) {
@@ -225,7 +210,7 @@ int main(int argc, char* argv[])
                 }
             }
         }
-    } else { /*odd ranks (in COMM_WORD) will perform a all_to_all and a barrier*/
+    } else { /*even ranks (in COMM_WORD) will perform a all_to_all and a barrier*/
         int send_buff[10240];
         int recv_buff[10240];
         MPI_Comm newcomm2;
