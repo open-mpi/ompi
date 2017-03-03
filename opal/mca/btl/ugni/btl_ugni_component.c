@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal_params.h"
@@ -56,8 +57,47 @@ mca_base_var_enum_value_t rcache_values[] = {
     {-1, NULL} /* sentinal */
 };
 
-static int
-btl_ugni_component_register(void)
+mca_base_var_enum_value_flag_t cdm_flags[] = {
+    {.flag = GNI_CDM_MODE_FORK_NOCOPY, .string = "fork-no-copy", .conflicting_flag = GNI_CDM_MODE_FORK_FULLCOPY | GNI_CDM_MODE_FORK_PARTCOPY},
+    {.flag = GNI_CDM_MODE_FORK_FULLCOPY, .string = "fork-full-copy", .conflicting_flag = GNI_CDM_MODE_FORK_NOCOPY | GNI_CDM_MODE_FORK_PARTCOPY},
+    {.flag = GNI_CDM_MODE_FORK_PARTCOPY, .string = "fork-part-copy", .conflicting_flag = GNI_CDM_MODE_FORK_NOCOPY | GNI_CDM_MODE_FORK_FULLCOPY},
+    {.flag = GNI_CDM_MODE_ERR_NO_KILL, .string = "err-no-kill", .conflicting_flag = GNI_CDM_MODE_ERR_ALL_KILL},
+    {.flag = GNI_CDM_MODE_ERR_ALL_KILL, .string = "err-all-kill", .conflicting_flag = GNI_CDM_MODE_ERR_NO_KILL},
+    {.flag = GNI_CDM_MODE_FAST_DATAGRAM_POLL, .string = "fast-datagram-poll", .conflicting_flag = 0},
+    {.flag = GNI_CDM_MODE_BTE_SINGLE_CHANNEL, .string = "bte-single-channel", .conflicting_flag = 0},
+    {.flag = GNI_CDM_MODE_USE_PCI_IOMMU, .string = "use-pci-iommu", .conflicting_flag = 0},
+    {.flag = GNI_CDM_MODE_MDD_DEDICATED, .string = "mdd-dedicated", .conflicting_flag = GNI_CDM_MODE_MDD_SHARED},
+    {.flag = GNI_CDM_MODE_MDD_SHARED, .string = "mdd-shared", .conflicting_flag = GNI_CDM_MODE_MDD_DEDICATED},
+    {.flag = GNI_CDM_MODE_FMA_DEDICATED, .string = "fma-dedicated", .conflicting_flag = GNI_CDM_MODE_FMA_SHARED},
+    {.flag = GNI_CDM_MODE_FMA_SHARED, .string = "fma-shared", .conflicting_flag = GNI_CDM_MODE_FMA_DEDICATED},
+    {.flag = GNI_CDM_MODE_CACHED_AMO_ENABLED, .string = "cached-amo-enabled", .conflicting_flag = 0},
+    {.flag = GNI_CDM_MODE_CQ_NIC_LOCAL_PLACEMENT, .string = "cq-nic-placement", .conflicting_flag = 0},
+    {.flag = GNI_CDM_MODE_FMA_SMALL_WINDOW, .string = "fma-small-window", .conflicting_flag = 0},
+    {}
+};
+
+static inline int mca_btl_ugni_get_stat (const mca_base_pvar_t *pvar, void *value, void *obj)
+{
+    gni_statistic_t statistic = (gni_statistic_t) (intptr_t) pvar->ctx;
+    gni_return_t rc = GNI_RC_SUCCESS;
+
+    rc = GNI_GetNicStat (mca_btl_ugni_component.modules[0].device.dev_handle, statistic,
+                         value);
+
+    return mca_btl_rc_ugni_to_opal (rc);
+}
+
+static inline int mca_btl_ugni_notify_stat (mca_base_pvar_t *pvar, mca_base_pvar_event_t event, void *obj, int *count)
+{
+    if (MCA_BASE_PVAR_HANDLE_BIND == event) {
+        /* one value for each virtual device handle */
+        *count = mca_btl_ugni_component.virtual_device_count;
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static int btl_ugni_component_register(void)
 {
     mca_base_var_enum_t *new_enum;
     gni_nic_device_t device_type;
@@ -227,6 +267,31 @@ btl_ugni_component_register(void)
                                             MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MCA_BASE_VAR_BIND_NO_OBJECT,
                                             MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS, NULL,
                                             NULL, NULL, &mca_btl_ugni_progress_thread_wakeups);
+
+    /* register network statistics as performance variables */
+    for (int i = 0 ; i < GNI_NUM_STATS ; ++i) {
+        char name[128], desc[128];
+        size_t str_len = strlen (gni_statistic_str[i]);
+
+        assert (str_len < sizeof (name));
+
+        /* we can get an all-caps string for the variable from gni_statistic_str. need to make it lowercase
+         * to match ompi standards */
+        for (size_t j = 0 ; j < str_len ; ++j) {
+            name[j] = tolower (gni_statistic_str[i][j]);
+            desc[j] = ('_' == name[j]) ? ' ' : name[j];
+        }
+
+        name[str_len] = '\0';
+        desc[str_len] = '\0';
+
+        (void) mca_base_component_pvar_register (&mca_btl_ugni_component.super.btl_version, name, desc,
+                                                 OPAL_INFO_LVL_4, MCA_BASE_PVAR_CLASS_COUNTER,
+                                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MCA_BASE_VAR_BIND_NO_OBJECT,
+                                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                                 mca_btl_ugni_get_stat, NULL, mca_btl_ugni_notify_stat,
+                                                 (void *) (intptr_t) i);
+    }
 
     /* btl/ugni can only support only a fixed set of rcache components (these rcache components have compatible resource
      * structures) */
