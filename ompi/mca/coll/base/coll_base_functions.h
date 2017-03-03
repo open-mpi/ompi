@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,42 +40,123 @@
 
 /* some fixed value index vars to simplify certain operations */
 typedef enum COLLTYPE {
-    ALLGATHER = 0,  /*  0 */
-    ALLGATHERV,     /*  1 */
-    ALLREDUCE,      /*  2 */
-    ALLTOALL,       /*  3 */
-    ALLTOALLV,      /*  4 */
-    ALLTOALLW,      /*  5 */
-    BARRIER,        /*  6 */
-    BCAST,          /*  7 */
-    EXSCAN,         /*  8 */
-    GATHER,         /*  9 */
-    GATHERV,        /* 10 */
-    REDUCE,         /* 11 */
-    REDUCESCATTER,  /* 12 */
-    SCAN,           /* 13 */
-    SCATTER,        /* 14 */
-    SCATTERV,       /* 15 */
-    COLLCOUNT       /* 16 end counter keep it as last element */
+    ALLGATHER = 0,       /*  0 */
+    ALLGATHERV,          /*  1 */
+    ALLREDUCE,           /*  2 */
+    ALLTOALL,            /*  3 */
+    ALLTOALLV,           /*  4 */
+    ALLTOALLW,           /*  5 */
+    BARRIER,             /*  6 */
+    BCAST,               /*  7 */
+    EXSCAN,              /*  8 */
+    GATHER,              /*  9 */
+    GATHERV,             /* 10 */
+    REDUCE,              /* 11 */
+    REDUCESCATTER,       /* 12 */
+    REDUCESCATTERBLOCK,  /* 13 */
+    SCAN,                /* 14 */
+    SCATTER,             /* 15 */
+    SCATTERV,            /* 16 */
+    NEIGHBOR_ALLGATHER,  /* 17 */
+    NEIGHBOR_ALLGATHERV, /* 18 */
+    NEIGHBOR_ALLTOALL,   /* 19 */
+    NEIGHBOR_ALLTOALLV,  /* 20 */
+    NEIGHBOR_ALLTOALLW,  /* 21 */
+    COLLCOUNT            /* 22 end counter keep it as last element */
 } COLLTYPE_T;
 
 /* defined arg lists to simply auto inclusion of user overriding decision functions */
-#define ALLGATHER_ARGS const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define ALLGATHERV_ARGS const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void * rbuf, const int *rcounts, const int *disps, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define ALLREDUCE_ARGS const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, struct ompi_op_t *op, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define ALLTOALL_ARGS const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void* rbuf, int rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define ALLTOALLV_ARGS const void *sbuf, const int *scounts, const int *sdisps, struct ompi_datatype_t *sdtype, void *rbuf, const int *rcounts, const int *rdisps, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define ALLTOALLW_ARGS const void *sbuf, const int *scounts, const int *sdisps,  struct ompi_datatype_t * const *sdtypes, void *rbuf, const int *rcounts, const int *rdisps, struct ompi_datatype_t * const *rdtypes, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define BARRIER_ARGS struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define BCAST_ARGS void *buff, int count, struct ompi_datatype_t *datatype, int root, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define EXSCAN_ARGS const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, struct ompi_op_t *op, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define GATHER_ARGS const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount, struct ompi_datatype_t *rdtype, int root, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define GATHERV_ARGS void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf, int *rcounts, int *disps, struct ompi_datatype_t *rdtype, int root, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define REDUCE_ARGS const void *sbuf, void* rbuf, int count, struct ompi_datatype_t *dtype, struct ompi_op_t *op, int root, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define REDUCESCATTER_ARGS const void *sbuf, void *rbuf, const int *rcounts, struct ompi_datatype_t *dtype, struct ompi_op_t *op, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define SCAN_ARGS const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,  struct ompi_op_t *op, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define SCATTER_ARGS const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount, struct ompi_datatype_t *rdtype, int root, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
-#define SCATTERV_ARGS const void *sbuf, const int *scounts, const int *disps, struct ompi_datatype_t *sdtype, void* rbuf, int rcount, struct ompi_datatype_t *rdtype, int root, struct ompi_communicator_t *comm, mca_coll_base_module_t *module
+#define ALLGATHER_BASE_ARGS           const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, int recvcount, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define ALLGATHERV_BASE_ARGS          const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int displs[], struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define ALLREDUCE_BASE_ARGS           const void *sendbuf, void *recvbuf, int count, struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
+#define ALLTOALL_BASE_ARGS            const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, int recvcount, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define ALLTOALLV_BASE_ARGS           const void *sendbuf, const int sendcounts[], const int sdispls[], struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define ALLTOALLW_BASE_ARGS           const void *sendbuf, const int sendcounts[], const int sdispls[], struct ompi_datatype_t * const sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], struct ompi_datatype_t * const recvtypes[], struct ompi_communicator_t *comm
+#define BARRIER_BASE_ARGS             struct ompi_communicator_t *comm
+#define BCAST_BASE_ARGS               void *buffer, int count, struct ompi_datatype_t *datatype, int root, struct ompi_communicator_t *comm
+#define EXSCAN_BASE_ARGS              const void *sendbuf, void *recvbuf, int count, struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
+#define GATHER_BASE_ARGS              const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, int recvcount, struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
+#define GATHERV_BASE_ARGS             const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int displs[], struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
+#define REDUCE_BASE_ARGS              const void *sendbuf, void *recvbuf, int count, struct ompi_datatype_t *datatype, struct ompi_op_t *op, int root, struct ompi_communicator_t *comm
+#define REDUCESCATTER_BASE_ARGS       const void *sendbuf, void *recvbuf, const int recvcounts[], struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
+#define REDUCESCATTERBLOCK_BASE_ARGS  const void *sendbuf, void *recvbuf, int recvcount, struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
+#define SCAN_BASE_ARGS                const void *sendbuf, void *recvbuf, int count, struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
+#define SCATTER_BASE_ARGS             const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, int recvcount, struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
+#define SCATTERV_BASE_ARGS            const void *sendbuf, const int sendcounts[], const int displs[], struct ompi_datatype_t *sendtype, void *recvbuf, int recvcount, struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
+#define NEIGHBOR_ALLGATHER_BASE_ARGS  const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, int recvcount, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define NEIGHBOR_ALLGATHERV_BASE_ARGS const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int displs[], struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define NEIGHBOR_ALLTOALL_BASE_ARGS   const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, int recvcount, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define NEIGHBOR_ALLTOALLV_BASE_ARGS  const void *sendbuf, const int sendcounts[], const int sdispls[], struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define NEIGHBOR_ALLTOALLW_BASE_ARGS  const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], struct ompi_datatype_t * const sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], struct ompi_datatype_t * const recvtypes[], struct ompi_communicator_t *comm
+
+#define ALLGATHER_ARGS           ALLGATHER_BASE_ARGS,           mca_coll_base_module_t *module
+#define ALLGATHERV_ARGS          ALLGATHERV_BASE_ARGS,          mca_coll_base_module_t *module
+#define ALLREDUCE_ARGS           ALLREDUCE_BASE_ARGS,           mca_coll_base_module_t *module
+#define ALLTOALL_ARGS            ALLTOALL_BASE_ARGS,            mca_coll_base_module_t *module
+#define ALLTOALLV_ARGS           ALLTOALLV_BASE_ARGS,           mca_coll_base_module_t *module
+#define ALLTOALLW_ARGS           ALLTOALLW_BASE_ARGS,           mca_coll_base_module_t *module
+#define BARRIER_ARGS             BARRIER_BASE_ARGS,             mca_coll_base_module_t *module
+#define BCAST_ARGS               BCAST_BASE_ARGS,               mca_coll_base_module_t *module
+#define EXSCAN_ARGS              EXSCAN_BASE_ARGS,              mca_coll_base_module_t *module
+#define GATHER_ARGS              GATHER_BASE_ARGS,              mca_coll_base_module_t *module
+#define GATHERV_ARGS             GATHERV_BASE_ARGS,             mca_coll_base_module_t *module
+#define REDUCE_ARGS              REDUCE_BASE_ARGS,              mca_coll_base_module_t *module
+#define REDUCESCATTER_ARGS       REDUCESCATTER_BASE_ARGS,       mca_coll_base_module_t *module
+#define REDUCESCATTERBLOCK_ARGS  REDUCESCATTERBLOCK_BASE_ARGS,  mca_coll_base_module_t *module
+#define SCAN_ARGS                SCAN_BASE_ARGS,                mca_coll_base_module_t *module
+#define SCATTER_ARGS             SCATTER_BASE_ARGS,             mca_coll_base_module_t *module
+#define SCATTERV_ARGS            SCATTERV_BASE_ARGS,            mca_coll_base_module_t *module
+#define NEIGHBOR_ALLGATHER_ARGS  NEIGHBOR_ALLGATHER_BASE_ARGS,  mca_coll_base_module_t *module
+#define NEIGHBOR_ALLGATHERV_ARGS NEIGHBOR_ALLGATHERV_BASE_ARGS, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLTOALL_ARGS   NEIGHBOR_ALLTOALL_BASE_ARGS,   mca_coll_base_module_t *module
+#define NEIGHBOR_ALLTOALLV_ARGS  NEIGHBOR_ALLTOALLV_BASE_ARGS,  mca_coll_base_module_t *module
+#define NEIGHBOR_ALLTOALLW_ARGS  NEIGHBOR_ALLTOALLW_BASE_ARGS,  mca_coll_base_module_t *module
+
+#define IALLGATHER_ARGS           ALLGATHER_BASE_ARGS,           ompi_request_t **request, mca_coll_base_module_t *module
+#define IALLGATHERV_ARGS          ALLGATHERV_BASE_ARGS,          ompi_request_t **request, mca_coll_base_module_t *module
+#define IALLREDUCE_ARGS           ALLREDUCE_BASE_ARGS,           ompi_request_t **request, mca_coll_base_module_t *module
+#define IALLTOALL_ARGS            ALLTOALL_BASE_ARGS,            ompi_request_t **request, mca_coll_base_module_t *module
+#define IALLTOALLV_ARGS           ALLTOALLV_BASE_ARGS,           ompi_request_t **request, mca_coll_base_module_t *module
+#define IALLTOALLW_ARGS           ALLTOALLW_BASE_ARGS,           ompi_request_t **request, mca_coll_base_module_t *module
+#define IBARRIER_ARGS             BARRIER_BASE_ARGS,             ompi_request_t **request, mca_coll_base_module_t *module
+#define IBCAST_ARGS               BCAST_BASE_ARGS,               ompi_request_t **request, mca_coll_base_module_t *module
+#define IEXSCAN_ARGS              EXSCAN_BASE_ARGS,              ompi_request_t **request, mca_coll_base_module_t *module
+#define IGATHER_ARGS              GATHER_BASE_ARGS,              ompi_request_t **request, mca_coll_base_module_t *module
+#define IGATHERV_ARGS             GATHERV_BASE_ARGS,             ompi_request_t **request, mca_coll_base_module_t *module
+#define IREDUCE_ARGS              REDUCE_BASE_ARGS,              ompi_request_t **request, mca_coll_base_module_t *module
+#define IREDUCESCATTER_ARGS       REDUCESCATTER_BASE_ARGS,       ompi_request_t **request, mca_coll_base_module_t *module
+#define IREDUCESCATTERBLOCK_ARGS  REDUCESCATTERBLOCK_BASE_ARGS,  ompi_request_t **request, mca_coll_base_module_t *module
+#define ISCAN_ARGS                SCAN_BASE_ARGS,                ompi_request_t **request, mca_coll_base_module_t *module
+#define ISCATTER_ARGS             SCATTER_BASE_ARGS,             ompi_request_t **request, mca_coll_base_module_t *module
+#define ISCATTERV_ARGS            SCATTERV_BASE_ARGS,            ompi_request_t **request, mca_coll_base_module_t *module
+#define INEIGHBOR_ALLGATHER_ARGS  NEIGHBOR_ALLGATHER_BASE_ARGS,  ompi_request_t **request, mca_coll_base_module_t *module
+#define INEIGHBOR_ALLGATHERV_ARGS NEIGHBOR_ALLGATHERV_BASE_ARGS, ompi_request_t **request, mca_coll_base_module_t *module
+#define INEIGHBOR_ALLTOALL_ARGS   NEIGHBOR_ALLTOALL_BASE_ARGS,   ompi_request_t **request, mca_coll_base_module_t *module
+#define INEIGHBOR_ALLTOALLV_ARGS  NEIGHBOR_ALLTOALLV_BASE_ARGS,  ompi_request_t **request, mca_coll_base_module_t *module
+#define INEIGHBOR_ALLTOALLW_ARGS  NEIGHBOR_ALLTOALLW_BASE_ARGS,  ompi_request_t **request, mca_coll_base_module_t *module
+
+#define ALLGATHER_BASE_ARG_NAMES           sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm
+#define ALLGATHERV_BASE_ARG_NAMES          sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm
+#define ALLREDUCE_BASE_ARG_NAMES           sendbuf, recvbuf, count, datatype, op, comm
+#define ALLTOALL_BASE_ARG_NAMES            sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm
+#define ALLTOALLV_BASE_ARG_NAMES           sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm
+#define ALLTOALLW_BASE_ARG_NAMES           sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm
+#define BARRIER_BASE_ARG_NAMES             comm
+#define BCAST_BASE_ARG_NAMES               buffer, count, datatype, root, comm
+#define EXSCAN_BASE_ARG_NAMES              sendbuf, recvbuf, count, datatype, op, comm
+#define GATHER_BASE_ARG_NAMES              sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm
+#define GATHERV_BASE_ARG_NAMES             sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm
+#define REDUCE_BASE_ARG_NAMES              sendbuf, recvbuf, count, datatype, op, root, comm
+#define REDUCESCATTER_BASE_ARG_NAMES       sendbuf, recvbuf, recvcounts, datatype, op, comm
+#define REDUCESCATTERBLOCK_BASE_ARG_NAMES  sendbuf, recvbuf, recvcount, datatype, op, comm
+#define SCAN_BASE_ARG_NAMES                sendbuf, recvbuf, count, datatype, op, comm
+#define SCATTER_BASE_ARG_NAMES             sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm
+#define SCATTERV_BASE_ARG_NAMES            sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm
+#define NEIGHBOR_ALLGATHER_BASE_ARG_NAMES  sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm
+#define NEIGHBOR_ALLGATHERV_BASE_ARG_NAMES sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm
+#define NEIGHBOR_ALLTOALL_BASE_ARG_NAMES   sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm
+#define NEIGHBOR_ALLTOALLV_BASE_ARG_NAMES  sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm
+#define NEIGHBOR_ALLTOALLW_BASE_ARG_NAMES  sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm
 /* end defined arg lists to simply auto inclusion of user overriding decision functions */
 
 BEGIN_C_DECLS
