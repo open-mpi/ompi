@@ -484,7 +484,6 @@ static inline int _esh_dir_del(const char *path)
     dir = opendir(path);
     if (NULL == dir) {
         rc = PMIX_ERR_BAD_PARAM;
-        PMIX_ERROR_LOG(rc);
         return rc;
     }
 
