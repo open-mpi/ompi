@@ -42,11 +42,6 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
     gni_cq_entry_t event_data;
     gni_return_t grc;
 
-    /* nothing to do */
-    if (0 == device->dev_smsg_local_cq.active_operations) {
-        return OPAL_SUCCESS;
-    }
-
     grc = mca_btl_ugni_cq_get_event (device, &device->dev_smsg_local_cq, &event_data);
     if (GNI_RC_NOT_DONE == grc) {
         return OPAL_SUCCESS;
