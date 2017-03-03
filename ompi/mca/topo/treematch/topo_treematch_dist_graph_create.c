@@ -6,7 +6,7 @@
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
  * Copyright (c) 2012-2015 Bordeaux Poytechnic Institute
  * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -55,7 +55,16 @@
 #define MY_STRING_SIZE 64
 /*#define __DEBUG__ 1  */
 
-
+/**
+ * This function is a allreduce between all processes to detect for oversubscription.
+ * On each node, the local_procs will be a different array, that contains only the
+ * local processes. Thus, that process will compute the node oversubscription and will
+ * bring this value to the operation, while every other process on the node will
+ * contribute 0.
+ * Doing an AllReduce might be an overkill for this situation, but it should remain
+ * more scalable than a star reduction (between the roots of each node (nodes_roots),
+ * followed by a bcast to all processes.
+ */
 static int check_oversubscribing(int rank,
                                  int num_nodes,
                                  int num_objs_in_node,
@@ -64,48 +73,13 @@ static int check_oversubscribing(int rank,
                                  int *local_procs,
                                  ompi_communicator_t *comm_old)
 {
-    int oversubscribed = 0;
-    int local_oversub = 0;
-    int err;
+    int oversubscribed = 0, local_oversub = 0, err;
 
+    /* Only a single process per node, the local root, compute the oversubscription condition */
     if (rank == local_procs[0])
         if(num_objs_in_node < num_procs_in_node)
             local_oversub =  1;
 
-    if (rank == 0) {
-        MPI_Request *reqs = (MPI_Request *)calloc(num_nodes-1, sizeof(MPI_Request));
-        int *oversub = (int *)calloc(num_nodes, sizeof(int));
-        int i;
-
-        oversub[0] = local_oversub;
-        for(i = 1;  i < num_nodes; i++)
-            if (OMPI_SUCCESS != ( err = MCA_PML_CALL(irecv(&oversub[i], 1, MPI_INT,
-                                                           nodes_roots[i], 111, comm_old, &reqs[i-1])))) {
-                /* NTH: more needs to be done to correctly clean up here */
-                free (reqs);
-                free (oversub);
-                return err;
-            }
-
-        if (OMPI_SUCCESS != ( err = ompi_request_wait_all(num_nodes-1,
-                                                          reqs, MPI_STATUSES_IGNORE))) {
-            /* NTH: more needs to be done to correctly clean up here */
-            free (reqs);
-            free (oversub);
-            return err;
-        }
-
-        for(i = 0;  i < num_nodes; i++)
-            oversubscribed += oversub[i];
-
-        free(oversub);
-        free(reqs);
-    } else {
-        if (rank == local_procs[0])
-            if (OMPI_SUCCESS != (err = MCA_PML_CALL(send(&local_oversub, 1, MPI_INT, 0,
-                                                         111, MCA_PML_BASE_SEND_STANDARD, comm_old))))
-                return err;
-    }
 
     if (OMPI_SUCCESS != (err = comm_old->c_coll->coll_bcast(&oversubscribed, 1,
                                                            MPI_INT, 0, comm_old,
@@ -163,7 +137,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     int num_procs_in_node = 0;
     int rank, size;
     int hwloc_err;
-    int oversubscribing_objs = 0;
+    int oversubscribing_objs = 0, oversubscribed_pus = 0;
     int i, j, idx;
     uint32_t val, *pval;
 
@@ -269,8 +243,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     hwloc_get_cpubind(opal_hwloc_topology,set,0);
     num_pus_in_node = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_PU);
 
-    if(hwloc_bitmap_isincluded(root_obj->cpuset,set)){
-        /* processes are not bound on the machine */
+    /**
+     * In all situations (including heterogeneous environments) all processes must execute
+     * all the calls that involve collective communications, so we have to lay the logic
+     * accordingly.
+     */
+    if(hwloc_bitmap_isincluded(root_obj->cpuset,set)){ /* processes are not bound on the machine */
 #ifdef __DEBUG__
         if (0 == rank)
             fprintf(stdout,">>>>>>>>>>>>> Process Not bound <<<<<<<<<<<<<<<\n");
@@ -285,40 +263,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         oversubscribing_objs = check_oversubscribing(rank,num_nodes,
                                                      num_objs_in_node,num_procs_in_node,
                                                      nodes_roots,local_procs,comm_old);
-        if(oversubscribing_objs) {
-#ifdef __DEBUG__
-            fprintf(stdout,"Oversubscribing OBJ/CORES resources => Trying to use PUs \n");
-#endif
-            int oversubscribed_pus = check_oversubscribing(rank,num_nodes,
-                                                           num_pus_in_node,num_procs_in_node,
-                                                           nodes_roots,local_procs,comm_old);
-            if (oversubscribed_pus){
-#ifdef __DEBUG__
-                fprintf(stdout,"Oversubscribing PUs resources => Rank Reordering Impossible \n");
-#endif
-                FALLBACK();
-            } else {
-                obj_rank = ompi_process_info.my_local_rank%num_pus_in_node;
-                effective_depth = hwloc_topology_get_depth(opal_hwloc_topology) - 1;
-                num_objs_in_node = num_pus_in_node;
-#ifdef __DEBUG__
-                fprintf(stdout,"Process not bound : binding on PU#%i \n",obj_rank);
-#endif
-            }
-        } else {
-            obj_rank = ompi_process_info.my_local_rank%num_objs_in_node;
-            effective_depth = depth;
-            object = hwloc_get_obj_by_depth(opal_hwloc_topology,effective_depth,obj_rank);
-            if( NULL == object) FALLBACK();
-
-            hwloc_bitmap_copy(set,object->cpuset);
-            hwloc_bitmap_singlify(set); /* we don't want the process to move */
-            hwloc_err = hwloc_set_cpubind(opal_hwloc_topology,set,0);
-            if( -1 == hwloc_err) FALLBACK();
-#ifdef __DEBUG__
-            fprintf(stdout,"Process not bound : binding on OBJ#%i \n",obj_rank);
-#endif
-        }
     } else {    /* the processes are already bound */
         object = hwloc_get_obj_covering_cpuset(opal_hwloc_topology,set);
         obj_rank = object->logical_index;
@@ -329,16 +273,60 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         oversubscribing_objs = check_oversubscribing(rank,num_nodes,
                                                      num_objs_in_node,num_procs_in_node,
                                                      nodes_roots,local_procs,comm_old);
-        if(oversubscribing_objs) {
+    }
+
+    if(oversubscribing_objs) {
+        if(hwloc_bitmap_isincluded(root_obj->cpuset,set)){ /* processes are not bound on the machine */
 #ifdef __DEBUG__
-            fprintf(stdout,"Oversubscribing OBJ/CORES resources =>  Rank Reordering Impossible\n");
+            fprintf(stdout,"Oversubscribing OBJ/CORES resources => Trying to use PUs \n");
 #endif
-            FALLBACK();
+            oversubscribed_pus = check_oversubscribing(rank,num_nodes,
+                                                       num_pus_in_node,num_procs_in_node,
+                                                       nodes_roots,local_procs,comm_old);
+        } else {
+            /* Bound processes will participate with the same data as before */
+            oversubscribed_pus = check_oversubscribing(rank,num_nodes,
+                                                       num_objs_in_node,num_procs_in_node,
+                                                       nodes_roots,local_procs,comm_old);
         }
+        if (!oversubscribed_pus) {
+            /* Update the data used to compute the correct binding */
+            if(hwloc_bitmap_isincluded(root_obj->cpuset,set)){ /* processes are not bound on the machine */
+                obj_rank = ompi_process_info.my_local_rank%num_pus_in_node;
+                effective_depth = hwloc_topology_get_depth(opal_hwloc_topology) - 1;
+                num_objs_in_node = num_pus_in_node;
 #ifdef __DEBUG__
-        fprintf(stdout,"Process %i bound  on OBJ #%i \n",rank,obj_rank);
-        fprintf(stdout,"=====> Num obj in node : %i | num pus in node : %i\n",num_objs_in_node,num_pus_in_node);
+                fprintf(stdout,"Process not bound : binding on PU#%i \n",obj_rank);
 #endif
+            }
+        }
+    }
+
+    if( !oversubscribing_objs && !oversubscribed_pus ) {
+        if( hwloc_bitmap_isincluded(root_obj->cpuset,set) ) { /* processes are not bound on the machine */
+        obj_rank = ompi_process_info.my_local_rank%num_objs_in_node;
+        effective_depth = depth;
+        object = hwloc_get_obj_by_depth(opal_hwloc_topology,effective_depth,obj_rank);
+        if( NULL == object) FALLBACK();
+
+        hwloc_bitmap_copy(set,object->cpuset);
+        hwloc_bitmap_singlify(set); /* we don't want the process to move */
+        hwloc_err = hwloc_set_cpubind(opal_hwloc_topology,set,0);
+        if( -1 == hwloc_err) FALLBACK();
+#ifdef __DEBUG__
+        fprintf(stdout,"Process not bound : binding on OBJ#%i \n",obj_rank);
+#endif
+        } else {
+#ifdef __DEBUG__
+            fprintf(stdout,"Process %i bound  on OBJ #%i \n",rank,obj_rank);
+            fprintf(stdout,"=====> Num obj in node : %i | num pus in node : %i\n",num_objs_in_node,num_pus_in_node);
+#endif
+        }
+    } else {
+#ifdef __DEBUG__
+        fprintf(stdout,"Oversubscribing PUs resources => Rank Reordering Impossible \n");
+#endif
+        FALLBACK();
     }
 
     reqs = (MPI_Request *)calloc(num_procs_in_node-1,sizeof(MPI_Request));
@@ -493,7 +481,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     for(i = 1; i < num_nodes ; i++)
                         displs[i] = displs[i-1] + objs_per_node[i-1];
 
-                    memset(reqs,0,(num_nodes-1)*sizeof(MPI_Request));
                     memcpy(obj_mapping,obj_to_rank_in_comm,objs_per_node[0]*sizeof(int));
                     for(i = 1; i < num_nodes ; i++)
                         if (OMPI_SUCCESS != ( err = MCA_PML_CALL(irecv(obj_mapping + displs[i], objs_per_node[i], MPI_INT,
