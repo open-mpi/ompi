@@ -700,8 +700,20 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
     if( mca_common_monitoring_filter() ) {
         for (int i = 0 ; i < nbprocs ; i++) {
             if(filtered_pml_count[i] > 0) {
-                fprintf(pf, "I\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
-                        my_rank, i, filtered_pml_data[i], filtered_pml_count[i]);
+                fprintf(pf, "I\t%" PRId32 "\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent%s",
+                        my_rank, i, filtered_pml_data[i], filtered_pml_count[i],
+                        0 == pml_count[i] ? "\t" : "\n");
+                /* 
+                 * In the case there was no external messages
+                 * exchanged between the two processes, the histogram
+                 * has not yet been dumpped. Then we need to add it at
+                 * the end of the internal category.
+                 */
+                if(0 == pml_count[i]) {
+                    for(int j = 0 ; j < max_size_histogram ; ++j)
+                        fprintf(pf, "%" PRIu64 "%s", size_histogram[i * max_size_histogram + j],
+                                j < max_size_histogram - 1 ? "," : "\n");
+                }
             }
             /* reset phase array */
             filtered_pml_data[i] = 0;
