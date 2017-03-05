@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2017 University of Houston. All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -35,6 +35,8 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
+#include "ompi/group/group.h"
+#include "ompi/proc/proc.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 
@@ -139,8 +141,16 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         free(shfileHandle);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    sprintf(sm_filename,"/tmp/OMPIO_sharedfp_sm_%s%s",filename_basename,".sm");
 
+    opal_jobid_t masterjobid;
+    if ( 0 == comm->c_my_rank ) {
+        ompi_proc_t *masterproc = ompi_group_peer_lookup(comm->c_local_group, 0 );
+        masterjobid = OMPI_CAST_RTE_NAME(&masterproc->super.proc_name)->jobid;
+    }
+    comm->c_coll->coll_bcast ( &masterjobid, 1, MPI_UNSIGNED, 0, comm, 
+                               comm->c_coll->coll_bcast_module );
+
+    sprintf(sm_filename,"/tmp/OMPIO_%s_%d_%s",filename_basename, masterjobid, ".sm");
     /* open shared memory file, initialize to 0, map into memory */
     sm_fd = open(sm_filename, O_RDWR | O_CREAT,
                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);

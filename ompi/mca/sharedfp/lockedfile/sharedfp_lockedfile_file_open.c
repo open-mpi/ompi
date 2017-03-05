@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2017 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -25,6 +25,8 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
+#include "ompi/group/group.h"
+#include "ompi/proc/proc.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 
@@ -99,8 +101,23 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    lockedfilename = (char*)malloc(sizeof(char) * (strlen(filename) + 64));
-    sprintf(lockedfilename,"%s%s",filename,".lockedfile");
+    opal_jobid_t masterjobid;
+    if ( 0 == comm->c_my_rank  ) {
+        ompi_proc_t *masterproc = ompi_group_peer_lookup(comm->c_local_group, 0 );
+        masterjobid = OMPI_CAST_RTE_NAME(&masterproc->super.proc_name)->jobid;
+    }
+    comm->c_coll->coll_bcast ( &masterjobid, 1, MPI_UNSIGNED, 0, comm, 
+                               comm->c_coll->coll_bcast_module );
+ 
+    size_t filenamelen = strlen(filename) + 16;
+    lockedfilename = (char*)malloc(sizeof(char) * filenamelen);
+    if ( NULL == lockedfilename ) {
+	free (shfileHandle);
+	free (sh);
+        free (module_data);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    snprintf(lockedfilename, filenamelen, "%s-%u%s",filename,masterjobid,".lock");
     module_data->filename = lockedfilename;
 
     /*-------------------------------------------------*/
