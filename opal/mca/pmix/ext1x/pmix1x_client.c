@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -448,7 +448,11 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
             return OPAL_ERR_NOT_FOUND;
         }
         (void)strncpy(p.nspace, job->nspace, PMIX_MAX_NSLEN);
-        p.rank = proc->vpid;
+        if (OPAL_VPID_WILDCARD == proc->vpid) {
+            p.rank = my_proc.rank;
+        } else {
+            p.rank = proc->vpid;
+        }
         pptr = &p;
     } else {
         /* if they are asking for our jobid, then return it */

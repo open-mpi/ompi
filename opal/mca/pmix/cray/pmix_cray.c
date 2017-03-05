@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -502,7 +502,7 @@ static int cray_init(void)
     kv.key = strdup(OPAL_PMIX_LOCAL_PEERS);
     kv.type = OPAL_STRING;
     kv.data.string = str;
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&name, &kv))) {
         OPAL_ERROR_LOG(ret);
         OBJ_DESTRUCT(&kv);
         goto err_exit;
@@ -514,7 +514,7 @@ static int cray_init(void)
     kv.key = strdup(OPAL_PMIX_LOCALLDR);
     kv.type = OPAL_UINT64;
     kv.data.uint64 = *(uint64_t*)&ldr;
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&name, &kv))) {
         OPAL_ERROR_LOG(ret);
         OBJ_DESTRUCT(&kv);
         goto err_exit;
