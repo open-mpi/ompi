@@ -44,6 +44,8 @@ OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_frag_t);
 int ompi_osc_pt2pt_frag_start(ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_frag_t *buffer);
 int ompi_osc_pt2pt_frag_flush_target(ompi_osc_pt2pt_module_t *module, int target);
 int ompi_osc_pt2pt_frag_flush_all(ompi_osc_pt2pt_module_t *module);
+int ompi_osc_pt2pt_frag_flush_pending (ompi_osc_pt2pt_module_t *module, int target);
+int ompi_osc_pt2pt_frag_flush_pending_all (ompi_osc_pt2pt_module_t *module);
 
 static inline int ompi_osc_pt2pt_frag_finish (ompi_osc_pt2pt_module_t *module,
                                               ompi_osc_pt2pt_frag_t* buffer)
@@ -107,7 +109,7 @@ static inline ompi_osc_pt2pt_frag_t *ompi_osc_pt2pt_frag_alloc_non_buffered (omp
  * soon as it is sent. this allows request-based rma fragments to be completed
  * so MPI_Test/MPI_Wait/etc will work as expected.
  */
-static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, int target,
+static inline int _ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, int target,
                                              size_t request_len, ompi_osc_pt2pt_frag_t **buffer,
                                              char **ptr, bool long_send, bool buffered)
 {
@@ -162,6 +164,25 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
     OPAL_THREAD_UNLOCK(&module->lock);
 
     return OMPI_SUCCESS;
+}
+
+static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, int target,
+                                             size_t request_len, ompi_osc_pt2pt_frag_t **buffer,
+                                             char **ptr, bool long_send, bool buffered)
+{
+    int ret;
+
+    do {
+        ret = ompi_osc_pt2pt_frag_alloc (module, target, request_len , buffer, ptr, long_send, buffered);
+        if (OPAL_LIKELY(OMPI_SUCCESS == ret || OMPI_ERR_OUT_OF_RESOURCE != ret)) {
+            break;
+        }
+
+        ompi_osc_pt2pt_frag_flush_pending_all (module);
+        opal_progress ();
+    } while (1);
+
+    return ret;
 }
 
 #endif
