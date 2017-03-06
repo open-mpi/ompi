@@ -17,7 +17,7 @@
 # This test requires multiple processes to run. Don't run it as part
 # of 'make check'
 if PROJECT_OMPI
-    noinst_PROGRAMS = monitoring_test test_pvar_access test_overhead check_monitoring
+    noinst_PROGRAMS = monitoring_test test_pvar_access test_overhead check_monitoring example_reduce_count
     monitoring_test_SOURCES = monitoring_test.c
     monitoring_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     monitoring_test_LDADD = \
@@ -36,6 +36,11 @@ if PROJECT_OMPI
     check_monitoring_SOURCES = check_monitoring.c
     check_monitoring_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     check_monitoring_LDADD = \
+	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+    example_reduce_count_SOURCES = example_reduce_count.c
+    example_reduce_count_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+    example_reduce_count_LDADD = \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
 	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 

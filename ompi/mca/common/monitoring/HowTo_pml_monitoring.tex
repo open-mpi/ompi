@@ -457,16 +457,20 @@ communication. For an exact measure of communications, the application
 must use \mpit{}'s monitoring performance variables to potentially
 subtract double-recorded data.
 
-\subsection{Example}
+\subsection{Examples}
 
-First is presented an example of monitoring using the \mpit{} in
-order to define phases during which the monitoring component is
-active.
+First is presented an example of monitoring using the \mpit{} in order
+to define phases during which the monitoring component is active. A
+second snipplet is presented for how to access monitoring performance
+variables with \mpit{}.
 
-You can execute the following example with \\
-\verb|mpiexec -n 4 --mca pml_monitoring_enable 2 test_monitoring|. Please
+\subsubsection{Monitoring Phases}
+
+You can execute the following example with
+\\ \verb|mpiexec -n 4 --mca pml_monitoring_enable 2 test_monitoring|. Please
 note that you need the prof directory to already exists to retrieve
-the dumped files.
+the dumped files. Following the complete code example, you will find a
+sample dumped file and the corresponding explainations.
 
 \paragraph{test\_monitoring.c} (extract)
 
@@ -655,6 +659,98 @@ find the name of the communicator, the ranks of the processes included
 in this communicator, and the amount of data send (or received) for
 each kind of collective, with the corresponding count of operations of
 each kind.
+
+\subsubsection{Accessing Monitoring Performance Variables}
+
+The following snipplet presents how to access the performances
+variables defined as part of the \mpit{} interface. The session
+allocation is not presented as it is the same as in the previous
+example. Please note that contrary to the {\it
+  pml\brkunds{}monitoring\brkunds{}flush} variable, the class of the
+monitoring performance values is {\tt
+  MPI\brkunds{}T\brkunds{}PVAR\brkunds{}CLASS\brkunds{}SIZE}, whereas
+the {\it flush} variable is of class {\tt GENERIC}. Also, performances
+variables are only to be read.
+
+\paragraph{test/monitoring/example\_reduce\_count.c} (extract)
+
+\begin{verbatim}
+MPI_T_pvar_handle count_handle;
+int count_pvar_idx;
+const char count_pvar_name[] = "pml_monitoring_messages_count";
+uint64_t*counts;
+
+/* Retrieve the proper pvar index */
+MPIT_result = MPI_T_pvar_get_index(count_pvar_name, MPI_T_PVAR_CLASS_SIZE, &count_pvar_idx);
+if (MPIT_result != MPI_SUCCESS) {
+    printf("cannot find monitoring MPI_T \"%s\" pvar, check that you have monitoring pml\n",
+           count_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+}
+
+/* Allocating a new PVAR in a session will reset the counters */
+MPIT_result = MPI_T_pvar_handle_alloc(session, count_pvar_idx,
+                                      MPI_COMM_WORLD, &count_handle, &count);
+if (MPIT_result != MPI_SUCCESS) {
+    printf("failed to allocate handle on \"%s\" pvar, check that you have monitoring pml\n",
+           count_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+}
+
+counts = (uint64_t*)malloc(count * sizeof(uint64_t));
+
+MPIT_result = MPI_T_pvar_start(session, count_handle);
+if (MPIT_result != MPI_SUCCESS) {
+    printf("failed to start handle on \"%s\" pvar, check that you have monitoring pml\n",
+           count_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+}
+
+/* Token Ring communications */
+if (rank == 0) {
+    n = 25;
+    MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD,&request);
+}
+while (1) {
+    MPI_Irecv(&n, 1, MPI_INT, from, tagno, MPI_COMM_WORLD, &request);
+    MPI_Wait(&request, &status);
+    if (rank == 0) {n--;tagno++;}
+    MPI_Isend(&n, 1, MPI_INT, to, tagno, MPI_COMM_WORLD, &request);
+    if (rank != 0) {n--;tagno++;}
+    if (n<0){
+        break;
+    }
+}
+
+MPIT_result = MPI_T_pvar_read(session, count_handle, counts);
+if (MPIT_result != MPI_SUCCESS) {
+    printf("failed to read handle on \"%s\" pvar, check that you have monitoring pml\n",
+           count_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+}
+
+/* Global reduce so everyone knows the maximum messages sent to each rank */
+MPI_Allreduce(MPI_IN_PLACE, counts, count, MPI_UNSIGNED_LONG, MPI_MAX, MPI_COMM_WORLD);
+
+/* OPERATIONS ON COUNTS */
+...
+
+free(counts);
+
+MPIT_result = MPI_T_pvar_stop(session, count_handle);
+if (MPIT_result != MPI_SUCCESS) {
+    printf("failed to stop handle on \"%s\" pvar, check that you have monitoring pml\n",
+           count_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+}
+
+MPIT_result = MPI_T_pvar_handle_free(session, &count_handle);
+if (MPIT_result != MPI_SUCCESS) {
+    printf("failed to free handle on \"%s\" pvar, check that you have monitoring pml\n",
+           count_pvar_name);
+    MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+}
+\end{verbatim}
 
 \section{Technical Documentation of the Implementation}
 \label{sec:TDI}
