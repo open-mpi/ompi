@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -332,7 +332,7 @@ static int s1_init(void)
     kv.key = strdup(OPAL_PMIX_LOCALLDR);
     kv.type = OPAL_UINT64;
     kv.data.uint64 = *(uint64_t*)&ldr;
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&wildcard_rank, &kv))) {
         OPAL_ERROR_LOG(ret);
         OBJ_DESTRUCT(&kv);
         goto err_exit;
