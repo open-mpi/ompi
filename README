@@ -62,7 +62,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (February 2017):
+base as of this writing (March 2017):
 
 General notes
 -------------
@@ -191,9 +191,14 @@ Compiler Notes
   f95/g95), or by disabling the Fortran MPI bindings with
   --disable-mpi-fortran.
 
+- On OpenBSD/i386, if you configure with
+  --enable-mca-no-build=patcher, you will also need to add
+  --disable-dlopen.  Otherwise, odd crashes can occur
+  nondeterministically.
+
 - Absoft 11.5.2 plus a service pack from September 2012 (which Absoft
   says is available upon request), or a version later than 11.5.2
-  (e.g., 11.5.3), is required to compile the new Fortran mpi_f08
+  (e.g., 11.5.3), is required to compile the Fortran mpi_f08
   module.
 
 - Open MPI does not support the Sparc v8 CPU target.  However,
@@ -350,8 +355,8 @@ Compiler Notes
         is provided, allowing mpi_f08 to be used in new subroutines in
         legacy MPI applications.
 
-  Per the OpenSHMEM specification, there is only one Fortran OpenSHMEM binding
-  provided:
+  Per the OpenSHMEM specification, there is only one Fortran OpenSHMEM
+  binding provided:
 
   - shmem.fh: All Fortran OpenSHMEM programs **should** include
     'shmem.fh', and Fortran OpenSHMEM programs that use constants
@@ -387,10 +392,9 @@ Compiler Notes
     Similar to the mpif.h interface, MPI_SIZEOF is only supported on
     Fortran compilers that support INTERFACE and ISO_FORTRAN_ENV.
 
-  - The mpi_f08 module is new and has been tested with the Intel
-    Fortran compiler and gfortran >= 4.9.  Other modern Fortran
-    compilers may also work (but are, as yet, only lightly tested).
-    It is expected that this support will mature over time.
+  - The mpi_f08 module has been tested with the Intel Fortran compiler
+    and gfortran >= 4.9.  Other modern Fortran compilers likely also
+    work.
 
     Many older Fortran compilers do not provide enough modern Fortran
     features to support the mpi_f08 module.  For example, gfortran <
@@ -465,11 +469,14 @@ MPI Functionality and Features
 
   (1) The cm PML and the following MTLs support MPI_THREAD_MULTIPLE:
       - MXM
+      - ofi (Libfabric)
       - portals4
 
   (2) The ob1 PML and the following BTLs support MPI_THREAD_MULTIPLE:
       - openib (see exception below)
       - self
+      - sm
+      - smcuda
       - tcp
       - ugni
       - usnic
@@ -508,8 +515,8 @@ MPI Functionality and Features
 
   This library is being offered as a "proof of concept" / convenience
   from Open MPI.  If there is interest, it is trivially easy to extend
-  it to printf for other MPI functions.  Patches and/or suggestions
-  would be greatfully appreciated on the Open MPI developer's list.
+  it to printf for other MPI functions.  Pull requests on github.com
+  would be greatly appreciated.
 
 OpenSHMEM Functionality and Features
 ------------------------------------
@@ -542,41 +549,6 @@ MPI Collectives
   (FCA) is a solution for offloading collective operations from the
   MPI process onto Mellanox QDR InfiniBand switch CPUs and HCAs.
 
-- The "ML" coll component is an implementation of MPI collective
-  operations that takes advantage of communication hierarchies in
-  modern systems. A ML collective operation is implemented by
-  combining multiple independently progressing collective primitives
-  implemented over different communication hierarchies, hence a ML
-  collective operation is also referred to as a hierarchical
-  collective operation. The number of collective primitives that are
-  included in a ML collective operation is a function of
-  subgroups(hierarchies).  Typically, MPI processes in a single
-  communication hierarchy such as CPU socket, node, or subnet are
-  grouped together into a single subgroup (hierarchy). The number of
-  subgroups are configurable at runtime, and each different collective
-  operation could be configured to have a different of number of
-  subgroups.
-
-  The component frameworks and components used by/required for a
-  "ML" collective operation.
-
-  Frameworks:
-  * "sbgp" - Provides functionality for grouping processes into
-             subgroups
-  * "bcol" - Provides collective primitives optimized for a particular
-             communication hierarchy
-
-  Components:
-  * sbgp components - Provides grouping functionality over a CPU
-                      socket ("basesocket"), shared memory
-                      ("basesmuma"), Mellanox's ConnectX HCA
-                      ("ibnet"), and other interconnects supported by
-                      PML ("p2p")
-  * BCOL components - Provides optimized collective primitives for
-                      shared memory ("basesmuma"), Mellanox's ConnectX
-                      HCA ("iboffload"), and other interconnects
-                      supported by PML ("ptpcoll")
-
 - The "cuda" coll component provides CUDA-aware support for the
   reduction type collectives with GPU buffers. This component is only
   compiled into the library when the library has been configured with
@@ -587,9 +559,10 @@ MPI Collectives
 OpenSHMEM Collectives
 ---------------------
 
-- The "fca" scoll component: the Mellanox Fabric Collective Accelerator
-  (FCA) is a solution for offloading collective operations from the
-  MPI process onto Mellanox QDR InfiniBand switch CPUs and HCAs.
+- The "fca" scoll component: the Mellanox Fabric Collective
+  Accelerator (FCA) is a solution for offloading collective operations
+  from the MPI process onto Mellanox QDR InfiniBand switch CPUs and
+  HCAs.
 
 - The "basic" scoll component: Reference implementation of all
   OpenSHMEM collective operations.
@@ -598,11 +571,11 @@ OpenSHMEM Collectives
 Network Support
 ---------------
 
-- There are four main MPI network models available: "ob1", "cm", "yalla",
-  and "ucx"."ob1" uses BTL ("Byte Transfer Layer") components for each
-  supported network.  "cm" uses MTL ("Matching Tranport Layer")
-  components for each supported network.  "yalla" uses the Mellanox
-  MXM transport.  "ucx" uses the OpenUCX transport.
+- There are four main MPI network models available: "ob1", "cm",
+  "yalla", and "ucx".  "ob1" uses BTL ("Byte Transfer Layer")
+  components for each supported network.  "cm" uses MTL ("Matching
+  Tranport Layer") components for each supported network.  "yalla"
+  uses the Mellanox MXM transport.  "ucx" uses the OpenUCX transport.
 
   - "ob1" supports a variety of networks that can be used in
     combination with each other:
@@ -615,15 +588,16 @@ Network Support
     - SMCUDA
     - Cisco usNIC
     - uGNI (Cray Gemini, Aries)
-    - vader (XPMEM, Linux CMA, Linux KNEM, and copy-in/copy-out shared memory)
+    - vader (XPMEM, Linux CMA, Linux KNEM, and copy-in/copy-out shared
+      memory)
 
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better overall MPI performance:
 
-    - Intel True Scale PSM (QLogic InfiniPath)
     - Intel Omni-Path PSM2
-    - Portals 4
+    - Intel True Scale PSM (QLogic InfiniPath)
     - OpenFabrics Interfaces ("libfabric" tag matching)
+    - Portals 4
 
     Open MPI will, by default, choose to use "cm" when one of the
     above transports can be used, unless OpenUCX or MXM support is
@@ -637,8 +611,8 @@ Network Support
       shell$ mpirun --mca pml cm ...
 
 - Similarly, there are two OpenSHMEM network models available: "yoda",
-  and "ikrit". "yoda" also uses the BTL components for many supported
-  network. "ikrit" interfaces directly with Mellanox MXM.
+  and "ikrit". "yoda" also uses the BTL components for supported
+  networks. "ikrit" interfaces directly with Mellanox MXM.
 
   - "yoda" supports a variety of networks that can be used:
 
@@ -646,6 +620,7 @@ Network Support
     - Loopback (send-to-self)
     - Shared memory
     - TCP
+    - usNIC
 
   - "ikrit" only supports Mellanox MXM.
 
@@ -662,7 +637,7 @@ Network Support
 - The usnic BTL is support for Cisco's usNIC device ("userspace NIC")
   on Cisco UCS servers with the Virtualized Interface Card (VIC).
   Although the usNIC is accessed via the OpenFabrics Libfabric API
-  stack, this BTL is specific to the Cisco usNIC device.
+  stack, this BTL is specific to Cisco usNIC devices.
 
 - uGNI is a Cray library for communicating over the Gemini and Aries
   interconnects.
@@ -694,9 +669,9 @@ Network Support
 Open MPI Extensions
 -------------------
 
-- An MPI "extensions" framework has been added (but is not enabled by
-  default).  See the "Open MPI API Extensions" section below for more
-  information on compiling and using MPI extensions.
+- An MPI "extensions" framework is included in Open MPI, but is not
+  enabled by default.  See the "Open MPI API Extensions" section below
+  for more information on compiling and using MPI extensions.
 
 - The following extensions are included in this version of Open MPI:
 
@@ -706,9 +681,10 @@ Open MPI Extensions
   - cr: Provides routines to access to checkpoint restart routines.
     See ompi/mpiext/cr/mpiext_cr_c.h for a listing of available
     functions.
-  - cuda: When the library is compiled with CUDA-aware support, it provides
-    two things.  First, a macro MPIX_CUDA_AWARE_SUPPORT. Secondly, the
-    function MPIX_Query_cuda_support that can be used to query for support.
+  - cuda: When the library is compiled with CUDA-aware support, it
+    provides two things.  First, a macro
+    MPIX_CUDA_AWARE_SUPPORT. Secondly, the function
+    MPIX_Query_cuda_support that can be used to query for support.
   - example: A non-functional extension; its only purpose is to
     provide an example for how to create other extensions.
 
@@ -720,10 +696,9 @@ Building Open MPI
 Open MPI uses a traditional configure script paired with "make" to
 build.  Typical installs can be of the pattern:
 
----------------------------------------------------------------------------
 shell$ ./configure [...options...]
-shell$ make all install
----------------------------------------------------------------------------
+shell$ make [-j N] all install
+    (use an integer value of N for parallel builds)
 
 There are many available configure options (see "./configure --help"
 for a full list); a summary of the more commonly used ones is included
@@ -746,16 +721,16 @@ INSTALLATION OPTIONS
   files in <directory>/include, its libraries in <directory>/lib, etc.
 
 --disable-shared
-  By default, libmpi and libshmem are built as a shared library, and
-  all components are built as dynamic shared objects (DSOs). This
-  switch disables this default; it is really only useful when used with
+  By default, Open MPI and OpenSHMEM build shared libraries, and all
+  components are built as dynamic shared objects (DSOs). This switch
+  disables this default; it is really only useful when used with
   --enable-static.  Specifically, this option does *not* imply
   --enable-static; enabling static libraries and disabling shared
   libraries are two independent options.
 
 --enable-static
-  Build libmpi and libshmem as static libraries, and statically link in all
-  components.  Note that this option does *not* imply
+  Build MPI and OpenSHMEM as static libraries, and statically link in
+  all components.  Note that this option does *not* imply
   --disable-shared; enabling static libraries and disabling shared
   libraries are two independent options.
 
@@ -841,7 +816,7 @@ NETWORKING SUPPORT / OPTIONS
   Specify the directory where the Mellanox FCA library and
   header files are located.
 
-  FCA is the support library for Mellanox QDR switches and HCAs.
+  FCA is the support library for Mellanox switches and HCAs.
 
 --with-hcoll=<directory>
   Specify the directory where the Mellanox hcoll library and header
@@ -870,7 +845,8 @@ NETWORKING SUPPORT / OPTIONS
   compiler/linker search paths.
 
   Libfabric is the support library for OpenFabrics Interfaces-based
-  network adapters, such as Cisco usNIC, Intel True Scale PSM, etc.
+  network adapters, such as Cisco usNIC, Intel True Scale PSM, Cray
+  uGNI, etc.
 
 --with-libfabric-libdir=<directory>
   Look in directory for the libfabric libraries.  By default, Open MPI
@@ -942,13 +918,14 @@ NETWORKING SUPPORT / OPTIONS
   Look in directory for Intel SCIF support libraries
 
 --with-verbs=<directory>
-  Specify the directory where the verbs (also know as OpenFabrics, and
-  previously known as OpenIB) libraries and header files are located.
-  This option is generally only necessary if the verbs headers and
-  libraries are not in default compiler/linker search paths.
+  Specify the directory where the verbs (also known as OpenFabrics
+  verbs, or Linux verbs, and previously known as OpenIB) libraries and
+  header files are located.  This option is generally only necessary
+  if the verbs headers and libraries are not in default
+  compiler/linker search paths.
 
-  "OpenFabrics" refers to operating system bypass networks, such as
-  InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
+  The Verbs library usually implies operating system bypass networks,
+  such as InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
 
 --with-verbs-libdir=<directory>
   Look in directory for the verbs libraries.  By default, Open MPI
@@ -983,9 +960,6 @@ RUN-TIME SYSTEM SUPPORT
   such as mpicc and mpirun can be found without needing to type long
   path names.  --enable-orterun-prefix-by-default is a synonym for
   this option.
-
---enable-sensors
-  Enable internal sensors (default: disabled).
 
 --enable-orte-static-ports
    Enable orte static ports for tcp oob (default: enabled).
@@ -1166,12 +1140,6 @@ MPI FUNCTIONALITY
 
 --enable-mpi-thread-multiple
   Allows the MPI thread level MPI_THREAD_MULTIPLE.
-  This is currently disabled by default. Enabling
-  this feature will automatically --enable-opal-multi-threads.
-
---enable-opal-multi-threads
-  Enables thread lock support in the OPAL and ORTE layers. Does
-  not enable MPI_THREAD_MULTIPLE - see above option for that feature.
   This is currently disabled by default.
 
 --enable-mpi-cxx
@@ -1239,7 +1207,7 @@ MPI FUNCTIONALITY
   significantly especially if you are creating large
   communicators. (Disabled by default)
 
-OpenSHMEM FUNCTIONALITY
+OPENSHMEM FUNCTIONALITY
 
 --disable-oshmem
   Disable building the OpenSHMEM implementation (by default, it is
@@ -1261,11 +1229,6 @@ MISCELLANEOUS FUNCTIONALITY
 
   However, it may be necessary to disable the memory manager in order
   to build Open MPI statically.
-
---with-ft=TYPE
-  Specify the type of fault tolerance to enable.  Options: LAM
-  (LAM/MPI-like), cr (Checkpoint/Restart).  Fault tolerance support is
-  disabled unless this option is specified.
 
 --enable-peruse
   Enable the PERUSE MPI data analysis interface.
@@ -1492,25 +1455,14 @@ The "A.B.C" version number may optionally be followed by a Quantifier:
 Nightly development snapshot tarballs use a different version number
 scheme; they contain three distinct values:
 
-   * The most recent Git tag name on the branch from which the tarball
-     was created.
-   * An integer indicating how many Git commits have occurred since
-     that Git tag.
-   * The Git hash of the tip of the branch.
+   * The git branch name from which the tarball was created.
+   * The date/timestamp, in YYYYMMDDHHMM format.
+   * The hash of the git commit from which the tarball was created.
 
 For example, a snapshot tarball filename of
-"openmpi-v1.8.2-57-gb9f1fd9.tar.bz2" indicates that this tarball was
-created from the v1.8 branch, 57 Git commits after the "v1.8.2" tag,
-specifically at Git hash gb9f1fd9.
-
-Open MPI's Git master branch contains a single "dev" tag.  For
-example, "openmpi-dev-8-gf21c349.tar.bz2" represents a snapshot
-tarball created from the master branch, 8 Git commits after the "dev"
-tag, specifically at Git hash gf21c349.
-
-The exact value of the "number of Git commits past a tag" integer is
-fairly meaningless; its sole purpose is to provide an easy,
-human-recognizable ordering for snapshot tarballs.
+"openmpi-v2.x-201703070235-e4798fb.tar.gz" indicates that this tarball
+was created from the v2.x branch, on March 7, 2017, at 2:35am GMT,
+from git hash e4798fb.
 
 Shared Library Version Number
 -----------------------------
@@ -1834,11 +1786,10 @@ example:
 
 OpenSHMEM applications may also be launched directly by resource
 managers such as SLURM. For example, when OMPI is configured
---with-pmi and --with-slurm one may launch OpenSHMEM applications via
+--with-pmi and --with-slurm, one may launch OpenSHMEM applications via
 srun:
 
    shell$ srun -N 2 hello_world_oshmem
-
 
 ===========================================================================
 
@@ -1853,7 +1804,6 @@ component frameworks in Open MPI:
 MPI component frameworks:
 -------------------------
 
-bcol      - Base collective operations
 bml       - BTL management layer
 coll      - MPI collective algorithms
 fbtl      - file byte transfer layer: abstraction for individual
@@ -1867,7 +1817,6 @@ op        - Back end computations for intrinsic MPI_Op operators
 osc       - MPI one-sided communications
 pml       - MPI point-to-point management layer
 rte       - Run-time environment operations
-sbgp      - Collective operation sub-group
 sharedfp  - shared file pointer operations for MPI I/O
 topo      - MPI topology routines
 vprotocol - Protocols for the "v" PML
@@ -1911,7 +1860,6 @@ Miscellaneous frameworks:
 allocator   - Memory allocator
 backtrace   - Debugging call stack backtrace support
 btl         - Point-to-point Byte Transfer Layer
-compress    - Compression algorithms
 dl          - Dynamic loading library interface
 event       - Event library (libevent) versioning support
 hwloc       - Hardware locality (hwloc) versioning support
@@ -1943,8 +1891,8 @@ to see what its tunable parameters are.  For example:
 
   shell$ ompi_info --param btl tcp
 
-shows a some of parameters (and default values) for the tcp btl
-component.
+shows some of the parameters (and default values) for the tcp btl
+component (use "--level 9" to show *all* the parameters; see below).
 
 Note that ompi_info only shows a small number a component's MCA
 parameters by default.  Each MCA parameter has a "level" value from 1
@@ -2027,10 +1975,10 @@ variable; an environment variable will override the system-wide
 defaults.
 
 Each component typically activates itself when relevant.  For example,
-the MX component will detect that MX devices are present and will
-automatically be used for MPI communications.  The SLURM component
-will automatically detect when running inside a SLURM job and activate
-itself.  And so on.
+the usNIC component will detect that usNIC devices are present and
+will automatically be used for MPI communications.  The SLURM
+component will automatically detect when running inside a SLURM job
+and activate itself.  And so on.
 
 Components can be manually activated or deactivated if necessary, of
 course.  The most common components that are manually activated,
@@ -2044,10 +1992,14 @@ comma-delimited list to the "btl" MCA parameter:
 
    shell$ mpirun --mca btl tcp,self hello_world_mpi
 
-To add shared memory support, add "sm" into the command-delimited list
-(list order does not matter):
+To add shared memory support, add "vader" into the command-delimited
+list (list order does not matter):
 
-   shell$ mpirun --mca btl tcp,sm,self hello_world_mpi
+   shell$ mpirun --mca btl tcp,vader,self hello_world_mpi
+
+(there is an "sm" shared memory BTL, too, but "vader" is a newer
+generation of shared memory support; by default, "vader" will be used
+instead of "sm")
 
 To specifically deactivate a specific component, the comma-delimited
 list can be prepended with a "^" to negate it:
@@ -2092,10 +2044,10 @@ user's list:
      http://lists.open-mpi.org/mailman/listinfo/users
 
 Developer-level bug reports, questions, and comments should generally
-be sent to the developer's mailing list (devel@lists.open-mpi.org).  Please
-do not post the same question to both lists.  As with the user's list,
-only subscribers are allowed to post to the developer's list.  Visit
-the following web page to subscribe:
+be sent to the developer's mailing list (devel@lists.open-mpi.org).
+Please do not post the same question to both lists.  As with the
+user's list, only subscribers are allowed to post to the developer's
+list.  Visit the following web page to subscribe:
 
      http://lists.open-mpi.org/mailman/listinfo/devel
 
