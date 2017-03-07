@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -154,8 +156,14 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
 
 int opal_hwloc_copy(hwloc_topology_t *dest, hwloc_topology_t src, opal_data_type_t type)
 {
+#ifdef HAVE_HWLOC_TOPOLOGY_DUP
     /* use the hwloc dup function */
     return hwloc_topology_dup(dest, src);
+#else
+    /* hwloc_topology_dup() was introduced in hwloc v1.8.0.
+     * Note that as of March 2017, opal_hwloc_copy() is not (yet?) used in the code base anywhere. */
+    return OPAL_ERR_NOT_SUPPORTED;
+#endif
 }
 
 int opal_hwloc_compare(const hwloc_topology_t topo1,
