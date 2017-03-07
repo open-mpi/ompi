@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -124,7 +124,8 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
         }
 
         assert (packed_size == payload_size);
-        if (OPAL_UNLIKELY(NULL == frag)) {
+        if (OPAL_UNLIKELY(NULL == frag || OPAL_SUCCESS != mca_btl_ugni_check_endpoint_state (endpoint) ||
+                          opal_list_get_size (&endpoint->frag_wait_list))) {
             break;
         }
 
@@ -141,8 +142,9 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
     } while (0);
 
     if (NULL != descriptor) {
-        *descriptor = NULL;
+        *descriptor = &frag->base;
     }
+
     return OPAL_ERR_OUT_OF_RESOURCE;
 }
 
