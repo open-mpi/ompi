@@ -460,6 +460,7 @@ void orte_state_base_report_progress(int fd, short argc, void *cbdata)
 }
 
 static void _send_notification(int status,
+                               orte_proc_state_t state,
                                orte_process_name_t *proc,
                                orte_process_name_t *target)
 {
@@ -485,19 +486,43 @@ static void _send_notification(int status,
         return;
     }
 
-    /* the source is me */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+    /* the source is the proc */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, proc, 1, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return;
     }
 
-    /* we are going to pass three opal_value_t's */
-    rc = 3;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        return;
+    if (OPAL_ERR_PROC_ABORTED == status) {
+        /* we will pass four opal_value_t's */
+        rc = 4;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        /* pass along the affected proc(s) */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_PMIX_EVENT_AFFECTED_PROC);
+        kv.type = OPAL_NAME;
+        kv.data.name.jobid = proc->jobid;
+        kv.data.name.vpid = proc->vpid;
+        kvptr = &kv;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        OBJ_DESTRUCT(&kv);
+    } else {
+        /* we are going to pass three opal_value_t's */
+        rc = 3;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            return;
+        }
     }
 
     /* pass along the affected proc(s) */
@@ -699,11 +724,11 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
                     /* notify everyone who asked for it */
                     target.jobid = jdata->jobid;
                     target.vpid = ORTE_VPID_WILDCARD;
-                    _send_notification(OPAL_ERR_JOB_TERMINATED, &target, ORTE_NAME_WILDCARD);
+                    _send_notification(OPAL_ERR_JOB_TERMINATED, pdata->state, &target, ORTE_NAME_WILDCARD);
                 } else {
                     target.jobid = jdata->jobid;
                     target.vpid = ORTE_VPID_WILDCARD;
-                    _send_notification(OPAL_ERR_JOB_TERMINATED, &target, &parent);
+                    _send_notification(OPAL_ERR_JOB_TERMINATED, pdata->state, &target, &parent);
                 }
             }
         } else if (ORTE_PROC_STATE_TERMINATED < pdata->state &&
@@ -711,7 +736,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
             /* if this was an abnormal term, notify the other procs of the termination */
             parent.jobid = jdata->jobid;
             parent.vpid = ORTE_VPID_WILDCARD;
-            _send_notification(OPAL_ERR_PROC_ABORTED, &pdata->name, &parent);
+            _send_notification(OPAL_ERR_PROC_ABORTED, pdata->state, &pdata->name, &parent);
         }
     }
 
