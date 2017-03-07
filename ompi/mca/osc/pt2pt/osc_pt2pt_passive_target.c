@@ -819,6 +819,7 @@ void ompi_osc_pt2pt_process_lock_ack (ompi_osc_pt2pt_module_t *module,
     assert (NULL != lock);
 
     ompi_osc_pt2pt_peer_set_eager_active (peer, true);
+    ompi_osc_pt2pt_frag_flush_pending (module, peer->rank);
 
     ompi_osc_pt2pt_sync_expected (lock);
 }

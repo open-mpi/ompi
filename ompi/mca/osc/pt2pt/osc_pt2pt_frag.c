@@ -117,15 +117,11 @@ static int ompi_osc_pt2pt_flush_active_frag (ompi_osc_pt2pt_module_t *module, om
     return ret;
 }
 
-int ompi_osc_pt2pt_frag_flush_target (ompi_osc_pt2pt_module_t *module, int target)
+int ompi_osc_pt2pt_frag_flush_pending (ompi_osc_pt2pt_module_t *module, int target)
 {
     ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
     ompi_osc_pt2pt_frag_t *frag;
     int ret = OMPI_SUCCESS;
-
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc pt2pt: frag flush to target target %d. queue fragments: %lu",
-                         target, (unsigned long) opal_list_get_size (&peer->queued_frags)));
 
     /* walk through the pending list and send */
     OPAL_THREAD_LOCK(&peer->lock);
@@ -137,10 +133,39 @@ int ompi_osc_pt2pt_frag_flush_target (ompi_osc_pt2pt_module_t *module, int targe
     }
     OPAL_THREAD_UNLOCK(&peer->lock);
 
-    /* XXX -- TODO -- better error handling */
+    return ret;
+}
+
+int ompi_osc_pt2pt_frag_flush_pending_all (ompi_osc_pt2pt_module_t *module)
+{
+    int ret;
+
+    for (int i = 0 ; i < ompi_comm_size (module->comm) ; ++i) {
+        ret = ompi_osc_pt2pt_frag_flush_pending (module, i);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return ret;
+        }
+    }
+
+    return ret;
+}
+
+int ompi_osc_pt2pt_frag_flush_target (ompi_osc_pt2pt_module_t *module, int target)
+{
+    ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
+    ompi_osc_pt2pt_frag_t *frag;
+    int ret = OMPI_SUCCESS;
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "osc pt2pt: frag flush to target target %d. queue fragments: %lu",
+                         target, (unsigned long) opal_list_get_size (&peer->queued_frags)));
+
+    ret = ompi_osc_pt2pt_frag_flush_pending (module, target);
     if (OMPI_SUCCESS != ret) {
+        /* XXX -- TODO -- better error handling */
         return ret;
     }
+
 
     /* flush the active frag */
     ret = ompi_osc_pt2pt_flush_active_frag (module, peer);
