@@ -14,8 +14,8 @@
  */
 
 #include <ompi_config.h>
-#include <common_monitoring.h>
-#include <common_monitoring_coll.h>
+#include "common_monitoring.h"
+#include "common_monitoring_coll.h"
 #include <ompi/constants.h>
 #include <ompi/communicator/communicator.h>
 #include <opal/mca/base/mca_base_component_repository.h>
@@ -160,8 +160,10 @@ static void mca_common_monitoring_coll_cond_release(mca_monitoring_coll_data_t*d
 
 void mca_common_monitoring_coll_finalize( void )
 {
-    opal_hash_table_remove_all( comm_data );
-    OBJ_RELEASE(comm_data);
+    if( NULL != comm_data ) {
+        opal_hash_table_remove_all( comm_data );
+        OBJ_RELEASE(comm_data);
+    }
 }
 
 void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)

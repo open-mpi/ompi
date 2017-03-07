@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Inria.  All rights reserved.
+ * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,7 +11,7 @@
  */
 
 #include <ompi_config.h>
-#include <pml_monitoring.h>
+#include "pml_monitoring.h"
 
 int mca_pml_monitoring_isend_init(const void *buf,
                                   size_t count,

@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Inria.  All rights reserved.
+ * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2013-2015 Bull SAS.  All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -386,9 +386,6 @@ int write_mat(char * filename, uint64_t * mat, unsigned int dim)
 #include <stdbool.h>
 #include "ompi_config.h"
 #include "opal/threads/thread_usage.h"
-#define OMPI_F77_PROTOTYPES_MPI_H
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
-#undef OMPI_F77_PROTOTYPES_MPI_H
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 
@@ -423,6 +420,9 @@ void monitoring_prof_mpi_finalize_f2c( MPI_Fint *ierr ) {
 #pragma weak MPI_Finalize_f = monitoring_prof_mpi_finalize_f2c
 #pragma weak MPI_Finalize_f08 = monitoring_prof_mpi_finalize_f2c
 #else
+#define OMPI_F77_PROTOTYPES_MPI_H
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
+
 OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
                            mpi_init,
                            mpi_init_,

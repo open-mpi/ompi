@@ -8,7 +8,7 @@
  */
 
 #include <ompi_config.h>
-#include <osc_monitoring.h>
+#include "osc_monitoring.h"
 #include <ompi/constants.h>
 #include <ompi/communicator/communicator.h>
 #include <ompi/info/info.h>
@@ -20,7 +20,7 @@
 
 /***************************************/
 /* Include template generating macros */
-#include <osc_monitoring_template.h>
+#include "osc_monitoring_template.h"
 
 #include <ompi/mca/osc/rdma/osc_rdma.h>
 OSC_MONITORING_MODULE_TEMPLATE_GENERATE(rdma, ompi_osc_rdma_module_t, comm)
