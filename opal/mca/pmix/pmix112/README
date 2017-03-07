@@ -8,7 +8,8 @@ $HEADER$
 ===========================================================================
 This internal component includes PMIx v1.2.1 plus these two commits
 cherry-picked from the PMIx v1.2 branch (which will be included in the
-eventual PMIx v1.2.2 release).
+eventual PMIx v1.2.2 release). Newer patches at top.
 
- * https://github.com/pmix/master/commit/a2d431cbec162b01e15920cc75df1af9ad244f06
- * https://github.com/pmix/master/commit/8587f278a17301633ccf6f0d7cb086e3be8f4793
+ * https://github.com/pmix/pmix/commit/4269e8484bd883523ae485bf2e1b7bbc0719c494
+ * https://github.com/pmix/pmix/commit/a2d431cbec162b01e15920cc75df1af9ad244f06
+ * https://github.com/pmix/pmix/commit/8587f278a17301633ccf6f0d7cb086e3be8f4793
