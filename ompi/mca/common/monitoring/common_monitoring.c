@@ -14,8 +14,8 @@
  */
 
 #include <ompi_config.h>
-#include <common_monitoring.h>
-#include <common_monitoring_coll.h>
+#include "common_monitoring.h"
+#include "common_monitoring_coll.h"
 #include <ompi/constants.h>
 #include <ompi/communicator/communicator.h>
 #include <opal/mca/base/mca_base_component_repository.h>

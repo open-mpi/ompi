@@ -14,7 +14,7 @@
  */
 
 #include <ompi_config.h>
-#include <pml_monitoring.h>
+#include "pml_monitoring.h"
 #include <ompi/constants.h>
 #include <ompi/mca/pml/base/base.h>
 #include <ompi/mca/common/monitoring/common_monitoring.h>

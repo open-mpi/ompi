@@ -13,12 +13,12 @@
 #include <ompi/communicator/communicator.h>
 #include <ompi/win/win.h>
 #include <opal/sys/atomic.h>
-#include <osc_monitoring_accumulate.h>
-#include <osc_monitoring_active_target.h>
-#include <osc_monitoring_comm.h>
-#include <osc_monitoring_dynamic.h>
-#include <osc_monitoring_module.h>
-#include <osc_monitoring_passive_target.h>
+#include "osc_monitoring_accumulate.h"
+#include "osc_monitoring_active_target.h"
+#include "osc_monitoring_comm.h"
+#include "osc_monitoring_dynamic.h"
+#include "osc_monitoring_module.h"
+#include "osc_monitoring_passive_target.h"
 
 /* module_type correspond to the ompi_osc_## template ##_module_t type 
  * comm correspond to the comm field name in ompi_osc_## template ##_module_t

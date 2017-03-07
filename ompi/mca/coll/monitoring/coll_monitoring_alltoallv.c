@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Inria. All rights reserved.
+ * Copyright (c) 2016-2017 Inria. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,7 +11,7 @@
 #include <ompi/request/request.h>
 #include <ompi/datatype/ompi_datatype.h>
 #include <ompi/communicator/communicator.h>
-#include <coll_monitoring.h>
+#include "coll_monitoring.h"
 
 int mca_coll_monitoring_alltoallv(const void *sbuf, const int *scounts, const int *sdisps,
                                   struct ompi_datatype_t *sdtype,

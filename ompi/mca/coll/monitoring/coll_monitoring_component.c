@@ -8,7 +8,7 @@
  */
 
 #include <ompi_config.h>
-#include <coll_monitoring.h>
+#include "coll_monitoring.h"
 #include <ompi/constants.h>
 #include <ompi/communicator/communicator.h>
 #include <ompi/mca/coll/coll.h>

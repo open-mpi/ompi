@@ -461,7 +461,7 @@ subtract double-recorded data.
 
 First is presented an example of monitoring using the \mpit{} in order
 to define phases during which the monitoring component is active. A
-second snipplet is presented for how to access monitoring performance
+second snippet is presented for how to access monitoring performance
 variables with \mpit{}.
 
 \subsubsection{Monitoring Phases}
@@ -470,7 +470,7 @@ You can execute the following example with
 \\ \verb|mpiexec -n 4 --mca pml_monitoring_enable 2 test_monitoring|. Please
 note that you need the prof directory to already exists to retrieve
 the dumped files. Following the complete code example, you will find a
-sample dumped file and the corresponding explainations.
+sample dumped file and the corresponding explanations.
 
 \paragraph{test\_monitoring.c} (extract)
 
@@ -662,7 +662,7 @@ each kind.
 
 \subsubsection{Accessing Monitoring Performance Variables}
 
-The following snipplet presents how to access the performances
+The following snippet presents how to access the performances
 variables defined as part of the \mpit{} interface. The session
 allocation is not presented as it is the same as in the previous
 example. Please note that contrary to the {\it
@@ -966,7 +966,7 @@ that has the following use:
   histogram is of log-2 scale. The index 0 is for empty
   messages. Messages of size between 1 and $2^{64}$ are recorded such
   as the following. For a given size $S$, with $2^k \le S < 2^{k+1}$,
-  the k-th element of the histogram is incremented. This array is of
+  the $k$-th element of the histogram is incremented. This array is of
   size $N \times {\tt max\brkunds{}size\brkunds{}histogram}$, where
   $N$ is the number of nodes in the MPI application.
 \item[{\tt max\brkunds{}size\brkunds{}histogram}] constant value
@@ -1201,8 +1201,8 @@ To make everything work for each kind of component, the variables are
 generated with the corresponding interception functions. These
 operations are done at compilation time. An issue appeared with the
 use of PORTALS4, that have its symbols propagated only when the card
-are available on the system. In the header files, where we defined the
-templated functions and structures, {\it template} refers to the OSC
+are available on the system. In the header files, where we define the
+template functions and structures, {\it template} refers to the OSC
 component name.
 
 We found two drawbacks to this solution. First, the readability of the

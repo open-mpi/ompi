@@ -12,7 +12,7 @@
 #include <ompi/request/request.h>
 #include <ompi/datatype/ompi_datatype.h>
 #include <ompi/communicator/communicator.h>
-#include <coll_monitoring.h>
+#include "coll_monitoring.h"
 
 int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf,
                                        const int *rcounts,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Inria. All rights reserved.
+ * Copyright (c) 2016-2017 Inria. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,7 +10,7 @@
 #include <ompi_config.h>
 #include <ompi/request/request.h>
 #include <ompi/communicator/communicator.h>
-#include <coll_monitoring.h>
+#include "coll_monitoring.h"
 
 int mca_coll_monitoring_barrier(struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module)
