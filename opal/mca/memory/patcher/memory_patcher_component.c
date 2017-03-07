@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -496,11 +496,15 @@ static int patcher_open (void)
     }
 #endif
 
+    /* NTH: we can't currently allow madvise to be intercepted due to a deadlock when running with glibc. in
+     * the future we may re-enable this hook if the deadlock can be resolved. */
+#if 0
 #if defined (SYS_madvise)
     rc = opal_patcher->patch_symbol ("madvise", (uintptr_t)intercept_madvise, (uintptr_t *) &original_madvise);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
+#endif
 #endif
 
 #if defined(SYS_shmdt) && defined(__linux__)
