@@ -118,7 +118,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
         /* check for topology */
         if (use_local_topology) {
             /* use our topology */
-            topo = opal_hwloc_topology;
+            t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, 0);
         } else if (NULL != files) {
             if (0 != hwloc_topology_init(&topo)) {
                 orte_show_help("help-ras-simulator.txt",
@@ -257,17 +257,17 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             if (NULL == max_slot_cnt || NULL == max_slot_cnt[n]) {
                 node->slots_max = 0;
             } else {
-                obj = hwloc_get_root_obj(topo);
-                node->slots_max = opal_hwloc_base_get_npus(topo, obj);
+                obj = hwloc_get_root_obj(t->topo);
+                node->slots_max = opal_hwloc_base_get_npus(t->topo, obj);
             }
             if (NULL == slot_cnt || NULL == slot_cnt[n]) {
                 node->slots = 0;
             } else {
-                obj = hwloc_get_root_obj(topo);
-                node->slots = opal_hwloc_base_get_npus(topo, obj);
+                obj = hwloc_get_root_obj(t->topo);
+                node->slots = opal_hwloc_base_get_npus(t->topo, obj);
             }
-            node->topology = OBJ_NEW(orte_topology_t);
-            node->topology->topo = topo;
+            OBJ_RETAIN(t);
+            node->topology = t;
             opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                 "Created Node <%10s> [%3d : %3d]",
                                 node->name, node->slots, node->slots_max);

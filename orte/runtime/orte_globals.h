@@ -456,11 +456,13 @@ ORTE_DECLSPEC extern char *orte_basename;
 ORTE_DECLSPEC extern bool orte_coprocessors_detected;
 ORTE_DECLSPEC extern opal_hash_table_t *orte_coprocessors;
 ORTE_DECLSPEC extern char *orte_topo_signature;
+ORTE_DECLSPEC extern bool orte_no_vm;
 
 /* ORTE OOB port flags */
 ORTE_DECLSPEC extern bool orte_static_ports;
 ORTE_DECLSPEC extern char *orte_oob_static_ports;
 ORTE_DECLSPEC extern bool orte_standalone_operation;
+ORTE_DECLSPEC extern bool orte_fwd_mpirun_port;
 
 /* nodename flags */
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;

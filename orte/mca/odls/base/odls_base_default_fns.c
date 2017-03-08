@@ -67,6 +67,8 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/rmaps/rmaps_types.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/schizo/schizo.h"
 #include "orte/mca/state/state.h"
 #include "orte/mca/filem/filem.h"
@@ -74,6 +76,7 @@
 
 #include "orte/util/context_fns.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/regex.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/nidmap.h"
@@ -137,7 +140,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
         }
 
         /* if we are not using static ports, we need to send the wireup info */
-        if (!orte_static_ports) {
+        if (!orte_static_ports && !orte_fwd_mpirun_port) {
             /* pack a flag indicating wiring info is provided */
             flag = 1;
             opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
@@ -234,11 +237,11 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     int rc;
     orte_std_cntr_t cnt;
     orte_job_t *jdata=NULL, *daemons;
-    int32_t n, j, k;
-    orte_proc_t *pptr, *dmn;
+    int32_t n, k, m;
     opal_buffer_t *bptr;
-    orte_app_context_t *app;
     orte_node_t *node;
+    orte_proc_t *pptr, *dmn;
+    orte_app_context_t *app;
     bool newmap = false;
     int8_t flag;
 
@@ -246,6 +249,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                          "%s odls:constructing child list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    /* set a default response */
     *job = ORTE_JOBID_INVALID;
     /* get the daemon job object */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
@@ -286,24 +290,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                 if (NULL == orte_get_job_data_object(jdata->jobid)) {
                     /* nope - add it */
                     opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
-                    /* connect each proc to its node object */
-                    for (j=0; j < jdata->procs->size; j++) {
-                        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
-                            continue;
-                        }
-                        if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, pptr->parent))) {
-                            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                            rc = ORTE_ERR_NOT_FOUND;
-                            goto REPORT_ERROR;
-                        }
-                        OBJ_RETAIN(dmn->node);
-                        pptr->node = dmn->node;
-                        /* add proc to node - note that num_procs for the
-                         * node was already correctly unpacked, so don't
-                         * increment it here */
-                        OBJ_RETAIN(pptr);
-                        opal_pointer_array_add(dmn->node->procs, pptr);
-                    }
                 } else {
                     /* yep - so we can drop this copy */
                     jdata->jobid = ORTE_JOBID_INVALID;
@@ -351,6 +337,19 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
             rc = ORTE_ERR_NOT_FOUND;
             goto REPORT_ERROR;
         }
+    } else {
+        opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
+    }
+
+    /* ensure the map object is present */
+    if (NULL == jdata->map) {
+        jdata->map = OBJ_NEW(orte_job_map_t);
+        newmap = true;
+    }
+
+    if (orte_no_vm) {
+        /* if we are operating novm, then mpirun will have sent us
+         * the complete array of procs - process it */
         for (n=0; n < jdata->procs->size; n++) {
             if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
                 continue;
@@ -359,6 +358,40 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                 /* not ready for use yet */
                 continue;
             }
+            opal_output_verbose(5, orte_odls_base_framework.framework_output,
+                                "%s GETTING DAEMON FOR PROC %s WITH PARENT %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&pptr->name),
+                                ORTE_VPID_PRINT(pptr->parent));
+            if (ORTE_VPID_INVALID == pptr->parent) {
+                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto REPORT_ERROR;
+            }
+            /* connect the proc to its node object */
+            if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, pptr->parent))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                rc = ORTE_ERR_NOT_FOUND;
+                goto REPORT_ERROR;
+            }
+            OBJ_RETAIN(dmn->node);
+            pptr->node = dmn->node;
+            /* add proc to node - note that num_procs for the
+             * node was already correctly unpacked, so don't
+             * increment it here */
+            OBJ_RETAIN(pptr);
+            opal_pointer_array_add(dmn->node->procs, pptr);
+
+            /* add the node to the map, if not already there */
+            if (!ORTE_FLAG_TEST(dmn->node, ORTE_NODE_FLAG_MAPPED)) {
+                OBJ_RETAIN(dmn->node);
+                ORTE_FLAG_SET(dmn->node, ORTE_NODE_FLAG_MAPPED);
+                opal_pointer_array_add(jdata->map->nodes, dmn->node);
+                if (newmap) {
+                    jdata->map->num_nodes++;
+                }
+            }
+
             /* see if it belongs to us */
             if (pptr->parent == ORTE_PROC_MY_NAME->vpid) {
                 /* is this child on our current list of children */
@@ -385,15 +418,59 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                 ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
             }
         }
-        goto COMPLETE;
     } else {
-        opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
+        /* create the map - will already have been done for the novm case */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_map_job(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* find our local procs */
+        for (n=0; n < jdata->map->nodes->size; n++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
+                continue;
+            }
+            if (node->index != (int)ORTE_PROC_MY_NAME->vpid) {
+                continue;
+            }
+            for (m=0; m < node->procs->size; m++) {
+                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(node->procs, m))) {
+                    continue;
+                }
+                if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
+                    /* not on the local list */
+                    OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                                         "%s adding proc %s to my local list",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&pptr->name)));
+                    /* keep tabs of the number of local procs */
+                    jdata->num_local_procs++;
+                    /* add this proc to our child list */
+                    OBJ_RETAIN(pptr);
+                    ORTE_FLAG_SET(pptr, ORTE_PROC_FLAG_LOCAL);
+                    opal_pointer_array_add(orte_local_children, pptr);
+                    /* mark that this app_context is being used on this node */
+                    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
+                    ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
+                }
+            }
+        }
+        /* compute and save bindings of local children */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
-    /* ensure the map object is present */
-    if (NULL == jdata->map) {
-        jdata->map = OBJ_NEW(orte_job_map_t);
-        newmap = true;
+   /* reset any node map flags we used so the next job will start clean */
+    for (n=0; n < jdata->map->nodes->size; n++) {
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
+            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+        }
+    }
+
+    /* if we wanted to see the map, now is the time to display it */
+    if (jdata->map->display_map) {
+        orte_rmaps_base_display_map(jdata);
     }
 
     /* if we have a file map, then we need to load it */
@@ -405,89 +482,18 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         }
     }
 
-    /* check the procs */
-    for (n=0; n < jdata->procs->size; n++) {
-        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
-            continue;
-        }
-        if (ORTE_PROC_STATE_UNDEF == pptr->state) {
-            /* not ready for use yet */
-            continue;
-        }
-        opal_output_verbose(5, orte_odls_base_framework.framework_output,
-                            "%s GETTING DAEMON FOR PROC %s WITH PARENT %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&pptr->name),
-                            ORTE_VPID_PRINT(pptr->parent));
-        if (ORTE_VPID_INVALID == pptr->parent) {
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            rc = ORTE_ERR_BAD_PARAM;
-            goto REPORT_ERROR;
-        }
-        /* connect the proc to its node object */
-        if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, pptr->parent))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            rc = ORTE_ERR_NOT_FOUND;
-            goto REPORT_ERROR;
-        }
-        OBJ_RETAIN(dmn->node);
-        pptr->node = dmn->node;
-        /* add proc to node - note that num_procs for the
-         * node was already correctly unpacked, so don't
-         * increment it here */
-        OBJ_RETAIN(pptr);
-        opal_pointer_array_add(dmn->node->procs, pptr);
-
-        /* add the node to the map, if not already there */
-        if (!ORTE_FLAG_TEST(dmn->node, ORTE_NODE_FLAG_MAPPED)) {
-            OBJ_RETAIN(dmn->node);
-            ORTE_FLAG_SET(dmn->node, ORTE_NODE_FLAG_MAPPED);
-            opal_pointer_array_add(jdata->map->nodes, dmn->node);
-            if (newmap) {
-                jdata->map->num_nodes++;
-            }
-        }
-
-        /* see if it belongs to us */
-        if (pptr->parent == ORTE_PROC_MY_NAME->vpid) {
-            /* is this child on our current list of children */
-            if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
-                /* not on the local list */
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                     "%s adding proc %s to my local list",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&pptr->name)));
-                /* keep tabs of the number of local procs */
-                jdata->num_local_procs++;
-                /* add this proc to our child list */
-                OBJ_RETAIN(pptr);
-                ORTE_FLAG_SET(pptr, ORTE_PROC_FLAG_LOCAL);
-                opal_pointer_array_add(orte_local_children, pptr);
-            }
-
-            /* if the job is in restart mode, the child must not barrier when launched */
-            if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
-                orte_set_attribute(&pptr->attributes, ORTE_PROC_NOBARRIER, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
-            }
-            /* mark that this app_context is being used on this node */
-            app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
-            ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
-        }
-    }
-    /* reset the node map flags we used so the next job will start clean */
-    for (n=0; n < jdata->map->nodes->size; n++) {
-        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
-            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
-        }
-    }
-
-  COMPLETE:
     /* register this job with the PMIx server - need to wait until after we
      * have computed the #local_procs before calling the function */
     if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata, false))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
+
+    /* to save memory, purge the job map of all procs other than
+     * our own - for daemons, this will completely release the
+     * proc structures. For the HNP, the proc structs will
+     * remain in the orte_job_t array */
+
     return ORTE_SUCCESS;
 
   REPORT_ERROR:
@@ -635,6 +641,10 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     orte_jobid_t job = caddy->job;
     orte_odls_base_fork_local_proc_fn_t fork_local = caddy->fork_local;
     bool index_argv;
+
+    opal_output_verbose(5, orte_odls_base_framework.framework_output,
+                        "%s local:launch",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* establish our baseline working directory - we will be potentially
      * bouncing around as we execute various apps, but we will always return
@@ -804,7 +814,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, idx))) {
                 continue;
             }
-
             /* does this child belong to this app? */
             if (j != (int)child->app_idx) {
                 continue;

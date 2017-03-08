@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -82,6 +82,13 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* pack the flags */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                        (void*)(&(jobs[i]->flags)), 1, ORTE_JOB_FLAGS_T))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* pack the personality */
         count = opal_argv_count(jobs[i]->personality);
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &count, 1, OPAL_INT32))) {
@@ -126,8 +133,8 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* and the procs, if we have them */
-        if (0 < jobs[i]->num_procs) {
+
+        if (orte_no_vm && 0 < jobs[i]->num_procs) {
             for (j=0; j < jobs[i]->procs->size; j++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jobs[i]->procs, j))) {
                     continue;
@@ -163,6 +170,7 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             j=0;
         } else {
             /* pack a one to indicate a map is there */
+            j = 1;
         }
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                             (void*)&j, 1, ORTE_STD_CNTR))) {
@@ -187,13 +195,6 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
         /* pack the job state */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)(&(jobs[i]->state)), 1, ORTE_JOB_STATE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* pack the flags */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&(jobs[i]->flags)), 1, ORTE_JOB_FLAGS_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

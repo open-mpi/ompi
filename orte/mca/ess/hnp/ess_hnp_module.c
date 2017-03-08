@@ -427,7 +427,8 @@ static int rte_init(void)
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
-    node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
+    node->index = ORTE_PROC_MY_NAME->vpid;
+    opal_pointer_array_set_item(orte_node_pool, 0, node);
 
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);

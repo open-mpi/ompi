@@ -87,6 +87,14 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* unpack the flags */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                         (&(jobs[i]->flags)), &n, ORTE_JOB_FLAGS_T))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* unpack the personality */
         n=1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &count, &n, OPAL_INT32))) {
@@ -138,8 +146,8 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* and the procs, if provided */
-        if (0 < jobs[i]->num_procs) {
+
+        if (orte_no_vm && 0 < jobs[i]->num_procs) {
             orte_proc_t *proc;
             for (j=0; j < jobs[i]->num_procs; j++) {
                 n = 1;
@@ -193,14 +201,6 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
                          (&(jobs[i]->state)), &n, ORTE_JOB_STATE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* unpack the flags */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                         (&(jobs[i]->flags)), &n, ORTE_JOB_FLAGS_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

@@ -76,11 +76,13 @@ char *orte_mgmt_transport = NULL;
 char *orte_coll_transport = NULL;
 int orte_mgmt_conduit = -1;
 int orte_coll_conduit = -1;
+bool orte_no_vm = false;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
 char *orte_oob_static_ports = NULL;
 bool orte_standalone_operation = false;
+bool orte_fwd_mpirun_port = false;
 
 bool orte_keep_fqdn_hostnames = false;
 bool orte_have_fqdn_allocation = false;
@@ -648,7 +650,6 @@ static void orte_job_construct(orte_job_t* job)
     job->num_local_procs = 0;
 
     job->flags = 0;
-    ORTE_FLAG_SET(job, ORTE_JOB_FLAG_GANG_LAUNCHED);
     ORTE_FLAG_SET(job, ORTE_JOB_FLAG_FORWARD_OUTPUT);
 
     OBJ_CONSTRUCT(&job->attributes, opal_list_t);

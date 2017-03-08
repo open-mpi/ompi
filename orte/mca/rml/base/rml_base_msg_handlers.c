@@ -168,6 +168,12 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
     OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
                        ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
 
+    /* if this message is just to warmup the connection, then drop it */
+    if (ORTE_RML_TAG_WARMUP_CONNECTION == msg->tag) {
+        OBJ_RELEASE(msg);
+        return;
+    }
+
     /* see if we have a waiting recv for this message */
     OPAL_LIST_FOREACH(post, &orte_rml_base.posted_recvs, orte_rml_posted_recv_t) {
         /* since names could include wildcards, must use

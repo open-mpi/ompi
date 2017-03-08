@@ -23,6 +23,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/base/base.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
@@ -256,6 +257,9 @@ static void track_procs(int fd, short argc, void *cbdata)
     int rc, i, j;
     orte_plm_cmd_flag_t cmd;
     char *rtmod;
+    orte_std_cntr_t index;
+    orte_job_map_t *map;
+    orte_node_t *node;
 
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s state:orted:track_procs called for proc %s state %s",
@@ -426,18 +430,6 @@ static void track_procs(int fd, short argc, void *cbdata)
                 if (pptr->name.jobid == jdata->jobid) {
                     /* clear the entry in the local children */
                     opal_pointer_array_set_item(orte_local_children, i, NULL);
-                    /* find it in the node->procs array */
-                    for (j=0; j < pptr->node->procs->size; j++) {
-                        if (NULL == (pdata = (orte_proc_t*)opal_pointer_array_get_item(pptr->node->procs, j))) {
-                            continue;
-                        }
-                        if (pdata == pptr) {
-                            /* remove it */
-                            opal_pointer_array_set_item(pptr->node->procs, j, NULL);
-                            OBJ_RELEASE(pdata);  // maintain accounting
-                            break;
-                        }
-                    }
                     OBJ_RELEASE(pptr);  // maintain accounting
                 }
             }
@@ -449,6 +441,47 @@ static void track_procs(int fd, short argc, void *cbdata)
             /* tell the PMIx subsystem the job is complete */
             if (NULL != opal_pmix.server_deregister_nspace) {
                 opal_pmix.server_deregister_nspace(jdata->jobid, NULL, NULL);
+            }
+
+            /* release the resources */
+            if (NULL != jdata->map) {
+                map = jdata->map;
+                for (index = 0; index < map->nodes->size; index++) {
+                    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, index))) {
+                        continue;
+                    }
+                    OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
+                                         "%s state:orted releasing procs from node %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         node->name));
+                    for (i = 0; i < node->procs->size; i++) {
+                        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
+                            continue;
+                        }
+                        if (pptr->name.jobid != jdata->jobid) {
+                            /* skip procs from another job */
+                            continue;
+                        }
+                        node->slots_inuse--;
+                        node->num_procs--;
+                        OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
+                                             "%s state:orted releasing proc %s from node %s",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_NAME_PRINT(&pptr->name), node->name));
+                        /* set the entry in the node array to NULL */
+                        opal_pointer_array_set_item(node->procs, i, NULL);
+                        /* release the proc once for the map entry */
+                        OBJ_RELEASE(pptr);
+                    }
+                    /* set the node location to NULL */
+                    opal_pointer_array_set_item(map->nodes, index, NULL);
+                    /* maintain accounting */
+                    OBJ_RELEASE(node);
+                    /* flag that the node is no longer in a map */
+                    ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+                }
+                OBJ_RELEASE(map);
+                jdata->map = NULL;
             }
 
             /* cleanup the job info */

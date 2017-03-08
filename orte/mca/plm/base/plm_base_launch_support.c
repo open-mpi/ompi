@@ -207,7 +207,7 @@ static void files_ready(int status, void *cbdata)
     if (ORTE_SUCCESS != status) {
         ORTE_FORCED_TERMINATE(status);
     } else {
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SYSTEM_PREP);
     }
 }
 
@@ -395,22 +395,6 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
     /* convenience */
     jdata = caddy->jdata;
 
-    /* quick sanity check - is the stdin target within range
-     * of the job?
-     */
-    if (ORTE_VPID_WILDCARD != jdata->stdin_target &&
-        ORTE_VPID_INVALID != jdata->stdin_target &&
-        jdata->num_procs <= jdata->stdin_target) {
-        /* this request cannot be met */
-        orte_show_help("help-plm-base.txt", "stdin-target-out-of-range", true,
-                       ORTE_VPID_PRINT(jdata->stdin_target),
-                       ORTE_VPID_PRINT(jdata->num_procs));
-        orte_never_launched = true;
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        OBJ_RELEASE(caddy);
-        return;
-    }
-
     /* If this job is being started by me, then there is nothing
      * further we need to do as any user directives (e.g., to tie
      * off IO to /dev/null) will have been included in the launch
@@ -425,19 +409,6 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
         /* the tool will PUSH its stdin, so nothing we need to do here
          * about stdin */
     }
-
-#if OPAL_ENABLE_FT_CR == 1
-    /*
-     * Notify the Global SnapC component regarding new job (even if it was restarted)
-     */
-    {
-        int rc;
-        if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(jdata->jobid) ) ) {
-            /* Silent Failure :/ JJH */
-            ORTE_ERROR_LOG(rc);
-        }
-    }
-#endif
 
     /* if coprocessors were detected, now is the time to
      * identify who is attached to what host - this info
@@ -1457,24 +1428,31 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_argv_append(argc, argv, rml_uri);
     free(rml_uri);
 
-    /* if we have static ports, pass the node list */
-    if (orte_static_ports) {
-        param = NULL;
-        if (NULL != nodes) {
-            /* convert the nodes to a regex */
-            if (ORTE_SUCCESS != (rc = orte_regex_create(nodes, &param))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        } else if (NULL != orte_node_regex) {
-            param = strdup(orte_node_regex);
+    /* pass the node list if one was given*/
+    param = NULL;
+    if (NULL != nodes) {
+        /* convert the nodes to a regex */
+        if (ORTE_SUCCESS != (rc = orte_regex_create(nodes, &param))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
-        if (NULL != param) {
-            opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-            opal_argv_append(argc, argv, "orte_node_regex");
-            opal_argv_append(argc, argv, param);
-            free(param);
-        }
+    } else if (NULL != orte_node_regex) {
+        param = strdup(orte_node_regex);
+    }
+    if (NULL != param) {
+        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+        opal_argv_append(argc, argv, "orte_node_regex");
+        opal_argv_append(argc, argv, param);
+        free(param);
+    }
+
+    /* if requested, pass our port */
+    if (orte_fwd_mpirun_port) {
+        asprintf(&param, "%d", orte_process_info.my_port);
+        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+        opal_argv_append(argc, argv, "oob_tcp_static_ipv4_ports");
+        opal_argv_append(argc, argv, param);
+        free(param);
     }
 
     /* if output-filename was specified, pass that along */

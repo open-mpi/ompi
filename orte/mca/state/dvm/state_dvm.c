@@ -80,8 +80,6 @@ static orte_job_state_t launch_states[] = {
     ORTE_JOB_STATE_DAEMONS_LAUNCHED,
     ORTE_JOB_STATE_DAEMONS_REPORTED,
     ORTE_JOB_STATE_VM_READY,
-    ORTE_JOB_STATE_MAP,
-    ORTE_JOB_STATE_MAP_COMPLETE,
     ORTE_JOB_STATE_SYSTEM_PREP,
     ORTE_JOB_STATE_LAUNCH_APPS,
     ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE,
@@ -100,8 +98,6 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_daemons_launched,
     orte_plm_base_daemons_reported,
     vm_ready,
-    orte_rmaps_base_map_job,
-    orte_plm_base_mapping_complete,
     orte_plm_base_complete_setup,
     orte_plm_base_launch_apps,
     orte_state_base_local_launch_complete,
@@ -213,8 +209,9 @@ static void files_ready(int status, void *cbdata)
 
     if (ORTE_SUCCESS != status) {
         ORTE_FORCED_TERMINATE(status);
+        return;
     } else {
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SYSTEM_PREP);
     }
 }
 
@@ -259,7 +256,7 @@ static void vm_ready(int fd, short args, void *cbdata)
             OBJ_RELEASE(buf);
             return;
         }
-        /* flag that daemons were launchd so we will update the nidmap */
+        /* flag that daemons were launched so we will update the nidmap */
         flag = 1;
         opal_dss.pack(buf, &flag, 1, OPAL_INT8);
         /* construct a nodemap with everything in it */
@@ -269,33 +266,38 @@ static void vm_ready(int fd, short args, void *cbdata)
             return;
         }
 
-        /* pack a flag indicating wiring info is provided */
-        flag = 1;
-        opal_dss.pack(buf, &flag, 1, OPAL_INT8);
-        /* get wireup info for daemons per the selected routing module */
-        wireup = OBJ_NEW(opal_buffer_t);
-        if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
-            ORTE_ERROR_LOG(rc);
+        if (!orte_static_ports && !orte_fwd_mpirun_port) {
+            /* pack a flag indicating wiring info is provided */
+            flag = 1;
+            opal_dss.pack(buf, &flag, 1, OPAL_INT8);
+            /* get wireup info for daemons per the selected routing module */
+            wireup = OBJ_NEW(opal_buffer_t);
+            if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(wireup);
+                OBJ_RELEASE(buf);
+                return;
+            }
+            /* put it in a byte object for xmission */
+            opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
+            /* pack the byte object - zero-byte objects are fine */
+            bo.size = numbytes;
+            boptr = &bo;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(wireup);
+                OBJ_RELEASE(buf);
+                return;
+            }
+            /* release the data since it has now been copied into our buffer */
+            if (NULL != bo.bytes) {
+                free(bo.bytes);
+            }
             OBJ_RELEASE(wireup);
-            OBJ_RELEASE(buf);
-            return;
+        } else {
+            flag = 0;
+            opal_dss.pack(buf, &flag, 1, OPAL_INT8);
         }
-        /* put it in a byte object for xmission */
-        opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
-        /* pack the byte object - zero-byte objects are fine */
-        bo.size = numbytes;
-        boptr = &bo;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(wireup);
-            OBJ_RELEASE(buf);
-            return;
-        }
-        /* release the data since it has now been copied into our buffer */
-        if (NULL != bo.bytes) {
-            free(bo.bytes);
-        }
-        OBJ_RELEASE(wireup);
 
         /* goes to all daemons */
         sig = OBJ_NEW(orte_grpcomm_signature_t);

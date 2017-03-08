@@ -177,23 +177,27 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
     char *node;
     char prefix[ORTE_MAX_NODE_PREFIX];
     int i, j, n, len, startnum, nodenum, numdigits;
-    bool found, fullname;
+    bool found, fullname, test;
     char *suffix, *sfx;
     orte_regex_node_t *ndreg;
-    orte_regex_range_t *range, *rng, *idrng;
-    opal_list_t nodeids, nodenms, dvpids;
+    orte_regex_range_t *range, *rng, *slt, *tp, *flg;
+    opal_list_t nodenms, dvpids, slots, topos, flags;
     opal_list_item_t *item, *itm2;
     char **regexargs = NULL, *tmp, *tmp2;
     orte_node_t *nptr;
     int rc;
 
     /* setup the list of results */
-    OBJ_CONSTRUCT(&nodeids, opal_list_t);
     OBJ_CONSTRUCT(&nodenms, opal_list_t);
     OBJ_CONSTRUCT(&dvpids, opal_list_t);
+    OBJ_CONSTRUCT(&slots, opal_list_t);
+    OBJ_CONSTRUCT(&topos, opal_list_t);
+    OBJ_CONSTRUCT(&flags, opal_list_t);
 
     rng = NULL;
-    idrng = NULL;
+    slt = NULL;
+    tp = NULL;
+    flg = NULL;
     for (n=0; n < orte_node_pool->size; n++) {
         if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n))) {
             continue;
@@ -201,26 +205,6 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         /* if no daemon has been assigned, then this node is not being used */
         if (NULL == nptr->daemon) {
             continue;
-        }
-        /* deal with the nodeids - these are just the index into
-         * the node array. We pass these to ensure coherence across
-         * the virtual machine */
-        if (NULL == idrng) {
-            /* just starting */
-            idrng = OBJ_NEW(orte_regex_range_t);
-            idrng->start = n;
-            idrng->cnt = 1;
-            opal_list_append(&nodeids, &idrng->super);
-        } else {
-            /* is this the next in line */
-            if (n == (idrng->start + idrng->cnt)) {
-                idrng->cnt++;
-            } else {
-                /* need to start another range */
-                idrng = OBJ_NEW(orte_regex_range_t);
-                idrng->start = n;
-                opal_list_append(&nodeids, &idrng->super);
-            }
         }
         /* deal with the daemon vpid - see if it is next in the
          * current range */
@@ -236,9 +220,87 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
                 rng->cnt++;
             } else {
                 /* need to start another range */
-            rng = OBJ_NEW(orte_regex_range_t);
-            rng->start = nptr->daemon->name.vpid;
-            opal_list_append(&dvpids, &rng->super);
+                rng = OBJ_NEW(orte_regex_range_t);
+                rng->start = nptr->daemon->name.vpid;
+                rng->cnt = 1;
+                opal_list_append(&dvpids, &rng->super);
+            }
+        }
+        /* check the #slots */
+        if (NULL == slt) {
+            /* just starting */
+            slt = OBJ_NEW(orte_regex_range_t);
+            slt->start = nptr->daemon->name.vpid;
+            slt->slots = nptr->slots;
+            slt->cnt = 1;
+            opal_list_append(&slots, &slt->super);
+        } else {
+            /* is this the next in line */
+            if (nptr->slots == slt->slots) {
+                slt->cnt++;
+            } else {
+                /* need to start another range */
+                slt = OBJ_NEW(orte_regex_range_t);
+                slt->start = nptr->daemon->name.vpid;
+                slt->slots = nptr->slots;
+                slt->cnt = 1;
+                opal_list_append(&slots, &slt->super);
+            }
+        }
+        /* check the topologies */
+        if (NULL == tp) {
+            if (NULL != nptr->topology) {
+                /* just starting */
+                tp = OBJ_NEW(orte_regex_range_t);
+                tp->start = nptr->daemon->name.vpid;
+                tp->t = nptr->topology;
+                tp->cnt = 1;
+                opal_list_append(&topos, &tp->super);
+            }
+        } else {
+            if (NULL != nptr->topology) {
+                /* is this the next in line */
+                if (tp->t == nptr->topology) {
+                    tp->cnt++;
+                } else {
+                    /* need to start another range */
+                    tp = OBJ_NEW(orte_regex_range_t);
+                    tp->start = nptr->daemon->name.vpid;
+                    tp->t = nptr->topology;
+                    tp->cnt = 1;
+                    opal_list_append(&topos, &tp->super);
+                }
+            }
+        }
+        /* check the flags */
+        test = ORTE_FLAG_TEST(nptr, ORTE_NODE_FLAG_SLOTS_GIVEN);
+        if (NULL == flg) {
+            /* just starting */
+            flg = OBJ_NEW(orte_regex_range_t);
+            flg->start = nptr->daemon->name.vpid;
+            if (test) {
+                flg->slots = 1;
+            } else {
+                flg->slots = 0;
+            }
+            flg->cnt = 1;
+            opal_list_append(&flags, &flg->super);
+        } else {
+            /* is this the next in line */
+             if ((test && 1 == flg->slots) ||
+                 (!test && 0 == flg->slots)) {
+                flg->cnt++;
+            } else {
+                /* need to start another range */
+                flg = OBJ_NEW(orte_regex_range_t);
+                flg->start = nptr->daemon->name.vpid;
+                if (test) {
+                    flg->slots = 1;
+                } else {
+                    flg->slots = 0;
+                }
+                flg->cnt = 1;
+                opal_list_append(&flags, &flg->super);
             }
         }
         node = nptr->name;
@@ -422,41 +484,7 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         OPAL_LIST_DESTRUCT(&dvpids);
-        return rc;
-    }
-    if (NULL != tmp) {
-        free(tmp);
-    }
-
-    /* do the same for the indices */
-    tmp = NULL;
-    while (NULL != (item = opal_list_remove_first(&nodeids))) {
-        rng = (orte_regex_range_t*)item;
-        if (1 < rng->cnt) {
-            if (NULL == tmp) {
-                asprintf(&tmp, "%d-%d", rng->start, rng->start + rng->cnt - 1);
-            } else {
-                asprintf(&tmp2, "%s,%d-%d", tmp, rng->start, rng->start + rng->cnt - 1);
-                free(tmp);
-                tmp = tmp2;
-            }
-        } else {
-            if (NULL == tmp) {
-                asprintf(&tmp, "%d", rng->start);
-            } else {
-                asprintf(&tmp2, "%s,%d", tmp, rng->start);
-                free(tmp);
-                tmp = tmp2;
-            }
-        }
-        OBJ_RELEASE(rng);
-    }
-    OPAL_LIST_DESTRUCT(&nodeids);
-
-    /* pack the string */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_LIST_DESTRUCT(&dvpids);
+        OPAL_LIST_DESTRUCT(&slots);
         return rc;
     }
     if (NULL != tmp) {
@@ -491,11 +519,152 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
     /* pack the string */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
-        OPAL_LIST_DESTRUCT(&dvpids);
+        OPAL_LIST_DESTRUCT(&slots);
         return rc;
     }
     if (NULL != tmp) {
         free(tmp);
+    }
+
+    /* do the same to pass #slots on each node */
+    tmp = NULL;
+    while (NULL != (item = opal_list_remove_first(&slots))) {
+        rng = (orte_regex_range_t*)item;
+        if (1 < rng->cnt) {
+            if (NULL == tmp) {
+                asprintf(&tmp, "%d-%d[%d]", rng->start, rng->start + rng->cnt - 1, rng->slots);
+            } else {
+                asprintf(&tmp2, "%s,%d-%d[%d]", tmp, rng->start, rng->start + rng->cnt - 1, rng->slots);
+                free(tmp);
+                tmp = tmp2;
+            }
+        } else {
+            if (NULL == tmp) {
+                asprintf(&tmp, "%d[%d]", rng->start, rng->slots);
+            } else {
+                asprintf(&tmp2, "%s,%d[%d]", tmp, rng->start, rng->slots);
+                free(tmp);
+                tmp = tmp2;
+            }
+        }
+        OBJ_RELEASE(rng);
+    }
+    OPAL_LIST_DESTRUCT(&slots);
+
+    /* pack the string */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (NULL != tmp) {
+        free(tmp);
+    }
+
+    /* do the same to pass the flags for each node */
+    tmp = NULL;
+    while (NULL != (item = opal_list_remove_first(&flags))) {
+        rng = (orte_regex_range_t*)item;
+        if (1 < rng->cnt) {
+            if (NULL == tmp) {
+                asprintf(&tmp, "%d-%d[%x]", rng->start, rng->start + rng->cnt - 1, rng->slots);
+            } else {
+                asprintf(&tmp2, "%s,%d-%d[%x]", tmp, rng->start, rng->start + rng->cnt - 1, rng->slots);
+                free(tmp);
+                tmp = tmp2;
+            }
+        } else {
+            if (NULL == tmp) {
+                asprintf(&tmp, "%d[%x]", rng->start, rng->slots);
+            } else {
+                asprintf(&tmp2, "%s,%d[%x]", tmp, rng->start, rng->slots);
+                free(tmp);
+                tmp = tmp2;
+            }
+        }
+        OBJ_RELEASE(rng);
+    }
+    OPAL_LIST_DESTRUCT(&flags);
+
+    /* pack the string */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (NULL != tmp) {
+        free(tmp);
+    }
+
+    /* handle the topologies - as the most common case by far
+     * is to have homogeneous topologies, we only send them
+     * if something is different */
+    tmp = NULL;
+    if (1 < opal_list_get_size(&topos)) {
+        opal_buffer_t bucket, *bptr;
+        OBJ_CONSTRUCT(&bucket, opal_buffer_t);
+        while (NULL != (item = opal_list_remove_first(&topos))) {
+            rng = (orte_regex_range_t*)item;
+            if (1 < rng->cnt) {
+                if (NULL == tmp) {
+                    asprintf(&tmp, "%d-%d", rng->start, rng->start + rng->cnt - 1);
+                } else {
+                    asprintf(&tmp2, "%s,%d-%d", tmp, rng->start, rng->start + rng->cnt - 1);
+                    free(tmp);
+                    tmp = tmp2;
+                }
+            } else {
+                if (NULL == tmp) {
+                    asprintf(&tmp, "%d", rng->start);
+                } else {
+                    asprintf(&tmp2, "%s,%d", tmp, rng->start);
+                    free(tmp);
+                    tmp = tmp2;
+                }
+            }
+            /* pack this topology string */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&bucket, &rng->t->sig, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(rng);
+                OPAL_LIST_DESTRUCT(&topos);
+                OBJ_DESTRUCT(&bucket);
+                free(tmp);
+                return rc;
+            }
+            /* pack the topology itself */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&bucket, &rng->t->topo, 1, OPAL_HWLOC_TOPO))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(rng);
+                OPAL_LIST_DESTRUCT(&topos);
+                OBJ_DESTRUCT(&bucket);
+                free(tmp);
+                return rc;
+            }
+            OBJ_RELEASE(rng);
+        }
+        OPAL_LIST_DESTRUCT(&topos);
+
+        /* pack the string */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&bucket);
+            free(tmp);
+            return rc;
+        }
+        free(tmp);
+
+        /* now pack the topologies */
+        bptr = &bucket;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &bptr, 1, OPAL_BUFFER))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&bucket);
+            return rc;
+        }
+        OBJ_DESTRUCT(&bucket);
+    } else {
+        /* need to pack the NULL just to terminate the region */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     return ORTE_SUCCESS;
@@ -504,14 +673,17 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
 /* decode a nodemap for a daemon */
 int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
 {
-    int m, n, rc;
+    int n, nn, rc;
     orte_node_t *node;
-    size_t k, num_nodes, endpt;
+    size_t k, endpt, start;
     orte_job_t *daemons;
     orte_proc_t *dptr;
-    char **nodes, *indices, *dvpids;
+    char **nodes=NULL, *dvpids=NULL, *slots=NULL, *topos=NULL, *flags=NULL;
     char *ndnames, *rmndr, **tmp;
-    int *nodeids, *dids;
+    opal_list_t dids, slts, flgs;;
+    opal_buffer_t *bptr=NULL;
+    orte_topology_t *t;
+    orte_regex_range_t *rng, *drng, *srng, *frng;
 
     /* unpack the node regex */
     n = 1;
@@ -524,141 +696,226 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
         return ORTE_SUCCESS;
     }
 
-    /* unpack the index regex */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &indices, &n, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        free(ndnames);
-        return rc;
-    }
-    /* this is not allowed to be NULL */
-    if (NULL == indices) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        free(ndnames);
-        return ORTE_ERR_BAD_PARAM;
-    }
+    OBJ_CONSTRUCT(&dids, opal_list_t);
+    OBJ_CONSTRUCT(&slts, opal_list_t);
+    OBJ_CONSTRUCT(&flgs, opal_list_t);
 
     /* unpack the daemon vpid regex */
     n = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &dvpids, &n, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
-        free(ndnames);
-        free(indices);
-        return rc;
+        goto cleanup;
     }
     /* this is not allowed to be NULL */
     if (NULL == dvpids) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        free(ndnames);
-        free(indices);
-        return ORTE_ERR_BAD_PARAM;
+        rc = ORTE_ERR_BAD_PARAM;
+        goto cleanup;
+    }
+
+    /* unpack the slots regex */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &slots, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    /* this is not allowed to be NULL */
+    if (NULL == slots) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        rc = ORTE_ERR_BAD_PARAM;
+        goto cleanup;
+    }
+
+    /* unpack the flags regex */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &flags, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    /* this is not allowed to be NULL */
+    if (NULL == flags) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        rc = ORTE_ERR_BAD_PARAM;
+        goto cleanup;
+    }
+
+    /* unpack the topos regex - this may not have been
+     * provided (e.g., for a homogeneous machine) */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &topos, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    if (NULL != topos) {
+        /* need to unpack the topologies */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &bptr, &n, OPAL_BUFFER))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     }
 
     /* if we are the HNP, then we just discard these strings as we already
      * have a complete picture - but we needed to unpack them in order to
      * maintain sync in the unpacking order */
     if (ORTE_PROC_IS_HNP) {
-        free(ndnames);
-        free(indices);
-        free(dvpids);
-        return ORTE_SUCCESS;
+        rc = ORTE_SUCCESS;
+        goto cleanup;
     }
 
     /* decompress the regex */
     nodes = NULL;
     if (ORTE_SUCCESS != (rc = orte_regex_extract_node_names(ndnames, &nodes))) {
-        free(ndnames);
-        free(indices);
-        free(dvpids);
-        return rc;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
-    free(ndnames);
 
     if (NULL == nodes) {
         /* should not happen */
-        free(indices);
-        free(dvpids);
-        return ORTE_ERR_NOT_FOUND;
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        rc = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
-
-    /* decompress the index ranges */
-    num_nodes = opal_argv_count(nodes);
-    nodeids = (int*)malloc(num_nodes * sizeof(int));
-    tmp = opal_argv_split(indices, ',');
-    k = 0;
-    for (n=0; NULL != tmp[n]; n++) {
-        /* convert the number - since it might be a range,
-         * save the remainder pointer */
-        nodeids[k++] = strtoul(tmp[n], &rmndr, 10);
-        if (NULL != rmndr) {
-            /* it must be a range - find the endpoint */
-            ++rmndr;
-            m = nodeids[k-1] + 1;
-            endpt = strtoul(rmndr, NULL, 10);
-            while (k <= endpt && k < num_nodes) {
-                nodeids[k++] = m++;
-            }
-            --k;  // step back to compensate for later increment
-        }
-        ++k;
-    }
-    opal_argv_free(tmp);
-    free(indices);
 
     /* decompress the vpids */
-    dids = (int*)malloc(num_nodes * sizeof(int));
     tmp = opal_argv_split(dvpids, ',');
-    k = 0;
     for (n=0; NULL != tmp[n]; n++) {
+        rng = OBJ_NEW(orte_regex_range_t);
+        opal_list_append(&dids, &rng->super);
         /* convert the number - since it might be a range,
          * save the remainder pointer */
-        dids[k++] = strtoul(tmp[n], &rmndr, 10);
-        if (NULL != rmndr) {
+        rng->start = strtoul(tmp[n], &rmndr, 10);
+        if (NULL == rmndr || 0 == strlen(rmndr)) {
+            rng->endpt = rng->start;
+        } else {
             /* it must be a range - find the endpoint */
             ++rmndr;
-            endpt = strtoul(rmndr, NULL, 10);
-            m = dids[k-1] + 1;
-            while (k <= endpt && k < num_nodes) {
-                dids[k++] = m++;
-            }
-            --k;  // step back to compensate for later increment
+            rng->endpt = strtoul(rmndr, NULL, 10);
         }
-        ++k;
     }
     opal_argv_free(tmp);
-    free(dvpids);
 
+    /* decompress the slots */
+    tmp = opal_argv_split(slots, ',');
+    for (n=0; NULL != tmp[n]; n++) {
+        rng = OBJ_NEW(orte_regex_range_t);
+        opal_list_append(&slts, &rng->super);
+        /* find the '[' as that delimits the value */
+        rmndr = strchr(tmp[n], '[');
+        if (NULL == rmndr) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            rc = ORTE_ERR_BAD_PARAM;
+            opal_argv_free(tmp);
+            goto cleanup;
+        }
+        *rmndr = '\0';
+        ++rmndr;
+        /* convert that number as this is the number of
+         * slots for this range */
+        rng->slots = strtoul(rmndr, NULL, 10);
+        /* convert the starting pt - since it might be a range,
+         * save the remainder pointer */
+        rng->start = strtoul(tmp[n], &rmndr, 10);
+        if (NULL == rmndr || 0 == strlen(rmndr)) {
+            rng->endpt = rng->start;
+        } else {
+            /* it must be a range - find the endpoint */
+            ++rmndr;
+            rng->endpt = strtoul(rmndr, NULL, 10);
+        }
+    }
+    opal_argv_free(tmp);
+
+    /* decompress the flags */
+    tmp = opal_argv_split(flags, ',');
+    for (n=0; NULL != tmp[n]; n++) {
+        rng = OBJ_NEW(orte_regex_range_t);
+        opal_list_append(&dids, &rng->super);
+        /* find the '[' as that delimits the value */
+        rmndr = strchr(tmp[n], '[');
+        if (NULL == rmndr) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            opal_argv_free(tmp);
+            rc = ORTE_ERR_BAD_PARAM;
+            goto cleanup;
+        }
+        *rmndr = '\0';
+        ++rmndr;
+        /* check the value - it is just one character */
+        if ('1' == *rmndr) {
+            rng->slots = 1;
+        } else {
+            rng->slots = 0;
+        }
+        /* convert the starting pt - since it might be a range,
+         * save the remainder pointer */
+        rng->start = strtoul(tmp[n], &rmndr, 10);
+        if (NULL == rmndr || 0 == strlen(rmndr)) {
+            rng->endpt = rng->start;
+        } else {
+            /* it must be a range - find the endpoint */
+            ++rmndr;
+            rng->endpt = strtoul(rmndr, NULL, 10);
+        }
+    }
+    opal_argv_free(tmp);
+    free(flags);
+
+    /* get the daemon job object */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    /* since this is a complete picture of all the nodes, reset the
-     * counters and regenerate them */
-    orte_process_info.num_daemons = 0;
-    orte_process_info.num_nodes = 0;
-    daemons->num_procs = 0;
 
     /* update the node array */
+    drng = (orte_regex_range_t*)opal_list_get_first(&dids);
+    srng = (orte_regex_range_t*)opal_list_get_first(&slts);
+    frng = (orte_regex_range_t*)opal_list_get_first(&flgs);
     for (n=0; NULL != nodes[n]; n++) {
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nodeids[n]))) {
+        /* the daemon vpids for these nodes will be in the dids array, so
+         * use those to lookup the nodes */
+        nn = drng->start + n;
+        if (nn == drng->endpt) {
+            drng = (orte_regex_range_t*)opal_list_get_next(&drng->super);
+        }
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nn))) {
             node = OBJ_NEW(orte_node_t);
             node->name = nodes[n];
-            node->index = nodeids[n];
-            opal_pointer_array_set_item(orte_node_pool, node->index, node);
-        } else if (NULL != node->daemon) {
-            OBJ_RELEASE(node->daemon);
-            node->daemon = NULL;
+            node->index = nn;
+            opal_pointer_array_set_item(orte_node_pool, nn, node);
+        }
+        /* set the number of slots */
+        node->slots = srng->slots;
+        if (srng->endpt == nn) {
+            srng = (orte_regex_range_t*)opal_list_get_next(&srng->super);
+        }
+        /* set the flags */
+        if (0 == frng->slots) {
+            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
+        } else {
+            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
+        }
+        if (frng->endpt == nn) {
+            frng = (orte_regex_range_t*)opal_list_get_next(&frng->super);
         }
         ++orte_process_info.num_nodes;
-        if (NULL == (dptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, dids[n]))) {
+        /* if this is me, just ignore the rest as we are all setup */
+        if (nn == (int)ORTE_PROC_MY_NAME->vpid) {
+            continue;
+        }
+        if (NULL != node->daemon) {
+                    OBJ_RELEASE(node->daemon);
+                    node->daemon = NULL;
+        }
+        if (NULL == (dptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, nn))) {
             /* create a daemon object for this node */
             dptr = OBJ_NEW(orte_proc_t);
             dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
-            dptr->name.vpid = dids[n];
+            dptr->name.vpid = nn;
             ORTE_FLAG_SET(dptr, ORTE_PROC_FLAG_ALIVE);  // assume the daemon is alive until discovered otherwise
-            opal_pointer_array_set_item(daemons->procs, dids[n], dptr);
+            opal_pointer_array_set_item(daemons->procs, nn, dptr);
+            ++daemons->num_procs;
         } else if (NULL != dptr->node) {
             OBJ_RELEASE(dptr->node);
             dptr->node = NULL;
         }
-        ++daemons->num_procs;
         /* link the node to the daemon */
         OBJ_RETAIN(dptr);
         node->daemon = dptr;
@@ -670,8 +927,83 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
      * all the node names themselves. Instead, we just free the
      * array of string pointers, leaving the strings alone */
     free(nodes);
-    free(nodeids);
-    free(dids);
+
+    /* if no topology info was passed, then everyone shares our topology */
+    if (NULL == bptr) {
+        orte_topology_t *t;
+        /* our topology is first in the array */
+        t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, 0);
+        for (n=0; n < orte_node_pool->size; n++) {
+            if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n))) {
+                if (NULL == node->topology) {
+                    OBJ_RETAIN(t);
+                    node->topology = t;
+                }
+            }
+        }
+    } else {
+        char *sig;
+        hwloc_topology_t topo;
+        /* decompress the topology regex */
+        tmp = opal_argv_split(topos, ',');
+        /* there must be a topology definition for each range */
+        for (nn=0; NULL != tmp[nn]; nn++) {
+            /* unpack the signature */
+            n = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(bptr, &sig, &n, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                opal_argv_free(tmp);
+                OBJ_RELEASE(bptr);
+                goto cleanup;
+            }
+            n = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(bptr, &topo, &n, OPAL_HWLOC_TOPO))) {
+                ORTE_ERROR_LOG(rc);
+                opal_argv_free(tmp);
+                OBJ_RELEASE(bptr);
+                free(sig);
+                goto cleanup;
+            }
+            /* see if we already have this topology - could be an update */
+            for (n=0; n < orte_node_topologies->size; n++) {
+                if (NULL == (t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, n))) {
+                    continue;
+                }
+                if (0 == strcmp(t->sig, sig)) {
+                    /* found a match */
+                    free(sig);
+                    opal_hwloc_base_free_topology(topo);
+                    sig = NULL;
+                    break;
+                }
+            }
+            if (NULL != sig) {
+                /* new topology - record it */
+                t = OBJ_NEW(orte_topology_t);
+                t->sig = sig;
+                t->topo = topo;
+            }
+            /* point each of the nodes in the regex to this topology */
+            start = strtoul(tmp[nn], &rmndr, 10);
+            if (NULL != rmndr) {
+                /* it must be a range - find the endpoint */
+                ++rmndr;
+                endpt = strtoul(rmndr, NULL, 10);
+            } else {
+                endpt = start;
+            }
+            for (k=start; k <= endpt; k++) {
+                if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, k))) {
+                    if (NULL == node->topology) {
+                        OBJ_RETAIN(t);
+                        node->topology = t;
+                    }
+                }
+            }
+        }
+        OBJ_RELEASE(bptr);
+        opal_argv_free(tmp);
+    }
 
     /* unpdate num procs */
     if (orte_process_info.num_procs != daemons->num_procs) {
@@ -700,5 +1032,9 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
         }
     }
 
-    return ORTE_SUCCESS;
+  cleanup:
+    OPAL_LIST_DESTRUCT(&dids);
+    OPAL_LIST_DESTRUCT(&slts);
+    OPAL_LIST_DESTRUCT(&flgs);
+    return rc;
 }
