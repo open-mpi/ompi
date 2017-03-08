@@ -53,6 +53,7 @@ void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status)
     PML_UCX_VERBOSE(8, "bsend request %p buffer %p completed with status %s", (void*)req,
                     req->req_complete_cb_data, ucs_status_string(status));
     mca_pml_base_bsend_request_free(req->req_complete_cb_data);
+    req->req_complete_cb_data = NULL;
     mca_pml_ucx_set_send_status(&req->req_status, status);
     PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
     mca_pml_ucx_request_free(&req);
@@ -137,6 +138,12 @@ static void mca_pml_ucx_request_init_common(ompi_request_t* ompi_req,
     ompi_req->req_state            = state;
     ompi_req->req_free             = req_free;
     ompi_req->req_cancel           = req_cancel;
+    /* This field is used to attach persistant request to a temporary req.
+     * Receive (ucp_tag_recv_nb) may call completion callback
+     * before the field is set. If the field is not NULL then mca_pml_ucx_preq_completion() 
+     * will try to complete bogus persistant request.
+     */ 
+    ompi_req->req_complete_cb_data = NULL;
 }
 
 void mca_pml_ucx_request_init(void *request)
