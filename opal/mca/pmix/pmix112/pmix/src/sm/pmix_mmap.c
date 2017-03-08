@@ -67,37 +67,35 @@ int _mmap_segment_create(pmix_sm_seg_t *sm_seg, const char *file_name, size_t si
     if (0 != (rc = posix_fallocate(sm_seg->seg_id, 0, size))) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                 "sys call posix_fallocate(2) fail\n");
-        if ((ENOTSUP == rc)
-#ifdef EOPNOTSUPP
-                            || (EOPNOTSUPP == rc)
-#endif
-           ) {
-            /* Not supported by OS and/or filesystem.
-             * Must fall-back to ftruncate().
-             */
-            if (0 != ftruncate(sm_seg->seg_id, size)) {
-                pmix_output_verbose(2, pmix_globals.debug_output,
-                        "sys call ftruncate(2) fail\n");
-                rc = PMIX_ERROR;
-                goto out;
-            }
-            rc = PMIX_SUCCESS;
-        } else if (ENOSPC == rc) {
+        if (ENOSPC == rc) {
             rc = PMIX_ERR_OUT_OF_RESOURCE;
             goto out;
-        } else {
+        } else if ((ENOTSUP != rc)
+#ifdef EOPNOTSUPP
+                            && (EOPNOTSUPP != rc)
+#endif
+        ){
             rc = PMIX_ERROR;
             goto out;
         }
+        /* else:
+         * Not supported by OS and/or filesystem.
+         * Must fall-back to ftruncate().
+         */
+    } else {
+        goto map_memory;
     }
-#else
+#endif
     if (0 != ftruncate(sm_seg->seg_id, size)) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                 "sys call ftruncate(2) fail\n");
         rc = PMIX_ERROR;
         goto out;
+    } else {
+        rc = PMIX_SUCCESS;
     }
-#endif
+
+map_memory:
     if (MAP_FAILED == (seg_addr = mmap(NULL, size,
                                        PROT_READ | PROT_WRITE, MAP_SHARED,
                                        sm_seg->seg_id, 0))) {
