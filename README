@@ -553,41 +553,6 @@ MPI Collectives
   (FCA) is a solution for offloading collective operations from the
   MPI process onto Mellanox QDR InfiniBand switch CPUs and HCAs.
 
-- The "ML" coll component is an implementation of MPI collective
-  operations that takes advantage of communication hierarchies in
-  modern systems. A ML collective operation is implemented by
-  combining multiple independently progressing collective primitives
-  implemented over different communication hierarchies, hence a ML
-  collective operation is also referred to as a hierarchical
-  collective operation. The number of collective primitives that are
-  included in a ML collective operation is a function of
-  subgroups(hierarchies).  Typically, MPI processes in a single
-  communication hierarchy such as CPU socket, node, or subnet are
-  grouped together into a single subgroup (hierarchy). The number of
-  subgroups are configurable at runtime, and each different collective
-  operation could be configured to have a different of number of
-  subgroups.
-
-  The component frameworks and components used by/required for a
-  "ML" collective operation.
-
-  Frameworks:
-  * "sbgp" - Provides functionality for grouping processes into
-             subgroups
-  * "bcol" - Provides collective primitives optimized for a particular
-             communication hierarchy
-
-  Components:
-  * sbgp components - Provides grouping functionality over a CPU
-                      socket ("basesocket"), shared memory
-                      ("basesmuma"), Mellanox's ConnectX HCA
-                      ("ibnet"), and other interconnects supported by
-                      PML ("p2p")
-  * BCOL components - Provides optimized collective primitives for
-                      shared memory ("basesmuma"), Mellanox's ConnectX
-                      HCA ("iboffload"), and other interconnects
-                      supported by PML ("ptpcoll")
-
 - The "cuda" coll component provides CUDA-aware support for the
   reduction type collectives with GPU buffers. This component is only
   compiled into the library when the library has been configured with
