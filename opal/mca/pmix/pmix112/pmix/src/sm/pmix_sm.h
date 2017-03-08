@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,6 +11,8 @@
 
 #ifndef PMIX_SM_H
 #define PMIX_SM_H
+
+#include <src/include/pmix_config.h>
 
 #include <pmix/pmix_common.h>
 #include <src/include/pmix_config.h>

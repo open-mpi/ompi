@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,6 +11,7 @@
  * $HEADER$
  */
 
+#include <src/include/pmix_config.h>
 
 #include <unistd.h>
 #ifdef HAVE_SYS_TYPES_H

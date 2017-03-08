@@ -1,12 +1,14 @@
 /*
  * Copyright (c) 2015-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
+#include <src/include/pmix_config.h>
 
 #include <pmix/pmix_common.h>
 #include "src/include/pmix_globals.h"

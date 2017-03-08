@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -50,9 +50,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h> /* for struct timeval */
-#endif
+
 #include <pmix_version.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
