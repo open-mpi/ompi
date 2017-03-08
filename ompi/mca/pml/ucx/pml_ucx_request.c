@@ -137,6 +137,12 @@ static void mca_pml_ucx_request_init_common(ompi_request_t* ompi_req,
     ompi_req->req_state            = state;
     ompi_req->req_free             = req_free;
     ompi_req->req_cancel           = req_cancel;
+    /* This field is used to attach persistant request to a temporary req.
+     * Receive (ucp_tag_recv_nb) may call completion callback
+     * before the field is set. If the field is not NULL then mca_pml_ucx_preq_completion() 
+     * will try to complete bogus persistant request.
+     */ 
+    ompi_req->req_complete_cb_data = NULL;
 }
 
 void mca_pml_ucx_request_init(void *request)
