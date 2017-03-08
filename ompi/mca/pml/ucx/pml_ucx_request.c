@@ -53,6 +53,7 @@ void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status)
     PML_UCX_VERBOSE(8, "bsend request %p buffer %p completed with status %s", (void*)req,
                     req->req_complete_cb_data, ucs_status_string(status));
     mca_pml_base_bsend_request_free(req->req_complete_cb_data);
+    req->req_complete_cb_data = NULL;
     mca_pml_ucx_set_send_status(&req->req_status, status);
     PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));
     mca_pml_ucx_request_free(&req);
