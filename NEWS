@@ -97,7 +97,7 @@ Bug fixes/minor improvements:
     traces to be reported (or <=0 to wait forever).
   - mtl_ofi_control_prog_type/mtl_ofi_data_prog_type: specify libfabric
     progress model to be used for control and data.
-- Fix a name collision in the shared memory MPI IO file locking
+- Fix a name collision in the shared file pointer MPI IO file locking
   scheme.  Thanks to Nicolas Joly for reporting the issue.
 - Fix datatype extent/offset errors in MPI_PUT and MPI_RACCUMULATE
   when using the Portals 4 one-sided component.
