@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +22,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 #include <time.h>
 #include <string.h>
 #include "mpi.h"
@@ -55,10 +58,17 @@ static inline void get_tick(struct timespec*t)
 #  define CLOCK_TYPE CLOCK_REALTIME
 #elif defined(CLOCK_MONOTONIC_RAW)
 #  define CLOCK_TYPE CLOCK_MONOTONIC_RAW
-#else
+#elif defined(CLOCK_MONOTONIC)
 #  define CLOCK_TYPE CLOCK_MONOTONIC
 #endif
+#if defined(CLOCK_TYPE)
     clock_gettime(CLOCK_TYPE, t);
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    t->tv_sec = tv.tv_sec;
+    t->tv_nsec = tv.tv_usec * 1000;
+#endif
 }
 static inline double timing_delay(const struct timespec*const t1, const struct timespec*const t2)
 {
