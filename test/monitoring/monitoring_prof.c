@@ -5,6 +5,8 @@
  * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2013-2015 Bull SAS.  All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -399,6 +401,7 @@ void monitoring_prof_mpi_finalize_f2c( MPI_Fint *ierr ) {
 }
 
 #if OPAL_HAVE_WEAK_SYMBOLS
+#warning weak
 #pragma weak MPI_INIT = monitoring_prof_mpi_init_f2c
 #pragma weak mpi_init = monitoring_prof_mpi_init_f2c
 #pragma weak mpi_init_ = monitoring_prof_mpi_init_f2c
@@ -412,7 +415,7 @@ void monitoring_prof_mpi_finalize_f2c( MPI_Fint *ierr ) {
 #pragma weak mpi_finalize__ = monitoring_prof_mpi_finalize_f2c
 #pragma weak MPI_Finalize_f = monitoring_prof_mpi_finalize_f2c
 #pragma weak MPI_Finalize_f08 = monitoring_prof_mpi_finalize_f2c
-#else
+#elif OMPI_BUILD_FORTRAN_BINDINGS
 #define OMPI_F77_PROTOTYPES_MPI_H
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
