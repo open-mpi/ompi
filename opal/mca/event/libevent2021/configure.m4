@@ -90,15 +90,6 @@ AC_DEFUN([MCA_opal_event_libevent2021_CONFIG],[
     AC_CONFIG_FILES([opal/mca/event/libevent2021/Makefile])
     libevent_basedir="opal/mca/event/libevent2021"
 
-    # If we're not building externally, configure this component
-    AS_IF([true],
-          [MCA_opal_event_libevent2021_DO_THE_CONFIG],
-          [AC_MSG_WARN([using an external libevent; disqualifiying this component])
-           $2])
-    OPAL_VAR_SCOPE_POP
-])        
-
-AC_DEFUN([MCA_opal_event_libevent2021_DO_THE_CONFIG], [
     CFLAGS_save="$CFLAGS"
     CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
     CPPFLAGS_save="$CPPFLAGS"
