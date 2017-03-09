@@ -45,8 +45,8 @@
 int orte_rmaps_base_map_job(orte_job_t *jdata)
 {
     orte_node_t *node;
-    int rc, i, ppx;
-    bool did_map, given, pernode;
+    int rc, i, ppx = 0;
+    bool did_map, given, pernode = false;
     orte_rmaps_base_selected_module_t *mod;
     orte_job_t *parent;
     orte_vpid_t nprocs;
