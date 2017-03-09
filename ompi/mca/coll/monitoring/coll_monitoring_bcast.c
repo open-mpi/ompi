@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +22,7 @@ int mca_coll_monitoring_bcast(void *buff, int count,
                               mca_coll_base_module_t *module)
 {
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    size_t type_size, data_size, rank;
+    size_t type_size, data_size;
     const int comm_size = ompi_comm_size(comm);
     ompi_datatype_type_size(datatype, &type_size);
     data_size = count * type_size;
@@ -49,7 +51,7 @@ int mca_coll_monitoring_ibcast(void *buff, int count,
                                mca_coll_base_module_t *module)
 {
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    size_t type_size, data_size, rank;
+    size_t type_size, data_size;
     const int comm_size = ompi_comm_size(comm);
     ompi_datatype_type_size(datatype, &type_size);
     data_size = count * type_size;

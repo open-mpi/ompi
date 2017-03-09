@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,6 @@ int mca_coll_monitoring_neighbor_allgatherv(const void *sbuf, int scount,
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
     size_t type_size, data_size, data_size_aggreg = 0;
     const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
-    const int rank = ompi_comm_rank (comm);
     int dim, srank, drank, world_rank;
 
     ompi_datatype_type_size(sdtype, &type_size);
@@ -79,7 +80,6 @@ int mca_coll_monitoring_ineighbor_allgatherv(const void *sbuf, int scount,
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
     size_t type_size, data_size, data_size_aggreg = 0;
     const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
-    const int rank = ompi_comm_rank (comm);
     int dim, srank, drank, world_rank;
 
     ompi_datatype_type_size(sdtype, &type_size);

@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +22,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 #include <time.h>
 #include <string.h>
 #include "mpi.h"
@@ -55,10 +58,17 @@ static inline void get_tick(struct timespec*t)
 #  define CLOCK_TYPE CLOCK_REALTIME
 #elif defined(CLOCK_MONOTONIC_RAW)
 #  define CLOCK_TYPE CLOCK_MONOTONIC_RAW
-#else
+#elif defined(CLOCK_MONOTONIC)
 #  define CLOCK_TYPE CLOCK_MONOTONIC
 #endif
+#if defined(CLOCK_TYPE)
     clock_gettime(CLOCK_TYPE, t);
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    t->tv_sec = tv.tv_sec;
+    t->tv_nsec = tv.tv_usec * 1000;
+#endif
 }
 static inline double timing_delay(const struct timespec*const t1, const struct timespec*const t2)
 {
@@ -95,7 +105,6 @@ static inline void op_send(double*res, void*sbuf, int size, int tagno, void*rbuf
 }
 
 static inline void op_send_pingpong(double*res, void*sbuf, int size, int tagno, void*rbuf) {
-    MPI_Request request;
     struct timespec start, end;
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -174,11 +183,11 @@ static inline void op_get(double*res, void*rbuf, int size, int tagno, void*sbuf)
     *res = timing_delay(&start, &end);
 }
 
-static inline void do_bench(int size, void*sbuf, double*results,
+static inline void do_bench(int size, char*sbuf, double*results,
                             void(*op)(double*, void*, int, int, void*)) {
     int iter;
     int tagno = 201;
-    void*rbuf = sbuf ? sbuf + size : NULL;
+    char*rbuf = sbuf ? sbuf + size : NULL;
 
     if(op == op_put || op == op_get){
 	win = MPI_WIN_NULL;
@@ -199,7 +208,7 @@ static inline void do_bench(int size, void*sbuf, double*results,
 int main(int argc, char* argv[])
 {
     int size, iter, nop;
-    void*sbuf = NULL;
+    char*sbuf = NULL;
     double results[NB_ITER];
     void(*op)(double*, void*, int, int, void*);
     char name[255];
@@ -245,7 +254,7 @@ int main(int argc, char* argv[])
         for(size = 0; size < MAX_SIZE; size = ((int)(size * 1.4) > size) ? (size * 1.4) : (size + 1)) {
             /* Init buffers */
             if( 0 != size ) {
-                sbuf = realloc(sbuf, (size_world + 1) * size); /* sbuf + alltoall recv buf */
+                sbuf = (char *)realloc(sbuf, (size_world + 1) * size); /* sbuf + alltoall recv buf */
             }        
 
             do_bench(size, sbuf, results, op);

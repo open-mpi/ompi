@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,12 +31,12 @@ struct mca_monitoring_coll_data_t {
     int world_rank;
     int is_released;
     ompi_communicator_t*p_comm;
-    uint64_t o2a_count;
-    uint64_t o2a_size;
-    uint64_t a2o_count;
-    uint64_t a2o_size;
-    uint64_t a2a_count;
-    uint64_t a2a_size;
+    int64_t o2a_count;
+    int64_t o2a_size;
+    int64_t a2o_count;
+    int64_t a2o_size;
+    int64_t a2a_count;
+    int64_t a2a_size;
 };
 
 /* Collectives operation monitoring */

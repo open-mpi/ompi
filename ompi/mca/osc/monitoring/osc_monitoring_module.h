@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +34,7 @@
 
 /* Define the ompi_osc_monitoring_module_## template ##_init_done variable */
 #define OMPI_OSC_MONITORING_MODULE_INIT_GENERATE(template)	\
-    static uint64_t OMPI_OSC_MONITORING_MODULE_INIT(template)
+    static int64_t OMPI_OSC_MONITORING_MODULE_INIT(template)
 
 /* Define and set the ompi_osc_monitoring_## template ##_template
  * variable. The functions recorded here are linked to the original

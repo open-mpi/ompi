@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -25,7 +25,7 @@
 
 /*** Monitoring specific variables ***/
 /* Keep tracks of how many components are currently using the common part */
-static uint32_t mca_common_monitoring_hold = 0;
+static int32_t mca_common_monitoring_hold = 0;
 /* Output parameters */
 int mca_common_monitoring_output_stream_id = -1;
 static opal_output_stream_t mca_common_monitoring_output_stream_obj = {
@@ -52,18 +52,18 @@ static char* mca_common_monitoring_initial_filename = "";
 static char* mca_common_monitoring_current_filename = NULL;
 
 /* array for stroring monitoring data*/
-static uint64_t* pml_data = NULL;
-static uint64_t* pml_count = NULL;
-static uint64_t* filtered_pml_data = NULL;
-static uint64_t* filtered_pml_count = NULL;
-static uint64_t* osc_data_s = NULL;
-static uint64_t* osc_count_s = NULL;
-static uint64_t* osc_data_r = NULL;
-static uint64_t* osc_count_r = NULL;
-static uint64_t* coll_data = NULL;
-static uint64_t* coll_count = NULL;
+static int64_t* pml_data = NULL;
+static int64_t* pml_count = NULL;
+static int64_t* filtered_pml_data = NULL;
+static int64_t* filtered_pml_count = NULL;
+static int64_t* osc_data_s = NULL;
+static int64_t* osc_count_s = NULL;
+static int64_t* osc_data_r = NULL;
+static int64_t* osc_count_r = NULL;
+static int64_t* coll_data = NULL;
+static int64_t* coll_count = NULL;
 
-static uint64_t* size_histogram = NULL;
+static int64_t* size_histogram = NULL;
 static const int max_size_histogram = 66;
 static double log10_2 = 0.;
 
@@ -426,7 +426,8 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
                                     size_t nprocs)
 {
     opal_process_name_t tmp, wp_name;
-    size_t i, peer_rank;
+    size_t i;
+    int peer_rank;
     uint64_t key;
     if( 0 > rank_world )
         rank_world = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
@@ -435,7 +436,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
 
     if( NULL == pml_data ) {
         int array_size = (10 + max_size_histogram) * nprocs_world;
-        pml_data           = (uint64_t*)calloc(array_size, sizeof(uint64_t));
+        pml_data           = (int64_t*)calloc(array_size, sizeof(int64_t));
         pml_count          = pml_data + nprocs_world;
         filtered_pml_data  = pml_count + nprocs_world;
         filtered_pml_count = filtered_pml_data + nprocs_world;

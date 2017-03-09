@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2016 Inria.  All rights reserved.
+ * Copyright (c) 2016      Inria.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +34,7 @@ struct mca_coll_monitoring_module_t {
     mca_coll_base_module_t super;
     mca_coll_base_comm_coll_t real;
     mca_monitoring_coll_data_t*data;
-    uint64_t is_initialized;
+    int64_t is_initialized;
 };
 typedef struct mca_coll_monitoring_module_t mca_coll_monitoring_module_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_monitoring_module_t);

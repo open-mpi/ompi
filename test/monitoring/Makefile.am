@@ -3,7 +3,7 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2013-2017 Inria.  All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
@@ -57,4 +57,4 @@ endif # MCA_BUILD_ompi_pml_monitoring_DSO
 endif # PROJECT_OMPI
 
 distclean:
-	rm -rf *.dSYM .deps .libs *.la *.lo monitoring_test prof *.log *.o *.trs Makefile
+	rm -rf *.dSYM .deps .libs *.la *.lo monitoring_test test_pvar_access test_overhead check_monitoring example_reduce_count prof *.log *.o *.trs Makefile
