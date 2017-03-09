@@ -62,10 +62,6 @@ segment_create(map_segment_t *ds_buf,
                const char *file_name,
                size_t size);
 
-static int
-ds_copy(const map_segment_t *from,
-        map_segment_t *to);
-
 static void *
 segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey);
 
@@ -84,7 +80,6 @@ mca_sshmem_sysv_module_t mca_sshmem_sysv_module = {
     {
         module_init,
         segment_create,
-        ds_copy,
         segment_attach,
         segment_detach,
         segment_unlink,
@@ -92,34 +87,6 @@ mca_sshmem_sysv_module_t mca_sshmem_sysv_module = {
     }
 };
 
-/* ////////////////////////////////////////////////////////////////////////// */
-/* private utility functions */
-/* ////////////////////////////////////////////////////////////////////////// */
-
-/* ////////////////////////////////////////////////////////////////////////// */
-/**
- * completely resets the contents of *ds_buf
- */
-static inline void
-shmem_ds_reset(map_segment_t *ds_buf)
-{
-    OPAL_OUTPUT_VERBOSE(
-          (70, oshmem_sshmem_base_framework.framework_output,
-           "%s: %s: shmem_ds_resetting "
-           "(id: %d, size: %lu, name: %s)\n",
-           mca_sshmem_sysv_component.super.base_version.mca_type_name,
-           mca_sshmem_sysv_component.super.base_version.mca_component_name,
-           ds_buf->seg_id, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
-      );
-
-      MAP_SEGMENT_RESET_FLAGS(ds_buf);
-      ds_buf->seg_id = MAP_SEGMENT_SHM_INVALID;
-      ds_buf->super.va_base = 0;
-      ds_buf->super.va_end = 0;
-      ds_buf->seg_size = 0;
-      ds_buf->type = MAP_SEGMENT_UNKNOWN;
-      memset(ds_buf->seg_name, '\0', sizeof(ds_buf->seg_name));
-}
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static int
@@ -137,29 +104,6 @@ module_finalize(void)
     return OSHMEM_SUCCESS;
 }
 
-/* ////////////////////////////////////////////////////////////////////////// */
-static int
-ds_copy(const map_segment_t *from,
-        map_segment_t *to)
-{
-    memcpy(to, from, sizeof(map_segment_t));
-
-    OPAL_OUTPUT_VERBOSE(
-        (70, oshmem_sshmem_base_framework.framework_output,
-         "%s: %s: ds_copy complete "
-         "from: (id: %d, size: %lu, "
-         "name: %s flags: 0x%02x) "
-         "to: (id: %d, size: %lu, "
-         "name: %s flags: 0x%02x)\n",
-         mca_sshmem_sysv_component.super.base_version.mca_type_name,
-         mca_sshmem_sysv_component.super.base_version.mca_component_name,
-         from->seg_id, (unsigned long)from->seg_size, from->seg_name,
-         from->flags, to->seg_id, (unsigned long)to->seg_size, to->seg_name,
-         to->flags)
-    );
-
-    return OSHMEM_SUCCESS;
-}
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static int
@@ -232,11 +176,11 @@ segment_create(map_segment_t *ds_buf,
     OPAL_OUTPUT_VERBOSE(
           (70, oshmem_sshmem_base_framework.framework_output,
            "%s: %s: create %s "
-           "(id: %d, addr: %p size: %lu, name: %s)\n",
+           "(id: %d, addr: %p size: %lu)\n",
            mca_sshmem_sysv_component.super.base_version.mca_type_name,
            mca_sshmem_sysv_component.super.base_version.mca_component_name,
            (rc ? "failure" : "successful"),
-           ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
+           ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size)
       );
 
     return rc;
@@ -261,10 +205,10 @@ segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
     OPAL_OUTPUT_VERBOSE(
         (70, oshmem_sshmem_base_framework.framework_output,
          "%s: %s: attach successful "
-            "(id: %d, addr: %p size: %lu, name: %s | va_base: 0x%p len: %d key %llx)\n",
+            "(id: %d, addr: %p size: %lu | va_base: 0x%p len: %d key %llx)\n",
             mca_sshmem_sysv_component.super.base_version.mca_type_name,
             mca_sshmem_sysv_component.super.base_version.mca_component_name,
-            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size, ds_buf->seg_name,
+            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size,
             mkey->va_base, mkey->len, (unsigned long long)mkey->u.key)
     );
 
@@ -283,10 +227,10 @@ segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
     OPAL_OUTPUT_VERBOSE(
         (70, oshmem_sshmem_base_framework.framework_output,
          "%s: %s: detaching "
-            "(id: %d, addr: %p size: %lu, name: %s)\n",
+            "(id: %d, addr: %p size: %lu)\n",
             mca_sshmem_sysv_component.super.base_version.mca_type_name,
             mca_sshmem_sysv_component.super.base_version.mca_component_name,
-            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
+            ds_buf->seg_id, ds_buf->super.va_base, (unsigned long)ds_buf->seg_size)
     );
 
     if (ds_buf->seg_id != MAP_SEGMENT_SHM_INVALID) {
@@ -318,10 +262,10 @@ segment_unlink(map_segment_t *ds_buf)
     OPAL_OUTPUT_VERBOSE(
         (70, oshmem_sshmem_base_framework.framework_output,
          "%s: %s: unlinking "
-         "(id: %d, size: %lu, name: %s)\n",
+         "(id: %d, size: %lu)\n",
          mca_sshmem_sysv_component.super.base_version.mca_type_name,
          mca_sshmem_sysv_component.super.base_version.mca_component_name,
-         ds_buf->seg_id, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
+         ds_buf->seg_id, (unsigned long)ds_buf->seg_size)
     );
 
     /* don't completely reset.  in particular, only reset

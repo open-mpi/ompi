@@ -21,7 +21,6 @@
  *
  * - module_init
  * - segment_create
- * - ds_copy
  * - segment_attach
  * - segment_detach
  * - unlink
@@ -73,20 +72,6 @@ typedef struct mca_sshmem_base_component_2_0_0_t mca_sshmem_base_component_t;
  */
 typedef int
 (*mca_sshmem_base_module_init_fn_t)(void);
-
-/**
- * copy shmem data structure information pointed to by from to the structure
- * pointed to by to.
- *
- * @param from  source pointer (IN).
- *
- * @param to    destination pointer (OUT).
- *
- * @return OSHMEM_SUCCESS on success.
- */
-typedef int
-(*mca_sshmem_base_ds_copy_fn_t)(const map_segment_t *from,
-                                map_segment_t *to);
 
 /**
  * create a new shared memory segment and initialize members in structure
@@ -153,7 +138,6 @@ typedef int (*mca_sshmem_base_module_finalize_fn_t)(void);
 struct mca_sshmem_base_module_2_0_0_t {
     mca_sshmem_base_module_init_fn_t            module_init;
     mca_sshmem_base_module_segment_create_fn_t  segment_create;
-    mca_sshmem_base_ds_copy_fn_t                ds_copy;
     mca_sshmem_base_module_segment_attach_fn_t  segment_attach;
     mca_sshmem_base_module_segment_detach_fn_t  segment_detach;
     mca_sshmem_base_module_unlink_fn_t          unlink;
