@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
@@ -70,20 +70,25 @@ AC_DEFUN([MCA_opal_hwloc_hwloc191_CONFIG],[
 
     AC_CONFIG_FILES([opal/mca/hwloc/hwloc191/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc191_save_CPPFLAGS opal_hwloc_hwloc191_save_LDFLAGS opal_hwloc_hwloc191_save_LIBS opal_hwloc_hwloc191_save_cairo opal_hwloc_hwloc191_save_xml opal_hwloc_hwloc191_basedir opal_hwloc_hwloc191_file opal_hwloc_hwloc191_save_cflags CPPFLAGS_save LIBS_save])
+    OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc191_save_CPPFLAGS opal_hwloc_hwloc191_save_LDFLAGS opal_hwloc_hwloc191_save_LIBS opal_hwloc_hwloc191_save_cairo opal_hwloc_hwloc191_save_xml opal_hwloc_hwloc191_basedir opal_hwloc_hwloc191_file opal_hwloc_hwloc191_save_cflags CPPFLAGS_save LIBS_save opal_hwloc_external])
 
     # default to this component not providing support
     opal_hwloc_hwloc191_basedir=opal/mca/hwloc/hwloc191
     opal_hwloc_hwloc191_support=no
 
-    if test "$with_hwloc" = "internal" -o "$with_hwloc" = "" -o "$with_hwloc" = "yes"; then
+    AS_IF([test "$with_hwloc" = "internal" || test -z "$with_hwloc" || test "$with_hwloc" = "yes"],
+          [opal_hwloc_external="no"],
+          [opal_hwloc_external="yes"])
+
+    if true; then
         opal_hwloc_hwloc191_save_CPPFLAGS=$CPPFLAGS
         opal_hwloc_hwloc191_save_LDFLAGS=$LDFLAGS
         opal_hwloc_hwloc191_save_LIBS=$LIBS
 
-        # Run the hwloc configuration - set the prefix to minimize
-        # the chance that someone will use the internal symbols
-        HWLOC_SET_SYMBOL_PREFIX([opal_hwloc191_])
+        # Run the hwloc configuration - if no external hwloc, then set the prefix
+        # to minimize the chance that someone will use the internal symbols
+        AS_IF([test "$opal_hwloc_external" = "no"],
+              [HWLOC_SET_SYMBOL_PREFIX([opal_hwloc191_])])
 
         # save XML or graphical options
         opal_hwloc_hwloc191_save_cairo=$enable_cairo
@@ -162,6 +167,16 @@ AC_DEFUN([MCA_opal_hwloc_hwloc191_CONFIG],[
         hwloc_hwloc191_WRAPPER_EXTRA_LIBS="$HWLOC_EMBEDDED_LIBS"
         hwloc_hwloc191_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/'"$opal_hwloc_hwloc191_basedir/hwloc/include"
     fi
+
+    # If we are not building the internal hwloc, then indicate that
+    # this component should not be built.  NOTE: we still did all the
+    # above configury so that all the proper GNU Autotools
+    # infrastructure is setup properly (e.g., w.r.t. SUBDIRS=hwloc in
+    # this directory's Makefile.am, we still need the Autotools "make
+    # distclean" infrastructure to work properly).
+    AS_IF([test "$opal_hwloc_external" = "yes"],
+          [AC_MSG_WARN([using an external hwloc; disqualifying this component])
+           opal_hwloc_hwloc191_support=no])
 
     # Done!
     AS_IF([test "$opal_hwloc_hwloc191_support" = "yes"],
