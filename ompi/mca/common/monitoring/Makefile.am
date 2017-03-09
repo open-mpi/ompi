@@ -1,5 +1,7 @@
 #
 # Copyright (c) 2016      Inria.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -8,7 +10,7 @@
 #
 
 sources = common_monitoring.c common_monitoring_coll.c
-header = common_monitoring.h
+headers = common_monitoring.h common_monitoring_coll.h
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
