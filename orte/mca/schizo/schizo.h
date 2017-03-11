@@ -88,7 +88,8 @@ typedef int (*orte_schizo_base_module_setup_fork_fn_t)(orte_job_t *jdata,
  * proc upon execution */
 typedef int (*orte_schizo_base_module_setup_child_fn_t)(orte_job_t *jdata,
                                                         orte_proc_t *child,
-                                                        orte_app_context_t *app);
+                                                        orte_app_context_t *app,
+                                                        char ***env);
 
 
 typedef enum {
