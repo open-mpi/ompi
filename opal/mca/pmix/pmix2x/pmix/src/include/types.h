@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -242,7 +242,7 @@ typedef struct event pmix_event_t;
 /* Basic event APIs */
 #define pmix_event_enable_debug_mode() event_enable_debug_mode()
 
-#define pmix_event_set(b, x, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+#define pmix_event_assign(x, b, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
 #define pmix_event_add(ev, tv) event_add((ev), (tv))
 
@@ -253,5 +253,7 @@ typedef struct event pmix_event_t;
 #define pmix_event_new(b, fd, fg, cb, arg) event_new((b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
 #define pmix_event_loop(b, fg) event_base_loop((b), (fg))
+
+#define pmix_event_active(x, y, z) event_active((x), (y), (z))
 
 #endif /* PMIX_TYPES_H */

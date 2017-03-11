@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -110,6 +110,15 @@ typedef orte_schizo_launch_environ_t (*orte_schizo_base_module_ck_launch_environ
 /* give the component a chance to cleanup */
 typedef void (*orte_schizo_base_module_finalize_fn_t)(void);
 
+
+/* request time remaining in this allocation - only one module
+ * capable of supporting this operation should be available
+ * in a given environment. However, if a module is available
+ * and decides it cannot provide the info in the current situation,
+ * then it can return ORTE_ERR_TAKE_NEXT_OPTION to indicate that
+ * another module should be tried */
+typedef long (*orte_schizo_base_module_get_rem_time_fn_t)(void);
+
 /*
  * schizo module version 1.3.0
  */
@@ -122,6 +131,7 @@ typedef struct {
     orte_schizo_base_module_setup_fork_fn_t             setup_fork;
     orte_schizo_base_module_setup_child_fn_t            setup_child;
     orte_schizo_base_module_ck_launch_environ_fn_t      check_launch_environment;
+    orte_schizo_base_module_get_rem_time_fn_t           get_remaining_time;
     orte_schizo_base_module_finalize_fn_t               finalize;
 } orte_schizo_base_module_t;
 

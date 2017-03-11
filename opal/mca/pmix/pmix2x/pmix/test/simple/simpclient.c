@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -204,23 +204,13 @@ int main(int argc, char **argv)
 
                 (void)asprintf(&tmp, "%s-%d-remote-%d", proc.nspace, n, j);
                 if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, tmp, NULL, 0, &val))) {
-                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s failed: %s",
-                                myproc.nspace, myproc.rank, j, tmp, PMIx_Error_string(rc));
+                    /* this data should _not_ be found as we are on the same node
+                     * and the data was "put" with a PMIX_REMOTE scope */
+                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned correct", myproc.nspace, myproc.rank, j, tmp);
                     continue;
                 }
-                if (PMIX_STRING != val->type) {
-                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned wrong type: %d", myproc.nspace, myproc.rank, j, tmp, val->type);
-                    PMIX_VALUE_RELEASE(val);
-                    free(tmp);
-                    continue;
-                }
-                if (0 != strcmp(val->data.string, "1234")) {
-                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned wrong value: %s", myproc.nspace, myproc.rank, j, tmp, val->data.string);
-                    PMIX_VALUE_RELEASE(val);
-                    free(tmp);
-                    continue;
-                }
-                pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned correct", myproc.nspace, myproc.rank, j, tmp);
+                pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned remote data for a local proc",
+                            myproc.nspace, myproc.rank, j, tmp);
                 PMIX_VALUE_RELEASE(val);
                 free(tmp);
             }

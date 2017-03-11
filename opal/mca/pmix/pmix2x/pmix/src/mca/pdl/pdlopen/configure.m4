@@ -44,13 +44,13 @@ AC_DEFUN([MCA_pmix_pdl_pdlopen_CONFIG],[
 
     dnl This is effectively a back-door for PMIX developers to
     dnl force the use of the libltdl pdl component.
-    AC_ARG_ENABLE([dlopen],
-        [AS_HELP_STRING([--disable-dlopen],
+    AC_ARG_ENABLE([dl-dlopen],
+        [AS_HELP_STRING([--disable-dl-dlopen],
                         [Disable the "dlopen" PDL component (and probably force the use of the "libltdl" PDL component).])
         ])
 
     pmix_pdl_pdlopen_happy=no
-    AS_IF([test "$enable_dlopen" != "no"],
+    AS_IF([test "$enable_dl_dlopen" != "no"],
           [PMIX_CHECK_PACKAGE([pmix_pdl_pdlopen],
               [dlfcn.h],
               [dl],

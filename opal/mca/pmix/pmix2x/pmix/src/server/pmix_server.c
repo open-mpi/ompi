@@ -2119,7 +2119,12 @@ static void query_cbfunc(pmix_status_t status,
     // send reply
     PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
     // cleanup
-    PMIX_QUERY_FREE(qcd->queries, qcd->nqueries);
+    if (NULL != qcd->queries) {
+        PMIX_QUERY_FREE(qcd->queries, qcd->nqueries);
+    }
+    if (NULL != qcd->info) {
+        PMIX_INFO_FREE(qcd->info, qcd->ninfo);
+    }
     PMIX_RELEASE(qcd);
     PMIX_RELEASE(cd);
 }
@@ -2244,7 +2249,7 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
         /* turn off the recv event - we shouldn't hear anything
          * more from this proc */
         if (peer->recv_ev_active) {
-            event_del(&peer->recv_event);
+            pmix_event_del(&peer->recv_event);
             peer->recv_ev_active = false;
         }
         /* let the network libraries cleanup */
@@ -2331,6 +2336,12 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
     if (PMIX_LOG_CMD == cmd) {
         PMIX_PEER_CADDY(cd, peer, tag);
         rc = pmix_server_log(peer, buf, op_cbfunc, cd);
+        return rc;
+    }
+
+    if (PMIX_ALLOC_CMD == cmd) {
+        PMIX_PEER_CADDY(cd, peer, tag);
+        rc = pmix_server_alloc(peer, buf, query_cbfunc, cd);
         return rc;
     }
 

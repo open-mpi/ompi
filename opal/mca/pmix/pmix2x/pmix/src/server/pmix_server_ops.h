@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
@@ -132,9 +132,9 @@ typedef struct {
 #define PMIX_EXECUTE_COLLECTIVE(c, t, f)                        \
     do {                                                        \
         PMIX_SETUP_COLLECTIVE(c, t);                            \
-        event_assign(&((c)->ev), pmix_globals.evbase, -1,       \
-                     EV_WRITE, (f), (c));                       \
-        event_active(&((c)->ev), EV_WRITE, 1);                  \
+        pmix_event_assign(&((c)->ev), pmix_globals.evbase, -1,  \
+                          EV_WRITE, (f), (c));                  \
+        pmix_event_active(&((c)->ev), EV_WRITE, 1);             \
     } while (0)
 
 
@@ -212,6 +212,11 @@ pmix_status_t pmix_server_log(pmix_peer_t *peer,
                               pmix_buffer_t *buf,
                               pmix_op_cbfunc_t cbfunc,
                               void *cbdata);
+
+pmix_status_t pmix_server_alloc(pmix_peer_t *peer,
+                                pmix_buffer_t *buf,
+                                pmix_info_cbfunc_t cbfunc,
+                                void *cbdata);
 
 pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_buffer_t *buf,

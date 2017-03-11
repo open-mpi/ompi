@@ -193,9 +193,9 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
         pmix_output_verbose(5, pmix_globals.debug_output,               \
                             "[%s:%d] post msg",                         \
                             __FILE__, __LINE__);                        \
-        event_assign(&((ms)->ev), pmix_globals.evbase, -1,              \
-                     EV_WRITE, pmix_ptl_base_process_msg, (ms));        \
-        event_active(&((ms)->ev), EV_WRITE, 1);                         \
+        pmix_event_assign(&((ms)->ev), pmix_globals.evbase, -1,         \
+                          EV_WRITE, pmix_ptl_base_process_msg, (ms));   \
+        pmix_event_active(&((ms)->ev), EV_WRITE, 1);                    \
     } while (0)
 
 #define PMIX_SND_CADDY(c, h, s)                                         \
@@ -237,7 +237,7 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
         }                                                                               \
         /* ensure the send event is active */                                           \
         if (!(p)->send_ev_active && 0 <= (p)->sd) {                                     \
-            event_add(&(p)->send_event, 0);                                             \
+            pmix_event_add(&(p)->send_event, 0);                                        \
             (p)->send_ev_active = true;                                                 \
         }                                                                               \
     } while (0)

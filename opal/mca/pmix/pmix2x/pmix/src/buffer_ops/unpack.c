@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -1358,6 +1358,13 @@ pmix_status_t pmix_bfrop_unpack_query(pmix_buffer_t *buffer, void *dest,
     }
     return PMIX_SUCCESS;
 }
+
+pmix_status_t pmix_bfrop_unpack_alloc_directive(pmix_buffer_t *buffer, void *dest,
+                                                int32_t *num_vals, pmix_data_type_t type)
+{
+    return pmix_bfrop_unpack_byte(buffer, dest, num_vals, PMIX_UINT8);
+}
+
 
 /**** DEPRECATED ****/
 pmix_status_t pmix_bfrop_unpack_array(pmix_buffer_t *buffer, void *dest,

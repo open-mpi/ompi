@@ -424,6 +424,13 @@ pmix_status_t pmix_bfrop_open(void)
                        pmix_bfrop_copy_bo,
                        pmix_bfrop_print_bo);
 
+    PMIX_REGISTER_TYPE("PMIX_ALLOC_DIRECTIVE",
+                       PMIX_ALLOC_DIRECTIVE,
+                       pmix_bfrop_pack_alloc_directive,
+                       pmix_bfrop_unpack_alloc_directive,
+                       pmix_bfrop_std_copy,
+                       pmix_bfrop_print_alloc_directive);
+
     /**** DEPRECATED ****/
     PMIX_REGISTER_TYPE("PMIX_INFO_ARRAY", PMIX_INFO_ARRAY,
                        pmix_bfrop_pack_array,

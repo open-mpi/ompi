@@ -12,7 +12,7 @@
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,7 +131,7 @@ exit:
     return rc;
 }
 
-static int _setup_top_session_dir(void)
+int orte_setup_top_session_dir(void)
 {
     int rc = ORTE_SUCCESS;
     /* get the effective uid */
@@ -170,20 +170,26 @@ static int _setup_jobfam_session_dir(orte_process_name_t *proc)
 
     /* construct the top_session_dir if we need */
     if (NULL == orte_process_info.jobfam_session_dir) {
-        if (ORTE_SUCCESS != (rc = _setup_top_session_dir())) {
+        if (ORTE_SUCCESS != (rc = orte_setup_top_session_dir())) {
             return rc;
         }
 
-        if (ORTE_PROC_IS_HNP) {
+        if (ORTE_PROC_IS_MASTER) {
+            if (0 > asprintf(&orte_process_info.jobfam_session_dir,
+                             "%s/dvm", orte_process_info.top_session_dir)) {
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto exit;
+            }
+        } else if (ORTE_PROC_IS_HNP) {
             if (0 > asprintf(&orte_process_info.jobfam_session_dir,
                              "%s/pid.%lu", orte_process_info.top_session_dir,
-                             (unsigned long)orte_process_info.pid) ) {
+                             (unsigned long)orte_process_info.pid)) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
         } else {
             /* we were not given one, so define it */
-            if (NULL == proc || (ORTE_JOBID_INVALID == proc->jobid) ) {
+            if (NULL == proc || (ORTE_JOBID_INVALID == proc->jobid)) {
                 if (0 > asprintf(&orte_process_info.jobfam_session_dir,
                                  "%s/jobfam", orte_process_info.top_session_dir) ) {
                     rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -524,7 +530,23 @@ orte_session_dir_finalize(orte_process_name_t *proc)
         }
     }
 
-    if(NULL != orte_process_info.top_session_dir) {
+    if (opal_os_dirpath_is_empty(orte_process_info.jobfam_session_dir)) {
+        if (orte_debug_flag) {
+            opal_output(0, "sess_dir_finalize: found jobfam session dir empty - deleting");
+        }
+        rmdir(orte_process_info.jobfam_session_dir);
+    } else {
+        if (orte_debug_flag) {
+            if (OPAL_ERR_NOT_FOUND ==
+                    opal_os_dirpath_access(orte_process_info.jobfam_session_dir, 0)) {
+                opal_output(0, "sess_dir_finalize: jobfam session dir does not exist");
+            } else {
+                opal_output(0, "sess_dir_finalize: jobfam session dir not empty - leaving");
+            }
+        }
+    }
+
+    if (NULL != orte_process_info.top_session_dir) {
         if (opal_os_dirpath_is_empty(orte_process_info.top_session_dir)) {
             if (orte_debug_flag) {
                 opal_output(0, "sess_dir_finalize: found top session dir empty - deleting");

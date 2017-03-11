@@ -1,7 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,10 +84,10 @@ int pmix_hotel_init(pmix_hotel_t *h, int num_rooms,
 
         /* Create this room's event (but don't add it) */
         if (NULL != h->evbase) {
-            event_assign(&(h->rooms[i].eviction_timer_event),
-                         h->evbase,
-                         -1, 0, local_eviction_callback,
-                         &(h->eviction_args[i]));
+            pmix_event_assign(&(h->rooms[i].eviction_timer_event),
+                              h->evbase,
+                              -1, 0, local_eviction_callback,
+                              &(h->eviction_args[i]));
         }
     }
 
@@ -114,7 +115,7 @@ static void destructor(pmix_hotel_t *h)
     if (NULL != h->evbase) {
         for (i = 0; i < h->num_rooms; ++i) {
             if (NULL != h->rooms[i].occupant) {
-                event_del(&(h->rooms[i].eviction_timer_event));
+                pmix_event_del(&(h->rooms[i].eviction_timer_event));
             }
         }
     }

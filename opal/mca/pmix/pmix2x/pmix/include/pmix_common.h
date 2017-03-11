@@ -300,6 +300,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_QUERY_LOCAL_ONLY               "pmix.qry.local"         // constrain the query to local information only
 #define PMIX_QUERY_REPORT_AVG               "pmix.qry.avg"           // report average values
 #define PMIX_QUERY_REPORT_MINMAX            "pmix.qry.minmax"        // report minimum and maximum value
+#define PMIX_QUERY_ALLOC_STATUS             "pmix.query.alloc"       // (char*) string identifier of the allocation whose status
+                                                                     //         is being requested
 
 /* log attributes */
 #define PMIX_LOG_STDERR                    "pmix.log.stderr"         // (char*) log string to stderr
@@ -322,6 +324,24 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_SET_ENVAR                      "pmix.set.envar"        // (char*) string "key=value" value shall be put into the environment
 #define PMIX_UNSET_ENVAR                    "pmix.unset.envar"      // (char*) unset envar specified in string
 
+/* attributes relating to allocations */
+#define PMIX_ALLOC_ID                       "pmix.alloc.id"         // (char*) provide a string identifier for this allocation request
+                                                                    //         which can later be used to query status of the request
+#define PMIX_TIME_REMAINING                 "pmix.time.remaining"   // (uint32_t) get number of seconds remaining in allocation
+#define PMIX_ALLOC_NUM_NODES                "pmix.alloc.nnodes"     // (uint64_t) number of nodes
+#define PMIX_ALLOC_NODE_LIST                "pmix.alloc.nlist"      // (char*) regex of specific nodes
+#define PMIX_ALLOC_NUM_CPUS                 "pmix.alloc.ncpus"      // (uint64_t) number of cpus
+#define PMIX_ALLOC_NUM_CPU_LIST             "pmix.alloc.ncpulist"   // (char*) regex of #cpus for each node
+#define PMIX_ALLOC_CPU_LIST                 "pmix.alloc.cpulist"    // (char*) regex of specific cpus indicating the cpus involved.
+#define PMIX_ALLOC_MEM_SIZE                 "pmix.alloc.msize"      // (float) number of Mbytes
+#define PMIX_ALLOC_NETWORK                  "pmix.alloc.net"        // (array) array of pmix_info_t describing network resources. If not
+                                                                    //         given as part of an info struct that identifies the
+                                                                    //         impacted nodes, then the description will be applied
+                                                                    //         across all nodes in the requestor's allocation
+#define PMIX_ALLOC_NETWORK_ID               "pmix.alloc.netid"      // (char*) name of network
+#define PMIX_ALLOC_BANDWIDTH                "pmix.alloc.bw"         // (float) Mbits/sec
+#define PMIX_ALLOC_NETWORK_QOS              "pmix.alloc.netqos"     // (char*) quality of service level
+#define PMIX_ALLOC_TIME                     "pmix.alloc.time"       // (uint32_t) time in seconds
 
 /****    PROCESS STATE DEFINITIONS    ****/
 typedef uint8_t pmix_proc_state_t;
@@ -365,53 +385,90 @@ typedef uint8_t pmix_proc_state_t;
 
 typedef int pmix_status_t;
 
-#define PMIX_SUCCESS                            (PMIX_ERR_BASE)
-#define PMIX_ERROR                              (PMIX_ERR_BASE -  1)    // general error
+/* v1.x error values - must be fixed in place for backward
+ * compatability. Note that some number of these have been
+ * deprecated and may not be returned by v2.x and above
+ * clients or servers. However, they must always be
+ * at least defined to ensure older codes will compile */
+#define PMIX_SUCCESS                                 0
+#define PMIX_ERROR                                  -1          // general error
+#define PMIX_ERR_SILENT                             -2          // internal-only
 /* debugger release flag */
-#define PMIX_ERR_DEBUGGER_RELEASE               (PMIX_ERR_BASE -  2)
+#define PMIX_ERR_DEBUGGER_RELEASE                   -3
 /* fault tolerance */
-#define PMIX_ERR_PROC_RESTART                   (PMIX_ERR_BASE -  3)
-#define PMIX_ERR_PROC_CHECKPOINT                (PMIX_ERR_BASE -  4)
-#define PMIX_ERR_PROC_MIGRATE                   (PMIX_ERR_BASE -  5)
-#define PMIX_ERR_UPDATE_ENDPOINTS               (PMIX_ERR_BASE -  6)
+#define PMIX_ERR_PROC_RESTART                       -4
+#define PMIX_ERR_PROC_CHECKPOINT                    -5
+#define PMIX_ERR_PROC_MIGRATE                       -6
 /* abort */
-#define PMIX_ERR_PROC_ABORTED                   (PMIX_ERR_BASE -  7)
-#define PMIX_ERR_PROC_REQUESTED_ABORT           (PMIX_ERR_BASE -  8)
-#define PMIX_ERR_PROC_ABORTING                  (PMIX_ERR_BASE -  9)
+#define PMIX_ERR_PROC_ABORTED                       -7
+#define PMIX_ERR_PROC_REQUESTED_ABORT               -8
+#define PMIX_ERR_PROC_ABORTING                      -9
 /* communication failures */
-#define PMIX_ERR_UNREACH                        (PMIX_ERR_BASE - 10)
-#define PMIX_ERR_LOST_CONNECTION_TO_SERVER      (PMIX_ERR_BASE - 11)
-#define PMIX_ERR_LOST_PEER_CONNECTION           (PMIX_ERR_BASE - 12)
-#define PMIX_ERR_LOST_CONNECTION_TO_CLIENT      (PMIX_ERR_BASE - 13)
-/* used by the query system */
-#define PMIX_QUERY_PARTIAL_SUCCESS              (PMIX_ERR_BASE - 14)
+#define PMIX_ERR_SERVER_FAILED_REQUEST              -10
+#define PMIX_EXISTS                                 -11
+#define PMIX_ERR_INVALID_CRED                       -12         // internal-only
+#define PMIX_ERR_HANDSHAKE_FAILED                   -13         // internal-only
+#define PMIX_ERR_READY_FOR_HANDSHAKE                -14         // internal-only
+#define PMIX_ERR_WOULD_BLOCK                        -15
+#define PMIX_ERR_UNKNOWN_DATA_TYPE                  -16         // internal-only
+#define PMIX_ERR_PROC_ENTRY_NOT_FOUND               -17         // internal-only
+#define PMIX_ERR_TYPE_MISMATCH                      -18         // internal-only
+#define PMIX_ERR_UNPACK_INADEQUATE_SPACE            -19         // internal-only
+#define PMIX_ERR_UNPACK_FAILURE                     -20         // internal-only
+#define PMIX_ERR_PACK_FAILURE                       -21         // internal-only
+#define PMIX_ERR_PACK_MISMATCH                      -22         // internal-only
+#define PMIX_ERR_NO_PERMISSIONS                     -23
+#define PMIX_ERR_TIMEOUT                            -24
+#define PMIX_ERR_UNREACH                            -25
+#define PMIX_ERR_IN_ERRNO                           -26         // internal-only
+#define PMIX_ERR_BAD_PARAM                          -27
+#define PMIX_ERR_RESOURCE_BUSY                      -28         // internal-only
+#define PMIX_ERR_OUT_OF_RESOURCE                    -29
+#define PMIX_ERR_DATA_VALUE_NOT_FOUND               -30
+#define PMIX_ERR_INIT                               -31
+#define PMIX_ERR_NOMEM                              -32         // internal-only
+#define PMIX_ERR_INVALID_ARG                        -33         // internal-only
+#define PMIX_ERR_INVALID_KEY                        -34         // internal-only
+#define PMIX_ERR_INVALID_KEY_LENGTH                 -35         // internal-only
+#define PMIX_ERR_INVALID_VAL                        -36         // internal-only
+#define PMIX_ERR_INVALID_VAL_LENGTH                 -37         // internal-only
+#define PMIX_ERR_INVALID_LENGTH                     -38         // internal-only
+#define PMIX_ERR_INVALID_NUM_ARGS                   -39         // internal-only
+#define PMIX_ERR_INVALID_ARGS                       -40         // internal-only
+#define PMIX_ERR_INVALID_NUM_PARSED                 -41         // internal-only
+#define PMIX_ERR_INVALID_KEYVALP                    -42         // internal-only
+#define PMIX_ERR_INVALID_SIZE                       -43
+#define PMIX_ERR_INVALID_NAMESPACE                  -44
+#define PMIX_ERR_SERVER_NOT_AVAIL                   -45         // internal-only
+#define PMIX_ERR_NOT_FOUND                          -46
+#define PMIX_ERR_NOT_SUPPORTED                      -47
+#define PMIX_ERR_NOT_IMPLEMENTED                    -48
+#define PMIX_ERR_COMM_FAILURE                       -49
+#define PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER     -50         // internal-only
 
+/* define a starting point for v2.x error values */
+#define PMIX_ERR_V2X_BASE                   -100
+
+/* v2.x communication errors */
+#define PMIX_ERR_LOST_CONNECTION_TO_SERVER      (PMIX_ERR_V2X_BASE - 1)
+#define PMIX_ERR_LOST_PEER_CONNECTION           (PMIX_ERR_V2X_BASE - 2)
+#define PMIX_ERR_LOST_CONNECTION_TO_CLIENT      (PMIX_ERR_V2X_BASE - 3)
+/* used by the query system */
+#define PMIX_QUERY_PARTIAL_SUCCESS              (PMIX_ERR_V2X_BASE - 4)
+#define PMIX_NOTIFY_ALLOC_COMPLETE              (PMIX_ERR_V2X_BASE - 5)
 
 /* define a starting point for operational error constants so
  * we avoid renumbering when making additions */
-#define PMIX_ERR_OP_BASE    -100
+#define PMIX_ERR_OP_BASE    PMIX_ERR_V2X_BASE-30
 
 /* operational */
-#define PMIX_ERR_NO_PERMISSIONS                 (PMIX_ERR_OP_BASE -  1)
-#define PMIX_ERR_TIMEOUT                        (PMIX_ERR_OP_BASE -  2)
-#define PMIX_ERR_WOULD_BLOCK                    (PMIX_ERR_OP_BASE -  3)
-#define PMIX_EXISTS                             (PMIX_ERR_OP_BASE -  4)
-#define PMIX_ERR_SERVER_FAILED_REQUEST          (PMIX_ERR_OP_BASE -  5)
-#define PMIX_ERR_NOT_SUPPORTED                  (PMIX_ERR_OP_BASE -  6)
-#define PMIX_ERR_NOT_FOUND                      (PMIX_ERR_OP_BASE -  7)
-#define PMIX_ERR_BAD_PARAM                      (PMIX_ERR_OP_BASE -  8)
-#define PMIX_ERR_DATA_VALUE_NOT_FOUND           (PMIX_ERR_OP_BASE -  9)
-#define PMIX_ERR_OUT_OF_RESOURCE                (PMIX_ERR_OP_BASE - 10)
-#define PMIX_ERR_INVALID_NAMESPACE              (PMIX_ERR_OP_BASE - 11)
-#define PMIX_ERR_INVALID_SIZE                   (PMIX_ERR_OP_BASE - 12)
-#define PMIX_ERR_INIT                           (PMIX_ERR_OP_BASE - 13)
 #define PMIX_ERR_EVENT_REGISTRATION             (PMIX_ERR_OP_BASE - 14)
 #define PMIX_ERR_JOB_TERMINATED                 (PMIX_ERR_OP_BASE - 15)
-
+#define PMIX_ERR_UPDATE_ENDPOINTS               (PMIX_ERR_OP_BASE - 16)
 
 /* define a starting point for system error constants so
  * we avoid renumbering when making additions */
-#define PMIX_ERR_SYS_BASE    -200
+#define PMIX_ERR_SYS_BASE    PMIX_ERR_OP_BASE-100
 
 /* system failures */
 #define PMIX_ERR_NODE_DOWN                      (PMIX_ERR_SYS_BASE -  1)
@@ -420,7 +477,7 @@ typedef int pmix_status_t;
 
 /* define a starting point for event handler error constants so
  * we avoid renumbering when making additions */
-#define PMIX_ERR_EVHDLR_BASE    -300
+#define PMIX_ERR_EVHDLR_BASE    PMIX_ERR_SYS_BASE-100
 
 /* used by event handlers */
 #define PMIX_EVENT_NO_ACTION_TAKEN              (PMIX_ERR_EVHDLR_BASE -  1)
@@ -487,9 +544,13 @@ typedef uint16_t pmix_data_type_t;
 #define PMIX_PROC_RANK          40
 #define PMIX_QUERY              41
 #define PMIX_COMPRESSED_STRING  42  // string compressed with zlib
+#define PMIX_ALLOC_DIRECTIVE    43
 /**** DEPRECATED ****/
-#define PMIX_INFO_ARRAY         43
+#define PMIX_INFO_ARRAY         44
 /********************/
+
+/* define a boundary for implementers so they can add their own data types */
+#define PMIX_DATA_TYPE_MAX     500
 
 
 /* define a scope for data "put" by PMI per the following:
@@ -532,6 +593,22 @@ typedef uint8_t pmix_persistence_t;
  * command directives via pmix_info_t arrays */
 typedef uint32_t pmix_info_directives_t;
 #define PMIX_INFO_REQD          0x0001
+
+
+/* define a set of directives for allocation requests */
+typedef uint8_t pmix_alloc_directive_t;
+#define PMIX_ALLOC_NEW          1  // new allocation is being requested. The resulting allocation will be
+                                   // disjoint (i.e., not connected in a job sense) from the requesting allocation
+#define PMIX_ALLOC_EXTEND       2  // extend the existing allocation, either in time or as additional resources
+#define PMIX_ALLOC_RELEASE      3  // release part of the existing allocation. Attributes in the accompanying
+                                   // pmix\_info\_t array may be used to specify permanent release of the
+                                   // identified resources, or "lending" of those resources for some period
+                                   // of time.
+#define PMIX_ALLOC_REAQUIRE     4  // reacquire resources that were previously "lent" back to the scheduler
+
+/* define a value boundary beyond which implementers are free
+ * to define their own directive values */
+#define PMIX_ALLOC_EXTERNAL     128
 
 
 /****    PMIX BYTE OBJECT    ****/
@@ -1321,6 +1398,7 @@ pmix_status_t PMIx_Notify_event(pmix_status_t status,
  * - pmix_data_range_t   (PMIX_DATA_RANGE)
  * - pmix_info_directives_t   (PMIX_INFO_DIRECTIVES)
  * - pmix_data_type_t   (PMIX_DATA_TYPE)
+ * - pmix_alloc_directive_t  (PMIX_ALLOC_DIRECTIVE)
  */
 const char* PMIx_Error_string(pmix_status_t status);
 const char* PMIx_Proc_state_string(pmix_proc_state_t state);
@@ -1329,7 +1407,7 @@ const char* PMIx_Persistence_string(pmix_persistence_t persist);
 const char* PMIx_Data_range_string(pmix_data_range_t range);
 const char* PMIx_Info_directives_string(pmix_info_directives_t directives);
 const char* PMIx_Data_type_string(pmix_data_type_t type);
-
+const char* PMIx_Alloc_directive_string(pmix_alloc_directive_t directive);
 
 /* Get the PMIx version string. Note that the provided string is
  * statically defined and must NOT be free'd  */
