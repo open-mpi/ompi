@@ -299,8 +299,9 @@ void pmix_server_notify(int status, orte_process_name_t* sender,
     orte_process_name_t source;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
-                        "%s Notification received",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                        "%s Notification received from %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(sender));
 
     /* unpack the status */
     cnt = 1;

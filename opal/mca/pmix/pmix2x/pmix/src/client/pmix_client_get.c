@@ -745,7 +745,7 @@ request:
 respond:
 
     /* if a callback was provided, execute it */
-    if (NULL != cb && NULL != cb->value_cbfunc) {
+    if (NULL != cb->value_cbfunc) {
         if (NULL != val)  {
             /* if this is a compressed string, then uncompress it */
             if (PMIX_COMPRESSED_STRING == val->type) {

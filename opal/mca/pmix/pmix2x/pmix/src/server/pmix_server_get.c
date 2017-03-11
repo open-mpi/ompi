@@ -705,8 +705,7 @@ static void dmdx_cbfunc(pmix_status_t status,
                         "[%s:%d] queue dmdx reply for %s:%u",
                         __FILE__, __LINE__,
                         caddy->lcd->proc.nspace, caddy->lcd->proc.rank);
-    event_assign(&caddy->ev, pmix_globals.evbase, -1, EV_WRITE,
-                 _process_dmdx_reply, caddy);
-    event_priority_set(&caddy->ev, 0);
-    event_active(&caddy->ev, EV_WRITE, 1);
+    pmix_event_assign(&caddy->ev, pmix_globals.evbase, -1, EV_WRITE,
+                      _process_dmdx_reply, caddy);
+    pmix_event_active(&caddy->ev, EV_WRITE, 1);
 }

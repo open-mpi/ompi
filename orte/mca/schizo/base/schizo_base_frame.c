@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -44,6 +44,7 @@ orte_schizo_base_module_t orte_schizo = {
     .setup_fork = orte_schizo_base_setup_fork,
     .setup_child = orte_schizo_base_setup_child,
     .check_launch_environment = orte_schizo_base_check_launch_environment,
+    .get_remaining_time = orte_schizo_base_get_remaining_time,
     .finalize = orte_schizo_base_finalize
 };
 
@@ -103,4 +104,3 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, schizo, "ORTE Schizo Subsystem",
 OBJ_CLASS_INSTANCE(orte_schizo_base_active_module_t,
                    opal_list_item_t,
                    NULL, NULL);
-

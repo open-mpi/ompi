@@ -19,7 +19,7 @@
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -190,6 +190,11 @@ AS_IF([test -z "$CC_FOR_BUILD"],[
 
 PMIX_SETUP_CC
 
+# Cleanup duplicate flags
+PMIX_FLAGS_UNIQ(CPPFLAGS)
+PMIX_FLAGS_UNIQ(LDFLAGS)
+PMIX_FLAGS_UNIQ(LIBS)
+
 #
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
 # they may have been modified throughout the course of this script.
@@ -205,6 +210,12 @@ AC_MSG_RESULT([$CPPFLAGS])
 
 AC_MSG_CHECKING([final CFLAGS])
 AC_MSG_RESULT([$CFLAGS])
+
+AC_MSG_CHECKING([final LDFLAGS])
+AC_MSG_RESULT([$LDFLAGS])
+
+AC_MSG_CHECKING([final LIBS])
+AC_MSG_RESULT([$LIBS])
 
 ####################################################################
 # Version information

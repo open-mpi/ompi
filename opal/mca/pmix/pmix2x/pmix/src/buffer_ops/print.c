@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -1079,12 +1079,12 @@ pmix_status_t pmix_bfrop_print_scope(char **output, char *prefix,
     if (0 > asprintf(output, "%sData type: PMIX_SCOPE\tValue: %s",
                      prefx, PMIx_Scope_string(*src))) {
         return PMIX_ERR_NOMEM;
-}
-if (prefx != prefix) {
-    free(prefx);
-}
+    }
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
-return PMIX_SUCCESS;
+    return PMIX_SUCCESS;
 }
 
 pmix_status_t pmix_bfrop_print_range(char **output, char *prefix,
@@ -1105,13 +1105,14 @@ pmix_status_t pmix_bfrop_print_range(char **output, char *prefix,
     if (0 > asprintf(output, "%sData type: PMIX_DATA_RANGE\tValue: %s",
                      prefx, PMIx_Data_range_string(*src))) {
         return PMIX_ERR_NOMEM;
-}
-if (prefx != prefix) {
-    free(prefx);
+    }
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
+    return PMIX_SUCCESS;
 }
 
-return PMIX_SUCCESS;
-}
 pmix_status_t pmix_bfrop_print_cmd(char **output, char *prefix,
                                    pmix_cmd_t *src,
                                    pmix_data_type_t type)
@@ -1130,12 +1131,12 @@ pmix_status_t pmix_bfrop_print_cmd(char **output, char *prefix,
     if (0 > asprintf(output, "%sData type: PMIX_CMD\tValue: %s",
                      prefx, pmix_command_string(*src))) {
         return PMIX_ERR_NOMEM;
-}
-if (prefx != prefix) {
-    free(prefx);
-}
+    }
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
-return PMIX_SUCCESS;
+    return PMIX_SUCCESS;
 }
 
 pmix_status_t pmix_bfrop_print_infodirs(char **output, char *prefix,
@@ -1156,12 +1157,12 @@ pmix_status_t pmix_bfrop_print_infodirs(char **output, char *prefix,
     if (0 > asprintf(output, "%sData type: PMIX_INFO_DIRECTIVES\tValue: %s",
                      prefx, PMIx_Info_directives_string(*src))) {
         return PMIX_ERR_NOMEM;
-}
-if (prefx != prefix) {
-    free(prefx);
-}
+    }
+    if (prefx != prefix) {
+        free(prefx);
+    }
 
-return PMIX_SUCCESS;
+    return PMIX_SUCCESS;
 }
 
 pmix_status_t pmix_bfrop_print_bo(char **output, char *prefix,
@@ -1430,6 +1431,33 @@ pmix_status_t pmix_bfrop_print_rank(char **output, char *prefix,
     }
     return PMIX_SUCCESS;
 }
+
+pmix_status_t pmix_bfrop_print_alloc_directive(char **output, char *prefix,
+                                               pmix_alloc_directive_t *src,
+                                               pmix_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) {
+        if (0 > asprintf(&prefx, " ")) {
+            return PMIX_ERR_NOMEM;
+        }
+    } else {
+        prefx = prefix;
+    }
+
+    if (0 > asprintf(output, "%sData type: PMIX_ALLOC_DIRECTIVE\tValue: %s",
+                     prefx, PMIx_Alloc_directive_string(*src))) {
+        return PMIX_ERR_NOMEM;
+    }
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
+    return PMIX_SUCCESS;
+}
+
 
 /**** DEPRECATED ****/
 pmix_status_t pmix_bfrop_print_array(char **output, char *prefix,

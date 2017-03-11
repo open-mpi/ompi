@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +37,7 @@
 #include "src/buffer_ops/internal.h"
 #include "src/include/pmix_globals.h"
 
-const char* PMIx_Proc_state_string(pmix_proc_state_t state)
+PMIX_EXPORT const char* PMIx_Proc_state_string(pmix_proc_state_t state)
 {
     switch(state) {
         case PMIX_PROC_STATE_UNDEF:
@@ -87,7 +87,7 @@ const char* PMIx_Proc_state_string(pmix_proc_state_t state)
     }
 }
 
-const char* PMIx_Scope_string(pmix_scope_t scope)
+PMIX_EXPORT const char* PMIx_Scope_string(pmix_scope_t scope)
 {
     switch(scope) {
         case PMIX_SCOPE_UNDEF:
@@ -103,7 +103,7 @@ const char* PMIx_Scope_string(pmix_scope_t scope)
     }
 }
 
-const char* PMIx_Persistence_string(pmix_persistence_t persist)
+PMIX_EXPORT const char* PMIx_Persistence_string(pmix_persistence_t persist)
 {
     switch(persist) {
         case PMIX_PERSIST_INDEF:
@@ -121,7 +121,7 @@ const char* PMIx_Persistence_string(pmix_persistence_t persist)
     }
 }
 
-const char* PMIx_Data_range_string(pmix_data_range_t range)
+PMIX_EXPORT const char* PMIx_Data_range_string(pmix_data_range_t range)
 {
     switch(range) {
         case PMIX_RANGE_UNDEF:
@@ -143,7 +143,7 @@ const char* PMIx_Data_range_string(pmix_data_range_t range)
     }
 }
 
-const char* PMIx_Info_directives_string(pmix_info_directives_t directives)
+PMIX_EXPORT const char* PMIx_Info_directives_string(pmix_info_directives_t directives)
 {
     switch(directives) {
         case PMIX_INFO_REQD:
@@ -153,7 +153,24 @@ const char* PMIx_Info_directives_string(pmix_info_directives_t directives)
     }
 }
 
-const char* pmix_command_string(pmix_cmd_t cmd)
+PMIX_EXPORT const char* PMIx_Alloc_directive_string(pmix_alloc_directive_t directive)
+{
+    switch(directive) {
+        case PMIX_ALLOC_NEW:
+            return "NEW";
+        case PMIX_ALLOC_EXTEND:
+            return "EXTEND";
+        case PMIX_ALLOC_RELEASE:
+            return "RELEASE";
+        case PMIX_ALLOC_REAQUIRE:
+            return "REACQUIRE";
+        default:
+            return "UNSPECIFIED";
+    }
+}
+
+
+PMIX_EXPORT const char* pmix_command_string(pmix_cmd_t cmd)
 {
     switch(cmd) {
         case PMIX_REQ_CMD:
@@ -193,7 +210,7 @@ const char* pmix_command_string(pmix_cmd_t cmd)
     }
 }
 
-const char* PMIx_Data_type_string(pmix_data_type_t type)
+PMIX_EXPORT const char* PMIx_Data_type_string(pmix_data_type_t type)
 {
     pmix_bfrop_type_info_t *info;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
@@ -551,8 +551,12 @@ int parse_replace(char *replace_param, int store, int *key_num) {
     while(NULL != pch) {
         pch++;
         ech = strchr(pch, ',');
-        if (NULL != ech || (strlen(pch) > 0)) {
-            snprintf(tmp_str, ech - pch + 1, "%s", pch);
+        if (strlen(pch) > 0) {
+            if (NULL != ech) {
+                snprintf(tmp_str, ech - pch + 1, "%s", pch);
+            } else {
+                snprintf(tmp_str, strlen(pch) + 1, "%s", pch);
+            }
             if ((0 == is_digit(tmp_str)) || ((atoi(tmp_str) + 1) > cnt)) {
                 ret = 1;
                 break;
@@ -631,4 +635,3 @@ int get_all_ranks_from_namespace(test_params params, char *nspace, pmix_proc_t *
     }
     return PMIX_SUCCESS;
 }
-

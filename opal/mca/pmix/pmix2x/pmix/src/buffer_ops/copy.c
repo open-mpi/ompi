@@ -174,6 +174,10 @@ pmix_status_t pmix_bfrop_copy_payload(pmix_buffer_t *dest, pmix_buffer_t *src)
         datasize = sizeof(pmix_proc_state_t);
         break;
 
+    case PMIX_ALLOC_DIRECTIVE:
+        datasize = sizeof(pmix_alloc_directive_t);
+        break;
+
     default:
         return PMIX_ERR_UNKNOWN_DATA_TYPE;
     }

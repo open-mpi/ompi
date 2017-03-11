@@ -346,9 +346,9 @@ static void listener_cb(int incoming_sd, void *cbdata)
                         incoming_sd);
     pending_connection = PMIX_NEW(pmix_pending_connection_t);
     pending_connection->sd = incoming_sd;
-    event_assign(&pending_connection->ev, pmix_globals.evbase, -1,
-                 EV_WRITE, connection_handler, pending_connection);
-    event_active(&pending_connection->ev, EV_WRITE, 1);
+    pmix_event_assign(&pending_connection->ev, pmix_globals.evbase, -1,
+                      EV_WRITE, connection_handler, pending_connection);
+    pmix_event_active(&pending_connection->ev, EV_WRITE, 1);
 }
 
 /* Parse init-ack message:
@@ -603,12 +603,12 @@ static void connection_handler(int sd, short args, void *cbdata)
     }
 
     /* start the events for this client */
-    event_assign(&psave->recv_event, pmix_globals.evbase, pnd->sd,
-                 EV_READ|EV_PERSIST, pmix_ptl_base_recv_handler, psave);
-    event_add(&psave->recv_event, NULL);
+    pmix_event_assign(&psave->recv_event, pmix_globals.evbase, pnd->sd,
+                      EV_READ|EV_PERSIST, pmix_ptl_base_recv_handler, psave);
+    pmix_event_add(&psave->recv_event, NULL);
     psave->recv_ev_active = true;
-    event_assign(&psave->send_event, pmix_globals.evbase, pnd->sd,
-                 EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, psave);
+    pmix_event_assign(&psave->send_event, pmix_globals.evbase, pnd->sd,
+                      EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, psave);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server client %s:%u has connected on socket %d",
                         psave->info->nptr->nspace, psave->info->rank, psave->sd);

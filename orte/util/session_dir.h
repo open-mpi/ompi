@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -114,6 +115,7 @@ ORTE_DECLSPEC int orte_session_dir(bool create, orte_process_name_t *proc);
  */
 ORTE_DECLSPEC int orte_session_setup_base(orte_process_name_t *proc);
 
+ORTE_DECLSPEC int orte_setup_top_session_dir(void);
 
 /** The orte_session_dir_finalize() function performs a cleanup of the
  * session directory tree. It first removes the session directory for

@@ -310,20 +310,20 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     pmix_ptl_base_set_nonblocking(sd);
 
     /* setup recv event */
-    event_assign(&pmix_client_globals.myserver.recv_event,
-                 pmix_globals.evbase,
-                 pmix_client_globals.myserver.sd,
-                 EV_READ | EV_PERSIST,
-                 pmix_ptl_base_recv_handler, &pmix_client_globals.myserver);
-    event_add(&pmix_client_globals.myserver.recv_event, 0);
+    pmix_event_assign(&pmix_client_globals.myserver.recv_event,
+                      pmix_globals.evbase,
+                      pmix_client_globals.myserver.sd,
+                      EV_READ | EV_PERSIST,
+                      pmix_ptl_base_recv_handler, &pmix_client_globals.myserver);
+    pmix_event_add(&pmix_client_globals.myserver.recv_event, 0);
     pmix_client_globals.myserver.recv_ev_active = true;
 
     /* setup send event */
-    event_assign(&pmix_client_globals.myserver.send_event,
-                 pmix_globals.evbase,
-                 pmix_client_globals.myserver.sd,
-                 EV_WRITE|EV_PERSIST,
-                 pmix_ptl_base_send_handler, &pmix_client_globals.myserver);
+    pmix_event_assign(&pmix_client_globals.myserver.send_event,
+                      pmix_globals.evbase,
+                      pmix_client_globals.myserver.sd,
+                      EV_WRITE|EV_PERSIST,
+                      pmix_ptl_base_send_handler, &pmix_client_globals.myserver);
     pmix_client_globals.myserver.send_ev_active = false;
 
     return PMIX_SUCCESS;
@@ -345,9 +345,9 @@ static pmix_status_t send_recv(struct pmix_peer_t *peer,
     ms->bfr = bfr;
     ms->cbfunc = cbfunc;
     ms->cbdata = cbdata;
-    event_assign(&ms->ev, pmix_globals.evbase, -1,
-                 EV_WRITE, pmix_ptl_base_send_recv, ms);
-    event_active(&ms->ev, EV_WRITE, 1);
+    pmix_event_assign(&ms->ev, pmix_globals.evbase, -1,
+                      EV_WRITE, pmix_ptl_base_send_recv, ms);
+    pmix_event_active(&ms->ev, EV_WRITE, 1);
     return PMIX_SUCCESS;
 }
 
@@ -366,9 +366,9 @@ static pmix_status_t send_oneway(struct pmix_peer_t *peer,
     q->peer = peer;
     q->buf = bfr;
     q->tag = tag;
-    event_assign(&q->ev, pmix_globals.evbase, -1,
-                 EV_WRITE, pmix_ptl_base_send, q);
-    event_active(&q->ev, EV_WRITE, 1);
+    pmix_event_assign(&q->ev, pmix_globals.evbase, -1,
+                      EV_WRITE, pmix_ptl_base_send, q);
+    pmix_event_active(&q->ev, EV_WRITE, 1);
 
     return PMIX_SUCCESS;
 }

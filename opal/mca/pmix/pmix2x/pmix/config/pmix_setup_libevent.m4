@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -33,10 +33,6 @@ AC_DEFUN([PMIX_LIBEVENT_CONFIG],[
     AC_DEFINE_UNQUOTED([PMIX_EVENT2_THREAD_HEADER], [$PMIX_EVENT2_THREAD_HEADER],
                        [Location of event2/thread.h])
     AC_MSG_RESULT([$PMIX_EVENT2_THREAD_HEADER])
-
-    CPPFLAGS="$CPPFLAGS $PMIX_EVENT_CPPFLAGS"
-    LDFLAGS="$LDFLAGS $PMIX_EVENT_LDFLAGS"
-    LIBS="$LIBS $PMIX_EVENT_LIBS"
 ])
 
 AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
@@ -45,9 +41,6 @@ AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
 
     PMIX_EVENT_HEADER="$with_libevent_header"
     PMIX_EVENT2_THREAD_HEADER="$with_libevent_header"
-    PMIX_EVENT_CPPFLAGS=
-    PMIX_EVENT_LIB=
-    PMIX_EVENT_LDFLAGS=
 
  ])
 
@@ -96,10 +89,9 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
                        [AC_MSG_WARN([LIBEVENT SUPPORT NOT FOUND])
                         AC_MSG_ERROR([CANNOT CONTINE])])
 
-    CPPFLAGS="$pmix_libevent_CPPFLAGS $CPPFLAGS"
-    LIBS="$pmix_libevent_LIBS $LIBS"
-    LDFLAGS="$pmix_libevent_LDFLAGS $LDFLAGS"
-
+    PMIX_FLAGS_APPEND_UNIQ(CPPFLAGS, $pmix_libevent_CPPFLAGS)
+    PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_libevent_LIBS)
+    PMIX_FLAGS_APPEND_UNIQ(LDFLAGS, $pmix_libevent_LDFLAGS)
 
     # Ensure that this libevent has the symbol
     # "evthread_set_lock_callbacks", which will only exist if
@@ -120,11 +112,6 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
     # Set output variables
     PMIX_EVENT_HEADER="<event.h>"
     PMIX_EVENT2_THREAD_HEADER="<event2/thread.h>"
-    PMIX_EVENT_LIB="-levent -levent_pthreads"
-    AS_IF([test "$pmix_event_dir" != ""],
-        [PMIX_EVENT_CPPFLAGS="-I$pmix_event_dir/include"])
-    AS_IF([test "$pmix_event_libdir" != ""],
-        [PMIX_EVENT_LDFLAGS="-L$pmix_event_libdir"])
 
     PMIX_VAR_SCOPE_POP
 ])dnl

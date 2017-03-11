@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -437,6 +437,41 @@ pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
                           const pmix_info_t directives[], size_t ndirs,
                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 
+/* Request an allocation operation from the host resource manager.
+ * Several broad categories are envisioned, including the ability to:
+ *
+ * - request allocation of additional resources, including memory,
+ *   bandwidth, and compute. This should be accomplished in a
+ *   non-blocking manner so that the application can continue to
+ *   progress while waiting for resources to become available. Note
+ *   that the new allocation will be disjoint from (i.e., not
+ *   affiliated with) the allocation of the requestor - thus the
+ *   termination of one allocation will not impact the other.
+ *
+ * - extend the reservation on currently allocated resources, subject
+ *   to scheduling availability and priorities. This includes extending
+ *   the time limit on current resources, and/or requesting additional
+ *   resources be allocated to the requesting job. Any additional
+ *   allocated resources will be considered as part of the current
+ *   allocation, and thus will be released at the same time.
+ *
+ * - release currently allocated resources that are no longer required.
+ *   This is intended to support partial release of resources since all
+ *   resources are normally released upon termination of the job. The
+ *   identified use-cases include resource variations across discrete steps
+ *   of a workflow, as well as applications that spawn sub-jobs and/or
+ *   dynamically grow/shrink over time
+ *
+ * - "lend" resources back to the scheduler with an expectation of getting
+ *   them back at some later time in the job. This can be a proactive
+ *   operation (e.g., to save on computing costs when resources are
+ *   temporarily not required), or in response to scheduler requests in
+ *   lieue of preemption. A corresponding ability to "reacquire" resources
+ *   previously released is included.
+ */
+pmix_status_t PMIx_Allocation_request_nb(pmix_alloc_directive_t directive,
+                                         pmix_info_t *info, size_t ninfo,
+                                         pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

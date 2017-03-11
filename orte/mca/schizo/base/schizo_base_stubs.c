@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -159,6 +159,22 @@ orte_schizo_launch_environ_t orte_schizo_base_check_launch_environment(void)
         }
     }
     return ORTE_SCHIZO_UNDETERMINED;
+}
+
+long orte_schizo_base_get_remaining_time(void)
+{
+    long rc;
+    orte_schizo_base_active_module_t *mod;
+
+    OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
+        if (NULL != mod->module->get_remaining_time) {
+            rc = mod->module->get_remaining_time();
+            if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
+                return rc;
+            }
+        }
+    }
+    return -1;
 }
 
 void orte_schizo_base_finalize(void)

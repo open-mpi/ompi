@@ -1,7 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -88,10 +89,10 @@ static void pdes(pmix_peer_t *p)
         CLOSE_THE_SOCKET(p->sd);
     }
     if (p->send_ev_active) {
-        event_del(&p->send_event);
+        pmix_event_del(&p->send_event);
     }
     if (p->recv_ev_active) {
-        event_del(&p->recv_event);
+        pmix_event_del(&p->recv_event);
     }
 
     if (NULL != p->info) {
@@ -256,6 +257,8 @@ static void qcon(pmix_query_caddy_t *p)
 {
     p->queries = NULL;
     p->nqueries = 0;
+    p->info = NULL;
+    p->ninfo = 0;
     p->cbfunc = NULL;
     p->cbdata = NULL;
     p->relcbfunc = NULL;

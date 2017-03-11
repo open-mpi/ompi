@@ -1010,12 +1010,12 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_ptl_base_set_nonblocking(pnd->sd);
 
     /* start the events for this client */
-    event_assign(&peer->recv_event, pmix_globals.evbase, pnd->sd,
-                 EV_READ|EV_PERSIST, pmix_ptl_base_recv_handler, peer);
-    event_add(&peer->recv_event, NULL);
+    pmix_event_assign(&peer->recv_event, pmix_globals.evbase, pnd->sd,
+                      EV_READ|EV_PERSIST, pmix_ptl_base_recv_handler, peer);
+    pmix_event_add(&peer->recv_event, NULL);
     peer->recv_ev_active = true;
-    event_assign(&peer->send_event, pmix_globals.evbase, pnd->sd,
-                 EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, peer);
+    pmix_event_assign(&peer->send_event, pmix_globals.evbase, pnd->sd,
+                      EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, peer);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server client %s:%u has connected on socket %d",
                         peer->info->nptr->nspace, peer->info->rank, peer->sd);
@@ -1151,12 +1151,12 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     }
 
     /* start the events for this tool */
-    event_assign(&peer->recv_event, pmix_globals.evbase, pnd->sd,
-                 EV_READ|EV_PERSIST, pmix_ptl_base_recv_handler, peer);
-    event_add(&peer->recv_event, NULL);
+    pmix_event_assign(&peer->recv_event, pmix_globals.evbase, pnd->sd,
+                      EV_READ|EV_PERSIST, pmix_ptl_base_recv_handler, peer);
+    pmix_event_add(&peer->recv_event, NULL);
     peer->recv_ev_active = true;
-    event_assign(&peer->send_event, pmix_globals.evbase, pnd->sd,
-                 EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, peer);
+    pmix_event_assign(&peer->send_event, pmix_globals.evbase, pnd->sd,
+                      EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, peer);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server tool %s:%d has connected on socket %d",
                         peer->info->nptr->nspace, peer->info->rank, peer->sd);

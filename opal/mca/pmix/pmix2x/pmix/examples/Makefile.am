@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,15 +21,9 @@
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/include -I$(top_builddir)/include/pmix
 
-noinst_PROGRAMS = client dmodex dynamic fault pub tool
+noinst_PROGRAMS = client dmodex dynamic fault pub tool debugger debuggerd alloc
 if !WANT_HIDDEN
 # these examples use internal symbols
-# use --disable-visibility
-noinst_PROGRAMS += debugger debuggerd
-endif
-
-if !WANT_HIDDEN
-# this example uses internal symbols
 # use --disable-visibility
 noinst_PROGRAMS += server
 endif
@@ -38,7 +32,6 @@ client_SOURCES = client.c
 client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 client_LDADD =  $(top_builddir)/src/libpmix.la
 
-if !WANT_HIDDEN
 debugger_SOURCES = debugger.c
 debugger_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 debugger_LDADD =  $(top_builddir)/src/libpmix.la
@@ -46,7 +39,11 @@ debugger_LDADD =  $(top_builddir)/src/libpmix.la
 debuggerd_SOURCES = debuggerd.c
 debuggerd_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 debuggerd_LDADD =  $(top_builddir)/src/libpmix.la
-endif
+
+
+alloc_SOURCES = alloc.c
+alloc_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
+alloc_LDADD =  $(top_builddir)/src/libpmix.la
 
 dmodex_SOURCES = dmodex.c
 dmodex_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
@@ -69,8 +66,6 @@ tool_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 tool_LDADD = $(top_builddir)/src/libpmix.la
 
 if !WANT_HIDDEN
-# this example uses internal symbols
-# use --disable-visibility
 server_SOURCES = server.c
 server_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 server_LDADD = $(top_builddir)/src/libpmix.la

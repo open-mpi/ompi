@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -228,7 +228,7 @@ pmix_event_base_t *pmix_progress_thread_init(const char *name)
 
     /* add an event to the new event base (if there are no events,
        pmix_event_loop() will return immediately) */
-    pmix_event_set(trk->ev_base, &trk->block, -1, PMIX_EV_PERSIST,
+    pmix_event_assign(&trk->block, trk->ev_base, -1, PMIX_EV_PERSIST,
                    dummy_timeout_cb, trk);
     pmix_event_add(&trk->block, &long_timeout);
 

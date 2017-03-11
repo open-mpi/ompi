@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,24 +63,38 @@ int _mmap_segment_create(pmix_sm_seg_t *sm_seg, const char *file_name, size_t si
     }
     /* size backing file - note the use of real_size here */
 #ifdef HAVE_POSIX_FALLOCATE
-    if (0 != posix_fallocate(sm_seg->seg_id, 0, size)) {
+    if (0 != (rc = posix_fallocate(sm_seg->seg_id, 0, size))) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                 "sys call posix_fallocate(2) fail\n");
-        if (ENOSPC == errno) {
+        if (ENOSPC == rc) {
             rc = PMIX_ERR_OUT_OF_RESOURCE;
-        } else {
+            goto out;
+        } else if ((ENOTSUP != rc)
+#ifdef EOPNOTSUPP
+                            && (EOPNOTSUPP != rc)
+#endif
+        ){
             rc = PMIX_ERROR;
+            goto out;
         }
-        goto out;
+        /* else:
+         * Not supported by OS and/or filesystem.
+         * Must fall-back to ftruncate().
+         */
+    } else {
+        goto map_memory;
     }
-#else
+#endif
     if (0 != ftruncate(sm_seg->seg_id, size)) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                 "sys call ftruncate(2) fail\n");
         rc = PMIX_ERROR;
         goto out;
+    } else {
+        rc = PMIX_SUCCESS;
     }
-#endif
+
+map_memory:
     if (MAP_FAILED == (seg_addr = mmap(NULL, size,
                                        PROT_READ | PROT_WRITE, MAP_SHARED,
                                        sm_seg->seg_id, 0))) {
