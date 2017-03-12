@@ -151,7 +151,7 @@ if ($myresults) {
 
 # determine the number of nodes - doesn't
 # matter which starter we use
-$cmd = "mpirun --novm --pernode hostname";
+$cmd = "mpirun --pernode hostname";
 $output = `$cmd`;
 @lines = split(/\n/, $output);
 $num_nodes = $#lines + 1;
