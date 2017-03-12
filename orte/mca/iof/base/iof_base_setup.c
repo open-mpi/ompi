@@ -219,11 +219,6 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
 {
     int ret;
 
-    close(opts->p_stdin[0]);
-    close(opts->p_stdout[1]);
-    close(opts->p_stderr[1]);
-    close(opts->p_internal[1]);
-
     /* connect stdin endpoint */
     if (opts->connect_stdin) {
         /* and connect the pty to stdin */

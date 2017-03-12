@@ -128,14 +128,15 @@ int orte_schizo_base_setup_fork(orte_job_t *jdata,
 
 int orte_schizo_base_setup_child(orte_job_t *jdata,
                                  orte_proc_t *child,
-                                 orte_app_context_t *app)
+                                 orte_app_context_t *app,
+                                 char ***env)
 {
     int rc;
     orte_schizo_base_active_module_t *mod;
 
     OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
         if (NULL != mod->module->setup_child) {
-            rc = mod->module->setup_child(jdata, child, app);
+            rc = mod->module->setup_child(jdata, child, app, env);
             if (ORTE_SUCCESS != rc && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;

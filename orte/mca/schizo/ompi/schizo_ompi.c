@@ -61,7 +61,8 @@ static int setup_fork(orte_job_t *jdata,
                       orte_app_context_t *context);
 static int setup_child(orte_job_t *jobdat,
                        orte_proc_t *child,
-                       orte_app_context_t *app);
+                       orte_app_context_t *app,
+                       char ***env);
 
 orte_schizo_base_module_t orte_schizo_ompi_module = {
     .define_cli = define_cli,
@@ -992,7 +993,8 @@ static int setup_fork(orte_job_t *jdata,
 
 static int setup_child(orte_job_t *jdata,
                        orte_proc_t *child,
-                       orte_app_context_t *app)
+                       orte_app_context_t *app,
+                       char ***env)
 {
     char *param, *value;
     int rc, i;
@@ -1026,7 +1028,7 @@ static int setup_child(orte_job_t *jdata,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    opal_setenv("OMPI_MCA_ess_base_jobid", value, true, &app->env);
+    opal_setenv("OMPI_MCA_ess_base_jobid", value, true, env);
     free(value);
 
     /* setup the vpid */
@@ -1034,7 +1036,7 @@ static int setup_child(orte_job_t *jdata,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    opal_setenv("OMPI_MCA_ess_base_vpid", value, true, &app->env);
+    opal_setenv("OMPI_MCA_ess_base_vpid", value, true, env);
 
     /* although the vpid IS the process' rank within the job, users
      * would appreciate being given a public environmental variable
@@ -1044,7 +1046,7 @@ static int setup_child(orte_job_t *jdata,
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
-    opal_setenv("OMPI_COMM_WORLD_RANK", value, true, &app->env);
+    opal_setenv("OMPI_COMM_WORLD_RANK", value, true, env);
     free(value);  /* done with this now */
 
     /* users would appreciate being given a public environmental variable
@@ -1060,7 +1062,7 @@ static int setup_child(orte_job_t *jdata,
         return rc;
     }
     asprintf(&value, "%lu", (unsigned long) child->local_rank);
-    opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
+    opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, env);
     free(value);
 
     /* users would appreciate being given a public environmental variable
@@ -1076,9 +1078,9 @@ static int setup_child(orte_job_t *jdata,
         return rc;
     }
     asprintf(&value, "%lu", (unsigned long) child->node_rank);
-    opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, &app->env);
+    opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, env);
     /* set an mca param for it too */
-    opal_setenv("OMPI_MCA_orte_ess_node_rank", value, true, &app->env);
+    opal_setenv("OMPI_MCA_orte_ess_node_rank", value, true, env);
     free(value);
 
     /* provide the identifier for the PMIx connection - the
@@ -1087,7 +1089,7 @@ static int setup_child(orte_job_t *jdata,
      * process name are the same, it isn't necessarily
      * required */
     orte_util_convert_process_name_to_string(&value, &child->name);
-    opal_setenv("PMIX_ID", value, true, &app->env);
+    opal_setenv("PMIX_ID", value, true, env);
     free(value);
 
     nrptr = &nrestarts;
@@ -1097,14 +1099,14 @@ static int setup_child(orte_job_t *jdata,
          * restarted so they can take appropriate action
          */
         asprintf(&value, "%d", nrestarts);
-        opal_setenv("OMPI_MCA_orte_num_restarts", value, true, &app->env);
+        opal_setenv("OMPI_MCA_orte_num_restarts", value, true, env);
         free(value);
     }
 
     /* if the proc should not barrier in orte_init, tell it */
     if (orte_get_attribute(&child->attributes, ORTE_PROC_NOBARRIER, NULL, OPAL_BOOL)
         || 0 < nrestarts) {
-        opal_setenv("OMPI_MCA_orte_do_not_barrier", "1", true, &app->env);
+        opal_setenv("OMPI_MCA_orte_do_not_barrier", "1", true, env);
     }
 
     /* if the proc isn't going to forward IO, then we need to flag that
@@ -1116,7 +1118,7 @@ static int setup_child(orte_job_t *jdata,
 
     /* pass an envar so the proc can find any files it had prepositioned */
     param = orte_process_info.proc_session_dir;
-    opal_setenv("OMPI_FILE_LOCATION", param, true, &app->env);
+    opal_setenv("OMPI_FILE_LOCATION", param, true, env);
 
     /* if the user wanted the cwd to be the proc's session dir, then
      * switch to that location now
@@ -1144,9 +1146,9 @@ static int setup_child(orte_job_t *jdata,
          * again not match getcwd! This is beyond our control - we are only
          * ensuring they start out matching.
          */
-        opal_setenv("PWD", param, true, &app->env);
+        opal_setenv("PWD", param, true, env);
         /* update the initial wdir value too */
-        opal_setenv("OMPI_MCA_initial_wdir", param, true, &app->env);
+        opal_setenv("OMPI_MCA_initial_wdir", param, true, env);
     }
     return ORTE_SUCCESS;
 }

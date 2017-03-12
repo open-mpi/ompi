@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +36,7 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/dss/dss_types.h"
 
+#include "orte/mca/iof/base/iof_base_setup.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -56,10 +57,14 @@ typedef struct {
     opal_list_t xterm_ranks;
     /* the xterm cmd to be used */
     char **xtermcmd;
+    /* thread pool */
+    int num_threads;
+    opal_event_base_t **ev_bases;   // event base array for progress threads
+    char** ev_threads;              // event progress thread names
+    int next_base;                  // counter to load-level thread use
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
-
 
 /*
  * Default functions that are common to most environments - can
@@ -74,11 +79,27 @@ ORTE_DECLSPEC int
 orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                                             orte_jobid_t *job);
 
+ORTE_DECLSPEC void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata);
+
 /* define a function that will fork a local proc */
-typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_app_context_t *context,
-                                                   orte_proc_t *child,
+typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_proc_t *child,
+                                                   char *app, char **argv,
                                                    char **environ_copy,
-                                                   orte_job_t *jdata);
+                                                   orte_job_t *jdata,
+                                                   orte_iof_base_io_conf_t opts);
+
+/* define an object for fork/exec the local proc */
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    orte_job_t *jdata;
+    orte_app_context_t *app;
+    orte_proc_t *child;
+    bool index_argv;
+    orte_iof_base_io_conf_t opts;
+    orte_odls_base_fork_local_proc_fn_t fork_local;
+} orte_odls_spawn_caddy_t;
+OBJ_CLASS_DECLARATION(orte_odls_spawn_caddy_t);
 
 /* define an object for starting local launch */
 typedef struct {
