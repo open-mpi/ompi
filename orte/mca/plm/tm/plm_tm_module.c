@@ -275,19 +275,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
         /* add to list */
         opal_argv_append_nosize(&nodeargv, node->name);
     }
+    /* we need mpirun to be the first node on this list - since we
+     * aren't launching mpirun via TM, it won't be there now */
+    opal_argv_prepend_nosize(&nodeargv, orte_process_info.nodename);
     nodelist = opal_argv_join(nodeargv, ',');
     opal_argv_free(nodeargv);
 
-    /* if we have static ports, we need to ensure that mpirun is
-     * on the list. Since Torque won't be launching a daemon on it,
-     * it won't have been placed on the list, so create a new
-     * version here that includes it */
-    if (orte_static_ports) {
-        char *ltmp;
-        asprintf(&ltmp, "%s,%s", orte_process_info.nodename, nodelist);
-        free(nodelist);
-        nodelist = ltmp;
-    }
 
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "tm",

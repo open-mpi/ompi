@@ -243,7 +243,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
          */
         opal_argv_append(&nodelist_argc, &nodelist_argv, node->name);
     }
-    nodelist = opal_argv_join(nodelist_argv, ',');
 
     /*
      * start building argv array
@@ -258,16 +257,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
 
-    /* if we have static ports, we need to ensure that mpirun is
-     * on the list. Since lsf won't be launching a daemon on it,
-     * it won't have been placed on the list, so create a new
-     * version here that includes it */
-    if (orte_static_ports) {
-        char *ltmp;
-        asprintf(&ltmp, "%s,%s", orte_process_info.nodename, nodelist);
-        free(nodelist);
-        nodelist = ltmp;
-    }
+    /* we need mpirun to be the first node on this list - since we
+     * aren't launching mpirun via TM, it won't be there now */
+    opal_argv_prepend_nosize(&nodelist_argv, orte_process_info.nodename);
+    nodelist = opal_argv_join(nodelist_argv, ',');
+    opal_argv_free(nodelist_argv);
+
 
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
