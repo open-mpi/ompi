@@ -9,7 +9,7 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/constants.h"
 
 #if BTL_IN_OPAL

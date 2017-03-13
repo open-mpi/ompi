@@ -1,0 +1,13 @@
+# Copyright (c) 2017 Cisco Systems, Inc.  All rights reserved
+# $COPYRIGHT$
+#
+
+# Per https://github.com/open-mpi/ompi/issues/2616, we cannot have an
+# "hwloc.h" in the framework directory (due to conflicts of finding
+# the system hwloc.h file when using "--with-hwloc=external").  Hence,
+# we need to deviate from the framework norm of having
+# framework/framework.h (i.e., hwloc/hwloc.h).  Instead, we'll have
+# hwloc/hwloc-internal.h to make sure that this header file can never
+# be mistaken for a system-level hwloc.h.
+
+framework_header = hwloc-internal.h

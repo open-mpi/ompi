@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
-# Copyright (c) 2015-2016 Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
@@ -176,7 +176,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1112_CONFIG],[
     # distclean" infrastructure to work properly).
     AS_IF([test "$opal_hwloc_external" = "yes"],
           [AC_MSG_WARN([using an external hwloc; disqualifying this component])
-           opal_hwloc_hwloc1112_support=no])
+           opal_hwloc_hwloc1112_support=no],
+          [AC_DEFINE([HAVE_DECL_HWLOC_OBJ_OSDEV_COPROC], [1])
+           AC_DEFINE([HAVE_HWLOC_TOPOLOGY_DUP], [1])])
 
     # Done!
     AS_IF([test "$opal_hwloc_hwloc1112_support" = "yes"],
