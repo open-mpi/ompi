@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2011-2012      IBM Corporation.  All rights reserved.
  *
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
  */
 
 /** @file
@@ -30,7 +33,7 @@
 
 /* Cross Memory Attach is so far only supported under linux */
 
-#if OPAL_ASSEMBLY_ARCH == OPAL_AMD64
+#if OPAL_ASSEMBLY_ARCH == OPAL_X86_64
 #define __NR_process_vm_readv 310
 #define __NR_process_vm_writev 311
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
