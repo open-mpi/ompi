@@ -1096,6 +1096,11 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             if (orte_odls_globals.num_threads <= orte_odls_globals.next_base) {
                 orte_odls_globals.next_base = 0;
             }
+            opal_output_verbose(1, orte_odls_base_framework.framework_output,
+                                "%s odls:dispatch %s to thread %d",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&child->name),
+                                orte_odls_globals.next_base);
             evb = orte_odls_globals.ev_bases[orte_odls_globals.next_base];
             opal_event_set(evb, &cd->ev, -1,
                            OPAL_EV_WRITE, orte_odls_base_spawn_proc, cd);
