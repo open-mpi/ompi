@@ -1,6 +1,6 @@
 # -*- indent-tabs-mode:nil -*-
 #
-# Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+# Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
 #
@@ -40,14 +40,15 @@ ugni_SOURCES = \
         btl_ugni_smsg.c \
         btl_ugni_progress_thread.c \
         btl_ugni_prepare.h \
-        btl_ugni_atomic.c
+        btl_ugni_atomic.c \
+        btl_ugni_init.c \
+        btl_ugni_device.h
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_ugni_la_SOURCES = $(ugni_SOURCES)
 nodist_mca_btl_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
-mca_btl_ugni_la_LIBADD = $(btl_ugni_LIBS)  \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/ugni/lib@OPAL_LIB_PREFIX@mca_common_ugni.la
+mca_btl_ugni_la_LIBADD = $(btl_ugni_LIBS)
 mca_btl_ugni_la_LDFLAGS = -module -avoid-version $(btl_ugni_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

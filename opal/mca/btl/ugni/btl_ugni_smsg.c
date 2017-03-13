@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -28,7 +28,7 @@ static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
     mbox->attr.smsg_attr.buff_size      = mca_btl_ugni_component.smsg_mbox_size;
     mbox->attr.smsg_attr.mem_hndl       = ugni_reg->handle.gni_handle;
     mbox->attr.proc_name = OPAL_PROC_MY_NAME;
-    mbox->attr.rmt_irq_mem_hndl = mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl;
+    mbox->attr.rmt_irq_mem_hndl = mca_btl_ugni_component.modules[0].devices[0].smsg_irq_mhndl;
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_ugni_smsg_mbox_t, opal_free_list_item_t,
@@ -39,11 +39,13 @@ int mca_btl_ugni_smsg_init (mca_btl_ugni_module_t *ugni_module)
 {
     gni_return_t rc;
 
-    rc = GNI_SmsgSetMaxRetrans (ugni_module->device->dev_handle,
-                                mca_btl_ugni_component.smsg_max_retries);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_ERROR(("error setting maximum SMSG retries %s",gni_err_str[rc]));
-        return opal_common_rc_ugni_to_opal (rc);
+    for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
+        rc = GNI_SmsgSetMaxRetrans (ugni_module->devices[i].dev_handle,
+                                    mca_btl_ugni_component.smsg_max_retries);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_ERROR(("error setting maximum SMSG retries %s",gni_err_str[rc]));
+            return mca_btl_rc_ugni_to_opal (rc);
+        }
     }
 
     return OPAL_SUCCESS;
@@ -52,6 +54,7 @@ int mca_btl_ugni_smsg_init (mca_btl_ugni_module_t *ugni_module)
 /* progress */
 int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
 {
+    mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_ep_btl (ep);
     mca_btl_active_message_callback_t *reg;
     mca_btl_ugni_base_frag_t frag;
     mca_btl_base_segment_t seg;
@@ -70,27 +73,20 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
     do {
         uint8_t tag = GNI_SMSG_ANY_TAG;
 
-        OPAL_THREAD_LOCK(&ep->common->dev->dev_lock);
-        rc = GNI_SmsgGetNextWTag (ep->smsg_ep_handle, (void **) &data_ptr, &tag);
-        OPAL_THREAD_UNLOCK(&ep->common->dev->dev_lock);
-        if (GNI_RC_NOT_DONE == rc) {
-            BTL_VERBOSE(("no smsg message waiting. rc = %s", gni_err_str[rc]));
+        rc = mca_btl_ugni_smsg_get_next_wtag (ep->smsg_ep_handle, &data_ptr, &tag);
+        if (GNI_RC_SUCCESS != rc) {
+            if (OPAL_LIKELY(GNI_RC_NOT_DONE == rc)) {
+                BTL_VERBOSE(("no smsg message waiting. rc = %s", gni_err_str[rc]));
 
-            ep->smsg_progressing = 0;
+                ep->smsg_progressing = 0;
+                return count;
+            }
 
-            return count;
-        }
-
-        if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
-            BTL_ERROR(("GNI_SmsgGetNextWTag returned error %s", gni_err_str[rc]));
+            BTL_ERROR(("unhandled GNI_SmsgGetNextWTag error"));
             return OPAL_ERROR;
         }
 
-        if (OPAL_UNLIKELY(0 == data_ptr)) {
-            BTL_ERROR(("null data ptr!"));
-            assert (0);
-            return OPAL_ERROR;
-        }
+        assert (0 != data_ptr);
 
         count++;
 
@@ -114,7 +110,7 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
 
             assert (NULL != reg->cbfunc);
 
-            reg->cbfunc(&ep->btl->super, tag, &(frag.base), reg->cbdata);
+            reg->cbfunc(&ugni_module->super, tag, &(frag.base), reg->cbdata);
 
             break;
         case MCA_BTL_UGNI_TAG_GET_INIT:
@@ -141,16 +137,14 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
             break;
         }
 
-        OPAL_THREAD_LOCK(&ep->common->dev->dev_lock);
-        rc = GNI_SmsgRelease (ep->smsg_ep_handle);
-        OPAL_THREAD_UNLOCK(&ep->common->dev->dev_lock);
+        rc = mca_btl_ugni_smsg_release (ep->smsg_ep_handle);
         if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
             BTL_ERROR(("Smsg release failed! rc = %d", rc));
             return OPAL_ERROR;
         }
     } while (!disconnect);
 
-    ep->smsg_progressing = false;
+    ep->smsg_progressing = 0;
 
     /* disconnect if we get here */
     opal_mutex_lock (&ep->lock);
@@ -165,7 +159,6 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
 static inline int
 mca_btl_ugni_handle_remote_smsg_overrun (mca_btl_ugni_module_t *btl)
 {
-    gni_cq_entry_t event_data;
     size_t endpoint_count;
     unsigned int ep_index;
     int count, rc;
@@ -177,11 +170,7 @@ mca_btl_ugni_handle_remote_smsg_overrun (mca_btl_ugni_module_t *btl)
        smsg remote cq and check all mailboxes */
 
     /* clear out remote cq */
-    do {
-        OPAL_THREAD_LOCK(&btl->device->dev_lock);
-        rc = GNI_CqGetEvent (btl->smsg_remote_cq, &event_data);
-        OPAL_THREAD_UNLOCK(&btl->device->dev_lock);
-    } while (GNI_RC_NOT_DONE != rc);
+    mca_btl_ugni_cq_clear (btl->devices, btl->smsg_remote_cq);
 
     endpoint_count = opal_pointer_array_get_size (&btl->endpoints);
 
@@ -212,9 +201,7 @@ int mca_btl_ugni_progress_remote_smsg (mca_btl_ugni_module_t *btl)
     gni_return_t grc;
     uint64_t inst_id;
 
-    OPAL_THREAD_LOCK(&btl->device->dev_lock);
-    grc = GNI_CqGetEvent (btl->smsg_remote_cq, &event_data);
-    OPAL_THREAD_UNLOCK(&btl->device->dev_lock);
+    grc = mca_btl_ugni_gni_cq_get_event (btl->devices, btl->smsg_remote_cq, &event_data);
     if (GNI_RC_NOT_DONE == grc) {
         return 0;
     }
@@ -231,12 +218,12 @@ int mca_btl_ugni_progress_remote_smsg (mca_btl_ugni_module_t *btl)
 
         /* unhandled error: crash */
         assert (0);
-        return opal_common_rc_ugni_to_opal (grc);
+        return mca_btl_rc_ugni_to_opal (grc);
     }
 
     BTL_VERBOSE(("REMOTE CQ: Got event 0x%" PRIx64 ". msg id = %" PRIu64
-                 ". ok = %d, type = %" PRIu64 "\n", (uint64_t) event_data,
-                 GNI_CQ_GET_MSG_ID(event_data), GNI_CQ_STATUS_OK(event_data),
+                 ". ok = %d, type = %" PRIu64, (uint64_t) event_data,
+                 GNI_CQ_GET_INST_ID(event_data), GNI_CQ_STATUS_OK(event_data),
                  GNI_CQ_GET_TYPE(event_data)));
 
     inst_id = GNI_CQ_GET_INST_ID(event_data);

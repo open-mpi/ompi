@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -62,22 +62,18 @@ mca_btl_ugni_module_t mca_btl_ugni_module = {
 };
 
 int
-mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
-                          opal_common_ugni_device_t *dev)
+mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module)
 {
     int rc;
 
-    BTL_VERBOSE(("binding module %p to device %p", (void *) ugni_module,
-                 (void *) dev));
+    BTL_VERBOSE(("binding module %p to device 0", (void *) ugni_module));
 
     /* copy module defaults (and function pointers) */
     memmove (ugni_module, &mca_btl_ugni_module, sizeof (mca_btl_ugni_module));
 
     ugni_module->initialized = false;
     ugni_module->nlocal_procs = 0;
-    ugni_module->active_send_count = 0;
     ugni_module->connected_peer_count = 0;
-    ugni_module->active_rdma_count = 0;
 
     OBJ_CONSTRUCT(&ugni_module->failed_frags, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->failed_frags_lock, opal_mutex_t);
@@ -85,11 +81,10 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     OBJ_CONSTRUCT(&ugni_module->eager_get_pending, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->eager_get_pending_lock,opal_mutex_t);
 
-    OBJ_CONSTRUCT(&ugni_module->eager_frags_send, opal_free_list_t);
-    OBJ_CONSTRUCT(&ugni_module->eager_frags_recv, opal_free_list_t);
-    OBJ_CONSTRUCT(&ugni_module->smsg_frags, opal_free_list_t);
-    OBJ_CONSTRUCT(&ugni_module->rdma_frags, opal_free_list_t);
-    OBJ_CONSTRUCT(&ugni_module->rdma_int_frags, opal_free_list_t);
+    for (int i = 0 ; i < MCA_BTL_UGNI_LIST_MAX ; ++i) {
+        OBJ_CONSTRUCT(ugni_module->frags_lists + i, opal_free_list_t);
+    }
+
     OBJ_CONSTRUCT(&ugni_module->pending_smsg_frags_bb, opal_pointer_array_t);
     OBJ_CONSTRUCT(&ugni_module->ep_wait_list_lock,opal_mutex_t);
     OBJ_CONSTRUCT(&ugni_module->ep_wait_list, opal_list_t);
@@ -97,22 +92,26 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     OBJ_CONSTRUCT(&ugni_module->endpoints, opal_pointer_array_t);
     OBJ_CONSTRUCT(&ugni_module->id_to_endpoint, opal_hash_table_t);
     OBJ_CONSTRUCT(&ugni_module->smsg_mboxes, opal_free_list_t);
-    OBJ_CONSTRUCT(&ugni_module->pending_descriptors, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->eager_get_pending, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->post_descriptors, opal_free_list_t);
 
-    ugni_module->device = dev;
-    dev->btl_ctx = (void *) ugni_module;
+    /* set up virtual device handles */
+    for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
+        rc = mca_btl_ugni_device_init (ugni_module->devices + i, i);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+            BTL_VERBOSE(("error initializing uGNI device handle"));
+            return rc;
+        }
+    }
 
-    /* create wildcard endpoint to listen for connections.
-     * there is no need to bind this endpoint. */
-    OPAL_THREAD_LOCK(&dev->dev_lock);
-    rc = GNI_EpCreate (ugni_module->device->dev_handle, NULL,
+    /* create wildcard endpoint on first device to listen for connections.
+     * there is no need to bind this endpoint. We are single threaded
+     * here so there is no need for a device lock. */
+    rc = GNI_EpCreate (ugni_module->devices[0].dev_handle, NULL,
                        &ugni_module->wildcard_ep);
-    OPAL_THREAD_UNLOCK(&dev->dev_lock);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating wildcard ugni endpoint"));
-        return opal_common_rc_ugni_to_opal (rc);
+        return mca_btl_rc_ugni_to_opal (rc);
     }
 
     /* post wildcard datagram */
@@ -133,16 +132,8 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
     uint64_t key;
     int rc;
 
-    while (ugni_module->active_send_count) {
-        /* ensure all sends are complete before closing the module */
-        rc = mca_btl_ugni_progress_local_smsg (ugni_module);
-        if (OPAL_SUCCESS != rc) {
-            break;
-        }
-    }
-
-    /* close all open connections and release endpoints */
     if (ugni_module->initialized) {
+        /* close all open connections and release endpoints */
         OPAL_HASH_TABLE_FOREACH(key, uint64, ep, &ugni_module->id_to_endpoint) {
             if (NULL != ep) {
                 mca_btl_ugni_release_ep (ep);
@@ -154,28 +145,12 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
         }
 
         /* destroy all cqs */
-        OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
-        rc = GNI_CqDestroy (ugni_module->rdma_local_cq);
-        if (GNI_RC_SUCCESS != rc) {
-            BTL_ERROR(("error tearing down local BTE/FMA CQ - %s",gni_err_str[rc]));
-        }
-
-        rc = GNI_CqDestroy (ugni_module->smsg_local_cq);
-        if (GNI_RC_SUCCESS != rc) {
-            BTL_ERROR(("error tearing down TX SMSG CQ - %s",gni_err_str[rc]));
-        }
-
         rc = GNI_CqDestroy (ugni_module->smsg_remote_cq);
         if (GNI_RC_SUCCESS != rc) {
             BTL_ERROR(("error tearing down RX SMSG CQ - %s",gni_err_str[rc]));
         }
 
         if (mca_btl_ugni_component.progress_thread_enabled) {
-            rc = GNI_CqDestroy (ugni_module->rdma_local_irq_cq);
-            if (GNI_RC_SUCCESS != rc) {
-                BTL_ERROR(("error tearing down local BTE/FMA CQ - %s",gni_err_str[rc]));
-            }
-
             rc = GNI_CqDestroy (ugni_module->smsg_remote_irq_cq);
             if (GNI_RC_SUCCESS != rc) {
                 BTL_ERROR(("error tearing down remote SMSG CQ - %s",gni_err_str[rc]));
@@ -195,14 +170,12 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
         if (GNI_RC_SUCCESS != rc) {
             BTL_VERBOSE(("btl/ugni error destroying endpoint - %s",gni_err_str[rc]));
         }
-        OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
     }
 
-    OBJ_DESTRUCT(&ugni_module->eager_frags_send);
-    OBJ_DESTRUCT(&ugni_module->eager_frags_recv);
-    OBJ_DESTRUCT(&ugni_module->smsg_frags);
-    OBJ_DESTRUCT(&ugni_module->rdma_frags);
-    OBJ_DESTRUCT(&ugni_module->rdma_int_frags);
+    for (int i = 0 ; i < MCA_BTL_UGNI_LIST_MAX ; ++i) {
+        OBJ_DESTRUCT(ugni_module->frags_lists + i);
+    }
+
     OBJ_DESTRUCT(&ugni_module->ep_wait_list);
     OBJ_DESTRUCT(&ugni_module->smsg_mboxes);
     OBJ_DESTRUCT(&ugni_module->pending_smsg_frags_bb);
@@ -215,6 +188,10 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
 
     if (ugni_module->rcache) {
         mca_rcache_base_module_destroy (ugni_module->rcache);
+    }
+
+    for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
+        mca_btl_ugni_device_fini (ugni_module->devices + i);
     }
 
     ugni_module->initialized = false;
@@ -230,10 +207,17 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
 {
     mca_btl_ugni_base_frag_t *frag = NULL;
 
-    if (size <=  mca_btl_ugni_component.smsg_max_data) {
-        (void) MCA_BTL_UGNI_FRAG_ALLOC_SMSG(endpoint, frag);
+    /* do not allocate a fragment unless the wait list is relatively small. this
+     * reduces the potential for resource exhaustion. note the wait list only exists
+     * because we have no way to notify the sender that credits are available. */
+    if (OPAL_UNLIKELY(opal_list_get_size (&endpoint->frag_wait_list) > 32)) {
+        return NULL;
+    }
+
+    if (size <= mca_btl_ugni_component.smsg_max_data) {
+        frag = mca_btl_ugni_frag_alloc_smsg (endpoint);
     } else if (size <= btl->btl_eager_limit) {
-        (void) MCA_BTL_UGNI_FRAG_ALLOC_EAGER_SEND(endpoint, frag);
+        frag = mca_btl_ugni_frag_alloc_eager_send (endpoint);
     }
 
     if (OPAL_UNLIKELY(NULL == frag)) {
@@ -284,6 +268,13 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                           uint8_t order, size_t reserve, size_t *size,
                           uint32_t flags)
 {
+    /* do not allocate a fragment unless the wait list is relatively small. this
+     * reduces the potential for resource exhaustion. note the wait list only exists
+     * because we have no way to notify the sender that credits are available. */
+    if (OPAL_UNLIKELY(opal_list_get_size (&endpoint->frag_wait_list) > 32)) {
+        return NULL;
+    }
+
     return mca_btl_ugni_prepare_src_send (btl, endpoint, convertor,
                                           order, reserve, size, flags);
 }
