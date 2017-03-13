@@ -26,7 +26,7 @@ mca_btl_ugni_prepare_src_send_nodata (struct mca_btl_base_module_t *btl,
 {
     mca_btl_ugni_base_frag_t *frag = NULL;
 
-    (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA(endpoint, frag);
+    frag = mca_btl_ugni_frag_alloc_rdma (endpoint);
     if (OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
@@ -65,8 +65,7 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
 
-    (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA(endpoint, frag);
-
+    frag = mca_btl_ugni_frag_alloc_rdma (endpoint);
     if (OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
@@ -123,7 +122,7 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
     int rc;
 
     if (OPAL_UNLIKELY(true == use_eager_get)) {
-        (void) MCA_BTL_UGNI_FRAG_ALLOC_EAGER_SEND(endpoint, frag);
+        frag = mca_btl_ugni_frag_alloc_eager_send (endpoint);
         if (OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
@@ -136,7 +135,7 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
         frag->hdr_size = reserve + sizeof (frag->hdr.eager);
         frag->segments[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
     } else {
-        (void) MCA_BTL_UGNI_FRAG_ALLOC_SMSG(endpoint, frag);
+        frag = mca_btl_ugni_frag_alloc_smsg (endpoint);
         if (OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
@@ -186,8 +185,8 @@ mca_btl_ugni_prepare_src_send (struct mca_btl_base_module_t *btl,
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
 
-    send_in_place = !(opal_convertor_need_buffers(convertor) ||
-                      (use_eager_get && ((uintptr_t)data_ptr & 3)));
+    send_in_place = (btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) && !(opal_convertor_need_buffers(convertor) ||
+                                                                       (use_eager_get && ((uintptr_t)data_ptr & 3)));
 
     if (send_in_place) {
         return mca_btl_ugni_prepare_src_send_inplace (btl, endpoint, convertor, order,

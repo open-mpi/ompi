@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -37,11 +37,8 @@ int mca_btl_ugni_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    BTL_VERBOSE(("Using RDMA/FMA Get from local address %p to remote address %" PRIx64,
-                 local_address, remote_address));
-
-    /* cause endpoint to bind if it isn't already (bind is sufficient for rdma) */
-    (void) mca_btl_ugni_check_endpoint_state_rdma (endpoint);
+    BTL_VERBOSE(("Using RDMA/FMA Get %lu bytes to local address %p to remote address %" PRIx64,
+                 (unsigned long) size, local_address, remote_address));
 
     return mca_btl_ugni_post (endpoint, true, size, local_address, remote_address, local_handle,
                               remote_handle, order, cbfunc, cbcontext, cbdata);
@@ -110,11 +107,13 @@ static void mca_btl_ugni_callback_eager_get (struct mca_btl_base_module_t *btl, 
     }
 
     reg = mca_btl_base_active_message_trigger + tag;
-    reg->cbfunc(&frag->endpoint->btl->super, tag, &(tmp.base), reg->cbdata);
+    reg->cbfunc(&ugni_module->super, tag, &(tmp.base), reg->cbdata);
 
     /* fill in the response header */
     frag->hdr.rdma.ctx = frag->hdr.eager.ctx;
     frag->flags = MCA_BTL_UGNI_FRAG_RESPONSE;
+    frag->ref_cnt = 1;
+
     frag->ref_cnt = 1;
 
     /* once complete use this fragment for a pending eager get if any exist */
@@ -125,16 +124,7 @@ static void mca_btl_ugni_callback_eager_get (struct mca_btl_base_module_t *btl, 
                                       NULL, 0, MCA_BTL_UGNI_TAG_RDMA_COMPLETE);
     if (OPAL_UNLIKELY(0 > rc)) {
         /* queue fragment */
-        OPAL_THREAD_LOCK(&endpoint->lock);
-        if (false == endpoint->wait_listed) {
-            OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
-            opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
-            OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
-            endpoint->wait_listed = true;
-        }
-
-        opal_list_append (&endpoint->frag_wait_list, (opal_list_item_t *) frag);
-        OPAL_THREAD_UNLOCK(&endpoint->lock);
+        mca_btl_ugni_wait_list_append (ugni_module, endpoint, frag);
     }
 }
 
@@ -142,7 +132,7 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *endpoint,
                                   mca_btl_ugni_eager_ex_frag_hdr_t hdr,
                                   mca_btl_ugni_base_frag_t *frag)
 {
-    mca_btl_ugni_module_t *ugni_module = endpoint->btl;
+    mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_ep_btl (endpoint);
     size_t size;
     int rc;
 
@@ -151,10 +141,10 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *endpoint,
     do {
         if (NULL == frag) {
             /* try to allocate a registered buffer */
-            rc = MCA_BTL_UGNI_FRAG_ALLOC_EAGER_RECV(endpoint, frag);
+            frag = mca_btl_ugni_frag_alloc_eager_recv (endpoint);
             if (OPAL_UNLIKELY(NULL == frag)) {
                 /* no registered buffers available. try again later */
-                (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA_INT(endpoint, frag);
+                frag = mca_btl_ugni_frag_alloc_rdma_int (endpoint);
 
                 /* not much can be done if a small fragment can not be allocated. abort! */
                 assert (NULL != frag);

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -17,14 +17,21 @@
 
 enum mca_btl_ugni_endpoint_state_t {
     MCA_BTL_UGNI_EP_STATE_INIT = 0,
-    MCA_BTL_UGNI_EP_STATE_START,
-    MCA_BTL_UGNI_EP_STATE_RDMA,
     MCA_BTL_UGNI_EP_STATE_CONNECTING,
-    MCA_BTL_UGNI_EP_STATE_CONNECTED
+    MCA_BTL_UGNI_EP_STATE_CONNECTED,
 };
 typedef enum mca_btl_ugni_endpoint_state_t mca_btl_ugni_endpoint_state_t;
 
 struct mca_btl_ugni_smsg_mbox_t;
+
+struct mca_btl_ugni_endpoint_handle_t {
+    opal_free_list_item_t super;
+    mca_btl_ugni_device_t *device;
+    gni_ep_handle_t gni_handle;
+};
+
+typedef struct mca_btl_ugni_endpoint_handle_t mca_btl_ugni_endpoint_handle_t;
+OBJ_CLASS_DECLARATION(mca_btl_ugni_endpoint_handle_t);
 
 typedef struct mca_btl_base_endpoint_t {
     opal_list_item_t super;
@@ -37,24 +44,34 @@ typedef struct mca_btl_base_endpoint_t {
     opal_recursive_mutex_t lock;
     mca_btl_ugni_endpoint_state_t state;
 
-    opal_common_ugni_endpoint_t *common;
+    /** Remote NIC address */
+    uint32_t ep_rem_addr;
 
-    mca_btl_ugni_module_t *btl;
+    /** Remote CDM identifier (base) */
+    uint32_t ep_rem_id;
 
-    gni_ep_handle_t smsg_ep_handle;
-    gni_ep_handle_t rdma_ep_handle;
+    /** endpoint to use for SMSG messages */
+    mca_btl_ugni_endpoint_handle_t *smsg_ep_handle;
 
-    mca_btl_ugni_endpoint_attr_t remote_attr; /* TODO: UGH, remove this */
+    /** temporary space to store the remote SMSG attributes */
+    mca_btl_ugni_endpoint_attr_t *remote_attr;
 
+    /** SMSG mailbox assigned to this endpoint */
     struct mca_btl_ugni_smsg_mbox_t *mailbox;
-    gni_mem_handle_t  rmt_irq_mem_hndl;
 
+    /** Remote IRQ handle (for async completion) */
+    gni_mem_handle_t rmt_irq_mem_hndl;
 
+    /** frags waiting for SMSG credits */
     opal_list_t frag_wait_list;
+
+    /** endpoint is currently wait-listed for SMSG progress */
     bool wait_listed;
+
     /** protect against race on connection */
     bool dg_posted;
 
+    /** protect against re-entry to SMSG */
     int32_t smsg_progressing;
 
     int index;
@@ -65,49 +82,10 @@ OBJ_CLASS_DECLARATION(mca_btl_ugni_endpoint_t);
 
 int mca_btl_ugni_ep_connect_progress (mca_btl_ugni_endpoint_t *ep);
 int mca_btl_ugni_ep_disconnect (mca_btl_ugni_endpoint_t *ep, bool send_disconnect);
-
-static inline int mca_btl_ugni_init_ep (mca_btl_ugni_module_t *ugni_module,
-                                        mca_btl_ugni_endpoint_t **ep,
-                                        mca_btl_ugni_module_t *btl,
-                                        opal_proc_t *peer_proc) {
-    mca_btl_ugni_endpoint_t *endpoint;
-
-    endpoint = OBJ_NEW(mca_btl_ugni_endpoint_t);
-    assert (endpoint != NULL);
-
-    endpoint->smsg_progressing = 0;
-    endpoint->state = MCA_BTL_UGNI_EP_STATE_INIT;
-
-    endpoint->btl = btl;
-    endpoint->peer_proc = peer_proc;
-    endpoint->index = opal_pointer_array_add (&ugni_module->endpoints, endpoint);
-
-    *ep = endpoint;
-
-    return OPAL_SUCCESS;
-}
-
-static inline void mca_btl_ugni_release_ep (mca_btl_ugni_endpoint_t *ep) {
-    int rc;
-
-    if (ep->common) {
-        opal_mutex_lock (&ep->lock);
-
-        rc = mca_btl_ugni_ep_disconnect (ep, false);
-        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-            BTL_VERBOSE(("btl/ugni error disconnecting endpoint"));
-        }
-
-        /* TODO -- Clear space at the end of the endpoint array */
-        opal_pointer_array_set_item (&ep->btl->endpoints, ep->index, NULL);
-
-        opal_mutex_unlock (&ep->lock);
-
-        opal_common_ugni_endpoint_return (ep->common);
-    }
-
-    OBJ_RELEASE(ep);
-}
+int mca_btl_ugni_wildcard_ep_post (mca_btl_ugni_module_t *ugni_module);
+void mca_btl_ugni_release_ep (mca_btl_ugni_endpoint_t *ep);
+int mca_btl_ugni_init_ep (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_endpoint_t **ep,
+                          mca_btl_ugni_module_t *btl, opal_proc_t *peer_proc);
 
 static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep) {
     int rc;
@@ -120,8 +98,6 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep
 
     switch (ep->state) {
     case MCA_BTL_UGNI_EP_STATE_INIT:
-    case MCA_BTL_UGNI_EP_STATE_RDMA:
-    case MCA_BTL_UGNI_EP_STATE_START:
         rc = mca_btl_ugni_ep_connect_progress (ep);
         if (OPAL_SUCCESS != rc) {
             break;
@@ -138,63 +114,91 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep
     return rc;
 }
 
-static inline int mca_btl_ugni_ep_connect_rdma (mca_btl_base_endpoint_t *ep) {
-    int rc;
-
-    if (ep->state >= MCA_BTL_UGNI_EP_STATE_RDMA) {
-        return OPAL_SUCCESS;
-    }
-
-    /* protect against re-entry from opal_progress */
-    if (OPAL_UNLIKELY(MCA_BTL_UGNI_EP_STATE_START == ep->state)) {
-        return OPAL_ERR_RESOURCE_BUSY;
-    }
-
-    ep->state = MCA_BTL_UGNI_EP_STATE_START;
-
-    /* get the modex info for this endpoint and setup a ugni endpoint. this call may lead
-     * to re-entry through opal_progress(). */
-    rc = opal_common_ugni_endpoint_for_proc (ep->btl->device, ep->peer_proc, &ep->common);
-    if (OPAL_SUCCESS != rc) {
-        assert (0);
-        return rc;
-    }
-
-    /* bind endpoint to remote address */
-    rc = opal_common_ugni_ep_create (ep->common, ep->btl->rdma_local_cq, &ep->rdma_ep_handle);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        return rc;
-    }
-
-    ep->state = MCA_BTL_UGNI_EP_STATE_RDMA;
-
-    return OPAL_SUCCESS;
+/**
+ * Accessor function for endpoint btl
+ *
+ * @param[in] ep   endpoint to query
+ *
+ * This helper function exists to make it easy to switch between using a single
+ * and multiple ugni modules. Currently there is only one so we just use the
+ * pointer in the component structure. This saves 4-8 bytes in the endpoint
+ * structure.
+ */
+static inline mca_btl_ugni_module_t *mca_btl_ugni_ep_btl (mca_btl_ugni_endpoint_t *ep)
+{
+    /* there is only one ugni module at this time. if that changes add a btl pointer back
+     * to the endpoint structure. */
+    return mca_btl_ugni_component.modules;
 }
 
-static inline int mca_btl_ugni_check_endpoint_state_rdma (mca_btl_base_endpoint_t *ep) {
-    int rc;
-    if (OPAL_LIKELY(MCA_BTL_UGNI_EP_STATE_INIT < ep->state)) {
-        return OPAL_SUCCESS;
+/**
+ * Allocate and bind a uGNI endpoint handle to the remote peer.
+ *
+ * @param[in]  ep                 BTL endpoint
+ * @param[in]  cq                 completion queue
+ * @param[out] ep_handle          uGNI endpoint handle
+ */
+mca_btl_ugni_endpoint_handle_t *mca_btl_ugni_ep_handle_create (mca_btl_ugni_endpoint_t *ep, gni_cq_handle_t cq,
+                                                               mca_btl_ugni_device_t *device);
+
+/**
+ * Unbind and free the uGNI endpoint handle.
+ *
+ * @param[in]  ep_handle    uGNI endpoint handle to unbind and release
+ */
+int mca_btl_ugni_ep_handle_destroy (mca_btl_ugni_endpoint_handle_t *ep_handle);
+
+/**
+ * Free list initialization function for endpoint handles (DO NOT CALL outside free list)
+ *
+ * @param[in] item Free list item to initialize
+ * @param[in] ctx  Free list context
+ *
+ * @returns OPAL_SUCCESS on success
+ * @returns OPAL error code on error
+ */
+int mca_btl_ugni_endpoint_handle_init_rdma (opal_free_list_item_t *item, void *ctx);
+
+/**
+ * @brief get an endpoint handle from a device's free list
+ *
+ * @param[in] ep     btl endpoint
+ * @param[in] device btl device to use
+ *
+ * This function MUST be called with the device lock held. This was done over using
+ * the atomic free list to avoid unnecessary atomics in the critical path.
+ */
+static inline mca_btl_ugni_endpoint_handle_t *
+mca_btl_ugni_ep_get_rdma (mca_btl_ugni_endpoint_t *ep, mca_btl_ugni_device_t *device)
+{
+    mca_btl_ugni_endpoint_handle_t *ep_handle;
+    gni_return_t grc;
+
+    ep_handle = (mca_btl_ugni_endpoint_handle_t *) opal_free_list_get_st (&device->endpoints);
+    if (OPAL_UNLIKELY(NULL == ep_handle)) {
+        return NULL;
+    }
+    grc = GNI_EpBind (ep_handle->gni_handle, ep->ep_rem_addr, ep->ep_rem_id | device->dev_index);
+    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
+        opal_free_list_return_st (&device->endpoints, &ep_handle->super);
+        ep_handle = NULL;
     }
 
-    opal_mutex_lock (&ep->lock);
-    rc = mca_btl_ugni_ep_connect_rdma (ep);
-    opal_mutex_unlock (&ep->lock);
-    return rc;
+    return ep_handle;
 }
 
-static inline int mca_btl_ugni_wildcard_ep_post (mca_btl_ugni_module_t *ugni_module) {
-    gni_return_t rc;
-
-    BTL_VERBOSE(("posting wildcard datagram"));
-
-    memset (&ugni_module->wc_local_attr, 0, sizeof (ugni_module->wc_local_attr));
-    memset (&ugni_module->wc_remote_attr, 0, sizeof (ugni_module->wc_remote_attr));
-    rc = GNI_EpPostDataWId (ugni_module->wildcard_ep, &ugni_module->wc_local_attr,
-                            sizeof (ugni_module->wc_local_attr), &ugni_module->wc_remote_attr,
-                            sizeof (ugni_module->wc_remote_attr), MCA_BTL_UGNI_CONNECT_WILDCARD_ID);
-
-    return opal_common_rc_ugni_to_opal (rc);
+/**
+ * @brief return an endpoint handle to a device's free list
+ *
+ * @param[in] ep_handle   endpoint handle to return
+ *
+ * This function MUST be called with the device lock held. This was done over using
+ * the atomic free list to avoid unnecessary atomics in the critical path. If
+ */
+static inline void mca_btl_ugni_ep_return_rdma (mca_btl_ugni_endpoint_handle_t *ep_handle)
+{
+    (void) GNI_EpUnbind (ep_handle->gni_handle);
+    opal_free_list_return_st (&ep_handle->device->endpoints, &ep_handle->super);
 }
 
 #endif /* MCA_BTL_UGNI_ENDPOINT_H */

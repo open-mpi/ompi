@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -29,17 +29,19 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
 {
     uint32_t which;
     gni_return_t status;
-    gni_cq_handle_t cq_vec[2];
+    gni_cq_handle_t cq_vec[1 + MCA_BTL_UGNI_MAX_DEV_HANDLES];
 
     struct mca_btl_ugni_module_t *btl = (mca_btl_ugni_module_t *)data;
+    int cq_count = 1 + mca_btl_ugni_component.virtual_device_count;
 
     /*
      * need to block signals
      */
 
     cq_vec[0] = btl->smsg_remote_irq_cq;
-    cq_vec[1] = btl->rdma_local_irq_cq;
-
+    for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
+        cq_vec[i + 1] = btl->devices[i].dev_rdma_local_irq_cq.gni_handle;
+    }
 
     while (stop_progress_thread == 0) {
 
@@ -48,7 +50,7 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
          */
 
         status = GNI_CqVectorMonitor(cq_vec,
-                                     2,
+                                     cq_count,
                                      -1,
                                      &which);
 
@@ -106,8 +108,8 @@ int mca_btl_ugni_kill_progress_thread(void)
      */
 
     ret = mca_btl_ugni_post_cqwrite (mca_btl_ugni_component.modules[0].local_ep,
-                                     mca_btl_ugni_component.modules[0].rdma_local_cq,
-                                     mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl,
+                                     &mca_btl_ugni_component.modules[0].devices[0].dev_rdma_local_cq,
+                                     mca_btl_ugni_component.modules[0].devices[0].smsg_irq_mhndl,
                                      0xdead, NULL, NULL, NULL);
     /*
      * TODO: if error returned, need to kill off thread manually

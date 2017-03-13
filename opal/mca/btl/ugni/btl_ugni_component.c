@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -73,7 +73,7 @@ mca_base_var_enum_value_flag_t cdm_flags[] = {
     {.flag = GNI_CDM_MODE_CACHED_AMO_ENABLED, .string = "cached-amo-enabled", .conflicting_flag = 0},
     {.flag = GNI_CDM_MODE_CQ_NIC_LOCAL_PLACEMENT, .string = "cq-nic-placement", .conflicting_flag = 0},
     {.flag = GNI_CDM_MODE_FMA_SMALL_WINDOW, .string = "fma-small-window", .conflicting_flag = 0},
-    {}
+    {.string = NULL}
 };
 
 static inline int mca_btl_ugni_get_stat (const mca_base_pvar_t *pvar, void *value, void *obj)
@@ -81,8 +81,10 @@ static inline int mca_btl_ugni_get_stat (const mca_base_pvar_t *pvar, void *valu
     gni_statistic_t statistic = (gni_statistic_t) (intptr_t) pvar->ctx;
     gni_return_t rc = GNI_RC_SUCCESS;
 
-    rc = GNI_GetNicStat (mca_btl_ugni_component.modules[0].device.dev_handle, statistic,
-                         value);
+    for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
+        rc = GNI_GetNicStat (mca_btl_ugni_component.modules[0].devices[i].dev_handle, statistic,
+                             ((unsigned int *) value) + i);
+    }
 
     return mca_btl_rc_ugni_to_opal (rc);
 }
@@ -221,6 +223,31 @@ static int btl_ugni_component_register(void)
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.mbox_increment);
 
+    /* communication domain flags */
+    rc = mca_base_var_enum_create_flag ("btl_ugni_cdm_flags", cdm_flags, (mca_base_var_enum_flag_t **) &new_enum);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    mca_btl_ugni_component.cdm_flags = GNI_CDM_MODE_FORK_PARTCOPY | GNI_CDM_MODE_ERR_NO_KILL | GNI_CDM_MODE_FAST_DATAGRAM_POLL |
+        GNI_CDM_MODE_MDD_SHARED | GNI_CDM_MODE_FMA_SHARED | GNI_CDM_MODE_FMA_SMALL_WINDOW;
+    (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
+                                           "cdm_flags", "Flags to set when creating a communication domain "
+                                           " (default: fork-fullcopy,cached-amo-enabled,err-no-kill,fast-datagram-poll,"
+                                           "fma-shared,fma-small-window)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, new_enum, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.cdm_flags);
+    OBJ_RELEASE(new_enum);
+
+    mca_btl_ugni_component.virtual_device_count = 0;
+    (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
+                                           "virtual_device_count", "Number of virtual devices to create. Higher numbers may "
+                                           "result in better performance when using threads. (default: auto, max: 8)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.virtual_device_count);
+
     /* determine if there are get alignment restrictions */
     GNI_GetDeviceType (&device_type);
 
@@ -242,12 +269,9 @@ static int btl_ugni_component_register(void)
     }
 
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
-                                           "smsg_page_size", "Page size to use for SMSG "
-                                           "mailbox allocation (default: detect)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
-                                           &mca_btl_ugni_component.smsg_page_size);
+                                           "smsg_page_size", "Page size to use for SMSG mailbox allocation (default: detect)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.smsg_page_size);
 
     mca_btl_ugni_component.progress_thread_requested = 0;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
@@ -300,9 +324,10 @@ static int btl_ugni_component_register(void)
         return rc;
     }
 
-    mca_btl_ugni_component.rcache_type = MCA_BTL_UGNI_RCACHE_UDREG;
+    /* NTH: there are known *serious* performance issues with udreg. if they are ever resolved it is the preferred rcache */
+    mca_btl_ugni_component.rcache_type = MCA_BTL_UGNI_RCACHE_GRDMA;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
-                                           "rcache", "registration cache to use", MCA_BASE_VAR_TYPE_INT, new_enum,
+                                           "rcache", "registration cache to use (default: grdma)", MCA_BASE_VAR_TYPE_INT, new_enum,
                                            0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.rcache_type);
     OBJ_RELEASE(new_enum);
@@ -390,7 +415,7 @@ btl_ugni_component_open(void)
 static int
 btl_ugni_component_close(void)
 {
-    opal_common_ugni_fini ();
+    mca_btl_ugni_fini ();
 
     if (mca_btl_ugni_component.modules) {
         free (mca_btl_ugni_component.modules);
@@ -407,7 +432,6 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 {
     struct mca_btl_base_module_t **base_modules;
     mca_btl_ugni_module_t *ugni_modules;
-    unsigned int i;
     int rc;
 
     if (16384 < mca_btl_ugni_component.ugni_smsg_limit) {
@@ -425,19 +449,18 @@ mca_btl_ugni_component_init (int *num_btl_modules,
     }
 
     /* Initialize ugni library and create communication domain */
-    rc = opal_common_ugni_init();
+    rc = mca_btl_ugni_init();
     if (OPAL_SUCCESS != rc) {
         return NULL;
     }
 
-    /* Create and initialize one module per uGNI device */
-    mca_btl_ugni_component.ugni_num_btls = opal_common_ugni_module.device_count;
+    /* For now only create a single BTL module */
+    mca_btl_ugni_component.ugni_num_btls = 1;
 
     BTL_VERBOSE(("btl/ugni initializing"));
 
     ugni_modules = mca_btl_ugni_component.modules = (mca_btl_ugni_module_t *)
-        calloc (mca_btl_ugni_component.ugni_num_btls,
-                sizeof (mca_btl_ugni_module_t));
+        calloc (mca_btl_ugni_component.ugni_num_btls, sizeof (mca_btl_ugni_module_t));
 
     if (OPAL_UNLIKELY(NULL == mca_btl_ugni_component.modules)) {
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
@@ -460,19 +483,14 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 
     mca_btl_ugni_module.super.btl_rdma_pipeline_send_length = mca_btl_ugni_module.super.btl_eager_limit;
 
-    for (i = 0 ; i < mca_btl_ugni_component.ugni_num_btls ; ++i) {
-        mca_btl_ugni_module_t *ugni_module = ugni_modules + i;
-
-        rc = mca_btl_ugni_module_init (ugni_module,
-                                       opal_common_ugni_module.devices + i);
-        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-            BTL_ERROR(("Failed to initialize uGNI module @ %s:%d", __FILE__,
-                       __LINE__));
-            return NULL;
-        }
-
-        base_modules[i] = (mca_btl_base_module_t *) ugni_module;
+    rc = mca_btl_ugni_module_init (ugni_modules);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        BTL_ERROR(("Failed to initialize uGNI module @ %s:%d", __FILE__,
+                   __LINE__));
+        return NULL;
     }
+
+    *base_modules = (mca_btl_base_module_t *) ugni_modules;
 
     *num_btl_modules = mca_btl_ugni_component.ugni_num_btls;
 
@@ -482,80 +500,47 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 }
 
 static inline int
-mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
+mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_device_t *device)
 {
-    uint64_t datagram_id, data, proc_id;
-    uint32_t remote_addr, remote_id;
     mca_btl_base_endpoint_t *ep;
-    gni_post_state_t post_state;
     gni_ep_handle_t handle;
-    gni_return_t grc;
     int count = 0, rc;
 
-    /* check for datagram completion */
-    OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);  /* TODO: may not need lock for this function */
-    grc = GNI_PostDataProbeById (ugni_module->device->dev_handle, &datagram_id);
-    if (OPAL_LIKELY(GNI_RC_SUCCESS != grc)) {
-        OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
-        return 0;
+    rc = mca_btl_ugni_get_datagram (ugni_module, device, &handle, &ep);
+    if (1 != rc) {
+        return rc;
     }
 
-    data = datagram_id & ~(MCA_BTL_UGNI_DATAGRAM_MASK);
-
-    BTL_VERBOSE(("datgram_id: %" PRIx64 ", mask: %" PRIx64, datagram_id, (uint64_t) (datagram_id & MCA_BTL_UGNI_DATAGRAM_MASK)));
-
-    if ((datagram_id & MCA_BTL_UGNI_DATAGRAM_MASK) == MCA_BTL_UGNI_CONNECT_DIRECTED_ID) {
-        ep = (mca_btl_base_endpoint_t *) opal_pointer_array_get_item (&ugni_module->endpoints, data);
-        handle = ep->smsg_ep_handle;
-    } else {
-        handle = ugni_module->wildcard_ep;
-    }
-
-    /* wait for the incoming datagram to complete (in case it isn't) */
-    grc = GNI_EpPostDataWaitById (handle, datagram_id, -1, &post_state,
-                                  &remote_addr, &remote_id);
-    OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
-    if (GNI_RC_SUCCESS != grc) {
-        BTL_ERROR(("GNI_EpPostDataWaitById failed with rc = %d", grc));
-        return opal_common_rc_ugni_to_opal (grc);
-    }
+    BTL_VERBOSE(("remote datagram completion on handle %p", handle));
 
     /* if this is a wildcard endpoint lookup the remote peer by the proc id we received */
     if (handle == ugni_module->wildcard_ep) {
-        proc_id = mca_btl_ugni_proc_name_to_id (ugni_module->wc_remote_attr.proc_name);
+        struct opal_proc_t *remote_proc = opal_proc_for_name (ugni_module->wc_remote_attr.proc_name);
 
-        BTL_VERBOSE(("received connection attempt on wildcard endpoint from proc id: %" PRIx64,
-                     proc_id));
+        BTL_VERBOSE(("received connection attempt on wildcard endpoint from proc: %s",
+                     OPAL_NAME_PRINT(ugni_module->wc_remote_attr.proc_name)));
 
-        OPAL_THREAD_LOCK(&ugni_module->endpoint_lock);
-        rc = opal_hash_table_get_value_uint64 (&ugni_module->id_to_endpoint, proc_id, (void **) &ep);
-        OPAL_THREAD_UNLOCK(&ugni_module->endpoint_lock);
-
-        /* check if the endpoint is known */
-        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc || NULL == ep)) {
-            struct opal_proc_t *remote_proc = opal_proc_for_name (ugni_module->wc_remote_attr.proc_name);
-            BTL_VERBOSE(("Got connection request from an unknown peer {jobid = 0x%x, vid = 0x%x}",
-                         ugni_module->wc_remote_attr.proc_name.jobid, ugni_module->wc_remote_attr.proc_name.vpid));
-            ep = mca_btl_ugni_get_ep (&ugni_module->super, remote_proc);
-            if (OPAL_UNLIKELY(NULL == ep)) {
-                return rc;
-            }
+        ep = mca_btl_ugni_get_ep (&ugni_module->super, remote_proc);
+        if (OPAL_UNLIKELY(NULL == ep)) {
+            /* there is no way to recover from this error so just abort() */
+            BTL_ERROR(("could not find/allocate a btl endpoint for peer %s",
+                       OPAL_NAME_PRINT(ugni_module->wc_remote_attr.proc_name)));
+            abort ();
+            return OPAL_ERR_NOT_FOUND;
         }
-    } else {
-        BTL_VERBOSE(("directed datagram complete for endpoint %p", (void *) ep));
     }
 
     /* should not have gotten a NULL endpoint */
     assert (NULL != ep);
 
-    BTL_VERBOSE(("got a datagram completion: id = %" PRIx64 ", state = %d, "
-                 "data = 0x%" PRIx64 ", ep = %p, remote id: %d", datagram_id, post_state,
-                 data, (void *) ep, remote_id));
+    BTL_VERBOSE(("got a datagram completion: ep = %p. wc = %d", (void *) ep, handle == ugni_module->wildcard_ep));
 
     /* NTH: TODO -- error handling */
     opal_mutex_lock (&ep->lock);
     if (handle != ugni_module->wildcard_ep) {
         /* directed post complete */
+        BTL_VERBOSE(("directed datagram complete for endpoint %p", (void *) ep));
+
         ep->dg_posted = false;
     }
 
@@ -579,106 +564,106 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
 static inline void btl_ugni_dump_post_desc (mca_btl_ugni_post_descriptor_t *desc)
 {
 
-    fprintf (stderr, "desc->desc.base.post_id          = %" PRIx64 "\n", desc->desc.base.post_id);
-    fprintf (stderr, "desc->desc.base.status           = %" PRIx64 "\n", desc->desc.base.status);
-    fprintf (stderr, "desc->desc.base.cq_mode_complete = %hu\n", desc->desc.base.cq_mode_complete);
-    fprintf (stderr, "desc->desc.base.type             = %d\n", desc->desc.base.type);
-    fprintf (stderr, "desc->desc.base.cq_mode          = %hu\n", desc->desc.base.cq_mode);
-    fprintf (stderr, "desc->desc.base.dlvr_mode        = %hu\n", desc->desc.base.dlvr_mode);
-    fprintf (stderr, "desc->desc.base.local_addr       = %" PRIx64 "\n", desc->desc.base.local_addr);
-    fprintf (stderr, "desc->desc.base.local_mem_hndl   = {%" PRIx64 ", %" PRIx64 "}\n", desc->desc.base.local_mem_hndl.qword1,
-             desc->desc.base.local_mem_hndl.qword2);
-    fprintf (stderr, "desc->desc.base.remote_addr      = %" PRIx64 "\n", desc->desc.base.remote_addr);
-    fprintf (stderr, "desc->desc.base.remote_mem_hndl  = {%" PRIx64 ", %" PRIx64 "}\n", desc->desc.base.remote_mem_hndl.qword1,
-             desc->desc.base.remote_mem_hndl.qword2);
-    fprintf (stderr, "desc->desc.base.length           = %" PRIu64 "\n", desc->desc.base.length);
-    fprintf (stderr, "desc->desc.base.rdma_mode        = %hu\n", desc->desc.base.rdma_mode);
-    fprintf (stderr, "desc->desc.base.amo_cmd          = %d\n", desc->desc.base.amo_cmd);
+    fprintf (stderr, "desc->desc.post_id          = %" PRIx64 "\n", desc->desc.post_id);
+    fprintf (stderr, "desc->desc.status           = %" PRIx64 "\n", desc->desc.status);
+    fprintf (stderr, "desc->desc.cq_mode_complete = %hu\n", desc->desc.cq_mode_complete);
+    fprintf (stderr, "desc->desc.type             = %d\n", desc->desc.type);
+    fprintf (stderr, "desc->desc.cq_mode          = %hu\n", desc->desc.cq_mode);
+    fprintf (stderr, "desc->desc.dlvr_mode        = %hu\n", desc->desc.dlvr_mode);
+    fprintf (stderr, "desc->desc.local_addr       = %" PRIx64 "\n", desc->desc.local_addr);
+    fprintf (stderr, "desc->desc.local_mem_hndl   = {%" PRIx64 ", %" PRIx64 "}\n", desc->desc.local_mem_hndl.qword1,
+             desc->desc.local_mem_hndl.qword2);
+    fprintf (stderr, "desc->desc.remote_addr      = %" PRIx64 "\n", desc->desc.remote_addr);
+    fprintf (stderr, "desc->desc.remote_mem_hndl  = {%" PRIx64 ", %" PRIx64 "}\n", desc->desc.remote_mem_hndl.qword1,
+             desc->desc.remote_mem_hndl.qword2);
+    fprintf (stderr, "desc->desc.length           = %" PRIu64 "\n", desc->desc.length);
+    fprintf (stderr, "desc->desc.rdma_mode        = %hu\n", desc->desc.rdma_mode);
+    fprintf (stderr, "desc->desc.amo_cmd          = %d\n", desc->desc.amo_cmd);
 }
 #endif
-
-static inline int mca_btl_ugni_progress_rdma (mca_btl_ugni_module_t *ugni_module, int which_cq)
-{
-    mca_btl_ugni_post_descriptor_t *post_desc = NULL;
-    gni_cq_entry_t event_data = 0;
-    gni_post_descriptor_t *desc;
-    uint32_t recoverable = 1;
-    gni_return_t grc;
-    gni_cq_handle_t the_cq;
-
-    the_cq = (which_cq == 0) ? ugni_module->rdma_local_cq : ugni_module->rdma_local_irq_cq;
-
-    OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
-    grc = GNI_CqGetEvent (the_cq, &event_data);
-    if (GNI_RC_NOT_DONE == grc) {
-        OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
-        return 0;
-    }
-
-    if (OPAL_UNLIKELY((GNI_RC_SUCCESS != grc && !event_data) || GNI_CQ_OVERRUN(event_data))) {
-        /* TODO -- need to handle overrun -- how do we do this without an event?
-           will the event eventually come back? Ask Cray */
-        BTL_ERROR(("unhandled post error! ugni rc = %d %s", grc, gni_err_str[grc]));
-        OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
-
-        return opal_common_rc_ugni_to_opal (grc);
-    }
-
-    grc = GNI_GetCompleted (the_cq, event_data, &desc);
-    OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc && GNI_RC_TRANSACTION_ERROR != grc)) {
-        BTL_ERROR(("Error in GNI_GetComplete %s", gni_err_str[grc]));
-        return opal_common_rc_ugni_to_opal (grc);
-    }
-
-    post_desc = MCA_BTL_UGNI_DESC_TO_PDESC(desc);
-
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc || !GNI_CQ_STATUS_OK(event_data))) {
-        (void) GNI_CqErrorRecoverable (event_data, &recoverable);
-
-        if (OPAL_UNLIKELY(++post_desc->desc.tries >= mca_btl_ugni_component.rdma_max_retries ||
-                          !recoverable)) {
-            char char_buffer[1024];
-            GNI_CqErrorStr (event_data, char_buffer, 1024);
-            /* give up */
-            BTL_ERROR(("giving up on desciptor %p, recoverable %d: %s", (void *) post_desc,
-                       recoverable, char_buffer));
-#if OPAL_ENABLE_DEBUG
-            btl_ugni_dump_post_desc (post_desc);
-#endif
-            mca_btl_ugni_post_desc_complete (ugni_module, post_desc, OPAL_ERROR);
-
-            return OPAL_ERROR;
-        }
-
-        mca_btl_ugni_repost (ugni_module, post_desc);
-
-        return 0;
-    }
-
-    mca_btl_ugni_post_desc_complete (ugni_module, post_desc, opal_common_rc_ugni_to_opal (grc));
-
-    return 1;
-}
 
 static inline int
-mca_btl_ugni_post_pending (mca_btl_ugni_module_t *ugni_module)
+mca_btl_ugni_post_pending (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_device_t *device)
 {
-    int count = opal_list_get_size (&ugni_module->pending_descriptors);
-    int i;
+    int pending_post_count = opal_list_get_size (&device->pending_post);
+    mca_btl_ugni_post_descriptor_t *post_desc;
+    int rc;
 
-    for (i = 0 ; i < count ; ++i) {
-        OPAL_THREAD_LOCK(&ugni_module->pending_descriptors_lock);
-        mca_btl_ugni_post_descriptor_t *post_desc =
-            (mca_btl_ugni_post_descriptor_t *) opal_list_remove_first (&ugni_module->pending_descriptors);
-        OPAL_THREAD_UNLOCK(&ugni_module->pending_descriptors_lock);
+    /* check if there are any posts pending resources */
+    if (OPAL_LIKELY(0 == pending_post_count)) {
+        return 0;
+    }
 
-        if (OPAL_SUCCESS != mca_btl_ugni_repost (ugni_module, post_desc)) {
+    BTL_VERBOSE(("progressing %d pending FMA/RDMA operations", pending_post_count));
+    for (int i = 0 ; i < pending_post_count ; ++i) {
+        mca_btl_ugni_device_lock (device);
+        post_desc = (mca_btl_ugni_post_descriptor_t *) opal_list_remove_first (&device->pending_post);
+        mca_btl_ugni_device_unlock (device);
+        if (NULL == post_desc) {
+            break;
+        }
+        rc = mca_btl_ugni_repost (ugni_module, post_desc);
+        if (OPAL_SUCCESS != rc) {
+            mca_btl_ugni_device_lock (device);
+            opal_list_prepend (&device->pending_post, (opal_list_item_t *) post_desc);
+            mca_btl_ugni_device_unlock (device);
             break;
         }
     }
 
-    return i;
+    return 1;
+}
+
+static inline int mca_btl_ugni_progress_rdma (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_device_t *device,
+                                              mca_btl_ugni_cq_t *cq)
+{
+    mca_btl_ugni_post_descriptor_t *post_desc[MCA_BTL_UGNI_COMPLETIONS_PER_LOOP];
+    gni_cq_entry_t event_data[MCA_BTL_UGNI_COMPLETIONS_PER_LOOP];
+    int rc;
+
+    rc = mca_btl_ugni_cq_get_completed_desc (device, cq, event_data, post_desc, MCA_BTL_UGNI_COMPLETIONS_PER_LOOP);
+    if (0 >= rc) {
+        return rc;
+    }
+
+    BTL_VERBOSE(("got %d completed rdma descriptors", rc));
+
+    for (int i = 0 ; i < rc ; ++i) {
+        BTL_VERBOSE(("post descriptor %p complete. GNI_CQ_STATUS_OK(): %d", post_desc[i],
+                     GNI_CQ_STATUS_OK(event_data[i])));
+
+        if (OPAL_UNLIKELY(!GNI_CQ_STATUS_OK(event_data[i]))) {
+            uint32_t recoverable = 1;
+
+            (void) GNI_CqErrorRecoverable (event_data[i], &recoverable);
+
+            if (OPAL_UNLIKELY(++post_desc[i]->tries >= mca_btl_ugni_component.rdma_max_retries ||
+                              !recoverable)) {
+                char char_buffer[1024];
+                GNI_CqErrorStr (event_data[i], char_buffer, 1024);
+                /* give up */
+                BTL_ERROR(("giving up on desciptor %p, recoverable %d: %s", (void *) post_desc[i],
+                           recoverable, char_buffer));
+#if OPAL_ENABLE_DEBUG
+                btl_ugni_dump_post_desc (post_desc[i]);
+#endif
+                mca_btl_ugni_post_desc_complete (ugni_module, post_desc[i], OPAL_ERROR);
+
+                return OPAL_ERROR;
+            }
+
+            mca_btl_ugni_repost (ugni_module, post_desc[i]);
+
+            return 0;
+        }
+
+        mca_btl_ugni_post_desc_complete (ugni_module, post_desc[i], OPAL_SUCCESS);
+    }
+
+    /* should be resources to progress the pending post list */
+    (void) mca_btl_ugni_post_pending (ugni_module, device);
+
+    return rc;
 }
 
 static inline int
@@ -692,9 +677,14 @@ mca_btl_ugni_progress_wait_list (mca_btl_ugni_module_t *ugni_module)
         return 0;
     }
 
+    /* check the count before taking the lock to avoid unnecessary locking */
+    count = opal_list_get_size(&ugni_module->ep_wait_list);
+    if (0 == count) {
+        return 0;
+    }
+
     OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
     count = opal_list_get_size(&ugni_module->ep_wait_list);
-
     do {
         endpoint = (mca_btl_base_endpoint_t *) opal_list_remove_first (&ugni_module->ep_wait_list);
         if (endpoint != NULL) {
@@ -714,35 +704,34 @@ mca_btl_ugni_progress_wait_list (mca_btl_ugni_module_t *ugni_module)
 
 static int mca_btl_ugni_component_progress (void)
 {
-    mca_btl_ugni_module_t *ugni_module;
-    static int64_t call_count = 0;
-    int64_t cur_call_count = OPAL_THREAD_ADD64(&call_count, 1);
-    unsigned int i;
+    mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_component.modules;
+    static volatile int32_t call_count = 0;
+    int32_t current_call;
     int count = 0;
 
-    for (i = 0 ; i < mca_btl_ugni_component.ugni_num_btls ; ++i) {
-        ugni_module = mca_btl_ugni_component.modules + i;
+    current_call = OPAL_THREAD_ADD32(&call_count, 1);
 
-        if ((cur_call_count & 0x7) == 0) {
-            count += mca_btl_ugni_progress_datagram (ugni_module);
-        }
+    count += mca_btl_ugni_progress_remote_smsg (ugni_module);
 
-        if (ugni_module->connected_peer_count) {
+    if ((current_call & 0x7) == 0) {
+        count += mca_btl_ugni_progress_datagram (ugni_module, ugni_module->devices);
+    }
+
+    for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
+        mca_btl_ugni_device_t *device = ugni_module->devices + i;
+
+        if (device->smsg_connections) {
+            count += mca_btl_ugni_progress_local_smsg (ugni_module, device);
             mca_btl_ugni_progress_wait_list (ugni_module);
-            count += mca_btl_ugni_progress_local_smsg (ugni_module);
-            count += mca_btl_ugni_progress_remote_smsg (ugni_module);
         }
 
-        if (ugni_module->active_rdma_count) {
-            count += mca_btl_ugni_progress_rdma (ugni_module, 0);
+        if (device->dev_rdma_local_cq.active_operations) {
+            count += mca_btl_ugni_progress_rdma (ugni_module, device, &device->dev_rdma_local_cq);
         }
 
-        if (mca_btl_ugni_component.progress_thread_enabled) {
-            count += mca_btl_ugni_progress_rdma (ugni_module, 1);
+        if (mca_btl_ugni_component.progress_thread_enabled && device->dev_rdma_local_irq_cq.active_operations) {
+            count += mca_btl_ugni_progress_rdma (ugni_module, device, &device->dev_rdma_local_irq_cq);
         }
-
-        /* post pending after progressing rdma */
-        mca_btl_ugni_post_pending (ugni_module);
     }
 
     return count;
