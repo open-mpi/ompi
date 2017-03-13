@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -138,7 +138,7 @@ static struct {
     char *ranking_policy;
     char *binding_policy;
     bool report_bindings;
-    char *slot_list;
+    char *cpu_list;
     bool debug;
     bool run_as_root;
 } myglobals;
@@ -267,9 +267,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Whether to report process bindings to stderr" },
 
     /* slot list option */
-    { NULL, '\0', "slot-list", "slot-list", 1,
-      &myglobals.slot_list, OPAL_CMD_LINE_TYPE_STRING,
-      "List of processor IDs to bind processes to [default=NULL]"},
+    { NULL, '\0', "cpu-list", "cpu-list", 1,
+      &myglobals.cpu_list, OPAL_CMD_LINE_TYPE_STRING,
+      "Comma-separated list of ranges specifying logical cpus to be used by these processes [default: none]"},
 
     /* mpiexec-like arguments */
     { NULL, '\0', "wdir", "wdir", 1,
@@ -392,7 +392,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         exit(1);
     }
- 
+
      /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
@@ -638,8 +638,8 @@ int main(int argc, char *argv[])
     if (myglobals.report_bindings) {
         orte_set_attribute(&jdata->attributes, ORTE_JOB_REPORT_BINDINGS, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
-    if (myglobals.slot_list) {
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_SLOT_LIST, ORTE_ATTR_GLOBAL, myglobals.slot_list, OPAL_STRING);
+    if (myglobals.cpu_list) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_CPU_LIST, ORTE_ATTR_GLOBAL, myglobals.cpu_list, OPAL_STRING);
     }
     if (NULL == myglobals.personality) {
         /* default to ompi */
@@ -704,7 +704,7 @@ int main(int argc, char *argv[])
     while (mywait) {
       opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
- 
+
  DONE:
     /* cleanup and leave */
     orte_finalize();
