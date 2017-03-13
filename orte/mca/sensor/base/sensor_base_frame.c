@@ -2,8 +2,9 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
- *
  * Copyright (c) 2017      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +44,7 @@ orte_sensor_base_API_module_t orte_sensor = {
     orte_sensor_base_start,
     orte_sensor_base_stop
 };
-orte_sensor_base_t orte_sensor_base;
+orte_sensor_base_t orte_sensor_base = {{{0}}};
 
 /*
  * Local variables
