@@ -323,7 +323,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
         goto cleanup;
     }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
-    opal_argv_free(nodelist_argv);
 
     /* if we are using all allocated nodes, then srun doesn't
      * require any further arguments
@@ -354,16 +353,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
 
-    /* if we have static ports, we need to ensure that mpirun is
-     * on the list. Since slurm won't be launching a daemon on it,
-     * it won't have been placed on the list, so create a new
-     * version here that includes it */
-    if (orte_static_ports) {
-        char *ltmp;
-        asprintf(&ltmp, "%s,%s", orte_process_info.nodename, nodelist_flat);
-        free(nodelist_flat);
-        nodelist_flat = ltmp;
-    }
+    /* we need mpirun to be the first node on this list - since we
+     * aren't launching mpirun via srun, it won't be there now */
+    opal_argv_prepend_nosize(&nodelist_argv, orte_process_info.nodename);
+    free(nodelist_flat);
+    nodelist_flat = opal_argv_join(nodelist_argv, ',');
+    opal_argv_free(nodelist_argv);
 
     /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
