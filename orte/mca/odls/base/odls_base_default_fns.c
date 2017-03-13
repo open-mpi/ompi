@@ -633,6 +633,7 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
     orte_proc_t *child = cd->child;
     char **env = NULL, **argv = NULL, *cmd = NULL;
     int rc, i;
+    bool found;
 
     /* thread-protect common values */
     env = opal_argv_copy(app->env);
@@ -667,6 +668,7 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
         opal_list_item_t *nmitem;
         orte_namelist_t *nm;
         /* see if this rank is one of those requested */
+        found = false;
         for (nmitem = opal_list_get_first(&orte_odls_globals.xterm_ranks);
              nmitem != opal_list_get_end(&orte_odls_globals.xterm_ranks);
              nmitem = opal_list_get_next(nmitem)) {
@@ -685,6 +687,7 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
                 }
                 /* use the xterm cmd as the app string */
                 cmd = strdup(orte_odls_globals.xtermcmd[0]);
+                found = true;
                 break;
             } else if (jobdat->num_procs <= nm->name.vpid) {  /* check for bozo case */
                 /* can't be done! */
@@ -694,6 +697,10 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
                 child->exit_code = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
                 goto errorout;
             }
+        }
+        if (!found) {
+            cmd = strdup(app->app);
+            argv = opal_argv_copy(app->argv);
         }
     } else if (NULL != orte_fork_agent) {
         /* we were given a fork agent - use it */
@@ -794,7 +801,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     orte_proc_t *child=NULL;
     int rc=ORTE_SUCCESS;
     char basedir[MAXPATHLEN];
-    char **argvsav=NULL;
     int j, idx;
     int total_num_local_procs = 0;
     orte_odls_launch_local_t *caddy = (orte_odls_launch_local_t*)cbdata;
@@ -881,15 +887,19 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
         if (opal_sys_limits.num_files < limit) {
             if (2 < caddy->retries) {
                 /* tried enough - give up */
-                child->exit_code = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
-                ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_LAUNCH);
+                for (idx=0; idx < orte_local_children->size; idx++) {
+                    if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, idx))) {
+                        continue;
+                    }
+                    if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name.jobid), ORTE_JOBID)) {
+                        child->exit_code = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
+                        ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_LAUNCH);
+                    }
+                }
                 goto ERROR_OUT;
             }
             /* don't have enough - wait a little time */
             ORTE_DETECT_TIMEOUT(1000, 1000, -1, timer_cb, caddy);
-            if (NULL != argvsav) {
-                opal_argv_free(argvsav);
-            }
             return;
         }
     }

@@ -467,13 +467,16 @@ void orte_rmaps_base_display_map(orte_job_t *jdata)
                     continue;
                 }
                 memset(tmp1, 0, 1024);
-                orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR);
-                if (NULL == bd) {
-                    (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
-                } else {
-                    if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
+                if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR)) {
+                    if (NULL == bd) {
                         (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                    } else {
+                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
+                            (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                        }
                     }
+                } else {
+                    (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
                 }
                 opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu binding=%s>",
                             ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,
@@ -488,29 +491,33 @@ void orte_rmaps_base_display_map(orte_job_t *jdata)
         node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, 0);
         p0 = (orte_proc_t*)opal_pointer_array_get_item(node->procs, 0);
         p0bitmap = NULL;
-        orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&p0bitmap, OPAL_STRING);
-        opal_output(orte_clean_output, "\t<locality>");
-        for (j=1; j < node->procs->size; j++) {
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
-                continue;
+        if (orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&p0bitmap, OPAL_STRING) &&
+            NULL != p0bitmap) {
+            opal_output(orte_clean_output, "\t<locality>");
+            for (j=1; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                procbitmap = NULL;
+                if (orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING) &&
+                    NULL != procbitmap) {
+                    locality = opal_hwloc_base_get_relative_locality(node->topology->topo,
+                                                                     p0bitmap,
+                                                                     procbitmap);
+                    opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",
+                                ORTE_VPID_PRINT(p0->name.vpid),
+                                ORTE_VPID_PRINT(proc->name.vpid),
+                                opal_hwloc_base_print_locality(locality));
+                }
             }
-            procbitmap = NULL;
-            orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
-            locality = opal_hwloc_base_get_relative_locality(node->topology->topo,
-                                                             p0bitmap,
-                                                             procbitmap);
-            opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",
-                        ORTE_VPID_PRINT(p0->name.vpid),
-                        ORTE_VPID_PRINT(proc->name.vpid),
-                        opal_hwloc_base_print_locality(locality));
-        }
-        opal_output(orte_clean_output, "\t</locality>\n</map>");
-        fflush(stderr);
-        if (NULL != p0bitmap) {
-            free(p0bitmap);
-        }
-        if (NULL != procbitmap) {
-            free(procbitmap);
+            opal_output(orte_clean_output, "\t</locality>\n</map>");
+            fflush(stderr);
+            if (NULL != p0bitmap) {
+                free(p0bitmap);
+            }
+            if (NULL != procbitmap) {
+                free(procbitmap);
+            }
         }
     } else {
         opal_output(orte_clean_output, " Data for JOB %s offset %s", ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(jdata->offset));

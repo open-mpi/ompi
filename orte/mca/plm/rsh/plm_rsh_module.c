@@ -1200,7 +1200,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         }
     }
     /* we need mpirun to be the first node on this list */
-    if (0 != strcmp(nodelist[0], orte_process_info.nodename)) {
+    if (NULL == nodelist || 0 != strcmp(nodelist[0], orte_process_info.nodename)) {
         opal_argv_prepend_nosize(&nodelist, orte_process_info.nodename);
     }
     nlistflat = opal_argv_join(nodelist, ',');
