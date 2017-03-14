@@ -13,7 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -25,6 +25,7 @@
 
 #include "ompi_config.h"
 #include "opal/prefetch.h"
+#include "opal/runtime/opal_params.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/mpool.h"
 #include "ompi/constants.h"
@@ -143,7 +144,7 @@ size_t mca_pml_ob1_rdma_cuda_btls(
     /* if we don't use leave_pinned and all BTLs that already have this memory
      * registered amount to less then half of available bandwidth - fall back to
      * pipeline protocol */
-    if(0 == num_btls_used || (!mca_pml_ob1.leave_pinned && weight_total < 0.5))
+    if(0 == num_btls_used || (!opal_leave_pinned && weight_total < 0.5))
         return 0;
 
     mca_pml_ob1_calc_weighted_length(rdma_btls, num_btls_used, size,
