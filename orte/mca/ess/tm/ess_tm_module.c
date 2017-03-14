@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +36,7 @@
 #include "opal/dss/dss.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/util/regex.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -66,7 +68,6 @@ static int rte_init(void)
     int ret;
     char *error = NULL;
     char **hosts = NULL;
-    char *nodelist;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -81,12 +82,14 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
-        /* get the list of nodes used for this job */
-        nodelist = getenv(OPAL_MCA_PREFIX"orte_nodelist");
-
-        if (NULL != nodelist) {
-            /* split the node list into an argv array */
-            hosts = opal_argv_split(nodelist, ',');
+        if (NULL != orte_node_regex) {
+            /* extract the nodes */
+            if (ORTE_SUCCESS != (ret =
+                orte_regex_extract_node_names(orte_node_regex, &hosts)) ||
+                NULL == hosts) {
+                error = "orte_regex_extract_node_names";
+                goto error;
+            }
         }
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
             ORTE_ERROR_LOG(ret);
@@ -112,7 +115,7 @@ static int rte_init(void)
     error = "ess_error";
     ret = ORTE_ERROR;
 
-error:
+  error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
