@@ -174,7 +174,7 @@ Bug fixes/minor improvements:
 - Fixed corner cases of handling DARRAY and HINDEXED_BLOCK datatypes.
 - Fix a problem with filesystem type check for OpenBSD.
   Thanks to Paul Hargrove for reporting.
-- Fix some debug input within Open MPI internal functions.  Thanks to 
+- Fix some debug input within Open MPI internal functions.  Thanks to
   Durga Choudhury for reporting.
 - Fix a typo in a configury help message.  Thanks to Paul Hargrove for
   reporting.
@@ -858,7 +858,7 @@ Bug fixes / minor enhancements:
   output extra bytes if the system was very heavily loaded
 - Fix a bug where specifying mca_component_show_load_errors=0 could
   cause ompi_info to segfault
-- Updated Valgrind suppression file
+- Updated valgrind suppression file
 
 
 1.8.3: 26 Sep 2014
@@ -2013,7 +2013,7 @@ Bug fixes / minor enhancements:
 
 - Modified a memcpy() call in the openib btl connection setup to use
   memmove() instead because of the possibility of an overlapping
-  copy (as identified by Valgrind).
+  copy (as identified by valgrind).
 - Changed use of sys_timer_get_cycles() to the more appropriate
   wrapper: opal_timer_base_get_cycles().  Thanks to Jani Monoses
   for this fix.
@@ -2159,7 +2159,7 @@ Bug fixes / minor enhancements:
 - Fixed an issue with VampirTrace's wrapper for MPI_init_thread.
 - Updated mca-btl-openib-device-params.ini file with various new vendor id's.
 - Configuration fixes to ensure CPPFLAGS in handled properly if a non-standard
-  Valgrind location was specified.
+  valgrind location was specified.
 - Various man page updates
 
 
@@ -2521,7 +2521,7 @@ and v1.4.
 - Elimiated duplicated error messages when multiple MPI processes fail
   with the same error.
 - Added NUMA support to the shared memory BTL.
-- Add valgrind-based memory checking for MPI-semantic checks.
+- Add Valgrind-based memory checking for MPI-semantic checks.
 - Add support for some optional Fortran datatypes (MPI_LOGICAL1,
   MPI_LOGICAL2, MPI_LOGICAL4 and MPI_LOGICAL8).
 - Remove the use of the STL from the C++ bindings.
