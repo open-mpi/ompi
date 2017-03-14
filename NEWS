@@ -437,9 +437,65 @@ Bug fixes / minor enhancements:
   Alastair McKinstry for reporting.
 
 
+1.10.6 - 17 Feb 2017
+------
+- Fix bug in timer code that caused problems at optimization settings
+  greater than 2
+- OSHMEM: make mmap allocator the default instead of sysv or verbs
+- Support MPI_Dims_create with dimension zero
+- Update USNIC support
+- Prevent 64-bit overflow on timer counter
+- Add support for forwarding signals
+- Fix bug that caused truncated messages on large sends over TCP BTL
+- Fix potential infinite loop when printing a stacktrace
+
+
+1.10.5 - 19 Dec 2016
+------
+- Update UCX APIs
+- Fix bug in darray that caused MPI/IO failures
+- Use a MPI_Get_library_version() like string to tag the debugger DLL.
+  Thanks to Alastair McKinstry for the report
+- Fix multi-threaded race condition in coll/libnbc
+- Several fixes to OSHMEM
+- Fix bug in UCX support due to uninitialized field
+- Fix MPI_Ialltoallv with MPI_IN_PLACE and without MPI param check
+- Correctly reset receive request type before init. Thanks Chris Pattison
+  for the report and test case.
+- Fix bug in iallgather[v]
+- Fix concurrency issue with MPI_Comm_accept. Thanks to Pieter Noordhuis
+  for the patch
+- Fix ompi_coll_base_{gather,scatter}_intra_binomial
+- Fixed an issue with MPI_Type_get_extent returning the wrong extent
+  for distributed array datatypes.
+- Re-enable use of rtdtsc instruction as a monotonic clock source if
+  the processor has a core-invariant tsc. This is a partial fix for a
+  performance regression introduced in Open MPI v1.10.3.
+
+
+1.10.4 - 01 Sept 2016
+------
+
+- Fix assembler support for MIPS
+- Improve memory handling for temp buffers in collectives
+- Fix [all]reduce with non-zero lower bound datatypes
+  Thanks Hristo Iliev for the report
+- Fix non-standard ddt handling. Thanks Yuki Matsumoto for the report
+- Various libnbc fixes. Thanks Yuki Matsumoto for the report
+- Fix typos in request RMA bindings for Fortran. Thanks to @alazzaro
+  and @vondele for the assist
+- Various bug fixes and enhancements to collective support
+- Fix predefined types mapping in hcoll
+- Revive the coll/sync component to resolve unexpected message issues
+  during tight loops across collectives
+- Fix typo in wrapper compiler for Fortran static builds
+
+
 1.10.3 - 15 June 2016
 ------
 
+- Fix zero-length datatypes.  Thanks to Wei-keng Liao for reporting
+  the issue.
 - Minor manpage cleanups
 - Implement atomic support in OSHMEM/UCX
 - Fix support of MPI_COMBINER_RESIZED. Thanks to James Ramsey
@@ -490,6 +546,23 @@ Bug fixes / minor enhancements:
 - Fix affinity for MPMD jobs running under LSF
 - Fix many Fortran binding bugs
 - Fix `MPI_IN_PLACE`-related bugs
+- Fix PSM/PSM2 support for singleton operations
+- Ensure MPI transports continue to progress during RTE barriers
+- Update HWLOC to 1.9.1 end-of-series
+- Fix a bug in the Java command line parser when the
+  -Djava.library.path options was given by the user
+- Update the MTL/OFI provider selection behavior
+- Add support for clock_gettime on Linux.
+- Correctly detect and configure for Solaris Studio 12.5
+  beta compilers
+- Correctly compute #slots when -host is used for MPMD case
+- Fix a bug in the hcoll collectives due to an uninitialized field
+- Do not set a binding policy when oversubscribing a node
+- Fix hang in intercommunicator operations when oversubscribed
+- Speed up process termination during MPI_Abort
+- Disable backtrace support by default in the PSM/PSM2 libraries to
+  prevent unintentional conflicting behavior.
+
 
 
 1.10.2: 26 Jan 2016
