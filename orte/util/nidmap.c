@@ -186,6 +186,7 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
     char **regexargs = NULL, *tmp, *tmp2;
     orte_node_t *nptr;
     int rc;
+    uint8_t ui8;
 
     /* setup the list of results */
     OBJ_CONSTRUCT(&nodenms, opal_list_t);
@@ -594,6 +595,28 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         free(tmp);
     }
 
+    /* pack a flag indicating if the HNP was included in the allocation */
+    if (orte_hnp_is_allocated) {
+        ui8 = 1;
+    } else {
+        ui8 = 0;
+    }
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &ui8, 1, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* pack a flag indicating if we are in a managed allocation */
+    if (orte_managed_allocation) {
+        ui8 = 1;
+    } else {
+        ui8 = 0;
+    }
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &ui8, 1, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* handle the topologies - as the most common case by far
      * is to have homogeneous topologies, we only send them
      * if something is different */
@@ -684,6 +707,7 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
     opal_buffer_t *bptr=NULL;
     orte_topology_t *t;
     orte_regex_range_t *rng, *drng, *srng, *frng;
+    uint8_t ui8;
 
     /* unpack the node regex */
     n = 1;
@@ -737,6 +761,30 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         rc = ORTE_ERR_BAD_PARAM;
         goto cleanup;
+    }
+
+    /* unpack the flag indicating if the HNP was allocated */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ui8, &n, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    if (0 == ui8) {
+        orte_hnp_is_allocated = false;
+    } else {
+        orte_hnp_is_allocated = true;
+    }
+
+    /* unpack the flag indicating we are in a managed allocation */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ui8, &n, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    if (0 == ui8) {
+        orte_managed_allocation = false;
+    } else {
+        orte_managed_allocation = true;
     }
 
     /* unpack the topos regex - this may not have been
