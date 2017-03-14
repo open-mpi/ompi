@@ -1106,7 +1106,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
                        true, mca_plm_rsh_component.num_concurrent, map->num_new_daemons);
         ORTE_ERROR_LOG(ORTE_ERR_FATAL);
         OBJ_RELEASE(state);
-        return;
+        rc = ORTE_ERR_SILENT;
+        goto cleanup;
     }
 
     /*
@@ -1150,6 +1151,13 @@ static void launch_daemons(int fd, short args, void *cbdata)
                 break;
             }
         }
+    }
+    if (NULL == node) {
+        /* this should be impossible, but adding the check will
+         * silence code checkers that don't know better */
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        rc = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
 
     /* if we are tree launching, find our children and create the launch cmd */
