@@ -326,7 +326,7 @@ static void mca_pml_ucx_waitall(void **reqs, size_t *count_p)
             PML_UCX_ERROR("disconnect request failed: %s",
                           ucs_status_string(status));
         }
-        ucp_request_release(reqs[i]);
+        ucp_request_free(reqs[i]);
         reqs[i] = NULL;
     }
 

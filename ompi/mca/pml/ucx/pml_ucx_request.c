@@ -21,7 +21,7 @@ static int mca_pml_ucx_request_free(ompi_request_t **rptr)
 
     *rptr = MPI_REQUEST_NULL;
     mca_pml_ucx_request_reset(req);
-    ucp_request_release(req);
+    ucp_request_free(req);
     return OMPI_SUCCESS;
 }
 
@@ -75,7 +75,7 @@ void mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *p
     ompi_request_complete(&preq->ompi, true);
     mca_pml_ucx_persistent_request_detach(preq, tmp_req);
     mca_pml_ucx_request_reset(tmp_req);
-    ucp_request_release(tmp_req);
+    ucp_request_free(tmp_req);
 }
 
 static inline void mca_pml_ucx_preq_completion(ompi_request_t *tmp_req)
@@ -154,7 +154,7 @@ static int mca_pml_ucx_persistent_request_free(ompi_request_t **rptr)
     preq->ompi.req_state = OMPI_REQUEST_INVALID;
     if (tmp_req != NULL) {
         mca_pml_ucx_persistent_request_detach(preq, tmp_req);
-        ucp_request_release(tmp_req);
+        ucp_request_free(tmp_req);
     }
     PML_UCX_FREELIST_RETURN(&ompi_pml_ucx.persistent_reqs, &preq->ompi.super);
     *rptr = MPI_REQUEST_NULL;
