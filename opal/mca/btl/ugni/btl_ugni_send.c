@@ -118,6 +118,13 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
     size_t packed_size = payload_size;
     int rc;
 
+    if (OPAL_UNLIKELY(opal_list_get_size (&endpoint->frag_wait_list))) {
+        if (NULL != descriptor) {
+            *descriptor = NULL;
+        }
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
     do {
         BTL_VERBOSE(("btl/ugni isend sending fragment from %d -> %d. length = %" PRIu64
                      " endoint state %d", OPAL_PROC_MY_NAME.vpid, endpoint->peer_proc->proc_name.vpid,
@@ -134,8 +141,7 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
         }
 
         assert (packed_size == payload_size);
-        if (OPAL_UNLIKELY(NULL == frag || OPAL_SUCCESS != mca_btl_ugni_check_endpoint_state (endpoint) ||
-                          opal_list_get_size (&endpoint->frag_wait_list))) {
+        if (OPAL_UNLIKELY(NULL == frag || OPAL_SUCCESS != mca_btl_ugni_check_endpoint_state (endpoint))) {
             break;
         }
 
