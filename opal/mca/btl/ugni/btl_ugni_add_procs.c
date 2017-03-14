@@ -156,6 +156,8 @@ int mca_btl_ugni_add_procs (struct mca_btl_base_module_t* btl, size_t nprocs,
             mca_btl_ugni_spawn_progress_thread(btl);
         }
 
+        opal_event_evtimer_add (&ugni_module->connection_event, (&(struct timeval) {.tv_sec = 0, .tv_usec = MCA_BTL_UGNI_CONNECT_USEC}));
+
         ugni_module->initialized = true;
     }
 

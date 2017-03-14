@@ -61,6 +61,16 @@ mca_btl_ugni_module_t mca_btl_ugni_module = {
     }
 };
 
+static void *mca_btl_ugni_datagram_event (int foo, short bar, void *arg)
+{
+    mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) arg;
+    mca_btl_ugni_device_t *device = ugni_module->devices;
+
+    mca_btl_ugni_progress_datagram (device);
+
+    opal_event_evtimer_add (&ugni_module->connection_event, (&(struct timeval) {.tv_sec = 0, .tv_usec = MCA_BTL_UGNI_CONNECT_USEC}));
+}
+
 int
 mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module)
 {
@@ -74,6 +84,10 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module)
     ugni_module->initialized = false;
     ugni_module->nlocal_procs = 0;
     ugni_module->connected_peer_count = 0;
+    ugni_module->active_datagrams = 0;
+
+    opal_event_evtimer_set (opal_sync_event_base, &ugni_module->connection_event,
+                            mca_btl_ugni_datagram_event, ugni_module);
 
     OBJ_CONSTRUCT(&ugni_module->failed_frags, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->failed_frags_lock, opal_mutex_t);
@@ -170,6 +184,8 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
         if (GNI_RC_SUCCESS != rc) {
             BTL_VERBOSE(("btl/ugni error destroying endpoint - %s",gni_err_str[rc]));
         }
+
+        opal_event_del (&ugni_module->connection_event);
     }
 
     for (int i = 0 ; i < MCA_BTL_UGNI_LIST_MAX ; ++i) {
