@@ -881,7 +881,7 @@ static int ompi_osc_rdma_share_data (ompi_osc_rdma_module_t *module)
             if (ompi_comm_size (module->local_leaders) > 1) {
                 ret = module->local_leaders->c_coll->coll_allgather (MPI_IN_PLACE, module->region_size, MPI_BYTE, module->node_comm_info,
                                                                     module->region_size, MPI_BYTE, module->local_leaders,
-                                                                    module->local_leaders->c_coll->coll_gather_module);
+                                                                    module->local_leaders->c_coll->coll_allgather_module);
                 if (OMPI_SUCCESS != ret) {
                     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "leader allgather failed with ompi error code %d", ret);
                     break;
