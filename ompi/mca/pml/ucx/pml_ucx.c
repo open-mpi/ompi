@@ -135,12 +135,16 @@ int mca_pml_ucx_open(void)
                              UCP_PARAM_FIELD_REQUEST_SIZE |
                              UCP_PARAM_FIELD_REQUEST_INIT |
                              UCP_PARAM_FIELD_REQUEST_CLEANUP |
-                             UCP_PARAM_FIELD_TAG_SENDER_MASK;
+                             UCP_PARAM_FIELD_TAG_SENDER_MASK |
+                             UCP_PARAM_FIELD_MT_WORKERS_SHARED;
     params.features        = UCP_FEATURE_TAG;
     params.request_size    = sizeof(ompi_request_t);
     params.request_init    = mca_pml_ucx_request_init;
     params.request_cleanup = mca_pml_ucx_request_cleanup;
     params.tag_sender_mask = PML_UCX_SPECIFIC_SOURCE_MASK;
+    params.mt_workers_shared = 0; /* we do not need mt support for context
+                                     since it will be protected by worker */
+
 
     status = ucp_init(&params, config, &ompi_pml_ucx.ucp_context);
     ucp_config_release(config);
@@ -178,6 +182,7 @@ int mca_pml_ucx_init(void)
 {
     ucp_worker_params_t params;
     ucs_status_t status;
+    ucp_worker_attr_t attr;
     int rc;
 
     PML_UCX_VERBOSE(1, "mca_pml_ucx_init");
@@ -185,10 +190,34 @@ int mca_pml_ucx_init(void)
     /* TODO check MPI thread mode */
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     params.thread_mode = UCS_THREAD_MODE_SINGLE;
+    if (ompi_mpi_thread_multiple) {
+        params.thread_mode = UCS_THREAD_MODE_MULTI;
+    } else {
+        params.thread_mode = UCS_THREAD_MODE_SINGLE;
+    }
 
     status = ucp_worker_create(ompi_pml_ucx.ucp_context, &params,
                                &ompi_pml_ucx.ucp_worker);
     if (UCS_OK != status) {
+        PML_UCX_ERROR("Failed to create UCP worker");
+        return OMPI_ERROR;
+    }
+
+    attr.field_mask = UCP_WORKER_ATTR_FIELD_THREAD_MODE;
+    status = ucp_worker_query(ompi_pml_ucx.ucp_worker, &attr);
+    if (UCS_OK != status) {
+        ucp_worker_destroy(ompi_pml_ucx.ucp_worker);
+        ompi_pml_ucx.ucp_worker = NULL;
+        PML_UCX_ERROR("Failed to query UCP worker thread level");
+        return OMPI_ERROR;
+    }
+
+    if (ompi_mpi_thread_multiple && attr.thread_mode != UCS_THREAD_MODE_MULTI) {
+        /* UCX does not support multithreading, disqualify current PML for now */
+        /* TODO: we should let OMPI to fallback to THREAD_SINGLE mode */
+        ucp_worker_destroy(ompi_pml_ucx.ucp_worker);
+        ompi_pml_ucx.ucp_worker = NULL;
+        PML_UCX_ERROR("UCP worker does not support MPI_THREAD_MULTIPLE");
         return OMPI_ERROR;
     }
 
