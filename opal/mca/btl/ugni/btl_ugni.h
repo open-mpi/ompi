@@ -53,6 +53,9 @@
 /** number of rdma completion queue items to remove per progress loop */
 #define MCA_BTL_UGNI_COMPLETIONS_PER_LOOP 16
 
+/** how often to check for connection requests */
+#define MCA_BTL_UGNI_CONNECT_USEC 10
+
 /**
  * Modex data
  */
@@ -166,6 +169,9 @@ typedef struct mca_btl_ugni_module_t {
 
     gni_ep_handle_t wildcard_ep;
     struct mca_btl_base_endpoint_t *local_ep;
+
+    volatile int32_t active_datagrams;
+    opal_event_t connection_event;
 
     struct mca_btl_ugni_endpoint_attr_t wc_remote_attr, wc_local_attr;
 
@@ -422,6 +428,7 @@ int mca_btl_ugni_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_
                          int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 int mca_btl_ugni_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
+int mca_btl_ugni_progress_datagram (mca_btl_ugni_device_t *device);
 
 mca_btl_base_descriptor_t *
 mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,

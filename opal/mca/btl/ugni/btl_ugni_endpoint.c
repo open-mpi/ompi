@@ -311,6 +311,9 @@ static int mca_btl_ugni_directed_ep_post (mca_btl_base_endpoint_t *ep)
     rc = GNI_EpPostDataWId (ep->smsg_ep_handle->gni_handle, &ep->mailbox->attr, sizeof (ep->mailbox->attr),
                             ep->remote_attr, sizeof (*ep->remote_attr),
                             MCA_BTL_UGNI_CONNECT_DIRECTED_ID | ep->index);
+    if (OPAL_LIKELY(GNI_RC_SUCCESS == rc)) {
+        (void) opal_atomic_add_32 (&ugni_module->active_datagrams, 1);
+    }
 
     return mca_btl_rc_ugni_to_opal (rc);
 }

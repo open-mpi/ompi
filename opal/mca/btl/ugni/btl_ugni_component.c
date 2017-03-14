@@ -499,9 +499,9 @@ mca_btl_ugni_component_init (int *num_btl_modules,
     return base_modules;
 }
 
-static inline int
-mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_device_t *device)
+int mca_btl_ugni_progress_datagram (mca_btl_ugni_device_t *device)
 {
+    mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_component.modules;
     mca_btl_base_endpoint_t *ep;
     gni_ep_handle_t handle;
     int count = 0, rc;
@@ -542,6 +542,7 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni
         BTL_VERBOSE(("directed datagram complete for endpoint %p", (void *) ep));
 
         ep->dg_posted = false;
+        (void) opal_atomic_add_32 (&ugni_module->active_datagrams, -1);
     }
 
     (void) mca_btl_ugni_ep_connect_progress (ep);
@@ -705,16 +706,12 @@ mca_btl_ugni_progress_wait_list (mca_btl_ugni_module_t *ugni_module)
 static int mca_btl_ugni_component_progress (void)
 {
     mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_component.modules;
-    static volatile int32_t call_count = 0;
-    int32_t current_call;
     int count = 0;
-
-    current_call = OPAL_THREAD_ADD32(&call_count, 1);
 
     count += mca_btl_ugni_progress_remote_smsg (ugni_module);
 
-    if ((current_call & 0x7) == 0) {
-        count += mca_btl_ugni_progress_datagram (ugni_module, ugni_module->devices);
+    if (ugni_module->active_datagrams) {
+        count += mca_btl_ugni_progress_datagram (ugni_module->devices);
     }
 
     for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
