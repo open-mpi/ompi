@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -294,12 +294,6 @@ mca_pml_ob1_component_init( int* priority,
         }
 
     }
-
-    /* Set this here (vs in component_open()) because
-       opal_leave_pinned* may have been set after MCA params were
-       read (e.g., by the openib btl) */
-    mca_pml_ob1.leave_pinned = (1 == opal_leave_pinned);
-    mca_pml_ob1.leave_pinned_pipeline = (int) opal_leave_pinned_pipeline;
 
     return &mca_pml_ob1.super;
 }
