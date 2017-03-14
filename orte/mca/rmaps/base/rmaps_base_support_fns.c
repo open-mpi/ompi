@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -340,7 +340,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         goto complete;
     }
 
- addknown:
+  addknown:
     /* if the hnp was allocated, include it unless flagged not to */
     if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
@@ -416,7 +416,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
             }
             if (NULL == nd || NULL == nd->daemon ||
-		NULL == node->daemon ||
+                NULL == node->daemon ||
                 nd->daemon->name.vpid < node->daemon->name.vpid) {
                 /* just append to end */
                 opal_list_append(allocated_nodes, &node->super);
@@ -476,7 +476,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (int)opal_list_get_size(allocated_nodes)));
 
- complete:
+  complete:
     /* remove all nodes that are already at max usage, and
      * compute the total number of allocated slots while
      * we do so */
