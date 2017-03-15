@@ -292,6 +292,12 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_EVENT_REGISTRATION:
         retval = "Event registration";
         break;
+    case OPAL_ERR_HEARTBEAT_ALERT:
+        retval = "Heartbeat not received";
+        break;
+    case OPAL_ERR_FILE_ALERT:
+        retval = "File alert - proc may have stalled";
+        break;
     default:
         retval = "UNRECOGNIZED";
     }

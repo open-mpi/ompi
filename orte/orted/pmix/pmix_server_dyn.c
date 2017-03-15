@@ -511,3 +511,13 @@ int pmix_server_disconnect_fn(opal_list_t *procs, opal_list_t *info,
 
     return rc;
 }
+
+int pmix_server_alloc_fn(const opal_process_name_t *requestor,
+                         opal_pmix_alloc_directive_t dir,
+                         opal_list_t *info,
+                         opal_pmix_info_cbfunc_t cbfunc,
+                         void *cbdata)
+{
+    /* ORTE currently has no way of supporting allocation requests */
+    return ORTE_ERR_NOT_SUPPORTED;
+}

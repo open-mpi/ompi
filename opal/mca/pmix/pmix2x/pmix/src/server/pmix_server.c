@@ -2345,6 +2345,18 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
         return rc;
     }
 
+    if (PMIX_JOB_CONTROL_CMD == cmd) {
+        PMIX_PEER_CADDY(cd, peer, tag);
+        rc = pmix_server_job_ctrl(peer, buf, query_cbfunc, cd);
+        return rc;
+    }
+
+    if (PMIX_MONITOR_CMD == cmd) {
+        PMIX_PEER_CADDY(cd, peer, tag);
+        rc = pmix_server_monitor(peer, buf, query_cbfunc, cd);
+        return rc;
+    }
+
     return PMIX_ERR_NOT_SUPPORTED;
 }
 

@@ -1562,6 +1562,134 @@ pmix_status_t pmix_server_alloc(pmix_peer_t *peer,
     return rc;
 }
 
+pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
+                                   pmix_buffer_t *buf,
+                                   pmix_info_cbfunc_t cbfunc,
+                                   void *cbdata)
+{
+    int32_t cnt;
+    pmix_status_t rc;
+    pmix_query_caddy_t *cd;
+    pmix_proc_t proc;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "recvd job control request from client");
+
+    if (NULL == pmix_host_server.job_control) {
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
+
+    cd = PMIX_NEW(pmix_query_caddy_t);
+    cd->cbdata = cbdata;
+
+    /* unpack the number of targets */
+    cnt = 1;
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->ntargets, &cnt, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        goto exit;
+    }
+    if (0 < cd->ntargets) {
+        PMIX_PROC_CREATE(cd->targets, cd->ntargets);
+        cnt = cd->ntargets;
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, cd->targets, &cnt, PMIX_PROC))) {
+            PMIX_ERROR_LOG(rc);
+            goto exit;
+        }
+    }
+    /* unpack the number of info objects */
+    cnt = 1;
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->ninfo, &cnt, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        goto exit;
+    }
+    /* unpack the info */
+    if (0 < cd->ninfo) {
+        PMIX_INFO_CREATE(cd->info, cd->ninfo);
+        cnt = cd->ninfo;
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, cd->info, &cnt, PMIX_INFO))) {
+            PMIX_ERROR_LOG(rc);
+            goto exit;
+        }
+    }
+
+    /* setup the requesting peer name */
+    (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
+    proc.rank = peer->info->rank;
+
+    /* ask the host to execute the request */
+    if (PMIX_SUCCESS != (rc = pmix_host_server.job_control(&proc,
+                                                           cd->targets, cd->ntargets,
+                                                           cd->info, cd->ninfo,
+                                                           cbfunc, cd))) {
+        goto exit;
+    }
+    return PMIX_SUCCESS;
+
+  exit:
+    PMIX_RELEASE(cd);
+    return rc;
+}
+
+pmix_status_t pmix_server_monitor(pmix_peer_t *peer,
+                                  pmix_buffer_t *buf,
+                                  pmix_info_cbfunc_t cbfunc,
+                                  void *cbdata)
+{
+    int32_t cnt;
+    pmix_status_t rc, error;
+    pmix_query_caddy_t *cd;
+    pmix_proc_t proc;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "recvd monitor request from client");
+
+    if (NULL == pmix_host_server.monitor) {
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
+
+    cd = PMIX_NEW(pmix_query_caddy_t);
+    cd->cbdata = cbdata;
+
+    /* unpack the error code */
+    cnt = 1;
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &error, &cnt, PMIX_STATUS))) {
+        PMIX_ERROR_LOG(rc);
+        goto exit;
+    }
+
+    /* unpack the number of directives */
+    cnt = 1;
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->ninfo, &cnt, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        goto exit;
+    }
+    /* unpack the directives */
+    if (0 < cd->ninfo) {
+        PMIX_INFO_CREATE(cd->info, cd->ninfo);
+        cnt = cd->ninfo;
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, cd->info, &cnt, PMIX_INFO))) {
+            PMIX_ERROR_LOG(rc);
+            goto exit;
+        }
+    }
+
+    /* setup the requesting peer name */
+    (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
+    proc.rank = peer->info->rank;
+
+    /* ask the host to execute the request */
+    if (PMIX_SUCCESS != (rc = pmix_host_server.monitor(&proc, error,
+                                                       cd->info, cd->ninfo,
+                                                       cbfunc, cd))) {
+        goto exit;
+    }
+    return PMIX_SUCCESS;
+
+  exit:
+    PMIX_RELEASE(cd);
+    return rc;
+}
+
 /*****    INSTANCE SERVER LIBRARY CLASSES    *****/
 static void tcon(pmix_server_trkr_t *t)
 {

@@ -328,6 +328,17 @@ typedef pmix_status_t (*pmix_server_alloc_fn_t)(const pmix_proc_t *client,
                                                 const pmix_info_t data[], size_t ndata,
                                                 pmix_info_cbfunc_t cbfunc, void *cbdata);
 
+/* Execute a job control action on behalf of a client */
+typedef pmix_status_t (*pmix_server_job_control_fn_t)(const pmix_proc_t *requestor,
+                                                      const pmix_proc_t targets[], size_t ntargets,
+                                                      const pmix_info_t directives[], size_t ndirs,
+                                                      pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* Request that a client be monitored for activity */
+typedef pmix_status_t (*pmix_server_monitor_fn_t)(const pmix_proc_t *requestor, pmix_status_t error,
+                                                  const pmix_info_t directives[], size_t ndirs,
+                                                  pmix_info_cbfunc_t cbfunc, void *cbdata);
+
 typedef struct pmix_server_module_2_0_0_t {
     /* v1x interfaces */
     pmix_server_client_connected_fn_t   client_connected;
@@ -350,12 +361,14 @@ typedef struct pmix_server_module_2_0_0_t {
     pmix_server_tool_connection_fn_t    tool_connected;
     pmix_server_log_fn_t                log;
     pmix_server_alloc_fn_t              allocate;
+    pmix_server_job_control_fn_t        job_control;
+    pmix_server_monitor_fn_t            monitor;
 } pmix_server_module_t;
 
 /****    SERVER SUPPORT INIT/FINALIZE FUNCTIONS    ****/
 
 /* Initialize the server support library, and provide a
- *  pointer to a pmix_server_module_t structure
+ * pointer to a pmix_server_module_t structure
  * containing the caller's callback functions. The
  * array of pmix_info_t structs is used to pass
  * additional info that may be required by the server

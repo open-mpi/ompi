@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -230,6 +230,19 @@ typedef void (*opal_pmix_connection_cbfunc_t)(int incoming_sd);
 typedef int (*opal_pmix_server_listener_fn_t)(int listening_sd,
                                               opal_pmix_connection_cbfunc_t cbfunc);
 
+/* Request allocation modifications on behalf of a client */
+typedef int (*opal_pmix_server_alloc_fn_t)(const opal_process_name_t *client,
+                                           opal_pmix_alloc_directive_t directive,
+                                           opal_list_t *data,
+                                           opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* Execute a job control action on behalf of a client */
+typedef int (*opal_pmix_server_job_control_fn_t)(const opal_process_name_t *requestor,
+                                                 opal_list_t *targets, opal_list_t *directives,
+                                                 opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* we do not provide a monitoring capability */
+
 typedef struct opal_pmix_server_module_1_0_0_t {
     opal_pmix_server_client_connected_fn_t      client_connected;
     opal_pmix_server_client_finalized_fn_t      client_finalized;
@@ -249,6 +262,8 @@ typedef struct opal_pmix_server_module_1_0_0_t {
     opal_pmix_server_tool_connection_fn_t       tool_connected;
     opal_pmix_server_log_fn_t                   log;
     opal_pmix_server_listener_fn_t              listener;
+    opal_pmix_server_alloc_fn_t                 allocate;
+    opal_pmix_server_job_control_fn_t           job_control;
 } opal_pmix_server_module_t;
 
 

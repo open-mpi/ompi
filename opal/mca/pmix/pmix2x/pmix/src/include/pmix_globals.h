@@ -72,7 +72,9 @@ typedef enum {
     PMIX_DEREGEVENTS_CMD,
     PMIX_QUERY_CMD,
     PMIX_LOG_CMD,
-    PMIX_ALLOC_CMD
+    PMIX_ALLOC_CMD,
+    PMIX_JOB_CONTROL_CMD,
+    PMIX_MONITOR_CMD
 } pmix_cmd_t;
 
 /* provide a "pretty-print" function for cmds */
@@ -214,6 +216,8 @@ typedef struct {
     pmix_status_t status;
     pmix_query_t *queries;
     size_t nqueries;
+    pmix_proc_t *targets;
+    size_t ntargets;
     pmix_info_t *info;
     size_t ninfo;
     pmix_info_cbfunc_t cbfunc;
