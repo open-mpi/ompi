@@ -14,7 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2016 Broadcom Limited. All rights reserved.
  * $COPYRIGHT$
  *
@@ -49,7 +49,7 @@ opal_timer_t (*opal_timer_base_get_cycles)(void) = opal_timer_base_get_cycles_sy
 opal_timer_t (*opal_timer_base_get_usec)(void) = opal_timer_base_get_usec_sys_timer;
 #endif  /* OPAL_HAVE_CLOCK_GETTIME */
 
-opal_timer_t opal_timer_linux_freq = {0};
+static opal_timer_t opal_timer_linux_freq = {0};
 
 static int opal_timer_linux_open(void);
 
