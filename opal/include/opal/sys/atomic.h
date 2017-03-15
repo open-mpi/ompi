@@ -153,8 +153,6 @@ enum {
 #include "opal/sys/sync_builtin/atomic.h"
 #elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_GCC
 #include "opal/sys/gcc_builtin/atomic.h"
-#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_OSX
-#include "opal/sys/osx/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
 #include "opal/sys/x86_64/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM
