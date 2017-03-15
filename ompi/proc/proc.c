@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2017 Research Organization for Information Science
@@ -345,12 +345,9 @@ int ompi_proc_complete_init(void)
 
     if (ompi_process_info.num_procs >= ompi_add_procs_cutoff) {
         char *val = NULL;
-        opal_process_name_t wildcard_rank;
-        wildcard_rank.jobid = OMPI_PROC_MY_NAME->jobid;
-        wildcard_rank.vpid = OMPI_NAME_WILDCARD->vpid;
         /* retrieve the local peers */
         OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
-                              &wildcard_rank, &val, OPAL_STRING);
+                              OMPI_PROC_MY_NAME, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
             char **peers = opal_argv_split(val, ',');
             int i;
