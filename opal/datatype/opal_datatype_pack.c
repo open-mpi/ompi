@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -464,9 +464,7 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
     unsigned char *conv_ptr, *iov_ptr;
     size_t iov_len_local;
     uint32_t iov_count;
-    int type, rc;
-    const opal_convertor_master_t* master = pConvertor->master;
-    ptrdiff_t advance;
+    int type;
 
     DO_DEBUG( opal_output( 0, "opal_convertor_general_pack( %p:%p, {%p, %lu}, %d )\n",
                            (void*)pConvertor, (void*)pConvertor->pBaseBuf,
@@ -566,7 +564,10 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                             pStack->disp + local_disp);
                 pos_desc++;
+#if 0
+            // This label currently in another if 0'ed out block
             update_loop_description:  /* update the current state */
+#endif
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
