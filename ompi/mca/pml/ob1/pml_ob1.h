@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -60,9 +60,7 @@ struct mca_pml_ob1_t {
     size_t rdma_retries_limit;
     int max_rdma_per_request;
     int max_send_per_range;
-    bool leave_pinned;
     bool use_all_rdma;
-    int leave_pinned_pipeline;
 
     /* lock queue access */
     opal_mutex_t lock;
