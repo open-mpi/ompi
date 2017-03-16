@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -27,6 +27,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
 #include "opal/mca/mpool/mpool.h"
+#include "opal/runtime/opal_params.h"
 #include "pml_ob1.h"
 #include "pml_ob1_rdma.h"
 
@@ -79,7 +80,7 @@ size_t mca_pml_ob1_rdma_btls(
             /* do not use the RDMA protocol with this btl if 1) leave pinned is disabled,
              * 2) the btl supports put, and 3) the fragment is larger than the minimum
              * pipeline size specified by the BTL */
-            if (!mca_pml_ob1.leave_pinned && (btl->btl_flags & MCA_BTL_FLAGS_PUT) &&
+            if (!opal_leave_pinned && (btl->btl_flags & MCA_BTL_FLAGS_PUT) &&
                   size > btl->btl_min_rdma_pipeline_size) {
                 continue;
             }
@@ -102,7 +103,7 @@ size_t mca_pml_ob1_rdma_btls(
     /* if we don't use leave_pinned and all BTLs that already have this memory
      * registered amount to less then half of available bandwidth - fall back to
      * pipeline protocol */
-    if (0 == num_btls_used || (!mca_pml_ob1.leave_pinned && weight_total < 0.5))
+    if (0 == num_btls_used || (!opal_leave_pinned && weight_total < 0.5))
         return 0;
 
     mca_pml_ob1_calc_weighted_length(rdma_btls, num_btls_used, size,
