@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,10 +41,17 @@ double MPI_Wtime(void)
 {
     double wtime;
 
+    /*
+     * See https://github.com/open-mpi/ompi/issues/3003
+     * For now we are forcing the use of gettimeofday() until we find a
+     * more portable solution.
+     */
+#if 0
 #if OPAL_TIMER_CYCLE_NATIVE
     wtime = ((double) opal_timer_base_get_cycles()) / opal_timer_base_get_freq();
 #elif OPAL_TIMER_USEC_NATIVE
     wtime = ((double) opal_timer_base_get_usec()) / 1000000.0;
+#endif
 #else
     /* Fall back to gettimeofday() if we have nothing else */
     struct timeval tv;
