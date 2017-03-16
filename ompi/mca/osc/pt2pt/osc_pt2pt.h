@@ -10,7 +10,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -669,7 +669,6 @@ static inline void osc_pt2pt_copy_for_send (void *target, size_t target_len, con
  */
 static inline void osc_pt2pt_gc_clean (ompi_osc_pt2pt_module_t *module)
 {
-    ompi_request_t *request;
     opal_list_item_t *item;
 
     OPAL_THREAD_LOCK(&module->gc_lock);

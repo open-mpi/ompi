@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
@@ -408,40 +408,6 @@ static int mca_btl_tcp_component_close(void)
 #if OPAL_CUDA_SUPPORT
     mca_common_cuda_fini();
 #endif /* OPAL_CUDA_SUPPORT */
-
-#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
-    OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_eager_mutex);
-    OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max_mutex);
-
-    if( (NULL != mca_btl_tcp_event_base) &&
-        (mca_btl_tcp_event_base != opal_sync_event_base) ) {
-        /* Turn of the progress thread before moving forward */
-        if( -1 != mca_btl_tcp_progress_thread_trigger ) {
-            mca_btl_tcp_progress_thread_trigger = 0;
-            /* Let the progress thread know that we're going away */
-            if( -1 != mca_btl_tcp_pipe_to_progress[1] ) {
-                close(mca_btl_tcp_pipe_to_progress[1]);
-                mca_btl_tcp_pipe_to_progress[1] = -1;
-            }
-            while( -1 != mca_btl_tcp_progress_thread_trigger ) {
-                /*event_base_loopbreak(mca_btl_tcp_event_base);*/
-                sched_yield();
-                usleep(100); /* give app a chance to re-enter library */
-             }
-        }
-        opal_event_del(&mca_btl_tcp_component.tcp_recv_thread_async_event);
-        opal_event_base_free(mca_btl_tcp_event_base);
-        mca_btl_tcp_event_base = NULL;
-
-        /* Close the remaining pipes */
-        if( -1 != mca_btl_tcp_pipe_to_progress[0] ) {
-            close(mca_btl_tcp_pipe_to_progress[0]);
-            mca_btl_tcp_pipe_to_progress[0] = -1;
-        }
-    }
-    OBJ_DESTRUCT(&mca_btl_tcp_ready_frag_mutex);
-    OBJ_DESTRUCT(&mca_btl_tcp_ready_frag_pending_queue);
-#endif
 
     return OPAL_SUCCESS;
 }

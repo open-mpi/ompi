@@ -763,7 +763,6 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
     if (OPAL_UNLIKELY(NULL == proc)) {
         mca_btl_base_endpoint_t *endpoint;
         opal_proc_t *opal_proc;
-        int rc;
 
         BTL_VERBOSE(("adding tcp proc for unknown peer {.jobid = 0x%x, .vpid = 0x%x}",
                      name->jobid, name->vpid));
