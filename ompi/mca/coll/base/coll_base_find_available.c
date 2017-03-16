@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -46,9 +46,6 @@
 static int init_query(const mca_base_component_t * ls,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
-static int init_query_2_0_0(const mca_base_component_t * ls,
-                            bool enable_progress_threads,
-                            bool enable_mpi_threads);
 
 /*
  * Scan down the list of successfully opened components and query each of
@@ -106,6 +103,20 @@ int mca_coll_base_find_available(bool enable_progress_threads,
 
 
 /*
+ * Query a specific component, coll v2.0.0
+ */
+static inline int
+init_query_2_0_0(const mca_base_component_t * component,
+                 bool enable_progress_threads,
+                 bool enable_mpi_threads)
+{
+    mca_coll_base_component_2_0_0_t *coll =
+        (mca_coll_base_component_2_0_0_t *) component;
+
+    return coll->collm_init_query(enable_progress_threads,
+                                  enable_mpi_threads);
+}
+/*
  * Query a component, see if it wants to run at all.  If it does, save
  * some information.  If it doesn't, close it.
  */
@@ -138,33 +149,11 @@ static int init_query(const mca_base_component_t * component,
     }
 
     /* Query done -- look at the return value to see what happened */
-
-    if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:find_available: coll component %s is not available",
-                            component->mca_component_name);
-    } else {
-        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:find_available: coll component %s is available",
-                            component->mca_component_name);
-    }
-
-    /* All done */
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                        "coll:find_available: coll component %s is %savailable",
+                        component->mca_component_name,
+                        (OMPI_SUCCESS == ret) ? "": "not ");
 
     return ret;
 }
 
-
-/*
- * Query a specific component, coll v2.0.0
- */
-static int init_query_2_0_0(const mca_base_component_t * component,
-                            bool enable_progress_threads,
-                            bool enable_mpi_threads)
-{
-    mca_coll_base_component_2_0_0_t *coll =
-        (mca_coll_base_component_2_0_0_t *) component;
-
-    return coll->collm_init_query(enable_progress_threads,
-                                  enable_mpi_threads);
-}

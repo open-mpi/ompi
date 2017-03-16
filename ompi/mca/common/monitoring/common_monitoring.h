@@ -71,7 +71,7 @@ static inline int mca_common_monitoring_get_world_rank(int dst, struct ompi_comm
                                                        int*world_rank)
 {
     opal_process_name_t tmp;
-    
+
     /* find the processor of the destination */
     ompi_proc_t *proc = ompi_group_get_proc_ptr(comm->c_remote_group, dst, true);
     if( ompi_proc_is_sentinel(proc) ) {
@@ -79,7 +79,7 @@ static inline int mca_common_monitoring_get_world_rank(int dst, struct ompi_comm
     } else {
         tmp = proc->super.proc_name;
     }
-    
+
     /* find its name*/
     uint64_t rank, key = *((uint64_t*)&tmp);
     /**
