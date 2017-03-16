@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,6 +41,12 @@ double MPI_Wtick(void)
 {
     OPAL_CR_NOOP_PROGRESS();
 
+    /*
+     * See https://github.com/open-mpi/ompi/issues/3003
+     * For now we are forcing the use of gettimeofday() until we find a
+     * more portable solution.
+     */
+#if 0
 #if OPAL_TIMER_USEC_NATIVE
     /* We may or may not have native usec precision on Windows, so put
        this #if before the #ifdef checking for Windows. */
@@ -49,6 +56,7 @@ double MPI_Wtick(void)
         opal_output( 0, "No timer frequency\n" );
     }
     return (double)opal_timer_base_get_freq();
+#endif
 #else
     /* Otherwise, we already return usec precision. */
     return 0.000001;
