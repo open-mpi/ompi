@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -566,7 +566,7 @@ BEGIN_C_DECLS
      * to opal_argv_free()) by the caller.
      */
     OPAL_DECLSPEC int opal_cmd_line_get_tail(opal_cmd_line_t *cmd, int *tailc,
-                                             char ***tailv) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
+                                             char ***tailv);
 
 END_C_DECLS
 
