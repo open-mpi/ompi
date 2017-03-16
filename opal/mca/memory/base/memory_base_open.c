@@ -69,26 +69,9 @@ static opal_memory_base_component_2_0_0_t empty_component = {
  */
 opal_memory_base_component_2_0_0_t *opal_memory = &empty_component;
 
-#if MEMORY_LINUX_PTMALLOC2
-/*
- * Note that this is a minor abstraction violation (that has actually
- * existed for quite a long time -- it used to be up in
- * ompi_mpi_init(); yoinks!): we're including a component's header
- * file here.  This is an unfortunate necessity: the linux/ptmallox
- * system hooks in pre-main, and has to be initialized before any
- * component or module has even been created.  Sad panda.
- */
-#include "opal/mca/memory/linux/memory_linux.h"
-#endif
 
 void opal_memory_base_malloc_init_hook (void)
 {
-#if MEMORY_LINUX_PTMALLOC2
-    /* See above comment about linux/ptmalloc2 about why this
-       abstraction violation is here. */
-    opal_memory->memoryc_init_hook = opal_memory_linux_malloc_init_hook;
-#endif
-
     if (opal_memory->memoryc_init_hook) {
         opal_memory->memoryc_init_hook ();
     }
@@ -110,14 +93,6 @@ static int opal_memory_base_open(mca_base_open_flag_t flags)
         tmp = (opal_memory_base_component_2_0_0_t *) item->cli_component;
 
         ret = tmp->memoryc_query (&priority);
-#if MEMORY_LINUX_PTMALLOC2
-        /* See above comment about linux/ptmalloc2 about why this
-           abstraction violation is here. */
-        if (0 == strcmp (tmp->memoryc_version.mca_component_name, "linux")) {
-            /* if ptmalloc is enabled always use it */
-            priority = 1000000;
-        }
-#endif
         if (OPAL_SUCCESS != ret || priority < highest_priority) {
             continue;
         }
