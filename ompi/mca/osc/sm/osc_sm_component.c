@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -21,6 +21,7 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/request/request.h"
 #include "opal/util/sys_limits.h"
+#include "opal/include/opal/align.h"
 
 #include "osc_sm.h"
 
@@ -211,7 +212,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         int i, flag;
         size_t pagesize;
         size_t state_size;
-        int posts_size, post_size = (comm_size + 63) / 64;
+        size_t posts_size, post_size = (comm_size + 63) / 64;
 
         OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
                              "allocating shared memory region of size %ld\n", (long) size));
@@ -246,7 +247,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
 	/* user opal/shmem directly to create a shared memory segment */
 	state_size = sizeof(ompi_osc_sm_global_state_t) + sizeof(ompi_osc_sm_node_state_t) * comm_size;
+        state_size += OPAL_ALIGN_PAD_AMOUNT(state_size, 64);
         posts_size = comm_size * post_size * sizeof (uint64_t);
+        posts_size += OPAL_ALIGN_PAD_AMOUNT(posts_size, 64);
         if (0 == ompi_comm_rank (module->comm)) {
             char *data_file;
             if (asprintf(&data_file, "%s"OPAL_PATH_SEP"shared_window_%d.%s",
