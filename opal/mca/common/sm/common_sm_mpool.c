@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
@@ -51,14 +51,6 @@ static void *mca_common_sm_mpool_alloc (mca_mpool_base_module_t *mpool,
   */
 static void mca_common_sm_mpool_free(mca_mpool_base_module_t *mpool,
                                      void *addr);
-
-/**
- * Fault Tolerance Event Notification Function
- * @param state Checkpoint Stae
- * @return OPAL_SUCCESS or failure status
- */
-static int mca_common_sm_mpool_ft_event (int state);
-
 
 /*
  *  Initializes the mpool module.
