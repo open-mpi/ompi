@@ -634,21 +634,24 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
     char **env = NULL, **argv = NULL, *cmd = NULL;
     int rc, i;
     bool found;
+    orte_proc_state_t state;
 
     /* thread-protect common values */
     env = opal_argv_copy(app->env);
-
-    /* setup the pmix environment */
-    if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_fork(&child->name, &env))) {
-        ORTE_ERROR_LOG(rc);
-        goto errorout;
-    }
 
     /* ensure we clear any prior info regarding state or exit status in
      * case this is a restart
      */
     child->exit_code = 0;
     ORTE_FLAG_UNSET(child, ORTE_PROC_FLAG_WAITPID);
+
+    /* setup the pmix environment */
+    if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_fork(&child->name, &env))) {
+        ORTE_ERROR_LOG(rc);
+        state = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
+        goto errorout;
+    }
+
     /* if we are not forwarding output for this job, then
      * flag iof as complete
      */
@@ -693,8 +696,9 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
                 /* can't be done! */
                 orte_show_help("help-orte-odls-base.txt",
                                "orte-odls-base:xterm-rank-out-of-bounds",
-                               true, nm->name.vpid, jobdat->num_procs);
-                child->exit_code = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
+                               true, orte_process_info.nodename,
+                               nm->name.vpid, jobdat->num_procs);
+                state = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
                 goto errorout;
             }
         }
@@ -717,7 +721,7 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
             orte_show_help("help-orte-odls-base.txt",
                            "orte-odls-base:fork-agent-not-found",
                            true, orte_process_info.nodename, orte_fork_agent[0]);
-            child->exit_code = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
+            state = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
             goto errorout;
         }
     } else {
@@ -730,7 +734,7 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
      */
     if (ORTE_SUCCESS != (rc = orte_schizo.setup_child(jobdat, child, app, &env))) {
         ORTE_ERROR_LOG(rc);
-        child->exit_code = rc;
+        state = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
         goto errorout;
     }
 
@@ -754,17 +758,8 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
     }
 
     if (ORTE_SUCCESS != (rc = cd->fork_local(child, cmd, argv, env, jobdat, cd->opts))) {
-        child->exit_code = rc; /* error message already output */
-        goto errorout;
-    }
-    if (ORTE_SUCCESS != rc) {
-        /* do NOT ERROR_LOG this error - it generates
-         * a message/node as most errors will be common
-         * across the entire cluster. Instead, we let orterun
-         * output a consolidated error message for us
-         */
-        ORTE_FLAG_UNSET(child, ORTE_PROC_FLAG_ALIVE);
-        child->exit_code = rc; /* error message already output */
+        /* error message already output */
+        state = ORTE_PROC_STATE_FAILED_TO_START;
         goto errorout;
     }
 
@@ -782,7 +777,8 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
     return;
 
   errorout:
-    ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_START);
+    ORTE_FLAG_UNSET(child, ORTE_PROC_FLAG_ALIVE);
+    ORTE_ACTIVATE_PROC_STATE(&child->name, state);
     if (NULL != env) {
         opal_argv_free(env);
     }

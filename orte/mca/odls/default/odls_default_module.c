@@ -328,6 +328,7 @@ static int do_child(orte_proc_t *child,
     int i;
     sigset_t sigs;
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
+    char dir[MAXPATHLEN];
 
 #if HAVE_SETPGID
     /* Set a new process group for this child, so that any
@@ -425,9 +426,10 @@ static int do_child(orte_proc_t *child,
     /* Exec the new executable */
 
     execve(app, argv, environ_copy);
+    getcwd(dir, sizeof(dir));
     send_error_show_help(write_fd, 1,
                          "help-orte-odls-default.txt", "execve error",
-                         orte_process_info.nodename, app, strerror(errno));
+                         orte_process_info.nodename, dir, app, strerror(errno));
     /* Does not return */
 }
 
