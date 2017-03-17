@@ -9,6 +9,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST = autogen.options
+
 # main library setup
 noinst_LTLIBRARIES = libmca_hwloc.la
 libmca_hwloc_la_SOURCES =
