@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,6 +25,9 @@
 #include <sys/time.h>
 #endif
 #include <stdio.h>
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 
 #include MCA_timer_IMPLEMENTATION_HEADER
 #include "ompi/mpi/c/bindings.h"
@@ -43,8 +48,7 @@ double MPI_Wtick(void)
 
     /*
      * See https://github.com/open-mpi/ompi/issues/3003
-     * For now we are forcing the use of gettimeofday() until we find a
-     * more portable solution.
+     * to get an idea what's going on here.
      */
 #if 0
 #if OPAL_TIMER_USEC_NATIVE
@@ -58,7 +62,19 @@ double MPI_Wtick(void)
     return (double)opal_timer_base_get_freq();
 #endif
 #else
+#if defined(__linux__) && OPAL_HAVE_CLOCK_GETTIME
+    struct timespec spec;
+    double wtick = 0.0;
+    if (0 == clock_getres(CLOCK_MONOTONIC, &spec)){
+        wtick =  spec.tv_sec + spec.tv_nsec * 1.0e-09;
+    } else {
+        /* guess */
+        wtick = 1.0e-09;
+    }
+    return wtick;
+#else
     /* Otherwise, we already return usec precision. */
     return 0.000001;
+#endif
 #endif
 }
