@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,6 +30,7 @@ having specified a directory for your application. Your job will now
 abort.
 
   Local host:        %s
+  Working dir:       %s
   Application name:  %s
   Error:             %s
 #

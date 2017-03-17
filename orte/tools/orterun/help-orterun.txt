@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -296,6 +297,7 @@ while attempting to start process rank %lu.
 %s was unable to start the specified application as it encountered an
 error:
 
+Error code: %d
 Error name: %s
 Node: %s
 
