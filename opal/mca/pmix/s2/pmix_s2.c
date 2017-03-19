@@ -30,7 +30,6 @@
 #include "pmi2_pmap_parser.h"
 
 #include <string.h>
-#include <pmi.h>
 #include <pmi2.h>
 
 #include "opal/mca/pmix/base/base.h"
