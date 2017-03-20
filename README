@@ -112,7 +112,6 @@ General notes
 
 - The run-time systems that are currently supported are:
   - rsh / ssh
-  - LoadLeveler
   - PBS Pro, Torque
   - Platform LSF (v7.0.2 and later)
   - SLURM
@@ -990,10 +989,6 @@ RUN-TIME SYSTEM SUPPORT
 --with-alps
   Force the building of for the Cray Alps run-time environment.  If
   Alps support cannot be found, configure will abort.
-
---with-loadleveler
-  Force the building of LoadLeveler scheduler support.  If LoadLeveler
-  support cannot be found, configure will abort.
 
 --with-lsf=<directory>
   Specify the directory where the LSF libraries and header files are

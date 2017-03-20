@@ -22,7 +22,6 @@ with_devel_headers=yes
 with_alps=no
 with_ftb=no
 with_sge=no
-with_loadleveler=no
 with_xgrid=no
 with_slurm=no
 with_tm=no
