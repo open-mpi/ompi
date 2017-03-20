@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,8 +22,6 @@
 
 #include "opal_config.h"
 #include <opal/sys/timer.h>
-
-OPAL_DECLSPEC extern opal_timer_t opal_timer_linux_freq;
 
 OPAL_DECLSPEC extern opal_timer_t (*opal_timer_base_get_cycles)(void);
 OPAL_DECLSPEC extern opal_timer_t (*opal_timer_base_get_usec)(void);
