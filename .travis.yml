@@ -14,10 +14,9 @@ compiler:
     - gcc
     - clang
 
-# Iterate over 2 different OSs
+# Test only linux now
 os:
     - linux
-    - osx
 
 addons:
     # For Linux, make sure we have some extra packages that we like to
