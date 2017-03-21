@@ -162,6 +162,8 @@ int opal_info_init(int argc, char **argv,
                             "Show only variables with at most this level (1-9)");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 's', NULL, "selected-only", 0,
                             "Show only variables from selected components");
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "show-failed", 0,
+                            "Show the components that failed to load along with the reason why they failed.");
 
     /* set our threading level */
     opal_set_using_threads(false);
@@ -226,6 +228,10 @@ int opal_info_init(int argc, char **argv,
     if (opal_cmd_line_is_taken(opal_info_cmd_line, "selected-only")) {
         /* register only selected components */
         opal_info_register_flags = MCA_BASE_REGISTER_DEFAULT;
+    }
+
+    if( opal_cmd_line_is_taken(opal_info_cmd_line, "show-failed") ) {
+        mca_base_component_track_load_errors = true;
     }
 
     return OPAL_SUCCESS;
