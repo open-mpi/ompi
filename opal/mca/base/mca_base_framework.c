@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,6 +67,7 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
     }
 
     OBJ_CONSTRUCT(&framework->framework_components, opal_list_t);
+    OBJ_CONSTRUCT(&framework->framework_failed_components, opal_list_t);
 
     if (framework->framework_flags & MCA_BASE_FRAMEWORK_FLAG_NO_DSO) {
         flags |= MCA_BASE_REGISTER_STATIC_ONLY;
@@ -228,12 +230,16 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
                                       framework->framework_output);
             OBJ_RELEASE(item);
         }
+        while (NULL != (item = opal_list_remove_first (&framework->framework_failed_components))) {
+            OBJ_RELEASE(item);
+        }
         ret = OPAL_SUCCESS;
     }
 
     framework->framework_flags &= ~(MCA_BASE_FRAMEWORK_FLAG_REGISTERED | MCA_BASE_FRAMEWORK_FLAG_OPEN);
 
     OBJ_DESTRUCT(&framework->framework_components);
+    OBJ_DESTRUCT(&framework->framework_failed_components);
 
     framework_close_output (framework);
 
