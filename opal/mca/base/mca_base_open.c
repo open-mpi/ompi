@@ -49,6 +49,7 @@ int mca_base_opened = 0;
 char *mca_base_system_default_path = NULL;
 char *mca_base_user_default_path = NULL;
 bool mca_base_component_show_load_errors = true;
+bool mca_base_component_track_load_errors = false;
 bool mca_base_component_disable_dlopen = false;
 
 static char *mca_base_verbose = NULL;
@@ -110,6 +111,14 @@ int mca_base_open(void)
                                    &mca_base_component_show_load_errors);
     (void) mca_base_var_register_synonym(var_id, "opal", "mca", NULL, "component_show_load_errors",
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    mca_base_component_track_load_errors = false;
+    var_id = mca_base_var_register("opal", "mca", "base", "component_track_load_errors",
+                                   "Whether to track errors for components that failed to load or not",
+                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &mca_base_component_track_load_errors);
 
     mca_base_component_disable_dlopen = false;
     var_id = mca_base_var_register("opal", "mca", "base", "component_disable_dlopen",

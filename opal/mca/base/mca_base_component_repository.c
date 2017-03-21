@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +56,29 @@ OBJ_CLASS_INSTANCE(mca_base_component_repository_item_t, opal_list_item_t,
 
 #endif /* OPAL_HAVE_DL_SUPPORT */
 
+static void clf_constructor(opal_object_t *obj);
+static void clf_destructor(opal_object_t *obj);
+
+OBJ_CLASS_INSTANCE(mca_base_failed_component_t, opal_list_item_t,
+                   clf_constructor, clf_destructor);
+
+
+static void clf_constructor(opal_object_t *obj)
+{
+    mca_base_failed_component_t *cli = (mca_base_failed_component_t *) obj;
+    cli->comp = NULL;
+    cli->error_msg = NULL;
+}
+
+static void clf_destructor(opal_object_t *obj)
+{
+    mca_base_failed_component_t *cli = (mca_base_failed_component_t *) obj;
+    cli->comp = NULL;
+    if( NULL != cli->error_msg ) {
+        free(cli->error_msg);
+        cli->error_msg = NULL;
+    }
+}
 
 /*
  * Private variables
@@ -408,6 +432,14 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
         }
         opal_output_verbose(vl, 0, "mca_base_component_repository_open: unable to open %s: %s (ignored)",
                             ri->ri_base, err_msg);
+
+        if( mca_base_component_track_load_errors ) {
+            mca_base_failed_component_t *f_comp = OBJ_NEW(mca_base_failed_component_t);
+            f_comp->comp = ri;
+            asprintf(&(f_comp->error_msg), "%s", err_msg);
+            opal_list_append(&framework->framework_failed_components, &f_comp->super);
+        }
+
         return OPAL_ERR_BAD_PARAM;
     }
 
