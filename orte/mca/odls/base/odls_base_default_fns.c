@@ -422,7 +422,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         /* create the map - will already have been done for the novm case */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_map_job(jdata))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto REPORT_ERROR;
         }
         /* find our local procs */
         for (n=0; n < jdata->map->nodes->size; n++) {
@@ -457,7 +457,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         /* compute and save bindings of local children */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto REPORT_ERROR;
         }
     }
 
