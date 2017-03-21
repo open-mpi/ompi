@@ -15,8 +15,9 @@ static int verbose_level = ERROR;
 #define MAX_TRIALS 10
 #define USE_KL_STRATEGY 1
 
-
+#if !defined(MIN)
 #define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
 
 
 int  fill_tab(int **,int *,int,int,int,int);
