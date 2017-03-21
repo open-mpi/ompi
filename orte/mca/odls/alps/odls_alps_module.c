@@ -342,11 +342,7 @@ static int close_open_file_descriptors(int write_fd, orte_iof_base_io_conf_t opt
     return ORTE_SUCCESS;
 }
 
-static int do_child( orte_proc_t *child,
-                    char *app, char **argv,
-                    char **environ_copy,
-                    orte_job_t *jobdat, int write_fd,
-                    orte_iof_base_io_conf_t opts)
+static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
 {
     int i, rc;
     sigset_t sigs;
@@ -355,7 +351,7 @@ static int do_child( orte_proc_t *child,
     /* Setup the pipe to be close-on-exec */
     opal_fd_set_cloexec(write_fd);
 
-    if (NULL != child) {
+    if (NULL != cd->child) {
         /* setup stdout/stderr so that any error messages that we
            may print out will get displayed back at orterun.
 
@@ -369,20 +365,19 @@ static int do_child( orte_proc_t *child,
            always outputs a nice, single message indicating what
            happened
         */
-        if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts,
-                                                           &environ_copy))) {
+        if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&cd->opts, &cd->env))) {
             ORTE_ERROR_LOG(i);
             send_error_show_help(write_fd, 1,
                                  "help-orte-odls-alps.txt",
                                  "iof setup failed",
-                                 orte_process_info.nodename, app);
+                                 orte_process_info.nodename, cd->app->app);
             /* Does not return */
         }
 
         /* now set any child-level controls such as binding */
-        orte_rtc.set(jobdat, child, &environ_copy, write_fd);
+        orte_rtc.set(cd->jdata, cd->child, &cd->env, write_fd);
 
-    } else if (!ORTE_FLAG_TEST(jobdat, ORTE_JOB_FLAG_FORWARD_OUTPUT)) {
+    } else if (!ORTE_FLAG_TEST(cd->jdata, ORTE_JOB_FLAG_FORWARD_OUTPUT)) {
         /* tie stdin/out/err/internal to /dev/null */
         int fdnull;
         for (i=0; i < 3; i++) {
@@ -393,24 +388,24 @@ static int do_child( orte_proc_t *child,
             close(fdnull);
         }
         fdnull = open("/dev/null", O_RDONLY, 0);
-        if (fdnull > opts.p_internal[1]) {
-            dup2(fdnull, opts.p_internal[1]);
+        if (fdnull > cd->opts.p_internal[1]) {
+            dup2(fdnull, cd->opts.p_internal[1]);
         }
         close(fdnull);
     }
 
-    if (ORTE_SUCCESS != close_open_file_descriptors(write_fd, opts)) {
+    if (ORTE_SUCCESS != close_open_file_descriptors(write_fd, cd->opts)) {
         send_error_show_help(write_fd, 1, "help-orte-odls-alps.txt",
                              "close fds",
-                             orte_process_info.nodename, app,
+                             orte_process_info.nodename, cd->app->app,
                              __FILE__, __LINE__);
     }
 
 
-    if (argv == NULL) {
-        argv = malloc(sizeof(char*)*2);
-        argv[0] = strdup(app);
-        argv[1] = NULL;
+    if (cd->argv == NULL) {
+        cd->argv = malloc(sizeof(char*)*2);
+        cd->argv[0] = strdup(cd->app->app);
+        cd->argv[1] = NULL;
     }
 
     /* Set signal handlers back to the default.  Do this close to
@@ -437,19 +432,19 @@ static int do_child( orte_proc_t *child,
 
     if (10 < opal_output_get_verbosity(orte_odls_base_framework.framework_output)) {
         int jout;
-        opal_output(0, "%s STARTING %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), app);
-        for (jout=0; NULL != argv[jout]; jout++) {
-            opal_output(0, "%s\tARGV[%d]: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jout, argv[jout]);
+        opal_output(0, "%s STARTING %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cd->app->app);
+        for (jout=0; NULL != cd->argv[jout]; jout++) {
+            opal_output(0, "%s\tARGV[%d]: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jout, cd->argv[jout]);
         }
-        for (jout=0; NULL != environ_copy[jout]; jout++) {
-            opal_output(0, "%s\tENVIRON[%d]: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jout, environ_copy[jout]);
+        for (jout=0; NULL != cd->env[jout]; jout++) {
+            opal_output(0, "%s\tENVIRON[%d]: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jout, cd->env[jout]);
         }
     }
 
-    execve(app, argv, environ_copy);
+    execve(cd->app->app, cd->argv, cd->env);
     send_error_show_help(write_fd, 1,
                          "help-orte-odls-alps.txt", "execve error",
-                         orte_process_info.nodename, app, strerror(errno));
+                         orte_process_info.nodename, cd->app->app, strerror(errno));
     /* Does not return */
 }
 
@@ -729,4 +724,3 @@ static int orte_odls_alps_restart_proc(orte_proc_t *child)
     }
     return rc;
 }
-
