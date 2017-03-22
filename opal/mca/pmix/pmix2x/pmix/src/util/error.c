@@ -56,6 +56,8 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "INVALID-KEYVAL";
     case PMIX_ERR_INVALID_NUM_PARSED:
         return "INVALID-NUM-PARSED";
+    case PMIX_ERR_TAKE_NEXT_OPTION:
+        return "TAKE-NEXT-OPTION";
 
     case PMIX_ERR_INVALID_ARGS:
         return "INVALID-ARGS";
@@ -157,6 +159,14 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "PMIX_ERR_WILDCARD";
     case PMIX_NOTIFY_ALLOC_COMPLETE:
         return "PMIX ALLOC OPERATION COMPLETE";
+    case PMIX_JCTRL_CHECKPOINT:
+        return "PMIX JOB CONTROL CHECKPOINT";
+    case PMIX_JCTRL_PREEMPT_ALERT:
+        return "PMIX PRE-EMPTION ALERT";
+    case PMIX_MONITOR_HEARTBEAT_ALERT:
+        return "PMIX HEARTBEAT ALERT";
+    case PMIX_MONITOR_FILE_ALERT:
+        return "PMIX FILE MONITOR ALERT";
     case PMIX_SUCCESS:
         return "SUCCESS";
     default:

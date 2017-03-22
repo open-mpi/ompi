@@ -473,6 +473,59 @@ pmix_status_t PMIx_Allocation_request_nb(pmix_alloc_directive_t directive,
                                          pmix_info_t *info, size_t ninfo,
                                          pmix_info_cbfunc_t cbfunc, void *cbdata);
 
+/* Request a job control action. The targets array identifies the
+ * processes to which the requested job control action is to be applied.
+ * A NULL value can be used to indicate all processes in the caller's
+ * nspace. The use of PMIX_RANK_WILDARD can also be used to indicate
+ * that all processes in the given nspace are to be included.
+ *
+ * The directives are provided as pmix_info_t structs in the directives
+ * array. The callback function provides a status to indicate whether or
+ * not the request was granted, and to provide some information as to
+ * the reason for any denial in the pmix_info_cbfunc_t array of pmix_info_t
+ * structures. If non-NULL, then the specified release_fn must be called
+ * when the callback function completes - this will be used to release
+ * any provided pmix_info_t array.
+ */
+pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_t ntargets,
+                                  const pmix_info_t directives[], size_t ndirs,
+                                  pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* Request that something be monitored - e.g., that the server monitor
+ * this process for periodic heartbeats as an indication that the process
+ * has not become "wedged". When a monitor detects the specified alarm
+ * condition, it will generate an event notification using the provided
+ * error code and passing along any available relevant information. It is
+ * up to the caller to register a corresponding event handler.
+ *
+ * Params:
+ *
+ * monitor: attribute indicating the type of monitor being requested - e.g.,
+ *          PMIX_MONITOR_FILE to indicate that the requestor is asking that
+ *          a file be monitored.
+ *
+ * error: the status code to be used when generating an event notification
+ *        alerting that the monitor has been triggered. The range of the
+ *        notification defaults to PMIX_RANGE_NAMESPACE - this can be
+ *        changed by providing a PMIX_RANGE directive
+ *
+ * directives: characterize the monitoring request (e.g., monitor file size)
+ *             and frequency of checking to be done
+ *
+ * cbfunc: provides a status to indicate whether or not the request was granted,
+ *         and to provide some information as to the reason for any denial in
+ *         the pmix_info_cbfunc_t array of pmix_info_t structures.
+ *
+ * Note: a process can send a heartbeat to the server using the PMIx_Heartbeat
+ * macro provided below*/
+pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pmix_status_t error,
+                                      const pmix_info_t directives[], size_t ndirs,
+                                      pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* define a special macro to simplify sending of a heartbeat */
+#define PMIx_Heartbeat() \
+    PMIx_Process_monitor_nb(PMIX_SEND_HEARTBEAT, NULL, 0, NULL, NULL)
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

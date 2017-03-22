@@ -102,7 +102,9 @@ static opal_pmix_server_module_t pmix_server = {
     .notify_event = pmix_server_notify_event,
     .query = pmix_server_query_fn,
     .tool_connected = pmix_tool_connected_fn,
-    .log = pmix_server_log_fn
+    .log = pmix_server_log_fn,
+    .allocate = pmix_server_alloc_fn,
+    .job_control = pmix_server_job_ctrl_fn
 };
 
 void pmix_server_register_params(void)
@@ -262,6 +264,12 @@ int pmix_server_init(void)
     /* use only one listener */
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_SINGLE_LISTENER);
+    kv->type = OPAL_BOOL;
+    kv->data.flag = true;
+    opal_list_append(&info, &kv->super);
+    /* tell the server to use its own internal monitoring */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_SERVER_ENABLE_MONITORING);
     kv->type = OPAL_BOOL;
     kv->data.flag = true;
     opal_list_append(&info, &kv->super);

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -110,6 +110,15 @@ typedef pmix_status_t (*pmix_ptl_send_fn_t)(struct pmix_peer_t *peer,
                                             pmix_buffer_t *bfr,
                                             pmix_ptl_tag_t tag);
 
+/* (ONE-WAY) register a persistent recv */
+typedef pmix_status_t (*pmix_ptl_recv_fn_t)(struct pmix_peer_t *peer,
+                                            pmix_ptl_cbfunc_t cbfunc,
+                                            pmix_ptl_tag_t tag);
+
+/* Cancel a persistent recv */
+typedef pmix_status_t (*pmix_ptl_cancel_fn_t)(struct pmix_peer_t *peer,
+                                              pmix_ptl_tag_t tag);
+
 /* connect to a peer - this is a blocking function
  * to establish a connection to a peer. It assigns
  * the corresponding module to the peer's compat
@@ -126,6 +135,8 @@ struct pmix_ptl_module_t {
     pmix_ptl_finalize_fn_t              finalize;
     pmix_ptl_send_recv_fn_t             send_recv;
     pmix_ptl_send_fn_t                  send;
+    pmix_ptl_recv_fn_t                  recv;
+    pmix_ptl_cancel_fn_t                cancel;
     pmix_ptl_connect_to_peer_fn_t       connect_to_peer;
 };
 typedef struct pmix_ptl_module_t pmix_ptl_module_t;
@@ -152,6 +163,8 @@ typedef struct {
     pmix_ptl_get_available_modules_fn_t     get_available_modules;
     pmix_ptl_send_recv_fn_t                 send_recv;
     pmix_ptl_send_fn_t                      send_oneway;
+    pmix_ptl_recv_fn_t                      recv;
+    pmix_ptl_cancel_fn_t                    cancel;
     pmix_ptl_connect_to_peer_fn_t           connect_to_peer;
     pmix_ptl_start_listening_fn_t           start_listening;
     pmix_ptl_stop_listening_fn_t            stop_listening;

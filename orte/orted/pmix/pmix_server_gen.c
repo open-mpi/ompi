@@ -40,10 +40,12 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/rmaps/rmaps_types.h"
+#include "orte/mca/schizo/schizo.h"
 #include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
 
 #include "pmix_server_internal.h"
@@ -611,7 +613,15 @@ static void _query(int sd, short args, void *cbdata)
                      * and ask directly for the info - if rank=wildcard, then
                      * we need to xcast the request and collect the results */
                 }
-
+            } else if (0 == strcmp(q->keys[n], OPAL_PMIX_TIME_REMAINING)) {
+                kv = OBJ_NEW(opal_value_t);
+                kv->key = strdup(OPAL_PMIX_TIME_REMAINING);
+                kv->type = OPAL_UINT32;
+                if (ORTE_SUCCESS != orte_schizo.get_remaining_time(&kv->data.uint32)) {
+                    OBJ_RELEASE(kv);
+                } else {
+                    opal_list_append(results, &kv->super);
+                }
             }
         }
     }
@@ -812,4 +822,63 @@ void pmix_server_log_fn(opal_process_name_t *requestor,
     if (NULL != cbfunc) {
         cbfunc(OPAL_SUCCESS, cbdata);
     }
+}
+
+int pmix_server_job_ctrl_fn(const opal_process_name_t *requestor,
+                            opal_list_t *targets,
+                            opal_list_t *info,
+                            opal_pmix_info_cbfunc_t cbfunc,
+                            void *cbdata)
+{
+    opal_value_t *val;
+    int rc, n;
+    orte_proc_t *proc;
+    opal_pointer_array_t parray, *ptrarray;
+    opal_namelist_t *nm;
+
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s job control request from %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(requestor));
+
+    OPAL_LIST_FOREACH(val, info, opal_value_t) {
+        if (NULL == val->key) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            continue;
+        }
+
+        if (0 == strcmp(val->key, OPAL_PMIX_JOB_CTRL_KILL)) {
+            /* convert the list of targets to a pointer array */
+            if (NULL == targets) {
+                ptrarray = NULL;
+            } else {
+                OBJ_CONSTRUCT(&parray, opal_pointer_array_t);
+                OPAL_LIST_FOREACH(nm, targets, opal_namelist_t) {
+                    /* get the proc object for this proc */
+                    if (NULL == (proc = orte_get_proc_object(&nm->name))) {
+                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                        continue;
+                    }
+                    OBJ_RETAIN(proc);
+                    opal_pointer_array_add(&parray, proc);
+                }
+                ptrarray = &parray;
+            }
+            if (ORTE_SUCCESS != (rc = orte_plm.terminate_procs(ptrarray))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            if (NULL != ptrarray) {
+                /* cleanup the array */
+                for (n=0; n < parray.size; n++) {
+                    if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(&parray, n))) {
+                        OBJ_RELEASE(proc);
+                    }
+                }
+                OBJ_DESTRUCT(&parray);
+            }
+            continue;
+        }
+    }
+
+    return ORTE_SUCCESS;
 }

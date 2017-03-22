@@ -279,6 +279,8 @@ OPAL_MODULE_DECLSPEC void pmix2x_value_load(pmix_value_t *v,
 OPAL_MODULE_DECLSPEC int pmix2x_value_unload(opal_value_t *kv,
                                             const pmix_value_t *v);
 
+OPAL_MODULE_DECLSPEC opal_pmix_alloc_directive_t pmix2x_convert_allocdir(pmix_alloc_directive_t dir);
+
 END_C_DECLS
 
 #endif /* MCA_PMIX_EXTERNAL_H */

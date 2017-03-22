@@ -3,26 +3,27 @@
 #
 # Copyright (c) 2017      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
+AM_CPPFLAGS = $(LTDLINCL)
+
 # main library setup
-noinst_LTLIBRARIES = libmca_sensor.la
-libmca_sensor_la_SOURCES =
+noinst_LTLIBRARIES = libmca_psensor.la
+libmca_psensor_la_SOURCES =
 
 # local files
-headers = sensor.h \
-          sensor_types.h
+headers = psensor.h
 
-libmca_sensor_la_SOURCES += $(headers)
+libmca_psensor_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ortedir = $(ompiincludedir)/$(subdir)
-nobase_orte_HEADERS = $(headers)
+pmixdir = $(pmixincludedir)/$(subdir)
+nobase_pmix_HEADERS = $(headers)
 endif
 
 include base/Makefile.am
