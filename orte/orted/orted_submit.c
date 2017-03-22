@@ -2278,6 +2278,23 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
         opal_setenv(env_name, "1", true, &app->env);
     }
     free(env_name);
+
+    /* setup the attach fifo in case someone wants to re-attach */
+    if (orte_create_session_dirs) {
+        /* create the attachment FIFO and setup readevent - cannot be
+         * done if no session dirs exist!
+         */
+        attach_fifo = opal_os_path(false, orte_process_info.job_session_dir,
+                                   "debugger_attach_fifo", NULL);
+        if ((mkfifo(attach_fifo, FILE_MODE) < 0) && errno != EEXIST) {
+            opal_output(0, "CANNOT CREATE FIFO %s: errno %d", attach_fifo, errno);
+            free(attach_fifo);
+            return;
+        }
+        strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH - 1);
+        free(attach_fifo);
+        open_fifo();
+    }
 }
 
 static bool mpir_breakpoint_fired = false;
