@@ -62,6 +62,9 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
     pmix_regevents_info_t *reginfoptr, *regnext;
     pmix_peer_events_info_t *pr, *pnext;
     pmix_rank_info_t *info, *pinfo;
+    pmix_ptl_posted_recv_t *rcv;
+    pmix_buffer_t buf;
+    pmix_ptl_hdr_t hdr;
 
     /* stop all events */
     if (peer->recv_ev_active) {
@@ -143,6 +146,25 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
         pmix_globals.connected = false;
          /* set the public error status */
         err = PMIX_ERR_LOST_CONNECTION_TO_SERVER;
+        /* it is possible that we have sendrecv's in progress where
+         * we are waiting for a response to arrive. Since we have
+         * lost connection to the server, that will never happen.
+         * Thus, to preclude any chance of hanging, cycle thru
+         * the list of posted recvs and complete any that are
+         * the return call from a sendrecv - i.e., any that are
+         * waiting on dynamic tags */
+        PMIX_CONSTRUCT(&buf, pmix_buffer_t);
+        hdr.nbytes = 0; // initialize the hdr to something safe
+        PMIX_LIST_FOREACH(rcv, &pmix_ptl_globals.posted_recvs, pmix_ptl_posted_recv_t) {
+            if (PMIX_PTL_TAG_DYNAMIC <= rcv->tag && UINT_MAX != rcv->tag) {
+                if (NULL != rcv->cbfunc) {
+                    /* construct and load the buffer */
+                    hdr.tag = rcv->tag;
+                    rcv->cbfunc(pmix_globals.mypeer, &hdr, &buf, rcv->cbdata);
+                }
+            }
+        }
+        PMIX_DESTRUCT(&buf);
     }
     PMIX_REPORT_EVENT(err, _notify_complete);
 }
