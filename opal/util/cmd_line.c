@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -70,6 +70,7 @@ struct cmd_line_option_t {
     char *clo_mca_param_env_var;
     void *clo_variable_dest;
     bool clo_variable_set;
+    opal_cmd_line_otype_t clo_otype;
 };
 typedef struct cmd_line_option_t cmd_line_option_t;
 static void option_constructor(cmd_line_option_t *cmd);
@@ -141,6 +142,7 @@ static cmd_line_option_t *find_option(opal_cmd_line_t *cmd,
 static int set_dest(cmd_line_option_t *option, char *sval);
 static void fill(const cmd_line_option_t *a, char result[3][BUFSIZ]);
 static int qsort_callback(const void *a, const void *b);
+static opal_cmd_line_otype_t get_help_otype(opal_cmd_line_t *cmd);
 
 
 /*
@@ -255,6 +257,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
     int num_args_used;
     bool have_help_option = false;
     bool printed_error = false;
+    bool help_without_arg = false;
 
     /* Bozo check */
 
@@ -394,10 +397,17 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
                    recognized */
 
                 for (j = 0; j < option->clo_num_params; ++j, ++i) {
-
-                    /* If we run out of parameters, error */
-
+                    /* If we run out of parameters, error, unless its a help request
+                       which can have 0 or 1 arguments */
                     if (i >= cmd->lcl_argc) {
+                    /* If this is a help request, can have no arguments */
+                        if((NULL != option->clo_single_dash_name && 
+                           0 == strcmp(option->clo_single_dash_name, "h")) || 
+                           (NULL != option->clo_long_name &&
+                           0 == strcmp(option->clo_long_name, "help"))) {
+                            help_without_arg = true;
+                            continue;
+                        }
                         fprintf(stderr, "%s: Error: option \"%s\" did not "
                                 "have enough parameters (%d)\n",
                                 cmd->lcl_argv[0],
@@ -454,10 +464,11 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
                     }
                 }
 
-                /* If there are no options to this command, see if we
-                   need to set a boolean value to "true". */
+                /* If there are no options to this command or it is
+                   a help request with no argument, see if we need to 
+                   set a boolean value to "true". */
 
-                if (0 == option->clo_num_params) {
+                if (0 == option->clo_num_params || help_without_arg) {
                     if (OPAL_SUCCESS != (ret = set_dest(option, "1"))) {
                         opal_mutex_unlock(&cmd->lcl_mutex);
                         return ret;
@@ -524,6 +535,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     char *start, *desc, *ptr;
     opal_list_item_t *item;
     cmd_line_option_t *option, **sorted;
+    opal_cmd_line_otype_t otype;
 
     /* Thread serialization */
 
@@ -550,135 +562,120 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     }
     qsort(sorted, i, sizeof(cmd_line_option_t*), qsort_callback);
 
+    /* Find if a help argument was passed, and return its type if it was. */
+
+    otype = get_help_otype(cmd);
+
     /* Now go through the sorted array and make the strings */
 
     for (j = 0; j < opal_list_get_size(&cmd->lcl_options); ++j) {
         option = sorted[j];
-        if (NULL != option->clo_description) {
-            bool filled = false;
+        if(otype == OPAL_CMD_LINE_OTYPE_NULL || option->clo_otype == otype) {
+            if (NULL != option->clo_description) {
+                bool filled = false;
 
-            /* Build up the output line */
+                /* Build up the output line */
 
-            memset(line, 0, sizeof(line));
-            if ('\0' != option->clo_short_name) {
-                line[0] = '-';
-                line[1] = option->clo_short_name;
-                filled = true;
-            } else {
-                line[0] = ' ';
-                line[1] = ' ';
-            }
-            if (NULL != option->clo_single_dash_name) {
-                line[2] = (filled) ? '|' : ' ';
-                strncat(line, "-", sizeof(line) - 1);
-                strncat(line, option->clo_single_dash_name, sizeof(line) - 1);
-                filled = true;
-            }
-            if (NULL != option->clo_long_name) {
-                if (filled) {
-                    strncat(line, "|", sizeof(line) - 1);
+                memset(line, 0, sizeof(line));
+                if ('\0' != option->clo_short_name) {
+                    line[0] = '-';
+                    line[1] = option->clo_short_name;
+                    filled = true;
                 } else {
+                    line[0] = ' ';
+                    line[1] = ' ';
+                }
+                if (NULL != option->clo_single_dash_name) {
+                    line[2] = (filled) ? '|' : ' ';
+                    strncat(line, "-", sizeof(line) - 1);
+                    strncat(line, option->clo_single_dash_name, sizeof(line) - 1);
+                    filled = true;
+                }
+                if (NULL != option->clo_long_name) {
+                    if (filled) {
+                        strncat(line, "|", sizeof(line) - 1);
+                    } else {
+                        strncat(line, " ", sizeof(line) - 1);
+                    }
+                    strncat(line, "--", sizeof(line) - 1);
+                    strncat(line, option->clo_long_name, sizeof(line) - 1);
+                }
+                strncat(line, " ", sizeof(line) - 1);
+                for (i = 0; (int)i < option->clo_num_params; ++i) {
+                    len = sizeof(temp);
+                    snprintf(temp, len, "<arg%d> ", (int)i);
+                    strncat(line, temp, sizeof(line) - 1);
+                }
+                if (option->clo_num_params > 0) {
                     strncat(line, " ", sizeof(line) - 1);
                 }
-                strncat(line, "--", sizeof(line) - 1);
-                strncat(line, option->clo_long_name, sizeof(line) - 1);
-            }
-                   strncat(line, " ", sizeof(line) - 1);
-            for (i = 0; (int)i < option->clo_num_params; ++i) {
-                len = sizeof(temp);
-                snprintf(temp, len, "<arg%d> ", (int)i);
-                strncat(line, temp, sizeof(line) - 1);
-            }
-            if (option->clo_num_params > 0) {
-                strncat(line, " ", sizeof(line) - 1);
-            }
 
-            /* If we're less than param width, then start adding the
-               description to this line.  Otherwise, finish this line
-               and start adding the description on the next line. */
+                /* If we're less than param width, then start adding the
+                   description to this line.  Otherwise, finish this line
+                   and start adding the description on the next line. */
 
-            if (strlen(line) > PARAM_WIDTH) {
-                opal_argv_append(&argc, &argv, line);
-
-                /* Now reset the line to be all blanks up to
-                   PARAM_WIDTH so that we can start adding the
-                   description */
-
-                memset(line, ' ', PARAM_WIDTH);
-                line[PARAM_WIDTH] = '\0';
-            } else {
-
-                /* Add enough blanks to the end of the line so that we
-                   can start adding the description */
-
-                for (i = strlen(line); i < PARAM_WIDTH; ++i) {
-                    line[i] = ' ';
-                }
-                line[i] = '\0';
-            }
-
-            /* Loop over adding the description to the array, breaking
-               the string at most at MAX_WIDTH characters.  We need a
-               modifyable description (for simplicity), so strdup the
-               clo_description (because it's likely a compiler
-               constant, and may barf if we write temporary \0's in
-               the middle). */
-
-            desc = strdup(option->clo_description);
-            if (NULL == desc) {
-                free(sorted);
-                opal_mutex_unlock(&cmd->lcl_mutex);
-                return strdup("");
-            }
-            start = desc;
-            len = strlen(desc);
-            do {
-
-                /* Trim off leading whitespace */
-
-                while (isspace(*start) && start < desc + len) {
-                    ++start;
-                }
-                if (start >= desc + len) {
-                    break;
-                }
-
-                /* Last line */
-
-                if (strlen(start) < (MAX_WIDTH - PARAM_WIDTH)) {
-                    strncat(line, start, sizeof(line) - 1);
+                if (strlen(line) > PARAM_WIDTH) {
                     opal_argv_append(&argc, &argv, line);
-                    break;
+
+                    /* Now reset the line to be all blanks up to
+                       PARAM_WIDTH so that we can start adding the
+                       description */
+
+                    memset(line, ' ', PARAM_WIDTH);
+                    line[PARAM_WIDTH] = '\0';
+                } else {
+
+                    /* Add enough blanks to the end of the line so that we
+                       can start adding the description */
+
+                    for (i = strlen(line); i < PARAM_WIDTH; ++i) {
+                        line[i] = ' ';
+                    }
+                    line[i] = '\0';
                 }
 
-                /* We have more than 1 line's worth left -- find this
-                   line's worth and add it to the array.  Then reset
-                   and loop around to get the next line's worth. */
+                /* Loop over adding the description to the array, breaking
+                   the string at most at MAX_WIDTH characters.  We need a
+                   modifyable description (for simplicity), so strdup the
+                   clo_description (because it's likely a compiler
+                   constant, and may barf if we write temporary \0's in
+                   the middle). */
 
-                for (ptr = start + (MAX_WIDTH - PARAM_WIDTH);
-                     ptr > start; --ptr) {
-                    if (isspace(*ptr)) {
-                        *ptr = '\0';
-                        strncat(line, start, sizeof(line) - 1);
-                        opal_argv_append(&argc, &argv, line);
+                desc = strdup(option->clo_description);
+                if (NULL == desc) {
+                    free(sorted);
+                    opal_mutex_unlock(&cmd->lcl_mutex);
+                    return strdup("");
+                }
+                start = desc;
+                len = strlen(desc);
+                do {
 
-                        start = ptr + 1;
-                        memset(line, ' ', PARAM_WIDTH);
-                        line[PARAM_WIDTH] = '\0';
+                    /* Trim off leading whitespace */
+
+                    while (isspace(*start) && start < desc + len) {
+                        ++start;
+                    }
+                    if (start >= desc + len) {
                         break;
                     }
-                }
 
-                /* If we got all the way back to the beginning of the
-                   string, then go forward looking for a whitespace
-                   and break there. */
+                    /* Last line */
 
-                if (ptr == start) {
+                    if (strlen(start) < (MAX_WIDTH - PARAM_WIDTH)) {
+                        strncat(line, start, sizeof(line) - 1);
+                        opal_argv_append(&argc, &argv, line);
+                        break;
+                    }
+
+                    /* We have more than 1 line's worth left -- find this
+                       line's worth and add it to the array.  Then reset
+                       and loop around to get the next line's worth. */
+
                     for (ptr = start + (MAX_WIDTH - PARAM_WIDTH);
-                         ptr < start + len; ++ptr) {
+                         ptr > start; --ptr) {
                         if (isspace(*ptr)) {
                             *ptr = '\0';
-
                             strncat(line, start, sizeof(line) - 1);
                             opal_argv_append(&argc, &argv, line);
 
@@ -689,17 +686,38 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                         }
                     }
 
-                    /* If we reached the end of the string with no
-                       whitespace, then just add it on and be done */
+                    /* If we got all the way back to the beginning of the
+                       string, then go forward looking for a whitespace
+                       and break there. */
 
-                    if (ptr >= start + len) {
-                        strncat(line, start, sizeof(line) - 1);
-                        opal_argv_append(&argc, &argv, line);
-                        start = desc + len + 1;
+                    if (ptr == start) {
+                        for (ptr = start + (MAX_WIDTH - PARAM_WIDTH);
+                             ptr < start + len; ++ptr) {
+                            if (isspace(*ptr)) {
+                                *ptr = '\0';
+
+                                strncat(line, start, sizeof(line) - 1);
+                                opal_argv_append(&argc, &argv, line);
+
+                                start = ptr + 1;
+                                memset(line, ' ', PARAM_WIDTH);
+                                line[PARAM_WIDTH] = '\0';
+                                break;
+                            }
+                        }
+
+                        /* If we reached the end of the string with no
+                           whitespace, then just add it on and be done */
+
+                        if (ptr >= start + len) {
+                            strncat(line, start, sizeof(line) - 1);
+                            opal_argv_append(&argc, &argv, line);
+                            start = desc + len + 1;
+                        }
                     }
-                }
-            } while (start < desc + len);
-            free(desc);
+                } while (start < desc + len);
+                free(desc);
+            }
         }
     }
     if (NULL != argv) {
@@ -798,7 +816,7 @@ char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, const char *opt, int inst,
                  opal_list_get_end(&cmd->lcl_params) != item;
                  item = opal_list_get_next(item)) {
                 param = (cmd_line_param_t *) item;
-                if (param->clp_option == option) {
+                if (param->clp_argc > 0 && param->clp_option == option) {
                     if (num_found == inst) {
                         opal_mutex_unlock(&cmd->lcl_mutex);
                         return param->clp_argv[idx];
@@ -872,6 +890,7 @@ static void option_constructor(cmd_line_option_t *o)
     o->clo_mca_param_env_var = NULL;
     o->clo_variable_dest = NULL;
     o->clo_variable_set = false;
+    o->clo_otype = OPAL_CMD_LINE_OTYPE_NULL;
 }
 
 
@@ -915,7 +934,7 @@ static void cmd_line_constructor(opal_cmd_line_t *cmd)
        only thread that has this instance), there's no need to lock it
        right now. */
 
-    OBJ_CONSTRUCT(&cmd->lcl_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&cmd->lcl_mutex, opal_recursive_mutex_t);
 
     /* Initialize the lists */
 
@@ -1011,6 +1030,8 @@ static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
         (void) mca_base_var_env_name (e->ocl_mca_param_name,
                                      &option->clo_mca_param_env_var);
     }
+
+    option->clo_otype = e->ocl_otype;
 
     /* Append the item, serializing thread access */
 
@@ -1306,4 +1327,55 @@ static int qsort_callback(const void *aa, const void *bb)
     /* Shrug -- they must be equal */
 
     return 0;
+}
+
+
+/*
+ * Helper function to find the option type specified in the help
+ * command.
+ */
+static opal_cmd_line_otype_t get_help_otype(opal_cmd_line_t *cmd)
+{
+    /* Initialize to NULL, if it remains so, the user asked for
+       "full" help output */
+    opal_cmd_line_otype_t otype = OPAL_CMD_LINE_OTYPE_NULL;
+    char *arg;
+
+    arg = opal_cmd_line_get_param(cmd, "help", 0, 0);
+
+    /* If not "help", check for "h" */
+    if(NULL == arg) {
+        arg = opal_cmd_line_get_param(cmd, "h", 0, 0);
+    }
+
+    /* If arg is still NULL, give them the General info by default */
+    if(NULL == arg) {
+        arg = "general";
+    }
+
+    if (0 == strcmp(arg, "debug")) {
+        otype = OPAL_CMD_LINE_OTYPE_DEBUG;
+    } else if (0 == strcmp(arg, "output")) {
+        otype = OPAL_CMD_LINE_OTYPE_OUTPUT;
+    } else if (0 == strcmp(arg, "input")) {
+        otype = OPAL_CMD_LINE_OTYPE_INPUT;
+    } else if (0 == strcmp(arg, "mapping")) {
+        otype = OPAL_CMD_LINE_OTYPE_MAPPING;
+    } else if (0 == strcmp(arg, "ranking")) {
+        otype = OPAL_CMD_LINE_OTYPE_RANKING;
+    } else if (0 == strcmp(arg, "binding")) {
+        otype = OPAL_CMD_LINE_OTYPE_BINDING;
+    } else if (0 == strcmp(arg, "devel")) {
+        otype = OPAL_CMD_LINE_OTYPE_DEVEL;
+    } else if (0 == strcmp(arg, "compatibility")) {
+        otype = OPAL_CMD_LINE_OTYPE_COMPAT;
+    } else if (0 == strcmp(arg, "launch")) {
+        otype = OPAL_CMD_LINE_OTYPE_LAUNCH;
+    } else if (0 == strcmp(arg, "dvm")) {
+        otype = OPAL_CMD_LINE_OTYPE_DVM;
+    } else if (0 == strcmp(arg, "general")) {
+        otype = OPAL_CMD_LINE_OTYPE_GENERAL;
+    }
+
+    return otype;
 }
