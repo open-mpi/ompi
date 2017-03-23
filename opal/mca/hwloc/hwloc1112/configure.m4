@@ -111,6 +111,10 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1112_CONFIG],[
     enable_libxml2=no
     enable_xml=yes
 
+    # Override -- disable hwloc's nvml support to prevent annoying messages like
+    # "NVIDIA: no NVIDIA devices found" on machines without GPUs
+    enable_nvml=no
+
     # hwloc checks for compiler visibility, and its needs to do
     # this without "picky" flags.
     opal_hwloc_hwloc1112_save_cflags=$CFLAGS
