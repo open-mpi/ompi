@@ -43,7 +43,7 @@ I       3       2       20 bytes        4 msgs sent
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "mpi.h"
+#include <mpi.h>
 
 static MPI_T_pvar_handle count_handle;
 static MPI_T_pvar_handle msize_handle;
@@ -52,13 +52,12 @@ static const char msize_pvar_name[] = "pml_monitoring_messages_size";
 static int count_pvar_idx, msize_pvar_idx;
 static int world_rank, world_size;
 
-static void print_vars(int rank, int size, unsigned long int* msg_count,
-                       unsigned long int*msg_size)
+static void print_vars(int rank, int size, size_t* msg_count, size_t*msg_size)
 {
     int i;
     for(i = 0; i < size; ++i) {
         if(0 != msg_size[i])
-            printf("I\t%d\t%d\t%lu bytes\t%lu msgs sent\n", rank, i, msg_size[i], msg_count[i]);
+            printf("I\t%d\t%d\t%zu bytes\t%zu msgs sent\n", rank, i, msg_size[i], msg_count[i]);
     }
 }
 
@@ -69,8 +68,8 @@ int main(int argc, char* argv[])
     MPI_Status status;
     MPI_Comm newcomm;
     MPI_Request request;
-    unsigned long int*msg_count_p1, *msg_size_p1;
-    unsigned long int*msg_count_p2, *msg_size_p2;
+    size_t*msg_count_p1, *msg_size_p1;
+    size_t*msg_count_p2, *msg_size_p2;
 
     /* first phase : make a token circulated in MPI_COMM_WORLD */
     n = -1;
@@ -126,7 +125,7 @@ int main(int argc, char* argv[])
     }
 
     /* Allocate arrays to retrieve results */
-    msg_count_p1 = calloc(count * 4, sizeof(unsigned long int));
+    msg_count_p1 = calloc(count * 4, sizeof(size_t));
     msg_size_p1 = &msg_count_p1[count];
     msg_count_p2 = &msg_count_p1[2*count];
     msg_size_p2 = &msg_count_p1[3*count];

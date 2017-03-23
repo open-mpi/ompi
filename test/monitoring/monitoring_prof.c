@@ -46,8 +46,6 @@ writing 4x4 matrix to monitoring_avg.mat
 #include <stdlib.h>
 #include <mpi.h>
 #include <string.h>
-#include <stdint.h>
-#include <inttypes.h>
 
 static MPI_T_pvar_session session;
 static int comm_world_size;
@@ -58,7 +56,7 @@ struct monitoring_result
     char * pvar_name;
     int pvar_idx;
     MPI_T_pvar_handle pvar_handle;
-    uint64_t * vector;
+    size_t * vector;
 };
 typedef struct monitoring_result monitoring_result;
 
@@ -75,7 +73,7 @@ static monitoring_result osc_rsizes;
 static monitoring_result coll_counts;
 static monitoring_result coll_sizes;
 
-static int  write_mat(char *, uint64_t *, unsigned int);
+static int  write_mat(char *, size_t *, unsigned int);
 static void init_monitoring_result(const char *, monitoring_result *);
 static void start_monitoring_result(monitoring_result *);
 static void stop_monitoring_result(monitoring_result *);
@@ -128,13 +126,13 @@ int MPI_Init(int* argc, char*** argv)
 int MPI_Finalize(void)
 {
     int result, MPIT_result;
-    uint64_t * exchange_count_matrix_1   = NULL;
-    uint64_t * exchange_size_matrix_1    = NULL;
-    uint64_t * exchange_count_matrix_2   = NULL;
-    uint64_t * exchange_size_matrix_2    = NULL;
-    uint64_t * exchange_all_size_matrix  = NULL;
-    uint64_t * exchange_all_count_matrix = NULL;
-    uint64_t * exchange_all_avg_matrix   = NULL;
+    size_t * exchange_count_matrix_1   = NULL;
+    size_t * exchange_size_matrix_1    = NULL;
+    size_t * exchange_count_matrix_2   = NULL;
+    size_t * exchange_size_matrix_2    = NULL;
+    size_t * exchange_all_size_matrix  = NULL;
+    size_t * exchange_all_count_matrix = NULL;
+    size_t * exchange_all_avg_matrix   = NULL;
 
     stop_monitoring_result(&pml_counts);
     stop_monitoring_result(&pml_sizes);
@@ -155,13 +153,13 @@ int MPI_Finalize(void)
     get_monitoring_result(&coll_sizes);
 
     if (0 == comm_world_rank) {
-        exchange_count_matrix_1   = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
-        exchange_size_matrix_1    = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
-        exchange_count_matrix_2   = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
-        exchange_size_matrix_2    = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
-        exchange_all_size_matrix  = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
-        exchange_all_count_matrix = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
-        exchange_all_avg_matrix   = (uint64_t *) calloc(comm_world_size * comm_world_size, sizeof(uint64_t));
+        exchange_count_matrix_1   = (size_t *) calloc(comm_world_size * comm_world_size, sizeof(size_t));
+        exchange_size_matrix_1    = (size_t *) calloc(comm_world_size * comm_world_size, sizeof(size_t));
+        exchange_count_matrix_2   = (size_t *) calloc(comm_world_size * comm_world_size, sizeof(size_t));
+        exchange_size_matrix_2    = (size_t *) calloc(comm_world_size * comm_world_size, sizeof(size_t));
+        exchange_all_size_matrix  = (size_t *) calloc(comm_world_size * comm_world_size, sizeof(size_t));
+        exchange_all_count_matrix = (size_t *) calloc(comm_world_size * comm_world_size, sizeof(size_t));
+        exchange_all_avg_matrix   = (size_t *) calloc(comm_world_size * comm_world_size, sizeof(size_t));
     }
 
     /* Gather PML and COLL results */
@@ -306,7 +304,7 @@ void init_monitoring_result(const char * pvar_name, monitoring_result * res)
         PMPI_Abort(MPI_COMM_WORLD, count);
     }
 
-    res->vector = (uint64_t *) malloc(comm_world_size * sizeof(uint64_t));
+    res->vector = (size_t *) malloc(comm_world_size * sizeof(size_t));
 }
 
 void start_monitoring_result(monitoring_result * res)
@@ -356,7 +354,7 @@ void destroy_monitoring_result(monitoring_result * res)
     free(res->vector);
 }
 
-int write_mat(char * filename, uint64_t * mat, unsigned int dim)
+int write_mat(char * filename, size_t * mat, unsigned int dim)
 {
     FILE *matrix_file;
     int i, j;
@@ -371,7 +369,7 @@ int write_mat(char * filename, uint64_t * mat, unsigned int dim)
 
     for (i = 0; i < comm_world_size; ++i) {
         for (j = 0; j < comm_world_size; ++j) {
-            fprintf(matrix_file, "%" PRIu64 " ", mat[i * comm_world_size + j]);
+            fprintf(matrix_file, "%zu ", mat[i * comm_world_size + j]);
         }
         fprintf(matrix_file, "\n");
     }

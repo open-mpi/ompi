@@ -220,81 +220,81 @@ Some performance variables are defined in the monitoring component:
   Allow the user to access within the application the number of
   messages exchanged through the PML framework with each node from the
   bound communicator (\textit{MPI\brkunds{}Comm}). This variable
-  returns an array of number of nodes unsigned long integers.
+  returns an array of number of nodes size typed integers.
 \item
   [\textit{pml\brkunds{}monitoring\brkunds{}messages\brkunds{}size}]
   Allow the user to access within the application the amount of data
   exchanged through the PML framework with each node from the bound
   communicator (\textit{MPI\brkunds{}Comm}). This variable returns an
-  array of number of nodes unsigned long integers.
+  array of number of nodes size typed integers.
 \item
   [\textit{osc\brkunds{}monitoring\brkunds{}messages\brkunds{}sent\brkunds{}count}]
   Allow the user to access within the application the number of
   messages sent through the OSC framework with each node from the
   bound communicator (\textit{MPI\brkunds{}Comm}). This variable
-  returns an array of number of nodes unsigned long integers.
+  returns an array of number of nodes size typed integers.
 \item
   [\textit{osc\brkunds{}monitoring\brkunds{}messages\brkunds{}sent\brkunds{}size}]
   Allow the user to access within the application the amount of data
   sent through the OSC framework with each node from the bound
   communicator (\textit{MPI\brkunds{}Comm}). This variable returns an
-  array of number of nodes unsigned long integers.
+  array of number of nodes size typed integers.
 \item
   [\textit{osc\brkunds{}monitoring\brkunds{}messages\brkunds{}recv\brkunds{}count}]
   Allow the user to access within the application the number of
   messages received through the OSC framework with each node from the
   bound communicator (\textit{MPI\brkunds{}Comm}). This variable
-  returns an array of number of nodes unsigned long integers.
+  returns an array of number of nodes size typed integers.
 \item
   [\textit{osc\brkunds{}monitoring\brkunds{}messages\brkunds{}recv\brkunds{}size}]
   Allow the user to access within the application the amount of data
   received through the OSC framework with each node from the bound
   communicator (\textit{MPI\brkunds{}Comm}). This variable returns an
-  array of number of nodes unsigned long integers.
+  array of number of nodes size typed integers.
 \item
   [\textit{coll\brkunds{}monitoring\brkunds{}messages\brkunds{}count}]
   Allow the user to access within the application the number of
   messages exchanged through the COLL framework with each node from
   the bound communicator (\textit{MPI\brkunds{}Comm}). This variable
-  returns an array of number of nodes unsigned long integers.
+  returns an array of number of nodes size typed integers.
 \item
   [\textit{coll\brkunds{}monitoring\brkunds{}messages\brkunds{}size}]
   Allow the user to access within the application the amount of data
   exchanged through the COLL framework with each node from the bound
   communicator (\textit{MPI\brkunds{}Comm}). This variable returns an
-  array of number of nodes unsigned long integers.
+  array of number of nodes size typed integers.
 \item [\textit{coll\brkunds{}monitoring\brkunds{}o2a\brkunds{}count}]
   Allow the user to access within the application the number of
   one-to-all collective operations across the bound communicator
   (\textit{MPI\brkunds{}Comm}) where the process was defined as
-  root. This variable returns a single unsigned long integer.
+  root. This variable returns a single size typed integer.
 \item [\textit{coll\brkunds{}monitoring\brkunds{}o2a\brkunds{}size}]
   Allow the user to access within the application the amount of data
   sent as one-to-all collective operations across the bound
   communicator (\textit{MPI\brkunds{}Comm}). This variable returns a
-  single unsigned long integers. The communications between a process
+  single size typed integers. The communications between a process
   and itself are not taken in account
 \item [\textit{coll\brkunds{}monitoring\brkunds{}a2o\brkunds{}count}]
   Allow the user to access within the application the number of
   all-to-one collective operations across the bound communicator
   (\textit{MPI\brkunds{}Comm}) where the process was defined as
-  root. This variable returns a single unsigned long integer.
+  root. This variable returns a single size typed integer.
 \item [\textit{coll\brkunds{}monitoring\brkunds{}a2o\brkunds{}size}]
   Allow the user to access within the application the amount of data
   received from all-to-one collective operations across the bound
   communicator (\textit{MPI\brkunds{}Comm}). This variable returns a
-  single unsigned long integers. The communications between a process
+  single size typed integers. The communications between a process
   and itself are not taken in account
 \item [\textit{coll\brkunds{}monitoring\brkunds{}a2a\brkunds{}count}]
   Allow the user to access within the application the number of
   all-to-all collective operations across the bound communicator
   (\textit{MPI\brkunds{}Comm}). This variable returns a single
-  unsigned long integer.
+  size typed integer.
 \item [\textit{coll\brkunds{}monitoring\brkunds{}a2a\brkunds{}size}]
   Allow the user to access within the application the amount of data
   sent as all-to-all collective operations across the bound
   communicator (\textit{MPI\brkunds{}Comm}). This variable returns a
-  single unsigned long integers. The communications between a process
+  single size typed integers. The communications between a process
   and itself are not taken in account
 \end{description}
 
@@ -678,7 +678,7 @@ variables are only to be read.
 MPI_T_pvar_handle count_handle;
 int count_pvar_idx;
 const char count_pvar_name[] = "pml_monitoring_messages_count";
-uint64_t*counts;
+size_t*counts;
 
 /* Retrieve the proper pvar index */
 MPIT_result = MPI_T_pvar_get_index(count_pvar_name, MPI_T_PVAR_CLASS_SIZE, &count_pvar_idx);
@@ -697,7 +697,7 @@ if (MPIT_result != MPI_SUCCESS) {
     MPI_Abort(MPI_COMM_WORLD, MPIT_result);
 }
 
-counts = (uint64_t*)malloc(count * sizeof(uint64_t));
+counts = (size_t*)malloc(count * sizeof(size_t));
 
 MPIT_result = MPI_T_pvar_start(session, count_handle);
 if (MPIT_result != MPI_SUCCESS) {

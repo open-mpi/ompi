@@ -31,12 +31,12 @@ struct mca_monitoring_coll_data_t {
     int world_rank;
     int is_released;
     ompi_communicator_t*p_comm;
-    int64_t o2a_count;
-    int64_t o2a_size;
-    int64_t a2o_count;
-    int64_t a2o_size;
-    int64_t a2a_count;
-    int64_t a2a_size;
+    size_t o2a_count;
+    size_t o2a_size;
+    size_t a2o_count;
+    size_t a2o_size;
+    size_t a2a_count;
+    size_t a2a_size;
 };
 
 /* Collectives operation monitoring */
@@ -174,9 +174,9 @@ void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
     /* Flush data */
     fprintf(pf,
             "D\t%s\tprocs: %s\n"
-            "O2A\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
-            "A2O\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n"
-            "A2A\t%" PRId32 "\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
+            "O2A\t%" PRId32 "\t%zu bytes\t%zu msgs sent\n"
+            "A2O\t%" PRId32 "\t%zu bytes\t%zu msgs sent\n"
+            "A2A\t%" PRId32 "\t%zu bytes\t%zu msgs sent\n",
             data->comm_name ? data->comm_name : "(no-name)", data->procs,
             data->world_rank, data->o2a_size, data->o2a_count,
             data->world_rank, data->a2o_size, data->a2o_count,
@@ -223,7 +223,7 @@ int mca_common_monitoring_coll_messages_notify(mca_base_pvar_t *pvar,
     return OMPI_ERROR;
 }
 
-void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*data)
+void mca_common_monitoring_coll_o2a(size_t size, mca_monitoring_coll_data_t*data)
 {
     if( 0 == mca_common_monitoring_current_state ) return; /* right now the monitoring is not started */
 #if OPAL_ENABLE_DEBUG
@@ -232,8 +232,8 @@ void mca_common_monitoring_coll_o2a(uint64_t size, mca_monitoring_coll_data_t*da
         return;
     }
 #endif /* OPAL_ENABLE_DEBUG */
-    opal_atomic_add_64(&data->o2a_size, size);
-    opal_atomic_add_64(&data->o2a_count, 1);
+    opal_atomic_add_size_t(&data->o2a_size, size);
+    opal_atomic_add_size_t(&data->o2a_count, 1);
 }
 
 int mca_common_monitoring_coll_get_o2a_count(const struct mca_base_pvar_t *pvar,
@@ -241,11 +241,11 @@ int mca_common_monitoring_coll_get_o2a_count(const struct mca_base_pvar_t *pvar,
                                              void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    uint64_t *value_uint64 = (uint64_t*) value;
+    size_t *value_size = (size_t*) value;
     mca_monitoring_coll_data_t*data;
     int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
     if( OPAL_SUCCESS == ret ) {
-        *value_uint64 = data->o2a_count;
+        *value_size = data->o2a_count;
     }
     return ret;
 }
@@ -255,16 +255,16 @@ int mca_common_monitoring_coll_get_o2a_size(const struct mca_base_pvar_t *pvar,
                                             void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    uint64_t *value_uint64 = (uint64_t*) value;
+    size_t *value_size = (size_t*) value;
     mca_monitoring_coll_data_t*data;
     int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
     if( OPAL_SUCCESS == ret ) {
-        *value_uint64 = data->o2a_size;
+        *value_size = data->o2a_size;
     }
     return ret;
 }
 
-void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*data)
+void mca_common_monitoring_coll_a2o(size_t size, mca_monitoring_coll_data_t*data)
 {
     if( 0 == mca_common_monitoring_current_state ) return; /* right now the monitoring is not started */
 #if OPAL_ENABLE_DEBUG
@@ -273,8 +273,8 @@ void mca_common_monitoring_coll_a2o(uint64_t size, mca_monitoring_coll_data_t*da
         return;
     }
 #endif /* OPAL_ENABLE_DEBUG */
-    opal_atomic_add_64(&data->a2o_size, size);
-    opal_atomic_add_64(&data->a2o_count, 1);
+    opal_atomic_add_size_t(&data->a2o_size, size);
+    opal_atomic_add_size_t(&data->a2o_count, 1);
 }
 
 int mca_common_monitoring_coll_get_a2o_count(const struct mca_base_pvar_t *pvar,
@@ -282,11 +282,11 @@ int mca_common_monitoring_coll_get_a2o_count(const struct mca_base_pvar_t *pvar,
                                              void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    uint64_t *value_uint64 = (uint64_t*) value;
+    size_t *value_size = (size_t*) value;
     mca_monitoring_coll_data_t*data;
     int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
     if( OPAL_SUCCESS == ret ) {
-        *value_uint64 = data->a2o_count;
+        *value_size = data->a2o_count;
     }
     return ret;
 }
@@ -296,16 +296,16 @@ int mca_common_monitoring_coll_get_a2o_size(const struct mca_base_pvar_t *pvar,
                                             void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    uint64_t *value_uint64 = (uint64_t*) value;
+    size_t *value_size = (size_t*) value;
     mca_monitoring_coll_data_t*data;
     int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
     if( OPAL_SUCCESS == ret ) {
-        *value_uint64 = data->a2o_size;
+        *value_size = data->a2o_size;
     }
     return ret;
 }
 
-void mca_common_monitoring_coll_a2a(uint64_t size, mca_monitoring_coll_data_t*data)
+void mca_common_monitoring_coll_a2a(size_t size, mca_monitoring_coll_data_t*data)
 {
     if( 0 == mca_common_monitoring_current_state ) return; /* right now the monitoring is not started */
 #if OPAL_ENABLE_DEBUG
@@ -314,8 +314,8 @@ void mca_common_monitoring_coll_a2a(uint64_t size, mca_monitoring_coll_data_t*da
         return;
     }
 #endif /* OPAL_ENABLE_DEBUG */
-    opal_atomic_add_64(&data->a2a_size, size);
-    opal_atomic_add_64(&data->a2a_count, 1);
+    opal_atomic_add_size_t(&data->a2a_size, size);
+    opal_atomic_add_size_t(&data->a2a_count, 1);
 }
 
 int mca_common_monitoring_coll_get_a2a_count(const struct mca_base_pvar_t *pvar,
@@ -323,11 +323,11 @@ int mca_common_monitoring_coll_get_a2a_count(const struct mca_base_pvar_t *pvar,
                                              void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    uint64_t *value_uint64 = (uint64_t*) value;
+    size_t *value_size = (size_t*) value;
     mca_monitoring_coll_data_t*data;
     int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
     if( OPAL_SUCCESS == ret ) {
-        *value_uint64 = data->a2a_count;
+        *value_size = data->a2a_count;
     }
     return ret;
 }
@@ -337,11 +337,11 @@ int mca_common_monitoring_coll_get_a2a_size(const struct mca_base_pvar_t *pvar,
                                             void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
-    uint64_t *value_uint64 = (uint64_t*) value;
+    size_t *value_size = (size_t*) value;
     mca_monitoring_coll_data_t*data;
     int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
     if( OPAL_SUCCESS == ret ) {
-        *value_uint64 = data->a2a_size;
+        *value_size = data->a2a_size;
     }
     return ret;
 }

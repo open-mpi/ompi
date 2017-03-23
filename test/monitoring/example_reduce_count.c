@@ -1,8 +1,15 @@
+/*
+ * Copyright (c) 2017 Inria.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <mpi.h>
-#include <stdint.h>
-#include <inttypes.h>
 
 static MPI_T_pvar_handle count_handle;
 static const char count_pvar_name[] = "pml_monitoring_messages_count";
@@ -14,7 +21,7 @@ int main(int argc, char**argv)
     MPI_T_pvar_session session;
     MPI_Status status;
     MPI_Request request;
-    uint64_t*counts;
+    size_t*counts;
 
     n = -1;
     MPI_Init(&argc, &argv);
@@ -50,7 +57,7 @@ int main(int argc, char**argv)
 	MPI_Abort(MPI_COMM_WORLD, MPIT_result);
     }
 
-    counts = (uint64_t*)malloc(count * sizeof(uint64_t));
+    counts = (size_t*)malloc(count * sizeof(size_t));
 
     MPIT_result = MPI_T_pvar_start(session, count_handle);
     if (MPIT_result != MPI_SUCCESS) {
@@ -87,7 +94,7 @@ int main(int argc, char**argv)
 
     if(0 == rank) {
 	for(n = 0; n < count; ++n)
-	    printf("%" PRIu64 "%s", counts[n], n < count - 1 ? ", " : "\n");
+	    printf("%zu%s", counts[n], n < count - 1 ? ", " : "\n");
     }
 
     free(counts);

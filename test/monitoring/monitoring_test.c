@@ -72,9 +72,7 @@ int main(int argc, char* argv[])
 {
     int rank, size, n, to, from, tagno, MPIT_result, provided, count, world_rank;
     MPI_T_pvar_session session;
-    MPI_Status status;
     MPI_Comm newcomm;
-    MPI_Request request;
     char filename[1024];
 
     if( argc > 1 ) {
@@ -131,13 +129,12 @@ int main(int argc, char* argv[])
 
     if (rank == 0) {
         n = 25;
-        MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD,&request);
+        MPI_Send(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD);
     }
     while (1) {
-        MPI_Irecv(&n, 1, MPI_INT, from, tagno, MPI_COMM_WORLD, &request);
-        MPI_Wait(&request, &status);
+        MPI_Recv(&n, 1, MPI_INT, from, tagno, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         if (rank == 0) {n--;tagno++;}
-        MPI_Isend(&n, 1, MPI_INT, to, tagno, MPI_COMM_WORLD, &request);
+        MPI_Send(&n, 1, MPI_INT, to, tagno, MPI_COMM_WORLD);
         if (rank != 0) {n--;tagno++;}
         if (n<0){
             break;
@@ -201,7 +198,7 @@ int main(int argc, char* argv[])
                 MPI_Send(&n, 1, MPI_INT, to, tagno, newcomm);
             }
             while (1){
-                MPI_Recv(&n, 1, MPI_INT, from, tagno, newcomm, &status);
+                MPI_Recv(&n, 1, MPI_INT, from, tagno, newcomm, MPI_STATUS_IGNORE);
                 if (rank == 0) {n--; tagno++;}
                 MPI_Send(&n, 1, MPI_INT, to, tagno, newcomm);
                 if (rank != 0) {n--; tagno++;}
