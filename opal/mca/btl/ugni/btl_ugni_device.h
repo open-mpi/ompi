@@ -5,6 +5,7 @@
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -121,7 +122,7 @@ static inline intptr_t mca_btl_ugni_post_fma_device (mca_btl_ugni_device_t *devi
     }
 
     BTL_VERBOSE(("Posting FMA descriptor %p with op_type %d, amo %d, ep_handle %p, remote_addr 0x%lx, "
-                 "length %lu", desc, desc->desc.type, desc->desc.amo_cmd, desc->ep_handle,
+                 "length %lu", (void*)desc, desc->desc.type, desc->desc.amo_cmd, (void*)desc->ep_handle,
                  desc->desc.remote_addr, desc->desc.length));
 
     rc = GNI_PostFma (desc->ep_handle->gni_handle, &desc->desc);
@@ -160,7 +161,7 @@ static inline intptr_t mca_btl_ugni_post_rdma_device (mca_btl_ugni_device_t *dev
     desc->desc.src_cq_hndl = desc->cq->gni_handle;
 
     BTL_VERBOSE(("Posting RDMA descriptor %p with op_type %d, ep_handle %p, remote_addr 0x%lx, "
-                 "length %lu", desc, desc->desc.type, desc->ep_handle, desc->desc.remote_addr,
+                 "length %lu", (void*)desc, desc->desc.type, (void*)desc->ep_handle, desc->desc.remote_addr,
                  desc->desc.length));
 
     rc = GNI_PostRdma (desc->ep_handle->gni_handle, &desc->desc);
