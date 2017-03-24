@@ -148,9 +148,11 @@ static int get_remaining_time(uint32_t *timeleft)
     }
     if (NULL == fgets(output, 256, fp)) {
         free(cmd);
+        pclose(fp);
         return ORTE_ERR_FILE_READ_FAILURE;
     }
     free(cmd);
+    pclose(fp);
     /* the output is returned in a colon-delimited set of fields */
     res = opal_argv_split(output, ':');
     cnt =  opal_argv_count(res);
