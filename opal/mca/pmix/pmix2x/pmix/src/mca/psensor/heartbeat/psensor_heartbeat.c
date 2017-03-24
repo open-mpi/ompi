@@ -88,7 +88,7 @@ static void ft_destructor(pmix_heartbeat_trkr_t *ft)
     if (NULL != ft->id) {
         free(ft->id);
     }
-    if (event_active) {
+    if (ft->event_active) {
         pmix_event_del(&ft->ev);
     }
     if (NULL != ft->info) {
