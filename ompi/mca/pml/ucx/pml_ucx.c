@@ -136,7 +136,8 @@ int mca_pml_ucx_open(void)
                              UCP_PARAM_FIELD_REQUEST_INIT |
                              UCP_PARAM_FIELD_REQUEST_CLEANUP |
                              UCP_PARAM_FIELD_TAG_SENDER_MASK |
-                             UCP_PARAM_FIELD_MT_WORKERS_SHARED;
+                             UCP_PARAM_FIELD_MT_WORKERS_SHARED |
+                             UCP_PARAM_FIELD_ESTIMATED_NUM_EPS;
     params.features        = UCP_FEATURE_TAG;
     params.request_size    = sizeof(ompi_request_t);
     params.request_init    = mca_pml_ucx_request_init;
@@ -144,7 +145,7 @@ int mca_pml_ucx_open(void)
     params.tag_sender_mask = PML_UCX_SPECIFIC_SOURCE_MASK;
     params.mt_workers_shared = 0; /* we do not need mt support for context
                                      since it will be protected by worker */
-
+    params.estimated_num_eps = ompi_proc_world_size();
 
     status = ucp_init(&params, config, &ompi_pml_ucx.ucp_context);
     ucp_config_release(config);
