@@ -13,7 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -585,7 +585,11 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
             orte_set_attribute(&node->attributes, ORTE_NODE_LAUNCH_ID, ORTE_ATTR_LOCAL, &apNodes[ix].nid, OPAL_INT32);
             node->slots_inuse = 0;
             node->slots_max = 0;
-            node->slots = opal_hwloc_use_hwthreads_as_cpus ? apNodes[ix].cpuCnt : apNodes[ix].numPEs;
+            if (opal_hwloc_use_hwthreads_as_cpus) {
+                node->slots = apNodes[ix].cpuCnt;
+            } else {
+                node->slots = apNodes[ix].numPEs;
+            }
             node->state = ORTE_NODE_STATE_UP;
             /* need to order these node ids so the regex generator
              * can properly function

@@ -1,10 +1,11 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/* -*- Mode: C; c-basic-offset:3 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +21,7 @@
 void mca_btl_ugni_wait_list_append (mca_btl_ugni_module_t *ugni_module, mca_btl_base_endpoint_t *endpoint,
                                     mca_btl_ugni_base_frag_t *frag)
 {
-    BTL_VERBOSE(("wait-listing fragment %p to %s. endpoint state %d\n", frag, OPAL_NAME_PRINT(endpoint->peer_proc->proc_name), endpoint->state));
+    BTL_VERBOSE(("wait-listing fragment %p to %s. endpoint state %d\n", (void*)frag, OPAL_NAME_PRINT(endpoint->peer_proc->proc_name), endpoint->state));
 
     frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
