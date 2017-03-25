@@ -5,6 +5,7 @@
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +62,7 @@ mca_btl_ugni_module_t mca_btl_ugni_module = {
     }
 };
 
-static void *mca_btl_ugni_datagram_event (int foo, short bar, void *arg)
+static void mca_btl_ugni_datagram_event (int foo, short bar, void *arg)
 {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) arg;
     mca_btl_ugni_device_t *device = ugni_module->devices;

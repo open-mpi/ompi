@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +52,7 @@ static int mca_btl_ugni_endpoint_get_modex (mca_btl_base_endpoint_t *ep)
     ep->ep_rem_id = modex->id;
 
 
-    BTL_VERBOSE(("received modex for ep %p. addr: %d, id: %d",  ep, ep->ep_rem_addr, ep->ep_rem_id));
+    BTL_VERBOSE(("received modex for ep %p. addr: %d, id: %d",  (void*)ep, ep->ep_rem_addr, ep->ep_rem_id));
 
     free (modex);
 
@@ -301,7 +302,6 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 static int mca_btl_ugni_directed_ep_post (mca_btl_base_endpoint_t *ep)
 {
     mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_ep_btl (ep);
-    mca_btl_ugni_device_t *device = ep->smsg_ep_handle->device;
     gni_return_t rc;
 
     BTL_VERBOSE(("posting directed datagram to remote id: %d for endpoint %p", ep->ep_rem_id, (void *)ep));
@@ -351,8 +351,8 @@ int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep)
         }
     }
 
-    BTL_VERBOSE(("ep->remote_attr->smsg_attr = {.msg_type = %d, .msg_buffer = 0x%lx}", ep->remote_attr->smsg_attr.msg_type,
-                 ep->remote_attr->smsg_attr.msg_buffer));
+    BTL_VERBOSE(("ep->remote_attr->smsg_attr = {.msg_type = %d, .msg_buffer = %p}", ep->remote_attr->smsg_attr.msg_type,
+                 (void*)ep->remote_attr->smsg_attr.msg_buffer));
 
     if (GNI_SMSG_TYPE_INVALID == ep->remote_attr->smsg_attr.msg_type) {
         /* use datagram to exchange connection information with the remote peer */

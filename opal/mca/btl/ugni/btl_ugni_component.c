@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -511,7 +512,7 @@ int mca_btl_ugni_progress_datagram (mca_btl_ugni_device_t *device)
         return rc;
     }
 
-    BTL_VERBOSE(("remote datagram completion on handle %p", handle));
+    BTL_VERBOSE(("remote datagram completion on handle %p", (void*)handle));
 
     /* if this is a wildcard endpoint lookup the remote peer by the proc id we received */
     if (handle == ugni_module->wildcard_ep) {
@@ -630,7 +631,7 @@ static inline int mca_btl_ugni_progress_rdma (mca_btl_ugni_module_t *ugni_module
     BTL_VERBOSE(("got %d completed rdma descriptors", rc));
 
     for (int i = 0 ; i < rc ; ++i) {
-        BTL_VERBOSE(("post descriptor %p complete. GNI_CQ_STATUS_OK(): %d", post_desc[i],
+        BTL_VERBOSE(("post descriptor %p complete. GNI_CQ_STATUS_OK(): %d", (void*)post_desc[i],
                      GNI_CQ_STATUS_OK(event_data[i])));
 
         if (OPAL_UNLIKELY(!GNI_CQ_STATUS_OK(event_data[i]))) {
