@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -322,18 +322,22 @@ int orte_submit_init(int argc, char *argv[],
      * exit with a giant warning flag
      */
     if (0 == geteuid() && !orte_cmd_options.run_as_root) {
+        /* show_help is not yet available, so print an error manually */
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         if (orte_cmd_options.help) {
-            fprintf(stderr, "%s cannot provide the help message when run as root.\n", orte_basename);
+            fprintf(stderr, "%s cannot provide the help message when run as root.\n\n", orte_basename);
         } else {
-            /* show_help is not yet available, so print an error manually */
-            fprintf(stderr, "%s has detected an attempt to run as root.\n", orte_basename);
+            fprintf(stderr, "%s has detected an attempt to run as root.\n\n", orte_basename);
         }
-        fprintf(stderr, "Running as root is *strongly* discouraged as any mistake (e.g., in\n");
+
+        fprintf(stderr, "Running at root is *strongly* discouraged as any mistake (e.g., in\n");
         fprintf(stderr, "defining TMPDIR) or bug can result in catastrophic damage to the OS\n");
         fprintf(stderr, "file system, leaving your system in an unusable state.\n\n");
+
+        fprintf(stderr, "We strongly suggest that you run %s as a non-root user.\n\n", orte_basename);
+
         fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
-        fprintf(stderr, "option to your cmd line. However, we reiterate our strong advice\n");
+        fprintf(stderr, "option to your command line.  However, we reiterate our strong advice\n");
         fprintf(stderr, "against doing so - please do so at your own risk.\n");
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         exit(1);
