@@ -1129,10 +1129,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     ORTE_ACTIVATE_JOB_STATE(jobdat, ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE);
 
   ERROR_OUT:
-    if (NULL != effective_dir) {
-        free(effective_dir);
-        effective_dir = NULL;
-    }
     /* ensure we reset our working directory back to our default location  */
     chdir(basedir);
     /* release the event */
