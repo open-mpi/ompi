@@ -22,7 +22,7 @@
 # Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 # Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -1407,6 +1407,7 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile
+    test/symbol_name/Makefile
 ])
 m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile])])
 m4_ifdef([project_ompi], [
