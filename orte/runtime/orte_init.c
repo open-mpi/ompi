@@ -255,10 +255,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     opal_process_info.my_local_rank    = (int32_t)orte_process_info.my_local_rank;
     opal_process_info.cpuset           = orte_process_info.cpuset;
 
-#if OPAL_ENABLE_TIMING
-    opal_timing_set_jobid(ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-#endif
-
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* start listening - will be ignored if no listeners
          * were registered */
