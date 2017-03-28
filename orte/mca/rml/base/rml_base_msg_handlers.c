@@ -165,9 +165,6 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
                          ORTE_NAME_PRINT(&msg->sender),
                          msg->tag));
 
-    OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
-                       ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
-
     /* if this message is just to warmup the connection, then drop it */
     if (ORTE_RML_TAG_WARMUP_CONNECTION == msg->tag) {
         OBJ_RELEASE(msg);
