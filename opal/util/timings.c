@@ -41,8 +41,6 @@
 
 #include MCA_timer_IMPLEMENTATION_HEADER
 
-static opal_mutex_t tm_lock;
-
 static double get_ts_gettimeofday(void)
 {
     double ret;
