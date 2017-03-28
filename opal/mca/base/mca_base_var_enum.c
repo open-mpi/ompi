@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -70,7 +70,7 @@ static int mca_base_var_enum_bool_vfs (mca_base_var_enum_t *self, const char *st
                                        int *value)
 {
     char *tmp;
-    int v;
+    long v;
 
     /* skip whitespace */
     string_value += strspn (string_value, " \t\n\v\f\r");
@@ -78,10 +78,12 @@ static int mca_base_var_enum_bool_vfs (mca_base_var_enum_t *self, const char *st
     v = strtol (string_value, &tmp, 10);
     if (*tmp != '\0') {
         if (0 == strcmp (string_value, "true") || 0 == strcmp (string_value, "t") ||
-            0 == strcmp (string_value, "enabled") || 0 == strcmp (string_value, "yes")) {
+            0 == strcmp (string_value, "enabled") || 0 == strcmp (string_value, "yes") ||
+            0 == strcmp (string_value, "y")) {
             v = 1;
         } else if (0 == strcmp (string_value, "false") || 0 == strcmp (string_value, "f") ||
-                   0 == strcmp (string_value, "disabled") || 0 == strcmp (string_value, "no")) {
+                   0 == strcmp (string_value, "disabled") || 0 == strcmp (string_value, "no") ||
+                   0 == strcmp (string_value, "n")) {
             v = 0;
         } else {
             return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
@@ -105,7 +107,7 @@ static int mca_base_var_enum_bool_sfv (mca_base_var_enum_t *self, const int valu
 
 static int mca_base_var_enum_bool_dump (mca_base_var_enum_t *self, char **out)
 {
-    *out = strdup ("0: f|false|disabled|no, 1: t|true|enabled|yes");
+    *out = strdup ("0: f|false|disabled|no|n, 1: t|true|enabled|yes|y");
     return *out ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
 }
 
@@ -146,7 +148,7 @@ static int mca_base_var_enum_auto_bool_vfs (mca_base_var_enum_t *self, const cha
                                             int *value)
 {
     char *tmp;
-    int v;
+    long v;
 
     /* skip whitespace */
     string_value += strspn (string_value, " \t\n\v\f\r");
@@ -154,10 +156,12 @@ static int mca_base_var_enum_auto_bool_vfs (mca_base_var_enum_t *self, const cha
     v = strtol (string_value, &tmp, 10);
     if (*tmp != '\0') {
         if (0 == strcasecmp (string_value, "true") || 0 == strcasecmp (string_value, "t") ||
-            0 == strcasecmp (string_value, "enabled") || 0 == strcasecmp (string_value, "yes")) {
+            0 == strcasecmp (string_value, "enabled") || 0 == strcasecmp (string_value, "yes") ||
+            0 == strcasecmp (string_value, "y")) {
             v = 1;
         } else if (0 == strcasecmp (string_value, "false") || 0 == strcasecmp (string_value, "f") ||
-                   0 == strcasecmp (string_value, "disabled") || 0 == strcasecmp (string_value, "no")) {
+                   0 == strcasecmp (string_value, "disabled") || 0 == strcasecmp (string_value, "no") ||
+                   0 == strcasecmp (string_value, "n")) {
             v = 0;
         } else if (0 == strcasecmp (string_value, "auto")) {
             v = -1;
@@ -171,7 +175,7 @@ static int mca_base_var_enum_auto_bool_vfs (mca_base_var_enum_t *self, const cha
     } else if (v < -1) {
         *value = -1;
     } else {
-        *value = v;
+        *value = (int) v;
     }
 
     return OPAL_SUCCESS;
@@ -195,7 +199,7 @@ static int mca_base_var_enum_auto_bool_sfv (mca_base_var_enum_t *self, const int
 
 static int mca_base_var_enum_auto_bool_dump (mca_base_var_enum_t *self, char **out)
 {
-    *out = strdup ("-1: auto, 0: f|false|disabled|no, 1: t|true|enabled|yes");
+    *out = strdup ("-1: auto, 0: f|false|disabled|no|n, 1: t|true|enabled|yes|y");
     return *out ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
 }
 
