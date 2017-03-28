@@ -55,8 +55,6 @@
 
 BEGIN_C_DECLS
 
-OPAL_TIMING_DECLARE_EXT(ORTE_DECLSPEC, tm_rml)
-
 /*
  * MCA Framework
  */
