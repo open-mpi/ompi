@@ -163,6 +163,8 @@
 # bets are off.  So feel free to install it anywhere in your tree.  He
 # suggests $prefix/doc.
 %define _defaultdocdir /opt/%{name}/%{version}/doc
+# Also put the modulefile in /opt.
+%define modulefile_path /opt/%{name}/%{version}/share/openmpi/modulefiles
 %endif
 
 %if !%{build_debuginfo_rpm}
@@ -767,6 +769,10 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Tue Mar 28 2017 Jeff Squyres <jsquyres@cisco.com>
+- Reverting a decision from a prior changelog entry: if
+  install_in_opt==1, then even put the modulefile under /opt.
+
 * Thu Nov 12 2015 Gilles Gouaillardet <gilles@rist.or.jp>
 - Revamp packaging when prefix is /usr
 
