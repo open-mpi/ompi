@@ -1,6 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2017 Cisco Systems, Inc.
 .\" $COPYRIGHT$
 .TH MPI_Wtick 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -37,9 +38,6 @@ returns, as a double-precision value, the number of seconds between
 successive clock ticks. For example, if the clock is implemented by
 the hardware as a counter that is incremented every millisecond, the
 value returned by MPI_Wtick should be 10^-3.
-.PP
-Note that on POSIX platforms, Open MPI should always return 10^-6 for
-MPI_Wtick.  The returned value may be different on Windows platforms.
 .PP
 
 .SH NOTE
