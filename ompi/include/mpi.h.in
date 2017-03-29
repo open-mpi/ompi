@@ -776,6 +776,7 @@ enum {
  */
 #define MPI_T_PVAR_ALL_HANDLES ((MPI_T_pvar_handle) -1)
 #define MPI_T_PVAR_HANDLE_NULL ((MPI_T_pvar_handle) 0)
+#define MPI_T_PVAR_SESSION_NULL ((MPI_T_pvar_session) 0)
 #define MPI_T_CVAR_HANDLE_NULL ((MPI_T_cvar_handle) 0)
 
 /* MPI-2 specifies that the name "MPI_TYPE_NULL_DELETE_FN" (and all
