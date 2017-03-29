@@ -4,7 +4,7 @@
 #include "opal/util/timings.h"
 /* TODO: we need access to MPI_* functions */
 
-#if (0 && OPAL_ENABLE_TIMING)
+#if (1 && OPAL_ENABLE_TIMING)
 
 /* TODO: replace with opal_timing function */
 static inline double OMPI_TIMING_GET_TS(void)
@@ -68,7 +68,7 @@ static inline double OMPI_TIMING_GET_TS(void)
     OMPI_TIMING_desc[OMPI_TIMING_cnt++] = desc;                           \
 }
 
-#define OMPI_TIMING_IMPORT_OPAL(func) {                          \
+#define OMPI_TIMING_IMPORT_OPAL_PREFIX(prefix, func) {                          \
     char *enabled;                                            \
     int cnt = OPAL_TIMING_ENV_CNT(func);                      \
     if( 0 < cnt )  {         \
@@ -79,10 +79,13 @@ static inline double OMPI_TIMING_GET_TS(void)
     int i;                                                    \
     for(i = 0; i < cnt; i++){                                 \
         char *desc;                                           \
-        double ts = OPAL_TIMING_ENV_GETDESC(prefix, i, &desc);   \
+        double ts = OPAL_TIMING_ENV_GETDESC_PREFIX(prefix, func, i, &desc);   \
         OMPI_TIMING_APPEND(desc, ts);                               \
     }                                                         \
 }
+
+#define OMPI_TIMING_IMPORT_OPAL(func) \
+    OMPI_TIMING_IMPORT_OPAL_PREFIX("", func)
 
 
 #define OMPI_TIMING_OUT {                                                   \

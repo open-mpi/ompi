@@ -23,6 +23,8 @@ typedef enum {
     OPAL_TIMING_USEC_NATIVE
 } opal_timer_type_t;
 
+#define OPAL_ENABLE_TIMING 1
+
 #if OPAL_ENABLE_TIMING
 
 typedef double (*opal_timing_ts_func_t)(void);
@@ -38,7 +40,6 @@ typedef struct {
 
 opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
 
-
 /* TODO: turn as much as possible into macro's
  * once debugged
  */
@@ -47,11 +48,11 @@ static inline opal_timing_env_t
 OPAL_TIMING_ENV_START_TYPE(char *func, opal_timer_type_t type, char *prefix)
 {
     opal_timing_env_t h;
+    char *ptr = NULL;
     int n;
 
     /* TODO: remove this when tested! */
-    h.enabled = 0;
-    return h;
+    //return tm_env;
 
     if( NULL == prefix ){
         prefix = "";
@@ -64,28 +65,40 @@ OPAL_TIMING_ENV_START_TYPE(char *func, opal_timer_type_t type, char *prefix)
          * disable this timing and set the error
          * sign
          */
+         h.enabled = 0;
+         h.error = 1;
     }
 
     /* TODO same length check here */
-    sprintf(h.cntr_env,"%s_CNT", h.id);
-    h.get_ts = opal_timing_ts_func(type);
-    h.ts = h.get_ts();
-    h.enabled = 1;
-
-    char *ptr = getenv(h.id);
-    if( NULL == ptr || strcmp(ptr, "1")){
+    n = sprintf(h.cntr_env,"%s_CNT", h.id);
+    if( n > OPAL_TIMING_STR_LEN ){
+        /* TODO: output truncated:
+         * disable this timing and set the error
+         * sign
+         */
         h.enabled = 0;
+        h.error = 1;
     }
-    ptr = getenv(h.cntr_env);
+
+    h.get_ts = opal_timing_ts_func(type);
+    h.enabled = 1;
     h.cntr = 0;
+
+    ptr = getenv(h.id);
     if( NULL != ptr ){
-        h.cntr = atoi(ptr);
+        h.enabled = 0;
+        h.error = 1;
     }
+
+    h.ts = h.get_ts();
+    setenv(h.id, "1", 1);
+    setenv(h.cntr_env, "0", 1);
+
     return h;
 }
 
-#define OPAL_TIMING_ENV_INIT(name)                                                     \
-    opal_timing_env_t name ## _val, *name = &(name ## _val);                            \
+#define OPAL_TIMING_ENV_INIT(name)                                                          \
+    opal_timing_env_t name ## _val, *name = &(name ## _val);                                \
     *name = OPAL_TIMING_ENV_START_TYPE(__FUNCTION__, OPAL_TIMING_AUTOMATIC_TIMER, "");
 
 /* We use function names for identification
@@ -94,7 +107,7 @@ OPAL_TIMING_ENV_START_TYPE(char *func, opal_timer_type_t type, char *prefix)
  * conflict.
  * Use prefix to do a finer-grained identification if needed
  */
-#define OPAL_TIMING_ENV_INIT_PREFIX(prefix, name)                                          \
+#define OPAL_TIMING_ENV_INIT_PREFIX(prefix, name)                                           \
     opal_timing_env_t name ## _val, *name = &(name ## _val);                                \
     name = OPAL_TIMING_ENV_START_TYPE(__FUNCTION__, OPAL_TIMING_AUTOMATIC_TIMER, prefix);
 
@@ -102,8 +115,7 @@ OPAL_TIMING_ENV_START_TYPE(char *func, opal_timer_type_t type, char *prefix)
 /* TODO: according to https://en.wikipedia.org/wiki/C99
  * varadic macroses are part of C99 and C11. Is it safe to use them here?
  */
-static inline void
-OPAL_TIMING_ENV_NEXT(opal_timing_env_t *h, char *fmt, ... )
+static inline void OPAL_TIMING_ENV_NEXT(opal_timing_env_t *h, char *fmt, ... )
 {
     if( !h->enabled ){
         return;
@@ -118,7 +130,7 @@ OPAL_TIMING_ENV_NEXT(opal_timing_env_t *h, char *fmt, ... )
     /* TODO: check that write succeded */
 
     va_start(ap, fmt);
-    n= vsnprintf(buf2, 256, fmt, ap);
+    n = vsnprintf(buf2, 256, fmt, ap);
     /* TODO: check that write succeded */
     va_end(ap);
 
@@ -145,19 +157,20 @@ OPAL_TIMING_ENV_NEXT(opal_timing_env_t *h, char *fmt, ... )
  * do the reduction of accumulated values
  */
 /* TODO: turn into a macro */
-static inline int OPAL_TIMING_ENV_CNT_PREFIX(char *prefix, char *func)
-{
-    char ename[256];
-    sprintf(ename, "%s%s_CNT", prefix, func);
-    char *ptr = getenv(ename);
-    if( !ptr ){
-        return 0;
-    }
-    return atoi(ptr);
-}
+#define OPAL_TIMING_ENV_CNT_PREFIX(prefix, func) ({           \
+    char ename[256];                                          \
+    int cnt = 0;                                              \
+    char *ptr = NULL;                                         \
+    sprintf(ename, "%s%s_CNT", prefix, func);                 \
+    ptr = getenv(ename);                                      \
+    if( NULL != ptr ){                                        \
+        cnt = atoi(ptr);                                      \
+    }                                                         \
+    cnt;                                                      \
+})
 
-#define OPAL_TIMING_ENV_CNT(func) \
-    OPAL_TIMING_ENV_CNT_PREFIX("", char *func)
+#define OPAL_TIMING_ENV_CNT(func)                             \
+    OPAL_TIMING_ENV_CNT_PREFIX("", func)
 
 /* TODO: make a macro */
 static inline double
@@ -165,15 +178,15 @@ OPAL_TIMING_ENV_GETDESC_PREFIX(char *prefix, char *func, int i, char **desc)
 {
     char vname[256];
     double ts;
-    sprintf(vname, "%s_INT_%d_DESC", prefix, i);
+    sprintf(vname, "%s%s_DESC_%d", prefix, func, i);
     *desc = getenv(vname);
-    sprintf(vname, "%s_INT_%d_VAL",prefix, i);
+    sprintf(vname, "%s%s_VAL_%d",prefix, func, i);
     char *ptr = getenv(vname);
     sscanf(ptr,"%lf", &ts);
     return ts;
 }
 
-#define OPAL_TIMING_ENV_GETDESC(func, index, desc) \
+#define OPAL_TIMING_ENV_GETDESC(func, index, desc)            \
     OPAL_TIMING_ENV_GETDESC_PREFIX("", func, index, desc)
 
 #define OSHTMNG_ENV_APPEND(prefix) {                          \
