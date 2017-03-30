@@ -138,7 +138,6 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
     pmix_nspace_t *nptr;
     pmix_rank_info_t *info;
     pmix_dmdx_remote_t *dcd, *dcdnext;
-    pmix_buffer_t *pbkt;
     pmix_value_t *val;
     char *data;
     size_t sz;
@@ -236,16 +235,19 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
         if (dcd->cd->proc.rank == info->rank) {
            /* we can now fulfill this request - collect the
              * remote/global data from this proc */
-            pbkt = PMIX_NEW(pmix_buffer_t);
             /* get any remote contribution - note that there
              * may not be a contribution */
+            data = NULL;
+            sz = 0;
             if (PMIX_SUCCESS == pmix_hash_fetch(&nptr->server->myremote, info->rank, "modex", &val) &&
                 NULL != val) {
-                PMIX_LOAD_BUFFER(pbkt, val->data.bo.bytes, val->data.bo.size);
+                data = val->data.bo.bytes;
+                sz = val->data.bo.size;
+                /* protect the data */
+                val->data.bo.bytes = NULL;
+                val->data.bo.size = 0;
                 PMIX_VALUE_RELEASE(val);
             }
-            PMIX_UNLOAD_BUFFER(pbkt, data, sz);
-            PMIX_RELEASE(pbkt);
             /* execute the callback */
             dcd->cd->cbfunc(PMIX_SUCCESS, data, sz, dcd->cd->cbdata);
             if (NULL != data) {

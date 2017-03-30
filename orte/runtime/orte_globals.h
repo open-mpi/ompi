@@ -491,6 +491,8 @@ ORTE_DECLSPEC extern bool orte_display_allocation;
 ORTE_DECLSPEC extern bool orte_display_devel_allocation;
 ORTE_DECLSPEC extern bool orte_soft_locations;
 ORTE_DECLSPEC extern bool orte_hnp_connected;
+ORTE_DECLSPEC extern bool orte_nidmap_communicated;
+ORTE_DECLSPEC extern bool orte_node_info_communicated;
 
 /* launch agents */
 ORTE_DECLSPEC extern char *orte_launch_agent;

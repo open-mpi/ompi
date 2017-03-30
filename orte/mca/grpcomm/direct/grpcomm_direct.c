@@ -270,7 +270,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     opal_list_t coll;
     orte_grpcomm_signature_t *sig;
     orte_rml_tag_t tag;
-    char *rtmod;
+    char *rtmod, *nidmap;
     size_t inlen, cmplen;
     uint8_t *packed_data, *cmpdata;
 
@@ -392,7 +392,8 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                 }
                 opal_dss.copy_payload(relay, data);
             } else if (ORTE_DAEMON_ADD_LOCAL_PROCS == command ||
-                       ORTE_DAEMON_DVM_NIDMAP_CMD == command) {
+                       ORTE_DAEMON_DVM_NIDMAP_CMD == command ||
+                       ORTE_DAEMON_DVM_ADD_PROCS == command) {
                 /* setup our internal relay buffer */
                 relay = OBJ_NEW(opal_buffer_t);
                 /* repack the command */
@@ -400,14 +401,25 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     ORTE_ERROR_LOG(ret);
                     goto relay;
                 }
-                /* see if any daemons were launched */
+                /* unpack the nidmap string - may be NULL */
+                cnt = 1;
+                if (OPAL_SUCCESS != (ret = opal_dss.unpack(data, &nidmap, &cnt, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto relay;
+                }
+                if (NULL != nidmap) {
+                    if (ORTE_SUCCESS != (ret = orte_util_nidmap_parse(nidmap))) {
+                        ORTE_ERROR_LOG(ret);
+                        goto relay;
+                    }
+                    free(nidmap);
+                }
+                /* see if they included info on node capabilities */
                 cnt = 1;
                 if (OPAL_SUCCESS != (ret = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
                     ORTE_ERROR_LOG(ret);
                     goto relay;
                 }
-                /* add it to our relay buffer as we will need it later */
-                opal_dss.pack(relay, &flag, 1, OPAL_INT8);
                 if (0 != flag) {
                     /* update our local nidmap, if required - the decode function
                      * knows what to do

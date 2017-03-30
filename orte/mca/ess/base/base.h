@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +67,7 @@ ORTE_DECLSPEC void orte_ess_base_app_abort(int status, bool report);
 ORTE_DECLSPEC int orte_ess_base_tool_setup(void);
 ORTE_DECLSPEC int orte_ess_base_tool_finalize(void);
 
-ORTE_DECLSPEC int orte_ess_base_orted_setup(char **hosts);
+ORTE_DECLSPEC int orte_ess_base_orted_setup(void);
 ORTE_DECLSPEC int orte_ess_base_orted_finalize(void);
 
 /* Detect whether or not this proc is bound - if not,

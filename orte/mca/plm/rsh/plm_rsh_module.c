@@ -328,8 +328,7 @@ static void rsh_wait_daemon(orte_proc_t *daemon, void* cbdata)
 static int setup_launch(int *argcptr, char ***argvptr,
                         char *nodename,
                         int *node_name_index1,
-                        int *proc_vpid_index, char *prefix_dir,
-                        char *nodelist)
+                        int *proc_vpid_index, char *prefix_dir)
 {
     int argc;
     char **argv;
@@ -613,8 +612,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
      */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
-                                          proc_vpid_index,
-                                          nodelist);
+                                          proc_vpid_index);
 
     /* ensure that only the ssh plm is selected on the remote daemon */
     opal_argv_append_nosize(&argv, "-"OPAL_MCA_CMD_LINE_ID);
@@ -828,8 +826,9 @@ static int remote_spawn(opal_buffer_t *launch)
     }
 
     /* setup the launch */
-    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1,
-                                           &proc_vpid_index, prefix, NULL))) {
+    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv,
+                                           orte_process_info.nodename, &node_name_index1,
+                                           &proc_vpid_index, prefix))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&coll);
         goto cleanup;
@@ -1030,7 +1029,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
     int port, *portptr;
     orte_namelist_t *child;
     char *rtmod;
-    char *nlistflat;
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
@@ -1199,32 +1197,11 @@ static void launch_daemons(int fd, short args, void *cbdata)
         orte_routed.get_routing_list(rtmod, &coll);
     }
 
-    /* create a list of all nodes involved so we can pass it along */
-    char **nodelist = NULL;
-    orte_node_t *n2;
-    for (nnode=0; nnode < map->nodes->size; nnode++) {
-        if (NULL != (n2 = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
-            opal_argv_append_nosize(&nodelist, n2->name);
-        }
-    }
-    /* we need mpirun to be the first node on this list */
-    if (NULL == nodelist || 0 != strcmp(nodelist[0], orte_process_info.nodename)) {
-        opal_argv_prepend_nosize(&nodelist, orte_process_info.nodename);
-    }
-    nlistflat = opal_argv_join(nodelist, ',');
-    opal_argv_free(nodelist);
-
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, node->name, &node_name_index1,
-                                           &proc_vpid_index, prefix_dir, nlistflat))) {
+                                           &proc_vpid_index, prefix_dir))) {
         ORTE_ERROR_LOG(rc);
-        if (NULL != nlistflat) {
-            free(nlistflat);
-        }
         goto cleanup;
-    }
-    if (NULL != nlistflat) {
-        free(nlistflat);
     }
 
     /*

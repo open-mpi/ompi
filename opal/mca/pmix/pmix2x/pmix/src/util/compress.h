@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,8 +31,8 @@
 
 BEGIN_C_DECLS
 
-/* define a limit for storing raw strings */
-#define PMIX_STRING_LIMIT  512
+/* define a limit of 128k for raw strings */
+#define PMIX_STRING_LIMIT  131072
 
 /* define a macro for quickly checking if a string exceeds the
  * compression limit */

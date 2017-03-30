@@ -113,6 +113,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     int8_t flag;
     void *nptr;
     uint32_t key;
+    char *nidmap;
 
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
@@ -127,19 +128,32 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
         return ORTE_SUCCESS;
     }
 
-    /* if we launched new daemons... */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL)) {
-        /* flag that we did */
+    /* if we couldn't provide the allocation regex on the orted
+     * cmd line, then we need to provide all the info here */
+    if (!orte_nidmap_communicated) {
+        if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(&nidmap))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        orte_nidmap_communicated = true;
+    } else {
+        nidmap = NULL;
+    }
+    opal_dss.pack(buffer, &nidmap, 1, OPAL_STRING);
+    if (NULL != nidmap) {
+        free(nidmap);
+    }
+
+    /* if we haven't already done so, provide the info on the
+     * capabilities of each node */
+    if (!orte_node_info_communicated ||
+        orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL)) {
         flag = 1;
         opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
-
-        /* include a nodemap of the daemons */
         if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buffer))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
-        /* if we are not using static ports, we need to send the wireup info */
         if (!orte_static_ports && !orte_fwd_mpirun_port) {
             /* pack a flag indicating wiring info is provided */
             flag = 1;
@@ -176,41 +190,52 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
          * copy of all active jobs so the grpcomm collectives can
          * properly work should a proc from one of the other jobs
          * interact with this one */
-        OBJ_CONSTRUCT(&jobdata, opal_buffer_t);
-        numjobs = 0;
-        rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jptr, &nptr);
-        while (OPAL_SUCCESS == rc) {
-            /* skip the one we are launching now */
-            if (NULL != jptr && jptr != jdata &&
-                ORTE_PROC_MY_NAME->jobid != jptr->jobid) {
-                /* pack the job struct */
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&jobdata, &jptr, 1, ORTE_JOB))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&jobdata);
-                    return rc;
+        if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL)) {
+            flag = 1;
+            opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
+            OBJ_CONSTRUCT(&jobdata, opal_buffer_t);
+            numjobs = 0;
+            rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jptr, &nptr);
+            while (OPAL_SUCCESS == rc) {
+                /* skip the one we are launching now */
+                if (NULL != jptr && jptr != jdata &&
+                    ORTE_PROC_MY_NAME->jobid != jptr->jobid) {
+                    /* pack the job struct */
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(&jobdata, &jptr, 1, ORTE_JOB))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&jobdata);
+                        return rc;
+                    }
+                    ++numjobs;
                 }
-                ++numjobs;
+                rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jptr, nptr, &nptr);
             }
-            rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jptr, nptr, &nptr);
-        }
-        /* pack the number of jobs */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &numjobs, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&jobdata);
-            return rc;
-        }
-        if (0 < numjobs) {
-            /* pack the jobdata buffer */
-            wireup = &jobdata;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &wireup, 1, OPAL_BUFFER))) {
+            /* pack the number of jobs */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &numjobs, 1, OPAL_INT32))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&jobdata);
                 return rc;
             }
-            OBJ_DESTRUCT(&jobdata);
+            if (0 < numjobs) {
+                /* pack the jobdata buffer */
+                wireup = &jobdata;
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &wireup, 1, OPAL_BUFFER))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_DESTRUCT(&jobdata);
+                    return rc;
+                }
+                OBJ_DESTRUCT(&jobdata);
+            }
+        } else {
+            flag = 0;
+            opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
         }
+        orte_node_info_communicated = true;
     } else {
-        /* include a sentinel */
+        /* mark that we didn't */
+        flag = 0;
+        opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
+        /* and that we didn't launch daemons */
         flag = 0;
         opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
     }

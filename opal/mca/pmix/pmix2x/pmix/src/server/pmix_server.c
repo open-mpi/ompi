@@ -990,11 +990,11 @@ static void _dmodex_req(int sd, short args, void *cbdata)
      * may not be a contribution */
     if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->server->myremote, info->rank, "modex", &val)) &&
         NULL != val) {
-    data = val->data.bo.bytes;
-    sz = val->data.bo.size;
-    /* protect the data */
-    val->data.bo.bytes = NULL;
-    val->data.bo.size = 0;
+        data = val->data.bo.bytes;
+        sz = val->data.bo.size;
+        /* protect the data */
+        val->data.bo.bytes = NULL;
+        val->data.bo.size = 0;
         PMIX_VALUE_RELEASE(val);
     }
 

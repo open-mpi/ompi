@@ -243,6 +243,7 @@ static void vm_ready(int fd, short args, void *cbdata)
     opal_byte_object_t bo, *boptr;
     int8_t flag;
     int32_t numbytes;
+    char *nidmap;
 
     /* if this is my job, then we are done */
     if (ORTE_PROC_MY_NAME->jobid == caddy->jdata->jobid) {
@@ -250,50 +251,65 @@ static void vm_ready(int fd, short args, void *cbdata)
          * do this here so we don't have to do it for every
          * job we are going to launch */
         buf = OBJ_NEW(opal_buffer_t);
-        /* pack the "load nidmap" cmd */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buf);
-            return;
+        opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD);
+        /* if we couldn't provide the allocation regex on the orted
+         * cmd line, then we need to provide all the info here */
+        if (!orte_nidmap_communicated) {
+            if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(&nidmap))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buf);
+                return;
+            }
+            orte_nidmap_communicated = true;
+        } else {
+            nidmap = NULL;
         }
-        /* flag that daemons were launched so we will update the nidmap */
-        flag = 1;
-        opal_dss.pack(buf, &flag, 1, OPAL_INT8);
-        /* construct a nodemap with everything in it */
-        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buf))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buf);
-            return;
+        opal_dss.pack(buf, &nidmap, 1, OPAL_STRING);
+        if (NULL != nidmap) {
+            free(nidmap);
         }
-
-        if (!orte_static_ports && !orte_fwd_mpirun_port) {
-            /* pack a flag indicating wiring info is provided */
+        /* provide the info on the capabilities of each node */
+        if (!orte_node_info_communicated) {
             flag = 1;
             opal_dss.pack(buf, &flag, 1, OPAL_INT8);
-            /* get wireup info for daemons per the selected routing module */
-            wireup = OBJ_NEW(opal_buffer_t);
-            if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
+            if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buf))) {
                 ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(wireup);
                 OBJ_RELEASE(buf);
                 return;
             }
-            /* put it in a byte object for xmission */
-            opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
-            /* pack the byte object - zero-byte objects are fine */
-            bo.size = numbytes;
-            boptr = &bo;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
-                ORTE_ERROR_LOG(rc);
+            orte_node_info_communicated = true;
+            if (!orte_static_ports && !orte_fwd_mpirun_port) {
+                /* pack a flag indicating wiring info is provided */
+                flag = 1;
+                opal_dss.pack(buf, &flag, 1, OPAL_INT8);
+                /* get wireup info for daemons per the selected routing module */
+                wireup = OBJ_NEW(opal_buffer_t);
+                if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(wireup);
+                    OBJ_RELEASE(buf);
+                    return;
+                }
+                /* put it in a byte object for xmission */
+                opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
+                /* pack the byte object - zero-byte objects are fine */
+                bo.size = numbytes;
+                boptr = &bo;
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(wireup);
+                    OBJ_RELEASE(buf);
+                    return;
+                }
+                /* release the data since it has now been copied into our buffer */
+                if (NULL != bo.bytes) {
+                    free(bo.bytes);
+                }
                 OBJ_RELEASE(wireup);
-                OBJ_RELEASE(buf);
-                return;
+            } else {
+                flag = 0;
+                opal_dss.pack(buf, &flag, 1, OPAL_INT8);
             }
-            /* release the data since it has now been copied into our buffer */
-            if (NULL != bo.bytes) {
-                free(bo.bytes);
-            }
-            OBJ_RELEASE(wireup);
         } else {
             flag = 0;
             opal_dss.pack(buf, &flag, 1, OPAL_INT8);

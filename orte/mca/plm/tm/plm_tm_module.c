@@ -171,7 +171,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
     char **env = NULL;
     char *var;
     char **argv = NULL;
-    char **nodeargv;
     int argc = 0;
     int rc;
     orte_std_cntr_t i;
@@ -180,7 +179,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
     tm_task_id *tm_task_ids = NULL;
     bool failed_launch = true;
     mode_t current_umask;
-    char *nodelist;
     char* vpid_string;
     orte_job_t *daemons, *jdata;
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
@@ -260,32 +258,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
 
-    /* create a list of nodes in this launch */
-    nodeargv = NULL;
-    for (i = 0; i < map->nodes->size; i++) {
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
-            continue;
-        }
-
-        /* if this daemon already exists, don't launch it! */
-        if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
-            continue;
-        }
-
-        /* add to list */
-        opal_argv_append_nosize(&nodeargv, node->name);
-    }
-    /* we need mpirun to be the first node on this list - since we
-     * aren't launching mpirun via TM, it won't be there now */
-    opal_argv_prepend_nosize(&nodeargv, orte_process_info.nodename);
-    nodelist = opal_argv_join(nodeargv, ',');
-    opal_argv_free(nodeargv);
-
-
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "tm",
-                                          &proc_vpid_index,
-                                          nodelist);
+                                          &proc_vpid_index);
     free(nodelist);
 
     if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
