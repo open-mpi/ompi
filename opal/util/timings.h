@@ -23,8 +23,6 @@ typedef enum {
     OPAL_TIMING_USEC_NATIVE
 } opal_timer_type_t;
 
-#define OPAL_ENABLE_TIMING 1
-
 #if OPAL_ENABLE_TIMING
 
 typedef double (*opal_timing_ts_func_t)(void);

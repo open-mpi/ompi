@@ -950,7 +950,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
         opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
         ompi_hook_base_mpi_init_error(argc, argv, requested, provided);
-        OMPI_TIMING_ENV_FINALIZE(&OMPI_TIMING_env);
+        OMPI_TIMING_ENV_FINALIZE;
         return ret;
     }
 
@@ -977,7 +977,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * and clear timing structure */
     OMPI_TIMING_NEXT("barrier-finish");
     OMPI_TIMING_OUT;
-    OMPI_TIMING_ENV_FINALIZE(&OMPI_TIMING_env);
+    OMPI_TIMING_ENV_FINALIZE;
 
     opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
 
