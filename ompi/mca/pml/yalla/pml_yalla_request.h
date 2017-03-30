@@ -175,25 +175,28 @@ static inline mca_pml_yalla_send_request_t* MCA_PML_YALLA_SREQ_INIT(void *_buf, 
         } \
     }
 
-#define PML_YALLA_SET_RECV_STATUS(_rreq, _length, _mpi_status) \
+#define PML_YALLA_SET_RECV_STATUS(_rreq, _length, _mpi_status, rc) \
     { \
-        if ((_mpi_status) != MPI_STATUS_IGNORE) { \
             switch ((_rreq)->base.error) { \
             case MXM_OK: \
-                (_mpi_status)->MPI_ERROR  = OMPI_SUCCESS; \
+                (rc)  = OMPI_SUCCESS; \
                 break; \
             case MXM_ERR_CANCELED: \
-                (_mpi_status)->MPI_ERROR  = OMPI_SUCCESS; \
-                (_mpi_status)->_cancelled = true; \
+                (rc)  = OMPI_SUCCESS; \
                 break; \
             case MXM_ERR_MESSAGE_TRUNCATED: \
-                (_mpi_status)->MPI_ERROR  = MPI_ERR_TRUNCATE; \
+                (rc)  = MPI_ERR_TRUNCATE; \
                 break; \
             default: \
-                (_mpi_status)->MPI_ERROR  = MPI_ERR_INTERN; \
+                (rc)  = MPI_ERR_INTERN; \
                 break; \
             } \
             \
+        if ((_mpi_status) != MPI_STATUS_IGNORE) { \
+            (_mpi_status)->MPI_ERROR  = (rc); \
+            if (MXM_ERR_CANCELED == (_rreq)->base.error) { \
+                (_mpi_status)->_cancelled = true; \
+            } \
             (_mpi_status)->MPI_TAG    = (_rreq)->completion.sender_tag; \
             (_mpi_status)->MPI_SOURCE = (_rreq)->completion.sender_imm; \
             (_mpi_status)->_ucount    = (_length); \
