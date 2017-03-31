@@ -45,18 +45,24 @@ static void mca_coll_sync_module_construct(mca_coll_sync_module_t *module)
     memset(&(module->c_coll), 0, sizeof(module->c_coll));
     module->before_num_operations = 0;
     module->after_num_operations = 0;
+    module->before_num_operations_alltoallv = 0;
+    module->after_num_operations_alltoallv = 0;
     module->in_operation = false;
 }
 
 static void mca_coll_sync_module_destruct(mca_coll_sync_module_t *module)
 {
-    OBJ_RELEASE(module->c_coll.coll_bcast_module);
-    OBJ_RELEASE(module->c_coll.coll_gather_module);
-    OBJ_RELEASE(module->c_coll.coll_gatherv_module);
-    OBJ_RELEASE(module->c_coll.coll_reduce_module);
-    OBJ_RELEASE(module->c_coll.coll_reduce_scatter_module);
-    OBJ_RELEASE(module->c_coll.coll_scatter_module);
-    OBJ_RELEASE(module->c_coll.coll_scatterv_module);
+    OBJ_RELEASE(module->c_coll.coll_alltoallv_module);
+    if (0 != mca_coll_sync_component.barrier_before_nops ||
+        0 != mca_coll_sync_component.barrier_after_nops) {
+        OBJ_RELEASE(module->c_coll.coll_bcast_module);
+        OBJ_RELEASE(module->c_coll.coll_gather_module);
+        OBJ_RELEASE(module->c_coll.coll_gatherv_module);
+        OBJ_RELEASE(module->c_coll.coll_reduce_module);
+        OBJ_RELEASE(module->c_coll.coll_reduce_scatter_module);
+        OBJ_RELEASE(module->c_coll.coll_scatter_module);
+        OBJ_RELEASE(module->c_coll.coll_scatterv_module);
+    }
     /* If the exscan module is not NULL, then this was an
        intracommunicator, and therefore scan will have a module as
        well. */
@@ -97,7 +103,9 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
 
     /* If both MCA params are 0, then disqualify us */
     if (0 == mca_coll_sync_component.barrier_before_nops &&
-        0 == mca_coll_sync_component.barrier_after_nops) {
+        0 == mca_coll_sync_component.barrier_after_nops &&
+        0 == mca_coll_sync_component.barrier_before_nops_alltoallv &&
+        0 == mca_coll_sync_component.barrier_after_nops_alltoallv) {
         return NULL;
     }
 
@@ -114,23 +122,42 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
 
     /* The "all" versions are already synchronous.  So no need for an
        additional barrier there. */
-    sync_module->super.coll_allgather  = NULL;
-    sync_module->super.coll_allgatherv = NULL;
-    sync_module->super.coll_allreduce  = NULL;
-    sync_module->super.coll_alltoall   = NULL;
-    sync_module->super.coll_alltoallv  = NULL;
-    sync_module->super.coll_alltoallw  = NULL;
-    sync_module->super.coll_barrier    = NULL;
-    sync_module->super.coll_bcast      = mca_coll_sync_bcast;
-    sync_module->super.coll_exscan     = mca_coll_sync_exscan;
-    sync_module->super.coll_gather     = mca_coll_sync_gather;
-    sync_module->super.coll_gatherv    = mca_coll_sync_gatherv;
-    sync_module->super.coll_reduce     = mca_coll_sync_reduce;
-    sync_module->super.coll_reduce_scatter = mca_coll_sync_reduce_scatter;
-    sync_module->super.coll_scan       = mca_coll_sync_scan;
-    sync_module->super.coll_scatter    = mca_coll_sync_scatter;
-    sync_module->super.coll_scatterv   = mca_coll_sync_scatterv;
-
+    if(0 == mca_coll_sync_component.barrier_before_nops &&
+       0 == mca_coll_sync_component.barrier_after_nops) {
+        sync_module->super.coll_allgather  = NULL;
+        sync_module->super.coll_allgatherv = NULL;
+        sync_module->super.coll_allreduce  = NULL;
+        sync_module->super.coll_alltoall   = NULL;
+        sync_module->super.coll_alltoallv  = mca_coll_sync_alltoallv;
+        sync_module->super.coll_alltoallw  = NULL;
+        sync_module->super.coll_barrier    = NULL;
+        sync_module->super.coll_bcast      = NULL;
+        sync_module->super.coll_exscan     = NULL;
+        sync_module->super.coll_gather     = NULL;
+        sync_module->super.coll_gatherv    = NULL;
+        sync_module->super.coll_reduce     = NULL;
+        sync_module->super.coll_reduce_scatter = NULL;
+        sync_module->super.coll_scan       = NULL;
+        sync_module->super.coll_scatter    = NULL;
+        sync_module->super.coll_scatterv   = NULL;
+    } else {
+        sync_module->super.coll_allgather  = NULL;
+        sync_module->super.coll_allgatherv = NULL;
+        sync_module->super.coll_allreduce  = NULL;
+        sync_module->super.coll_alltoall   = NULL;
+        sync_module->super.coll_alltoallv  = mca_coll_sync_alltoallv;
+        sync_module->super.coll_alltoallw  = NULL;
+        sync_module->super.coll_barrier    = NULL;
+        sync_module->super.coll_bcast      = mca_coll_sync_bcast;
+        sync_module->super.coll_exscan     = mca_coll_sync_exscan;
+        sync_module->super.coll_gather     = mca_coll_sync_gather;
+        sync_module->super.coll_gatherv    = mca_coll_sync_gatherv;
+        sync_module->super.coll_reduce     = mca_coll_sync_reduce;
+        sync_module->super.coll_reduce_scatter = mca_coll_sync_reduce_scatter;
+        sync_module->super.coll_scan       = mca_coll_sync_scan;
+        sync_module->super.coll_scatter    = mca_coll_sync_scatter;
+        sync_module->super.coll_scatterv   = mca_coll_sync_scatterv;
+    }
     return &(sync_module->super);
 }
 
@@ -156,13 +183,19 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
         OBJ_RETAIN(s->c_coll.coll_ ## name ## _module);  \
     }
 
-    CHECK_AND_RETAIN(bcast);
-    CHECK_AND_RETAIN(gather);
-    CHECK_AND_RETAIN(gatherv);
-    CHECK_AND_RETAIN(reduce);
-    CHECK_AND_RETAIN(reduce_scatter);
-    CHECK_AND_RETAIN(scatter);
-    CHECK_AND_RETAIN(scatterv);
+    CHECK_AND_RETAIN(alltoallv);
+
+    if (0 != mca_coll_sync_component.barrier_before_nops ||
+        0 != mca_coll_sync_component.barrier_after_nops) {
+        CHECK_AND_RETAIN(bcast);
+        CHECK_AND_RETAIN(gather);
+        CHECK_AND_RETAIN(gatherv);
+        CHECK_AND_RETAIN(reduce);
+        CHECK_AND_RETAIN(reduce_scatter);
+        CHECK_AND_RETAIN(scatter);
+        CHECK_AND_RETAIN(scatterv);
+    }
+
     if (!OMPI_COMM_IS_INTER(comm)) {
         /* MPI does not define scan/exscan on intercommunicators */
         CHECK_AND_RETAIN(exscan);
