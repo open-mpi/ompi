@@ -7,6 +7,9 @@ dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2011-2012 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2017      The University of Tennessee and The University
+dnl                         of Tennessee Research Foundation.  All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -554,17 +557,17 @@ EOF
         #
         # Include the mpif.h header if it is available.  Cannot do
         # this from inside the usempi.h since, for VPATH builds, the
-        # top_ompi_srcdir is needed to find the header.
+        # srcdir is needed to find the header.
         #
         if test "$enabled_mpifh" = 1; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempi_ext_h <<EOF
-      include '$top_ompi_srcdir/ompi/mpiext/$component/mpif-h/$mpifh_component_header'
+      include '${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header'
 EOF
         fi
 
         cat >> $mpiusempi_ext_h <<EOF
-      include '$top_ompi_srcdir/ompi/mpiext/$component/use-mpi/$component_header'
+      include '${srcdir}/ompi/mpiext/$component/use-mpi/$component_header'
 
 EOF
     else
@@ -607,17 +610,17 @@ EOF
         #
         # Include the mpif.h header if it is available.  Cannot do
         # this from inside the usempif08.h since, for VPATH builds,
-        # the top_ompi_srcdir is needed to find the header.
+        # the srcdir is needed to find the header.
         #
         if test "$enabled_mpifh" = 1; then
             mpifh_component_header="mpiext_${component}_mpifh.h"
             cat >> $mpiusempif08_ext_h <<EOF
-      include '$top_ompi_srcdir/ompi/mpiext/$component/mpif-h/$mpifh_component_header'
+      include '${srcdir}/ompi/mpiext/$component/mpif-h/$mpifh_component_header'
 EOF
         fi
 
         cat >> $mpiusempif08_ext_h <<EOF
-      include '$top_ompi_srcdir/ompi/mpiext/$component/use-mpi-f08/$component_header'
+      include '${srcdir}/ompi/mpiext/$component/use-mpi-f08/$component_header'
 
 EOF
     else
