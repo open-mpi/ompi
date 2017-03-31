@@ -9,6 +9,7 @@
 typedef struct {
     char **desc;
     double *in;
+    int use;
 } ompi_timing_item_t;
 
 typedef struct ompi_timing_list_t {
@@ -48,6 +49,7 @@ exit:                                                                          \
     *item = (ompi_timing_item_t*)malloc(sizeof(ompi_timing_item_t));           \
     (*item)->in = (double*)malloc(sizeof(double) * OMPI_TIMING_env.inum);      \
     (*item)->desc = (char**)malloc(sizeof(char**) * OMPI_TIMING_env.inum);     \
+    (*item)->use = 0;                                                          \
 }
 
 #define OMPI_TIMING_ENV_ITEM_EXTEND ({                                         \
@@ -71,9 +73,18 @@ exit:                                                                          \
         tmp = t;                                                               \
         t = t->next;                                                           \
         if ( tmp->item ) {                                                     \
-            if ( tmp->item->desc ) { free(tmp->item->desc); }                  \
+            if ( tmp->item->desc ) {                                           \
+                int i;                                                         \
+                for (i = 0; i < tmp->item->use; i++) {                         \
+                    free(tmp->item->desc[i]);                                  \
+                    tmp->item->desc[i] = NULL;                                 \
+                }                                                              \
+                free(tmp->item->desc);                                         \
+                tmp->item->desc = NULL;                                        \
+            }                                                                  \
             if ( tmp->item->in ) { free(tmp->item->in); }                      \
             free(tmp->item);                                                   \
+            tmp->item = NULL;                                                  \
         }                                                                      \
         free(tmp);                                                             \
         tmp = NULL;                                                            \
@@ -110,6 +121,7 @@ exit:;                                                                         \
                         OMPI_TIMING_env.get_ts() - OMPI_TIMING_env.ts;         \
     asprintf(&item->desc[OMPI_TIMING_env.cnt % OMPI_TIMING_env.inum],          \
             fmt, ## __VA_ARGS__);                                              \
+    item->use++;                                                               \
     OMPI_TIMING_env.cnt++;                                                     \
     OMPI_TIMING_env.ts = OMPI_TIMING_env.get_ts();                             \
 }
@@ -127,6 +139,7 @@ exit:;                                                                         \
     }                                                                          \
     item->in[OMPI_TIMING_env.cnt % OMPI_TIMING_env.inum] = ts;                 \
     item->desc[OMPI_TIMING_env.cnt % OMPI_TIMING_env.inum] = strdup(desc);     \
+    item->use++;                                                               \
     OMPI_TIMING_env.cnt++;                                                     \
  }
 
@@ -149,8 +162,6 @@ exit:;                                                                         \
     MPI_Comm_size(MPI_COMM_WORLD, &size);                                      \
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);                                      \
     int n = (OMPI_TIMING_env.cnt - 1)/ OMPI_TIMING_env.inum + 1;               \
-    int tail = OMPI_TIMING_env.cnt % OMPI_TIMING_env.inum;                     \
-    int get_cnt = OMPI_TIMING_env.inum;                                        \
                                                                                \
     double *avg = (double*)malloc(sizeof(double) * OMPI_TIMING_env.cnt);       \
     double *min = (double*)malloc(sizeof(double) * OMPI_TIMING_env.cnt);       \
@@ -162,9 +173,7 @@ exit:;                                                                         \
         ompi_timing_list_t *lst = OMPI_TIMING_env.timing;                      \
                                                                                \
         for (i = 0; i < n; i++) {                                              \
-            if (i == (n-1)) {                                                  \
-                get_cnt = tail == 0 ? OMPI_TIMING_env.inum : tail;             \
-            }                                                                  \
+            int get_cnt = lst->item->use;                                      \
             double *avg_ptr = avg + (OMPI_TIMING_env.inum * i);                \
             double *min_ptr = min + (OMPI_TIMING_env.inum * i);                \
             double *max_ptr = max + (OMPI_TIMING_env.inum * i);                \

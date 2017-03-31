@@ -160,7 +160,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         error = "opal_init";
         goto error;
     }
-    OPAL_TIMING_ENV_NEXT(tmng, "test_opal_init");
 
     OPAL_TIMING_ENV_NEXT(tmng, "opal_init");
 
