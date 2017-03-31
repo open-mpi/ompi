@@ -1157,10 +1157,10 @@ int cuda_closememhandle(void *reg_data, mca_rcache_base_registration_t *reg)
     if (ctx_ok) {
         result = cuFunc.cuIpcCloseMemHandle((CUdeviceptr)cuda_reg->base.alloc_base);
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-            opal_show_help("help-mpi-common-cuda.txt", "cuIpcCloseMemHandle failed",
-                           true, result, cuda_reg->base.alloc_base);
-            opal_output(0, "Sleep on %d", getpid());
-            sleep(20);
+            if (CUDA_ERROR_DEINITIALIZED != result) {
+                opal_show_help("help-mpi-common-cuda.txt", "cuIpcCloseMemHandle failed",
+                true, result, cuda_reg->base.alloc_base);
+            }
             /* We will just continue on and hope things continue to work. */
         } else {
             opal_output_verbose(10, mca_common_cuda_output,
