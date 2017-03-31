@@ -40,7 +40,7 @@
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/util/session_dir.h"

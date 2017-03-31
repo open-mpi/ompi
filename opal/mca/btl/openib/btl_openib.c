@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2015 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -80,7 +80,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
