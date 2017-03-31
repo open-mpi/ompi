@@ -492,7 +492,7 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
     pmix_buffer_t *bfr;
     pmix_cmd_t cmd = PMIX_ABORT_CMD;
     pmix_status_t rc;
-    pmix_ptl_sr_t cb;
+    volatile bool active;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:client abort called");
@@ -541,23 +541,15 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
         }
     }
 
-    /* create a callback object as we need to pass it to the
-     * recv routine so we know which callback to use when
-     * the return message is recvd */
-     PMIX_CONSTRUCT(&cb, pmix_ptl_sr_t);
-     cb.active = true;
-     cb.cbfunc = wait_cbfunc;
-
     /* send to the server */
+    active = true;
     if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, bfr,
-                                                 wait_cbfunc, &cb))){
-        PMIX_DESTRUCT(&cb);
+                                                 wait_cbfunc, (void*)&active))){
         return rc;
     }
 
     /* wait for the release */
-     PMIX_WAIT_FOR_COMPLETION(cb.active);
-     PMIX_DESTRUCT(&cb);
+     PMIX_WAIT_FOR_COMPLETION(active);
      return PMIX_SUCCESS;
  }
 
