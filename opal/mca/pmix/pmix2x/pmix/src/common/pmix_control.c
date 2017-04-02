@@ -211,7 +211,7 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
         }
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix:monitor handed to RM");
-        rc = pmix_host_server.monitor(&pmix_globals.myid, error,
+        rc = pmix_host_server.monitor(&pmix_globals.myid, monitor, error,
                                       directives, ndirs, cbfunc, cbdata);
         return rc;
     }
@@ -226,6 +226,13 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
+
+    /* pack the monitor */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, monitor, 1, PMIX_INFO))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;

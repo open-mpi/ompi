@@ -523,8 +523,14 @@ pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pmix_status_t 
                                       pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /* define a special macro to simplify sending of a heartbeat */
-#define PMIx_Heartbeat() \
-    PMIx_Process_monitor_nb(PMIX_SEND_HEARTBEAT, NULL, 0, NULL, NULL)
+#define PMIx_Heartbeat()                                                    \
+    do {                                                                    \
+        pmix_info_t _in;                                                    \
+        PMIX_INFO_CONSTRUCT(&_in);                                          \
+        PMIX_INFO_LOAD(&_in, PMIX_SEND_HEARTBEAT, NULL, PMIX_POINTER);      \
+        PMIx_Process_monitor_nb(&_in, PMIX_SUCCESS, NULL, 0, NULL, NULL);   \
+        PMIX_INFO_DESTRUCT(&_in);                                           \
+    } while(0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -165,7 +165,7 @@ static pmix_status_t heartbeat_start(pmix_peer_t *requestor, pmix_status_t error
                                      const pmix_info_t directives[], size_t ndirs)
 {
     pmix_heartbeat_trkr_t *ft;
-    size_t n, n2;
+    size_t n;
 
     PMIX_OUTPUT_VERBOSE((1, pmix_psensor_base_framework.framework_output,
                          "[%s:%d] checking heartbeat monitoring for requestor %s:%d",

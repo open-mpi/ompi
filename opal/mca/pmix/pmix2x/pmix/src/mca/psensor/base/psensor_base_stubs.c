@@ -18,8 +18,6 @@
 
 #include "src/mca/psensor/base/base.h"
 
-static bool mods_active = false;
-
 pmix_status_t pmix_psensor_base_start(pmix_peer_t *requestor, pmix_status_t error,
                                       const pmix_info_t *monitor,
                                       const pmix_info_t directives[], size_t ndirs)
@@ -27,7 +25,7 @@ pmix_status_t pmix_psensor_base_start(pmix_peer_t *requestor, pmix_status_t erro
     pmix_psensor_active_module_t *mod;
     pmix_status_t rc;
 
-    opal_output_verbose(5, pmix_psensor_base_framework.framework_output,
+    pmix_output_verbose(5, pmix_psensor_base_framework.framework_output,
                         "%s:%d sensor:base: starting sensors",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank);
 
@@ -50,7 +48,7 @@ pmix_status_t pmix_psensor_base_stop(pmix_peer_t *requestor,
     pmix_psensor_active_module_t *mod;
     pmix_status_t rc;
 
-    opal_output_verbose(5, pmix_psensor_base_framework.framework_output,
+    pmix_output_verbose(5, pmix_psensor_base_framework.framework_output,
                         "%s:%d sensor:base: stopping sensors",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank);
 

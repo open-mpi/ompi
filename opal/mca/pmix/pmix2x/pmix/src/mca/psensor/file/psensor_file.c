@@ -176,8 +176,7 @@ static pmix_status_t start(pmix_peer_t *requestor, pmix_status_t error,
                            const pmix_info_t directives[], size_t ndirs)
 {
     file_tracker_t *ft;
-    pmix_info_t *ptr;
-    size_t n, n2;
+    size_t n;
 
     PMIX_OUTPUT_VERBOSE((1, pmix_psensor_base_framework.framework_output,
                          "[%s:%d] checking file monitoring for requestor %s:%d",
@@ -278,7 +277,7 @@ static void file_sample(int sd, short args, void *cbdata)
     pmix_status_t rc;
     pmix_proc_t source;
 
-    OPAL_OUTPUT_VERBOSE((1, pmix_psensor_base_framework.framework_output,
+    PMIX_OUTPUT_VERBOSE((1, pmix_psensor_base_framework.framework_output,
                          "[%s:%d] sampling file %s",
                          pmix_globals.myid.nspace, pmix_globals.myid.rank,
                          ft->file));
@@ -301,7 +300,7 @@ static void file_sample(int sd, short args, void *cbdata)
                          (unsigned long)buf.st_size, ctime(&buf.st_atime), ctime(&buf.st_mtime)));
 
     if (ft->file_size) {
-        if (buf.st_size == ft->last_size) {
+        if (buf.st_size == (int64_t)ft->last_size) {
             ft->nmisses++;
         } else {
             ft->nmisses = 0;
@@ -323,7 +322,6 @@ static void file_sample(int sd, short args, void *cbdata)
         }
     }
 
-  CHECK:
     PMIX_OUTPUT_VERBOSE((1, pmix_psensor_base_framework.framework_output,
                          "[%s:%d] sampled file %s misses %d",
                          pmix_globals.myid.nspace, pmix_globals.myid.rank,

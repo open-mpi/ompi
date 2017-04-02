@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -28,6 +28,8 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
                                             pmix_data_range_t range,
                                             pmix_info_t info[], size_t ninfo,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata);
+
+static bool check_range(pmix_range_trkr_t *range, const pmix_proc_t *proc);
 
 /* if we are a client, we call this function to notify the server of
  * an event. If we are a server, our host RM will call this function
@@ -190,47 +192,49 @@ static void progress_local_event_hdlr(pmix_status_t status,
                                       void *notification_cbdata)
 {
     pmix_event_chain_t *chain = (pmix_event_chain_t*)notification_cbdata;
-    size_t n, nsave;
+    size_t n, nsave, cnt;
     pmix_info_t *newinfo;
-    pmix_list_item_t *nxt;
-    pmix_single_event_t *sing;
-    pmix_multi_event_t *multi;
-    pmix_default_event_t *def;
+    pmix_list_item_t *item;
+    pmix_event_hdlr_t *nxt;
 
-    /* if the caller indicates that the chain is completed, then stop here */
-    if (PMIX_EVENT_ACTION_COMPLETE == status) {
-        goto complete;
-    }
-
-    /* save the current number of results */
-    nsave = chain->nresults;
-    /* create the new space */
-    PMIX_INFO_CREATE(newinfo, chain->nresults + nresults + 1);
-    /* transfer over the prior data */
+    /* aggregate the results per RFC0018 - first search the
+     * prior chained results to see if any keys have been NULL'd
+     * as this indicates that info struct should be removed */
+    nsave = 0;
     for (n=0; n < chain->nresults; n++) {
-        PMIX_INFO_XFER(&newinfo[n], &chain->results[n]);
+        if (NULL != chain->results[n].key) {
+            ++nsave;
+        }
     }
-    /* save this handler's response */
-    if (NULL != chain->sing) {
-        if (NULL != chain->sing->name) {
-            (void)strncpy(newinfo[nsave].key, chain->sing->name, PMIX_MAX_KEYLEN);
+    /* we have to at least record the status returned by each
+     * stage of the event handler chain, so we have to reallocate
+     * the array to make space */
+
+    /* add in any new results plus space for the returned status */
+    nsave += nresults + 1;
+    /* create the new space */
+    PMIX_INFO_CREATE(newinfo, nsave);
+    /* transfer over the prior data */
+    cnt = 0;
+    for (n=0; n < chain->nresults; n++) {
+        if (NULL != chain->results[n].key) {
+            PMIX_INFO_XFER(&newinfo[cnt], &chain->results[n]);
+            ++cnt;
         }
-    } else if (NULL != chain->multi) {
-        if (NULL != chain->multi->name) {
-            (void)strncpy(newinfo[nsave].key, chain->multi->name, PMIX_MAX_KEYLEN);
-        }
-    } else if (NULL != chain->def) {
-        if (NULL != chain->def->name) {
-            (void)strncpy(newinfo[nsave].key, chain->def->name, PMIX_MAX_KEYLEN);
-        }
+    }
+    /* save this handler's returned status */
+    if (NULL != chain->evhdlr->name) {
+        (void)strncpy(newinfo[cnt].key, chain->evhdlr->name, PMIX_MAX_KEYLEN);
     } else {
-        (void)strncpy(newinfo[nsave].key, "UNKNOWN", PMIX_MAX_KEYLEN);
+        (void)strncpy(newinfo[cnt].key, "UNKNOWN", PMIX_MAX_KEYLEN);
     }
-    newinfo[nsave].value.type = PMIX_STATUS;
-    newinfo[nsave].value.data.status = status;
+    newinfo[cnt].value.type = PMIX_STATUS;
+    newinfo[cnt].value.data.status = status;
+    ++cnt;
     /* transfer across the new results */
     for (n=0; n < nresults; n++) {
-        PMIX_INFO_XFER(&newinfo[n+nsave+1], &results[n]);
+        PMIX_INFO_XFER(&newinfo[cnt], &results[n]);
+        ++cnt;
     }
     /* release the prior results */
     if (0 < chain->nresults) {
@@ -238,76 +242,139 @@ static void progress_local_event_hdlr(pmix_status_t status,
     }
     /* pass along the new ones */
     chain->results = newinfo;
-    chain->nresults = nsave + nresults;
+    chain->nresults = cnt;
+
+    /* if the caller indicates that the chain is completed,
+     * or we completed the "last" event, then stop here */
+    if (PMIX_EVENT_ACTION_COMPLETE == status || chain->endchain) {
+        goto complete;
+    }
+    item = NULL;
 
     /* see if we need to continue, starting with the single code events */
-    if (NULL != chain->sing) {
+    if (1 == chain->evhdlr->ncodes) {
         /* the last handler was for a single code - see if there are
          * any others that match this event */
-        while (pmix_list_get_end(&pmix_globals.events.single_events) != (nxt = pmix_list_get_next(&chain->sing->super))) {
-            sing = (pmix_single_event_t*)nxt;
-            if (sing->code == chain->status) {
-                chain->sing = sing;
+        item = &chain->evhdlr->super;
+        while (pmix_list_get_end(&pmix_globals.events.single_events) != (item = pmix_list_get_next(item))) {
+            nxt = (pmix_event_hdlr_t*)item;
+            if (nxt->codes[0] == chain->status &&
+                check_range(&nxt->rng, &chain->source)) {
+                chain->evhdlr = nxt;
                 /* add any cbobject - the info struct for it is at the end */
-                chain->info[chain->ninfo-1].value.data.ptr = sing->cbobject;
-                sing->evhdlr(sing->index,
-                             chain->status, &chain->source,
-                             chain->info, chain->ninfo,
-                             chain->results, chain->nresults,
-                             progress_local_event_hdlr, (void*)chain);
-                goto complete;
+                chain->info[chain->ninfo-1].value.data.ptr = nxt->cbobject;
+                nxt->evhdlr(nxt->index,
+                            chain->status, &chain->source,
+                            chain->info, chain->ninfo,
+                            chain->results, chain->nresults,
+                            progress_local_event_hdlr, (void*)chain);
+                return;
             }
         }
         /* if we get here, then there are no more single code
          * events that match */
-        chain->sing = NULL;
-        /* pickup the beginning of the multi-code event list */
-        chain->multi = (pmix_multi_event_t*)pmix_list_get_begin(&pmix_globals.events.multi_events);
+        item = pmix_list_get_begin(&pmix_globals.events.multi_events);
     }
 
     /* see if we need to continue with the multi code events */
-    if (NULL != chain->multi) {
-        while (pmix_list_get_end(&pmix_globals.events.multi_events) != (nxt = pmix_list_get_next(&chain->multi->super))) {
-            multi = (pmix_multi_event_t*)nxt;
-            for (n=0; n < multi->ncodes; n++) {
-                if (multi->codes[n] == chain->status) {
-                    /* found it - invoke the handler, pointing its
-                     * callback function to our progression function */
-                    chain->multi = multi;
+    if (NULL != chain->evhdlr->codes || NULL != item) {
+        /* the last handler was for a multi-code event, or we exhausted
+         * all the single code events */
+        if (NULL == item) {
+            /* if the last handler was multi-code, then start from that point */
+            item = &chain->evhdlr->super;
+        }
+        while (pmix_list_get_end(&pmix_globals.events.multi_events) != (item = pmix_list_get_next(item))) {
+            nxt = (pmix_event_hdlr_t*)item;
+            if (!check_range(&nxt->rng, &chain->source)) {
+                continue;
+            }
+            for (n=0; n < nxt->ncodes; n++) {
+                /* if this event handler provided a range, check to see if
+                 * the source fits within it */
+                if (nxt->codes[n] == chain->status) {
+                    chain->evhdlr = nxt;
                     /* add any cbobject - the info struct for it is at the end */
-                    chain->info[chain->ninfo-1].value.data.ptr = multi->cbobject;
-                    multi->evhdlr(multi->index,
-                                  chain->status, &chain->source,
-                                  chain->info, chain->ninfo,
-                                  chain->results, chain->nresults,
-                                  progress_local_event_hdlr, (void*)chain);
-                    goto complete;
+                    chain->info[chain->ninfo-1].value.data.ptr = nxt->cbobject;
+                    nxt->evhdlr(nxt->index,
+                                chain->status, &chain->source,
+                                chain->info, chain->ninfo,
+                                chain->results, chain->nresults,
+                                progress_local_event_hdlr, (void*)chain);
+                    return;
                 }
             }
         }
         /* if we get here, then there are no more multi-mode
          * events that match */
-        chain->multi = NULL;
-        /* pickup the beginning of the default event list */
-        chain->def = (pmix_default_event_t*)pmix_list_get_begin(&pmix_globals.events.default_events);
+        item = pmix_list_get_begin(&pmix_globals.events.default_events);
     }
 
-    /* if they didn't want it to go to a default handler, then we are done */
-    if (chain->nondefault) {
-        goto complete;
+    /* if they didn't want it to go to a default handler, then ignore them */
+    if (!chain->nondefault) {
+        if (NULL == item) {
+            item = &chain->evhdlr->super;
+        }
+        if (pmix_list_get_end(&pmix_globals.events.default_events) != (item = pmix_list_get_next(item))) {
+            nxt = (pmix_event_hdlr_t*)item;
+            /* if this event handler provided a range, check to see if
+             * the source fits within it */
+            if (check_range(&nxt->rng, &chain->source)) {
+                chain->evhdlr = nxt;
+                /* add any cbobject - the info struct for it is at the end */
+                chain->info[chain->ninfo-1].value.data.ptr = nxt->cbobject;
+                nxt->evhdlr(nxt->index,
+                            chain->status, &chain->source,
+                            chain->info, chain->ninfo,
+                            chain->results, chain->nresults,
+                            progress_local_event_hdlr, (void*)chain);
+                return;
+            }
+        }
     }
 
-    if (NULL != chain->def) {
-        if (pmix_list_get_end(&pmix_globals.events.default_events) != (nxt = pmix_list_get_next(&chain->def->super))) {
-            def = (pmix_default_event_t*)nxt;
-            chain->def = def;
+    /* if we registered a "last" handler, and it fits the given range
+     * and code, then invoke it now */
+    if (NULL != pmix_globals.events.last &&
+        check_range(&pmix_globals.events.last->rng, &chain->source)) {
+        chain->endchain = true;  // ensure we don't do this again
+        if (1 == pmix_globals.events.last->ncodes &&
+            pmix_globals.events.last->codes[0] == chain->status) {
+            chain->evhdlr = pmix_globals.events.last;
             /* add any cbobject - the info struct for it is at the end */
-            chain->info[chain->ninfo-1].value.data.ptr = def->cbobject;
-            def->evhdlr(def->index,
-                        chain->status, &chain->source,
-                        chain->info, chain->ninfo,
-                        chain->results, chain->nresults,
-                        progress_local_event_hdlr, (void*)chain);
+            chain->info[chain->ninfo-1].value.data.ptr = pmix_globals.events.last->cbobject;
+            chain->evhdlr->evhdlr(chain->evhdlr->index,
+                                  chain->status, &chain->source,
+                                  chain->info, chain->ninfo,
+                                  chain->results, chain->nresults,
+                                  progress_local_event_hdlr, (void*)chain);
+            return;
+        } else if (NULL != pmix_globals.events.last->codes) {
+            /* need to check if this code is included in the array */
+            for (n=0; n < pmix_globals.events.last->ncodes; n++) {
+                if (pmix_globals.events.last->codes[n] == chain->status) {
+                    chain->evhdlr = pmix_globals.events.last;
+                    /* add any cbobject - the info struct for it is at the end */
+                    chain->info[chain->ninfo-1].value.data.ptr = pmix_globals.events.last->cbobject;
+                    chain->evhdlr->evhdlr(chain->evhdlr->index,
+                                          chain->status, &chain->source,
+                                          chain->info, chain->ninfo,
+                                          chain->results, chain->nresults,
+                                          progress_local_event_hdlr, (void*)chain);
+                    return;
+                }
+            }
+        } else {
+            /* gets run for all codes */
+            chain->evhdlr = pmix_globals.events.last;
+            /* add any cbobject - the info struct for it is at the end */
+            chain->info[chain->ninfo-1].value.data.ptr = pmix_globals.events.last->cbobject;
+            chain->evhdlr->evhdlr(chain->evhdlr->index,
+                                  chain->status, &chain->source,
+                                  chain->info, chain->ninfo,
+                                  chain->results, chain->nresults,
+                                  progress_local_event_hdlr, (void*)chain);
+            return;
         }
     }
 
@@ -339,10 +406,9 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     /* We need to parse thru each registered handler and determine
      * which one(s) to call for the specific error */
     size_t i;
-    pmix_single_event_t *sing;
-    pmix_multi_event_t *multi;
-    pmix_default_event_t *def;
+    pmix_event_hdlr_t *evhdlr;
     pmix_status_t rc = PMIX_SUCCESS;
+    bool found;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "%s:%d invoke_local_event_hdlr",
@@ -363,45 +429,63 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
         }
     }
 
+    /* if we registered a "first" handler, and it fits the given range,
+     * then invoke it first */
+    if (NULL != pmix_globals.events.first) {
+        if (1 == pmix_globals.events.first->ncodes &&
+            pmix_globals.events.first->codes[0] == chain->status &&
+            check_range(&pmix_globals.events.first->rng, &chain->source)) {
+            /* invoke the handler */
+            chain->evhdlr = pmix_globals.events.first;
+            goto invk;
+        } else if (NULL != pmix_globals.events.first->codes) {
+            /* need to check if this code is included in the array */
+            found = false;
+            for (i=0; i < pmix_globals.events.first->ncodes; i++) {
+                if (pmix_globals.events.first->codes[i] == chain->status) {
+                    found = true;
+                    break;
+                }
+            }
+            /* if this event handler provided a range, check to see if
+             * the source fits within it */
+            if (found && check_range(&pmix_globals.events.first->rng, &chain->source)) {
+                /* invoke the handler */
+                chain->evhdlr = pmix_globals.events.first;
+                goto invk;
+            }
+        } else {
+            /* take all codes for a default handler */
+            if (check_range(&pmix_globals.events.first->rng, &chain->source)) {
+                /* invoke the handler */
+                chain->evhdlr = pmix_globals.events.first;
+                goto invk;
+            }
+        }
+        /* get here if there is no match, so fall thru */
+    }
+
     /* cycle thru the single-event registrations first */
-    PMIX_LIST_FOREACH(sing, &pmix_globals.events.single_events, pmix_single_event_t) {
-        if (sing->code == chain->status) {
-            /* found it - invoke the handler, pointing its
-             * callback function to our progression function */
-            chain->sing = sing;
-            /* add any cbobject - the info struct for it is at the end */
-            chain->info[chain->ninfo-1].value.data.ptr = sing->cbobject;
-            pmix_output_verbose(2, pmix_globals.debug_output,
-                                "[%s:%d] CALLING SINGLE EVHDLR",
-                                pmix_globals.myid.nspace, pmix_globals.myid.rank);
-            sing->evhdlr(sing->index,
-                         chain->status, &chain->source,
-                         chain->info, chain->ninfo,
-                         NULL, 0,
-                         progress_local_event_hdlr, (void*)chain);
-            return;
+    PMIX_LIST_FOREACH(evhdlr, &pmix_globals.events.single_events, pmix_event_hdlr_t) {
+        if (evhdlr->codes[0] == chain->status) {
+            if (check_range(&evhdlr->rng, &chain->source)) {
+                /* invoke the handler */
+                chain->evhdlr = evhdlr;
+                goto invk;
+            }
         }
     }
 
     /* if we didn't find any match in the single-event registrations,
      * then cycle thru the multi-event registrations next */
-    PMIX_LIST_FOREACH(multi, &pmix_globals.events.multi_events, pmix_multi_event_t) {
-        for (i=0; i < multi->ncodes; i++) {
-            if (multi->codes[i] == chain->status) {
-                /* found it - invoke the handler, pointing its
-                 * callback function to our progression function */
-                chain->multi = multi;
-                /* add any cbobject - the info struct for it is at the end */
-                chain->info[chain->ninfo-1].value.data.ptr = multi->cbobject;
-                pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "[%s:%d] CALLING MULTI EVHDLR",
-                                    pmix_globals.myid.nspace, pmix_globals.myid.rank);
-                multi->evhdlr(multi->index,
-                              chain->status, &chain->source,
-                              chain->info, chain->ninfo,
-                              NULL, 0,
-                              progress_local_event_hdlr, (void*)chain);
-                return;
+    PMIX_LIST_FOREACH(evhdlr, &pmix_globals.events.multi_events, pmix_event_hdlr_t) {
+        for (i=0; i < evhdlr->ncodes; i++) {
+            if (evhdlr->codes[i] == chain->status) {
+                if (check_range(&evhdlr->rng, &chain->source)) {
+                    /* invoke the handler */
+                    chain->evhdlr = evhdlr;
+                    goto invk;
+                }
             }
         }
     }
@@ -412,25 +496,32 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     }
 
     /* finally, pass it to any default handlers */
-    PMIX_LIST_FOREACH(def, &pmix_globals.events.default_events, pmix_default_event_t) {
-        chain->def = def;
-        /* add any cbobject - the info struct for it is at the end */
-        chain->info[chain->ninfo-1].value.data.ptr = def->cbobject;
-        pmix_output_verbose(2, pmix_globals.debug_output,
-                            "[%s:%d] CALLING DEFAULT EVHDLR", __FILE__, __LINE__);
-        def->evhdlr(def->index,
-                    chain->status, &chain->source,
-                    chain->info, chain->ninfo,
-                    NULL, 0,
-                    progress_local_event_hdlr, (void*)chain);
-        return;
+    PMIX_LIST_FOREACH(evhdlr, &pmix_globals.events.default_events, pmix_event_hdlr_t) {
+        if (check_range(&evhdlr->rng, &chain->source)) {
+            /* invoke the handler */
+            chain->evhdlr = evhdlr;
+            goto invk;
+        }
     }
-
+    /* if we got here, then nothing was found */
   complete:
     /* we still have to call their final callback */
     if (NULL != chain->final_cbfunc) {
         chain->final_cbfunc(rc, chain->final_cbdata);
     }
+    return;
+
+
+  invk:
+    /* invoke the handler */
+    chain->info[chain->ninfo-1].value.data.ptr = chain->evhdlr->cbobject;
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "[%s:%d] INVOKING EVHDLR", __FILE__, __LINE__);
+    chain->evhdlr->evhdlr(chain->evhdlr->index,
+                          chain->status, &chain->source,
+                          chain->info, chain->ninfo,
+                          NULL, 0,
+                          progress_local_event_hdlr, (void*)chain);
     return;
 }
 
@@ -617,66 +708,104 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
     return PMIX_SUCCESS;
 }
 
-static void sevcon(pmix_single_event_t *p)
+static bool check_range(pmix_range_trkr_t *rng,
+                        const pmix_proc_t *proc)
+{
+    size_t n;
+
+    if (PMIX_RANGE_UNDEF == rng->range ||
+        PMIX_RANGE_GLOBAL == rng->range ||
+        PMIX_RANGE_SESSION == rng->range ||
+        PMIX_RANGE_LOCAL == rng->range) { // assume RM took care of session & local for now
+        return true;
+    }
+    if (PMIX_RANGE_NAMESPACE == rng->range) {
+        if (0 == strncmp(pmix_globals.myid.nspace, proc->nspace, PMIX_MAX_NSLEN)) {
+            return true;
+        }
+        return false;
+    }
+    if (PMIX_RANGE_PROC_LOCAL == rng->range) {
+        if (0 == strncmp(pmix_globals.myid.nspace, proc->nspace, PMIX_MAX_NSLEN) &&
+            pmix_globals.myid.rank == proc->rank) {
+            return true;
+        }
+        return false;
+    }
+    if (PMIX_RANGE_CUSTOM == rng->range) {
+        if (NULL != rng->procs) {
+            /* see if this proc was included */
+            for (n=0; n < rng->nprocs; n++) {
+                if (0 != strncmp(rng->procs[n].nspace, proc->nspace, PMIX_MAX_NSLEN)) {
+                    continue;
+                }
+                if (PMIX_RANK_WILDCARD == rng->procs[n].rank ||
+                    rng->procs[n].rank == proc->rank) {
+                    return true;
+                }
+            }
+            /* if we get here, then this proc isn't in range */
+            return false;
+        } else {
+            /* if they didn't give us a list, then assume
+             * everyone included */
+            return true;
+        }
+    }
+
+    /* if it is anything else, then reject it */
+    return false;
+}
+
+
+/****    CLASS INSTANTIATIONS    ****/
+
+static void sevcon(pmix_event_hdlr_t *p)
 {
     p->name = NULL;
+    p->index = UINT_MAX;
+    p->precedence = PMIX_EVENT_ORDER_NONE;
+    p->locator = NULL;
+    p->rng.range = PMIX_RANGE_UNDEF;
+    p->rng.procs = NULL;
+    p->rng.nprocs = 0;
     p->evhdlr = NULL;
     p->cbobject = NULL;
+    p->codes = NULL;
+    p->ncodes = 0;
 }
-static void sevdes(pmix_single_event_t *p)
+static void sevdes(pmix_event_hdlr_t *p)
 {
     if (NULL != p->name) {
         free(p->name);
     }
-}
-PMIX_CLASS_INSTANCE(pmix_single_event_t,
-                    pmix_list_item_t,
-                    sevcon, sevdes);
-
-static void mevcon(pmix_multi_event_t *p)
-{
-    p->name = NULL;
-    p->codes = NULL;
-    p->ncodes = 0;
-    p->evhdlr = NULL;
-    p->cbobject = NULL;
-}
-static void mevdes(pmix_multi_event_t *p)
-{
-    if (NULL != p->name) {
-        free(p->name);
+    if (NULL != p->locator) {
+        free(p->locator);
+    }
+    if (NULL != p->rng.procs) {
+        free(p->rng.procs);
     }
     if (NULL != p->codes) {
         free(p->codes);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_multi_event_t,
+PMIX_CLASS_INSTANCE(pmix_event_hdlr_t,
                     pmix_list_item_t,
-                    mevcon, mevdes);
+                    sevcon, sevdes);
 
-static void devcon(pmix_default_event_t *p)
+static void accon(pmix_active_code_t *p)
 {
-    p->name = NULL;
-    p->evhdlr = NULL;
-    p->cbobject = NULL;
+    p->nregs = 0;
 }
-static void devdes(pmix_default_event_t *p)
-{
-    if (NULL != p->name) {
-        free(p->name);
-    }
-}
-PMIX_CLASS_INSTANCE(pmix_default_event_t,
-                    pmix_list_item_t,
-                    devcon, devdes);
-
 PMIX_CLASS_INSTANCE(pmix_active_code_t,
                     pmix_list_item_t,
-                    NULL, NULL);
+                    accon, NULL);
 
 static void evcon(pmix_events_t *p)
 {
     p->nhdlrs = 0;
+    p->first = NULL;
+    p->last = NULL;
     PMIX_CONSTRUCT(&p->actives, pmix_list_t);
     PMIX_CONSTRUCT(&p->single_events, pmix_list_t);
     PMIX_CONSTRUCT(&p->multi_events, pmix_list_t);
@@ -684,6 +813,12 @@ static void evcon(pmix_events_t *p)
 }
 static void evdes(pmix_events_t *p)
 {
+    if (NULL != p->first) {
+        PMIX_RELEASE(p->first);
+    }
+    if (NULL != p->last) {
+        PMIX_RELEASE(p->last);
+    }
     PMIX_LIST_DESTRUCT(&p->actives);
     PMIX_LIST_DESTRUCT(&p->single_events);
     PMIX_LIST_DESTRUCT(&p->multi_events);
@@ -698,14 +833,13 @@ static void chcon(pmix_event_chain_t *p)
     memset(p->source.nspace, 0, PMIX_MAX_NSLEN+1);
     p->source.rank = PMIX_RANK_UNDEF;
     p->nondefault = false;
+    p->endchain = false;
     p->range = PMIX_RANGE_UNDEF;
     p->info = NULL;
     p->ninfo = 0;
     p->results = NULL;
     p->nresults = 0;
-    p->sing = NULL;
-    p->multi = NULL;
-    p->def = NULL;
+    p->evhdlr = NULL;
     p->final_cbfunc = NULL;
     p->final_cbdata = NULL;
 }

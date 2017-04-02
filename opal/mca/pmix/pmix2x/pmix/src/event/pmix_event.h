@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,47 +29,42 @@
 
  BEGIN_C_DECLS
 
-/* define an object for tracking event handlers focused on a
- * single status code */
+#define PMIX_EVENT_ORDER_NONE       0x00
+#define PMIX_EVENT_ORDER_FIRST      0x01
+#define PMIX_EVENT_ORDER_LAST       0x02
+#define PMIX_EVENT_ORDER_BEFORE     0x04
+#define PMIX_EVENT_ORDER_AFTER      0x08
+#define PMIX_EVENT_ORDER_PREPEND    0x10
+#define PMIX_EVENT_ORDER_APPEND     0x20
+
+/* define a struct for tracking registration ranges */
+typedef struct {
+    pmix_data_range_t range;
+    pmix_proc_t *procs;
+    size_t nprocs;
+} pmix_range_trkr_t;
+
+/* define a common struct for tracking event handlers */
 typedef struct {
     pmix_list_item_t super;
     char *name;
     size_t index;
-    pmix_status_t code;
+    uint8_t precedence;
+    char *locator;
+    pmix_range_trkr_t rng;
     pmix_notification_fn_t evhdlr;
     void *cbobject;
-} pmix_single_event_t;
-PMIX_CLASS_DECLARATION(pmix_single_event_t);
-
-/* define an object for tracking event handlers registered
- * on multiple status codes, generally corresponding to a
- * functional group */
-typedef struct {
-    pmix_list_item_t super;
-    char *name;
-    size_t index;
     pmix_status_t *codes;
     size_t ncodes;
-    pmix_notification_fn_t evhdlr;
-    void *cbobject;
-} pmix_multi_event_t;
-PMIX_CLASS_DECLARATION(pmix_multi_event_t);
-
-/* define an object for tracking default event handlers */
-typedef struct {
-    pmix_list_item_t super;
-    char *name;
-    size_t index;
-    pmix_notification_fn_t evhdlr;
-    void *cbobject;
-} pmix_default_event_t;
-PMIX_CLASS_DECLARATION(pmix_default_event_t);
+} pmix_event_hdlr_t;
+PMIX_CLASS_DECLARATION(pmix_event_hdlr_t);
 
 /* define an object for tracking status codes we are actively
  * registered to receive */
 typedef struct {
     pmix_list_item_t super;
     pmix_status_t code;
+    size_t nregs;
 } pmix_active_code_t;
 PMIX_CLASS_DECLARATION(pmix_active_code_t);
 
@@ -79,6 +74,8 @@ PMIX_CLASS_DECLARATION(pmix_active_code_t);
 typedef struct {
     pmix_object_t super;
     size_t nhdlrs;
+    pmix_event_hdlr_t *first;
+    pmix_event_hdlr_t *last;
     pmix_list_t actives;
     pmix_list_t single_events;
     pmix_list_t multi_events;
@@ -98,15 +95,14 @@ typedef struct pmix_event_chain_t {
     pmix_object_t super;
     pmix_status_t status;
     bool nondefault;
+    bool endchain;
     pmix_proc_t source;
     pmix_data_range_t range;
     pmix_info_t *info;
     size_t ninfo;
     pmix_info_t *results;
     size_t nresults;
-    pmix_single_event_t *sing;
-    pmix_multi_event_t *multi;
-    pmix_default_event_t *def;
+    pmix_event_hdlr_t *evhdlr;
     pmix_op_cbfunc_t final_cbfunc;
     void *final_cbdata;
 } pmix_event_chain_t;
