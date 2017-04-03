@@ -156,12 +156,10 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
         PMIX_CONSTRUCT(&buf, pmix_buffer_t);
         hdr.nbytes = 0; // initialize the hdr to something safe
         PMIX_LIST_FOREACH(rcv, &pmix_ptl_globals.posted_recvs, pmix_ptl_posted_recv_t) {
-            if (PMIX_PTL_TAG_DYNAMIC <= rcv->tag && UINT_MAX != rcv->tag) {
-                if (NULL != rcv->cbfunc) {
-                    /* construct and load the buffer */
-                    hdr.tag = rcv->tag;
-                    rcv->cbfunc(pmix_globals.mypeer, &hdr, &buf, rcv->cbdata);
-                }
+            if (UINT_MAX != rcv->tag && NULL != rcv->cbfunc) {
+                /* construct and load the buffer */
+                hdr.tag = rcv->tag;
+                rcv->cbfunc(pmix_globals.mypeer, &hdr, &buf, rcv->cbdata);
             }
         }
         PMIX_DESTRUCT(&buf);

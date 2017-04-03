@@ -1219,9 +1219,7 @@ void pmix_server_deregister_events(pmix_peer_t *peer,
                                    pmix_buffer_t *buf)
 {
     int32_t cnt;
-    pmix_status_t rc, *codes = NULL, *cdptr, maxcode = PMIX_MAX_ERR_CONSTANT;
-    pmix_info_t *info = NULL;
-    size_t ninfo=0, ncodes, ncds, n;
+    pmix_status_t rc, code;
     pmix_regevents_info_t *reginfo = NULL;
     pmix_regevents_info_t *reginfo_next;
     pmix_peer_events_info_t *prev;
@@ -1229,34 +1227,11 @@ void pmix_server_deregister_events(pmix_peer_t *peer,
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "recvd deregister events");
 
-    /* unpack the number of codes */
+    /* unpack codes and process until done */
     cnt=1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ncodes, &cnt, PMIX_SIZE))) {
-        /* it is okay if there aren't any - equivalent to a wildcard */
-        ncodes = 0;
-    }
-    /* unpack the array of codes */
-    if (0 < ncodes) {
-        codes = (pmix_status_t*)malloc(ncodes * sizeof(pmix_status_t));
-        cnt=ncodes;
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, codes, &cnt, PMIX_STATUS))) {
-            PMIX_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-
-    /* find the event registration info so we can delete them */
-    if (NULL == codes) {
-        cdptr = &maxcode;
-        ncds = 1;
-    } else {
-        cdptr = codes;
-        ncds = ncodes;
-    }
-
-    for (n=0; n < ncds; n++) {
+    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, &code, &cnt, PMIX_STATUS))) {
         PMIX_LIST_FOREACH_SAFE(reginfo, reginfo_next, &pmix_server_globals.events, pmix_regevents_info_t) {
-            if (cdptr[n] == reginfo->code) {
+            if (code == reginfo->code) {
                 /* found it - remove this peer from the list */
                 PMIX_LIST_FOREACH(prev, &reginfo->peers, pmix_peer_events_info_t) {
                     if (prev->peer == peer) {
@@ -1275,15 +1250,9 @@ void pmix_server_deregister_events(pmix_peer_t *peer,
             }
         }
     }
-
-cleanup:
-    if (NULL != codes) {
-        free(codes);
+    if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        PMIX_ERROR_LOG(rc);
     }
-    if (NULL != info) {
-        PMIX_INFO_FREE(info, ninfo);
-    }
-    return;
 }
 
 
@@ -1636,6 +1605,7 @@ pmix_status_t pmix_server_monitor(pmix_peer_t *peer,
                                   void *cbdata)
 {
     int32_t cnt;
+    pmix_info_t monitor;
     pmix_status_t rc, error;
     pmix_query_caddy_t *cd;
     pmix_proc_t proc;
@@ -1649,6 +1619,14 @@ pmix_status_t pmix_server_monitor(pmix_peer_t *peer,
 
     cd = PMIX_NEW(pmix_query_caddy_t);
     cd->cbdata = cbdata;
+
+    /* unpack what is to be monitored */
+    PMIX_INFO_CONSTRUCT(&monitor);
+    cnt = 1;
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &monitor, &cnt, PMIX_INFO))) {
+        PMIX_ERROR_LOG(rc);
+        goto exit;
+    }
 
     /* unpack the error code */
     cnt = 1;
@@ -1678,7 +1656,7 @@ pmix_status_t pmix_server_monitor(pmix_peer_t *peer,
     proc.rank = peer->info->rank;
 
     /* ask the host to execute the request */
-    if (PMIX_SUCCESS != (rc = pmix_host_server.monitor(&proc, error,
+    if (PMIX_SUCCESS != (rc = pmix_host_server.monitor(&proc, &monitor, error,
                                                        cd->info, cd->ninfo,
                                                        cbfunc, cd))) {
         goto exit;
@@ -1686,6 +1664,7 @@ pmix_status_t pmix_server_monitor(pmix_peer_t *peer,
     return PMIX_SUCCESS;
 
   exit:
+    PMIX_INFO_DESTRUCT(&monitor);
     PMIX_RELEASE(cd);
     return rc;
 }

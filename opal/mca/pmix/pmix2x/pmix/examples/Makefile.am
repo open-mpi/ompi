@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/include -I$(top_builddir)/include/pmix
 
-noinst_PROGRAMS = client dmodex dynamic fault pub tool debugger debuggerd alloc
+noinst_PROGRAMS = client dmodex dynamic fault pub tool debugger debuggerd alloc jctrl
 if !WANT_HIDDEN
 # these examples use internal symbols
 # use --disable-visibility
@@ -40,10 +40,13 @@ debuggerd_SOURCES = debuggerd.c
 debuggerd_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 debuggerd_LDADD =  $(top_builddir)/src/libpmix.la
 
-
 alloc_SOURCES = alloc.c
 alloc_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 alloc_LDADD =  $(top_builddir)/src/libpmix.la
+
+jctrl_SOURCES = jctrl.c
+jctrl_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
+jctrl_LDADD =  $(top_builddir)/src/libpmix.la
 
 dmodex_SOURCES = dmodex.c
 dmodex_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)

@@ -42,7 +42,7 @@ pmix_psensor_base_module_t pmix_psensor = {
     pmix_psensor_base_start,
     pmix_psensor_base_stop
 };
-pmix_psensor_base_t pmix_psensor_base = {{{0}}};;
+pmix_psensor_base_t pmix_psensor_base = {{{0}}};
 
 static bool use_separate_thread = false;
 

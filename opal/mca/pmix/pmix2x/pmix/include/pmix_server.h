@@ -335,7 +335,8 @@ typedef pmix_status_t (*pmix_server_job_control_fn_t)(const pmix_proc_t *request
                                                       pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /* Request that a client be monitored for activity */
-typedef pmix_status_t (*pmix_server_monitor_fn_t)(const pmix_proc_t *requestor, pmix_status_t error,
+typedef pmix_status_t (*pmix_server_monitor_fn_t)(const pmix_proc_t *requestor,
+                                                  const pmix_info_t *monitor, pmix_status_t error,
                                                   const pmix_info_t directives[], size_t ndirs,
                                                   pmix_info_cbfunc_t cbfunc, void *cbdata);
 
