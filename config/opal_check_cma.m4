@@ -22,6 +22,10 @@ AC_DEFUN([OPAL_CHECK_CMA],[
                 [AC_HELP_STRING([--with-cma],
                                 [Build Cross Memory Attach support (default: autodetect)])])
 
+    if test "x$with_cma" = "xno" ; then
+        opal_check_cma_happy=0
+    fi
+
     # We only need to do the back-end test once
     if test -z "$opal_check_cma_happy" ; then
         OPAL_CHECK_CMA_BACKEND
