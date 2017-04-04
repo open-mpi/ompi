@@ -10,6 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -34,8 +36,8 @@
 #
 ######################################################################
 
-AMD64	default-.text-.globl-:--.L-@-1-0-1-1-1	amd64-linux
-AMD64	default-.text-.globl-:--.L-@-1-0-1-1-0	amd64-linux-nongas
+X86_64	default-.text-.globl-:--.L-@-1-0-1-1-1	x86_64-linux
+X86_64	default-.text-.globl-:--.L-@-1-0-1-1-0	x86_64-linux-nongas
 
 
 ######################################################################

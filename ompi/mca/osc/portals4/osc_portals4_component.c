@@ -3,7 +3,7 @@
  * Copyright (c) 2011-2017 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -590,7 +590,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     module->passive_target_access_epoch = false;
 
-#if OPAL_ASSEMBLY_ARCH == OPAL_AMD64 || OPAL_ASSEMBLY_ARCH == OPAL_IA32
+#if OPAL_ASSEMBLY_ARCH == OPAL_X86_64 || OPAL_ASSEMBLY_ARCH == OPAL_IA32
     *model = MPI_WIN_UNIFIED;
 #else
     *model = MPI_WIN_SEPARATE;

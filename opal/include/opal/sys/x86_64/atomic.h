@@ -13,6 +13,8 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,7 @@
 #define OPAL_SYS_ARCH_ATOMIC_H 1
 
 /*
- * On amd64, we use cmpxchg.
+ * On x86_64, we use cmpxchg.
  */
 
 

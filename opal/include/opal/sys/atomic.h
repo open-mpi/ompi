@@ -14,6 +14,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -153,8 +155,8 @@ enum {
 #include "opal/sys/gcc_builtin/atomic.h"
 #elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_OSX
 #include "opal/sys/osx/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_AMD64
-#include "opal/sys/amd64/atomic.h"
+#elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+#include "opal/sys/x86_64/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM
 #include "opal/sys/arm/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64

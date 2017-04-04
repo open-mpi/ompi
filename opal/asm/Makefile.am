@@ -10,6 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -63,7 +65,7 @@ EXTRA_DIST	= \
 	generate-all-asm.pl \
 	base/aix.conf \
 	base/default.conf \
-	base/AMD64.asm \
+	base/X86_64.asm \
 	base/ARM.asm \
 	base/IA32.asm \
 	base/IA64.asm \
