@@ -261,7 +261,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "tm",
                                           &proc_vpid_index);
-    free(nodelist);
 
     if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
