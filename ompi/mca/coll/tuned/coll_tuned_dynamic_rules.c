@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -289,7 +291,7 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
     ompi_coll_alg_rule_t*  alg_p = (ompi_coll_alg_rule_t*) NULL;
     ompi_coll_com_rule_t*  com_p = (ompi_coll_com_rule_t*) NULL;
     ompi_coll_com_rule_t*  best_com_p = (ompi_coll_com_rule_t*) NULL;
-    int i, best;
+    int i;
 
     if (!rules) {                    /* no rule base no resulting com rule */
         return ((ompi_coll_com_rule_t*)NULL);
@@ -305,13 +307,12 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
 
     /* make a copy of the first com rule */
     best_com_p = com_p = alg_p->com_rules;
-    i = best = 0;
+    i = 0;
 
     while( i < alg_p->n_com_sizes ) {
         if (com_p->mpi_comsize > mpi_comsize) {
             break;
         }
-        best = i;
         best_com_p = com_p;
         /* go to the next entry */
         com_p++;
@@ -344,7 +345,7 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
 {
     ompi_coll_msg_rule_t*  msg_p = (ompi_coll_msg_rule_t*) NULL;
     ompi_coll_msg_rule_t*  best_msg_p = (ompi_coll_msg_rule_t*) NULL;
-    int i, best;
+    int i;
 
     /* No rule or zero rules */
     if( (NULL == base_com_rule) || (0 == base_com_rule->n_msg_sizes)) {
@@ -355,13 +356,12 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
 
     /* make a copy of the first msg rule */
     best_msg_p = msg_p = base_com_rule->msg_rules;
-    i = best = 0;
+    i = 0;
 
     while (i<base_com_rule->n_msg_sizes) {
         /*       OPAL_OUTPUT((ompi_coll_tuned_stream,"checking mpi_msgsize %d against com_id %d msg_id %d index %d msg_size %d",  */
         /*             mpi_msgsize, msg_p->com_rule_id, msg_p->msg_rule_id, i, msg_p->msg_size)); */
         if (msg_p->msg_size <= mpi_msgsize) {
-            best = i;
             best_msg_p = msg_p;
             /*          OPAL_OUTPUT((ompi_coll_tuned_stream(":ok\n")); */
         }
