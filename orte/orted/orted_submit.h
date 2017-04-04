@@ -3,6 +3,8 @@
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +47,7 @@ extern char MPIR_attach_fifo[];
  * Global struct for caching orte command line options.
  */
 struct orte_cmd_options_t {
-    bool help;
+    char *help;
     bool version;
     bool verbose;
     char *report_pid;

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -132,7 +132,7 @@ BEGIN_C_DECLS
         opal_object_t super;
 
         /** Thread safety */
-        opal_mutex_t lcl_mutex;
+        opal_recursive_mutex_t lcl_mutex;
 
         /** List of cmd_line_option_t's (defined internally) */
         opal_list_t lcl_options;
@@ -177,6 +177,32 @@ BEGIN_C_DECLS
     typedef enum opal_cmd_line_type_t opal_cmd_line_type_t;
 
     /**
+     * Command line option type, for use in
+     * mpirun --help output.
+     */
+    enum opal_cmd_line_otype_t {
+        OPAL_CMD_LINE_OTYPE_GENERAL,
+        OPAL_CMD_LINE_OTYPE_DEBUG,
+        OPAL_CMD_LINE_OTYPE_OUTPUT,
+        OPAL_CMD_LINE_OTYPE_INPUT,
+        OPAL_CMD_LINE_OTYPE_MAPPING,
+        OPAL_CMD_LINE_OTYPE_RANKING,
+        OPAL_CMD_LINE_OTYPE_BINDING,
+        OPAL_CMD_LINE_OTYPE_DEVEL,
+        OPAL_CMD_LINE_OTYPE_COMPAT, /* Backwards compatibility */
+        OPAL_CMD_LINE_OTYPE_LAUNCH,
+        OPAL_CMD_LINE_OTYPE_DVM,
+        OPAL_CMD_LINE_OTYPE_UNSUPPORTED,
+        OPAL_CMD_LINE_OTYPE_NULL
+    };
+    /**
+     * \internal
+     *
+     * Convenience typedef
+     */
+    typedef enum opal_cmd_line_otype_t opal_cmd_line_otype_t;
+
+    /**
      * Datatype used to construct a command line handle; see
      * opal_cmd_line_create().
      */
@@ -207,6 +233,9 @@ BEGIN_C_DECLS
         /** Description of the command line option, to be used with
             opal_cmd_line_get_usage_msg(). */
         const char *ocl_description;
+
+        /** Category for mpirun --help output */
+        opal_cmd_line_otype_t ocl_otype;
     };
     /**
      * \internal

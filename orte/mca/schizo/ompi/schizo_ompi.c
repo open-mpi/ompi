@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2006-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2017 Oak Ridge National Labs.  All rights reserved.
@@ -75,96 +75,109 @@ orte_schizo_base_module_t orte_schizo_ompi_module = {
 
 static opal_cmd_line_init_t cmd_line_init[] = {
     /* Various "obvious" options */
-    { NULL, 'h', NULL, "help", 0,
-      &orte_cmd_options.help, OPAL_CMD_LINE_TYPE_BOOL,
-      "This help message" },
+    { NULL, 'h', NULL, "help", 1,
+      &orte_cmd_options.help, OPAL_CMD_LINE_TYPE_STRING,
+      "Help  messages.  Argument options are: general (Defaults to this option), debug, output, input, mapping, ranking, binding, devel (arguments usefull to OMPI Developers), compatibility (arguments supported for backwards compatibility) launch (arguments to modify launch options), and dvm (Distributed Virtual Machine arguments", OPAL_CMD_LINE_OTYPE_GENERAL },
     { NULL, 'V', NULL, "version", 0,
       &orte_cmd_options.version, OPAL_CMD_LINE_TYPE_BOOL,
-      "Print version and exit" },
+      "Print version and exit", OPAL_CMD_LINE_OTYPE_GENERAL },
     { NULL, 'v', NULL, "verbose", 0,
       &orte_cmd_options.verbose, OPAL_CMD_LINE_TYPE_BOOL,
-      "Be verbose" },
+      "Be verbose", OPAL_CMD_LINE_OTYPE_GENERAL },
     { "orte_execute_quiet", 'q', NULL, "quiet", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Suppress helpful messages" },
+      "Suppress helpful messages", OPAL_CMD_LINE_OTYPE_GENERAL },
     { NULL, '\0', "report-pid", "report-pid", 1,
       &orte_cmd_options.report_pid, OPAL_CMD_LINE_TYPE_STRING,
-      "Printout pid on stdout [-], stderr [+], or a file [anything else]" },
+      "Printout pid on stdout [-], stderr [+], or a file [anything else]",
+      OPAL_CMD_LINE_OTYPE_GENERAL },
     { NULL, '\0', "report-uri", "report-uri", 1,
       &orte_cmd_options.report_uri, OPAL_CMD_LINE_TYPE_STRING,
-      "Printout URI on stdout [-], stderr [+], or a file [anything else]" },
+      "Printout URI on stdout [-], stderr [+], or a file [anything else]",
+      OPAL_CMD_LINE_OTYPE_GENERAL },
 
     /* testing options */
     { NULL, '\0', "timeout", "timeout", 1,
       &orte_cmd_options.timeout, OPAL_CMD_LINE_TYPE_INT,
-      "Timeout the job after the specified number of seconds" },
+      "Timeout the job after the specified number of seconds",
+      OPAL_CMD_LINE_OTYPE_DEBUG },
     { NULL, '\0', "report-state-on-timeout", "report-state-on-timeout", 0,
       &orte_cmd_options.report_state_on_timeout, OPAL_CMD_LINE_TYPE_BOOL,
-      "Report all job and process states upon timeout" },
+      "Report all job and process states upon timeout",
+      OPAL_CMD_LINE_OTYPE_DEBUG },
     { NULL, '\0', "get-stack-traces", "get-stack-traces", 0,
       &orte_cmd_options.get_stack_traces, OPAL_CMD_LINE_TYPE_BOOL,
-      "Get stack traces of all application procs on timeout" },
+      "Get stack traces of all application procs on timeout",
+      OPAL_CMD_LINE_OTYPE_DEBUG },
 
 
     /* exit status reporting */
     { "orte_report_child_jobs_separately", '\0', "report-child-jobs-separately", "report-child-jobs-separately", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Return the exit status of the primary job only" },
+      "Return the exit status of the primary job only", OPAL_CMD_LINE_OTYPE_OUTPUT },
 
     /* uri of the dvm, or at least where to get it */
     { NULL, '\0', "hnp", "hnp", 1,
       &orte_cmd_options.hnp, OPAL_CMD_LINE_TYPE_STRING,
-      "Specify the URI of the HNP, or the name of the file (specified as file:filename) that contains that info" },
+      "Specify the URI of the HNP, or the name of the file (specified as file:filename) that contains that info",
+      OPAL_CMD_LINE_OTYPE_DVM },
 
     /* select XML output */
     { "orte_xml_output", '\0', "xml", "xml", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Provide all output in XML format" },
+      "Provide all output in XML format", OPAL_CMD_LINE_OTYPE_OUTPUT },
     { "orte_xml_file", '\0', "xml-file", "xml-file", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide all output in XML format to the specified file" },
+      "Provide all output in XML format to the specified file", OPAL_CMD_LINE_OTYPE_OUTPUT },
 
     /* tag output */
     { "orte_tag_output", '\0', "tag-output", "tag-output", 0,
       &orte_cmd_options.tag_output, OPAL_CMD_LINE_TYPE_BOOL,
-      "Tag all output with [job,rank]" },
+      "Tag all output with [job,rank]", OPAL_CMD_LINE_OTYPE_OUTPUT },
     { "orte_timestamp_output", '\0', "timestamp-output", "timestamp-output", 0,
       &orte_cmd_options.timestamp_output, OPAL_CMD_LINE_TYPE_BOOL,
-      "Timestamp all application process output" },
+      "Timestamp all application process output", OPAL_CMD_LINE_OTYPE_OUTPUT },
     { "orte_output_filename", '\0', "output-filename", "output-filename", 1,
       &orte_cmd_options.output_filename, OPAL_CMD_LINE_TYPE_STRING,
-      "Redirect output from application processes into filename/job/rank/std[out,err,diag]" },
+      "Redirect output from application processes into filename/job/rank/std[out,err,diag]",
+      OPAL_CMD_LINE_OTYPE_OUTPUT },
     { NULL, '\0', "merge-stderr-to-stdout", "merge-stderr-to-stdout", 0,
       &orte_cmd_options.merge, OPAL_CMD_LINE_TYPE_BOOL,
-      "Merge stderr to stdout for each process"},
+      "Merge stderr to stdout for each process", OPAL_CMD_LINE_OTYPE_OUTPUT },
     { "orte_xterm", '\0', "xterm", "xterm", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Create a new xterm window and display output from the specified ranks there" },
+      "Create a new xterm window and display output from the specified ranks there",
+      OPAL_CMD_LINE_OTYPE_OUTPUT },
 
     /* select stdin option */
     { NULL, '\0', "stdin", "stdin", 1,
       &orte_cmd_options.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
-      "Specify procs to receive stdin [rank, all, none] (default: 0, indicating rank 0)" },
+      "Specify procs to receive stdin [rank, all, none] (default: 0, indicating rank 0)",
+      OPAL_CMD_LINE_OTYPE_INPUT },
 
     /* request that argv[0] be indexed */
     { NULL, '\0', "index-argv-by-rank", "index-argv-by-rank", 0,
       &orte_cmd_options.index_argv, OPAL_CMD_LINE_TYPE_BOOL,
-      "Uniquely index argv[0] for each process using its rank" },
+      "Uniquely index argv[0] for each process using its rank",
+      OPAL_CMD_LINE_OTYPE_INPUT },
 
     /* Specify the launch agent to be used */
     { "orte_launch_agent", '\0', "launch-agent", "launch-agent", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Command used to start processes on remote nodes (default: orted)" },
+      "Command used to start processes on remote nodes (default: orted)",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
 
     /* Preload the binary on the remote machine */
     { NULL, 's', NULL, "preload-binary", 0,
       &orte_cmd_options.preload_binaries, OPAL_CMD_LINE_TYPE_BOOL,
-      "Preload the binary on the remote machine before starting the remote process." },
+      "Preload the binary on the remote machine before starting the remote process.",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
 
     /* Preload files on the remote machine */
     { NULL, '\0', NULL, "preload-files", 1,
       &orte_cmd_options.preload_files, OPAL_CMD_LINE_TYPE_STRING,
-      "Preload the comma separated list of files to the remote machines current working directory before starting the remote process." },
+      "Preload the comma separated list of files to the remote machines current working directory before starting the remote process.",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
 
 #if OPAL_ENABLE_FT_CR == 1
     /* Tell SStore to preload a snapshot before launch */
@@ -176,248 +189,287 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     /* Use an appfile */
     { NULL, '\0', NULL, "app", 1,
       &orte_cmd_options.appfile, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide an appfile; ignore all other command line options" },
+      "Provide an appfile; ignore all other command line options",
+      OPAL_CMD_LINE_OTYPE_GENERAL },
 
     /* Number of processes; -c, -n, --n, -np, and --np are all
        synonyms */
     { NULL, 'c', "np", "np", 1,
       &orte_cmd_options.num_procs, OPAL_CMD_LINE_TYPE_INT,
-      "Number of processes to run" },
+      "Number of processes to run", OPAL_CMD_LINE_OTYPE_GENERAL },
     { NULL, '\0', "n", "n", 1,
       &orte_cmd_options.num_procs, OPAL_CMD_LINE_TYPE_INT,
-      "Number of processes to run" },
+      "Number of processes to run", OPAL_CMD_LINE_OTYPE_GENERAL },
 
     /* maximum size of VM - typically used to subdivide an allocation */
     { "orte_max_vm_size", '\0', "max-vm-size", "max-vm-size", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Number of processes to run" },
+      "Number of processes to run", OPAL_CMD_LINE_OTYPE_DVM },
 
     /* Set a hostfile */
     { NULL, '\0', "hostfile", "hostfile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide a hostfile" },
+      "Provide a hostfile", OPAL_CMD_LINE_OTYPE_LAUNCH },
     { NULL, '\0', "machinefile", "machinefile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide a hostfile" },
+      "Provide a hostfile", OPAL_CMD_LINE_OTYPE_LAUNCH },
     { "orte_default_hostfile", '\0', "default-hostfile", "default-hostfile", 1,
         NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide a default hostfile" },
+      "Provide a default hostfile", OPAL_CMD_LINE_OTYPE_LAUNCH },
     { "opal_if_do_not_resolve", '\0', "do-not-resolve", "do-not-resolve", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Do not attempt to resolve interfaces" },
+      "Do not attempt to resolve interfaces", OPAL_CMD_LINE_OTYPE_DEVEL },
 
     /* uri of PMIx publish/lookup server, or at least where to get it */
     { "pmix_server_uri", '\0', "ompi-server", "ompi-server", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Specify the URI of the publish/lookup server, or the name of the file (specified as file:filename) that contains that info" },
+      "Specify the URI of the publish/lookup server, or the name of the file (specified as file:filename) that contains that info",
+      OPAL_CMD_LINE_OTYPE_DVM },
 
     { "carto_file_path", '\0', "cf", "cartofile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide a cartography file" },
+      "Provide a cartography file", OPAL_CMD_LINE_OTYPE_MAPPING },
 
     { "orte_rankfile", '\0', "rf", "rankfile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide a rankfile file" },
+      "Provide a rankfile file", OPAL_CMD_LINE_OTYPE_MAPPING },
 
     /* Export environment variables; potentially used multiple times,
        so it does not make sense to set into a variable */
     { NULL, 'x', NULL, NULL, 1,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
-      "Export an environment variable, optionally specifying a value (e.g., \"-x foo\" exports the environment variable foo and takes its value from the current environment; \"-x foo=bar\" exports the environment variable name foo and sets its value to \"bar\" in the started processes)" },
+      "Export an environment variable, optionally specifying a value (e.g., \"-x foo\" exports the environment variable foo and takes its value from the current environment; \"-x foo=bar\" exports the environment variable name foo and sets its value to \"bar\" in the started processes)", OPAL_CMD_LINE_OTYPE_GENERAL },
 
       /* Mapping controls */
     { "rmaps_base_display_map", '\0', "display-map", "display-map", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Display the process map just before launch"},
+      "Display the process map just before launch", OPAL_CMD_LINE_OTYPE_DEBUG },
     { "rmaps_base_display_devel_map", '\0', "display-devel-map", "display-devel-map", 0,
        NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Display a detailed process map (mostly intended for developers) just before launch"},
+       "Display a detailed process map (mostly intended for developers) just before launch",
+       OPAL_CMD_LINE_OTYPE_DEVEL },
     { "rmaps_base_display_topo_with_map", '\0', "display-topo", "display-topo", 0,
        NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Display the topology as part of the process map (mostly intended for developers) just before launch"},
+       "Display the topology as part of the process map (mostly intended for developers) just before launch",
+       OPAL_CMD_LINE_OTYPE_DEVEL },
     { "rmaps_base_display_diffable_map", '\0', "display-diffable-map", "display-diffable-map", 0,
        NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Display a diffable process map (mostly intended for developers) just before launch"},
+       "Display a diffable process map (mostly intended for developers) just before launch",
+       OPAL_CMD_LINE_OTYPE_DEVEL },
     { NULL, 'H', "host", "host", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "List of hosts to invoke processes on" },
+      "List of hosts to invoke processes on",
+      OPAL_CMD_LINE_OTYPE_MAPPING },
     { "rmaps_base_no_schedule_local", '\0', "nolocal", "nolocal", 0,
       &orte_cmd_options.nolocal, OPAL_CMD_LINE_TYPE_BOOL,
-      "Do not run any MPI applications on the local node" },
+      "Do not run any MPI applications on the local node",
+      OPAL_CMD_LINE_OTYPE_MAPPING },
     { "rmaps_base_no_oversubscribe", '\0', "nooversubscribe", "nooversubscribe", 0,
       &orte_cmd_options.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
-      "Nodes are not to be oversubscribed, even if the system supports such operation"},
+      "Nodes are not to be oversubscribed, even if the system supports such operation",
+      OPAL_CMD_LINE_OTYPE_MAPPING },
     { "rmaps_base_oversubscribe", '\0', "oversubscribe", "oversubscribe", 0,
       &orte_cmd_options.oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
-      "Nodes are allowed to be oversubscribed, even on a managed system, and overloading of processing elements"},
+      "Nodes are allowed to be oversubscribed, even on a managed system, and overloading of processing elements",
+      OPAL_CMD_LINE_OTYPE_MAPPING },
     { "rmaps_base_cpus_per_rank", '\0', "cpus-per-proc", "cpus-per-proc", 1,
       &orte_cmd_options.cpus_per_proc, OPAL_CMD_LINE_TYPE_INT,
-      "Number of cpus to use for each process [default=1]" },
+      "Number of cpus to use for each process [default=1]",
+      OPAL_CMD_LINE_OTYPE_MAPPING },
     { "rmaps_base_cpus_per_rank", '\0', "cpus-per-rank", "cpus-per-rank", 1,
       &orte_cmd_options.cpus_per_proc, OPAL_CMD_LINE_TYPE_INT,
-      "Synonym for cpus-per-proc" },
+      "Synonym for cpus-per-proc", OPAL_CMD_LINE_OTYPE_MAPPING },
 
     /* backward compatiblity */
     { "rmaps_base_bycore", '\0', "bycore", "bycore", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to map and rank processes round-robin by core" },
+      "Whether to map and rank processes round-robin by core",
+      OPAL_CMD_LINE_OTYPE_COMPAT },
     { "rmaps_base_bynode", '\0', "bynode", "bynode", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to map and rank processes round-robin by node" },
+      "Whether to map and rank processes round-robin by node",
+      OPAL_CMD_LINE_OTYPE_COMPAT },
     { "rmaps_base_byslot", '\0', "byslot", "byslot", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to map and rank processes round-robin by slot" },
+      "Whether to map and rank processes round-robin by slot",
+      OPAL_CMD_LINE_OTYPE_COMPAT },
 
     /* Nperxxx options that do not require topology and are always
      * available - included for backwards compatibility
      */
     { "rmaps_ppr_pernode", '\0', "pernode", "pernode", 0,
       &orte_cmd_options.pernode, OPAL_CMD_LINE_TYPE_BOOL,
-      "Launch one process per available node" },
+      "Launch one process per available node",
+      OPAL_CMD_LINE_OTYPE_COMPAT },
     { "rmaps_ppr_n_pernode", '\0', "npernode", "npernode", 1,
-        &orte_cmd_options.npernode, OPAL_CMD_LINE_TYPE_INT,
-        "Launch n processes per node on all allocated nodes" },
+      &orte_cmd_options.npernode, OPAL_CMD_LINE_TYPE_INT,
+      "Launch n processes per node on all allocated nodes",
+      OPAL_CMD_LINE_OTYPE_COMPAT },
     { "rmaps_ppr_n_pernode", '\0', "N", NULL, 1,
-        &orte_cmd_options.npernode, OPAL_CMD_LINE_TYPE_INT,
-        "Launch n processes per node on all allocated nodes (synonym for npernode)" },
+      &orte_cmd_options.npernode, OPAL_CMD_LINE_TYPE_INT,
+      "Launch n processes per node on all allocated nodes (synonym for npernode)",
+      OPAL_CMD_LINE_OTYPE_GENERAL },
 
     /* declare hardware threads as independent cpus */
     { "hwloc_base_use_hwthreads_as_cpus", '\0', "use-hwthread-cpus", "use-hwthread-cpus", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Use hardware threads as independent cpus" },
+      "Use hardware threads as independent cpus", OPAL_CMD_LINE_OTYPE_MAPPING },
 
     /* include npersocket for backwards compatibility */
     { "rmaps_ppr_n_persocket", '\0', "npersocket", "npersocket", 1,
       &orte_cmd_options.npersocket, OPAL_CMD_LINE_TYPE_INT,
-      "Launch n processes per socket on all allocated nodes" },
+      "Launch n processes per socket on all allocated nodes",
+      OPAL_CMD_LINE_OTYPE_COMPAT },
 
     /* Mapping options */
     { "rmaps_base_mapping_policy", '\0', NULL, "map-by", 1,
       &orte_cmd_options.mapping_policy, OPAL_CMD_LINE_TYPE_STRING,
-      "Mapping Policy [slot | hwthread | core | socket (default) | numa | board | node]" },
+      "Mapping Policy [slot | hwthread | core | socket (default) | numa | board | node]",
+      OPAL_CMD_LINE_OTYPE_MAPPING },
 
       /* Ranking options */
     { "rmaps_base_ranking_policy", '\0', NULL, "rank-by", 1,
       &orte_cmd_options.ranking_policy, OPAL_CMD_LINE_TYPE_STRING,
-      "Ranking Policy [slot (default) | hwthread | core | socket | numa | board | node]" },
+      "Ranking Policy [slot (default) | hwthread | core | socket | numa | board | node]",
+      OPAL_CMD_LINE_OTYPE_RANKING },
 
       /* Binding options */
     { "hwloc_base_binding_policy", '\0', NULL, "bind-to", 1,
       &orte_cmd_options.binding_policy, OPAL_CMD_LINE_TYPE_STRING,
-      "Policy for binding processes. Allowed values: none, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board (\"none\" is the default when oversubscribed, \"core\" is the default when np<=2, and \"socket\" is the default when np>2). Allowed qualifiers: overload-allowed, if-supported" },
+      "Policy for binding processes. Allowed values: none, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board (\"none\" is the default when oversubscribed, \"core\" is the default when np<=2, and \"socket\" is the default when np>2). Allowed qualifiers: overload-allowed, if-supported", OPAL_CMD_LINE_OTYPE_BINDING },
 
     /* backward compatiblity */
     { "hwloc_base_bind_to_core", '\0', "bind-to-core", "bind-to-core", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Bind processes to cores" },
+      "Bind processes to cores", OPAL_CMD_LINE_OTYPE_COMPAT },
     { "hwloc_base_bind_to_socket", '\0', "bind-to-socket", "bind-to-socket", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Bind processes to sockets" },
+      "Bind processes to sockets", OPAL_CMD_LINE_OTYPE_COMPAT },
 
     { "hwloc_base_report_bindings", '\0', "report-bindings", "report-bindings", 0,
       &orte_cmd_options.report_bindings, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to report process bindings to stderr" },
+      "Whether to report process bindings to stderr",
+      OPAL_CMD_LINE_OTYPE_BINDING },
 
     /* slot list option */
     { "hwloc_base_cpu_list", '\0', "cpu-list", "cpu-list", 1,
       &orte_cmd_options.cpu_list, OPAL_CMD_LINE_TYPE_STRING,
-      "List of processor IDs to bind processes to [default=NULL]"},
+      "List of processor IDs to bind processes to [default=NULL]",
+      OPAL_CMD_LINE_OTYPE_BINDING },
 
     /* generalized pattern mapping option */
     { "rmaps_ppr_pattern", '\0', NULL, "ppr", 1,
-        NULL, OPAL_CMD_LINE_TYPE_STRING,
-        "Comma-separated list of number of processes on a given resource type [default: none]" },
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Comma-separated list of number of processes on a given resource type [default: none]",
+      OPAL_CMD_LINE_OTYPE_MAPPING },
 
     /* Allocation options */
     { "orte_display_alloc", '\0', "display-allocation", "display-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Display the allocation being used by this job"},
+      "Display the allocation being used by this job", OPAL_CMD_LINE_OTYPE_DEBUG },
     { "orte_display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Display a detailed list (mostly intended for developers) of the allocation being used by this job"},
+      "Display a detailed list (mostly intended for developers) of the allocation being used by this job",
+      OPAL_CMD_LINE_OTYPE_DEVEL },
     { "hwloc_base_cpu_set", '\0', "cpu-set", "cpu-set", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]"},
+      "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]",
+      OPAL_CMD_LINE_OTYPE_DEBUG },
 
     /* mpiexec-like arguments */
     { NULL, '\0', "wdir", "wdir", 1,
       &orte_cmd_options.wdir, OPAL_CMD_LINE_TYPE_STRING,
-      "Set the working directory of the started processes" },
+      "Set the working directory of the started processes",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
     { NULL, '\0', "wd", "wd", 1,
       &orte_cmd_options.wdir, OPAL_CMD_LINE_TYPE_STRING,
-      "Synonym for --wdir" },
+      "Synonym for --wdir", OPAL_CMD_LINE_OTYPE_LAUNCH },
     { NULL, '\0', "set-cwd-to-session-dir", "set-cwd-to-session-dir", 0,
       &orte_cmd_options.set_cwd_to_session_dir, OPAL_CMD_LINE_TYPE_BOOL,
-      "Set the working directory of the started processes to their session directory" },
+      "Set the working directory of the started processes to their session directory",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
     { NULL, '\0', "path", "path", 1,
       &orte_cmd_options.path, OPAL_CMD_LINE_TYPE_STRING,
-      "PATH to be used to look for executables to start processes" },
+      "PATH to be used to look for executables to start processes",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
 
     /* User-level debugger arguments */
     { NULL, '\0', "tv", "tv", 0,
       &orte_cmd_options.debugger, OPAL_CMD_LINE_TYPE_BOOL,
-      "Deprecated backwards compatibility flag; synonym for \"--debug\"" },
+      "Deprecated backwards compatibility flag; synonym for \"--debug\"",
+      OPAL_CMD_LINE_OTYPE_DEBUG },
     { NULL, '\0', "debug", "debug", 0,
       &orte_cmd_options.debugger, OPAL_CMD_LINE_TYPE_BOOL,
-      "Invoke the user-level debugger indicated by the orte_base_user_debugger MCA parameter" },
+      "Invoke the user-level debugger indicated by the orte_base_user_debugger MCA parameter",
+      OPAL_CMD_LINE_OTYPE_DEBUG },
     { "orte_base_user_debugger", '\0', "debugger", "debugger", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Sequence of debuggers to search for when \"--debug\" is used" },
+      "Sequence of debuggers to search for when \"--debug\" is used",
+      OPAL_CMD_LINE_OTYPE_DEBUG },
     { "orte_output_debugger_proctable", '\0', "output-proctable", "output-proctable", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Output the debugger proctable after launch" },
+      "Output the debugger proctable after launch",
+      OPAL_CMD_LINE_OTYPE_DEBUG },
 
     /* OpenRTE arguments */
     { "orte_debug", 'd', "debug-devel", "debug-devel", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Enable debugging of OpenRTE" },
+      "Enable debugging of OpenRTE", OPAL_CMD_LINE_OTYPE_DEVEL },
 
     { "orte_debug_daemons", '\0', "debug-daemons", "debug-daemons", 0,
       NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Enable debugging of any OpenRTE daemons used by this application" },
+      "Enable debugging of any OpenRTE daemons used by this application",
+      OPAL_CMD_LINE_OTYPE_DEVEL },
 
     { "orte_debug_daemons_file", '\0', "debug-daemons-file", "debug-daemons-file", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Enable debugging of any OpenRTE daemons used by this application, storing output in files" },
+      "Enable debugging of any OpenRTE daemons used by this application, storing output in files",
+      OPAL_CMD_LINE_OTYPE_DEVEL },
 
     { "orte_leave_session_attached", '\0', "leave-session-attached", "leave-session-attached", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Enable debugging of OpenRTE" },
+      "Enable debugging of OpenRTE", OPAL_CMD_LINE_OTYPE_DEBUG },
 
     { "orte_do_not_launch", '\0', "do-not-launch", "do-not-launch", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Perform all necessary operations to prepare to launch the application, but do not actually launch it" },
+      "Perform all necessary operations to prepare to launch the application, but do not actually launch it",
+      OPAL_CMD_LINE_OTYPE_DEVEL },
 
     { NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Prefix where Open MPI is installed on remote nodes" },
+      "Prefix where Open MPI is installed on remote nodes",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
     { NULL, '\0', NULL, "noprefix", 0,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Disable automatic --prefix behavior" },
+      "Disable automatic --prefix behavior",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
 
     { "orte_report_launch_progress", '\0', "show-progress", "show-progress", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Output a brief periodic report on launch progress" },
+      "Output a brief periodic report on launch progress",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
 
     { "orte_use_regexp", '\0', "use-regexp", "use-regexp", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Use regular expressions for launch" },
+      "Use regular expressions for launch", OPAL_CMD_LINE_OTYPE_LAUNCH },
 
     { "orte_report_events", '\0', "report-events", "report-events", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Report events to a tool listening at the specified URI" },
+      "Report events to a tool listening at the specified URI", OPAL_CMD_LINE_OTYPE_DEBUG },
 
     { "orte_enable_recovery", '\0', "enable-recovery", "enable-recovery", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Enable recovery from process failure [Default = disabled]" },
+      "Enable recovery from process failure [Default = disabled]",
+      OPAL_CMD_LINE_OTYPE_UNSUPPORTED },
 
     { "orte_max_restarts", '\0', "max-restarts", "max-restarts", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Max number of times to restart a failed process" },
+      "Max number of times to restart a failed process",
+      OPAL_CMD_LINE_OTYPE_UNSUPPORTED },
 
     { NULL, '\0', "continuous", "continuous", 0,
       &orte_cmd_options.continuous, OPAL_CMD_LINE_TYPE_BOOL,
-      "Job is to run until explicitly terminated" },
+      "Job is to run until explicitly terminated", OPAL_CMD_LINE_OTYPE_DEBUG },
 
 #if OPAL_ENABLE_CRDEBUG == 1
     { "opal_cr_enable_crdebug", '\0', "crdebug", "crdebug", 0,
@@ -427,28 +479,33 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     { NULL, '\0', "disable-recovery", "disable-recovery", 0,
       &orte_cmd_options.disable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
-      "Disable recovery (resets all recovery options to off)" },
+      "Disable recovery (resets all recovery options to off)",
+      OPAL_CMD_LINE_OTYPE_UNSUPPORTED },
 
     { "orte_no_vm", '\0', "novm", "novm", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)" },
+      "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)",
+      OPAL_CMD_LINE_OTYPE_DVM },
 
     { NULL, '\0', "allow-run-as-root", "allow-run-as-root", 0,
       &orte_cmd_options.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
-      "Allow execution as root (STRONGLY DISCOURAGED)" },
+      "Allow execution as root (STRONGLY DISCOURAGED)",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
 
     { NULL, '\0', "personality", "personality", 1,
       &orte_cmd_options.personality, OPAL_CMD_LINE_TYPE_STRING,
-      "Comma-separated list of programming model, languages, and containers being used (default=\"ompi\")" },
+      "Comma-separated list of programming model, languages, and containers being used (default=\"ompi\")",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
 
     { NULL, '\0', "dvm", "dvm", 0,
       &orte_cmd_options.create_dvm, OPAL_CMD_LINE_TYPE_BOOL,
-      "Create a persistent distributed virtual machine (DVM)" },
+      "Create a persistent distributed virtual machine (DVM)",
+      OPAL_CMD_LINE_OTYPE_DVM },
 
     /* tell the dvm to terminate */
     { NULL, '\0', "terminate", "terminate", 0,
       &orte_cmd_options.terminate_dvm, OPAL_CMD_LINE_TYPE_BOOL,
-      "Terminate the DVM" },
+      "Terminate the DVM", OPAL_CMD_LINE_OTYPE_DVM },
 
     /* fwd mpirun port */
     { "orte_fwd_mpirun_port", '\0', "fwd-mpirun-port", "fwd-mpirun-port", 0,

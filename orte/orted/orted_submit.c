@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -153,6 +153,7 @@ static void build_debugger_args(orte_app_context_t *debugger);
 static void open_fifo (void);
 static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                          int argc, char *argv[], int num_procs);
+static void print_help(void);
 
 /* instance the standard MPIR interfaces */
 #define MPIR_MAX_PATH_LENGTH 512
@@ -355,24 +356,9 @@ int orte_submit_init(int argc, char *argv[],
     }
 
     /* Check for help request */
-   if (orte_cmd_options.help) {
-        char *str, *args = NULL;
-        char *project_name = NULL;
-        if (0 == strcmp(orte_basename, "mpirun")) {
-            project_name = "Open MPI";
-        } else {
-            project_name = "OpenRTE";
-        }
-        args = opal_cmd_line_get_usage_msg(orte_cmd_line);
-        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
-                                    orte_basename, project_name, OPAL_VERSION,
-                                    orte_basename, args,
-                                    PACKAGE_BUGREPORT);
-        if (NULL != str) {
-            printf("%s", str);
-            free(str);
-        }
-        free(args);
+    if (NULL != orte_cmd_options.help) {
+        print_help();
+
         /* If someone asks for help, that should be all we do */
         exit(0);
     }
@@ -589,6 +575,27 @@ int orte_submit_init(int argc, char *argv[],
     return ORTE_SUCCESS;
 }
 
+static void print_help()
+{
+    char *str = NULL, *args;
+    char *project_name = NULL;
+
+    if (0 == strcmp(orte_basename, "mpirun")) {
+        project_name = "Open MPI";
+    } else {
+        project_name = "OpenRTE";
+    }
+    args = opal_cmd_line_get_usage_msg(orte_cmd_line);
+    str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
+                                 orte_basename, project_name, OPAL_VERSION,
+                                 orte_basename, args,
+                                 PACKAGE_BUGREPORT);
+    if (NULL != str) {
+        printf("%s", str);
+        free(str);
+    }
+    free(args);
+}
 
 void orte_submit_finalize(void)
 {
@@ -1114,7 +1121,7 @@ int orte_submit_job(char *argv[], int *index,
 static int init_globals(void)
 {
     /* Reset the other fields every time */
-    orte_cmd_options.help = false;
+    orte_cmd_options.help = NULL;
     orte_cmd_options.version = false;
     orte_cmd_options.num_procs =  0;
     if (NULL != orte_cmd_options.appfile) {
