@@ -12,6 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,7 +59,6 @@ static int rte_init(void)
 {
     int ret;
     char *error = NULL;
-    char **hosts = NULL;
 
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:alps in rte_init"));
@@ -90,22 +90,10 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
-        if (NULL != orte_node_regex) {
-            /* extract the nodes */
-            if (ORTE_SUCCESS != (ret =
-                orte_regex_extract_node_names(orte_node_regex, &hosts)) ||
-                NULL == hosts) {
-                error = "orte_regex_extract_node_names";
-                goto fn_fail;
-            }
-        }
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
+        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto fn_fail;
-        }
-        if (NULL != hosts) {
-            opal_argv_free(hosts);
         }
 
         /*

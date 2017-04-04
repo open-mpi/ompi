@@ -365,25 +365,6 @@ ras_alps_getline(FILE *fp)
     return NULL;
 }
 
-static int compare_nodes (opal_list_item_t **a, opal_list_item_t **b)
-{
-    orte_node_t *nodea = (orte_node_t *) *a;
-    orte_node_t *nodeb = (orte_node_t *) *b;
-    int32_t launcha, launchb, *ldptr;
-
-    ldptr = &launcha;
-    if (!orte_get_attribute(&nodea->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) {
-        return 0;
-    }
-
-    ldptr = &launchb;
-    if (!orte_get_attribute(&nodeb->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) {
-        return 0;
-    }
-
-    return (launcha > launchb) ? 1 : -1;
-}
-
 #if ALPS_APPINFO_VERSION > 0 && ALPS_APPINFO_VERSION < 3
     typedef placeNodeList_t orte_ras_alps_placeNodeList_t;
 #else
@@ -602,8 +583,6 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
         break;                              /* Extended details ignored       */
     }
 
-    opal_list_sort (nodes, compare_nodes);
-
     free(cpBuf);                            /* Free the buffer                */
 
     return ORTE_SUCCESS;
@@ -617,4 +596,3 @@ orte_ras_alps_finalize(void)
                          "ras:alps:finalize: success (nothing to do)");
     return ORTE_SUCCESS;
 }
-

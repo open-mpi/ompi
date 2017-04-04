@@ -103,7 +103,7 @@ static void setup_sighandler(int signal, opal_event_t *ev,
 }
 
 
-int orte_ess_base_orted_setup(char **hosts)
+int orte_ess_base_orted_setup(void)
 {
     int ret = ORTE_ERROR;
     int fd;
@@ -113,7 +113,6 @@ int orte_ess_base_orted_setup(char **hosts)
     orte_job_t *jdata;
     orte_proc_t *proc;
     orte_app_context_t *app;
-    orte_node_t *node;
     char *param;
     hwloc_obj_t obj;
     unsigned i, j;
@@ -218,12 +217,9 @@ int orte_ess_base_orted_setup(char **hosts)
      * a specific module to use
      */
     (void) mca_base_var_env_name("plm", &param);
-
     plm_in_use = !!(getenv(param));
     free (param);
-
     if (plm_in_use)  {
-
         if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_plm_base_framework, 0))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_plm_base_open";
@@ -332,11 +328,6 @@ int orte_ess_base_orted_setup(char **hosts)
     app = OBJ_NEW(orte_app_context_t);
     opal_pointer_array_set_item(jdata->apps, 0, app);
     jdata->num_apps++;
-    /* create and store a node object where we are */
-    node = OBJ_NEW(orte_node_t);
-    node->name = strdup(orte_process_info.nodename);
-    node->index = ORTE_PROC_MY_NAME->vpid;
-    opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
 
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -345,19 +336,6 @@ int orte_ess_base_orted_setup(char **hosts)
     proc->pid = orte_process_info.pid;
     proc->state = ORTE_PROC_STATE_RUNNING;
     opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
-    /* record that the daemon (i.e., us) is on this node
-     * NOTE: we do not add the proc object to the node's
-     * proc array because we are not an application proc.
-     * Instead, we record it in the daemon field of the
-     * node object
-     */
-    OBJ_RETAIN(proc);   /* keep accounting straight */
-    node->daemon = proc;
-    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
-    node->state = ORTE_NODE_STATE_UP;
-    /* now point our proc node field to the node */
-    OBJ_RETAIN(node);   /* keep accounting straight */
-    proc->node = node;
     /* record that the daemon job is running */
     jdata->num_procs = 1;
     jdata->state = ORTE_JOB_STATE_RUNNING;
@@ -514,7 +492,6 @@ int orte_ess_base_orted_setup(char **hosts)
     orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
     t->sig = strdup(orte_topo_signature);
     opal_pointer_array_add(orte_node_topologies, t);
-    node->topology = t;
     if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
         opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
@@ -526,12 +503,25 @@ int orte_ess_base_orted_setup(char **hosts)
      * after we enable_comm as that function determines our
      * own port, which we need in order to construct the nidmap
      */
-    if (NULL != hosts) {
+    if (NULL != orte_node_regex) {
+        if (ORTE_SUCCESS != (ret = orte_util_nidmap_parse(orte_node_regex))) {
+            ORTE_ERROR_LOG(ret);
+            error = "construct nidmap";
+            goto error;
+        }
+    }
+
+    if (orte_static_ports) {
+        if (NULL == orte_node_regex) {
+            /* we didn't get the node info */
+            error = "cannot construct daemon map for static ports - no node map info";
+            goto error;
+        }
         /* extract the node info from the environment and
          * build a nidmap from it - this will update the
          * routing plan as well
          */
-        if (ORTE_SUCCESS != (ret = orte_util_build_daemon_nidmap(hosts))) {
+        if (ORTE_SUCCESS != (ret = orte_util_build_daemon_nidmap())) {
             ORTE_ERROR_LOG(ret);
             error = "construct daemon map from static ports";
             goto error;
@@ -635,6 +625,7 @@ int orte_ess_base_orted_setup(char **hosts)
     }
 
     return ORTE_SUCCESS;
+
  error:
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",

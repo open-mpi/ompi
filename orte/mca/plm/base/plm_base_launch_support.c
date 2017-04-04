@@ -1037,20 +1037,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&daemon->name), nodename));
 
-        /* look this node up, if necessary */
-        if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                 "%s plm:base:orted_report_launch attempting to assign daemon %s to node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&dname), nodename));
-            /* to "relocate" the daemon, we just update the name of
-             * the node object pointed to by this daemon */
-            free(daemon->node->name);
-            daemon->node->name = strdup(nodename);
-            /* mark that it was verified */
-            ORTE_FLAG_SET(daemon->node, ORTE_NODE_FLAG_LOC_VERIFIED);
-        }
-
         /* mark the daemon as launched */
         ORTE_FLAG_SET(daemon->node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
 
@@ -1312,8 +1298,7 @@ int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
  */
 int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *ess,
-                                          int *proc_vpid_index,
-                                          char *nodes)
+                                          int *proc_vpid_index)
 {
     char *param = NULL;
     const char **tmp_value, **tmp_value2;
@@ -1321,7 +1306,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     char *tmp_force = NULL;
     int i, j, cnt, rc;
     orte_job_t *jdata;
-    char *rml_uri;
     unsigned long num_procs;
     bool ignore;
 
@@ -1411,39 +1395,32 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_argv_append(argc, argv, param);
     free(param);
 
-    /* pass the uri of the hnp */
-    if (ORTE_PROC_IS_HNP) {
-        rml_uri = orte_rml.get_contact_info();
-    } else {
-        rml_uri = orte_rml.get_contact_info();
-        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "orte_parent_uri");
-        opal_argv_append(argc, argv, rml_uri);
-        free(rml_uri);
-
-        rml_uri = strdup(orte_process_info.my_hnp_uri);
-    }
-    opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-    opal_argv_append(argc, argv, "orte_hnp_uri");
-    opal_argv_append(argc, argv, rml_uri);
-    free(rml_uri);
-
-    /* pass the node list if one was given*/
+    /* convert the nodes with daemons to a regex */
     param = NULL;
-    if (NULL != nodes) {
-        /* convert the nodes to a regex */
-        if (ORTE_SUCCESS != (rc = orte_regex_create(nodes, &param))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    } else if (NULL != orte_node_regex) {
-        param = strdup(orte_node_regex);
+    if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(&param))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
-    if (NULL != param) {
+    /* if this is too long, then we'll have to do it with
+     * a phone home operation instead */
+    if (strlen(param) < ORTE_MAX_REGEX_CMD_LENGTH) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "orte_node_regex");
         opal_argv_append(argc, argv, param);
-        free(param);
+        /* mark that the nidmap has been communicated */
+        orte_nidmap_communicated = true;
+    }
+    free(param);
+
+    if (!orte_static_ports && !orte_fwd_mpirun_port) {
+        /* if we are using static ports, or we are forwarding
+         * mpirun's port, then we would have built all the
+         * connection info and so there is nothing to be passed.
+         * Otherwise, we have to pass the HNP uri so we can
+         * phone home */
+        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+        opal_argv_append(argc, argv, "orte_hnp_uri");
+        opal_argv_append(argc, argv, orte_process_info.my_hnp_uri);
     }
 
     /* if requested, pass our port */
@@ -1994,7 +1971,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     if (orte_hnp_is_allocated) {
         node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
         OBJ_RETAIN(node);
-        opal_list_append(&nodes, &node->super);
+        opal_list_prepend(&nodes, &node->super);
     }
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
@@ -2028,15 +2005,11 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     }
 
     /* ensure we are not on the list */
-    for (item = opal_list_get_first(&nodes);
-         item != opal_list_get_end(&nodes);
-         item = opal_list_get_next(item)) {
-        node = (orte_node_t*)item;
-        if (0 == node->index) {
-            opal_list_remove_item(&nodes, item);
-            OBJ_RELEASE(item);
-            break;
-        }
+    item = opal_list_get_first(&nodes);
+    node = (orte_node_t*)item;
+    if (0 == node->index) {
+        opal_list_remove_item(&nodes, item);
+        OBJ_RELEASE(item);
     }
 
     /* if we didn't get anything, then we are the only node in the

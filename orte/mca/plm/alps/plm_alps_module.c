@@ -306,41 +306,42 @@ static void launch_daemons(int fd, short args, void *cbdata)
     opal_argv_append(&argc, &argv, "-e");
     opal_argv_append(&argc, &argv, "OMPI_NO_USE_CRAY_PMI=1");
 
-    /* create nodelist */
-    nodelist_argv = NULL;
-    nodelist_argc = 0;
-
-    for (nnode=0; nnode < map->nodes->size; nnode++) {
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
-            continue;
-        }
-
-        /* if the daemon already exists on this node, then
-         * don't include it
-         */
-        if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
-            continue;
-        }
-
-        /* otherwise, add it to the list of nodes upon which
-         * we need to launch a daemon
-         */
-        opal_argv_append(&nodelist_argc, &nodelist_argv, node->name);
-    }
-    if (0 == opal_argv_count(nodelist_argv)) {
-        orte_show_help("help-plm-alps.txt", "no-hosts-in-list", true);
-        rc = ORTE_ERR_FAILED_TO_START;
-        goto cleanup;
-    }
-    nodelist_flat = opal_argv_join(nodelist_argv, ',');
-    opal_argv_free(nodelist_argv);
-
     /* if we are using all allocated nodes, then alps
      * doesn't need a nodelist, or if running without a batch scheduler
      */
     if ((map->num_new_daemons < orte_num_allocated_nodes) || (orte_num_allocated_nodes == 0)) {
+        /* create nodelist */
+        nodelist_argv = NULL;
+        nodelist_argc = 0;
+
+        for (nnode=0; nnode < map->nodes->size; nnode++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+                continue;
+            }
+
+            /* if the daemon already exists on this node, then
+             * don't include it
+             */
+            if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
+                continue;
+            }
+
+            /* otherwise, add it to the list of nodes upon which
+             * we need to launch a daemon
+             */
+            opal_argv_append(&nodelist_argc, &nodelist_argv, node->name);
+        }
+        if (0 == opal_argv_count(nodelist_argv)) {
+            orte_show_help("help-plm-alps.txt", "no-hosts-in-list", true);
+            rc = ORTE_ERR_FAILED_TO_START;
+            goto cleanup;
+        }
+        nodelist_flat = opal_argv_join(nodelist_argv, ',');
+        opal_argv_free(nodelist_argv);
+
         opal_argv_append(&argc, &argv, "-L");
         opal_argv_append(&argc, &argv, nodelist_flat);
+        free(nodelist_flat);
     }
 
 
@@ -351,20 +352,10 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
 
-    /* ensure that mpirun is
-     * on the list. Since alps won't be launching a daemon on it,
-     * it won't have been placed on the list, so create a new
-     * version here that includes it */
-    asprintf(&ltmp, "%s,%s", orte_process_info.nodename, nodelist_flat);
-    free(nodelist_flat);
-    nodelist_flat = ltmp;
-
     /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           NULL,
-                                          &proc_vpid_index,
-                                          nodelist_flat);
-    free(nodelist_flat);
+                                          &proc_vpid_index);
 
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end
