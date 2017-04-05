@@ -423,6 +423,14 @@ int opal_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
         sizeof(mca_btl_openib_control_header_t) +
         sizeof(mca_btl_openib_footer_t) +
         mca_btl_openib_component.qp_infos[mca_btl_openib_component.credits_qp].size;
+    int align_it = 0;
+    int page_size;
+
+    page_size = opal_getpagesize();
+    if (length >= page_size / 2) { align_it = 1; }
+    if (align_it) {
+        length = OPAL_ALIGN(length, page_size, int);
+    }
 
     int align_it = 0;
     int page_size;
