@@ -62,6 +62,7 @@
  typedef struct {
     opal_object_t super;
     opal_event_t ev;
+    char *operation;
     int status;
     int timeout;
     int room_num;
@@ -109,6 +110,7 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
     do {                                                     \
         pmix_server_req_t *_req;                             \
         _req = OBJ_NEW(pmix_server_req_t);                   \
+        (void)asprintf(&_req->operation, "DMDX: %s:%d", __FILE__, __LINE__); \
         _req->target = (p);                                  \
         _req->mdxcbfunc = (ocf);                             \
         _req->cbdata = (ocd);                                \
@@ -122,6 +124,7 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
     do {                                                     \
         pmix_server_req_t *_req;                             \
         _req = OBJ_NEW(pmix_server_req_t);                   \
+        (void)asprintf(&_req->operation, "SPAWN: %s:%d", __FILE__, __LINE__); \
         _req->jdata = (j);                                   \
         _req->spcbfunc = (ocf);                              \
         _req->cbdata = (ocd);                                \
