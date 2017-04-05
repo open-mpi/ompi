@@ -138,6 +138,15 @@ General notes
   - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
     with Oracle Solaris Studio 12.5
 
+Platform Notes
+--------------
+
+- Users on Intel Xeon Phi with XPPSL 1.5.1 will see a warning on job
+  launch from the internal hwloc.  To avoid the warning message, users
+  can build hwloc 1.11.6 externally and tell Open MPI's configure to
+  use the external hwloc with the --with-hwloc=external (if in default
+  search path) or --with-hwloc=<path>.
+
 Compiler Notes
 --------------
 
