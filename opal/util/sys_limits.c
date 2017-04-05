@@ -235,13 +235,20 @@ out:
 
 int opal_getpagesize(void)
 {
+    static int page_size = -1;
+
+    if (page_size != -1) {
+// testing in a loop showed sysconf() took ~5 usec vs ~0.3 usec with it cached
+        return page_size;
+    }
+
 #ifdef HAVE_GETPAGESIZE
-    return getpagesize();
+    return page_size = getpagesize();
 #elif defined(_SC_PAGESIZE )
-    return sysconf(_SC_PAGESIZE);
+    return page_size = sysconf(_SC_PAGESIZE);
 #elif defined(_SC_PAGE_SIZE)
-    return sysconf(_SC_PAGE_SIZE);
+    return page_size = sysconf(_SC_PAGE_SIZE);
 #else
-    return 65536; /* safer to overestimate than under */
+    return page_size = 65536; /* safer to overestimate than under */
 #endif
 }
