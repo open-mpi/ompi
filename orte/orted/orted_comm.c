@@ -69,6 +69,7 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/state/state.h"
@@ -122,6 +123,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     opal_pstats_t pstat;
     char *rtmod;
     char *coprocessors;
+    orte_job_map_t *map;
 
     /* unpack the command */
     n = 1;
@@ -556,6 +558,66 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             goto CLEANUP;
         }
         break;
+
+
+        /****     DVM CLEANUP JOB COMMAND    ****/
+    case ORTE_DAEMON_DVM_CLEANUP_JOB_CMD:
+        /* unpack the jobid */
+        n = 1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(ret);
+            goto CLEANUP;
+        }
+
+        /* look up job data object */
+        if (NULL == (jdata = orte_get_job_data_object(job))) {
+            /* we can safely ignore this request as the job
+             * was already cleaned up */
+            goto CLEANUP;
+        }
+
+        /* if we have any local children for this job, then we
+         * can ignore this request as we would have already
+         * dealt with it */
+        if (0 < jdata->num_local_procs) {
+            goto CLEANUP;
+        }
+
+        /* release all resources (even those on other nodes) that we
+         * assigned to this job */
+        if (NULL != jdata->map) {
+            map = (orte_job_map_t*)jdata->map;
+            for (n = 0; n < map->nodes->size; n++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, n))) {
+                    continue;
+                }
+                for (i = 0; i < node->procs->size; i++) {
+                    if (NULL == (proct = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
+                        continue;
+                    }
+                    if (proct->name.jobid != jdata->jobid) {
+                        /* skip procs from another job */
+                        continue;
+                    }
+                    node->slots_inuse--;
+                    node->num_procs--;
+                    /* set the entry in the node array to NULL */
+                    opal_pointer_array_set_item(node->procs, i, NULL);
+                    /* release the proc once for the map entry */
+                    OBJ_RELEASE(proct);
+                }
+                /* set the node location to NULL */
+                opal_pointer_array_set_item(map->nodes, n, NULL);
+                /* maintain accounting */
+                OBJ_RELEASE(node);
+                /* flag that the node is no longer in a map */
+                ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+            }
+            OBJ_RELEASE(map);
+            jdata->map = NULL;
+        }
+        break;
+
 
         /****     REPORT TOPOLOGY COMMAND    ****/
     case ORTE_DAEMON_REPORT_TOPOLOGY_CMD:
@@ -1336,6 +1398,9 @@ static char *get_orted_comm_cmd_str(int command)
 
     case ORTE_DAEMON_GET_MEMPROFILE:
         return strdup("ORTE_DAEMON_GET_MEMPROFILE");
+
+    case ORTE_DAEMON_DVM_CLEANUP_JOB_CMD:
+        return strdup("ORTE_DAEMON_DVM_CLEANUP_JOB_CMD");
 
     default:
         return strdup("Unknown Command!");

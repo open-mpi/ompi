@@ -345,7 +345,7 @@ static void dump_aborted_procs(void)
     /* find the job that caused the problem */
     n = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&job, &nptr);
     while (OPAL_SUCCESS == n) {
-        if (job->jobid == ORTE_PROC_MY_NAME->jobid) {
+        if (NULL == job || job->jobid == ORTE_PROC_MY_NAME->jobid) {
             goto next;
         }
         if (ORTE_JOB_STATE_UNDEF != job->state &&
