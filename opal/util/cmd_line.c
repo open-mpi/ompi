@@ -143,6 +143,7 @@ static int set_dest(cmd_line_option_t *option, char *sval);
 static void fill(const cmd_line_option_t *a, char result[3][BUFSIZ]);
 static int qsort_callback(const void *a, const void *b);
 static opal_cmd_line_otype_t get_help_otype(opal_cmd_line_t *cmd);
+static char *build_parsable(cmd_line_option_t *option);
 
 
 /*
@@ -570,7 +571,12 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 
     for (j = 0; j < opal_list_get_size(&cmd->lcl_options); ++j) {
         option = sorted[j];
-        if(otype == OPAL_CMD_LINE_OTYPE_NULL || option->clo_otype == otype) {
+        if(otype == OPAL_CMD_LINE_OTYPE_PARSABLE) {
+            ret = build_parsable(option);
+            opal_argv_append(&argc, &argv, ret);
+            free(ret);
+            ret = NULL;
+        } else if(otype == OPAL_CMD_LINE_OTYPE_NULL || option->clo_otype == otype) {
             if (NULL != option->clo_description) {
                 bool filled = false;
 
@@ -1375,7 +1381,33 @@ static opal_cmd_line_otype_t get_help_otype(opal_cmd_line_t *cmd)
         otype = OPAL_CMD_LINE_OTYPE_DVM;
     } else if (0 == strcmp(arg, "general")) {
         otype = OPAL_CMD_LINE_OTYPE_GENERAL;
+    } else if (0 == strcmp(arg, "parsable")) {
+        otype = OPAL_CMD_LINE_OTYPE_PARSABLE;
     }
 
     return otype;
+}
+
+/*
+ * Helper function to build a parsable string for the help
+ * output.
+ */
+static char *build_parsable(cmd_line_option_t *option) {
+    char *line;
+    int length;
+
+    length = snprintf(NULL, 0, "%c:%s:%s:%d:%s\n", option->clo_short_name, option->clo_single_dash_name,
+                      option->clo_long_name, option->clo_num_params, option->clo_description);
+
+    line = (char *)malloc(length * sizeof(char));
+
+    if('\0' == option->clo_short_name) {
+        snprintf(line, length, "0:%s:%s:%d:%s\n", option->clo_single_dash_name, option->clo_long_name,
+                 option->clo_num_params, option->clo_description);
+    } else {
+        snprintf(line, length, "%c:%s:%s:%d:%s\n", option->clo_short_name, option->clo_single_dash_name,
+                 option->clo_long_name, option->clo_num_params, option->clo_description);
+    }
+
+    return line;
 }
