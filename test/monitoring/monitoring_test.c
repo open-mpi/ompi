@@ -15,8 +15,12 @@
 /*
 pml monitoring tester.
 
-Designed by George Bosilca <bosilca@icl.utk.edu> and  Emmanuel Jeannot <emmanuel.jeannot@inria.fr>
+Designed by George Bosilca <bosilca@icl.utk.edu> Emmanuel Jeannot <emmanuel.jeannot@inria.fr> and Clément Foyer <clement.foyer@inria.fr>
 Contact the authors for questions.
+
+To options are available for this test, with/without MPI_Tools, and with/without RMA operations. The default mode is without MPI_Tools, and with RMA operations.
+To enable the MPI_Tools use, add "--with-mpit" as an application parameter.
+To disable the RMA operations testing, add "--without-rma" as an application parameter.
 
 To be run as (without using MPI_Tool):
 
@@ -67,6 +71,7 @@ static const char flush_pvar_name[] = "pml_monitoring_flush";
 static const void*nullbuf = NULL;
 static int flush_pvar_idx;
 static int with_mpit = 0;
+static int with_rma  = 1;
 
 int main(int argc, char* argv[])
 {
@@ -74,11 +79,14 @@ int main(int argc, char* argv[])
     MPI_T_pvar_session session;
     MPI_Comm newcomm;
     char filename[1024];
-
-    if( argc > 1 ) {
-        if( 0 == strcmp(argv[1], "--with-mpit") ) {
+    
+    for ( int arg_it = 1; argc > 1 && arg_it < argc; ++arg_it ) {
+        if( 0 == strcmp(argv[arg_it], "--with-mpit") ) {
             with_mpit = 1;
             printf("enable MPIT support\n");
+        } else if( 0 == strcmp(argv[arg_it], "--without-rma") ) {
+            with_rma = 0;
+            printf("disable RMA testing\n");
         }
     }
 
@@ -258,75 +266,77 @@ int main(int argc, char* argv[])
         }
     }
 
-    MPI_Win win;
-    int rs_buff[10240];
-    int win_buff[10240];
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    to = (rank + 1) % size;
-    from = (rank + size - 1) % size;
-    for( int v = 0; v < 10240; ++v )
+    if( with_rma ) {
+      MPI_Win win;
+      int rs_buff[10240];
+      int win_buff[10240];
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      MPI_Comm_size(MPI_COMM_WORLD, &size);
+      to = (rank + 1) % size;
+      from = (rank + size - 1) % size;
+      for( int v = 0; v < 10240; ++v )
         rs_buff[v] = win_buff[v] = rank;
 
-    MPI_Win_create(win_buff, 10240 * sizeof(int), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-    MPI_Win_fence(MPI_MODE_NOPRECEDE, win);
-    if( rank%2 ) {
+      MPI_Win_create(win_buff, 10240 * sizeof(int), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+      MPI_Win_fence(MPI_MODE_NOPRECEDE, win);
+      if( rank%2 ) {
         MPI_Win_fence(MPI_MODE_NOSTORE | MPI_MODE_NOPUT, win);
         MPI_Get(rs_buff, 10240, MPI_INT, from, 0, 10240, MPI_INT, win);
-    } else {
+      } else {
         MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
         MPI_Win_fence(MPI_MODE_NOSTORE | MPI_MODE_NOPUT, win);
-    }
-    MPI_Win_fence(MPI_MODE_NOSUCCEED, win);
+      }
+      MPI_Win_fence(MPI_MODE_NOSUCCEED, win);
 
-    for( int v = 0; v < 10240; ++v )
+      for( int v = 0; v < 10240; ++v )
         if( rs_buff[v] != win_buff[v] && ((rank%2 && rs_buff[v] != from) || (!(rank%2) && rs_buff[v] != rank)) ) {
-            printf("Error on checking exchanged values: %s_buff[%d] == %d instead of %d\n",
-                   rank%2 ? "rs" : "win", v, rs_buff[v], rank%2 ? from : rank);
-            MPI_Abort(MPI_COMM_WORLD, -1);
+	  printf("Error on checking exchanged values: %s_buff[%d] == %d instead of %d\n",
+		 rank%2 ? "rs" : "win", v, rs_buff[v], rank%2 ? from : rank);
+	  MPI_Abort(MPI_COMM_WORLD, -1);
         }
 
-    MPI_Group world_group, newcomm_group, distant_group;
-    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-    MPI_Comm_group(newcomm, &newcomm_group);
-    MPI_Group_difference(world_group, newcomm_group, &distant_group);
-    if( rank%2 ) {
+      MPI_Group world_group, newcomm_group, distant_group;
+      MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+      MPI_Comm_group(newcomm, &newcomm_group);
+      MPI_Group_difference(world_group, newcomm_group, &distant_group);
+      if( rank%2 ) {
         MPI_Win_post(distant_group, 0, win);
         MPI_Win_wait(win);
         /* Check recieved values */
         for( int v = 0; v < 10240; ++v )
-            if( from != win_buff[v] ) {
-                printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
-                       v, win_buff[v], from);
-                MPI_Abort(MPI_COMM_WORLD, -1);
-            }
-    } else {
+	  if( from != win_buff[v] ) {
+	    printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
+		   v, win_buff[v], from);
+	    MPI_Abort(MPI_COMM_WORLD, -1);
+	  }
+      } else {
         MPI_Win_start(distant_group, 0, win);
         MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
         MPI_Win_complete(win);
-    }
-    MPI_Group_free(&world_group);
-    MPI_Group_free(&newcomm_group);
-    MPI_Group_free(&distant_group);
-    MPI_Barrier(MPI_COMM_WORLD);
+      }
+      MPI_Group_free(&world_group);
+      MPI_Group_free(&newcomm_group);
+      MPI_Group_free(&distant_group);
+      MPI_Barrier(MPI_COMM_WORLD);
 
-    for( int v = 0; v < 10240; ++v ) rs_buff[v] = rank;
+      for( int v = 0; v < 10240; ++v ) rs_buff[v] = rank;
 
-    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, to, 0, win);
-    MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
-    MPI_Win_unlock(to, win);
+      MPI_Win_lock(MPI_LOCK_EXCLUSIVE, to, 0, win);
+      MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
+      MPI_Win_unlock(to, win);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
 
-    /* Check recieved values */
-    for( int v = 0; v < 10240; ++v )
+      /* Check recieved values */
+      for( int v = 0; v < 10240; ++v )
         if( from != win_buff[v] ) {
-            printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
-                   v, win_buff[v], from);
-            MPI_Abort(MPI_COMM_WORLD, -1);
+	  printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
+		 v, win_buff[v], from);
+	  MPI_Abort(MPI_COMM_WORLD, -1);
         }
 
-    MPI_Win_free(&win);
+      MPI_Win_free(&win);
+    }
 
     if( with_mpit ) {
         /* the filename for flushing monitoring now uses 3 as phase number! */
