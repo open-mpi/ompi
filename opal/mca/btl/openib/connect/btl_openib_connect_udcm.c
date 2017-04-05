@@ -1048,6 +1048,8 @@ static int udcm_module_allocate_buffers (udcm_module_t *m)
 
     total_size = (udcm_recv_count + 1) * (m->msg_length +
                                           UDCM_GRH_SIZE);
+    page_size = opal_getpagesize();
+    total_size = OPAL_ALIGN(total_size, page_size, size_t);
 
     page_size = opal_getpagesize();
     total_size = OPAL_ALIGN(total_size, page_size, size_t);
