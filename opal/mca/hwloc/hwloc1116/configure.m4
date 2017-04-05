@@ -119,6 +119,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1116_CONFIG],[
     # this without "picky" flags.
     opal_hwloc_hwloc1116_save_cflags=$CFLAGS
     CFLAGS=$OPAL_CFLAGS_BEFORE_PICKY
+    AS_IF([test -n "$opal_datatype_cuda_CPPFLAGS"],
+          [CPPFLAGS="$CPPFLAGS $opal_datatype_cuda_CPPFLAGS"])
+
     HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc1116/hwloc],
               [AC_MSG_CHECKING([whether hwloc configure succeeded])
                AC_MSG_RESULT([yes])
