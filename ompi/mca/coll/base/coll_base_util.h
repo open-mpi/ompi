@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -36,14 +36,14 @@ BEGIN_C_DECLS
  * If one of the communications results in a zero-byte message the
  * communication is ignored, and no message will cross to the peer.
  */
-int ompi_coll_base_sendrecv_nonzero_actual( void* sendbuf, size_t scount,
-                                             ompi_datatype_t* sdatatype,
-                                             int dest, int stag,
-                                             void* recvbuf, size_t rcount,
-                                             ompi_datatype_t* rdatatype,
-                                             int source, int rtag,
-                                             struct ompi_communicator_t* comm,
-                                             ompi_status_public_t* status );
+int ompi_coll_base_sendrecv_actual( void* sendbuf, size_t scount,
+                                    ompi_datatype_t* sdatatype,
+                                    int dest, int stag,
+                                    void* recvbuf, size_t rcount,
+                                    ompi_datatype_t* rdatatype,
+                                    int source, int rtag,
+                                    struct ompi_communicator_t* comm,
+                                    ompi_status_public_t* status );
 
 
 /**
@@ -64,10 +64,10 @@ ompi_coll_base_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdatatyp
         return (int) ompi_datatype_sndrcv(sendbuf, (int32_t) scount, sdatatype,
                                           recvbuf, (int32_t) rcount, rdatatype);
     }
-    return ompi_coll_base_sendrecv_nonzero_actual (sendbuf, scount, sdatatype,
-                                            dest, stag,
-                                            recvbuf, rcount, rdatatype,
-                                            source, rtag, comm, status);
+    return ompi_coll_base_sendrecv_actual (sendbuf, scount, sdatatype,
+                                           dest, stag,
+                                           recvbuf, rcount, rdatatype,
+                                           source, rtag, comm, status);
 }
 
 END_C_DECLS
