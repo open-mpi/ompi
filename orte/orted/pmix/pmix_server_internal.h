@@ -48,6 +48,15 @@
 
  BEGIN_C_DECLS
 
+#define ORTED_PMIX_MIN_DMX_TIMEOUT      10
+#define ORTE_ADJUST_TIMEOUT(a)                                      \
+    do {                                                            \
+        (a)->timeout = (2 * orte_process_info.num_daemons) / 1000;  \
+        if ((a)->timeout < ORTED_PMIX_MIN_DMX_TIMEOUT) {            \
+            (a)->timeout = ORTED_PMIX_MIN_DMX_TIMEOUT;              \
+        }                                                           \
+    } while(0)
+
 /* object for tracking requests so we can
  * correctly route the eventual reply */
  typedef struct {
