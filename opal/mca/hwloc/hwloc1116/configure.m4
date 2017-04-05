@@ -111,6 +111,10 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1116_CONFIG],[
     enable_libxml2=no
     enable_xml=yes
 
+    # Disable NVML support if CUDA support is not built
+    AS_IF([test "$opal_check_cuda_happy" != "yes"],
+          [enable_nvml=no])
+
     # hwloc checks for compiler visibility, and its needs to do
     # this without "picky" flags.
     opal_hwloc_hwloc1116_save_cflags=$CFLAGS
