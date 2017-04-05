@@ -690,7 +690,7 @@ static int parse_env(char *path,
     }
 
     for (i = 0; NULL != srcenv[i]; ++i) {
-        if (0 == strncmp("OMPI_", srcenv[i], 5)) {
+        if (0 == strncmp("OMPI_MCA_", srcenv[i], 9)) {
             /* check for duplicate in app->env - this
              * would have been placed there by the
              * cmd line processor. By convention, we
