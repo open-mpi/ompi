@@ -105,7 +105,7 @@ static void spawn(int sd, short args, void *cbdata)
 
     /* add this request to our tracker hotel */
     if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
-        ORTE_ERROR_LOG(rc);
+        orte_show_help("help-orted.txt", "noroom", true, req->operation, orte_pmix_server_globals.num_rooms);
         goto callback;
     }
 

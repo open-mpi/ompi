@@ -68,3 +68,15 @@ A request has timed out and will therefore fail:
 
 Your job may terminate as a result of this problem. You may want to
 adjust the MCA parameter pmix_server_max_wait and try again.
+#
+[noroom]
+A request for an asynchronous runtime operation cannot be fulfilled
+because of a lack of room in the tracking array:
+
+  Operation:  %s
+  Number of rooms:  %d
+
+This is usually caused by a large job that encounters significant
+delays across the cluster when starting the application processes.
+Your job may terminate as a result of this problem. You may want to
+adjust the MCA parameter pmix_server_max_reqs and try again.
