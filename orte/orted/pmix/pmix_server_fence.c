@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
@@ -147,6 +147,10 @@ static void dmodex_req(int sd, short args, void *cbdata)
         OBJ_RELEASE(req);
         return;
     }
+
+    /* adjust the timeout to reflect the size of the job as it can take some
+     * amount of time to start the job */
+    ORTE_ADJUST_TIMEOUT(req);
 
     /* has anyone already requested data for this target? If so,
      * then the data is already on its way */

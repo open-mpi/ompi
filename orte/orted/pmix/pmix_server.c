@@ -536,6 +536,9 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
         req->proxy = *sender;
         req->target = idreq;
         req->remote_room_num = room_num;
+        /* adjust the timeout to reflect the size of the job as it can take some
+         * amount of time to start the job */
+        ORTE_ADJUST_TIMEOUT(req);
         if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
             OBJ_RELEASE(req);
             send_error(rc, &idreq, sender);
@@ -558,6 +561,9 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     req->proxy = *sender;
     req->target = idreq;
     req->remote_room_num = room_num;
+    /* adjust the timeout to reflect the size of the job as it can take some
+     * amount of time to start the job */
+    ORTE_ADJUST_TIMEOUT(req);
     if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
         OBJ_RELEASE(req);
         send_error(rc, &idreq, sender);
