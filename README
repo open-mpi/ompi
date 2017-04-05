@@ -112,7 +112,6 @@ General notes
 
 - The run-time systems that are currently supported are:
   - rsh / ssh
-  - LoadLeveler
   - PBS Pro, Torque
   - Platform LSF (v7.0.2 and later)
   - SLURM
@@ -120,23 +119,21 @@ General notes
   - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
 
 - Systems that have been tested are:
-  - Linux (various flavors/distros), 32 bit, with gcc
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
     Intel, and Portland (*)
-  - OS X (10.8, 10.9, 10.10, 10.11), 32 and 64 bit (x86_64), with
-    XCode and Absoft compilers (*)
-  - MacOS (10.12), 64 bit (x85_64) with XCode and Absoft compilers (*)
-  - OpenBSD.  Requires configure options --enable-mca-no-build=patcher
-    and --disable-slopen with this release.
+  - macOS (10.12), 64 bit (x85_64) with XCode compilers
 
   (*) Be sure to read the Compiler Notes, below.
 
 - Other systems have been lightly (but not fully tested):
+  - Linux (various flavors/distros), 32 bit, with gcc
   - Cygwin 32 & 64 bit with gcc
   - ARMv4, ARMv5, ARMv6, ARMv7, ARMv8
   - Other 64 bit platforms (e.g., Linux on PPC64)
   - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
     with Oracle Solaris Studio 12.5
+  - OpenBSD.  Requires configure options --enable-mca-no-build=patcher
+    and --disable-slopen with this release.
 
 Compiler Notes
 --------------
