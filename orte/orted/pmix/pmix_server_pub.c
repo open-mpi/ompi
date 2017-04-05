@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -100,6 +100,7 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
 
     /* create the caddy */
     req = OBJ_NEW(pmix_server_req_t);
+    (void)asprintf(&req->operation, "PUBLISH: %s:%d", __FILE__, __LINE__);
     req->opcbfunc = cbfunc;
     req->cbdata = cbdata;
 
@@ -207,6 +208,7 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
 
     /* create the caddy */
     req = OBJ_NEW(pmix_server_req_t);
+    (void)asprintf(&req->operation, "LOOKUP: %s:%d", __FILE__, __LINE__);
     req->lkcbfunc = cbfunc;
     req->cbdata = cbdata;
 
@@ -302,6 +304,7 @@ int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
 
     /* create the caddy */
     req = OBJ_NEW(pmix_server_req_t);
+    (void)asprintf(&req->operation, "UNPUBLISH: %s:%d", __FILE__, __LINE__);
     req->opcbfunc = cbfunc;
     req->cbdata = cbdata;
 
@@ -468,4 +471,3 @@ void pmix_server_keyval_client(int status, orte_process_name_t* sender,
         OBJ_RELEASE(req);
     }
 }
-

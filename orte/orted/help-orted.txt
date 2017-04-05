@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -60,3 +60,11 @@ info key:
   key:   %s
 
 The operation will continue, but may not behave completely as expected.
+#
+[timedout]
+A request has timed out and will therefore fail:
+
+  Operation:  %s
+
+Your job may terminate as a result of this problem. You may want to
+adjust the MCA parameter pmix_server_max_wait and try again.
