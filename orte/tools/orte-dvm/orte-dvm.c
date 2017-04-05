@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,6 +75,7 @@
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -519,6 +520,8 @@ static void notify_requestor(int sd, short args, void *cbdata)
     orte_proc_t *pptr;
     int ret, id, *idptr;
     opal_buffer_t *reply;
+    orte_daemon_cmd_flag_t command;
+    orte_grpcomm_signature_t *sig;
 
     /* notify the requestor */
     reply = OBJ_NEW(opal_buffer_t);
@@ -556,6 +559,24 @@ static void notify_requestor(int sd, short args, void *cbdata)
                             &jdata->originator, reply,
                             ORTE_RML_TAG_NOTIFY_COMPLETE,
                             send_callback, jdata);
+
+    /* now ensure that _all_ daemons know that this job has terminated so even
+     * those that did not participate in it will know to cleanup the resources
+     * they assigned to the job. This is necessary now that the mapping function
+     * has been moved to the backend daemons - otherwise, non-participating daemons
+     * retain the slot assignments on the participating daemons, and then incorrectly
+     * map subsequent jobs thinking those nodes are still "busy" */
+    reply = OBJ_NEW(opal_buffer_t);
+    command = ORTE_DAEMON_DVM_CLEANUP_JOB_CMD;
+    opal_dss.pack(reply, &command, 1, ORTE_DAEMON_CMD);
+    opal_dss.pack(reply, &jdata->jobid, 1, ORTE_JOBID);
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, reply);
+    OBJ_RELEASE(reply);
+    OBJ_RELEASE(sig);
 
     /* we cannot cleanup the job object as we might
      * hit an error during transmission, so clean it

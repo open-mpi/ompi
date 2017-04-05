@@ -89,6 +89,10 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* request full topology string */
 #define ORTE_DAEMON_REPORT_TOPOLOGY_CMD     (orte_daemon_cmd_flag_t) 33
 
+/* tell DVM daemons to cleanup resources from job */
+#define ORTE_DAEMON_DVM_CLEANUP_JOB_CMD     (orte_daemon_cmd_flag_t) 34
+
+
 /*
  * Struct written up the pipe from the child to the parent.
  */
