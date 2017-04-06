@@ -175,33 +175,39 @@ static inline mca_pml_yalla_send_request_t* MCA_PML_YALLA_SREQ_INIT(void *_buf, 
         } \
     }
 
-#define PML_YALLA_SET_RECV_STATUS(_rreq, _length, _mpi_status, rc) \
-    { \
-            switch ((_rreq)->base.error) { \
-            case MXM_OK: \
-                (rc)  = OMPI_SUCCESS; \
-                break; \
-            case MXM_ERR_CANCELED: \
-                (rc)  = OMPI_SUCCESS; \
-                break; \
-            case MXM_ERR_MESSAGE_TRUNCATED: \
-                (rc)  = MPI_ERR_TRUNCATE; \
-                break; \
-            default: \
-                (rc)  = MPI_ERR_INTERN; \
-                break; \
-            } \
-            \
-        if ((_mpi_status) != MPI_STATUS_IGNORE) { \
-            (_mpi_status)->MPI_ERROR  = (rc); \
-            if (MXM_ERR_CANCELED == (_rreq)->base.error) { \
-                (_mpi_status)->_cancelled = true; \
-            } \
-            (_mpi_status)->MPI_TAG    = (_rreq)->completion.sender_tag; \
-            (_mpi_status)->MPI_SOURCE = (_rreq)->completion.sender_imm; \
-            (_mpi_status)->_ucount    = (_length); \
-        } \
+static inline int PML_YALLA_SET_RECV_STATUS(mxm_recv_req_t *_rreq,
+                                            size_t _length,
+                                            ompi_status_public_t *_mpi_status)
+{
+    int rc;
+
+    switch (_rreq->base.error) {
+    case MXM_OK:
+        rc = OMPI_SUCCESS;
+        break;
+    case MXM_ERR_CANCELED:
+        rc = OMPI_SUCCESS;
+        break;
+    case MXM_ERR_MESSAGE_TRUNCATED:
+        rc = MPI_ERR_TRUNCATE;
+        break;
+    default:
+        rc = MPI_ERR_INTERN;
+        break;
     }
+
+    /* If status is not ignored, fill what is needed */
+    if (_mpi_status != MPI_STATUS_IGNORE) {
+        _mpi_status->MPI_ERROR  = rc;
+        if (MXM_ERR_CANCELED == _rreq->base.error) {
+            _mpi_status->_cancelled = true;
+        }
+        _mpi_status->MPI_TAG    = _rreq->completion.sender_tag;
+        _mpi_status->MPI_SOURCE = _rreq->completion.sender_imm;
+        _mpi_status->_ucount    = _length;
+    }
+    return rc;
+}
 
 #define PML_YALLA_SET_MESSAGE(_rreq, _comm, _mxm_msg, _message) \
     { \

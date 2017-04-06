@@ -388,7 +388,7 @@ int mca_pml_yalla_recv(void *buf, size_t count, ompi_datatype_t *datatype, int s
                       rreq.completion.sender_imm, rreq.completion.sender_tag,
                       rreq.tag, rreq.tag_mask,
                       rreq.completion.actual_len);
-    PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.actual_len, status, rc);
+    rc = PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.actual_len, status);
     PML_YALLA_FREE_BLOCKING_MXM_REQ(&rreq.base);
 
     return rc;
@@ -532,7 +532,6 @@ int mca_pml_yalla_iprobe(int src, int tag, struct ompi_communicator_t* comm,
 {
     mxm_recv_req_t rreq;
     mxm_error_t error;
-    int rc;
 
     PML_YALLA_INIT_MXM_PROBE_REQ(&rreq, src, tag, comm);
 
@@ -540,7 +539,7 @@ int mca_pml_yalla_iprobe(int src, int tag, struct ompi_communicator_t* comm,
     switch (error) {
     case MXM_OK:
         *matched = 1;
-        PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status, rc);
+        PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status);
         return OMPI_SUCCESS;
     case MXM_ERR_NO_MESSAGE:
         *matched = 0;
@@ -557,14 +556,13 @@ int mca_pml_yalla_probe(int src, int tag, struct ompi_communicator_t* comm,
 {
     mxm_recv_req_t rreq;
     mxm_error_t error;
-    int rc;
 
     PML_YALLA_INIT_MXM_PROBE_REQ(&rreq, src, tag, comm);
     for (;;) {
         error = mxm_req_probe(&rreq);
         switch (error) {
         case MXM_OK:
-            PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status, rc);
+            PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status);
             return OMPI_SUCCESS;
         case MXM_ERR_NO_MESSAGE:
             break;
@@ -583,7 +581,6 @@ int mca_pml_yalla_improbe(int src, int tag, struct ompi_communicator_t* comm,
     mxm_recv_req_t rreq;
     mxm_message_h mxm_msg;
     mxm_error_t error;
-    int rc;
 
     PML_YALLA_INIT_MXM_PROBE_REQ(&rreq, src, tag, comm);
 
@@ -591,7 +588,7 @@ int mca_pml_yalla_improbe(int src, int tag, struct ompi_communicator_t* comm,
     switch (error) {
     case MXM_OK:
         *matched = 1;
-        PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status, rc);
+        PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status);
         PML_YALLA_SET_MESSAGE(&rreq, comm, mxm_msg, message);
         return OMPI_SUCCESS;
     case MXM_ERR_NO_MESSAGE:
@@ -611,14 +608,13 @@ int mca_pml_yalla_mprobe(int src, int tag, struct ompi_communicator_t* comm,
     mxm_recv_req_t rreq;
     mxm_message_h mxm_msg;
     mxm_error_t error;
-    int rc;
 
     PML_YALLA_INIT_MXM_PROBE_REQ(&rreq, src, tag, comm);
     for (;;) {
         error = mxm_req_mprobe(&rreq, &mxm_msg);
         switch (error) {
         case MXM_OK:
-            PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status, rc);
+            PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.sender_len, status);
             PML_YALLA_SET_MESSAGE(&rreq, comm, mxm_msg, message);
             return OMPI_SUCCESS;
         case MXM_ERR_NO_MESSAGE:
@@ -663,7 +659,6 @@ int mca_pml_yalla_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
 {
     mxm_recv_req_t rreq;
     mxm_error_t error;
-    int rc;
 
     PML_YALLA_INIT_MXM_RECV_REQ(&rreq, buf, count, datatype, -1, 0, (*message)->comm, recv);
     PML_YALLA_INIT_BLOCKING_MXM_RECV_REQ(&rreq);
@@ -684,8 +679,7 @@ int mca_pml_yalla_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
                       rreq.completion.sender_imm, rreq.completion.sender_tag,
                       rreq.tag, rreq.tag_mask,
                       rreq.completion.actual_len);
-    PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.actual_len, status, rc);
-    return rc;
+    return PML_YALLA_SET_RECV_STATUS(&rreq, rreq.completion.actual_len, status);
 }
 
 int mca_pml_yalla_start(size_t count, ompi_request_t** requests)

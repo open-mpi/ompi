@@ -195,10 +195,9 @@ static void mca_pml_yalla_bsend_completion_cb(void *context)
 static void mca_pml_yalla_recv_completion_cb(void *context)
 {
     mca_pml_yalla_recv_request_t* rreq = context;
-    int rc;
 
     PML_YALLA_SET_RECV_STATUS(&rreq->mxm, rreq->mxm.completion.actual_len,
-                              &rreq->super.ompi.req_status, rc);
+                              &rreq->super.ompi.req_status);
 
     PML_YALLA_VERBOSE(8, "receive request %p completed with status %s source %d rtag %d(%d/0x%x) len %zu",
                       (void *)rreq, mxm_error_string(rreq->mxm.base.error),
