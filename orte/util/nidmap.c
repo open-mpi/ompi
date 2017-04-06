@@ -618,14 +618,25 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
 
     /* handle the topologies - as the most common case by far
      * is to have homogeneous topologies, we only send them
-     * if something is different */
-    if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) & ORTE_MAPPING_NO_USE_LOCAL)) {
-        ui8 = 2;
-    } else {
-        ui8 = 1;
+     * if something is different. We know that the HNP is
+     * the first topology, and that any differing topology
+     * on the compute nodes must follow. So send the topologies
+     * if and only if:
+     *
+     * (a) the HNP is being used to house application procs and
+     *     there is more than one topology on our list; or
+     *
+     * (b) the HNP is not being used, but there are more than
+     *     two topologies on our list, thus indicating that
+     *     there are multiple topologies on the compute nodes
+     */
+    if (!orte_hnp_is_allocated || (ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) & ORTE_MAPPING_NO_USE_LOCAL)) {
+        /* remove the first topo on the list */
+        item = opal_list_remove_first(&topos);
+        OBJ_RELEASE(item);
     }
     tmp = NULL;
-    if (ui8 < opal_list_get_size(&topos)) {
+    if (1 < opal_list_get_size(&topos)) {
         opal_buffer_t bucket, *bptr;
         OBJ_CONSTRUCT(&bucket, opal_buffer_t);
         while (NULL != (item = opal_list_remove_first(&topos))) {
