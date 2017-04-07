@@ -641,6 +641,13 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         OBJ_CONSTRUCT(&bucket, opal_buffer_t);
         while (NULL != (item = opal_list_remove_first(&topos))) {
             rng = (orte_regex_range_t*)item;
+            if (NULL == rng->t) {
+                /* when we pass thru here prior to launching the daemons, we
+                 * won't have topologies for them and so this entry might
+                 * be NULL - protect ourselves */
+                OBJ_RELEASE(item);
+                continue;
+            }
             if (NULL == tmp) {
                 asprintf(&tmp, "%d", rng->cnt);
             } else {
