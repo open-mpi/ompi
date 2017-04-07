@@ -78,6 +78,31 @@ my $indent = "      ";
 
 my $subs;
 
+sub queue {
+    my ($f_type, $suffix, $import_type) = @_;
+
+    # Leave off the MPI/PMI prefix; we'll add that when outputting
+    my $sub_name = "Sizeof_$suffix";
+
+    # Make a hash for this subroutine
+    my $subr;
+    $subr->{name} = $sub_name;
+    my $start = "${indent}SUBROUTINE ^PREFIX^$sub_name^RANK^(x, size, ierror)\n";
+    # For long type names and large ranks, this first line gets very
+    # long and only narrowly squeezed in before 72 columns.  Use no
+    # whitespace.
+    $start .= $indent . uc($f_type) . "^DIMENSION^::x
+${indent}  INTEGER, INTENT(OUT) :: size
+${indent}  INTEGER$optional_ierror_param, INTENT(OUT) :: ierror";
+    $subr->{start} = $start;
+    $subr->{middle} = "${indent}  size = storage_size(x) / 8
+${indent}  ${optional_ierror_statement}ierror = 0";
+    $subr->{end} = "${indent}END SUBROUTINE ^PREFIX^$sub_name^RANK^";
+
+    # Save it in the overall hash
+    $subs->{$sub_name} = $subr;
+}
+
 sub queue_sub {
     my ($f_type, $suffix, $import_type) = @_;
 
@@ -145,6 +170,9 @@ sub generate {
 # Main
 #############################################################################
 
+for my $type (qw/logical character/) {
+    queue("${type}", "${type}", "${type}");
+}
 for my $size (qw/8 16 32 64/) {
     queue_sub("integer(int${size})", "int${size}", "int${size}");
 }
