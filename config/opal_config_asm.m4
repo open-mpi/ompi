@@ -15,6 +15,8 @@ dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -1000,7 +1002,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
             ;;
-        i?86-*|x86_64*)
+        i?86-*|x86_64*|amd64*)
             if test "$ac_cv_sizeof_long" = "4" ; then
                 opal_cv_asm_arch="IA32"
             else
