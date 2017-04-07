@@ -158,8 +158,8 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                                               sizeof(ompi_proc_t *));
             for (i=0 ; i<group->grp_proc_count ; i++) {
                 if (NULL == (proc_list[i] = ompi_group_peer_lookup(group,i))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    rc = ORTE_ERR_NOT_FOUND;
+                    OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
+                    rc = OMPI_ERR_NOT_FOUND;
                     free(proc_list);
                     goto exit;
                 }
@@ -665,10 +665,10 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     for (i = 0; i < count; ++i) {
         app = OBJ_NEW(opal_pmix_app_t);
         if (NULL == app) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
             OPAL_LIST_DESTRUCT(&apps);
             opal_progress_event_users_decrement();
-            return ORTE_ERR_OUT_OF_RESOURCE;
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
         /* add the app to the job data */
         opal_list_append(&apps, &app->super);
@@ -893,9 +893,9 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get (array_of_info[i], "ompi_stdin_target", sizeof(stdin_target) - 1, stdin_target, &flag);
             if ( flag ) {
                 if (0 == strcmp(stdin_target, "all")) {
-                    ui32 = ORTE_VPID_WILDCARD;
+                    ui32 = OPAL_VPID_WILDCARD;
                 } else if (0 == strcmp(stdin_target, "none")) {
-                    ui32 = ORTE_VPID_INVALID;
+                    ui32 = OPAL_VPID_INVALID;
                 } else {
                     ui32 = strtoul(stdin_target, NULL, 10);
                 }
@@ -911,7 +911,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
          */
         if ( !have_wdir ) {
             if (OMPI_SUCCESS != (rc = opal_getcwd(cwd, OPAL_PATH_MAX))) {
-                ORTE_ERROR_LOG(rc);
+                OMPI_ERROR_LOG(rc);
                 OPAL_LIST_DESTRUCT(&apps);
                 opal_progress_event_users_decrement();
                 return rc;
