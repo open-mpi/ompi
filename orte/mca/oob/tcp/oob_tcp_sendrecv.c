@@ -343,9 +343,6 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
 static int read_bytes(mca_oob_tcp_peer_t* peer)
 {
     int rc;
-#if OPAL_ENABLE_TIMING
-    int to_read = peer->recv_msg->rdbytes;
-#endif
 
     /* read until all bytes recvd or error */
     while (0 < peer->recv_msg->rdbytes) {
@@ -431,9 +428,6 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)cbdata;
     int rc;
     orte_rml_send_t *snd;
-#if OPAL_ENABLE_TIMING
-    bool timing_same_as_hdr = false;
-#endif
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s:tcp:recv:handler called for peer %s",
@@ -503,13 +497,7 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                 "%s:tcp:recv:handler read hdr",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-#if OPAL_ENABLE_TIMING
-            int to_recv = peer->recv_msg->rdbytes;
-#endif
             if (ORTE_SUCCESS == (rc = read_bytes(peer))) {
-#if OPAL_ENABLE_TIMING
-                timing_same_as_hdr = true;
-#endif
                 /* completed reading the header */
                 peer->recv_msg->hdr_recvd = true;
                 /* convert the header */

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -139,7 +139,6 @@ int main(int argc, char **argv)
 
         MPI_Gather(hname,sizeof(hname),MPI_CHAR,hnames,sizeof(hname),MPI_CHAR, 0, MPI_COMM_WORLD);
         MPI_Gather(send,2,MPI_DOUBLE,measure,2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        char tmpname[128];
         FILE *fp = fopen(filename,"w");
         if( fp == NULL ){
              fprintf(stderr, "Fail to open the file %s. Abort\n", filename);

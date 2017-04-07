@@ -49,7 +49,19 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
         opal_pmix_pmix2x_sm_flag=--disable-dstore
     fi
 
-    opal_pmix_pmix2x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX2X_ $opal_pmix_pmix2x_sm_flag --without-tests-examples --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
+    AC_ARG_ENABLE([pmix-timing],
+                  [AC_HELP_STRING([--enable-pmix-timing],
+                                  [Enable PMIx timing measurements (default: disabled)])])
+    AC_MSG_CHECKING([if PMIx timing is enabled])
+    if test "$enable_pmix_timing" == "yes"; then
+        AC_MSG_RESULT([yes])
+        opal_pmix_pmix2x_timing_flag=--enable-pmix-timing
+    else
+        AC_MSG_RESULT([no (disabled)])
+        opal_pmix_pmix2x_timing_flag=--disable-pmix-timing
+    fi
+
+    opal_pmix_pmix2x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX2X_ $opal_pmix_pmix2x_sm_flag $opal_pmix_pmix2x_timing_flag --without-tests-examples --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix2x_args="--enable-debug $opal_pmix_pmix2x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
