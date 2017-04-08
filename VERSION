@@ -4,6 +4,8 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+#                         reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -107,7 +109,7 @@ libmca_orte_common_alps_so_version=0:0:0
 
 # OPAL layer
 libmca_opal_common_cuda_so_version=0:0:0
-libmca_opal_common_libfabric_so_version=0:0:0
+libmca_opal_common_ofi_so_version=0:0:0
 libmca_opal_common_sm_so_version=0:0:0
 libmca_opal_common_ugni_so_version=0:0:0
 libmca_opal_common_verbs_so_version=0:0:0

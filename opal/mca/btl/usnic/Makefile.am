@@ -14,6 +14,8 @@
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,7 +23,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = -DBTL_IN_OPAL=1 $(opal_common_libfabric_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
+AM_CPPFLAGS = -DBTL_IN_OPAL=1 $(opal_common_ofi_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
 
 EXTRA_DIST = README.txt README.test
 
@@ -91,7 +93,7 @@ mca_btl_usnic_la_LDFLAGS = \
         $(opal_btl_usnic_LDFLAGS) \
         -module -avoid-version
 mca_btl_usnic_la_LIBADD = \
-        $(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib@OPAL_LIB_PREFIX@mca_common_libfabric.la
+        $(OPAL_TOP_BUILDDIR)/opal/mca/common/ofi/lib@OPAL_LIB_PREFIX@mca_common_ofi.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)

@@ -12,6 +12,8 @@
 # Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,22 +23,22 @@
 # A word of explanation...
 #
 # This library is linked against various MCA components because the
-# support for libfabrics is needed in various places.
+# support for ofis is needed in various places.
 #
 # Note that building this common component statically and linking
 # against other dynamic components is *not* supported!
 
-AM_CPPFLAGS = $(opal_common_libfabric_CPPFLAGS)
+AM_CPPFLAGS = $(opal_common_ofi_CPPFLAGS)
 
 # Header files
 
 headers = \
-        common_libfabric.h
+        common_ofi.h
 
 # Source files
 
 sources = \
-        common_libfabric.c
+        common_ofi.c
 
 # As per above, we'll either have an installable or noinst result.
 # The installable one should follow the same MCA prefix naming rules
@@ -55,24 +57,25 @@ sources = \
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = lib@OPAL_LIB_PREFIX@mca_common_libfabric.la
-comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst.la
+comp_inst = lib@OPAL_LIB_PREFIX@mca_common_ofi.la
+comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst.la
 
-if MCA_BUILD_opal_common_libfabric_DSO
+
+if MCA_BUILD_opal_common_ofi_DSO
 lib_LTLIBRARIES += $(comp_inst)
 else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_SOURCES = $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_LDFLAGS = \
-        $(opal_common_libfabric_LDFLAGS) \
-        -version-info $(libmca_opal_common_libfabric_so_version)
-lib@OPAL_LIB_PREFIX@mca_common_libfabric_la_LIBADD = $(opal_common_libfabric_LIBS)
+lib@OPAL_LIB_PREFIX@mca_common_ofi_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_ofi_la_LDFLAGS = \
+        $(opal_common_ofi_LDFLAGS) \
+        -version-info $(libmca_opal_common_ofi_so_version)
+lib@OPAL_LIB_PREFIX@mca_common_ofi_la_LIBADD = $(opal_common_ofi_LIBS)
 
-lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_SOURCES = $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_LDFLAGS = $(opal_common_libfabric_LDFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_libfabric_noinst_la_LIBADD = $(opal_common_libfabric_LIBS)
+lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_LDFLAGS = $(opal_common_ofi_LDFLAGS)
+lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_LIBADD = $(opal_common_ofi_LIBS)
 
 # Conditionally install the header files
 

@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,7 +20,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(opal_common_libfabric_CPPFLAGS)
+AM_CPPFLAGS = $(opal_common_ofi_CPPFLAGS)
 
 sources = \
 	rml_ofi.h \
@@ -42,7 +44,7 @@ mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rml_ofi_la_SOURCES = $(sources)
 mca_rml_ofi_la_LDFLAGS = -module -avoid-version
-mca_rml_ofi_la_LIBADD = $(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib@OPAL_LIB_PREFIX@mca_common_libfabric.la
+mca_rml_ofi_la_LIBADD = $(OPAL_TOP_BUILDDIR)/opal/mca/common/ofi/lib@OPAL_LIB_PREFIX@mca_common_ofi.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_rml_ofi_la_SOURCES = $(sources)
