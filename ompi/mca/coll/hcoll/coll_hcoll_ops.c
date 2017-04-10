@@ -15,6 +15,7 @@
 #include "hcoll/api/hcoll_constants.h"
 #include "coll_hcoll_dtypes.h"
 #include "hcoll/api/hcoll_dte.h"
+int hcoll_progress_registered = 0;
 int mca_coll_hcoll_barrier(struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module){
     int rc;
@@ -405,6 +406,10 @@ int mca_coll_hcoll_ibarrier(struct ompi_communicator_t *comm,
     HCOL_VERBOSE(20,"RUNNING HCOL NON-BLOCKING BARRIER");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     rt_handle = (void**) request;
+    if (!hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        hcoll_progress_registered = 1;
+    }
     rc = hcoll_collectives.coll_ibarrier(hcoll_module->hcoll_context, rt_handle);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK NON-BLOCKING BARRIER");
@@ -434,6 +439,10 @@ int mca_coll_hcoll_ibcast(void *buff, int count,
         rc = hcoll_module->previous_ibcast(buff,count,datatype,root,
                                          comm, request, hcoll_module->previous_ibcast_module);
         return rc;
+    }
+    if (!hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        hcoll_progress_registered = 1;
     }
     rc = hcoll_collectives.coll_ibcast(buff, count, dtype, root, rt_handle, hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
@@ -474,6 +483,10 @@ int mca_coll_hcoll_iallgather(void *sbuf, int scount,
                                              request,
                                              hcoll_module->previous_iallgather_module);
         return rc;
+    }
+    if (!hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        hcoll_progress_registered = 1;
     }
     rc = hcoll_collectives.coll_iallgather(sbuf, scount, stype, rbuf, rcount, rtype, hcoll_module->hcoll_context, rt_handle);
     if (HCOLL_SUCCESS != rc){
@@ -520,6 +533,10 @@ int mca_coll_hcoll_iallgatherv(const void *sbuf, int scount,
                                              request,
                                              hcoll_module->previous_iallgatherv_module);
         return rc;
+    }
+    if (!hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        hcoll_progress_registered = 1;
     }
     rc = hcoll_collectives.coll_iallgatherv((void *)sbuf,scount,stype,rbuf,rcount,displs,rtype,
             hcoll_module->hcoll_context, rt_handle);
@@ -576,6 +593,10 @@ int mca_coll_hcoll_iallreduce(const void *sbuf, void *rbuf, int count,
         return rc;
     }
 
+    if (!hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        hcoll_progress_registered = 1;
+    }
     rc = hcoll_collectives.coll_iallreduce(sbuf, rbuf, count, Dtype, Op, hcoll_module->hcoll_context, rt_handle);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK NON-BLOCKING ALLREDUCE");
@@ -628,6 +649,10 @@ int mca_coll_hcoll_ireduce(const void *sbuf, void *rbuf, int count,
                                              hcoll_module->previous_ireduce_module);
         return rc;
     }
+    if (!hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        hcoll_progress_registered = 1;
+    }
 
     rc = hcoll_collectives.coll_ireduce((void *)sbuf,rbuf,count,Dtype,Op,root,hcoll_module->hcoll_context,rt_handle);
     if (HCOLL_SUCCESS != rc){
@@ -673,6 +698,10 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
                                            hcoll_module->previous_igatherv_module);
         return rc;
     }
+    if (!hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        hcoll_progress_registered = 1;
+    }
     rc = hcoll_collectives.coll_igatherv(sbuf,scount,stype,rbuf,rcounts,displs, rtype, root, hcoll_module->hcoll_context, rt_handle);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK IGATHERV");
@@ -710,6 +739,10 @@ int mca_coll_hcoll_ialltoallv(void *sbuf, int *scounts, int *sdisps,
                                                rbuf, rcounts, rdisps, rdtype,
                                                comm, request, hcoll_module->previous_alltoallv_module);
         return rc;
+    }
+    if (!hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        hcoll_progress_registered = 1;
     }
     rc = hcoll_collectives.coll_ialltoallv((void *)sbuf, (int *)scounts, (int *)sdisps, stype,
                                            rbuf, (int *)rcounts, (int *)rdisps, rtype,

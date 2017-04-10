@@ -290,7 +290,8 @@ static int hcoll_close(void)
     HCOL_VERBOSE(5,"HCOLL FINALIZE");
     rc = hcoll_finalize();
     OBJ_DESTRUCT(&cm->dtypes);
-    opal_progress_unregister(mca_coll_hcoll_progress);
+    if (hcoll_progress_registered)
+        opal_progress_unregister(mca_coll_hcoll_progress);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(1,"Hcol library finalize failed");
         return OMPI_ERROR;
