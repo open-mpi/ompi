@@ -103,7 +103,8 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
     AS_IF([test "$with_hwloc" = "external"], [opal_hwloc_external_want=yes])
     AS_IF([test "$with_hwloc" != "" && \
            test "$with_hwloc" != "no" && \
-           test "$with_hwloc" != "internal"], [opal_hwloc_external_want=yes])
+           test "$with_hwloc" != "internal" && \
+           test "$with_hwloc" != "future"], [opal_hwloc_external_want=yes])
     AS_IF([test "$with_hwloc" = "no"], [opal_hwloc_external_want=no])
 
     # If we still want external support, try it

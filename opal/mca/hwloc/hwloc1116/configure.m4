@@ -88,7 +88,8 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1116_CONFIG],[
 
     # Run the hwloc configuration - if no external hwloc, then set the prefixi
     # to minimize the chance that someone will use the internal symbols
-    AS_IF([test "$opal_hwloc_external" = "no"],
+    AS_IF([test "$opal_hwloc_external" = "no" &&
+           test "$with_hwloc" != "future"],
           [HWLOC_SET_SYMBOL_PREFIX([opal_hwloc1116_])])
 
     # save XML or graphical options
