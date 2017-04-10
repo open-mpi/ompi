@@ -99,8 +99,6 @@ int orte_rml_oob_send_nb(struct orte_rml_base_module_t *mod,
         return ORTE_ERR_BAD_PARAM;
     }
 
-    OPAL_TIMING_EVENT((&tm_rml, "to %s", ORTE_NAME_PRINT(peer)));
-
     /* if this is a message to myself, then just post the message
      * for receipt - no need to dive into the oob
      */
@@ -206,8 +204,6 @@ int orte_rml_oob_send_buffer_nb(struct orte_rml_base_module_t *mod,
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-
-    OPAL_TIMING_EVENT((&tm_rml, "to %s", ORTE_NAME_PRINT(peer)));
 
     /* if this is a message to myself, then just post the message
      * for receipt - no need to dive into the oob
