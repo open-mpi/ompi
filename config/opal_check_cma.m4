@@ -7,6 +7,8 @@
 # Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 # Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,10 +24,12 @@ AC_DEFUN([OPAL_CHECK_CMA],[
                 [AC_HELP_STRING([--with-cma],
                                 [Build Cross Memory Attach support (default: autodetect)])])
 
+    AS_IF([test "$with_cma" = "no"],
+          [opal_check_cma_happy=0])
+
     # We only need to do the back-end test once
-    if test -z "$opal_check_cma_happy" ; then
-        OPAL_CHECK_CMA_BACKEND
-    fi
+    AS_IF([test -z "$opal_check_cma_happy"],
+          [OPAL_CHECK_CMA_BACKEND])
 
     AS_IF([test $opal_check_cma_happy -eq 1],
           [$2],
