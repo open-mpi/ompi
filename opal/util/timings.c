@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

@@ -1,3 +1,13 @@
+/*
+ * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #ifndef OMPI_UTIL_TIMING_H
 #define OMPI_UTIL_TIMING_H
 
@@ -33,7 +43,7 @@ typedef struct ompi_timing_t {
 
 #define OMPI_TIMING_INIT(_size)                                                \
     ompi_timing_t OMPI_TIMING;                                                 \
-    OMPI_TIMING.prefix = __func__;                                         \
+    OMPI_TIMING.prefix = __func__;                                             \
     OMPI_TIMING.size = _size;                                                  \
     OMPI_TIMING.get_ts = opal_timing_ts_func(OPAL_TIMING_AUTOMATIC_TIMER);     \
     OMPI_TIMING.cnt = 0;                                                       \
@@ -55,8 +65,8 @@ typedef struct ompi_timing_t {
         }                                                                      \
     }
 
-#define OMPI_TIMING_ITEM_EXTEND                                              \
-    do {                                             \
+#define OMPI_TIMING_ITEM_EXTEND                                                    \
+    do {                                                                           \
         if (OMPI_TIMING.enabled) {                                                 \
             OMPI_TIMING.cur_timing->next = (struct ompi_timing_list_t*)malloc(sizeof(ompi_timing_list_t)); \
             OMPI_TIMING.cur_timing = (ompi_timing_list_t*)OMPI_TIMING.cur_timing->next;                    \
@@ -65,8 +75,8 @@ typedef struct ompi_timing_t {
         }                                                                          \
     } while(0)
 
-#define OMPI_TIMING_FINALIZE                                                 \
-    do {                                                \
+#define OMPI_TIMING_FINALIZE                                                       \
+    do {                                                                           \
         if (OMPI_TIMING.enabled) {                                                 \
             ompi_timing_list_t *t = OMPI_TIMING.timing, *tmp;                      \
             while ( NULL != t) {                                                   \
@@ -81,8 +91,8 @@ typedef struct ompi_timing_t {
         }                                                                          \
     } while(0)
 
-#define OMPI_TIMING_NEXT(...)                                              \
-    do {                                          \
+#define OMPI_TIMING_NEXT(...)                                                      \
+    do {                                                                           \
         if (!OMPI_TIMING.error && OMPI_TIMING.enabled) {                           \
             char *f = strrchr(__FILE__, '/') + 1;                                  \
             int len = 0;                                                           \
@@ -90,7 +100,7 @@ typedef struct ompi_timing_t {
                 OMPI_TIMING_ITEM_EXTEND;                                           \
             }                                                                      \
             len = snprintf(OMPI_TIMING.cur_timing->val[OMPI_TIMING.cur_timing->use].desc,        \
-                OPAL_TIMING_STR_LEN, ##__VA_ARGS__);                          \
+                OPAL_TIMING_STR_LEN, ##__VA_ARGS__);                               \
             if (len >= OPAL_TIMING_STR_LEN) {                                      \
                 OMPI_TIMING.error = 1;                                             \
             }                                                                      \
@@ -103,8 +113,8 @@ typedef struct ompi_timing_t {
         }                                                                          \
     } while(0)
 
-#define OMPI_TIMING_APPEND(filename,func,desc,ts)                               \
-    do {                            \
+#define OMPI_TIMING_APPEND(filename,func,desc,ts)                                  \
+    do {                                                                           \
         if (OMPI_TIMING.cur_timing->use >= OMPI_TIMING.size){                      \
             OMPI_TIMING_ITEM_EXTEND;                                               \
         }                                                                          \
@@ -115,20 +125,18 @@ typedef struct ompi_timing_t {
         }                                                                          \
         OMPI_TIMING.cur_timing->val[OMPI_TIMING.cur_timing->use].prefix = func;    \
         OMPI_TIMING.cur_timing->val[OMPI_TIMING.cur_timing->use].file = filename;  \
-        OMPI_TIMING.cur_timing->val[OMPI_TIMING.cur_timing->use++].ts =            \
-            OMPI_TIMING.get_ts() - OMPI_TIMING.ts;                                 \
+        OMPI_TIMING.cur_timing->val[OMPI_TIMING.cur_timing->use++].ts = ts;        \
         OMPI_TIMING.cnt++;                                                         \
-        OMPI_TIMING.ts = OMPI_TIMING.get_ts();                                     \
     } while(0)
 
-#define OMPI_TIMING_IMPORT_OPAL_PREFIX(_prefix, func)                           \
-    do {                        \
+#define OMPI_TIMING_IMPORT_OPAL_PREFIX(_prefix, func)                              \
+    do {                                                                           \
         if (!OMPI_TIMING.error && OMPI_TIMING.enabled) {                           \
-            int cnt;                                                                \
+            int cnt;                                                               \
             int i;                                                                 \
-            double ts;                                                              \
-            OPAL_TIMING_ENV_CNT(func, cnt);                                   \
-            OPAL_TIMING_ENV_ERROR_PREFIX(_prefix, func, OMPI_TIMING.error);       \
+            double ts;                                                             \
+            OPAL_TIMING_ENV_CNT(func, cnt);                                        \
+            OPAL_TIMING_ENV_ERROR_PREFIX(_prefix, func, OMPI_TIMING.error);        \
             for(i = 0; i < cnt; i++){                                              \
                 char *desc, *filename;                                             \
                 OPAL_TIMING_ENV_GETDESC_PREFIX(_prefix, &filename, func, i, &desc, ts);  \
@@ -137,13 +145,11 @@ typedef struct ompi_timing_t {
         }                                                                          \
     } while(0)
 
-#define OMPI_TIMING_IMPORT_OPAL(func) \
-    OMPI_TIMING_IMPORT_OPAL_PREFIX("", func)
+#define OMPI_TIMING_IMPORT_OPAL(func)                                              \
+        OMPI_TIMING_IMPORT_OPAL_PREFIX("", func);
 
-
-
-#define OMPI_TIMING_OUT                                                      \
-    do {                                                    \
+#define OMPI_TIMING_OUT                                                           \
+    do {                                                                          \
         if (OMPI_TIMING.enabled) {                                                \
             int i, size, rank;                                                    \
             MPI_Comm_size(MPI_COMM_WORLD, &size);                                 \
