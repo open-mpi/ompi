@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -171,6 +171,10 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
                                              char **ptr, bool long_send, bool buffered)
 {
     int ret;
+
+    if (request_len > mca_osc_pt2pt_component.buffer_size) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     do {
         ret = _ompi_osc_pt2pt_frag_alloc (module, target, request_len , buffer, ptr, long_send, buffered);
