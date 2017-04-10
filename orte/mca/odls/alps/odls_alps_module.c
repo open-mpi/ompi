@@ -423,6 +423,11 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
     sigprocmask(0, 0, &sigs);
     sigprocmask(SIG_UNBLOCK, &sigs, 0);
 
+    /* take us to the correct wdir */
+    if (NULL != cd->wdir) {
+        chdir(cd->wdir);
+    }
+
     /* Exec the new executable */
 
     if (10 < opal_output_get_verbosity(orte_odls_base_framework.framework_output)) {
