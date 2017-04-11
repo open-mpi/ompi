@@ -209,7 +209,7 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
 
 #define OPAL_TIMING_ENV_INIT_PREFIX(prefix)
 
-#define OPAL_TIMING_ENV_NEXT(h, fmt, ... )
+#define OPAL_TIMING_ENV_NEXT(h, ... )
 
 #define OPAL_TIMING_ENV_CNT_PREFIX(prefix, func)
 
