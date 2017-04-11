@@ -327,47 +327,49 @@ static int ppr_mapper(orte_job_t *jdata)
                 }
             }
 
-            /* set the total slots used */
-            if ((int)node->num_procs <= node->slots) {
-                node->slots_inuse = (int)node->num_procs;
-            } else {
-                node->slots_inuse = node->slots;
-            }
-
-            /* if no-oversubscribe was specified, check to see if
-             * we have violated the total slot specification - regardless,
-             * if slots_max was given, we are not allowed to violate it!
-             */
-            if ((node->slots < (int)node->num_procs) ||
-                (0 < node->slots_max && node->slots_max < (int)node->num_procs)) {
-                if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
-                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
-                                   true, node->num_procs, app->app);
-                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                    rc = ORTE_ERR_SILENT;
-                    goto error;
+            if (!(ORTE_MAPPING_DEBUGGER & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
+                /* set the total slots used */
+                if ((int)node->num_procs <= node->slots) {
+                    node->slots_inuse = (int)node->num_procs;
+                } else {
+                    node->slots_inuse = node->slots;
                 }
-                /* flag the node as oversubscribed so that sched-yield gets
-                 * properly set
+
+                /* if no-oversubscribe was specified, check to see if
+                 * we have violated the total slot specification - regardless,
+                 * if slots_max was given, we are not allowed to violate it!
                  */
-                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
-                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
-                /* check for permission */
-                if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
-                    /* if we weren't given a directive either way, then we will error out
-                     * as the #slots were specifically given, either by the host RM or
-                     * via hostfile/dash-host */
-                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                if ((node->slots < (int)node->num_procs) ||
+                    (0 < node->slots_max && node->slots_max < (int)node->num_procs)) {
+                    if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
-                                       true, app->num_procs, app->app);
+                                       true, node->num_procs, app->app);
                         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                        return ORTE_ERR_SILENT;
-                    } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
-                        /* if we were explicitly told not to oversubscribe, then don't */
-                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
-                                       true, app->num_procs, app->app);
-                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                        return ORTE_ERR_SILENT;
+                        rc = ORTE_ERR_SILENT;
+                        goto error;
+                    }
+                    /* flag the node as oversubscribed so that sched-yield gets
+                     * properly set
+                     */
+                    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                    ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
+                    /* check for permission */
+                    if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                        /* if we weren't given a directive either way, then we will error out
+                         * as the #slots were specifically given, either by the host RM or
+                         * via hostfile/dash-host */
+                        if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                           true, app->num_procs, app->app);
+                            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                            return ORTE_ERR_SILENT;
+                        } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                            /* if we were explicitly told not to oversubscribe, then don't */
+                            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                           true, app->num_procs, app->app);
+                            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                            return ORTE_ERR_SILENT;
+                        }
                     }
                 }
             }

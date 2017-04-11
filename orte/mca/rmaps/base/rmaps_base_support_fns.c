@@ -477,55 +477,60 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                          (int)opal_list_get_size(allocated_nodes)));
 
   complete:
+    num_slots = 0;
     /* remove all nodes that are already at max usage, and
      * compute the total number of allocated slots while
-     * we do so */
-    num_slots = 0;
-    item  = opal_list_get_first(allocated_nodes);
-    while (item != opal_list_get_end(allocated_nodes)) {
-        /** save the next pointer in case we remove this node */
-        next  = opal_list_get_next(item);
-        /** check to see if this node is fully used - remove if so */
-        node = (orte_node_t*)item;
-        if (0 != node->slots_max && node->slots_inuse > node->slots_max) {
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                 "%s Removing node %s: max %d inuse %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 node->name, node->slots_max, node->slots_inuse));
-            opal_list_remove_item(allocated_nodes, item);
-            OBJ_RELEASE(item);  /* "un-retain" it */
-        } else if (node->slots <= node->slots_inuse &&
-                   (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
-            /* remove the node as fully used */
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                 "%s Removing node %s slots %d inuse %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 node->name, node->slots, node->slots_inuse));
-            opal_list_remove_item(allocated_nodes, item);
-            OBJ_RELEASE(item);  /* "un-retain" it */
-        } else if (node->slots > node->slots_inuse) {
-                /* add the available slots */
+     * we do so - can ignore this if we are mapping debugger
+     * daemons as they do not count against the allocation */
+    if (ORTE_MAPPING_DEBUGGER & ORTE_GET_MAPPING_DIRECTIVE(policy)) {
+        num_slots = opal_list_get_size(allocated_nodes);    // tell the mapper there is one slot/node for debuggers
+    } else {
+        item  = opal_list_get_first(allocated_nodes);
+        while (item != opal_list_get_end(allocated_nodes)) {
+            /** save the next pointer in case we remove this node */
+            next  = opal_list_get_next(item);
+            /** check to see if this node is fully used - remove if so */
+            node = (orte_node_t*)item;
+            if (0 != node->slots_max && node->slots_inuse > node->slots_max) {
                 OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                     "%s node %s has %d slots available",
+                                     "%s Removing node %s: max %d inuse %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     node->name, node->slots - node->slots_inuse));
-                num_slots += node->slots - node->slots_inuse;
-        } else if (!(ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
-                /* nothing needed to do here - we don't add slots to the
-                 * count as we don't have any available. Just let the mapper
-                 * do what it needs to do to meet the request
-                 */
+                                     node->name, node->slots_max, node->slots_inuse));
+                opal_list_remove_item(allocated_nodes, item);
+                OBJ_RELEASE(item);  /* "un-retain" it */
+            } else if (node->slots <= node->slots_inuse &&
+                       (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
+                /* remove the node as fully used */
                 OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                     "%s node %s is fully used, but available for oversubscrition",
+                                     "%s Removing node %s slots %d inuse %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     node->name));
-        } else {
-            /* if we cannot use it, remove it from list */
-            opal_list_remove_item(allocated_nodes, item);
-            OBJ_RELEASE(item);  /* "un-retain" it */
+                                     node->name, node->slots, node->slots_inuse));
+                opal_list_remove_item(allocated_nodes, item);
+                OBJ_RELEASE(item);  /* "un-retain" it */
+            } else if (node->slots > node->slots_inuse) {
+                    /* add the available slots */
+                    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
+                                         "%s node %s has %d slots available",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         node->name, node->slots - node->slots_inuse));
+                    num_slots += node->slots - node->slots_inuse;
+            } else if (!(ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
+                    /* nothing needed to do here - we don't add slots to the
+                     * count as we don't have any available. Just let the mapper
+                     * do what it needs to do to meet the request
+                     */
+                    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
+                                         "%s node %s is fully used, but available for oversubscription",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         node->name));
+            } else {
+                /* if we cannot use it, remove it from list */
+                opal_list_remove_item(allocated_nodes, item);
+                OBJ_RELEASE(item);  /* "un-retain" it */
+            }
+            /** go on to next item */
+            item = next;
         }
-        /** go on to next item */
-        item = next;
     }
 
     /* Sanity check to make sure we have resources available */

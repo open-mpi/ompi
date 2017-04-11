@@ -2383,15 +2383,13 @@ static void orte_debugger_dump(void)
             "NULL" : (char*) MPIR_server_arguments);
 }
 
-static void setup_debugger_job(void)
+static void setup_debugger_job(orte_jobid_t jobid)
 {
     orte_job_t *debugger;
     orte_app_context_t *app;
-    orte_proc_t *proc;
-    int i, rc;
-    orte_node_t *node;
-    orte_vpid_t vpid=0;
+    int rc;
     char cwd[OPAL_PATH_MAX];
+    bool flag = true;
 
     /* setup debugger daemon job */
     debugger = OBJ_NEW(orte_job_t);
@@ -2427,68 +2425,28 @@ static void setup_debugger_job(void)
         return;
     }
     app->cwd = strdup(cwd);
-    orte_remove_attribute(&app->attributes, ORTE_APP_USER_CWD);
+    orte_set_attribute(&app->attributes, ORTE_APP_USER_CWD, ORTE_ATTR_GLOBAL, &flag, OPAL_BOOL);
     opal_argv_append_nosize(&app->argv, app->app);
     build_debugger_args(app);
     opal_pointer_array_add(debugger->apps, app);
     debugger->num_apps = 1;
-    /* create a job map */
+    /* create the map object and set the policy to 1ppn */
     debugger->map = OBJ_NEW(orte_job_map_t);
-    /* in building the map, we want to launch one debugger daemon
-     * on each node that *already has an application process on it*.
-     * We cannot just launch one debugger daemon on EVERY node because
-     * the original job may not have placed procs on every node. So
-     * we construct the map here by cycling across all nodes, adding
-     * only those nodes where num_procs > 0.
-     */
-    for (i=0; i < orte_node_pool->size; i++) {
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-            continue;
-        }
-        /* if this node wasn't included in the vm, ignore it */
-        if (NULL == node->daemon) {
-            continue;
-        }
-        /* if the node doesn't have any app procs on it, ignore it */
-        if (node->num_procs < 1) {
-            continue;
-        }
-        /* this node has at least one proc, so add it to our map */
-        OBJ_RETAIN(node);
-        opal_pointer_array_add(debugger->map->nodes, node);
-        debugger->map->num_nodes++;
-        /* add a debugger daemon to the node - note that the
-         * debugger daemon does NOT count against our subscribed slots
-         */
-        proc = OBJ_NEW(orte_proc_t);
-        proc->name.jobid = debugger->jobid;
-        proc->name.vpid = vpid++;
-        /* point the proc at the local ORTE daemon as its parent */
-        proc->parent = node->daemon->name.vpid;
-        /* set the local/node ranks - we don't actually care
-         * what these are, but the odls needs them
-         */
-        proc->local_rank = 0;
-        proc->node_rank = 0;
-        proc->app_rank = proc->name.vpid;
-        /* flag the proc as ready for launch */
-        proc->state = ORTE_PROC_STATE_INIT;
-        proc->app_idx = 0;
-
-        OBJ_RETAIN(node);  /* maintain accounting on object */
-        proc->node = node;
-        /* add the proc to the job */
-        opal_pointer_array_set_item(debugger->procs, proc->name.vpid, proc);
-        debugger->num_procs++;
-
-        /* add the proc to the node's array */
-        OBJ_RETAIN(proc);
-        opal_pointer_array_add(node->procs, (void*)proc);
-        node->num_procs++;
+    ORTE_SET_MAPPING_POLICY(debugger->map->mapping, ORTE_MAPPING_PPR);
+    ORTE_SET_MAPPING_DIRECTIVE(debugger->map->mapping, ORTE_MAPPING_GIVEN);
+    ORTE_SET_MAPPING_DIRECTIVE(debugger->map->mapping, ORTE_MAPPING_DEBUGGER);
+    /* define the ppr */
+    debugger->map->ppr = strdup("1:node");
+    /* mark that we do not want the daemon bound */
+    if (ORTE_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&debugger->map->binding, "none"))) {
+        ORTE_ERROR_LOG(rc);
+        return;
     }
-    /* schedule it for launch */
-    debugger->state = ORTE_JOB_STATE_INIT;
-    ORTE_ACTIVATE_JOB_STATE(debugger, ORTE_JOB_STATE_LAUNCH_APPS);
+    /* spawn it */
+    rc = orte_plm.spawn(debugger);
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
 }
 
 /*
@@ -2644,7 +2602,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 (NULL == orte_debugger_test_daemon) ?
                                 MPIR_executable_path : orte_debugger_test_daemon);
-            setup_debugger_job();
+            setup_debugger_job(jdata->jobid);
         }
         /* we don't have anything else to do */
         OBJ_RELEASE(caddy);
@@ -2936,7 +2894,7 @@ static void attach_debugger(int fd, short event, void *arg)
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             (NULL == orte_debugger_test_daemon) ?
                             MPIR_executable_path : orte_debugger_test_daemon);
-        setup_debugger_job();
+        setup_debugger_job(ORTE_JOBID_WILDCARD);
         did_once = true;
     }
 
