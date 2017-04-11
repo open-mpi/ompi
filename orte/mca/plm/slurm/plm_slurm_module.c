@@ -356,7 +356,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
         opal_argv_append(&argc, &argv, tmp);
         free(tmp);
     }
-    free(nodelist_flat);
 
     /* tell srun how many tasks to run */
     asprintf(&tmp, "--ntasks=%lu", (unsigned long)map->num_new_daemons);
@@ -366,6 +365,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     OPAL_OUTPUT_VERBOSE((2, orte_plm_base_framework.framework_output,
                          "%s plm:slurm: launching on nodes %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodelist_flat));
+    free(nodelist_flat);
 
     /*
      * ORTED OPTIONS
