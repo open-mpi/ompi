@@ -162,7 +162,7 @@ static inline int ompi_win_invalid(ompi_win_t *win) {
 }
 
 static inline int ompi_win_peer_invalid(ompi_win_t *win, int peer) {
-    if (win->w_group->grp_proc_count <= peer) return true;
+    if (win->w_group->grp_proc_count <= peer || peer < 0) return true;
     return false;
 }
 
