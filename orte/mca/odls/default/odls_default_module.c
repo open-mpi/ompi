@@ -422,7 +422,7 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
             send_error_show_help(write_fd, 1,
                                  "help-orterun.txt",
                                  "orterun:wdir-not-found",
-                                 orte_basename,
+                                 "orted",
                                  cd->wdir,
                                  orte_process_info.nodename,
                                  cd->child->app_rank);
