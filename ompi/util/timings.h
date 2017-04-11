@@ -223,7 +223,7 @@ typedef struct ompi_timing_t {
 #else
 #define OMPI_TIMING_INIT(size)
 
-#define OMPI_TIMING_NEXT(fmt, ...)
+#define OMPI_TIMING_NEXT(...)
 
 #define OMPI_TIMING_APPEND(desc,ts)
 
