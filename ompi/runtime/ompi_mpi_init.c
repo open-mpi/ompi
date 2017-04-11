@@ -93,6 +93,7 @@
 #include "ompi/dpm/dpm.h"
 #include "ompi/mpiext/mpiext.h"
 #include "ompi/mca/hook/base/base.h"
+#include "ompi/util/timings.h"
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -279,7 +280,7 @@ opal_hash_table_t ompi_mpi_f90_complex_hashtable = {{0}};
  */
 opal_list_t ompi_registered_datareps = {{0}};
 
-bool ompi_enable_timing = false, ompi_enable_timing_ext = false;
+bool ompi_enable_timing = false;
 extern bool ompi_mpi_yield_when_idle;
 extern int ompi_mpi_event_tick_rate;
 
@@ -348,6 +349,9 @@ static int ompi_register_mca_variables(void)
     }
 
     /* check to see if we want timing information */
+    /* TODO: enable OMPI init and OMPI finalize timings if
+     * this variable was set to 1!
+     */
     ompi_enable_timing = false;
     (void) mca_base_var_register("ompi", "ompi", NULL, "timing",
                                  "Request that critical timing loops be measured",
@@ -356,13 +360,6 @@ static int ompi_register_mca_variables(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_enable_timing);
 
-    ompi_enable_timing_ext = false;
-    (void) mca_base_var_register("ompi", "ompi", NULL, "timing_ext",
-                                 "Request that critical timing loops be measured",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_enable_timing_ext);
     return OMPI_SUCCESS;
 }
 
@@ -382,8 +379,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     volatile bool active;
     opal_list_t info;
     opal_value_t *kv;
-    OPAL_TIMING_DECLARE(tm);
-    OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
+
+    OMPI_TIMING_INIT(32);
 
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */
@@ -486,7 +483,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_hook_base_mpi_init_top_post_opal(argc, argv, requested, provided);
 
 
-    OPAL_TIMING_MSTART((&tm,"time from start to completion of rte_init"));
+    OMPI_TIMING_NEXT("initialization");
 
     /* if we were not externally started, then we need to setup
      * some envars so the MPI_INFO_ENV can get the cmd name
@@ -515,10 +512,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_init: ompi_rte_init failed";
         goto error;
     }
-    ompi_rte_initialized = true;
 
-    /* check for timing request - get stop time and report elapsed time if so */
-    OPAL_TIMING_MNEXT((&tm,"time from completion of rte_init to modex"));
+    OMPI_TIMING_NEXT("rte_init");
+
+    ompi_rte_initialized = true;
 
     /* Register the default errhandler callback  */
     errtrk.status = OPAL_ERROR;
@@ -645,8 +642,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* check for timing request - get stop time and report elapsed time if so */
-    OPAL_TIMING_MNEXT((&tm,"time to execute modex"));
+    OMPI_TIMING_IMPORT_OPAL("orte_init");
+    OMPI_TIMING_NEXT("rte_init-modex");
+
 
     /* exchange connection info - this function may also act as a barrier
      * if data exchange is required. The modex occurs solely across procs
@@ -664,7 +662,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 
-    OPAL_TIMING_MNEXT((&tm,"time from modex to first barrier"));
+    OMPI_TIMING_NEXT("modex");
 
     /* select buffered send allocator component to be used */
     if( OMPI_SUCCESS !=
@@ -825,7 +823,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_rte_wait_for_debugger();
 
     /* Next timing measurement */
-    OPAL_TIMING_MNEXT((&tm,"time to execute barrier"));
+    OMPI_TIMING_NEXT("modex-barrier");
 
     /* wait for everyone to reach this point - this is a hard
      * barrier requirement at this time, though we hope to relax
@@ -843,7 +841,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    OPAL_TIMING_MNEXT((&tm,"time from barrier to complete mpi_init"));
+    OMPI_TIMING_NEXT("barrier");
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     /* Start setting up the event engine for MPI operations.  Don't
@@ -952,6 +950,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
         opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
         ompi_hook_base_mpi_init_error(argc, argv, requested, provided);
+        OMPI_TIMING_FINALIZE;
         return ret;
     }
 
@@ -976,10 +975,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Finish last measurement, output results
      * and clear timing structure */
-    OPAL_TIMING_MSTOP(&tm);
-    OPAL_TIMING_DELTAS(ompi_enable_timing, &tm);
-    OPAL_TIMING_REPORT(ompi_enable_timing_ext, &tm);
-    OPAL_TIMING_RELEASE(&tm);
+    OMPI_TIMING_NEXT("barrier-finish");
+    OMPI_TIMING_OUT;
+    OMPI_TIMING_FINALIZE;
 
     opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
 

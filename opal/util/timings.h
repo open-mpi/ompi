@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,426 +26,200 @@ typedef enum {
 
 #if OPAL_ENABLE_TIMING
 
-#define OPAL_TIMING_DESCR_MAX 1024
-#define OPAL_TIMING_BUFSIZE 32
-#define OPAL_TIMING_OUTBUF_SIZE (10*1024)
+typedef double (*opal_timing_ts_func_t)(void);
 
-typedef enum {
-    OPAL_TIMING_TRACE,
-    OPAL_TIMING_INTDESCR,
-    OPAL_TIMING_INTBEGIN,
-    OPAL_TIMING_INTEND
-} opal_event_type_t;
+#define OPAL_TIMING_STR_LEN 256
 
 typedef struct {
-    opal_list_item_t super;
-    int fib;
-    opal_event_type_t type;
-    const char *func;
-    const char *file;
-    int line;
-    double ts, ts_ovh;
-    char descr[OPAL_TIMING_DESCR_MAX];
-    int id;
-} opal_timing_event_t;
+    char id[OPAL_TIMING_STR_LEN], cntr_env[OPAL_TIMING_STR_LEN];
+    int enabled, error;
+    int cntr;
+    double ts;
+    opal_timing_ts_func_t get_ts;
+} opal_timing_env_t;
 
-typedef double (*get_ts_t)(void);
+opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
 
-typedef struct opal_timing_t
-{
-    int next_id_cntr;
-    // not thread safe!
-    // The whole implementation is not thread safe now
-    // since it is supposed to be used in orte service
-    // thread only. Fix in the future or now?
-    int current_id;
-    opal_list_t *events;
-    opal_timing_event_t *buffer;
-    size_t buffer_offset, buffer_size;
-    get_ts_t get_ts;
-} opal_timing_t;
+#define OPAL_TIMING_ENV_START_TYPE(func, _nm, type, prefix)                       \
+    do {                                                                          \
+        char *ptr = NULL;                                                         \
+        char *_prefix = prefix;                                                   \
+        int n;                                                                    \
+        if( NULL == prefix ){                                                     \
+            _prefix = "";                                                         \
+        }                                                                         \
+        (_nm)->error = 0;                                                         \
+        n = snprintf((_nm)->id, OPAL_TIMING_STR_LEN, "%s%s", _prefix, func);      \
+        if( n > OPAL_TIMING_STR_LEN ){                                            \
+             (_nm)->error = 1;                                                    \
+        }                                                                         \
+        n = sprintf((_nm)->cntr_env,"OMPI_TIMING_%s%s_CNT", prefix, (_nm)->id);   \
+        if( n > OPAL_TIMING_STR_LEN ){                                            \
+            (_nm)->error = 1;                                                     \
+        }                                                                         \
+        ptr = getenv((_nm)->id);                                                  \
+        if( NULL == ptr || strcmp(ptr, "1")){                                     \
+            (_nm)->enabled = 0;                                                   \
+        }                                                                         \
+        (_nm)->get_ts = opal_timing_ts_func(type);                                \
+        ptr = getenv("OPAL_TIMING_ENABLE");                                       \
+        if (NULL != ptr) {                                                        \
+            (_nm)->enabled = atoi(ptr);                                           \
+        }                                                                         \
+        (_nm)->cntr = 0;                                                          \
+        ptr = getenv((_nm)->id);                                                  \
+        if( NULL != ptr ){                                                        \
+            (_nm)->cntr = atoi(ptr);                                              \
+        }                                                                         \
+        (_nm)->ts = (_nm)->get_ts();                                              \
+        if ( 0 != (_nm)->error ){                                                 \
+            (_nm)->enabled = 0;                                                   \
+        }                                                                         \
+    } while(0)
 
-typedef struct {
-    opal_timing_t *t;
-    opal_timing_event_t *ev;
-    int errcode;
-} opal_timing_prep_t;
+#define OPAL_TIMING_ENV_INIT(name)                                                \
+    opal_timing_env_t name ## _val, *name = &(name ## _val);                      \
+    OPAL_TIMING_ENV_START_TYPE(__func__, name, OPAL_TIMING_AUTOMATIC_TIMER, "");
 
-/**
- * Read synchronisation information from the file
- * provided through the MCA parameter.
- * Should not be directly used, for service purposes.
- *
- * @param sync_file Name of the file to read
-  *
- * @retval OPAL_SUCCESS On success
- * @retval OPAL_ERROR On failure
+
+/* We use function names for identification
+ * however this might be a problem for the private
+ * functions declared as static as their names may
+ * conflict.
+ * Use prefix to do a finer-grained identification if needed
  */
-int opal_timing_clocksync_read(char *sync_file);
+#define OPAL_TIMING_ENV_INIT_PREFIX(prefix, name)                                 \
+    do {                                                                          \
+        opal_timing_env_t name ## _val, *name = &(name ## _val);                  \
+        *name = OPAL_TIMING_ENV_START_TYPE(__func__, OPAL_TIMING_AUTOMATIC_TIMER, prefix); \
+    } while(0)
 
-/**
- * Pass string representation of ORTE job ID down to the OPAL.
- * Should not be directly used, for service purposes.
- *
- * @param jid job id
-  *
- * @retval OPAL_SUCCESS On success
- * @retval OPAL_ERROR On failure
+#define OPAL_TIMING_ENV_NEXT(h, ...)                                              \
+    do {                                                                          \
+        int n;                                                                    \
+        char buf1[OPAL_TIMING_STR_LEN], buf2[OPAL_TIMING_STR_LEN];                \
+        double time;                                                              \
+        char *filename;                                                           \
+        if( h->enabled ){                                                         \
+            /* enabled codepath */                                                \
+            time = h->get_ts() - h->ts;                                           \
+            n = snprintf(buf1, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s_DESC_%d", h->id, h->cntr); \
+            if ( n > OPAL_TIMING_STR_LEN ){                                       \
+                h->error = 1;                                                     \
+            }                                                                     \
+            n = snprintf(buf2, OPAL_TIMING_STR_LEN, __VA_ARGS__ );                \
+            if ( n > OPAL_TIMING_STR_LEN ){                                       \
+                h->error = 1;                                                     \
+            }                                                                     \
+            setenv(buf1, buf2, 1);                                                \
+            n = snprintf(buf1, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s_VAL_%d", h->id, h->cntr);  \
+            if ( n > OPAL_TIMING_STR_LEN ){                                       \
+                h->error = 1;                                                     \
+            }                                                                     \
+            n = snprintf(buf2, OPAL_TIMING_STR_LEN, "%lf", time);                 \
+            if ( n > OPAL_TIMING_STR_LEN ){                                       \
+                h->error = 1;                                                     \
+            }                                                                     \
+            setenv(buf1, buf2, 1);                                                \
+            filename = strrchr(__FILE__, '/') + 1;                                \
+            n = snprintf(buf1, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s_FILE_%d", h->id, h->cntr); \
+            if ( n > OPAL_TIMING_STR_LEN ){                                       \
+                h->error = 1;                                                     \
+            }                                                                     \
+            n = snprintf(buf2, OPAL_TIMING_STR_LEN, "%s", filename);              \
+            if ( n > OPAL_TIMING_STR_LEN ){                                       \
+                h->error = 1;                                                     \
+            }                                                                     \
+            setenv(buf1, buf2, 1);                                                \
+            h->cntr++;                                                            \
+            sprintf(buf1, "%d", h->cntr);                                         \
+            setenv(h->cntr_env, buf1, 1);                                         \
+            /* We don't include env operations into the consideration.
+             * Hopefully this will help to make measurements more accurate.
+             */                                                                   \
+            h->ts = h->get_ts();                                                  \
+        }                                                                         \
+        if (h->error) {                                                           \
+            n = snprintf(buf1, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s_ERROR", h->id);\
+            if ( n > OPAL_TIMING_STR_LEN ){                                       \
+                h->error = 1;                                                     \
+            }                                                                     \
+            n = snprintf(buf2, OPAL_TIMING_STR_LEN, "%d", h->error);              \
+            if ( n > OPAL_TIMING_STR_LEN ){                                       \
+                h->error = 1;                                                     \
+            }                                                                     \
+            setenv(buf1, buf2, 1);                                                \
+        }                                                                         \
+    } while(0)
+
+/* This function supposed to be called from the code that will
+ * do the postprocessing, i.e. OMPI timing portion that will
+ * do the reduction of accumulated values
  */
-int opal_timing_set_jobid(char *jid);
+#define OPAL_TIMING_ENV_CNT_PREFIX(prefix, func, _cnt)                            \
+    do {                                                                          \
+        char ename[OPAL_TIMING_STR_LEN];                                          \
+        char *ptr = NULL;                                                         \
+        int n = snprintf(ename, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s%s_CNT", prefix, func);    \
+        (_cnt) = 0;                                                               \
+        if ( n <= OPAL_TIMING_STR_LEN ){                                          \
+            ptr = getenv(ename);                                                  \
+            if( NULL != ptr ){ (_cnt) = atoi(ptr); };                             \
+        }                                                                         \
+    } while(0)
 
-/**
- * Initialize timing structure.
- *
- * @param t pointer to the timing handler structure
-  *
- * @retval OPAL_SUCCESS On success
- * @retval OPAL_ERROR On failure
- */
-int opal_timing_init(opal_timing_t *t, opal_timer_type_t type);
+#define OPAL_TIMING_ENV_ERROR_PREFIX(prefix, func, _err)                          \
+    do {                                                                          \
+        char ename[OPAL_TIMING_STR_LEN];                                          \
+        (_err) = 0;                                                               \
+        char *ptr = NULL;                                                         \
+        int n = snprintf(ename, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s%s_ERROR", prefix, func);    \
+        if ( n <= OPAL_TIMING_STR_LEN ){                                          \
+            ptr = getenv(ename);                                                  \
+            if( NULL != ptr ){ (_err) = atoi(ptr); };                             \
+        }                                                                         \
+    } while(0)
 
-/**
- * Prepare timing event, do all printf-like processing.
- * Should not be directly used - for service purposes only.
- *
- * @param t pointer to the timing handler structure
- * @param fmt printf-like format
- * @param ... other parameters that should be converted to string representation
- *
- * @retval partly filled opal_timing_prep_t structure
-  */
-opal_timing_prep_t opal_timing_prep_ev(opal_timing_t *t, const char *fmt, ...);
+#define OPAL_TIMING_ENV_CNT(func, _cnt)                                           \
+    OPAL_TIMING_ENV_CNT_PREFIX("", func, _cnt)
 
-/**
- * Prepare timing event, ignore printf-like processing.
- * Should not be directly used - for service purposes only.
- *
- * @param t pointer to the timing handler structure
- * @param fmt printf-like format
- * @param ... other parameters that should be converted to string representation
- *
- * @retval partly filled opal_timing_prep_t structure
-  */
-opal_timing_prep_t opal_timing_prep_ev_end(opal_timing_t *t, const char *fmt, ...);
+#define OPAL_TIMING_ENV_GETDESC_PREFIX(prefix, filename, func, i, desc, _t)       \
+    do {                                                                          \
+        char vname[OPAL_TIMING_STR_LEN];                                          \
+        (_t) = 0.0;                                                               \
+        sprintf(vname, "OMPI_TIMING_%s%s_FILE_%d", prefix, func, i);              \
+        *filename = getenv(vname);                                                \
+        sprintf(vname, "OMPI_TIMING_%s%s_DESC_%d", prefix, func, i);              \
+        *desc = getenv(vname);                                                    \
+        sprintf(vname, "OMPI_TIMING_%s%s_VAL_%d", prefix, func, i);               \
+        char *ptr = getenv(vname);                                                \
+        if ( NULL != ptr ) {                                                      \
+            sscanf(ptr,"%lf", &(_t));                                             \
+        }                                                                         \
+    } while(0)
 
-/**
- * Enqueue timing event into the list of events in handler 't'.
- *
- * @param p result of opal_timing_prep_ev
- * @param func function name where event occurs
- * @param file file name where event occurs
- * @param line line number in the file
- *
- * @retval
- */
-void opal_timing_add_step(opal_timing_prep_t p, const char *func,
-                          const char *file, int line);
-
-/**
- * Enqueue the description of the interval into a list of events
- * in handler 't'.
- *
- * @param p result of opal_timing_prep_ev
- * @param func function name where event occurs
- * @param file file name where event occurs
- * @param line line number in the file
- *
- * @retval id of event interval
- */
-int opal_timing_descr(opal_timing_prep_t p, const char *func,
-                      const char *file, int line);
-
-/**
- * Enqueue the beginning of timing interval that already has the
- * description and assigned id into the list of events
- * in handler 't'.
- *
- * @param p result of opal_timing_prep_ev
- * @param func function name where event occurs
- * @param file file name where event occurs
- * @param line line number in the file
- *
- * @retval
- */
-void opal_timing_start_id(opal_timing_t *t, int id, const char *func,
-                          const char *file, int line);
-
-/**
- * Enqueue the end of timing interval that already has
- * description and assigned id into the list of events
- * in handler 't'.
- *
- * @param p result of opal_timing_prep_ev
- * @param func function name where event occurs
- * @param file file name where event occurs
- * @param line line number in the file
- *
- * @retval
- */
-void opal_timing_end(opal_timing_t *t, int id, const char *func,
-                     const char *file, int line );
-
-/**
- * Enqueue both description and start of timing interval
- * into the list of events and assign its id.
- *
- * @param p result of opal_timing_prep_ev
- * @param func function name where event occurs
- * @param file file name where event occurs
- * @param line line number in the file
- *
- * @retval interval id
- */
-static inline int opal_timing_start_init(opal_timing_prep_t p,
-                           const char *func, const char *file, int line)
-{
-    int id = opal_timing_descr(p, func, file, line);
-    if( id < 0 )
-        return id;
-    opal_timing_start_id(p.t, id, func, file, line);
-    return id;
-}
-
-/**
- * The wrapper that is used to stop last measurement in OPAL_TIMING_MNEXT.
- *
- * @param p result of opal_timing_prep_ev
- * @param func function name where event occurs
- * @param file file name where event occurs
- * @param line line number in the file
- *
- * @retval interval id
- */
-void opal_timing_end_prep(opal_timing_prep_t p,
-                                        const char *func, const char *file, int line);
-
-/**
- * Report all events that were enqueued in the timing handler 't'.
- * - if fname == NULL the output will be done using opal_output and
- * each line will be prefixed with "prefix" to ease grep'ing.
- * - otherwise the corresponding file will be used for output in "append" mode
- * WARRNING: not all filesystems provide enough support for that feature, some records may
- * disappear.
- *
- * @param t timing handler
- * @param account_overhead consider malloc overhead introduced by timing code
- * @param prefix prefix to use when no fname was specifyed to ease grep'ing
- * @param fname name of the output file (may be NULL)
- *
- * @retval OPAL_SUCCESS On success
- * @retval OPAL_ERROR or OPAL_ERR_OUT_OF_RESOURCE On failure
- */
-int opal_timing_report(opal_timing_t *t, char *fname);
-
-/**
- * Report all intervals that were enqueued in the timing handler 't'.
- * - if fname == NULL the output will be done using opal_output and
- * each line will be prefixed with "prefix" to ease grep'ing.
- * - otherwise the corresponding file will be used for output in "append" mode
- * WARRNING: not all filesystems provide enough support for that feature, some records may
- * disappear.
- *
- * @param t timing handler
- * @param account_overhead consider malloc overhead introduced by timing code
-  * @param fname name of the output file (may be NULL)
- *
- * @retval OPAL_SUCCESS On success
- * @retval OPAL_ERROR or OPAL_ERR_OUT_OF_RESOURCE On failure
- */
-int opal_timing_deltas(opal_timing_t *t, char *fname);
-
-/**
- * Release all memory allocated for the timing handler 't'.
- *
- * @param t timing handler
- *
- * @retval
- */
-void opal_timing_release(opal_timing_t *t);
-
-/**
- * Main macro for use in declaring opal timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- */
-#define OPAL_TIMING_DECLARE(t) opal_timing_t t;   /* need semicolon here to avoid warnings when not enabled */
-
-/**
- * Main macro for use in declaring external opal timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- */
-#define OPAL_TIMING_DECLARE_EXT(x, t) x extern opal_timing_t t;  /* need semicolon here to avoid warnings when not enabled */
-
-/**
- * Main macro for use in initializing opal timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_init()
- */
-#define OPAL_TIMING_INIT(t) opal_timing_init(t, OPAL_TIMING_AUTOMATIC_TIMER)
-
-/**
- * Main macro for use in initializing opal timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_init()
- */
-#define OPAL_TIMING_INIT_EXT(t, type) opal_timing_init(t, type)
-
-/**
- * Macro that enqueues event with its description to the specified
- * timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_add_step()
- */
-#define OPAL_TIMING_EVENT(x) opal_timing_add_step( opal_timing_prep_ev x, __FUNCTION__, __FILE__, __LINE__)
-
-/**
- * MDESCR: Measurement DESCRiption
- * Introduce new timing measurement with string description for the specified
- * timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_descr()
- */
-#define OPAL_TIMING_MDESCR(x) opal_timing_descr( opal_timing_prep_ev x, __FUNCTION__, __FILE__, __LINE__)
-
-/**
- * MSTART_ID: Measurement START by ID.
- * Marks the beginning of the measurement with ID=id on the
- * specified timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_start_id()
- */
-#define OPAL_TIMING_MSTART_ID(t, id) opal_timing_start_id(t, id, __FUNCTION__, __FILE__, __LINE__)
-
-/**
- * MSTART: Measurement START
- * Introduce new timing measurement conjuncted with its start
- * on the specifyed timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_start_init()
- */
-#define OPAL_TIMING_MSTART(x) opal_timing_start_init( opal_timing_prep_ev x, __FUNCTION__, __FILE__, __LINE__)
-
-/**
- * MSTOP: STOP Measurement
- * Finishes the most recent measurement on the specifyed timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_end()
- */
-#define OPAL_TIMING_MSTOP(t) opal_timing_end(t, -1, __FUNCTION__, __FILE__, __LINE__)
-
-/**
- * MSTOP_ID: STOP Measurement with ID=id.
- * Finishes the measurement with give ID on the specifyed timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_end()
- */
-#define OPAL_TIMING_MSTOP_ID(t, id) opal_timing_end(t, id, __FUNCTION__, __FILE__, __LINE__)
-
-/**
- * MNEXT: start NEXT Measurement
- * Convinient macro, may be implemented with the sequence of three previously
- * defined macroses:
- * - finish current measurement (OPAL_TIMING_MSTOP);
- * - introduce new timing measurement (OPAL_TIMING_MDESCR);
- * - starts next measurement (OPAL_TIMING_MSTART_ID)
- * on the specifyed timing handler;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_start_init()
- */
-#define OPAL_TIMING_MNEXT(x) ( \
-    opal_timing_end_prep(opal_timing_prep_ev_end x,             \
-                            __FUNCTION__, __FILE__, __LINE__ ), \
-    opal_timing_start_init( opal_timing_prep_ev x,              \
-                            __FUNCTION__, __FILE__, __LINE__)   \
-)
-
-/**
- * The macro for use in reporting collected events with absolute values;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @param enable flag that enables/disables reporting. Used for fine-grained timing.
- * @see opal_timing_report()
- */
-#define OPAL_TIMING_REPORT(enable, t) { \
-    if( enable ) { \
-        opal_timing_report(t, opal_timing_output); \
-    } \
-}
-
-/**
- * The macro for use in reporting collected events with relative times;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @param enable flag that enables/disables reporting. Used for fine-grained timing.
- * @see opal_timing_deltas()
- */
-#define OPAL_TIMING_DELTAS(enable, t) { \
-    if( enable ) { \
-        opal_timing_deltas(t, opal_timing_output); \
-    } \
-}
-
-/**
- * Main macro for use in releasing allocated resources;
- * will be "compiled out" when OPAL is configured without
- * --enable-timing.
- *
- * @see opal_timing_release()
- */
-#define OPAL_TIMING_RELEASE(t) opal_timing_release(t)
+#define OPAL_TIMING_ENV_GETDESC(file, func, index, desc)                          \
+    OPAL_TIMING_ENV_GETDESC_PREFIX("", file, func, index, desc)
 
 #else
 
-#define OPAL_TIMING_DECLARE(t)
+#define OPAL_TIMING_ENV_START_TYPE(func, type, prefix)
 
-#define OPAL_TIMING_DECLARE_EXT(x, t)
+#define OPAL_TIMING_ENV_INIT(name)
 
-#define OPAL_TIMING_INIT(t)
+#define OPAL_TIMING_ENV_INIT_PREFIX(prefix)
 
-#define OPAL_TIMING_INIT_EXT(t, type)
+#define OPAL_TIMING_ENV_NEXT(h, fmt, ... )
 
-#define OPAL_TIMING_EVENT(x)
+#define OPAL_TIMING_ENV_CNT_PREFIX(prefix, func)
 
-#define OPAL_TIMING_MDESCR(x)
+#define OPAL_TIMING_ENV_CNT(func)
 
-#define OPAL_TIMING_MSTART_ID(t, id)
+#define OPAL_TIMING_ENV_GETDESC_PREFIX(prefix, func, i, desc)
 
-#define OPAL_TIMING_MSTART(x)
+#define OPAL_TIMING_ENV_GETDESC(func, index, desc)
 
-#define OPAL_TIMING_MSTOP(t)
-
-#define OPAL_TIMING_MSTOP_ID(t, id)
-
-#define OPAL_TIMING_MNEXT(x)
-
-#define OPAL_TIMING_REPORT(enable, t)
-
-#define OPAL_TIMING_DELTAS(enable, t)
-
-#define OPAL_TIMING_RELEASE(t)
+#define OPAL_TIMING_ENV_ERROR_PREFIX(prefix, func)
 
 #endif
 

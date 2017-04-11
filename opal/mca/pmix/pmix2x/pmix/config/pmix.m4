@@ -950,18 +950,18 @@ AC_MSG_RESULT([$with_ident_string])
 # Timing support
 #
 AC_MSG_CHECKING([if want developer-level timing support])
-AC_ARG_ENABLE(timing,
-              AC_HELP_STRING([--enable-timing],
+AC_ARG_ENABLE(pmix-timing,
+              AC_HELP_STRING([--enable-pmix-timing],
                              [enable developer-level timing code (default: disabled)]))
-if test "$enable_timing" = "yes"; then
+if test "$enable_pmix_timing" = "yes"; then
     AC_MSG_RESULT([yes])
-    WANT_TIMING=1
+    WANT_PMIX_TIMING=1
 else
     AC_MSG_RESULT([no])
-    WANT_TIMING=0
+    WANT_PMIX_TIMING=0
 fi
 
-AC_DEFINE_UNQUOTED([PMIX_ENABLE_TIMING], [$WANT_TIMING],
+AC_DEFINE_UNQUOTED([PMIX_ENABLE_TIMING], [$WANT_PMIX_TIMING],
                    [Whether we want developer-level timing support or not])
 
 #
