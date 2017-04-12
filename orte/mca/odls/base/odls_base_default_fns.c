@@ -694,7 +694,7 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
     }
 
     /* did the user request we display output in xterms? */
-    if (NULL != orte_xterm) {
+    if (NULL != orte_xterm && !ORTE_FLAG_TEST(jobdat, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
         opal_list_item_t *nmitem;
         orte_namelist_t *nm;
         /* see if this rank is one of those requested */
@@ -740,9 +740,6 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
         for (i=0; NULL != app->argv[i]; i++) {
             opal_argv_append_nosize(&cd->argv, app->argv[i]);
         }
-        /* the app exe name itself is in the argvsav array, so
-         * we can recover it from there later
-         */
         cd->cmd = opal_path_findv(orte_fork_agent[0], X_OK, orte_launch_environ, NULL);
         if (NULL == cd->cmd) {
             orte_show_help("help-orte-odls-base.txt",
@@ -766,7 +763,7 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
     }
 
     /* if we are indexing the argv by rank, do so now */
-    if (cd->index_argv) {
+    if (cd->index_argv && !ORTE_FLAG_TEST(jobdat, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
         char *param;
         asprintf(&param, "%s-%d", cd->argv[0], (int)child->name.vpid);
         free(cd->argv[0]);
@@ -1804,12 +1801,6 @@ int orte_odls_base_default_restart_proc(orte_proc_t *child,
                    OPAL_EV_WRITE, orte_odls_base_spawn_proc, cd);
     opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);
     opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);
-
-    if (ORTE_SUCCESS != (rc = fork_local(cd))) {
-        orte_wait_cb_cancel(child);
-        child->exit_code = ORTE_ERR_SILENT; /* error message already output */
-        ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_START);
-    }
 
   CLEANUP:
     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,

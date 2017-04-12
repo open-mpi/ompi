@@ -529,7 +529,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         }
         break;
 
-
         /****    TERMINATE JOB COMMAND    ****/
     case ORTE_DAEMON_TERMINATE_JOB_CMD:
 

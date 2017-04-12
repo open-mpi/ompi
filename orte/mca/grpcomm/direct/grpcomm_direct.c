@@ -556,7 +556,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     /* now pass the relay buffer to myself for processing - don't
      * inject it into the RML system via send as that will compete
      * with the relay messages down in the OOB. Instead, pass it
-     * directly to the orted command processor */
+     * directly to the RML message processor */
     if (ORTE_DAEMON_DVM_NIDMAP_CMD != command) {
         ORTE_RML_POST_MESSAGE(ORTE_PROC_MY_NAME, tag, 1,
                               relay->base_ptr, relay->bytes_used);
