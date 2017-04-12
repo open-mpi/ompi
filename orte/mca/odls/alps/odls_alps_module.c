@@ -16,6 +16,8 @@
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Rutgers, The State University of New Jersey.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -422,6 +424,20 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
        want that blocked by the launched process. */
     sigprocmask(0, 0, &sigs);
     sigprocmask(SIG_UNBLOCK, &sigs, 0);
+
+    /* take us to the correct wdir */
+    if (NULL != cd->wdir) {
+        if (0 != chdir(cd->wdir)) {
+            send_error_show_help(write_fd, 1,
+                                 "help-orterun.txt",
+                                 "orterun:wdir-not-found",
+                                 "orted",
+                                 cd->wdir,
+                                 orte_process_info.nodename,
+                                 cd->child->app_rank);
+            /* Does not return */
+        }
+    }
 
     /* Exec the new executable */
 
