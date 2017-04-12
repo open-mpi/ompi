@@ -17,7 +17,7 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
-dnl Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -844,6 +844,21 @@ fi
 AC_DEFINE_UNQUOTED([PMIX_ENABLE_TIMING], [$WANT_TIMING],
                    [Whether we want developer-level timing support or not])
 
+#
+# Install backward compatibility support for PMI-1 and PMI-2
+#
+AC_MSG_CHECKING([if want backward compatibility for PMI-1 and PMI-2])
+AC_ARG_ENABLE(pmix-backward-compatibility,
+              AC_HELP_STRING([--enable-pmix-backward-compatibility],
+                             [enable PMIx support for PMI-1 and PMI-2 (default: enabled)]))
+if test "$enable_pmix_backward_compatibility" = "no"; then
+    AC_MSG_RESULT([no])
+    WANT_PMIX_BACKWARD=0
+else
+    AC_MSG_RESULT([yes])
+    WANT_PMIX_BACKWARD=1
+fi
+
 ])dnl
 
 # Specify the symbol prefix
@@ -860,7 +875,7 @@ AC_DEFUN([PMIX_DO_AM_CONDITIONALS],[
         AM_CONDITIONAL([PMIX_WANT_MUNGE], [test "$pmix_munge_support" = "1"])
         AM_CONDITIONAL([PMIX_WANT_SASL], [test "$pmix_sasl_support" = "1"])
         AM_CONDITIONAL([WANT_DSTORE],[test "x$enable_dstore" != "xno"])
+        AM_CONDITIONAL(WANT_PMIX_BACKWARD, test "$WANT_PMIX_BACKWARD" = 1)
     ])
     pmix_did_am_conditionals=yes
 ])dnl
-
