@@ -633,8 +633,8 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         rc = pmix_hash_fetch(&nptr->modex, pmix_globals.myid.rank, cb->key, &val);
         if( PMIX_SUCCESS != rc ){
             rc = PMIX_ERR_NOT_FOUND;
-            goto respond;
         }
+        goto respond;
     }
 
     /* otherwise, the data must be something they "put" */

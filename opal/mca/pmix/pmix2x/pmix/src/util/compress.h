@@ -31,8 +31,8 @@
 
 BEGIN_C_DECLS
 
-/* define a limit of 128k for raw strings */
-#define PMIX_STRING_LIMIT  131072
+/* define a limit for storing raw strings */
+#define PMIX_STRING_LIMIT  512
 
 /* define a macro for quickly checking if a string exceeds the
  * compression limit */

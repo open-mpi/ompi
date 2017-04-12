@@ -202,7 +202,7 @@ static void progress_local_event_hdlr(pmix_status_t status,
      * as this indicates that info struct should be removed */
     nsave = 0;
     for (n=0; n < chain->nresults; n++) {
-        if (NULL != chain->results[n].key) {
+        if (0 < strlen(chain->results[n].key)) {
             ++nsave;
         }
     }
@@ -217,7 +217,7 @@ static void progress_local_event_hdlr(pmix_status_t status,
     /* transfer over the prior data */
     cnt = 0;
     for (n=0; n < chain->nresults; n++) {
-        if (NULL != chain->results[n].key) {
+        if (0 < strlen(chain->results[n].key)) {
             PMIX_INFO_XFER(&newinfo[cnt], &chain->results[n]);
             ++cnt;
         }
