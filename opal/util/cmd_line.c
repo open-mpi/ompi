@@ -726,6 +726,11 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
             }
         }
     }
+    if(otype == OPAL_CMD_LINE_OTYPE_NULL || otype == OPAL_CMD_LINE_OTYPE_GENERAL) {
+        char *argument_line = "\nFor additional mpirun arguments, run 'mpirun --help <category>'\n\nThe following categories exist: general (Defaults to this option), debug,\n    output, input, mapping, ranking, binding, devel (arguments useful to OMPI\n    Developers), compatibility (arguments supported for backwards compatibility),\n    launch (arguments to modify launch options), and dvm (Distributed Virtual\n    Machine arguments).";
+
+        opal_argv_append(&argc, &argv, argument_line);
+    }
     if (NULL != argv) {
         ret = opal_argv_join(argv, '\n');
         opal_argv_free(argv);
