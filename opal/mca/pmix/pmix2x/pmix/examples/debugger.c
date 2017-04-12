@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -430,7 +430,6 @@ static void infocbfunc(pmix_status_t status,
 static int attach_to_running_job(char *nspace)
 {
     pmix_status_t rc;
-    pmix_proc_t myproc;
     pmix_query_t *query;
     size_t nq;
     mydbug_query_t *q;

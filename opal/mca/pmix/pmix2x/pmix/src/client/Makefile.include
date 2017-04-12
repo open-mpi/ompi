@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
 #                         All rights reserved.
 # Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -22,7 +22,7 @@ sources += \
         client/pmix_client_spawn.c \
         client/pmix_client_connect.c
 
-if !PMIX_EMBEDDED_MODE
+if WANT_PMIX_BACKWARD
 sources += \
         client/pmi1.c \
         client/pmi2.c

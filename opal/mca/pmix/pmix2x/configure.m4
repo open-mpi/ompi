@@ -61,7 +61,7 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
         opal_pmix_pmix2x_timing_flag=--disable-pmix-timing
     fi
 
-    opal_pmix_pmix2x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX2X_ $opal_pmix_pmix2x_sm_flag $opal_pmix_pmix2x_timing_flag --without-tests-examples --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
+    opal_pmix_pmix2x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX2X_ $opal_pmix_pmix2x_sm_flag $opal_pmix_pmix2x_timing_flag --without-tests-examples --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix2x_args="--enable-debug $opal_pmix_pmix2x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],

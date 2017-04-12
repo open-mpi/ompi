@@ -15,9 +15,13 @@ include_HEADERS = \
         pmix.h \
         pmix_common.h \
         pmix_server.h \
-        pmi.h \
-        pmi2.h \
         pmix_tool.h
+
+if WANT_PMIX_BACKWARD
+include_HEADERS += \
+        pmi.h \
+        pmi2.h
+endif
 
 nodist_include_HEADERS = \
     pmix_version.h \
