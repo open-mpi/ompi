@@ -47,14 +47,17 @@ static void mca_coll_sync_module_construct(mca_coll_sync_module_t *module)
     module->after_num_operations = 0;
     module->before_num_operations_alltoallv = 0;
     module->after_num_operations_alltoallv = 0;
+    module->before_num_operations_alltoallw = 0;
+    module->after_num_operations_alltoallw = 0;
     module->in_operation = false;
 }
 
 static void mca_coll_sync_module_destruct(mca_coll_sync_module_t *module)
 {
-    OBJ_RELEASE(module->c_coll.coll_alltoallv_module);
     if (0 != mca_coll_sync_component.barrier_before_nops ||
         0 != mca_coll_sync_component.barrier_after_nops) {
+        OBJ_RELEASE(module->c_coll.coll_alltoallv_module);
+        OBJ_RELEASE(module->c_coll.coll_alltoallw_module);
         OBJ_RELEASE(module->c_coll.coll_bcast_module);
         OBJ_RELEASE(module->c_coll.coll_gather_module);
         OBJ_RELEASE(module->c_coll.coll_gatherv_module);
@@ -62,6 +65,13 @@ static void mca_coll_sync_module_destruct(mca_coll_sync_module_t *module)
         OBJ_RELEASE(module->c_coll.coll_reduce_scatter_module);
         OBJ_RELEASE(module->c_coll.coll_scatter_module);
         OBJ_RELEASE(module->c_coll.coll_scatterv_module);
+    } else {
+        if (0 != mca_coll_sync_component.barrier_before_nops_alltoallv ||
+            0 != mca_coll_sync_component.barrier_after_nops_alltoallv)
+            OBJ_RELEASE(module->c_coll.coll_alltoallv_module);
+        if (0 != mca_coll_sync_component.barrier_before_nops_alltoallw ||
+            0 != mca_coll_sync_component.barrier_after_nops_alltoallw) 
+            OBJ_RELEASE(module->c_coll.coll_alltoallw_module);
     }
     /* If the exscan module is not NULL, then this was an
        intracommunicator, and therefore scan will have a module as
@@ -105,7 +115,9 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
     if (0 == mca_coll_sync_component.barrier_before_nops &&
         0 == mca_coll_sync_component.barrier_after_nops &&
         0 == mca_coll_sync_component.barrier_before_nops_alltoallv &&
-        0 == mca_coll_sync_component.barrier_after_nops_alltoallv) {
+        0 == mca_coll_sync_component.barrier_after_nops_alltoallv &&
+        0 == mca_coll_sync_component.barrier_before_nops_alltoallw &&
+        0 == mca_coll_sync_component.barrier_after_nops_alltoallw) {
         return NULL;
     }
 
@@ -128,8 +140,16 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
         sync_module->super.coll_allgatherv = NULL;
         sync_module->super.coll_allreduce  = NULL;
         sync_module->super.coll_alltoall   = NULL;
-        sync_module->super.coll_alltoallv  = mca_coll_sync_alltoallv;
-        sync_module->super.coll_alltoallw  = NULL;
+        if (0 != mca_coll_sync_component.barrier_before_nops_alltoallv ||
+            0 != mca_coll_sync_component.barrier_after_nops_alltoallv)
+            sync_module->super.coll_alltoallv  = mca_coll_sync_alltoallv;
+        else
+            sync_module->super.coll_alltoallv  =  NULL;
+        if (0 != mca_coll_sync_component.barrier_before_nops_alltoallw ||
+            0 != mca_coll_sync_component.barrier_after_nops_alltoallw)
+            sync_module->super.coll_alltoallw  = mca_coll_sync_alltoallw;
+        else
+            sync_module->super.coll_alltoallw  =  NULL;
         sync_module->super.coll_barrier    = NULL;
         sync_module->super.coll_bcast      = NULL;
         sync_module->super.coll_exscan     = NULL;
@@ -146,7 +166,7 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
         sync_module->super.coll_allreduce  = NULL;
         sync_module->super.coll_alltoall   = NULL;
         sync_module->super.coll_alltoallv  = mca_coll_sync_alltoallv;
-        sync_module->super.coll_alltoallw  = NULL;
+        sync_module->super.coll_alltoallw  = mca_coll_sync_alltoallw;
         sync_module->super.coll_barrier    = NULL;
         sync_module->super.coll_bcast      = mca_coll_sync_bcast;
         sync_module->super.coll_exscan     = mca_coll_sync_exscan;
@@ -183,10 +203,10 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
         OBJ_RETAIN(s->c_coll.coll_ ## name ## _module);  \
     }
 
-    CHECK_AND_RETAIN(alltoallv);
-
     if (0 != mca_coll_sync_component.barrier_before_nops ||
         0 != mca_coll_sync_component.barrier_after_nops) {
+        CHECK_AND_RETAIN(alltoallv);
+        CHECK_AND_RETAIN(alltoallw);
         CHECK_AND_RETAIN(bcast);
         CHECK_AND_RETAIN(gather);
         CHECK_AND_RETAIN(gatherv);
@@ -194,6 +214,13 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
         CHECK_AND_RETAIN(reduce_scatter);
         CHECK_AND_RETAIN(scatter);
         CHECK_AND_RETAIN(scatterv);
+    } else {
+        if (0 != mca_coll_sync_component.barrier_before_nops_alltoallv ||
+            0 != mca_coll_sync_component.barrier_after_nops_alltoallv)
+            CHECK_AND_RETAIN(alltoallv);
+        if (0 != mca_coll_sync_component.barrier_before_nops_alltoallw ||
+            0 != mca_coll_sync_component.barrier_after_nops_alltoallw)
+            CHECK_AND_RETAIN(alltoallw);
     }
 
     if (!OMPI_COMM_IS_INTER(comm)) {

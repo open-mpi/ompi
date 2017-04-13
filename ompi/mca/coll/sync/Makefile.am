@@ -33,7 +33,8 @@ sources = \
         coll_sync_scan.c \
         coll_sync_scatter.c \
         coll_sync_scatterv.c \
-        coll_sync_alltoallv.c
+        coll_sync_alltoallv.c \
+        coll_sync_alltoallw.c
 
 if MCA_BUILD_ompi_coll_sync_DSO
 component_noinst =

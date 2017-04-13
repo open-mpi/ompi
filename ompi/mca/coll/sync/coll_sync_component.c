@@ -100,6 +100,13 @@ static int sync_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_sync_component.barrier_before_nops_alltoallv);
 
+    mca_coll_sync_component.barrier_before_nops_alltoallw = 0;
+    (void) mca_base_component_var_register(c, "barrier_before_alltoallw",
+                                           "Do a synchronization before each Nth alltoallw",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_sync_component.barrier_before_nops_alltoallw);
 
 
     mca_coll_sync_component.barrier_after_nops = 0;
@@ -117,6 +124,14 @@ static int sync_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_sync_component.barrier_before_nops_alltoallv);
+
+    mca_coll_sync_component.barrier_after_nops_alltoallw = 0;
+    (void) mca_base_component_var_register(c, "barrier_after_alltoallw",
+                                           "Do a synchronization before each Nth alltoallw",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_sync_component.barrier_before_nops_alltoallw);
 
     return OMPI_SUCCESS;
 }
