@@ -213,7 +213,7 @@ void mca_pml_yalla_init_reqs(void);
 #define PML_YALLA_MESSAGE_RELEASE(_message) \
     { \
         ompi_message_return(*(_message)); \
-        *(_message) = NULL; \
+        *(_message) = MPI_MESSAGE_NULL; \
     }
 
 #endif /* PML_YALLA_REQUEST_H_ */
