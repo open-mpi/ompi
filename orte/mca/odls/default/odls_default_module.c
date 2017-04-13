@@ -425,7 +425,7 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
                                  "orted",
                                  cd->wdir,
                                  orte_process_info.nodename,
-                                 cd->child->app_rank);
+                                 (NULL == cd->child) ? 0 : cd->child->app_rank);
             /* Does not return */
         }
     }
