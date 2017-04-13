@@ -89,7 +89,7 @@ enum {
 #define PML_UCX_MESSAGE_RELEASE(_message) \
     { \
         ompi_message_return(*(_message)); \
-        *(_message) = NULL; \
+        *(_message) = MPI_MESSAGE_NULL; \
     }
 
 
