@@ -1611,6 +1611,12 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
              * has happened
              */
             ORTE_FLAG_SET(cd->child, ORTE_PROC_FLAG_WAITPID);
+
+            /* Since we are not going to wait for this process, make sure
+             * we mark it as not-alive so that we don't wait for it
+             * in orted_cmd
+             */
+            ORTE_FLAG_UNSET(cd->child, ORTE_PROC_FLAG_ALIVE);
             cd->child->pid = 0;
 
             /* mark the child as "killed" */
