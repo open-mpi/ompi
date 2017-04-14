@@ -843,12 +843,15 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
      */
   execute:
     /* initialize */
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                        "mca:rmaps: computing bindings for job %s",
+                        ORTE_JOBID_PRINT(jdata->jobid));
 
     for (i=0; i < jdata->map->nodes->size; i++) {
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
             continue;
         }
-        if (!orte_no_vm && (int)ORTE_PROC_MY_NAME->vpid != i) {
+        if (!orte_no_vm && (int)ORTE_PROC_MY_NAME->vpid != node->index) {
             continue;
         }
         if (!orte_do_not_launch) {
