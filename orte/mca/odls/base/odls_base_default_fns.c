@@ -423,8 +423,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                 if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
                     /* not on the local list */
                     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                         "%s adding proc %s to my local list",
+                                         "%s[%s:%d] adding proc %s to my local list",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         __FILE__, __LINE__,
                                          ORTE_NAME_PRINT(&pptr->name)));
                     /* keep tabs of the number of local procs */
                     jdata->num_local_procs++;
@@ -464,8 +465,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                 if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
                     /* not on the local list */
                     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                         "%s adding proc %s to my local list",
+                                         "%s[%s:%d] adding proc %s to my local list",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         __FILE__, __LINE__,
                                          ORTE_NAME_PRINT(&pptr->name)));
                     /* keep tabs of the number of local procs */
                     jdata->num_local_procs++;
