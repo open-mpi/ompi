@@ -432,6 +432,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
         }
         index = pmix_globals.events.nhdlrs;
         evhdlr->index = index;
+        ++pmix_globals.events.nhdlrs;
         evhdlr->rng.range = range;
         if (NULL != parray) {
             evhdlr->rng.nprocs = nprocs;
@@ -455,6 +456,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
                 goto ack;
             }
             memcpy(evhdlr->codes, cd->codes, cd->ncodes * sizeof(pmix_status_t));
+            evhdlr->ncodes = cd->ncodes;
         }
         if (firstoverall) {
             pmix_globals.events.first = evhdlr;
@@ -502,6 +504,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     }
     index = pmix_globals.events.nhdlrs;
     evhdlr->index = index;
+    ++pmix_globals.events.nhdlrs;
     evhdlr->precedence = location;
     evhdlr->locator = locator;
     evhdlr->rng.range = range;
@@ -530,6 +533,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
             goto ack;
         }
         memcpy(evhdlr->codes, cd->codes, cd->ncodes * sizeof(pmix_status_t));
+        evhdlr->ncodes = cd->ncodes;
         if (1 == cd->ncodes) {
             cd->list = &pmix_globals.events.single_events;
         } else {
