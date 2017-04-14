@@ -18,6 +18,7 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1606,11 +1607,24 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                  "%s SENDING SIGKILL TO %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&cd->child->name)));
-            kill_local(cd->child->pid, SIGKILL);
+
+            /* Send signal to the negative of the PID to send the signal to all
+             * of the children of that PID - the process group under it.
+             * Otherwise it is delivered to only that PID.
+             */
+            kill_local(cd->child->pid * -1, SIGKILL);
+
             /* indicate the waitpid fired as this is effectively what
              * has happened
              */
             ORTE_FLAG_SET(cd->child, ORTE_PROC_FLAG_WAITPID);
+
+            /* Since we are not going to wait for this process, make sure
+             * we mark it as not-alive so that we don't wait for it
+             * in orted_cmd
+             */
+            ORTE_FLAG_UNSET(cd->child, ORTE_PROC_FLAG_ALIVE);
+
             cd->child->pid = 0;
 
             /* mark the child as "killed" */
