@@ -13,6 +13,7 @@
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,7 +104,7 @@ static int rte_init(void)
     return ORTE_SUCCESS;
 
 error:
-    if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
+    if( ORTE_ERR_SILENT != ret || orte_report_silent_errors ) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
