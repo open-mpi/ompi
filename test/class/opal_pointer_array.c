@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -109,11 +109,7 @@ static void test(bool thread_usage){
     }
 
     /* test opal_pointer_array_get_item */
-    array->number_free=array->size;
-    array->lowest_free=0;
-    for(i=0 ; i < array->size ; i++ ) {
-        array->addr[i] = NULL;
-    }
+    opal_pointer_array_remove_all(array);
     error_cnt=0;
     for(i=0 ; i < array->size ; i++ ) {
         value.ivalue = i + 2;
@@ -141,7 +137,35 @@ static void test(bool thread_usage){
         test_failure(" data check - 2nd ");
     }
 
-    free (array);
+    OBJ_RELEASE(array);
+    assert(NULL == array);
+
+    array=OBJ_NEW(opal_pointer_array_t);
+    assert(array);
+    opal_pointer_array_init(array, 0, 4, 2);
+    for( i = 0; i < 4; i++ ) {
+        value.ivalue = i + 1;
+        if( 0 > opal_pointer_array_add( array, value.cvalue ) ) {
+            test_failure("Add/Remove: failure during initial data_add ");
+        }
+    }
+    for( i = i-1; i >= 0; i-- ) {
+        if( i % 2 )
+            if( 0 != opal_pointer_array_set_item(array, i, NULL) )
+                test_failure("Add/Remove: failure during item removal ");
+    }
+    for( i = 0; i < 4; i++ ) {
+        if( !opal_pointer_array_add( array, (void*)(uintptr_t)(i+1) ) ) {
+            if( i != 2 ) {
+                test_failure("Add/Remove: failure during the readd ");
+                break;
+            }
+        }
+    }
+    opal_pointer_array_remove_all(array);
+    OBJ_RELEASE(array);
+    assert(NULL == array);
+
     free(test_data);
 }
 

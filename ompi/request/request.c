@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -108,7 +108,7 @@ int ompi_request_init(void)
     OBJ_CONSTRUCT(&ompi_request_null, ompi_request_t);
     OBJ_CONSTRUCT(&ompi_request_f_to_c_table, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_request_f_to_c_table,
-                                                0, OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+                                                0, OMPI_FORTRAN_HANDLE_MAX, 32) ) {
         return OMPI_ERROR;
     }
     ompi_request_null.request.req_type = OMPI_REQUEST_NULL;

@@ -457,7 +457,7 @@ int32_t ompi_datatype_init( void )
     /* Create the f2c translation table */
     OBJ_CONSTRUCT(&ompi_datatype_f_to_c_table, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_datatype_f_to_c_table,
-                                                0, OMPI_FORTRAN_HANDLE_MAX, 64)) {
+                                                64, OMPI_FORTRAN_HANDLE_MAX, 32)) {
         return OMPI_ERROR;
     }
     /* All temporary datatypes created on the following statement will get registered

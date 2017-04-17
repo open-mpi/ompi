@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 
     /* setup the mca_types array */
     OBJ_CONSTRUCT(&mca_types, opal_pointer_array_t);
-    opal_pointer_array_init(&mca_types, 256, INT_MAX, 128);
+    opal_pointer_array_init(&mca_types, 128, INT_MAX, 64);
 
     /* add in the opal frameworks */
     opal_info_register_types(&mca_types);
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 
     /* init the component map */
     OBJ_CONSTRUCT(&component_map, opal_pointer_array_t);
-    opal_pointer_array_init(&component_map, 256, INT_MAX, 128);
+    opal_pointer_array_init(&component_map, 64, INT_MAX, 32);
 
     /* Register OMPI's params */
     if (OMPI_SUCCESS != (ret = ompi_info_register_framework_params(&component_map))) {
