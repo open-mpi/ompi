@@ -312,6 +312,25 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
 
 int mca_coll_hcoll_progress(void);
 void mca_coll_hcoll_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc);
+
+extern int mca_coll_hcoll_progress_registered;
+
+static inline void
+mca_coll_hcoll_progress_unregister(void) {
+    if (mca_coll_hcoll_progress_registered) {
+        opal_progress_unregister(mca_coll_hcoll_progress);
+        mca_coll_hcoll_progress_registered = 0;
+    }
+}
+
+static inline void
+mca_coll_hcoll_progress_register(void) {
+    if (!mca_coll_hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        mca_coll_hcoll_progress_registered = 1;
+    }
+}
+
 END_C_DECLS
 
 #endif
