@@ -114,7 +114,7 @@ struct oshmem_request_t {
     opal_free_list_item_t super; /**< Base type *//*TODO: Implement in shmem */
     oshmem_request_type_t req_type; /**< Enum indicating the type of the request */
     oshmem_status_public_t req_status; /**< Completion status */
-    volatile bool req_complete; /**< Flag indicating completion on a request */
+    volatile void *req_complete; /**< Flag indicating completion on a request */
     volatile oshmem_request_state_t req_state; /**< enum indicate the state of the request */
     bool req_persistent; /* TODO: NOT Required */
     /**< flag indicating if this is a persistent request */
