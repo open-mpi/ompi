@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
 #                         All rights reserved.
 # $COPYRIGHT$
@@ -20,7 +20,7 @@ sources += \
         src/client/pmix_client_spawn.c \
         src/client/pmix_client_connect.c
 
-if !PMIX_EMBEDDED_MODE
+if WANT_PMIX_BACKWARD
 sources += \
         src/client/pmi1.c \
         src/client/pmi2.c

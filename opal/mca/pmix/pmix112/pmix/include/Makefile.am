@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -15,9 +15,13 @@
 if ! PMIX_EMBEDDED_MODE
 include_HEADERS = \
         include/pmix.h \
-        include/pmix_server.h \
+        include/pmix_server.h
+
+if WANT_PMIX_BACKWARD
+include_HEADERS += \
         include/pmi.h \
         include/pmi2.h
+endif
 
 include_pmixdir = $(includedir)/pmix
 include_pmix_HEADERS = \
