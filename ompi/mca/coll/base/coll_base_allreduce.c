@@ -13,7 +13,7 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -136,7 +136,7 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     int newrank, newremote, extra_ranks;
     char *tmpsend = NULL, *tmprecv = NULL, *tmpswap = NULL, *inplacebuf_free = NULL, *inplacebuf;
     ompi_request_t *reqs[2] = {NULL, NULL};
-    OPAL_PTRDIFF_TYPE span, gap;
+    ptrdiff_t span, gap;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -630,7 +630,7 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
     char *tmpsend = NULL, *tmprecv = NULL, *inbuf[2] = {NULL, NULL};
     ptrdiff_t block_offset, max_real_segsize;
     ompi_request_t *reqs[2] = {NULL, NULL};
-    OPAL_PTRDIFF_TYPE lb, extent, gap;
+    ptrdiff_t lb, extent, gap;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);

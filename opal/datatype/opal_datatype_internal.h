@@ -13,7 +13,9 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -155,8 +157,8 @@ struct ddt_elem_desc {
     ddt_elem_id_description common;           /**< basic data description and flags */
     uint32_t                count;            /**< number of blocks */
     uint32_t                blocklen;         /**< number of elements on each block */
-    OPAL_PTRDIFF_TYPE       extent;           /**< extent of each block (in bytes) */
-    OPAL_PTRDIFF_TYPE       disp;             /**< displacement of the first block */
+    ptrdiff_t       extent;           /**< extent of each block (in bytes) */
+    ptrdiff_t       disp;             /**< displacement of the first block */
 };
 typedef struct ddt_elem_desc ddt_elem_desc_t;
 
@@ -173,7 +175,7 @@ struct ddt_loop_desc {
     uint32_t                loops;            /**< number of elements */
     uint32_t                items;            /**< number of items in the loop */
     size_t                  unused;           /**< not used right now */
-    OPAL_PTRDIFF_TYPE       extent;           /**< extent of the whole loop */
+    ptrdiff_t       extent;           /**< extent of the whole loop */
 };
 typedef struct ddt_loop_desc ddt_loop_desc_t;
 
@@ -182,7 +184,7 @@ struct ddt_endloop_desc {
     uint32_t                items;            /**< number of elements */
     uint32_t                unused;           /**< not used right now */
     size_t                  size;             /**< real size of the data in the loop */
-    OPAL_PTRDIFF_TYPE       first_elem_disp;  /**< the displacement of the first block in the loop */
+    ptrdiff_t       first_elem_disp;  /**< the displacement of the first block in the loop */
 };
 typedef struct ddt_endloop_desc ddt_endloop_desc_t;
 

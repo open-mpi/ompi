@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,7 +72,7 @@ struct dt_stack_t {
     int32_t           index;    /**< index in the element description */
     int16_t           type;     /**< the type used for the last pack/unpack (original or OPAL_DATATYPE_UINT1) */
     size_t            count;    /**< number of times we still have to do it */
-    OPAL_PTRDIFF_TYPE disp;     /**< actual displacement depending on the count field */
+    ptrdiff_t disp;     /**< actual displacement depending on the count field */
 };
 typedef struct dt_stack_t dt_stack_t;
 

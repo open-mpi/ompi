@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -42,7 +42,7 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
                                            mca_coll_base_module_t *module)
 {
     int i, j, size, rank, err = MPI_SUCCESS, line;
-    OPAL_PTRDIFF_TYPE ext, gap;
+    ptrdiff_t ext, gap;
     ompi_request_t *req;
     char *allocated_buffer = NULL, *tmp_buffer;
     size_t max_size;
@@ -197,7 +197,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     int i, k, line = -1, rank, size, err = 0;
     int sendto, recvfrom, distance, *displs = NULL, *blen = NULL;
     char *tmpbuf = NULL, *tmpbuf_free = NULL;
-    OPAL_PTRDIFF_TYPE sext, rext, span, gap;
+    ptrdiff_t sext, rext, span, gap;
     struct ompi_datatype_t *new_ddt;
 
     if (MPI_IN_PLACE == sbuf) {

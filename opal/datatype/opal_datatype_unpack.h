@@ -5,6 +5,8 @@
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +45,7 @@ unpack_predefined_data( opal_convertor_t* CONVERTOR,  /* the convertor */
         if( 0 == _copy_count ) return;  /* nothing to do */
     }
 
-    if( (OPAL_PTRDIFF_TYPE)_copy_blength == _elem->extent ) {
+    if( (ptrdiff_t)_copy_blength == _elem->extent ) {
         _copy_blength *= _copy_count;
         /* the extent and the size of the basic datatype are equal */
         OPAL_DATATYPE_SAFEGUARD_POINTER( _destination, _copy_blength, (CONVERTOR)->pBaseBuf,

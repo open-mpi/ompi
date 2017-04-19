@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -99,7 +99,7 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
 int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, int32_t count,
                                              char* destination_base, char* source_base )
 {
-    OPAL_PTRDIFF_TYPE extent;
+    ptrdiff_t extent;
     int32_t (*fct)( const opal_datatype_t*, int32_t, char*, char*);
 
 #if OPAL_CUDA_SUPPORT

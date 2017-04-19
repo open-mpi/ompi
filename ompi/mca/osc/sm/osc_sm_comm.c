@@ -3,7 +3,7 @@
  * Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -25,7 +25,7 @@ ompi_osc_sm_rput(const void *origin_addr,
                  int origin_count,
                  struct ompi_datatype_t *origin_dt,
                  int target,
-                 OPAL_PTRDIFF_TYPE target_disp,
+                 ptrdiff_t target_disp,
                  int target_count,
                  struct ompi_datatype_t *target_dt,
                  struct ompi_win_t *win,
@@ -65,7 +65,7 @@ ompi_osc_sm_rget(void *origin_addr,
                  int origin_count,
                  struct ompi_datatype_t *origin_dt,
                  int target,
-                 OPAL_PTRDIFF_TYPE target_disp,
+                 ptrdiff_t target_disp,
                  int target_count,
                  struct ompi_datatype_t *target_dt,
                  struct ompi_win_t *win,
@@ -105,7 +105,7 @@ ompi_osc_sm_raccumulate(const void *origin_addr,
                         int origin_count,
                         struct ompi_datatype_t *origin_dt,
                         int target,
-                        OPAL_PTRDIFF_TYPE target_disp,
+                        ptrdiff_t target_disp,
                         int target_count,
                         struct ompi_datatype_t *target_dt,
                         struct ompi_op_t *op,
@@ -210,7 +210,7 @@ ompi_osc_sm_put(const void *origin_addr,
                       int origin_count,
                       struct ompi_datatype_t *origin_dt,
                       int target,
-                      OPAL_PTRDIFF_TYPE target_disp,
+                      ptrdiff_t target_disp,
                       int target_count,
                       struct ompi_datatype_t *target_dt,
                       struct ompi_win_t *win)
@@ -241,7 +241,7 @@ ompi_osc_sm_get(void *origin_addr,
                       int origin_count,
                       struct ompi_datatype_t *origin_dt,
                       int target,
-                      OPAL_PTRDIFF_TYPE target_disp,
+                      ptrdiff_t target_disp,
                       int target_count,
                       struct ompi_datatype_t *target_dt,
                       struct ompi_win_t *win)
@@ -272,7 +272,7 @@ ompi_osc_sm_accumulate(const void *origin_addr,
                        int origin_count,
                        struct ompi_datatype_t *origin_dt,
                        int target,
-                       OPAL_PTRDIFF_TYPE target_disp,
+                       ptrdiff_t target_disp,
                        int target_count,
                        struct ompi_datatype_t *target_dt,
                        struct ompi_op_t *op,
@@ -365,7 +365,7 @@ ompi_osc_sm_compare_and_swap(const void *origin_addr,
                              void *result_addr,
                              struct ompi_datatype_t *dt,
                              int target,
-                             OPAL_PTRDIFF_TYPE target_disp,
+                             ptrdiff_t target_disp,
                              struct ompi_win_t *win)
 {
     ompi_osc_sm_module_t *module =
@@ -404,7 +404,7 @@ ompi_osc_sm_fetch_and_op(const void *origin_addr,
                          void *result_addr,
                          struct ompi_datatype_t *dt,
                          int target,
-                         OPAL_PTRDIFF_TYPE target_disp,
+                         ptrdiff_t target_disp,
                          struct ompi_op_t *op,
                          struct ompi_win_t *win)
 {

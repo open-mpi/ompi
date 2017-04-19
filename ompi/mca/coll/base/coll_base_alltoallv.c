@@ -14,7 +14,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -46,7 +46,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     ompi_request_t *req;
     char *allocated_buffer, *tmp_buffer;
     size_t max_size, rdtype_size;
-    OPAL_PTRDIFF_TYPE ext, gap = 0;
+    ptrdiff_t ext, gap = 0;
 
     /* Initialize. */
 

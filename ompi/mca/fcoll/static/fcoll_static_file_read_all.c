@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -89,7 +91,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 
     int blocklen[3] = {1, 1, 1};
     int static_num_io_procs=1;
-    OPAL_PTRDIFF_TYPE d[3], base;
+    ptrdiff_t d[3], base;
     ompi_datatype_t *types[3];
     ompi_datatype_t *io_array_type=MPI_DATATYPE_NULL;
     ompi_datatype_t **sendtype = NULL;
@@ -97,7 +99,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     int my_aggregator=-1;
     bool recvbuf_is_contiguous=false;
     size_t ftype_size;
-    OPAL_PTRDIFF_TYPE ftype_extent, lb;
+    ptrdiff_t ftype_extent, lb;
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double read_time = 0.0, start_read_time = 0.0, end_read_time = 0.0;
@@ -114,7 +116,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     /**************************************************************************
      ** 1.  In case the data is not contigous in memory, decode it into an iovec
      **************************************************************************/
-    if ( ( ftype_extent == (OPAL_PTRDIFF_TYPE) ftype_size)             &&
+    if ( ( ftype_extent == (ptrdiff_t) ftype_size)             &&
          opal_datatype_is_contiguous_memory_layout(&datatype->super,1) &&
          0 == lb ) {
         recvbuf_is_contiguous = true;
@@ -186,9 +188,9 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
         local_iov_array[0].process_id = fh->f_rank;
     }
 
-    d[0] = (OPAL_PTRDIFF_TYPE)&local_iov_array[0];
-    d[1] = (OPAL_PTRDIFF_TYPE)&local_iov_array[0].length;
-    d[2] = (OPAL_PTRDIFF_TYPE)&local_iov_array[0].process_id;
+    d[0] = (ptrdiff_t)&local_iov_array[0];
+    d[1] = (ptrdiff_t)&local_iov_array[0].length;
+    d[2] = (ptrdiff_t)&local_iov_array[0].process_id;
     base = d[0];
     for (i=0 ; i<3 ; i++) {
         d[i] -= base;
@@ -768,7 +770,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
             for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
                 printf(" ADDRESS: %p  OFFSET: %ld   LENGTH: %ld\n",
                        fh->f_io_array[i].memory_address,
-                       (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].offset,
+                       (ptrdiff_t)fh->f_io_array[i].offset,
                        fh->f_io_array[i].length);
             }
 #endif
@@ -871,14 +873,14 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
         position += bytes_to_read_in_cycle;
 
         if (!recvbuf_is_contiguous) {
-            OPAL_PTRDIFF_TYPE mem_address;
+            ptrdiff_t mem_address;
             size_t remaining = 0;
             size_t temp_position = 0;
 
             remaining = bytes_to_read_in_cycle;
 
             while (remaining && (iov_count > iov_index)){
-                mem_address = (OPAL_PTRDIFF_TYPE)
+                mem_address = (ptrdiff_t)
                     (decoded_iov[iov_index].iov_base) + current_position;
 
                 if (remaining >=

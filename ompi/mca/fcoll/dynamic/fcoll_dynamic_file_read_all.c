@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,7 +99,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
     int my_aggregator =-1;
     bool recvbuf_is_contiguous=false;
     size_t ftype_size;
-    OPAL_PTRDIFF_TYPE ftype_extent, lb;
+    ptrdiff_t ftype_extent, lb;
 
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
@@ -114,7 +116,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
     opal_datatype_type_size ( &datatype->super, &ftype_size );
     opal_datatype_get_extent ( &datatype->super, &lb, &ftype_extent );
 
-    if ( (ftype_extent == (OPAL_PTRDIFF_TYPE) ftype_size)             &&
+    if ( (ftype_extent == (ptrdiff_t) ftype_size)             &&
         opal_datatype_is_contiguous_memory_layout(&datatype->super,1) &&
         0 == lb ) {
         recvbuf_is_contiguous = true;
@@ -503,7 +505,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                     if (my_aggregator == fh->f_rank) {
                         blocklen_per_process[n][disp_index[n] - 1] = bytes_remaining;
                         displs_per_process[n][disp_index[n] - 1] =
-                            (OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base +
+                            (ptrdiff_t)global_iov_array[sorted[current_index]].iov_base +
                             (global_iov_array[sorted[current_index]].iov_len - bytes_remaining);
 
                         blocklen_per_process[n] = (int *) realloc
@@ -528,7 +530,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                     if (my_aggregator == fh->f_rank) {
                         blocklen_per_process[n][disp_index[n] - 1] = bytes_to_read_in_cycle;
                         displs_per_process[n][disp_index[n] - 1] =
-                            (OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base +
+                            (ptrdiff_t)global_iov_array[sorted[current_index]].iov_base +
                             (global_iov_array[sorted[current_index]].iov_len
                              - bytes_remaining);
                     }
@@ -548,7 +550,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                     if (my_aggregator == fh->f_rank) {
                         blocklen_per_process[n][disp_index[n] - 1] = bytes_to_read_in_cycle;
                         displs_per_process[n][disp_index[n] - 1] =
-                            (OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base ;
+                            (ptrdiff_t)global_iov_array[sorted[current_index]].iov_base ;
                     }
 
                     if (fh->f_procs_in_group[n] == fh->f_rank) {
@@ -564,7 +566,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                     if (my_aggregator ==  fh->f_rank) {
                         blocklen_per_process[n][disp_index[n] - 1] =
                             global_iov_array[sorted[current_index]].iov_len;
-                        displs_per_process[n][disp_index[n] - 1] = (OPAL_PTRDIFF_TYPE)
+                        displs_per_process[n][disp_index[n] - 1] = (ptrdiff_t)
                             global_iov_array[sorted[current_index]].iov_base;
                         blocklen_per_process[n] =
                             (int *) realloc ((void *)blocklen_per_process[n], (disp_index[n]+1)*sizeof(int));
@@ -813,14 +815,14 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
         /* If data is not contigous in memory, copy the data from the
            receive buffer into the buffer passed in */
         if (!recvbuf_is_contiguous ) {
-            OPAL_PTRDIFF_TYPE mem_address;
+            ptrdiff_t mem_address;
             size_t remaining = 0;
             size_t temp_position = 0;
 
             remaining = bytes_received;
 
             while (remaining) {
-                mem_address = (OPAL_PTRDIFF_TYPE)
+                mem_address = (ptrdiff_t)
                     (decoded_iov[iov_index].iov_base) + current_position;
 
                 if (remaining >=

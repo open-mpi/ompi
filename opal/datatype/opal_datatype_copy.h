@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -98,7 +98,7 @@ static inline void _contiguous_loop( const dt_elem_desc_t* ELEM,
     size_t _copy_loops = (COUNT);
     uint32_t _i;
 
-    if( _loop->extent == (OPAL_PTRDIFF_TYPE)_end_loop->size ) {  /* the loop is contiguous */
+    if( _loop->extent == (ptrdiff_t)_end_loop->size ) {  /* the loop is contiguous */
         _copy_loops *= _end_loop->size;
         OPAL_DATATYPE_SAFEGUARD_POINTER( _source, _copy_loops, (SOURCE_BASE),
                                     (DATATYPE), (TOTAL_COUNT) );
@@ -140,13 +140,13 @@ static inline int32_t _copy_content_same_ddt( const opal_datatype_t* datatype, i
      * do a MEM_OP.
      */
     if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-        OPAL_PTRDIFF_TYPE extent = (datatype->ub - datatype->lb);
+        ptrdiff_t extent = (datatype->ub - datatype->lb);
         /* Now that we know the datatype is contiguous, we should move the 2 pointers
          * source and destination to the correct displacement.
          */
         destination += datatype->true_lb;
         source      += datatype->true_lb;
-        if( (OPAL_PTRDIFF_TYPE)datatype->size == extent ) {  /* all contiguous == no gaps around */
+        if( (ptrdiff_t)datatype->size == extent ) {  /* all contiguous == no gaps around */
             size_t total_length = iov_len_local;
             size_t memop_chunk = opal_datatype_memop_block_size;
             while( total_length > 0 ) {
@@ -233,14 +233,14 @@ static inline int32_t _copy_content_same_ddt( const opal_datatype_t* datatype, i
                                    (int)pStack->count, stack_pos, pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
         }
         if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
-            OPAL_PTRDIFF_TYPE local_disp = (OPAL_PTRDIFF_TYPE)source;
+            ptrdiff_t local_disp = (ptrdiff_t)source;
             if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                 _contiguous_loop( pElem, datatype, (unsigned char*)source_base, count, count_desc,
                                   source, destination, &iov_len_local );
                 pos_desc += pElem->loop.items + 1;
                 goto update_loop_description;
             }
-            local_disp = (OPAL_PTRDIFF_TYPE)source - local_disp;
+            local_disp = (ptrdiff_t)source - local_disp;
             PUSH_STACK( pStack, stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                         pStack->disp + local_disp);
             pos_desc++;

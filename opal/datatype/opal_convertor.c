@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013-2016 Research Organization for Information Science
+ * Copyright (c) 2013-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -333,7 +333,7 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     const opal_datatype_t* pData = pConvertor->pDesc;
     dt_elem_desc_t* pElems;
     uint32_t count;
-    OPAL_PTRDIFF_TYPE extent;
+    ptrdiff_t extent;
 
     pStack = pConvertor->pStack;
     /**
@@ -599,7 +599,7 @@ int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
             convertor->fAdvance = opal_pack_general_checksum;
         } else {
             if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-                if( ((datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size)
+                if( ((datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size)
                     || (1 >= convertor->count) )
                     convertor->fAdvance = opal_pack_homogeneous_contig_checksum;
                 else
@@ -613,7 +613,7 @@ int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
             convertor->fAdvance = opal_pack_general;
         } else {
             if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-                if( ((datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size)
+                if( ((datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size)
                     || (1 >= convertor->count) )
                     convertor->fAdvance = opal_pack_homogeneous_contig;
                 else
