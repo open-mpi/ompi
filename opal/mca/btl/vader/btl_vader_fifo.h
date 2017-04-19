@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +30,7 @@
 #include "btl_vader_endpoint.h"
 #include "btl_vader_frag.h"
 
-#if SIZEOF_VOID_P == 8
+#if OPAL_HAVE_ATOMIC_MATH_64
   #define vader_item_cmpset(x, y, z) opal_atomic_cmpset_64((volatile int64_t *)(x), (int64_t)(y), (int64_t)(z))
   #define vader_item_swap(x, y)      opal_atomic_swap_64((volatile int64_t *)(x), (int64_t)(y))
 
@@ -96,10 +96,16 @@ static inline fifo_value_t virtual2relativepeer (struct mca_btl_base_endpoint_t 
     return (fifo_value_t) ((intptr_t) (addr - endpoint->segment_base)) | ((fifo_value_t)endpoint->peer_smp_rank << MCA_BTL_VADER_OFFSET_BITS);
 }
 
+static inline void *relative2virtualpeer (btl_base_endpoint_t *ep, fifo_value_t offset)
+{
+    return (void *)(intptr_t)((offset & MCA_BTL_VADER_OFFSET_MASK) + ep->segment_base);
+}
+
 static inline void *relative2virtual (fifo_value_t offset)
 {
-    return (void *)(intptr_t)((offset & MCA_BTL_VADER_OFFSET_MASK) + mca_btl_vader_component.endpoints[offset >> MCA_BTL_VADER_OFFSET_BITS].segment_base);
+    return relative2virtualpeer (mca_btl_vader_component.endpoints + (offset >> MCA_BTL_VADER_OFFSET_BITS), offset);
 }
+
 
 #include "btl_vader_fbox.h"
 
@@ -216,12 +222,16 @@ static inline bool vader_fifo_write_ep (mca_btl_vader_hdr_t *hdr, struct mca_btl
  * @param[in]  ep  - endpoint the fragment belongs to
  *
  * This function is used to return a fragment to the sending process. It differs from vader_fifo_write_ep
- * in that it uses the {ep} to produce the relative address.
+ * in that it uses the {ep} to produce the relative address and does not attempt to use the fast box.
+ * Since the fast box can fill up it is not safe to use it to write back the fragment. The fragment is
+ * instead sent back using the fifo because fifo writes should never fail. The alternative would be to
+ * loop on vader_fifo_write_ep uptil it succeeds. This is unnecessary as the fragment return is NOT on
+ * the critical path.
  */
 static inline void vader_fifo_write_back (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
 {
     hdr->next = VADER_FIFO_FREE;
-    vader_fifo_write(ep->fifo, virtual2relativepeer (ep, (char *) hdr));
+    vader_fifo_write (ep->fifo, rhdr);
 }
 
 #endif /* MCA_BTL_VADER_FIFO_H */
