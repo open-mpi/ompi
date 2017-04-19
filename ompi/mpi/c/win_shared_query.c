@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2013 Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -39,7 +39,7 @@ int MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, 
 
         if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
-         } else if (ompi_win_peer_invalid(win, rank)) {
+         } else if (MPI_PROC_NULL != rank && ompi_win_peer_invalid(win, rank)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RANK, FUNC_NAME);
          }
     }
