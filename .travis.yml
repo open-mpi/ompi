@@ -60,6 +60,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap homebrew/science || true; brew install hwloc || true; brew upgrade hwloc || true ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "6" ]] ; then brew install gcc || true; brew upgrade gcc || true ; fi
     - mkdir -p $HOME/bogus/include $HOME/bogus/lib
+    - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install libtool; fi
 
 # Note that we use "make -k" to do the entire build, even if there was a
 # build error in there somewhere.  This prevents us from needing to submit
