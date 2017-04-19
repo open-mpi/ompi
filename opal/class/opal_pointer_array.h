@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -58,6 +58,8 @@ struct opal_pointer_array_t {
     int max_size;
     /** block size for each allocation */
     int block_size;
+    /** pointer to an array of bits to speed up the research for an empty position. */
+    uint64_t* free_bits;
     /** pointer to array of pointers */
     void **addr;
 };
@@ -195,8 +197,11 @@ static inline void opal_pointer_array_remove_all(opal_pointer_array_t *array)
     OPAL_THREAD_LOCK(&array->lock);
     array->lowest_free = 0;
     array->number_free = array->size;
-    for(i=0; i<array->size; i++) {
+    for(i = 0; i < array->size; i++) {
         array->addr[i] = NULL;
+    }
+    for(i = 0; i < (int)((array->size + 8*sizeof(uint64_t) - 1) / (8*sizeof(uint64_t))); i++) {
+        array->free_bits[i] = 0;
     }
     OPAL_THREAD_UNLOCK(&array->lock);
 }

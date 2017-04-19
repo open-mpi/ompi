@@ -86,15 +86,15 @@ int ompi_comm_init(void)
 
     /* Setup communicator array */
     OBJ_CONSTRUCT(&ompi_mpi_communicators, opal_pointer_array_t);
-    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_mpi_communicators, 0,
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_mpi_communicators, 16,
                                                 OMPI_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
     }
 
     /* Setup f to c table (we can no longer use the cid as the fortran handle) */
     OBJ_CONSTRUCT(&ompi_comm_f_to_c_table, opal_pointer_array_t);
-    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_comm_f_to_c_table, 0,
-                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_comm_f_to_c_table, 8,
+                                                OMPI_FORTRAN_HANDLE_MAX, 32) ) {
         return OMPI_ERROR;
     }
 

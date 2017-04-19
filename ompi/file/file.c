@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -73,7 +73,7 @@ int ompi_file_init(void)
 
     OBJ_CONSTRUCT(&ompi_file_f_to_c_table, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_file_f_to_c_table, 0,
-                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+                                                OMPI_FORTRAN_HANDLE_MAX, 16) ) {
         return OMPI_ERROR;
     }
 

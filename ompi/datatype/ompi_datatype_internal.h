@@ -403,7 +403,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 
 #define OMPI_DATATYPE_EMPTY_DATA(NAME)                                               \
     .id = OMPI_DATATYPE_MPI_ ## NAME,                                                \
-    .d_f_to_c_index = 0,                                                             \
+    .d_f_to_c_index = -1,                                                            \
     .d_keyhash = NULL,                                                               \
     .args = NULL,                                                                    \
     .packed_description = NULL,                                                      \

@@ -29,9 +29,11 @@
 static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
 {
     datatype->args               = NULL;
-    datatype->d_f_to_c_index     = opal_pointer_array_add(&ompi_datatype_f_to_c_table, datatype);
-    /* Later generated datatypes will have their id according to the Fortran ID, as ALL types are registered */
-    datatype->id                 = datatype->d_f_to_c_index;
+    /* Do not add the newly created datatypes to the f2c translation table. We will add them only
+     * if necessary, basically upon the first call the MPI_Datatype_f2c.
+     */
+    datatype->d_f_to_c_index     = -1;
+    datatype->id                 = -1;
     datatype->d_keyhash          = NULL;
     datatype->name[0]            = '\0';
     datatype->packed_description = NULL;
@@ -48,8 +50,9 @@ static void __ompi_datatype_release(ompi_datatype_t * datatype)
         free( datatype->packed_description );
         datatype->packed_description = NULL;
     }
-    if( NULL != opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, datatype->d_f_to_c_index) ){
+    if( datatype->d_f_to_c_index >= 0 ) {
         opal_pointer_array_set_item( &ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
+        datatype->d_f_to_c_index = -1;
     }
     /* any pending attributes ? */
     if (NULL != datatype->d_keyhash) {
