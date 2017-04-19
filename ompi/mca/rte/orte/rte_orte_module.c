@@ -144,6 +144,9 @@ void ompi_rte_wait_for_debugger(void)
     if (1 == MPIR_being_debugged) {
         debugger = 1;
     }
+    /* Setup the defaults in case we attach a
+       debugger only at a later point in time */
+    ompi_debugger_setup_defaults();
 
     if (!debugger && NULL == getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
         /* if not, just return */

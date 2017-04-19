@@ -31,6 +31,11 @@
 BEGIN_C_DECLS
 
 /**
+ * Setup the debugger defaults
+ */
+extern void ompi_debugger_setup_defaults(void);
+
+/**
  * Setup the magic constants so that the debugger can find the DLL
  * necessary for understanding the queues and other structures.
  */
