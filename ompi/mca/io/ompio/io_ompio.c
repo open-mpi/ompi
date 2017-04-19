@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -67,7 +67,7 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
     k = 0;
 
     while (bytes_to_write) {
-        OPAL_PTRDIFF_TYPE disp;
+        ptrdiff_t disp;
         /* reallocate if needed */
         if (OMPIO_IOVEC_INITIAL_SIZE*block <= k) {
             block ++;
@@ -93,7 +93,7 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
             }
         }
 
-        disp = (OPAL_PTRDIFF_TYPE)(fh->f_decoded_iov[j].iov_base) +
+        disp = (ptrdiff_t)(fh->f_decoded_iov[j].iov_base) +
             (fh->f_total_bytes - sum_previous_counts);
         iov[k].iov_base = (IOVBASE_TYPE *)(intptr_t)(disp + fh->f_offset);
 
@@ -125,7 +125,7 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 	int *row_index=NULL, i=0, l=0, m=0;
 	int column_index=0, r_index=0;
 	int blocklen[3] = {1, 1, 1};
-	OPAL_PTRDIFF_TYPE d[3], base;
+	ptrdiff_t d[3], base;
 	ompi_datatype_t *types[3];
 	ompi_datatype_t *io_array_type=MPI_DATATYPE_NULL;
 	int **adj_matrix=NULL;
@@ -172,9 +172,9 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
         types[1] = &ompi_mpi_long.dt;
         types[2] = &ompi_mpi_int.dt;
 
-	d[0] = (OPAL_PTRDIFF_TYPE)&per_process[0];
-        d[1] = (OPAL_PTRDIFF_TYPE)&per_process[0].length;
-        d[2] = (OPAL_PTRDIFF_TYPE)&per_process[0].process_id;
+        d[0] = (ptrdiff_t)&per_process[0];
+        d[1] = (ptrdiff_t)&per_process[0].length;
+        d[2] = (ptrdiff_t)&per_process[0].process_id;
         base = d[0];
         for (i=0;i<3;i++){
             d[i] -= base;

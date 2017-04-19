@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -72,7 +72,7 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
     struct ompi_datatype_t *open_status_type;
     struct ompi_datatype_t *types[2] = {&ompi_mpi_int.dt, &ompi_mpi_byte.dt};
     int lens[2] = {1, sizeof(PVFS_object_ref)};
-    OPAL_PTRDIFF_TYPE offsets[2];
+    ptrdiff_t offsets[2];
     char char_stripe[MPI_MAX_INFO_KEY];
     int flag;
     int fs_pvfs2_stripe_size = -1;

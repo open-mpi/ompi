@@ -108,10 +108,10 @@ struct opal_datatype_t {
     uint32_t           bdt_used; /**< bitset of which basic datatypes are used in the data description */
     size_t             size;     /**< total size in bytes of the memory used by the data if
                                       the data is put on a contiguous buffer */
-    OPAL_PTRDIFF_TYPE  true_lb;  /**< the true lb of the data without user defined lb and ub */
-    OPAL_PTRDIFF_TYPE  true_ub;  /**< the true ub of the data without user defined lb and ub */
-    OPAL_PTRDIFF_TYPE  lb;       /**< lower bound in memory */
-    OPAL_PTRDIFF_TYPE  ub;       /**< upper bound in memory */
+    ptrdiff_t  true_lb;  /**< the true lb of the data without user defined lb and ub */
+    ptrdiff_t  true_ub;  /**< the true ub of the data without user defined lb and ub */
+    ptrdiff_t  lb;       /**< lower bound in memory */
+    ptrdiff_t  ub;       /**< upper bound in memory */
     /* --- cacheline 1 boundary (64 bytes) --- */
     size_t             nbElems;  /**< total number of elements inside the datatype */
     uint32_t           align;    /**< data should be aligned to */
@@ -226,19 +226,19 @@ OPAL_DECLSPEC void opal_datatype_dump( const opal_datatype_t* pData );
 /* data creation functions */
 OPAL_DECLSPEC int32_t opal_datatype_clone( const opal_datatype_t * src_type, opal_datatype_t * dest_type );
 OPAL_DECLSPEC int32_t opal_datatype_create_contiguous( int count, const opal_datatype_t* oldType, opal_datatype_t** newType );
-OPAL_DECLSPEC int32_t opal_datatype_resize( opal_datatype_t* type, OPAL_PTRDIFF_TYPE lb, OPAL_PTRDIFF_TYPE extent );
+OPAL_DECLSPEC int32_t opal_datatype_resize( opal_datatype_t* type, ptrdiff_t lb, ptrdiff_t extent );
 OPAL_DECLSPEC int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtAdd, uint32_t count,
-                                         OPAL_PTRDIFF_TYPE disp, OPAL_PTRDIFF_TYPE extent );
+                                         ptrdiff_t disp, ptrdiff_t extent );
 
 static inline int32_t
-opal_datatype_type_lb( const opal_datatype_t* pData, OPAL_PTRDIFF_TYPE* disp )
+opal_datatype_type_lb( const opal_datatype_t* pData, ptrdiff_t* disp )
 {
     *disp = pData->lb;
     return 0;
 }
 
 static inline int32_t
-opal_datatype_type_ub( const opal_datatype_t* pData, OPAL_PTRDIFF_TYPE* disp )
+opal_datatype_type_ub( const opal_datatype_t* pData, ptrdiff_t* disp )
 {
     *disp = pData->ub;
     return 0;
@@ -252,21 +252,21 @@ opal_datatype_type_size( const opal_datatype_t* pData, size_t *size )
 }
 
 static inline int32_t
-opal_datatype_type_extent( const opal_datatype_t* pData, OPAL_PTRDIFF_TYPE* extent )
+opal_datatype_type_extent( const opal_datatype_t* pData, ptrdiff_t* extent )
 {
     *extent = pData->ub - pData->lb;
     return 0;
 }
 
 static inline int32_t
-opal_datatype_get_extent( const opal_datatype_t* pData, OPAL_PTRDIFF_TYPE* lb, OPAL_PTRDIFF_TYPE* extent)
+opal_datatype_get_extent( const opal_datatype_t* pData, ptrdiff_t* lb, ptrdiff_t* extent)
 {
     *lb = pData->lb; *extent = pData->ub - pData->lb;
     return 0;
 }
 
 static inline int32_t
-opal_datatype_get_true_extent( const opal_datatype_t* pData, OPAL_PTRDIFF_TYPE* true_lb, OPAL_PTRDIFF_TYPE* true_extent)
+opal_datatype_get_true_extent( const opal_datatype_t* pData, ptrdiff_t* true_lb, ptrdiff_t* true_extent)
 {
     *true_lb = pData->true_lb;
     *true_extent = (pData->true_ub - pData->true_lb);
@@ -297,12 +297,12 @@ opal_datatype_sndrcv( void *sbuf, int32_t scount, const opal_datatype_t* sdtype,
 OPAL_DECLSPEC int32_t
 opal_datatype_get_args( const opal_datatype_t* pData, int32_t which,
                         int32_t * ci, int32_t * i,
-                        int32_t * ca, OPAL_PTRDIFF_TYPE* a,
+                        int32_t * ca, ptrdiff_t* a,
                         int32_t * cd, opal_datatype_t** d, int32_t * type);
 OPAL_DECLSPEC int32_t
 opal_datatype_set_args( opal_datatype_t* pData,
                         int32_t ci, int32_t ** i,
-                        int32_t ca, OPAL_PTRDIFF_TYPE* a,
+                        int32_t ca, ptrdiff_t* a,
                         int32_t cd, opal_datatype_t** d,int32_t type);
 OPAL_DECLSPEC int32_t
 opal_datatype_copy_args( const opal_datatype_t* source_data,
@@ -340,12 +340,12 @@ opal_datatype_create_from_packed_description( void** packed_buffer,
  * Returns: the memory span of count repetition of the datatype, and in the gap
  *          argument, the number of bytes of the gap at the beginning.
  */
-static inline OPAL_PTRDIFF_TYPE
+static inline ptrdiff_t
 opal_datatype_span( const opal_datatype_t* pData, int64_t count,
-                    OPAL_PTRDIFF_TYPE* gap)
+                    ptrdiff_t* gap)
 {
-    OPAL_PTRDIFF_TYPE extent = (pData->ub - pData->lb);
-    OPAL_PTRDIFF_TYPE true_extent = (pData->true_ub - pData->true_lb);
+    ptrdiff_t extent = (pData->ub - pData->lb);
+    ptrdiff_t true_extent = (pData->true_ub - pData->true_lb);
     if (OPAL_UNLIKELY(0 == pData->size) || (0 == count)) {
         return 0;
     }

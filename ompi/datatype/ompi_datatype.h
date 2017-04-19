@@ -7,7 +7,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -167,7 +167,7 @@ OMPI_DECLSPEC int32_t ompi_datatype_destroy( ompi_datatype_t** type);
  */
 static inline int32_t
 ompi_datatype_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, uint32_t count,
-                   OPAL_PTRDIFF_TYPE disp, OPAL_PTRDIFF_TYPE extent )
+                   ptrdiff_t disp, ptrdiff_t extent )
 {
     return opal_datatype_add( &pdtBase->super, &pdtAdd->super, count, disp, extent );
 }
@@ -178,17 +178,17 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
 OMPI_DECLSPEC int32_t ompi_datatype_create_contiguous( int count, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
                                                    const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_hvector( int count, int bLength, OPAL_PTRDIFF_TYPE stride,
+OMPI_DECLSPEC int32_t ompi_datatype_create_hvector( int count, int bLength, ptrdiff_t stride,
                                                     const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_indexed( int count, const int* pBlockLength, const int* pDisp,
                                                     const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
+OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
                                                      const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_indexed_block( int count, int bLength, const int* pDisp,
                                                           const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const OPAL_PTRDIFF_TYPE* pDisp,
+OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const ptrdiff_t* pDisp,
                                                            const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
+OMPI_DECLSPEC int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
                                                    ompi_datatype_t* const* pTypes, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_darray( int size, int rank, int ndims, int const* gsize_array,
                                                    int const* distrib_array, int const* darg_array,
@@ -199,8 +199,8 @@ OMPI_DECLSPEC int32_t ompi_datatype_create_subarray(int ndims, int const* size_a
                                                     const ompi_datatype_t* oldtype, ompi_datatype_t** newtype);
 static inline int32_t
 ompi_datatype_create_resized( const ompi_datatype_t* oldType,
-                              OPAL_PTRDIFF_TYPE lb,
-                              OPAL_PTRDIFF_TYPE extent,
+                              ptrdiff_t lb,
+                              ptrdiff_t extent,
                               ompi_datatype_t** newType )
 {
     ompi_datatype_t * type;
@@ -214,13 +214,13 @@ ompi_datatype_create_resized( const ompi_datatype_t* oldType,
 }
 
 static inline int32_t
-ompi_datatype_type_lb( const ompi_datatype_t* type, OPAL_PTRDIFF_TYPE* disp )
+ompi_datatype_type_lb( const ompi_datatype_t* type, ptrdiff_t* disp )
 {
     return opal_datatype_type_lb(&type->super, disp);
 }
 
 static inline int32_t
-ompi_datatype_type_ub( const ompi_datatype_t* type, OPAL_PTRDIFF_TYPE* disp )
+ompi_datatype_type_ub( const ompi_datatype_t* type, ptrdiff_t* disp )
 {
     return opal_datatype_type_ub( &type->super, disp);
 }
@@ -232,19 +232,19 @@ ompi_datatype_type_size ( const ompi_datatype_t* type, size_t *size )
 }
 
 static inline int32_t
-ompi_datatype_type_extent( const ompi_datatype_t* type, OPAL_PTRDIFF_TYPE* extent )
+ompi_datatype_type_extent( const ompi_datatype_t* type, ptrdiff_t* extent )
 {
     return opal_datatype_type_extent( &type->super, extent);
 }
 
 static inline int32_t
-ompi_datatype_get_extent( const ompi_datatype_t* type, OPAL_PTRDIFF_TYPE* lb, OPAL_PTRDIFF_TYPE* extent)
+ompi_datatype_get_extent( const ompi_datatype_t* type, ptrdiff_t* lb, ptrdiff_t* extent)
 {
     return opal_datatype_get_extent( &type->super, lb, extent);
 }
 
 static inline int32_t
-ompi_datatype_get_true_extent( const ompi_datatype_t* type, OPAL_PTRDIFF_TYPE* true_lb, OPAL_PTRDIFF_TYPE* true_extent)
+ompi_datatype_get_true_extent( const ompi_datatype_t* type, ptrdiff_t* true_lb, ptrdiff_t* true_extent)
 {
     return opal_datatype_get_true_extent( &type->super, true_lb, true_extent);
 }
@@ -266,7 +266,7 @@ ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
                                      char* pDestBuf, char* pSrcBuf )
 {
     int32_t length, rc;
-    OPAL_PTRDIFF_TYPE extent;
+    ptrdiff_t extent;
 
     ompi_datatype_type_extent( type, &extent );
     while( 0 != count ) {
@@ -295,11 +295,11 @@ OMPI_DECLSPEC int32_t ompi_datatype_sndrcv( const void *sbuf, int32_t scount, co
  */
 OMPI_DECLSPEC int32_t ompi_datatype_get_args( const ompi_datatype_t* pData, int32_t which,
                                               int32_t * ci, int32_t * i,
-                                              int32_t * ca, OPAL_PTRDIFF_TYPE* a,
+                                              int32_t * ca, ptrdiff_t* a,
                                               int32_t * cd, ompi_datatype_t** d, int32_t * type);
 OMPI_DECLSPEC int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
                                               int32_t ci, const int32_t ** i,
-                                              int32_t ca, const OPAL_PTRDIFF_TYPE* a,
+                                              int32_t ca, const ptrdiff_t* a,
                                               int32_t cd, ompi_datatype_t* const * d,int32_t type);
 OMPI_DECLSPEC int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_data,
                                                ompi_datatype_t* dest_data );

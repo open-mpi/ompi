@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -40,7 +40,7 @@ static inline int
 __ompi_datatype_pack_description( ompi_datatype_t* datatype,
                                   void** packed_buffer, int* next_index );
 static ompi_datatype_t*
-__ompi_datatype_create_from_args( int32_t* i, OPAL_PTRDIFF_TYPE * a,
+__ompi_datatype_create_from_args( int32_t* i, ptrdiff_t * a,
                                   ompi_datatype_t** d, int32_t type );
 
 typedef struct __dt_args {
@@ -51,7 +51,7 @@ typedef struct __dt_args {
     int32_t            ca;
     int32_t            cd;
     int*               i;
-    OPAL_PTRDIFF_TYPE* a;
+    ptrdiff_t* a;
     ompi_datatype_t**  d;
 } ompi_datatype_args_t;
 
@@ -65,7 +65,7 @@ typedef struct __dt_args {
  */
 #if OPAL_ALIGN_WORD_SIZE_INTEGERS
 #define OMPI_DATATYPE_ALIGN_PTR(PTR, TYPE) \
-    (PTR) = OPAL_ALIGN_PTR((PTR), sizeof(OPAL_PTRDIFF_TYPE), TYPE)
+    (PTR) = OPAL_ALIGN_PTR((PTR), sizeof(ptrdiff_t), TYPE)
 #else
 #define OMPI_DATATYPE_ALIGN_PTR(PTR, TYPE)
 #endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
@@ -80,7 +80,7 @@ typedef struct __dt_args {
 #define ALLOC_ARGS(PDATA, IC, AC, DC)                                   \
     do {                                                                \
         int length = sizeof(ompi_datatype_args_t) + (IC) * sizeof(int) + \
-            (AC) * sizeof(OPAL_PTRDIFF_TYPE) + (DC) * sizeof(MPI_Datatype); \
+            (AC) * sizeof(ptrdiff_t) + (DC) * sizeof(MPI_Datatype); \
         char* buf = (char*)malloc( length );                            \
         ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)buf;       \
         pArgs->ci = (IC);                                               \
@@ -89,8 +89,8 @@ typedef struct __dt_args {
         buf += sizeof(ompi_datatype_args_t);                            \
         if( pArgs->ca == 0 ) pArgs->a = NULL;                           \
         else {                                                          \
-            pArgs->a = (OPAL_PTRDIFF_TYPE*)buf;                         \
-            buf += pArgs->ca * sizeof(OPAL_PTRDIFF_TYPE);               \
+            pArgs->a = (ptrdiff_t*)buf;                         \
+            buf += pArgs->ca * sizeof(ptrdiff_t);               \
         }                                                               \
         if( pArgs->cd == 0 ) pArgs->d = NULL;                           \
         else {                                                          \
@@ -101,7 +101,7 @@ typedef struct __dt_args {
         else pArgs->i = (int*)buf;                                      \
         pArgs->ref_count = 1;                                           \
         pArgs->total_pack_size = (4 + (IC) + (DC)) * sizeof(int) +      \
-            (AC) * sizeof(OPAL_PTRDIFF_TYPE);                           \
+            (AC) * sizeof(ptrdiff_t);                                   \
         (PDATA)->args = (void*)pArgs;                                   \
         (PDATA)->packed_description = NULL;                             \
     } while(0)
@@ -109,7 +109,7 @@ typedef struct __dt_args {
 
 int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
                                 int32_t ci, const int32_t** i,
-                                int32_t ca, const OPAL_PTRDIFF_TYPE* a,
+                                int32_t ca, const ptrdiff_t* a,
                                 int32_t cd, ompi_datatype_t* const * d, int32_t type)
 {
     int pos;
@@ -220,9 +220,9 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         break;
     }
 
-    /* copy the array of MPI_Aint, aka OPAL_PTRDIFF_TYPE */
+    /* copy the array of MPI_Aint, aka ptrdiff_t */
     if( pArgs->a != NULL )
-        memcpy( pArgs->a, a, ca * sizeof(OPAL_PTRDIFF_TYPE) );
+        memcpy( pArgs->a, a, ca * sizeof(ptrdiff_t) );
 
     for( pos = 0; pos < cd; pos++ ) {
         pArgs->d[pos] = d[pos];
@@ -317,7 +317,7 @@ int32_t ompi_datatype_print_args( const ompi_datatype_t* pData )
 
 int32_t ompi_datatype_get_args( const ompi_datatype_t* pData, int32_t which,
                                 int32_t* ci, int32_t* i,
-                                int32_t* ca, OPAL_PTRDIFF_TYPE* a,
+                                int32_t* ca, ptrdiff_t* a,
                                 int32_t* cd, ompi_datatype_t** d, int32_t* type)
 {
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)pData->args;
@@ -354,7 +354,7 @@ int32_t ompi_datatype_get_args( const ompi_datatype_t* pData, int32_t which,
             memcpy( i, pArgs->i, pArgs->ci * sizeof(int) );
         }
         if( (NULL != a) && (NULL != pArgs->a) ) {
-            memcpy( a, pArgs->a, pArgs->ca * sizeof(OPAL_PTRDIFF_TYPE) );
+            memcpy( a, pArgs->a, pArgs->ca * sizeof(ptrdiff_t) );
         }
         if( (NULL != d) && (NULL != pArgs->d) ) {
             memcpy( d, pArgs->d, pArgs->cd * sizeof(MPI_Datatype) );
@@ -449,8 +449,8 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
         /* description of the displacements must be 64 bits aligned */
         OMPI_DATATYPE_ALIGN_PTR(next_packed, char*);
 
-        memcpy( next_packed, args->a, sizeof(OPAL_PTRDIFF_TYPE) * args->ca );
-        next_packed += sizeof(OPAL_PTRDIFF_TYPE) * args->ca;
+        memcpy( next_packed, args->a, sizeof(ptrdiff_t) * args->ca );
+        next_packed += sizeof(ptrdiff_t) * args->ca;
     }
     position = (int*)next_packed;
     next_packed += sizeof(int) * args->cd;
@@ -557,7 +557,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
     int* position;
     ompi_datatype_t* datatype = NULL;
     ompi_datatype_t** array_of_datatype;
-    OPAL_PTRDIFF_TYPE* array_of_disp;
+    ptrdiff_t* array_of_disp;
     int* array_of_length;
     int number_of_length, number_of_disp, number_of_datatype, data_id;
     int create_type, i;
@@ -609,13 +609,13 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
     next_buffer += (4 * sizeof(int));  /* move after the header */
 
     /* description of the displacements (if ANY !)  should always be aligned
-       on MPI_Aint, aka OPAL_PTRDIFF_TYPE */
+       on MPI_Aint, aka ptrdiff_t */
     if (number_of_disp > 0) {
         OMPI_DATATYPE_ALIGN_PTR(next_buffer, char*);
     }
 
-    array_of_disp   = (OPAL_PTRDIFF_TYPE*)next_buffer;
-    next_buffer    += number_of_disp * sizeof(OPAL_PTRDIFF_TYPE);
+    array_of_disp   = (ptrdiff_t*)next_buffer;
+    next_buffer    += number_of_disp * sizeof(ptrdiff_t);
     /* the other datatypes */
     position        = (int*)next_buffer;
     next_buffer    += number_of_datatype * sizeof(int);

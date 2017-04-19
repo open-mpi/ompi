@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -30,7 +30,7 @@
 
 #include <poll.h>
 
-static int get_extents(ompi_datatype_t * type, OPAL_PTRDIFF_TYPE *lb, OPAL_PTRDIFF_TYPE *extent, OPAL_PTRDIFF_TYPE *true_lb, OPAL_PTRDIFF_TYPE *true_extent) {
+static int get_extents(ompi_datatype_t * type, ptrdiff_t *lb, ptrdiff_t *extent, ptrdiff_t *true_lb, ptrdiff_t *true_extent) {
     int ret;
 
     ret = ompi_datatype_get_extent(type, lb, extent);
@@ -50,10 +50,10 @@ main(int argc, char* argv[])
     struct ompi_datatype_t *unpacked_dt;
     int ret = 0;
     int         blen[4];
-    OPAL_PTRDIFF_TYPE    disp[4];
+    ptrdiff_t    disp[4];
     ompi_datatype_t *newType, *types[4], *struct_type, *vec_type;
-    OPAL_PTRDIFF_TYPE    old_lb, old_extent, old_true_lb, old_true_extent;
-    OPAL_PTRDIFF_TYPE    lb, extent, true_lb, true_extent;
+    ptrdiff_t    old_lb, old_extent, old_true_lb, old_true_extent;
+    ptrdiff_t    lb, extent, true_lb, true_extent;
 
     /* make ompi_proc_local () work ... */
     struct ompi_proc_t dummy_proc;

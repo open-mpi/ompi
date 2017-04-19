@@ -11,7 +11,9 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,19 +36,19 @@
 #define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   (INT_VALUE) = (INT_VALUE) & (~(OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS))
 
 #if defined(__GNUC__) && !defined(__STDC__)
-#define LMAX(A,B)  ({ OPAL_PTRDIFF_TYPE _a = (A), _b = (B); (_a < _b ? _b : _a) })
-#define LMIN(A,B)  ({ OPAL_PTRDIFF_TYPE _a = (A), _b = (B); (_a < _b ? _a : _b); })
+#define LMAX(A,B)  ({ ptrdiff_t _a = (A), _b = (B); (_a < _b ? _b : _a) })
+#define LMIN(A,B)  ({ ptrdiff_t _a = (A), _b = (B); (_a < _b ? _a : _b); })
 #define IMAX(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _b : _a); })
 #else
-static inline OPAL_PTRDIFF_TYPE LMAX( OPAL_PTRDIFF_TYPE a, OPAL_PTRDIFF_TYPE b ) { return ( a < b ? b : a ); }
-static inline OPAL_PTRDIFF_TYPE LMIN( OPAL_PTRDIFF_TYPE a, OPAL_PTRDIFF_TYPE b ) { return ( a < b ? a : b ); }
+static inline ptrdiff_t LMAX( ptrdiff_t a, ptrdiff_t b ) { return ( a < b ? b : a ); }
+static inline ptrdiff_t LMIN( ptrdiff_t a, ptrdiff_t b ) { return ( a < b ? a : b ); }
 static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
 #endif  /* __GNU__ */
 
 #define OPAL_DATATYPE_COMPUTE_REQUIRED_ENTRIES( _pdtAdd, _count, _extent, _place_needed) \
 { \
     if( (_pdtAdd)->flags & OPAL_DATATYPE_FLAG_PREDEFINED ) { /* add a basic datatype */ \
-        (_place_needed) = ((_extent) == (OPAL_PTRDIFF_TYPE)(_pdtAdd)->size ? 1 : 3); \
+        (_place_needed) = ((_extent) == (ptrdiff_t)(_pdtAdd)->size ? 1 : 3); \
     } else { \
         (_place_needed) = (_pdtAdd)->desc.used; \
         if( (_count) != 1 ) { \
@@ -70,7 +72,7 @@ static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
         _new_lb = (_old_lb) + (_disp); \
         _new_ub = (_old_ub) + (_disp); \
     } else { \
-        OPAL_PTRDIFF_TYPE lower, upper; \
+        ptrdiff_t lower, upper; \
         upper = (_disp) + (_old_extent) * ((_count) - 1); \
         lower = (_disp); \
         if( lower < upper ) { \
@@ -101,12 +103,12 @@ static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
  * set to ZERO if it's a empty datatype.
  */
 int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtAdd,
-                           uint32_t count, OPAL_PTRDIFF_TYPE disp, OPAL_PTRDIFF_TYPE extent )
+                           uint32_t count, ptrdiff_t disp, ptrdiff_t extent )
 {
     uint32_t newLength, place_needed = 0, i;
     short localFlags = 0;  /* no specific options yet */
     dt_elem_desc_t *pLast, *pLoop = NULL;
-    OPAL_PTRDIFF_TYPE lb, ub, true_lb, true_ub, epsilon, old_true_ub;
+    ptrdiff_t lb, ub, true_lb, true_ub, epsilon, old_true_ub;
 
     /**
      * From MPI-3, page 84, lines 18-20: Most datatype constructors have
@@ -130,7 +132,7 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
             pdtBase->lb = disp;
             pdtBase->flags |= OPAL_DATATYPE_FLAG_USER_LB;
         }
-        if( (pdtBase->ub - pdtBase->lb) != (OPAL_PTRDIFF_TYPE)pdtBase->size ) {
+        if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
             pdtBase->flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
         }
         return OPAL_SUCCESS; /* Just ignore the OPAL_DATATYPE_LOOP and OPAL_DATATYPE_END_LOOP */
@@ -142,7 +144,7 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
             pdtBase->ub = disp;
             pdtBase->flags |= OPAL_DATATYPE_FLAG_USER_UB;
         }
-        if( (pdtBase->ub - pdtBase->lb) != (OPAL_PTRDIFF_TYPE)pdtBase->size ) {
+        if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
             pdtBase->flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
         }
         return OPAL_SUCCESS; /* Just ignore the OPAL_DATATYPE_LOOP and OPAL_DATATYPE_END_LOOP */
@@ -284,7 +286,7 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
         pLast->elem.extent           = extent;
         pdtBase->desc.used++;
         pLast->elem.common.flags     = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED);
-        if( (extent != (OPAL_PTRDIFF_TYPE)pdtAdd->size) && (count > 1) ) {  /* gaps around the datatype */
+        if( (extent != (ptrdiff_t)pdtAdd->size) && (count > 1) ) {  /* gaps around the datatype */
             pLast->elem.common.flags &= ~(OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS);
         }
     } else {
@@ -344,11 +346,11 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
     UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
     if( (localFlags & OPAL_DATATYPE_FLAG_CONTIGUOUS)             /* both type were contiguous */
         && ((disp + pdtAdd->true_lb) == old_true_ub)  /* and there is no gap between them */
-        && ( ((OPAL_PTRDIFF_TYPE)pdtAdd->size == extent)      /* the size and the extent of the
+        && ( ((ptrdiff_t)pdtAdd->size == extent)      /* the size and the extent of the
                                                        * added type have to match */
              || (count < 2)) ) {                      /* if the count is bigger than 2 */
             SET_CONTIGUOUS_FLAG(pdtBase->flags);
-            if( (OPAL_PTRDIFF_TYPE)pdtBase->size == (pdtBase->ub - pdtBase->lb) )
+            if( (ptrdiff_t)pdtBase->size == (pdtBase->ub - pdtBase->lb) )
                 SET_NO_GAP_FLAG(pdtBase->flags);
     }
 

@@ -57,7 +57,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
                                 struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res;
-  OPAL_PTRDIFF_TYPE ext, lb;
+  ptrdiff_t ext, lb;
   NBC_Schedule *schedule;
   size_t size;
 #ifdef NBC_CACHE_SCHEDULE

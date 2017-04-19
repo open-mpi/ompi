@@ -11,7 +11,9 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,7 +68,7 @@ opal_pack_homogeneous_contig_function( opal_convertor_t* pConv,
     unsigned char *source_base = NULL;
     uint32_t iov_count;
     size_t length = pConv->local_size - pConv->bConverted, initial_amount = pConv->bConverted;
-    OPAL_PTRDIFF_TYPE initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
+    ptrdiff_t initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
     source_base = (pConv->pBaseBuf + initial_displ + pStack[0].disp + pStack[1].disp);
 
@@ -114,10 +116,10 @@ opal_pack_homogeneous_contig_with_gaps_function( opal_convertor_t* pConv,
     unsigned char *user_memory, *packed_buffer;
     uint32_t i, index, iov_count;
     size_t bConverted, remaining, length, initial_bytes_converted = pConv->bConverted;
-    OPAL_PTRDIFF_TYPE extent= pData->ub - pData->lb;
-    OPAL_PTRDIFF_TYPE initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
+    ptrdiff_t extent= pData->ub - pData->lb;
+    ptrdiff_t initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
-    assert( (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && ((OPAL_PTRDIFF_TYPE)pData->size != extent) );
+    assert( (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && ((ptrdiff_t)pData->size != extent) );
     DO_DEBUG( opal_output( 0, "pack_homogeneous_contig( pBaseBuf %p, iov_count %d )\n",
                            (void*)pConv->pBaseBuf, *out_size ); );
     if( stack[1].type != opal_datatype_uint1.id ) {
@@ -354,7 +356,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                                        count_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
             }
             if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
-                OPAL_PTRDIFF_TYPE local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr;
+                ptrdiff_t local_disp = (ptrdiff_t)conv_ptr;
                 if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                     PACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc,
                                           conv_ptr, iov_ptr, iov_len_local );
@@ -364,7 +366,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                     }
                     /* Save the stack with the correct last_count value. */
                 }
-                local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr - local_disp;
+                local_disp = (ptrdiff_t)conv_ptr - local_disp;
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                             pStack->disp + local_disp);
                 pos_desc++;
@@ -417,7 +419,7 @@ pack_predefined_heterogeneous( opal_convertor_t* CONVERTOR,
     const opal_convertor_master_t* master = (CONVERTOR)->master;
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
     unsigned char* _source = (*SOURCE) + _elem->disp;
-    OPAL_PTRDIFF_TYPE advance;
+    ptrdiff_t advance;
     uint32_t _count = *(COUNT);
     size_t _r_blength;
 
@@ -430,8 +432,8 @@ pack_predefined_heterogeneous( opal_convertor_t* CONVERTOR,
     OPAL_DATATYPE_SAFEGUARD_POINTER( _source, (_count * _elem->extent), (CONVERTOR)->pBaseBuf,
                                      (CONVERTOR)->pDesc, (CONVERTOR)->count );
     DO_DEBUG( opal_output( 0, "pack [l %s r %s] memcpy( %p, %p, %lu ) => space %lu\n",
-                           ((OPAL_PTRDIFF_TYPE)(opal_datatype_basicDatatypes[_elem->common.type]->size) == _elem->extent) ? "cont" : "----",
-                           ((OPAL_PTRDIFF_TYPE)_r_blength == _elem->extent) ? "cont" : "----",
+                           ((ptrdiff_t)(opal_datatype_basicDatatypes[_elem->common.type]->size) == _elem->extent) ? "cont" : "----",
+                           ((ptrdiff_t)_r_blength == _elem->extent) ? "cont" : "----",
                            (void*)*(DESTINATION), (void*)_source, (unsigned long)_r_blength,
                            (unsigned long)(*(SPACE)) ); );
     master->pFunctions[_elem->common.type]( CONVERTOR, _count,
@@ -542,7 +544,7 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
                                        count_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
             }
             if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
-                OPAL_PTRDIFF_TYPE local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr;
+                ptrdiff_t local_disp = (ptrdiff_t)conv_ptr;
 #if 0
                 if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                     PACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc,
@@ -554,7 +556,7 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
                     /* Save the stack with the correct last_count value. */
                 }
 #endif  /* in a heterogeneous environment we can't handle the contiguous loops */
-                local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr - local_disp;
+                local_disp = (ptrdiff_t)conv_ptr - local_disp;
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                             pStack->disp + local_disp);
                 pos_desc++;
