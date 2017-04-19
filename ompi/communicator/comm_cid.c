@@ -21,6 +21,7 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -303,6 +304,7 @@ static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
     ompi_request_t *subreq;
     bool flag;
     int ret;
+    int participate = (context->newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED);
 
     if (OPAL_THREAD_TRYLOCK(&ompi_cid_lock)) {
         return ompi_comm_request_schedule_append (request, ompi_comm_allreduce_getnextcid, NULL, 0);
@@ -318,39 +320,47 @@ static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
     /**
      * This is the real algorithm described in the doc
      */
-    flag = false;
-    context->nextlocal_cid = mca_pml.pml_max_contextid;
-    for (unsigned int i = context->start ; i < mca_pml.pml_max_contextid ; ++i) {
-        flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, i,
-                                                     context->comm);
-        if (true == flag) {
-            context->nextlocal_cid = i;
-            break;
+    if( participate ){
+        flag = false;
+        context->nextlocal_cid = mca_pml.pml_max_contextid;
+        for (unsigned int i = context->start ; i < mca_pml.pml_max_contextid ; ++i) {
+            flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, i,
+                                                         context->comm);
+            if (true == flag) {
+                context->nextlocal_cid = i;
+                break;
+            }
         }
+    } else {
+        context->nextlocal_cid = 0;
     }
 
     ret = context->allreduce_fn (&context->nextlocal_cid, &context->nextcid, 1, MPI_MAX,
                                  context, &subreq);
+    /* there was a failure during non-blocking collective
+     * all we can do is abort
+     */
     if (OMPI_SUCCESS != ret) {
-        ompi_comm_cid_lowest_id = INT64_MAX;
-        OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-        return ret;
+        goto err_exit;
     }
 
-    if ((unsigned int) context->nextlocal_cid == mca_pml.pml_max_contextid) {
-        /* at least one peer ran out of CIDs */
-        if (flag) {
-            opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
-        }
-
-        ompi_comm_cid_lowest_id = INT64_MAX;
-        OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    if ( ((unsigned int) context->nextlocal_cid == mca_pml.pml_max_contextid) ) {
+        /* Our local CID space is out, others already aware (allreduce above) */
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto err_exit;
     }
     OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
     /* next we want to verify that the resulting commid is ok */
     return ompi_comm_request_schedule_append (request, ompi_comm_checkcid, &subreq, 1);
+err_exit:
+    if (participate && flag) {
+        opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
+    }
+    ompi_comm_cid_lowest_id = INT64_MAX;
+    OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+    return ret;
+
 }
 
 static int ompi_comm_checkcid (ompi_comm_request_t *request)
@@ -358,18 +368,22 @@ static int ompi_comm_checkcid (ompi_comm_request_t *request)
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
     ompi_request_t *subreq;
     int ret;
+    int participate = (context->newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED);
 
     if (OPAL_THREAD_TRYLOCK(&ompi_cid_lock)) {
         return ompi_comm_request_schedule_append (request, ompi_comm_checkcid, NULL, 0);
     }
 
-    context->flag = (context->nextcid == context->nextlocal_cid);
+    if( !participate ){
+        context->flag = 1;
+    } else {
+        context->flag = (context->nextcid == context->nextlocal_cid);
+        if ( participate && !context->flag) {
+            opal_pointer_array_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
 
-    if (!context->flag) {
-        opal_pointer_array_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
-
-        context->flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators,
-                                                              context->nextcid, context->comm);
+            context->flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators,
+                                                                  context->nextcid, context->comm);
+        }
     }
 
     ++context->iter;
@@ -377,22 +391,45 @@ static int ompi_comm_checkcid (ompi_comm_request_t *request)
     ret = context->allreduce_fn (&context->flag, &context->rflag, 1, MPI_MIN, context, &subreq);
     if (OMPI_SUCCESS == ret) {
         ompi_comm_request_schedule_append (request, ompi_comm_nextcid_check_flag, &subreq, 1);
+    } else {
+        if (participate && context->flag ) {
+            opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
+        }
+        ompi_comm_cid_lowest_id = INT64_MAX;
     }
 
     OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-
     return ret;
 }
 
 static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
 {
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
+    int participate = (context->newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED);
 
     if (OPAL_THREAD_TRYLOCK(&ompi_cid_lock)) {
         return ompi_comm_request_schedule_append (request, ompi_comm_nextcid_check_flag, NULL, 0);
     }
 
     if (1 == context->rflag) {
+        if( !participate ) {
+            /* we need to provide something sane here
+             * but we cannot use `nextcid` as we may have it
+             * in-use, go ahead with next locally-available CID
+             */
+            context->nextlocal_cid = mca_pml.pml_max_contextid;
+            for (unsigned int i = context->start ; i < mca_pml.pml_max_contextid ; ++i) {
+                bool flag;
+                flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, i,
+                                                                context->comm);
+                if (true == flag) {
+                    context->nextlocal_cid = i;
+                    break;
+                }
+            }
+            context->nextcid = context->nextlocal_cid;
+        }
+
         /* set the according values to the newcomm */
         context->newcomm->c_contextid = context->nextcid;
         opal_pointer_array_set_item (&ompi_mpi_communicators, context->nextcid, context->newcomm);
@@ -405,7 +442,7 @@ static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
         return OMPI_SUCCESS;
     }
 
-    if (1 == context->flag) {
+    if (participate && (1 == context->flag)) {
         /* we could use this cid, but other don't agree */
         opal_pointer_array_set_item (&ompi_mpi_communicators, context->nextcid, NULL);
         context->start = context->nextcid + 1; /* that's where we can start the next round */
