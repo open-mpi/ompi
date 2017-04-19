@@ -45,15 +45,16 @@ int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
         return OMPI_SUCCESS;
     }
 
-    pData = ompi_datatype_create( oldType->super.desc.used + 2 );
     if( (bLength == stride) || (1 >= count) ) {  /* the elements are contiguous */
+        pData = ompi_datatype_create( oldType->super.desc.used + 2 );
         ompi_datatype_add( pData, oldType, count * bLength, 0, extent );
     } else {
         if( 1 == bLength ) {
+            pData = ompi_datatype_create( oldType->super.desc.used + 2 );
             ompi_datatype_add( pData, oldType, count, 0, extent * stride );
         } else {
-            ompi_datatype_add( pData, oldType, bLength, 0, extent );
-            pTempData = pData;
+            pTempData = ompi_datatype_create_temporary( oldType->super.desc.used + 2 ); 
+            ompi_datatype_add( pTempData , oldType, bLength, 0, extent );
             pData = ompi_datatype_create( oldType->super.desc.used + 2 + 2 );
             ompi_datatype_add( pData, pTempData, count, 0, extent * stride );
             OBJ_RELEASE( pTempData );
@@ -76,15 +77,15 @@ int32_t ompi_datatype_create_hvector( int count, int bLength, OPAL_PTRDIFF_TYPE 
         return OMPI_SUCCESS;
     }
 
-    pTempData = ompi_datatype_create( oldType->super.desc.used + 2 );
     if( ((extent * bLength) == stride) || (1 >= count) ) {  /* contiguous */
-        pData = pTempData;
+        pData = ompi_datatype_create( oldType->super.desc.used + 2 );
         ompi_datatype_add( pData, oldType, count * bLength, 0, extent );
     } else {
         if( 1 == bLength ) {
-            pData = pTempData;
+            pData = ompi_datatype_create( oldType->super.desc.used + 2 );
             ompi_datatype_add( pData, oldType, count, 0, stride );
         } else {
+            pTempData =  ompi_datatype_create_temporary( oldType->super.desc.used + 2 );
             ompi_datatype_add( pTempData, oldType, bLength, 0, extent );
             pData = ompi_datatype_create( oldType->super.desc.used + 2 + 2 );
             ompi_datatype_add( pData, pTempData, count, 0, stride );

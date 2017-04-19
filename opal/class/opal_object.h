@@ -257,6 +257,7 @@ struct opal_object_t {
  * @return              Pointer to the object
  */
 static inline opal_object_t *opal_obj_new(opal_class_t * cls);
+static inline opal_object_t *opal_obj_new_constructor(opal_class_t * cls, opal_construct_t custom_constructor);
 #if OPAL_ENABLE_DEBUG
 static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* file, int line)
 {
@@ -266,11 +267,23 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
     object->cls_init_lineno = line;
     return object;
 }
+static inline opal_object_t *opal_obj_new_constructor_debug(opal_class_t* type, opal_construct_t custom_constructor, const char* file, int line)
+{
+    opal_object_t* object = opal_obj_new_constructor(type, custom_constructor);
+    object->obj_magic_id = OPAL_OBJ_MAGIC_ID;
+    object->cls_init_file_name = file;
+    object->cls_init_lineno = line;
+    return object;
+}
 #define OBJ_NEW(type)                                   \
     ((type *)opal_obj_new_debug(OBJ_CLASS(type), __FILE__, __LINE__))
+#define OBJ_NEW_CONSTRUCTOR(type, constructor)          \
+    ((type *)opal_obj_new_constructor_debug(OBJ_CLASS(type), constructor, __FILE__, __LINE__))
 #else
 #define OBJ_NEW(type)                                   \
     ((type *) opal_obj_new(OBJ_CLASS(type)))
+#define OBJ_NEW_CONSTRUCTOR(type, constructor)          \
+    ((type *) opal_obj_new_constructor(OBJ_CLASS(type), constructor))
 #endif  /* OPAL_ENABLE_DEBUG */
 
 /**
@@ -442,6 +455,23 @@ static inline void opal_obj_run_constructors(opal_object_t * object)
     }
 }
 
+/**
+ * Run the hierarchy of class constructors for this object, in a
+ * parent-first order, except for the base class for which it calls the custom_constructor.
+ */
+static inline void opal_obj_run_custom_constructors(opal_object_t * object, opal_construct_t custom_constructor)
+{
+    opal_construct_t* cls_construct;
+
+    assert(NULL != object->obj_class);
+
+    cls_construct = object->obj_class->cls_construct_array;
+    while( NULL != *cls_construct && NULL != *(cls_construct+1)) {
+        (*cls_construct)(object);
+        cls_construct++;
+    }
+    (custom_constructor)(object);
+}
 
 /**
  * Run the hierarchy of class destructors for this object, in a
@@ -496,6 +526,26 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
     return object;
 }
 
+static inline opal_object_t *opal_obj_new_constructor(opal_class_t * cls, opal_construct_t custom_constructor)
+{
+    opal_object_t *object;
+    assert(cls->cls_sizeof >= sizeof(opal_object_t));
+
+#if OPAL_WANT_MEMCHECKER
+    object = (opal_object_t *) calloc(1, cls->cls_sizeof);
+#else
+    object = (opal_object_t *) malloc(cls->cls_sizeof);
+#endif
+    if (opal_class_init_epoch != cls->cls_initialized) {
+        opal_class_initialize(cls);
+    }
+    if (NULL != object) {
+        object->obj_class = cls;
+        object->obj_reference_count = 1;
+        opal_obj_run_custom_constructors(object, custom_constructor);
+    }
+    return object;
+}
 
 /**
  * Atomically update the object's reference count by some increment.

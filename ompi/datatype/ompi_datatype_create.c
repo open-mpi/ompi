@@ -26,16 +26,27 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/attribute/attribute.h"
 
-static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
+__opal_attribute_always_inline__  static void __ompi_datatype_base_allocate( ompi_datatype_t* datatype )
 {
     datatype->args               = NULL;
-    datatype->d_f_to_c_index     = opal_pointer_array_add(&ompi_datatype_f_to_c_table, datatype);
     /* Later generated datatypes will have their id according to the Fortran ID, as ALL types are registered */
     datatype->id                 = datatype->d_f_to_c_index;
     datatype->d_keyhash          = NULL;
     datatype->name[0]            = '\0';
     datatype->packed_description = NULL;
     datatype->pml_data           = 0;
+}
+
+static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
+{
+    datatype->d_f_to_c_index     = opal_pointer_array_add(&ompi_datatype_f_to_c_table, datatype);
+    __ompi_datatype_base_allocate(datatype);
+}
+
+static void __ompi_datatype_temporary_allocate( ompi_datatype_t* datatype )
+{
+    datatype->d_f_to_c_index     = -1;
+    __ompi_datatype_base_allocate(datatype);
 }
 
 static void __ompi_datatype_release(ompi_datatype_t * datatype)
@@ -48,8 +59,10 @@ static void __ompi_datatype_release(ompi_datatype_t * datatype)
         free( datatype->packed_description );
         datatype->packed_description = NULL;
     }
-    if( NULL != opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, datatype->d_f_to_c_index) ){
-        opal_pointer_array_set_item( &ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
+    if(  datatype->d_f_to_c_index != -1) {
+        if( NULL != opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, datatype->d_f_to_c_index) ){
+            opal_pointer_array_set_item( &ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
+        }
     }
     /* any pending attributes ? */
     if (NULL != datatype->d_keyhash) {
@@ -66,6 +79,22 @@ ompi_datatype_t * ompi_datatype_create( int32_t expectedSize )
 {
     int ret;
     ompi_datatype_t * datatype = (ompi_datatype_t*)OBJ_NEW(ompi_datatype_t);
+
+    ret = opal_datatype_create_desc( &(datatype->super), expectedSize);
+    if (OPAL_SUCCESS != ret)
+        return NULL;
+
+    return datatype;
+}
+
+/**
+ * Creates ompi datatype without adding it to the ompi_datatype_f_to_c_table, 
+ * this can be useful whenever the datatype is just a temporary value.
+ */
+ompi_datatype_t * ompi_datatype_create_temporary( int32_t expectedSize )
+{
+    int ret;
+    ompi_datatype_t * datatype = (ompi_datatype_t*)OBJ_NEW_CONSTRUCTOR(ompi_datatype_t, __ompi_datatype_temporary_allocate);
 
     ret = opal_datatype_create_desc( &(datatype->super), expectedSize);
     if (OPAL_SUCCESS != ret)
