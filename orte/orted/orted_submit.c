@@ -331,7 +331,7 @@ int orte_submit_init(int argc, char *argv[],
             fprintf(stderr, "%s has detected an attempt to run as root.\n\n", orte_basename);
         }
 
-        fprintf(stderr, "Running at root is *strongly* discouraged as any mistake (e.g., in\n");
+        fprintf(stderr, "Running as root is *strongly* discouraged as any mistake (e.g., in\n");
         fprintf(stderr, "defining TMPDIR) or bug can result in catastrophic damage to the OS\n");
         fprintf(stderr, "file system, leaving your system in an unusable state.\n\n");
 
