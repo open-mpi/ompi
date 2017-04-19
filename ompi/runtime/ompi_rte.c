@@ -1097,6 +1097,14 @@ void ompi_rte_wait_for_debugger(void)
         return;
     }
 
+    
+    /* Setup the defaults in case we attach a
+     * debugger only at a later point in time
+     */
+    ompi_debugger_setup_defaults();
+
+    ompi_debugger_setup_dlls();
+
     /* check for the "mpi-init" breakpoint */
     ompi_rte_breakpoint("mpi-init");
 }

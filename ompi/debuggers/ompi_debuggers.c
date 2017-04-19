@@ -79,7 +79,8 @@
 #if defined(OMPI_MSGQ_DLL)
 /* This variable is old/deprecated -- the mpimsgq_dll_locations[]
    method is preferred because it's more flexible */
-OMPI_DECLSPEC char MPIR_dll_name[] = OMPI_MSGQ_DLL;
+#define MAX_DLL_NAME_LENGTH 2048
+OMPI_DECLSPEC char MPIR_dll_name[MAX_DLL_NAME_LENGTH] = OMPI_MSGQ_DLL;
 #endif  /* defined(OMPI_MSGQ_DLL) */
 OMPI_DECLSPEC char **mpidbg_dll_locations = NULL;
 OMPI_DECLSPEC char **mpimsgq_dll_locations = NULL;
@@ -159,6 +160,19 @@ static void check(char *dir, char *file, char **locations)
     free(str);
 }
 
+/**
+ * The initial setting of MPIR_dll_name is
+ * <libdir>/<OPAL_DYN_LIB_PREFIX>/libompi_dbg_msgq.so
+ * but we'd rather have a dynamic setting.
+ * ompi_debugger_dll_path should be the right dir and
+ * OMPI_MSGQ_DLL_PREFIX.so should be the library
+ */
+extern void
+ompi_debugger_setup_defaults(void)
+{
+    snprintf(MPIR_dll_name, MAX_DLL_NAME_LENGTH, "%s/%s.so",
+        opal_install_dirs.opallibdir, OMPI_MSGQ_DLL_PREFIX);
+}
 
 extern void
 ompi_debugger_setup_dlls(void)
