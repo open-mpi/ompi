@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -869,7 +869,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                 if (aggregator == rank) {
                     data->blocklen_per_process[data->n][data->disp_index[data->n] - 1] = data->bytes_remaining;
                     data->displs_per_process[data->n][data->disp_index[data->n] - 1] =
-                        (OPAL_PTRDIFF_TYPE)data->global_iov_array[data->sorted[data->current_index]].iov_base +
+                        (ptrdiff_t)data->global_iov_array[data->sorted[data->current_index]].iov_base +
                         (data->global_iov_array[data->sorted[data->current_index]].iov_len
                          - data->bytes_remaining);
                     
@@ -897,7 +897,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                 if (aggregator == rank) {
                     data->blocklen_per_process[data->n][data->disp_index[data->n] - 1] = data->bytes_to_write_in_cycle;
                     data->displs_per_process[data->n][data->disp_index[data->n] - 1] =
-                        (OPAL_PTRDIFF_TYPE)data->global_iov_array[data->sorted[data->current_index]].iov_base +
+                        (ptrdiff_t)data->global_iov_array[data->sorted[data->current_index]].iov_base +
                         (data->global_iov_array[data->sorted[data->current_index]].iov_len
                          - data->bytes_remaining);
                 }
@@ -918,7 +918,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                 if (aggregator == rank) {
                     data->blocklen_per_process[data->n][data->disp_index[data->n] - 1] = data->bytes_to_write_in_cycle;
                     data->displs_per_process[data->n][data->disp_index[data->n] - 1] =
-                        (OPAL_PTRDIFF_TYPE)data->global_iov_array[data->sorted[data->current_index]].iov_base ;
+                        (ptrdiff_t)data->global_iov_array[data->sorted[data->current_index]].iov_base ;
                 }
                 if (data->procs_in_group[data->n] == rank) {
                     bytes_sent += data->bytes_to_write_in_cycle;
@@ -934,7 +934,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                 if (aggregator == rank) {
                     data->blocklen_per_process[data->n][data->disp_index[data->n] - 1] =
                         data->global_iov_array[data->sorted[data->current_index]].iov_len;
-                    data->displs_per_process[data->n][data->disp_index[data->n] - 1] = (OPAL_PTRDIFF_TYPE)
+                    data->displs_per_process[data->n][data->disp_index[data->n] - 1] = (ptrdiff_t)
                         data->global_iov_array[data->sorted[data->current_index]].iov_base;
                     
                     /*realloc for next blocklength
@@ -1142,7 +1142,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
         /* allocate a send buffer and copy the data that needs
            to be sent into it in case the data is non-contigous
            in memory */
-        OPAL_PTRDIFF_TYPE mem_address;
+        ptrdiff_t mem_address;
         size_t remaining = 0;
         size_t temp_position = 0;
         
@@ -1156,7 +1156,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
         remaining = bytes_sent;
         
         while (remaining) {
-            mem_address = (OPAL_PTRDIFF_TYPE)
+            mem_address = (ptrdiff_t)
                 (data->decoded_iov[data->iov_index].iov_base) + data->current_position;
             
             if (remaining >=
@@ -1266,7 +1266,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
         for (i=0 ; i<num_of_io_entries ; i++) {
             printf(" ADDRESS: %p  OFFSET: %ld   LENGTH: %ld\n",
                    io_array[i].memory_address,
-                   (OPAL_PTRDIFF_TYPE)io_array[i].offset,
+                   (ptrdiff_t)io_array[i].offset,
                    io_array[i].length);
         }
         

@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,7 +51,7 @@ uint32_t remote_arch = 0xffffffff;
  */
 static size_t compute_memory_size( opal_datatype_t const * const pdt, int count )
 {
-    OPAL_PTRDIFF_TYPE extent, true_lb, true_extent;
+    ptrdiff_t extent, true_lb, true_extent;
 
     opal_datatype_type_extent( pdt, &extent );
     opal_datatype_get_true_extent( pdt, &true_lb, &true_extent );
@@ -140,7 +142,7 @@ static int test_upper( unsigned int length )
  */
 static int local_copy_ddt_count( opal_datatype_t const * const pdt, int count )
 {
-    OPAL_PTRDIFF_TYPE lb, extent;
+    ptrdiff_t lb, extent;
     size_t malloced_size;
     char *odst, *osrc;
     void *pdst, *psrc;
@@ -202,7 +204,7 @@ local_copy_with_convertor_2datatypes( opal_datatype_t const * const send_type, i
                                       opal_datatype_t const * const recv_type, int recv_count,
                                       int chunk )
 {
-    OPAL_PTRDIFF_TYPE send_lb, send_extent, recv_lb, recv_extent;
+    ptrdiff_t send_lb, send_extent, recv_lb, recv_extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
     char *odst, *osrc;
     opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
@@ -306,7 +308,7 @@ local_copy_with_convertor_2datatypes( opal_datatype_t const * const send_type, i
 
 static int local_copy_with_convertor( opal_datatype_t const * const pdt, int count, int chunk )
 {
-    OPAL_PTRDIFF_TYPE lb, extent;
+    ptrdiff_t lb, extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
     char *odst, *osrc;
     opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;

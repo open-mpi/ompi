@@ -20,7 +20,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
-# Copyright (c) 2014-2016 Research Organization for Information Science
+# Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -420,6 +420,8 @@ if test "$ac_cv_type_ssize_t" = yes ; then
 fi
 if test "$ac_cv_type_ptrdiff_t" = yes; then
     AC_CHECK_SIZEOF(ptrdiff_t)
+else
+    AC_MSG_ERROR([ptrdiff_t type is not available, this is required by C99 standard.  Cannot continue])
 fi
 AC_CHECK_SIZEOF(wchar_t)
 
@@ -781,27 +783,6 @@ AC_INCLUDES_DEFAULT
 #include <sys/statvfs.h>
 #endif
 ])
-
-#
-# Check for ptrdiff type.  Yes, there are platforms where
-# sizeof(void*) != sizeof(long) (64 bit Windows, apparently).
-#
-AC_MSG_CHECKING([for pointer diff type])
-if test $ac_cv_type_ptrdiff_t = yes ; then
-    opal_ptrdiff_t="ptrdiff_t"
-    opal_ptrdiff_size=$ac_cv_sizeof_ptrdiff_t
-elif test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long ; then
-    opal_ptrdiff_t="long"
-    opal_ptrdiff_size=$ac_cv_sizeof_long
-elif test $ac_cv_type_long_long = yes && test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
-    opal_ptrdiff_t="long long"
-    opal_ptrdiff_size=$ac_cv_sizeof_long_long
-else
-    AC_MSG_ERROR([Could not find datatype to emulate ptrdiff_t.  Cannot continue])
-fi
-AC_DEFINE_UNQUOTED([OPAL_PTRDIFF_TYPE], [$opal_ptrdiff_t],
-    [type to use for ptrdiff_t])
-AC_MSG_RESULT([$opal_ptrdiff_t (size: $opal_ptrdiff_size)])
 
 #
 # Find corresponding types for MPI_Aint, MPI_Count, and MPI_Offset.

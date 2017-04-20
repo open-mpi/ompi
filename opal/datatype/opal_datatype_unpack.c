@@ -12,7 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,8 +73,8 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
     uint32_t iov_count, i;
     size_t bConverted, remaining, length, initial_bytes_converted = pConv->bConverted;
     dt_stack_t* stack = pConv->pStack;
-    OPAL_PTRDIFF_TYPE extent = pData->ub - pData->lb;
-    OPAL_PTRDIFF_TYPE initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
+    ptrdiff_t extent = pData->ub - pData->lb;
+    ptrdiff_t initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
     DO_DEBUG( opal_output( 0, "unpack_homogeneous_contig( pBaseBuf %p, iov_count %d )\n",
                            (void*)pConv->pBaseBuf, *out_size ); );
@@ -89,7 +91,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
         bConverted = remaining; /* how much will get unpacked this time */
         user_memory = pConv->pBaseBuf + initial_displ;
 
-        if( (OPAL_PTRDIFF_TYPE)pData->size == extent ) {
+        if( (ptrdiff_t)pData->size == extent ) {
             user_memory += pConv->bConverted;
             DO_DEBUG( opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %lu\n",
                                    (void*)user_memory, (void*)packed_buffer, (unsigned long)remaining ); );
@@ -177,7 +179,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
 static inline uint32_t
 opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pElem,
                               unsigned char* partial_data,
-                              OPAL_PTRDIFF_TYPE start_position, OPAL_PTRDIFF_TYPE length,
+                              ptrdiff_t start_position, ptrdiff_t length,
                               unsigned char** user_buffer )
 {
     char unused_byte = 0x7F, saved_data[16];
@@ -377,7 +379,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                                        (long)pStack->disp, (unsigned long)iov_len_local ); );
             }
             if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
-                OPAL_PTRDIFF_TYPE local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr;
+                ptrdiff_t local_disp = (ptrdiff_t)conv_ptr;
                 if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                     UNPACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc,
                                             iov_ptr, conv_ptr, iov_len_local );
@@ -387,7 +389,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                     }
                     /* Save the stack with the correct last_count value. */
                 }
-                local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr - local_disp;
+                local_disp = (ptrdiff_t)conv_ptr - local_disp;
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                             pStack->disp + local_disp);
                 pos_desc++;
@@ -448,7 +450,7 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
     uint32_t iov_count;
 
     const opal_convertor_master_t* master = pConvertor->master;
-    OPAL_PTRDIFF_TYPE advance;       /* number of bytes that we should advance the buffer */
+    ptrdiff_t advance;       /* number of bytes that we should advance the buffer */
     int32_t rc;
 
     DO_DEBUG( opal_output( 0, "opal_convertor_general_unpack( %p, {%p, %lu}, %u )\n",

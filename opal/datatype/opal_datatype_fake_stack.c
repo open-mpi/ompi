@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,7 +80,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
     if( (pConvertor->flags & CONVERTOR_HOMOGENEOUS) && (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) ) {
         /* Special case for contiguous datatypes */
         int32_t cnt = (int32_t)(starting_point / pData->size);
-        OPAL_PTRDIFF_TYPE extent = pData->ub - pData->lb;
+        ptrdiff_t extent = pData->ub - pData->lb;
 
         loop_length = GET_FIRST_NON_LOOP( pElems );
         pStack[0].disp  = pElems[loop_length].elem.disp;
@@ -90,7 +92,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
         pStack[1].disp     = pStack[0].disp;
         pStack[1].count    = pData->size - cnt;
 
-        if( (OPAL_PTRDIFF_TYPE)pData->size == extent ) { /* all elements are contiguous */
+        if( (ptrdiff_t)pData->size == extent ) { /* all elements are contiguous */
             pStack[1].disp += starting_point;
         } else {  /* each is contiguous but there are gaps inbetween */
             pStack[1].disp += (pConvertor->count - pStack[0].count) * extent + cnt;
@@ -122,7 +124,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
     while( pos_desc < (int32_t)pConvertor->use_desc->used ) {
         if( OPAL_DATATYPE_END_LOOP == pElems->elem.common.type ) { /* end of the current loop */
             ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)pElems;
-            OPAL_PTRDIFF_TYPE extent;
+            ptrdiff_t extent;
 
             if( (loop_length * pStack->count) > resting_place ) {
                 /* We will stop somewhere on this loop. To avoid moving inside the loop

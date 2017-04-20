@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
@@ -353,10 +353,10 @@ static inline int memchecker_datatype(MPI_Datatype type)
     opal_memchecker_base_isdefined (&type->super.id, sizeof(uint16_t));
     opal_memchecker_base_isdefined (&type->super.bdt_used, sizeof(uint32_t));
     opal_memchecker_base_isdefined (&type->super.size, sizeof(size_t));
-    opal_memchecker_base_isdefined (&type->super.true_lb, sizeof(OPAL_PTRDIFF_T));
-    opal_memchecker_base_isdefined (&type->super.true_ub, sizeof(OPAL_PTRDIFF_T));
-    opal_memchecker_base_isdefined (&type->super.lb, sizeof(OPAL_PTRDIFF_T));
-    opal_memchecker_base_isdefined (&type->super.ub, sizeof(OPAL_PTRDIFF_T));
+    opal_memchecker_base_isdefined (&type->super.true_lb, sizeof(ptrdiff_t));
+    opal_memchecker_base_isdefined (&type->super.true_ub, sizeof(ptrdiff_t));
+    opal_memchecker_base_isdefined (&type->super.lb, sizeof(ptrdiff_t));
+    opal_memchecker_base_isdefined (&type->super.ub, sizeof(ptrdiff_t));
     opal_memchecker_base_isdefined (&type->super.align, sizeof(uint32_t));
     opal_memchecker_base_isdefined (&type->super.nbElems, sizeof(uint32_t));
     /* name... */

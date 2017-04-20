@@ -4,9 +4,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,9 +40,9 @@
  */
 #define COPY_TYPE( TYPENAME, TYPE, COUNT )                                              \
 static int copy_##TYPENAME( opal_convertor_t *pConvertor, uint32_t count,               \
-                            char* from, size_t from_len, OPAL_PTRDIFF_TYPE from_extent, \
-                            char* to, size_t to_len, OPAL_PTRDIFF_TYPE to_extent,       \
-                            OPAL_PTRDIFF_TYPE *advance)                                 \
+                            char* from, size_t from_len, ptrdiff_t from_extent, \
+                            char* to, size_t to_len, ptrdiff_t to_extent,       \
+                            ptrdiff_t *advance)                                 \
 {                                                                                       \
     uint32_t i;                                                                         \
     size_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */                        \
@@ -61,8 +61,8 @@ static int copy_##TYPENAME( opal_convertor_t *pConvertor, uint32_t count,       
         DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
               #TYPE, count, from, from_len, to, to_len );                               \
                                                                                         \
-    if( (from_extent == (OPAL_PTRDIFF_TYPE)local_TYPE_size) &&                          \
-        (to_extent == (OPAL_PTRDIFF_TYPE)remote_TYPE_size) ) {                          \
+    if( (from_extent == (ptrdiff_t)local_TYPE_size) &&                          \
+        (to_extent == (ptrdiff_t)remote_TYPE_size) ) {                          \
         /* copy of contigous data at both source and destination */                     \
         MEMCPY( to, from, count * local_TYPE_size );                                    \
     } else {                                                                            \
@@ -93,9 +93,9 @@ static int copy_##TYPENAME( opal_convertor_t *pConvertor, uint32_t count,       
  */
 #define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                                          \
 static int copy_##TYPENAME##_##COUNT( opal_convertor_t *pConvertor, uint32_t count,       \
-                                      char* from, size_t from_len, OPAL_PTRDIFF_TYPE from_extent, \
-                                      char* to, size_t to_len, OPAL_PTRDIFF_TYPE to_extent,       \
-                                      OPAL_PTRDIFF_TYPE *advance )              \
+                                      char* from, size_t from_len, ptrdiff_t from_extent, \
+                                      char* to, size_t to_len, ptrdiff_t to_extent,       \
+                                      ptrdiff_t *advance )              \
 {                                                                               \
     uint32_t i;                                                                 \
     size_t remote_TYPE_size = (size_t)(COUNT); /* TODO */                       \
@@ -113,8 +113,8 @@ static int copy_##TYPENAME##_##COUNT( opal_convertor_t *pConvertor, uint32_t cou
         DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
               #TYPENAME, count, from, from_len, to, to_len );                   \
                                                                                 \
-    if( (from_extent == (OPAL_PTRDIFF_TYPE)local_TYPE_size) &&                  \
-        (to_extent == (OPAL_PTRDIFF_TYPE)remote_TYPE_size) ) {                  \
+    if( (from_extent == (ptrdiff_t)local_TYPE_size) &&                  \
+        (to_extent == (ptrdiff_t)remote_TYPE_size) ) {                  \
         MEMCPY( to, from, count * local_TYPE_size );                            \
     } else {                                                                    \
         for( i = 0; i < count; i++ ) {                                          \

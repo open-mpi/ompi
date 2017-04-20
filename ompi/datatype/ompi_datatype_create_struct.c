@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,11 +28,11 @@
 
 #include "ompi/datatype/ompi_datatype.h"
 
-int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
+int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
                                      ompi_datatype_t* const * pTypes, ompi_datatype_t** newType )
 {
     int i;
-    OPAL_PTRDIFF_TYPE disp = 0, endto, lastExtent, lastDisp;
+    ptrdiff_t disp = 0, endto, lastExtent, lastDisp;
     int lastBlock;
     ompi_datatype_t *pdt, *lastType;
 

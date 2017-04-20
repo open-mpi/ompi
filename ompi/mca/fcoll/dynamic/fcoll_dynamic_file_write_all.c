@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -101,7 +101,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     int my_aggregator=-1;
     bool sendbuf_is_contiguous = false;
     size_t ftype_size;
-    OPAL_PTRDIFF_TYPE ftype_extent, lb;
+    ptrdiff_t ftype_extent, lb;
 
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
@@ -117,7 +117,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     /**************************************************************************
      ** 1.  In case the data is not contigous in memory, decode it into an iovec
      **************************************************************************/
-    if ( ( ftype_extent == (OPAL_PTRDIFF_TYPE) ftype_size)             &&
+    if ( ( ftype_extent == (ptrdiff_t) ftype_size)             &&
          opal_datatype_is_contiguous_memory_layout(&datatype->super,1) &&
          0 == lb ) {
         sendbuf_is_contiguous = true;
@@ -523,7 +523,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
                     if (my_aggregator == fh->f_rank) {
                         blocklen_per_process[n][disp_index[n] - 1] = bytes_remaining;
                         displs_per_process[n][disp_index[n] - 1] =
-                            (OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base +
+                            (ptrdiff_t)global_iov_array[sorted[current_index]].iov_base +
                             (global_iov_array[sorted[current_index]].iov_len
                              - bytes_remaining);
 
@@ -551,7 +551,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
                     if (my_aggregator == fh->f_rank) {
                         blocklen_per_process[n][disp_index[n] - 1] = bytes_to_write_in_cycle;
                         displs_per_process[n][disp_index[n] - 1] =
-                            (OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base +
+                            (ptrdiff_t)global_iov_array[sorted[current_index]].iov_base +
                             (global_iov_array[sorted[current_index]].iov_len
                              - bytes_remaining);
                     }
@@ -572,7 +572,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
                     if (my_aggregator == fh->f_rank) {
                         blocklen_per_process[n][disp_index[n] - 1] = bytes_to_write_in_cycle;
                         displs_per_process[n][disp_index[n] - 1] =
-                            (OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base ;
+                            (ptrdiff_t)global_iov_array[sorted[current_index]].iov_base ;
                     }
                     if (fh->f_procs_in_group[n] == fh->f_rank) {
                         bytes_sent += bytes_to_write_in_cycle;
@@ -588,7 +588,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
                     if (my_aggregator == fh->f_rank) {
                         blocklen_per_process[n][disp_index[n] - 1] =
                             global_iov_array[sorted[current_index]].iov_len;
-                        displs_per_process[n][disp_index[n] - 1] = (OPAL_PTRDIFF_TYPE)
+                        displs_per_process[n][disp_index[n] - 1] = (ptrdiff_t)
                             global_iov_array[sorted[current_index]].iov_base;
 
                         /*realloc for next blocklength
@@ -798,7 +798,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
             /* allocate a send buffer and copy the data that needs
                to be sent into it in case the data is non-contigous
                in memory */
-            OPAL_PTRDIFF_TYPE mem_address;
+            ptrdiff_t mem_address;
             size_t remaining = 0;
             size_t temp_position = 0;
 
@@ -812,7 +812,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
             remaining = bytes_sent;
 
             while (remaining) {
-                mem_address = (OPAL_PTRDIFF_TYPE)
+                mem_address = (ptrdiff_t)
                     (decoded_iov[iov_index].iov_base) + current_position;
 
                 if (remaining >=
@@ -946,7 +946,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
             for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
                 printf(" ADDRESS: %p  OFFSET: %ld   LENGTH: %ld\n",
                        fh->f_io_array[i].memory_address,
-                       (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].offset,
+                       (ptrdiff_t)fh->f_io_array[i].offset,
                        fh->f_io_array[i].length);
             }
 

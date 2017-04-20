@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -237,7 +237,7 @@ struct mca_io_ompio_file_t {
     size_t            f_position_in_file_view; /* in bytes */
     size_t            f_total_bytes; /* total bytes read/written within 1 Fview*/
     int               f_index_in_file_view;
-    OPAL_PTRDIFF_TYPE f_view_extent;
+    ptrdiff_t f_view_extent;
     size_t            f_view_size;
     ompi_datatype_t  *f_etype;
     ompi_datatype_t  *f_filetype;

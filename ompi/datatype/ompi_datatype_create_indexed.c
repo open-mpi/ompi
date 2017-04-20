@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -35,7 +35,7 @@ int32_t ompi_datatype_create_indexed( int count, const int* pBlockLength, const 
 {
     ompi_datatype_t* pdt;
     int i, dLength, endat, disp;
-    OPAL_PTRDIFF_TYPE extent;
+    ptrdiff_t extent;
 
     if( 0 == count ) {
         return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
@@ -66,12 +66,12 @@ int32_t ompi_datatype_create_indexed( int count, const int* pBlockLength, const 
 }
 
 
-int32_t ompi_datatype_create_hindexed( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
+int32_t ompi_datatype_create_hindexed( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
                                        const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t* pdt;
     int i, dLength;
-    OPAL_PTRDIFF_TYPE extent, disp, endat;
+    ptrdiff_t extent, disp, endat;
 
     if( 0 == count ) {
         *newType = ompi_datatype_create( 0 );
@@ -109,7 +109,7 @@ int32_t ompi_datatype_create_indexed_block( int count, int bLength, const int* p
 {
     ompi_datatype_t* pdt;
     int i, dLength, endat, disp;
-    OPAL_PTRDIFF_TYPE extent;
+    ptrdiff_t extent;
 
     ompi_datatype_type_extent( oldType, &extent );
     if( (count == 0) || (bLength == 0) ) {
@@ -143,12 +143,12 @@ int32_t ompi_datatype_create_indexed_block( int count, int bLength, const int* p
     return OMPI_SUCCESS;
 }
 
-int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const OPAL_PTRDIFF_TYPE* pDisp,
+int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const ptrdiff_t* pDisp,
                                              const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t* pdt;
     int i, dLength;
-    OPAL_PTRDIFF_TYPE extent, disp, endat;
+    ptrdiff_t extent, disp, endat;
 
     ompi_datatype_type_extent( oldType, &extent );
     if( (count == 0) || (bLength == 0) ) {

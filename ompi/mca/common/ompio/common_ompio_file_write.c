@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -329,7 +329,7 @@ int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cy
                                       size_t bytes_per_cycle, int max_data, uint32_t iov_count,
                                       struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw )
 {
-    OPAL_PTRDIFF_TYPE disp;
+    ptrdiff_t disp;
     int block = 1;
     size_t total_bytes_written = *tbw;  /* total bytes that have been written*/
     size_t bytes_to_write_in_cycle = 0; /* left to be written in a cycle*/
@@ -374,7 +374,7 @@ int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cy
 	    i = i + 1;
 	}
 
-	disp = (OPAL_PTRDIFF_TYPE)decoded_iov[i].iov_base +
+	disp = (ptrdiff_t)decoded_iov[i].iov_base +
 	    (total_bytes_written - sum_previous_counts);
 	fh->f_io_array[k].memory_address = (IOVBASE_TYPE *)disp;
 
@@ -404,7 +404,7 @@ int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cy
 	    }
 	}
 
-	disp = (OPAL_PTRDIFF_TYPE)fh->f_decoded_iov[j].iov_base +
+	disp = (ptrdiff_t)fh->f_decoded_iov[j].iov_base +
 	    (fh->f_total_bytes - sum_previous_length);
 	fh->f_io_array[k].offset = (IOVBASE_TYPE *)(intptr_t)(disp + fh->f_offset);
 
