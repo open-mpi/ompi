@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -27,11 +27,11 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 /*
  *	allgather_inter
@@ -51,7 +51,6 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
     int rank, root = 0, size, rsize, err = OMPI_SUCCESS;
     char *ptmp_free = NULL, *ptmp = NULL;
     ptrdiff_t gap, span;
-    ompi_request_t *req[2];
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm->c_local_comm);
@@ -77,22 +76,11 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
 
     if (rank == root) {
 	/* Do a send-recv between the two root procs. to avoid deadlock */
-        err = MCA_PML_CALL(irecv(rbuf, rcount*rsize, rdtype, 0,
-                                 MCA_COLL_BASE_TAG_ALLGATHER, comm,
-                                 &(req[0])));
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-        }
-
-        err = MCA_PML_CALL(isend(ptmp, scount*size, sdtype, 0,
-                                 MCA_COLL_BASE_TAG_ALLGATHER,
-                                 MCA_PML_BASE_SEND_STANDARD,
-                                 comm, &(req[1])));
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-        }
-
-        err = ompi_request_wait_all(2, req, MPI_STATUSES_IGNORE);
+        err = ompi_coll_base_sendrecv_actual(ptmp, scount*size, sdtype, 0,
+                                             MCA_COLL_BASE_TAG_ALLGATHER,
+                                             rbuf, rcount*rsize, rdtype, 0,
+                                             MCA_COLL_BASE_TAG_ALLGATHER,
+                                             comm, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != err) {
             goto exit;
         }

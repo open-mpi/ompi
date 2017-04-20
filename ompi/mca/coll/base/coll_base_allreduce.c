@@ -135,7 +135,6 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     int ret, line, rank, size, adjsize, remote, distance;
     int newrank, newremote, extra_ranks;
     char *tmpsend = NULL, *tmprecv = NULL, *tmpswap = NULL, *inplacebuf_free = NULL, *inplacebuf;
-    ompi_request_t *reqs[2] = {NULL, NULL};
     ptrdiff_t span, gap;
 
     size = ompi_comm_size(comm);
@@ -215,14 +214,11 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
             (newremote * 2 + 1):(newremote + extra_ranks);
 
         /* Exchange the data */
-        ret = MCA_PML_CALL(irecv(tmprecv, count, dtype, remote,
-                                 MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[0]));
-        if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-        ret = MCA_PML_CALL(isend(tmpsend, count, dtype, remote,
-                                 MCA_COLL_BASE_TAG_ALLREDUCE,
-                                 MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
-        if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-        ret = ompi_request_wait_all(2, reqs, MPI_STATUSES_IGNORE);
+        ret = ompi_coll_base_sendrecv_actual(tmpsend, count, dtype, remote,
+                                             MCA_COLL_BASE_TAG_ALLREDUCE,
+                                             tmprecv, count, dtype, remote,
+                                             MCA_COLL_BASE_TAG_ALLREDUCE,
+                                             comm, MPI_STATUS_IGNORE);
         if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
 
         /* Apply operation */

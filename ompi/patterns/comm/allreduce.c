@@ -22,6 +22,7 @@
 #include "opal/include/opal/sys/atomic.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/patterns/net/netpatterns.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "coll_ops.h"
 #include "commpatterns.h"
 
@@ -42,7 +43,6 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
     char scratch_bufers[2][MAX_TMP_BUFFER];
     int send_buffer=0,recv_buffer=1;
     char *sbuf_current, *rbuf_current;
-    ompi_request_t *requests[2];
 
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
@@ -165,31 +165,19 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
             /* is the remote data read */
             pair_rank=my_exchange_node.rank_exchanges[exchange];
 
-            /* post non-blocking receive */
-            rc=MCA_PML_CALL(irecv(scratch_bufers[recv_buffer],
-                        count_this_stripe,dtype,ranks_in_comm[pair_rank],
-                        -OMPI_COMMON_TAG_ALLREDUCE,
-                        comm,&(requests[0])));
+            rc=ompi_coll_base_sendrecv_actual(scratch_bufers[send_buffer],
+                                              count_this_stripe,dtype, ranks_in_comm[pair_rank],
+                                              -OMPI_COMMON_TAG_ALLREDUCE,
+                                              scratch_bufers[recv_buffer],
+                                              count_this_stripe,dtype,ranks_in_comm[pair_rank],
+                                              -OMPI_COMMON_TAG_ALLREDUCE,
+                                              comm, MPI_STATUS_IGNORE);
             if( 0 > rc ) {
                 fprintf(stderr,"  irecv failed in  comm_allreduce_pml at iterations %d \n",
                         exchange);
                 fflush(stderr);
                 goto Error;
             }
-
-            /* post non-blocking send */
-            rc=MCA_PML_CALL(isend(scratch_bufers[send_buffer],
-                        count_this_stripe,dtype, ranks_in_comm[pair_rank],
-                        -OMPI_COMMON_TAG_ALLREDUCE,MCA_PML_BASE_SEND_STANDARD,
-                        comm,&(requests[1])));
-            if( 0 > rc ) {
-                fprintf(stderr,"  isend failed in  comm_allreduce_pml at iterations %d \n",
-                        exchange);
-                fflush(stderr);
-                goto Error;
-            }
-            /* wait on send and receive completion */
-            ompi_request_wait_all(2,requests,MPI_STATUSES_IGNORE);
 
             /* reduce the data */
             if( 0 < count_this_stripe ) {

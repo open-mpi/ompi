@@ -29,7 +29,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "coll_base_util.h"
 
-int ompi_coll_base_sendrecv_actual( void* sendbuf, size_t scount,
+int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
                                     ompi_datatype_t* sdatatype,
                                     int dest, int stag,
                                     void* recvbuf, size_t rcount,

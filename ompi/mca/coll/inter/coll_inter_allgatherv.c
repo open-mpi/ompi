@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -24,11 +24,11 @@
 
 #include "mpi.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/mca/pml/pml.h"
 
 
@@ -51,7 +51,6 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
     int *count=NULL,*displace=NULL;
     char *ptmp_free=NULL, *ptmp=NULL;
     ompi_datatype_t *ndtype = NULL;
-    ompi_request_t *req[2];
 
     rank = ompi_comm_rank(comm);
     size_local = ompi_comm_size(comm->c_local_comm);
@@ -106,25 +105,14 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
 
     if (0 == rank) {
 	/* Exchange data between roots */
-	err = MCA_PML_CALL(irecv(rbuf, 1, ndtype, 0,
-                                 MCA_COLL_BASE_TAG_ALLGATHERV, comm,
-                                 &(req[0])));
+        err = ompi_coll_base_sendrecv_actual(ptmp, total, sdtype, 0,
+                                             MCA_COLL_BASE_TAG_ALLGATHERV,
+	                                     rbuf, 1, ndtype, 0,
+                                             MCA_COLL_BASE_TAG_ALLGATHERV,
+                                             comm, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
-
-        err = MCA_PML_CALL(isend(ptmp, total, sdtype, 0,
-                                 MCA_COLL_BASE_TAG_ALLGATHERV,
-                                 MCA_PML_BASE_SEND_STANDARD,
-                                 comm, &(req[1])));
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-        }
-
-        err = ompi_request_wait_all(2, req, MPI_STATUSES_IGNORE);
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-	}
     }
 
     /* bcast the message to all the local processes */

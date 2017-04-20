@@ -36,7 +36,7 @@ BEGIN_C_DECLS
  * If one of the communications results in a zero-byte message the
  * communication is ignored, and no message will cross to the peer.
  */
-int ompi_coll_base_sendrecv_actual( void* sendbuf, size_t scount,
+int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
                                     ompi_datatype_t* sdatatype,
                                     int dest, int stag,
                                     void* recvbuf, size_t rcount,
