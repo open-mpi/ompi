@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -75,11 +77,11 @@ void ompi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val,
     /* This stuff is very confusing.  Be sure to see the comment at
        the top of src/attributes/attributes.c. */
 
-    c_err = ompi_attr_set_fortran_mpi1(COMM_ATTR,
-                                       c_comm,
-                                       &c_comm->c_keyhash,
-                                       OMPI_FINT_2_INT(*keyval), 
-                                       *attribute_val,
-                                       false);
+    c_err = ompi_attr_set_fint(COMM_ATTR,
+                               c_comm,
+                               &c_comm->c_keyhash,
+                               OMPI_FINT_2_INT(*keyval),
+                               *attribute_val,
+                               false);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_err);
 }
