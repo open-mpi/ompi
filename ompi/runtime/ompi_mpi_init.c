@@ -643,7 +643,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     OMPI_TIMING_IMPORT_OPAL("orte_init");
-    OMPI_TIMING_NEXT("rte_init-modex");
+    OMPI_TIMING_IMPORT_OPAL("opal_init_util");
+    OMPI_TIMING_NEXT("rte_init-commit");
 
 
     /* exchange connection info - this function may also act as a barrier
@@ -651,6 +652,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * in our job. If a barrier is required, the "modex" function will
      * perform it internally */
     opal_pmix.commit();
+    OMPI_TIMING_NEXT("commit");
+
     if (!opal_pmix_base_async_modex) {
         if (NULL != opal_pmix.fence_nb) {
             active = true;
