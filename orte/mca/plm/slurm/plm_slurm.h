@@ -29,6 +29,7 @@ BEGIN_C_DECLS
 struct orte_plm_slurm_component_t {
     orte_plm_base_component_t super;
     char *custom_args;
+    bool resv_ports;
 };
 typedef struct orte_plm_slurm_component_t orte_plm_slurm_component_t;
 

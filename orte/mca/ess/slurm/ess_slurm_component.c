@@ -35,29 +35,55 @@
 
 extern orte_ess_base_module_t orte_ess_slurm_module;
 
+static int ess_slurm_register(void);
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-orte_ess_base_component_t mca_ess_slurm_component = {
-    .base_version = {
-        ORTE_ESS_BASE_VERSION_3_0_0,
+orte_ess_slurm_component_t mca_ess_slurm_component = {
 
-        /* Component name and version */
-        .mca_component_name = "slurm",
-        MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
-                              ORTE_RELEASE_VERSION),
+    {
+        /* First, the mca_component_t struct containing meta
+           information about the component itself */
 
-        /* Component open and close functions */
-        .mca_open_component = orte_ess_slurm_component_open,
-        .mca_close_component = orte_ess_slurm_component_close,
-        .mca_query_component = orte_ess_slurm_component_query,
-    },
-    .base_data = {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+        .base_version = {
+            ORTE_ESS_BASE_VERSION_3_0_0,
+
+            /* Component name and version */
+            .mca_component_name = "slurm",
+            MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
+                                  ORTE_RELEASE_VERSION),
+
+            /* Component open and close functions */
+            .mca_open_component = orte_ess_slurm_component_open,
+            .mca_close_component = orte_ess_slurm_component_close,
+            .mca_query_component = orte_ess_slurm_component_query,
+            .mca_register_component_params = ess_slurm_register,
+        },
+        .base_data = {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        },
+    }
+
+    /* Other orte_plm_slurm_component_t items -- left uninitialized
+       here; will be initialized in plm_slurm_open() */
 };
+
+static int ess_slurm_register(void)
+{
+    mca_base_component_t *comp = &mca_ess_slurm_component.super.base_version;
+
+    mca_ess_slurm_component.resv_ports = false;
+    (void) mca_base_component_var_register (comp, "resv_ports", "Use slurm reserved ports for orted",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ess_slurm_component.resv_ports);
+
+    return ORTE_SUCCESS;
+}
 
 
 int

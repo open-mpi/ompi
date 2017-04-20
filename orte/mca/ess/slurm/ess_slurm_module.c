@@ -27,11 +27,13 @@
 #endif  /* HAVE_UNISTD_H */
 #include <string.h>
 #include <ctype.h>
+#include <poll.h>
 
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 
@@ -77,6 +79,24 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
+        if (mca_ess_slurm_component.resv_ports) {
+            char *port_env = getenv("SLURM_STEP_RESV_PORTS");
+            assert(NULL != port_env);
+            OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
+                                 "ess:slurm rte_init: using slurm reserved port %s",
+                                 port_env));
+            /* FIXME
+             * oob/tcp will not retry if a connection fails with ECONNREFUSED
+             * that can happen since the peer might have not yet created the listening socket
+             * as a temporary workaround, sleep and hope all listening sockets get created
+             */
+            poll(NULL, 0, 3000);
+            opal_setenv("OMPI_MCA_oob_tcp_static_ipv4_ports", port_env, true, &environ);
+            opal_setenv("OMPI_MCA_oob_tcp_static_ipv4_port", "0", true, &environ);
+            orte_process_info.my_port = atoi(port_env);
+            orte_static_ports = true;
+        }
+#if 1
         if (NULL != orte_node_regex) {
             /* extract the nodes */
             if (ORTE_SUCCESS != (ret =
@@ -86,6 +106,7 @@ static int rte_init(void)
                 goto error;
             }
         }
+#endif
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
