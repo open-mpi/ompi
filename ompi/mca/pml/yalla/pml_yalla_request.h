@@ -222,7 +222,7 @@ static inline int PML_YALLA_SET_RECV_STATUS(mxm_recv_req_t *_rreq,
 #define PML_YALLA_MESSAGE_RELEASE(_message) \
     { \
         ompi_message_return(*(_message)); \
-        *(_message) = NULL; \
+        *(_message) = MPI_MESSAGE_NULL; \
     }
 
 #endif /* PML_YALLA_REQUEST_H_ */
