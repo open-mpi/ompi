@@ -972,6 +972,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
 
 
 
+
     /* someone may require this specific component, so look for "ofi" */
     if (orte_get_attribute(attributes, ORTE_RML_INCLUDE_COMP_ATTRIB, (void**)&comp_attrib, OPAL_STRING) &&
         NULL != comp_attrib) {
