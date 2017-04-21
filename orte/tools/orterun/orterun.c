@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -2236,7 +2236,7 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
  *      - fills in the table MPIR_proctable, and sets MPIR_proctable_size
  *      - sets MPIR_debug_state to MPIR_DEBUG_SPAWNED ( = 1)
  *      - calls MPIR_Breakpoint() which the debugger will have a
- *	  breakpoint on.
+ *        breakpoint on.
  *
  *  b) Applications start and then spin until MPIR_debug_gate is set
  *     non-zero by the debugger.
@@ -2413,6 +2413,8 @@ static void setup_debugger_job(void)
      * to avoid confusing the rest of the system's bookkeeping
      */
     orte_plm_base_create_jobid(debugger);
+    /* set the personality to ORTE */
+    debugger->personality = strdup("orte");
     /* flag the job as being debugger daemons */
     ORTE_FLAG_SET(debugger, ORTE_JOB_FLAG_DEBUGGER_DAEMON);
     /* unless directed, we do not forward output */
@@ -2699,14 +2701,14 @@ static void orte_debugger_detached(int fd, short event, void *cbdata)
 static void open_fifo (void)
 {
     if (attach_fd > 0) {
-	close(attach_fd);
+        close(attach_fd);
     }
 
     attach_fd = open(MPIR_attach_fifo, O_RDONLY | O_NONBLOCK, 0);
     if (attach_fd < 0) {
-	opal_output(0, "%s unable to open debugger attach fifo",
-		    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-	return;
+        opal_output(0, "%s unable to open debugger attach fifo",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        return;
     }
 
     /* Set this fd to be close-on-exec so that children don't see it */
@@ -2719,9 +2721,9 @@ static void open_fifo (void)
     }
 
     opal_output_verbose(2, orte_debug_output,
-			"%s Monitoring debugger attach fifo %s",
-			ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-			MPIR_attach_fifo);
+                        "%s Monitoring debugger attach fifo %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        MPIR_attach_fifo);
     attach = (opal_event_t*)malloc(sizeof(opal_event_t));
     opal_event_set(orte_event_base, attach, attach_fd, OPAL_EV_READ, attach_debugger, attach);
 
@@ -2738,16 +2740,16 @@ static void attach_debugger(int fd, short event, void *arg)
 
     if (fifo_active) {
         attach = (opal_event_t*)arg;
-	fifo_active = false;
+        fifo_active = false;
 
         rc = read(attach_fd, &fifo_cmd, sizeof(fifo_cmd));
-	if (!rc) {
+        if (!rc) {
             /* release the current event */
             opal_event_free(attach);
-	    /* reopen device to clear hangup */
-	    open_fifo();
-	    return;
-	}
+            /* reopen device to clear hangup */
+            open_fifo();
+            return;
+        }
         if (1 != fifo_cmd) {
             /* ignore the cmd */
             fifo_active = true;
