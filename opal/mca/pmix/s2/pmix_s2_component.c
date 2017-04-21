@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -89,10 +89,10 @@ static int pmix_s2_component_register(void)
 
 static int pmix_s2_component_query(mca_base_module_t **module, int *priority)
 {
-    /* disqualify ourselves if we are not under slurm, and
-     * if they didn't set mpi=pmix2 */
-    if (NULL == getenv("SLURM_STEP_NUM_TASKS") ||
-            NULL == getenv("PMI_FD")) {
+    /* disqualify ourselves if we are not under slurm and
+     * they didn't set mpi=pmix2, or we are not under flux */
+    if ((NULL == getenv("SLURM_STEP_NUM_TASKS") || NULL == getenv("PMI_FD"))  &&
+        NULL == getenv("FLUX_URI")) {
         *priority = 0;
         *module = NULL;
         return OPAL_ERROR;
