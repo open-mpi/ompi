@@ -704,6 +704,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     struct fi_info hints = {0};
     struct fi_ep_attr ep_attr = {0};
     struct fi_fabric_attr fabric_attr = {0};
+    struct fi_rx_attr rx_attr = {0};
+    struct fi_tx_attr tx_attr = {0};
 
     /* We only want providers named "usnic" that are of type EP_DGRAM */
     fabric_attr.prov_name = "usnic";
@@ -714,6 +716,11 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     hints.addr_format = FI_SOCKADDR;
     hints.ep_attr = &ep_attr;
     hints.fabric_attr = &fabric_attr;
+    hints.tx_attr = &tx_attr;
+    hints.rx_attr = &rx_attr;
+
+    tx_attr.iov_limit = 1;
+    rx_attr.iov_limit = 1;
 
     ret = fi_getinfo(libfabric_api, NULL, 0, 0, &hints, &info_list);
     if (0 != ret) {
