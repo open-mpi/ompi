@@ -13,6 +13,8 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -278,8 +280,14 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * SLURM srun OPTIONS
      */
 
+
     /* add the srun command */
     opal_argv_append(&argc, &argv, "srun");
+
+    if (mca_plm_slurm_component.resv_ports) {
+        orte_static_ports = true;
+        opal_argv_append(&argc, &argv, "--resv-ports=1");
+    }
 
     /* start one orted on each node */
     opal_argv_append(&argc, &argv, "--ntasks-per-node=1");
@@ -427,6 +435,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
             }
             free(app_prefix_dir);
         }
+    }
+
+    if (mca_plm_slurm_component.resv_ports) {
+        opal_argv_append(&argc, &argv, "--mca");
+        opal_argv_append(&argc, &argv, "ess_slurm_resv_ports");
+        opal_argv_append(&argc, &argv, "true");
     }
 
     /* protect the args in case someone has a script wrapper around srun */

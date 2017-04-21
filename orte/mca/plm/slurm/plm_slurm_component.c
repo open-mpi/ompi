@@ -13,6 +13,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,6 +110,13 @@ static int plm_slurm_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_slurm_component.slurm_warning_msg);
+
+    mca_plm_slurm_component.resv_ports = false;
+    (void) mca_base_component_var_register (comp, "resv_ports", "Use slurm reserved ports for orted",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_slurm_component.resv_ports);
 
     return ORTE_SUCCESS;
 }
