@@ -287,11 +287,7 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_dynamics_enabled);
 
-    if (opal_pmix_base_async_modex) {
-        ompi_async_mpi_init = true;
-    } else {
-        ompi_async_mpi_init = false;
-    }
+    ompi_async_mpi_init = true;
     (void) mca_base_var_register("ompi", "async", "mpi", "init",
                                  "Do not perform a barrier at the end of MPI_Init",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,

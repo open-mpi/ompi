@@ -80,6 +80,7 @@ static int external_open(void)
     mca_pmix_pmix2x_component.evindex = 0;
     OBJ_CONSTRUCT(&mca_pmix_pmix2x_component.jobids, opal_list_t);
     OBJ_CONSTRUCT(&mca_pmix_pmix2x_component.events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_pmix2x_component.dmdx, opal_list_t);
 
     return OPAL_SUCCESS;
 }
@@ -88,6 +89,7 @@ static int external_close(void)
 {
     OPAL_LIST_DESTRUCT(&mca_pmix_pmix2x_component.jobids);
     OPAL_LIST_DESTRUCT(&mca_pmix_pmix2x_component.events);
+    OPAL_LIST_DESTRUCT(&mca_pmix_pmix2x_component.dmdx);
     return OPAL_SUCCESS;
 }
 
