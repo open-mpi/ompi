@@ -2,6 +2,8 @@
 # Copyright (c) 2013-2015 Intel, Inc. All rights reserved
 #
 # Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -11,7 +13,7 @@
 
 EXTRA_DIST = post_configure.sh
 
-AM_CPPFLAGS = $(ompi_mtl_ofi_CPPFLAGS) $(opal_common_libfabric_CPPFLAGS)
+AM_CPPFLAGS = $(ompi_mtl_ofi_CPPFLAGS) $(opal_common_ofi_CPPFLAGS)
 
 dist_ompidata_DATA = help-mtl-ofi.txt
 
@@ -44,7 +46,7 @@ mca_mtl_ofi_la_LDFLAGS = \
         $(ompi_mtl_ofi_LDFLAGS) \
         -module -avoid-version
 mca_mtl_ofi_la_LIBADD = $(ompi_mtl_ofi_LIBS) \
-        $(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib@OPAL_LIB_PREFIX@mca_common_libfabric.la
+        $(OPAL_TOP_BUILDDIR)/opal/mca/common/ofi/lib@OPAL_LIB_PREFIX@mca_common_ofi.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mtl_ofi_la_SOURCES = $(mtl_ofi_sources)

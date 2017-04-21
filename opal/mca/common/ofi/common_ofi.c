@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,9 +15,9 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "common_libfabric.h"
+#include "common_ofi.h"
 
-int mca_common_libfabric_register_mca_variables(void)
+int mca_common_ofi_register_mca_variables(void)
 {
     return OPAL_SUCCESS;
 }
