@@ -364,8 +364,6 @@ static pmix_server_trkr_t* new_tracker(pmix_proc_t *procs,
         return NULL;
     }
 
-    assert( NULL == get_tracker(procs, nprocs, type) );
-
     pmix_output_verbose(5, pmix_globals.debug_output,
                         "adding new tracker with %d procs", (int)nprocs);
 
@@ -468,7 +466,8 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
         return rc;
     }
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "recvd fence with %d procs", (int)nprocs);
+                        "recvd fence from %s:%u with %d procs",
+                        cd->peer->info->nptr->nspace, cd->peer->info->rank, (int)nprocs);
     /* there must be at least one as the client has to at least provide
      * their own namespace */
     if (nprocs < 1) {

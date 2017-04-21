@@ -654,15 +654,40 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_pmix.commit();
     OMPI_TIMING_NEXT("commit");
 
-    if (!opal_pmix_base_async_modex) {
-        if (NULL != opal_pmix.fence_nb) {
+    /* If we have a non-blocking fence:
+     * if we are doing an async modex, but we are collecting all
+     * data, then execute the non-blocking modex in the background.
+     * All calls to modex_recv will be cached until the background
+     * modex completes. If collect_all_data is false, then we skip
+     * the fence completely and retrieve data on-demand from the
+     * source node.
+     *
+     * If we do not have a non-blocking fence, then we must always
+     * execute the blocking fence as the system does not support
+     * later data retrieval. */
+    if (NULL != opal_pmix.fence_nb) {
+        if (opal_pmix_base_async_modex && opal_pmix_collect_all_data) {
+            /* execute the fence_nb in the background to collect
+             * the data */
+            if (!ompi_async_mpi_init) {
+                /* we are going to execute a barrier at the
+                 * end of MPI_Init. We can only have ONE fence
+                 * operation with the identical involved procs
+                 * at a time, so we will need to wait when we
+                 * get there */
+                active = true;
+                opal_pmix.fence_nb(NULL, true, fence_release, (void*)&active);
+            } else {
+                opal_pmix.fence_nb(NULL, true, NULL, NULL);
+            }
+        } else if (!opal_pmix_base_async_modex) {
             active = true;
             opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
                                fence_release, (void*)&active);
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-        } else {
-            opal_pmix.fence(NULL, opal_pmix_collect_all_data);
         }
+    } else {
+        opal_pmix.fence(NULL, opal_pmix_collect_all_data);
     }
 
     OMPI_TIMING_NEXT("modex");
@@ -832,13 +857,20 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * barrier requirement at this time, though we hope to relax
      * it at a later point */
     if (!ompi_async_mpi_init) {
-        active = true;
-        if (NULL != opal_pmix.fence_nb) {
-            opal_pmix.fence_nb(NULL, false,
-                               fence_release, (void*)&active);
+        /* if we executed the above fence in the background, then
+         * we have to wait here for it to complete. However, there
+         * is no reason to do two barriers! */
+        if (opal_pmix_base_async_modex && opal_pmix_collect_all_data) {
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
-            opal_pmix.fence(NULL, false);
+            active = true;
+            if (NULL != opal_pmix.fence_nb) {
+                opal_pmix.fence_nb(NULL, false,
+                                   fence_release, (void*)&active);
+                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
+            } else {
+                opal_pmix.fence(NULL, false);
+            }
         }
     }
 

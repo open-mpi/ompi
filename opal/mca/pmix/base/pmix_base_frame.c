@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -39,7 +39,7 @@ opal_pmix_base_t opal_pmix_base = {0};
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {
-    opal_pmix_base_async_modex = false;
+    opal_pmix_base_async_modex = true;
     (void) mca_base_var_register("opal", "pmix", "base", "async_modex", "Use asynchronous modex mode",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base_async_modex);

@@ -1465,3 +1465,19 @@ static void tsdes(pmix2x_threadshift_t *p)
 OBJ_CLASS_INSTANCE(pmix2x_threadshift_t,
                    opal_object_t,
                    tscon, tsdes);
+
+static void dmcon(opal_pmix2x_dmx_trkr_t *p)
+{
+    p->nspace = NULL;
+    p->cbfunc = NULL;
+    p->cbdata = NULL;
+}
+static void dmdes(opal_pmix2x_dmx_trkr_t *p)
+{
+    if (NULL != p->nspace) {
+        free(p->nspace);
+    }
+}
+OBJ_CLASS_INSTANCE(opal_pmix2x_dmx_trkr_t,
+                   opal_list_item_t,
+                   dmcon, dmdes);

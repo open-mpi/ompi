@@ -1850,7 +1850,7 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     }
 
   finish_collective:
-    if(NULL != databuf) {
+    if (NULL != databuf) {
         PMIX_RELEASE(databuf);
     }
     /* setup the reply, starting with the returned status */

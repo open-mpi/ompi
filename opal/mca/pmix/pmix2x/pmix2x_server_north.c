@@ -266,6 +266,7 @@ static void opmdx_response(int status, const char *data, size_t sz, void *cbdata
 {
     pmix_status_t rc;
     pmix2x_opalcaddy_t *opalcaddy = (pmix2x_opalcaddy_t*)cbdata;
+    opal_pmix2x_dmx_trkr_t *dmdx;
 
     rc = pmix2x_convert_rc(status);
     if (NULL != opalcaddy->mdxcbfunc) {
@@ -273,6 +274,13 @@ static void opmdx_response(int status, const char *data, size_t sz, void *cbdata
         opalcaddy->ocbdata = relcbdata;
         opalcaddy->mdxcbfunc(rc, data, sz, opalcaddy->cbdata,
                              _data_release, opalcaddy);
+        /* if we were collecting all data, then check for any pending
+         * dmodx requests that we cached and notify them that the
+         * data has arrived */
+        while (NULL != (dmdx = (opal_pmix2x_dmx_trkr_t*)opal_list_remove_first(&mca_pmix_pmix2x_component.dmdx))) {
+            dmdx->cbfunc(PMIX_SUCCESS, NULL, 0, dmdx->cbdata, NULL, NULL);
+            OBJ_RELEASE(dmdx);
+        }
     } else {
         OBJ_RELEASE(opalcaddy);
     }
@@ -292,7 +300,6 @@ static pmix_status_t server_fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
     if (NULL == host_module || NULL == host_module->fence_nb) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
-
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
     opalcaddy->mdxcbfunc = cbfunc;
@@ -338,6 +345,7 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
     opal_process_name_t proc;
     opal_value_t *iptr;
     size_t n;
+    opal_pmix2x_dmx_trkr_t *dmdx;
 
     if (NULL == host_module || NULL == host_module->direct_modex) {
         return PMIX_ERR_NOT_SUPPORTED;
@@ -353,6 +361,21 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
     opalcaddy->mdxcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
+
+    /* this function should only get called if we are in an async modex.
+     * If we are also collecting data, then the fence_nb will eventually
+     * complete and return all the required data down to the pmix
+     * server beneath us. Thus, we only need to track the dmodex_req
+     * and ensure that the release gets called once the data has
+     * arrived - this will trigger the pmix server to tell the
+     * client that the data is available */
+    if (opal_pmix_base_async_modex && opal_pmix_collect_all_data) {
+        dmdx = OBJ_NEW(opal_pmix2x_dmx_trkr_t);
+        dmdx->cbfunc = cbfunc;
+        dmdx->cbdata = cbdata;
+        opal_list_append(&mca_pmix_pmix2x_component.dmdx, &dmdx->super);
+        return PMIX_SUCCESS;
+    }
 
     /* convert the array of pmix_info_t to the list of info */
     for (n=0; n < ninfo; n++) {
