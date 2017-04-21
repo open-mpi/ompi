@@ -1552,8 +1552,6 @@ static int create_ep(opal_btl_usnic_module_t* module,
 
     hint->rx_attr->size = channel->chan_rd_num;
     hint->tx_attr->size = channel->chan_sd_num;
-    hint->tx_attr->iov_limit = 1;
-    hint->rx_attr->iov_limit = 1;
 
     /* specific ports requested? */
     sin = hint->src_addr;
