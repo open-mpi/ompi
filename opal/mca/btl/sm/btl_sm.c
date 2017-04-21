@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
@@ -221,7 +221,7 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
 {
     size_t length, length_payload;
     sm_fifo_t *my_fifos;
-    int my_mem_node, num_mem_nodes, i, rc;
+    int my_mem_node, num_mem_nodes, i = 0, rc;
     mca_common_sm_mpool_resources_t *res = NULL;
     mca_btl_sm_component_t* m = &mca_btl_sm_component;
     char *loc, *mynuma;
