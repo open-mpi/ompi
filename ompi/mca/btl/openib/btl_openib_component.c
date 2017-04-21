@@ -19,7 +19,7 @@
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * Copyright (c) 2013      Intel, Inc. All rights reserved
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
@@ -2660,10 +2660,11 @@ btl_openib_component_init(int *num_btl_modules,
 
         found = true;
         ret = init_one_device(&btl_list, dev_sorted[i].ib_dev);
+        BTL_VERBOSE(("openib: init_one_device returned %d", ret));
         if (OMPI_ERR_NOT_SUPPORTED == ret) {
             ++num_devices_intentionally_ignored;
             continue;
-        } else if (OPAL_SUCCESS != ret) {
+        } else if (OMPI_SUCCESS != ret) {
             free(dev_sorted);
             goto no_btls;
         }
@@ -2708,6 +2709,7 @@ btl_openib_component_init(int *num_btl_modules,
     /* Now that we know we have devices and ports that we want to use,
        init CPC components */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_connect_base_init())) {
+        BTL_VERBOSE(("ompi_btl_openib_connect_base_init failed with %d", ret));
         goto no_btls;
     }
 
