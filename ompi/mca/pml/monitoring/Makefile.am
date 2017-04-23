@@ -11,7 +11,6 @@
 #
 
 monitoring_sources  = \
-	pml_monitoring.c \
 	pml_monitoring.h \
 	pml_monitoring_comm.c \
 	pml_monitoring_component.c \
@@ -32,6 +31,8 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_monitoring_la_SOURCES = $(monitoring_sources)
 mca_pml_monitoring_la_LDFLAGS = -module -avoid-version
+mca_pml_monitoring_la_LIBADD = \
+	$(OMPI_TOP_BUILDDIR)/ompi/mca/common/monitoring/libmca_common_monitoring.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_monitoring_la_SOURCES = $(monitoring_sources)

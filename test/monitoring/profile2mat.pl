@@ -4,7 +4,7 @@
 # Copyright (c) 2013-2015 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2013-2015 Inria.  All rights reserved.
+# Copyright (c) 2013-2016 Inria.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,9 +35,11 @@ if($#ARGV < 0){
    $filename=$ARGV[0];
 }
 
-profile($filename,"I|E","all");
+profile($filename,"I|E|S|R|C","all");
 if ( profile($filename,"E","external") ){
-   profile($filename,"I","internal");
+    profile($filename,"I","internal");
+    profile($filename,"S|R","osc");
+    profile($filename,"C","coll");
 }
 
 sub profile{
