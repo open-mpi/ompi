@@ -39,7 +39,7 @@ opal_pmix_base_t opal_pmix_base = {0};
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {
-    opal_pmix_base_async_modex = true;
+    opal_pmix_base_async_modex = false;
     (void) mca_base_var_register("opal", "pmix", "base", "async_modex", "Use asynchronous modex mode",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base_async_modex);
