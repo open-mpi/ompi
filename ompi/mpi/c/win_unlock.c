@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -53,9 +53,6 @@ int MPI_Win_unlock(int rank, MPI_Win win)
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RANK, FUNC_NAME);
         }
     }
-
-    /* NTH: do not bother keeping track of unlocking MPI_PROC_NULL. */
-    if (MPI_PROC_NULL == rank) return MPI_SUCCESS;
 
     rc = win->w_osc_module->osc_unlock(rank, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
