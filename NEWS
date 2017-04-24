@@ -53,6 +53,40 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+2.1.1 -- April, 2017
+--------------------
+
+Bug fixes/minor improvements:
+
+- Add missing MPI_AINT_ADD/MPI_AINT_DIFF function definitions to mpif.h.
+  Thanks to Aboorva Devarajan for reporting.
+- Fix the error return from MPI_WIN_LOCK when rank argument is invalid.
+  Thanks to Jeff Hammond for reporting and fixing this issue.
+- Fix a problem with mpirun/orterun when started under a debugger. Thanks
+  to Gregory Leff for reporting.
+- Add configury option to disable use of CMA by the vader BTL.  Thanks
+  to Sascha Hunold for reporting.
+- Add configury check for MPI_DOUBLE_COMPLEX datatype support.
+  Thanks to Alexander Klein for reporting.
+- Fix memory allocated by MPI_WIN_ALLOCATE_SHARED to
+  be 64 byte aligned.  Thanks to Joseph Schuchart for
+  reporting.
+- Update MPI_WTICK man page to reflect possibly higher
+  resolution than 10e-6.  Thanks to Mark Dixon for
+  reporting
+- Add missing MPI_T_PVAR_SESSION_NULL definition to mpi.h
+  include file.  Thanks to Omri Mor for this contribution.
+- Enhance the Open MPI spec file to install modulefile in /opt
+  if installed in a non-default location.  Thanks to Kevin
+  Buckley for reporting and supplying a fix.
+- Fix a problem with conflicting PMI symbols when linking statically.
+  Thanks to Kilian Cavalotti for reporting.
+
+Known issues (to be addressed in v2.1.2):
+
+- See the list of fixes slated for v2.1.2 here:
+  https://github.com/open-mpi/ompi/milestone/28
+
 2.1.0 -- March, 2017
 --------------------
 
