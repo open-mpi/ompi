@@ -222,7 +222,7 @@ JNIEXPORT void JNICALL Java_mpi_Win_setErrhandler(
         JNIEnv *env, jobject jthis, jlong win, jlong errhandler)
 {
     int rc = MPI_Win_set_errhandler(
-             (MPI_Win)win, (MPI_Errhandler)MPI_ERRORS_RETURN);
+             (MPI_Win)win, (MPI_Errhandler)errhandler);
 
     ompi_java_exceptionCheck(env, rc);
 }
