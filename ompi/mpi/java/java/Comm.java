@@ -13,6 +13,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1195,6 +1196,20 @@ public class Comm implements Freeable, Cloneable
 	}
 
 	private native long getErrhandler(long comm);
+
+	/**
+	 * Calls the error handler currently associated with the communicator.
+	 * <p>Java binding of the MPI operation {@code MPI_COMM_CALL_ERRHANDLER}.
+	 * @param errorCode error code
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public void callErrhandler(int errorCode) throws MPIException
+	{
+		callErrhandler(handle, errorCode);
+	}
+
+	private native void callErrhandler(long handle, int errorCode)
+			throws MPIException;
 
 	// Collective Communication
 

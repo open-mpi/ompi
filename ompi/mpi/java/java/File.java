@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -406,6 +407,29 @@ public final class File
 					throws MPIException;
 
 	/**
+	 * Java binding of {@code MPI_FILE_IREAD_AT_ALL}.
+	 * @param offset file offset
+	 * @param buf    buffer
+	 * @param count  number of items in buffer
+	 * @param type   datatype of each buffer element
+	 * @return request object
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public Request iReadAtAll(long offset, Buffer buf, int count, Datatype type)
+			throws MPIException
+	{
+		MPI.check();
+		assertDirectBuffer(buf);
+		Request req = new Request(iReadAtAll(handle, offset, buf, count, type.handle));
+		req.addRecvBufRef(buf);
+		return req;
+	}
+
+	private native long iReadAtAll(
+			long fh, long offset, Buffer buf, int count, long type)
+					throws MPIException;
+
+	/**
 	 * Java binding of {@code MPI_FILE_IWRITE_AT}.
 	 * @param offset file offset
 	 * @param buf    buffer
@@ -425,6 +449,29 @@ public final class File
 	}
 
 	private native long iWriteAt(
+			long fh, long offset, Buffer buf, int count, long type)
+					throws MPIException;
+
+	/**
+	 * Java binding of {@code MPI_FILE_IWRITE_AT_ALL}.
+	 * @param offset file offset
+	 * @param buf    buffer
+	 * @param count  number of items in buffer
+	 * @param type   datatype of each buffer element
+	 * @return request object
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public Request iWriteAtAll(long offset, Buffer buf, int count, Datatype type)
+			throws MPIException
+	{
+		MPI.check();
+		assertDirectBuffer(buf);
+		Request req = new Request(iWriteAtAll(handle, offset, buf, count, type.handle));
+		req.addSendBufRef(buf);
+		return req;
+	}
+
+	private native long iWriteAtAll(
 			long fh, long offset, Buffer buf, int count, long type)
 					throws MPIException;
 
@@ -565,6 +612,26 @@ public final class File
 			throws MPIException;
 
 	/**
+	 * Java binding of {@code MPI_FILE_IREAD_ALL}.
+	 * @param buf   buffer
+	 * @param count number of items in buffer
+	 * @param type  datatype of each buffer element
+	 * @return request object
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public Request iReadAll(Buffer buf, int count, Datatype type) throws MPIException
+	{
+		MPI.check();
+		assertDirectBuffer(buf);
+		Request req = new Request(iReadAll(handle, buf, count, type.handle));
+		req.addRecvBufRef(buf);
+		return req;
+	}
+
+	private native long iReadAll(long fh, Buffer buf, int count, long type)
+			throws MPIException;
+
+	/**
 	 * Java binding of {@code MPI_FILE_IWRITE}.
 	 * @param buf   buffer
 	 * @param count number of items in buffer
@@ -582,6 +649,26 @@ public final class File
 	}
 
 	private native long iWrite(long fh, Buffer buf, int count, long type)
+			throws MPIException;
+
+	/**
+	 * Java binding of {@code MPI_FILE_IWRITE_ALL}.
+	 * @param buf   buffer
+	 * @param count number of items in buffer
+	 * @param type  datatype of each buffer element
+	 * @return request object
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public Request iWriteAll(Buffer buf, int count, Datatype type) throws MPIException
+	{
+		MPI.check();
+		assertDirectBuffer(buf);
+		Request req = new Request(iWriteAll(handle, buf, count, type.handle));
+		req.addRecvBufRef(buf);
+		return req;
+	}
+
+	private native long iWriteAll(long fh, Buffer buf, int count, long type)
 			throws MPIException;
 
 	/**
@@ -1235,6 +1322,19 @@ public final class File
 			throws MPIException;
 
 	/**
+	 * Java binding of {@code MPI_FILE_GET_ATOMICITY}.
+	 * @return current consistency of the file
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public boolean getAtomicity() throws MPIException
+	{
+		MPI.check();
+		return getAtomicity(handle);
+	}
+
+	private native boolean getAtomicity(long fh) throws MPIException;
+
+	/**
 	 * Java binding of {@code MPI_FILE_SYNC}.
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
@@ -1245,5 +1345,45 @@ public final class File
 	}
 
 	private native void sync(long handle) throws MPIException;
+
+	/**
+	 * Java binding of the MPI operation {@code MPI_FILE_SET_ERRHANDLER}.
+	 * @param errhandler new MPI error handler for file
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public void setErrhandler(Errhandler errhandler) throws MPIException
+	{
+		MPI.check();
+		setErrhandler(handle, errhandler.handle);
+	}
+
+	private native void setErrhandler(long fh, long errhandler)
+			throws MPIException;
+
+	/**
+	 * Java binding of the MPI operation {@code MPI_FILE_GET_ERRHANDLER}.
+	 * @return MPI error handler currently associated with file
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public Errhandler getErrhandler() throws MPIException
+	{
+		MPI.check();
+		return new Errhandler(getErrhandler(handle));
+	}
+
+	private native long getErrhandler(long fh);
+
+	/**
+	 * Java binding of the MPI operation {@code MPI_FILE_CALL_ERRHANDLER}.
+	 * @param errorCode error code
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public void callErrhandler(int errorCode) throws MPIException
+	{
+		callErrhandler(handle, errorCode);
+	}
+
+	private native void callErrhandler(long handle, int errorCode)
+			throws MPIException;
 
 } // File
