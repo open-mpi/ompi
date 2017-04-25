@@ -55,6 +55,8 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1116_POST_CONFIG],[
            CPPFLAGS="-I$OPAL_TOP_SRCDIR/$file/include $CPPFLAGS"
            AS_IF([test "$OPAL_TOP_BUILDDIR" != "$OPAL_TOP_SRCDIR"],
                  [CPPFLAGS="-I$OPAL_TOP_BUILDDIR/$file/include $CPPFLAGS"])
+           AS_IF([test -n "$opal_datatype_cuda_CPPFLAGS"],
+                 [CPPFLAGS="$opal_datatype_cuda_CPPFLAGS $CPPFLAGS"])
            unset file
           ])
     OPAL_VAR_SCOPE_POP
