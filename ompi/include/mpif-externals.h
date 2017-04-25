@@ -10,7 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -41,4 +41,8 @@
 !
       external MPI_WTIME, MPI_WTICK , PMPI_WTICK, PMPI_WTIME
       double precision MPI_WTIME, MPI_WTICK , PMPI_WTICK, PMPI_WTIME
-
+!
+!     address integer functions
+!
+      external MPI_AINT_ADD, MPI_AINT_DIFF
+      integer(kind=MPI_ADDRESS_KIND) MPI_AINT_ADD, MPI_AINT_DIFF
