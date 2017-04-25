@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+# A comment
+
 use strict;
 
 use Cwd;
