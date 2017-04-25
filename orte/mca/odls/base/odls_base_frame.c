@@ -239,7 +239,26 @@ OBJ_CLASS_INSTANCE(orte_odls_launch_local_t,
 static void sccon(orte_odls_spawn_caddy_t *p)
 {
     memset(&p->opts, 0, sizeof(orte_iof_base_io_conf_t));
+    p->cmd = NULL;
+    p->wdir = NULL;
+    p->argv = NULL;
+    p->env = NULL;
+}
+static void scdes(orte_odls_spawn_caddy_t *p)
+{
+    if (NULL != p->cmd) {
+        free(p->cmd);
+    }
+    if (NULL != p->wdir) {
+        free(p->wdir);
+    }
+    if (NULL != p->argv) {
+        opal_argv_free(p->argv);
+    }
+    if (NULL != p->env) {
+        opal_argv_free(p->env);
+    }
 }
 OBJ_CLASS_INSTANCE(orte_odls_spawn_caddy_t,
                    opal_object_t,
-                   sccon, NULL);
+                   sccon, scdes);

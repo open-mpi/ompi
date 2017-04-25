@@ -82,16 +82,16 @@ orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 ORTE_DECLSPEC void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata);
 
 /* define a function that will fork a local proc */
-typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_proc_t *child,
-                                                   char *app, char **argv,
-                                                   char **environ_copy,
-                                                   orte_job_t *jdata,
-                                                   orte_iof_base_io_conf_t opts);
+typedef int (*orte_odls_base_fork_local_proc_fn_t)(void *cd);
 
 /* define an object for fork/exec the local proc */
 typedef struct {
     opal_object_t super;
     opal_event_t ev;
+    char *cmd;
+    char *wdir;
+    char **argv;
+    char **env;
     orte_job_t *jdata;
     orte_app_context_t *app;
     orte_proc_t *child;
