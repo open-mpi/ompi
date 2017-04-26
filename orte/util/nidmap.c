@@ -447,7 +447,6 @@ int orte_util_nidmap_create(char **regex)
     asprintf(&tmp2, "%s@%s", nodenames, tmp);
     free(nodenames);
     free(tmp);
-
     *regex = tmp2;
     return ORTE_SUCCESS;
 }
@@ -760,9 +759,10 @@ int orte_util_nidmap_parse(char *regex)
             *ptr = '\0';
             ++ptr;
             rng->cnt = strtoul(ptr, NULL, 10);
+        } else {
+            rng->cnt = 1;
         }
-        /* convert the number - since it might be a range,
-         * save the remainder pointer */
+        /* convert the number */
         rng->vpid = strtoul(dvpids[n], NULL, 10);
     }
     opal_argv_free(dvpids);
@@ -797,16 +797,17 @@ int orte_util_nidmap_parse(char *regex)
             nd->daemon = proc;
         }
         ++cnt;
-        if (cnt == rng->cnt) {
+        if (rng->cnt <= cnt) {
             rng = (orte_regex_range_t*)opal_list_get_next(&rng->super);
             if (NULL == rng) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 return ORTE_ERR_NOT_FOUND;
             }
+            cnt = 0;
         }
     }
 
-    /* unpdate num procs */
+    /* update num procs */
     if (orte_process_info.num_procs != daemons->num_procs) {
         orte_process_info.num_procs = daemons->num_procs;
         /* need to update the routing plan */
