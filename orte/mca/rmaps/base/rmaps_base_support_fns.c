@@ -413,7 +413,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                  * are getting for an initial map of a job,
                  * then mark all nodes as unmapped
                  */
-                    ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+                ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
             }
             if (NULL == nd || NULL == nd->daemon ||
                 NULL == node->daemon ||
