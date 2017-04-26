@@ -34,6 +34,10 @@ information that we request in order to provide assistance:
 
      http://www.open-mpi.org/community/help/
 
+A GitHub issue template is also available to help in providing
+the information needed to triage and hopefully resolve the
+issue.
+
 The best way to report bugs, send comments, or ask questions is to
 sign up on the user's and/or developer's mailing list (for user-level
 and developer-level questions; when in doubt, send to the user's
