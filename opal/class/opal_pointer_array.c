@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,11 +94,21 @@ static void opal_pointer_array_destruct(opal_pointer_array_t *array)
     do {                                                                \
         uint32_t __b_idx, __b_pos;                                      \
         GET_BIT_POS((START_IDX), __b_idx, __b_pos);                     \
-        for (; table->free_bits[__b_idx] == 0xFFFFFFFFFFFFFFFFULL; __b_idx++); \
-        assert(__b_idx < (uint32_t)table->size);                        \
+        while(table->free_bits[__b_idx] == 0xFFFFFFFFFFFFFFFFULL) {     \
+             if (__b_idx < (TYPE_ELEM_COUNT(uint64_t, table->size)-1)) {\
+                 __b_idx++;                                             \
+             } else {                                                   \
+                 break;                                                 \
+             }                                                          \
+        }                                                               \
+        assert(__b_idx < TYPE_ELEM_COUNT(uint64_t, table->size));       \
         uint64_t __check_value = table->free_bits[__b_idx];             \
         __b_pos = 0;                                                    \
                                                                         \
+        if( 0xFFFFFFFFFFFFFFFFULL == __check_value ) {                  \
+            assert(!SET);                                               \
+            __check_value = 0; __b_pos += 64;                           \
+        }                                                               \
         if( 0x00000000FFFFFFFFULL == (__check_value & 0x00000000FFFFFFFFULL) ) { \
             __check_value >>= 32; __b_pos += 32;                        \
         }                                                               \
