@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -53,12 +53,6 @@
 #define MCA_BTL_TCP_STATISTICS 0
 BEGIN_C_DECLS
 
-#if (HAVE_PTHREAD_H == 1)
-#define MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD 1
-#else
-#define MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD 0
-#endif  /* (HAVE_PTHREAD_H == 1) */
-
 extern opal_event_base_t* mca_btl_tcp_event_base;
 
 #define MCA_BTL_TCP_COMPLETE_FRAG_SEND(frag)                            \
@@ -81,7 +75,6 @@ extern opal_event_base_t* mca_btl_tcp_event_base;
         }                                                               \
     } while (0)
 
-#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
 extern opal_list_t mca_btl_tcp_ready_frag_pending_queue;
 extern opal_mutex_t mca_btl_tcp_ready_frag_mutex;
 extern int mca_btl_tcp_pipe_to_progress[2];
@@ -103,14 +96,6 @@ extern int mca_btl_tcp_progress_thread_trigger;
             opal_event_add(event, (value));                             \
         }                                                               \
     } while (0)
-#else
-#define MCA_BTL_TCP_CRITICAL_SECTION_ENTER(name)
-#define MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(name)
-#define MCA_BTL_TCP_ACTIVATE_EVENT(event, value)                    \
-    do {                                                            \
-        opal_event_add(event, (value));                             \
-    } while (0)
-#endif  /* MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD */
 
 /**
  * TCP BTL component.
@@ -158,12 +143,10 @@ struct mca_btl_tcp_component_t {
 
     int tcp_enable_progress_thread;         /** Support for tcp progress thread flag */
 
-#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
     opal_event_t tcp_recv_thread_async_event;
     opal_mutex_t tcp_frag_eager_mutex;
     opal_mutex_t tcp_frag_max_mutex;
     opal_mutex_t tcp_frag_user_mutex;
-#endif
     /* Do we want to use TCP_NODELAY? */
     int    tcp_not_use_nodelay;
 
