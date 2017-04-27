@@ -817,6 +817,10 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
     int i;
     uint32_t h;
     orte_job_t *jdata;
+    uint8_t flag;
+    size_t inlen, cmplen;
+    uint8_t *packed_data, *cmpdata;
+    opal_buffer_t datbuf, *data;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:daemon_topology recvd for daemon %s",
@@ -832,10 +836,55 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
         orted_failed_launch = true;
         goto CLEANUP;
     }
+    OBJ_CONSTRUCT(&datbuf, opal_buffer_t);
+    /* unpack the flag to see if this payload is compressed */
+    idx=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &flag, &idx, OPAL_INT8))) {
+        ORTE_ERROR_LOG(rc);
+        orted_failed_launch = true;
+        goto CLEANUP;
+    }
+    if (flag) {
+        /* unpack the data size */
+        idx=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &inlen, &idx, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        /* unpack the unpacked data size */
+        idx=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &cmplen, &idx, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        /* allocate the space */
+        packed_data = (uint8_t*)malloc(inlen);
+        /* unpack the data blob */
+        idx = inlen;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, packed_data, &idx, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        /* decompress the data */
+        if (orte_util_uncompress_block(&cmpdata, cmplen,
+                                       packed_data, inlen)) {
+            /* the data has been uncompressed */
+            opal_dss.load(&datbuf, cmpdata, cmplen);
+            data = &datbuf;
+        } else {
+            data = buffer;
+        }
+        free(packed_data);
+    } else {
+        data = buffer;
+    }
 
     /* unpack the topology signature for this node */
     idx=1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &idx, OPAL_STRING))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(data, &sig, &idx, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         orted_failed_launch = true;
         goto CLEANUP;
@@ -861,7 +910,7 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
 
     /* unpack the topology */
     idx=1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(data, &topo, &idx, OPAL_HWLOC_TOPO))) {
         ORTE_ERROR_LOG(rc);
         orted_failed_launch = true;
         goto CLEANUP;
@@ -873,7 +922,7 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
 
     /* unpack any coprocessors */
     idx=1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &coprocessors, &idx, OPAL_STRING))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(data, &coprocessors, &idx, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         orted_failed_launch = true;
         goto CLEANUP;
@@ -900,7 +949,7 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
     }
     /* see if this daemon is on a coprocessor */
     idx=1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &coprocessors, &idx, OPAL_STRING))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(data, &coprocessors, &idx, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         orted_failed_launch = true;
         goto CLEANUP;
