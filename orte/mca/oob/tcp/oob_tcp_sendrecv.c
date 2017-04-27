@@ -14,6 +14,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -179,15 +181,8 @@ static int send_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_send_t* msg)
             /* header was fully written, but only a part of the msg data was written */
             msg->hdr_sent = true;
             rc -= msg->sdbytes;
-            if (NULL != msg->data) {
-                /* technically, this should never happen as iov_count
-                 * would be 1 for a zero-byte message, and so we cannot
-                 * have a case where we write the header and part of the
-                 * msg. However, code checkers don't know that and are
-                 * fooled by our earlier check for NULL, and so
-                 * we silence their warnings by using this check */
-                msg->sdptr = (char *)msg->data + rc;
-            }
+            assert(2 == iov_count);
+            msg->sdptr = (char *)iov[1].iov_base + rc;
             msg->sdbytes = ntohl(msg->hdr.nbytes) - rc;
         }
         return ORTE_ERR_RESOURCE_BUSY;
