@@ -151,7 +151,6 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
 
         rc = mca_btl_ugni_send_frag (endpoint, frag);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-            mca_btl_ugni_frag_return (frag);
             break;
         }
 
