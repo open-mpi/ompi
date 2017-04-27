@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -236,6 +237,20 @@ JNIEXPORT jlong JNICALL Java_mpi_File_iReadAt(
     return (jlong)request;
 }
 
+JNIEXPORT jlong JNICALL Java_mpi_File_iReadAtAll(
+        JNIEnv *env, jobject jthis, jlong fh, jlong offset,
+        jobject buf, jint count, jlong type)
+{
+    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    MPI_Request request;
+
+    int rc = MPI_File_iread_at_all((MPI_File)fh, (MPI_Offset)offset,
+                                   ptr, count, (MPI_Datatype)type, &request);
+
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
+
 JNIEXPORT jlong JNICALL Java_mpi_File_iWriteAt(
         JNIEnv *env, jobject jthis, jlong fh, jlong offset,
         jobject buf, jint count, jlong type)
@@ -245,6 +260,20 @@ JNIEXPORT jlong JNICALL Java_mpi_File_iWriteAt(
 
     int rc = MPI_File_iwrite_at((MPI_File)fh, (MPI_Offset)offset,
                                 ptr, count, (MPI_Datatype)type, &request);
+
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_File_iWriteAtAll(
+        JNIEnv *env, jobject jthis, jlong fh, jlong offset,
+        jobject buf, jint count, jlong type)
+{
+    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    MPI_Request request;
+
+    int rc = MPI_File_iwrite_at_all((MPI_File)fh, (MPI_Offset)offset,
+                                    ptr, count, (MPI_Datatype)type, &request);
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)request;
@@ -336,6 +365,20 @@ JNIEXPORT jlong JNICALL Java_mpi_File_iRead(
     return (jlong)request;
 }
 
+JNIEXPORT jlong JNICALL Java_mpi_File_iReadAll(
+        JNIEnv *env, jobject jthis, jlong fh,
+        jobject buf, jint count, jlong type)
+{
+    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    MPI_Request request;
+
+    int rc = MPI_File_iread_all((MPI_File)fh, ptr, count,
+                                (MPI_Datatype)type, &request);
+
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
+
 JNIEXPORT jlong JNICALL Java_mpi_File_iWrite(
         JNIEnv *env, jobject jthis, jlong fh,
         jobject buf, jint count, jlong type)
@@ -345,6 +388,20 @@ JNIEXPORT jlong JNICALL Java_mpi_File_iWrite(
 
     int rc = MPI_File_iwrite((MPI_File)fh, ptr, count,
                              (MPI_Datatype)type, &request);
+
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_File_iWriteAll(
+        JNIEnv *env, jobject jthis, jlong fh,
+        jobject buf, jint count, jlong type)
+{
+    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    MPI_Request request;
+
+    int rc = MPI_File_iwrite_all((MPI_File)fh, ptr, count,
+                                 (MPI_Datatype)type, &request);
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)request;
@@ -646,9 +703,43 @@ JNIEXPORT void JNICALL Java_mpi_File_setAtomicity(
     ompi_java_exceptionCheck(env, rc);
 }
 
+JNIEXPORT jboolean JNICALL Java_mpi_File_getAtomicity(
+        JNIEnv *env, jobject jthis, jlong fh)
+{
+    int atomicity;
+    int rc = MPI_File_get_atomicity((MPI_File)fh, &atomicity);
+    ompi_java_exceptionCheck(env, rc);
+    return atomicity ? JNI_TRUE : JNI_FALSE;
+}
+
 JNIEXPORT void JNICALL Java_mpi_File_sync(
         JNIEnv *env, jobject jthis, jlong fh)
 {
     int rc = MPI_File_sync((MPI_File)fh);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_File_setErrhandler(
+        JNIEnv *env, jobject jthis, jlong fh, jlong errhandler)
+{
+    int rc = MPI_File_set_errhandler(
+             (MPI_File)fh, (MPI_Errhandler)errhandler);
+
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_File_getErrhandler(
+        JNIEnv *env, jobject jthis, jlong fh)
+{
+    MPI_Errhandler errhandler;
+    int rc = MPI_File_get_errhandler((MPI_File)fh, &errhandler);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)errhandler;
+}
+
+JNIEXPORT void JNICALL Java_mpi_File_callErrhandler(
+        JNIEnv *env, jobject jthis, jlong fh, jint errorCode)
+{
+    int rc = MPI_File_call_errhandler((MPI_File)fh, errorCode);
     ompi_java_exceptionCheck(env, rc);
 }

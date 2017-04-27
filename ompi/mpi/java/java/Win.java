@@ -13,6 +13,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -426,6 +427,19 @@ public final class Win implements Freeable
 
 	private native void setErrhandler(long win, long errhandler)
 			throws MPIException;
+
+	/**
+	 * Java binding of the MPI operation {@code MPI_WIN_GET_ERRHANDLER}.
+	 * @return MPI error handler currently associated with window
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public Errhandler getErrhandler() throws MPIException
+	{
+		MPI.check();
+		return new Errhandler(getErrhandler(handle));
+	}
+
+	private native long getErrhandler(long win);
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_CALL_ERRHANDLER}.

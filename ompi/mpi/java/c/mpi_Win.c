@@ -13,6 +13,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -221,9 +222,18 @@ JNIEXPORT void JNICALL Java_mpi_Win_setErrhandler(
         JNIEnv *env, jobject jthis, jlong win, jlong errhandler)
 {
     int rc = MPI_Win_set_errhandler(
-             (MPI_Win)win, (MPI_Errhandler)MPI_ERRORS_RETURN);
+             (MPI_Win)win, (MPI_Errhandler)errhandler);
 
     ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_getErrhandler(
+        JNIEnv *env, jobject jthis, jlong win)
+{
+    MPI_Errhandler errhandler;
+    int rc = MPI_Win_get_errhandler((MPI_Win)win, &errhandler);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)errhandler;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Win_callErrhandler(

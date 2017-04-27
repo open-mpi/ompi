@@ -13,6 +13,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -706,6 +707,13 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_getErrhandler(
     int rc = MPI_Errhandler_get((MPI_Comm)comm, &errhandler);
     ompi_java_exceptionCheck(env, rc);
     return (jlong)errhandler;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Comm_callErrhandler(
+        JNIEnv *env, jobject jthis, jlong comm, jint errorCode)
+{
+    int rc = MPI_Comm_call_errhandler((MPI_Comm)comm, errorCode);
+    ompi_java_exceptionCheck(env, rc);
 }
 
 static int commCopyAttr(MPI_Comm oldcomm, int keyval, void *extraState,
