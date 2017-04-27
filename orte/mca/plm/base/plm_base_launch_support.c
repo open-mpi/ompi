@@ -14,7 +14,7 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -1088,8 +1088,57 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         /* rank=1 always sends its topology back */
         topo = NULL;
         if (1 == dname.vpid) {
+            uint8_t flag;
+            size_t inlen, cmplen;
+            uint8_t *packed_data, *cmpdata;
+            opal_buffer_t datbuf, *data;
+            OBJ_CONSTRUCT(&datbuf, opal_buffer_t);
+            /* unpack the flag to see if this payload is compressed */
             idx=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &flag, &idx, OPAL_INT8))) {
+                ORTE_ERROR_LOG(rc);
+                orted_failed_launch = true;
+                goto CLEANUP;
+            }
+            if (flag) {
+                /* unpack the data size */
+                idx=1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &inlen, &idx, OPAL_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
+                }
+                /* unpack the unpacked data size */
+                idx=1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &cmplen, &idx, OPAL_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
+                }
+                /* allocate the space */
+                packed_data = (uint8_t*)malloc(inlen);
+                /* unpack the data blob */
+                idx = inlen;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, packed_data, &idx, OPAL_UINT8))) {
+                    ORTE_ERROR_LOG(rc);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
+                }
+                /* decompress the data */
+                if (orte_util_uncompress_block(&cmpdata, cmplen,
+                                               packed_data, inlen)) {
+                    /* the data has been uncompressed */
+                    opal_dss.load(&datbuf, cmpdata, cmplen);
+                    data = &datbuf;
+                } else {
+                    data = buffer;
+                }
+                free(packed_data);
+            } else {
+                data = buffer;
+            }
+            idx=1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(data, &topo, &idx, OPAL_HWLOC_TOPO))) {
                 ORTE_ERROR_LOG(rc);
                 orted_failed_launch = true;
                 goto CLEANUP;
