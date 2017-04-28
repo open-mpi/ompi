@@ -983,14 +983,10 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
         } while(!size);
         btl = bml_btl->btl;
 
-        /* NTH: This conditional used to check if there was a registration in
-         * recvreq->req_rdma[rdma_idx].btl_reg. If once existed it was due to
-         * the btl not needed registration (equivalent to btl->btl_register_mem
-         * != NULL. This new check is equivalent. Note: I feel this protocol
-         * needs work to better improve resource usage when running with a
-         * leave pinned protocol. */
-        if (btl->btl_register_mem && (btl->btl_rdma_pipeline_frag_size != 0) &&
-            (size > btl->btl_rdma_pipeline_frag_size)) {
+         /* NTH: Note: I feel this protocol needs work to better improve resource
+          * usage when running with a leave pinned protocol. */
+        /* GB: We should always abide by the BTL RDMA pipeline fragment limit (if one is set) */
+        if ((btl->btl_rdma_pipeline_frag_size != 0) && (size > btl->btl_rdma_pipeline_frag_size)) {
             size = btl->btl_rdma_pipeline_frag_size;
         }
 
