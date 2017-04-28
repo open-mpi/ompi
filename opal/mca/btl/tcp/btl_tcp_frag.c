@@ -173,7 +173,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     num_vecs = frag->iov_cnt;
 #if MCA_BTL_TCP_ENDPOINT_CACHE
     if( 0 != btl_endpoint->endpoint_cache_length ) {
-        ssize_t length;
+        size_t length;
         /* It's strange at the first look but cnt have to be set to the full amount of data
          * available. After going to advance_iov_position we will use cnt to detect if there
          * is still some data pending.
