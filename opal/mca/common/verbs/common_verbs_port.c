@@ -68,6 +68,10 @@ int opal_common_verbs_port_bw(struct ibv_port_attr *port_attr,
         /* EDR: 25.78125 Gbps * 64/66, in megabits */
         *bandwidth = 25000;
         break;
+    case 64:
+        /* HDR: 50Gbps * 64/66, in megabits */
+        *bandwidth = 50000;
+        break;
     default:
         /* Who knows? */
         return OPAL_ERR_NOT_FOUND;
