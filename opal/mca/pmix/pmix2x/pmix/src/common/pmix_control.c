@@ -24,7 +24,7 @@
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
-#include "src/buffer_ops/buffer_ops.h"
+#include "src/mca/bfrops/bfrops.h"
 #include "src/mca/ptl/ptl.h"
 
 #include "src/client/pmix_client_ops.h"
@@ -59,7 +59,8 @@ static void query_cbfunc(struct pmix_peer_t *peer,
 
     /* unpack the status */
     cnt = 1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &results->status, &cnt, PMIX_STATUS))) {
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &results->status, &cnt, PMIX_STATUS);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         goto complete;
     }
@@ -69,14 +70,16 @@ static void query_cbfunc(struct pmix_peer_t *peer,
 
     /* unpack any returned data */
     cnt = 1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &results->ninfo, &cnt, PMIX_SIZE))) {
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &results->ninfo, &cnt, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         goto complete;
     }
     if (0 < results->ninfo) {
         PMIX_INFO_CREATE(results->info, results->ninfo);
         cnt = results->ninfo;
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, results->info, &cnt, PMIX_INFO))) {
+        PMIX_BFROPS_UNPACK(rc, peer, buf, results->info, &cnt, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             goto complete;
         }
@@ -133,14 +136,18 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
 
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
+    PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                     msg, &cmd, 1, PMIX_CMD);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
 
     /* pack the number of targets */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ntargets, 1, PMIX_SIZE))) {
+    PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                     msg, &ntargets, 1, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
@@ -149,7 +156,9 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
      * is to be done against all members of our nspace */
     if (0 < ntargets) {
         /* pack the targets */
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, targets, ntargets, PMIX_PROC))) {
+        PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                         msg, targets, ntargets, PMIX_PROC);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_RELEASE(msg);
             return rc;
@@ -157,13 +166,17 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
     }
 
     /* pack the directives */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ndirs, 1, PMIX_SIZE))) {
+    PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                     msg, &ndirs, 1, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
     if (0 < ndirs) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, directives, ndirs, PMIX_INFO))) {
+        PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                         msg, directives, ndirs, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_RELEASE(msg);
             return rc;
@@ -178,7 +191,9 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, query_cbfunc, (void*)cb))){
+    PMIX_PTL_SEND_RECV(rc, &pmix_client_globals.myserver,
+                       msg, query_cbfunc, (void*)cb);
+    if (PMIX_SUCCESS != rc) {
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }
@@ -225,34 +240,44 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
 
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
+    PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                     msg, &cmd, 1, PMIX_CMD);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
 
     /* pack the monitor */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, monitor, 1, PMIX_INFO))) {
+    PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                     msg, monitor, 1, PMIX_INFO);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
 
     /* pack the error */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &error, 1, PMIX_STATUS))) {
+    PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                     msg, &error, 1, PMIX_STATUS);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
 
     /* pack the directives */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ndirs, 1, PMIX_SIZE))) {
+    PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                     msg, &ndirs, 1, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
     if (0 < ndirs) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, directives, ndirs, PMIX_INFO))) {
+        PMIX_BFROPS_PACK(rc, &pmix_client_globals.myserver,
+                         msg, directives, ndirs, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_RELEASE(msg);
             return rc;
@@ -267,7 +292,9 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, query_cbfunc, (void*)cb))){
+    PMIX_PTL_SEND_RECV(rc, &pmix_client_globals.myserver,
+                       msg, query_cbfunc, (void*)cb);
+    if (PMIX_SUCCESS != rc) {
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }

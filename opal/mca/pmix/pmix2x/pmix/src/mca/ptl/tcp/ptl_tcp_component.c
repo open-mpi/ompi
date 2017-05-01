@@ -58,6 +58,9 @@
 #include "src/util/show_help.h"
 #include "src/util/strnlen.h"
 #include "src/server/pmix_server_ops.h"
+#include "src/mca/bfrops/base/base.h"
+#include "src/mca/gds/base/base.h"
+#include "src/mca/psec/base/base.h"
 
 #include "src/mca/ptl/base/base.h"
 #include "src/mca/ptl/tcp/ptl_tcp.h"
@@ -205,16 +208,9 @@ static pmix_status_t component_open(void)
 
 pmix_status_t component_close(void)
 {
-    if (NULL != mca_ptl_tcp_component.tmpdir) {
-        free(mca_ptl_tcp_component.tmpdir);
-    }
-    if (NULL != mca_ptl_tcp_component.super.uri) {
-        free(mca_ptl_tcp_component.super.uri);
-    }
     if (NULL != mca_ptl_tcp_component.filename) {
         /* remove the file */
         unlink(mca_ptl_tcp_component.filename);
-        free(mca_ptl_tcp_component.filename);
     }
     return PMIX_SUCCESS;
 }
@@ -677,7 +673,9 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_peer_t *peer;
     pmix_rank_t rank;
     pmix_status_t rc;
-    char *msg, *mg, *sec;
+    char *msg, *mg;
+    char *sec, *bfrops, *gds;
+    pmix_bfrop_buffer_type_t bftype;
     char *nspace;
     uint32_t len, u32;
     size_t cnt, msglen, n;
@@ -686,6 +684,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     bool found;
     pmix_rank_info_t *info;
     pmix_proc_t proc;
+    pmix_info_t ginfo;
 
     pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                         "ptl:tcp:connection_handler: new connection: %d",
@@ -736,6 +735,47 @@ static void connection_handler(int sd, short args, void *cbdata)
         sec = mg;
         mg += strlen(sec) + 1;
         cnt -= strlen(sec) + 1;
+    } else {
+        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+        free(msg);
+        /* send an error reply to the client */
+        rc = PMIX_ERR_BAD_PARAM;
+        goto error;
+    }
+
+    /* extract the name of the bfrops module they used */
+    PMIX_STRNLEN(msglen, mg, cnt);
+    if (msglen < cnt) {
+        bfrops = mg;
+        mg += strlen(bfrops) + 1;
+        cnt -= strlen(bfrops) + 1;
+    } else {
+        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+        free(msg);
+        /* send an error reply to the client */
+        rc = PMIX_ERR_BAD_PARAM;
+        goto error;
+    }
+
+    /* extract the type of buffer they used */
+    if (sizeof(bftype) < cnt) {
+        memcpy(&bftype, mg, sizeof(bftype));
+        mg += sizeof(bftype);
+        cnt -= sizeof(bftype);
+    } else {
+        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+        free(msg);
+        /* send an error reply to the client */
+        rc = PMIX_ERR_BAD_PARAM;
+        goto error;
+    }
+
+    /* extract the name of the gds module they used */
+    PMIX_STRNLEN(msglen, mg, cnt);
+    if (msglen < cnt) {
+        gds = mg;
+        mg += strlen(gds) + 1;
+        cnt -= strlen(gds) + 1;
     } else {
         PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
         free(msg);
@@ -846,6 +886,9 @@ static void connection_handler(int sd, short args, void *cbdata)
         /* pass along the bfrop, buffer_type, and sec fields so
          * we can assign them once we create a peer object */
         pnd->psec = strdup(sec);
+        pnd->bfrops = strdup(bfrops);
+        pnd->buffer_type = bftype;
+        pnd->gds = strdup(gds);
         /* release the msg */
         free(msg);
         /* request an nspace for this requestor - it will
@@ -882,7 +925,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* see if we know this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_nspace_t) {
         if (0 == strcmp(tmp->nspace, nspace)) {
             nptr = tmp;
             break;
@@ -899,8 +942,8 @@ static void connection_handler(int sd, short args, void *cbdata)
     /* see if we have this peer in our list */
     info = NULL;
     found = false;
-    PMIX_LIST_FOREACH(info, &nptr->server->ranks, pmix_rank_info_t) {
-        if (info->rank == rank) {
+    PMIX_LIST_FOREACH(info, &nptr->ranks, pmix_rank_info_t) {
+        if (info->pname.rank == rank) {
             found = true;
             break;
         }
@@ -924,6 +967,8 @@ static void connection_handler(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         return;
     }
+    PMIX_RETAIN(nptr);
+    peer->nptr = nptr;
     PMIX_RETAIN(info);
     peer->info = info;
     info->proc_cnt++; /* increase number of processes on this rank */
@@ -938,9 +983,23 @@ static void connection_handler(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         return;
     }
+    info->peerid = peer->index;
 
     /* set the sec module to match this peer */
-    if (PMIX_SUCCESS != (rc = pmix_psec.assign_module(peer, sec))) {
+    peer->nptr->compat.psec = pmix_psec_base_assign_module(sec);
+    if (NULL == peer->nptr->compat.psec) {
+        free(msg);
+        info->proc_cnt--;
+        PMIX_RELEASE(info);
+        pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
+        PMIX_RELEASE(peer);
+        /* send an error reply to the client */
+        goto error;
+    }
+
+    /* set the bfrops module to match this peer */
+    peer->nptr->compat.bfrops = pmix_bfrops_base_assign_module(bfrops);
+    if (NULL == peer->nptr->compat.bfrops) {
         free(msg);
         info->proc_cnt--;
         PMIX_RELEASE(info);
@@ -950,13 +1009,30 @@ static void connection_handler(int sd, short args, void *cbdata)
         goto error;
     }
     free(msg);
+    /* and the buffer type to match */
+    peer->nptr->compat.type = bftype;
+
+    /* set the gds module to match this peer */
+    PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, gds, PMIX_STRING);
+    peer->nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+    if (NULL == peer->nptr->compat.gds) {
+        free(msg);
+        info->proc_cnt--;
+        PMIX_RELEASE(info);
+        pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
+        PMIX_RELEASE(peer);
+        /* send an error reply to the client */
+        goto error;
+    }
 
     /* the choice of PTL module is obviously us */
-    peer->compat.ptl = &pmix_ptl_tcp_module;
+    peer->nptr->compat.ptl = &pmix_ptl_tcp_module;
 
     /* validate the connection */
-    if (PMIX_SUCCESS != (rc = pmix_psec.validate_connection((struct pmix_peer_t*)peer,
-                                                            PMIX_PROTOCOL_V2, pnd->cred, pnd->len))) {
+    PMIX_PSEC_VALIDATE_CONNECTION(rc, peer,
+                                  PMIX_PROTOCOL_V2,
+                                  pnd->cred, pnd->len);
+    if (PMIX_SUCCESS != rc) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of client connection failed");
         info->proc_cnt--;
@@ -998,8 +1074,8 @@ static void connection_handler(int sd, short args, void *cbdata)
 
       /* let the host server know that this client has connected */
       if (NULL != pmix_host_server.client_connected) {
-          (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
-          proc.rank = peer->info->rank;
+          (void)strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
+          proc.rank = peer->info->pname.rank;
           rc = pmix_host_server.client_connected(&proc, peer->info->server_object,
                                                  NULL, NULL);
           if (PMIX_SUCCESS != rc) {
@@ -1018,7 +1094,7 @@ static void connection_handler(int sd, short args, void *cbdata)
                       EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, peer);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server client %s:%u has connected on socket %d",
-                        peer->info->nptr->nspace, peer->info->rank, peer->sd);
+                        peer->info->pname.nspace, peer->info->pname.rank, peer->sd);
     PMIX_RELEASE(pnd);
     return;
 
@@ -1090,20 +1166,20 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     /* add this nspace to our pool */
     nptr = PMIX_NEW(pmix_nspace_t);
     (void)strncpy(nptr->nspace, cd->proc.nspace, PMIX_MAX_NSLEN);
-    nptr->server = PMIX_NEW(pmix_server_nspace_t);
-    pmix_list_append(&pmix_globals.nspaces, &nptr->super);
+    pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
     /* add this tool rank to the nspace */
     info = PMIX_NEW(pmix_rank_info_t);
-    PMIX_RETAIN(nptr);
-    info->nptr = nptr;
-    info->rank = 0;
+    info->pname.nspace = strdup(cd->proc.nspace);
+    info->pname.rank = 0;
     /* need to include the uid/gid for validation */
     info->uid = pnd->uid;
     info->gid = pnd->gid;
-    pmix_list_append(&nptr->server->ranks, &info->super);
+    pmix_list_append(&nptr->ranks, &info->super);
 
     /* setup a peer object for this tool */
     pmix_peer_t *peer = PMIX_NEW(pmix_peer_t);
+    PMIX_RETAIN(nptr);
+    peer->nptr = nptr;
     PMIX_RETAIN(info);
     peer->info = info;
     peer->proc_cnt = 1;
@@ -1111,9 +1187,10 @@ static void process_cbfunc(int sd, short args, void *cbdata)
 
     /* get the appropriate compatibility modules based on the
      * info provided by the tool during the initial connection request */
-    if (PMIX_SUCCESS != pmix_psec.assign_module((struct pmix_peer_t*)peer, pnd->psec)) {
+    peer->nptr->compat.psec = pmix_psec_base_assign_module(pnd->psec);
+    if (NULL == peer->nptr->compat.psec) {
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         CLOSE_THE_SOCKET(pnd->sd);
         goto done;
@@ -1121,17 +1198,18 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     /* the choice of PTL module was obviously made by the connecting
      * tool as we received this request via that channel, so simply
      * record it here for future use */
-    peer->compat.ptl = &pmix_ptl_tcp_module;
+    peer->nptr->compat.ptl = &pmix_ptl_tcp_module;
 
     /* validate the connection */
-    if (PMIX_SUCCESS != (rc = pmix_psec.validate_connection((struct pmix_peer_t*)peer,
-                                                            PMIX_PROTOCOL_V2,
-                                                            pnd->cred, pnd->len))) {
+    PMIX_PSEC_VALIDATE_CONNECTION(rc, peer,
+                                  PMIX_PROTOCOL_V2,
+                                  pnd->cred, pnd->len);
+    if (PMIX_SUCCESS != rc) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of tool credentials failed: %s",
                             PMIx_Error_string(rc));
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         CLOSE_THE_SOCKET(pnd->sd);
         goto done;
@@ -1144,7 +1222,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         PMIX_RELEASE(cd);
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         /* probably cannot send an error reply if we are out of memory */
         return;
@@ -1159,7 +1237,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
                       EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, peer);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server tool %s:%d has connected on socket %d",
-                        peer->info->nptr->nspace, peer->info->rank, peer->sd);
+                        peer->info->pname.nspace, peer->info->pname.rank, peer->sd);
 
   done:
     PMIX_RELEASE(pnd);

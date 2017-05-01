@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -30,7 +30,7 @@
 #include "src/include/pmix_globals.h"
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_pointer_array.h"
-#include "src/buffer_ops/buffer_ops.h"
+#include "src/mca/bfrops/bfrops.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
 
@@ -74,7 +74,7 @@ pmix_status_t pmix_hash_store(pmix_hash_table_t *table,
 
     pmix_output_verbose(10, pmix_globals.debug_output,
                         "HASH:STORE rank %d key %s",
-                        rank, kin->key);
+                        rank, (NULL == kin) ? "NULL KVAL" : kin->key);
 
     id = (uint64_t)rank;
 
@@ -106,6 +106,9 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
     pmix_kval_t *hv;
     uint64_t id;
     char *node;
+    pmix_info_t *info;
+    size_t ninfo, n;
+    pmix_value_t *val;
 
     pmix_output_verbose(10, pmix_globals.debug_output,
                         "HASH:FETCH rank %d key %s",
@@ -114,9 +117,9 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
     id = (uint64_t)rank;
 
     /* - PMIX_RANK_UNDEF should return following statuses
-     * PMIX_ERR_PROC_ENTRY_NOT_FOUND | PMIX_SUCCESS
+     *     PMIX_ERR_PROC_ENTRY_NOT_FOUND | PMIX_SUCCESS
      * - specified rank can return following statuses
-     * PMIX_ERR_PROC_ENTRY_NOT_FOUND | PMIX_ERR_NOT_FOUND | PMIX_SUCCESS
+     *     PMIX_ERR_PROC_ENTRY_NOT_FOUND | PMIX_ERR_NOT_FOUND | PMIX_SUCCESS
      * special logic is basing on these statuses on a client and a server */
     if (PMIX_RANK_UNDEF == rank) {
         rc = pmix_hash_table_get_first_key_uint64(table, &id,
@@ -143,13 +146,51 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
         if (NULL == key) {
             /* we will return the data as an array of pmix_info_t
              * in the kvs pmix_value_t */
-
+            val = (pmix_value_t*)malloc(sizeof(pmix_value_t));
+            if (NULL == val) {
+                return PMIX_ERR_NOMEM;
+            }
+            val->type = PMIX_DATA_ARRAY;
+            val->data.darray = (pmix_data_array_t*)malloc(sizeof(pmix_data_array_t));
+            if (NULL == val->data.darray) {
+                PMIX_VALUE_RELEASE(val);
+                return PMIX_ERR_NOMEM;
+            }
+            val->data.darray->type = PMIX_INFO;
+            val->data.darray->size = 0;
+            val->data.darray->array = NULL;
+            ninfo = pmix_list_get_size(&proc_data->data);
+            PMIX_INFO_CREATE(info, ninfo);
+            if (NULL == info) {
+                PMIX_VALUE_RELEASE(val);
+                return PMIX_ERR_NOMEM;
+            }
+            /* copy the list elements */
+            n=0;
+            PMIX_LIST_FOREACH(hv, &proc_data->data, pmix_kval_t) {
+                (void)strncpy(info[n].key, hv->key, PMIX_MAX_KEYLEN);
+                PMIX_BFROPS_VALUE_XFER(rc, pmix_globals.mypeer,
+                                       &info[n].value, hv->value);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
+                    PMIX_VALUE_RELEASE(val);
+                    PMIX_INFO_FREE(info, ninfo);
+                    return rc;
+                }
+                ++n;
+            }
+            val->data.darray->size = ninfo;
+            val->data.darray->array = info;
+            *kvs = val;
+            return PMIX_SUCCESS;
         } else {
             /* find the value from within this proc_data object */
             hv = lookup_keyval(&proc_data->data, key);
             if (NULL != hv) {
                 /* create the copy */
-                if (PMIX_SUCCESS != (rc = pmix_bfrop.copy((void**)kvs, hv->value, PMIX_VALUE))) {
+                PMIX_BFROPS_COPY(rc, pmix_globals.mypeer,
+                                 (void**)kvs, hv->value, PMIX_VALUE);
+                if (PMIX_SUCCESS != rc) {
                     PMIX_ERROR_LOG(rc);
                     return rc;
                 }
@@ -215,7 +256,9 @@ pmix_status_t pmix_hash_fetch_by_key(pmix_hash_table_t *table, const char *key,
     hv = lookup_keyval(&proc_data->data, key_r);
     if (hv) {
         /* create the copy */
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.copy((void**)kvs, hv->value, PMIX_VALUE))) {
+        PMIX_BFROPS_COPY(rc, pmix_globals.mypeer,
+                         (void**)kvs, hv->value, PMIX_VALUE);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             return rc;
         }

@@ -15,10 +15,12 @@
 #define PMIX_SERVER_OPS_H
 
 #include <src/include/pmix_config.h>
-
+#include "src/include/types.h"
 #include <pmix_common.h>
+
 #include <src/class/pmix_ring_buffer.h>
 #include <pmix_server.h>
+#include "src/include/pmix_globals.h"
 #include "src/util/hash.h"
 
 typedef struct {
@@ -34,16 +36,25 @@ typedef struct {
     volatile bool active;
     char *nspace;
     pmix_status_t status;
+    pmix_status_t *codes;
+    size_t ncodes;
     pmix_proc_t proc;
+    pmix_proc_t *procs;
+    size_t nprocs;
     uid_t uid;
     gid_t gid;
     void *server_object;
     int nlocalprocs;
     pmix_info_t *info;
     size_t ninfo;
+    char **keys;
+    pmix_app_t *apps;
+    size_t napps;
     pmix_op_cbfunc_t opcbfunc;
     pmix_dmodex_response_fn_t cbfunc;
     pmix_setup_application_cbfunc_t setupcbfunc;
+    pmix_lookup_cbfunc_t lkcbfunc;
+    pmix_spawn_cbfunc_t spcbfunc;
     void *cbdata;
 } pmix_setup_caddy_t;
 PMIX_CLASS_DECLARATION(pmix_setup_caddy_t);
@@ -60,7 +71,6 @@ typedef struct {
     bool nondefault;
     pmix_info_t *info;
     size_t ninfo;
-    pmix_buffer_t *buf;
     pmix_op_cbfunc_t cbfunc;
     void *cbdata;
 } pmix_notify_caddy_t;
@@ -105,16 +115,17 @@ typedef struct {
 PMIX_CLASS_DECLARATION(pmix_regevents_info_t);
 
 typedef struct {
+    pmix_list_t nspaces;                    // list of pmix_nspace_t for the nspaces we know about
     pmix_pointer_array_t clients;           // array of pmix_peer_t local clients
     pmix_list_t collectives;                // list of active pmix_server_trkr_t
     pmix_list_t remote_pnd;                 // list of pmix_dmdx_remote_t awaiting arrival of data fror servicing remote req's
     pmix_list_t local_reqs;                 // list of pmix_dmdx_local_t awaiting arrival of data from local neighbours
-    pmix_buffer_t gdata;                    // cache of data given to me for passing to all clients
+    pmix_list_t gdata;                      // cache of data given to me for passing to all clients
     pmix_list_t events;                     // list of pmix_regevents_info_t registered events
     bool tool_connections_allowed;
 } pmix_server_globals_t;
 
-#define PMIX_PEER_CADDY(c, p, t)                \
+#define PMIX_GDS_CADDY(c, p, t)                \
     do {                                        \
         (c) = PMIX_NEW(pmix_server_caddy_t);    \
         (c)->hdr.tag = (t);                     \
@@ -183,8 +194,9 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
                                   pmix_buffer_t *buf, bool disconnect,
                                   pmix_op_cbfunc_t cbfunc);
 
-void pmix_pack_proc_map(pmix_buffer_t *buf,
-                        char **nodes, char **procs);
+pmix_status_t pmix_pack_proc_map(struct pmix_peer_t *pr,
+                                 pmix_buffer_t *buf,
+                                 char **nodes, char **procs);
 pmix_status_t pmix_regex_parse_nodes(const char *regexp, char ***names);
 pmix_status_t pmix_regex_parse_procs(const char *regexp, char ***procs);
 

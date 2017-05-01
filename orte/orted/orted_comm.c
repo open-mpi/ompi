@@ -1447,6 +1447,9 @@ static char *get_orted_comm_cmd_str(int command)
     case ORTE_DAEMON_DVM_CLEANUP_JOB_CMD:
         return strdup("ORTE_DAEMON_DVM_CLEANUP_JOB_CMD");
 
+    case ORTE_DAEMON_REPORT_TOPOLOGY_CMD:
+        return strdup("ORTE_DAEMON_REPORT_TOPOLOGY_CMD");
+
     default:
         return strdup("Unknown Command!");
     }

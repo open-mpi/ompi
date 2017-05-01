@@ -149,12 +149,11 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         }
         *p2 = '\0';
         ++p2;
-        pmix_client_globals.myserver.info = PMIX_NEW(pmix_rank_info_t);
-        pmix_client_globals.myserver.info->nptr = PMIX_NEW(pmix_nspace_t);
-        (void)strncpy(pmix_client_globals.myserver.info->nptr->nspace, p, PMIX_MAX_NSLEN);
+        pmix_client_globals.myserver.nptr->nspace = strdup(p);
+        pmix_client_globals.myserver.info->pname.nspace = strdup(p);
 
         /* set the server rank */
-        pmix_client_globals.myserver.info->rank = strtoull(p2, NULL, 10);
+        pmix_client_globals.myserver.info->pname.rank = strtoull(p2, NULL, 10);
 
         /* save the URI, but do not overwrite what we may have received from
          * the info-key directives */
@@ -208,18 +207,17 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             *p2 = '\0';
             ++p2;
             /* set the server nspace */
-            pmix_client_globals.myserver.info = PMIX_NEW(pmix_rank_info_t);
-            pmix_client_globals.myserver.info->nptr = PMIX_NEW(pmix_nspace_t);
-            (void)strncpy(pmix_client_globals.myserver.info->nptr->nspace, srvr, PMIX_MAX_NSLEN);
-            pmix_client_globals.myserver.info->rank = strtoull(p2, NULL, 10);
-            /* now parse the uti itself */
+            pmix_client_globals.myserver.nptr->nspace = strdup(srvr);
+            pmix_client_globals.myserver.info->pname.nspace = strdup(srvr);
+            pmix_client_globals.myserver.info->pname.rank = strtoull(p2, NULL, 10);
+            /* now parse the uri itself */
             mca_ptl_tcp_component.super.uri = strdup(p);
             free(srvr);
         }
     }
 
     /* mark that we are the active module for this server */
-    pmix_client_globals.myserver.compat.ptl = &pmix_ptl_tcp_module;
+    pmix_client_globals.myserver.nptr->compat.ptl = &pmix_ptl_tcp_module;
 
     /* setup the path to the daemon rendezvous point */
     memset(&mca_ptl_tcp_component.connection, 0, sizeof(struct sockaddr_storage));
@@ -381,7 +379,8 @@ static pmix_status_t send_connect_ack(int sd)
     pmix_ptl_hdr_t hdr;
     size_t sdsize=0, csize=0, len;
     char *cred = NULL;
-    char *sec;
+    char *sec, *bfrops, *gds;
+    pmix_bfrop_buffer_type_t bftype;
     pmix_status_t rc;
     uint8_t flag;
     uid_t euid;
@@ -406,8 +405,9 @@ static pmix_status_t send_connect_ack(int sd)
      * local PMIx server, if known. Now use that module to
      * get a credential, if the security system provides one. Not
      * every psec module will do so, thus we must first check */
-    if (PMIX_SUCCESS != (rc = pmix_psec.create_cred(&pmix_client_globals.myserver,
-                                                    PMIX_PROTOCOL_V2, &cred, &len))) {
+    PMIX_PSEC_CREATE_CRED(rc, &pmix_client_globals.myserver,
+                          PMIX_PROTOCOL_V2, &cred, &len);
+    if (PMIX_SUCCESS != rc) {
         return rc;
     }
 
@@ -424,11 +424,22 @@ static pmix_status_t send_connect_ack(int sd)
         sdsize += 2*sizeof(uint32_t);
     }
 
-    /* add our active sec module info */
-    sec = pmix_psec.get_available_modules();
+    /* add the name of our active sec module - we selected it
+     * in pmix_client.c prior to entering here */
+    sec = pmix_globals.mypeer->nptr->compat.psec->name;
+
+    /* add our active bfrops module name */
+    bfrops = pmix_globals.mypeer->nptr->compat.bfrops->version;
+    /* and the type of buffer we are using */
+    bftype = pmix_globals.mypeer->nptr->compat.type;
+
+    /* add our active gds module for working with the server */
+    gds = (char*)pmix_globals.mypeer->nptr->compat.gds->name;
 
     /* set the number of bytes to be read beyond the header */
-    hdr.nbytes = sdsize + strlen(PMIX_VERSION) + 1 + strlen(sec) + 1 + sizeof(uint32_t) + len;  // must NULL terminate the VERSION string!
+    hdr.nbytes = sdsize + strlen(PMIX_VERSION) + 1 + strlen(sec) + 1 \
+                + strlen(bfrops) + 1 + sizeof(bftype) \
+                + strlen(gds) + 1 + sizeof(uint32_t) + len;  // must NULL terminate the strings!
 
     /* create a space for our message */
     sdsize = (sizeof(hdr) + hdr.nbytes);
@@ -449,7 +460,18 @@ static pmix_status_t send_connect_ack(int sd)
     /* provide our active psec module */
     memcpy(msg+csize, sec, strlen(sec));
     csize += strlen(sec)+1;
-    free(sec);
+
+    /* provide our active bfrops module */
+    memcpy(msg+csize, bfrops, strlen(bfrops));
+    csize += strlen(bfrops)+1;
+
+    /* provide the bfrops type */
+    memcpy(msg+csize, &bftype, sizeof(bftype));
+    csize += sizeof(bftype);
+
+    /* provide the gds module */
+    memcpy(msg+csize, gds, strlen(gds));
+    csize += strlen(gds)+1;
 
     /* load the length of the credential - we put this in uint32_t
      * format as that is a fixed size, and convert to network
@@ -519,7 +541,7 @@ static pmix_status_t recv_connect_ack(int sd)
     pmix_socklen_t sz;
     bool sockopt = true;
     uint32_t u32;
-    pmix_nspace_t *nsptr;
+    char nspace[PMIX_MAX_NSLEN+1];
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: RECV CONNECT ACK FROM SERVER");
@@ -554,7 +576,8 @@ static pmix_status_t recv_connect_ack(int sd)
     if (PMIX_PROC_IS_CLIENT) {
         /* see if they want us to do the handshake */
         if (PMIX_ERR_READY_FOR_HANDSHAKE == reply) {
-            if (PMIX_SUCCESS != (rc = pmix_psec.client_handshake(&pmix_client_globals.myserver, sd))) {
+            PMIX_PSEC_CLIENT_HANDSHAKE(rc, &pmix_client_globals.myserver, sd);
+            if (PMIX_SUCCESS != rc) {
                 return rc;
             }
         } else if (PMIX_SUCCESS != reply) {
@@ -570,7 +593,7 @@ static pmix_status_t recv_connect_ack(int sd)
             return rc;
         }
         pmix_globals.pindex = ntohl(u32);
-    } else {
+    } else {  // we are a tool
         /* if the status indicates an error, then we are done */
         if (PMIX_SUCCESS != reply) {
             PMIX_ERROR_LOG(reply);
@@ -582,35 +605,30 @@ static pmix_status_t recv_connect_ack(int sd)
             PMIX_ERROR_LOG(rc);
             return rc;
         }
-
-        /* setup required bookkeeping */
-        nsptr = PMIX_NEW(pmix_nspace_t);
-        (void)strncpy(nsptr->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
-        pmix_list_append(&pmix_globals.nspaces, &nsptr->super);
         /* our rank is always zero */
         pmix_globals.myid.rank = 0;
 
         /* get the server's nspace and rank so we can send to it */
         pmix_client_globals.myserver.info = PMIX_NEW(pmix_rank_info_t);
-        pmix_client_globals.myserver.info->nptr = PMIX_NEW(pmix_nspace_t);
-        pmix_ptl_base_recv_blocking(sd, (char*)pmix_client_globals.myserver.info->nptr->nspace, PMIX_MAX_NSLEN+1);
-        pmix_ptl_base_recv_blocking(sd, (char*)&(pmix_client_globals.myserver.info->rank), sizeof(int));
+        pmix_client_globals.myserver.nptr = PMIX_NEW(pmix_nspace_t);
+        pmix_ptl_base_recv_blocking(sd, (char*)nspace, PMIX_MAX_NSLEN+1);
+        pmix_client_globals.myserver.nptr->nspace = strdup(nspace);
+        pmix_client_globals.myserver.info->pname.nspace = strdup(nspace);
+        pmix_ptl_base_recv_blocking(sd, (char*)&(pmix_client_globals.myserver.info->pname.rank), sizeof(int));
 
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: RECV CONNECT CONFIRMATION FOR TOOL %s:%d FROM SERVER %s:%d",
                             pmix_globals.myid.nspace, pmix_globals.myid.rank,
-                            pmix_client_globals.myserver.info->nptr->nspace,
-                            pmix_client_globals.myserver.info->rank);
+                            pmix_client_globals.myserver.info->pname.nspace,
+                            pmix_client_globals.myserver.info->pname.rank);
 
         /* get the returned status from the security handshake */
         pmix_ptl_base_recv_blocking(sd, (char*)&reply, sizeof(pmix_status_t));
         if (PMIX_SUCCESS != reply) {
             /* see if they want us to do the handshake */
             if (PMIX_ERR_READY_FOR_HANDSHAKE == reply) {
-                if (NULL == pmix_psec.client_handshake) {
-                    return PMIX_ERR_HANDSHAKE_FAILED;
-                }
-                if (PMIX_SUCCESS != (reply = pmix_psec.client_handshake(&pmix_client_globals.myserver, sd))) {
+                PMIX_PSEC_CLIENT_HANDSHAKE(reply, &pmix_client_globals.myserver, sd);
+                if (PMIX_SUCCESS != reply) {
                     return reply;
                 }
                 /* if the handshake succeeded, then fall thru to the next step */

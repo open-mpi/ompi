@@ -181,7 +181,7 @@ static pmix_status_t start(pmix_peer_t *requestor, pmix_status_t error,
     PMIX_OUTPUT_VERBOSE((1, pmix_psensor_base_framework.framework_output,
                          "[%s:%d] checking file monitoring for requestor %s:%d",
                          pmix_globals.myid.nspace, pmix_globals.myid.rank,
-                         requestor->info->nptr->nspace, requestor->info->rank));
+                         requestor->info->pname.nspace, requestor->info->pname.rank));
 
     /* if they didn't ask to monitor a file, then nothing for us to do */
     if (0 != strcmp(monitor->key, PMIX_MONITOR_FILE)) {
@@ -335,8 +335,8 @@ static void file_sample(int sd, short args, void *cbdata)
         /* stop monitoring this client */
         pmix_list_remove_item(&mca_psensor_file_component.trackers, &ft->super);
         /* generate an event */
-        (void)strncpy(source.nspace, ft->requestor->info->nptr->nspace, PMIX_MAX_NSLEN);
-        source.rank = ft->requestor->info->rank;
+        (void)strncpy(source.nspace, ft->requestor->info->pname.nspace, PMIX_MAX_NSLEN);
+        source.rank = ft->requestor->info->pname.rank;
         rc = PMIx_Notify_event(PMIX_MONITOR_FILE_ALERT, &source,
                                ft->range, ft->info, ft->ninfo, opcbfunc, ft);
         if (PMIX_SUCCESS != rc) {

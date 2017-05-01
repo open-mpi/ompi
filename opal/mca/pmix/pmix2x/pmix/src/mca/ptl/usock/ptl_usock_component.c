@@ -59,7 +59,7 @@
 #include "src/util/fd.h"
 #include "src/util/show_help.h"
 #include "src/util/strnlen.h"
-#include "src/mca/psec/psec.h"
+#include "src/mca/psec/base/base.h"
 #include "src/server/pmix_server_ops.h"
 
 #include "src/mca/ptl/base/base.h"
@@ -218,7 +218,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
      * are using as this wasn't included in their handshake. So
      * the best we can assume is that they are using the highest
      * priority default we have */
-    secmods = pmix_psec.get_available_modules();
+    secmods = pmix_psec_base_get_available_modules();
     options = pmix_argv_split(secmods, ',');
     sec_mode = strdup(options[0]);
     pmix_argv_free(options);
@@ -469,7 +469,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* see if we know this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_nspace_t) {
         if (0 == strcmp(tmp->nspace, nspace)) {
             nptr = tmp;
             break;
@@ -486,8 +486,8 @@ static void connection_handler(int sd, short args, void *cbdata)
     /* see if we have this peer in our list */
     info = NULL;
     found = false;
-    PMIX_LIST_FOREACH(info, &nptr->server->ranks, pmix_rank_info_t) {
-        if (info->rank == rank) {
+    PMIX_LIST_FOREACH(info, &nptr->ranks, pmix_rank_info_t) {
+        if (info->pname.rank == rank) {
             found = true;
             break;
         }
@@ -508,6 +508,8 @@ static void connection_handler(int sd, short args, void *cbdata)
         rc = PMIX_ERR_NOMEM;
         goto error;
     }
+    PMIX_RETAIN(nptr);
+    psave->nptr = nptr;
     PMIX_RETAIN(info);
     psave->info = info;
     info->proc_cnt++; /* increase number of processes on this rank */
@@ -522,9 +524,11 @@ static void connection_handler(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         return;
     }
+    info->peerid = psave->index;
 
     /* get the appropriate compatibility modules */
-    if (PMIX_SUCCESS != pmix_psec.assign_module((struct pmix_peer_t*)psave, sec_mode)) {
+    nptr->compat.psec = pmix_psec_base_assign_module(sec_mode);
+    if (NULL == nptr->compat.psec) {
         free(msg);
         info->proc_cnt--;
         PMIX_RELEASE(info);
@@ -536,7 +540,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     /* the choice of PTL module was obviously made by the connecting
      * tool as we received this request via that channel, so simply
      * record it here for future use */
-    psave->compat.ptl = &pmix_ptl_usock_module;
+    nptr->compat.ptl = &pmix_ptl_usock_module;
 
     /* validate the connection */
     if (NULL == cred) {
@@ -544,8 +548,9 @@ static void connection_handler(int sd, short args, void *cbdata)
     } else {
         len = strlen(cred);
     }
-    if (PMIX_SUCCESS != (rc = pmix_psec.validate_connection((struct pmix_peer_t*)psave,
-                                                            PMIX_PROTOCOL_V1, cred, len))) {
+    PMIX_PSEC_VALIDATE_CONNECTION(rc, psave,
+                                  PMIX_PROTOCOL_V1, cred, len);
+    if (PMIX_SUCCESS != rc) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of client credentials failed: %s",
                             PMIx_Error_string(rc));
@@ -589,8 +594,8 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* let the host server know that this client has connected */
     if (NULL != pmix_host_server.client_connected) {
-        (void)strncpy(proc.nspace, psave->info->nptr->nspace, PMIX_MAX_NSLEN);
-        proc.rank = psave->info->rank;
+        (void)strncpy(proc.nspace, psave->info->pname.nspace, PMIX_MAX_NSLEN);
+        proc.rank = psave->info->pname.rank;
         rc = pmix_host_server.client_connected(&proc, psave->info->server_object, NULL, NULL);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
@@ -611,7 +616,7 @@ static void connection_handler(int sd, short args, void *cbdata)
                       EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, psave);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server client %s:%u has connected on socket %d",
-                        psave->info->nptr->nspace, psave->info->rank, psave->sd);
+                        psave->info->pname.nspace, psave->info->pname.rank, psave->sd);
 
     PMIX_RELEASE(pnd);
     return;
