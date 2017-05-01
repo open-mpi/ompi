@@ -714,8 +714,8 @@ void opal_datatype_dump_stack( const dt_stack_t* pStack, int stack_pos,
         opal_output( 0, "%d: pos %d count %d disp %ld ", stack_pos, pStack[stack_pos].index,
                      (int)pStack[stack_pos].count, (long)pStack[stack_pos].disp );
         if( pStack->index != -1 )
-            opal_output( 0, "\t[desc count %d disp %ld extent %ld]\n",
-                         pDesc[pStack[stack_pos].index].elem.count,
+            opal_output( 0, "\t[desc count %lu disp %ld extent %ld]\n",
+                         (unsigned long)pDesc[pStack[stack_pos].index].elem.count,
                          (long)pDesc[pStack[stack_pos].index].elem.disp,
                          (long)pDesc[pStack[stack_pos].index].elem.extent );
         else

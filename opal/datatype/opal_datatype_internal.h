@@ -155,10 +155,10 @@ typedef struct ddt_elem_id_description ddt_elem_id_description;
  */
 struct ddt_elem_desc {
     ddt_elem_id_description common;           /**< basic data description and flags */
-    uint32_t                count;            /**< number of blocks */
+    size_t                  count;            /**< number of blocks */
     uint32_t                blocklen;         /**< number of elements on each block */
-    ptrdiff_t       extent;           /**< extent of each block (in bytes) */
-    ptrdiff_t       disp;             /**< displacement of the first block */
+    ptrdiff_t               extent;           /**< extent of each block (in bytes) */
+    ptrdiff_t               disp;             /**< displacement of the first block */
 };
 typedef struct ddt_elem_desc ddt_elem_desc_t;
 
@@ -175,7 +175,7 @@ struct ddt_loop_desc {
     uint32_t                loops;            /**< number of elements */
     uint32_t                items;            /**< number of items in the loop */
     size_t                  unused;           /**< not used right now */
-    ptrdiff_t       extent;           /**< extent of the whole loop */
+    ptrdiff_t               extent;           /**< extent of the whole loop */
 };
 typedef struct ddt_loop_desc ddt_loop_desc_t;
 
@@ -184,7 +184,7 @@ struct ddt_endloop_desc {
     uint32_t                items;            /**< number of elements */
     uint32_t                unused;           /**< not used right now */
     size_t                  size;             /**< real size of the data in the loop */
-    ptrdiff_t       first_elem_disp;  /**< the displacement of the first block in the loop */
+    ptrdiff_t               first_elem_disp;  /**< the displacement of the first block in the loop */
 };
 typedef struct ddt_endloop_desc ddt_endloop_desc_t;
 
@@ -214,13 +214,20 @@ union dt_elem_desc {
         (_place)->end_loop.unused = -1;                                        \
     } while(0)
 
+
+/**
+ * Create one or more elements depending on the value of _count. If the value
+ * is too large for the type of elem.count then use oth the elem.count and
+ * elem.blocklen to create it. If the number is prime then create a second
+ * element to account for the difference.
+ */
 #define CREATE_ELEM( _place, _type, _flags, _count, _disp, _extent )           \
     do {                                                                       \
         (_place)->elem.common.flags = (_flags) | OPAL_DATATYPE_FLAG_DATA;      \
         (_place)->elem.common.type  = (_type);                                 \
-        (_place)->elem.count        = (_count);                                \
         (_place)->elem.disp         = (_disp);                                 \
         (_place)->elem.extent       = (_extent);                               \
+        (_place)->elem.count        = (_count);                                \
         (_place)->elem.blocklen     = 1;                                       \
     } while(0)
 /*

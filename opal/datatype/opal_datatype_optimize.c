@@ -50,11 +50,12 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
     dt_stack_t* pOrigStack;
     dt_stack_t* pStack;            /* pointer to the position on the stack */
     int32_t pos_desc = 0;          /* actual position in the description of the derived datatype */
-    int32_t stack_pos = 0, last_type = OPAL_DATATYPE_UINT1, last_length = 0;
+    int32_t stack_pos = 0, last_type = OPAL_DATATYPE_UINT1;
     int32_t type = OPAL_DATATYPE_LOOP, nbElems = 0, continuity;
     ptrdiff_t total_disp = 0, last_extent = 1, last_disp = 0;
     uint16_t last_flags = 0xFFFF;  /* keep all for the first datatype */
     uint32_t i;
+    size_t last_length = 0;
 
     pOrigStack = pStack = (dt_stack_t*)malloc( sizeof(dt_stack_t) * (pData->btypes[OPAL_DATATYPE_LOOP]+2) );
     SAVE_STACK( pStack, -1, 0, count, 0 );
@@ -98,8 +99,8 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
             int index = GET_FIRST_NON_LOOP( &(pData->desc.desc[pos_desc]) );
             ptrdiff_t loop_disp = pData->desc.desc[pos_desc + index].elem.disp;
 
-            continuity = ((last_disp + last_length * (ptrdiff_t)opal_datatype_basicDatatypes[last_type]->size)
-                              == (total_disp + loop_disp));
+            continuity = ((last_disp + (ptrdiff_t)last_length * (ptrdiff_t)opal_datatype_basicDatatypes[last_type]->size)
+                          == (total_disp + loop_disp));
             if( loop->common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                 /* the loop is contiguous or composed by contiguous elements with a gap */
                 if( loop->extent == (ptrdiff_t)end_loop->size ) {
@@ -206,7 +207,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
         while( pData->desc.desc[pos_desc].elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {  /* keep doing it until we reach a non datatype element */
             /* now here we have a basic datatype */
             type = pData->desc.desc[pos_desc].elem.common.type;
-            continuity = ((last_disp + last_length * (ptrdiff_t)opal_datatype_basicDatatypes[last_type]->size)
+            continuity = ((last_disp + (ptrdiff_t)last_length * (ptrdiff_t)opal_datatype_basicDatatypes[last_type]->size)
                           == (total_disp + pData->desc.desc[pos_desc].elem.disp));
 
             if( (pData->desc.desc[pos_desc].elem.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && continuity &&
