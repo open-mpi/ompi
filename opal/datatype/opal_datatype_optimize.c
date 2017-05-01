@@ -247,6 +247,12 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
     }
     /* cleanup the stack */
     pTypeDesc->used = nbElems - 1;  /* except the last fake END_LOOP */
+    if (OPAL_UNLIKELY(0 == pTypeDesc->used)) {
+        /* optimized description is not gonna be used, so free it */
+        free(pTypeDesc->desc);
+        pTypeDesc->desc = NULL;
+        pTypeDesc->length = 0;
+    }
     free(pOrigStack);
     return OPAL_SUCCESS;
 }
