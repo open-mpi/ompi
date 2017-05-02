@@ -23,7 +23,7 @@
 /**
  * The purpose of this test is to simulate the multi-network packing and
  * unpacking process. The pack operation will happens in-order while the
- * will be done randomly. Therefore, before each unpack the correct
+ * unpack will be done randomly. Therefore, before each unpack the correct
  * position in the user buffer has to be set.
  */
 

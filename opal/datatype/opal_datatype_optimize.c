@@ -42,8 +42,8 @@
 
 static int32_t
 opal_datatype_optimize_short( opal_datatype_t* pData,
-                         int32_t count,
-                         dt_type_desc_t* pTypeDesc )
+                              int32_t count,
+                              dt_type_desc_t* pTypeDesc )
 {
     dt_elem_desc_t* pElemDesc;
     ddt_elem_desc_t opt_elem;
@@ -57,7 +57,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
     uint32_t i;
     size_t last_length = 0;
 
-    pOrigStack = pStack = (dt_stack_t*)malloc( sizeof(dt_stack_t) * (pData->btypes[OPAL_DATATYPE_LOOP]+2) );
+    pOrigStack = pStack = (dt_stack_t*)malloc( sizeof(dt_stack_t) * (pData->loops+2) );
     SAVE_STACK( pStack, -1, 0, count, 0 );
 
     pTypeDesc->length = 2 * pData->desc.used + 1 /* for the fake OPAL_DATATYPE_END_LOOP at the end */;
@@ -86,7 +86,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
             pElemDesc++; nbElems++;
             if( --stack_pos >= 0 ) {  /* still something to do ? */
                 ddt_loop_desc_t* pStartLoop = &(pTypeDesc->desc[pStack->index - 1].loop);
-                pStartLoop->items = (pElemDesc - 1)->elem.count;
+                pStartLoop->items = end_loop->items;
                 total_disp = pStack->disp;  /* update the displacement position */
             }
             pStack--;  /* go down one position on the stack */

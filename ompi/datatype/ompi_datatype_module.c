@@ -384,8 +384,9 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         (PDST)->super.opt_desc = (PSRC)->super.opt_desc;                             \
         (PDST)->packed_description = (PSRC)->packed_description;                     \
         (PSRC)->packed_description = NULL;                                           \
-        memcpy( (PDST)->super.btypes, (PSRC)->super.btypes,                          \
-                OPAL_DATATYPE_MAX_PREDEFINED * sizeof(uint32_t) );                   \
+        /* transfer the ptypes */                                                    \
+        (PDST)->super.ptypes = (PSRC)->super.ptypes;                                 \
+        (PSRC)->super.ptypes = NULL;                                                 \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_STRUCT_DDT( PDATA, MPIDDT, MPIDDTNAME, type1, type2, MPIType1, MPIType2, FLAGS) \
@@ -393,20 +394,20 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         struct { type1 v1; type2 v2; } s[2];                                         \
         ompi_datatype_t *types[2], *ptype;                                           \
         int bLength[2] = {1, 1};                                                     \
-        ptrdiff_t base, displ[2];                                            \
+        ptrdiff_t base, displ[2];                                                    \
                                                                                      \
         types[0] = (ompi_datatype_t*)ompi_datatype_basicDatatypes[MPIType1];         \
         types[1] = (ompi_datatype_t*)ompi_datatype_basicDatatypes[MPIType2];         \
-        base = (ptrdiff_t)(&(s[0]));                                         \
-        displ[0] = (ptrdiff_t)(&(s[0].v1));                                  \
+        base = (ptrdiff_t)(&(s[0]));                                                 \
+        displ[0] = (ptrdiff_t)(&(s[0].v1));                                          \
         displ[0] -= base;                                                            \
-        displ[1] = (ptrdiff_t)(&(s[0].v2));                                  \
+        displ[1] = (ptrdiff_t)(&(s[0].v2));                                          \
         displ[1] -= base;                                                            \
                                                                                      \
         ompi_datatype_create_struct( 2, bLength, displ, types, &ptype );             \
-        displ[0] = (ptrdiff_t)(&(s[1]));                                     \
+        displ[0] = (ptrdiff_t)(&(s[1]));                                             \
         displ[0] -= base;                                                            \
-        if( displ[0] != (displ[1] + (ptrdiff_t)sizeof(type2)) )              \
+        if( displ[0] != (displ[1] + (ptrdiff_t)sizeof(type2)) )                      \
             ptype->super.ub = displ[0];  /* force a new extent for the datatype */   \
         ptype->super.flags |= (FLAGS);                                               \
         ptype->id = MPIDDT;                                                          \
@@ -736,7 +737,7 @@ void ompi_datatype_dump( const ompi_datatype_t* pData )
                      (long)pData->super.size, (int)pData->super.align, pData->super.id, (int)pData->super.desc.length, (int)pData->super.desc.used,
                      (long)pData->super.true_lb, (long)pData->super.true_ub, (long)(pData->super.true_ub - pData->super.true_lb),
                      (long)pData->super.lb, (long)pData->super.ub, (long)(pData->super.ub - pData->super.lb),
-                     (int)pData->super.nbElems, (int)pData->super.btypes[OPAL_DATATYPE_LOOP], (int)pData->super.flags );
+                     (int)pData->super.nbElems, (int)pData->super.loops, (int)pData->super.flags );
     /* dump the flags */
     if( ompi_datatype_is_predefined(pData) ) {
         index += snprintf( buffer + index, length - index, "predefined " );

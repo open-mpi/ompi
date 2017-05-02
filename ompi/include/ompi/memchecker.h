@@ -366,7 +366,8 @@ static inline int memchecker_datatype(MPI_Datatype type)
     opal_memchecker_base_isdefined (&type->super.opt_desc.length, sizeof(opal_datatype_count_t));
     opal_memchecker_base_isdefined (&type->super.opt_desc.used, sizeof(opal_datatype_count_t));
     opal_memchecker_base_isdefined (&type->super.opt_desc.desc, sizeof(dt_elem_desc_t *));
-    opal_memchecker_base_isdefined (&type->super.btypes, OPAL_DATATYPE_MAX_PREDEFINED * sizeof(uint32_t));
+    if( NULL != type->super.ptypes )
+        opal_memchecker_base_isdefined (&type->super.ptypes, OPAL_DATATYPE_MAX_PREDEFINED * sizeof(size_t));
 
     opal_memchecker_base_isdefined (&type->id, sizeof(int32_t));
     opal_memchecker_base_isdefined (&type->d_f_to_c_index, sizeof(int32_t));
