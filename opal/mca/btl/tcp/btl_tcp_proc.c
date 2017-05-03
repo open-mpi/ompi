@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -828,20 +828,13 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
     /* No further use of this socket. Close it */
     CLOSE_THE_SOCKET(sd);
     {
-        char *addr_str=NULL, *tmp, pnet[1024];
+        char *addr_str = NULL, *tmp, *pnet;
         for (size_t i = 0; i < btl_proc->proc_endpoint_count; i++) {
             mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
             if (btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
                 continue;
             }
-            if (AF_INET == addr->sa_family) {
-                inet_ntop(AF_INET, (void*)(struct in_addr*)&btl_endpoint->endpoint_addr->addr_inet, pnet, 1024);
-            } else if (AF_INET6 == addr->sa_family) {
-                inet_ntop(AF_INET6, (void*)(struct in6_addr*)&btl_endpoint->endpoint_addr->addr_inet, pnet, 1024);
-            } else {
-                /* unrecognized family */
-                continue;
-            }
+            pnet = opal_net_get_hostname((struct sockaddr*)&btl_endpoint->endpoint_addr->addr_inet);
             if (NULL == addr_str) {
                 (void)asprintf(&tmp, "\n\t%s", pnet);
             } else {
