@@ -1001,7 +1001,9 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         }
     }
 
+
     /*[Debug] to check for daemon commn over ofi-ethernet, enable the default conduit  ORTE_MGMT_CONDUIT over ofi */
+/*
     if (orte_get_attribute(attributes, ORTE_RML_TRANSPORT_TYPE, (void**)&comp_attrib, OPAL_STRING) &&
         NULL != comp_attrib) {
             opal_output_verbose(20,orte_rml_base_framework.framework_output,
@@ -1011,7 +1013,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         for (i=0; NULL != comps[i]; i++) {
             if (0 == strcmp(comps[i], "ethernet")) {
                 /* we are a candidate,  */
-                opal_argv_free(comps);
+/*                opal_argv_free(comps);
                 OBJ_CONSTRUCT(&provider, opal_list_t);
                 orte_set_attribute(&provider, ORTE_RML_PROVIDER_ATTRIB,
                          ORTE_ATTR_LOCAL, "sockets", OPAL_STRING);
@@ -1020,7 +1022,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         }
         opal_argv_free(comps);
     }
-    /*[Debug] */
+    /* end [Debug] */
 
     /* Alternatively, check the attributes to see if we qualify - we only handle
      * "pt2pt" */
