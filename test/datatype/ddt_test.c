@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -394,6 +396,14 @@ int main( int argc, char* argv[] )
     printf( "\n\n#\n * TEST CONTIGUOUS\n #\n\n" );
     pdt = test_contiguous();
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
+
+    printf( "\n\n#\n * TEST MPI_DATATYPE_NULL\n #\n\n" );
+    /*
+     * MPI_DATATYPE_NULL cannot be a committed datatype,
+     * see comment in ompi/mpi/c/bindings.h
+     */
+    assert(! opal_datatype_is_committed(&ompi_mpi_datatype_null.dt.super));
+
     printf( "\n\n#\n * TEST STRUCT\n #\n\n" );
     pdt = test_struct();
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
