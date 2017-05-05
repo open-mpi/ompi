@@ -223,7 +223,7 @@ int32_t opal_convertor_pack( opal_convertor_t* pConv,
     if( OPAL_LIKELY(pConv->flags & CONVERTOR_NO_OP) ) {
         /**
          * We are doing conversion on a contiguous datatype on a homogeneous
-         * environment. The convertor contain minimal informations, we only
+         * environment. The convertor contain minimal information, we only
          * use the bConverted to manage the conversion.
          */
         uint32_t i;
@@ -466,40 +466,28 @@ opal_datatype_compute_remote_size( const opal_datatype_t* pData,
 }
 
 /**
- * Compute the remote size based on the datatype and count. Assume that the sizes
- * are the sizes corresponding to the remote architecture.
+ * Compute the remote size. If necessary remove the homogeneous flag
+ * and redirect the convertor description toward the non-optimized
+ * datatype representation.
  */
 size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
 {
-    if( pConvertor->flags & CONVERTOR_HOMOGENEOUS ) {
-        pConvertor->remote_size = pConvertor->local_size;
-    } else {
+    opal_datatype_t* datatype = (opal_datatype_t*)pConvertor->pDesc;
+    
+    pConvertor->remote_size = pConvertor->local_size;
+    if( OPAL_UNLIKELY(datatype->bdt_used & pConvertor->master->hetero_mask) ) {
+        pConvertor->flags &= (~CONVERTOR_HOMOGENEOUS);
+        pConvertor->use_desc = &(datatype->desc);
         if( 0 == (pConvertor->flags & CONVERTOR_HAS_REMOTE_SIZE) ) {
             /* This is for a single datatype, we must update it with the count */
-            pConvertor->remote_size = opal_datatype_compute_remote_size(pConvertor->pDesc,
+            pConvertor->remote_size = opal_datatype_compute_remote_size(datatype,
                                                                         pConvertor->master->remote_sizes);
             pConvertor->remote_size *= pConvertor->count;
-            pConvertor->flags |= CONVERTOR_HAS_REMOTE_SIZE;
         }
     }
     pConvertor->flags |= CONVERTOR_HAS_REMOTE_SIZE;
     return pConvertor->remote_size;
 }
-
-
-/**
- * Compute the remote size. If necessary remove the homogeneous flag
- * and redirect the convertor description toward the non-optimized
- * datatype representation.
- */
-#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype)         \
-    do {                                                                \
-        if( datatype->bdt_used & convertor->master->hetero_mask ) {     \
-            convertor->flags &= (~CONVERTOR_HOMOGENEOUS);               \
-            convertor->use_desc = &(datatype->desc);                    \
-        }                                                               \
-        opal_convertor_compute_remote_size( (convertor) );              \
-    } while(0)
 
 /**
  * This macro will initialize a convertor based on a previously created
@@ -510,27 +498,26 @@ size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
  */
 #define OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
+        convertor->local_size = count * datatype->size;                 \
+        convertor->pBaseBuf   = (unsigned char*)pUserBuf;               \
+        convertor->count      = count;                                  \
+        convertor->pDesc      = (opal_datatype_t*)datatype;             \
+        convertor->bConverted = 0;                                      \
+        convertor->use_desc   = &(datatype->opt_desc);                  \
         /* If the data is empty we just mark the convertor as           \
          * completed. With this flag set the pack and unpack functions  \
          * will not do anything.                                        \
          */                                                             \
         if( OPAL_UNLIKELY((0 == count) || (0 == datatype->size)) ) {    \
-            convertor->flags |= OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;  \
+            convertor->flags |= (OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED | CONVERTOR_HAS_REMOTE_SIZE); \
             convertor->local_size = convertor->remote_size = 0;         \
             return OPAL_SUCCESS;                                        \
         }                                                               \
-        /* Compute the local in advance */                              \
-        convertor->local_size = count * datatype->size;                 \
-        convertor->pBaseBuf   = (unsigned char*)pUserBuf;               \
-        convertor->count      = count;                                  \
                                                                         \
         /* Grab the datatype part of the flags */                       \
         convertor->flags     &= CONVERTOR_TYPE_MASK;                    \
         convertor->flags     |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
         convertor->flags     |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
-        convertor->pDesc      = (opal_datatype_t*)datatype;             \
-        convertor->bConverted = 0;                                      \
-        convertor->use_desc = &(datatype->opt_desc);                    \
                                                                         \
         convertor->remote_size = convertor->local_size;                 \
         if( OPAL_LIKELY(convertor->remoteArch == opal_local_arch) ) {   \
@@ -542,7 +529,7 @@ size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
         }                                                               \
                                                                         \
         assert( (convertor)->pDesc == (datatype) );                     \
-        OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE( convertor, datatype );      \
+        opal_convertor_compute_remote_size( convertor );                \
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
         /* if checksum is enabled then always continue */               \
