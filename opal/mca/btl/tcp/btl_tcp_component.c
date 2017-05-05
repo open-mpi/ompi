@@ -250,8 +250,20 @@ static int mca_btl_tcp_component_register(void)
     mca_btl_tcp_param_register_int ("free_list_num", NULL, 8, OPAL_INFO_LVL_5,  &mca_btl_tcp_component.tcp_free_list_num);
     mca_btl_tcp_param_register_int ("free_list_max", NULL, -1, OPAL_INFO_LVL_5,  &mca_btl_tcp_component.tcp_free_list_max);
     mca_btl_tcp_param_register_int ("free_list_inc", NULL, 32, OPAL_INFO_LVL_5,  &mca_btl_tcp_component.tcp_free_list_inc);
-    mca_btl_tcp_param_register_int ("sndbuf", NULL, 128*1024, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_sndbuf);
-    mca_btl_tcp_param_register_int ("rcvbuf", NULL, 128*1024, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_rcvbuf);
+    mca_btl_tcp_param_register_int ("sndbuf",
+                                    "The size of the send buffer socket option for each connection.  "
+                                    "Modern TCP stacks generally are smarter than a fixed size and in some "
+                                    "situations setting a buffer size explicitly can actually lower "
+                                    "performance.  0 means the tcp btl will not try to set a send buffer "
+                                    "size.",
+                                    0, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_sndbuf);
+    mca_btl_tcp_param_register_int ("rcvbuf",
+                                    "The size of the receive buffer socket option for each connection.  "
+                                    "Modern TCP stacks generally are smarter than a fixed size and in some "
+                                    "situations setting a buffer size explicitly can actually lower "
+                                    "performance.  0 means the tcp btl will not try to set a send buffer "
+                                    "size.",
+                                    0, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_rcvbuf);
     mca_btl_tcp_param_register_int ("endpoint_cache",
         "The size of the internal cache for each TCP connection. This cache is"
         " used to reduce the number of syscalls, by replacing them with memcpy."
