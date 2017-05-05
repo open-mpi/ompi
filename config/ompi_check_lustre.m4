@@ -39,7 +39,6 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     check_lustre_configuration="none"
     ompi_check_lustre_happy="yes"
 
-
     # Get some configuration information
     AC_ARG_WITH([lustre],
         [AC_HELP_STRING([--with-lustre(=DIR)],
@@ -48,7 +47,7 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
 
     AS_IF([test -z "$with_lustre" || test "$with_lustre" = "yes"],
           [ompi_check_lustre_dir="/usr"],
-          [ompi_check_lustre_dir="$with_lustre"])
+          [ompi_check_lustre_dir=$with_lustre])
 
     if test -e "$ompi_check_lustre_dir/lib64" ; then
         ompi_check_lustre_libdir="$ompi_check_lustre_dir/lib64"
