@@ -87,6 +87,6 @@ OPAL_LOG_COMMAND(
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_lustre" && test "$with_lustre" != "no"],
-                  [echo LUSTRE support not found])
-              $3])
+                 [AC_MSG_ERROR([Lustre support requested but not found.  Aborting])])
+           $3])
 ])
