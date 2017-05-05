@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,8 +38,8 @@ orte_schizo_base_component_t mca_schizo_slurm_component = {
 
 static int component_query(mca_base_module_t **module, int *priority)
 {
-    /* disqualify ourselves if we are not an app or under slurm */
-    if (!ORTE_PROC_IS_APP) {
+    /* disqualify ourselves if we are not under slurm */
+    if (NULL == getenv("SLURM_JOBID")) {
         *priority = 0;
         *module = NULL;
         return OPAL_ERROR;
@@ -49,4 +49,3 @@ static int component_query(mca_base_module_t **module, int *priority)
     *priority = 50;
     return ORTE_SUCCESS;
 }
-

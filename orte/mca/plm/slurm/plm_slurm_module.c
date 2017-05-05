@@ -65,7 +65,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_quit.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/state/state.h"
 
 #include "orte/orted/orted.h"
@@ -192,6 +192,25 @@ static void launch_daemons(int fd, short args, void *cbdata)
     OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:slurm: LAUNCH DAEMONS CALLED",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+#if SLURM_CRAY_ENV
+        /* if we are in a Cray-SLURM environment, then we cannot
+         * launch procs local to the HNP. The problem
+         * is the MPI processes launched on the head node (where the
+         * ORTE_PROC_IS_HNP evalues to true) get launched by a daemon
+         * (mpirun) which is not a child of a slurmd daemon.  This
+         * means that any RDMA credentials obtained via the odls/alps
+         * local launcher are incorrect. So warn the user and set
+         * the envar for no_schedule_local if mpirun is not on a
+         * system management node (i.e. is part of the allocation)
+         * and the "no_use_local" flag hasn't been set */
+        if (mca_plm_slurm_component.slurm_warning_msg &&
+            (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) & ORTE_MAPPING_NO_USE_LOCAL))) {
+            orte_show_help("help-plm-slurm.txt", "no-local-support", true);
+            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_USE_LOCAL);
+            mca_plm_slurm_component.slurm_warning_msg = false;  // only do this once
+        }
+#endif
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
@@ -323,6 +342,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         goto cleanup;
     }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
+    opal_argv_free(nodelist_argv);
 
     /* if we are using all allocated nodes, then srun doesn't
      * require any further arguments
@@ -345,6 +365,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     OPAL_OUTPUT_VERBOSE((2, orte_plm_base_framework.framework_output,
                          "%s plm:slurm: launching on nodes %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodelist_flat));
+    free(nodelist_flat);
 
     /*
      * ORTED OPTIONS
@@ -353,18 +374,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
 
-    /* we need mpirun to be the first node on this list - since we
-     * aren't launching mpirun via srun, it won't be there now */
-    opal_argv_prepend_nosize(&nodelist_argv, orte_process_info.nodename);
-    free(nodelist_flat);
-    nodelist_flat = opal_argv_join(nodelist_argv, ',');
-    opal_argv_free(nodelist_argv);
-
     /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                          "slurm", &proc_vpid_index,
-                                          nodelist_flat);
-    free(nodelist_flat);
+                                          "slurm", &proc_vpid_index);
 
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end

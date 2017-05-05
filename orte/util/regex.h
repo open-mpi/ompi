@@ -36,8 +36,7 @@ BEGIN_C_DECLS
 
 typedef struct {
     opal_list_item_t super;
-    int start;
-    int endpt;
+    int vpid;
     int cnt;
     int slots;
     orte_topology_t *t;
@@ -53,11 +52,6 @@ typedef struct {
     opal_list_t ranges;
 } orte_regex_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_regex_node_t);
-
-/* NOTE: this is a destructive call for the nodes param - the
- * function will search and replace all commas with '\0'
- */
-ORTE_DECLSPEC int orte_regex_create(char *nodes, char **regexp);
 
 ORTE_DECLSPEC int orte_regex_extract_node_names(char *regexp, char ***names);
 

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -68,7 +68,6 @@ static int rte_init(void)
 {
     int ret;
     char *error = NULL;
-    char **hosts = NULL;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -83,19 +82,11 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
-        if (NULL != orte_node_regex) {
-            /* extract the nodes */
-            if (ORTE_SUCCESS != (ret = orte_regex_extract_node_names(orte_node_regex, &hosts))) {
-                error = "orte_regex_extract_node_names";
-                goto error;
-            }
-        }
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
+        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;
         }
-        opal_argv_free(hosts);
         return ORTE_SUCCESS;
     }
 

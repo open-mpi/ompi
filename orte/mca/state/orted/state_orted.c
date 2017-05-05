@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -254,7 +254,7 @@ static void track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata, *pptr;
     opal_buffer_t *alert;
-    int rc, i, j;
+    int rc, i;
     orte_plm_cmd_flag_t cmd;
     char *rtmod;
     orte_std_cntr_t index;

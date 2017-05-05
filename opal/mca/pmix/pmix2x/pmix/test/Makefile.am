@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,7 +32,12 @@ headers = test_common.h cli_stages.h server_callbacks.h utils.h test_fence.h \
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/src/api
 
 noinst_SCRIPTS = pmix_client_otheruser.sh
-noinst_PROGRAMS = pmi_client pmi2_client
+noinst_PROGRAMS =
+
+if WANT_PMIX_BACKWARD
+noinst_PROGRAMS += pmi_client pmi2_client
+endif
+
 if !WANT_HIDDEN
 noinst_PROGRAMS += pmix_test pmix_client pmix_regex
 endif
@@ -43,6 +48,7 @@ pmix_test_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmix_test_LDADD = \
     $(top_builddir)/src/libpmix.la
 
+if WANT_PMIX_BACKWARD
 pmi_client_SOURCES = $(headers) \
         pmi_client.c
 pmi_client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
@@ -54,6 +60,7 @@ pmi2_client_SOURCES = $(headers) \
 pmi2_client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmi2_client_LDADD = \
     $(top_builddir)/src/libpmix.la
+endif
 
 pmix_client_SOURCES = $(headers) \
         pmix_client.c test_fence.c test_common.c test_publish.c test_spawn.c \

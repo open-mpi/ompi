@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,9 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#include "opal/util/opal_environ.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/plm/plm.h"
@@ -98,6 +101,13 @@ static int plm_slurm_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_slurm_component.custom_args);
+
+    mca_plm_slurm_component.slurm_warning_msg = true;
+    (void) mca_base_component_var_register (comp, "warning", "Turn off warning message",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_slurm_component.slurm_warning_msg);
 
     return ORTE_SUCCESS;
 }

@@ -114,8 +114,7 @@ ORTE_DECLSPEC void orte_plm_base_recv(int status, orte_process_name_t* sender,
  */
 ORTE_DECLSPEC int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                                         char *ess_module,
-                                                        int *proc_vpid_index,
-                                                        char *nodes);
+                                                        int *proc_vpid_index);
 
 /*
  * Proxy functions for use by daemons and application procs

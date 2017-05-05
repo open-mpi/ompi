@@ -83,6 +83,8 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
                                   opal_buffer_t *buffer,
                                   orte_rml_tag_t tg, void *cbdata);
 
+#define ORTE_PMIX_SERVER_MIN_ROOMS    4096
+
 pmix_server_globals_t orte_pmix_server_globals = {0};
 
 static opal_pmix_server_module_t pmix_server = {
@@ -102,7 +104,9 @@ static opal_pmix_server_module_t pmix_server = {
     .notify_event = pmix_server_notify_event,
     .query = pmix_server_query_fn,
     .tool_connected = pmix_tool_connected_fn,
-    .log = pmix_server_log_fn
+    .log = pmix_server_log_fn,
+    .allocate = pmix_server_alloc_fn,
+    .job_control = pmix_server_job_ctrl_fn
 };
 
 void pmix_server_register_params(void)
@@ -120,7 +124,7 @@ void pmix_server_register_params(void)
                                   orte_pmix_server_globals.verbosity);
     }
     /* specify the size of the hotel */
-    orte_pmix_server_globals.num_rooms = 256;
+    orte_pmix_server_globals.num_rooms = -1;
     (void) mca_base_var_register ("orte", "pmix", NULL, "server_max_reqs",
                                   "Maximum number of backlogged PMIx server direct modex requests",
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -156,7 +160,7 @@ static void eviction_cbfunc(struct opal_hotel_t *hotel,
 {
     pmix_server_req_t *req = (pmix_server_req_t*)occupant;
     bool timeout = false;
-    int rc;
+    int rc=OPAL_ERR_TIMEOUT;
 
     /* decrement the request timeout */
     req->timeout -= orte_pmix_server_globals.timeout;
@@ -173,6 +177,8 @@ static void eviction_cbfunc(struct opal_hotel_t *hotel,
         }
         ORTE_ERROR_LOG(rc);
         /* fall thru and return an error so the caller doesn't hang */
+    } else {
+        orte_show_help("help-orted.txt", "timedout", true, req->operation);
     }
     /* don't let the caller hang */
     if (NULL != req->opcbfunc) {
@@ -203,6 +209,17 @@ int pmix_server_init(void)
 
     /* setup the server's state variables */
     OBJ_CONSTRUCT(&orte_pmix_server_globals.reqs, opal_hotel_t);
+    /* by the time we init the server, we should know how many nodes we
+     * have in our environment - with the exception of mpirun. If the
+     * user specified the size of the hotel, then use that value. Otherwise,
+     * set the value to something large to avoid running out of rooms on
+     * large machines */
+    if (-1 == orte_pmix_server_globals.num_rooms) {
+        orte_pmix_server_globals.num_rooms = orte_process_info.num_procs * 2;
+        if (orte_pmix_server_globals.num_rooms < ORTE_PMIX_SERVER_MIN_ROOMS) {
+            orte_pmix_server_globals.num_rooms = ORTE_PMIX_SERVER_MIN_ROOMS;
+        }
+    }
     if (OPAL_SUCCESS != (rc = opal_hotel_init(&orte_pmix_server_globals.reqs,
                                               orte_pmix_server_globals.num_rooms,
                                               orte_event_base, orte_pmix_server_globals.timeout*1000000,
@@ -262,6 +279,12 @@ int pmix_server_init(void)
     /* use only one listener */
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_SINGLE_LISTENER);
+    kv->type = OPAL_BOOL;
+    kv->data.flag = true;
+    opal_list_append(&info, &kv->super);
+    /* tell the server to use its own internal monitoring */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_SERVER_ENABLE_MONITORING);
     kv->type = OPAL_BOOL;
     kv->data.flag = true;
     opal_list_append(&info, &kv->super);
@@ -525,10 +548,15 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
          * condition, so just log the request and we will fill
          * it later */
         req = OBJ_NEW(pmix_server_req_t);
+        (void)asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
         req->proxy = *sender;
         req->target = idreq;
         req->remote_room_num = room_num;
+        /* adjust the timeout to reflect the size of the job as it can take some
+         * amount of time to start the job */
+        ORTE_ADJUST_TIMEOUT(req);
         if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
+            orte_show_help("help-orted.txt", "noroom", true, req->operation, orte_pmix_server_globals.num_rooms);
             OBJ_RELEASE(req);
             send_error(rc, &idreq, sender);
         }
@@ -547,10 +575,15 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     /* track the request since the call down to the PMIx server
      * is asynchronous */
     req = OBJ_NEW(pmix_server_req_t);
+    (void)asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
     req->proxy = *sender;
     req->target = idreq;
     req->remote_room_num = room_num;
+    /* adjust the timeout to reflect the size of the job as it can take some
+     * amount of time to start the job */
+    ORTE_ADJUST_TIMEOUT(req);
     if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
+        orte_show_help("help-orted.txt", "noroom", true, req->operation, orte_pmix_server_globals.num_rooms);
         OBJ_RELEASE(req);
         send_error(rc, &idreq, sender);
         return;
@@ -682,6 +715,7 @@ OBJ_CLASS_INSTANCE(orte_pmix_server_op_caddy_t,
 
 static void rqcon(pmix_server_req_t *p)
 {
+    p->operation = NULL;
     p->target = *ORTE_NAME_INVALID;
     p->proxy = *ORTE_NAME_INVALID;
     p->timeout = orte_pmix_server_globals.timeout;
@@ -696,6 +730,9 @@ static void rqcon(pmix_server_req_t *p)
 }
 static void rqdes(pmix_server_req_t *p)
 {
+    if (NULL != p->operation) {
+        free(p->operation);
+    }
     if (NULL != p->jdata) {
         OBJ_RELEASE(p->jdata);
     }

@@ -61,6 +61,8 @@ pmix_ptl_API_t pmix_ptl = {
     .send_recv = pmix_ptl_stub_send_recv,
     .send_oneway = pmix_ptl_stub_send_oneway,
     .connect_to_peer = pmix_ptl_stub_connect_to_peer,
+    .recv = pmix_ptl_stub_register_recv,
+    .cancel = pmix_ptl_stub_cancel_recv,
     .start_listening = pmix_ptl_base_start_listening,
     .stop_listening = pmix_ptl_base_stop_listening
 };
@@ -88,6 +90,7 @@ static pmix_status_t pmix_ptl_close(void)
     /* the components will cleanup when closed */
     PMIX_LIST_DESTRUCT(&pmix_ptl_globals.actives);
     PMIX_LIST_DESTRUCT(&pmix_ptl_globals.posted_recvs);
+    PMIX_LIST_DESTRUCT(&pmix_ptl_globals.unexpected_msgs);
     PMIX_LIST_DESTRUCT(&pmix_ptl_globals.listeners);
 
     return pmix_mca_base_framework_components_close(&pmix_ptl_base_framework, NULL);
@@ -99,6 +102,7 @@ static pmix_status_t pmix_ptl_open(pmix_mca_base_open_flag_t flags)
     pmix_ptl_globals.initialized = true;
     PMIX_CONSTRUCT(&pmix_ptl_globals.actives, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_ptl_globals.posted_recvs, pmix_list_t);
+    PMIX_CONSTRUCT(&pmix_ptl_globals.unexpected_msgs, pmix_list_t);
     pmix_ptl_globals.listen_thread_active = false;
     PMIX_CONSTRUCT(&pmix_ptl_globals.listeners, pmix_list_t);
     pmix_client_globals.myserver.sd = -1;

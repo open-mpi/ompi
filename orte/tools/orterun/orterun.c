@@ -10,9 +10,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -130,6 +130,8 @@ int orterun(int argc, char *argv[])
 {
     orte_submit_status_t launchst, completest;
 
+    /* orte_submit_init() will also check if the user is running as
+       root (and may issue a warning/exit). */
     if (ORTE_SUCCESS != orte_submit_init(argc, argv, NULL)) {
         exit(1);
     }
@@ -140,7 +142,7 @@ int orterun(int argc, char *argv[])
      */
     if (0 == geteuid() && !orte_cmd_options.run_as_root) {
         fprintf(stderr, "--------------------------------------------------------------------------\n");
-        if (orte_cmd_options.help) {
+        if (NULL != orte_cmd_options.help) {
             fprintf(stderr, "%s cannot provide the help message when run as root.\n", orte_basename);
         } else {
             /* show_help is not yet available, so print an error manually */

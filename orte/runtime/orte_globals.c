@@ -108,6 +108,8 @@ bool orte_display_allocation = false;
 bool orte_display_devel_allocation = false;
 bool orte_soft_locations = false;
 int orted_pmi_version = 0;
+bool orte_nidmap_communicated = false;
+bool orte_node_info_communicated = false;
 
 /* launch agents */
 char *orte_launch_agent = NULL;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -12,6 +12,11 @@
 #define PMIX_PROGRESS_THREADS_H
 
 #include "pmix_config.h"
+
+#include <pthread.h>
+#include PMIX_EVENT_HEADER
+
+#include "src/include/types.h"
 
 /**
  * Initialize a progress thread name; if a progress thread is not

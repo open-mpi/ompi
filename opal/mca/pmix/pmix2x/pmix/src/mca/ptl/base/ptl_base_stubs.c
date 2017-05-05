@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,4 +104,93 @@ pmix_status_t pmix_ptl_stub_connect_to_peer(struct pmix_peer_t *peer,
     }
 
     return PMIX_ERR_UNREACH;
+}
+
+static void post_recv(int fd, short args, void *cbdata)
+{
+    pmix_ptl_posted_recv_t *req = (pmix_ptl_posted_recv_t*)cbdata;
+    pmix_ptl_recv_t *msg, *nmsg;
+    pmix_buffer_t buf;
+
+    pmix_output_verbose(5, pmix_globals.debug_output,
+                        "posting recv on tag %d", req->tag);
+
+    /* add it to the list of recvs */
+    pmix_list_append(&pmix_ptl_globals.posted_recvs, &req->super);
+
+    /* now check the unexpected msg queue to see if we already
+     * recvd something for it */
+    PMIX_LIST_FOREACH_SAFE(msg, nmsg, &pmix_ptl_globals.unexpected_msgs, pmix_ptl_recv_t) {
+        if (msg->hdr.tag == req->tag || UINT_MAX == req->tag) {
+            if (NULL != req->cbfunc) {
+                /* construct and load the buffer */
+                PMIX_CONSTRUCT(&buf, pmix_buffer_t);
+                if (NULL != msg->data) {
+                    buf.base_ptr = (char*)msg->data;
+                    buf.bytes_allocated = buf.bytes_used = msg->hdr.nbytes;
+                    buf.unpack_ptr = buf.base_ptr;
+                    buf.pack_ptr = ((char*)buf.base_ptr) + buf.bytes_used;
+                }
+                msg->data = NULL;  // protect the data region
+                req->cbfunc(msg->peer, &msg->hdr, &buf, req->cbdata);
+                PMIX_DESTRUCT(&buf);  // free's the msg data
+            }
+            pmix_list_remove_item(&pmix_ptl_globals.unexpected_msgs, &msg->super);
+            PMIX_RELEASE(msg);
+        }
+    }
+}
+
+pmix_status_t pmix_ptl_stub_register_recv(struct pmix_peer_t *peer,
+                                          pmix_ptl_cbfunc_t cbfunc,
+                                          pmix_ptl_tag_t tag)
+{
+    pmix_ptl_posted_recv_t *req;
+
+    req = PMIX_NEW(pmix_ptl_posted_recv_t);
+    if (NULL == req) {
+        return PMIX_ERR_NOMEM;
+    }
+    req->tag = tag;
+    req->cbfunc = cbfunc;
+    /* have to push this into an event so we can add this
+     * to the list of posted recvs */
+    pmix_event_assign(&(req->ev), pmix_globals.evbase, -1,
+                      EV_WRITE, post_recv, req);
+    pmix_event_active(&(req->ev), EV_WRITE, 1);
+    return PMIX_SUCCESS;
+}
+
+static void cancel_recv(int fd, short args, void *cbdata)
+{
+    pmix_ptl_posted_recv_t *req = (pmix_ptl_posted_recv_t*)cbdata;
+    pmix_ptl_posted_recv_t *rcv;
+
+    PMIX_LIST_FOREACH(rcv, &pmix_ptl_globals.posted_recvs, pmix_ptl_posted_recv_t) {
+        if (rcv->tag == req->tag) {
+            pmix_list_remove_item(&pmix_ptl_globals.posted_recvs, &rcv->super);
+            PMIX_RELEASE(rcv);
+            PMIX_RELEASE(req);
+            return;
+        }
+    }
+    PMIX_RELEASE(req);
+}
+
+pmix_status_t pmix_ptl_stub_cancel_recv(struct pmix_peer_t *peer,
+                                        pmix_ptl_tag_t tag)
+{
+    pmix_ptl_posted_recv_t *req;
+
+    req = PMIX_NEW(pmix_ptl_posted_recv_t);
+    if (NULL == req) {
+        return PMIX_ERR_NOMEM;
+    }
+    req->tag = tag;
+    /* have to push this into an event so we can modify
+     * the list of posted recvs */
+    pmix_event_assign(&(req->ev), pmix_globals.evbase, -1,
+                      EV_WRITE, cancel_recv, req);
+    pmix_event_active(&(req->ev), EV_WRITE, 1);
+    return PMIX_SUCCESS;
 }
