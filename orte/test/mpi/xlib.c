@@ -30,12 +30,12 @@ static void notification_fn(size_t evhdlr_registration_id,
 }
 
 /* this is an event notification function that we explicitly request
- * be called when the PMIX_ERR_JOB_TERMINATED notification is issued.
+ * be called when the PMIX_MODEL_DECLARED notification is issued.
  * We could catch it in the general event notification function and test
- * the status to see if it was "job terminated", but it often is simpler
+ * the status to see if the status matched, but it often is simpler
  * to declare a use-specific notification callback point. In this case,
- * we are asking to know whenever a job terminates, and we will then
- * know we can exit */
+ * we are asking to know whenever a programming model library is
+ * instantiated */
 static void model_callback(size_t evhdlr_registration_id,
                            pmix_status_t status,
                            const pmix_proc_t *source,
