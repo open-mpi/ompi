@@ -16,7 +16,7 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -275,6 +275,9 @@ int ompi_mpi_finalize(void)
             opal_pmix.fence(NULL, 0);
         }
     }
+
+    /* account for our refcount on pmix_init */
+    opal_pmix.finalize();
 
     /* check for timing request - get stop time and report elapsed
      time if so */

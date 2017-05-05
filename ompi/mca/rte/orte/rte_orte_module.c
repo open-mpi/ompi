@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2012-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -131,7 +131,7 @@ static void _register_fn(int status,
 void ompi_rte_wait_for_debugger(void)
 {
     int debugger;
-    opal_list_t *codes;
+    opal_list_t *codes, directives;
     opal_value_t *kv;
     char *evar;
     int time;
@@ -179,9 +179,17 @@ void ompi_rte_wait_for_debugger(void)
         kv->data.integer = ORTE_ERR_DEBUGGER_RELEASE;
         opal_list_append(codes, &kv->super);
 
-        opal_pmix.register_evhandler(codes, NULL, _release_fn, _register_fn, codes);
+        OBJ_CONSTRUCT(&directives, opal_list_t);
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_EVENT_HDLR_NAME);
+        kv->type = OPAL_STRING;
+        kv->data.string = strdup("MPI-DEBUGGER-ATTACH");
+        opal_list_append(&directives, &kv->super);
+
+        opal_pmix.register_evhandler(codes, &directives, _release_fn, _register_fn, codes);
         /* let the MPI progress engine run while we wait for registration to complete */
         OMPI_WAIT_FOR_COMPLETION(debugger_register_active);
+        OPAL_LIST_DESTRUCT(&directives);
 
         /* let the MPI progress engine run while we wait for debugger release */
         OMPI_WAIT_FOR_COMPLETION(debugger_event_active);

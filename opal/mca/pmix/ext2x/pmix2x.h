@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -216,7 +216,7 @@ OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
     } while(0)
 
 /****  CLIENT FUNCTIONS  ****/
-OPAL_MODULE_DECLSPEC int pmix2x_client_init(void);
+OPAL_MODULE_DECLSPEC int pmix2x_client_init(opal_list_t *ilist);
 OPAL_MODULE_DECLSPEC int pmix2x_client_finalize(void);
 OPAL_MODULE_DECLSPEC int pmix2x_initialized(void);
 OPAL_MODULE_DECLSPEC int pmix2x_abort(int flag, const char *msg,

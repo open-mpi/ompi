@@ -409,6 +409,9 @@ pmix_status_t pmix2x_convert_opalrc(int rc)
     case OPAL_ERR_PARTIAL_SUCCESS:
         return PMIX_QUERY_PARTIAL_SUCCESS;
 
+    case OPAL_ERR_MODEL_DECLARED:
+        return PMIX_MODEL_DECLARED;
+
     case OPAL_ERROR:
         return PMIX_ERROR;
     case OPAL_SUCCESS:
@@ -498,6 +501,10 @@ int pmix2x_convert_rc(pmix_status_t rc)
 
     case PMIX_MONITOR_FILE_ALERT:
         return OPAL_ERR_FILE_ALERT;
+
+    case PMIX_MODEL_DECLARED:
+        return OPAL_ERR_MODEL_DECLARED;
+
 
     case PMIX_ERROR:
         return OPAL_ERROR;
@@ -1010,6 +1017,7 @@ static void _reg_hdlr(int sd, short args, void *cbdata)
         n=0;
         OPAL_LIST_FOREACH(kv, cd->event_codes, opal_value_t) {
             op->pcodes[n] = pmix2x_convert_opalrc(kv->data.integer);
+            ++n;
         }
     }
 

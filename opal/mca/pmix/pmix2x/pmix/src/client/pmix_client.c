@@ -57,7 +57,7 @@
 #elif PMIX_CC_USE_IDENT
 #ident PMIX_VERSION
 #endif
- static const char pmix_version_string[] = PMIX_VERSION;
+static const char pmix_version_string[] = PMIX_VERSION;
 
 
 #include "src/class/pmix_list.h"
@@ -134,8 +134,8 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
         goto error;
     }
 
-    /* we always leave space for a callback object */
-    chain->ninfo = ninfo + 1;
+    /* we always leave space for the evhandler name plus a callback object */
+    chain->ninfo = ninfo + 2;
     PMIX_INFO_CREATE(chain->info, chain->ninfo);
 
     if (0 < ninfo) {
@@ -145,8 +145,10 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
             goto error;
         }
     }
+    /* put the evhandler name tag in its place */
+    PMIX_INFO_LOAD(&chain->info[chain->ninfo-2], PMIX_EVENT_HDLR_NAME, NULL, PMIX_STRING);
     /* now put the callback object tag in the last element */
-    PMIX_INFO_LOAD(&chain->info[ninfo], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
+    PMIX_INFO_LOAD(&chain->info[chain->ninfo-1], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "[%s:%d] pmix:client_notify_recv - processing event %d, calling errhandler",
@@ -236,6 +238,79 @@ static void evhandler_reg_callbk(pmix_status_t status,
     *active = status;
 }
 
+typedef struct {
+    pmix_info_t *info;
+    size_t ninfo;
+} mydata_t;
+
+static void release_info(pmix_status_t status, void *cbdata)
+{
+    mydata_t *cd = (mydata_t*)cbdata;
+    PMIX_INFO_FREE(cd->info, cd->ninfo);
+    free(cd);
+}
+
+static void _check_for_notify(pmix_info_t info[], size_t ninfo)
+{
+    mydata_t *cd;
+    size_t n, m=0;
+    pmix_info_t *model=NULL, *library=NULL, *vers=NULL, *tmod=NULL;
+
+    for (n=0; n < ninfo; n++) {
+        if (0 == strncmp(info[n].key, PMIX_PROGRAMMING_MODEL, PMIX_MAX_KEYLEN)) {
+            /* we need to generate an event indicating that
+             * a programming model has been declared */
+            model = &info[n];
+            ++m;
+        } else if (0 == strncmp(info[n].key, PMIX_MODEL_LIBRARY_NAME, PMIX_MAX_KEYLEN)) {
+            library = &info[n];
+            ++m;
+        } else if (0 == strncmp(info[n].key, PMIX_MODEL_LIBRARY_VERSION, PMIX_MAX_KEYLEN)) {
+            vers = &info[n];
+            ++m;
+        } else if (0 == strncmp(info[n].key, PMIX_THREADING_MODEL, PMIX_MAX_KEYLEN)) {
+            tmod = &info[n];
+            ++m;
+        }
+    }
+    if (0 < m) {
+        /* notify anyone listening that a model has been declared */
+        cd = (mydata_t*)malloc(sizeof(mydata_t));
+        if (NULL == cd) {
+            /* nothing we can do */
+            return;
+        }
+        PMIX_INFO_CREATE(cd->info, m+1);
+        if (NULL == cd->info) {
+            free(cd);
+            return;
+        }
+        cd->ninfo = m+1;
+        n = 0;
+        if (NULL != model) {
+            PMIX_INFO_XFER(&cd->info[n], model);
+            ++n;
+        }
+        if (NULL != library) {
+            PMIX_INFO_XFER(&cd->info[n], library);
+            ++n;
+        }
+        if (NULL != vers) {
+            PMIX_INFO_XFER(&cd->info[n], vers);
+            ++n;
+        }
+        if (NULL != tmod) {
+            PMIX_INFO_XFER(&cd->info[n], tmod);
+            ++n;
+        }
+        /* mark that it is not to go to any default handlers */
+        PMIX_INFO_LOAD(&cd->info[n], PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);
+        PMIx_Notify_event(PMIX_MODEL_DECLARED,
+                          &pmix_globals.myid, PMIX_RANGE_PROC_LOCAL,
+                          cd->info, cd->ninfo, release_info, (void*)cd);
+    }
+}
+
 PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
                                     pmix_info_t info[], size_t ninfo)
 {
@@ -263,6 +338,12 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
             (void)strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
             proc->rank = pmix_globals.myid.rank;
         }
+        /* we also need to check the info keys to see if something need
+         * be done with them - e.g., to notify another library that we
+         * also have called init */
+        if (NULL != info) {
+            _check_for_notify(info, ninfo);
+        }
         ++pmix_globals.init_cntr;
         return PMIX_SUCCESS;
     }
@@ -280,6 +361,8 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     }
 
     /* setup the globals */
+    PMIX_CONSTRUCT(&pmix_globals.notifications, pmix_ring_buffer_t);
+    pmix_ring_buffer_init(&pmix_globals.notifications, 256);
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_client_globals.myserver, pmix_peer_t);
 
@@ -380,6 +463,11 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         PMIX_WAIT_FOR_COMPLETION(waiting_for_debugger);
     }
     PMIX_INFO_DESTRUCT(&ginfo);
+
+    /* check to see if we need to notify anyone */
+    if (NULL != info) {
+        _check_for_notify(info, ninfo);
+    }
 
     return PMIX_SUCCESS;
 }

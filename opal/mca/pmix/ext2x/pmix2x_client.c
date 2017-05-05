@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -56,7 +56,7 @@ static void errreg_cbfunc (pmix_status_t status,
                         status, (unsigned long)errhandler_ref);
 }
 
-int pmix2x_client_init(void)
+int pmix2x_client_init(opal_list_t *ilist)
 {
     opal_process_name_t pname;
     pmix_status_t rc;
