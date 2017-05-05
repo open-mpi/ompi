@@ -15,6 +15,7 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -181,6 +182,7 @@ static void backend_fatal_aggregate(char *type,
     const char* const unknown_error_code = "Error code: %d (no associated error message)";
     const char* const unknown_error = "Unknown error";
     const char* const unknown_prefix = "[?:?]";
+    bool generated = false;
 
     // these do not own what they point to; they're
     // here to avoid repeating expressions such as
@@ -211,6 +213,8 @@ static void backend_fatal_aggregate(char *type,
                 err_msg = NULL;
                 opal_output(0, "%s", "Could not write to err_msg");
                 opal_output(0, unknown_error_code, *error_code);
+            } else {
+                generated = true;
             }
         }
     }
@@ -256,7 +260,9 @@ static void backend_fatal_aggregate(char *type,
     }
 
     free(prefix);
-    free(err_msg);
+    if (generated) {
+        free(err_msg);
+    }
 }
 
 /*
