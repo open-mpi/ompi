@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2008-2012 University of Houston. All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -46,7 +46,7 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
              [Build Lustre support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([lustre], [$with_lustre], [include/lustre/liblustreapi.h])
 
-    AS_IF([test -z "$with_lustre"],
+    AS_IF([test -z "$with_lustre" || test "$with_lustre" = "yes"],
           [ompi_check_lustre_dir="/usr"],
           [ompi_check_lustre_dir="$with_lustre"])
 
