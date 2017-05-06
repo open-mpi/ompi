@@ -202,6 +202,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     int response, glresponse=0;
     int start;
     unsigned int i;
+    int participate = newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED;
 
     ompi_comm_cid_allredfct* allredfnct;
 
@@ -237,6 +238,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         return ret;
     }
     start = ompi_mpi_communicators.lowest_free;
+    nextlocal_cid = 0;
 
     while (!done) {
         /**
@@ -250,34 +252,34 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         }
         OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
-        nextlocal_cid = mca_pml.pml_max_contextid;
-        flag = false;
-        for (i=start; i < mca_pml.pml_max_contextid ; i++) {
-            flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators,
-                                                        i, comm);
-            if (true == flag) {
-                nextlocal_cid = i;
-                break;
+        if( participate ) {
+            nextlocal_cid = mca_pml.pml_max_contextid;
+            flag = false;
+            for (i=start; i < mca_pml.pml_max_contextid ; i++) {
+                flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators,
+                                                            i, comm);
+                if (true == flag) {
+                    nextlocal_cid = i;
+                    break;
+                }
             }
         }
 
         ret = (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
                            local_leader, remote_leader, send_first );
         if( OMPI_SUCCESS != ret ) {
-            opal_pointer_array_set_item(&ompi_mpi_communicators, nextlocal_cid, NULL);
             goto release_and_return;
         }
 
         if (mca_pml.pml_max_contextid == (unsigned int) nextcid) {
             /* at least one peer ran out of CIDs */
             if (flag) {
-                opal_pointer_array_set_item(&ompi_mpi_communicators, nextlocal_cid, NULL);
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto release_and_return;
             }
         }
 
-        if (nextcid == nextlocal_cid) {
+        if ( !participate || nextcid == nextlocal_cid) {
             response = 1; /* fine with me */
         }
         else {
@@ -297,14 +299,14 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         ret = (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
                            local_leader, remote_leader, send_first );
         if( OMPI_SUCCESS != ret ) {
-            opal_pointer_array_set_item(&ompi_mpi_communicators, nextcid, NULL);
             goto release_and_return;
         }
         if (1 == glresponse) {
             done = 1;             /* we are done */
             break;
         }
-        else if ( 0 == glresponse ) {
+        
+        if ( participate && 0 == glresponse ) {
             if ( 1 == response ) {
                 /* we could use that, but other don't agree */
                 opal_pointer_array_set_item(&ompi_mpi_communicators,
@@ -315,10 +317,31 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     }
 
     /* set the according values to the newcomm */
+    if( !participate ){
+        /* we need to provide something sane here
+         * but we cannot use `nextcid` as we may have it
+         * in-use, go ahead with next locally-available CID
+         */
+        nextlocal_cid = mca_pml.pml_max_contextid;
+        flag = false;
+        for (i=start; i < mca_pml.pml_max_contextid ; i++) {
+            flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators,
+                                                      i, comm);
+            if (true == flag) {
+                nextlocal_cid = i;
+                break;
+            }
+        }
+        nextcid = nextlocal_cid;
+    }
+    
     newcomm->c_contextid = nextcid;
     opal_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
 
  release_and_return:
+    if( participate && ret ){
+        opal_pointer_array_set_item(&ompi_mpi_communicators, nextcid, NULL);
+    }
     ompi_comm_unregister_cid (comm->c_contextid);
 
     return ret;
