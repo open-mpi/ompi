@@ -1083,7 +1083,15 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             fi
             OPAL_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
             ;;
-
+        # There is no current difference between s390 and s390x
+        # But use two different defines in case some come later
+        # as s390 is 31bits while s390x is 64bits
+        s390-*)
+            opal_cv_asm_arch="S390"
+            ;;
+        s390x-*)
+            opal_cv_asm_arch="S390X"
+            ;;
         sparc*-*)
             # SPARC v9 (and above) are the only ones with 64bit support
             # if compiling 32 bit, see if we are v9 (aka v8plus) or
