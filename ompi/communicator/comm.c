@@ -606,14 +606,6 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
         }
     }
 
-    /* set the rank to MPI_UNDEFINED. This prevents in comm_activate
-     * the collective module selection for a communicator that will
-     * be freed anyway.
-     */
-    if ( MPI_UNDEFINED == color || (inter && my_rsize==0)) {
-        newcomp->c_local_group->grp_my_rank = MPI_UNDEFINED;
-    }
-
     /* Determine context id. It is identical to f_2_c_handle */
     rc = ompi_comm_nextcid ( newcomp,  /* new communicator */ 
                              comm,     /* old comm */
@@ -630,6 +622,13 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d SPLIT FROM %d", 
              newcomp->c_contextid, comm->c_contextid );
 
+    /* set the rank to MPI_UNDEFINED. This prevents in comm_activate
+     * the collective module selection for a communicator that will
+     * be freed anyway.
+     */
+    if ( MPI_UNDEFINED == color || (inter && my_rsize==0)) {
+        newcomp->c_local_group->grp_my_rank = MPI_UNDEFINED;
+    }
 
 
     /* Activate the communicator and init coll-component */
@@ -875,10 +874,6 @@ ompi_comm_split_type(ompi_communicator_t *comm,
         goto exit;
     }
 
-    if ( MPI_UNDEFINED == split_type ) {
-        newcomp->c_local_group->grp_my_rank = MPI_UNDEFINED;
-    }
-
     /* Determine context id. It is identical to f_2_c_handle */
     rc = ompi_comm_nextcid ( newcomp,  /* new communicator */ 
                              comm,     /* old comm */
@@ -899,6 +894,9 @@ ompi_comm_split_type(ompi_communicator_t *comm,
      * the collective module selection for a communicator that will
      * be freed anyway.
      */
+    if ( MPI_UNDEFINED == split_type ) {
+        newcomp->c_local_group->grp_my_rank = MPI_UNDEFINED;
+    }
 
 
     /* Activate the communicator and init coll-component */
