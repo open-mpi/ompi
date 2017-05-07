@@ -193,25 +193,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
                          "%s plm:slurm: LAUNCH DAEMONS CALLED",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-#if SLURM_CRAY_ENV
-        /* if we are in a Cray-SLURM environment, then we cannot
-         * launch procs local to the HNP. The problem
-         * is the MPI processes launched on the head node (where the
-         * ORTE_PROC_IS_HNP evalues to true) get launched by a daemon
-         * (mpirun) which is not a child of a slurmd daemon.  This
-         * means that any RDMA credentials obtained via the odls/alps
-         * local launcher are incorrect. So warn the user and set
-         * the envar for no_schedule_local if mpirun is not on a
-         * system management node (i.e. is part of the allocation)
-         * and the "no_use_local" flag hasn't been set */
-        if (mca_plm_slurm_component.slurm_warning_msg &&
-            (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) & ORTE_MAPPING_NO_USE_LOCAL))) {
-            orte_show_help("help-plm-slurm.txt", "no-local-support", true);
-            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_USE_LOCAL);
-            mca_plm_slurm_component.slurm_warning_msg = false;  // only do this once
-        }
-#endif
-
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
      */
