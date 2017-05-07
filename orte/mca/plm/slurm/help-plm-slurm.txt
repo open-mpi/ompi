@@ -49,18 +49,3 @@ are running.
 
 Please consult with your system administrator about obtaining
 such support.
-[no-local-support]
-The SLURM process starter cannot start processes local to
-mpirun when executing under a Cray environment. The problem
-is that mpirun is not itself a child of a slurmd daemon. Thus,
-any processes mpirun itself starts will inherit incorrect
-RDMA credentials.
-
-Your application will be mapped and run (assuming adequate
-resources) on the remaining allocated nodes. If adequate
-resources are not available, you will need to exit and obtain
-a larger allocation.
-
-This situation will be fixed in a future release. Meantime,
-you can turn "off" this warning by setting the plm_slurm_warning
-MCA param to 0.
