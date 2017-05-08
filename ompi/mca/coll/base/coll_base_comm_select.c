@@ -204,6 +204,34 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
             COPY(avail->ac_module, comm, ineighbor_alltoallv);
             COPY(avail->ac_module, comm, ineighbor_alltoallw);
 
+            /* -oIBM added for persistent nonblocking collectives
+             *
+             */
+
+            COPY(avail->ac_module, comm, libpnbc_start);
+            COPY(avail->ac_module, comm, ibcast_init);
+            COPY(avail->ac_module, comm, iallgather_init);
+            COPY(avail->ac_module, comm, iallgatherv_init);
+            COPY(avail->ac_module, comm, iallreduce_init);
+            COPY(avail->ac_module, comm, ialltoall_init);
+            COPY(avail->ac_module, comm, ialltoallv_init);
+            COPY(avail->ac_module, comm, ibarrier_init);
+            COPY(avail->ac_module, comm, iexscan_init);
+            COPY(avail->ac_module, comm, igather_init);
+            COPY(avail->ac_module, comm, igatherv_init);
+            COPY(avail->ac_module, comm, ireduce_init);
+            COPY(avail->ac_module, comm, ireduce_scatter_block_init);
+            COPY(avail->ac_module, comm, ireduce_scatter_init);
+            COPY(avail->ac_module, comm, iscan_init);
+            COPY(avail->ac_module, comm, iscatter_init);
+            COPY(avail->ac_module, comm, iscatterv_init);
+            COPY(avail->ac_module, comm, ineighbor_allgather_init);
+            COPY(avail->ac_module, comm, ineighbor_allgatherv_init);
+            COPY(avail->ac_module, comm, ineighbor_alltoall_init);
+            COPY(avail->ac_module, comm, ineighbor_alltoallv_init);
+            COPY(avail->ac_module, comm, ineighbor_alltoallw_init);
+
+
             COPY(avail->ac_module, comm, reduce_local);
         }
         /* release the original module reference and the list item */

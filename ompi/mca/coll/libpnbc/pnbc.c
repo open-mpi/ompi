@@ -47,6 +47,7 @@ static void pnbc_schedule_constructor (PNBC_Schedule *schedule) {
 }
 
 static void pnbc_schedule_destructor (PNBC_Schedule *schedule) {
+  PNBC_DEBUG(5, "** pnbc_schedule_destructor FREEING schedule data! **\n");
   free (schedule->data);
   schedule->data = NULL;
 }

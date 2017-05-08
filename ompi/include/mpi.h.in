@@ -1893,12 +1893,44 @@ OMPI_DECLSPEC  int MPI_Ialltoallw_init(const void *sendbuf, const int sendcounts
                                  MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Ibarrier_init(MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Ibcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Iexscan_init(const void *sendbuf, void *recvbuf, int count,
+                              MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Igather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                               void *recvbuf, int recvcount, MPI_Datatype recvtype,
                               int root, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Igatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                void *recvbuf, const int recvcounts[], const int displs[],
                                MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Ireduce(const void *sendbuf, void *recvbuf, int count,
+                              MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Ireduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount,
+                                      MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Ireduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvcounts[],
+                                      MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Iscan_init(const void *sendbuf, void *recvbuf, int count,
+                            MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Iscatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                               void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                               int root, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Iscatterv_init(const void *sendbuf, const int sendcounts[], const int displs[],
+                                MPI_Datatype sendtype, void *recvbuf, int recvcount,
+                                MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Ineighbor_allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                           void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                           MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Ineighbor_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                            void *recvbuf, const int recvcounts[], const int displs[],
+                                            MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Ineighbor_alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                          void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                          MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype,
+                                           void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype,
+                                           MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Ineighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Datatype sendtypes[],
+                                           void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Datatype recvtypes[],
+                                           MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PNBC_Start(MPI_Comm comm, MPI_Request *request);
 
 
   /*
@@ -2670,7 +2702,7 @@ OMPI_DECLSPEC  int PMPI_Ialltoallw_init(const void *sendbuf, const int sendcount
                                  MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Ibarrier_init(MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Ibcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Iexscan_init(const void *sendbuf, void *recvbuf, int count,
+OMPI_DECLSPEC  int PMPI_Iexscan_init(const void *sendbuf, void *recvbuf, int count,
                               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Igather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                               void *recvbuf, int recvcount, MPI_Datatype recvtype,
@@ -2678,35 +2710,36 @@ OMPI_DECLSPEC  int PMPI_Igather_init(const void *sendbuf, int sendcount, MPI_Dat
 OMPI_DECLSPEC  int PMPI_Igatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                void *recvbuf, const int recvcounts[], const int displs[],
                                MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Ireduce(const void *sendbuf, void *recvbuf, int count,
+OMPI_DECLSPEC  int PMPI_Ireduce(const void *sendbuf, void *recvbuf, int count,
                               MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Ireduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount,
+OMPI_DECLSPEC  int PMPI_Ireduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount,
                                       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Ireduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvcounts[],
+OMPI_DECLSPEC  int PMPI_Ireduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvcounts[],
                                       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Iscan_init(const void *sendbuf, void *recvbuf, int count,
+OMPI_DECLSPEC  int PMPI_Iscan_init(const void *sendbuf, void *recvbuf, int count,
                             MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Iscatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+OMPI_DECLSPEC  int PMPI_Iscatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                void *recvbuf, int recvcount, MPI_Datatype recvtype,
                                int root, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Iscatterv_init(const void *sendbuf, const int sendcounts[], const int displs[],
+OMPI_DECLSPEC  int PMPI_Iscatterv_init(const void *sendbuf, const int sendcounts[], const int displs[],
                                 MPI_Datatype sendtype, void *recvbuf, int recvcount,
                                 MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Ineighbor_allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+OMPI_DECLSPEC  int PMPI_Ineighbor_allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                            void *recvbuf, int recvcount, MPI_Datatype recvtype,
                                            MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Ineighbor_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+OMPI_DECLSPEC  int PMPI_Ineighbor_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                             void *recvbuf, const int recvcounts[], const int displs[],
                                             MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Ineighbor_alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+OMPI_DECLSPEC  int PMPI_Ineighbor_alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                           void *recvbuf, int recvcount, MPI_Datatype recvtype,
                                           MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype,
+OMPI_DECLSPEC  int PMPI_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype,
                                            void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype,
                                            MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Ineighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Datatype sendtypes[],
+OMPI_DECLSPEC  int PMPI_Ineighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Datatype sendtypes[],
                                            void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Datatype recvtypes[],
                                            MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_PNBC_Start(MPI_Comm comm, MPI_Request *request);
 
   /*
    * Tool MPI API

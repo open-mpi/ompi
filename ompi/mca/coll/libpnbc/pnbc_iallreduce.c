@@ -38,6 +38,10 @@ int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int co
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_2_0_t *module)
 {
+
+  PNBC_DEBUG(5, "*** IALLREDUCE_INIT ***\n");
+  PNBC_DEBUG(5, "*** IALLREDUCE_INIT _send buffer size = %u  | receive buffer size =%u  | count=%d **\n", sizeof(sendbuf), sizeof(recvbuf), count);
+
   int rank, p, res;
   ptrdiff_t ext, lb;
   PNBC_Schedule *schedule;
@@ -107,6 +111,8 @@ int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int co
     /* ensure the schedule is released with the handle on error */
     handle->schedule = schedule;
 
+    PNBC_DEBUG(7, "** finalizing request schedule **\n");
+
     switch(alg) {
       case PNBC_ARED_BINOMIAL:
         res = allred_sched_diss(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, handle);
@@ -129,7 +135,8 @@ int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int co
 
   *request = (ompi_request_t *) handle;
 
-  /* tmpbuf is freed with the handle */
+  PNBC_DEBUG(7, "** allreduce_init complete **\n");
+
   return OMPI_SUCCESS;
 }
 
