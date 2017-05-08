@@ -102,12 +102,6 @@ int ompi_coll_libpnbc_igatherv_init(const void* sendbuf, int sendcount, MPI_Data
     return res;
   }
 
-  res = PNBC_Start (handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    PNBC_Return_handle (handle);
-    return res;
-  }
-
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
@@ -171,7 +165,7 @@ int ompi_coll_libpnbc_igatherv_inter (const void* sendbuf, int sendcount, MPI_Da
     return res;
   }
 
-  res = PNBC_Start (handle, schedule);
+  res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);
     return res;

@@ -135,13 +135,6 @@ int ompi_coll_libpnbc_ialltoallv_init(const void* sendbuf, const int *sendcounts
     return res;
   }
 
-  res = PNBC_Start(handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    PNBC_Return_handle (handle);
-    OBJ_RELEASE(schedule);
-    return res;
-  }
-
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
@@ -212,7 +205,7 @@ int ompi_coll_libpnbc_ialltoallv_inter (const void* sendbuf, const int *sendcoun
     return res;
   }
 
-  res = PNBC_Start(handle, schedule);
+  res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);
     OBJ_RELEASE(schedule);

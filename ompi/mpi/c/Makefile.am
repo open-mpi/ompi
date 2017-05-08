@@ -444,7 +444,29 @@ libmpi_c_mpi_la_SOURCES = \
         win_test.c \
         win_unlock.c \
 	win_unlock_all.c \
-        win_wait.c
+        win_wait.c \
+        iallgather_init.c \
+        iallgatherv_init.c \
+        iallreduce_init.c \
+        ialltoall_init.c \
+        ialltoallv_init.c \
+        ibarrier_init.c \
+        ibcast_init.c \
+        igather_init.c \
+        igatherv_init.c \
+        ireduce_init.c \
+        ireduce_scatter_init.c \
+        ireduce_scatter_block_init.c \
+        iscan_init.c \
+        iscatter_init.c \
+        iscatterv_init.c \
+        ineighbor_allgather_init.c \
+        ineighbor_allgatherv_init.c \
+        ineighbor_alltoall_init.c \
+        ineighbor_alltoallv_init.c \
+        ineighbor_alltoallw_init.c \
+        libpnbc_start.c
+        
 
 # Conditionally install the header files
 

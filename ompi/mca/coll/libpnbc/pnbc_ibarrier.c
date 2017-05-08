@@ -83,12 +83,6 @@ int ompi_coll_libpnbc_ibarrier_init(struct ompi_communicator_t *comm, ompi_reque
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-  res = PNBC_Start (handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    PNBC_Return_handle (handle);
-    return OMPI_ERR_OUT_OF_RESOURCE;
-  }
-
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
@@ -166,7 +160,7 @@ int ompi_coll_libpnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_requ
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  res = PNBC_Start (handle, schedule);
+  res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;

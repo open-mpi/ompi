@@ -259,7 +259,7 @@ void PNBC_SchedCache_args_delete_key_dummy(void *k);
 #endif
 
 
-int PNBC_Start(PNBC_Handle *handle, PNBC_Schedule *schedule);
+int PNBC_Start_internal(PNBC_Handle *handle, PNBC_Schedule *schedule);
 int PNBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libpnbc_request_t **request, ompi_coll_libpnbc_module_t *module);
 void PNBC_Return_handle(ompi_coll_libpnbc_request_t *request);
 static inline int PNBC_Type_intrinsic(MPI_Datatype type);

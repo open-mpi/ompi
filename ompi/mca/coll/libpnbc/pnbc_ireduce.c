@@ -136,12 +136,6 @@ int ompi_coll_libpnbc_ireduce_init(const void* sendbuf, void* recvbuf, int count
       return res;
     }
 
-  res = PNBC_Start(handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    PNBC_Return_handle (handle);
-    return res;
-  }
-
   *request = (ompi_request_t *) handle;
 
   /* tmpbuf is freed with the handle */
@@ -190,7 +184,7 @@ int ompi_coll_libpnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int coun
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  res = PNBC_Start(handle, schedule);
+  res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);
     return OMPI_ERR_OUT_OF_RESOURCE;

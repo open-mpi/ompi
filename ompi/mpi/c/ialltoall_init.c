@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -14,7 +14,7 @@
  * Copyright (c) 2012      Oak Ridge National Laboratory. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -47,8 +47,6 @@ int MPI_Ialltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm,  MPI_Request *request)
 {
-	//printf("**entering MPI_ialltoall_init\n");
-
     size_t sendtype_size, recvtype_size;
     int err;
 
@@ -76,11 +74,6 @@ int MPI_Ialltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
                    MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           FUNC_NAME);
-        } else if (MPI_IN_PLACE == sendbuf) {
-            /* MPI_IN_PLACE is not fully implemented yet,
-               return MPI_ERR_INTERN for now */
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                          FUNC_NAME);
         } else {
             if (MPI_IN_PLACE != sendbuf) {
                 OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
@@ -99,15 +92,11 @@ int MPI_Ialltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
         }
     }
 
-    //printf("** opal_cr_enter_library....\n");
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    //printf("** invoking ialltoall_init\n");
-    err = comm->c_coll.coll_ialltoall_init(sendbuf, sendcount, sendtype,
+    err = comm->c_coll->coll_ialltoall_init(sendbuf, sendcount, sendtype,
                                       recvbuf, recvcount, recvtype, comm,
-                                      request, comm->c_coll.coll_ialltoall_init_module);
+                                      request, comm->c_coll->coll_ialltoall_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
-    //printf("returning from ialltoall_init\n");
-
 }

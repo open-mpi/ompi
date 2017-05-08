@@ -10,7 +10,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -21,8 +20,8 @@
  *
  * $HEADER$
  */
+
 #include "ompi_config.h"
-#include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -34,27 +33,23 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Iscan_init = PMPI_Iscan_init
+#pragma weak MPI_Iexscan_init = PMPI_Iexscan_init
 #endif
-#define MPI_Iscan_init PMPI_Iscan_init
+#define MPI_Iexscan_init PMPI_Iexscan_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Iscan_init";
+static const char FUNC_NAME[] = "MPI_Iexscan_init";
 
 
-int MPI_Iscan_init(const void *sendbuf, void *recvbuf, int count,
-              MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
+int MPI_Iexscan_init(const void *sendbuf, void *recvbuf, int count,
+                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
     int err;
 
     MEMCHECKER(
         memchecker_datatype(datatype);
+        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
         memchecker_comm(comm);
-        if (MPI_IN_PLACE != sendbuf) {
-            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
-        } else {
-            memchecker_call(&opal_memchecker_base_isdefined, recvbuf, count, datatype);
-        }
     );
 
     if (MPI_PARAM_CHECK) {
@@ -66,38 +61,28 @@ int MPI_Iscan_init(const void *sendbuf, void *recvbuf, int count,
                                           FUNC_NAME);
         }
 
-        /* No intercommunicators allowed! (MPI does not define
-           MPI_SCAN on intercommunicators) */
-
-        else if (OMPI_COMM_IS_INTER(comm)) {
-          err = MPI_ERR_COMM;
-        }
-
-        /* Unrooted operation; checks for all ranks */
-
-        else if (MPI_OP_NULL == op || NULL == op) {
-          err = MPI_ERR_OP;
-        } else if (MPI_IN_PLACE == recvbuf) {
-          err = MPI_ERR_ARG;
+        /* Unrooted operation -- same checks for intracommunicators
+           and intercommunicators */
+        else if (MPI_OP_NULL == op) {
+            err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
         } else {
-          OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* Call the coll component to actually perform the allgather */
+    /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    err = comm->c_coll->coll_iscan_init(sendbuf, recvbuf, count,
-                                  datatype, op, comm,
-                                  request,
-                                  comm->c_coll->coll_iscan_init_module);
+    err = comm->c_coll->coll_iexscan_init(sendbuf, recvbuf, count,
+                                    datatype, op, comm, request,
+                                    comm->c_coll->coll_iexscan_init_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

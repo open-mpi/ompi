@@ -10,7 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -34,26 +35,34 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Iscan_init = PMPI_Iscan_init
+#pragma weak MPI_Ireduce_scatter_block_init = PMPI_Ireduce_scatter_block_init
 #endif
-#define MPI_Iscan_init PMPI_Iscan_init
+#define MPI_Ireduce_scatter_block_init PMPI_Ireduce_scatter_block_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Iscan_init";
+static const char FUNC_NAME[] = "MPI_Ireduce_scatter_block_init";
 
 
-int MPI_Iscan_init(const void *sendbuf, void *recvbuf, int count,
-              MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
+int MPI_Ireduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount,
+                              MPI_Datatype datatype, MPI_Op op,
+                              MPI_Comm comm, MPI_Request *request)
 {
     int err;
 
     MEMCHECKER(
-        memchecker_datatype(datatype);
         memchecker_comm(comm);
-        if (MPI_IN_PLACE != sendbuf) {
-            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
+        memchecker_datatype(datatype);
+
+        /* check receive buffer of current proccess, whether it's addressable. */
+        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf,
+                        recvcount, datatype);
+
+        /* check whether the actual send buffer is defined. */
+        if(MPI_IN_PLACE == sendbuf) {
+            memchecker_call(&opal_memchecker_base_isdefined, recvbuf, recvcount, datatype);
         } else {
-            memchecker_call(&opal_memchecker_base_isdefined, recvbuf, count, datatype);
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, recvcount, datatype);
+
         }
     );
 
@@ -66,38 +75,32 @@ int MPI_Iscan_init(const void *sendbuf, void *recvbuf, int count,
                                           FUNC_NAME);
         }
 
-        /* No intercommunicators allowed! (MPI does not define
-           MPI_SCAN on intercommunicators) */
-
-        else if (OMPI_COMM_IS_INTER(comm)) {
-          err = MPI_ERR_COMM;
-        }
-
-        /* Unrooted operation; checks for all ranks */
+        /* Unrooted operation; same checks for all ranks on both
+           intracommunicators and intercommunicators */
 
         else if (MPI_OP_NULL == op || NULL == op) {
           err = MPI_ERR_OP;
-        } else if (MPI_IN_PLACE == recvbuf) {
-          err = MPI_ERR_ARG;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
-        } else {
-          OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
+        } else if (MPI_IN_PLACE == recvbuf) {
+          err = MPI_ERR_ARG;
         }
+        OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+
+        OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, recvcount);
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* Call the coll component to actually perform the allgather */
+    /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    err = comm->c_coll->coll_iscan_init(sendbuf, recvbuf, count,
-                                  datatype, op, comm,
-                                  request,
-                                  comm->c_coll->coll_iscan_init_module);
+    err = comm->c_coll->coll_ireduce_scatter_block_init(sendbuf, recvbuf, recvcount,
+                                                  datatype, op, comm, request,
+                                                  comm->c_coll->coll_ireduce_scatter_block_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

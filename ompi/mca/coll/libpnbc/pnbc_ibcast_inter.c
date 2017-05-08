@@ -69,12 +69,6 @@ int ompi_coll_libpnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatyp
     return res;
   }
 
-  res = PNBC_Start(handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    PNBC_Return_handle (handle);
-    return res;
-  }
-
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;

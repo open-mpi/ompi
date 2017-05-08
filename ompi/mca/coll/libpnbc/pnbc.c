@@ -383,7 +383,7 @@ int PNBC_Progress(PNBC_Handle *handle) {
       /* this was the last round - we're done */
       PNBC_DEBUG(5, "PNBC_Progress last round finished - we're done\n");
 
-      PNBC_Free(handle);
+      handle->super.req_complete = 1;
 
       return PNBC_OK;
     }
@@ -692,7 +692,7 @@ int  PNBC_Init_comm(MPI_Comm comm, PNBC_Comminfo *comminfo) {
   return OMPI_SUCCESS;
 }
 
-int PNBC_Start(PNBC_Handle *handle, PNBC_Schedule *schedule) {
+int PNBC_Start_internal(PNBC_Handle *handle, PNBC_Schedule *schedule) {
   int res;
 
   handle->schedule = schedule;

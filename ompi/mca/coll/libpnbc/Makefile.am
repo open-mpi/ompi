@@ -52,7 +52,8 @@ sources = \
 	pnbc_iscan.c \
 	pnbc_iscatter.c \
 	pnbc_iscatterv.c \
-	pnbc_neighbor_helpers.c
+	pnbc_neighbor_helpers.c \
+	pnbc_start.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

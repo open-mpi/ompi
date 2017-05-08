@@ -123,45 +123,8 @@ int ompi_coll_libpnbc_iexscan_init(const void* sendbuf, void* recvbuf, int count
             return res;
         }
 
-#ifdef PNBC_CACHE_SCHEDULE
-        /* save schedule to tree */
-        args = (PNBC_Scan_args *) malloc (sizeof (args));
-        if (NULL != args) {
-            args->sendbuf = sendbuf;
-            args->recvbuf = recvbuf;
-            args->count = count;
-            args->datatype = datatype;
-            args->op = op;
-            args->schedule = schedule;
-            res = hb_tree_insert ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_EXSCAN], args, args, 0);
-            if (0 == res) {
-                OBJ_RETAIN(schedule);
-
-                /* increase number of elements for A2A */
-                if (++libpnbc_module->PNBC_Dict_size[PNBC_EXSCAN] > PNBC_SCHED_DICT_UPPER) {
-                    PNBC_SchedCache_dictwipe ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_EXSCAN],
-                                             &libpnbc_module->PNBC_Dict_size[PNBC_EXSCAN]);
-                }
-            } else {
-                PNBC_Error("error in dict_insert() (%i)", res);
-                free (args);
-            }
-        }
-    } else {
-        /* found schedule */
-        schedule = found->schedule;
-        OBJ_RETAIN(schedule);
-    }
-#endif
-
-    res = PNBC_Start (handle, schedule);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        PNBC_Return_handle (handle);
-        return res;
-    }
 
     *request = (ompi_request_t *) handle;
 
-    /* tmpbuf is freed with the handle */
     return OMPI_SUCCESS;
 }

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -48,11 +48,9 @@ int MPI_Igatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int i, size, err;
 
     MEMCHECKER(
-        int rank;
         ptrdiff_t ext;
 
         size = ompi_comm_remote_size(comm);
-        rank = ompi_comm_rank(comm);
         ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_comm(comm);
@@ -192,8 +190,8 @@ int MPI_Igatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll.coll_igatherv_init(sendbuf, sendcount, sendtype, recvbuf,
+    err = comm->c_coll->coll_igatherv_init(sendbuf, sendcount, sendtype, recvbuf,
                                      recvcounts, displs, recvtype,
-                                     root, comm, request, comm->c_coll.coll_igatherv_module);
+                                     root, comm, request, comm->c_coll->coll_igatherv_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

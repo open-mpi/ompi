@@ -197,15 +197,8 @@ int ompi_coll_libpnbc_ireduce_scatter_block_init(const void* sendbuf, void* recv
     return res;
   }
 
-  res = PNBC_Start (handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    PNBC_Return_handle (handle);
-    return res;
-  }
-
   *request = (ompi_request_t *) handle;
 
-  /* tmpbuf is freed with the handle */
   return OMPI_SUCCESS;
 }
 
@@ -321,7 +314,7 @@ int ompi_coll_libpnbc_ireduce_scatter_block_inter(const void *sendbuf, void *rec
     return res;
   }
 
-  res = PNBC_Start(handle, schedule);
+  res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);
     return res;

@@ -1,7 +1,10 @@
 /*
- * Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
+ * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,13 +21,19 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
+#pragma weak MPI_Ibcast_init = PMPI_Ibcast_init
+#endif
+#define MPI_Ibcast_init PMPI_Ibcast_init
+#endif
+
 static const char FUNC_NAME[] = "MPI_Ibcast_init";
 
 
 int MPI_Ibcast_init(void *buffer, int count, MPI_Datatype datatype,
               int root, MPI_Comm comm,  MPI_Request *request)
 {
-	//printf(" ** entered MPI_Ibcast_init **\n");
     int err;
 
     MEMCHECKER(
@@ -67,25 +76,12 @@ int MPI_Ibcast_init(void *buffer, int count, MPI_Datatype datatype,
       }
     }
 
-//     if (MPI_PROC_NULL == request) {
-//            *request = OBJ_NEW(ompi_request_t);
-//            /* Other fields were initialized by the constructor for
-//               ompi_request_t */
-//            (*request)->req_type = OMPI_REQUEST_NOOP;
-//            (*request)->req_status = ompi_request_empty.req_status;
-//            (*request)->req_complete = true;
-//            (*request)->req_state = OMPI_REQUEST_INACTIVE;
-//            (*request)->req_persistent = true;
-//            (*request)->req_free = ompi_request_persistent_proc_null_free;
-//            //return MPI_SUCCESS;
-//        }
-
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    //printf(" ** invoking c_coll.coll_ibcast_init **\n");
-    err = comm->c_coll.coll_ibcast_init(buffer, count, datatype, root, comm,
+
+    err = comm->c_coll->coll_ibcast_init(buffer, count, datatype, root, comm,
                                   request,
-                                  comm->c_coll.coll_ibcast_init_module);
+                                  comm->c_coll->coll_ibcast_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

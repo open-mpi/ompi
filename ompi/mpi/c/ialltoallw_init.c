@@ -34,17 +34,17 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ialltoallv_init = PMPI_Ialltoallv_init
+#pragma weak MPI_Ialltoallw_init = PMPI_Ialltoallw_init
 #endif
-#define MPI_Ialltoallv_init PMPI_Ialltoallv_init
+#define MPI_Ialltoallw_init PMPI_Ialltoallw_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Ialltoallv_init";
+static const char FUNC_NAME[] = "MPI_Ialltoallw_init";
 
 
-int MPI_Ialltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
-                   MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
-                   const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm,
+int MPI_Ialltoallw_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
+                   const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[],
+                   const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm,
                    MPI_Request *request)
 {
     int i, size, err;
@@ -53,28 +53,24 @@ int MPI_Ialltoallv_init(const void *sendbuf, const int sendcounts[], const int s
         ptrdiff_t recv_ext;
         ptrdiff_t send_ext;
 
+
         memchecker_comm(comm);
-
-        if (MPI_IN_PLACE != sendbuf) {
-            memchecker_datatype(sendtype);
-            ompi_datatype_type_extent(sendtype, &send_ext);
-        }
-
-        memchecker_datatype(recvtype);
-        ompi_datatype_type_extent(recvtype, &recv_ext);
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for ( i = 0; i < size; i++ ) {
             if (MPI_IN_PLACE != sendbuf) {
-                /* check if send chunks are defined. */
+                memchecker_datatype(sendtypes[i]);
+                ompi_datatype_type_extent(sendtypes[i], &send_ext);
                 memchecker_call(&opal_memchecker_base_isdefined,
                                 (char *)(sendbuf)+sdispls[i]*send_ext,
-                                sendcounts[i], sendtype);
+                                sendcounts[i], sendtypes[i]);
             }
-            /* check if receive chunks are addressable. */
+
+            memchecker_datatype(recvtypes[i]);
+            ompi_datatype_type_extent(recvtypes[i], &recv_ext);
             memchecker_call(&opal_memchecker_base_isaddressable,
                             (char *)(recvbuf)+rdispls[i]*recv_ext,
-                            recvcounts[i], recvtype);
+                            recvcounts[i], recvtypes[i]);
         }
     );
 
@@ -91,12 +87,12 @@ int MPI_Ialltoallv_init(const void *sendbuf, const int sendcounts[], const int s
 
         if (MPI_IN_PLACE == sendbuf) {
             sendcounts = recvcounts;
-            sdispls = rdispls;
-            sendtype = recvtype;
+            sdispls    = rdispls;
+            sendtypes  = recvtypes;
         }
 
-        if ((NULL == sendcounts) || (NULL == sdispls) ||
-            (NULL == recvcounts) || (NULL == rdispls) ||
+        if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
+            (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
             (MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
             MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
@@ -104,17 +100,17 @@ int MPI_Ialltoallv_init(const void *sendbuf, const int sendcounts[], const int s
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for (i = 0; i < size; ++i) {
-            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-            OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtype, recvcounts[i]);
+            OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtypes[i], recvcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
 
         if (MPI_IN_PLACE != sendbuf && !OMPI_COMM_IS_INTER(comm)) {
             int me = ompi_comm_rank(comm);
             size_t sendtype_size, recvtype_size;
-            ompi_datatype_type_size(sendtype, &sendtype_size);
-            ompi_datatype_type_size(recvtype, &recvtype_size);
+            ompi_datatype_type_size(sendtypes[me], &sendtype_size);
+            ompi_datatype_type_size(recvtypes[me], &recvtype_size);
             if ((sendtype_size*sendcounts[me]) != (recvtype_size*recvcounts[me])) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
             }
@@ -124,9 +120,10 @@ int MPI_Ialltoallv_init(const void *sendbuf, const int sendcounts[], const int s
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_ialltoallv_init(sendbuf, sendcounts, sdispls,
-                                       sendtype, recvbuf, recvcounts, rdispls,
-                                       recvtype, comm, request, comm->c_coll->coll_ialltoallv_init_module);
+    err = comm->c_coll->coll_ialltoallw_init(sendbuf, sendcounts, sdispls,
+                                       sendtypes, recvbuf, recvcounts,
+                                       rdispls, recvtypes, comm, request,
+                                       comm->c_coll->coll_ialltoallw_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 
