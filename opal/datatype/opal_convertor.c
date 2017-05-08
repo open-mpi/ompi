@@ -481,7 +481,9 @@ size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
     pConvertor->remote_size = pConvertor->local_size;
     if( OPAL_UNLIKELY(datatype->bdt_used & pConvertor->master->hetero_mask) ) {
         pConvertor->flags &= (~CONVERTOR_HOMOGENEOUS);
-        pConvertor->use_desc = &(datatype->desc);
+        if (!(pConvertor->flags & CONVERTOR_SEND && pConvertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)) {
+            pConvertor->use_desc = &(datatype->desc);
+        }
         if( 0 == (pConvertor->flags & CONVERTOR_HAS_REMOTE_SIZE) ) {
             /* This is for a single datatype, we must update it with the count */
             pConvertor->remote_size = opal_datatype_compute_remote_size(datatype,
@@ -570,6 +572,7 @@ int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
     mca_cuda_convertor_init(convertor, pUserBuf);
 #endif
 
+    assert(! (convertor->flags & CONVERTOR_SEND));
     OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
