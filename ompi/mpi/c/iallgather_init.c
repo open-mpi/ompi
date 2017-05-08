@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -35,15 +35,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Iallgather_init = PMPI_Iallgather_init
+#pragma weak MPIX_Iallgather_init = PMPIX_Iallgather_init
 #endif
-#define MPI_Iallgather_init PMPI_Iallgather_init
+#define MPIX_Iallgather_init PMPIX_Iallgather_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Iallgather_init";
+static const char FUNC_NAME[] = "MPIX_Iallgather_init";
 
 
-int MPI_Iallgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPIX_Iallgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                    void *recvbuf, int recvcount, MPI_Datatype recvtype,
                    MPI_Comm comm,  MPI_Request *request)
 {

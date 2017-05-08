@@ -34,15 +34,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Iscan_init = PMPI_Iscan_init
+#pragma weak MPIX_Iscan_init = PMPIX_Iscan_init
 #endif
-#define MPI_Iscan_init PMPI_Iscan_init
+#define MPIX_Iscan_init PMPIX_Iscan_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Iscan_init";
+static const char FUNC_NAME[] = "MPIX_Iscan_init";
 
 
-int MPI_Iscan_init(const void *sendbuf, void *recvbuf, int count,
+int MPIX_Iscan_init(const void *sendbuf, void *recvbuf, int count,
               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
     int err;

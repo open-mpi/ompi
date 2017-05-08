@@ -30,15 +30,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ibarrier_init = PMPI_Ibarrier_init
+#pragma weak MPIX_Ibarrier_init = PMPIX_Ibarrier_init
 #endif
-#define MPI_Ibarrier_init PMPI_Ibarrier_init
+#define MPIX_Ibarrier_init PMPIX_Ibarrier_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Ibarrier_init";
+static const char FUNC_NAME[] = "MPIX_Ibarrier_init";
 
 
-int MPI_Ibarrier_init(MPI_Comm comm, MPI_Request *request)
+int MPIX_Ibarrier_init(MPI_Comm comm, MPI_Request *request)
 {
     int err = MPI_SUCCESS;
 

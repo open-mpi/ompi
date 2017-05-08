@@ -38,15 +38,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ineighbor_alltoallv_init = PMPI_Ineighbor_alltoallv_init
+#pragma weak MPIX_Ineighbor_alltoallv_init = PMPIX_Ineighbor_alltoallv_init
 #endif
-#define MPI_Ineighbor_alltoallv_init PMPI_Ineighbor_alltoallv_init
+#define MPIX_Ineighbor_alltoallv_init PMPIX_Ineighbor_alltoallv_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Ineighbor_alltoallv_init";
+static const char FUNC_NAME[] = "MPIX_Ineighbor_alltoallv_init";
 
 
-int MPI_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
+int MPIX_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
                             MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
                             const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm,
                             MPI_Request *request)

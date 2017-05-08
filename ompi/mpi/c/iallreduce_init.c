@@ -35,15 +35,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Iallreduce_init = PMPI_Iallreduce_init
+#pragma weak MPIX_Iallreduce_init = PMPIX_Iallreduce_init
 #endif
-#define MPI_Iallreduce_init PMPI_Iallreduce_init
+#define MPIX_Iallreduce_init PMPIX_Iallreduce_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Iallreduce_init";
+static const char FUNC_NAME[] = "MPIX_Iallreduce_init";
 
 
-int MPI_Iallreduce_init(const void *sendbuf, void *recvbuf, int count,
+int MPIX_Iallreduce_init(const void *sendbuf, void *recvbuf, int count,
                    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request) {
 
 	//printf("Entered Iallreduce_init...\n");

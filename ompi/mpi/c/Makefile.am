@@ -466,7 +466,6 @@ libmpi_c_mpi_la_SOURCES = \
         ineighbor_alltoallv_init.c \
         ineighbor_alltoallw_init.c \
         libpnbc_start.c
-        
 
 # Conditionally install the header files
 

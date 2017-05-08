@@ -21,15 +21,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PNBC_Start = PMPI_PNBC_Start
+#pragma weak MPIX_Start = PMPIX_Start
 #endif
-#define PNBC_Start PMPI_PNBC_Start
+#define MPIX_Start PMPIX_Start
 #endif
 
-static const char FUNC_NAME[] = "PNBC_Start";
+static const char FUNC_NAME[] = "MPIX_Start";
 
 
-int PNBC_Start(MPI_Comm comm,  MPI_Request *request) {
+int MPIX_Start(MPI_Comm comm,  MPI_Request *request) {
 
 	//printf("*** Entered PNBC_Start (libpnbc_start.c) ***\n");
 

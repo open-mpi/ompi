@@ -33,15 +33,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Iscatterv_init = PMPI_Iscatterv_init
+#pragma weak MPIX_Iscatterv_init = PMPIX_Iscatterv_init
 #endif
-#define MPI_Iscatterv_init PMPI_Iscatterv_init
+#define MPIX_Iscatterv_init PMPIX_Iscatterv_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Iscatterv_init";
+static const char FUNC_NAME[] = "MPIX_Iscatterv_init";
 
 
-int MPI_Iscatterv_init(const void *sendbuf, const int sendcounts[], const int displs[],
+int MPIX_Iscatterv_init(const void *sendbuf, const int sendcounts[], const int displs[],
                   MPI_Datatype sendtype, void *recvbuf, int recvcount,
                   MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
 {

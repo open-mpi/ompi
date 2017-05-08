@@ -11,7 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
+ * Copyright (c) 2010      University of Houston.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Laboratory. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -38,15 +39,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ineighbor_allgather_init = PMPI_Ineighbor_allgather_init
+#pragma weak MPIX_Ineighbor_allgather_init = PMPIX_Ineighbor_allgather_init
 #endif
-#define MPI_Ineighbor_allgather_init PMPI_Ineighbor_allgather_init
+#define MPIX_Ineighbor_allgather_init PMPIX_Ineighbor_allgather_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Ineighbor_allgather_init";
+static const char FUNC_NAME[] = "MPIX_Ineighbor_allgather_init";
 
 
-int MPI_Ineighbor_allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPIX_Ineighbor_allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                             void *recvbuf, int recvcount, MPI_Datatype recvtype,
                             MPI_Comm comm,  MPI_Request *request)
 {

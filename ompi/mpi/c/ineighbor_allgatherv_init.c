@@ -38,15 +38,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ineighbor_allgatherv_init = PMPI_Ineighbor_allgatherv_init
+#pragma weak MPIX_Ineighbor_allgatherv_init = PMPIX_Ineighbor_allgatherv_init
 #endif
-#define MPI_Ineighbor_allgatherv_init PMPI_Ineighbor_allgatherv_init
+#define MPIX_Ineighbor_allgatherv_init PMPIX_Ineighbor_allgatherv_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Ineighbor_allgatherv_init";
+static const char FUNC_NAME[] = "MPIX_Ineighbor_allgatherv_init";
 
 
-int MPI_Ineighbor_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPIX_Ineighbor_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                              void *recvbuf, const int recvcounts[], const int displs[],
                              MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
 {
@@ -145,7 +145,7 @@ int MPI_Ineighbor_allgatherv_init(const void *sendbuf, int sendcount, MPI_Dataty
 
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_ineighbor_allgatherv_init(sendbuf, sendcount, sendtype,
-                                                 recvbuf, (int *) recvcounts, (int *) displs,
+                                                 recvbuf, recvcounts, displs,
                                                  recvtype, comm, request,
                                                  comm->c_coll->coll_ineighbor_allgatherv_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

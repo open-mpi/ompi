@@ -35,15 +35,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Igather_init = PMPI_Igather_init
+#pragma weak MPIX_Igather_init = PMPIX_Igather_init
 #endif
-#define MPI_Igather_init PMPI_Igather_init
+#define MPIX_Igather_init PMPIX_Igather_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Igather_init";
+static const char FUNC_NAME[] = "MPIX_Igather_init";
 
 
-int MPI_Igather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPIX_Igather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                 void *recvbuf, int recvcount, MPI_Datatype recvtype,
                 int root, MPI_Comm comm, MPI_Request *request)
 {
