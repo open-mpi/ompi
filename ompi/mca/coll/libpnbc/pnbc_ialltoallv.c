@@ -40,7 +40,7 @@ static inline int a2av_sched_inplace(int rank, int p, PNBC_Schedule *schedule,
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear Alltoallv */
-int ompi_coll_libpnbc_ialltoallv(const void* sendbuf, const int *sendcounts, const int *sdispls,
+int ompi_coll_libpnbc_ialltoallv_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
                                 MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_2_0_t *module)

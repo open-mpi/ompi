@@ -156,59 +156,59 @@ int PNBC_Init_comm(MPI_Comm comm, ompi_coll_libpnbc_module_t *module);
 int PNBC_Progress(PNBC_Handle *handle);
 
 
-int ompi_coll_libpnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libpnbc_iallgather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
+int ompi_coll_libpnbc_iallgatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
                                  MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                  struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libpnbc_ialltoall_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ialltoallv(const void* sendbuf, const int *sendcounts, const int *sdispls,
+int ompi_coll_libpnbc_ialltoallv_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
                                 MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ialltoallw(const void *sbuf, const int *scounts, const int *sdisps, struct ompi_datatype_t * const *sdtypes,
+int ompi_coll_libpnbc_ialltoallw_init(const void *sbuf, const int *scounts, const int *sdisps, struct ompi_datatype_t * const *sdtypes,
                                 void *rbuf, const int *rcounts, const int *rdisps, struct ompi_datatype_t * const *rdtypes,
                                 struct ompi_communicator_t *comm, ompi_request_t **request,
                                 struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
+int ompi_coll_libpnbc_ibarrier_init(struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libpnbc_ibcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
                             struct ompi_communicator_t *comm, ompi_request_t ** request,
                             struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_iexscan(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+int ompi_coll_libpnbc_iexscan_init(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
                              struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t **request,
                              struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_igather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libpnbc_igather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                              MPI_Datatype recvtype, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                              struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+int ompi_coll_libpnbc_igatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                               void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+int ompi_coll_libpnbc_ireduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
                              MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                              struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+int ompi_coll_libpnbc_ireduce_scatter_init(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
                                      MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                      struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ireduce_scatter_block(const void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
+int ompi_coll_libpnbc_ireduce_scatter_block_init(const void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
                                            struct ompi_op_t *op, struct ompi_communicator_t *comm,
                                            ompi_request_t **request,
                                            struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libpnbc_iscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                            struct ompi_communicator_t *comm, ompi_request_t ** request,
                            struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_iscatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+int ompi_coll_libpnbc_iscatter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                               void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                               struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_iscatterv(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
+int ompi_coll_libpnbc_iscatterv_init(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
                                void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_2_0_t *module);
@@ -266,21 +266,21 @@ int ompi_coll_libpnbc_iscatterv_inter(const void* sendbuf, const int *sendcounts
                                struct mca_coll_base_module_2_2_0_t *module);
 
 
-int ompi_coll_libpnbc_ineighbor_allgather(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
+int ompi_coll_libpnbc_ineighbor_allgather_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
                                          int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
                                          ompi_request_t ** request, struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ineighbor_allgatherv(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
+int ompi_coll_libpnbc_ineighbor_allgatherv_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
                                           const int *rcounts, const int *displs, MPI_Datatype rtype,
                                           struct ompi_communicator_t *comm, ompi_request_t ** request,
                                           struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ineighbor_alltoall(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
+int ompi_coll_libpnbc_ineighbor_alltoall_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
                                         int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
                                         ompi_request_t ** request, struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
+int ompi_coll_libpnbc_ineighbor_alltoallv_init(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
                                          void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          struct mca_coll_base_module_2_2_0_t *module);
-int ompi_coll_libpnbc_ineighbor_alltoallw(const void *sbuf, const int *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
+int ompi_coll_libpnbc_ineighbor_alltoallw_init(const void *sbuf, const int *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
                                          void *rbuf, const int *rcounts, const MPI_Aint *rdisps, struct ompi_datatype_t * const *rtypes,
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          struct mca_coll_base_module_2_2_0_t *module);

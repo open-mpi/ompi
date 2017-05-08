@@ -19,31 +19,11 @@
  */
 #include "pnbc_internal.h"
 
-#ifdef PNBC_CACHE_SCHEDULE
-/* tree comparison function for schedule cache */
-int PNBC_Allgather_args_compare(PNBC_Allgather_args *a, PNBC_Allgather_args *b, void *param) {
-  if ((a->sendbuf == b->sendbuf) &&
-      (a->sendcount == b->sendcount) &&
-      (a->sendtype == b->sendtype) &&
-      (a->recvbuf == b->recvbuf) &&
-      (a->recvcount == b->recvcount) &&
-      (a->recvtype == b->recvtype) ) {
-    return 0;
-  }
-
-  if( a->sendbuf < b->sendbuf ) {
-    return -1;
-  }
-
-  return 1;
-}
-#endif
-
 /* simple linear MPI_Iallgather
  * the algorithm uses p-1 rounds
  * each node sends the packet it received last round (or has in round 0) to it's right neighbor (modulo p)
  * each node receives from it's left (modulo p) neighbor */
-int ompi_coll_libpnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libpnbc_iallgather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_2_0_t *module)
 {
@@ -83,17 +63,6 @@ int ompi_coll_libpnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatyp
     return OMPI_SUCCESS;
   }
 
-#ifdef PNBC_CACHE_SCHEDULE
-  /* search schedule in communicator specific tree */
-  search.sendbuf = sendbuf;
-  search.sendcount = sendcount;
-  search.sendtype = sendtype;
-  search.recvbuf = recvbuf;
-  search.recvcount = recvcount;
-  search.recvtype = recvtype;
-  found = (PNBC_Allgather_args *) hb_tree_search ((hb_tree*)libpnbc_module->PNBC_Dict[PNBC_ALLGATHER], &search);
-  if (NULL == found) {
-#endif
     schedule = OBJ_NEW(PNBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
       return OMPI_ERR_OUT_OF_RESOURCE;
@@ -126,34 +95,6 @@ int ompi_coll_libpnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatyp
       return res;
     }
 
-#ifdef PNBC_CACHE_SCHEDULE
-    /* save schedule to tree */
-    args = (PNBC_Allgather_args *) malloc (sizeof (args));
-    args->sendbuf = sendbuf;
-    args->sendcount = sendcount;
-    args->sendtype = sendtype;
-    args->recvbuf = recvbuf;
-    args->recvcount = recvcount;
-    args->recvtype = recvtype;
-    args->schedule = schedule;
-
-    res = hb_tree_insert ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_ALLGATHER], args, args, 0);
-    if (res != 0) {
-      free (args);
-    } else {
-      OBJ_RETAIN(schedule);
-    }
-
-    /* increase number of elements for A2A */
-    if (++libpnbc_module->PNBC_Dict_size[PNBC_ALLGATHER] > PNBC_SCHED_DICT_UPPER) {
-      PNBC_SchedCache_dictwipe ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_ALLGATHER], &libpnbc_module->PNBC_Dict_size[PNBC_ALLGATHER]);
-    }
-  } else {
-    /* found schedule */
-    schedule = found->schedule;
-    OBJ_RETAIN(schedule);
-  }
-#endif
 
   res = PNBC_Init_handle (comm, &handle, libpnbc_module);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

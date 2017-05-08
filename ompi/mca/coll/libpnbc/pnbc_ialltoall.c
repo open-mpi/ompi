@@ -32,28 +32,9 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
 static inline int a2a_sched_inplace(int rank, int p, PNBC_Schedule* schedule, void* buf, int count,
                                    MPI_Datatype type, MPI_Aint ext, ptrdiff_t gap, MPI_Comm comm);
 
-#ifdef PNBC_CACHE_SCHEDULE
-/* tree comparison function for schedule cache */
-int PNBC_Alltoall_args_compare(PNBC_Alltoall_args *a, PNBC_Alltoall_args *b, void *param) {
-  if ((a->sendbuf == b->sendbuf) &&
-      (a->sendcount == b->sendcount) &&
-      (a->sendtype == b->sendtype) &&
-      (a->recvbuf == b->recvbuf) &&
-      (a->recvcount == b->recvcount) &&
-      (a->recvtype == b->recvtype)) {
-    return 0;
-  }
-
-  if( a->sendbuf < b->sendbuf ) {
-    return -1;
-  }
-
-  return 1;
-}
-#endif
 
 /* simple linear MPI_Ialltoall the (simple) algorithm just sends to all nodes */
-int ompi_coll_libpnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libpnbc_ialltoall_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_2_0_t *module)
 {
@@ -61,9 +42,7 @@ int ompi_coll_libpnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype
   size_t a2asize, sndsize;
   PNBC_Schedule *schedule;
   MPI_Aint rcvext, sndext;
-#ifdef PNBC_CACHE_SCHEDULE
-  PNBC_Alltoall_args *args, *found, search;
-#endif
+
   char *rbuf, *sbuf, inplace;
   enum {PNBC_A2A_LINEAR, PNBC_A2A_PAIRWISE, PNBC_A2A_DISS, PNBC_A2A_INPLACE} alg;
   PNBC_Handle *handle;
@@ -194,17 +173,7 @@ int ompi_coll_libpnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype
     }
   }
 
-#ifdef PNBC_CACHE_SCHEDULE
-  /* search schedule in communicator specific tree */
-  search.sendbuf = sendbuf;
-  search.sendcount = sendcount;
-  search.sendtype = sendtype;
-  search.recvbuf = recvbuf;
-  search.recvcount = recvcount;
-  search.recvtype = recvtype;
-  found = (PNBC_Alltoall_args *) hb_tree_search ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_ALLTOALL], &search);
-  if (NULL == found) {
-#endif
+
     /* not found - generate new schedule */
     schedule = OBJ_NEW(PNBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
@@ -240,38 +209,6 @@ int ompi_coll_libpnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype
       PNBC_Return_handle (handle);
       return res;
     }
-
-#ifdef PNBC_CACHE_SCHEDULE
-    /* save schedule to tree */
-    args = (PNBC_Alltoall_args *) malloc (sizeof (args));
-    if (NULL != args) {
-      args->sendbuf = sendbuf;
-      args->sendcount = sendcount;
-      args->sendtype = sendtype;
-      args->recvbuf = recvbuf;
-      args->recvcount = recvcount;
-      args->recvtype = recvtype;
-      args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_ALLTOALL], args, args, 0);
-      if (0 == res) {
-        OBJ_RETAIN(schedule);
-
-        /* increase number of elements for A2A */
-        if (++libpnbc_module->PNBC_Dict_size[PNBC_ALLTOALL] > PNBC_SCHED_DICT_UPPER) {
-          PNBC_SchedCache_dictwipe ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_ALLTOALL],
-                                   &libpnbc_module->PNBC_Dict_size[PNBC_ALLTOALL]);
-        }
-      } else {
-        PNBC_Error("error in dict_insert() (%i)", res);
-        free (args);
-      }
-    }
-  } else {
-    /* found schedule */
-    schedule = found->schedule;
-    OBJ_RETAIN(schedule);
-  }
-#endif
 
   res = PNBC_Start (handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

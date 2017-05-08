@@ -40,7 +40,7 @@ static inline int a2aw_sched_inplace(int rank, int p, PNBC_Schedule *schedule,
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear Alltoallw */
-int ompi_coll_libpnbc_ialltoallw(const void* sendbuf, const int *sendcounts, const int *sdispls,
+int ompi_coll_libpnbc_ialltoallw_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
                                 struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
                                 struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				struct mca_coll_base_module_2_2_0_t *module)

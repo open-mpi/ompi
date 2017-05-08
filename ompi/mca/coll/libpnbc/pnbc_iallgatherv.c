@@ -33,7 +33,7 @@
  * second round:
  *   each node sends to node (rank+2)%p sendcount elements
  *   each node receives from node (rank-2)%p recvcounts[(rank+2)%p] elements */
-int ompi_coll_libpnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
+int ompi_coll_libpnbc_iallgatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
                                  MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                  struct mca_coll_base_module_2_2_0_t *module)
 {

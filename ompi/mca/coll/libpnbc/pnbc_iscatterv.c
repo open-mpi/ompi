@@ -27,7 +27,7 @@
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear MPI_Iscatterv */
-int ompi_coll_libpnbc_iscatterv(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
+int ompi_coll_libpnbc_iscatterv_init(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
                                void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_2_0_t *module) {

@@ -39,7 +39,7 @@
  *
  */
 
-int ompi_coll_libpnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
+int ompi_coll_libpnbc_ireduce_scatter_block_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                            MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                            struct mca_coll_base_module_2_2_0_t *module) {
   int peer, rank, maxr, p, res, count;

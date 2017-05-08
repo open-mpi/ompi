@@ -28,7 +28,7 @@
  * would not be sufficient ... we simply do not cache it */
 
 
-int ompi_coll_libpnbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+int ompi_coll_libpnbc_igatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                               void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_2_0_t *module) {

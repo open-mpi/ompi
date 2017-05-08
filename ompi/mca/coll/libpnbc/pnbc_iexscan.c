@@ -19,25 +19,6 @@
  */
 #include "pnbc_internal.h"
 
-#ifdef PNBC_CACHE_SCHEDULE
-/* tree comparison function for schedule cache */
-int PNBC_Scan_args_compare(PNBC_Scan_args *a, PNBC_Scan_args *b, void *param) {
-    if ((a->sendbuf == b->sendbuf) &&
-        (a->recvbuf == b->recvbuf) &&
-        (a->count == b->count) &&
-        (a->datatype == b->datatype) &&
-        (a->op == b->op) ) {
-        return 0;
-    }
-
-    if( a->sendbuf < b->sendbuf ) {
-        return -1;
-    }
-
-    return 1;
-}
-#endif
-
 /* linear iexscan
  * working principle:
  * 1. each node (but node 0) receives from left neigbor
@@ -45,15 +26,13 @@ int PNBC_Scan_args_compare(PNBC_Scan_args *a, PNBC_Scan_args *b, void *param) {
  * 3. all but rank p-1 do sends to it's right neigbor and exits
  *
  */
-int ompi_coll_libpnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libpnbc_iexscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                              struct ompi_communicator_t *comm, ompi_request_t ** request,
                              struct mca_coll_base_module_2_2_0_t *module) {
     int rank, p, res;
     ptrdiff_t gap, span;
     PNBC_Schedule *schedule;
-#ifdef PNBC_CACHE_SCHEDULE
-    PNBC_Scan_args *args, *found, search;
-#endif
+
     char inplace;
     PNBC_Handle *handle;
     ompi_coll_libpnbc_module_t *libpnbc_module = (ompi_coll_libpnbc_module_t*) module;
@@ -86,16 +65,6 @@ int ompi_coll_libpnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI
         }
     }
 
-#ifdef PNBC_CACHE_SCHEDULE
-    /* search schedule in communicator specific tree */
-    search.sendbuf = sendbuf;
-    search.recvbuf = recvbuf;
-    search.count = count;
-    search.datatype = datatype;
-    search.op = op;
-    found = (PNBC_Scan_args *) hb_tree_search ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_EXSCAN], &search);
-    if (NULL == found) {
-#endif
         schedule = OBJ_NEW(PNBC_Schedule);
         if (OPAL_UNLIKELY(NULL == schedule)) {
             PNBC_Return_handle (handle);

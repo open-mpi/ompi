@@ -26,34 +26,15 @@ static inline int bcast_sched_linear(int rank, int p, int root, PNBC_Schedule *s
 static inline int bcast_sched_chain(int rank, int p, int root, PNBC_Schedule *schedule, void *buffer, int count,
                                     MPI_Datatype datatype, int fragsize, size_t size);
 
-#ifdef PNBC_CACHE_SCHEDULE
-/* tree comparison function for schedule cache */
-int PNBC_Bcast_args_compare(PNBC_Bcast_args *a, PNBC_Bcast_args *b, void *param) {
-  if ((a->buffer == b->buffer) &&
-      (a->count == b->count) &&
-      (a->datatype == b->datatype) &&
-      (a->root == b->root) ) {
-    return 0;
-  }
 
-  if( a->buffer < b->buffer ) {
-    return -1;
-  }
-
-  return 1;
-}
-#endif
-
-int ompi_coll_libpnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libpnbc_ibcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
                             struct ompi_communicator_t *comm, ompi_request_t ** request,
                             struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res, segsize;
   size_t size;
   PNBC_Schedule *schedule;
-#ifdef PNBC_CACHE_SCHEDULE
-  PNBC_Bcast_args *args, *found, search;
-#endif
+
   enum { PNBC_BCAST_LINEAR, PNBC_BCAST_BINOMIAL, PNBC_BCAST_CHAIN } alg;
   PNBC_Handle *handle;
   ompi_coll_libpnbc_module_t *libpnbc_module = (ompi_coll_libpnbc_module_t*) module;
@@ -96,15 +77,6 @@ int ompi_coll_libpnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int
     }
   }
 
-#ifdef PNBC_CACHE_SCHEDULE
-  /* search schedule in communicator specific tree */
-  search.buffer = buffer;
-  search.count = count;
-  search.datatype = datatype;
-  search.root = root;
-  found = (PNBC_Bcast_args *) hb_tree_search ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_BCAST], &search);
-  if (NULL == found) {
-#endif
     schedule = OBJ_NEW(PNBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
       return OMPI_ERR_OUT_OF_RESOURCE;
@@ -133,35 +105,6 @@ int ompi_coll_libpnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int
       return res;
     }
 
-#ifdef PNBC_CACHE_SCHEDULE
-    /* save schedule to tree */
-    args = (PNBC_Bcast_args *) malloc (sizeof (args));
-    if (NULL != args) {
-      args->buffer = buffer;
-      args->count = count;
-      args->datatype = datatype;
-      args->root = root;
-      args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_BCAST], args, args, 0);
-      if (0 == res) {
-        OBJ_RETAIN (schedule);
-
-        /* increase number of elements for A2A */
-        if (++libpnbc_module->PNBC_Dict_size[PNBC_BCAST] > PNBC_SCHED_DICT_UPPER) {
-          PNBC_SchedCache_dictwipe ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_BCAST],
-                                   &libpnbc_module->PNBC_Dict_size[PNBC_BCAST]);
-        }
-      } else {
-        PNBC_Error("error in dict_insert() (%i)", res);
-        free (args);
-      }
-    }
-  } else {
-    /* found schedule */
-    schedule = found->schedule;
-    OBJ_RETAIN(schedule);
-  }
-#endif
 
   res = PNBC_Init_handle (comm, &handle, libpnbc_module);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

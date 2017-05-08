@@ -19,31 +19,7 @@
  */
 #include "pnbc_internal.h"
 
-/* cannot cache schedules because one cannot check locally if the pattern is the same!! */
-#undef PNBC_CACHE_SCHEDULE
-
-#ifdef PNBC_CACHE_SCHEDULE
-/* tree comparison function for schedule cache */
-int PNBC_Ineighbor_alltoallv_args_compare(PNBC_Ineighbor_alltoallv_args *a, PNBC_Ineighbor_alltoallv_args *b, void *param) {
-  if ((a->sbuf == b->sbuf) &&
-      (a->scount == b->scount) &&
-      (a->stype == b->stype) &&
-      (a->rbuf == b->rbuf) &&
-      (a->rcount == b->rcount) &&
-      (a->rtype == b->rtype) ) {
-    return 0;
-  }
-
-  if (a->sbuf < b->sbuf) {
-    return -1;
-  }
-
-  return 1;
-}
-#endif
-
-
-int ompi_coll_libpnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
+int ompi_coll_libpnbc_ineighbor_alltoallv_init(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
                                          void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          struct mca_coll_base_module_2_2_0_t *module) {
@@ -65,20 +41,6 @@ int ompi_coll_libpnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, 
     return res;
   }
 
-#ifdef PNBC_CACHE_SCHEDULE
-  PNBC_Ineighbor_alltoallv_args *args, *found, search;
-
-  /* search schedule in communicator specific tree */
-  search.sbuf = sbuf;
-  search.scount = scount;
-  search.stype = stype;
-  search.rbuf = rbuf;
-  search.rcount = rcount;
-  search.rtype = rtype;
-  found = (PNBC_Ineighbor_alltoallv_args *) hb_tree_search ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_NEIGHBOR_ALLTOALLV],
-                                                           &search);
-  if (NULL == found) {
-#endif
     schedule = OBJ_NEW(PNBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
       return OMPI_ERR_OUT_OF_RESOURCE;
@@ -130,47 +92,10 @@ int ompi_coll_libpnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, 
       return res;
     }
 
-#ifdef PNBC_CACHE_SCHEDULE
-    /* save schedule to tree */
-    args = (PNBC_Ineighbor_alltoallv_args *) malloc (sizeof (args));
-    if (NULL != args) {
-      args->sbuf = sbuf;
-      args->scount = scount;
-      args->stype = stype;
-      args->rbuf = rbuf;
-      args->rcount = rcount;
-      args->rtype = rtype;
-      args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_NEIGHBOR_ALLTOALLV], args, args, 0);
-      if (0 == res) {
-        OBJ_RETAIN(schedule);
-
-        /* increase number of elements for A2A */
-        if (++libpnbc_module->PNBC_Dict_size[PNBC_NEIGHBOR_ALLTOALLV] > PNBC_SCHED_DICT_UPPER) {
-          PNBC_SchedCache_dictwipe ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_NEIGHBOR_ALLTOALLV],
-                                   &libpnbc_module->PNBC_Dict_size[PNBC_NEIGHBOR_ALLTOALLV]);
-        }
-      } else {
-        PNBC_Error("error in dict_insert() (%i)", res);
-        free (args);
-      }
-    }
-  } else {
-    /* found schedule */
-    schedule = found->schedule;
-    OBJ_RETAIN(schedule);
-  }
-#endif
 
   res = PNBC_Init_handle(comm, &handle, libpnbc_module);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
-    return res;
-  }
-
-  res = PNBC_Start (handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    PNBC_Return_handle (handle);
     return res;
   }
 

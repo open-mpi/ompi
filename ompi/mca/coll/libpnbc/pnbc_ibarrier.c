@@ -21,7 +21,7 @@
 #include "pnbc_internal.h"
 
 /* Dissemination implementation of MPI_Ibarrier */
-int ompi_coll_libpnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
+int ompi_coll_libpnbc_ibarrier_init(struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, maxround, res, recvpeer, sendpeer;
@@ -37,14 +37,6 @@ int ompi_coll_libpnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t 
     return res;
   }
 
-#ifdef PNBC_CACHE_SCHEDULE
-  /* there only one argument set per communicator -> hang it directly at
-   * the tree-position, PNBC_Dict_size[...] is 0 for not initialized and
-   * 1 for initialized. PNBC_Dict[...] is a pointer to the schedule in
-   * this case */
-  if (libpnbc_module->PNBC_Dict_size[PNBC_BARRIER] == 0) {
-    /* we did not init it yet */
-#endif
     schedule = OBJ_NEW(PNBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
       PNBC_Return_handle (handle);
@@ -90,17 +82,6 @@ int ompi_coll_libpnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t 
       PNBC_Return_handle (handle);
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
-#ifdef PNBC_CACHE_SCHEDULE
-    /* add it */
-    libpnbc_module->PNBC_Dict[PNBC_BARRIER] = (hb_tree *) schedule;
-    libpnbc_module->PNBC_Dict_size[PNBC_BARRIER] = 1;
-  } else {
-    /* we found it */
-    handle->schedule = schedule = (PNBC_Schedule *) libpnbc_module->PNBC_Dict[PNBC_BARRIER];
-  }
-  OBJ_RETAIN(schedule);
-#endif
 
   res = PNBC_Start (handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

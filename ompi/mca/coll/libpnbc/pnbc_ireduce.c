@@ -31,28 +31,8 @@ static inline int red_sched_chain (int rank, int p, int root, const void *sendbu
 static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, void *tmpbuf, int count, MPI_Datatype datatype,
                                     MPI_Op op, PNBC_Schedule *schedule, PNBC_Handle *handle);
 
-#ifdef PNBC_CACHE_SCHEDULE
-/* tree comparison function for schedule cache */
-int PNBC_Reduce_args_compare(PNBC_Reduce_args *a, PNBC_Reduce_args *b, void *param) {
-  if ((a->sendbuf == b->sendbuf) &&
-      (a->recvbuf == b->recvbuf) &&
-      (a->count == b->count) &&
-      (a->datatype == b->datatype) &&
-      (a->op == b->op) &&
-      (a->root == b->root)) {
-    return 0;
-  }
-
-  if (a->sendbuf < b->sendbuf) {
-    return -1;
-  }
-
-  return 1;
-}
-#endif
-
 /* the non-blocking reduce */
-int ompi_coll_libpnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+int ompi_coll_libpnbc_ireduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
                              MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                              struct mca_coll_base_module_2_2_0_t *module) {
   int rank, p, res, segsize;
@@ -127,19 +107,6 @@ int ompi_coll_libpnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-#ifdef PNBC_CACHE_SCHEDULE
-  PNBC_Reduce_args *args, *found, search;
-
-  /* search schedule in communicator specific tree */
-  search.sendbuf = sendbuf;
-  search.recvbuf = recvbuf;
-  search.count = count;
-  search.datatype = datatype;
-  search.op = op;
-  search.root = root;
-  found = (PNBC_Reduce_args *) hb_tree_search ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_REDUCE], &search);
-  if (NULL == found) {
-#endif
     schedule = OBJ_NEW(PNBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
       PNBC_Return_handle (handle);
@@ -168,37 +135,6 @@ int ompi_coll_libpnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI
       PNBC_Return_handle (handle);
       return res;
     }
-#ifdef PNBC_CACHE_SCHEDULE
-    /* save schedule to tree */
-    args = (PNBC_Reduce_args *) malloc (sizeof (args));
-    if (NULL != args) {
-      args->sendbuf = sendbuf;
-      args->recvbuf = recvbuf;
-      args->count = count;
-      args->datatype = datatype;
-      args->op = op;
-      args->root = root;
-      args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_REDUCE], args, args, 0);
-      if (0 == res) {
-        OBJ_RETAIN(schedule);
-
-        /* increase number of elements for Reduce */
-        if (++libpnbc_module->PNBC_Dict_size[PNBC_REDUCE] > PNBC_SCHED_DICT_UPPER) {
-          PNBC_SchedCache_dictwipe ((hb_tree *) libpnbc_module->PNBC_Dict[PNBC_REDUCE],
-                                   &libpnbc_module->PNBC_Dict_size[PNBC_REDUCE]);
-        }
-      } else {
-        PNBC_Error("error in dict_insert() (%i)", res);
-        free (args);
-      }
-    }
-  } else {
-    /* found schedule */
-    schedule = found->schedule;
-    OBJ_RETAIN(schedule);
-  }
-#endif
 
   res = PNBC_Start(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
