@@ -82,6 +82,16 @@
 
 #endif
 
+#elif OPAL_ASSEMBLY_ARCH == OPAL_S390
+
+#define __NR_process_vm_readv	340
+#define __NR_process_vm_writev	341
+
+#elif OPAL_ASSEMBLY_ARCH == OPAL_S390X
+
+#define __NR_process_vm_readv	340
+#define __NR_process_vm_writev	341
+
 #else
 #error "Unsupported architecture for process_vm_readv and process_vm_writev syscalls"
 #endif
