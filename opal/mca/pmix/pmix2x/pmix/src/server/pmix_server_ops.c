@@ -1160,8 +1160,8 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
 
   check:
     /* check if any matching notifications have been cached */
-    for (i=0; i < pmix_server_globals.notifications.size; i++) {
-        if (NULL == (cd = (pmix_notify_caddy_t*)pmix_ring_buffer_poke(&pmix_server_globals.notifications, i))) {
+    for (i=0; i < pmix_globals.notifications.size; i++) {
+        if (NULL == (cd = (pmix_notify_caddy_t*)pmix_ring_buffer_poke(&pmix_globals.notifications, i))) {
             break;
         }
         found = false;

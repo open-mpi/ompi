@@ -96,10 +96,10 @@ enum {
     OPAL_ERR_PROC_MIGRATE                   = (OPAL_ERR_BASE - 65),
     OPAL_ERR_EVENT_REGISTRATION             = (OPAL_ERR_BASE - 66),
     OPAL_ERR_HEARTBEAT_ALERT                = (OPAL_ERR_BASE - 67),
-    OPAL_ERR_FILE_ALERT                     = (OPAL_ERR_BASE - 68)
+    OPAL_ERR_FILE_ALERT                     = (OPAL_ERR_BASE - 68),
+    OPAL_ERR_MODEL_DECLARED                 = (OPAL_ERR_BASE - 69)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)
 
 #endif /* OPAL_CONSTANTS_H */
-

@@ -111,7 +111,6 @@ typedef struct {
     pmix_list_t local_reqs;                 // list of pmix_dmdx_local_t awaiting arrival of data from local neighbours
     pmix_buffer_t gdata;                    // cache of data given to me for passing to all clients
     pmix_list_t events;                     // list of pmix_regevents_info_t registered events
-    pmix_ring_buffer_t notifications;       // ring buffer of pending notifications
     bool tool_connections_allowed;
 } pmix_server_globals_t;
 

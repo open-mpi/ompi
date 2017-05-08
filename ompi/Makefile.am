@@ -14,7 +14,7 @@
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -178,6 +178,7 @@ include errhandler/Makefile.am
 include file/Makefile.am
 include group/Makefile.am
 include info/Makefile.am
+include interlib/Makefile.am
 include message/Makefile.am
 include op/Makefile.am
 include peruse/Makefile.am

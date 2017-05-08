@@ -36,6 +36,8 @@
 
 static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
+static volatile bool regactive;
+static bool initialized = false;
 
 #define PMIX_WAIT_FOR_COMPLETION(a)             \
     do {                                        \
@@ -55,28 +57,61 @@ static void errreg_cbfunc (pmix_status_t status,
     opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                         "PMIX client errreg_cbfunc - error handler registered status=%d, reference=%lu",
                         status, (unsigned long)errhandler_ref);
+    regactive = false;
 }
 
-int pmix2x_client_init(void)
+int pmix2x_client_init(opal_list_t *ilist)
 {
     opal_process_name_t pname;
     pmix_status_t rc;
     int dbg;
     opal_pmix2x_jobid_trkr_t *job;
     opal_pmix2x_event_t *event;
+    pmix_info_t *pinfo;
+    size_t ninfo, n;
+    opal_value_t *ival;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client init");
 
-    if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
-        asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
-        putenv(dbgvalue);
+    if (!initialized) {
+        if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
+            asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
+            putenv(dbgvalue);
+        }
     }
 
-    rc = PMIx_Init(&my_proc, NULL, 0);
+    /* convert the incoming list to info structs */
+    if (NULL != ilist) {
+        ninfo = opal_list_get_size(ilist);
+        if (0 < ninfo) {
+            PMIX_INFO_CREATE(pinfo, ninfo);
+            n=0;
+            OPAL_LIST_FOREACH(ival, ilist, opal_value_t) {
+                (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
+                pmix2x_value_load(&pinfo[n].value, ival);
+                ++n;
+            }
+        } else {
+            pinfo = NULL;
+        }
+    } else {
+        pinfo = NULL;
+        ninfo = 0;
+    }
+
+    rc = PMIx_Init(&my_proc, pinfo, ninfo);
     if (PMIX_SUCCESS != rc) {
         return pmix2x_convert_rc(rc);
     }
+    if (0 < ninfo) {
+        PMIX_INFO_FREE(pinfo, ninfo);
+
+    }
+    if (initialized) {
+        return OPAL_SUCCESS;
+    }
+    initialized = true;
 
     /* store our jobid and rank */
     if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
@@ -102,7 +137,13 @@ int pmix2x_client_init(void)
     /* register the default event handler */
     event = OBJ_NEW(opal_pmix2x_event_t);
     opal_list_append(&mca_pmix_pmix2x_component.events, &event->super);
-    PMIx_Register_event_handler(NULL, 0, NULL, 0, pmix2x_event_hdlr, errreg_cbfunc, event);
+    PMIX_INFO_CREATE(pinfo, 1);
+    PMIX_INFO_LOAD(&pinfo[0], PMIX_EVENT_HDLR_NAME, "OPAL-PMIX-2X-DEFAULT", PMIX_STRING);
+    regactive = true;
+    PMIx_Register_event_handler(NULL, 0, pinfo, 1, pmix2x_event_hdlr, errreg_cbfunc, event);
+    PMIX_WAIT_FOR_COMPLETION(regactive);
+    PMIX_INFO_FREE(pinfo, 1);
+
     return OPAL_SUCCESS;
 
 }
@@ -130,7 +171,7 @@ int pmix2x_initialized(void)
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client initialized");
 
-    return PMIx_Initialized();
+    return initialized;
 }
 
 int pmix2x_abort(int flag, const char *msg,

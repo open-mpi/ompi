@@ -70,6 +70,7 @@
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errcode.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/interlib/interlib.h"
 #include "ompi/request/request.h"
 #include "ompi/message/message.h"
 #include "ompi/op/op.h"
@@ -315,7 +316,6 @@ static int _convert_process_name_to_string(char** name_string,
     return ompi_rte_convert_process_name_to_string(name_string, name);
 }
 
-
 void ompi_mpi_thread_level(int requested, int *provided)
 {
     /**
@@ -525,6 +525,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_EVENT_ORDER_PREPEND);
     opal_list_append(&info, &kv->super);
+    /* give it a name so we can distinguish it */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_EVENT_HDLR_NAME);
+    kv->type = OPAL_STRING;
+    kv->data.string = strdup("MPI-Default");
+    opal_list_append(&info, &kv->super);
     opal_pmix.register_evhandler(NULL, &info, ompi_errhandler_callback,
                                  ompi_errhandler_registration_callback,
                                  (void*)&errtrk);
@@ -537,6 +543,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* declare our presence for interlib coordination, and
+     * register for callbacks when other libs declare */
+    if (OMPI_SUCCESS != (ret = ompi_interlib_declare(*provided, OMPI_IDENT_STRING))) {
+        error = "ompi_interlib_declare";
+        goto error;
+    }
 
     /* determine the bitflag belonging to the threadlevel_support provided */
     memset ( &threadlevel_bf, 0, sizeof(uint8_t));

@@ -167,6 +167,8 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "PMIX HEARTBEAT ALERT";
     case PMIX_MONITOR_FILE_ALERT:
         return "PMIX FILE MONITOR ALERT";
+    case PMIX_MODEL_DECLARED:
+        return "PMIX MODEL DECLARED";
     case PMIX_SUCCESS:
         return "SUCCESS";
     default:

@@ -36,6 +36,7 @@
 #include "src/buffer_ops/types.h"
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
+#include "src/class/pmix_ring_buffer.h"
 #include "src/event/pmix_event.h"
 
 #include "src/mca/psec/psec.h"
@@ -358,21 +359,22 @@ PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
  * between various parts of the code library. Both the client
  * and server libraries must instance this structure */
 typedef struct {
-    int init_cntr;                       // #times someone called Init - #times called Finalize
+    int init_cntr;                      // #times someone called Init - #times called Finalize
     pmix_proc_t myid;
-    pmix_peer_t *mypeer;                 // my own peer object
+    pmix_peer_t *mypeer;                // my own peer object
     pmix_proc_type_t proc_type;
-    uid_t uid;                           // my effective uid
-    gid_t gid;                           // my effective gid
+    uid_t uid;                          // my effective uid
+    gid_t gid;                          // my effective gid
     int pindex;
     pmix_event_base_t *evbase;
     bool external_evbase;
     int debug_output;
-    pmix_events_t events;                // my event handler registrations.
+    pmix_events_t events;               // my event handler registrations.
     bool connected;
-    pmix_list_t nspaces;                 // list of pmix_nspace_t for the nspaces we know about
-    pmix_buffer_t *cache_local;          // data PUT by me to local scope
-    pmix_buffer_t *cache_remote;         // data PUT by me to remote scope
+    pmix_list_t nspaces;                // list of pmix_nspace_t for the nspaces we know about
+    pmix_buffer_t *cache_local;         // data PUT by me to local scope
+    pmix_buffer_t *cache_remote;        // data PUT by me to remote scope
+    pmix_ring_buffer_t notifications;   // ring buffer of pending notifications
 } pmix_globals_t;
 
 

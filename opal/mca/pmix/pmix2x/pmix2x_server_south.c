@@ -142,8 +142,11 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
 
     /* register the default event handler */
     active = true;
-    PMIx_Register_event_handler(NULL, 0, NULL, 0, pmix2x_event_hdlr, errreg_cbfunc, (void*)&active);
+    PMIX_INFO_CREATE(pinfo, 1);
+    PMIX_INFO_LOAD(&pinfo[0], PMIX_EVENT_HDLR_NAME, "OPAL-PMIX-2X-SERVER-DEFAULT", PMIX_STRING);
+    PMIx_Register_event_handler(NULL, 0, pinfo, 1, pmix2x_event_hdlr, errreg_cbfunc, (void*)&active);
     PMIX_WAIT_FOR_COMPLETION(active);
+    PMIX_INFO_FREE(pinfo, 1);
 
     /* as we might want to use some client-side functions, be sure
      * to register our own nspace */

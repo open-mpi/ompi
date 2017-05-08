@@ -125,11 +125,14 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
         pmix_event_chain_t *_ch;                    \
         _ch = PMIX_NEW(pmix_event_chain_t);         \
         _ch->status = (e);                          \
-        _ch->ninfo = 1;                             \
+        _ch->ninfo = 2;                             \
         _ch->final_cbfunc = (f);                    \
         _ch->final_cbdata = _ch;                    \
         PMIX_INFO_CREATE(_ch->info, _ch->ninfo);    \
         PMIX_INFO_LOAD(&_ch->info[0],               \
+                       PMIX_EVENT_HDLR_NAME,        \
+                       NULL, PMIX_STRING);          \
+        PMIX_INFO_LOAD(&_ch->info[1],               \
                        PMIX_EVENT_RETURN_OBJECT,    \
                        NULL, PMIX_POINTER);         \
         pmix_invoke_local_event_hdlr(_ch);          \

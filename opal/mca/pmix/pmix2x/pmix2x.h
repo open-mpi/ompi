@@ -186,7 +186,7 @@ OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
     } while(0)
 
 /****  CLIENT FUNCTIONS  ****/
-OPAL_MODULE_DECLSPEC int pmix2x_client_init(void);
+OPAL_MODULE_DECLSPEC int pmix2x_client_init(opal_list_t *ilist);
 OPAL_MODULE_DECLSPEC int pmix2x_client_finalize(void);
 OPAL_MODULE_DECLSPEC int pmix2x_initialized(void);
 OPAL_MODULE_DECLSPEC int pmix2x_abort(int flag, const char *msg,

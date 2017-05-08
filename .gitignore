@@ -387,6 +387,7 @@ orte/test/mpi/segv
 orte/test/mpi/simple_spawn
 orte/test/mpi/slave
 orte/test/mpi/spawn_multiple
+orte/test/mpi/xlib
 orte/test/mpi/ziaprobe
 orte/test/mpi/ziatest
 orte/test/mpi/*.dwarf
