@@ -98,6 +98,8 @@ int ompi_coll_libpnbc_igather_init(const void* sendbuf, int sendcount, MPI_Datat
     return res;
   }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;

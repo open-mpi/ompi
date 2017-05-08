@@ -31,6 +31,8 @@ static const char FUNC_NAME[] = "PNBC_Start";
 
 int PNBC_Start(MPI_Comm comm,  MPI_Request *request) {
 
+	printf("*** Entered PNBC_Start (libpnbc_start.c) ***\n");
+
 	int ret = OMPI_SUCCESS;
 	int err;
 
@@ -95,15 +97,15 @@ int PNBC_Start(MPI_Comm comm,  MPI_Request *request) {
 	        }
 
 	    default:
-	        //printf("firing OMPI_CR_ENTER_LIBRARY...\n\n");
+	        printf("firing OMPI_CR_ENTER_LIBRARY...\n\n");
 
 	        OPAL_CR_ENTER_LIBRARY();
 
 	        /* Invoke the coll component to perform the back-end operation */
 
-	        //printf("firing libpnbc_start()...\n\n");
+	        printf("firing libpnbc_start()...\n\n");
 	        err = comm->c_coll->coll_libpnbc_start(request);
-	        //printf("returning libpnbc_start()...\n\n");
+	        printf("returning libpnbc_start()...\n\n");
 
 
 	        OPAL_CR_EXIT_LIBRARY();
@@ -111,6 +113,8 @@ int PNBC_Start(MPI_Comm comm,  MPI_Request *request) {
 	        //return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
 	    }
 
+
+	printf("*** Leaving PNBC_Start (libpnbc_start.c) ***\n");
 
     //OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

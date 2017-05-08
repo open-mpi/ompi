@@ -99,6 +99,8 @@ int ompi_coll_libpnbc_iscatterv_init(const void* sendbuf, const int *sendcounts,
     return res;
   }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;

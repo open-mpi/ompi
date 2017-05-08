@@ -232,6 +232,9 @@ libpnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_ineighbor_alltoall_init = ompi_coll_libpnbc_ineighbor_alltoall_init;
         module->super.coll_ineighbor_alltoallv_init = ompi_coll_libpnbc_ineighbor_alltoallv_init;
         module->super.coll_ineighbor_alltoallw_init = ompi_coll_libpnbc_ineighbor_alltoallw_init;
+
+        module->super.coll_libpnbc_start = ompi_coll_libpnbc_start;
+
     }
 
     module->super.ft_event = NULL;

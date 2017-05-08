@@ -83,6 +83,8 @@ int ompi_coll_libpnbc_ibarrier_init(struct ompi_communicator_t *comm, ompi_reque
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;

@@ -102,9 +102,12 @@ int ompi_coll_libpnbc_iallgather_init(const void* sendbuf, int sendcount, MPI_Da
     return res;
   }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
+
 }
 
 int ompi_coll_libpnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,

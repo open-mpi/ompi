@@ -133,6 +133,8 @@ int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int co
       return res;
     }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
   PNBC_DEBUG(7, "** allreduce_init complete **\n");

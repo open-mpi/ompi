@@ -384,9 +384,11 @@ int PNBC_Progress(PNBC_Handle *handle) {
       /* this was the last round - we're done */
       PNBC_DEBUG(5, "PNBC_Progress last round finished - we're done\n");
 
-      handle->super.req_complete = 1;
+      REQUEST_COMPLETE(&(handle->super));
+      handle->row_offset = 0;
 
       return PNBC_OK;
+
     }
 
     PNBC_DEBUG(5, "PNBC_Progress round finished - goto next round\n");
@@ -417,10 +419,15 @@ static inline int PNBC_Start_round(PNBC_Handle *handle) {
   PNBC_Args_unpack unpackargs;
   void *buf1,  *buf2;
 
+  PNBC_DEBUG(10, "\n\n*** getting round schedule address... ***\n\n");
+
   /* get round-schedule address */
   ptr = handle->schedule->data + handle->row_offset;
 
+  PNBC_DEBUG(10, "setting array index to %u + %u = %u\n", handle->schedule->data, handle->row_offset, ptr);
+
   PNBC_GET_BYTES(ptr,num);
+
   PNBC_DEBUG(10, "start_round round at offset %d : posting %i operations\n", handle->row_offset, num);
 
   for (int i = 0 ; i < num ; ++i) {
@@ -697,6 +704,7 @@ int PNBC_Start_internal(PNBC_Handle *handle, PNBC_Schedule *schedule) {
   int res;
 
   handle->schedule = schedule;
+  handle->super.req_complete = false;
 
   /* kick off first round */
   res = PNBC_Start_round(handle);

@@ -112,9 +112,14 @@ int ompi_coll_libpnbc_ibcast_init(void *buffer, int count, MPI_Datatype datatype
     return res;
   }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
+  (*request)->req_complete = NULL;
+
   return OMPI_SUCCESS;
+
 }
 
 /* better binomial bcast

@@ -102,8 +102,9 @@ int ompi_coll_libpnbc_iscan_init(const void* sendbuf, void* recvbuf, int count, 
       return res;
     }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
-  /* tmpbuf is freed with the handle */
   return OMPI_SUCCESS;
 }

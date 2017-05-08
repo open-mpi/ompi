@@ -85,6 +85,8 @@ int ompi_coll_libpnbc_ineighbor_alltoallw_init(const void *sbuf, const int *scou
     return res;
   }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;

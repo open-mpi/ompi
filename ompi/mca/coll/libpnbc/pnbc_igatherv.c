@@ -102,6 +102,8 @@ int ompi_coll_libpnbc_igatherv_init(const void* sendbuf, int sendcount, MPI_Data
     return res;
   }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;

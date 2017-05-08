@@ -124,6 +124,8 @@ int ompi_coll_libpnbc_iexscan_init(const void* sendbuf, void* recvbuf, int count
         }
 
 
+    handle->schedule = schedule;
+
     *request = (ompi_request_t *) handle;
 
     return OMPI_SUCCESS;

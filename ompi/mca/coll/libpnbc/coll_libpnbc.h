@@ -285,6 +285,8 @@ int ompi_coll_libpnbc_ineighbor_alltoallw_init(const void *sbuf, const int *scou
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          struct mca_coll_base_module_2_2_0_t *module);
 
+int ompi_coll_libpnbc_start(ompi_request_t ** request);
+
 
 END_C_DECLS
 

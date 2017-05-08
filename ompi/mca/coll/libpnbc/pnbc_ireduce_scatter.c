@@ -195,9 +195,10 @@ int ompi_coll_libpnbc_ireduce_scatter_init(const void* sendbuf, void* recvbuf, c
     return res;
   }
 
+  handle->schedule = schedule;
+
   *request = (ompi_request_t *) handle;
 
-  /* tmpbuf is freed with the handle */
   return OMPI_SUCCESS;
 }
 
