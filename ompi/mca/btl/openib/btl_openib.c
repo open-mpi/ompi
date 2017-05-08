@@ -1074,7 +1074,7 @@ int mca_btl_openib_add_procs(
     }
 
     openib_btl->local_procs += local_procs;
-    openib_btl->device->mem_reg_max /= openib_btl->local_procs;
+    openib_btl->device->mem_reg_max = openib_btl->device->mem_reg_max_total / openib_btl->local_procs;
 
     return mca_btl_openib_size_queues(openib_btl, nprocs);
 }
