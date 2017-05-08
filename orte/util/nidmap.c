@@ -13,7 +13,7 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -756,8 +756,8 @@ int orte_util_nidmap_parse(char *regex)
         opal_list_append(&dids, &rng->super);
         /* check for a count */
         if (NULL != (ptr = strchr(dvpids[n], '('))) {
+            dvpids[n][strlen(dvpids[n])-1] = '\0';  // remove trailing paren
             *ptr = '\0';
-            dvpids[n][strlen(dvpids[n])-2] = '\0';  // remove trailing paren
             ++ptr;
             rng->cnt = strtoul(ptr, NULL, 10);
         }
