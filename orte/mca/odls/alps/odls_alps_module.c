@@ -18,6 +18,8 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Rutgers, The State University of New Jersey.
  *                         All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -452,7 +454,7 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
         }
     }
 
-    execve(cd->app->app, cd->argv, cd->env);
+    execve(cd->cmd, cd->argv, cd->env);
     send_error_show_help(write_fd, 1,
                          "help-orte-odls-alps.txt", "execve error",
                          orte_process_info.nodename, cd->app->app, strerror(errno));
