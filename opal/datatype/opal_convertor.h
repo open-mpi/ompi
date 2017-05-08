@@ -218,6 +218,7 @@ static inline void opal_convertor_get_unpacked_size( const opal_convertor_t* pCo
         return;
     }
     if( 0 == (CONVERTOR_HAS_REMOTE_SIZE & pConv->flags) ) {
+        assert(! (pConv->flags & CONVERTOR_SEND));
         opal_convertor_compute_remote_size( (opal_convertor_t*)pConv);
     }
     *pSize = pConv->remote_size;

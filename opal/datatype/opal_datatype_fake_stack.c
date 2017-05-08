@@ -91,6 +91,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
     }
 
     /* remove from the main loop all the complete datatypes */
+    assert (! (pConvertor->flags & CONVERTOR_SEND));
     remote_size    = opal_convertor_compute_remote_size( pConvertor );
     count          = (int32_t)(starting_point / remote_size);
     resting_place -= (remote_size * count);
