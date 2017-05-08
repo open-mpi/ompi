@@ -116,8 +116,6 @@ int ompi_coll_libpnbc_ibcast_init(void *buffer, int count, MPI_Datatype datatype
 
   *request = (ompi_request_t *) handle;
 
-  (*request)->req_complete = NULL;
-
   return OMPI_SUCCESS;
 
 }

@@ -384,8 +384,10 @@ int PNBC_Progress(PNBC_Handle *handle) {
       /* this was the last round - we're done */
       PNBC_DEBUG(5, "PNBC_Progress last round finished - we're done\n");
 
-      REQUEST_COMPLETE(&(handle->super));
-      handle->row_offset = 0;
+      if(!REQUEST_COMPLETE(&handle->super)) {
+    	  ompi_request_complete(&handle->super, true);
+    	  PNBC_DEBUG(5, "Request Marked COMPLETED\n");
+      }
 
       return PNBC_OK;
 
@@ -402,6 +404,8 @@ int PNBC_Progress(PNBC_Handle *handle) {
       return res;
     }
   }
+
+  PNBC_DEBUG(5, "Leaving PNBC_Progress\n");
 
   return ret;
 }
@@ -579,18 +583,23 @@ static inline int PNBC_Start_round(PNBC_Handle *handle) {
    *
    * threaded case: calling progress in the first round can lead to a
    * deadlock if PNBC_Free is called in this round :-( */
-  if (handle->row_offset) {
+  //if (handle->row_offset) {
     res = PNBC_Progress(handle);
+    PNBC_DEBUG(5, "Returned from PNBC_Progress\n");
     if ((PNBC_OK != res) && (PNBC_CONTINUE != res)) {
       return OMPI_ERROR;
     }
-  }
+  //}
+
+  PNBC_DEBUG(5, "Leaving PNBC_Start_round\n");
 
   return OMPI_SUCCESS;
 }
 
-int PNBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libpnbc_request_t **request, ompi_coll_libpnbc_module_t *comminfo)
-{
+int PNBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libpnbc_request_t **request, ompi_coll_libpnbc_module_t *comminfo) {
+
+  PNBC_DEBUG(5, "PNBC_Init_handle\n");
+
   int tmp_tag;
   bool need_register = false;
   ompi_coll_libpnbc_request_t *handle;
@@ -701,21 +710,25 @@ int  PNBC_Init_comm(MPI_Comm comm, PNBC_Comminfo *comminfo) {
 }
 
 int PNBC_Start_internal(PNBC_Handle *handle, PNBC_Schedule *schedule) {
+
   int res;
 
   handle->schedule = schedule;
-  handle->super.req_complete = false;
+  handle->super.req_complete = REQUEST_PENDING;
+  handle->super.req_state = OMPI_REQUEST_ACTIVE;  // DAN: added
 
   /* kick off first round */
   res = PNBC_Start_round(handle);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
   }
+
   OPAL_THREAD_LOCK(&mca_coll_libpnbc_component.lock);
   opal_list_append(&mca_coll_libpnbc_component.active_requests, &(handle->super.super.super));
   OPAL_THREAD_UNLOCK(&mca_coll_libpnbc_component.lock);
 
   return OMPI_SUCCESS;
+
 }
 
 #ifdef PNBC_CACHE_SCHEDULE

@@ -28,8 +28,6 @@ int ompi_coll_libpnbc_start(ompi_request_t ** request) {
 	int res;
 
 	handle = (PNBC_Handle *) *request;
-	handle->super.req_complete = false;
-	handle->super.req_state = OMPI_REQUEST_ACTIVE;  // DAN: added
 
 	schedule = handle->schedule;
 
@@ -49,6 +47,8 @@ int ompi_coll_libpnbc_start(ompi_request_t ** request) {
 	    PNBC_Return_handle (handle);
 	    return res;
 	}
+
+	PNBC_DEBUG(5, " ** LEAVING ompi_coll_libpnbc_start **\n");
 
 	return OMPI_SUCCESS;
 
