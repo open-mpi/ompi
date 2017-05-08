@@ -1544,51 +1544,34 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, orte_xterm);
     }
 
-    /*
-     * Pass along the Aggregate MCA Parameter Sets
-     */
-    /* Add the 'prefix' param */
-    tmp_value = NULL;
-
-    loc_id = mca_base_var_find("opal", "mca", "base", "envar_file_prefix");
+    loc_id = mca_base_var_find("opal", "mca", "base", "param_files");
     if (loc_id < 0) {
         rc = OPAL_ERR_NOT_FOUND;
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    tmp_value = NULL;
     rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if( NULL != tmp_value && NULL != tmp_value[0] ) {
-        /* Could also use the short version '-tune'
-         * but being verbose has some value
-         */
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "mca_base_envar_file_prefix");
-        opal_argv_append(argc, argv, tmp_value[0]);
+    if (NULL != tmp_value && NULL != tmp_value[0]) {
+        rc = strcmp(tmp_value[0], "none");
+    } else {
+        rc = 1;
     }
 
-    tmp_value2 = NULL;
-    loc_id = mca_base_var_find("opal", "mca", "base", "param_file_prefix");
-    mca_base_var_get_value(loc_id, &tmp_value2, NULL, NULL);
-    if( NULL != tmp_value2 && NULL != tmp_value2[0] ) {
-        /* Could also use the short version '-am'
-         * but being verbose has some value
+    if (0 != rc) {
+        /*
+         * Pass along the Aggregate MCA Parameter Sets
          */
-        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "mca_base_param_file_prefix");
-        opal_argv_append(argc, argv, tmp_value2[0]);
-        orte_show_help("help-plm-base.txt", "deprecated-amca", true);
-    }
-
-    if ((NULL != tmp_value && NULL != tmp_value[0])
-        || (NULL != tmp_value2 && NULL != tmp_value2[0])) {
-        /* Add the 'path' param */
+        /* Add the 'prefix' param */
         tmp_value = NULL;
-        loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path");
+
+        loc_id = mca_base_var_find("opal", "mca", "base", "envar_file_prefix");
         if (loc_id < 0) {
+            rc = OPAL_ERR_NOT_FOUND;
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -1598,39 +1581,76 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
             return rc;
         }
         if( NULL != tmp_value && NULL != tmp_value[0] ) {
-            opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-            opal_argv_append(argc, argv, "mca_base_param_file_path");
+            /* Could also use the short version '-tune'
+             * but being verbose has some value
+             */
+            opal_argv_append(argc, argv, "-mca");
+            opal_argv_append(argc, argv, "mca_base_envar_file_prefix");
             opal_argv_append(argc, argv, tmp_value[0]);
         }
 
-        /* Add the 'path' param */
-        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "mca_base_param_file_path_force");
+        tmp_value2 = NULL;
+        loc_id = mca_base_var_find("opal", "mca", "base", "param_file_prefix");
+        mca_base_var_get_value(loc_id, &tmp_value2, NULL, NULL);
+        if( NULL != tmp_value2 && NULL != tmp_value2[0] ) {
+            /* Could also use the short version '-am'
+             * but being verbose has some value
+             */
+            opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+            opal_argv_append(argc, argv, "mca_base_param_file_prefix");
+            opal_argv_append(argc, argv, tmp_value2[0]);
+            orte_show_help("help-plm-base.txt", "deprecated-amca", true);
+        }
 
-        tmp_value = NULL;
-        loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path_force");
-        if (loc_id < 0) {
-            rc = OPAL_ERR_NOT_FOUND;
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
-        if (OPAL_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if( NULL == tmp_value || NULL == tmp_value[0] ) {
-            /* Get the current working directory */
-            tmp_force = (char *) malloc(sizeof(char) * OPAL_PATH_MAX);
-            if (NULL == getcwd(tmp_force, OPAL_PATH_MAX)) {
-                free(tmp_force);
-                tmp_force = strdup("");
+        if ((NULL != tmp_value && NULL != tmp_value[0])
+            || (NULL != tmp_value2 && NULL != tmp_value2[0])) {
+            /* Add the 'path' param */
+            tmp_value = NULL;
+            loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path");
+            if (loc_id < 0) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+            if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            if( NULL != tmp_value && NULL != tmp_value[0] ) {
+                opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+                opal_argv_append(argc, argv, "mca_base_param_file_path");
+                opal_argv_append(argc, argv, tmp_value[0]);
             }
 
-            opal_argv_append(argc, argv, tmp_force);
-            free(tmp_force);
-        } else {
-            opal_argv_append(argc, argv, tmp_value[0]);
+            /* Add the 'path' param */
+            opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
+            opal_argv_append(argc, argv, "mca_base_param_file_path_force");
+
+            tmp_value = NULL;
+            loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path_force");
+            if (loc_id < 0) {
+                rc = OPAL_ERR_NOT_FOUND;
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            rc = mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+            if (OPAL_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            if( NULL == tmp_value || NULL == tmp_value[0] ) {
+                /* Get the current working directory */
+                tmp_force = (char *) malloc(sizeof(char) * OPAL_PATH_MAX);
+                if (NULL == getcwd(tmp_force, OPAL_PATH_MAX)) {
+                    free(tmp_force);
+                    tmp_force = strdup("");
+                }
+
+                opal_argv_append(argc, argv, tmp_force);
+                free(tmp_force);
+            } else {
+                opal_argv_append(argc, argv, tmp_value[0]);
+            }
         }
     }
 
