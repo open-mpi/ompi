@@ -54,13 +54,15 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     ompi_datatype_type_size(rdtype, &rdtype_size);
 
     /* If only one process, we're done. */
-    if (1 == size || 0 == rdtype_size) {
+    if (1 == size) {
         return MPI_SUCCESS;
     }
-
     /* Find the largest receive amount */
     ompi_datatype_type_extent (rdtype, &ext);
     for (i = 0, max_size = 0 ; i < size ; ++i) {
+        if (i == rank) {
+            continue;
+        }
         size_t size = opal_datatype_span(&rdtype->super, rcounts[i], &gap);
         max_size = size > max_size ? size : max_size;
     }
