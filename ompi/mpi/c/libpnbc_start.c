@@ -31,7 +31,7 @@ static const char FUNC_NAME[] = "PNBC_Start";
 
 int PNBC_Start(MPI_Comm comm,  MPI_Request *request) {
 
-	printf("*** Entered PNBC_Start (libpnbc_start.c) ***\n");
+	//printf("*** Entered PNBC_Start (libpnbc_start.c) ***\n");
 
 	int ret = OMPI_SUCCESS;
 	int err;
@@ -60,7 +60,7 @@ int PNBC_Start(MPI_Comm comm,  MPI_Request *request) {
 	    switch((*request)->req_type) {
 	    case OMPI_REQUEST_PML:
 	    	//printf("start.c: req_type %s\n\n", (*request)->req_type);
-	    	printf("start.c: case OMPI_REQUEST_PML entered.\n\n");
+	    	//printf("start.c: case OMPI_REQUEST_PML entered.\n\n");
 	        OPAL_CR_ENTER_LIBRARY();
 
 	        ret = MCA_PML_CALL(start(1, request));
@@ -90,22 +90,22 @@ int PNBC_Start(MPI_Comm comm,  MPI_Request *request) {
 	         * Otherwise, mark it active so we can correctly handle it in
 	         * the wait*.
 	         */
-	    	printf("start.c: case OMPI_REQUEST_NOOP entered.\n\n");
+	    	//printf("start.c: case OMPI_REQUEST_NOOP entered.\n\n");
 	        if( OMPI_REQUEST_INACTIVE == (*request)->req_state ) {
 	            (*request)->req_state = OMPI_REQUEST_ACTIVE;
 	            return MPI_SUCCESS;
 	        }
 
 	    default:
-	        printf("firing OMPI_CR_ENTER_LIBRARY...\n\n");
+	        //printf("firing OMPI_CR_ENTER_LIBRARY...\n\n");
 
 	        OPAL_CR_ENTER_LIBRARY();
 
 	        /* Invoke the coll component to perform the back-end operation */
 
-	        printf("firing libpnbc_start()...\n\n");
+	        //printf("firing libpnbc_start()...\n\n");
 	        err = comm->c_coll->coll_libpnbc_start(request);
-	        printf("returning libpnbc_start()...\n\n");
+	        //printf("returning libpnbc_start()...\n\n");
 
 
 	        OPAL_CR_EXIT_LIBRARY();
@@ -114,7 +114,7 @@ int PNBC_Start(MPI_Comm comm,  MPI_Request *request) {
 	    }
 
 
-	printf("*** Leaving PNBC_Start (libpnbc_start.c) ***\n");
+	//printf("*** Leaving PNBC_Start (libpnbc_start.c) ***\n");
 
     //OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

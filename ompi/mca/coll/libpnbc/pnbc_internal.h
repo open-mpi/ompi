@@ -306,7 +306,7 @@ static inline void pnbc_get_round_size (char *p, unsigned long *size) {
   int num;
 
   PNBC_GET_BYTES(p,num);
-  printf("GET_ROUND_SIZE got %i elements\n", num);
+  //printf("GET_ROUND_SIZE got %i elements\n", num);
   for (int i = 0 ; i < num ; ++i) {
     memcpy (&type, p + offset, sizeof (type));
     switch(type) {

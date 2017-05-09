@@ -46,7 +46,7 @@ static const char FUNC_NAME[] = "MPI_Iallreduce_init";
 int MPI_Iallreduce_init(const void *sendbuf, void *recvbuf, int count,
                    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request) {
 
-	printf("Entered Iallreduce_init...\n");
+	//printf("Entered Iallreduce_init...\n");
 
 	int err;
 
@@ -112,13 +112,13 @@ int MPI_Iallreduce_init(const void *sendbuf, void *recvbuf, int count,
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    printf("Invoking comm->c_coll->coll_iallreduce_init...\n");
+    //printf("Invoking comm->c_coll->coll_iallreduce_init...\n");
     err = comm->c_coll->coll_iallreduce_init(sendbuf, recvbuf, count, datatype, op, comm, request, comm->c_coll->coll_iallreduce_init_module);
     OBJ_RELEASE(op);
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 
-    printf("Leaving Iallreduce_init...\n");
+    //printf("Leaving Iallreduce_init...\n");
 
 }
 
