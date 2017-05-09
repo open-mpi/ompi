@@ -157,8 +157,9 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 /* offset is in units of etype relative to the filetype. */
 
     ADIOI_Flatlist_node *flat_buf, *flat_file;
-    int i, j, k, err=-1, brd_size, frd_size=0, st_index=0;
-    int bufsize, num, size, sum, n_etypes_in_filetype, size_in_filetype;
+    int i, j, k, err=-1, brd_size, st_index=0;
+    int num, size, sum, n_etypes_in_filetype, size_in_filetype;
+    MPI_Count bufsize;
     int n_filetypes, etype_in_filetype;
     ADIO_Offset abs_off_in_filetype=0;
     int req_len, partial_read;
@@ -168,8 +169,9 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
     ADIO_Offset userbuf_off;
     ADIO_Offset off, req_off, disp, end_offset=0, readbuf_off, start_off;
     char *readbuf, *tmp_buf, *value;
-    int st_frd_size, st_n_filetypes, readbuf_len;
-    int new_brd_size, new_frd_size, err_flag=0, info_flag, max_bufsize;
+    int st_n_filetypes, readbuf_len;
+    ADIO_Offset frd_size=0, new_frd_size, st_frd_size;
+    int new_brd_size, err_flag=0, info_flag, max_bufsize;
 
     static char myname[] = "ADIOI_NFS_READSTRIDED";
 
@@ -449,12 +451,13 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	else {
 /* noncontiguous in memory as well as in file */
 
+            ADIO_Offset i;
 	    ADIOI_Flatten_datatype(datatype);
 	    flat_buf = ADIOI_Flatlist;
 	    while (flat_buf->type != datatype) flat_buf = flat_buf->next;
 
 	    k = num = buf_count = 0;
-	    i = (int) (flat_buf->indices[0]);
+	    i = flat_buf->indices[0];
 	    j = st_index;
 	    off = offset;
 	    n_filetypes = st_n_filetypes;
@@ -499,8 +502,8 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 
 		    k = (k + 1)%flat_buf->count;
 		    buf_count++;
-		    i = (int) (buftype_extent*(buf_count/flat_buf->count) +
-			flat_buf->indices[k]);
+		    i = buftype_extent*(buf_count/flat_buf->count) +
+			flat_buf->indices[k];
 		    new_brd_size = flat_buf->blocklens[k];
 		    if (size != frd_size) {
 			off += size;

@@ -260,8 +260,9 @@ void ADIOI_NFS_WriteStrided(ADIO_File fd, const void *buf, int count,
 /* offset is in units of etype relative to the filetype. */
 
     ADIOI_Flatlist_node *flat_buf, *flat_file;
-    int i, j, k, err=-1, bwr_size, fwr_size=0, st_index=0;
-    int bufsize, num, size, sum, n_etypes_in_filetype, size_in_filetype;
+    int i, j, k, err=-1, bwr_size, st_index=0;
+    int num, size, sum, n_etypes_in_filetype, size_in_filetype;
+    MPI_Count bufsize;
     int n_filetypes, etype_in_filetype;
     ADIO_Offset abs_off_in_filetype=0;
     int req_len;
@@ -271,8 +272,9 @@ void ADIOI_NFS_WriteStrided(ADIO_File fd, const void *buf, int count,
     ADIO_Offset userbuf_off;
     ADIO_Offset off, req_off, disp, end_offset=0, writebuf_off, start_off;
     char *writebuf=NULL, *value;
-    int st_fwr_size, st_n_filetypes, writebuf_len, write_sz;
-    int new_bwr_size, new_fwr_size, err_flag=0, info_flag, max_bufsize;
+    int st_n_filetypes, writebuf_len, write_sz;
+    ADIO_Offset fwr_size = 0, new_fwr_size, st_fwr_size;
+    int new_bwr_size, err_flag=0, info_flag, max_bufsize;
     static char myname[] = "ADIOI_NFS_WRITESTRIDED";
 
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
@@ -553,12 +555,13 @@ void ADIOI_NFS_WriteStrided(ADIO_File fd, const void *buf, int count,
 	else {
 /* noncontiguous in memory as well as in file */
 
+            ADIO_Offset i;
 	    ADIOI_Flatten_datatype(datatype);
 	    flat_buf = ADIOI_Flatlist;
 	    while (flat_buf->type != datatype) flat_buf = flat_buf->next;
 
 	    k = num = buf_count = 0;
-	    i = (int) (flat_buf->indices[0]);
+	    i = flat_buf->indices[0];
 	    j = st_index;
 	    off = offset;
 	    n_filetypes = st_n_filetypes;
@@ -604,8 +607,8 @@ void ADIOI_NFS_WriteStrided(ADIO_File fd, const void *buf, int count,
 
 		    k = (k + 1)%flat_buf->count;
 		    buf_count++;
-		    i = (int) (buftype_extent*(buf_count/flat_buf->count) +
-			flat_buf->indices[k]);
+		    i = buftype_extent*(buf_count/flat_buf->count) +
+			flat_buf->indices[k];
 		    new_bwr_size = flat_buf->blocklens[k];
 		    if (size != fwr_size) {
 			off += size;
