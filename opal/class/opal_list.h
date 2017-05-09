@@ -101,9 +101,9 @@ struct opal_list_item_t
 {
     opal_object_t super;
     /**< Generic parent class for all Open MPI objects */
-    volatile struct opal_list_item_t *opal_list_next;
+    volatile struct opal_list_item_t * volatile opal_list_next;
     /**< Pointer to next list item */
-    volatile struct opal_list_item_t *opal_list_prev;
+    volatile struct opal_list_item_t * volatile opal_list_prev;
     /**< Pointer to previous list item */
     int32_t item_free;
 
