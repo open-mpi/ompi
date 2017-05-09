@@ -46,6 +46,15 @@ mca_coll_base_module_t
 int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
                                 struct ompi_communicator_t *comm);
 
+int mca_coll_sync_alltoallv(void *sbuf, const int *scounts,
+                            const int *sdisps,
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, const int *rcounts,
+                            const int *rdisps,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module);
+
 int mca_coll_sync_barrier(struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module);
 
@@ -130,6 +139,12 @@ typedef struct mca_coll_sync_module_t {
     /* How many ops we've executed (it's easier to have 2) */
     int after_num_operations;
 
+    /* How many ops we've executed */
+    int before_num_operations_alltoallv;
+
+    /* How many ops we've executed (it's easier to have 2) */
+    int after_num_operations_alltoallv;
+
     /* Avoid recursion of syncs */
     bool in_operation;
 } mca_coll_sync_module_t;
@@ -146,9 +161,12 @@ typedef struct mca_coll_sync_component_t {
 
     /* Do a sync *before* each Nth collective */
     int barrier_before_nops;
+    int barrier_before_nops_alltoallv;
 
     /* Do a sync *after* each Nth collective */
     int barrier_after_nops;
+    int barrier_after_nops_alltoallv;
+
 } mca_coll_sync_component_t;
 
 /* Globally exported variables */
