@@ -494,34 +494,50 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         return rc;
     }
 
-    for (n=0; n < orte_node_pool->size; n++) {
+    /* there is always one topology - our own - so start with it */
+    nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+    tp = OBJ_NEW(orte_regex_range_t);
+    tp->t = nptr->topology;
+    tp->cnt = 1;
+    opal_list_append(&topos, &tp->super);
+
+    /* likewise, we have slots */
+    slt = OBJ_NEW(orte_regex_range_t);
+    slt->slots = nptr->slots;
+    slt->cnt = 1;
+    opal_list_append(&slots, &slt->super);
+
+    /* and flags */
+    flg = OBJ_NEW(orte_regex_range_t);
+    if (ORTE_FLAG_TEST(nptr, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+        flg->slots = 1;
+    } else {
+        flg->slots = 0;
+    }
+    flg->cnt = 1;
+    opal_list_append(&flags, &flg->super);
+
+    for (n=1; n < orte_node_pool->size; n++) {
         if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n))) {
             continue;
         }
         /* check the #slots */
-        if (NULL == slt) {
-            /* just starting */
+        /* is this the next in line */
+        if (nptr->slots == slt->slots) {
+            slt->cnt++;
+        } else {
+            /* need to start another range */
             slt = OBJ_NEW(orte_regex_range_t);
             slt->slots = nptr->slots;
             slt->cnt = 1;
             opal_list_append(&slots, &slt->super);
-        } else {
-            /* is this the next in line */
-            if (nptr->slots == slt->slots) {
-                slt->cnt++;
-            } else {
-                /* need to start another range */
-                slt = OBJ_NEW(orte_regex_range_t);
-                slt->slots = nptr->slots;
-                slt->cnt = 1;
-                opal_list_append(&slots, &slt->super);
-            }
         }
         /* check the topologies */
-        if (NULL == tp) {
-            /* just starting */
+        if (NULL == nptr->topology) {
+            /* we don't know this topology, likely because
+             * we don't have a daemon on the node */
             tp = OBJ_NEW(orte_regex_range_t);
-            tp->t = nptr->topology;
+            tp->t = NULL;
             tp->cnt = 1;
             opal_list_append(&topos, &tp->super);
         } else {
@@ -538,8 +554,12 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         }
         /* check the flags */
         test = ORTE_FLAG_TEST(nptr, ORTE_NODE_FLAG_SLOTS_GIVEN);
-        if (NULL == flg) {
-            /* just starting */
+        /* is this the next in line */
+         if ((test && 1 == flg->slots) ||
+             (!test && 0 == flg->slots)) {
+            flg->cnt++;
+        } else {
+            /* need to start another range */
             flg = OBJ_NEW(orte_regex_range_t);
             if (test) {
                 flg->slots = 1;
@@ -548,22 +568,6 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
             }
             flg->cnt = 1;
             opal_list_append(&flags, &flg->super);
-        } else {
-            /* is this the next in line */
-             if ((test && 1 == flg->slots) ||
-                 (!test && 0 == flg->slots)) {
-                flg->cnt++;
-            } else {
-                /* need to start another range */
-                flg = OBJ_NEW(orte_regex_range_t);
-                if (test) {
-                    flg->slots = 1;
-                } else {
-                    flg->slots = 0;
-                }
-                flg->cnt = 1;
-                opal_list_append(&flags, &flg->super);
-            }
         }
     }
 
@@ -581,7 +585,6 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         OBJ_RELEASE(rng);
     }
     OPAL_LIST_DESTRUCT(&slots);
-
     /* pack the string */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
@@ -640,13 +643,6 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         OBJ_CONSTRUCT(&bucket, opal_buffer_t);
         while (NULL != (item = opal_list_remove_first(&topos))) {
             rng = (orte_regex_range_t*)item;
-            if (NULL == rng->t) {
-                /* when we pass thru here prior to launching the daemons, we
-                 * won't have topologies for them and so this entry might
-                 * be NULL - protect ourselves */
-                OBJ_RELEASE(item);
-                continue;
-            }
             if (NULL == tmp) {
                 asprintf(&tmp, "%d", rng->cnt);
             } else {
@@ -654,28 +650,40 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
                 free(tmp);
                 tmp = tmp2;
             }
-            /* pack this topology string */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&bucket, &rng->t->sig, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(rng);
-                OPAL_LIST_DESTRUCT(&topos);
-                OBJ_DESTRUCT(&bucket);
-                free(tmp);
-                return rc;
-            }
-            /* pack the topology itself */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&bucket, &rng->t->topo, 1, OPAL_HWLOC_TOPO))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(rng);
-                OPAL_LIST_DESTRUCT(&topos);
-                OBJ_DESTRUCT(&bucket);
-                free(tmp);
-                return rc;
+            if (NULL == rng->t) {
+                /* need to account for NULL topology */
+                tmp2 = NULL;
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&bucket, &tmp2, 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(rng);
+                    OPAL_LIST_DESTRUCT(&topos);
+                    OBJ_DESTRUCT(&bucket);
+                    free(tmp);
+                    return rc;
+                }
+            } else {
+                /* pack this topology string */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&bucket, &rng->t->sig, 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(rng);
+                    OPAL_LIST_DESTRUCT(&topos);
+                    OBJ_DESTRUCT(&bucket);
+                    free(tmp);
+                    return rc;
+                }
+                /* pack the topology itself */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&bucket, &rng->t->topo, 1, OPAL_HWLOC_TOPO))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(rng);
+                    OPAL_LIST_DESTRUCT(&topos);
+                    OBJ_DESTRUCT(&bucket);
+                    free(tmp);
+                    return rc;
+                }
             }
             OBJ_RELEASE(rng);
         }
         OPAL_LIST_DESTRUCT(&topos);
-
         /* pack the string */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
@@ -1029,11 +1037,10 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
                 goto cleanup;
             }
             if (NULL == sig) {
-                rc = ORTE_ERR_BAD_PARAM;
-                ORTE_ERROR_LOG(rc);
-                opal_argv_free(tmp);
-                OBJ_RELEASE(bptr);
-                goto cleanup;
+                /* the nodes in this range have not reported a topology,
+                 * so skip them */
+                offset += cnt;
+                continue;
             }
             n = 1;
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(bptr, &topo, &n, OPAL_HWLOC_TOPO))) {

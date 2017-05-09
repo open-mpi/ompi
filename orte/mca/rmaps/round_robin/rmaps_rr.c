@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,6 +108,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:multi-apps-and-zero-np",
                            true, jdata->num_apps, NULL);
             rc = ORTE_ERR_SILENT;
+            opal_output(0, "RMAPS RR FAILING: %s:%d", __FILE__, __LINE__);
             goto error;
         }
 
@@ -118,6 +119,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
                                                                   jdata->map->mapping, initial_map, false))) {
             ORTE_ERROR_LOG(rc);
+            opal_output(0, "RMAPS RR FAILING: %s:%d", __FILE__, __LINE__);
             goto error;
         }
         /* flag that all subsequent requests should not reset the node->mapped flag */
@@ -236,10 +238,12 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                            true, "mapping",
                            orte_rmaps_base_print_mapping(jdata->map->mapping));
             rc = ORTE_ERR_SILENT;
+            opal_output(0, "RMAPS RR FAILING: %s:%d", __FILE__, __LINE__);
             goto error;
         }
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
+            opal_output(0, "RMAPS RR FAILING: %s:%d", __FILE__, __LINE__);
             goto error;
         }
 
@@ -249,6 +253,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
          */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata, app, &node_list))) {
             ORTE_ERROR_LOG(rc);
+            opal_output(0, "RMAPS RR FAILING: %s:%d", __FILE__, __LINE__);
             return rc;
         }
 
@@ -270,6 +275,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     return ORTE_SUCCESS;
 
  error:
+    opal_output(0, "RMAPS RR FAILING: %s:%d", __FILE__, __LINE__);
     while(NULL != (item = opal_list_remove_first(&node_list))) {
         OBJ_RELEASE(item);
     }
