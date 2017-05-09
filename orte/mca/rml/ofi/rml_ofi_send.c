@@ -72,33 +72,6 @@ OBJ_CLASS_INSTANCE(ofi_recv_msg_queue_t,
                    opal_list_item_t,
                    ofi_recv_msg_queue_cons, ofi_recv_msg_queue_des);
 
-/* moved to base.h
-typedef struct {
-    opal_object_t object;
-    opal_event_t ev;
-    orte_rml_tag_t tag;
-    struct iovec* iov;
-    int count;
-    opal_buffer_t *buffer;
-    union {
-        orte_rml_callback_fn_t        iov;
-        orte_rml_buffer_callback_fn_t buffer;
-    } cbfunc;
-    void *cbdata;
-} orte_self_send_xfer_t;
-static void xfer_cons(orte_self_send_xfer_t *xfer)
-{
-    xfer->iov = NULL;
-    xfer->cbfunc.iov = NULL;
-    xfer->buffer = NULL;
-    xfer->cbfunc.buffer = NULL;
-    xfer->cbdata = NULL;
-}
-OBJ_CLASS_INSTANCE(orte_self_send_xfer_t,
-                   opal_object_t,
-                   xfer_cons, NULL);
-*/
-
 static void send_self_exe(int fd, short args, void* data)
 {
     orte_self_send_xfer_t *xfer = (orte_self_send_xfer_t*)data;
@@ -549,7 +522,7 @@ static void send_msg(int fd, short args, void *cbdata)
       }
    }
     if ( OPAL_SUCCESS == ret) {
-           //Anandhi added for debug purpose
+           //[Debug] printing additional info of IP
             switch ( orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->addr_format)
             {
                 case  FI_SOCKADDR_IN :
@@ -564,7 +537,7 @@ static void send_msg(int fd, short args, void *cbdata)
                     /*[end debug]*/
                     break;
             }
-            //Anandhi end debug
+            //[Debug] end debug
         opal_output_verbose(10, orte_rml_base_framework.framework_output,
                          "%s OPAL_MODEX_RECV succeded, %s peer ep name obtained. length=%lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

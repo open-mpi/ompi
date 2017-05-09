@@ -970,9 +970,6 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         return NULL;
     }
 
-
-
-
     /* someone may require this specific component, so look for "ofi" */
     if (orte_get_attribute(attributes, ORTE_RML_INCLUDE_COMP_ATTRIB, (void**)&comp_attrib, OPAL_STRING) &&
         NULL != comp_attrib) {
@@ -1000,8 +997,6 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
             }
         }
     }
-
-
     /*[Debug] to check for daemon commn over ofi-ethernet, enable the default conduit  ORTE_MGMT_CONDUIT over ofi */
     if (orte_get_attribute(attributes, ORTE_RML_TRANSPORT_TYPE, (void**)&comp_attrib, OPAL_STRING) &&
         NULL != comp_attrib) {
