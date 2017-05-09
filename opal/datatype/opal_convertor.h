@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -54,6 +54,7 @@ BEGIN_C_DECLS
 #define CONVERTOR_STATE_ALLOC      0x04000000
 #define CONVERTOR_COMPLETED        0x08000000
 #define CONVERTOR_CUDA_UNIFIED     0x10000000
+#define CONVERTOR_HAS_REMOTE_SIZE  0x20000000
 
 union dt_elem_desc;
 typedef struct opal_convertor_t opal_convertor_t;
@@ -72,7 +73,7 @@ struct dt_stack_t {
     int32_t           index;    /**< index in the element description */
     int16_t           type;     /**< the type used for the last pack/unpack (original or OPAL_DATATYPE_UINT1) */
     size_t            count;    /**< number of times we still have to do it */
-    ptrdiff_t disp;     /**< actual displacement depending on the count field */
+    ptrdiff_t         disp;     /**< actual displacement depending on the count field */
 };
 typedef struct dt_stack_t dt_stack_t;
 
@@ -186,9 +187,16 @@ static inline int32_t opal_convertor_need_buffers( const opal_convertor_t* pConv
     return 1;
 }
 
+/**
+ * Update the size of the remote datatype representation. The size will
+ * depend on the configuration of the master convertor. In homogeneous
+ * environments, the local and remote sizes are identical.
+ */
+size_t
+opal_convertor_compute_remote_size( opal_convertor_t* pConv );
 
-/*
- *
+/**
+ * Return the local size of the convertor (count times the size of the datatype).
  */
 static inline void opal_convertor_get_packed_size( const opal_convertor_t* pConv,
                                                    size_t* pSize )
@@ -197,15 +205,23 @@ static inline void opal_convertor_get_packed_size( const opal_convertor_t* pConv
 }
 
 
-/*
- *
+/**
+ * Return the remote size of the convertor (count times the remote size of the
+ * datatype). On homogeneous environments the local and remote sizes are
+ * identical.
  */
 static inline void opal_convertor_get_unpacked_size( const opal_convertor_t* pConv,
                                                      size_t* pSize )
 {
+    if( pConv->flags & CONVERTOR_HOMOGENEOUS ) {
+        *pSize = pConv->local_size;
+        return;
+    }
+    if( 0 == (CONVERTOR_HAS_REMOTE_SIZE & pConv->flags) ) {
+        opal_convertor_compute_remote_size( (opal_convertor_t*)pConv);
+    }
     *pSize = pConv->remote_size;
 }
-
 
 /**
  * Return the current absolute position of the next pack/unpack. This function is
@@ -278,6 +294,7 @@ opal_convertor_raw( opal_convertor_t* convertor,  /* [IN/OUT] */
                     struct iovec* iov,            /* [IN/OUT] */
                     uint32_t* iov_count,          /* [IN/OUT] */
                     size_t* length );             /* [OUT]    */
+
 
 /*
  * Upper level does not need to call the _nocheck function directly.

@@ -3,10 +3,10 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2017 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -34,21 +34,8 @@
 #include "opal/datatype/opal_datatype_internal.h"
 
 
-int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
-                                                  size_t starting_point,
-                                                  const size_t* sizes );
-
-static inline size_t
-opal_convertor_compute_remote_size( const opal_datatype_t* pData, const size_t* sizes )
-{
-    uint32_t i;
-    size_t length = 0;
-
-    for( i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ ) {
-        length += (pData->btypes[i] * sizes[i]);
-    }
-    return length;
-}
+extern int opal_convertor_create_stack_with_pos_general( opal_convertor_t* convertor,
+                                                         size_t starting_point, const size_t* sizes );
 
 int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
                                                   size_t starting_point, const size_t* sizes )
@@ -104,7 +91,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
     }
 
     /* remove from the main loop all the complete datatypes */
-    remote_size    = opal_convertor_compute_remote_size( pData, sizes );
+    remote_size    = opal_convertor_compute_remote_size( pConvertor );
     count          = (int32_t)(starting_point / remote_size);
     resting_place -= (remote_size * count);
     pStack->count  = pConvertor->count - count;
@@ -114,7 +101,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
     pStack->disp = count * (pData->ub - pData->lb) + pElems[loop_length].elem.disp;
 
     pos_desc  = 0;
-    remoteLength = (size_t*)alloca( sizeof(size_t) * (pConvertor->pDesc->btypes[OPAL_DATATYPE_LOOP] + 1));
+    remoteLength = (size_t*)alloca( sizeof(size_t) * (pConvertor->pDesc->loops + 1));
     remoteLength[0] = 0;  /* initial value set to ZERO */
     loop_length = 0;
 

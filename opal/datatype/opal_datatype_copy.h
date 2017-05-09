@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -179,7 +179,7 @@ static inline int32_t _copy_content_same_ddt( const opal_datatype_t* datatype, i
         return 0;  /* completed */
     }
 
-    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->btypes[OPAL_DATATYPE_LOOP] + 1) );
+    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->loops + 1) );
     pStack->count = count;
     pStack->index   = -1;
     pStack->disp    = 0;

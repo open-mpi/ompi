@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -25,6 +25,7 @@
 
 #include "ompi/runtime/params.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_datatype_internal.h"
 
 int ompi_datatype_get_elements (ompi_datatype_t *datatype, size_t ucount, size_t *count)
 {
@@ -48,9 +49,10 @@ int ompi_datatype_get_elements (ompi_datatype_t *datatype, size_t ucount, size_t
        there are no leftover bytes */
     if (!ompi_datatype_is_predefined(datatype)) {
         if (0 != internal_count) {
+            opal_datatype_compute_ptypes(&datatype->super);
             /* count the basic elements in the datatype */
-            for (i = 4, total = 0 ; i < OPAL_DATATYPE_MAX_PREDEFINED ; ++i) {
-                total += datatype->super.btypes[i];
+            for (i = OPAL_DATATYPE_FIRST_TYPE, total = 0 ; i < OPAL_DATATYPE_MAX_PREDEFINED ; ++i) {
+                total += datatype->super.ptypes[i];
             }
             internal_count = total * internal_count;
         }

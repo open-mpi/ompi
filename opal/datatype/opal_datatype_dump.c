@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -42,8 +42,14 @@ int opal_datatype_contain_basic_datatypes( const opal_datatype_t* pData, char* p
     if( pData->flags & OPAL_DATATYPE_FLAG_USER_LB ) index += snprintf( ptr, length - index, "lb " );
     if( pData->flags & OPAL_DATATYPE_FLAG_USER_UB ) index += snprintf( ptr + index, length - index, "ub " );
     for( i = 0; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ ) {
-        if( pData->bdt_used & mask )
-            index += snprintf( ptr + index, length - index, "%s ", opal_datatype_basicDatatypes[i]->name );
+        if( pData->bdt_used & mask ) {
+            if( NULL == pData->ptypes ) {
+                index += snprintf( ptr + index, length - index, "%s:* ", opal_datatype_basicDatatypes[i]->name );
+            } else {
+                index += snprintf( ptr + index, length - index, "%s:%lu ", opal_datatype_basicDatatypes[i]->name,
+                                   pData->ptypes[i]);
+            }
+        }
         mask <<= 1;
         if( length <= (size_t)index ) break;
     }
@@ -115,7 +121,7 @@ void opal_datatype_dump( const opal_datatype_t* pData )
                      (void*)pData, pData->name, (long)pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
                      (long)pData->true_lb, (long)pData->true_ub, (long)(pData->true_ub - pData->true_lb),
                      (long)pData->lb, (long)pData->ub, (long)(pData->ub - pData->lb),
-                     (int)pData->nbElems, (int)pData->btypes[OPAL_DATATYPE_LOOP], (int)pData->flags );
+                     (int)pData->nbElems, (int)pData->loops, (int)pData->flags );
     /* dump the flags */
     if( pData->flags == OPAL_DATATYPE_FLAG_PREDEFINED )
         index += snprintf( buffer + index, length - index, "predefined " );

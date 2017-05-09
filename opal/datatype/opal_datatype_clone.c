@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -61,6 +61,9 @@ int32_t opal_datatype_clone( const opal_datatype_t * src_type, opal_datatype_t *
                 dest_type->opt_desc.used = src_type->opt_desc.used;
                 memcpy( dest_type->opt_desc.desc, src_type->opt_desc.desc, desc_length * sizeof(dt_elem_desc_t) );
             }
+        } else {
+            assert( NULL == dest_type->opt_desc.desc );
+            assert( 0 == dest_type->opt_desc.length );
         }
     }
     dest_type->id  = src_type->id;  /* preserve the default id. This allow us to

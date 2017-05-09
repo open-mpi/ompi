@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -279,7 +279,8 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
      * predefined non contiguous datatypes (like MPI_SHORT_INT).
      */
     if( (pdtAdd->flags & (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA)) == (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA) ) {
-        pdtBase->btypes[pdtAdd->id] += count;
+        if( NULL != pdtBase->ptypes )
+            pdtBase->ptypes[pdtAdd->id] += count;
         pLast->elem.common.type      = pdtAdd->id;
         pLast->elem.count            = count;
         pLast->elem.disp             = disp;
@@ -291,13 +292,13 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
         }
     } else {
         /* keep trace of the total number of basic datatypes in the datatype definition */
-        pdtBase->btypes[OPAL_DATATYPE_LOOP]     += pdtAdd->btypes[OPAL_DATATYPE_LOOP];
-        pdtBase->btypes[OPAL_DATATYPE_END_LOOP] += pdtAdd->btypes[OPAL_DATATYPE_END_LOOP];
-        pdtBase->btypes[OPAL_DATATYPE_LB]       |= pdtAdd->btypes[OPAL_DATATYPE_LB];
-        pdtBase->btypes[OPAL_DATATYPE_UB]       |= pdtAdd->btypes[OPAL_DATATYPE_UB];
-        for( i = 4; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ )
-            if( pdtAdd->btypes[i] != 0 ) pdtBase->btypes[i] += (count * pdtAdd->btypes[i]);
-
+        pdtBase->loops += pdtAdd->loops;
+        pdtBase->flags |= (pdtAdd->flags & OPAL_DATATYPE_FLAG_USER_LB);
+        pdtBase->flags |= (pdtAdd->flags & OPAL_DATATYPE_FLAG_USER_UB);
+        if( (NULL != pdtBase->ptypes) && (NULL != pdtAdd->ptypes) ) {
+            for( i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ )
+                if( pdtAdd->ptypes[i] != 0 ) pdtBase->ptypes[i] += (count * pdtAdd->ptypes[i]);
+        }
         if( (1 == pdtAdd->desc.used) && (extent == (pdtAdd->ub - pdtAdd->lb)) &&
             (extent == pdtAdd->desc.desc[0].elem.extent) ){
             pLast->elem        = pdtAdd->desc.desc[0].elem;
@@ -312,7 +313,7 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
                 pLoop = pLast;
                 CREATE_LOOP_START( pLast, count, pdtAdd->desc.used + 1, extent,
                                    (pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED)) );
-                pdtBase->btypes[OPAL_DATATYPE_LOOP] += 2;
+                pdtBase->loops     += 2;
                 pdtBase->desc.used += 2;
                 pLast++;
             }

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -39,9 +39,9 @@ ssize_t opal_datatype_get_element_count( const opal_datatype_t* datatype, size_t
     /* Normally the size should be less or equal to the size of the datatype.
      * This function does not support a iSize bigger than the size of the datatype.
      */
-    assert( (uint32_t)iSize <= datatype->size );
-    DUMP( "dt_count_elements( %p, %d )\n", (void*)datatype, iSize );
-    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->btypes[OPAL_DATATYPE_LOOP] + 2) );
+    assert( iSize <= datatype->size );
+    DUMP( "dt_count_elements( %p, %ul )\n", (void*)datatype, (unsigned long)iSize );
+    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->loops + 2) );
     pStack->count    = 1;
     pStack->index    = -1;
     pStack->disp     = 0;
@@ -53,8 +53,10 @@ ssize_t opal_datatype_get_element_count( const opal_datatype_t* datatype, size_t
             if( --(pStack->count) == 0 ) { /* end of loop */
                 stack_pos--; pStack--;
                 if( stack_pos == -1 ) return nbElems;  /* completed */
+                pos_desc++;  /* advance to the next element after the end loop */
+            } else {
+                pos_desc = pStack->index + 1;  /* go back to the begining of the loop */
             }
-            pos_desc = pStack->index + 1;
             continue;
         }
         if( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ) {
@@ -93,9 +95,7 @@ int32_t opal_datatype_set_element_count( const opal_datatype_t* datatype, size_t
     /**
      * Handle all complete multiple of the datatype.
      */
-    for( pos_desc = 4; pos_desc < OPAL_DATATYPE_MAX_PREDEFINED; pos_desc++ ) {
-        local_length += datatype->btypes[pos_desc];
-    }
+    local_length = datatype->nbElems;
     pos_desc = count / local_length;
     count = count % local_length;
     *length = datatype->size * pos_desc;
@@ -104,7 +104,7 @@ int32_t opal_datatype_set_element_count( const opal_datatype_t* datatype, size_t
     }
 
     DUMP( "dt_set_element_count( %p, %d )\n", (void*)datatype, count );
-    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->btypes[OPAL_DATATYPE_LOOP] + 2) );
+    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->loops + 2) );
     pStack->count    = 1;
     pStack->index    = -1;
     pStack->disp     = 0;
@@ -116,8 +116,10 @@ int32_t opal_datatype_set_element_count( const opal_datatype_t* datatype, size_t
             if( --(pStack->count) == 0 ) { /* end of loop */
                 stack_pos--; pStack--;
                 if( stack_pos == -1 ) return 0;
+                pos_desc++;  /* advance to the next element after the end loop */
+            } else {
+                pos_desc = pStack->index + 1;  /* go back to the begining of the loop */
             }
-            pos_desc = pStack->index + 1;
             continue;
         }
         if( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ) {
@@ -143,3 +145,56 @@ int32_t opal_datatype_set_element_count( const opal_datatype_t* datatype, size_t
     }
 }
 
+/**
+ * Compute the array of counts of the predefined datatypes contained in
+ * the datatype. We have no simple way to create this array, as we only
+ * sporadically need it (when we deal with heterogeneous environments or
+ * when we use get_element_count). Thus, we will pay the cost once per
+ * datatype, but we will only update this array if/when needed.
+ */
+int opal_datatype_compute_ptypes( opal_datatype_t* datatype )
+{
+    dt_stack_t* pStack;   /* pointer to the position on the stack */
+    uint32_t pos_desc;    /* actual position in the description of the derived datatype */
+    ssize_t nbElems = 0, stack_pos = 0;
+    dt_elem_desc_t* pElems;
+
+    if( NULL != datatype->ptypes ) return 0;
+    datatype->ptypes = (size_t*)calloc(OPAL_DATATYPE_MAX_SUPPORTED, sizeof(size_t));
+
+    DUMP( "opal_datatype_compute_ptypes( %p )\n", (void*)datatype );
+    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->loops + 2) );
+    pStack->count    = 1;
+    pStack->index    = -1;
+    pStack->disp     = 0;
+    pElems           = datatype->desc.desc;
+    pos_desc         = 0;
+
+    while( 1 ) {  /* loop forever the exit condition is on the last OPAL_DATATYPE_END_LOOP */
+        if( OPAL_DATATYPE_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
+            if( --(pStack->count) == 0 ) { /* end of loop */
+                stack_pos--; pStack--;
+                if( stack_pos == -1 ) return 0;  /* completed */
+                pos_desc++;  /* advance to the next element after the end loop */
+            } else {
+                pos_desc = pStack->index + 1;  /* go back to the begining of the loop */
+            }
+            continue;
+        }
+        if( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ) {
+            ddt_loop_desc_t* loop = &(pElems[pos_desc].loop);
+            do {
+                PUSH_STACK( pStack, stack_pos, pos_desc, OPAL_DATATYPE_LOOP, loop->loops, 0 );
+                pos_desc++;
+            } while( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
+            DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
+        }
+        while( pElems[pos_desc].elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
+            /* now here we have a basic datatype */
+            datatype->ptypes[pElems[pos_desc].elem.common.type] += pElems[pos_desc].elem.count;
+            nbElems += pElems[pos_desc].elem.count;
+
+            pos_desc++;  /* advance to the next data */
+        }
+    }
+}
