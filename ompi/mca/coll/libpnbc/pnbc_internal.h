@@ -306,28 +306,28 @@ static inline void pnbc_get_round_size (char *p, unsigned long *size) {
   int num;
 
   PNBC_GET_BYTES(p,num);
-  /*PNBC_DEBUG(10, "GET_ROUND_SIZE got %i elements\n", num); */
+  printf("GET_ROUND_SIZE got %i elements\n", num);
   for (int i = 0 ; i < num ; ++i) {
     memcpy (&type, p + offset, sizeof (type));
     switch(type) {
     case SEND:
-      /*printf("found a SEND at offset %li\n", (long)p-(long)schedule); */
+      //printf("found a SEND at offset %li\n", (long)p-(long)schedule);
       offset += sizeof(PNBC_Args_send);
       break;
     case RECV:
-      /*printf("found a RECV at offset %li\n", (long)p-(long)schedule); */
+      //printf("found a RECV at offset %li\n", (long)p-(long)schedule);
       offset += sizeof(PNBC_Args_recv);
       break;
     case OP:
-      /*printf("found a OP at offset %li\n", (long)p-(long)schedule); */
+     // printf("found a OP at offset %li\n", (long)p-(long)schedule);
       offset += sizeof(PNBC_Args_op);            \
       break;
     case COPY:
-      /*printf("found a COPY at offset %li\n", (long)p-(long)schedule); */
+      //printf("found a COPY at offset %li\n", (long)p-(long)schedule);
       offset += sizeof(PNBC_Args_copy);
       break;
     case UNPACK:
-      /*printf("found a UNPACK at offset %li\n", (long)p-(long)schedule); */
+      //printf("found a UNPACK at offset %li\n", (long)p-(long)schedule);
       offset += sizeof(PNBC_Args_unpack);
       break;
     default:

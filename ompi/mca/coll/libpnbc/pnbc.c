@@ -381,13 +381,14 @@ int PNBC_Progress(PNBC_Handle *handle) {
     handle->req_count = 0;
 
     if (*delim == 0) {
+
       /* this was the last round - we're done */
       PNBC_DEBUG(5, "PNBC_Progress last round finished - we're done\n");
 
-      if(!REQUEST_COMPLETE(&handle->super)) {
+      /*if(!REQUEST_COMPLETE(&handle->super)) {
     	  ompi_request_complete(&handle->super, true);
     	  PNBC_DEBUG(5, "Request Marked COMPLETED\n");
-      }
+      }*/
 
       return PNBC_OK;
 
