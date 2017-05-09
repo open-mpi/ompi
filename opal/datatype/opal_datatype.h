@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -53,9 +53,10 @@ BEGIN_C_DECLS
 #endif
 /*
  * No more than this number of _Basic_ datatypes in C/CPP or Fortran
- * are supported (in order to not change setup and usage of btypes).
+ * are supported (in order to not change setup and usage of the predefined
+ * datatypes).
  *
- * XXX TODO Adapt to whatever the OMPI-layer needs
+ * BEWARE: This constant should reflect whatever the OMPI-layer needs.
  */
 #define OPAL_DATATYPE_MAX_SUPPORTED  47
 
@@ -108,13 +109,14 @@ struct opal_datatype_t {
     uint32_t           bdt_used; /**< bitset of which basic datatypes are used in the data description */
     size_t             size;     /**< total size in bytes of the memory used by the data if
                                       the data is put on a contiguous buffer */
-    ptrdiff_t  true_lb;  /**< the true lb of the data without user defined lb and ub */
-    ptrdiff_t  true_ub;  /**< the true ub of the data without user defined lb and ub */
-    ptrdiff_t  lb;       /**< lower bound in memory */
-    ptrdiff_t  ub;       /**< upper bound in memory */
+    ptrdiff_t          true_lb;  /**< the true lb of the data without user defined lb and ub */
+    ptrdiff_t          true_ub;  /**< the true ub of the data without user defined lb and ub */
+    ptrdiff_t          lb;       /**< lower bound in memory */
+    ptrdiff_t          ub;       /**< upper bound in memory */
     /* --- cacheline 1 boundary (64 bytes) --- */
     size_t             nbElems;  /**< total number of elements inside the datatype */
     uint32_t           align;    /**< data should be aligned to */
+    uint32_t           loops;    /**< number of loops on the iternal type stack */
 
     /* Attribute fields */
     char               name[OPAL_MAX_OBJECT_NAME];  /**< name of the datatype */
@@ -123,11 +125,12 @@ struct opal_datatype_t {
     dt_type_desc_t     opt_desc; /**< short description of the data used when conversion is useless
                                       or in the send case (without conversion) */
 
-    uint32_t           btypes[OPAL_DATATYPE_MAX_SUPPORTED];
-                                 /**< basic elements count used to compute the size of the
-                                      datatype for remote nodes. The length of the array is dependent on
-                                      the maximum number of datatypes of all top layers.
-                                      Reason being is that Fortran is not at the OPAL layer. */
+    size_t             *ptypes;  /**< array of basic predefined types that facilitate the computing
+                                      of the remote size in heterogeneous environments. The length of the
+                                      array is dependent on the maximum number of predefined datatypes of
+                                      all language interfaces (because Fortran is not known at the OPAL
+                                      layer). This field should never be initialized in homogeneous
+                                      environments */
     /* --- cacheline 5 boundary (320 bytes) was 32-36 bytes ago --- */
 
     /* size: 352, cachelines: 6, members: 15 */
@@ -280,6 +283,8 @@ opal_datatype_set_element_count( const opal_datatype_t* pData, size_t count, siz
 OPAL_DECLSPEC int32_t
 opal_datatype_copy_content_same_ddt( const opal_datatype_t* pData, int32_t count,
                                      char* pDestBuf, char* pSrcBuf );
+
+OPAL_DECLSPEC int opal_datatype_compute_ptypes( opal_datatype_t* datatype );
 
 OPAL_DECLSPEC const opal_datatype_t*
 opal_datatype_match_size( int size, uint16_t datakind, uint16_t datalang );

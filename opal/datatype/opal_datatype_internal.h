@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -155,10 +155,10 @@ typedef struct ddt_elem_id_description ddt_elem_id_description;
  */
 struct ddt_elem_desc {
     ddt_elem_id_description common;           /**< basic data description and flags */
-    uint32_t                count;            /**< number of blocks */
     uint32_t                blocklen;         /**< number of elements on each block */
-    ptrdiff_t       extent;           /**< extent of each block (in bytes) */
-    ptrdiff_t       disp;             /**< displacement of the first block */
+    size_t                  count;            /**< number of blocks */
+    ptrdiff_t               extent;           /**< extent of each block (in bytes) */
+    ptrdiff_t               disp;             /**< displacement of the first block */
 };
 typedef struct ddt_elem_desc ddt_elem_desc_t;
 
@@ -172,10 +172,10 @@ typedef struct ddt_elem_desc ddt_elem_desc_t;
  */
 struct ddt_loop_desc {
     ddt_elem_id_description common;           /**< basic data description and flags */
-    uint32_t                loops;            /**< number of elements */
     uint32_t                items;            /**< number of items in the loop */
+    uint32_t                loops;            /**< number of elements */
     size_t                  unused;           /**< not used right now */
-    ptrdiff_t       extent;           /**< extent of the whole loop */
+    ptrdiff_t               extent;           /**< extent of the whole loop */
 };
 typedef struct ddt_loop_desc ddt_loop_desc_t;
 
@@ -184,7 +184,7 @@ struct ddt_endloop_desc {
     uint32_t                items;            /**< number of elements */
     uint32_t                unused;           /**< not used right now */
     size_t                  size;             /**< real size of the data in the loop */
-    ptrdiff_t       first_elem_disp;  /**< the displacement of the first block in the loop */
+    ptrdiff_t               first_elem_disp;  /**< the displacement of the first block in the loop */
 };
 typedef struct ddt_endloop_desc ddt_endloop_desc_t;
 
@@ -214,13 +214,20 @@ union dt_elem_desc {
         (_place)->end_loop.unused = -1;                                        \
     } while(0)
 
+
+/**
+ * Create one or more elements depending on the value of _count. If the value
+ * is too large for the type of elem.count then use oth the elem.count and
+ * elem.blocklen to create it. If the number is prime then create a second
+ * element to account for the difference.
+ */
 #define CREATE_ELEM( _place, _type, _flags, _count, _disp, _extent )           \
     do {                                                                       \
         (_place)->elem.common.flags = (_flags) | OPAL_DATATYPE_FLAG_DATA;      \
         (_place)->elem.common.type  = (_type);                                 \
-        (_place)->elem.count        = (_count);                                \
         (_place)->elem.disp         = (_disp);                                 \
         (_place)->elem.extent       = (_extent);                               \
+        (_place)->elem.count        = (_count);                                \
         (_place)->elem.blocklen     = 1;                                       \
     } while(0)
 /*
@@ -238,8 +245,8 @@ struct opal_datatype_t;
  *     OPAL_DATATYPE_INIT_BTYPES_ARRAY_[0-21], then order and naming would _not_ matter....
  */
 
-#define OPAL_DATATYPE_INIT_BTYPES_ARRAY_UNAVAILABLE { 0 }
-#define OPAL_DATATYPE_INIT_BTYPES_ARRAY(NAME) { [OPAL_DATATYPE_ ## NAME] = 1 }
+#define OPAL_DATATYPE_INIT_PTYPES_ARRAY_UNAVAILABLE NULL
+#define OPAL_DATATYPE_INIT_PTYPES_ARRAY(NAME) (size_t[OPAL_DATATYPE_MAX_PREDEFINED]){ [OPAL_DATATYPE_ ## NAME] = 1, [OPAL_DATATYPE_MAX_PREDEFINED-1] = 0 }
 
 #define OPAL_DATATYPE_INIT_NAME(NAME) "OPAL_" #NAME
 
@@ -268,7 +275,7 @@ struct opal_datatype_t;
         .name = OPAL_DATATYPE_INIT_NAME(NAME),                                       \
         .desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(UNAVAILABLE),                     \
         .opt_desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(UNAVAILABLE),                 \
-        .btypes = OPAL_DATATYPE_INIT_BTYPES_ARRAY_UNAVAILABLE                        \
+        .ptypes = OPAL_DATATYPE_INIT_PTYPES_ARRAY_UNAVAILABLE                        \
     }
 
 #define OPAL_DATATYPE_INITIALIZER_UNAVAILABLE( FLAGS )                               \
@@ -287,7 +294,7 @@ struct opal_datatype_t;
         .name = OPAL_DATATYPE_INIT_NAME(EMPTY),                         \
         .desc = OPAL_DATATYPE_INIT_DESC_NULL,                           \
         .opt_desc = OPAL_DATATYPE_INIT_DESC_NULL,                       \
-        .btypes = OPAL_DATATYPE_INIT_BTYPES_ARRAY_UNAVAILABLE           \
+        .ptypes = OPAL_DATATYPE_INIT_PTYPES_ARRAY_UNAVAILABLE           \
     }
 
 #define OPAL_DATATYPE_INIT_BASIC_TYPE( TYPE, NAME, FLAGS )              \
@@ -303,7 +310,7 @@ struct opal_datatype_t;
         .name = OPAL_DATATYPE_INIT_NAME(NAME),                          \
         .desc = OPAL_DATATYPE_INIT_DESC_NULL,                           \
         .opt_desc = OPAL_DATATYPE_INIT_DESC_NULL,                       \
-        .btypes = OPAL_DATATYPE_INIT_BTYPES_ARRAY(NAME)                 \
+        .ptypes = OPAL_DATATYPE_INIT_PTYPES_ARRAY_UNAVAILABLE           \
     }
 
 #define OPAL_DATATYPE_INIT_BASIC_DATATYPE( TYPE, ALIGN, NAME, FLAGS )                \
@@ -319,7 +326,7 @@ struct opal_datatype_t;
         .name = OPAL_DATATYPE_INIT_NAME(NAME),                                       \
         .desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(NAME),                            \
         .opt_desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(NAME),                        \
-        .btypes = OPAL_DATATYPE_INIT_BTYPES_ARRAY(NAME)                              \
+        .ptypes = OPAL_DATATYPE_INIT_PTYPES_ARRAY_UNAVAILABLE                        \
     }
 
 #define OPAL_DATATYPE_INITIALIZER_LOOP(FLAGS)       OPAL_DATATYPE_INIT_BASIC_TYPE( OPAL_DATATYPE_LOOP, LOOP, FLAGS )
@@ -476,7 +483,10 @@ static inline int GET_FIRST_NON_LOOP( const union dt_elem_desc* _pElem )
 #define UPDATE_INTERNAL_COUNTERS( DESCRIPTION, POSITION, ELEMENT, COUNTER ) \
     do {                                                                \
         (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                       \
-        (COUNTER) = (ELEMENT)->elem.count;                              \
+        if( OPAL_DATATYPE_LOOP == (ELEMENT)->elem.common.type )         \
+            (COUNTER) = (ELEMENT)->loop.loops;                          \
+        else                                                            \
+            (COUNTER) = (ELEMENT)->elem.count;                          \
     } while (0)
 
 OPAL_DECLSPEC int opal_datatype_contain_basic_datatypes( const struct opal_datatype_t* pData, char* ptr, size_t length );

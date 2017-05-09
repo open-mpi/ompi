@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil  -*- */
 /*
- * Copyright (c) 2009-2013 The University of Tennessee and The University
+ * Copyright (c) 2009-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -467,7 +467,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
         .name = OPAL_DATATYPE_INIT_NAME(TYPE ## SIZE),                               \
         .desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(TYPE ## SIZE),                    \
         .opt_desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(TYPE ## SIZE),                \
-	.btypes = OPAL_DATATYPE_INIT_BTYPES_ARRAY(TYPE ## SIZE)                      \
+        .ptypes = OPAL_DATATYPE_INIT_PTYPES_ARRAY(TYPE ## SIZE)                      \
     }
 
 #define OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN( TYPE, NAME, SIZE, ALIGN, FLAGS ) \
