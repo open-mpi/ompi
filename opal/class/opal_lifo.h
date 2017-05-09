@@ -46,7 +46,7 @@ union opal_counted_pointer_t {
         /** update counter used when cmpset_128 is available */
         uint64_t counter;
         /** list item pointer */
-        opal_list_item_t *item;
+        volatile opal_list_item_t * volatile item;
     } data;
 #if OPAL_HAVE_ATOMIC_CMPSET_128 && HAVE_OPAL_INT128_T
     /** used for atomics when there is a cmpset that can operate on
@@ -134,14 +134,14 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
  */
 static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 {
+    opal_counted_pointer_t old_head;
     opal_list_item_t *item;
 
     do {
-        opal_counted_pointer_t old_head;
 
         old_head.data.counter = lifo->opal_lifo_head.data.counter;
         opal_atomic_rmb ();
-        item = old_head.data.item = lifo->opal_lifo_head.data.item;
+        old_head.data.item = item = (opal_list_item_t*)lifo->opal_lifo_head.data.item;
 
         if (item == &lifo->opal_lifo_ghost) {
             return NULL;
