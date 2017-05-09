@@ -172,6 +172,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
             COPY(avail->ac_module, comm, scatter);
             COPY(avail->ac_module, comm, scatterv);
 
+            /* nonblocking collectives */
             COPY(avail->ac_module, comm, iallgather);
             COPY(avail->ac_module, comm, iallgatherv);
             COPY(avail->ac_module, comm, iallreduce);
@@ -190,32 +191,15 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
             COPY(avail->ac_module, comm, iscatter);
             COPY(avail->ac_module, comm, iscatterv);
 
-            /* We can not reliably check if this comm has a topology
-             * at this time. The flags are set *after* coll_select */
-            COPY(avail->ac_module, comm, neighbor_allgather);
-            COPY(avail->ac_module, comm, neighbor_allgatherv);
-            COPY(avail->ac_module, comm, neighbor_alltoall);
-            COPY(avail->ac_module, comm, neighbor_alltoallv);
-            COPY(avail->ac_module, comm, neighbor_alltoallw);
-
-            COPY(avail->ac_module, comm, ineighbor_allgather);
-            COPY(avail->ac_module, comm, ineighbor_allgatherv);
-            COPY(avail->ac_module, comm, ineighbor_alltoall);
-            COPY(avail->ac_module, comm, ineighbor_alltoallv);
-            COPY(avail->ac_module, comm, ineighbor_alltoallw);
-
-            /* -oIBM added for persistent nonblocking collectives
-             *
-             */
-
-            COPY(avail->ac_module, comm, libpnbc_start);
-            COPY(avail->ac_module, comm, ibcast_init);
+            /* persistent nonblocking collectives */
             COPY(avail->ac_module, comm, iallgather_init);
             COPY(avail->ac_module, comm, iallgatherv_init);
             COPY(avail->ac_module, comm, iallreduce_init);
             COPY(avail->ac_module, comm, ialltoall_init);
             COPY(avail->ac_module, comm, ialltoallv_init);
+            COPY(avail->ac_module, comm, ialltoallw_init);
             COPY(avail->ac_module, comm, ibarrier_init);
+            COPY(avail->ac_module, comm, ibcast_init);
             COPY(avail->ac_module, comm, iexscan_init);
             COPY(avail->ac_module, comm, igather_init);
             COPY(avail->ac_module, comm, igatherv_init);
@@ -225,14 +209,34 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
             COPY(avail->ac_module, comm, iscan_init);
             COPY(avail->ac_module, comm, iscatter_init);
             COPY(avail->ac_module, comm, iscatterv_init);
+
+            /* We can not reliably check if this comm has a topology
+             * at this time. The flags are set *after* coll_select */
+
+            /* neighborhood collectives */
+            COPY(avail->ac_module, comm, neighbor_allgather);
+            COPY(avail->ac_module, comm, neighbor_allgatherv);
+            COPY(avail->ac_module, comm, neighbor_alltoall);
+            COPY(avail->ac_module, comm, neighbor_alltoallv);
+            COPY(avail->ac_module, comm, neighbor_alltoallw);
+
+            /* nonblocking neighborhood collectives */
+            COPY(avail->ac_module, comm, ineighbor_allgather);
+            COPY(avail->ac_module, comm, ineighbor_allgatherv);
+            COPY(avail->ac_module, comm, ineighbor_alltoall);
+            COPY(avail->ac_module, comm, ineighbor_alltoallv);
+            COPY(avail->ac_module, comm, ineighbor_alltoallw);
+
+            /* persistent nonblocking neighborhood collectives */
             COPY(avail->ac_module, comm, ineighbor_allgather_init);
             COPY(avail->ac_module, comm, ineighbor_allgatherv_init);
             COPY(avail->ac_module, comm, ineighbor_alltoall_init);
             COPY(avail->ac_module, comm, ineighbor_alltoallv_init);
             COPY(avail->ac_module, comm, ineighbor_alltoallw_init);
 
-
             COPY(avail->ac_module, comm, reduce_local);
+
+            COPY(avail->ac_module, comm, libpnbc_start);
         }
         /* release the original module reference and the list item */
         OBJ_RELEASE(avail->ac_module);
@@ -260,6 +264,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, scan)) ||
         CHECK_NULL(which_func, comm, scatter) ||
         CHECK_NULL(which_func, comm, scatterv) ||
+
         CHECK_NULL(which_func, comm, iallgather) ||
         CHECK_NULL(which_func, comm, iallgatherv) ||
         CHECK_NULL(which_func, comm, iallreduce) ||
@@ -277,9 +282,29 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, iscan)) ||
         CHECK_NULL(which_func, comm, iscatter) ||
         CHECK_NULL(which_func, comm, iscatterv) ||
-        CHECK_NULL(which_func, comm, reduce_local) ) {
+
+        CHECK_NULL(which_func, comm, iallgather_init) ||
+        CHECK_NULL(which_func, comm, iallgatherv_init) ||
+        CHECK_NULL(which_func, comm, iallreduce_init) ||
+        CHECK_NULL(which_func, comm, ialltoall_init) ||
+        CHECK_NULL(which_func, comm, ialltoallv_init) ||
+        CHECK_NULL(which_func, comm, ialltoallw_init) ||
+        CHECK_NULL(which_func, comm, ibarrier_init) ||
+        CHECK_NULL(which_func, comm, ibcast_init) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, iexscan_init)) ||
+        CHECK_NULL(which_func, comm, igather_init) ||
+        CHECK_NULL(which_func, comm, igatherv_init) ||
+        CHECK_NULL(which_func, comm, ireduce_init) ||
+        CHECK_NULL(which_func, comm, ireduce_scatter_block_init) ||
+        CHECK_NULL(which_func, comm, ireduce_scatter_init) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, iscan_init)) ||
+        CHECK_NULL(which_func, comm, iscatter_init) ||
+        CHECK_NULL(which_func, comm, iscatterv_init) ||
+
         /* TODO -- Once the topology flags are set before coll_select then
          * check if neighborhood collectives have been set. */
+
+        CHECK_NULL(which_func, comm, reduce_local) ) {
 
         opal_show_help("help-mca-coll-base.txt",
                        "comm-select:no-function-available", true, which_func);

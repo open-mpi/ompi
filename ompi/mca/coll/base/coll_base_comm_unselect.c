@@ -85,6 +85,23 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, iscatter);
     CLOSE(comm, iscatterv);
 
+    CLOSE(comm, iallgather_init);
+    CLOSE(comm, iallgatherv_init);
+    CLOSE(comm, iallreduce_init);
+    CLOSE(comm, ialltoall_init);
+    CLOSE(comm, ialltoallv_init);
+    CLOSE(comm, ialltoallw_init);
+    CLOSE(comm, ibarrier_init);
+    CLOSE(comm, ibcast_init);
+    CLOSE(comm, igather_init);
+    CLOSE(comm, igatherv_init);
+    CLOSE(comm, ireduce_init);
+    CLOSE(comm, ireduce_scatter_init);
+    CLOSE(comm, ireduce_scatter_block_init);
+    CLOSE(comm, iscan_init);
+    CLOSE(comm, iscatter_init);
+    CLOSE(comm, iscatterv_init);
+
     CLOSE(comm, neighbor_allgather);
     CLOSE(comm, neighbor_allgatherv);
     CLOSE(comm, neighbor_alltoall);
@@ -97,32 +114,15 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, ineighbor_alltoallv);
     CLOSE(comm, ineighbor_alltoallw);
 
-    CLOSE(comm, ibcast_init); // -oIBM added libpnbc
-    CLOSE(comm, iallgather_init);
-    CLOSE(comm, iallgatherv_init);
-    CLOSE(comm, iallreduce_init);
-    CLOSE(comm, ialltoall_init);
-    CLOSE(comm, ialltoallv_init);
-    CLOSE(comm, ibarrier_init);
-    CLOSE(comm, igather_init);
-    CLOSE(comm, igatherv_init);
-    CLOSE(comm, ireduce_init);
-    CLOSE(comm, ireduce_scatter_init);
-    CLOSE(comm, ireduce_scatter_block_init);
-    CLOSE(comm, iscan_init);
-    CLOSE(comm, iscatter_init);
-    CLOSE(comm, iscatterv_init);
-    CLOSE(comm, libpnbc_start);
     CLOSE(comm, ineighbor_allgather_init);
     CLOSE(comm, ineighbor_allgatherv_init);
     CLOSE(comm, ineighbor_alltoall_init);
     CLOSE(comm, ineighbor_alltoallv_init);
     CLOSE(comm, ineighbor_alltoallw_init);
 
-    // -oIBM added libpnbc
-
-
     CLOSE(comm, reduce_local);
+
+    CLOSE(comm, libpnbc_start);
 
     free(comm->c_coll);
     comm->c_coll = NULL;
