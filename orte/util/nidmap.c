@@ -483,6 +483,7 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
     orte_node_t *nptr;
     int rc;
     uint8_t ui8;
+    orte_topology_t *ortetopo;
 
     /* setup the list of results */
     OBJ_CONSTRUCT(&slots, opal_list_t);
@@ -515,12 +516,39 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         return rc;
     }
 
-    /* there is always one topology - our own - so start with it */
+    /* handle the topologies - as the most common case by far
+     * is to have homogeneous topologies, we only send them
+     * if something is different. We know that the HNP is
+     * the first topology, and that any differing topology
+     * on the compute nodes must follow. So send the topologies
+     * if and only if:
+     *
+     * (a) the HNP is being used to house application procs and
+     *     there is more than one topology on our list; or
+     *
+     * (b) the HNP is not being used, but there are more than
+     *     two topologies on our list, thus indicating that
+     *     there are multiple topologies on the compute nodes
+     */
     nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-    tp = OBJ_NEW(orte_regex_range_t);
-    tp->t = nptr->topology;
-    tp->cnt = 1;
+    if (!orte_hnp_is_allocated || (ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) & ORTE_MAPPING_NO_USE_LOCAL)) {
+        /* assign a NULL topology so we still account for our presence,
+         * but don't cause us to send topology info when not needed */
+        tp = OBJ_NEW(orte_regex_range_t);
+        tp->t = NULL;
+        tp->cnt = 1;
+    } else {
+        /* there is always one topology - our own - so start with it */
+        tp = OBJ_NEW(orte_regex_range_t);
+        tp->t = nptr->topology;
+        tp->cnt = 1;
+    }
     opal_list_append(&topos, &tp->super);
+
+    opal_output_verbose(5, orte_nidmap_output,
+                        "%s STARTING WITH TOPOLOGY FOR NODE %s: %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        nptr->name, (NULL == tp->t) ? "NULL" : tp->t->sig);
 
     /* likewise, we have slots */
     slt = OBJ_NEW(orte_regex_range_t);
@@ -554,22 +582,33 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
             opal_list_append(&slots, &slt->super);
         }
         /* check the topologies */
-        if (NULL == nptr->topology) {
+        if (NULL != tp->t && NULL == nptr->topology) {
             /* we don't know this topology, likely because
              * we don't have a daemon on the node */
             tp = OBJ_NEW(orte_regex_range_t);
             tp->t = NULL;
             tp->cnt = 1;
+            opal_output_verbose(5, orte_nidmap_output,
+                                "%s ADD TOPOLOGY FOR NODE %s: NULL",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nptr->name);
             opal_list_append(&topos, &tp->super);
         } else {
             /* is this the next in line */
             if (tp->t == nptr->topology) {
                 tp->cnt++;
+                opal_output_verbose(5, orte_nidmap_output,
+                                    "%s CONTINUE TOPOLOGY RANGE (%d) WITH NODE %s: %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    tp->cnt, nptr->name, tp->t->sig);
             } else {
                 /* need to start another range */
                 tp = OBJ_NEW(orte_regex_range_t);
                 tp->t = nptr->topology;
                 tp->cnt = 1;
+                opal_output_verbose(5, orte_nidmap_output,
+                                    "%s STARTING NEW TOPOLOGY RANGE WITH NODE %s: %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    nptr->name, tp->t->sig);
                 opal_list_append(&topos, &tp->super);
             }
         }
@@ -645,31 +684,32 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         free(tmp);
     }
 
-    /* handle the topologies - as the most common case by far
-     * is to have homogeneous topologies, we only send them
-     * if something is different. We know that the HNP is
-     * the first topology, and that any differing topology
-     * on the compute nodes must follow. So send the topologies
-     * if and only if:
-     *
-     * (a) the HNP is being used to house application procs and
-     *     there is more than one topology on our list; or
-     *
-     * (b) the HNP is not being used, but there are more than
-     *     two topologies on our list, thus indicating that
-     *     there are multiple topologies on the compute nodes
-     */
-    if (!orte_hnp_is_allocated || (ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) & ORTE_MAPPING_NO_USE_LOCAL)) {
-        /* remove the first topo on the list */
-        item = opal_list_remove_first(&topos);
-        OBJ_RELEASE(item);
+    /* don't try to be cute - there aren't going to be that many
+     * topologies, so just scan the list and see if they are the
+     * same, excluding any NULL values */
+    ortetopo = NULL;
+    test = false;
+    OPAL_LIST_FOREACH(rng, &topos, orte_regex_range_t) {
+        if (NULL == rng->t) {
+            continue;
+        }
+        if (NULL == ortetopo) {
+            ortetopo = rng->t;
+        } else if (0 != strcmp(ortetopo->sig, rng->t->sig)) {
+            /* we have a difference, so send them */
+            test = true;
+        }
     }
     tmp = NULL;
-    if (1 < opal_list_get_size(&topos)) {
+    if (test) {
         opal_buffer_t bucket, *bptr;
         OBJ_CONSTRUCT(&bucket, opal_buffer_t);
         while (NULL != (item = opal_list_remove_first(&topos))) {
             rng = (orte_regex_range_t*)item;
+            opal_output_verbose(5, orte_nidmap_output,
+                                "%s PASSING TOPOLOGY %s RANGE %d",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                (NULL == rng->t) ? "NULL" : rng->t->sig, rng->cnt);
             if (NULL == tmp) {
                 asprintf(&tmp, "%d", rng->cnt);
             } else {
@@ -738,6 +778,9 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         }
         OBJ_DESTRUCT(&bucket);
     } else {
+        opal_output_verbose(1, orte_nidmap_output,
+                            "%s NOT PASSING TOPOLOGIES",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* need to pack the NULL just to terminate the region */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
