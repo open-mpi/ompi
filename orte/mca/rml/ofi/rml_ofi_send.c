@@ -551,7 +551,6 @@ static void send_msg(int fd, short args, void *cbdata)
             snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
 
                 ORTE_RML_SEND_COMPLETE(snd);
-
                 return;
         }
     } else {
