@@ -493,7 +493,6 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app, orte_process_info.nodename);
             ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            opal_output(0, "RMAPS RR NO-SPAN FAILING: %s:%d", __FILE__, __LINE__);
             return ORTE_ERR_SILENT;
         }
     }
@@ -511,7 +510,6 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             if (NULL == node->topology || NULL == node->topology->topo) {
                 orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
                                true, node->name);
-                opal_output(0, "RMAPS RR NO-SPAN FAILING: %s:%d", __FILE__, __LINE__);
                 return ORTE_ERR_SILENT;
             }
             start = 0;
@@ -550,7 +548,6 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             /* add this node to the map, if reqd */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                    opal_output(0, "RMAPS RR NO-SPAN FAILING: %s:%d", __FILE__, __LINE__);
                     ORTE_ERROR_LOG(idx);
                     return idx;
                 }
@@ -569,18 +566,15 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                     /* get the hwloc object */
                     if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, target, cache_level, (i+start) % nobjs, OPAL_HWLOC_AVAILABLE))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                        opal_output(0, "RMAPS RR NO-SPAN FAILING: %s:%d", __FILE__, __LINE__);
                         return ORTE_ERR_NOT_FOUND;
                     }
                     if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_base_get_npus(node->topology->topo, obj)) {
                         orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
                                        orte_rmaps_base.cpus_per_rank, opal_hwloc_base_get_npus(node->topology->topo, obj),
                                        orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
-                        opal_output(0, "RMAPS RR NO-SPAN FAILING: %s:%d", __FILE__, __LINE__);
                         return ORTE_ERR_SILENT;
                     }
                     if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
-                        opal_output(0, "RMAPS RR NO-SPAN FAILING: %s:%d", __FILE__, __LINE__);
                         return ORTE_ERR_OUT_OF_RESOURCE;
                     }
                     nprocs_mapped++;
@@ -607,14 +601,12 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app, orte_process_info.nodename);
                         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                        opal_output(0, "RMAPS RR NO-SPAN FAILING: %s:%d", __FILE__, __LINE__);
                         return ORTE_ERR_SILENT;
                     } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                         /* if we were explicitly told not to oversubscribe, then don't */
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app, orte_process_info.nodename);
                         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                        opal_output(0, "RMAPS RR NO-SPAN FAILING: %s:%d", __FILE__, __LINE__);
                         return ORTE_ERR_SILENT;
                     }
                 }
@@ -629,7 +621,6 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
 
     if (nprocs_mapped < app->num_procs) {
         /* usually means there were no objects of the requested type */
-        opal_output(0, "RMAPS RR NO-SPAN FAILING: %s:%d", __FILE__, __LINE__);
         return ORTE_ERR_NOT_FOUND;
     }
 
