@@ -970,7 +970,6 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         return NULL;
     }
 
-
     /* someone may require this specific component, so look for "ofi" */
     if (orte_get_attribute(attributes, ORTE_RML_INCLUDE_COMP_ATTRIB, (void**)&comp_attrib, OPAL_STRING) &&
         NULL != comp_attrib) {
@@ -998,17 +997,23 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
             }
         }
     }
-
     /*[Debug] to check for daemon commn over ofi-ethernet, enable the default conduit  ORTE_MGMT_CONDUIT over ofi */
     if (orte_get_attribute(attributes, ORTE_RML_TRANSPORT_TYPE, (void**)&comp_attrib, OPAL_STRING) &&
         NULL != comp_attrib) {
-            opal_output_verbose(20,orte_rml_base_framework.framework_output,
-                    "%s - Forcibly returning ofi socket provider for ethernet transport request",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                opal_output_verbose(20,orte_rml_base_framework.framework_output,
+                    "%s - ORTE_RML_TRANSPORT_TYPE = %s ",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comp_attrib);
         comps = opal_argv_split(comp_attrib, ',');
         for (i=0; NULL != comps[i]; i++) {
-            if (0 == strcmp(comps[i], "ethernet")) {
+            /* changing below to check for oob, as trying to use ofi for only mgmt conduit */
+            if (0 == strcmp(comps[i], "oob")) {
+            /* changing below to check for fabric, as trying to use ofi for only coll conduit
+            if (0 == strcmp(comps[i], "fabric")) { */
+            /*if (0 == strcmp(comps[i], "ethernet")) { */
                 /* we are a candidate,  */
+                opal_output_verbose(20,orte_rml_base_framework.framework_output,
+                    "%s - Forcibly returning ofi socket provider for ethernet transport request",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                 opal_argv_free(comps);
                 OBJ_CONSTRUCT(&provider, opal_list_t);
                 orte_set_attribute(&provider, ORTE_RML_PROVIDER_ATTRIB,
@@ -1018,7 +1023,7 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         }
         opal_argv_free(comps);
     }
-    /*[Debug] */
+    /* end [Debug] */
 
     /* Alternatively, check the attributes to see if we qualify - we only handle
      * "pt2pt" */
@@ -1241,6 +1246,7 @@ void convert_to_sockaddr( char *ofiuri, struct sockaddr_in* ep_sockaddr)
     ep_sockaddr->sin_family = atoi( sin_fly );
     port = atoi( sin_port);
     ep_sockaddr->sin_port   = htons(port);
+    ep_sockaddr->sin_addr.s_addr = inet_addr(sin_addr);
     opal_output_verbose(1,orte_rml_base_framework.framework_output,
                         "%s OFI convert_to_sockaddr() port = 0x%x decimal-%d, InternetAddr = %s  ",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ntohs(ep_sockaddr->sin_port),ntohs(ep_sockaddr->sin_port),
