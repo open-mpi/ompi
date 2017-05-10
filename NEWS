@@ -58,6 +58,9 @@ included in the vX.Y.Z section and be denoted as:
 
 Bug fixes/minor improvements:
 
+- Fix a problem with one of Open MPI's fifo data structures which led to
+  hangs in a make check test.  Thanks to Nicolas Morey-Chaisemartin for
+  reporting.
 - Add missing MPI_AINT_ADD/MPI_AINT_DIFF function definitions to mpif.h.
   Thanks to Aboorva Devarajan for reporting.
 - Fix the error return from MPI_WIN_LOCK when rank argument is invalid.
