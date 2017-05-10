@@ -47,6 +47,7 @@
 #include "orte/mca/schizo/base/base.h"
 #include "orte/util/listener.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
 #include "orte/orted/pmix/pmix_server.h"
@@ -201,6 +202,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* let the pmix server register params */
         pmix_server_register_params();
+        orte_util_nidmap_init();
     }
 
     /* open the SCHIZO framework as everyone needs it, and the

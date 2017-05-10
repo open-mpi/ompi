@@ -44,6 +44,8 @@ BEGIN_C_DECLS
 #define ORTE_NON_CONTIG_NODE_CMD    0x02
 
 
+ORTE_DECLSPEC void orte_util_nidmap_init(void);
+
 ORTE_DECLSPEC int orte_util_nidmap_create(char **regex);
 ORTE_DECLSPEC int orte_util_nidmap_parse(char *regex);
 
