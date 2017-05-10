@@ -88,9 +88,13 @@ static void opal_pointer_array_destruct(opal_pointer_array_t *array)
  * from the indicated position until it finds a zero bit. If SET is true,
  * the bit is set. The position of the bit is returned in store.
  */
-#define FIND_FIRST_ZERO(START_IDX, STORE, SET)                          \
+#define FIND_FIRST_ZERO(START_IDX, STORE)                               \
     do {                                                                \
         uint32_t __b_idx, __b_pos;                                      \
+        if( 0 == table->number_free ) {                                 \
+            (STORE) = table->size;                                      \
+            break;                                                      \
+        }                                                               \
         GET_BIT_POS((START_IDX), __b_idx, __b_pos);                     \
         for (; table->free_bits[__b_idx] == 0xFFFFFFFFFFFFFFFFULL; __b_idx++); \
         assert(__b_idx < (uint32_t)table->size);                        \
@@ -114,9 +118,6 @@ static void opal_pointer_array_destruct(opal_pointer_array_t *array)
         }                                                               \
         if( 0x0000000000000001ULL == (__check_value & 0x0000000000000001ULL) ) { \
             __b_pos += 1;                                               \
-        }                                                               \
-        if( (SET) ) {                                                   \
-            table->free_bits[__b_idx] |= (1ULL << __b_pos);             \
         }                                                               \
         (STORE) = (__b_idx * 8 * sizeof(uint64_t)) + __b_pos;           \
     } while(0)
@@ -240,7 +241,7 @@ int opal_pointer_array_add(opal_pointer_array_t *table, void *ptr)
     table->number_free--;
     SET_BIT(index);
     if (table->number_free > 0) {
-        FIND_FIRST_ZERO(index, table->lowest_free, 0);
+        FIND_FIRST_ZERO(index, table->lowest_free);
     } else {
         table->lowest_free = table->size;
     }
@@ -297,7 +298,7 @@ int opal_pointer_array_set_item(opal_pointer_array_t *table, int index,
             SET_BIT(index);
             /* Reset lowest_free if required */
             if ( index == table->lowest_free ) {
-                FIND_FIRST_ZERO(index, table->lowest_free, 0);
+                FIND_FIRST_ZERO(index, table->lowest_free);
             }
         } else {
             assert( index != table->lowest_free );
@@ -373,7 +374,7 @@ bool opal_pointer_array_test_and_set_item (opal_pointer_array_t *table,
     /* Reset lowest_free if required */
     if( table->number_free > 0 ) {
         if ( index == table->lowest_free ) {
-            FIND_FIRST_ZERO(index, table->lowest_free, 0);
+            FIND_FIRST_ZERO(index, table->lowest_free);
         }
     } else {
         table->lowest_free = table->size;
