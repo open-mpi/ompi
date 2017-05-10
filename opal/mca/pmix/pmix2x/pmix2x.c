@@ -1410,8 +1410,8 @@ static void opdes(pmix2x_opcaddy_t *p)
     if (NULL != p->error_procs) {
         PMIX_PROC_FREE(p->error_procs, p->nerror_procs);
     }
-    if (NULL != p->info) {
-        PMIX_INFO_FREE(p->info, p->sz);
+    if (0 < p->ninfo) {
+        PMIX_INFO_FREE(p->info, p->ninfo);
     }
     if (NULL != p->apps) {
         PMIX_APP_FREE(p->apps, p->sz);
