@@ -37,7 +37,10 @@ Unable to post application receive buffer (psm_mq_irecv).
 
   Error:      %s
   Buffer:     %p
-  Length:     %d
+  Length:     %llu
 #
 [path query mechanism unknown]
 Unknown path record query mechanism %s. Supported mechanisms are %s.
+#
+[message too big]
+Message size %llu bigger than supported by PSM API. Max = %llu

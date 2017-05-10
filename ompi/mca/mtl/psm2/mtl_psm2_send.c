@@ -22,6 +22,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/util/show_help.h"
 
 #include "mtl_psm2.h"
 #include "mtl_psm2_types.h"
@@ -54,6 +55,12 @@ ompi_mtl_psm2_send(struct mca_mtl_base_module_t* mtl,
                                  &length,
                                  &mtl_psm2_request.free_after);
 
+    if (length >= 1ULL << sizeof(uint32_t) * 8) {
+            opal_show_help("help-mtl-psm2.txt",
+		    "message too big", false,
+		    length, 1ULL << sizeof(uint32_t) * 8);
+            return OMPI_ERROR;
+    }
 
     mtl_psm2_request.length = length;
     mtl_psm2_request.convertor = convertor;
@@ -106,6 +113,13 @@ ompi_mtl_psm2_isend(struct mca_mtl_base_module_t* mtl,
                                  &mtl_psm2_request->buf,
                                  &length,
                                  &mtl_psm2_request->free_after);
+
+    if (length >= 1ULL << sizeof(uint32_t) * 8) {
+            opal_show_help("help-mtl-psm2.txt",
+		    "message too big", false,
+		    length, 1ULL << sizeof(uint32_t) * 8);
+            return OMPI_ERROR;
+    }
 
     mtl_psm2_request->length= length;
     mtl_psm2_request->convertor = convertor;

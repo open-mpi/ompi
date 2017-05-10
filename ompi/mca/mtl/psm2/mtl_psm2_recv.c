@@ -52,6 +52,13 @@ ompi_mtl_psm2_irecv(struct mca_mtl_base_module_t* mtl,
 
     if (OMPI_SUCCESS != ret) return ret;
 
+    if (length >= 1ULL << sizeof(uint32_t) * 8) {
+            opal_show_help("help-mtl-psm2.txt",
+		    "message too big", false,
+		    length, 1ULL << sizeof(uint32_t) * 8);
+            return OMPI_ERROR;
+    }
+
     mtl_psm2_request->length = length;
     mtl_psm2_request->convertor = convertor;
     mtl_psm2_request->type = OMPI_mtl_psm2_IRECV;
@@ -101,6 +108,13 @@ ompi_mtl_psm2_imrecv(struct mca_mtl_base_module_t* mtl,
                                      &mtl_psm2_request->free_after);
 
     if (OMPI_SUCCESS != ret) return ret;
+
+    if (length >= 1ULL << sizeof(uint32_t) * 8) {
+            opal_show_help("help-mtl-psm2.txt",
+		    "message too big", false,
+		    length, 1ULL << sizeof(uint32_t) * 8);
+            return OMPI_ERROR;
+    }
 
     mtl_psm2_request->length = length;
     mtl_psm2_request->convertor = convertor;
